@@ -1,0 +1,490 @@
+<title>Send Book Walk §154</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:#FBFAF6; --panel:#F3F1E9; --well:#EBE8DC; --ink:#1A1D19; --ink-soft:#4A4E45;
+    --meta:#75796C; --rule:#DEDBCC; --rule-strong:#C6C2AE;
+    --accent:#33562A; --accent-soft:#E4EDD9; --amber:#7C5E28; --amber-soft:#F2E9D5;
+    --flag:#8A3324; --flag-soft:#F6E3DE;
+    --f-display:'Archivo','Helvetica Neue',Arial,sans-serif;
+    --f-body:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#14161A; --panel:#1B1E22; --well:#0E1013; --ink:#E9EAE4; --ink-soft:#BFC2B8;
+      --meta:#8B8F84; --rule:#2C3037; --rule-strong:#414650;
+      --accent:#A8C883; --accent-soft:#23301C; --amber:#D5AE6C; --amber-soft:#2E2617;
+      --flag:#E09A88; --flag-soft:#33201B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#14161A; --panel:#1B1E22; --well:#0E1013; --ink:#E9EAE4; --ink-soft:#BFC2B8;
+    --meta:#8B8F84; --rule:#2C3037; --rule-strong:#414650;
+    --accent:#A8C883; --accent-soft:#23301C; --amber:#D5AE6C; --amber-soft:#2E2617;
+    --flag:#E09A88; --flag-soft:#33201B;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: var(--f-body);
+         font-size: 16.5px; line-height: 1.6; margin: 0; padding: 0 1.1rem 6rem;
+         -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 62rem; margin: 0 auto; }
+  h1,h2,h3,.lbl,button,.chip { font-family: var(--f-display); }
+  h1 { font-size: clamp(1.75rem,1.2rem+2vw,2.6rem); font-weight:700; line-height:1.1;
+       letter-spacing:-0.02em; margin:0 0 .5rem; text-wrap:balance; }
+  h2 { font-size:1.22rem; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  h3 { font-size:.98rem; font-weight:600; margin:0 0 .3rem; }
+  p { margin:0 0 .75rem; }
+  .lbl { font-family:var(--f-mono); font-size:.7rem; font-weight:600; letter-spacing:.13em;
+         text-transform:uppercase; color:var(--meta); }
+
+  header.mast { padding:3rem 0 1.6rem; border-bottom:2px solid var(--ink); }
+  .standfirst { font-size:1.08rem; color:var(--ink-soft); max-width:42rem; }
+
+  /* sticky progress */
+  .bar { position:sticky; top:0; z-index:20; background:var(--ground);
+         border-bottom:1px solid var(--rule); padding:.7rem 0; margin-bottom:.4rem;
+         display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; }
+  .count { font-family:var(--f-mono); font-size:.8rem; color:var(--meta); }
+  .track { flex:1 1 8rem; height:5px; background:var(--well); min-width:5rem; }
+  .fillbar { display:block; height:100%; width:0; background:var(--accent); transition:width .18s; }
+  @media (prefers-reduced-motion: reduce) { .fillbar { transition:none; } }
+  .btn { font-size:.82rem; font-weight:600; padding:.42rem .9rem; cursor:pointer;
+         border:1px solid var(--accent); background:var(--accent); color:var(--ground); border-radius:2px; }
+  .btn.ghost { background:var(--ground); color:var(--accent); }
+  .btn:focus-visible, .vbtn:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+
+  .signin { margin:1.4rem 0 0; background:var(--panel); border:1px solid var(--rule); padding:1rem 1.15rem; }
+  .signin h2 { margin-bottom:.6rem; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:.3rem 1rem; margin:0; font-size:.93rem; }
+  .kv dt { font-family:var(--f-mono); font-size:.74rem; color:var(--meta); padding-top:.2rem;
+           text-transform:uppercase; letter-spacing:.07em; }
+  .kv dd { margin:0; color:var(--ink-soft); }
+  .warn { margin-top:.9rem; background:var(--amber-soft); border-left:3px solid var(--amber);
+          padding:.7rem .85rem; font-size:.93rem; color:var(--ink); }
+
+  .part { margin-top:2.6rem; }
+  .part-head { display:flex; align-items:baseline; gap:.8rem; border-bottom:1px solid var(--rule-strong);
+               padding-bottom:.45rem; }
+  .part-head .pid { font-family:var(--f-mono); font-size:1.5rem; font-weight:600; color:var(--rule-strong);
+                    line-height:1; }
+  .part-why { color:var(--ink-soft); font-size:.95rem; margin:.7rem 0 .9rem; }
+
+  .chk { display:flex; gap:.6rem; align-items:flex-start; padding:.5rem 0;
+         border-bottom:1px dotted var(--rule); }
+  .chk:last-of-type { border-bottom:none; }
+  .chk input { margin-top:.35rem; width:1.05rem; height:1.05rem; accent-color:var(--accent); flex:0 0 auto; cursor:pointer; }
+  .chk label { cursor:pointer; font-size:.97rem; }
+  .chk input:checked + label { color:var(--meta); }
+  .hintline { display:block; font-size:.85rem; color:var(--meta); margin-top:.15rem; }
+  code, .mono { font-family:var(--f-mono); font-size:.86em; background:var(--well); padding:0 .25em; }
+
+  .verdict { display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; margin-top:.9rem;
+             font-family:var(--f-display); font-weight:600; font-size:.68rem; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--meta); }
+  .vbtn { font-family:var(--f-display); font-size:.72rem; font-weight:600; letter-spacing:.05em;
+          padding:.32rem .7rem; border:1px solid var(--rule-strong); background:var(--ground);
+          color:var(--ink-soft); cursor:pointer; border-radius:2px; }
+  .vbtn[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--ground); }
+  .vbtn.flag[aria-pressed="true"] { background:var(--flag); border-color:var(--flag); color:var(--ground); }
+  .vbtn.call[aria-pressed="true"] { background:var(--amber); border-color:var(--amber); color:var(--ground); }
+  .note { width:100%; margin-top:.5rem; min-height:2.2rem; font-family:var(--f-body); font-size:.9rem;
+          padding:.45rem .6rem; border:1px solid var(--rule); background:var(--ground); color:var(--ink);
+          resize:vertical; border-radius:2px; }
+
+  .proof { background:var(--well); border:1px solid var(--rule-strong); padding:.9rem; margin:.7rem 0; }
+  .proof-cap { font-family:var(--f-mono); font-size:.68rem; letter-spacing:.09em; text-transform:uppercase;
+               color:var(--meta); margin-bottom:.6rem; }
+  .proof-body { overflow-x:auto; }
+  .subject { font-family:var(--f-display); font-weight:600; font-size:.98rem; background:var(--panel);
+             border-left:3px solid var(--accent); padding:.45rem .7rem; margin:.5rem 0; overflow-wrap:anywhere; }
+
+  table.board { width:100%; border-collapse:collapse; font-size:.9rem; margin:.6rem 0 0; }
+  .scroller { overflow-x:auto; }
+  table.board th, table.board td { text-align:left; padding:.4rem .6rem; border-bottom:1px solid var(--rule); }
+  table.board th { font-family:var(--f-display); font-size:.72rem; letter-spacing:.08em;
+                   text-transform:uppercase; color:var(--meta); }
+  table.board td.k { font-family:var(--f-mono); font-size:.82rem; }
+  table.board td.d { font-family:var(--f-mono); font-size:.85rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  .closing { margin-top:3rem; border-top:2px solid var(--ink); padding-top:1.4rem; }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <span class="lbl">Owner QA &middot; §154 &middot; Founding Season 2027 Phase 1</span>
+    <h1>The send book, walked</h1>
+    <p class="standfirst">Ten campaign emails became eight, every one of them rewritten for a free season that now ends <b>September 30, 2027</b>. Nothing has been sent. This walk checks that what the product will send is what you approved &mdash; and that the two campaigns which must not go out this autumn no longer can.</p>
+  </header>
+
+  <div class="bar">
+    <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+    <span class="track"><span class="fillbar" id="fillbar"></span></span>
+    <button class="btn" id="copyout" type="button">Copy findings</button>
+    <button class="btn ghost" id="resetall" type="button">Reset</button>
+  </div>
+
+  <div class="signin">
+    <h2>Sign in as</h2>
+    <dl class="kv">
+      <dt>URL</dt><dd>http://localhost:3000 &mdash; the dev server was restarted for you on 2026-09-07 (shared modules changed)</dd>
+      <dt>Parts A&ndash;F</dt><dd><b>uat-platform@fieldlogichq.ca</b> &middot; <b>UATPassword2026!</b> &mdash; keep it private; dev only</dd>
+      <dt>Part G</dt><dd><b>nobody</b> &mdash; the demos are public. Walk them signed out, on a laptop <i>and</i> on your phone.</dd>
+      <dt>Part H</dt><dd>the same platform admin, in the in-app help</dd>
+    </dl>
+    <p style="margin:.8rem 0 0;font-size:.93rem;color:var(--ink-soft);"><b>Routes:</b> <code>/platform-admin/email</code> &middot; <code>/platform-admin/email-templates</code> &middot; <code>/demos</code> &middot; <code>/see-it-live</code> &middot; <code>/see-it-live/coaches</code></p>
+    <div class="warn"><b>What to pin.</b> Every campaign reads <b>&ldquo;September 30, 2027&rdquo;</b> and, where it names the deadline, <b>&ldquo;December 31, 2026&rdquo;</b> &mdash; in full. Any <i>Sept</i>, <i>Dec 31</i>, <i>Jan 1</i>, <i>January 2027</i>, <i>trial</i> or <i>summer</i> in customer copy is a defect: flag the step and say where. <b>Do not press Send on anything.</b> If a Send button is ever pressed on this walk, that is the walk failing, not passing.</div>
+  </div>
+
+  <!-- ══ A ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">A</span><h2>The board is eight campaigns, not ten</h2></div>
+    <p class="part-why">Go to <b>Platform admin &rarr; Email</b>. Three campaigns sold products we do not sell &mdash; Club and House League are parked &mdash; and two of them were sitting there marked <b>past due</b>, asking to be sent. They are gone from the board. Their copy is <i>not</i> deleted; Part F is where you confirm that.</p>
+    <div class="scroller"><table class="board">
+      <thead><tr><th>Campaign</th><th>Planned</th><th>Reads</th></tr></thead>
+      <tbody>
+        <tr><td class="k">founding_welcome</td><td class="d">At signup</td><td>Your Founding Season starts now</td></tr>
+        <tr><td class="k">founding_checkin</td><td class="d">~Day 60</td><td>How&rsquo;s your season going?</td></tr>
+        <tr><td class="k">spotlight_coaches_org</td><td class="d">Oct 1, 2026</td><td>For the coaches on your teams</td></tr>
+        <tr><td class="k">spotlight_coaches_coach</td><td class="d">Oct 1, 2026</td><td>Your team&rsquo;s season workspace</td></tr>
+        <tr><td class="k">spotlight_full_picture</td><td class="d">Nov 15, 2026</td><td>Where FieldLogicHQ is headed</td></tr>
+        <tr><td class="k">founding_renewal</td><td class="d">Jun 1, 2027</td><td>Choose your 2028 plan</td></tr>
+        <tr><td class="k">founding_nudge</td><td class="d">Aug 1, 2027</td><td>Still time to choose your 2028 plan</td></tr>
+        <tr><td class="k">founding_final</td><td class="d">Sep 15, 2027</td><td>Last note before your free season ends</td></tr>
+      </tbody>
+    </table></div>
+    <div class="chk"><input type="checkbox" id="a1"><label for="a1">The board lists <b>exactly these eight</b> campaigns &mdash; count them.</label></div>
+    <div class="chk"><input type="checkbox" id="a2"><label for="a2">There is <b>no</b> <code>spotlight_club</code>, <b>no</b> <code>spotlight_league</code> and <b>no</b> <code>spotlight_club_last</code> row anywhere on this page.<span class="hintline">These are the three retired ones. <code>spotlight_club_last</code> was scheduled for October 15 &mdash; it is the one that would actually have gone out.</span></label></div>
+    <div class="chk"><input type="checkbox" id="a3"><label for="a3">Nothing on the board is marked <b>Past due</b>.<span class="hintline">Before today, two rows were &mdash; a standing false alarm on a screen whose whole job is telling you what needs sending.</span></label></div>
+    <div class="chk"><input type="checkbox" id="a4"><label for="a4"><code>founding_nudge</code> is present and is the only campaign you have not seen before.</label></div>
+    <div class="verdict" data-part="A"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part A&hellip;" aria-label="Notes on Part A"></textarea></div>
+  </section>
+
+  <!-- ══ B ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">B</span><h2>The two dates that must not fire this autumn</h2></div>
+    <p class="part-why">The renewal and final-notice campaigns still described the January 1, 2027 cliff, and were scheduled for <b>November 1</b> and <b>December 15, 2026</b> &mdash; both within weeks. Sending either would have contradicted every other surface in the app. They have moved to the summer, which is the structural fix: they cannot be sent early because the board no longer asks for them.</p>
+    <div class="chk"><input type="checkbox" id="b1"><label for="b1"><code>founding_renewal</code> reads <b>Jun 1, 2027</b> &mdash; not November 1, 2026.</label></div>
+    <div class="chk"><input type="checkbox" id="b2"><label for="b2"><code>founding_final</code> reads <b>Sep 15, 2027</b> &mdash; not December 15, 2026.</label></div>
+    <div class="chk"><input type="checkbox" id="b3"><label for="b3"><code>founding_nudge</code> reads <b>Aug 1, 2027</b>, between the other two.</label></div>
+    <div class="chk"><input type="checkbox" id="b4"><label for="b4">Press the little calendar/pencil on <code>founding_renewal</code>&rsquo;s date, change it to something else, save, then change it back to <b>2027-06-01</b>. It takes the edit both ways.<span class="hintline">Your own date always wins over the seeded one &mdash; worth proving once, because the migration deliberately only moves a date you have never touched.</span></label></div>
+    <div class="verdict" data-part="B"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part B&hellip;" aria-label="Notes on Part B"></textarea></div>
+  </section>
+
+  <!-- ══ C ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">C</span><h2>What each email actually says</h2></div>
+    <p class="part-why">For each campaign below: click its <b>Preview</b> (eye) icon on the board and read the email the product renders. It must match the specimen printed here &mdash; same subject, same words, same dates. The preview is produced by the same code as the send, so this is the real thing, not a mock-up.</p>
+    <div id="specimens"></div>
+    <div class="verdict" data-part="C"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part C&hellip;" aria-label="Notes on Part C"></textarea></div>
+  </section>
+
+  <!-- ══ D ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">D</span><h2>The dialog you read last, before real mail goes out</h2></div>
+    <p class="part-why">This is the defect that caused the rest of the work. The board&rsquo;s table already read the subject from the database, so the rewrite looked complete &mdash; but the <b>Confirm Send</b> dialog read its own hardcoded copy, and would have quoted you a December 31 subject while sending a September 30 email. It now comes from the same one place as everything else.</p>
+    <div class="chk"><input type="checkbox" id="d1"><label for="d1">Click <b>Send</b> on <code>founding_renewal</code> to open the confirm dialog &mdash; <b>and do not confirm it.</b></label></div>
+    <div class="chk"><input type="checkbox" id="d2"><label for="d2">The dialog&rsquo;s <b>Subject</b> line reads <b>&ldquo;Your free season ends September 30, 2027 &mdash; choose your 2028 plan&rdquo;</b>.<span class="hintline">If it says &ldquo;Your founding season ends December 31&rdquo;, the fix did not land. That exact sentence is the defect.</span></label></div>
+    <div class="chk"><input type="checkbox" id="d3"><label for="d3">Close the dialog with <b>Cancel</b> or the &times;. Nothing sent.</label></div>
+    <div class="chk"><input type="checkbox" id="d4"><label for="d4">Do the same on <code>founding_nudge</code>: the dialog says <b>&ldquo;Still time to choose your 2028 plan&rdquo;</b>. Cancel it.</label></div>
+    <div class="verdict" data-part="D"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part D&hellip;" aria-label="Notes on Part D"></textarea></div>
+  </section>
+
+  <!-- ══ E ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">E</span><h2>A retired campaign cannot be sent, even on purpose</h2></div>
+    <p class="part-why">Taking a row off a screen is not the same as making it impossible. The send route refuses a retired campaign outright, so a stale bookmark, a browser back-button, or a future screen that forgets cannot mail a pitch for a parked product.</p>
+    <div class="chk"><input type="checkbox" id="e1"><label for="e1">Open your browser&rsquo;s dev console on the Email page and run:<br><code>await (await fetch('/api/admin/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emailKey:'spotlight_club_last'})})).json()</code><span class="hintline">If you would rather not, skip this one and tick it as not done &mdash; it is the only step that asks you to touch a console.</span></label></div>
+    <div class="chk"><input type="checkbox" id="e2"><label for="e2">It comes back <b>refused</b> &mdash; <code>Unknown email key: spotlight_club_last</code> &mdash; and <b>no</b> batch appears in Sent History.</label></div>
+    <div class="verdict" data-part="E"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part E&hellip;" aria-label="Notes on Part E"></textarea></div>
+  </section>
+
+  <!-- ══ F ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">F</span><h2>Nothing was thrown away</h2></div>
+    <p class="part-why">Go to <b>Platform admin &rarr; Email Templates</b>. Retiring a campaign keeps its copy, so the day Club or House League un-parks the email is still written. Deleting the rows would have been tidier and worse: a row deletion is invisible to every check we have, which is how migration 264 ended up stranded and unnoticed.</p>
+    <div class="chk"><input type="checkbox" id="f1"><label for="f1">All three retired campaigns are still listed under <b>marketing</b>: <code>spotlight_club</code>, <code>spotlight_league</code>, <code>spotlight_club_last</code>.</label></div>
+    <div class="chk"><input type="checkbox" id="f2"><label for="f2">Open <code>spotlight_club</code>. Its description now begins <b>&ldquo;RETIRED 2026-09-07 &mdash; Club is a parked product. Kept for revival; not sendable.&rdquo;</b></label></div>
+    <div class="chk"><input type="checkbox" id="f3"><label for="f3">Its <b>body is untouched</b> &mdash; it still reads &ldquo;Club is free through December 31, 2026&rdquo;.<span class="hintline">Deliberate. It is old copy for a product we do not sell, and rewriting it would be work spent on an email nobody can send. It is unreachable, not live.</span></label></div>
+    <div class="verdict" data-part="F"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part F&hellip;" aria-label="Notes on Part F"></textarea></div>
+  </section>
+
+  <!-- ══ G ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">G</span><h2>The offer bar, walked into both demos</h2></div>
+    <p class="part-why">The Founding Season bar sits on marketing pages and a sandbox is an organization, so the two should never share a screen. That is an argument, not an observation &mdash; and the failure it predicts is not a visible bar but an <b>empty band</b> where one used to be, because the bar reserves its own height at the top of the document. I measured all of this at phone and laptop width (34 checks, all passed); this part is you seeing it.</p>
+    <div class="chk"><input type="checkbox" id="g1"><label for="g1">On <code>/demos</code>, signed out: the dark <b>Founding Season</b> bar is at the very top, and the navigation sits <i>below</i> it, not underneath it.</label></div>
+    <div class="chk"><input type="checkbox" id="g2"><label for="g2">Enter the <b>tournament demo</b>. The offer bar is gone, the sandbox banner is at the top, and there is <b>no empty gap</b> above it.</label></div>
+    <div class="chk"><input type="checkbox" id="g3"><label for="g3">Leave, then enter the <b>coach demo</b>. Same: no bar, no gap, banner at the top.</label></div>
+    <div class="chk"><input type="checkbox" id="g4"><label for="g4">Repeat all three on your phone.<span class="hintline">The bar is 44px tall on a phone and 40px on a laptop, so a reserved-gap bug would look different on each.</span></label></div>
+    <div class="chk"><input type="checkbox" id="g5"><label for="g5">Walking both demos, you were <b>not</b> shown the Founding Season offer anywhere inside them.<span class="hintline">Tick this if true &mdash; it is correct as built, and it is also the open question in Part I. Neither tour has a pricing moment, so nothing was added.</span></label></div>
+    <div class="verdict" data-part="G"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part G&hellip;" aria-label="Notes on Part G"></textarea></div>
+  </section>
+
+  <!-- ══ H ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">H</span><h2>The help that describes this screen</h2></div>
+    <p class="part-why">In-app help, <b>How to send a batch marketing email</b>. It described a &ldquo;not built&rdquo; state that the dashboard has never actually shown, and called the feature matrix &ldquo;the public plan comparison&rdquo; &mdash; a table you removed from the pricing page on 2026-09-07.</p>
+    <div class="chk"><input type="checkbox" id="h1"><label for="h1">Step 2 no longer mentions a template that is <b>&ldquo;not built&rdquo;</b>; it explains that the preview is rendered by the same code as the send, and that a retired campaign leaves the board.</label></div>
+    <div class="chk"><input type="checkbox" id="h2"><label for="h2">In <b>How to work with plans, pricing, and feature matrix changes</b>, the feature matrix is described as <b>which modules each plan includes</b> &mdash; not as a public comparison.</label></div>
+    <div class="verdict" data-part="H"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Pass</button><button class="vbtn flag" type="button" data-v="flag">Flag</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Notes on Part H&hellip;" aria-label="Notes on Part H"></textarea></div>
+  </section>
+
+  <!-- ══ I ══ -->
+  <section class="part">
+    <div class="part-head"><span class="pid">I</span><h2>Two things I could not close, and one I did not build</h2></div>
+    <p class="part-why">These need your ruling, not your testing. Tick each once you have decided; put the decision in the note.</p>
+    <div class="chk"><input type="checkbox" id="i1"><label for="i1"><b>Coaches were going to receive the wrong email, and the review caught it.</b> A comped coach portal is backed by a hidden organization record carrying the <i>same</i> Founding Season marker a real organization does, so the audience query could not tell them apart: every one of these emails would have gone to coaches too, saying Tournament Plus was free, quoting $39/month for a product they never had, and linking to an organization billing page their account does not have. It had not fired only because no coach has taken the comp yet &mdash; and the two Coaches Portal emails on this board exist to change that. The audience is now filtered to real organizations. <b>So the gap is now deliberate:</b> coaches get none of the summer sequence. Closing it needs its own audience <i>and</i> its own copy, because an organization drops to the free plan and keeps everything while a coach&rsquo;s portal closes.<span class="hintline">Decide: do the coach twins belong in Phase 2, or a Phase 1b before next summer?</span></label></div>
+    <div class="chk"><input type="checkbox" id="i2"><label for="i2"><b>&ldquo;Card on file&rdquo; is written but cannot fire.</b> Two summer emails read differently once a card is saved. That fact lives only inside Stripe &mdash; the app does not record it &mdash; so today both send the &ldquo;no card&rdquo; version, which is honest. Both versions are printed in Part C. Phase 2&rsquo;s first item turns it on, and the emails improve with no copy change.<span class="hintline">Nothing to do. Tick to confirm you have read it.</span></label></div>
+    <div class="chk"><input type="checkbox" id="i3"><label for="i3"><b>The demo never mentions the offer.</b> A prospect can walk an entire sandbox, be sold, press &ldquo;Start your own &mdash; free&rdquo; and never learn that a whole 2027 season of Tournament Plus is free. The banner&rsquo;s wording is true of the free floor and silent about the offer. I flagged this rather than changing it: the banner is persistent demo chrome and its copy is your call, not a build detail.<span class="hintline">Decide: change the banner CTA, or leave the demo deliberately quiet about price?</span></label></div>
+    <div class="verdict" data-part="I"><span>Verdict</span><button class="vbtn" type="button" data-v="pass">Ruled</button><button class="vbtn flag" type="button" data-v="flag">Disagree</button><button class="vbtn call" type="button" data-v="call">Needs a call</button><textarea class="note" placeholder="Your rulings&hellip;" aria-label="Rulings on Part I"></textarea></div>
+  </section>
+
+  <section class="closing">
+    <span class="lbl">When you are through</span>
+    <h2>Copy the findings back to me</h2>
+    <p style="color:var(--ink-soft);font-size:.96rem;">Your ticks and notes are saved in this browser, so you can stop and come back. <b>Copy findings</b> puts the lot on your clipboard &mdash; paste it into the chat and I will fix what you flagged before anything is committed.</p>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem;">
+      <button class="btn" id="copyout2" type="button">Copy findings</button>
+    </div>
+  </section>
+</div>
+
+<script>
+  const SPECIMENS = [
+ {
+  "key": "founding_welcome",
+  "label": "Founding — Welcome",
+  "variantLabel": null,
+  "plannedSendDate": null,
+  "audienceLabel": "Each new founding org owner (transactional)",
+  "timing": {
+   "kind": "trigger",
+   "when": "At signup"
+  },
+  "subject": "Your Founding Season starts now — free through September 30, 2027",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Your Founding Season starts now.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">You're in. <strong>Milton Softball Association</strong> is set up on FieldLogicHQ, and <strong>Tournament Plus is free through September 30, 2027</strong> — your whole 2027 season. Normally $39/month. No credit card.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What Tournament Plus gives you</p><ul style=\"margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);\"><li>Auto-scheduling across any number of fields and time slots</li><li>Single and double-elimination brackets</li><li>Team communications and announcements</li><li>As many tournaments as you run — no cap</li><li>Tournament archives — every past event preserved</li></ul></div>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Set up your first tournament →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">If anything doesn't work the way you'd expect, reply to this email. We read everything.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "founding_checkin",
+  "label": "Founding — Season Check-in",
+  "variantLabel": null,
+  "plannedSendDate": null,
+  "audienceLabel": "Founding orgs, signed up 60+ days ago",
+  "timing": {
+   "kind": "trigger",
+   "when": "~Day 60 post-signup"
+  },
+  "subject": "How's your season going?",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">How's your season going?</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">It's been <strong>9 weeks</strong> since <strong>Milton Softball Association</strong> joined FieldLogicHQ.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">Season so far</p><p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">You've run <strong>2 tournaments</strong> — <strong>47 games played</strong>.<br>That's 47 schedule exports and score entries you didn't have to do in a spreadsheet.</p></div>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Set up another tournament →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">We're also curious: what's working, and what isn't? Reply and tell us.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Tournament Plus is free for <strong>Milton Softball Association</strong> through <strong>September 30, 2027</strong>. In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "founding_renewal",
+  "label": "Founding — Choose your plan",
+  "variantLabel": null,
+  "plannedSendDate": "2027-06-01",
+  "audienceLabel": "All founding season org owners",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2027-06-01"
+  },
+  "subject": "Your free season ends September 30, 2027 — choose your 2028 plan",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Your free season ends September 30, 2027.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\"><strong>Milton Softball Association</strong> has run on Tournament Plus at no cost since you joined. That free season ends on <strong>September 30, 2027</strong> — and this is the early note, not the last one.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What you're choosing</p><p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">A plan for your 2028 season — <strong>annual or monthly</strong>. Tournament Plus is <strong>$390/year</strong> or <strong>$39/month</strong>. Annual suits most seasons: a year of tournaments paid once, in the month you're already doing the budget.</p></div>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What Milton Softball Association has built</p><p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Your <strong>1 active tournament</strong>, every registered team, every score and every archive carry over exactly as they are. Nothing moves.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Your <strong>3 past tournaments</strong> stay in your archives on any plan, including the free one.</p></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">You can add a card now and choose the plan later. Nothing is charged before <strong>October 1, 2027</strong>.</p>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Add a payment method — takes 2 minutes →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\"><strong>If Tournament Plus isn't right for 2028, there is nothing to cancel.</strong> On October 1, 2027, <strong>Milton Softball Association</strong> moves to the free Tournament plan and keeps everything it built.</p>\n<a href=\"#\" style=\"display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;\">See the plans →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Questions? Reply to this email.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "founding_nudge",
+  "label": "Founding — Plan reminder",
+  "variantLabel": "No card on file (what sends today)",
+  "plannedSendDate": "2027-08-01",
+  "audienceLabel": "All founding season org owners",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2027-08-01"
+  },
+  "subject": "Still time to choose your 2028 plan",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Still time to choose your 2028 plan.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">A short follow-up: <strong>Milton Softball Association</strong>'s free season on Tournament Plus ends on <strong>September 30, 2027</strong>.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Nothing has been charged, and nothing will be before <strong>October 1, 2027</strong>. If you already know you're continuing, adding a card now takes two minutes and takes it off your list:</p>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Add a payment method →</a>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What it costs from October 1, 2027</p><p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Tournament Plus is <strong>$390/year</strong> or <strong>$39/month</strong>. The year is one payment, in the month you're planning the season anyway.</p></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">If Tournament Plus isn't right for 2028, there is nothing to cancel. <strong>Milton Softball Association</strong> moves to the free Tournament plan and keeps everything it built.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "founding_nudge",
+  "label": "Founding — Plan reminder",
+  "variantLabel": "Card on file (once Phase 2 records it)",
+  "plannedSendDate": "2027-08-01",
+  "audienceLabel": "All founding season org owners",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2027-08-01"
+  },
+  "subject": "Still time to choose your 2028 plan",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Still time to choose your 2028 plan.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">A short follow-up: <strong>Milton Softball Association</strong>'s free season on Tournament Plus ends on <strong>September 30, 2027</strong>.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Your payment method is on file, so there is nothing to do today. In September 2027 you'll pick annual or monthly, and that is the whole decision.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What it costs from October 1, 2027</p><p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Tournament Plus is <strong>$390/year</strong> or <strong>$39/month</strong>. The year is one payment, in the month you're planning the season anyway.</p></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">If Tournament Plus isn't right for 2028, there is nothing to cancel. <strong>Milton Softball Association</strong> moves to the free Tournament plan and keeps everything it built.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "founding_final",
+  "label": "Founding — Final notice",
+  "variantLabel": "No card on file (what sends today)",
+  "plannedSendDate": "2027-09-15",
+  "audienceLabel": "All founding season org owners",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2027-09-15"
+  },
+  "subject": "Last note before your free season ends September 30, 2027",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Your free season ends September 30, 2027.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">This is the last note before <strong>Milton Softball Association</strong>'s free season ends on <strong>September 30, 2027</strong>.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">To keep Tournament Plus from October 1, 2027, choose a plan for your 2028 season:</p>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Choose your 2028 plan →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\"><strong>If you'd rather not continue, you don't have to do anything.</strong> On October 1, 2027, <strong>Milton Softball Association</strong> moves to the free Tournament plan — one active tournament, manual scheduling, no cost — and every team, score and archive you have built stays exactly where it is.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Thank you for running your season with us. You were one of the first.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "founding_final",
+  "label": "Founding — Final notice",
+  "variantLabel": "Card on file (once Phase 2 records it)",
+  "plannedSendDate": "2027-09-15",
+  "audienceLabel": "All founding season org owners",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2027-09-15"
+  },
+  "subject": "Last note before your free season ends September 30, 2027",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Your free season ends September 30, 2027.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">This is the last note before <strong>Milton Softball Association</strong>'s free season ends on <strong>September 30, 2027</strong>.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Your payment method is on file, so the only thing left is the choice itself: <strong>$390/year</strong> or <strong>$39/month</strong> from October 1, 2027.</p>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Choose your 2028 plan →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Thank you for running your season with us. You were one of the first.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "spotlight_coaches_org",
+  "label": "Spotlight — Coaches Portal (to orgs)",
+  "variantLabel": null,
+  "plannedSendDate": "2026-10-01",
+  "audienceLabel": "Org owners",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2026-10-01"
+  },
+  "subject": "For the coaches on your teams — free through September 30, 2027",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">For the coaches on your teams — a workspace that's actually theirs.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">The coaches managing teams in your tournaments are tracking rosters in group texts, lineups in notes apps, and team fees in someone's head.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">The Premium Coaches Portal gives them one place for all of it</p><ul style=\"margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);\"><li>Full roster management with season history</li><li>Lineup builder — plan your starting lineup, export to PDF</li><li>Team budget and player dues tracking</li><li>Document management: consent forms, medical notes, eligibility files</li></ul></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">It works whether or not a coach's team is registered in a tournament you run on FieldLogicHQ. A coach can sign up on their own and run their team year-round.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">The Premium Coaches Portal is free through September 30, 2027 when you sign up by December 31, 2026. No credit card. Normally $29/month or $290/year — or included when your organization is on Club.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Know a coach who'd use it? They can start today:</p>\n<a href=\"#\" style=\"display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;\">Send them this link →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Want the details first?</p>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">See the Premium Coaches Portal →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "spotlight_coaches_coach",
+  "label": "Spotlight — Coaches Portal (to coaches)",
+  "variantLabel": null,
+  "plannedSendDate": "2026-10-01",
+  "audienceLabel": "Coach accounts (tournament participants)",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2026-10-01"
+  },
+  "subject": "Your team's season workspace — free through September 30, 2027",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Your team's season workspace.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">You've been through a tournament on FieldLogicHQ. But managing your team between tournaments is still probably spread across your phone, your email, and your memory.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">The Premium Coaches Portal is built for exactly that</p><ul style=\"margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);\"><li>Your full roster, season over season</li><li>Lineups you can plan, save, and export to PDF</li><li>Team budget: dues in, expenses out, who owes what</li><li>Documents in one place — consent, medical, eligibility</li></ul></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">No organization account required. Your team's workspace, on your timeline.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">The Premium Coaches Portal is free through September 30, 2027 when you sign up by December 31, 2026. No credit card. Normally $29/month or $290/year.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p>\n<a href=\"#\" style=\"display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;\">Start your Premium Coaches Portal →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ },
+ {
+  "key": "spotlight_full_picture",
+  "label": "Spotlight — The Full Picture",
+  "variantLabel": null,
+  "plannedSendDate": "2026-11-15",
+  "audienceLabel": "All founding season participants",
+  "timing": {
+   "kind": "date",
+   "plannedSendDate": "2026-11-15"
+  },
+  "subject": "Where FieldLogicHQ is headed — a note from the Founding Season",
+  "html": "\n<div style=\"font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);\">\n  <div style=\"margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);\">\n    <span style=\"font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;\">FIELDLOGICHQ</span>\n  </div>\n  <h2 style=\"color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;\">Where FieldLogicHQ is headed.</h2>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Hi Dana,</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">You're one of the first organizations running on FieldLogicHQ. Here's where things stand, and where they're going.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What's live today</p><ul style=\"margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);\"><li><strong>Tournament</strong> — registration, manual scheduling, brackets, live scores and archives, free with no end date</li><li><strong>Tournament Plus</strong> — everything above plus auto-scheduling, and as many tournaments as you run</li><li><strong>The Premium Coaches Portal</strong> — a full season workspace for one team: roster, lineups, budget, dues, documents</li></ul></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.</p>\n<div style=\"background:#0F172A;padding:1.25rem;margin:1.5rem 0;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);\"><p style=\"margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;\">What's coming</p><ul style=\"margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);\"><li>More ways for families to follow their teams</li><li>Deeper reporting on the money side of a season</li><li>And more, shaped by what this first season has taught us</li></ul></div>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">You helped build this — by running real events on the platform and telling us what worked and what didn't.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">If you know another tournament organizer or coach who should be here, the Founding Season is open until <strong>December 31, 2026</strong>:</p>\n<a href=\"#\" style=\"display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;\">Share FieldLogicHQ →</a>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">There is nothing to do about billing. In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p>\n<p style=\"margin:0 0 1.1rem;line-height:1.7;color:rgba(241,245,249,0.85);\">— The FieldLogicHQ team</p>\n<div style=\"margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);\"><p style=\"margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;\">You're receiving this because you signed up for FieldLogicHQ.&nbsp;<a href=\"#\" style=\"color:rgba(217,249,157,0.5);text-decoration:underline;\">Unsubscribe</a>&nbsp;·&nbsp; FieldLogicHQ · Canada</p></div>\n</div>"
+ }
+];
+  const STEPS = [
+  { "key": "founding_welcome", "title": "Welcome", "watch": "Watch the bullet list: it must say <b>as many tournaments as you run &mdash; no cap</b>. The old one promised &ldquo;up to 3 active tournaments&rdquo;, which understated the paid product to every organization that ever signed up." },
+  { "key": "founding_checkin", "title": "Season check-in", "watch": "Subject is now just <b>How&rsquo;s your season going?</b> The closing paragraph names September 30, 2027 &mdash; no January price cliff." },
+  { "key": "spotlight_coaches_org", "title": "The Coaches Portal, to organizations", "watch": "Both prices, not just the monthly one: <b>$29/month or $290/year</b>. The offer sentence is word-for-word what the pricing page says." },
+  { "key": "spotlight_coaches_coach", "title": "The Coaches Portal, to coaches", "watch": "The subject used to say <b>free until January 1, 2027</b> &mdash; the one line that decides whether it gets opened. The button now names the Premium product, not the free one." },
+  { "key": "spotlight_full_picture", "title": "Where we&rsquo;re headed", "watch": "Two things must be <b>absent</b>: any mention of House League, Rep Teams, Accounting, League Plus or Club being free (all parked), and any ask for a payment method (nothing asks for a card before June 1, 2027)." },
+  { "key": "founding_renewal", "title": "Choose your 2028 plan", "watch": "Annual leads: <b>$390/year</b> before $39/month, with the reason. And the do-nothing outcome is stated plainly &mdash; moves to the free Tournament plan, keeps everything." },
+  { "key": "founding_nudge", "title": "Plan reminder", "watch": "The new one. Two versions below: today the product sends the <b>no card</b> one. Neither counts down days." },
+  { "key": "founding_final", "title": "Final notice", "watch": "The old version said &ldquo;ends in 16 days&rdquo; &mdash; true only if sent on exactly the right morning. This names the date. The do-nothing path gets as much room as the paying one." }
+]
+;
+  const STORE = 'fs2027-walk-154-v1';
+
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) { state = {}; }
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
+  const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // ── Part C: one block per campaign, specimen + its own checkbox ─────────────
+  const byKey = {};
+  for (const s of SPECIMENS) (byKey[s.key] = byKey[s.key] || []).push(s);
+  const host = document.getElementById('specimens');
+  STEPS.forEach((step, i) => {
+    const proofs = byKey[step.key] || [];
+    const id = 'c' + (i + 1);
+    const el = document.createElement('div');
+    el.style.cssText = 'padding:1.2rem 0;border-bottom:1px solid var(--rule);';
+    el.innerHTML =
+      '<h3>' + esc(step.title) + ' <span style="font-family:var(--f-mono);font-size:.75rem;color:var(--meta);font-weight:400;">' + esc(step.key) + '</span></h3>' +
+      '<p style="color:var(--ink-soft);font-size:.93rem;margin:.2rem 0 .4rem;">' + step.watch + '</p>' +
+      '<div class="subject">' + esc(proofs[0] ? proofs[0].subject : '') + '</div>' +
+      proofs.map(p =>
+        '<div class="proof"><div class="proof-cap">' + esc(p.variantLabel || 'As it arrives') + '</div>' +
+        '<div class="proof-body">' + p.html + '</div></div>').join('') +
+      '<div class="chk"><input type="checkbox" id="' + id + '"><label for="' + id + '">The preview in the product matches this, word for word &mdash; subject included.</label></div>';
+    host.appendChild(el);
+  });
+
+  // ── checkboxes ──────────────────────────────────────────────────────────────
+  const boxes = Array.from(document.querySelectorAll('.chk input[type="checkbox"]'));
+  document.getElementById('ctotal').textContent = String(boxes.length);
+  function tally() {
+    const done = boxes.filter(b => b.checked).length;
+    document.getElementById('cdone').textContent = String(done);
+    document.getElementById('fillbar').style.width = (boxes.length ? (done / boxes.length) * 100 : 0) + '%';
+  }
+  for (const b of boxes) {
+    if (state[b.id]) b.checked = true;
+    b.addEventListener('change', () => { state[b.id] = b.checked; save(); tally(); });
+  }
+  tally();
+
+  // ── verdicts + notes ────────────────────────────────────────────────────────
+  document.querySelectorAll('.verdict').forEach(row => {
+    const part = row.dataset.part;
+    const btns = Array.from(row.querySelectorAll('.vbtn'));
+    const ta = row.querySelector('.note');
+    const paint = () => btns.forEach(b => b.setAttribute('aria-pressed', String((state['v' + part] || '') === b.dataset.v)));
+    if (state['n' + part]) ta.value = state['n' + part];
+    paint();
+    btns.forEach(b => b.addEventListener('click', () => {
+      state['v' + part] = state['v' + part] === b.dataset.v ? '' : b.dataset.v;
+      save(); paint();
+    }));
+    ta.addEventListener('input', () => { state['n' + part] = ta.value; save(); });
+  });
+
+  // ── copy out ────────────────────────────────────────────────────────────────
+  function findings() {
+    const lines = ['Owner QA §154 — Founding Season 2027 Phase 1 (the send book)', ''];
+    const done = boxes.filter(b => b.checked).length;
+    lines.push(`Checked ${done} of ${boxes.length}.`, '');
+    document.querySelectorAll('.part').forEach(sec => {
+      const part = sec.querySelector('.verdict').dataset.part;
+      const title = sec.querySelector('h2').textContent.trim();
+      const v = state['v' + part] || '(no verdict)';
+      const n = (state['n' + part] || '').trim();
+      const missed = Array.from(sec.querySelectorAll('.chk input')).filter(b => !b.checked)
+        .map(b => sec.querySelector('label[for="' + b.id + '"]').textContent.trim().slice(0, 90));
+      lines.push(`Part ${part} — ${title}: ${v.toUpperCase()}`);
+      if (n) lines.push(`  note: ${n}`);
+      for (const m of missed) lines.push(`  unchecked: ${m}…`);
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+  async function copyFindings(btn) {
+    const text = findings();
+    try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
+    catch (e) { btn.textContent = 'Press Ctrl+C'; window.prompt('Copy your findings:', text); }
+    setTimeout(() => { btn.textContent = 'Copy findings'; }, 1800);
+  }
+  document.getElementById('copyout').addEventListener('click', e => copyFindings(e.currentTarget));
+  document.getElementById('copyout2').addEventListener('click', e => copyFindings(e.currentTarget));
+  document.getElementById('resetall').addEventListener('click', () => {
+    state = {}; save();
+    boxes.forEach(b => { b.checked = false; });
+    document.querySelectorAll('.note').forEach(t => { t.value = ''; });
+    document.querySelectorAll('.vbtn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    tally();
+  });
+</script>

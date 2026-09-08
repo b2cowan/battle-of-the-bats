@@ -3,6 +3,7 @@ import { sendEmail } from '@/lib/email';
 import { renderPlatformEmailHtml } from '@/lib/platform-email-templates';
 import { fillSubjectTokens } from '@/lib/email-markup';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getMarketingEmailDefault } from '@/lib/marketing-email-defaults';
 import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ key: string }> };
@@ -32,6 +33,23 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     .single();
 
   if (error) return Response.json({ error: 'Template not found.' }, { status: 404 });
+
+  // A RETIRED marketing campaign keeps its row so its copy survives a product un-parking, but it
+  // is not sendable — and "not sendable" has to mean every path, not just the batch one. Its copy
+  // is deliberately left un-rewritten (it still quotes a superseded calendar for a product we no
+  // longer sell), so putting it in ANY inbox, including the requesting admin's own, would be
+  // delivering something we know to be untrue. Non-marketing templates are unaffected.
+  const retired = getMarketingEmailDefault(key)?.retired;
+  if (retired) {
+    return Response.json(
+      {
+        error: `"${key}" was retired on ${retired.on} (${retired.why}) and cannot be sent. `
+          + 'Its copy is kept here so the campaign can be revived, but reviving it means bringing it '
+          + 'back in the campaign registry and rewriting it for the current calendar first.',
+      },
+      { status: 409 },
+    );
+  }
 
   const subject  = previewSubject  ?? tmpl.subject;
   const heading  = previewHeading  ?? tmpl.heading;

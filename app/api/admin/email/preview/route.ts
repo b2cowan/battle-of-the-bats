@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
+import { getMarketingEmailDefault } from '@/lib/marketing-email-defaults';
 import type { EmailVars } from '@/lib/email-markup';
 import { withObservability } from '@/lib/observability';
 
@@ -53,6 +54,19 @@ export const GET = withObservability(async (request: NextRequest) => {
   const emailKey = request.nextUrl.searchParams.get('emailKey') ?? '';
   if (!emailKey) {
     return NextResponse.json({ error: 'emailKey is required' }, { status: 400 });
+  }
+
+  // This endpoint exists to answer "what will the send look like", so it must not render a
+  // campaign that cannot be sent. A retired campaign keeps its row and its deliberately
+  // un-rewritten copy (a superseded calendar for a parked product); previewing it here would show
+  // that copy in the one place an operator reads to decide a send is safe. Its content is still
+  // readable and editable in the template editor, which is where a revival would start.
+  const retired = getMarketingEmailDefault(emailKey)?.retired;
+  if (retired) {
+    return NextResponse.json(
+      { error: `"${emailKey}" was retired on ${retired.on} (${retired.why}) and is not a sendable campaign.` },
+      { status: 409 },
+    );
   }
 
   const template = await resolvePlatformTemplate(emailKey);

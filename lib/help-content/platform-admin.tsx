@@ -618,7 +618,7 @@ const platformAdminHelp: HelpPageContent = {
             <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible.</li>
             <li><strong>Config limits</strong> (tournament caps, seat caps, trial days) — affects what customers on the plan can do.</li>
             <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
-            <li><strong>Feature matrix</strong> — the public plan comparison; highest blast radius and least immediately reversible.</li>
+            <li><strong>Feature matrix</strong> — which modules each plan actually includes; highest blast radius and least immediately reversible, because it changes what existing customers can <em>do</em>, not just what a plan is advertised as.</li>
           </ol>
           <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through the <strong>Approval Queue</strong> (see <em>How to review and action the Approval Queue</em>).</p>
           <p><strong>Stripe price change checklist:</strong></p>
@@ -652,7 +652,7 @@ const platformAdminHelp: HelpPageContent = {
           <p>The <strong>Email</strong> dashboard triggers the founding-season marketing emails. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
           <ol>
             <li>Check the audience stats at the top: <strong>Founding Season Orgs</strong>, <strong>Active Recipients</strong> (founding orgs minus opt-outs), and <strong>Opted Out</strong>. The per-email <strong>Recipients</strong> column is the count that will actually receive that email — read that number, not the total org count.</li>
-            <li>Click the <strong>Preview</strong> (eye) icon to read the exact email before sending. A row whose template is not built shows <em>not built</em> and cannot be sent.</li>
+            <li>Click the <strong>Preview</strong> (eye) icon to read the exact email before sending — the preview is rendered by the same code as the send, so what you read is what goes out. The board lists only campaigns that can actually be sent; a retired campaign (one whose product we no longer sell) leaves the board entirely rather than sitting there waiting to be clicked.</li>
             <li>Click <strong>Send</strong>. The <strong>Confirm Send</strong> modal restates the email key, the recipient count, and the subject, with the warning <em>&ldquo;This will send real emails… This action cannot be undone.&rdquo;</em> Read all three before confirming.</li>
             <li>Confirm with <strong>Send to N recipients</strong>. Do not close the window while it says <em>&ldquo;Sending in progress.&rdquo;</em> When it finishes you get a result line: <em>Sent / Suppressed / Failed / Batch</em>.</li>
             <li>If a send partially fails, open <strong>Sent History</strong> and expand the batch row for per-recipient delivery status (sent / suppressed / failed) before deciding whether to re-send to anyone.</li>

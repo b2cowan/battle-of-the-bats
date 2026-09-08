@@ -13,11 +13,14 @@ import { NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
+import { LIVE_MARKETING_CAMPAIGNS } from '@/lib/marketing-email-defaults';
 import { withObservability } from '@/lib/observability';
 
 // ── Founding season audience query ────────────────────────────────────────────
-// Orgs with a founding-season comp_period override (expires_at = Jan 1 2027)
-// that have NOT opted out of marketing emails.
+// Orgs with a founding-season comp_period override that have NOT opted out of marketing emails.
+// The expiry is matched against FOUNDING_SEASON_COMP_EXPIRIES — the CURRENT instant and the
+// legacy one, because the 2026 cohort's rows are moved to the new date by a data-only backfill
+// that no gate can prove has run (see lib/plan-config.ts). Never hardcode the date here.
 
 
 async function getFoundingSeasonRecipientCount(): Promise<number> {
@@ -121,19 +124,20 @@ export const GET = withObservability(async () => {
     return NextResponse.json({
       batches: batchesResult.data ?? [],
       optOuts: enrichedOptOuts,
-      recipientCounts: {
-        // All batch-type founding season emails share this audience
-        founding_welcome: null, // transactional — no batch audience
-        founding_checkin: foundingCount,
-        founding_renewal: foundingCount,
-        founding_final: foundingCount,
-        spotlight_club: foundingCount,
-        spotlight_league: foundingCount,
-        spotlight_coaches_org: foundingCount,
-        spotlight_coaches_coach: foundingCount, // TODO: count coach accounts separately
-        spotlight_club_last: foundingCount, // TODO: filter out Club-plan orgs
-        spotlight_full_picture: foundingCount,
-      },
+      // One entry per LIVE campaign, built from the registry so a campaign added or retired in
+      // lib/marketing-email-defaults.ts cannot leave a stale key behind here.
+      // A transactional campaign has no batch audience, so it reports null.
+      //
+      // ⚠ NOTHING CURRENTLY READS THIS (found by /review 2026-09-07, pre-existing). The dashboard's
+      // only use of this endpoint's response applies `batches` and discards the rest; the counts it
+      // actually renders are computed server-side in app/platform-admin/email/page.tsx from
+      // getMarketingAudienceCounts(), which segments per audience instead of reporting the flat
+      // founding-org count below. Deriving it is still right — a dead field that lies is worse than
+      // a dead field that does not — but do not treat this as the source of any displayed number,
+      // and prefer deleting it to "fixing" it if a cleanup pass reaches here.
+      recipientCounts: Object.fromEntries(
+        LIVE_MARKETING_CAMPAIGNS.map(c => [c.key, c.isTransactional ? null : foundingCount]),
+      ),
       stats: {
         totalFoundingOrgs: foundingCount + optOutCount,
         activeRecipients: foundingCount,

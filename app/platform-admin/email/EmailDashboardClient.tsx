@@ -6,109 +6,42 @@ import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw, Pencil, Lock, Calen
 import type { EmailBatch, OptOutOrg, MarketingSchedule } from './page';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { UPCOMING_WINDOW_DAYS, classifyCampaignSend, daysUntil, formatPlannedDate } from '@/lib/marketing-schedule';
+import { LIVE_MARKETING_CAMPAIGNS } from '@/lib/marketing-email-defaults';
 import styles from './email.module.css';
 
 // ── Founding season email schedule ────────────────────────────────────────────
-// Hardcoded registry matching lib/email-sender.ts TEMPLATE_REGISTRY.
-// Update status/sendDate here as templates are built and sends are completed.
+// Built from the campaign registry (lib/marketing-email-defaults.ts), which is the one place a
+// campaign is declared — Founding Season 2027 Phase 1.
+//
+// ⚠ THIS LIST USED TO BE HARDCODED HERE, and that is exactly how it went wrong. The table
+// already preferred the DB's subject and planned date, so the stale copies looked harmless —
+// but the "Confirm Send" dialog reads `email.subject` straight off this list, so an operator
+// about to mail real customers was shown a subject line two rewrites out of date. A retired
+// campaign also stayed on the board, marked past due, one click from a send that would have
+// pitched a parked product.
 
 type ScheduledEmail = {
   emailKey: string;
   subject: string;
-  sendDate: string;      // display string
+  sendDate: string;      // display string, used for trigger campaigns (dated ones read the DB)
   audience: string;
   isTransactional: boolean;
-  templateBuilt: boolean;
   // How the send fires — a fixed calendar date (default), or a system event ("at
   // signup", "~day 60"). Content is editable regardless; timing/audience are
   // system-defined.
   timingKind?: 'date' | 'trigger';
 };
 
-const SCHEDULED_EMAILS: ScheduledEmail[] = [
-  {
-    emailKey: 'founding_welcome',
-    subject: 'Your founding season starts now — Tournament Plus is free through Dec 31',
-    sendDate: 'At signup',
-    audience: 'Each new founding org owner (transactional)',
-    isTransactional: true,
-    templateBuilt: true,
-    timingKind: 'trigger',
-  },
-  {
-    emailKey: 'founding_checkin',
-    subject: "How's your season going? Update from FieldLogicHQ",
-    sendDate: '~Day 60 post-signup',
-    audience: 'Founding orgs, signed up ≥ 60 days ago',
-    isTransactional: false,
-    templateBuilt: true,
-    timingKind: 'trigger',
-  },
-  {
-    emailKey: 'founding_renewal',
-    subject: 'Your founding season ends December 31 — here\'s what happens next',
-    sendDate: 'Nov 1, 2026',
-    audience: 'All founding season org owners',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'founding_final',
-    subject: '2 weeks left in your founding season',
-    sendDate: 'Dec 15, 2026',
-    audience: 'All founding season org owners',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'spotlight_club',
-    subject: 'Before your September season starts — Club is free through December 31',
-    sendDate: 'Aug 1, 2026',
-    audience: 'Org owners',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'spotlight_league',
-    subject: 'What running a house league actually looks like on FieldLogicHQ',
-    sendDate: 'Sep 1, 2026',
-    audience: 'Org owners',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'spotlight_coaches_org',
-    subject: 'For the coaches on your teams — a workspace that\'s actually theirs',
-    sendDate: 'Oct 1, 2026',
-    audience: 'Org owners',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'spotlight_coaches_coach',
-    subject: 'For the coaches on your teams — a workspace that\'s actually theirs',
-    sendDate: 'Oct 1, 2026',
-    audience: 'Coach accounts (tournament participants)',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'spotlight_club_last',
-    subject: 'Last reminder — Club is still free through December 31',
-    sendDate: 'Oct 15, 2026',
-    audience: 'Org owners not yet on Club plan',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-  {
-    emailKey: 'spotlight_full_picture',
-    subject: 'Where FieldLogicHQ is headed — a note from the founding season',
-    sendDate: 'Nov 15, 2026',
-    audience: 'All founding season participants',
-    isTransactional: false,
-    templateBuilt: true,
-  },
-];
+const SCHEDULED_EMAILS: ScheduledEmail[] = LIVE_MARKETING_CAMPAIGNS.map(c => ({
+  emailKey: c.key,
+  // Fallback only for the table (which prefers the operator-editable DB subject), but the ONE
+  // source for the Confirm Send dialog — so it must track the copy, and now it cannot drift.
+  subject: c.subject,
+  sendDate: c.timing.kind === 'trigger' ? c.timing.when : formatPlannedDate(c.timing.plannedSendDate),
+  audience: c.audienceLabel,
+  isTransactional: c.isTransactional === true,
+  timingKind: c.timing.kind,
+}));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -578,7 +511,7 @@ export default function EmailDashboardClient({
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTitle}>Scheduled Sends</span>
           <span className={styles.sectionNote}>
-            All 10 founding season emails. <strong>Subject, content &amp; calendar send dates are editable</strong>;
+            All {SCHEDULED_EMAILS.length} founding season emails. <strong>Subject, content &amp; calendar send dates are editable</strong>;
             <Lock size={10} style={{ verticalAlign: '-1px', margin: '0 0.15rem 0 0.3rem', opacity: 0.6 }} />
             trigger-based timing &amp; audience are set by the system. Sends are manual — this board tells you when.
           </span>

@@ -18,6 +18,11 @@ import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
+import {
+  LIVE_MARKETING_EMAIL_KEYS,
+  MARKETING_EMAIL_AUDIENCE,
+  MARKETING_EMAIL_DEFAULTS,
+} from '@/lib/marketing-email-defaults';
 import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
 import type { EmailVars } from '@/lib/email-markup';
 import { withObservability } from '@/lib/observability';
@@ -26,17 +31,42 @@ import { withObservability } from '@/lib/observability';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 // ── Valid marketing campaign keys ─────────────────────────────────────────────
-// Content + subject for each of these now lives in the operator-editable
+// Content + subject for each of these lives in the operator-editable
 // platform_email_templates registry (migration 179, category 'marketing') and is
 // rendered — for both send AND preview — through the shared markup resolver. Audience
 // routing for each key is handled in the POST handler below.
-const CAMPAIGN_KEYS = new Set<string>([
-  'founding_welcome', 'founding_checkin', 'founding_renewal', 'founding_final',
-  'spotlight_club', 'spotlight_league', 'spotlight_coaches_org', 'spotlight_coaches_coach',
-  'spotlight_club_last', 'spotlight_full_picture',
-]);
+//
+// The SET comes from lib/marketing-email-defaults.ts, which is the one place a campaign is
+// declared (Founding Season 2027 Phase 1). A RETIRED campaign is absent from it, so this route
+// refuses it even though its template row still exists — which is exactly what "retired" means:
+// the copy is kept for revival, the send is not possible.
+const CAMPAIGN_KEYS = new Set<string>(LIVE_MARKETING_EMAIL_KEYS);
 
 // ── Audience fetchers ─────────────────────────────────────────────────────────
+//
+// ⚠ THE FOUNDING POOL IS REAL ORGANIZATIONS ONLY, and it has to be filtered for that explicitly.
+//
+// A comped standalone Premium Coaches Portal is backed by a SHADOW ORG that carries the very same
+// founding-season `comp_period` override a real organization does (lib/team-checkout.ts calls
+// ensureFoundingSeasonCompPeriod on the workspace org). So the override query below cannot tell
+// the two apart, and without this filter every founding campaign — all of which are written for an
+// organization — would have gone to coaches too, telling them "Tournament Plus is free through …",
+// quoting them $39/month for a product they never had, and linking them to an org billing page and
+// a tournaments dashboard for a workspace that has neither.
+//
+// It has not happened yet only because no coach workspace has taken the comp on this data. The two
+// Coaches Portal spotlights in the current campaign set exist to change exactly that, so the window
+// where this was harmless was about to close. Found by /review 2026-09-07.
+//
+// The predicate is the repo's canonical shadow-org test (isTeamWorkspaceOrgRow,
+// lib/team-org-links.ts): account_kind = 'team_workspace' OR plan_id = 'team'. Both columns are
+// NOT NULL, so the negated form below has no null-semantics trap.
+//
+// ⚠ Coaches are therefore NOT reachable by any of these campaigns — deliberate, and a real gap: a
+// coach's free season would end with no warning. Closing it needs its own audience AND its own
+// copy, because the consequence differs by product (an organization drops to the free Tournament
+// plan keeping everything; a coach's portal closes). Copy canon §1 rule 4 forbids putting both on
+// one surface. That is Phase 2's work — see FOUNDING_SEASON_2027_PLAN.md §3 Phase 1's open item.
 
 async function getFoundingSeasonRecipients(): Promise<
   Array<{ orgId: string; orgName: string; ownerEmail: string; ownerName: string | null }>
@@ -58,7 +88,10 @@ async function getFoundingSeasonRecipients(): Promise<
     .from('organizations')
     .select('id, name, email_marketing_opt_out')
     .in('id', orgIds)
-    .eq('email_marketing_opt_out', false);
+    .eq('email_marketing_opt_out', false)
+    // ⚠ REAL ORGANIZATIONS ONLY — see the note above the fetchers. Found by /review 2026-09-07.
+    .eq('account_kind', 'organization')
+    .neq('plan_id', 'team');
 
   if (orgErr || !orgs?.length) return [];
 
@@ -117,7 +150,9 @@ async function getFoundingSeasonRecipientsNotOnClub(): Promise<
     .select('id, name, email_marketing_opt_out')
     .in('id', orgIds)
     .eq('email_marketing_opt_out', false)
-    .not('plan_id', 'in', '(league,club,club_large)');
+    // Real organizations only — same reason as getFoundingSeasonRecipients above.
+    .eq('account_kind', 'organization')
+    .not('plan_id', 'in', '(league,club,club_large,team)');
 
   if (!orgs?.length) return [];
 
@@ -270,14 +305,14 @@ async function buildVars(
       };
     }
 
+    case 'founding_nudge':
     case 'founding_final':
-      // Stripe not yet live — always the "add a payment method" branch (hasCard falsy).
-      return { firstName, hasCard: '', billingUrl };
-
-    case 'spotlight_club':
-    case 'spotlight_league':
-    case 'spotlight_club_last':
-      return { firstName, orgName: r.orgName, setupUrl: `${SITE_URL}/pricing` };
+      // Both summer reminders branch on whether a card is on file. The app does not RECORD that
+      // fact yet — it lives only in Stripe — so hasCard stays falsy and the "add a payment
+      // method" branch is what sends. Recording it at webhook time is Phase 2's first item
+      // (FOUNDING_SEASON_2027_PLAN §3 Phase 2.1); the day it lands, pass it here and both
+      // emails improve with no copy change.
+      return { firstName, orgName: r.orgName, hasCard: '', billingUrl };
 
     case 'spotlight_coaches_org':
       return { firstName, coachShareUrl: `${SITE_URL}/for-coaches`, interestUrl: `${SITE_URL}/for-coaches` };
@@ -286,7 +321,7 @@ async function buildVars(
       return { firstName, interestUrl: `${SITE_URL}/for-coaches` };
 
     case 'spotlight_full_picture':
-      return { firstName, shareUrl: SITE_URL, billingUrl };
+      return { firstName, shareUrl: SITE_URL };
 
     default:
       return { firstName, orgName: r.orgName };
@@ -319,16 +354,21 @@ export const POST = withObservability(async (request: NextRequest) => {
     );
   }
 
-  // Select audience based on email key
+  // Select the audience the campaign registry declares for this key. Reading it from the
+  // registry (rather than re-testing key names here) is what keeps the count the dashboard shows
+  // and the recipients this route resolves from ever describing different people.
   type Recipient = { orgId: string; orgName: string; ownerEmail: string; ownerName: string | null; userId?: string };
   let recipients: Recipient[];
 
-  if (emailKey === 'spotlight_coaches_coach') {
-    recipients = await getCoachRecipients();
-  } else if (emailKey === 'spotlight_club_last') {
-    recipients = await getFoundingSeasonRecipientsNotOnClub();
-  } else {
-    recipients = await getFoundingSeasonRecipients();
+  switch (MARKETING_EMAIL_AUDIENCE[emailKey]) {
+    case 'coaches':
+      recipients = await getCoachRecipients();
+      break;
+    case 'not_on_club':
+      recipients = await getFoundingSeasonRecipientsNotOnClub();
+      break;
+    default:
+      recipients = await getFoundingSeasonRecipients();
   }
 
   if (!recipients.length) {
@@ -339,6 +379,25 @@ export const POST = withObservability(async (request: NextRequest) => {
       failed: 0,
       message: 'No qualifying recipients found.',
     });
+  }
+
+  // A campaign DECLARES the variables its copy uses; buildVars is what SUPPLIES them, and nothing
+  // tied the two together. A token added to a body (with its name added to `variables`, which the
+  // registry test does check) but without a matching buildVars case would render as a literal
+  // "{{token}}" in real customer mail — or, worse, silently take the wrong ::if branch and state
+  // the opposite of the truth about someone's billing. Prove the contract on the first recipient
+  // and refuse the WHOLE batch, rather than discovering it one sent email too late.
+  const declared = MARKETING_EMAIL_DEFAULTS[emailKey]?.variables ?? [];
+  const sampleVars = await buildVars(emailKey, recipients[0]);
+  const missing = declared.filter(v => !(v in sampleVars));
+  if (missing.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Campaign "${emailKey}" declares variables its send path does not supply: ${missing.join(', ')}. `
+          + 'Nothing was sent. Add the missing values to buildVars in this route.',
+      },
+      { status: 500 },
+    );
   }
 
   const batchId = await createEmailBatch({

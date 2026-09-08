@@ -19472,3 +19472,58 @@ no rendered gate can see inside it, which is Part F.
 
 **Help:** the *"Can fundraising lower what families pay?"* answer was rewritten — it had been stale
 since mig 243 and would have been actively wrong after this. A full `/docs` sweep is still owed.
+
+## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — BUILT 2026-09-07 on dev, migration 284 applied to dev, awaiting QA · walk artifact `fc80f4bf` · copy-approval artifact `4e8c6474`
+
+**Founding Season 2027 Phase 1** (`FOUNDING_SEASON_2027_PLAN.md` §3 Phase 1). The free season runs
+through **September 30, 2027** for everyone who signs up by **December 31, 2026** — but every one of
+the ten campaign emails still described the January 1, 2027 cliff, and two of them were scheduled to
+send **within weeks** (Nov 1 and Dec 15, 2026). Nothing has been sent.
+
+**What changed.** Ten campaigns → **eight**. `founding_renewal` moves Nov 1, 2026 → **Jun 1, 2027**
+(the day the card ask opens) and becomes the plan-choice note, annual first; `founding_final` moves
+Dec 15, 2026 → **Sep 15, 2027**; **`founding_nudge` is new** (Aug 1, 2027), the middle beat the
+sequence lacked. `spotlight_club`, `spotlight_league` and `spotlight_club_last` are **RETIRED** —
+parked products, and two of them sat on the board marked *past due*. Retiring keeps the row (the copy
+survives a revival) while the app drops it from the board, the counts and the send allowlist;
+**deliberately not a DELETE**, which no drift gate can see (mig 264).
+
+**The defect that caused the rest of the work.** The campaign set was declared in **five** places and
+all five had drifted. The board's table read the DB subject, so the rewrite looked complete — but the
+**Confirm Send dialog read its own hardcoded copy**, and would have quoted a December 31 subject
+while sending a September 30 email, at the one moment an operator is deciding to mail real customers.
+The set now lives once, in `lib/marketing-email-defaults.ts`, and the other four derive from it;
+`tests/unit/marketing-campaign-registry.test.ts` (10 tests) fails the build if they ever disagree
+again, if a live campaign stops naming the free-season end, or if the copy changes without a reseed.
+
+**One factual defect fixed in passing:** the live welcome email told every new organization that
+Tournament Plus gives "up to 3 active tournaments at once". It is **unlimited** — three is not even
+the free plan's limit (that is one). We understated the paid product to every customer at signup.
+
+**⚠ THE REVIEW FOUND A CRITICAL, AND IT REVERSED WHAT THIS SECTION FIRST CLAIMED.** A comped coach
+portal is backed by a shadow org carrying the SAME founding-season marker a real organization does, so
+the audience query could not tell them apart: every campaign here would have gone to coaches too,
+saying Tournament Plus was free, quoting $39/month for a product they never had, and linking them to an
+org billing page their account does not have. It had not fired only because no coach has taken the comp
+on this data — and the two Coaches Portal spotlights in this very set exist to change that. The
+audience is now filtered to real organizations in all three places (both recipient fetchers AND the
+count, so the number an operator reads before pressing Send cannot describe different people from the
+send). **Only now is the following true:** a coach is in none of these audiences, so a coach's free
+season would end on September 30, 2027 with no email ever having warned them. Not papered over
+with a product-neutral rewrite, because the honest sentence differs by product (an org drops to the
+free Tournament plan and keeps everything; a coach's portal closes). **Phase 2 owns the audience**;
+these three then want coach-facing twins. Also open: the demos never mention the offer at all — a
+prospect can walk a sandbox, be sold, press "Start your own — free" and never learn a whole 2027
+season is free. Flagged rather than changed: the banner is persistent demo chrome and its copy is an
+owner call. Both are Part I of the walk.
+
+**Verified before QA:** 3,224/3,224 unit tests (10 new) · typecheck clean on every touched file ·
+focused lint 0 errors · spelling, dates, dictionary, demos, marketing shots, css-selectors,
+export-catalog, index + observability coverage all green · **34/34 browser checks** on the offer bar
+walked into both demos at 390px and 1440px (bar present on `/demos` with the nav below it; inside
+both sandboxes no bar, no `--offer-bar-h` left set, no reserved gap). `check:migrations` and
+`check:parity` fail on **pre-existing** drift from other sessions' migrations 276–283 — migration 284
+is data-only and invisible to both by construction, so its prod apply must be recorded by hand.
+
+---
+
