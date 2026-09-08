@@ -566,27 +566,69 @@ const platformAdminHelp: HelpPageContent = {
       id: 'email-templates',
       group: 'Product SOP',
       heading: 'How to edit email templates safely',
-      summary: 'Customise transactional email copy without breaking variable tokens; test before saving.',
-      keywords: ['email templates', 'transactional email', 'variable token', 'test send', 'reset to default', 'subject', 'heading', 'cta'],
-      searchText: 'how do i edit email templates safely customise transactional email copy variable tokens curly braces test send reset to default subject heading body cta',
+      summary: 'Edit transactional and marketing email copy without breaking variable tokens; test before saving.',
+      keywords: ['email templates', 'transactional email', 'marketing campaign', 'founding season', 'retired campaign', 'variable token', 'test send', 'reset to default', 'subject', 'heading', 'cta'],
+      searchText: 'how do i edit email templates safely customise transactional email copy marketing campaigns founding season retired campaign cannot send test refused variable tokens curly braces test send reset to default subject heading body cta which category',
       links: [
         { label: 'Email Templates', href: '/platform-admin/email-templates' },
       ],
       content: (
-        <>
-          <p><strong>Email Templates</strong> lets you override the copy of platform transactional emails. Editing a template replaces the built-in default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically. Templates are grouped by category: <strong>Authentication</strong>, <strong>Billing</strong>, <strong>Tournament</strong>, <strong>Rep Teams</strong>, <strong>House League</strong>, and <strong>System</strong>. Most of these fire automatically on a customer action, so copy mistakes reach real customers.</p>
-          <ol>
-            <li>Open the template from the list (the status column shows <strong>Customised</strong> or <strong>Default</strong>).</li>
-            <li>Edit the <strong>Subject line</strong>, <strong>Heading</strong>, <strong>Body</strong>, and optional <strong>CTA button label</strong>. The live preview on the right shows the branded result as you type.</li>
-            <li>Insert variables with the <strong>token chips</strong> below the body — they use <code>{'{{variableName}}'}</code> syntax. <strong>Do not hand-type or alter a token.</strong> A broken token (typo, missing brace) renders the literal <code>{'{{variableName}}'}</code> in the email instead of the real value.</li>
-            <li>Before saving, click <strong>Send test</strong>. A preview of your <em>unsaved</em> draft is emailed to your platform-admin address, with a TEST EMAIL badge and tokens shown as <code>[placeholders]</code>. Open it in an inbox and confirm it reads correctly.</li>
-            <li>Click <strong>Save</strong> to publish. The template is marked Customised and records you as the last editor.</li>
-            <li>To revert, click <strong>Reset to default</strong> and confirm — your customised copy is discarded and the built-in default is restored.</li>
-          </ol>
-          <p><strong>Approval expectation:</strong> copy changes to transactional templates that go directly to customers (auth, billing, tournament, rep-teams, house-league categories) should be reviewed with the product owner before saving. System templates are internal.</p>
-          <p><strong>Permission boundary:</strong> Email Templates is super admin and product only — it is not visible to support, billing, or growth.</p>
-        </>
+        <p><strong>Email Templates</strong> lets you override the copy of platform emails. Editing a template replaces the built-in default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically.</p>
       ),
+      subtopics: [
+        {
+          id: 'email-templates-two-kinds',
+          title: 'Two kinds of email share one list',
+          content: (
+            <>
+              <p>Every platform email is in this editor, but they do not behave the same way, and the difference decides how careful you have to be.</p>
+              <ul>
+                <li><strong>Transactional</strong> — <strong>Authentication</strong>, <strong>Billing</strong>, <strong>Tournament</strong>, <strong>Rep Teams</strong>, <strong>House League</strong> and <strong>System</strong>. These fire automatically on a customer action, so a copy mistake reaches real customers with no further step from you.</li>
+                <li><strong>Marketing</strong> — the Founding Season campaigns, and the largest group in the list. Nothing here sends by itself: you send each one by hand from the <strong>Email</strong> dashboard, which is where the audience and the planned date live. This editor owns only the words.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'email-templates-editing',
+          title: 'Editing a template',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Open the template from the list (the status column shows <strong>Customised</strong> or <strong>Default</strong>).</li>
+                <li>Edit the <strong>Subject line</strong>, <strong>Heading</strong>, <strong>Body</strong>, and optional <strong>CTA button label</strong>. The live preview on the right shows the branded result as you type.</li>
+                <li>Insert variables with the <strong>token chips</strong> below the body — they use <code>{'{{variableName}}'}</code> syntax. <strong>Do not hand-type or alter a token.</strong> A broken token (typo, missing brace) renders the literal <code>{'{{variableName}}'}</code> in the email instead of the real value.</li>
+                <li>Before saving, click <strong>Send test</strong>. A preview of your <em>unsaved</em> draft is emailed to your platform-admin address, with a TEST EMAIL badge and tokens shown as <code>[placeholders]</code>. Open it in an inbox and confirm it reads correctly.</li>
+                <li>Click <strong>Save</strong> to publish. The template is marked Customised and records you as the last editor.</li>
+                <li>To revert, click <strong>Reset to default</strong> and confirm — your customised copy is discarded and the built-in default is restored.</li>
+              </HelpSteps>
+              <HelpNote variant="warning" title="A token is the one thing not to type by hand">
+                Use the chips. A token you typed yourself looks right in the editor and renders as raw <code>{'{{variableName}}'}</code> in a real customer&rsquo;s inbox.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'email-templates-retired',
+          title: 'A retired campaign is here to be read, not sent',
+          content: (
+            <>
+              <p>A marketing campaign for a product we no longer sell is <strong>retired</strong>. It keeps its row and its copy so it can be revived, but it is gone from the Email dashboard, and <strong>Send test</strong> refuses it — as do preview and any attempt to send. The description at the top of the template says when it was retired and why.</p>
+              <p>Editing one is safe and changes nothing a customer can receive. Reviving it starts in the product rather than here, and includes rewriting the copy for the current calendar: a retired campaign&rsquo;s words are deliberately left exactly as they were on the day it was retired, so they will describe an offer that has moved on.</p>
+            </>
+          ),
+        },
+        {
+          id: 'email-templates-who',
+          title: 'Who may edit, and what needs a second pair of eyes',
+          content: (
+            <>
+              <p>Email Templates is <strong>super admin and product only</strong> — it is not visible to support, billing, or growth.</p>
+              <p><strong>Review with the product owner before saving</strong> any transactional template that goes straight to a customer: the auth, billing, tournament, rep-teams and house-league categories. Those send themselves, so there is no second chance to catch a mistake. System templates are internal, and marketing campaigns get their review when you send them from the Email dashboard.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-email-template-broken-token',
@@ -597,6 +639,15 @@ const platformAdminHelp: HelpPageContent = {
           answerText: 'The email shows the literal {{token}} text instead of the value. Use the token chips and run a test send before saving.',
           keywords: ['broken token', 'variable', 'curly braces', 'literal'],
           popular: true,
+        },
+        {
+          id: 'faq-email-template-retired-campaign',
+          question: 'Why is Send test refused on this campaign?',
+          answer: (
+            <p>Because it is <strong>retired</strong> — a marketing campaign for a product we no longer sell. Its copy is kept here so the campaign can be revived, but it cannot be sent, previewed or test-sent, and it does not appear on the Email dashboard. The template&rsquo;s description says when it was retired and why. Reviving one starts in the product, not here.</p>
+          ),
+          answerText: 'Because the campaign is retired — kept for a product we no longer sell. Retired campaigns cannot be sent, previewed or test-sent and are absent from the Email dashboard, but their copy stays so they can be revived. The description says when and why it was retired.',
+          keywords: ['send test refused', 'retired', 'cannot send', 'campaign missing', 'not on the dashboard'],
         },
       ],
     },
@@ -651,7 +702,7 @@ const platformAdminHelp: HelpPageContent = {
         <>
           <p>The <strong>Email</strong> dashboard triggers the founding-season marketing emails. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
           <ol>
-            <li>Check the audience stats at the top: <strong>Founding Season Orgs</strong>, <strong>Active Recipients</strong> (founding orgs minus opt-outs), and <strong>Opted Out</strong>. The per-email <strong>Recipients</strong> column is the count that will actually receive that email — read that number, not the total org count.</li>
+            <li>Check the audience stats at the top: <strong>Founding Season Orgs</strong>, <strong>Active Recipients</strong> (founding orgs minus opt-outs), and <strong>Opted Out</strong>. <strong>The per-email <em>Recipients</em> column is the only count that tells you who will actually receive that email</strong> — always read that one. It can legitimately be lower than the headline figure: the stats at the top count every account holding a free season, while these campaigns are written for organizations and are sent only to them.</li>
             <li>Click the <strong>Preview</strong> (eye) icon to read the exact email before sending — the preview is rendered by the same code as the send, so what you read is what goes out. The board lists only campaigns that can actually be sent; a retired campaign (one whose product we no longer sell) leaves the board entirely rather than sitting there waiting to be clicked.</li>
             <li>Click <strong>Send</strong>. The <strong>Confirm Send</strong> modal restates the email key, the recipient count, and the subject, with the warning <em>&ldquo;This will send real emails… This action cannot be undone.&rdquo;</em> Read all three before confirming.</li>
             <li>Confirm with <strong>Send to N recipients</strong>. Do not close the window while it says <em>&ldquo;Sending in progress.&rdquo;</em> When it finishes you get a result line: <em>Sent / Suppressed / Failed / Batch</em>.</li>
