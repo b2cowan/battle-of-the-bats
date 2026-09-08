@@ -16,13 +16,13 @@
  * are called, and how a row is built from a record. One definition each, so the same dataset can
  * never come out two different ways.
  */
-import type { ExportColumnDef, XlsxRowStyle } from './export';
+import type { ExportColumnDef, ReportShape, XlsxRowStyle } from './export';
 import {
   buildFilename, serializeHeaders, serializeRows, generateCSV, downloadCSVBlob, downloadXLSX,
   downloadPDF, DEFAULT_PDF_SETTINGS, BRANDING_TEXT, loadBrandMark, type OrgPdfSettings,
 } from './export';
 import { duesStatusLabel } from './dues-status';
-import type { DuesLadder } from './dues-payments';
+import { duesLadderTotals, type DuesLadder } from './dues-payments';
 import {
   LINE_KIND_SECTION, FUNDING_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
 } from './coach-budget-totals';
@@ -375,9 +375,15 @@ export const DUES_EXPORT_COLUMNS: ExportColumnDef[] = [
    exhibit harness says `coach-player-dues`, the export registry says `coaches-player-dues`. The
    coach got landscape; the gate that refused the commit stayed on portrait and kept refusing.
    Both call sites already pass this module's own `DUES_EXPORT_COLUMNS`, so identity on that array
-   is the one key they cannot disagree about — the shape is part of the column contract, literally. */
-const REPORT_SHAPES = new Map<readonly ExportColumnDef[], { orientation: 'landscape' | 'portrait' }>([
-  [DUES_EXPORT_COLUMNS, { orientation: 'landscape' }],
+   is the one key they cannot disagree about — the shape is part of the column contract, literally.
+   ⚠ DENSITY IS THE SHEET'S OWN TOO (owner, 2026-09-08). At the org-default "readable" density a
+   landscape page holds exactly TWELVE body rows, so a twelve-family roster fit and its Total row —
+   the line the sheet gained in QA §151 — was the one thing on page two. Measured on the real
+   engine, not the fake: compact holds eighteen families plus the Total on one sheet, and a
+   treasurer's eight-column money table at that size is a normal financial print. The exhibit
+   harness renders an eighteen-family bench and refuses the commit if it ever needs a second page. */
+const REPORT_SHAPES = new Map<readonly ExportColumnDef[], ReportShape>([
+  [DUES_EXPORT_COLUMNS, { orientation: 'landscape', density: 'compact' }],
 ]);
 
 export type DuesExportPlayer = {
@@ -410,22 +416,68 @@ export type DuesExportPlayer = {
   ladder: DuesLadder;
 };
 
-export function duesExportRows(players: DuesExportPlayer[]): ExportRow[] {
-  return players.map(p => ({
+/**
+ * The dues sheet's rows, and the TOTALS ROW under them (owner ruling 2026-09-07, QA §151).
+ *
+ * ⚠⚠ THE FILE GETS THE FOOTER BECAUSE THE SCREEN DOES — an export's shape is its screen's shape
+ * (QA §146 F2), and the totals row is the one line on either that proves the ladder closes across
+ * the whole roster. A treasurer who pivots this file would otherwise build the same six sums by
+ * hand and have nothing to check them against.
+ *
+ * ⚠ IT NAMES ITSELF, WHERE THE SCREEN'S DOES NOT. On screen the count IS the label: a rule above
+ * the row and the column headings above that say everything. A CSV has no footer line and a PDF
+ * has no tint, so a bare "12 players" in the first column reads as a thirteenth family. The file
+ * says `Total` and carries the head count after it — same figures, and the one extra word a flat
+ * format needs to stay honest.
+ *
+ * ⚠ NO ROW WHEN THERE ARE NO PLAYERS. `downloadMoneyExport` refuses an empty dataset by counting
+ * rows; a footer over nothing would defeat that and write a file whose only line totals zero.
+ */
+export function duesExportRows(
+  players: DuesExportPlayer[],
+): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
+  const rows: ExportRow[] = players.map(p => ({
     player: [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' '),
     totalDues: p.schedule?.totalAmount ?? '',
-    /* ⚠ THE LADDER'S FIGURES, NOT THE SCREEN'S OLD PAIR. A blank means "no schedule"; a real ZERO
-       is written as zero rather than blanked, because a spreadsheet column that empties itself
-       cannot be summed and a treasurer reading `Fundraising` wants to see that a family raised
-       nothing, not an empty cell they have to interpret. */
-    fundraising: p.schedule ? p.ladder.fundraising : '',
-    otherCredits: p.schedule ? p.ladder.otherCredits : '',
-    paid: p.schedule ? p.ladder.paid : '',
-    handedBack: p.schedule ? p.ladder.handedBack : '',
-    balance: p.schedule ? p.rollingBalance : '',
+    /* ⚠ THE LADDER'S FIGURES, NOT THE SCREEN'S OLD PAIR. A real ZERO is written as zero rather
+       than blanked, because a spreadsheet column that empties itself cannot be summed and a
+       treasurer reading `Fundraising` wants to see that a family raised nothing, not an empty
+       cell they have to interpret.
+
+       ⚠⚠ ONLY `Dues` STILL BLANKS ON A MISSING SCHEDULE, and the other five stopped when the
+       totals row arrived (QA §151). A player added after dues were set has no schedule and can
+       still hold a fundraiser credit, a payment and a payout — real money the screen has always
+       shown on their row. Blanking it here made the file quieter than the screen AND put the
+       footer beyond reach of its own columns: a treasurer summing `Fundraising` would land short
+       of the total under it by exactly that player's credit, with nothing in the file to explain
+       the gap. A missing BILL is genuinely nothing, so `Dues` keeps its blank and sums as zero. */
+    fundraising: p.ladder.fundraising,
+    otherCredits: p.ladder.otherCredits,
+    paid: p.ladder.paid,
+    handedBack: p.ladder.handedBack,
+    balance: p.rollingBalance,
     // ⚠ The shared word list, so the table and the file cannot call one player two things.
     status: duesStatusLabel(p),
   }));
+  if (rows.length === 0) return { rows, kinds: [] };
+
+  /* ⚠ THE SHARED SUM, not a seventh hand-rolled reduce in this file. `duesLadderTotals` is what
+     the screen's footer reads too, so the spreadsheet and the table cannot land a cent apart —
+     and it sums the BALANCE column rather than re-deriving it from the five beside it. */
+  const totals = duesLadderTotals(players.map(p => ({ ladder: p.ladder, balance: p.rollingBalance })));
+  rows.push({
+    player: `Total — ${totals.players} player${totals.players === 1 ? '' : 's'}`,
+    totalDues: totals.dues,
+    fundraising: totals.fundraising,
+    otherCredits: totals.otherCredits,
+    paid: totals.paid,
+    handedBack: totals.handedBack,
+    balance: totals.balance,
+    /* ⚠ DELIBERATELY EMPTY. Status is a per-family verdict; a roster has no single one, and the
+       nearest candidates ("9 up to date, 1 past due") are the band's job, not a cell's. */
+    status: '',
+  });
+  return { rows, kinds: [...players.map(() => undefined), 'total' as const] };
 }
 
 /** Currency pre-formatted as strings — jsPDF has no number formatter. */

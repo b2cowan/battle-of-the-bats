@@ -2,7 +2,7 @@
 
 **Plan:** `COACH_DUES_LADDER_PLAN.md` · **Mockup:** https://claude.ai/code/artifact/5df27ea9-8210-45de-a569-26c6c74894dc
 **Priority:** high — it corrects two figures that currently contradict their own headings
-**Status:** approved from mockup, in build (2026-09-07)
+**Status:** built and committed 2026-09-07 (`3545b64e` + `e160f76b`) · **✅ owner QA §151 PASSED 48/48, zero defects, 2026-09-08** · *Dues* confirmed as the word on the season band (I2, ruled 2026-09-08) · the additions built mid-walk (a totals row under the table, the credit form as a dialog, the installment column) are unwalked
 
 ## The problem, in one row
 

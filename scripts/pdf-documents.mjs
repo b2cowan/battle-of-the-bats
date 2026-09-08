@@ -106,6 +106,7 @@ export async function buildDocuments() {
   const { checkinSheetHeadings, checkinTickColumn } = await import('../lib/export/tryout-checkin-columns.ts');
   const { buildFamilyDuesStatements } = await import('../lib/coach-dues-statement.ts');
   const money$ = await import('../lib/coach-money-exports.ts');
+  const dues$ = await import('../lib/dues-payments.ts');
   const { formatTime } = await import('../lib/utils.ts');
   const {
     DEFAULT_PDF_SETTINGS, downloadPDF, downloadPracticeSheet, downloadDevelopmentSummary,
@@ -156,6 +157,9 @@ export async function buildDocuments() {
    * @param d.pageTotals 'document' (default) every page names the file's true total ·
    *                     'section'  numbering restarts per section (the family statements) ·
    *                     'none'     a single sheet that numbers nothing.
+   * @param d.maxPages  a LENGTH promise — the most pages this fixture may need. Declare it on the
+   *                     edge case built to be the document's longest honest roster; absent means
+   *                     the document makes no promise about its length.
    */
   const doc = (d) => {
     docs.push({ entry: 'downloadPDF', columns: 'fixed', pageTotals: 'document', edgeCases: [], ...d });
@@ -540,20 +544,116 @@ export async function buildDocuments() {
    * `check-pdf-documents.mjs` reads each screen's own `formats={[...]}` and fails if one of
    * these ever gains a PDF row without a fixture.
    */
-  const moneyDoc = (id, label, title, columns, screens, rows) => doc({
-    id, label, screens,
-    headings: columns.map((c) => c.label),
-    render: (name, settings) => money$.downloadMoneyExport('pdf', {
-      dataset: id, title, columns, rows: rowsFor(columns, rows),
+  /** One money document's render, with the shape the real screen hands it — shared by a document
+   *  and its edge cases, so an edge case cannot drift from the document it is a case of. */
+  const moneyRender = (id, label, title, columns, rows, pdfRows) => (name, settings) => money$.downloadMoneyExport('pdf', {
+      // A count asks for width-realistic synthetic rows; an ARRAY is the product's own builder
+      // output, for a document whose SHAPE matters as much as its width (see the dues sheet).
+      dataset: id, title, columns, rows: Array.isArray(rows) ? rows : rowsFor(columns, rows),
+      /* ⚠ THE SCREEN'S OWN CURRENCY FORMATTER, where the screen passes one. Real builder output
+         is RAW NUMBERS — right for Excel, and the reason a fixture that skips this renders
+         `11308.3` where a coach's file says `$11,308.30`. That is a third narrower in the widest
+         column of the sheet, so a document could pass the fit contract here and overflow in a
+         coach's hands. Synthetic rows are pre-formatted by `cellFor` and need none. */
+      ...(pdfRows ? { pdfRows } : {}),
       orgLabel: 'riverdale-ridge', scopeLabel: SEASON, teamName: TEAM,
       pdfSettings: settings, emptyMessage: `Nothing to export on ${label}.`,
-    }),
+    });
+  const moneyDoc = (id, label, title, columns, screens, rows, pdfRows, extra = {}) => doc({
+    id, label, screens,
+    headings: columns.map((c) => c.label),
+    render: moneyRender(id, label, title, columns, rows, pdfRows),
+    ...extra,
   });
+
+  /* ⚠ THE DUES SHEET RUNS THROUGH THE PRODUCT'S OWN BUILDER, not the synthetic generator
+   * (QA §151). It gained a TOTALS ROW, and a totals row is a shape rather than a width: it is the
+   * only line in the file whose first cell is not a person, whose Status cell is deliberately
+   * empty, and whose figures must equal the columns above it. A generated fixture renders a
+   * perfectly-fitting document that has never had one in it — coverage over an empty seat, which
+   * is the trap `reference_green_check_over_empty_fixture` names. Same reasoning as the budget
+   * plan's fixture below.
+   * ⚠ The families are the QA §151 roster (an overpayment fully refunded, a fundraiser rebate, a
+   * coach-typed credit, families who have sent nothing), so the exhibit also holds every status
+   * word the shared list can produce rather than the five the generator cycles. */
+  /** name, dues, fundraiser, other-kinds, overpayment, gross payments, payouts */
+  const QA151_ROSTER = [
+    ['Avery', 'Thompson',  700.00, 198.15, 380.00, 550.00, 1250.00,   0],
+    ['Blake', 'Nakamura',  970.83, 150.00, 126.98,      0,  625.00, 100],
+    ['Casey', 'O’Donnell', 900.00,  37.50,      0, 300.00, 1200.00, 300],
+    ['Devon', 'Whitfield', 970.83,  27.00,      0,      0,       0,   0],
+    ['Emerson', 'Vasquez', 970.83,      0,      0,      0,       0,   0],
+    ['Frankie', 'Ibrahim', 970.83,  40.00,      0,      0,       0,   0],
+    ['Gray', 'Lindqvist',  970.83, 125.00,      0,      0,       0,   0],
+    ['Harper', 'Beaulieu', 970.83,      0,      0,      0,       0,   0],
+    ['Indigo', 'Castellano', 970.83,    0, 240.00,      0,       0,   0],
+    ['Jules', 'Ferreira',  970.83, 125.00,      0,      0,       0,   0],
+    ['Kai', 'Okonkwo',     970.83, 200.00, 700.00,      0,       0,   0],
+    ['Logan', 'Pemberton', 970.83, 300.00,      0,      0,       0, 200],
+  ];
+  /* ⚠ THE FULL BENCH — the same twelve plus six families who have simply paid or not, because the
+   * promise this sheet now makes is about LENGTH: eighteen families and the Total row on ONE
+   * landscape page (owner, 2026-09-08). The twelve-family fixture cannot test that — at the old
+   * readable density it filled the page exactly and only the Total spilled, so a fixture that stops
+   * at twelve is coverage over an empty seat for this rule. Long double-barrelled surnames on
+   * purpose: the Player column is the one whose width the bench also stresses. */
+  const FULL_BENCH = [
+    ...QA151_ROSTER,
+    ['Morgan', 'Delacroix-Whitehead', 970.83,      0,      0, 0, 970.83, 0],
+    ['Nico',   'Papadopoulos',        970.83,  75.00,      0, 0, 500.00, 0],
+    ['Oakley', 'Singh',               970.83,      0,      0, 0,      0, 0],
+    ['Parker', 'Mbeki-Larsen',        970.83, 210.00,      0, 0, 760.83, 0],
+    ['Quinn',  'Fitzgerald',          970.83,      0, 120.00, 0, 850.83, 0],
+    ['Reese',  'Yamamoto',            970.83,  50.00,      0, 0,      0, 0],
+  ];
+  const duesRows = (roster) => {
+    const cents = (n) => Math.round(n * 100) / 100;
+    return money$.duesExportRows(roster.map(([first, last, dues, fr, other, over, gross, out]) => {
+      const creditsIssued = cents(fr + other + over);
+      const cappedPaid = Math.min(gross, dues);
+      const netCredits = cents(creditsIssued - out);
+      const outstanding = cents(dues - cappedPaid);
+      const ladder = dues$.splitDuesLadder({
+        dues, grossPayments: gross, cappedPaid, creditsIssued,
+        fundraiserIssued: fr, overpaymentIssued: over, paidOut: out,
+      });
+      /* ⚠⚠ THE PRODUCT'S OWN SPLIT, NOT A LOOKALIKE (/review 2026-09-08). This read
+         `max(0, ladder.ownMoney - out)` — the payout taken off the CLAMPED own-money figure — while
+         the dues route takes it off the RAW overpayment total. The two agree on every row of this
+         roster and diverge the moment one carries a coach-typed overpayment larger than the family
+         actually over-sent, alongside a partial refund. A fixture that is right by the shape of its
+         data rather than by construction is a fixture that stops being right when someone edits the
+         data — which is the whole failure mode the exhibit exists to catch elsewhere. */
+      const ownMoneyHeld = dues$.splitFamilyOwnMoney({
+        cappedPaid, netCredits, overpaymentCredits: over, paidOut: out,
+      }).ownMoneyHeld;
+      return {
+        player: { playerFirstName: first, playerLastName: last },
+        schedule: { totalAmount: dues },
+        paidAmount: cents(cappedPaid + ownMoneyHeld),
+        totalCredits: cents(netCredits - ownMoneyHeld),
+        rollingBalance: cents(outstanding - netCredits),
+        leftToSend: Math.max(0, cents(outstanding - netCredits)),
+        owedBack: Math.max(0, cents(netCredits - outstanding)),
+        outstanding,
+        ownMoneyHeld,
+        // One bill, already past its date where anything is still owed — so the sheet carries a
+        // "Past due" as well as the settled words.
+        installments: [{ dueDate: '2026-06-01', paidAt: null, amount: dues, remainingAmount: Math.max(0, cents(outstanding - netCredits)) }],
+        ladder,
+      };
+    })).rows;
+  };
+  const duesFixture = duesRows(QA151_ROSTER);
 
   moneyDoc('coach-player-dues', 'Player dues team sheet', 'Player Dues',
     money$.DUES_EXPORT_COLUMNS,
     ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx'], 16);
+      'app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx'], duesFixture, money$.duesPdfRows, {
+      // The length promise: a full bench and its Total on one sheet. See FULL_BENCH.
+      edgeCases: [['full-bench', moneyRender('coach-player-dues', 'Player dues team sheet', 'Player Dues',
+        money$.DUES_EXPORT_COLUMNS, duesRows(FULL_BENCH), money$.duesPdfRows), { maxPages: 1 }]],
+    });
 
   /* ⚠ The PDF is NEVER the month grid. The Months view exports a column per month, which is a
    * spreadsheet shape; for `format === 'pdf'` the panel deliberately swaps in the four-column

@@ -32,7 +32,7 @@
      • .cardStackCell / .cardActionCell
                                inside .tableAsCards: a cell too big for one
                                label/value line, and the trailing action cell.
-     • .tableFoot + .footValue / .footNote / .footLeadCell
+     • .tableFoot + .footValue / .footNote
                                a season/period TOTALS <tfoot> row under a list
                                table, each figure beneath the column it totals.
                                @640 it becomes the last card in the list. Reach
@@ -125,11 +125,15 @@
   .tableAsCards .tableFoot td { border-top: none; background: none; }
   /* ⚰ THE TWO `.footLabel` RULES THAT STOOD HERE went with the class (2026-09-03) — one hid the
      in-cell caption so a card would not print every label twice, the other let the LEAD cell keep
-     its caption as the card's heading. `.footLeadCell` itself stays, and so does the reason it is a
-     CLASS rather than `:first-child`: `.cardActionCell` two rules up is this file's own answer to
-     the identical problem at the other end of the row, and a positional selector silently styles
-     the wrong cell the day a column is inserted or reordered rather than failing where someone
-     would notice — which is exactly what the 2026-09-03 column move would have done. */
+     its caption as the card's heading. `.footLeadCell` GOES TOO, and this comment used to claim it
+     "stays" while no such rule had existed since that same day: the settlement sheet went on asking
+     for it and got a literal `undefined` in its class list until QA §151 noticed. Nothing needs it
+     — with no in-cell caption left to preserve, a footer's lead cell is an ordinary `.td`.
+     ⚠ THE REASON IT WAS A CLASS SURVIVES ITS DELETION, because the next author to need one faces
+     the same choice: `.cardActionCell` two rules up is this file's own answer to the identical
+     problem at the other end of the row, and a positional `:first-child` silently styles the wrong
+     cell the day a column is inserted or reordered rather than failing where someone would
+     notice — which is exactly what the 2026-09-03 column move would have done. */
   /* ⚰ `.tableAsCards td.clubExpandCell` STOOD HERE and is deleted (List · Room · Question,
      2026-09-02). It pulled the Club tab's spanning fold cell out of card mode's flex row — the
      third victim of the trap `.cardStackCell` above records — because a fold panel laid its
@@ -3323,13 +3327,17 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 /* ── The totals row (owner ruling 2026-08-13, "Option C" from mockup artifact `c19d8500`) ────
-   Season figures sit in a <tfoot> under the column each one totals — Collected under Paid,
-   Outstanding under Balance — replacing the 300px reference rail that used to carry them beside
-   the table. A number under its own column needs less explaining than a number in a side panel.
+   Figures sit in a <tfoot> under the column each one totals, replacing the 300px reference rail
+   that used to carry them beside the table. A number under its own column needs less explaining
+   than a number in a side panel.
 
-   ⚠ EACH CELL STILL CARRIES A CAPTION, because two of the totals RENAME their column: the Paid
-   column totals to "Collected" and Balance to "Outstanding". Without the caption the footer would
-   assert an identity the header doesn't make.
+   ⚠ NO CAPTIONS IN THE CELLS ANY MORE (2026-09-03, `.footLabel` retired). The original dues
+   footer needed them because two of its totals RENAMED their column — Paid totalled to
+   "Collected", Balance to "Outstanding" — and an uncaptioned cell would have asserted an identity
+   the header did not make. Its two adopters today (the settlement sheet, and the dues ladder's
+   proof line — QA §151) total their columns HONESTLY, so the heading above IS the caption. A
+   future caller that wants to rename a column in its footer has the old problem back and needs a
+   caption again: say so out loud rather than reaching for a bare figure.
 
    ⚠ `.tableFoot td` is 0-1-1 and beats the 0-1-0 `.td` it overrides regardless of source order,
    but it stays below `.td`/`.tdNum` anyway — this file has been bitten twice by equal-specificity
@@ -3360,7 +3368,8 @@ a.oneChip:hover { border-color: currentColor; }
   font-weight: var(--money-cat-weight);
   color: var(--text-primary);
 }
-/* A second, quieter line in a footer cell — the overdue headcount under "Next due". `data-warn`
+/* A second, quieter line in a footer cell, under the value — today the dues footer's "N with no
+   dues set", the one honest gap between reading down a column and the total under it. `data-warn`
    rather than a conditional class name, matching the rail primitives this replaces. */
 .footNote {
   display: block;

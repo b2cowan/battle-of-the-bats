@@ -1515,9 +1515,12 @@ function DuesRow({ cat, dues, base, canWrite }: {
             sentence. What is said here is a money fact, about a figure that has just stopped meaning
             what a coach expects: the actual now counts a team bill a family paid and fundraising put
             against their dues, so it reads higher than the cash they know arrived.
-            ⚠ IT QUOTES NO FIGURE, so it can never go stale against one — the same discipline as the
-            "sent $550.00 more than billed" note on the dues screen. The amounts are one tap away in
-            `DuesBehind`, where they add up. */}
+            ⚠ IT QUOTES NO FIGURE, so it can never go stale against one — the same discipline the
+            dues ladder now follows in its columns. ⚰ This once cited that screen's row-level "sent $550.00
+            more than billed" note as the precedent; the note was retired into the ladder on
+            2026-09-07, so the sentence it pointed at is gone and the DISCIPLINE is what survived —
+            which is exactly the stale cross-reference this rule protects against. The amounts are
+            one tap away in `DuesBehind`, where they add up. */}
         {isSet && hasNonCash && (
           <span className={styles.duesCaption}>
             Includes team bills families paid and fundraising credited to dues, less money handed back.

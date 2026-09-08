@@ -307,6 +307,60 @@ export function splitDuesLadder(input: {
   };
 }
 
+/** A roster's ladder, column by column, plus the balance those columns close on and the head
+ *  count they cover — the Season-totals footer, and the same row at the foot of the export. */
+export interface DuesLadderTotals extends DuesLadder {
+  /** The sum of the rows' OWN balances, never re-derived from the five figures beside it. */
+  balance: number;
+  players: number;
+}
+
+/**
+ * THE LADDER, TOTALLED (owner ruling 2026-09-07, out of the QA §151 walk).
+ *
+ * ⚠⚠ THIS IS A PROOF LINE, NOT A SUMMARY — and the distinction decides everything about it. The
+ * tab's summary is the band at the top, which answers a coach's questions (what has SETTLED, what
+ * is still to CHASE) and deliberately does NOT equal these columns: Collected is capped at the
+ * bill where Paid is gross, and Balance owing counts only the families who owe where Balance is
+ * the net close. This row answers one narrower thing — does the roster add up the way every row
+ * does? `splitDuesLadder` guarantees `dues − fundraising − otherCredits − paid + handedBack =
+ * balance` per player, and because that is plain arithmetic it survives summation, so a footer
+ * built from this helper ties by construction on any roster and cannot be talked out of it by a
+ * filter.
+ *
+ * ⚠ `balance` IS SUMMED, NOT RECOMPUTED, for the same reason `splitDuesLadder` re-splits rather
+ * than re-derives: the balances on this screen are what coaches have chased families on. Summing
+ * them means the footer can only ever be wrong about itself, never about a row.
+ *
+ * ⚠ CENTS, LIKE EVERYTHING IN THIS FILE. Twelve float additions across six columns is exactly the
+ * shape that lands a footer a cent away from the column it totals — visible, unexplainable, and
+ * the kind of defect that costs a treasurer an afternoon.
+ */
+export function duesLadderTotals(
+  rows: readonly { ladder: DuesLadder; balance: number }[],
+): DuesLadderTotals {
+  let dues = 0, fundraising = 0, otherCredits = 0, paid = 0, handedBack = 0, ownMoney = 0, balance = 0;
+  for (const r of rows) {
+    dues += toCents(r.ladder.dues);
+    fundraising += toCents(r.ladder.fundraising);
+    otherCredits += toCents(r.ladder.otherCredits);
+    paid += toCents(r.ladder.paid);
+    handedBack += toCents(r.ladder.handedBack);
+    ownMoney += toCents(r.ladder.ownMoney);
+    balance += toCents(r.balance);
+  }
+  return {
+    dues: toDollars(dues),
+    fundraising: toDollars(fundraising),
+    otherCredits: toDollars(otherCredits),
+    paid: toDollars(paid),
+    handedBack: toDollars(handedBack),
+    ownMoney: toDollars(ownMoney),
+    balance: toDollars(balance),
+    players: rows.length,
+  };
+}
+
 /** How much of a NEW payment lands beyond everything left on the schedule — the amount that
  *  becomes an overpayment credit automatically (owner ruling 2026-08-13, no prompt). */
 export function overpaymentExcess(

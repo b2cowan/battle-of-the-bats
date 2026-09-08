@@ -1,6 +1,6 @@
 # Coach Money — The Dues Ladder
 
-**Status:** committed `3545b64e` 2026-09-07 (after /review, §7.8) — owner QA owed
+**Status:** committed `3545b64e` 2026-09-07 (after /review, §7.8) + `e160f76b` (§7.9) · **✅ owner QA §151 PASSED 48/48, zero defects, 2026-09-08** (§7.10) · §1's zero rule + order walked with it · the rulings the owner gave mid-walk (the proof line, Paid dashing at zero, the installment Credits column, the credit modal, the strip) are built on dev and **UNWALKED — re-walk owed under §151** · **I2 ruled 2026-09-08: *Dues* stays (§7.10)**
 **Owner-approved mockup (round 4):** https://claude.ai/code/artifact/5df27ea9-8210-45de-a569-26c6c74894dc
 **PM brief:** `COACH_DUES_LADDER_PM_BRIEF.md`
 **Came out of:** the §148 walk. The owner asked why Avery's *After fundraising* read $700.00 when
@@ -26,7 +26,20 @@ Dues − Fundraising − Other credits − Paid + Handed back = Balance
   when the family is *owed*, where Balance is the honest one.
 - **Handed back is drawn in amber**, not the green used for money coming in — colour carries the
   direction no operator states.
-- **Zero terms stay visible**, in the quiet ink.
+- ~~**Zero terms stay visible**, in the quiet ink.~~ **REVERSED 2026-09-07 (owner, out of the §151
+  walk): the EVENT terms hide at zero, the BILL's terms never do.** Fundraising, Other credits and
+  Handed back are events that may never happen for a family, so they leave the drawer's tile row
+  and the phone receipt when there is nothing in them — the rule Handed back already followed and
+  the player page already applied. Dues, Paid and Balance are the bill's story and always show;
+  Paid $0.00 (in the quiet ink) is the fact a coach opens the drawer to learn. ⚰ Why the mockup's
+  choice did not survive: three screens had drifted three ways — the table's dash at zero (§151's
+  own ruling), the drawer's quiet $0.00 (the mockup), the player page hiding the boxes (inherited)
+  — and the "tile row is the table of contents" argument for keeping zeros never held, because the
+  Fundraising and Payments sections below already vanished when empty. The rule follows the KIND
+  of figure, not the screen. The table keeps its dashes: a table cannot drop one family's cell.
+- **The player page reads the ladder in the ladder's ORDER** (fixed 2026-09-07, same walk). Its
+  first cut put Paid second — same figures, and with no operator glyphs the order *is* the
+  arithmetic, so the same sum read as a different equation on the two screens that show one family.
 
 ## 2. The definitions (the whole correctness story)
 
@@ -273,3 +286,25 @@ deletion of a class with no consumer, which cannot alter a rendered pixel.
 - **Owner QA §151** — walk artifact `COACH_DUES_LADDER_WALK.html`, nine parts. Part F is the phone,
   walked by hand because nothing else can; Part I carries the two open calls (the Add-a-credit
   placement, Dues vs Billed).
+
+### 7.10 Owner QA §151 — ✅ PASSED 48/48, zero defects, no steps flagged (2026-09-08)
+
+- All nine parts walked on the UAT Test Team fixture; every step with a verdict reads Pass, nothing
+  flagged, no notes. The twelve balances re-proved, Blake's row read aloud, Casey's refund said in two
+  places that agree, the phone receipt walked by hand, the eight-column landscape export, and the
+  family statement agreeing with the coach's screen.
+- The E1c follow-up (§1: event terms hide at zero, the bill's never do; the player page in the
+  ladder's order) passed on the steps it added — C3, E1a/E1c as re-worded, and F1f.
+- **Part I.** I1 (the *+ Add a credit* door) was taken up during the walk: the owner ruled the form a
+  modal, built with the other mid-walk rulings (the proof line under the Season-totals table and at
+  the foot of the export, the strip, Paid dashing at zero, the installment Credits column) and reviewed
+  2026-09-08 — **all of it unwalked; the ledger's §151 in-walk block records it, and a re-walk with its
+  own steps is owed.** ⚠ When those steps are written, the block takes its **own ledger number** in
+  the same unit of work — a ledger section is the unit of an owner walk, not of a feature (dues-by-family
+  already spans §148 · §151 · §153 for that reason), and a second verdict under a heading that already
+  reads "✅ 48/48" would be ambiguous. Leave a forward pointer under §151, give the new section the
+  "step N of dues-by-family, step N−1 was §151" line, and move the pointers here, in the PM brief, the
+  TODO line, the auto-memory and the run order with it. Not before the steps exist: a section holding
+  neither steps nor a verdict is worse than the appendix it is today. **I2 — *Dues* or *Billed* on the season band — RULED 2026-09-08: *Dues* stays.** The tick carried no
+  ruling; the owner settled it in conversation the same day. The help guide and the demo narration take
+  that word when the dues project closes (§7.5).

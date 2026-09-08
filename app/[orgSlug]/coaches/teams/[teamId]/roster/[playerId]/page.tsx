@@ -845,23 +845,27 @@ export default function PlayerDetailPage({
           <>
             <div className={styles.statBoxRow}>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Dues</span></div>
-              {/* ⚠⚠ THE LADDER'S FIGURES, SO THIS PAGE AND THE DUES TABLE CANNOT DISAGREE (dues
-                  ladder, 2026-09-07). `Credits` used to be one box holding fundraising, costs the
-                  family fronted and anything else; `Paid` was net of any refund, so a family who
-                  sent $1,200 and was handed $300 back read $900 here while the dues table now reads
-                  $1,200. Same five figures, same order, both screens.
-                  ⚠ The BOX LABELS on this page are its own (`Assessed`, not `Dues`) and were left
-                  alone — that wording question was not in the approved mockup. The NUMBERS are what
-                  had to match; a label difference is a design call, a figure difference is a bug. */}
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.paid)}</span><span className={styles.statBoxLabel}>Paid</span></div>
-              {/* Each self-hides at zero, the way the single Credits box always did — a family who
-                  raised nothing should not read three $0.00 boxes to learn it. */}
+              {/* ⚠⚠ THE LADDER'S FIGURES, IN THE LADDER'S ORDER, SO THIS PAGE AND THE DUES TABLE
+                  CANNOT DISAGREE (dues ladder, 2026-09-07). `Credits` used to be one box holding
+                  fundraising, costs the family fronted and anything else; `Paid` was net of any
+                  refund, so a family who sent $1,200 and was handed $300 back read $900 here while
+                  the dues table now reads $1,200.
+                  ⚠ THE ORDER IS THE ARITHMETIC. The ladder carries no operator glyphs — Dues −
+                  Fundraising − Other credits − Paid + Handed back = Balance is read left to right —
+                  so the first cut of this row, which put Paid SECOND, showed the same figures and
+                  broke the one rule that makes them add up. Fixed 2026-09-07 out of the §151 walk;
+                  the old comment here claimed "same order, both screens" while the code disagreed.
+                  ⚠ The zero rule is the same as the drawer's: Fundraising, Other credits and Handed
+                  back are EVENTS and hide when nothing happened; Dues, Paid and Balance are the
+                  bill's story and always show. This page had that rule first (inherited from the
+                  single Credits box) and the drawer adopted it. */}
               {dues.ladder.fundraising > 0 && (
                 <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.fundraising)}</span><span className={styles.statBoxLabel}>Fundraising</span></div>
               )}
               {dues.ladder.otherCredits > 0 && (
                 <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.otherCredits)}</span><span className={styles.statBoxLabel}>Other credits</span></div>
               )}
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.paid)}</span><span className={styles.statBoxLabel}>Paid</span></div>
               {dues.ladder.handedBack > 0 && (
                 <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.handedBack)}</span><span className={styles.statBoxLabel}>Handed back</span></div>
               )}

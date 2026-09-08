@@ -16,7 +16,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { planOverpaymentReconcile, splitDuesLadder } from '../../lib/dues-payments.ts';
+import { planOverpaymentReconcile, splitDuesLadder, duesLadderTotals } from '../../lib/dues-payments.ts';
 import { projectScheduleTotalChange, payoutFloorViolation } from '../../lib/dues-credit-guards.ts';
 
 /** Newest first, like the executor's `order('created_at', { ascending: false })`. */
@@ -254,6 +254,30 @@ describe('projectScheduleTotalChange — the schedule doors ask the payout floor
    asserts that, not a hand-typed expected figure — a test that restates the implementation proves
    nothing about the invariant §148 was built around and this change must not break. The twelve
    families are the QA fixture, read off the rendered dues table on 2026-09-07. */
+/* ⚠ THE QA FIXTURE'S TWELVE FAMILIES, read off the rendered dues table on 2026-09-07 — MODULE
+   SCOPE because two suites below need them: the per-row ladder and the roster totals under it.
+   It is the one roster in this repo carrying every awkward case at once, which is why both the
+   row invariant and the footer invariant are worth asserting against exactly these numbers.
+   name, dues, fundraiser, other-kinds, overpayment, gross payments, payouts */
+const FIXTURE: Array<[string, number, number, number, number, number, number]> = [
+  // Overpaid, no payout: $550 of her own money sits inside Paid, not Credits.
+  ['Avery',    700.00, 198.15, 380.00, 550.00, 1250.00,   0],
+  // The payout case that started this: $150 raised, $100 handed back.
+  ['Blake',    970.83, 150.00, 126.98,      0,  625.00, 100],
+  // Overpaid AND fully refunded — the row whose Paid reads $900 today against $1,200 sent.
+  ['Casey',    900.00,  37.50,      0, 300.00, 1200.00, 300],
+  ['Devon',    970.83,  27.00,      0,      0,       0,   0],
+  ['Emerson',  970.83,      0,      0,      0,       0,   0],
+  ['Frankie',  970.83,  40.00,      0,      0,       0,   0],
+  ['Gray',     970.83, 125.00,      0,      0,       0,   0],
+  ['Harper',   970.83,      0,      0,      0,       0,   0],
+  ['Indigo',   970.83,      0, 240.00,      0,       0,   0],
+  ['Jules',    970.83, 125.00,      0,      0,       0,   0],
+  // Mostly a bat the family fronted — Other credits, not fundraising.
+  ['Kai',      970.83, 200.00, 700.00,      0,       0,   0],
+  ['Logan',    970.83, 300.00,      0,      0,       0, 200],
+];
+
 describe('splitDuesLadder — the ladder lands on the balance the screen already had (2026-09-07)', () => {
   /** The balance every dues surface computes today: dues − (credits issued − paid out) − capped paid. */
   const todaysBalance = (f: {
@@ -267,26 +291,6 @@ describe('splitDuesLadder — the ladder lands on the balance the screen already
 
   const sums = (l: ReturnType<typeof splitDuesLadder>) =>
     Math.round((l.dues - l.fundraising - l.otherCredits - l.paid + l.handedBack) * 100) / 100;
-
-  /** name, dues, fundraiser, other-kinds, overpayment, gross payments, payouts */
-  const FIXTURE: Array<[string, number, number, number, number, number, number]> = [
-    // Overpaid, no payout: $550 of her own money sits inside Paid, not Credits.
-    ['Avery',    700.00, 198.15, 380.00, 550.00, 1250.00,   0],
-    // The payout case that started this: $150 raised, $100 handed back.
-    ['Blake',    970.83, 150.00, 126.98,      0,  625.00, 100],
-    // Overpaid AND fully refunded — the row whose Paid reads $900 today against $1,200 sent.
-    ['Casey',    900.00,  37.50,      0, 300.00, 1200.00, 300],
-    ['Devon',    970.83,  27.00,      0,      0,       0,   0],
-    ['Emerson',  970.83,      0,      0,      0,       0,   0],
-    ['Frankie',  970.83,  40.00,      0,      0,       0,   0],
-    ['Gray',     970.83, 125.00,      0,      0,       0,   0],
-    ['Harper',   970.83,      0,      0,      0,       0,   0],
-    ['Indigo',   970.83,      0, 240.00,      0,       0,   0],
-    ['Jules',    970.83, 125.00,      0,      0,       0,   0],
-    // Mostly a bat the family fronted — Other credits, not fundraising.
-    ['Kai',      970.83, 200.00, 700.00,      0,       0,   0],
-    ['Logan',    970.83, 300.00,      0,      0,       0, 200],
-  ];
 
   for (const [name, dues, fundraiserIssued, otherKinds, overpaymentIssued, grossPayments, paidOut] of FIXTURE) {
     it(`${name}: the five figures land on the balance the screen showed`, () => {
@@ -353,5 +357,94 @@ describe('splitDuesLadder — the ladder lands on the balance the screen already
     const l = ladderOf(f);
     assert.equal(l.otherCredits, 126.98);
     assert.equal(sums(l), todaysBalance(f));
+  });
+});
+
+/* ⚠⚠ THE FOOTER'S ONE PROMISE, and it is the row's whole reason to exist (QA §151): the six
+   columns close on the balance beside them for a WHOLE ROSTER, not just a family. That follows
+   from `splitDuesLadder` by linearity — which is exactly the kind of "obviously true" step that
+   stops being true the day someone reaches for floats, drops a rung, or decides the total should
+   be re-derived from the five figures instead of summed from the rows. Every case asserts the
+   invariant, never a typed figure.
+
+   ⚠ THE FIXTURE IS THE SAME TWELVE FAMILIES as the ladder suite above, deliberately: it is the
+   one roster in this repo that carries every awkward case at once — an overpayment with a full
+   refund, a fundraiser rebate, a coach-typed credit, and families who have sent nothing. */
+describe('duesLadderTotals — the ladder closes across the roster, not just the row (2026-09-07)', () => {
+  const ladderOf = (f: {
+    dues: number; creditsIssued: number; fundraiserIssued: number; overpaymentIssued: number;
+    paidOut: number; grossPayments: number;
+  }) => splitDuesLadder({ ...f, cappedPaid: Math.min(f.grossPayments, f.dues) });
+
+  const rowOf = ([, dues, fundraiserIssued, otherKinds, overpaymentIssued, grossPayments, paidOut]:
+    [string, number, number, number, number, number, number]) => {
+    const creditsIssued = Math.round((fundraiserIssued + otherKinds + overpaymentIssued) * 100) / 100;
+    const f = { dues, creditsIssued, fundraiserIssued, overpaymentIssued, paidOut, grossPayments };
+    return {
+      ladder: ladderOf(f),
+      // The balance every dues surface computes today — the figure the footer sums, never re-derives.
+      balance: Math.round((dues - (creditsIssued - paidOut) - Math.min(grossPayments, dues)) * 100) / 100,
+    };
+  };
+
+  /** Dues − Fundraising − Other credits − Paid + Handed back, as a coach reads across the footer. */
+  const closes = (t: ReturnType<typeof duesLadderTotals>) =>
+    Math.round((t.dues - t.fundraising - t.otherCredits - t.paid + t.handedBack) * 100) / 100;
+
+  const ROSTER = FIXTURE.map(rowOf);
+
+  it('the whole roster: reading across the totals lands on the total balance', () => {
+    const t = duesLadderTotals(ROSTER);
+    assert.equal(closes(t), t.balance);
+    assert.equal(t.players, 12);
+  });
+
+  /* ⚠ THE FILTER IS THE POINT, not a bonus case. This footer totals what is ON SCREEN — a coach
+     can narrow the list to "Past due" or "In credit" — so an invariant that only held over the
+     full roster would be no invariant at all. Every contiguous slice is checked, because a bug
+     that cancels out across twelve families is exactly the one a single whole-roster assertion
+     lets through. */
+  it('every filtered slice closes too — the footer follows the Showing pill', () => {
+    for (let from = 0; from < ROSTER.length; from += 1) {
+      for (let to = from; to <= ROSTER.length; to += 1) {
+        const slice = ROSTER.slice(from, to);
+        const t = duesLadderTotals(slice);
+        assert.equal(closes(t), t.balance, `rows ${from}–${to} do not close`);
+        assert.equal(t.players, slice.length);
+      }
+    }
+  });
+
+  it('an empty list totals to zero rather than NaN — the Showing pill can empty the table', () => {
+    const t = duesLadderTotals([]);
+    assert.deepEqual(
+      [t.dues, t.fundraising, t.otherCredits, t.paid, t.handedBack, t.balance, t.players],
+      [0, 0, 0, 0, 0, 0, 0],
+    );
+  });
+
+  /* ⚠⚠ THE TWO GAPS THE BAND'S CAPTIONS EXPLAIN, pinned so nobody "fixes" them into agreement.
+     The footer is GROSS and the band is capped; the footer is NET and the band counts only debts.
+     If a later change makes either pair equal, one of the two surfaces has started answering the
+     other's question and the screen has lost the fact it was showing. */
+  it('Paid exceeds the band’s Collected by exactly the money families sent over their bills', () => {
+    const t = duesLadderTotals(ROSTER);
+    // What the band shows: payments capped at each family's own bill.
+    const collected = Math.round(FIXTURE.reduce(
+      (sum, [, dues, , , , grossPayments]) => sum + Math.min(grossPayments, dues) * 100, 0,
+    )) / 100;
+    const sentOver = Math.round(FIXTURE.reduce(
+      (sum, [, dues, , , , grossPayments]) => sum + Math.max(0, grossPayments - dues) * 100, 0,
+    )) / 100;
+    assert.ok(sentOver > 0, 'fixture must contain an overpayment or this proves nothing');
+    assert.equal(Math.round((t.paid - collected) * 100) / 100, sentOver);
+  });
+
+  it('Balance falls short of the band’s Balance owing by exactly the money owed back', () => {
+    const t = duesLadderTotals(ROSTER);
+    const owing = Math.round(ROSTER.reduce((s, r) => s + Math.max(0, r.balance) * 100, 0)) / 100;
+    const owedBack = Math.round(ROSTER.reduce((s, r) => s + Math.max(0, -r.balance) * 100, 0)) / 100;
+    assert.ok(owedBack > 0, 'fixture must contain a family in credit or this proves nothing');
+    assert.equal(Math.round((owing - t.balance) * 100) / 100, owedBack);
   });
 });

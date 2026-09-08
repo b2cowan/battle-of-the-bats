@@ -37,12 +37,13 @@ import budgetStyles from '../budget/budget.module.css';
 /* The generator's discard guard (owner Q21) — a typed hardship plan is the most expensive typing
    in the hub, and a stray backdrop click used to throw it away silently. */
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 /* The schedule editor's sentences — the team comparison and the paid-money consequence — are
    derived here, never summed in the screen (owner, "installments only", 2026-09-01). */
 import { commonScheduleTotal, teamComparison, scheduleEditConsequence, installmentSumC } from '@/lib/dues-schedule-edit';
-import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
+import { duesLadderTotals, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
 
 /** The engine's ONE consolidated schedule-change credit (owner, 2026-09-01) — recognized by the
  *  description the executor writes, never by shape alone: a coach-typed overpayment credit is
@@ -351,8 +352,26 @@ const MARK_PAID_REST_LABEL = 'Record rest as paid';
 /* ── One installment, as the player ledger draws it (owner-approved mockup `e73e9842`) ────────
  * FOUR FIGURES PER INSTALLMENT, and each one totals to a tile at the head of the drawer:
  *
- *     installment  −  credit applied  =  after fundraising
- *     after fundraising  −  cash paid  =  owing
+ *     installment  −  credits  −  cash paid  =  owing
+ *
+ * ⚠⚠ A ROW IS A LADDER, LIKE THE TILES ABOVE IT (owner ruling 2026-09-07, QA §151). It used to
+ * print `after fundraising` — the RESULT of the subtraction rather than the subtraction — and that
+ * shape had three problems, any one of which was enough:
+ *
+ *   1. THE HEADING WAS FACTUALLY WRONG. `creditApplied` is every kind of credit that reached this
+ *      installment — a reimbursement, a contribution, a forgiven balance — and the Note cell on the
+ *      same row already said "Covered by credit" for the non-fundraising ones. One row, two names.
+ *   2. IT REPEATED THE INSTALLMENT ON EVERY UNCREDITED ROW. Avery's three instalments read
+ *      $250/$250, $250/$250, $200/$200 — two identical columns, which is exactly the noise the
+ *      phone card below hides itself to avoid and a table column cannot.
+ *   3. ⚰ ITS TILE WAS RETIRED THE DAY BEFORE, for the same reason, and this table was the twin
+ *      left behind (see the ladder headstone in the drawer). "After fundraising" answered a
+ *      question about a BILL while appearing to answer one about FUNDRAISING.
+ *
+ * ⚠ ONE CREDIT COLUMN, NOT TWO. The tiles above split Fundraising from Other credits because the
+ * SEASON's question is where the money came from; an instalment's question is how much of THIS
+ * bill a credit covered, and the Note beside it already names the source. A ninth column on a
+ * table that already dropped its card mode at eight would cost more than it says.
  *
  * ⚠ DERIVED ONCE, HANDED TO BOTH RENDERERS. The drawer draws this list twice — an eight-column
  * table on a desktop, collapsible cards on a phone — and the two must never be able to disagree
@@ -368,7 +387,6 @@ function ledgerRowFor(inst: InstallmentWithCredit, coverage: InstallmentCoverage
   const paidCash = cov?.allocated ?? 0;
   const creditApplied = inst.creditApplied ?? 0;
   const owing = installmentToSend(inst, cov);
-  const afterFundraising = Math.max(inst.amount - creditApplied, 0);
   const partial = !inst.paidAt && paidCash > 0.005;
   // A row credits settled is never late — nothing is being asked for.
   const overdue = owing > 0.005 && isInstallmentOverdue(inst.dueDate, inst.paidAt);
@@ -381,7 +399,7 @@ function ledgerRowFor(inst: InstallmentWithCredit, coverage: InstallmentCoverage
     .map(s => s.description || CREDIT_TYPE_LABELS[s.creditType as DuesCreditType] || s.creditType)
     .filter((v, i, a) => a.indexOf(v) === i)
     .join(' · ');
-  return { paidCash, creditApplied, owing, afterFundraising, partial, overdue, coveredByCredit, coveredLabel, sourceNote };
+  return { paidCash, creditApplied, owing, partial, overdue, coveredByCredit, coveredLabel, sourceNote };
 }
 
 type LedgerRow = ReturnType<typeof ledgerRowFor>;
@@ -974,13 +992,20 @@ export function PlayerDuesPanel({
    * shared contract so this file and any other view of dues cannot disagree about a player.
    */
   function buildExport() {
+    /* ⚠ ROWS AND THEIR KINDS COME OUT TOGETHER, from one call (QA §151). The builder appends the
+       totals row and says which row it is in the same breath, so Excel's bold band cannot land on
+       the wrong line — the failure mode of handing a caller a row array and asking it to describe
+       the shape separately. */
+    const dues = duesExportRows(shownPlayers);
     return {
       dataset: 'player-dues',
       title: 'Player Dues',
       columns: DUES_EXPORT_COLUMNS,
       // The list on screen, not the roster (owner E3): an export that ignored the filter would
-      // hand a coach twelve rows under a title that promised three.
-      rows: duesExportRows(shownPlayers),
+      // hand a coach twelve rows under a title that promised three. The totals row under them
+      // totals the same list, exactly as the screen's footer does.
+      rows: dues.rows,
+      rowKinds: dues.kinds,
       pdfRows: duesPdfRows,
       scopeLabel: [assignment?.programYearName ?? '', duesShow === 'all' ? '' : SHOW_LABEL[duesShow]].filter(Boolean).join(' · '),
       teamName: assignment?.teamName ?? '',
@@ -1961,6 +1986,29 @@ export function PlayerDuesPanel({
     ? selected.credits.filter(c => !isFundraisingCredit(c) && !ownMoneyIds.has(c.id))
     : [];
 
+  /**
+   * THE WHOLE ROSTER'S LADDER — the band's own scope, from the same tested sum the footer uses.
+   *
+   * ⚠⚠ THE GROSS OWN-MONEY FIGURE IS THE ONE THE COLLECTED CAPTION NEEDS (QA §151).
+   * `ownMoneyHeld` is NET of refunds; `ladder.ownMoney` is what the family SENT over their bill.
+   * They differ by whatever has since been handed back — Casey sent $300 over and got every dollar
+   * of it back — and only the GROSS figure closes the gap between the Paid column and the tile,
+   * which is the entire job §148 gave that caption. Held is still right for the "Overpaid" word and
+   * the drawer's strip; it was simply never right for this sentence, and nothing could see that
+   * while `Paid` was itself netted.
+   *
+   * ⚠ IT IS SUMMED HERE RATHER THAN IN THE BAND'S OWN LOOP, and that placement is the /review fix
+   * (2026-09-08). The first cut added a seventh accumulator to that loop and summed plain floats —
+   * beside a comment, written in the same change, warning that float summation across a roster is
+   * exactly what lands a footer a cent from the column it totals. `duesLadderTotals` is cents-safe
+   * and unit-tested; a figure that has a shared sum should not get a hand-rolled one.
+   * ⚠ `players`, NOT `shownPlayers`: the band describes the roster and the footer describes the
+   * list. Two scopes, one helper — which is why the helper takes its rows rather than reading them.
+   */
+  const rosterLadder = duesLadderTotals(
+    players.map(p => ({ ladder: p.ladder, balance: p.rollingBalance })),
+  );
+
   // ── Season totals (owner ruling 2026-08-13, mockup artifact `c19d8500`) ────────────────────
   // Every figure is summed from `players`, which this page already has — nothing new is computed
   // or fetched. These used to live in a 300px reference rail beside the table (Option C rails,
@@ -2067,9 +2115,26 @@ export function PlayerDuesPanel({
          ⚠ IT ALSO HAS TO ACCOUNT FOR THE PAID COLUMN NOW (QA §148). A coach who adds that column up
          gets a bigger number than this tile whenever a family has overpaid, and without a word here
          that reads as an error rather than as two different questions. */
+      /* ⚠⚠ THE SECOND CLAUSE IS GROSS, AND IT HAD TO CHANGE WHEN THE COLUMN DID (QA §151).
+         This clause exists to account for the Paid COLUMN — that is the job §148 gave it — and it
+         named the money still HELD, which reconciled a Paid column that was itself netted. The
+         ladder made Paid gross the same day, and the sentence quietly stopped closing: on the QA
+         roster a coach adding Paid gets $3,075.00 against $2,225.00 + $550.00, and the missing
+         $300.00 is Casey's over-send, long since refunded. Gross closes it exactly, on any roster,
+         because `Collected + everything sent over the bills = everything sent`.
+         ⚠ AND IT SAYS WHAT WENT BACK, because "sent" is now a bigger number than the team holds
+         and a caption that stopped there would invite a coach to go looking for $850.00 that is
+         partly gone. The row-level sentence this replaces died of the opposite flaw — it said
+         *sent* about a figure that meant *held* — so both halves are stated rather than implied. */
       caption: [
         seasonTotals.credits > 0.005 ? `+ ${fmt(seasonTotals.credits)} from credits` : null,
-        seasonTotals.ownMoneyHeld > 0.005 ? `${fmt(seasonTotals.ownMoneyHeld)} more sent than billed` : null,
+        rosterLadder.ownMoney > 0.005
+          ? `${fmt(rosterLadder.ownMoney)} more sent than billed${
+            rosterLadder.ownMoney - seasonTotals.ownMoneyHeld > 0.005
+              ? `, ${fmt(Math.round((rosterLadder.ownMoney - seasonTotals.ownMoneyHeld) * 100) / 100)} of it handed back`
+              : ''
+          }`
+          : null,
       ].filter(Boolean).join(' · ') || undefined,
     },
     {
@@ -2101,6 +2166,43 @@ export function PlayerDuesPanel({
   // Asks whether a SCHEDULE exists, not whether `assessed > 0`: a real schedule totalling zero is
   // a decision a coach made, and its footer should say zero rather than vanish.
   const showSeasonTotals = players.some(p => p.schedule);
+
+  /**
+   * THE LADDER'S PROOF LINE (owner ruling 2026-09-07, QA §151) — the table's own `<tfoot>`.
+   *
+   * ⚠⚠ THIS IS NOT THE BAND AGAIN, AND IT MUST NEVER BORROW THE BAND'S WORDS. The band answers a
+   * coach's two questions and is capped at four tiles: `Collected` is what has SETTLED (capped at
+   * the bill) and `Balance owing` is what is left to CHASE (positive balances only). This row
+   * answers one question the band cannot — does the roster add up? — and it therefore reads
+   * DIFFERENTLY on purpose:
+   *
+   *   • `Paid` totals GROSS, so it exceeds `Collected` by the money families sent over their
+   *     bills — the figure the Collected tile's own caption already names.
+   *   • `Balance` totals NET, so it falls short of `Balance owing` by the money owed back to
+   *     families in credit — the figure the Balance owing tile's caption already names.
+   *
+   * Every gap between this row and the band is therefore printed on the same screen, which is the
+   * whole reason the row is worth having: it turns the band's captions from something a coach
+   * takes on faith into something they can check by reading down a column. Put the band's words on
+   * these cells and it becomes the one-word-two-numbers defect the retired footer's headstone
+   * below still warns about.
+   *
+   * ⚠ IT TOTALS WHAT IS ON SCREEN, not the roster — the same rule the Export button obeys, and for
+   * the same reason: a total under three filtered rows that quietly counted twelve would be worse
+   * than no total. The lead cell says which of the two it is.
+   */
+  const shownTotals = duesLadderTotals(
+    shownPlayers.map(p => ({ ladder: p.ladder, balance: p.rollingBalance })),
+  );
+  /* ⚰ `shownWithoutSchedule` STOOD HERE, and its removal is the point rather than a tidy-up
+     (/review 2026-09-08). It fed a second line under the head count — "N with no dues set" —
+     explaining why reading down two columns would not reach the totals beside them. That note was
+     a WORKAROUND FOR A DEFECT, not a disclosure: the gap existed because the Balance cell dashed
+     away a real figure this footer was summing. Printing the figure closes the gap at its source,
+     and the only column still blanking on a missing schedule is Dues — which is genuinely zero for
+     such a player, so the column adds up to the total under it with nothing left to explain.
+     ⚠ THE LESSON, because the first instinct was to write the note: a totals row that needs a
+     footnote to be believed is telling you its columns are wrong. */
 
   /** The two money settings have arrived. Their two consumers — the setup block (no dues yet)
    *  and the policy line (dues exist) — are mutually exclusive on `showSeasonTotals`, so this
@@ -2543,16 +2645,39 @@ export function PlayerDuesPanel({
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Other credits" style={{ color: p.ladder.otherCredits > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                         {p.ladder.otherCredits > 0.005 ? fmt(p.ladder.otherCredits) : '—'}
                       </td>
+                      {/* ⚠ A DASH AT ZERO, LIKE EVERY OTHER RUNG (owner ruling 2026-09-07, QA §151).
+                          This cell printed `$0.00` where Fundraising, Other credits and Handed back
+                          printed `—` for the same "there is no such thing here" state — one column
+                          out of step in a row the coach is meant to read straight across. Nothing is
+                          lost: Balance carries the whole amount and Status says whether they are
+                          behind, so `$0.00` was never the signal it looked like.
+                          ⚠ THE SCHEDULE GATE WENT WITH IT, and that is a fix rather than a
+                          side effect. A player added after dues were set has no schedule and can
+                          still have SENT money; `p.schedule ? … : '—'` hid it, and hid it from the
+                          totals row below, which sums what the family actually paid. */}
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid" style={{ color: p.ladder.paid > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))' }}>
-                        {p.schedule ? fmt(p.ladder.paid) : '—'}
+                        {p.ladder.paid > 0.005 ? fmt(p.ladder.paid) : '—'}
                       </td>
                       {anyHandedBack && (
                         <td className={`${styles.td} ${styles.tdNum}`} data-label="Handed back" style={{ color: p.ladder.handedBack > 0.005 ? 'var(--warning)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                           {p.ladder.handedBack > 0.005 ? fmt(p.ladder.handedBack) : '—'}
                         </td>
                       )}
+                      {/* ⚠⚠ IT NO LONGER DASHES AWAY A REAL BALANCE (/review 2026-09-08, found by two
+                          lenses independently). `p.schedule ? … : '—'` hid money that genuinely
+                          exists: a player added after dues were set has no schedule, and their
+                          balance is `0 − netCredits` — a real figure the moment they hold a
+                          fundraiser share or have had a payout. Three things were wrong at once:
+                          the totals row below SUMS that figure, so the column could not be added up
+                          to the total under it; the export prints it, so the screen and the file
+                          called one player two things; and the drawer already tells the coach the
+                          team is holding it. The dash now means what it means everywhere else on
+                          this screen — nothing here — rather than "something here, not shown".
+                          ⚠ A SCHEDULED PLAYER STILL PRINTS $0.00, and that is not the same case:
+                          zero against a real bill is SETTLED, which is a fact worth stating. Zero
+                          against no bill is an absence, and gets the dash. */}
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Balance" style={{ color: balanceColor(p.rollingBalance), fontWeight: 600 }}>
-                        {p.schedule ? fmt(p.rollingBalance) : '—'}
+                        {p.schedule || Math.abs(p.rollingBalance) > 0.005 ? fmt(p.rollingBalance) : '—'}
                       </td>
                       <td className={styles.td} data-label="Status">
                         {/* ⚠ THE ⚠ IS NOT DECORATION. "Past due" is the one status that is a call
@@ -2572,11 +2697,88 @@ export function PlayerDuesPanel({
                 })}
               </tbody>
 
+              {/* ⚠⚠ THE LADDER'S PROOF LINE (owner ruling 2026-09-07, QA §151). See `shownTotals`
+                  above for what this row is and — more importantly — what it deliberately is NOT.
+                  In one sentence: the band at the top of the tab answers a coach's questions and
+                  does not equal these columns; this row answers whether the roster adds up, and
+                  every gap between the two is a figure the band's own captions already print.
+
+                  ⚠ NO LABELS ON THE FIGURES, the same ruling the settlement sheet's footer below
+                  obeys: each one sits under the column heading that already names it, and a row on
+                  the footer line reads as a total without being told. The lead cell carries the
+                  head count instead — the one thing the columns do not say.
+
+                  ⚠ THE BALANCE TOTAL WEARS NO COLOUR, and that is a decision rather than an
+                  omission. Amber on this cell would make it read as the chase figure, which is the
+                  band's `Balance owing` — a bigger number, four hundred pixels up, under a word
+                  this row is not allowed to borrow. Plain ink says "this is where the arithmetic
+                  closes". The four rungs above it keep their columns' colours because those
+                  columns mean one thing each. */}
+              {showSeasonTotals && shownPlayers.length > 0 && (
+                <tfoot className={styles.tableFoot}>
+                  <tr className={styles.tr}>
+                    <td className={styles.td} data-label="">
+                      <span className={styles.footValue}>
+                        {/* The count IS the label — until a filter is on, when it also has to say
+                            what it is a count OF. An unqualified "3 players" under a narrowed list
+                            is the same lie as totalling the roster underneath it. */}
+                        {shownPlayers.length === players.length
+                          ? `${players.length} player${players.length === 1 ? '' : 's'}`
+                          : `${shownPlayers.length} of ${players.length} players`}
+                      </span>
+                    </td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Dues">
+                      <span className={styles.footValue}>{fmt(shownTotals.dues)}</span>
+                    </td>
+                    {/* ⚠ THE ROWS' OWN ZERO GLYPH, deliberately repeated here: a footer printing
+                        `$0.00` under a column of dashes asserts a figure where the column says
+                        there is no such thing. */}
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Fundraising">
+                      <span className={styles.footValue} style={{ color: shownTotals.fundraising > 0.005 ? 'var(--success-light)' : undefined }}>
+                        {shownTotals.fundraising > 0.005 ? fmt(shownTotals.fundraising) : '—'}
+                      </span>
+                    </td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Other credits">
+                      <span className={styles.footValue} style={{ color: shownTotals.otherCredits > 0.005 ? 'var(--success-light)' : undefined }}>
+                        {shownTotals.otherCredits > 0.005 ? fmt(shownTotals.otherCredits) : '—'}
+                      </span>
+                    </td>
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid">
+                      <span className={styles.footValue} style={{ color: shownTotals.paid > 0.005 ? 'var(--success-light)' : undefined }}>
+                        {shownTotals.paid > 0.005 ? fmt(shownTotals.paid) : '—'}
+                      </span>
+                    </td>
+                    {anyHandedBack && (
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Handed back">
+                        <span className={styles.footValue} style={{ color: shownTotals.handedBack > 0.005 ? 'var(--warning)' : undefined }}>
+                          {shownTotals.handedBack > 0.005 ? fmt(shownTotals.handedBack) : '—'}
+                        </span>
+                      </td>
+                    )}
+                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Balance">
+                      <span className={styles.footValue}>{fmt(shownTotals.balance)}</span>
+                    </td>
+                    {/* Status is a per-family verdict and a roster has no single one; the chevron
+                        column has no door to open. Both stay empty rather than inventing a word. */}
+                    <td className={styles.td} data-label=""></td>
+                    <td className={styles.td} data-label=""></td>
+                  </tr>
+                </tfoot>
+              )}
+
               {/* ⚰ THE SEASON TOTALS FOOTER IS RETIRED (owner ruling 2026-09-03, D4). Its five
                   figures now open the tab as a MoneySummaryBand above the toolbar — visible under
                   either lens, and above the fold rather than below a 12–20 row roster.
 
-                  Two facts from its headstone, both still load-bearing:
+                  ⚠⚠ THE ROW DIRECTLY ABOVE IS NOT ITS RETURN, and reading this headstone as "there
+                  is no footer here" is the mistake to avoid. What was retired was a SUMMARY in the
+                  footer's seat — five figures answering the coach's questions, which is a job the
+                  band does better above the fold. What stands there now is a PROOF LINE: the six
+                  ladder columns totalled, tying to the balance beside them the way every row does.
+                  The band could never be that, because it is capped at four tiles and two of them
+                  deliberately answer different questions from the columns they sit over.
+
+                  Two facts from this headstone, both still load-bearing:
 
                   ⚠ "Balance owing" IS NOT "Outstanding". This cell summed positive ROLLING balances
                   (credits subtracted); "Outstanding" is the credits-EXCLUDED figure the digest and
@@ -2585,9 +2787,13 @@ export function PlayerDuesPanel({
 
                   ⚠ Its `data-label` on every cell was what made it survive at 640, where this table
                   becomes cards and the totals row became the last card in the list. The band needs
-                  no such trick: it is not a table row, so it cannot be re-captioned wrongly. That is
-                  also why the settlement sheet's footer BELOW is untouched — that table really does
-                  become a card stack, and `.tableAsCards` has to re-caption it. */}
+                  no such trick: it is not a table row, so it cannot be re-captioned wrongly.
+                  ⚠ THE NEW ROW CARRIES THEM ANYWAY, and not out of habit. This table is
+                  `.duesDesktopOnly` whenever a schedule exists, so today the footer never reaches
+                  card mode — but that gate is one ruling away from moving, and a totals row that
+                  arrives in a card stack with no captions prints six unlabelled figures. Cheap
+                  insurance against a change made somewhere else entirely; the settlement sheet's
+                  footer BELOW keeps them because that table really does become a card stack. */}
             </table>
           </div>
           )}
@@ -3037,7 +3243,15 @@ export function PlayerDuesPanel({
                               <tr className={styles.tr}>
                                 {/* The count IS the label — a totals row on the footer line needs no
                                     word telling the reader it totals the team. */}
-                                <td className={`${styles.td} ${styles.footLeadCell}`} data-label="">
+                                {/* ⚰ `.footLeadCell` WAS ON THIS CELL AND RESOLVED TO NOTHING (found
+                                    QA §151). The class's last RULES went with `.footLabel` on
+                                    2026-09-03 — the comments in coaches.module.css say it "stays",
+                                    but the declaration did not — so this cell shipped a literal
+                                    `undefined` in its class list for four days. Harmless only
+                                    because there was nothing left to apply; the lesson is that a
+                                    CSS-module class name is a silent failure in both directions,
+                                    and `check:css-selectors` only watches the other one. */}
+                                <td className={styles.td} data-label="">
                                   <span className={styles.footValue}>
                                     {settlement.rows.length} player{settlement.rows.length !== 1 ? 's' : ''}
                                   </span>
@@ -3220,19 +3434,30 @@ export function PlayerDuesPanel({
 
                           ⚠ HANDED BACK WEARS AMBER and hides at zero. With no `+` glyph it is the
                           only cue that this figure pushes a balance UP rather than down; every
-                          other money tile here is green. */}
+                          other money tile here is green.
+
+                          ⚠⚠ THE EVENT TERMS HIDE AT ZERO; THE BILL'S TERMS NEVER DO (owner ruling
+                          2026-09-07, out of the §151 walk — REVERSING mockup round 4's settled
+                          "zero terms stay visible, in the quiet ink"). The rule follows the KIND of
+                          figure, not the screen it is on. Dues, Paid and Balance are the bill's
+                          story and always show: Paid $0.00 is the fact a coach opens this drawer to
+                          learn. Fundraising, Other credits and Handed back are EVENTS that may never
+                          happen for a family — Handed back already hid at zero on every screen, and
+                          its two siblings printed $0.00 beside the gap it left. Three screens had
+                          drifted three ways (the table's dash at zero, this row's quiet $0.00, the
+                          player page hiding the boxes); this is the player page's rule, adopted
+                          here and on the phone receipt below. The "table of contents" argument for
+                          keeping the zeros never held: the Fundraising and Payments sections below
+                          already vanish when empty, so a $0.00 tile pointed at a section that was
+                          not there. */}
                       {[
                         { label: 'Dues', value: fmt(selected.ladder.dues), color: undefined },
-                        {
-                          label: 'Fundraising',
-                          value: fmt(selected.ladder.fundraising),
-                          color: selected.ladder.fundraising > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.4))',
-                        },
-                        {
-                          label: 'Other credits',
-                          value: fmt(selected.ladder.otherCredits),
-                          color: selected.ladder.otherCredits > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.4))',
-                        },
+                        ...(selected.ladder.fundraising > 0.005
+                          ? [{ label: 'Fundraising', value: fmt(selected.ladder.fundraising), color: 'var(--success-light)' }]
+                          : []),
+                        ...(selected.ladder.otherCredits > 0.005
+                          ? [{ label: 'Other credits', value: fmt(selected.ladder.otherCredits), color: 'var(--success-light)' }]
+                          : []),
                         {
                           label: 'Paid',
                           value: fmt(selected.ladder.paid),
@@ -3285,10 +3510,18 @@ export function PlayerDuesPanel({
                         <ChevronDown size={20} className={styles.duesLadderChev} aria-hidden style={{ flexShrink: 0, color: 'var(--home-dim, rgba(255,255,255,0.35))' }} />
                       </summary>
                       <div style={{ borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))', padding: '0.2rem 0.9rem 0.7rem' }}>
+                        {/* Same zero rule as the tile row above: the event terms (Fundraising,
+                            Other credits, Handed back) leave the receipt when there is nothing in
+                            them; Dues and Paid stay, because a receipt with no Paid line reads as
+                            an unfinished receipt rather than as "nothing sent". */}
                         {[
                           { label: 'Dues', amount: selected.ladder.dues, source: null as string | null },
-                          { label: 'Fundraising', amount: selected.ladder.fundraising, source: fundraisingRows.map(c => c.description).join(' · ') || null },
-                          { label: 'Other credits', amount: selected.ladder.otherCredits, source: otherCreditRows.map(c => c.description).join(' · ') || null },
+                          ...(selected.ladder.fundraising > 0.005
+                            ? [{ label: 'Fundraising', amount: selected.ladder.fundraising, source: fundraisingRows.map(c => c.description).join(' · ') || null }]
+                            : []),
+                          ...(selected.ladder.otherCredits > 0.005
+                            ? [{ label: 'Other credits', amount: selected.ladder.otherCredits, source: otherCreditRows.map(c => c.description).join(' · ') || null }]
+                            : []),
                           { label: 'Paid', amount: selected.ladder.paid, source: selected.payments.length ? `${pluralize(selected.payments.length, 'payment', 'payments')} received` : null },
                           ...(selected.ladder.handedBack > 0.005
                             ? [{ label: 'Handed back', amount: selected.ladder.handedBack, source: `${pluralize(selected.payouts.length, 'payout', 'payouts')} paid out` }]
@@ -3706,7 +3939,7 @@ export function PlayerDuesPanel({
                               <th className={styles.th}>#</th>
                               <th className={styles.th}>Due</th>
                               <th className={`${styles.th} ${styles.thNum}`}>Installment</th>
-                              <th className={`${styles.th} ${styles.thNum}`}>After fundraising</th>
+                              <th className={`${styles.th} ${styles.thNum}`}>Credits</th>
                               <th className={`${styles.th} ${styles.thNum}`}>Paid</th>
                               <th className={`${styles.th} ${styles.thNum}`}>Owing</th>
                               <th className={styles.th}>Note</th>
@@ -3726,10 +3959,13 @@ export function PlayerDuesPanel({
                                     {row.overdue && <AlertTriangle size={11} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                                   </td>
                                   <td className={`${styles.td} ${styles.tdNum}`}>{fmt(inst.amount)}</td>
-                                  {/* The cut fundraising made, as a RESULT rather than a deduction —
-                                      the same reading as the "After fundraising" tile above. */}
-                                  <td className={`${styles.td} ${styles.tdNum}`} style={row.creditApplied > 0.005 ? { color: 'var(--success-light)', fontWeight: 650 } : undefined}>
-                                    {fmt(row.afterFundraising)}
+                                  {/* THE CUT CREDITS MADE, as a deduction — see `ledgerRowFor` for why
+                                      the result-shaped "After fundraising" it replaced was wrong three
+                                      ways over. A dash at zero, like every other rung on this screen:
+                                      a column of $0.00 under a heading that means "nothing was
+                                      applied" is the noise the ladder was drawn to remove. */}
+                                  <td className={`${styles.td} ${styles.tdNum}`} style={{ color: row.creditApplied > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))', fontWeight: row.creditApplied > 0.005 ? 650 : undefined }}>
+                                    {row.creditApplied > 0.005 ? fmt(row.creditApplied) : '—'}
                                   </td>
                                   <td className={`${styles.td} ${styles.tdNum}`} style={row.paidCash > 0.005 ? { color: 'var(--success-light)', fontWeight: 650 } : { color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>
                                     {row.paidCash > 0.005 ? fmt(row.paidCash) : '—'}
@@ -3810,13 +4046,16 @@ export function PlayerDuesPanel({
                                   <span className={styles.duesCardRowLab}>Installment</span>
                                   <span className={styles.duesCardRowVal} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</span>
                                 </div>
-                                {/* Only when fundraising actually moved this installment — an
-                                    identical figure repeated under a second label is the noise a
-                                    card has no columns to justify. */}
+                                {/* Only when credits actually moved this installment — a card has no
+                                    columns to justify a row saying "nothing happened", which is why
+                                    the desktop table dashes here and this hides instead.
+                                    ⚠ THE CARD ALWAYS HELD THE DEDUCTION'S CONDITION and printed the
+                                    RESULT — it showed itself when `creditApplied` moved, then named
+                                    the figure "After fundraising". Now the two agree. */}
                                 {row.creditApplied > 0.005 && (
                                   <div className={styles.duesCardRow}>
-                                    <span className={styles.duesCardRowLab}>After fundraising</span>
-                                    <span className={styles.duesCardRowVal} style={{ color: 'var(--success-light)', fontWeight: 650, fontVariantNumeric: 'tabular-nums' }}>{fmt(row.afterFundraising)}</span>
+                                    <span className={styles.duesCardRowLab}>Credits</span>
+                                    <span className={styles.duesCardRowVal} style={{ color: 'var(--success-light)', fontWeight: 650, fontVariantNumeric: 'tabular-nums' }}>{fmt(row.creditApplied)}</span>
                                   </div>
                                 )}
                                 <div className={styles.duesCardRow}>
@@ -3873,6 +4112,9 @@ export function PlayerDuesPanel({
                         ladder, owner ruling 2026-09-07): Fundraising, Other credits, Payments,
                         Paid out. Each heading prints its tile's figure, so the tile row is this
                         drawer's table of contents and nothing on the screen is unaccounted for.
+                        ⚠ Since the event tiles hide at zero (2026-09-07), the one section that
+                        outlives its tile is Other credits — it stays as the home of the "+ Add a
+                        credit" door, which is a door and not a figure.
                         Payments moved BELOW the two credit sections to hold that order — cheap,
                         because recording a payment runs off the buttons at the top of the drawer
                         rather than this list.
@@ -3905,7 +4147,7 @@ export function PlayerDuesPanel({
                         </span>
                         {/* moneyCanWrite, like every write control in this drawer (Phase B) —
                             the whole credit cluster rendered for read-only assistants. */}
-                        {moneyCanWrite && !addingCredit && (
+                        {moneyCanWrite && (
                           <button
                             className={styles.btnGhost}
                             style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
@@ -3922,126 +4164,15 @@ export function PlayerDuesPanel({
                         )}
                       </div>
 
-                      {/* Add credit form */}
-                      {addingCredit && (
-                        <div style={{
-                          padding: '0.85rem', marginBottom: '0.85rem',
-                          background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
-                          border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
-                        }}>
-                          {/* The form names the act (approved mockup, QA §123) — the drawer's
-                              title bar already says whose record this is. */}
-                          <p style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
-                            {editingCreditId ? 'Edit this credit' : 'Add a credit'}
-                          </p>
-                          <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
-                            * Required
-                          </p>
-                          <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
-                            <div>
-                              <label className={styles.label}>Amount *</label>
-                              <input
-                                className={styles.input}
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                placeholder="e.g. 300"
-                                value={creditForm.amount}
-                                onChange={e => setCreditForm(f => ({ ...f, amount: e.target.value }))}
-                              />
-                            </div>
-                            <div>
-                              <label className={styles.label}>Date *</label>
-                              <input
-                                className={styles.input}
-                                type="date"
-                                value={creditForm.creditDate}
-                                onChange={e => setCreditForm(f => ({ ...f, creditDate: e.target.value }))}
-                              />
-                            </div>
-                          </div>
-                          <div style={{ marginBottom: '0.6rem' }}>
-                            <label className={styles.label}>Description *</label>
-                            <input
-                              className={styles.input}
-                              placeholder="e.g. Player bat contribution"
-                              value={creditForm.description}
-                              onChange={e => setCreditForm(f => ({ ...f, description: e.target.value }))}
-                            />
-                          </div>
-                          <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
-                            <div>
-                              <label className={styles.label}>Type</label>
-                              {/* ⚠⚠ THE PICKER IS GONE, NOT SHRUNK (owner rulings R6/R7,
-                                  2026-09-07). With contributions recorded as PAYMENTS and
-                                  fundraiser shares coming from the DRIVE, one kind is left that a
-                                  coach may type — and a select with one option is a control that
-                                  cannot be operated. What remains is a statement of what this
-                                  credit is.
-
-                                  ⚠ AN EXISTING CREDIT OF A RETIRED KIND STILL SAYS ITS OWN NAME.
-                                  A forgiveness, a reimbursement, an overpayment — and now a
-                                  contribution or a fundraiser share — opens for a note correction
-                                  reading what it actually is, never relabelled. The type was
-                                  already fixed once set (it is PROVENANCE, and the server ignores
-                                  it on a correction), so nothing is lost by showing it as text. */}
-                              <p className={styles.readonlyValue}>
-                                {CREDIT_TYPE_LABELS[creditForm.creditType]}
-                              </p>
-                              {!editingCreditId && (
-                                <p className={styles.formHint}>
-                                  Money that <strong>arrived</strong> is recorded where it arrived —
-                                  a fundraiser share on the drive, someone paying toward a family&apos;s
-                                  dues as a payment, a bill a family paid on the expense. An
-                                  adjustment is the one credit with no money behind it, so it counts
-                                  as no revenue.
-                                </p>
-                              )}
-                            </div>
-                            <div>
-                              <label className={styles.label}>Notes</label>
-                              <input
-                                className={styles.input}
-                                placeholder="Optional notes"
-                                value={creditForm.notes}
-                                onChange={e => setCreditForm(f => ({ ...f, notes: e.target.value }))}
-                              />
-                            </div>
-                          </div>
-                          {/* The landing sentence (owner Q4, QA §123 Phase E) — what saving does,
-                              quoting the team's own credits-reduce setting. No sums of its own:
-                              the amount is the coach's, the clause is the setting's. */}
-                          {(() => {
-                            const amt = parseFloat(creditForm.amount);
-                            if (isNaN(amt) || amt <= 0 || creditMode === null) return null;
-                            const first = selected.player.playerFirstName || 'This player';
-                            const subject = editingCreditId
-                              ? <>this credit becomes {fmt(amt)}</>
-                              : creditMode === 'keep_separate'
-                                ? <>the team owes {first}&apos;s family {fmt(amt)} more</>
-                                : <>{first}&apos;s family owes {fmt(amt)} less</>;
-                            const clause = creditMode === 'keep_separate'
-                              ? 'settled at season’s end — their installments don’t move'
-                              : creditMode === 'next_first'
-                                ? 'taken off their next payment first'
-                                : 'taken off their last payment first';
-                            return (
-                              <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                                <strong>When you save:</strong> nothing changes hands — {subject}, {clause}.
-                              </p>
-                            );
-                          })()}
-                          {creditError && <p className={styles.errorText}>{creditError}</p>}
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button className={styles.btnGhost} onClick={() => { void closeCreditFormGuarded(); }} style={{ fontSize: '0.8rem' }}>Cancel</button>
-                            {/* Sentence case beside its neighbours (Phase D) — the button used to
-                                change capitalization scheme with its own state. */}
-                            <button className={styles.btnPrimary} disabled={creditSaving} onClick={saveCredit} style={{ fontSize: '0.8rem' }}>
-                              {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Save credit'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      {/* ⚰ THE ADD/EDIT FORM IS A MODAL NOW (owner ruling 2026-09-07, QA §151), and it
+                          stands at the foot of this panel beside the drawer rather than inside this
+                          section. It sat here as an inline block that pushed the credit list down —
+                          the only write form in this drawer that was not a modal, while Record money
+                          and Record a payout, which ask for the same handful of things, both open
+                          one. There was no reason for the divergence beyond age.
+                          ⚠ THE BUTTON ABOVE NO LONGER HIDES ITSELF while the form is open, and that
+                          is not tidying: an overlay returns focus to the control that opened it, and
+                          a control unmounted meanwhile has nowhere to hand it back to. */}
 
                       {/* ⚠ A refused DELETE must be visible from the LIST (/review 2026-08-28).
                           The first fix wrote the message into the add/edit form's own error slot
@@ -4062,11 +4193,12 @@ export function PlayerDuesPanel({
                           {otherCreditRows.map(c => creditRow(c, false))}
                         </div>
                       ) : (
-                        !addingCredit && (
-                          <p style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))', margin: 0 }}>
-                            No other credits for this player.
-                          </p>
-                        )
+                        /* ⚠ IT NO LONGER STANDS ASIDE FOR THE FORM (QA §151). The add form was an
+                           inline block in this very spot, so the empty sentence hid to make room;
+                           it is a modal now and there is nothing to make room for. */
+                        <p style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))', margin: 0 }}>
+                          No other credits for this player.
+                        </p>
                       )}
                     </div>
 
@@ -4105,8 +4237,18 @@ export function PlayerDuesPanel({
                                   with nothing saying so a coach reads $500 here against $300 there as
                                   the screen contradicting itself. The difference is the §148 helper's
                                   own figure (a refund drains the family's money first), so it is
-                                  stated rather than re-derived. */}
-                              {selected.ladder.ownMoney - selected.ownMoneyHeld > 0.005 && (
+                                  stated rather than re-derived.
+
+                                  ⚠⚠ AND IT ONLY SPEAKS WHEN THERE IS A CONTRADICTION TO SETTLE (owner,
+                                  QA §151). A BRIDGE NEEDS TWO BANKS: the strip only names "$X of it
+                                  their own" while the team is still holding some, so on a FULL refund
+                                  there is nothing on screen for this clause to reconcile — and `Paid
+                                  out — $300.00 handed back` sits forty pixels below it, over a row
+                                  that says $300.00 again. Casey read the same $300.00 three times in
+                                  one column. Gated on the money still HELD, which is precisely the
+                                  figure the strip prints, so the sentence exists exactly where its
+                                  other half does. */}
+                              {selected.ownMoneyHeld > 0.005 && selected.ladder.ownMoney - selected.ownMoneyHeld > 0.005 && (
                                 <> · {fmt(Math.round((selected.ladder.ownMoney - selected.ownMoneyHeld) * 100) / 100)} of it since handed back</>
                               )}
                             </span>
@@ -4261,6 +4403,148 @@ export function PlayerDuesPanel({
         </div>
       )}
 
+      {/* ── Add / edit a credit — the Question (owner ruling 2026-09-07, QA §151) ─────────────
+          A modal, like every other write form a coach opens from this drawer. It asks for the same
+          handful of things Record money asks for, and answering it inline while its neighbours
+          opened dialogs was a difference with no reason behind it.
+
+          ⚠⚠ IT IS DELIBERATELY *NOT* A BRANCH OF RECORD MONEY, and this is the load-bearing part.
+          That conversation asks "what happened" and every branch it offers is money ARRIVING or
+          LEAVING — dues, a drive, a club bill, a sponsor, a payout, a spend. This form's own
+          explainer says an adjustment is the one credit with NO money behind it. Folding it in
+          would break the single sentence the whole credit vocabulary rests on. Same chrome, same
+          floor, different question.
+
+          ⚠ THE SUBTITLE NAMES THE FAMILY, where the inline version did not have to: it sat inside
+          the drawer whose title bar already said whose record this was, and a modal covers that
+          bar. A form that moves onto its own surface inherits the job of identifying its subject.
+
+          ⚠ NO `leaveGuard` HERE, and its absence is deliberate rather than an oversight. The
+          drawer behind it already mounts the route guard for `drawerFormDirty`, which INCLUDES
+          `creditDirty` — passing one here too would arm two interceptors over the same typing and
+          ask a coach twice to leave a page once. The DISMISS guard (backdrop, ✕, Cancel) is a
+          different mechanism and is wired below, exactly where it always was. */}
+      {selected && (
+        <QuestionShell
+          open={addingCredit && tabActive}
+          onClose={() => { void closeCreditFormGuarded(); }}
+          ariaLabel={`${editingCreditId ? 'Edit a credit' : 'Add a credit'} for ${playerName(selected.player) || 'this player'}`}
+          title={editingCreditId ? 'Edit this credit' : 'Add a credit'}
+          subtitle={playerName(selected.player) || undefined}
+          busy={creditSaving}
+        >
+          <form onSubmit={e => { e.preventDefault(); void saveCredit(); }}>
+            <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
+              * Required
+            </p>
+            <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
+              <div>
+                <label className={styles.label} htmlFor="credit-amount">Amount *</label>
+                <input
+                  id="credit-amount"
+                  className={styles.input}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="e.g. 300"
+                  value={creditForm.amount}
+                  onChange={e => setCreditForm(f => ({ ...f, amount: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className={styles.label} htmlFor="credit-date">Date *</label>
+                <input
+                  id="credit-date"
+                  className={styles.input}
+                  type="date"
+                  value={creditForm.creditDate}
+                  onChange={e => setCreditForm(f => ({ ...f, creditDate: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div style={{ marginBottom: '0.6rem' }}>
+              <label className={styles.label} htmlFor="credit-description">Description *</label>
+              <input
+                id="credit-description"
+                className={styles.input}
+                placeholder="e.g. Player bat contribution"
+                value={creditForm.description}
+                onChange={e => setCreditForm(f => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
+              <div>
+                <label className={styles.label}>Type</label>
+                {/* ⚠⚠ THE PICKER IS GONE, NOT SHRUNK (owner rulings R6/R7, 2026-09-07). With
+                    contributions recorded as PAYMENTS and fundraiser shares coming from the DRIVE,
+                    one kind is left that a coach may type — and a select with one option is a
+                    control that cannot be operated. What remains is a statement of what this
+                    credit is.
+
+                    ⚠ AN EXISTING CREDIT OF A RETIRED KIND STILL SAYS ITS OWN NAME. A forgiveness,
+                    a reimbursement, an overpayment — and now a contribution or a fundraiser
+                    share — opens for a note correction reading what it actually is, never
+                    relabelled. The type was already fixed once set (it is PROVENANCE, and the
+                    server ignores it on a correction), so nothing is lost by showing it as text. */}
+                <p className={styles.readonlyValue}>
+                  {CREDIT_TYPE_LABELS[creditForm.creditType]}
+                </p>
+                {!editingCreditId && (
+                  <p className={styles.formHint}>
+                    Money that <strong>arrived</strong> is recorded where it arrived —
+                    a fundraiser share on the drive, someone paying toward a family&apos;s
+                    dues as a payment, a bill a family paid on the expense. An
+                    adjustment is the one credit with no money behind it, so it counts
+                    as no revenue.
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className={styles.label} htmlFor="credit-notes">Notes</label>
+                <input
+                  id="credit-notes"
+                  className={styles.input}
+                  placeholder="Optional notes"
+                  value={creditForm.notes}
+                  onChange={e => setCreditForm(f => ({ ...f, notes: e.target.value }))}
+                />
+              </div>
+            </div>
+            {/* The landing sentence (owner Q4, QA §123 Phase E) — what saving does, quoting the
+                team's own credits-reduce setting. No sums of its own: the amount is the coach's,
+                the clause is the setting's. */}
+            {(() => {
+              const amt = parseFloat(creditForm.amount);
+              if (isNaN(amt) || amt <= 0 || creditMode === null) return null;
+              const first = selected.player.playerFirstName || 'This player';
+              const subject = editingCreditId
+                ? <>this credit becomes {fmt(amt)}</>
+                : creditMode === 'keep_separate'
+                  ? <>the team owes {first}&apos;s family {fmt(amt)} more</>
+                  : <>{first}&apos;s family owes {fmt(amt)} less</>;
+              const clause = creditMode === 'keep_separate'
+                ? 'settled at season’s end — their installments don’t move'
+                : creditMode === 'next_first'
+                  ? 'taken off their next payment first'
+                  : 'taken off their last payment first';
+              return (
+                <p className={`${styles.formHint} ${styles.formHintConsequence}`} style={{ marginBottom: '0.6rem' }}>
+                  <strong>When you save:</strong> nothing changes hands — {subject}, {clause}.
+                </p>
+              );
+            })()}
+            {creditError && <p className={styles.errorText} role="alert">{creditError}</p>}
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnGhost} disabled={creditSaving} onClick={() => { void closeCreditFormGuarded(); }}>Cancel</button>
+              {/* Sentence case beside its neighbours (Phase D) — the button used to change
+                  capitalization scheme with its own state. */}
+              <button type="submit" className={styles.btnPrimary} disabled={creditSaving}>
+                {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Save credit'}
+              </button>
+            </div>
+          </form>
+        </QuestionShell>
+      )}
       {/* Set dues for all players — the shared generator. `duesHref` is deliberately omitted:
           its success state links to the dues list, and this IS the dues list. */}
       {applyAllOpen && (
