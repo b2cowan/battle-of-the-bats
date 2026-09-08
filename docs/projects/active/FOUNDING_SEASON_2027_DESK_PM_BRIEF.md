@@ -1,7 +1,7 @@
 # Founding Season 2027 — Phase 2 PM brief: the desk, the card, and the 2028 choice
 
 **Plan:** `FOUNDING_SEASON_2027_DESK_PLAN.md` · **Parent:** `FOUNDING_SEASON_2027_PLAN.md` §3 Phase 2
-· **Status:** planned 2026-09-07, awaiting mockup approval.
+· **Status:** committed `6eda3722` on `dev` 2026-09-08; mockups approved and rulings D1–D4 taken 2026-09-07. Owner QA §155 outstanding.
 
 ## The problem in one paragraph
 
@@ -33,10 +33,13 @@ Coaches get this for the first time. Today a comped Coaches Portal sees no Found
 all on its billing page — the whole block is suppressed because its wording only ever spoke about
 Tournament Plus. That block now speaks for whichever product the account is actually on.
 
-**For the reminder emails.** The batch email tool gains a new audience — *founding accounts with no
-card on file* — so the summer nudge reaches only the people it is about, instead of everyone. **Nothing
-sends this autumn.** The words for that campaign are the parallel Phase 1 chat's job; this phase only
-builds the audience and the key it hangs on.
+**For the reminder emails — NOT BUILT, and stopped deliberately.** The plan was a new batch-email
+audience of *founding accounts with no card on file*. Between the plan and the build, the parallel
+Phase 1 chat moved the email-audience registry into a file this phase is forbidden to touch and
+took uncommitted edits to both email screens, so wiring it meant editing their work mid-flight.
+The desk's **No card yet** filter and its export give the operator the same list by the same rule —
+what is missing is only the batch-send wiring, and nothing was going to send this autumn. The plan's
+§12 says how it finishes.
 
 ## Why it matters
 
@@ -54,6 +57,10 @@ card and a choice converts itself; an account without one has to be chased, and 
   May 2027 as part of the deliverable rather than a hope.
 - **"Last activity" is really "owner last signed in."** The product does not keep an activity metric,
   so the column is named for the fact we actually hold rather than implying one we do not.
+- **The card and the 2028 choice are kept in their own store, not on the account record.** `/review`
+  found that the account table is readable by anyone holding the site's public key for any
+  organization with a public page — so putting them there would have published every founding
+  account's card details and commitment. The cost is one extra lookup; the alternative was a leak.
 
 ## Success criteria
 
@@ -63,15 +70,25 @@ card and a choice converts itself; an account without one has to be chased, and 
 3. A founding coach can save a card from their own billing page during the summer window.
 4. A 2028 choice made in June results in the first charge on October 1, 2027 — and a test proves no
    path can bring that date forward.
-5. The reminder audience counts only accounts with no card, and excludes opted-out and revoked ones.
+5. Cancelling a 2028 choice withdraws the choice and nothing else — it never suspends an account
+   whose free season is still running.
+6. ~~The reminder audience counts only accounts with no card~~ — **not built this phase** (above).
 
-## Decisions still with the owner
+## Decisions — all four RULED 2026-09-07, as recommended
 
-- When the coach read-only window gets built, and what a lapsed coach sees until it exists.
-- Whether a 2028 choice made in June takes effect in June or on October 1.
-- Whether account notices to founding accounts honour the marketing opt-out or go as service
-  messages.
-- Acceptance of the "nothing can charge before October 1" argument and the test behind it.
+- **The coach read-only window is built in the spring with Phase 3.** Until it exists, the coach's
+  "if you choose nothing" copy promises only what the product already does.
+- **A choice made in June takes effect on October 1**, not in June — so the free season is worth the
+  same to every account.
+- **Season-ending notices go as service messages**, not marketing campaigns: the customer opted out
+  of being sold to, not out of being told what happens to their account.
+- **The no-early-charge design is accepted**, with one thing stated plainly: an account that
+  deliberately buys a bigger plan mid-season is still charged for it, as today.
+
+**Still open, and not this phase's:** the account table is readable by anyone holding the site's
+public key for any organization with a public page, and it already carries the Stripe customer link,
+internal notes and the billing-suspension reason. Nothing meaningful is leaking today, but it wants
+a decision of its own.
 
 ## Priority
 

@@ -19544,7 +19544,7 @@ is data-only and invisible to both by construction, so its prod apply must be re
 
 ---
 
-## §155 · The Founding Season desk — every free account in one list, the card recorded in the app, and a 2028 choice that cannot charge early — BUILT 2026-09-07 on dev, migration 283 applied to dev, awaiting QA · walk artifact `29258882` · mockup artifact `587fbd15`
+## §155 · The Founding Season desk — every free account in one list, the card recorded in the app, and a 2028 choice that cannot charge early — committed `6eda3722` on `dev` 2026-09-08 after `/simplify` + `/review`, migration 283 applied to dev (PROD-OWED), awaiting QA · walk artifact `29258882` · mockup artifact `587fbd15`
 
 **Plan:** `FOUNDING_SEASON_2027_DESK_PLAN.md` (+ `_PM_BRIEF.md`) · Phase 2 of
 `FOUNDING_SEASON_2027_PLAN.md` §3 · run order **E2** on artifact `5ef0163e`.

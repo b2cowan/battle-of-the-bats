@@ -1,6 +1,6 @@
 # Founding Season 2027 — Phase 2: the desk, the card, and the 2028 choice
 
-**Status:** ✅ **BUILT on `dev` 2026-09-07** after owner approval of the mockups (artifact `587fbd15`) and rulings D1–D4. Scope = `FOUNDING_SEASON_2027_PLAN.md` §3 Phase 2, built from
+**Status:** ✅ **committed `6eda3722` on `dev` 2026-09-08** after owner approval of the mockups (artifact `587fbd15`), rulings D1–D4, and `/simplify` + `/review` (§13 — the review overturned §4.1's schema design). Scope = `FOUNDING_SEASON_2027_PLAN.md` §3 Phase 2, built from
 `FOUNDING_SEASON_2027_PHASE2_BUILD_PROMPT.md`. Runs in parallel with the Phase 1 chat (campaign
 copy, demos, help) in one shared working copy — the ownership split is at the foot of this file.
 **PM brief:** `FOUNDING_SEASON_2027_DESK_PM_BRIEF.md`. **Mockups:** artifact `587fbd15` (source `FOUNDING_SEASON_2027_DESK_MOCKUP.html`). **Owner QA §155**, walk artifact `29258882` (source `FOUNDING_SEASON_2027_DESK_WALK.html`). Ruling this serves:
