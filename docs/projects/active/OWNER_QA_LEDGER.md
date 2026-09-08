@@ -19473,7 +19473,7 @@ no rendered gate can see inside it, which is Part F.
 **Help:** the *"Can fundraising lower what families pay?"* answer was rewritten — it had been stale
 since mig 243 and would have been actively wrong after this. A full `/docs` sweep is still owed.
 
-## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — BUILT 2026-09-07 on dev, migration 284 applied to dev, awaiting QA · walk artifact `fc80f4bf` · copy-approval artifact `4e8c6474`
+## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — committed `d2b3b2db` on `dev` 2026-09-08 after `/review`, migration 284 applied to dev (PROD-OWED, data-only), awaiting QA · walk artifact `fc80f4bf` · copy approved by the owner on artifact `4e8c6474` before any seed was written
 
 **Founding Season 2027 Phase 1** (`FOUNDING_SEASON_2027_PLAN.md` §3 Phase 1). The free season runs
 through **September 30, 2027** for everyone who signs up by **December 31, 2026** — but every one of

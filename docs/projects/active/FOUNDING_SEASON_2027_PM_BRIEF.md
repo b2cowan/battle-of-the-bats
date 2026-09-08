@@ -1,7 +1,7 @@
 # Founding Season 2027 — PM brief
 
 **Plan:** `FOUNDING_SEASON_2027_PLAN.md` · **Copy:** `FOUNDING_SEASON_2027_OFFER_COPY.md` · **Mockups:** artifact `61a78f09`
-**Status:** Phase 0 built on dev 2026-09-07, owner QA §150 ✅ passed 73/73. **Phase 1 built 2026-09-07; owner QA §154 owed.** Migrations 279 and 284 prod-owed (both data-only).
+**Status:** Phase 0 built on dev 2026-09-07, owner QA §150 ✅ passed 73/73. **Phase 1 committed `d2b3b2db` 2026-09-08; owner QA §154 owed.** Migrations 279 and 284 prod-owed (both data-only).
 
 ## What changes for the customer
 
@@ -70,7 +70,7 @@ demo carry no offer bar. Full checklist in `OWNER_QA_LEDGER.md` §150.
 
 ---
 
-## Phase 1 — the send book (built 2026-09-07)
+## Phase 1 — the send book (committed `d2b3b2db`, 2026-09-08)
 
 **What changed.** Ten campaign emails became **eight**, all rewritten for the summer-2027 calendar.
 Nothing has been sent, and nothing sends by itself.

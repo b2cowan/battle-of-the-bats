@@ -2,7 +2,7 @@
 
 **Status:** Phase 0 ✅ **committed `2f02a949` on `dev` 2026-09-07** after `/review` (§3b; owner QA §150 ✅ **PASSED 73/73, zero defects, 2026-09-07** — B9 on the owner's run-order artifact `5ef0163e`; the one question it raised — the comparison table had no Coaches Portal column — was RULED the same day: **the table is removed** (`BUSINESS_DECISIONS.md` 2026-09-07);
 **migration 279 applied to dev, PROD-OWED and invisible to `check:migrations` — it is data-only**).
-**Phase 1 ✅ BUILT 2026-09-07** (the campaign emails, the demos, the help, the offer bar walked into both demos; migration 284 applied to dev, PROD-OWED, data-only; owner QA §154 owed; copy approved on artifact `4e8c6474`, walk artifact `fc80f4bf`). Phases 2–3 planned. Ruling: `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-07. Design:
+**Phase 1 ✅ committed `d2b3b2db` on `dev` 2026-09-08** after `/review` (the campaign emails, the demos, the help, the offer bar walked into both demos; migration 284 applied to dev, PROD-OWED and data-only; owner QA §154 owed; copy approved by the owner on artifact `4e8c6474` before any seed was written, walk artifact `fc80f4bf`). Phases 2–3 planned. Ruling: `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-07. Design:
 `memory/design_decisions.md` 2026-09-07. Copy: `FOUNDING_SEASON_2027_OFFER_COPY.md` (approved canon).
 Mockups: artifact `61a78f09` (source `FOUNDING_SEASON_2027_OFFER_MOCKUP.html`).
 **PM brief:** `FOUNDING_SEASON_2027_PM_BRIEF.md`. **Predecessors (archived):** `FOUNDING_SEASON_PLAN.md`,
@@ -89,7 +89,7 @@ Owner QA: `OWNER_QA_LEDGER.md` §150.
 calendar; sent by hand, so nothing wrong fires on its own — but do not send `founding_renewal` /
 `founding_final` this autumn, they still say January); the read-only window; any admin-desk work.
 
-### Phase 1 — autumn: the acquisition push (copy + demos + help) ✅ BUILT 2026-09-07
+### Phase 1 — autumn: the acquisition push (copy + demos + help) ✅ committed `d2b3b2db` 2026-09-08
 
 **Owner QA `OWNER_QA_LEDGER.md` §154** (walk artifact `fc80f4bf`; the copy was approved by the owner on
 the send-book artifact `4e8c6474` before any seed was written — copy is a mockup gate here, not an
