@@ -19345,6 +19345,21 @@ Casey's refund said in two places that must agree; E the roster page; **F the ph
 because no gate can**; G the export; H the statement a parent keeps; I two calls — the
 Add-a-credit placement the review flagged, and Dues vs Billed on the band.
 
+**Follow-up out of the walk's own E1c (owner, 2026-09-07, "go ahead").** The owner opened Emerson's
+drawer beside the walk step that said the credit boxes hide at zero and read `Fundraising $0.00 ·
+Other credits $0.00 · Paid $0.00` — the step was written about the *player page*, which did hide
+them, while the drawer kept the mockup's "zeros in the quiet ink". Three screens had drifted three
+ways for one family (the table's dash, the drawer's $0.00, the page's hidden box). **Ruled: a figure
+hides at zero by its KIND, not its screen** — Fundraising, Other credits and Handed back are events
+and hide; Dues, Paid and Balance are the bill and always show, Paid $0.00 in the quiet ink; the
+table keeps its dashes. This reverses mockup round 4's "zero terms stay visible" — recorded in
+`memory/design_decisions.md` 2026-09-07 and as a headstone in plan §1. **Found on the way: the
+player page read the ladder in the wrong ORDER** (Dues · Paid · Fundraising · Other credits), and
+E1a had asserted that order as expected — with no operator glyphs the order *is* the arithmetic.
+Fixed; the walk gained **C3** (Emerson's three tiles in the drawer) and **F1f** (Emerson's two-line
+phone receipt), and **E1a / E1c** were re-worded. Nothing of the arithmetic moved: 61 dues unit
+tests unchanged and green.
+
 **Gates:** typecheck · **3,135 unit tests** (17 new across three files) · full `verify:changed` ·
 `check:pdf` (every document keeps its promises) · `check:layout --only=coach-dues,coach-player` at
 361/390/768/1440, no new findings. **Not measured by a machine:** the drawer's phone shape.

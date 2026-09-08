@@ -275,6 +275,20 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
     <textarea placeholder="Notes on C2…"></textarea>
   </div>
 </article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><div class="step-t"><h3>Emerson: three tiles, because nothing has happened yet</h3></div></div>
+  <div class="step-body">
+    <p class="why">Close Blake, open Emerson. This family has raised nothing, been credited nothing and sent nothing. The tiles that stand for <i>events</i> stay away until there is an event; the tiles that stand for the <i>bill</i> never leave.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c3a"><label for="c3a">Exactly three tiles: <b>Dues $970.83 · Paid $0.00 · Balance $970.83</b><span class="hintline">This reverses the mockup's "zeros kept in the quiet ink" — Fundraising and Other credits now hide at zero the way Handed back always did, and the way the player page already did</span></label></div>
+      <div class="chk"><input type="checkbox" id="c3b"><label for="c3b"><b>Paid $0.00</b> is still there, in the quiet ink — it is the fact you opened the drawer to learn, not a blank</label></div>
+      <div class="chk"><input type="checkbox" id="c3c"><label for="c3c">Below the tiles there is no Fundraising section and no Payments section — the only section that stays is <b>Other credits</b>, holding the <b>+ Add a credit</b> door</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C3…"></textarea>
+  </div>
+</article>
 </div>
 
 <!-- ══════════════ PART D ══════════════ -->
@@ -347,9 +361,9 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
   <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>Avery's player page reads the ladder</h3></div></div>
   <div class="step-body">
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The money boxes read <b>Dues $700.00 · Paid $1,250.00 · Fundraising $198.15 · Other credits $380.00 · Balance</b> — the first box says <b>Dues</b>, not Assessed<span class="hintline">This page prints a negative balance its own older way, <code>$-1128.15</code>; that spelling is older than this change and outside it</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The money boxes read <b>Dues $700.00 · Fundraising $198.15 · Other credits $380.00 · Paid $1,250.00 · Balance</b> — the ladder's order, with Paid <i>after</i> the credits, and the first box says <b>Dues</b>, not Assessed<span class="hintline">The first cut of this page put Paid second. Same figures, wrong order — and with no operator glyphs the order is the arithmetic. This page prints a negative balance its own older way, <code>$-1128.15</code>; that spelling is older than this change and outside it</span></label></div>
       <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Casey's page shows a <b>Handed back $300.00</b> box and <b>Paid $1,200.00</b> — matching the dues table, not the old $900.00</label></div>
-      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">Emerson's page shows just <b>Dues · Paid · Balance</b> — the credit boxes hide themselves when there is nothing in them</label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">Emerson's player page shows just <b>Dues · Paid · Balance</b> — the same three tiles the drawer showed in C3, because both screens now follow one rule: event boxes hide at zero, the bill's boxes never do<span class="hintline">Roster → Emerson Test. If this page and Emerson's drawer show a different set of boxes, that is the drift this part exists to catch</span></label></div>
     </div>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
     <textarea placeholder="Notes on E1…"></textarea>
@@ -377,6 +391,7 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
       <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">Tap it: the working lists <b>Dues $700.00 · Fundraising $198.15 · Other credits $380.00 · Paid $1,250.00</b>, then a rule, then <b>Balance ($1,128.15)</b></label></div>
       <div class="chk"><input type="checkbox" id="f1c"><label for="f1c">Each line names its source underneath — Fundraising says <i>Chocolate sale · Sponsorship — Northside Physio · Sponsorship — Northside Physio</i>; Paid says <i>2 payments received</i></label></div>
       <div class="chk"><input type="checkbox" id="f1d"><label for="f1d">Open Blake instead: a <b>Handed back $100.00</b> line in amber with <i>1 payout paid out</i> under it</label></div>
+      <div class="chk"><input type="checkbox" id="f1f"><label for="f1f">Open Emerson: the receipt is two lines, <b>Dues $970.83</b> and <b>Paid $0.00</b>, then the rule and <b>Balance $970.83</b> — no Fundraising or Other credits line for money that never arrived</label></div>
       <div class="chk"><input type="checkbox" id="f1e"><label for="f1e">The whole summary row is the tap target and it is comfortably a thumb tall</label></div>
     </div>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
