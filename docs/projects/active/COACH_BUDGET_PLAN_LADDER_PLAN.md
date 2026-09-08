@@ -1,8 +1,8 @@
 # Coach Budget Plan — the plan adds up on the page (the ladder)
 
 **Status:** owner-approved on mockup round 2, 2026-09-08 (artifact
-`e94d05d9-2f07-455d-8cd9-93ea7b1c3f48`, source `COACH_BUDGET_PLAN_LADDER_MOCKUP.html`). Build
-started the same day on `dev`. No migration.
+`e94d05d9-2f07-455d-8cd9-93ea7b1c3f48`, source `COACH_BUDGET_PLAN_LADDER_MOCKUP.html`). Built and
+committed `e1aa4b6e` on `dev` 2026-09-08 after `/review` (§6). No migration.
 **PM brief:** `COACH_BUDGET_PLAN_LADDER_PM_BRIEF.md`.
 **Decision record:** `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-08 ("expected" leaves the
 plan) · `memory/design_decisions.md` 2026-09-08 (bands, subtotals and the ladder).

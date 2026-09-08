@@ -2,7 +2,7 @@
 
 **Plan:** `COACH_BUDGET_PLAN_LADDER_PLAN.md` · **Mockup of record:** artifact
 `e94d05d9-2f07-455d-8cd9-93ea7b1c3f48` round 2 · **Priority:** high (a treasurer's core screen) ·
-**Owner-approved** 2026-09-08 · no migration.
+**Owner-approved** 2026-09-08 · committed `e1aa4b6e` on `dev` 2026-09-08 · no migration.
 
 ## What a coach sees differently
 - The Budget plan's table is split into two groups with headings, **Costs** and **Funding**, and

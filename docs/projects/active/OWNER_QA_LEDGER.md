@@ -19646,7 +19646,7 @@ server restarted 2026-09-07 after the shared-module changes; the offer-bar walk 
 34/34.
 
 
-## §156 · The plan adds up — the Budget plan gains Costs and Funding bands, subtotals that wear the tiles' names, and a closing ladder; the word "expected" leaves the plan — BUILT 2026-09-08 on `dev`, awaiting QA · walk artifact `b0baf8b4` · mockup artifact `e94d05d9` (round 2 is the picture)
+## §156 · The plan adds up — the Budget plan gains Costs and Funding bands, subtotals that wear the tiles' names, and a closing ladder; the word "expected" leaves the plan — committed `e1aa4b6e` on `dev` 2026-09-08 after `/review` (nine findings fixed), awaiting QA · walk artifact `b0baf8b4` · mockup artifact `e94d05d9` (round 2 is the picture)
 
 **Plan:** `COACH_BUDGET_PLAN_LADDER_PLAN.md` (+ `_PM_BRIEF.md`). **Decision records:** Business Decisions
 Log 2026-09-08 ("expected" retired; one qualifier, Planned) · design log 2026-09-08 (bands, subtotals,
