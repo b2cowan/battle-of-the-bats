@@ -3,6 +3,12 @@
  * screen is grouped, in both views, and the period file's month headers ride BvA's own pieces
  * (`formatMonthLabel` text + `headerMonth` Excel dates). These run the builders' arithmetic —
  * a green render is not evidence about a file (memory: run-the-pure-module).
+ *
+ * THE LADDER (owner ruling 2026-09-08, mockup e94d05d9 round 2): both files now carry the screen's
+ * bands and subtotals — COSTS → Planned costs, FUNDING → Planned funding — and the close reads
+ * Costs less funding → Player installments → Short/buffer. The subtotals are asserted as NUMBERS
+ * here, not as labels, because a subtotal that is present but wrong is the defect the ladder
+ * exists to make visible.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
@@ -23,6 +29,16 @@ function planLine(over: Partial<PeriodViewLine> & {
   } as never;
 }
 
+/** The screen's own totals shape, with no estimate set: Planned costs = the lines. */
+function totalsOf(over: Partial<BudgetPlanExportSource['totals']>): BudgetPlanExportSource['totals'] {
+  return {
+    totalPlanned: 2500, fundedByPlayers: 700, fundingLineCount: 1,
+    itemized: 2500, expectedFunding: 1800,
+    estimatedTotal: null, difference: 0, hasDifference: false, overPlanned: false,
+    ...over,
+  };
+}
+
 const STATEMENT_SOURCE: BudgetPlanExportSource = {
   groups: [{
     categoryName: 'Tournaments',
@@ -41,15 +57,18 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
   lines: [
     planLine({ id: 'f', description: 'Chocolate Sale', totalAmount: 1800, lineKind: 'funding' }),
   ],
-  totals: { totalPlanned: 2500, fundedByPlayers: 700, fundingLineCount: 1 },
+  totals: totalsOf({}),
   duesAssessed: 0,
   leftToFund: 700,
 };
 
 describe('the statement file (List view, and every PDF)', () => {
-  it('groups category → summed item → per-line sub-rows named by their notes', () => {
+  it('reads band for band: COSTS → category → summed item → per-line sub-rows → Planned costs; FUNDING → kind → Planned funding; the estimated close', () => {
     const { rows, kinds } = budgetPlanStatementRows(STATEMENT_SOURCE);
     assert.deepEqual(rows.map(r => r.item), [
+      // ⚠ UPPERCASE in the file — the statement export's own band convention (REVENUE / EXPENSES),
+      // and the only heading signal a PDF has, since that path never reads row kinds.
+      'COSTS',
       'Tournaments',
       // ⚠ NO "(2 lines)" SUFFIX. The count came off every screen and every export label in one
       // ruling (owner 2026-09-04, QA §133) — and this file is where it read emptiest, since the two
@@ -57,22 +76,37 @@ describe('the statement file (List view, and every PDF)', () => {
       'Entry Fees',
       '  — Spring classic',
       '  — Regional qualifier',
-      'Expected fundraising',
+      'Planned costs',
+      'FUNDING',
+      // Bare noun (owner ruling 2026-09-08): the band above it already says Funding.
+      'Fundraising',
       '  — Chocolate Sale',
+      'Planned funding',
       'Player installments (estimated)',
     ]);
-    assert.deepEqual(kinds, ['category', 'item', 'item', 'item', 'category', 'item', 'total']);
+    assert.deepEqual(kinds, [
+      'section', 'category', 'item', 'item', 'item', 'total',
+      'section', 'category', 'item', 'total',
+      'total',
+    ]);
+    // A band heading carries no figure at all.
+    assert.equal(rows[0].planned, '');
+    assert.equal(rows[6].planned, '');
     // The summed item row carries the sum; its lines carry their own money and their own answer to
     // "when does this money move?" — WHEN, not a chunk count (owner ruling 2026-09-04).
-    assert.equal(rows[1].planned, 2500);
-    assert.equal(rows[2].planned, 1600);
-    assert.equal(rows[2].schedule, 'Apr');
-    assert.equal(rows[3].notes, 'Regional qualifier');
-    // The closing row is the screen's: players' side of a funded plan.
-    assert.equal(rows[6].planned, 700);
+    assert.equal(rows[2].planned, 2500);
+    assert.equal(rows[3].planned, 1600);
+    assert.equal(rows[3].schedule, 'Apr');
+    assert.equal(rows[4].notes, 'Regional qualifier');
+    // The two subtotals wear the tiles' names and the tiles' figures.
+    assert.equal(rows[5].planned, 2500);
+    assert.equal(rows[9].planned, 1800);
+    // The closing row is the screen's: players' side of a funded plan, saying where it came from.
+    assert.equal(rows[10].planned, 700);
+    assert.equal(rows[10].notes, 'Costs less funding, until dues are set');
   });
 
-  it('a single-line item is one row, named by the item, with its schedule and note', () => {
+  it('a single-line item is one row, named by the item, with its schedule and note — and with no money in, Planned costs closes on the estimate row', () => {
     const src: BudgetPlanExportSource = {
       ...STATEMENT_SOURCE,
       groups: [{
@@ -88,21 +122,39 @@ describe('the statement file (List view, and every PDF)', () => {
         }],
       }],
       lines: [],
-      totals: { totalPlanned: 5200, fundedByPlayers: 5200, fundingLineCount: 0 },
+      totals: totalsOf({ totalPlanned: 5200, fundedByPlayers: 5200, fundingLineCount: 0, itemized: 5200, expectedFunding: 0 }),
     };
-    const { rows } = budgetPlanStatementRows(src);
-    assert.deepEqual(rows.map(r => r.item), ['Facilities', 'Dome Time', 'Total planned budget']);
+    const { rows, kinds } = budgetPlanStatementRows(src);
+    // No Funding band, no Planned funding, no Costs less funding: nothing to subtract. The old
+    // "Total planned budget" close is retired — Planned costs already says it one row up.
+    assert.deepEqual(rows.map(r => r.item), ['COSTS', 'Facilities', 'Dome Time', 'Planned costs', 'Player installments (estimated)']);
+    assert.deepEqual(kinds, ['section', 'category', 'item', 'total', 'total']);
     // ⚠ THE MONTHS THEMSELVES, not "Jan–Mar · 3 chunks". A count is not an answer to "when",
     // and the old label could not say that a partly-dated line had money with no date at all.
-    assert.equal(rows[1].schedule, 'Jan · Feb · Mar');
-    assert.equal(rows[1].notes, '16 sessions, Jan–Mar');
+    assert.equal(rows[2].schedule, 'Jan · Feb · Mar');
+    assert.equal(rows[2].notes, '16 sessions, Jan–Mar');
+    assert.equal(rows[3].planned, 5200);
+    assert.equal(rows[4].notes, 'Planned costs, until dues are set');
   });
 
-  it('with dues scheduled, closes on the screen\'s residual — or on nothing when they match', () => {
+  it('with dues scheduled, closes as the ladder — Costs less funding, Player installments, the residual — or on installments alone when they match', () => {
     const short = budgetPlanStatementRows({ ...STATEMENT_SOURCE, duesAssessed: 500, leftToFund: 200 });
-    const shortTail = short.rows.slice(-2).map(r => r.item);
-    assert.deepEqual(shortTail, ['Player installments', 'Short of covering the plan']);
-    assert.equal(short.rows[short.rows.length - 1].planned, 200);
+    const shortTail = short.rows.slice(-4);
+    assert.deepEqual(shortTail.map(r => r.item), ['Planned funding', 'Costs less funding', 'Player installments', 'Short of covering the plan']);
+    // Costs less funding is the two subtotals' difference FLOORED AT ZERO — the same figure the tile
+    // prints as the Estimated installments — so an over-funded plan reads $0.00 in the file exactly
+    // as it does on screen, never a signed figure the screen's absolute formatter would hide.
+    assert.equal(shortTail[1].planned, 700);
+    const overFunded = budgetPlanStatementRows({
+      ...STATEMENT_SOURCE,
+      totals: totalsOf({ totalPlanned: 1500, fundedByPlayers: 0, itemized: 1500 }),
+      duesAssessed: 500, leftToFund: -800,
+    });
+    assert.equal(overFunded.rows.find(r => r.item === 'Costs less funding')?.planned, 0);
+    assert.equal(shortTail[1].notes, 'What player installments need to cover');
+    assert.equal(shortTail[2].planned, 500);
+    assert.equal(shortTail[3].planned, 200);
+    assert.deepEqual(short.kinds.slice(-4), ['total', 'total', 'total', 'total']);
 
     const buffered = budgetPlanStatementRows({ ...STATEMENT_SOURCE, duesAssessed: 800, leftToFund: -100 });
     assert.equal(buffered.rows[buffered.rows.length - 1].item, 'Planned buffer');
@@ -111,6 +163,34 @@ describe('the statement file (List view, and every PDF)', () => {
 
     const matched = budgetPlanStatementRows({ ...STATEMENT_SOURCE, duesAssessed: 700, leftToFund: 0 });
     assert.equal(matched.rows[matched.rows.length - 1].item, 'Player installments');
+  });
+
+  it('a season estimate that differs from the lines gets its gap as rows under the costs, and Planned costs stays the estimate', () => {
+    const under = budgetPlanStatementRows({
+      ...STATEMENT_SOURCE,
+      totals: totalsOf({ totalPlanned: 3000, fundedByPlayers: 1200, estimatedTotal: 3000, difference: 500, hasDifference: true }),
+    });
+    const costsEnd = under.rows.findIndex(r => r.item === 'Planned costs');
+    assert.deepEqual(under.rows.slice(costsEnd - 2, costsEnd + 1).map(r => r.item), ['Lines so far', 'Still to itemize', 'Planned costs']);
+    assert.equal(under.rows[costsEnd - 2].planned, 2500);
+    assert.equal(under.rows[costsEnd - 1].planned, 500);
+    assert.equal(under.rows[costsEnd - 1].notes, 'Your estimate is $3,000.00');
+    assert.equal(under.rows[costsEnd].planned, 3000);
+    // ⚠ `plain`, NOT `item`: an item row is written one outline level down and hidden behind the
+    // row above it, so these vanished into the last category's collapsed group — and their indent
+    // made them phantom budget lines on re-import (/review, 2026-09-08).
+    assert.deepEqual(under.kinds.slice(costsEnd - 2, costsEnd + 1), ['plain', 'plain', 'total']);
+
+    // Lines past the estimate: the one state the screen draws in red. The gap is stated absolute —
+    // the label carries the direction, as everywhere else in these files.
+    const over = budgetPlanStatementRows({
+      ...STATEMENT_SOURCE,
+      totals: totalsOf({ totalPlanned: 2000, fundedByPlayers: 200, estimatedTotal: 2000, difference: -500, hasDifference: true, overPlanned: true }),
+    });
+    const overEnd = over.rows.findIndex(r => r.item === 'Planned costs');
+    assert.equal(over.rows[overEnd - 1].item, 'Over your estimate');
+    assert.equal(over.rows[overEnd - 1].planned, 500);
+    assert.equal(over.rows[overEnd].planned, 2000);
   });
 });
 
@@ -158,27 +238,64 @@ describe('the period-grid file (By-period view)', () => {
     assert.ok(cols.every(c => c.headerMonth === undefined));
   });
 
-  it('rows follow the screen: merged items summed and unlabelled, money-in positive, the closing row a real subtraction', () => {
+  it('rows follow the screen: two bands, merged items summed and unlabelled, money-in positive, two subtotals and a closing subtraction', () => {
     const view = buildPeriodView(LINES, 'months');
     const { rows, kinds } = budgetPeriodGridRows(view);
     assert.deepEqual(rows.map(r => r.item), [
+      'COSTS',
       'Tournaments',
       // Unlabelled, exactly as the grid on screen now renders it (owner 2026-09-04, QA §133).
       '  — Entry Fees',
-      'Expected fundraising',
+      'Planned costs',
+      'FUNDING',
+      'Fundraising',
       '  — Chocolate Sale',
+      'Planned funding',
       'Costs less funding',
     ]);
-    assert.deepEqual(kinds, ['category', 'item', 'category', 'item', 'total']);
+    assert.deepEqual(kinds, ['section', 'category', 'item', 'total', 'section', 'category', 'item', 'total', 'total']);
+    // A band carries no figures — every cell blank, Total included.
+    assert.equal(rows[0]['m_2027-04'], '');
+    assert.equal(rows[0].total, '');
     // The merged row holds both months.
-    assert.equal(rows[1]['m_2027-04'], 1600);
-    assert.equal(rows[1]['m_2027-05'], 900);
-    assert.equal(rows[1].total, 2500);
+    assert.equal(rows[2]['m_2027-04'], 1600);
+    assert.equal(rows[2]['m_2027-05'], 900);
+    assert.equal(rows[2].total, 2500);
+    // Planned costs is the cost band's subtotal, column by column.
+    assert.equal(rows[3]['m_2027-04'], 1600);
+    assert.equal(rows[3]['m_2027-05'], 900);
+    assert.equal(rows[3].total, 2500);
     // Money-in reads POSITIVE, as the screen paints it — the heading says the direction…
-    assert.equal(rows[3].unscheduled, 1000);
-    assert.equal(rows[2].total, 1000);
-    // …and the closing row keeps the signed arithmetic: costs less funding.
-    assert.equal(rows[4].total, 1500);
-    assert.equal(rows[4].unscheduled, -1000);
+    assert.equal(rows[6].unscheduled, 1000);
+    assert.equal(rows[5].total, 1000);
+    // …and so does its subtotal…
+    assert.equal(rows[7].unscheduled, 1000);
+    assert.equal(rows[7].total, 1000);
+    // …while the closing row keeps the signed arithmetic: costs less funding.
+    assert.equal(rows[8].total, 1500);
+    assert.equal(rows[8].unscheduled, -1000);
+  });
+
+  it('with no money in, Planned costs IS the close — no Funding band, no subtraction row', () => {
+    const view = buildPeriodView(LINES.filter(l => l.lineKind === 'cost'), 'months');
+    const { rows, kinds } = budgetPeriodGridRows(view);
+    assert.deepEqual(rows.map(r => r.item), ['COSTS', 'Tournaments', '  — Entry Fees', 'Planned costs']);
+    assert.deepEqual(kinds, ['section', 'category', 'item', 'total']);
+    assert.equal(rows[3].total, 2500);
+  });
+
+  it('with a season estimate that differs from the lines, the cost subtotal reads "Lines so far" — one name, one number', () => {
+    // The grid spreads LINES; an estimate has no dates. The List calls this same figure "Lines so
+    // far" and reserves "Planned costs" for the estimate, so the grid may not borrow that name here
+    // (the rule its closing row has carried since 2026-08-13; /review 2026-09-08).
+    const view = buildPeriodView(LINES, 'months', { estimatedTotal: 4000 });
+    assert.equal(view.estimateDiffers, true);
+    const { rows } = budgetPeriodGridRows(view);
+    assert.equal(rows[3].item, 'Lines so far');
+    assert.equal(rows[3].total, 2500);
+    // An estimate equal to the lines is not a difference — the ordinary name comes back.
+    const same = buildPeriodView(LINES, 'months', { estimatedTotal: 2500 });
+    assert.equal(same.estimateDiffers, false);
+    assert.equal(budgetPeriodGridRows(same).rows[3].item, 'Planned costs');
   });
 });

@@ -124,6 +124,19 @@ export interface PeriodView {
   groups: PeriodViewGroup[];
   /** Costs − funding, per column: what players fund month by month. */
   totals: { cells: Record<string, number>; total: number };
+  /** Σ cost groups, per column — the "Planned costs" subtotal row (owner ruling 2026-09-08). */
+  costTotals: { cells: Record<string, number>; total: number };
+  /** Σ money-in groups, per column, SIGNED like their cells — the "Planned funding" subtotal row.
+   *  Null when the plan has no money-in lines, so the grid knows not to draw that band at all. */
+  fundingTotals: { cells: Record<string, number>; total: number } | null;
+  /**
+   * Is a season ESTIMATE set that differs from the lines? This grid spreads LINES — an estimate has
+   * no dates and cannot be placed in a month — so when one is set and differs, the cost subtotal is
+   * the lines' sum and must not wear the List's "Planned costs" name, which is the estimate there.
+   * One name, one number (the rule this grid's closing row has carried since 2026-08-13; /review
+   * 2026-09-08 caught the subtotal breaking it). The renderers pick "Lines so far" when this is true.
+   */
+  estimateDiffers: boolean;
   /** Did anything land in the undated column? Drives whether that column exists at all. */
   hasUnscheduled: boolean;
   /** True when the plan's dated span was wider than the window and the far end was dropped. The
@@ -311,6 +324,9 @@ function columnFor(
 
 export function buildPeriodView(
   lines: PeriodViewLine[], granularity: PeriodGranularity,
+  /** The season estimate, when one is set — read only to decide `estimateDiffers`; it is never
+   *  spread into a column (it has no dates). */
+  opts: { estimatedTotal?: number | null } = {},
 ): PeriodView {
   const dated: string[] = [];
   for (const line of lines) {
@@ -325,6 +341,14 @@ export function buildPeriodView(
   const groupsByKey = new Map<string, PeriodViewGroup>();
   const totals: Record<string, number> = {};
   let grandTotal = 0;
+  /* The two subtotals, accumulated in the SAME pass as the closing row so they cannot disagree
+     with it: Planned costs + Planned funding = the close, column by column (owner ruling
+     2026-09-08 — the grid draws both bands with a subtotal each, exactly as the List does). */
+  const costCells: Record<string, number> = {};
+  let costTotal = 0;
+  const fundingCells: Record<string, number> = {};
+  let fundingTotal = 0;
+  let hasFunding = false;
   let hasUnscheduled = false;
 
   // Rows keyed inside each group so two lines on one item are ONE row (P1, 2026-09-02 — the SUM
@@ -406,8 +430,11 @@ export function buildPeriodView(
       add(row.cells, key, amount);
       add(group.cells, key, amount);
       add(totals, key, amount);
+      add(isCost ? costCells : fundingCells, key, amount);
     }
     grandTotal = r2(grandTotal + rowTotal);
+    if (isCost) costTotal = r2(costTotal + rowTotal);
+    else { fundingTotal = r2(fundingTotal + rowTotal); hasFunding = true; }
   }
 
   /* ⚠ ONE ORDERING RULE, THE LIST'S, IN BOTH VIEWS (P1 verify-pass correction, 2026-09-02: the two
@@ -457,6 +484,10 @@ export function buildPeriodView(
     yearBands: deriveYearBands(dateColumns),
     groups,
     totals: { cells: totals, total: grandTotal },
+    costTotals: { cells: costCells, total: costTotal },
+    fundingTotals: hasFunding ? { cells: fundingCells, total: fundingTotal } : null,
+    // ±half a cent, the same deadband computeBudgetTotals uses for the List's estimate rows.
+    estimateDiffers: opts.estimatedTotal != null && Math.abs(r2(opts.estimatedTotal) - costTotal) >= 0.005,
     hasUnscheduled,
     truncated,
   };

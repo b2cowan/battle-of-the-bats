@@ -179,15 +179,52 @@ export function budgetLineKindForItem(
 export const DERIVED_INCOME_LINE_KINDS: BudgetLineKind[] =
   FUNDING_LINE_KINDS.filter(k => LINE_KIND_ACTUAL_SOURCE[k] !== 'typed');
 
-/** The heading its section carries — in the plan list, in the summary ladder, in the period grid
- *  and in Budget vs. Actual. ONE definition: four hardcoded copies of "Expected fundraising" is
- *  four places to miss on a rename. */
+/** The heading its section carries — in the plan list, in the period grid and in both exports.
+ *  ONE definition: four hardcoded copies of a section name is four places to miss on a rename.
+ *
+ *  ⚠ BARE NOUNS, NO "EXPECTED" (owner ruling 2026-09-08, mockup e94d05d9 round 2). The kind rows
+ *  sit under a band that already says FUNDING, and the cost categories beside them never carried a
+ *  prefix. "Expected" implied a distinction — money in is less certain than money out — that the
+ *  plan does nothing with; every figure on the screen is planned. The one qualifier lives on the
+ *  subtotals, and it is the same on both sides: see `PLAN_LADDER_LABEL`. */
 export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
   cost:         'Costs',
-  funding:      'Expected fundraising',
-  sponsorship:  'Expected sponsorship',
-  other_income: 'Expected other income',
+  funding:      'Fundraising',
+  sponsorship:  'Sponsorship',
+  other_income: 'Other income',
 };
+
+/**
+ * Every label the plan's LADDER prints — the List, the By-period grid, both exports and the tiles
+ * read these and nothing else, so the words cannot fork (owner ruling 2026-09-08).
+ *
+ * THE RULE: the three tiles above the table are the table's three subtotals, with the same names
+ * verbatim — Planned costs · Planned funding · Player installments. The tiles are the headline of
+ * the table, not a second summary. `costsLessFunding` is the grid's existing closing label, reused
+ * in the list; `shortOfPlan` / `buffer` are the close both surfaces already printed. "Expected" is
+ * deliberately absent from every value here — see `LINE_KIND_SECTION`.
+ */
+export const PLAN_LADDER_LABEL = {
+  costsBand:             'Costs',
+  fundingBand:           'Funding',
+  plannedCosts:          'Planned costs',
+  plannedFunding:        'Planned funding',
+  /* Under the When filter the List is a SLICE, and a slice may not borrow the tile's name — one
+     name, one number (the rule the By-period grid has carried since 2026-08-13). These close the
+     two bands over a filtered list; they never reach an export, which always carries the whole
+     plan (/review, 2026-09-08). */
+  costsShown:            'Costs shown',
+  fundingShown:          'Funding shown',
+  costsLessFunding:      'Costs less funding',
+  costsLessFundingNote:  'What player installments need to cover',
+  installments:          'Player installments',
+  installmentsEstimated: 'Player installments (estimated)',
+  shortOfPlan:           'Short of covering the plan',
+  buffer:                'Planned buffer',
+  linesSoFar:            'Lines so far',
+  stillToItemize:        'Still to itemize',
+  overEstimate:          'Over your estimate',
+} as const;
 
 /** Anything with an amount and a kind — the plan's line shape, narrowed to what the maths needs,
  *  so callers can pass their own richer rows without a mapping step. */

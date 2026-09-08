@@ -27,7 +27,7 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { fmtCompact } from '@/lib/coach-money-summary';
 import { toggleKey } from '@/lib/toggle-key';
 import {
-  computeBudgetTotals, LINE_KIND_SECTION, budgetLineKindForItem,
+  computeBudgetTotals, LINE_KIND_SECTION, PLAN_LADDER_LABEL, budgetLineKindForItem,
   isFundingKind, normalizeBudgetLineKind, FUNDING_LINE_KINDS,
   type BudgetLineKind, type BudgetItemActualSource,
 } from '@/lib/coach-budget-totals';
@@ -137,18 +137,18 @@ const DIRECTION_ANSWERS: { value: BudgetItemDirection; name: string; sub: string
 const KIND_HINT_LONG: Record<BudgetLineKind, React.ReactNode> = {
   cost: null,  // the cost form explains itself — the category picker below it is the explanation
   funding: (
-    <>Expected fundraising lowers what players are asked to pay — a bottle drive, a chocolate sale,
+    <>Fundraising lowers what players are asked to pay — a bottle drive, a chocolate sale,
       anything the team raises by selling. Enter what you expect the <strong>team</strong> to keep:
       if a campaign pays part of what a player raises back to that player, that already lowers their
       dues and shouldn&apos;t be counted here.</>
   ),
   sponsorship: (
-    <>Expected sponsorship lowers what players are asked to pay — a business sponsor, a grant,
+    <>Sponsorship lowers what players are asked to pay — a business sponsor, a grant,
       anything given directly rather than raised by selling. It is budgeted apart from fundraising
       so <strong>Budget vs. Actual</strong> can tell you whether each hit its number.</>
   ),
   other_income: (
-    <>Expected other income lowers what players are asked to pay — interest, a facility rebate, a
+    <>Other income lowers what players are asked to pay — interest, a facility rebate, a
       plain donation: money coming in that nobody raised and no sponsor gave. You record each
       arrival yourself as it lands, the way you record an expense.</>
   ),
@@ -598,6 +598,66 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
      the view — a band naming columns a coach cannot see is worse than no band at all. */
   const bands = monthYearBands(windowCols.map(c => c.key));
 
+  /* The two bands' groups, split once (owner ruling 2026-09-08, mockup e94d05d9 round 2). The
+     funding subtotal is read into a const so the JSX can narrow it once rather than assert it
+     non-null inside every map. */
+  const costGroups = view.groups.filter(g => !isFundingKind(g.lineKind));
+  const fundingGroups = view.groups.filter(g => isFundingKind(g.lineKind));
+  const fundingTotals = view.fundingTotals;
+  /** A subtotal or closing row's cells, from a per-column total the view built in the same pass as
+   *  the close — money-in read POSITIVE, the way every other cell in that band is painted. */
+  const totalCells = (t: { cells: Record<string, number>; total: number }, funding: boolean) => {
+    const kind: BudgetLineKind = funding ? 'funding' : 'cost';
+    return (
+      <>
+        {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(kind, t.cells[col.key]))}</td>)}
+        <td>{fmtCell(fundingCell(kind, t.total))}</td>
+      </>
+    );
+  };
+  /** One group — a cost category or a money-in kind — with its fold. ONE renderer for both bands. */
+  const renderGroup = (group: ReturnType<typeof buildPeriodView>['groups'][number]) => {
+    const open = !closed.has(group.key);
+    return (
+      <Fragment key={group.key}>
+        <tr className={`${shared.moneyGridCat} ${isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}`}>
+          <th scope="rowgroup">
+            <button
+              type="button"
+              className={shared.moneyGridToggle}
+              onClick={() => onToggle(group.key)}
+              aria-expanded={open}
+              disabled={group.rows.length === 0}
+            >
+              {group.rows.length === 0
+                ? <span className={shared.moneyGridChevronSpacer} aria-hidden />
+                : open
+                  ? <ChevronDown size={13} aria-hidden className={shared.moneyGridChevron} />
+                  : <ChevronRight size={13} aria-hidden className={shared.moneyGridChevron} />}
+              <span className={shared.wrap640}>{group.name}</span>
+            </button>
+          </th>
+          {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
+          <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
+        </tr>
+        {open && group.rows.map(row => (
+          <tr key={row.id} className={isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}>
+            <th scope="row" className={shared.moneyGridLead}>
+              {row.description}
+              {/* ⚠ NO "N lines" COUNT ON THIS ROW, and none on the Budget list or the Budget vs.
+                  Actual statement either — owner ruling 2026-09-04, QA §133. The full reasoning
+                  lives with the gate that enforces it, tests/unit/bva-figure-doors-guard.test.ts.
+                  Short version: a fact the coach gets by opening the row does not need a label
+                  promising it first. */}
+            </th>
+            {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
+            <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
+          </tr>
+        ))}
+      </Fragment>
+    );
+  };
+
   return (
     <div className={styles.periodGridWrap}>
       {paged && (
@@ -655,59 +715,52 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
             </tr>
           </thead>
           <tbody>
-            {view.groups.map(group => {
-              const open = !closed.has(group.key);
-              return (
-              <Fragment key={group.key}>
-                <tr className={`${shared.moneyGridCat} ${isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}`}>
-                  <th scope="rowgroup">
-                    <button
-                      type="button"
-                      className={shared.moneyGridToggle}
-                      onClick={() => onToggle(group.key)}
-                      aria-expanded={open}
-                      disabled={group.rows.length === 0}
-                    >
-                      {group.rows.length === 0
-                        ? <span className={shared.moneyGridChevronSpacer} aria-hidden />
-                        : open
-                          ? <ChevronDown size={13} aria-hidden className={shared.moneyGridChevron} />
-                          : <ChevronRight size={13} aria-hidden className={shared.moneyGridChevron} />}
-                      <span className={shared.wrap640}>{group.name}</span>
-                    </button>
-                  </th>
-                  {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
-                  <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
+            {/* ── COSTS → categories → Planned costs; FUNDING → kinds → Planned funding; the close
+                (owner ruling 2026-09-08, mockup e94d05d9 round 2 — the same bands and subtotals the
+                List draws, so the two readings of one plan share one shape). A band row carries
+                real empty cells and never a colSpan: the first column is pinned, and a spanning
+                cell gives the pin nothing to hold (the statement's bands learned this first). */}
+            {costGroups.length > 0 && (
+              <>
+                <tr className={shared.moneyGridBand}>
+                  <th scope="row">{PLAN_LADDER_LABEL.costsBand}</th>
+                  {cols.map(col => <td key={col.key} />)}
+                  <td />
                 </tr>
-                {open && group.rows.map(row => (
-                  <tr key={row.id} className={isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}>
-                    <th scope="row" className={shared.moneyGridLead}>
-                      {row.description}
-                      {/* ⚠ NO "N lines" COUNT ON THIS ROW, and none on the Budget list or the
-                          Budget vs. Actual statement either — owner ruling 2026-09-04, QA §133. The
-                          full reasoning lives with the gate that enforces it,
-                          tests/unit/bva-figure-doors-guard.test.ts. Short version: a fact the coach
-                          gets by opening the row does not need a label promising it first. */}
-                    </th>
-                    {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
-                    <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
-                  </tr>
-                ))}
-              </Fragment>
-              );
-            })}
-            <tr className={shared.moneyGridTotal}>
-              <th scope="row">
-                {/* NOT "Player installments" (review finding): this grid spreads the PLAN —
-                    itemized costs less funding, estimate-blind — and borrowing the card's
-                    label would put one name on two different numbers. "Funding", not
-                    "fundraising" (P1 mockup): the row aggregates every money-in kind, and the
-                    aggregate word must cover sponsorship too. */}
-                {view.groups.some(g => isFundingKind(g.lineKind)) ? 'Costs less funding' : 'Total planned budget'}
-              </th>
-              {cols.map(col => <td key={col.key}>{fmtCell(view.totals.cells[col.key])}</td>)}
-              <td>{fmtCell(view.totals.total)}</td>
-            </tr>
+                {costGroups.map(renderGroup)}
+                {/* ⚠ ONE NAME, ONE NUMBER (the rule this grid's close has carried since 2026-08-13,
+                    and which /review caught the subtotal breaking). This grid spreads LINES; an
+                    estimate has no dates. When one is set and differs, this row is the lines' sum and
+                    reads "Lines so far" — what the List calls the same figure — never "Planned costs",
+                    which is the estimate there. */}
+                <tr className={shared.moneyGridTotal}>
+                  <th scope="row">{view.estimateDiffers ? PLAN_LADDER_LABEL.linesSoFar : PLAN_LADDER_LABEL.plannedCosts}</th>
+                  {totalCells(view.costTotals, false)}
+                </tr>
+              </>
+            )}
+            {fundingTotals && fundingGroups.length > 0 && (
+              <>
+                <tr className={shared.moneyGridBand}>
+                  <th scope="row">{PLAN_LADDER_LABEL.fundingBand}</th>
+                  {cols.map(col => <td key={col.key} />)}
+                  <td />
+                </tr>
+                {fundingGroups.map(renderGroup)}
+                <tr className={`${shared.moneyGridTotal} ${styles.periodGridFunding}`}>
+                  <th scope="row">{PLAN_LADDER_LABEL.plannedFunding}</th>
+                  {totalCells(fundingTotals, true)}
+                </tr>
+                {/* The close is a real subtraction and keeps the view's SIGNED totals. NOT "Player
+                    installments" (review finding, kept): this grid spreads the PLAN, estimate-blind,
+                    and borrowing the tile's label would put one name on two different numbers.
+                    "Funding", not "fundraising": the row aggregates every money-in kind. */}
+                <tr className={shared.moneyGridTotal}>
+                  <th scope="row">{PLAN_LADDER_LABEL.costsLessFunding}</th>
+                  {totalCells(view.totals, false)}
+                </tr>
+              </>
+            )}
           </tbody>
         </table>
       </CoachScrollX>
@@ -715,6 +768,14 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
         <p className={styles.periodGridNote}>
           <strong>No date yet</strong> holds anything without payment dates. Split a line by period
           to move it into a month.
+        </p>
+      )}
+      {view.estimateDiffers && (
+        /* The one thing this grid cannot draw, said once: an estimate has no dates. The cost
+           subtotal above reads "Lines so far" for the same reason (one name, one number). */
+        <p className={styles.periodGridNote}>
+          Your season estimate has no dates, so this grid spreads the lines you have entered. The
+          List shows the estimate as Planned costs.
         </p>
       )}
       {view.truncated && (
@@ -2087,7 +2148,7 @@ export function BudgetPlanPanel({
      different shapes — and the button was rendered for the List alone, so a coach in the grid could
      only fold one category at a time. Null here IS "not in the grid": the view builds only where it
      is drawn, and the branch below reads that rather than re-testing the mode. */
-  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity) : null;
+  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal }) : null;
   const gridKeys = periodView ? periodView.groups.map(g => g.key) : [];
   const allGridClosed = gridKeys.length > 0 && gridKeys.every(k => gridClosed.has(k));
   const foldAll = periodView
@@ -2119,6 +2180,15 @@ export function BudgetPlanPanel({
   // The plan minus everything already answering for it — funding lines and scheduled dues.
   // Signed on purpose: negative means players are scheduled to pay more than the plan now needs.
   const leftToFund = r2(totals.totalPlanned - totals.expectedFunding - duesAssessed);
+  /* THE SUBTOTALS THE TABLE PRINTS SUM THE LINES THE TABLE SHOWS (owner ruling 2026-09-08). Under
+     the When filter a subtotal that kept the season's figure would sit over rows that do not add up
+     to it — the exact mismatch the ladder exists to remove. The season's own close (Costs less
+     funding, installments, short/buffer) belongs to the whole plan and steps aside while a filter
+     is on; the tiles above still carry it. The estimate is a season fact, so it rides only the
+     unfiltered table. */
+  const tableTotals = whenFilter === 'all'
+    ? totals
+    : computeBudgetTotals({ lines: shownLines, estimatedTotal: null, rosterCount: 0 });
   // The genuinely-blank first visit: no lines AND no estimate. The $0 summary is suppressed so the
   // first-run surface leads; it returns the moment anything exists. ⚠ The summary is also the only
   // UI that SETS an estimate, so "set an estimated total instead" (a first-run door) flips
@@ -2179,7 +2249,7 @@ export function BudgetPlanPanel({
       emptyMessage: 'There are no budget lines to export yet — build the plan first.',
     };
     if (viewMode === 'period' && format !== 'pdf') {
-      const view = buildPeriodView(allLines, granularity);
+      const view = buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal });
       const columns = budgetPeriodGridColumns(view);
       const built = budgetPeriodGridRows(view);
       return {
@@ -2191,14 +2261,15 @@ export function BudgetPlanPanel({
         ...shared,
       };
     }
+    /* ⚠ THE FILE IS THE WHOLE PLAN, WHATEVER THE WHEN FILTER SHOWS (/review, 2026-09-08). `groups`
+       follows the filter; `lines` and `totals` never did — so a filtered export carried a season
+       "Planned costs" over a slice of category rows, and a season Funding band under filtered
+       costs. A filter is a working view; the file is the record, and its subtotals must sum its
+       own rows. */
     const built = budgetPlanStatementRows({
-      groups,
+      groups: whenFilter === 'all' ? groups : groupLines(allLines),
       lines: allLines,
-      totals: {
-        totalPlanned: totals.totalPlanned,
-        fundedByPlayers: totals.fundedByPlayers,
-        fundingLineCount: totals.fundingLineCount,
-      },
+      totals,
       duesAssessed,
       leftToFund,
     });
@@ -2213,7 +2284,10 @@ export function BudgetPlanPanel({
       pdfRows: (rows: Array<Record<string, string | number>>) => rows.map(r => BUDGET_PLAN_COLUMNS.map(c => {
         const v = r[c.key];
         if (c.format !== 'currency') return String(v ?? '');
-        return v === '' || v === undefined || v === null ? '—' : formatMoneyCell(Number(v));
+        // A band heading's money cell is EMPTY, not a dash: a dash says "nothing happened" on a row
+        // that carries no money at all (the PDF never reads row kinds, so the blank is the signal).
+        if (v === '') return '';
+        return v === undefined || v === null ? '—' : formatMoneyCell(Number(v));
       })),
       ...shared,
     };
@@ -2320,7 +2394,7 @@ export function BudgetPlanPanel({
                    printing a zero nobody planned (recipe deviation 2). "Expected FUNDING", not
                    the fundraising section's own name: this AGGREGATES every money-in kind. */
                 key: 'funding',
-                label: 'Expected funding',
+                label: PLAN_LADDER_LABEL.plannedFunding,
                 figure: fmt(totals.expectedFunding),
                 tone: 'good',
                 caption: `${totals.fundingLineCount} line${totals.fundingLineCount === 1 ? '' : 's'}`,
@@ -2641,6 +2715,17 @@ export function BudgetPlanPanel({
                 </tr>
               </thead>
               <tbody>
+              {/* ── COSTS — the band (owner ruling 2026-09-08, mockup e94d05d9 round 2). A bare noun:
+                  the qualifier lives on the subtotal that closes the band. Three real empty cells,
+                  never a colSpan — the first column is pinned inside <CoachScrollX sticky>, the rule
+                  the statement's bands and the month grid's already follow. It waits for a cost to
+                  head: a funding-only plan (or a filter that leaves none) draws no empty band. */}
+              {(groups.length > 0 || tableTotals.estimatedTotal != null) && (
+                <tr className={shared.moneyGridBand}>
+                  <th scope="row" className={styles.lead}>{PLAN_LADDER_LABEL.costsBand}</th>
+                  <td className={styles.schedCell} /><td /><td />
+                </tr>
+              )}
               {groups.map(({ categoryName: catName, total: catTotal, items }) => (
                 <Fragment key={catName}>
                   {/* ⚠ COLLAPSIBLE, by the same ruling that gave the By-period grid its chevrons
@@ -2737,109 +2822,204 @@ export function BudgetPlanPanel({
               ))}
 
 
-              {/* Expected fundraising — one section, always after the costs, shown POSITIVE in
-                  green (owner 2026-08-13: the label says the direction; a minus sign made readers
-                  re-check arithmetic). It appears only once something is budgeted.
-                  ⚠ FUNDING LINES ONLY. This section's total must equal the ladder's "Expected
-                  funding" row — same words, same number. Player dues sat inside it briefly and
-                  made the section total −$8,000 while the ladder said −$180 (owner catch,
-                  2026-08-13); dues are the ANSWER to the plan, not an input, so they close the
-                  list below instead. */}
-              {/* ⚠ ONE SECTION PER MONEY-IN KIND (2026-08-15). Fundraising and sponsorship count
-                  identically — both subtract — but a single merged section could not answer the
-                  question the split was made for: "did our sponsorship hit the number?" Each
-                  section shows only what it holds, and a team using just one sees exactly what it
-                  saw before. */}
-              {FUNDING_LINE_KINDS.map(kind => {
-                const kindLines = fundingLines.filter(l => normalizeBudgetLineKind(l.lineKind) === kind);
-                if (kindLines.length === 0) return null;
-                const sectionKey = `kind:${kind}`;
-                const sectionTotal = kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0);
-                return (
-                  <Fragment key={kind}>
-                    <tr
-                      className={`${shared.moneyGridCat} ${styles.fundingRow} ${shared.rowTappable}`}
-                      onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(sectionKey); }}
-                    >
-                      <th scope="row" className={styles.lead}>
-                        <button
-                          type="button"
-                          className={shared.moneyGridToggle}
-                          aria-expanded={!isClosed(sectionKey)}
-                          onClick={e => { e.stopPropagation(); toggleSectionClosed(sectionKey); }}
-                        >
-                          {isClosed(sectionKey)
-                            ? <ChevronRight size={14} aria-hidden />
-                            : <ChevronDown size={14} aria-hidden />}
-                          <span>{LINE_KIND_SECTION[kind]}</span>
-                        </button>
-                      </th>
-                      <td className={styles.schedCell} />
-                      <td className={styles.fundingAmount}>
-                        {fmt(Math.round(sectionTotal * 100) / 100)}
-                      </td>
-                      <td />
-                    </tr>
-                    {!isClosed(sectionKey) && kindLines.map(line => (
-                      <BudgetLineRow
-                        key={line.id}
-                        line={line}
-                        funding
-                        expanded={expandedLines.has(line.id)}
-                        canWrite={moneyCanWrite}
-                        onToggle={() => toggleLineExpanded(line.id)}
-                        onEdit={() => openEdit(line)}
-                      />
-                    ))}
-                  </Fragment>
-                );
-              })}
-
-              {/* Player installments — the players' side of the plan, once schedules exist. Its
-                  own quiet frame between the fundraising inputs and the close: the figure is the
-                  Dues tab's assessed total, display-only, never a budget line and never inside
-                  Expected fundraising (see the note above). No View-dues link — the hub's Dues
-                  tab is two inches up, the same reason the BvA foot link went (owner 08-12). */}
-              {duesAssessed > 0 && (
-                <tr className={`${shared.moneyGridCat} ${styles.fundingRow} ${styles.installmentsRow}`}>
-                  <th scope="row" className={styles.lead}>
-                    <span className={shared.moneyGridChevronSpacer} aria-hidden />
-                    <span>Player installments</span>
-                  </th>
-                  <td className={styles.schedCell} />
-                  <td className={styles.fundingAmount}>{fmt(duesAssessed)}</td>
-                  <td />
-                </tr>
-              )}
-
-              {/* ONE closing row, in the plan card's vocabulary. Before dues: what the plan asks
-                  of players (estimated), or the plain total when nothing offsets it. After dues:
-                  the residual — a planned buffer in ordinary ink, a shortfall in amber, and NO
-                  row at all when the schedules match the plan (a $0.00 close says nothing). */}
-              {duesAssessed > 0 ? (
-                Math.abs(leftToFund) >= 0.005 && (
-                  <tr className={styles.closeRow}>
+              {/* ── THE COSTS SUBTOTAL, and the estimate rows above it (owner ruling 2026-09-08,
+                  mockup e94d05d9 round 2). THE RULE: the three tiles above this table are its three
+                  subtotals, with the same names verbatim — so "Planned costs" here IS the tile's
+                  figure: the estimate when one is set, the sum of the lines when not. When an
+                  estimate is set and the lines differ, the gap gets two quiet rows ("Lines so far",
+                  then "Still to itemize" or "Over your estimate" in the tile's own red) rather than
+                  living only in a caption three inches up.
+                  ⚠ `tableTotals`, not `totals`: under the When filter these sum the rows on screen. */}
+              {(groups.length > 0 || tableTotals.estimatedTotal != null) && (
+                <>
+                  {tableTotals.hasDifference && (
+                    <>
+                      <tr className={styles.estimateRow}>
+                        <th scope="row" className={styles.lead}>{PLAN_LADDER_LABEL.linesSoFar}</th>
+                        <td className={styles.schedCell} />
+                        <td>{fmt(tableTotals.itemized)}</td>
+                        <td />
+                      </tr>
+                      <tr className={`${styles.estimateRow} ${tableTotals.overPlanned ? styles.estimateOver : ''}`}>
+                        <th scope="row" className={styles.lead}>
+                          {tableTotals.overPlanned ? PLAN_LADDER_LABEL.overEstimate : PLAN_LADDER_LABEL.stillToItemize}
+                          <span className={styles.rowNote}>
+                            Your estimate is {fmt(tableTotals.estimatedTotal ?? 0)}
+                            {moneyCanWrite && !editingSeason && (
+                              <>
+                                {' · '}
+                                <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
+                              </>
+                            )}
+                          </span>
+                        </th>
+                        <td className={styles.schedCell} />
+                        <td>{fmt(tableTotals.difference)}</td>
+                        <td />
+                      </tr>
+                    </>
+                  )}
+                  {/* ⚠ ONE NAME, ONE NUMBER. Under the When filter this sums a SLICE, and a slice may
+                      not wear the tile's name — "Costs shown" says what it is (/review, 2026-09-08). */}
+                  <tr className={shared.moneyGridTotal}>
                     <th scope="row" className={styles.lead}>
-                      {leftToFund < 0 ? 'Planned buffer' : 'Short of covering the plan'}
+                      {whenFilter === 'all' ? PLAN_LADDER_LABEL.plannedCosts : PLAN_LADDER_LABEL.costsShown}
                     </th>
                     <td className={styles.schedCell} />
-                    <td className={leftToFund > 0 ? styles.closeWarn : ''}>
-                      {fmt(leftToFund)}
-                    </td>
+                    <td>{fmt(tableTotals.totalPlanned)}</td>
+                    <td />
+                  </tr>
+                </>
+              )}
+
+              {/* ── FUNDING — the band, one section per money-in kind, the subtotal.
+                  Money in is shown POSITIVE in green (owner 2026-08-13: the label says the
+                  direction; a minus sign made readers re-check arithmetic).
+                  ⚠ ONE SECTION PER MONEY-IN KIND (2026-08-15). Fundraising and sponsorship count
+                  identically — both subtract — but a single merged section could not answer the
+                  question the split was made for: "did our sponsorship hit the number?"
+                  ⚠ FUNDING LINES ONLY. Player dues are the ANSWER to the plan, not an input — they
+                  briefly sat inside this section and made its total −$8,000 while the ladder said
+                  −$180 (owner catch, 2026-08-13); they close the list below instead.
+                  ⚠ The subtotal wears the tile's exact name, "Planned funding" (owner ruling
+                  2026-09-08) — "funding", not "fundraising", because it aggregates every kind. */}
+              {fundingLines.length > 0 && (
+                <>
+                  <tr className={shared.moneyGridBand}>
+                    <th scope="row" className={styles.lead}>{PLAN_LADDER_LABEL.fundingBand}</th>
+                    <td className={styles.schedCell} /><td /><td />
+                  </tr>
+                  {FUNDING_LINE_KINDS.map(kind => {
+                    const kindLines = fundingLines.filter(l => normalizeBudgetLineKind(l.lineKind) === kind);
+                    if (kindLines.length === 0) return null;
+                    const sectionKey = `kind:${kind}`;
+                    const sectionTotal = kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0);
+                    return (
+                      <Fragment key={kind}>
+                        <tr
+                          className={`${shared.moneyGridCat} ${styles.fundingRow} ${shared.rowTappable}`}
+                          onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(sectionKey); }}
+                        >
+                          <th scope="row" className={styles.lead}>
+                            <button
+                              type="button"
+                              className={shared.moneyGridToggle}
+                              aria-expanded={!isClosed(sectionKey)}
+                              onClick={e => { e.stopPropagation(); toggleSectionClosed(sectionKey); }}
+                            >
+                              {isClosed(sectionKey)
+                                ? <ChevronRight size={14} aria-hidden />
+                                : <ChevronDown size={14} aria-hidden />}
+                              <span>{LINE_KIND_SECTION[kind]}</span>
+                            </button>
+                          </th>
+                          <td className={styles.schedCell} />
+                          <td className={styles.fundingAmount}>
+                            {fmt(Math.round(sectionTotal * 100) / 100)}
+                          </td>
+                          <td />
+                        </tr>
+                        {!isClosed(sectionKey) && kindLines.map(line => (
+                          <BudgetLineRow
+                            key={line.id}
+                            line={line}
+                            funding
+                            expanded={expandedLines.has(line.id)}
+                            canWrite={moneyCanWrite}
+                            onToggle={() => toggleLineExpanded(line.id)}
+                            onEdit={() => openEdit(line)}
+                          />
+                        ))}
+                      </Fragment>
+                    );
+                  })}
+                  {/* ⚠ `.fundingRow` ON THE ROW is load-bearing: the shared total treatment sets the
+                      figure's colour at (0,2,3) and a bare `.fundingAmount` (0,2,0) loses to it — the
+                      row class lifts the green to (0,3,1). /review caught this row shipping in plain
+                      ink beside green section rows (2026-09-08). Label as above: a slice is "shown". */}
+                  <tr className={`${shared.moneyGridTotal} ${styles.fundingRow}`}>
+                    <th scope="row" className={styles.lead}>
+                      {whenFilter === 'all' ? PLAN_LADDER_LABEL.plannedFunding : PLAN_LADDER_LABEL.fundingShown}
+                    </th>
+                    <td className={styles.schedCell} />
+                    <td className={styles.fundingAmount}>{fmt(tableTotals.expectedFunding)}</td>
+                    <td />
+                  </tr>
+                </>
+              )}
+
+              {/* ── THE CLOSE — the season's ladder (owner ruling 2026-09-08). Once dues exist:
+                  Costs less funding (what installments have to cover) → Player installments, wearing
+                  the tile's Scheduled tag → the residual, a planned buffer in ordinary ink, a
+                  shortfall in amber, and NO row when the schedules match the plan (a $0.00 close
+                  says nothing). Before dues exist the block is ONE row — the estimated installments
+                  figure, saying where it came from and what it means per player, in the tile's own
+                  words. ⚠ Only on the UNFILTERED plan: a slice has no shortfall (see `tableTotals`).
+                  ⚠ Player installments lost the category ground and the green figure here: it is an
+                  INPUT to the ladder now, not a section a coach can open. */}
+              {whenFilter === 'all' && (
+                duesAssessed > 0 ? (
+                  <>
+                    {totals.fundingLineCount > 0 && (
+                      <tr className={`${styles.ladderRow} ${styles.ladderGap}`}>
+                        <th scope="row" className={styles.lead}>
+                          {PLAN_LADDER_LABEL.costsLessFunding}
+                          <span className={styles.rowNote}>{PLAN_LADDER_LABEL.costsLessFundingNote}</span>
+                        </th>
+                        <td className={styles.schedCell} />
+                        {/* `fundedByPlayers`, not a fresh subtraction: the same figure the tile prints
+                            as the Estimated installments, floored at zero — so an over-funded plan
+                            reads $0.00 here and in the file alike, never a sign the screen's absolute
+                            formatter would have hidden (/review, 2026-09-08). */}
+                        <td>{fmt(totals.fundedByPlayers)}</td>
+                        <td />
+                      </tr>
+                    )}
+                    <tr className={`${styles.ladderRow} ${totals.fundingLineCount > 0 ? '' : styles.ladderGap}`}>
+                      <th scope="row" className={styles.lead}>
+                        {PLAN_LADDER_LABEL.installments}
+                        <span className={`${styles.planBadgeOff} ${styles.ladderBadge}`}>Scheduled</span>
+                      </th>
+                      <td className={styles.schedCell} />
+                      <td>{fmt(duesAssessed)}</td>
+                      <td />
+                    </tr>
+                    {Math.abs(leftToFund) >= 0.005 && (
+                      <tr className={styles.closeRow}>
+                        <th scope="row" className={styles.lead}>
+                          {leftToFund < 0 ? PLAN_LADDER_LABEL.buffer : PLAN_LADDER_LABEL.shortOfPlan}
+                        </th>
+                        <td className={styles.schedCell} />
+                        <td className={leftToFund > 0 ? styles.closeWarn : ''}>
+                          {fmt(leftToFund)}
+                        </td>
+                        <td />
+                      </tr>
+                    )}
+                  </>
+                ) : (
+                  <tr className={styles.closeRow}>
+                    <th scope="row" className={styles.lead}>
+                      {PLAN_LADDER_LABEL.installments}
+                      <span className={`${styles.planBadgeEst} ${styles.ladderBadge}`}>Estimated</span>
+                      <span className={styles.rowNote}>
+                        {totals.fundingLineCount > 0 ? PLAN_LADDER_LABEL.costsLessFunding : PLAN_LADDER_LABEL.plannedCosts}, until dues are set
+                        {totals.perPlayer != null && <> · ≈ {fmt(totals.perPlayer)} per player ÷ {totals.rosterCount}</>}
+                        {moneyCanWrite && allLines.length > 0 && (
+                          <>
+                            {' · '}
+                            <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                              set dues for all players
+                            </button>
+                          </>
+                        )}
+                      </span>
+                    </th>
+                    <td className={styles.schedCell} />
+                    <td>{fmt(totals.fundedByPlayers)}</td>
                     <td />
                   </tr>
                 )
-              ) : (
-                <tr className={styles.closeRow}>
-                  <th scope="row" className={styles.lead}>
-                    {totals.fundingLineCount > 0 ? 'Player installments (estimated)' : 'Total planned budget'}
-                  </th>
-                  <td className={styles.schedCell} />
-                  <td>
-                    {fmt(totals.fundingLineCount > 0 ? totals.fundedByPlayers : totals.totalPlanned)}
-                  </td>
-                  <td />
-                </tr>
               )}
               </tbody>
             </table>

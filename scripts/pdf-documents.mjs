@@ -702,7 +702,15 @@ export async function buildDocuments() {
         { itemName: 'Chocolate Sale', description: 'Chocolate Sale', lineKind: 'funding', totalAmount: 1800, notes: null, periods: [] },
         { itemName: 'Hometown Sports Shop', description: 'Hometown Sports Shop', lineKind: 'sponsorship', totalAmount: 1500, notes: null, periods: [] },
       ],
-      totals: { totalPlanned: 13200, fundedByPlayers: 9900, fundingLineCount: 2 },
+      // The screen's own totals shape (lib/coach-budget-totals BudgetTotals). ⚠ This file is not
+      // typechecked, so a widened contract is invisible here: the 2026-09-08 ladder read
+      // `expectedFunding` for the Planned funding row and this fixture, still three fields, printed
+      // an em-dash for it (/review). Keep every field the builder reads.
+      totals: {
+        totalPlanned: 13200, fundedByPlayers: 9900, fundingLineCount: 2,
+        itemized: 13200, expectedFunding: 3300,
+        estimatedTotal: null, difference: 0, hasDifference: false, overPlanned: false,
+      },
       duesAssessed: 0,
       leftToFund: 9900,
     });

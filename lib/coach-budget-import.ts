@@ -2,6 +2,7 @@ import { getCell } from './import/tabular.ts';
 import type { ParsedImportFile } from './import/types.ts';
 import type { XlsxOptions, XlsxColumnChoice, XlsxColumnFlag, XlsxGuideLine } from './export/xlsx.ts';
 import { formatMonthLabel, type MonthKey } from './coach-budget-months.ts';
+import { PLAN_LADDER_LABEL } from './coach-budget-totals';
 
 /**
  * Spreadsheet intake for the coach's budget (Coach Portal chunk H2).
@@ -187,8 +188,28 @@ export function parseMonthHeader(header: string, carriedYear: number): { month: 
   return { month: `${year}-${String(idx + 1).padStart(2, '0')}`, year };
 }
 
-/** Rows the app's own export adds that are derived, not data. */
-const DERIVED_ROW_LABELS = new Set(['total', 'money in', 'money out', 'running balance', 'grand total']);
+/**
+ * Rows the app's own export adds that are derived, not data.
+ *
+ * ⚠ THE PLAN'S LADDER ROWS ARE READ FROM `PLAN_LADDER_LABEL`, NEVER RETYPED (/review, 2026-09-08).
+ * The statement export gained subtotals, a closing ladder and two estimate rows ("Lines so far",
+ * "Still to itemize"); an importer that did not know those words would have re-imported the
+ * team's own file with two phantom budget LINES worth the itemized sum and the estimate gap. Every
+ * label the ladder prints is skipped here by construction, so a new ladder word cannot be born
+ * without the importer learning it. The two band headings ("Costs", "Funding") are deliberately NOT
+ * in this set — a coach may legitimately own a category by either name, and as non-indented rows
+ * they only ever act as a category name that the next real category row replaces before any line
+ * attaches. "Total planned budget" is the retired close, kept so a file exported before 2026-09-08
+ * still reads back clean.
+ */
+const PLAN_LADDER_DERIVED = Object.entries(PLAN_LADDER_LABEL)
+  .filter(([key]) => key !== 'costsBand' && key !== 'fundingBand' && key !== 'costsLessFundingNote')
+  .map(([, label]) => label.toLowerCase());
+const DERIVED_ROW_LABELS = new Set([
+  'total', 'money in', 'money out', 'running balance', 'grand total',
+  'total planned budget',
+  ...PLAN_LADDER_DERIVED,
+]);
 
 function isDerivedRow(label: string): boolean {
   return DERIVED_ROW_LABELS.has(label.trim().toLowerCase().replace(/^[—–-]\s*/, ''));

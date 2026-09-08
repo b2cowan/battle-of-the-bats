@@ -889,10 +889,10 @@ export default function GenerateInstallmentsModal({
                     <span className={`${styles.basisMath} ${disabled ? styles.basisMathStop : ''}`}>
                       {option.unavailable ?? (
                         key === 'budget'
-                          // "expected funding" — the aggregate of every money-in kind, not just
+                          // "planned funding" — the aggregate of every money-in kind, not just
                           // fundraising (the per-kind section names stay on the plan itself).
-                          ? `${fmt(totals.itemized)} line items${totals.expectedFunding > 0 ? ` − ${fmt(totals.expectedFunding)} expected funding` : ''} ÷ ${rosterCount} players`
-                          : `${fmt(totals.estimatedTotal ?? 0)} estimate${totals.expectedFunding > 0 ? ` − ${fmt(totals.expectedFunding)} expected funding` : ''} ÷ ${rosterCount} players`
+                          ? `${fmt(totals.itemized)} line items${totals.expectedFunding > 0 ? ` − ${fmt(totals.expectedFunding)} planned funding` : ''} ÷ ${rosterCount} players`
+                          : `${fmt(totals.estimatedTotal ?? 0)} estimate${totals.expectedFunding > 0 ? ` − ${fmt(totals.expectedFunding)} planned funding` : ''} ÷ ${rosterCount} players`
                       )}
                     </span>
                   </label>

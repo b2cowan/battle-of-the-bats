@@ -1,0 +1,533 @@
+<title>The Plan Adds Up</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.rowtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:2px 0}
+.rowtable th,.rowtable td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rowtable th{font-family:var(--disp);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.rowtable td:first-child,.rowtable th:first-child{text-align:left}
+.rowtable tr.sum td{border-top:2px solid var(--rule-strong);font-weight:600}
+.scrollx{overflow-x:auto}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §156 · Coaches portal → Money → Budget</p>
+  <h1>The plan adds up</h1>
+  <p class="lede">The Budget plan now reads top to bottom as arithmetic: <b>Costs</b> closing on
+    <b>Planned costs</b>, <b>Funding</b> closing on <b>Planned funding</b>, then <b>Costs less funding
+    → Player installments → Short of covering the plan</b>. The tiles above the table carry the same
+    three names as its subtotals. The word "expected" is gone. Every figure below is the UAT team's;
+    if one has moved, <b>check the sum, not the digits</b> — the identities are the test.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b> → <b>Budget</b>. Part G visits
+    <b>Player Dues → Set dues for all players</b>; Part H the help search.</p>
+  <div class="warn"><b>Restart the dev server first.</b> Three shared modules changed (the plan's
+    words, the period-grid maths, the exports). And <b>another session shares this working copy</b>
+    — if a figure is off, check whether the whole plan moved under us before recording a defect.</div>
+  <div class="tip"><b>The identities.</b> 8,400 + 1,200 + 1,521 + 2,500 = <b>13,621</b> ·
+    1,800 + 150 = <b>1,950</b> · 13,621 − 1,950 = <b>11,671</b> · 11,671 − 11,308.30 = <b>362.70</b>.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The List adds up</h2>
+  <p>Budget → View <b>List</b>, When <b>All</b>. Read the table top to bottom once before ticking anything.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>Two bands, bare nouns</h3></div></div>
+  <div class="step-body">
+    <p class="why">Above Facilities there is a tinted olive heading row reading <b>COSTS</b>; above
+      Fundraising another reading <b>FUNDING</b>. Neither carries a figure. They are the same band
+      Budget vs. Actual uses for Revenue / Expenses.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a"><b>COSTS</b> band above the first category, <b>FUNDING</b> band above the first money-in row, both with room above them<span class="hintline">A band that reads as one more category row is the defect the gutter exists to prevent</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">The money-in rows read <b>Fundraising</b> and <b>Other income</b> — no "Expected" in front of either</label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Both money-in rows still open on their chevron and their figures are still green</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>The subtotals wear the tiles' names</h3></div></div>
+  <div class="step-body">
+    <p class="why">Under Tournaments a heavier row with a 2px cap reads <b>Planned costs $13,621.00</b>.
+      Under Other income, <b>Planned funding $1,950.00</b> in green. The tiles at the top of the tab
+      say exactly the same two things.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a"><b>Planned costs $13,621.00</b> closes the Costs band and equals the first tile</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b"><b>Planned funding $1,950.00</b> closes the Funding band, in green, and equals the second tile<span class="hintline">The second tile used to say "Expected funding"</span></label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">Say it aloud: the four category figures add to 13,621 and the two money-in figures add to 1,950, without a calculator</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>The ladder</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Three rows close the table. The first opens with the same 2px cap a subtotal wears.</p>
+    <div class="scrollx"><table class="rowtable">
+      <tr><th>Row</th><th>Reads</th><th>Figure</th></tr>
+      <tr><td>Costs less funding</td><td>sub-line "What player installments need to cover"</td><td>$11,671.00</td></tr>
+      <tr><td>Player installments</td><td>green outlined <b>Scheduled</b> tag beside the label</td><td>$11,308.30</td></tr>
+      <tr class="sum"><td>Short of covering the plan</td><td>amber figure, heaviest row</td><td>$362.70</td></tr>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">The three rows read exactly as above, in that order</label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b"><b>Player installments</b> has NO tinted ground and its figure is in ordinary ink — it no longer looks like a section<span class="hintline">It used to wear the category tint and a green figure; it is an input to the ladder now</span></label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">13,621 − 1,950 = 11,671 and 11,671 − 11,308.30 = 362.70, both readable from the rows above without leaving the table</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><div class="step-t"><h3>Folding still folds only what folds</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a4a"><label for="a4a"><b>Collapse all</b> closes every category and both money-in sections; the two bands, both subtotals and the three ladder rows all stay</label></div>
+      <div class="chk"><input type="checkbox" id="a4b"><label for="a4b"><b>Expand all</b> brings the lines back; the subtotals do not move</label></div>
+      <div class="chk"><input type="checkbox" id="a4c"><label for="a4c">Tapping a line's pencil still opens its edit form; tapping a band row does nothing</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The word is gone</h2>
+  <p>Everywhere on the tab a coach reads the plan's vocabulary.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Nothing on the Budget tab says "Expected"</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Tiles read <b>Planned costs · Planned funding · Player installments</b></label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b"><b>Add Line</b> → "Money coming in" → pick <b>Fundraising</b> → any item: the sentence under the item begins <b>"Fundraising lowers what players are asked to pay"</b> (not "Expected fundraising…")</label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">Cancel the form. Ctrl-F the tab for "expected": zero hits</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The When filter</h2>
+  <p>A filtered list adds up to its own subtotals; the season's close steps aside.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>Show just the undated lines</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Under the toolbar, "<b>3 lines</b> have no date. <b>Show just those</b>". Tap it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">Only the undated lines and their categories remain, and the Costs band closes on <b>Costs shown</b> — the sum of the rows you can see (not 13,621), and not the tile's name<span class="hintline">A slice may not borrow the tile's name: one name, one number</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">The <b>Funding</b> band shows only if an undated money-in line exists; if it does, it closes on <b>Funding shown</b>, equal to the rows shown</label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c"><b>Costs less funding, Player installments and Short of covering the plan are absent</b> while the filter is on — the tiles above still say $362.70 short<span class="hintline">A slice of the plan has no shortfall. This is a build-time call; flag it if you would rather the ladder stayed</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1d"><label for="c1d"><b>Show the whole plan</b> brings everything back exactly as Part A</label></div>
+      <div class="chk"><input type="checkbox" id="c1e"><label for="c1e">With the filter still on, <b>Export</b> → Excel: the file carries the <b>whole plan</b>, not the slice — Planned costs 13,621, Planned funding 1,950, the ladder<span class="hintline">A filter is a working view; the file is the record. Found by /review — the first cut exported season subtotals over a slice of rows</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>By period gets the same bones</h2>
+  <p>View <b>By period</b>, Columns <b>Months</b>.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Bands and subtotals, column by column</h3></div></div>
+  <div class="step-body">
+    <div class="scrollx"><table class="rowtable">
+      <tr><th>Row</th><th>No date yet</th><th>Jan</th><th>Mar</th><th>Apr</th><th>Total</th></tr>
+      <tr><td>Planned costs</td><td>1,621</td><td>2,033</td><td>2,234</td><td>3,500</td><td>13,621</td></tr>
+      <tr><td>Planned funding (green)</td><td>150</td><td>—</td><td>900</td><td>900</td><td>1,950</td></tr>
+      <tr class="sum"><td>Costs less funding</td><td>1,471</td><td>2,033</td><td>1,334</td><td>2,600</td><td>11,671</td></tr>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a"><b>COSTS</b> band above Facilities, <b>FUNDING</b> band above Fundraising, each with empty cells right across</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b"><b>Planned costs</b> row under Tournaments ties per column: March 1,734 + 500 = 2,234; April 3,200 + 300 = 3,500</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c"><b>Planned funding</b> row under Other income, green, positive: No date yet 150, March 900, April 900, Total 1,950</label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d"><b>Costs less funding</b> is unchanged from before and equals Planned costs − Planned funding in every column</label></div>
+      <div class="chk"><input type="checkbox" id="d1e"><label for="d1e">Columns <b>Quarters</b>: the same three rows, quarter by quarter; Collapse all still folds only the groups</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>The files follow the screen</h2>
+  <p><b>Export</b> from each view. An export's shape is its screen's shape.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>List → Excel and PDF</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">Excel rows in order: <b>COSTS</b> · the four categories with their lines · <b>Planned costs</b> 13,621 · <b>FUNDING</b> · Fundraising · Other income · <b>Planned funding</b> 1,950 · <b>Costs less funding</b> 11,671 · <b>Player installments</b> 11,308.30 · <b>Short of covering the plan</b> 362.70</label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">The two band rows are bold, UPPERCASE and carry no figure — the same convention as REVENUE / EXPENSES in the Budget vs. Actual file; the Costs less funding row's note reads "What player installments need to cover"</label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">The PDF prints the same rows in the same order; the two band rows show a <b>blank</b> money cell, not a dash</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>By period → Excel</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Rows: <b>COSTS</b> · categories · <b>Planned costs</b> · <b>FUNDING</b> · Fundraising · Other income · <b>Planned funding</b> · <b>Costs less funding</b>, with the same per-month figures as D1</label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">Planned funding cells are positive (150 / 900 / 900); Costs less funding keeps its real subtraction</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>Phone</h2>
+  <p>Open the Budget tab on a phone, or DevTools at 390 wide. List view.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>The ladder at 390px</h3><div class="tags"><span class="tag phone">Phone</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">Both bands and both subtotals read in the pinned first column; nothing new scrolls sideways</label></div>
+      <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">The <b>Scheduled</b> tag sits UNDER "Player installments", not beside it, and the figure column holds still</label></div>
+      <div class="chk"><input type="checkbox" id="f1c"><label for="f1c">Every row, ladder rows included, is at least the height of a fingertip — the category rows' chevrons still clear 44px</label></div>
+      <div class="chk"><input type="checkbox" id="f1d"><label for="f1d">By period at 390: the band rows still read in the pinned column while you swipe the months</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>The set-dues window</h2>
+  <p>Player Dues → <b>Set dues for all players</b> (or the same door in the Budget tab's caption).</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>The arithmetic line says planned funding</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g1a"><label for="g1a">Under <b>Split the budget evenly</b>: "<b>$13,621.00 line items − $1,950.00 planned funding ÷ 12 players</b>"</label></div>
+      <div class="chk"><input type="checkbox" id="g1b"><label for="g1b">Cancel without saving. Nothing else in the window changed</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART H ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>Help, and the neighbours that must not move</h2>
+</div>
+<div class="steps">
+
+<article class="step" data-step="H1">
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>Help search finds the new word</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">Coach help → search <b>planned funding</b>: the budget article appears, and its definition is titled <b>Planned funding</b></label></div>
+      <div class="chk"><input type="checkbox" id="h1b"><label for="h1b">The definition names the three kinds as <b>fundraising</b>, <b>sponsorship</b> and <b>other income</b></label></div>
+      <div class="chk"><input type="checkbox" id="h1c"><label for="h1c"><b>Budget vs. Actual</b> is untouched: Revenue / Expenses bands, Sponsorship still its own row under Revenue</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART I ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part I</p>
+  <h2>Two states this fixture cannot show</h2>
+  <p>The UAT team has dues set and no season estimate. Both states below are pinned by unit tests on
+    the export builders; tick them from a team that has them, or record that you accepted the tests.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="I1">
+  <div class="step-head"><span class="num">I1</span><div class="step-t"><h3>Before dues are set, and with an estimate</h3><div class="tags"><span class="tag think">Optional</span></div></div></div>
+  <div class="step-body">
+    <div class="ask"><b>Needs a team with no dues schedule, or one with a season estimate.</b> If you have neither to hand, tick the last box and move on.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i1a"><label for="i1a">No dues: the table closes on ONE row, <b>Player installments</b> with a dashed amber <b>Estimated</b> tag, captioned "Costs less funding, until dues are set · ≈ $X per player ÷ N · set dues for all players"</label></div>
+      <div class="chk"><input type="checkbox" id="i1b"><label for="i1b">Estimate set and larger than the lines: under the last category, <b>Lines so far</b> and <b>Still to itemize</b> (with "Your estimate is $X · Edit"), then <b>Planned costs</b> = the estimate. Switch to By period: the cost subtotal there reads <b>Lines so far</b>, not Planned costs, and a footnote says the estimate has no dates<span class="hintline">One name, one number — found by /review</span></label></div>
+      <div class="chk"><input type="checkbox" id="i1c"><label for="i1c">Lines over the estimate: the second row reads <b>Over your estimate</b> in red</label></div>
+      <div class="chk"><input type="checkbox" id="i1d"><label for="i1d">Not walked here — accepted on the unit tests</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Everything you ticked, flagged and wrote, as text. <b>Copy findings</b> puts it on the clipboard; paste it back into the chat.</p>
+  <textarea class="out" id="out" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §156</span><span>Built on dev 2026-09-08</span><span>Mockup of record: artifact e94d05d9 round 2</span><span>Plan: COACH_BUDGET_PLAN_LADDER_PLAN.md</span>
+</footer>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast"></span></div>
+</div>
+
+<script>
+(function(){
+  var KEY='fl-qa-156-budget-ladder';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('.step textarea'));
+  var out=document.getElementById('out');
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v){ st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); }); }
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §156 — Coach Budget Plan: the plan adds up','Fixture: UAT Test Team · built on dev 2026-09-08',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var hint=lab.querySelector('.hintline');
+        var txt=lab.textContent;
+        if(hint) txt=txt.replace(hint.textContent,'');
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt.replace(/\s+/g,' ').trim());
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

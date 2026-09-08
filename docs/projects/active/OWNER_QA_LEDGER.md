@@ -19645,3 +19645,80 @@ screens and the platform-admin Email board is not one of them (asked the script,
 server restarted 2026-09-07 after the shared-module changes; the offer-bar walk was re-run against it,
 34/34.
 
+
+## §156 · The plan adds up — the Budget plan gains Costs and Funding bands, subtotals that wear the tiles' names, and a closing ladder; the word "expected" leaves the plan — BUILT 2026-09-08 on `dev`, awaiting QA · walk artifact `b0baf8b4` · mockup artifact `e94d05d9` (round 2 is the picture)
+
+**Plan:** `COACH_BUDGET_PLAN_LADDER_PLAN.md` (+ `_PM_BRIEF.md`). **Decision records:** Business Decisions
+Log 2026-09-08 ("expected" retired; one qualifier, Planned) · design log 2026-09-08 (bands, subtotals,
+ladder). No migration.
+**Walk:** https://claude.ai/code/artifact/b0baf8b4-db04-4221-9a49-4c9cd57fef61 — 33 checks, nine parts
+(A the List adds up · B the word is gone · C the When filter · D By period · E the files · F phone ·
+G the set-dues window · H help + Budget vs. Actual untouched · I two states the fixture cannot show).
+Source `COACH_BUDGET_PLAN_LADDER_WALK.html`.
+
+**Where it came from.** The owner's screenshot of the plan: *"with no grouping or subtotals it doesn't
+read like x + y = plan expected over/under … users are left to mentally sum up lots of rows."* The
+recorded reasons for the old shape (dues are the plan's answer, not an input; over/under wording is a
+Budget vs. Actual problem) all explained why there is no *Revenue* band; none explained why there was
+no *subtotal*. Mockup round 1 drew bands + subtotals vs. subtotals alone; the owner chose the bands
+and, in round 2, retired "expected": *"technically everything here is planned/expected, so throwing
+that on any item rows does seem redundant."*
+
+**What it is.** THE RULE: the three tiles above the table are the table's three subtotals, same names
+verbatim — **Planned costs · Planned funding · Player installments**. List and By-period grid both
+split into a **COSTS** band (closing on Planned costs) and a **FUNDING** band (closing on Planned
+funding), using the statement's own band and total recipes. The List's close is a ladder: **Costs
+less funding** (sub-line "What player installments need to cover") → **Player installments** with
+the tile's Scheduled tag, restyled off the category tint → **Short of covering the plan** / Planned
+buffer / no row when equal. Before dues exist: one row, Player installments [Estimated], captioned
+"Costs less funding, until dues are set". A season estimate that differs from the lines gets *Lines
+so far* + *Still to itemize* / *Over your estimate* under the last category. Kind rows read
+Fundraising · Sponsorship · Other income. Both exports follow the screen (bands as bold section
+rows). The set-dues window's arithmetic line, the line form's consequence sentences, the PDF report
+note and five help articles (+ keyword arrays) all say "planned funding".
+
+**Two build-time calls, open to this walk:** subtotals always render when their band does (stable
+shape; the tile's name is always in the table); the season's close steps aside under the When filter,
+where the subtotals sum the SHOWN rows (C1 — flag it if you would rather the ladder stayed).
+**Deliberately not done:** installments are not spread into the By-period grid (BvA → Months' job);
+the add-a-line form's "Money the team spends / Money coming in" and BvA's "Revenue / Expenses" are
+untouched — the hub now carries three direction vocabularies, logged for `/strategy` as one question.
+
+**Verification on dev, 2026-09-08:** full unit suite 3231/3231 (the two builders' subtotals asserted
+as numbers, not labels); `npm run typecheck` clean; `lint:focused` 0 errors; spelling gate ✓;
+dead-selector gate ✓; `check-demos` both worlds presentable; `verify-changed` warnings only,
+all pre-existing. Dev server restarted with a fresh cache after the shared-module edits. ⚠ Part I
+(pre-dues close; estimate rows) has no fixture on the UAT team — pinned by the export unit tests.
+
+**⚠ `/review` ran 2026-09-08 (high-risk tier: three shared modules; four lenses — correctness,
+regression/blast-radius, CSS cascade, export contract) and found NINE real things, all fixed and
+re-verified before this walk.** The two that mattered most were in the FILE, not on the screen:
+(1) the estimate rows ("Lines so far", "Still to itemize") were written to Excel as indented ITEMS, so
+they sat one outline level down and HIDDEN inside the last category's collapsed group; (2) the importer,
+reading that same indent, would have re-imported the team's own export with two phantom budget lines
+worth the itemized sum and the estimate gap — the file's own docstring promises a clean round trip.
+Both closed: a level-0 `plain` row kind for the estimate rows, and every ladder word skipped by the
+importer BY CONSTRUCTION (its derived-row set now reads `PLAN_LADDER_LABEL`), with a round-trip unit
+test pinning it. (3) The List's new "Planned funding" subtotal shipped in plain ink beside green section
+rows — `.fundingAmount` at (0,2,0) lost to the shared total treatment at (0,2,3), the exact cascade trap
+the stylesheet documents; the row now carries `.fundingRow`. (4) **One name, two numbers:** the By-period
+grid's cost subtotal read "Planned costs" while showing the itemized sum, whereas the List's "Planned
+costs" is the ESTIMATE when one is set — the rule that grid's closing row has carried since 2026-08-13.
+The grid now reads **"Lines so far"** whenever an estimate is set and differs, and its footnote says why
+(an estimate has no dates). (5) A filtered List exported season subtotals over a slice of category rows;
+the file is now always the whole plan. (6) Under the When filter the on-screen subtotals sum the SHOWN
+rows and may not borrow the tiles' names either — they read **"Costs shown" / "Funding shown"**.
+(7) "Costs less funding" was signed in the file and absolute on screen; both now print the floored
+figure the tile prints as the Estimated installments. (8) The PDF exhibit fixture (`scripts/`, not
+typechecked) still passed the old three-field totals and printed an em-dash for Planned funding. (9) Band
+rows printed a dash in the PDF's money column and lower-case names in the file; they are now UPPERCASE
+(the statement export's REVENUE / EXPENSES convention) with a blank money cell. **The rendered check
+caught a tenth:** the grid's heading row carried an inert sticky rule that only began "sticking to
+nothing" once the bands made the grid taller than a 780px phone — sixteen new findings at 361 wide,
+cancelled the way the List's was (`top: auto`; non-pin cells static). Not deep-verified: nothing — every
+finding was adjudicated against the code in the main loop.
+
+**Gates after the fixes (2026-09-08):** typecheck clean · lint 0 errors · unit suite green (153 in the
+affected files; full run recorded below) · `verify:changed` ✓ · rendered check on both Budget screens: no
+new findings · `check:pdf` 23 documents, 98 files read back ✓. The walk's Parts C1 and E1/E2 were updated
+to the reviewed words (Costs shown / Funding shown; COSTS / FUNDING in the file).

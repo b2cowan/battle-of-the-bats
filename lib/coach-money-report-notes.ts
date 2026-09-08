@@ -242,7 +242,7 @@ export function monthGridNotes(input: MonthGridNoteInput): ReportNote[] {
   if (lens === 'budget') {
     out.push(note('basis-budget', [
       { text: 'Budget is your plan', bold: true },
-      { text: ', not your bills — the dues installments you set, your expected funding, and the months you gave your costs.' },
+      { text: ', not your bills — the dues installments you set, your planned funding, and the months you gave your costs.' },
       ...(input.budgetUndated
         ? [{ text: ` ${input.budgetUndated} with no date yet is in the Total and in no month.` }]
         : []),

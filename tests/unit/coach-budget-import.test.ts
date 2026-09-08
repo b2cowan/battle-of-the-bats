@@ -171,6 +171,37 @@ describe('rowsFromList', () => {
     assert.equal(rows[1].notes, 'includes hats');
     assert.equal(rows[2].amount, '1200');
   });
+
+  it('reads the plan\'s own statement export back as lines only — bands, subtotals, estimate rows and the ladder are not money', () => {
+    // The shape budgetPlanStatementRows writes since 2026-09-08, in the combined-column form the
+    // CSV carries. ⚠ /review caught the first cut re-importing "Lines so far" and "Still to
+    // itemize" as two phantom cost lines worth the itemized sum and the estimate gap; every ladder
+    // word is now skipped by construction (DERIVED_ROW_LABELS reads PLAN_LADDER_LABEL). The band
+    // headings are deliberately NOT skipped — a coach may own a category called Costs — and as
+    // non-indented rows they act only as a category name the next real category replaces.
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['COSTS', '', ''],
+      ['Tournaments', '2500', ''],
+      ['Entry Fees', '2500', ''],
+      ['Lines so far', '2500', ''],
+      ['Still to itemize', '500', 'Your estimate is $3,000.00'],
+      ['Planned costs', '3000', ''],
+      ['FUNDING', '', ''],
+      ['Fundraising', '1800', ''],
+      ['Chocolate Sale', '1800', ''],
+      ['Planned funding', '1800', ''],
+      ['Costs less funding', '1200', 'What player installments need to cover'],
+      ['Player installments', '1100', 'What players are scheduled to pay'],
+      ['Short of covering the plan', '100', ''],
+      // The close a file exported before 2026-09-08 carried — still skipped.
+      ['Total planned budget', '2500', ''],
+    ], [2, 8]);
+    const rows = rowsFromList(file);
+    assert.deepEqual(rows.map(r => [r.categoryName, r.lineName, r.amount]), [
+      ['Tournaments', 'Entry Fees', '2500'],
+      ['Fundraising', 'Chocolate Sale', '1800'],
+    ]);
+  });
 });
 
 describe('rowsFromPayables', () => {

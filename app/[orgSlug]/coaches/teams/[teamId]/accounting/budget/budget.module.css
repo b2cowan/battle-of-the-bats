@@ -1889,3 +1889,59 @@
     --scrollx-pin-gutter: 0.75rem;
   }
 }
+
+/* ── The ladder (owner ruling 2026-09-08, mockup e94d05d9 round 2) ─────────────────────────────
+   The plan adds up on the page: a COSTS band closing on "Planned costs", a FUNDING band closing on
+   "Planned funding" — both the shared `.moneyGridBand` / `.moneyGridTotal` recipes, nothing new to
+   remember — then the close as a ladder: Costs less funding, Player installments, Short of covering
+   the plan. The two ladder INPUT rows take the category's weight on a plain ground: they are
+   neither a section (no tint, nothing to open) nor a total (no cap), and the first of them opens
+   the block with the same 2px cap a total wears so the close reads as its own group.
+   ⚠ (0,2,3) on purpose — `.moneyGrid tbody th` (0,1,2) sets size and weight on every row heading,
+   and a bare `.ladderRow th` would lose them: the exact cascade collision `.closeRow` records. */
+.planTable tbody tr.ladderRow th,
+.planTable tbody tr.ladderRow td {
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--text-primary);
+}
+.planTable tbody tr.ladderRow td { font-size: var(--money-catnum-size); }
+.planTable tbody tr.ladderGap th,
+.planTable tbody tr.ladderGap td {
+  box-shadow: inset 0 2px 0 var(--home-line-strong, var(--border-2));
+  padding-top: 0.7rem;
+}
+/* The two estimate rows under the last cost category — "Lines so far" and "Still to itemize" /
+   "Over your estimate" — are LINES, not totals: reading size, no tint, no cap. The over state takes
+   the tile's own red, the one state this screen draws in red. */
+.planTable tbody tr.estimateRow th,
+.planTable tbody tr.estimateRow td {
+  font-size: var(--money-line-size);
+  font-weight: var(--money-line-weight);
+}
+.planTable tbody tr.estimateRow.estimateOver th,
+.planTable tbody tr.estimateRow.estimateOver td { color: var(--danger-light); }
+/* The Scheduled / Estimated tag rides beside the label on a desktop and drops UNDER it on a phone,
+   so the line name never wraps into the figure column (mockup specimen 06). */
+@media (max-width: 640px) {
+  .planTable .ladderBadge {
+    display: block;
+    width: max-content;
+    margin: 0.15rem 0 0;
+  }
+}
+
+/* ── The By-period grid's heading row does not stick either, and for the same reason the List's
+   does not (see `.planTable.planTable thead th` above) — it lives inside <CoachScrollX>, whose
+   horizontal scroller is also the sticky element's containing block, so the declaration was inert
+   from the day it was written. It went unmeasured while the grid fit a phone's viewport; the two
+   bands and two subtotals (2026-09-08) made it taller than 780px at 361 wide, and the rendered
+   sweep reported sixteen headings "sticking" to a box with no vertical travel. Cancelled where it
+   cannot work, exactly as the List's was — never left declared and inert.
+   ⚠ `top: auto`, NOT `position: static`, on the first cell of each heading row: that cell is the
+   LEFT pin (the line-name column), and cancelling its position would cancel the pin with it. Every
+   other heading cell goes back to static outright. Doubled class to out-specify the shared rule
+   deterministically rather than by bundle order. The BvA month grid keeps its own copy of the inert
+   declaration and is deliberately not touched from here. */
+.periodGrid.periodGrid thead th { top: auto; }
+.periodGrid.periodGrid thead th:not(:first-child) { position: static; }

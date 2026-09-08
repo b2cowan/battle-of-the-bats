@@ -150,6 +150,11 @@ describe('unscheduled', () => {
     ], 'months');
     assert.deepEqual(view.columns.map(c => c.key), [UNSCHEDULED]);
     assert.equal(view.totals.total, 5000);
+    // No money in → no Funding band to draw (owner ruling 2026-09-08); Planned costs IS the close.
+    assert.equal(view.fundingTotals, null);
+    assert.equal(view.costTotals.total, 5000);
+    // No estimate passed → nothing to differ from.
+    assert.equal(view.estimateDiffers, false);
   });
 });
 
@@ -159,10 +164,17 @@ describe('funding', () => {
       line('a', 'Entry fees', 3000, [['2027-01-01', 3000]]),
       line('f', 'Fundraising', 1000, [['2027-01-01', 1000]], { funding: true, category: 'Fundraising' }),
     ], 'months');
-    assert.equal(view.groups[1].name, 'Expected fundraising');
+    // Bare noun (owner ruling 2026-09-08): the band above it already says Funding.
+    assert.equal(view.groups[1].name, 'Fundraising');
     assert.equal(view.groups[1].rows[0].cells['2027-01'], -1000);
     assert.equal(view.totals.cells['2027-01'], 2000);
     assert.equal(view.totals.total, 2000);
+    // The two subtotals the grid prints, built in the same pass as the close, so they add up to it
+    // column by column: Planned costs + Planned funding (signed) = Costs less funding.
+    assert.equal(view.costTotals.cells['2027-01'], 3000);
+    assert.equal(view.costTotals.total, 3000);
+    assert.equal(view.fundingTotals?.cells['2027-01'], -1000);
+    assert.equal(view.fundingTotals?.total, -1000);
   });
 
   it('lands in ONE group whatever categories its lines carry', () => {
@@ -185,7 +197,7 @@ describe('funding', () => {
     ], 'months');
     assert.deepEqual(view.groups.map(g => g.lineKind), ['cost', 'cost', 'funding']);
     // Cost categories alphabetical (the List's rule), the money-in group after them.
-    assert.deepEqual(view.groups.map(g => g.name), ['Equipment', 'Tournaments', 'Expected fundraising']);
+    assert.deepEqual(view.groups.map(g => g.name), ['Equipment', 'Tournaments', 'Fundraising']);
   });
 });
 

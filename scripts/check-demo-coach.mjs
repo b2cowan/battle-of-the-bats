@@ -243,7 +243,7 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     check(fundingLines.length === OFFSEASON_FUNDING_LINES.length
       && fundingTotal === OFFSEASON_FUNDING_LINES.reduce((s, l) => s + l.total, 0)
       && fundingLines.every(l => l.category_id),
-      `expected fundraising of $${fundingTotal.toLocaleString()} is budgeted, on a real category (stored positive — the kind carries the sign)`);
+      `planned fundraising of $${fundingTotal.toLocaleString()} is budgeted, on a real category (stored positive — the kind carries the sign)`);
 
     // Every line, funding included — the phasing rule is the planner's and applies to both kinds,
     // and the nightly re-anchor re-derives them all by sort_order without caring which is which.
