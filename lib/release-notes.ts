@@ -44,6 +44,72 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-08',
+    title: 'Money that adds up, clearer dues, and a free 2027 season',
+    highlights: [
+      {
+        category: 'new',
+        text: "Player Dues now reads left to right — what each family owes, what they've raised, what they've paid, and what's left.",
+      },
+      {
+        category: 'new',
+        text: "Fundraising and sponsorship money is recorded in one place, and every drive and sponsor names the budget line it's raising for — so it reports where you planned it.",
+      },
+      {
+        category: 'new',
+        text: 'Money the whole team raised together can now be recorded without naming a player.',
+      },
+      {
+        category: 'new',
+        text: 'A club bill a family paid themselves now counts toward what that family has contributed to their dues.',
+      },
+      {
+        category: 'new',
+        text: 'Your budget plan totals on the page — planned costs, planned funding and player installments each carry their own subtotal.',
+      },
+      {
+        category: 'new',
+        text: 'Adding a budget line asks one question instead of two: pick the word, and it decides where the money reports.',
+      },
+      {
+        category: 'new',
+        text: 'Every budget line says when the money moves, so Budget vs. Actual compares the same months on both sides.',
+      },
+      {
+        category: 'new',
+        text: 'Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 for anyone who signs up by December 31, 2026.',
+      },
+      {
+        category: 'improved',
+        text: 'Bills, club payments and fundraisers open over the list you were reading instead of on their own page, so you keep your place.',
+      },
+      {
+        category: 'improved',
+        text: 'Money figures open into the records behind them — including which sponsors made up a total.',
+      },
+      {
+        category: 'improved',
+        text: "Reports and spreadsheets carry your club's mark, an opening page explaining the figures, and the caveats behind them.",
+      },
+      {
+        category: 'improved',
+        text: 'The Player Dues sheet fits eighteen families and its total on one printed page.',
+      },
+      {
+        category: 'improved',
+        text: "Notifications sit in your own portal frame, and one you've cleared stays cleared.",
+      },
+      {
+        category: 'fixed',
+        text: 'Paying a family back no longer offers you a debt that had already been settled.',
+      },
+      {
+        category: 'fixed',
+        text: 'Grants are filed as sponsorship, so a team that budgets its sponsorship properly gets the report it expected.',
+      },
+    ],
+  },
+  {
     date: '2026-09-02',
     title: 'Simpler tags, clearer dues, and one place for bills',
     highlights: [

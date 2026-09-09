@@ -245,6 +245,11 @@
     "indexdef": "CREATE UNIQUE INDEX budget_categories_pkey ON public.budget_categories USING btree (id)"
   },
   {
+    "tablename": "budget_categories",
+    "indexname": "budget_categories_team_idx",
+    "indexdef": "CREATE INDEX budget_categories_team_idx ON public.budget_categories USING btree (team_id) WHERE (team_id IS NOT NULL)"
+  },
+  {
     "tablename": "budget_items",
     "indexname": "budget_items_category_idx",
     "indexdef": "CREATE INDEX budget_items_category_idx ON public.budget_items USING btree (category_id)"
@@ -1330,6 +1335,21 @@
     "indexdef": "CREATE UNIQUE INDEX org_venues_pkey ON public.org_venues USING btree (id)"
   },
   {
+    "tablename": "organization_billing_facts",
+    "indexname": "idx_org_billing_facts_no_card",
+    "indexdef": "CREATE INDEX idx_org_billing_facts_no_card ON public.organization_billing_facts USING btree (org_id) WHERE (card_on_file_at IS NULL)"
+  },
+  {
+    "tablename": "organization_billing_facts",
+    "indexname": "idx_org_billing_facts_no_next_season_choice",
+    "indexdef": "CREATE INDEX idx_org_billing_facts_no_next_season_choice ON public.organization_billing_facts USING btree (org_id) WHERE (next_season_plan_id IS NULL)"
+  },
+  {
+    "tablename": "organization_billing_facts",
+    "indexname": "organization_billing_facts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX organization_billing_facts_pkey ON public.organization_billing_facts USING btree (org_id)"
+  },
+  {
     "tablename": "organization_members",
     "indexname": "organization_members_invited_email_idx",
     "indexdef": "CREATE INDEX organization_members_invited_email_idx ON public.organization_members USING btree (lower(invited_email)) WHERE (status = 'invited'::text)"
@@ -1845,6 +1865,31 @@
     "indexdef": "CREATE INDEX rep_dues_payments_team_id_idx ON public.rep_dues_payments USING btree (team_id)"
   },
   {
+    "tablename": "rep_dues_payout_credits",
+    "indexname": "idx_dues_payout_credits_credit",
+    "indexdef": "CREATE INDEX idx_dues_payout_credits_credit ON public.rep_dues_payout_credits USING btree (credit_id)"
+  },
+  {
+    "tablename": "rep_dues_payout_credits",
+    "indexname": "idx_dues_payout_credits_org_team",
+    "indexdef": "CREATE INDEX idx_dues_payout_credits_org_team ON public.rep_dues_payout_credits USING btree (org_id, team_id)"
+  },
+  {
+    "tablename": "rep_dues_payout_credits",
+    "indexname": "idx_dues_payout_credits_payout",
+    "indexdef": "CREATE INDEX idx_dues_payout_credits_payout ON public.rep_dues_payout_credits USING btree (payout_id)"
+  },
+  {
+    "tablename": "rep_dues_payout_credits",
+    "indexname": "rep_dues_payout_credits_credit_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_dues_payout_credits_credit_id_key ON public.rep_dues_payout_credits USING btree (credit_id)"
+  },
+  {
+    "tablename": "rep_dues_payout_credits",
+    "indexname": "rep_dues_payout_credits_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_dues_payout_credits_pkey ON public.rep_dues_payout_credits USING btree (id)"
+  },
+  {
     "tablename": "rep_dues_payouts",
     "indexname": "idx_rep_dues_payouts_year_player",
     "indexdef": "CREATE INDEX idx_rep_dues_payouts_year_player ON public.rep_dues_payouts USING btree (program_year_id, player_id)"
@@ -1938,6 +1983,11 @@
     "tablename": "rep_fundraiser_entries",
     "indexname": "rep_fundraiser_entries_team_id_idx",
     "indexdef": "CREATE INDEX rep_fundraiser_entries_team_id_idx ON public.rep_fundraiser_entries USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_fundraisers",
+    "indexname": "idx_rep_fundraisers_budget_item",
+    "indexdef": "CREATE INDEX idx_rep_fundraisers_budget_item ON public.rep_fundraisers USING btree (budget_item_id)"
   },
   {
     "tablename": "rep_fundraisers",

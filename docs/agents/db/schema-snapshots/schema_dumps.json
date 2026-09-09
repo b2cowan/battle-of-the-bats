@@ -29778,6 +29778,24 @@
         "column_default": null
       },
       {
+        "table_name": "budget_categories",
+        "pos": 9,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "budget_categories",
+        "pos": 10,
+        "column_name": "income_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'typed'::text"
+      },
+      {
         "table_name": "budget_items",
         "pos": 1,
         "column_name": "id",
@@ -29884,6 +29902,15 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": null
+      },
+      {
+        "table_name": "budget_items",
+        "pos": 13,
+        "column_name": "actual_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'typed'::text"
       },
       {
         "table_name": "chat_message_reactions",
@@ -34035,6 +34062,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "notifications",
+        "pos": 11,
+        "column_name": "cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "observability_cron_heartbeat",
         "pos": 1,
         "column_name": "job_name",
@@ -35180,6 +35216,96 @@
       {
         "table_name": "org_venues",
         "pos": 8,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 2,
+        "column_name": "card_on_file_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 3,
+        "column_name": "card_on_file_brand",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 4,
+        "column_name": "card_on_file_last4",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 5,
+        "column_name": "next_season_plan_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 6,
+        "column_name": "next_season_billing_cycle",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 7,
+        "column_name": "next_season_chosen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 8,
+        "column_name": "next_season_subscription_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 10,
         "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -37716,6 +37842,15 @@
         "column_default": "'cost'::text"
       },
       {
+        "table_name": "rep_budget_lines",
+        "pos": 14,
+        "column_name": "split_mode",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_budget_periods",
         "pos": 1,
         "column_name": "id",
@@ -38177,6 +38312,69 @@
       {
         "table_name": "rep_dues_payments",
         "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 2,
+        "column_name": "payout_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 3,
+        "column_name": "credit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 4,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 6,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "pos": 7,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -38657,6 +38855,24 @@
         "column_name": "expected_by",
         "data_type": "date",
         "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 17,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 18,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -46540,6 +46756,13 @@
         "constraint_name": "budget_categories_org_id_fkey"
       },
       {
+        "table_name": "budget_categories",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "budget_categories_team_id_fkey"
+      },
+      {
         "table_name": "budget_items",
         "column_name": "category_id",
         "foreign_table": "budget_categories",
@@ -47415,6 +47638,13 @@
         "constraint_name": "org_venues_org_id_fkey"
       },
       {
+        "table_name": "organization_billing_facts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "organization_billing_facts_org_id_fkey"
+      },
+      {
         "table_name": "organization_members",
         "column_name": "organization_id",
         "foreign_table": "organizations",
@@ -47758,6 +47988,34 @@
         "constraint_name": "rep_dues_payments_team_id_fkey"
       },
       {
+        "table_name": "rep_dues_payout_credits",
+        "column_name": "credit_id",
+        "foreign_table": "rep_dues_credits",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payout_credits_credit_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payout_credits_org_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "column_name": "payout_id",
+        "foreign_table": "rep_dues_payouts",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payout_credits_payout_id_fkey"
+      },
+      {
+        "table_name": "rep_dues_payout_credits",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_dues_payout_credits_team_id_fkey"
+      },
+      {
         "table_name": "rep_dues_payouts",
         "column_name": "accounting_entry_id",
         "foreign_table": "accounting_entries",
@@ -47868,6 +48126,20 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_fundraiser_entries_team_id_fkey"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_fundraisers_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_fundraisers_budget_item_id_fkey"
       },
       {
         "table_name": "rep_fundraisers",
@@ -48041,14 +48313,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -48328,20 +48600,13 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
@@ -48350,6 +48615,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -50140,6 +50412,11 @@
         "indexdef": "CREATE UNIQUE INDEX budget_categories_pkey ON public.budget_categories USING btree (id)"
       },
       {
+        "tablename": "budget_categories",
+        "indexname": "budget_categories_team_idx",
+        "indexdef": "CREATE INDEX budget_categories_team_idx ON public.budget_categories USING btree (team_id) WHERE (team_id IS NOT NULL)"
+      },
+      {
         "tablename": "budget_items",
         "indexname": "budget_items_category_idx",
         "indexdef": "CREATE INDEX budget_items_category_idx ON public.budget_items USING btree (category_id)"
@@ -51225,6 +51502,21 @@
         "indexdef": "CREATE UNIQUE INDEX org_venues_pkey ON public.org_venues USING btree (id)"
       },
       {
+        "tablename": "organization_billing_facts",
+        "indexname": "idx_org_billing_facts_no_card",
+        "indexdef": "CREATE INDEX idx_org_billing_facts_no_card ON public.organization_billing_facts USING btree (org_id) WHERE (card_on_file_at IS NULL)"
+      },
+      {
+        "tablename": "organization_billing_facts",
+        "indexname": "idx_org_billing_facts_no_next_season_choice",
+        "indexdef": "CREATE INDEX idx_org_billing_facts_no_next_season_choice ON public.organization_billing_facts USING btree (org_id) WHERE (next_season_plan_id IS NULL)"
+      },
+      {
+        "tablename": "organization_billing_facts",
+        "indexname": "organization_billing_facts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX organization_billing_facts_pkey ON public.organization_billing_facts USING btree (org_id)"
+      },
+      {
         "tablename": "organization_members",
         "indexname": "organization_members_invited_email_idx",
         "indexdef": "CREATE INDEX organization_members_invited_email_idx ON public.organization_members USING btree (lower(invited_email)) WHERE (status = 'invited'::text)"
@@ -51740,6 +52032,31 @@
         "indexdef": "CREATE INDEX rep_dues_payments_team_id_idx ON public.rep_dues_payments USING btree (team_id)"
       },
       {
+        "tablename": "rep_dues_payout_credits",
+        "indexname": "idx_dues_payout_credits_credit",
+        "indexdef": "CREATE INDEX idx_dues_payout_credits_credit ON public.rep_dues_payout_credits USING btree (credit_id)"
+      },
+      {
+        "tablename": "rep_dues_payout_credits",
+        "indexname": "idx_dues_payout_credits_org_team",
+        "indexdef": "CREATE INDEX idx_dues_payout_credits_org_team ON public.rep_dues_payout_credits USING btree (org_id, team_id)"
+      },
+      {
+        "tablename": "rep_dues_payout_credits",
+        "indexname": "idx_dues_payout_credits_payout",
+        "indexdef": "CREATE INDEX idx_dues_payout_credits_payout ON public.rep_dues_payout_credits USING btree (payout_id)"
+      },
+      {
+        "tablename": "rep_dues_payout_credits",
+        "indexname": "rep_dues_payout_credits_credit_id_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_dues_payout_credits_credit_id_key ON public.rep_dues_payout_credits USING btree (credit_id)"
+      },
+      {
+        "tablename": "rep_dues_payout_credits",
+        "indexname": "rep_dues_payout_credits_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_dues_payout_credits_pkey ON public.rep_dues_payout_credits USING btree (id)"
+      },
+      {
         "tablename": "rep_dues_payouts",
         "indexname": "idx_rep_dues_payouts_year_player",
         "indexdef": "CREATE INDEX idx_rep_dues_payouts_year_player ON public.rep_dues_payouts USING btree (program_year_id, player_id)"
@@ -51833,6 +52150,11 @@
         "tablename": "rep_fundraiser_entries",
         "indexname": "rep_fundraiser_entries_team_id_idx",
         "indexdef": "CREATE INDEX rep_fundraiser_entries_team_id_idx ON public.rep_fundraiser_entries USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_fundraisers",
+        "indexname": "idx_rep_fundraisers_budget_item",
+        "indexdef": "CREATE INDEX idx_rep_fundraisers_budget_item ON public.rep_fundraisers USING btree (budget_item_id)"
       },
       {
         "tablename": "rep_fundraisers",
@@ -53806,6 +54128,12 @@
       {
         "kind": "CHECK",
         "table_name": "budget_categories",
+        "detail": "budget_categories_income_source_check",
+        "check_clause": "(income_source = ANY (ARRAY['typed'::text, 'fundraiser'::text, 'sponsor'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "budget_categories",
         "detail": "budget_categories_scope_check",
         "check_clause": "(scope = ANY (ARRAY['org'::text, 'team'::text, 'both'::text]))"
       },
@@ -53818,8 +54146,20 @@
       {
         "kind": "CHECK",
         "table_name": "budget_items",
+        "detail": "budget_items_actual_source_check",
+        "check_clause": "(actual_source = ANY (ARRAY['typed'::text, 'fundraiser'::text, 'sponsor'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "budget_items",
         "detail": "budget_items_direction_check",
         "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "budget_items",
+        "detail": "budget_items_out_is_typed_check",
+        "check_clause": "((direction = 'in'::text) OR (actual_source = 'typed'::text))"
       },
       {
         "kind": "RLS",
@@ -54375,6 +54715,24 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "organization_billing_facts",
+        "detail": "organization_billing_facts_next_season_billing_cycle_check",
+        "check_clause": "(next_season_billing_cycle = ANY (ARRAY['annual'::text, 'monthly'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_billing_facts",
+        "detail": "organization_billing_facts_next_season_plan_id_check",
+        "check_clause": "((next_season_plan_id IS NULL) OR (length(next_season_plan_id) > 0))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "organization_billing_facts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "organization_members",
         "detail": "org_members_title_length",
         "check_clause": "(char_length(title) <= 80)"
@@ -54725,7 +55083,13 @@
         "kind": "CHECK",
         "table_name": "rep_budget_lines",
         "detail": "rep_budget_lines_line_kind_check",
-        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))"
+        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text, 'other_income'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_budget_lines",
+        "detail": "rep_budget_lines_split_mode_check",
+        "check_clause": "(split_mode = ANY (ARRAY['months'::text, 'quarters'::text, 'dates'::text, 'names'::text]))"
       },
       {
         "kind": "CHECK",
@@ -54814,6 +55178,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_dues_payments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_dues_payout_credits",
+        "detail": "rep_dues_payout_credits_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_dues_payout_credits",
         "detail": "ENABLED",
         "check_clause": null
       },
