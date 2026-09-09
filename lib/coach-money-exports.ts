@@ -24,8 +24,10 @@ import {
 import { duesStatusLabel } from './dues-status';
 import { duesLadderTotals, type DuesLadder } from './dues-payments';
 import { PLAN_LADDER_LABEL, isFundingKind, type BudgetTotals } from './coach-budget-totals';
-import { categoryGroupOf, groupByCategory } from './coach-budget-rollup';
-import { whenSummary, whenSummaryText, type PeriodView } from './coach-budget-periods-view';
+import { categoryGroupOf, groupByCategory, groupByItem } from './coach-budget-rollup';
+import {
+  whenSummary, whenSummaryText, mergedSubLineName, type PeriodView,
+} from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
 import { planColumnLabel, netRowLabel, type CompareBasis } from './coach-budget-basis';
 import { noteRunsForFile, noteTextForFile, type ReportNote } from './coach-money-report-notes';
@@ -222,8 +224,12 @@ export function budgetPlanStatementRows(
       // the very next rows in the file.
       push({ item: item.itemName, schedule: '', planned: item.total, notes: '' }, 'item');
       for (const l of item.lines) {
+        /* ⚠ THE SCHEDULE, NOT THE DESCRIPTION, when there is no note (decision B2, 2026-09-09).
+           The stored description is kept synced to the ITEM's name, so this fell back to printing
+           the parent's word one row above itself — on the UAT fixture, "Entry Fees" three times in
+           one column. Same rule as the money-in half below; the two are deliberately identical. */
         push({
-          item: `  — ${l.notes || l.description}`,
+          item: `  — ${mergedSubLineName({ notes: l.notes ?? null, totalAmount: l.totalAmount, periods: l.periods.map(pd => ({ periodDate: pd.periodDate })) }).name}`,
           schedule: whenText(l.periods, l.totalAmount),
           planned: l.totalAmount,
           notes: l.notes ?? '',
@@ -257,13 +263,35 @@ export function budgetPlanStatementRows(
     for (const { ref, items: kindLines } of groupByCategory(fundingLines, categoryGroupOf, src.categoryOrder)) {
       const sectionTotal = round2(kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0));
       push({ item: ref.name, schedule: '', planned: sectionTotal, notes: '' }, 'category');
-      for (const l of kindLines) {
-        push({
-          item: `  — ${l.itemName ?? l.description}`,
-          schedule: whenText(l.periods ?? [], l.totalAmount),
-          planned: l.totalAmount,
-          notes: l.notes ?? '',
-        }, 'item');
+      /* ⚠⚠ ONE ROW PER WORD, MERGED (owner ruling 2026-09-09) — and this loop carried a defect of
+         its own, not merely an inconsistency. It printed one row per LINE while naming each by its
+         ITEM, so two money-in lines filed against one word exported as two rows with the SAME name,
+         the same schedule column and nothing to tell them apart. The cost half of this file has
+         summed them into one openable row since the 2026-08-15 ruling; `groupByItem` is that rule,
+         shared with the plan list so the file and the screen cannot say different things. */
+      for (const item of groupByItem(kindLines)) {
+        if (item.lines.length === 1) {
+          const l = item.lines[0];
+          push({
+            item: `  — ${item.itemName}`,
+            schedule: whenText(l.periods ?? [], l.totalAmount),
+            planned: l.totalAmount,
+            notes: l.notes ?? '',
+          }, 'item');
+          continue;
+        }
+        push({ item: `  — ${item.itemName}`, schedule: '', planned: item.total, notes: '' }, 'item');
+        for (const l of item.lines) {
+          /* The note names the sub-line; with no note its SCHEDULE does (decision B2). The old
+             fallback was the item's name, which printed the parent's word again one row down —
+             the same echo the screen was carrying. */
+          push({
+            item: `    — ${mergedSubLineName({ notes: l.notes ?? null, totalAmount: l.totalAmount, periods: (l.periods ?? []).map(pd => ({ periodDate: pd.periodDate, amount: pd.amount })) }).name}`,
+            schedule: whenText(l.periods ?? [], l.totalAmount),
+            planned: l.totalAmount,
+            notes: l.notes ?? '',
+          }, 'item');
+        }
       }
     }
     push({ item: L.plannedFunding, schedule: '', planned: totals.expectedFunding, notes: '' }, 'total');

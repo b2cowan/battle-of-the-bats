@@ -16,7 +16,10 @@ import { monthKeyOf, monthYearBands, periodRangeLabel, MONTH_WINDOW } from '@/li
 import ColumnPager from '@/components/coaches/ColumnPager';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import { todayLocal } from '@/lib/measurable-format';
-import { rollupBudget, categoryGroupOf, groupByCategory, type CategoryGroupRef } from '@/lib/coach-budget-rollup';
+import {
+  rollupBudget, categoryGroupOf, groupByCategory, groupByItem,
+  type CategoryGroupRef,
+} from '@/lib/coach-budget-rollup';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
   BUDGET_PLAN_COLUMNS, budgetPlanStatementRows, budgetPeriodGridColumns, budgetPeriodGridRows,
@@ -33,7 +36,7 @@ import {
 } from '@/lib/coach-budget-totals';
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
-  buildPeriodView, whenSummary, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
+  buildPeriodView, whenSummary, mergedSubLineName, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
   type PeriodGranularity,
 } from '@/lib/coach-budget-periods-view';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
@@ -376,7 +379,7 @@ function WhenChip({ line, className, onToggle }: {
 }
 
 function BudgetLineRow({
-  line, expanded, funding, canWrite, onToggle, onEdit,
+  line, expanded, funding, canWrite, onToggle, onEdit, hideWhen = false,
 }: {
   line: RepBudgetLineWithPeriods;
   expanded: boolean;
@@ -384,6 +387,16 @@ function BudgetLineRow({
   canWrite: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  /**
+   * Suppress BOTH copies of the schedule on this row — the When cell and the phone chip under the
+   * name (owner ruling 2026-09-09, decision B2).
+   *
+   * ⚠ SET ONLY WHERE THE SCHEDULE HAS BECOME THE NAME. A merged sub-line with no note is titled by
+   * its own schedule (`mergedSubLineName`); leaving the cell and the chip in place would print that
+   * same answer THREE times on one row. The name IS the When answer, so nothing is lost. A noted
+   * sub-line, and every ordinary row, keeps both.
+   */
+  hideWhen?: boolean;
 }) {
   const moneyClass = funding ? styles.fundingAmount : '';
   /* One predicate for "this line has a fold", read by the chevron and by both When chips — they
@@ -456,7 +469,8 @@ function BudgetLineRow({
                 take room from the line name, which already ellipses, or from the money. The note
                 slot is already here, already quiet, and already where a line says something extra
                 about itself. */}
-            <WhenChip line={line} className={styles.whenUnderName} onToggle={foldFromChip} />
+            {!hideWhen
+              && <WhenChip line={line} className={styles.whenUnderName} onToggle={foldFromChip} />}
           </span>
         </th>
 
@@ -464,7 +478,7 @@ function BudgetLineRow({
             whose undated half it never mentioned. See `whenSummary` for both defects.
             ⚠ The chip inside it FOLDS THE ROW on a split line (2026-09-05) — see WhenChip. */}
         <td className={styles.schedCell}>
-          <WhenChip line={line} onToggle={foldFromChip} />
+          {!hideWhen && <WhenChip line={line} onToggle={foldFromChip} />}
         </td>
 
         <td className={moneyClass}>{fmt(line.totalAmount)}</td>
@@ -1978,15 +1992,15 @@ export function BudgetPlanPanel({
       return;
     }
 
-    /* ⚠ THE COMMENT HERE SAID "same rule as collectProblems: funding lines save the description
-       alone" — and had been false since mig 243, which made an item REQUIRED in both directions
-       (see collectProblems above: no kind is exempt). What survives is narrower and real: a
-       money-in line keeps whatever the coach typed and does NOT fall back to the item's name,
-       because "Fundraising drive" is a worse row label than "Chocolate sale". A cost line does
-       fall back, because there its item IS the row's name. */
-    const description = form.direction === 'in'
-      ? form.description.trim()
-      : form.description.trim() || form.itemName.trim();
+    /* ⚠⚠ ONE RULE, BOTH DIRECTIONS (owner ruling 2026-09-09). This branched: a money-in line kept
+       whatever was typed and did NOT fall back to its word, "because Fundraising drive is a worse
+       row label than Chocolate sale". That reasoning outlived the field it depended on — the
+       money-in description input was deleted on 2026-08-16, so from that day the branch preserved
+       a word no coach could edit and every NEW line fell through to the empty string anyway.
+       The word names the row in both directions now, and this column is only the NOT NULL text the
+       server keeps synced to it. A coach who wants their own wording makes a word; see the picker's
+       hint. */
+    const description = form.description.trim() || form.itemName.trim();
     const totalAmount = parseFloat(form.totalAmount);
 
     setSaving(true);
@@ -2839,22 +2853,31 @@ export function BudgetPlanPanel({
                           <td>{fmt(item.total)}</td>
                           <td />
                         </tr>
-                        {!isClosed(item.key) && item.lines.map(line => (
-                          <BudgetLineRow
-                            key={line.id}
-                            /* The note NAMES the sub-line (P1 mockup, pin 3). The item already
-                               names the group head one row up, so repeating it here was an echo —
-                               the note ("Regional qualifier") is the only word that tells two
-                               lines on one item apart, which is exactly what the form asked it
-                               for. A note-less line keeps the description it always showed. */
-                            line={line.notes ? { ...line, description: line.notes, notes: null } : line}
-                            funding={false}
-                            expanded={expandedLines.has(line.id)}
-                            canWrite={moneyCanWrite}
-                            onToggle={() => toggleLineExpanded(line.id)}
-                            onEdit={() => openEdit(line)}
-                          />
-                        ))}
+                        {!isClosed(item.key) && item.lines.map(line => {
+                          /* ⚠ THE NOTE NAMES THE SUB-LINE, AND WITH NO NOTE ITS SCHEDULE DOES
+                             (owner ruling 2026-09-09, decision B2). The old fallback was the
+                             line's stored description — which the server keeps synced to the
+                             ITEM's name, so a note-less line echoed the row directly above it.
+                             On this repo's own fixture "Entry Fees" printed THREE times in one
+                             column, on the cost side, and nobody reported it because the rows
+                             still added up.
+                             ⚠ THE RULE IS SHARED with the money-in section below: fixing one half
+                             would leave the identical echo on the surface the other half is being
+                             aligned to. Half a fix reads worse than none. */
+                          const sub = mergedSubLineName(line);
+                          return (
+                            <BudgetLineRow
+                              key={line.id}
+                              line={{ ...line, description: sub.name, notes: null }}
+                              funding={false}
+                              hideWhen={!sub.showWhen}
+                              expanded={expandedLines.has(line.id)}
+                              canWrite={moneyCanWrite}
+                              onToggle={() => toggleLineExpanded(line.id)}
+                              onEdit={() => openEdit(line)}
+                            />
+                          );
+                        })}
                       </Fragment>
                     )
                   ))}
@@ -2958,16 +2981,69 @@ export function BudgetPlanPanel({
                           </td>
                           <td />
                         </tr>
-                        {!isClosed(sectionKey) && group.lines.map(line => (
-                          <BudgetLineRow
-                            key={line.id}
-                            line={line}
-                            funding
-                            expanded={expandedLines.has(line.id)}
-                            canWrite={moneyCanWrite}
-                            onToggle={() => toggleLineExpanded(line.id)}
-                            onEdit={() => openEdit(line)}
-                          />
+                        {/* ⚠⚠ ONE ROW PER WORD, NOT PER LINE (owner ruling 2026-09-09). This
+                            listed one row per line, named by a description no form has offered
+                            since mig 243 deleted the field — so a row wore a word a coach could
+                            neither see nor change, while the by-period grid and Budget vs. Actual
+                            called the same money something else. The cost side has grouped by
+                            word since 2026-08-15; `groupByItem` is that rule, shared, so these
+                            two cannot drift apart again.
+                            ⚠ ALPHABETICAL now, where this kept creation order — one rule for the
+                            whole table rather than a special case for half of it (decision A1). */}
+                        {!isClosed(sectionKey) && groupByItem(group.lines).map(item => (
+                          item.lines.length === 1 ? (
+                            /* The ordinary shape: the row IS the line, wearing its word. */
+                            <BudgetLineRow
+                              key={item.key}
+                              line={{ ...item.lines[0], description: item.itemName }}
+                              funding
+                              expanded={expandedLines.has(item.lines[0].id)}
+                              canWrite={moneyCanWrite}
+                              onToggle={() => toggleLineExpanded(item.lines[0].id)}
+                              onEdit={() => openEdit(item.lines[0])}
+                            />
+                          ) : (
+                            /* Two or more lines on one word: the summed head opens to reveal them,
+                               exactly as a cost item does. */
+                            <Fragment key={item.key}>
+                              <tr
+                                className={`${shared.rowTappable} ${styles.fundingRow}`}
+                                onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(item.key); }}
+                              >
+                                <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
+                                  <button
+                                    type="button"
+                                    className={shared.moneyGridToggle}
+                                    aria-expanded={!isClosed(item.key)}
+                                    onClick={e => { e.stopPropagation(); toggleSectionClosed(item.key); }}
+                                  >
+                                    {isClosed(item.key)
+                                      ? <ChevronRight size={14} aria-hidden />
+                                      : <ChevronDown size={14} aria-hidden />}
+                                    <span>{item.itemName}</span>
+                                  </button>
+                                </th>
+                                <td className={styles.schedCell} />
+                                <td className={styles.fundingAmount}>{fmt(item.total)}</td>
+                                <td />
+                              </tr>
+                              {!isClosed(item.key) && item.lines.map(line => {
+                                const sub = mergedSubLineName(line);
+                                return (
+                                  <BudgetLineRow
+                                    key={line.id}
+                                    line={{ ...line, description: sub.name, notes: null }}
+                                    funding
+                                    hideWhen={!sub.showWhen}
+                                    expanded={expandedLines.has(line.id)}
+                                    canWrite={moneyCanWrite}
+                                    onToggle={() => toggleLineExpanded(line.id)}
+                                    onEdit={() => openEdit(line)}
+                                  />
+                                );
+                              })}
+                            </Fragment>
+                          )
                         ))}
                       </Fragment>
                     );
@@ -3325,8 +3401,16 @@ export function BudgetPlanPanel({
                    screen just hands it over (the retired row tag's lesson). */
                 newItemNote={newMoneyInWordNote}
               />
+              {/* ⚠ THIS SENTENCE WAS FALSE FOR MONEY IN UNTIL 2026-09-09, and it was the only thing
+                  on the form that said so. A money-in row was named by a stored description this
+                  form stopped offering when mig 243 made a word required in both directions — so a
+                  coach read "these name this line everywhere" beside a control that named nothing,
+                  while their plan showed a word they could not reach. The row now wears its word,
+                  and the sentence is true; it also says the one move that gets a coach their own
+                  wording, because "you cannot rename this" is a worse answer than "make a word". */}
               <p className={styles.kindHint}>
-                These name this line everywhere. Anything else worth saying goes in Notes.
+                This names the line on your plan, your report and your exports. Want it to say
+                something else? Add your own word from the picker above.
               </p>
               {/* ⚠ THE CONSEQUENCE OF THE WORD, once there is one (mig 280). It sat under the KIND
                   dropdown until that question was deleted, where it explained the answer the coach
@@ -3788,8 +3872,9 @@ export function BudgetPlanPanel({
               {itemSiblingCount > 0 && (
                 <p className={styles.kindHint}>
                   {form.itemName || 'This item'} already has {itemSiblingCount === 1
-                    ? 'a line' : `${itemSiblingCount} lines`} on this plan — a few words here
-                  name this one on the plan and in the export.
+                    ? 'a line' : `${itemSiblingCount} lines`} on this plan, so they share one row —
+                  a few words here name this one inside it. Without them it is named by when the
+                  money moves.
                 </p>
               )}
             </div>

@@ -238,6 +238,46 @@ export function whenSummaryText(s: WhenSummary, fmtMoney: (n: number) => string)
   return s.undated > 0.005 ? `${dated} · ${fmtMoney(s.undated)} no date` : dated;
 }
 
+/**
+ * WHAT A MERGED SUB-LINE IS CALLED — the rule for the rows that appear only when two or more budget
+ * lines share one word (owner ruling 2026-09-09, decision B2).
+ *
+ * ⚠⚠ THE DEFECT IT REPLACES: a sub-line with no note fell back to its ITEM's name, so it echoed the
+ * row directly above it. On the UAT fixture the *Entry Fees* row printed that word THREE times in one
+ * column — the parent and both of its note-less lines — and the only thing telling the two lines
+ * apart was the When cell and the amount. It shipped on the cost side and nobody reported it, because
+ * the rows still added up.
+ *
+ * ⚠ SO THE FALLBACK IS THE SCHEDULE, NOT THE WORD. A note-less line's schedule is the one thing that
+ * is both true of it and different from its siblings.
+ *
+ * ⚠⚠ AND THE `When` CELL GOES WITH IT — this half is the whole reason the rule needs a function
+ * rather than a ternary. Every line row already renders its schedule TWICE: once in the When column
+ * and once as a chip under the name below 640. Naming the row by its schedule as originally drawn
+ * would have printed "Oct" THREE times on one row. When the schedule becomes the name, the answer has
+ * MOVED there — so `showWhen` is false and the caller renders neither. A noted sub-line keeps both.
+ *
+ * ⚠ BOTH SIDES OF THE TABLE, deliberately (owner, same ruling, widened on 2026-09-09). The fallback
+ * is shared, so fixing only the money-in half would leave the identical echo on the cost side — the
+ * very surface money-in was being aligned TO. Half a fix reads worse than none.
+ *
+ * ⚠ NOT FOR A ROW THAT STANDS ALONE. One line on one word IS the row, and it is named by the word;
+ * this only decides the sub-rows a merged row opens to reveal.
+ */
+export function mergedSubLineName(line: {
+  notes: string | null;
+  totalAmount: number;
+  periods: Array<{ periodDate: string | null; amount?: number | string | null }>;
+}): { name: string; showWhen: boolean } {
+  const note = (line.notes ?? '').trim();
+  if (note) return { name: note, showWhen: true };
+  const s = whenSummary(line.periods, Number(line.totalAmount) || 0);
+  // ⚠ The MONTHS only — never `whenSummaryText`, whose undated-money tail ("Mar · $400.00 no date")
+  // is a figure, and a figure has no business being a row's name: it would go stale against the
+  // amount in the very next cell. "No date yet" is the same spelling every other surface uses.
+  return { name: s.months.length === 0 ? 'No date yet' : s.months.join(' · '), showWhen: false };
+}
+
 /** `2027-04` → `2027-Q2`. */
 export function quarterKeyOf(month: MonthKey): string {
   const year = month.slice(0, 4);

@@ -627,12 +627,19 @@ async function budgetItemIds(teamId, pairs) {
         id: itemId, category_id: categoryId, org_id: org.id, team_id: teamId,
         name: pair.item, is_default: false, is_misc: false,
         direction: pair.direction ?? 'out',
-        /* `actual_source` is left to the column's own default of 'typed' (mig 280) — a word this
-           seed invents has no drive or sponsor behind it, exactly as a coach's own word does not. */
+        /* ⚠⚠ THE SHELF DECIDES, and this used to default to 'typed' with a comment saying a word the
+           seed invents "has no drive or sponsor behind it, exactly as a coach's own word does not".
+           That was true until mig 285 and is not any more: a word filed under Fundraising is a
+           fundraising word FROM BIRTH, and the coach's own create panel derives it exactly this way
+           (`budgetItemSourceForCategory`). Left at 'typed', a money-in word this seed invents under
+           Fundraising reported under **Other income** while its own row read "Fundraising ·" — the
+           live defect that ruling names, reproduced in the shop window. A cost is unaffected. */
+        actual_source: sourceForNewWord(pair.direction ?? 'out', categoryId),
       })).error);
       word = {
         id: itemId, name: pair.item, category_id: categoryId, org_id: org.id, team_id: teamId,
-        direction: pair.direction ?? 'out', actual_source: 'typed',
+        direction: pair.direction ?? 'out',
+        actual_source: sourceForNewWord(pair.direction ?? 'out', categoryId),
       };
       known.push(word);
     }
@@ -648,6 +655,14 @@ async function budgetItemIds(teamId, pairs) {
       });
   }
   return index;
+}
+
+/** Who fills a newly-invented word's number in — the shelf, never the caller (mig 285). Mirrors
+ *  `budgetItemSourceForCategory`; inlined because a seed script must not import a route's module. */
+function sourceForNewWord(direction, categoryId) {
+  if (direction !== 'in') return 'typed';
+  const source = budgetCategorySources.get(categoryId);
+  return source === 'fundraiser' || source === 'sponsor' ? source : 'typed';
 }
 
 const wordKey = (category, item) =>
@@ -729,6 +744,8 @@ function midProfileFor(team, i) {
   return team.id === DEMO_COACH_TEAMS.midSeason.id ? midseasonPitcherProfile(i) : null;
 }
 
+/** Category id → its `income_source`, filled by the lookup below. Read only by `budgetItemIds`. */
+let budgetCategorySources = new Map();
 const budgetCategoryIds = await platformBudgetCategoryIds();
 
 /**
@@ -744,9 +761,12 @@ async function platformBudgetCategoryIds() {
   // that route's write path REFUSES them. Filtering here means a demo line on an unreachable
   // category fails this script loudly instead of shipping a budget a coach could never have built.
   const { data, error } = await db.from('budget_categories')
-    .select('id, name').is('org_id', null).in('scope', ['team', 'both']);
+    // ⚠ `income_source` rides along because it decides who fills a money-in word's number in
+    //   (mig 285) — see `budgetItemIds`, which can no longer default an invented word to 'typed'.
+    .select('id, name, income_source').is('org_id', null).in('scope', ['team', 'both']);
   die('load budget categories', error);
   const byName = new Map((data ?? []).map(c => [c.name.toLowerCase(), c.id]));
+  budgetCategorySources = new Map((data ?? []).map(c => [c.id, c.income_source ?? null]));
   const required = [...new Set([
     ...OFFSEASON_BUDGET_LINES.map(l => l.category),
     // Money-in lines and arrivals name real categories too since mig 243 — "Fundraising" is the

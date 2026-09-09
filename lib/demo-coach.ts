@@ -1203,8 +1203,23 @@ export const OFFSEASON_BUDGET_LINES = [
  */
 export const OFFSEASON_FUNDING_LINES = [
   {
+    /* ⚠⚠ THE WORD IS THE ROW'S NAME NOW (owner ruling 2026-09-09), so this line's `item` is what a
+       prospect reads on the plan — not its `description`, which no form has offered since the
+       money-in description field was deleted on 2026-08-16.
+
+       ⚠ IT USED TO SAY `item: 'Fundraising drive'`, and the demo got away with it only because the
+       plan list still rendered the typed description. The day the word started naming the row, this
+       world's most-read money-in line would have flattened from "Raffle proceeds" to the platform's
+       generic "Fundraising drive" — on the public sandbox, with nothing failing and no gate able to
+       see it. That is precisely the demo drift the repo rule warns about: the product changes and
+       the story the demo tells over the top of it does not follow.
+
+       ⚠ SO IT IS THE TEAM'S OWN WORD, and that is better than a workaround: a prospect now sees the
+       exact move the ruling depends on — a coach who wants their plan to say something specific
+       creates that word. The seed mints it under Fundraising, so it is a fundraising word from
+       birth (mig 285) and reports under Fundraising rather than Other income. */
     description: 'Raffle proceeds — team share (estimated)',
-    category: 'Fundraising', item: 'Fundraising drive', total: 2400,
+    category: 'Fundraising', item: 'Raffle proceeds', total: 2400,
   },
 ] as const;
 

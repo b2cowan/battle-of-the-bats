@@ -198,6 +198,74 @@ describe('the statement file (List view, and every PDF)', () => {
   });
 });
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   TWO MONEY-IN LINES ON ONE WORD (owner ruling 2026-09-09)
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('the statement file — money in merges by word', () => {
+  /* ⚠⚠ THE DEFECT THIS PINS WAS LIVE AND SILENT. The money-in loop printed one row per LINE while
+     naming each by its ITEM, so two lines filed against one word exported as two rows with the SAME
+     name and the same schedule — nothing in the file told them apart. The cost half of this builder
+     has summed them into one openable row since 2026-08-15; the two halves now share `groupByItem`.
+     No gate caught it because the file still added up, which is exactly why the assertion below is
+     on the row LABELS and not only on the totals. */
+
+  const twoOnOneWord = (): BudgetPlanExportSource => ({
+    groups: [],
+    lines: [
+      planLine({
+        id: 'f1', description: 'Chocolate sale', totalAmount: 1800, lineKind: 'funding',
+        itemId: 'item-drive', itemName: 'Fundraising drive',
+        categoryId: 'cat-fundraising', categoryName: 'Fundraising',
+        notes: 'Expected team share',
+        periods: [{ periodDate: '2026-03-01', amount: 900 }, { periodDate: '2026-04-01', amount: 900 }],
+      }),
+      planLine({
+        id: 'f2', description: 'Bottle drive', totalAmount: 600, lineKind: 'funding',
+        itemId: 'item-drive', itemName: 'Fundraising drive',
+        categoryId: 'cat-fundraising', categoryName: 'Fundraising',
+        periods: [{ periodDate: '2026-10-01', amount: 600 }],
+      }),
+    ],
+    totals: totalsOf({ expectedFunding: 2400, totalPlanned: 0, itemized: 0 }),
+    duesAssessed: 0,
+    leftToFund: 0,
+  } as never);
+
+  it('sums two lines on one word into ONE row, with the lines beneath it', () => {
+    const { rows } = budgetPlanStatementRows(twoOnOneWord());
+    const items = rows.map(r => r.item);
+    assert.deepEqual(items, [
+      'FUNDING',
+      'Fundraising',
+      '  — Fundraising drive',
+      // ⚠ THE NOTE NAMES THE FIRST SUB-LINE, and the SCHEDULE names the second, which has none
+      //   (decision B2). Before this the note-less line printed "Fundraising drive" again — the
+      //   parent's word, one row below the parent.
+      '    — Expected team share',
+      '    — Oct',
+      'Planned funding',
+      // The builder always closes on the players' side; not part of this rule, asserted so the
+      // shape above is the WHOLE file rather than a prefix of it.
+      'Player installments (estimated)',
+    ]);
+  });
+
+  it('never prints two rows a coach cannot tell apart — the twin defect, pinned', () => {
+    const { rows } = budgetPlanStatementRows(twoOnOneWord());
+    const leaves = rows.map(r => String(r.item)).filter(i => i.trimStart().startsWith('—'));
+    assert.equal(new Set(leaves).size, leaves.length, 'every money-in row label must be distinct');
+  });
+
+  it('keeps the summed figure on the word, and the parts on its lines', () => {
+    const { rows } = budgetPlanStatementRows(twoOnOneWord());
+    const by = (label: string) => rows.find(r => r.item === label);
+    assert.equal(by('  — Fundraising drive')?.planned, 2400);
+    assert.equal(by('    — Expected team share')?.planned, 1800);
+    assert.equal(by('    — Oct')?.planned, 600);
+  });
+});
+
 describe('the period-grid file (By-period view)', () => {
   const LINES: PeriodViewLine[] = [
     {

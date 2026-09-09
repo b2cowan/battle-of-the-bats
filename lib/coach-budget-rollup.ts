@@ -418,6 +418,66 @@ export function groupByCategory<T>(
   return [...byKey.values()].sort((a, b) => cmp(a.ref, b.ref));
 }
 
+/** One row on a plan list: the WORD, and every line filed against it. */
+export interface ItemGroup<T> {
+  /** Stable row key. `item:<id>`, or `line:<id>` for a line carrying no word at all. */
+  key: string;
+  itemId: string | null;
+  /** What the row is CALLED. The item's name; for a word-less line, its own stored text. */
+  itemName: string;
+  total: number;
+  lines: T[];
+}
+
+/**
+ * Bucket plan lines by the WORD they are filed against — rule 2 and rule 3, applied to a flat list.
+ *
+ * ⚠⚠ WHY THIS EXISTS RATHER THAN A SECOND COPY IN THE PANEL (owner ruling 2026-09-09). The money-in
+ * side of the plan listed one row per LINE, named by a typed description, while the by-period grid
+ * merged the same lines by item and Budget vs. Actual merged them too. One plan, three shapes. The
+ * cost side has grouped by item since 2026-08-15 through `rollupBudget`; this is the same rule for
+ * the money-in list and both plan exports, written ONCE so those two cannot drift apart the way the
+ * three surfaces above did.
+ *
+ * ⚠ ALPHABETICAL, and the money-in list changes order because of it (owner ruling, decision A1). It
+ * previously kept the coach's creation order. One rule for the whole table was chosen over a
+ * special case for half of it; `buildCategoryRow`'s item sort is the same comparison.
+ *
+ * ⚠ A LINE WITH NO WORD STAYS ITS OWN ROW, keyed on the line, and wears its stored text — it has
+ * nothing else to be named by. These are pre-mig-243 money-in lines; they sort last, exactly as the
+ * report's nameless bucket does. **Never merge them together**: two word-less lines have two
+ * different stored texts and no honest way to choose between them.
+ *
+ * ⚠ IDS, NEVER NAMES. Two words can legitimately share a name across ownership tiers; merging on the
+ * name is the 2026-08-15 "Officials twice" defect wearing a new hat.
+ */
+export function groupByItem<T extends {
+  id: string;
+  itemId: string | null;
+  itemName?: string | null;
+  description: string;
+  totalAmount: number;
+}>(lines: readonly T[]): Array<ItemGroup<T>> {
+  const byKey = new Map<string, ItemGroup<T>>();
+  for (const line of lines) {
+    const key = line.itemId ? `item:${line.itemId}` : `line:${line.id}`;
+    const bucket = byKey.get(key) ?? {
+      key,
+      itemId: line.itemId,
+      itemName: (line.itemId ? line.itemName?.trim() : '') || line.description,
+      total: 0,
+      lines: [] as T[],
+    };
+    bucket.lines.push(line);
+    bucket.total = r2(bucket.total + (Number(line.totalAmount) || 0));
+    byKey.set(key, bucket);
+  }
+  return [...byKey.values()].sort((a, b) => {
+    if ((a.itemId === null) !== (b.itemId === null)) return a.itemId === null ? 1 : -1;
+    return a.itemName.localeCompare(b.itemName);
+  });
+}
+
 /** The category id a grid/report key carries, when it carries one — the inverse of `categoryKey`
  *  for id-keyed rows, so no reader parses the `id:` prefix for itself. Null for a name-keyed or
  *  nameless row. */
@@ -676,10 +736,7 @@ function varianceFor(direction: MoneyDirection, budgeted: number, actual: number
  *
  * ⚠ AND NOT FOR "Not itemized". That row is a gap to close, not a line with a name.
  */
-function rowLabel(entry: Entry, direction: MoneyDirection): string {
-  if (direction !== 'in' || !entry.itemId || entry.lines.length !== 1) return entry.itemName;
-  return (entry.lines[0].description ?? '').trim() || entry.itemName;
-}
+
 function buildCategoryRow(
   bucket: Bucket, direction: MoneyDirection, side: Map<string, Entry>,
 ): CategoryRow {
@@ -691,8 +748,8 @@ function buildCategoryRow(
     const actual      = r2(grossActual - refundTotal);
     items.push({
       itemId: entry.itemId,
-      // The coach's own word where the plan agrees on one — see `rowLabel`.
-      itemName: rowLabel(entry, direction),
+      // The WORD names the row, in both directions (owner ruling 2026-09-09).
+      itemName: entry.itemName,
       direction,
       budgeted,
       actual,

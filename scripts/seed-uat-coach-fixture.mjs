@@ -791,7 +791,7 @@ const money = { budget: 0, dues: 0, expenses: 0, fundraisers: 0, requests: 0 };
 // ("Uncategorized" everywhere) without anyone reading it. Mirrors the coach-side reader in
 // `app/api/coaches/[orgSlug]/budget-items/route.ts`, which uses the same `['team','both']` filter.
 const { data: cats, error: catErr } = await db.from('budget_categories')
-  .select('id, name').in('scope', ['team', 'both']).order('sort_order');
+  .select('id, name, income_source').in('scope', ['team', 'both']).order('sort_order');
 if (catErr) { console.error('✗ budget_categories read', catErr.message); process.exit(1); }
 if (!cats?.length) {
   // Loud, not silent: a fixture that cannot name its categories is not the fixture anyone meant.
@@ -807,6 +807,64 @@ const { data: catItems } = await db.from('budget_items')
   .select('id, name, category_id')
   .in('category_id', (cats ?? []).map(c => c.id))
   .is('org_id', null).eq('is_misc', false).order('sort_order');
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   THE TEAM'S OWN WORD — "Chocolate sale" (owner ruling 2026-09-09)
+   ══════════════════════════════════════════════════════════════════════════════════════════
+
+   ⚠⚠ THIS FIXTURE IS WHY THE RULING EXISTS. Its fundraising line carried the typed description
+   "Chocolate sale" while being filed against the platform word "Fundraising drive" — so the plan
+   list said one thing, the by-period grid said another, and no form on the screen could edit
+   either. The owner opened that line, found no field naming it, and ruled that the WORD names the
+   row everywhere. A coach who wants their plan to say "Chocolate sale" now CREATES that word.
+
+   ⚠ SO THE FIXTURE HAS TO OWN ONE. Seeded exactly as the coach's own picker writes it — team
+   scope, money IN, and its `actual_source` derived from the shelf rather than chosen (mig 285: a
+   word filed under Fundraising is a fundraising word from birth). Without this the fixture would
+   have NO coverage of a team-created money-in word, on the very release that makes creating one
+   the answer.
+
+   ⚠ IT IS FOUND-OR-CREATED, never blindly inserted — this script is re-run against a database that
+   may already hold it, and the library's unique index is PARTIAL (it only bites where org_id is
+   not null), so a blind insert would mint duplicates on the second run. */
+const fundraisingCat = (cats ?? []).find(c => c.name.toLowerCase() === 'fundraising');
+if (!fundraisingCat) {
+  console.error('✗ No "Fundraising" category available to a TEAM — the money-in fixture cannot be seeded.');
+  process.exit(1);
+}
+const TEAM_WORD = 'Chocolate sale';
+let teamWordId = null;
+{
+  const { data: existing, error: findErr } = await db.from('budget_items')
+    .select('id').eq('org_id', org.id).eq('team_id', team.id)
+    .eq('category_id', fundraisingCat.id).ilike('name', TEAM_WORD).maybeSingle();
+  if (findErr) { console.error('✗ budget_items read', findErr.message); process.exit(1); }
+  if (existing) {
+    teamWordId = existing.id;
+  } else {
+    /* The shelf decides who fills the number in — never the caller. Same derivation the coach's
+       own POST uses (`budgetItemSourceForCategory`), inlined here because this script must not
+       import a route. Fundraising ⇒ 'fundraiser'. */
+    const actualSource = fundraisingCat.income_source === 'fundraiser'
+      || fundraisingCat.income_source === 'sponsor'
+      ? fundraisingCat.income_source
+      : 'typed';
+    const { data: made, error: makeErr } = await db.from('budget_items').insert({
+      category_id: fundraisingCat.id,
+      org_id: org.id,
+      team_id: team.id,
+      name: TEAM_WORD,
+      is_default: false,
+      is_misc: false,
+      direction: 'in',
+      actual_source: actualSource,
+    }).select('id').single();
+    if (makeErr) { console.error('✗ could not create the team word', makeErr.message); process.exit(1); }
+    teamWordId = made.id;
+  }
+  // Visible to the same lookups the platform words use, so `taxonomyFor` can find it by name.
+  (catItems ?? []).push({ id: teamWordId, name: TEAM_WORD, category_id: fundraisingCat.id });
+}
+
 /** By NAME, never by position — an index picked "Entry Fees" for a dome block, and a fixture a
  *  human reads during QA has to say things that make sense. Falls back to the first item in the
  *  category so the line is still named rather than left blank. */
@@ -852,7 +910,20 @@ const FIXTURE_ITEMS = {
      migration, which requires a category and an item in BOTH directions. The statement rolls up by
      category+item, so a nameless money-in line landed in "No category / Not itemized" and was
      SUMMED with its sibling, and owner QA was reading a screen no coach can produce today. */
-  'Chocolate sale':       { category: 'Fundraising', item: 'Fundraising drive' },
+  /* ⚠ THE TEAM'S OWN WORD, not the platform's (owner ruling 2026-09-09). This said
+     `item: 'Fundraising drive'` — which is exactly how the row came to read one thing on the plan
+     and another on the grid. Now the word IS "Chocolate sale", so every surface agrees and the
+     walk still reads the sentence it always read. */
+  'Chocolate sale':       { category: 'Fundraising', item: 'Chocolate sale' },
+  /* ⚠⚠ THE SECOND LINE ON ONE WORD — the shape this fixture has NEVER had on the money-in side,
+     and the one the 2026-09-09 ruling introduces. Two lines filed against "Chocolate sale" merge
+     into a single summed row that opens to reveal them; the first is named by its note, the second
+     has none and is named by its SCHEDULE (decision B2). Both branches of that rule are therefore
+     live here, which no other fixture row exercises.
+     ⚠ It is a COVERAGE CHANGE, not housekeeping: it adds $600.00 of planned funding to this team
+     (Planned funding $1,950.00 → $2,550.00). Seeding a new record SHAPE is exactly the thing the
+     2026-09-03 lesson says to declare rather than slip in. */
+  'Spring chocolate round': { category: 'Fundraising', item: 'Chocolate sale' },
 };
 /** Both halves of a line's taxonomy, resolved by NAME. ⚠ The category has to be right BEFORE the
  *  item can be: an item lives in exactly one category, so a line filed under the wrong heading
@@ -914,6 +985,10 @@ if (!existingLines?.length) {
     { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    ...taxonomyFor('Diamond permits'), sort_order: 2 },
     { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
     { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', ...taxonomyFor('Chocolate sale'), sort_order: 4 },
+    /* ⚠ NO NOTE, DELIBERATELY — this is the sub-line that must render as its schedule ("Oct")
+       rather than echoing "Chocolate sale" one row above it. A note here would silently remove the
+       only coverage of decision B2's fallback branch. */
+    { description: 'Spring chocolate round', total_amount: 600, notes: null,                line_kind: 'funding', ...taxonomyFor('Spring chocolate round'), sort_order: 5 },
   ].map((r) => ({ ...r, org_id: org.id, team_id: team.id, program_year_id: py.id }));
 
   // Every row's kind, re-derived from the word it names (mig 280) — see `seededKind`.
@@ -1403,6 +1478,9 @@ const WHEN_ANSWERS_SEED = [
      useless as the one revenue row a walk can read a real to-date variance on. */
   { description: 'Chocolate sale',    periods: [['Mar', `${py.year}-03-01`, 900],
                                                 ['Apr', `${py.year}-04-01`, 900]] },
+  /* Its whole total in one month — so the note-less sub-line above has a schedule to be named by,
+     and reads "Oct" rather than repeating its parent's word. */
+  { description: 'Spring chocolate round', periods: [['Oct', `${py.year}-10-01`, 600]] },
 ];
 for (const want of WHEN_ANSWERS_SEED) {
   const { data: target } = await db.from('rep_budget_lines')

@@ -1,0 +1,1551 @@
+<title>The Item Names the Row</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   THE SHEET — ledger worksheet chrome. Deliberately COOL and ruled, so the
+   warm product frames inside it read as specimens pinned to a page rather
+   than as the page itself.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --sheet:      #E5EAEA;
+  --sheet-2:    #F1F5F5;
+  --sheet-3:    #DCE3E3;
+  --rule:       rgba(20, 50, 55, 0.14);
+  --rule-hard:  rgba(20, 50, 55, 0.28);
+  --ink:        #15262A;
+  --ink-2:      #2E464B;
+  --dim:        #566F74;
+  --red:        #9A3324;
+  --red-soft:   rgba(154, 51, 36, 0.10);
+  --teal:       #14555E;
+  --teal-soft:  rgba(20, 85, 94, 0.10);
+
+  /* ── The PRODUCT's own warm tokens. Fixed in both sheet themes: a specimen
+        shows the coach portal as the coach actually sees it. ── */
+  --p-paper:       #F8F4ED;
+  --p-card:        #FFFFFF;
+  --p-ink:         #241E15;
+  --p-ink-soft:    #4A4235;
+  --p-dim:         #615A54;
+  --p-line:        rgba(70, 55, 30, 0.12);
+  --p-line-strong: rgba(70, 55, 30, 0.20);
+  --p-fill:        rgba(70, 55, 30, 0.08);
+  --p-olive:       #57651E;
+  --p-olive-soft:  rgba(87, 101, 30, 0.10);
+  --p-win:         #34662A;
+  --p-live:        #B03A22;
+  --p-amber:       #835006;
+  --p-lime:        #D9F99D;
+  --p-radius:      14px;
+  --p-radius-sm:   9px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet:     #0D1517;
+    --sheet-2:   #141F22;
+    --sheet-3:   #1B282B;
+    --rule:      rgba(168, 200, 205, 0.15);
+    --rule-hard: rgba(168, 200, 205, 0.32);
+    --ink:       #E2ECEE;
+    --ink-2:     #C3D3D6;
+    --dim:       #90A6AB;
+    --red:       #E58A73;
+    --red-soft:  rgba(229, 138, 115, 0.14);
+    --teal:      #74C6D0;
+    --teal-soft: rgba(116, 198, 208, 0.13);
+  }
+}
+:root[data-theme="dark"] {
+  --sheet:     #0D1517;
+  --sheet-2:   #141F22;
+  --sheet-3:   #1B282B;
+  --rule:      rgba(168, 200, 205, 0.15);
+  --rule-hard: rgba(168, 200, 205, 0.32);
+  --ink:       #E2ECEE;
+  --ink-2:     #C3D3D6;
+  --dim:       #90A6AB;
+  --red:       #E58A73;
+  --red-soft:  rgba(229, 138, 115, 0.14);
+  --teal:      #74C6D0;
+  --teal-soft: rgba(116, 198, 208, 0.13);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--sheet);
+  /* Ledger ruling: a faint horizontal repeat, and one red vertical rule at the margin. */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 27px,
+      var(--rule) 27px,
+      var(--rule) 28px
+    );
+  color: var(--ink);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 40px 24px 96px;
+}
+
+/* ── Masthead ─────────────────────────────────────────────────────────── */
+.mast {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--rule-hard);
+  padding: 20px 0 22px;
+  margin-bottom: 34px;
+}
+.mast-eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+h1 {
+  font-family: "Barlow Condensed", Inter, sans-serif;
+  font-size: clamp(38px, 6vw, 58px);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.005em;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.quote {
+  border-left: 3px solid var(--red);
+  padding: 2px 0 2px 16px;
+  margin: 0;
+  max-width: 66ch;
+  font-size: 16px;
+  color: var(--ink-2);
+}
+.quote cite {
+  display: block;
+  margin-top: 7px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ── Section scaffolding ──────────────────────────────────────────────── */
+section { margin: 0 0 56px; }
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  border-bottom: 1px solid var(--rule-hard);
+  padding-bottom: 8px;
+  margin-bottom: 18px;
+}
+.sec-num {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--red);
+  flex-shrink: 0;
+}
+h2 {
+  font-family: "Barlow Condensed", Inter, sans-serif;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  margin: 0;
+  line-height: 1.1;
+  flex: 1;
+}
+h3 {
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.005em;
+}
+p { margin: 0 0 14px; max-width: 68ch; }
+p.lede { font-size: 16.5px; color: var(--ink-2); max-width: 64ch; }
+strong { font-weight: 700; }
+em { font-style: italic; }
+
+.note {
+  font-size: 13.5px;
+  color: var(--dim);
+  max-width: 70ch;
+  margin: 0 0 14px;
+}
+
+/* ── Tag chips (NEW / RESTYLED / UNCHANGED / GONE) ─────────────────────── */
+.tag {
+  display: inline-block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+.tag-new       { background: var(--teal); color: var(--sheet-2); }
+.tag-restyled  { background: var(--teal-soft); color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
+.tag-unchanged { background: transparent; color: var(--dim); box-shadow: inset 0 0 0 1px var(--rule-hard); }
+.tag-gone      { background: var(--red-soft); color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+.tag-today     { background: var(--red); color: var(--sheet-2); }
+.tag-added     { background: var(--sheet-3); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-hard); font-style: italic; }
+
+/* ── Specimen frames ──────────────────────────────────────────────────── */
+.spec { margin: 0 0 26px; }
+.spec-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  padding: 0 0 7px;
+  border-bottom: 1px dashed var(--rule-hard);
+  margin-bottom: 12px;
+}
+.spec-cap .who {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.spec-cap .measure { margin-left: auto; }
+
+/* The product surface: cream paper, a white card, real radii. */
+.frame {
+  background: var(--p-paper);
+  border-radius: var(--p-radius);
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(20,50,55,0.10), 0 10px 28px rgba(20,50,55,0.10);
+  overflow-x: auto;
+}
+:root[data-theme="dark"] .frame,
+.frame { border: 1px solid rgba(70,55,30,0.10); }
+.card {
+  background: var(--p-card);
+  border-radius: var(--p-radius-sm);
+  border: 1px solid var(--p-line);
+  overflow: hidden;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px 10px;
+  border-bottom: 1px solid var(--p-line);
+  font-family: Inter, sans-serif;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--p-ink);
+  letter-spacing: -0.005em;
+}
+.card-sub {
+  font-size: 12px;
+  color: var(--p-dim);
+}
+
+/* ── The product's money table, to the recipe ─────────────────────────── */
+.pt {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-ink);
+  min-width: 640px;
+}
+.pt th, .pt td {
+  padding: 6.7px 10.4px;
+  box-shadow: inset 0 -1px 0 var(--p-line);
+  white-space: nowrap;
+  font-weight: 400;
+  text-align: right;
+  background-color: var(--p-card);
+  vertical-align: top;
+}
+.pt th:first-child, .pt td:first-child { text-align: left; }
+.pt thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-dim);
+  letter-spacing: 0.02em;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.pt col.c-when    { width: 200px; }
+.pt col.c-planned { width: 150px; }
+.pt col.c-act     { width: 48px; }
+
+/* Band — FUNDING / COSTS */
+.pt tr.band th, .pt tr.band td {
+  background-image: linear-gradient(var(--p-olive-soft), var(--p-olive-soft));
+  padding-top: 16.8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--p-olive);
+}
+/* Category row */
+.pt tr.cat th, .pt tr.cat td {
+  background-image: linear-gradient(var(--p-fill), var(--p-fill));
+  font-size: 14.7px;
+  font-weight: 800;
+  color: var(--p-ink);
+}
+.pt tr.cat td { font-size: 13.8px; }
+/* Closing total */
+.pt tr.total th, .pt tr.total td {
+  box-shadow: inset 0 2px 0 var(--p-line-strong);
+  font-size: 14.7px;
+  font-weight: 800;
+  color: var(--p-ink);
+}
+/* A line under its category */
+.lead    { padding-left: 24.8px !important; }
+.lead-2  { padding-left: 46px !important; }
+.name    { display: block; overflow-wrap: break-word; }
+.rownote {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--p-dim);
+  letter-spacing: 0;
+  margin-top: 1px;
+}
+.money-in { color: var(--p-win) !important; }
+
+/* When chip */
+.chip {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.3;
+  padding: 1.6px 6.4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  color: var(--p-dim);
+  font-variant-numeric: tabular-nums;
+}
+.chip-none { color: var(--p-amber); background: rgba(131,80,6,0.10); font-weight: 600; }
+
+/* Chevrons + pencil */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6.4px;
+  background: none;
+  border: 0;
+  padding: 2.4px 3.2px;
+  margin: -2.4px -3.2px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.toggle:focus-visible { outline: 2px solid var(--p-olive); outline-offset: 1px; border-radius: 3px; }
+.chev { width: 14px; height: 14px; flex-shrink: 0; color: var(--p-dim); }
+.chev-d { transform: rotate(90deg); }
+.exp {
+  width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; vertical-align: middle;
+  color: var(--p-dim);
+}
+.exp + .name-i { display: inline-block; vertical-align: middle; margin-left: 8px; }
+.pencil { width: 15px; height: 15px; color: var(--p-dim); }
+
+/* A drawn highlight over the thing that changed */
+.hl {
+  background: rgba(20,85,94,0.13);
+  box-shadow: 0 0 0 1px rgba(20,85,94,0.30);
+  border-radius: 3px;
+  padding: 0 3px;
+  margin: 0 -3px;
+}
+.hl-red {
+  background: rgba(154,51,36,0.12);
+  box-shadow: 0 0 0 1px rgba(154,51,36,0.32);
+  border-radius: 3px;
+  padding: 0 3px;
+  margin: 0 -3px;
+}
+
+/* ── Before / after stack ─────────────────────────────────────────────── */
+.pair { display: grid; gap: 22px; }
+@media (min-width: 940px) { .pair.side { grid-template-columns: 1fr 1fr; } }
+
+/* ── Phone frames — FIXED, never reflowing with the reader's window ────── */
+.phones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  align-items: flex-start;
+}
+.phone {
+  width: 390px;
+  max-width: 100%;
+  flex: 0 0 auto;
+  background: var(--p-paper);
+  border-radius: 20px;
+  padding: 10px;
+  border: 1px solid rgba(70,55,30,0.14);
+  box-shadow: 0 1px 2px rgba(20,50,55,0.10), 0 10px 28px rgba(20,50,55,0.12);
+}
+.phone .pt { min-width: 0; font-size: 13.5px; }
+.phone .pt col.c-planned { width: 96px; }
+.phone .pt col.c-act { width: 34px; }
+.phone .lead { padding-left: 17.6px !important; }
+.phone .lead-2 { padding-left: 34px !important; }
+.phone .c-when-cell { display: none; }
+.ref-rule {
+  height: 44px;
+  width: 100%;
+  border: 1px dashed var(--teal);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-top: 10px;
+}
+
+/* ── The editor specimen ──────────────────────────────────────────────── */
+.modal {
+  background: var(--p-card);
+  border-radius: var(--p-radius);
+  padding: 20px;
+  max-width: 560px;
+  border: 1px solid var(--p-line);
+  font-family: Inter, sans-serif;
+  color: var(--p-ink);
+}
+.modal h4 {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.req { font-size: 12px; color: var(--p-dim); margin: 0 0 16px; }
+.fld { margin-bottom: 15px; }
+.fld > label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--p-ink-soft);
+  margin-bottom: 5px;
+}
+.fld .star { color: var(--p-live); }
+.ctrl {
+  border: 1px solid var(--p-line-strong);
+  border-radius: var(--p-radius-sm);
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--p-ink);
+  background: var(--p-card);
+}
+.ctrl.sel {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--p-paper);
+}
+.hint {
+  font-size: 12.5px;
+  color: var(--p-dim);
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+.consequence {
+  font-size: 12.5px;
+  color: var(--p-ink-soft);
+  margin: 8px 0 0;
+  line-height: 1.55;
+  border-left: 2px solid var(--p-olive);
+  padding-left: 10px;
+}
+.modal-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--p-line);
+}
+.btn-del { color: var(--p-live); font-size: 14px; font-weight: 600; text-decoration: underline; }
+.btn-row { display: flex; gap: 10px; align-items: center; }
+.btn-ghost { font-size: 14px; color: var(--p-ink-soft); padding: 9px 14px; }
+.btn-cta {
+  background: var(--p-lime);
+  color: var(--p-ink);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: var(--p-radius-sm);
+}
+
+/* ── Data table on the sheet (the four-surfaces audit) ─────────────────── */
+.audit {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  margin: 4px 0 16px;
+}
+.audit th, .audit td {
+  text-align: left;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.audit thead th {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--rule-hard);
+}
+.audit td.says { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; }
+.audit .bad { color: var(--red); font-weight: 600; }
+
+/* ── Decision blocks ──────────────────────────────────────────────────── */
+.decision {
+  background: var(--sheet-2);
+  border-left: 3px solid var(--red);
+  border-radius: 0 6px 6px 0;
+  padding: 16px 18px;
+  margin: 0 0 16px;
+}
+.decision h3 { margin-bottom: 8px; }
+.decision p:last-child { margin-bottom: 0; }
+.decision .ask {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--red);
+  display: block;
+  margin-bottom: 6px;
+}
+.opts { display: grid; gap: 8px; margin: 12px 0 0; }
+.opt {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  align-items: start;
+}
+.opt b {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  padding-top: 2px;
+}
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 16px;
+  font-size: 12.5px; color: var(--dim);
+  align-items: center;
+  padding: 12px 0 0;
+}
+
+/* ── Round-2 status block ─────────────────────────────────────────────── */
+.status {
+  margin-top: 22px;
+  background: var(--sheet-2);
+  border: 1px solid var(--rule-hard);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 6px 6px 0;
+  padding: 16px 20px 14px;
+}
+.status-head {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin: 0 0 10px;
+  max-width: none;
+}
+.status-list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 7px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  max-width: 76ch;
+}
+.status-list b { color: var(--ink); }
+.status-foot {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--dim);
+  max-width: none;
+}
+.legend span.l { display: inline-flex; align-items: center; gap: 6px; }
+
+.foot {
+  border-top: 1px solid var(--rule-hard);
+  padding-top: 16px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  display: flex; flex-wrap: wrap; gap: 6px 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="mast-eyebrow">
+      <span>FieldLogicHQ · Coaches · Money</span>
+      <span>Mockup round 3</span>
+      <span>2026-09-09</span>
+      <span>Ruled — build sheet</span>
+    </p>
+    <h1>The item names the row</h1>
+    <blockquote class="quote">
+      “Let the item name it everywhere — users can leave the standard <em>Fundraising drive</em> or if
+      they want to create their own <em>Chocolate drive</em> they can create that item themselves.”
+      <cite>Owner, 2026-09-09</cite>
+    </blockquote>
+    <div class="legend">
+      <span class="l"><span class="tag tag-today">Today</span> what ships now</span>
+      <span class="l"><span class="tag tag-new">New</span> did not exist</span>
+      <span class="l"><span class="tag tag-restyled">Restyled</span> same thing, drawn differently</span>
+      <span class="l"><span class="tag tag-unchanged">Unchanged</span> shown for reference only</span>
+      <span class="l"><span class="tag tag-gone">Gone</span> removed by this change</span>
+      <span class="l"><span class="tag tag-added">Added</span> example row, not on the real team</span>
+    </div>
+
+    <div class="status">
+      <p class="status-head">Round 3 — both decisions ruled, three things moved, and the figures corrected</p>
+      <ol class="status-list">
+        <li><b>A1 ruled</b> — money-in rows sort alphabetically once they group by word. One rule for
+          the whole table.</li>
+        <li><b>B2 ruled, with one addition the drawing could not show</b> — a note-less merged
+          sub-line takes its <em>schedule</em> as its name. Writing it revealed that the schedule
+          already appears in the <em>When</em> column and again under the name on a phone, so as
+          drawn it would have printed three times on one row. <strong>The When cell now drops on
+          that row.</strong> Section 03 is redrawn for it.</li>
+        <li><b>B2 also fixes a live defect on the cost side</b> — the same note-less fallback is
+          shared, and your test team’s <em>Entry Fees</em> row currently prints that word three times
+          in a column. Drawn as it really is in 03.</li>
+        <li><b>The headings are now categories, not kinds</b> — from your separate
+          “category is the shelf” ruling, already built. <em>Fundraising</em> and
+          <em>Sponsorship</em> read identically either way, so every specimen below still stands;
+          what changes is that a money-in category you invent gets its own peer heading, and this
+          work nests word-rows inside those headings.</li>
+      </ol>
+      <p class="status-foot">
+        <strong>Not yet built.</strong> This change sits on files another session is still writing;
+        it starts once that work is committed.
+      </p>
+      <p class="status-foot" style="border-top:0; padding-top:4px">
+        <strong>Where the figures come from.</strong> Every row is your UAT test team’s real budget —
+        Facilities $8,400 over two words, Tournaments $2,500 over one, Chocolate sale $1,800, Season
+        interest $150 — <strong>except one</strong>. That team has only a single fundraising line, so
+        the second one needed to show two lines merging onto one word (<em>Bottle drive, $600, Oct</em>)
+        is an <strong>added example</strong>, marked <span class="tag tag-added">Added</span> wherever
+        it appears. A <em>Bottle drive</em> fundraiser does exist on that team, which is why it is the
+        plausible second line — but it has no budget line today.
+        <strong>Round 1 got this wrong</strong>: it drew an invented sponsorship row and a second
+        fundraising row as if they were real, and printed a costs total that did not match the rows
+        above it. Both are corrected here.
+      </p>
+    </div>
+  </header>
+
+  <!-- ═══════════════ 00 — the problem, in figures ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">00</span>
+      <h2>One line, four screens, three different names</h2>
+    </div>
+    <p class="lede">
+      This is the fundraising line on your test team: <strong>$1,800</strong>, filed under
+      <em>Fundraising · Fundraising drive</em>, noted “Expected team share”. Here is what each screen
+      calls it today.
+    </p>
+    <table class="audit">
+      <thead>
+        <tr><th>Where you read it</th><th>Rows grouped by</th><th>The name it wears</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Budget Plan → <strong>List</strong></td>
+          <td>one row per line</td>
+          <td class="says bad">Chocolate sale</td>
+        </tr>
+        <tr>
+          <td>Budget Plan → <strong>By period</strong></td>
+          <td>merged by item</td>
+          <td class="says">Fundraising drive</td>
+        </tr>
+        <tr>
+          <td>Budget Plan → <strong>Export</strong> (CSV / PDF)</td>
+          <td>one row per line</td>
+          <td class="says bad">Fundraising drive — twice, identically, when two lines share the word</td>
+        </tr>
+        <tr>
+          <td><strong>Budget vs. Actual</strong></td>
+          <td>merged by item</td>
+          <td class="says bad">Chocolate sale</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">
+      The export’s duplicate rows are a defect on their own, not just an inconsistency — two
+      fundraising lines on one word print as two rows nobody can tell apart. Spending has never had
+      this problem: costs have been named by their item since August.
+    </p>
+  </section>
+
+  <!-- ═══════════════ 01 — whole screen, before & after ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>The whole screen, before and after</h2>
+    </div>
+    <p>
+      The Budget Plan list at desktop width, costs and funding together — because the question that
+      matters is not whether a row reads well on its own, but whether the money-in half still reads
+      like the same table as the cost half above it.
+    </p>
+
+    <div class="spec">
+      <div class="spec-cap">
+        <span class="who">Today</span>
+        <span class="tag tag-today">Today</span>
+        <span>Budget Plan · List · 1440px</span>
+        <span class="measure">Money-in rows: 3 lines, 3 rows</span>
+      </div>
+      <div class="frame">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Season budget</span>
+            <span class="card-sub">2026 Season · List</span>
+          </div>
+          <table class="pt">
+            <colgroup><col><col class="c-when"><col class="c-planned"><col class="c-act"></colgroup>
+            <thead>
+              <tr><th scope="col">Category / line</th><th scope="col">When</th><th scope="col">Planned</th><th scope="col"></th></tr>
+            </thead>
+            <tbody>
+              <tr class="band"><th scope="row">Costs</th><td></td><td></td><td></td></tr>
+
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Facilities</span>
+                  </button>
+                </th>
+                <td></td><td>$8,400.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"><svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span class="name-i"><span class="name">Dome Time</span><span class="rownote">16 sessions, Jan–Mar</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip">Jan · Feb · Mar</span></td>
+                <td>$5,200.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"></span>
+                  <span class="name-i"><span class="name">Diamond Permits</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip">Apr</span></td>
+                <td>$3,200.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Tournaments</span>
+                  </button>
+                </th>
+                <td></td><td>$2,500.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <button class="toggle" type="button">
+                    <svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Entry Fees</span>
+                  </button>
+                </th>
+                <td></td><td>$2,500.00</td><td></td>
+              </tr>
+
+              <tr class="total"><th scope="row">Planned costs</th><td></td><td>$10,900.00</td><td></td></tr>
+
+              <tr class="band"><th scope="row">Funding</th><td></td><td></td><td></td></tr>
+
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Fundraising</span>
+                  </button>
+                </th>
+                <td></td><td class="money-in">$1,800.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"><svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span class="name-i"><span class="name"><span class="hl-red">Chocolate sale</span></span><span class="rownote">Expected team share</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip">Mar · Apr</span></td>
+                <td class="money-in">$1,800.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Other income</span>
+                  </button>
+                </th>
+                <td></td><td class="money-in">$150.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"></span>
+                  <span class="name-i"><span class="name">Season interest</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip chip-none">No date yet</span></td>
+                <td class="money-in">$150.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+
+              <tr class="total"><th scope="row">Planned funding</th><td></td><td class="money-in">$1,950.00</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="note" style="margin-top:10px">
+        Three money-in rows wearing three words <strong>you cannot see, change or delete anywhere in
+        the product</strong>. Note the shape difference against Tournaments above: a cost item with
+        two lines behind it is one openable row; a fundraising item with two lines behind it is two
+        loose rows.
+      </p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-cap">
+        <span class="who">After — same data, nothing re-filed</span>
+        <span class="tag tag-restyled">Restyled</span>
+        <span>Budget Plan · List · 1440px</span>
+        <span class="measure">Money-in rows: 3 lines, 2 rows</span>
+      </div>
+      <div class="frame">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Season budget</span>
+            <span class="card-sub">2026 Season · List</span>
+          </div>
+          <table class="pt">
+            <colgroup><col><col class="c-when"><col class="c-planned"><col class="c-act"></colgroup>
+            <thead>
+              <tr><th scope="col">Category / line</th><th scope="col">When</th><th scope="col">Planned</th><th scope="col"></th></tr>
+            </thead>
+            <tbody>
+              <tr class="band"><th scope="row">Costs</th><td></td><td></td><td></td></tr>
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Facilities</span>
+                  </button>
+                </th>
+                <td></td><td>$8,400.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"><svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span class="name-i"><span class="name">Dome Time</span><span class="rownote">16 sessions, Jan–Mar</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip">Jan · Feb · Mar</span></td>
+                <td>$5,200.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"></span>
+                  <span class="name-i"><span class="name">Diamond Permits</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip">Apr</span></td>
+                <td>$3,200.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Tournaments</span>
+                  </button>
+                </th>
+                <td></td><td>$2,500.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <button class="toggle" type="button">
+                    <svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Entry Fees</span>
+                  </button>
+                </th>
+                <td></td><td>$2,500.00</td><td></td>
+              </tr>
+              <tr class="total"><th scope="row">Planned costs</th><td></td><td>$10,900.00</td><td></td></tr>
+
+              <tr class="band"><th scope="row">Funding</th><td></td><td></td><td></td></tr>
+
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Fundraising</span>
+                  </button>
+                </th>
+                <td></td><td class="money-in">$1,800.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"><svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span class="name-i"><span class="name"><span class="hl">Fundraising drive</span></span><span class="rownote">Expected team share</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip">Mar · Apr</span></td>
+                <td class="money-in">$1,800.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+
+              <tr class="cat">
+                <th scope="row">
+                  <button class="toggle" type="button">
+                    <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Other income</span>
+                  </button>
+                </th>
+                <td></td><td class="money-in">$150.00</td><td></td>
+              </tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"></span>
+                  <span class="name-i"><span class="name">Season interest</span></span>
+                </th>
+                <td class="c-when-cell"><span class="chip chip-none">No date yet</span></td>
+                <td class="money-in">$150.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+
+              <tr class="total"><th scope="row">Planned funding</th><td></td><td class="money-in">$1,950.00</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="note" style="margin-top:10px">
+        <strong>This is the honest day-one picture, and it is the thing to judge.</strong> Every figure
+        is identical; the two fundraising lines have collapsed into one openable row because they are
+        filed against one word, exactly as <em>Entry Fees</em> does above them. The money-in half now
+        reads as the same table as the cost half. What it costs is the two evocative words — until the
+        coach does specimen 04.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 02 — the ordinary row ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>The ordinary row — one line, one word</h2>
+    </div>
+    <p>
+      The common case, and the smallest visible change: the row stops showing a word nothing can edit
+      and shows the word it is actually filed against. The note underneath is untouched and is now
+      the only place a coach writes something particular about the line.
+    </p>
+    <div class="pair side">
+      <div class="spec">
+        <div class="spec-cap"><span class="who">Today</span><span class="tag tag-today">Today</span></div>
+        <div class="frame"><div class="card">
+          <table class="pt" style="min-width:0">
+            <colgroup><col><col class="c-planned"><col class="c-act"></colgroup>
+            <tbody>
+              <tr class="cat"><th scope="row">Fundraising</th><td class="money-in">$1,800.00</td><td></td></tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"></span>
+                  <span class="name-i"><span class="name"><span class="hl-red">Chocolate sale</span></span><span class="rownote">Expected team share</span></span>
+                </th>
+                <td class="money-in">$1,800.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+            </tbody>
+          </table>
+        </div></div>
+        <p class="note" style="margin-top:10px">A typed word with no field behind it — the row that
+          started this. Budget vs. Actual calls it the same thing; the by-period grid already calls it
+          <em>Fundraising drive</em>.</p>
+      </div>
+      <div class="spec">
+        <div class="spec-cap"><span class="who">After</span><span class="tag tag-restyled">Restyled</span></div>
+        <div class="frame"><div class="card">
+          <table class="pt" style="min-width:0">
+            <colgroup><col><col class="c-planned"><col class="c-act"></colgroup>
+            <tbody>
+              <tr class="cat"><th scope="row">Fundraising</th><td class="money-in">$1,800.00</td><td></td></tr>
+              <tr>
+                <th scope="row" class="lead">
+                  <span class="exp"></span>
+                  <span class="name-i"><span class="name"><span class="hl">Fundraising drive</span></span><span class="rownote">Expected team share</span></span>
+                </th>
+                <td class="money-in">$1,800.00</td>
+                <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+              </tr>
+            </tbody>
+          </table>
+        </div></div>
+        <p class="note" style="margin-top:10px">The word names the row on all four screens, and the
+          note underneath is untouched. A coach who wants their plan to keep saying
+          <em>Chocolate sale</em> creates that word — section 04.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 03 — the merged row ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Two lines on one word — and the echo it exposes</h2>
+    </div>
+    <p>
+      Spending already merges two lines onto one word, so money-in is adopting an existing shape
+      rather than a new one. But drawing it turned up something round 1 got wrong, and something
+      already broken on the cost side.
+    </p>
+    <p class="note">
+      <strong>Round 1 drew the cost reference with a note on both sub-lines.</strong> Your test team
+      does not have that — neither of its two Entry Fees lines carries a note, so the fallback fires
+      twice and the word prints three times in one column. That is the frame below, exactly as the
+      product renders it today.
+    </p>
+    <div class="spec">
+      <div class="spec-cap">
+        <span class="who">Today — costs, on your test team</span>
+        <span class="tag tag-today">Today</span>
+        <span>The live defect B2 also fixes</span>
+        <span class="measure">“Entry Fees” × 3</span>
+      </div>
+      <div class="frame"><div class="card">
+        <table class="pt">
+          <colgroup><col><col class="c-when"><col class="c-planned"><col class="c-act"></colgroup>
+          <thead>
+            <tr><th scope="col">Category / line</th><th scope="col">When</th><th scope="col">Planned</th><th scope="col"></th></tr>
+          </thead>
+          <tbody>
+            <tr class="cat"><th scope="row">Tournaments</th><td></td><td>$2,500.00</td><td></td></tr>
+            <tr>
+              <th scope="row" class="lead">
+                <button class="toggle" type="button">
+                  <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span><span class="hl-red">Entry Fees</span></span>
+                </button>
+              </th>
+              <td></td><td>$2,500.00</td><td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead-2">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name"><span class="hl-red">Entry Fees</span></span></span>
+              </th>
+              <td class="c-when-cell"><span class="chip chip-none">No date yet</span></td>
+              <td>$1,600.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead-2">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name"><span class="hl-red">Entry Fees</span></span></span>
+              </th>
+              <td class="c-when-cell"><span class="chip">May</span></td>
+              <td>$900.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+          </tbody>
+        </table>
+      </div></div>
+      <p class="note" style="margin-top:10px">
+        Neither line has a note, so each falls back to the word above it. The only thing telling the
+        two apart is the When column and the amount — the name column says nothing three times.
+        <strong>This is shipping today, on spending, and nobody reported it</strong> because the two
+        rows still add up.
+      </p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-cap">
+        <span class="who">After — one rule, both sides</span>
+        <span class="tag tag-new">New</span>
+        <span class="tag tag-added">Added example</span>
+        <span>B2 as it will actually be built</span>
+        <span class="measure">Nothing printed twice</span>
+      </div>
+      <div class="frame"><div class="card">
+        <table class="pt">
+          <colgroup><col><col class="c-when"><col class="c-planned"><col class="c-act"></colgroup>
+          <thead>
+            <tr><th scope="col">Category / line</th><th scope="col">When</th><th scope="col">Planned</th><th scope="col"></th></tr>
+          </thead>
+          <tbody>
+            <tr class="cat"><th scope="row">Tournaments</th><td></td><td>$2,500.00</td><td></td></tr>
+            <tr>
+              <th scope="row" class="lead">
+                <button class="toggle" type="button">
+                  <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Entry Fees</span>
+                </button>
+              </th>
+              <td></td><td>$2,500.00</td><td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead-2">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name"><span class="hl">No date yet</span></span></span>
+              </th>
+              <td class="c-when-cell"></td>
+              <td>$1,600.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead-2">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name"><span class="hl">May</span></span></span>
+              </th>
+              <td class="c-when-cell"></td>
+              <td>$900.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+
+            <tr class="band"><th scope="row">Funding</th><td></td><td></td><td></td></tr>
+
+            <tr class="cat"><th scope="row">Fundraising</th><td></td><td class="money-in">$2,400.00</td><td></td></tr>
+            <tr>
+              <th scope="row" class="lead">
+                <button class="toggle" type="button">
+                  <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span><span class="hl">Fundraising drive</span></span>
+                </button>
+              </th>
+              <td></td><td class="money-in">$2,400.00</td><td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead-2">
+                <span class="exp"><svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="name-i"><span class="name">Expected team share</span></span>
+              </th>
+              <td class="c-when-cell"><span class="chip">Mar · Apr</span></td>
+              <td class="money-in">$1,800.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead-2">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name"><span class="hl">Oct</span></span></span>
+              </th>
+              <td class="c-when-cell"></td>
+              <td class="money-in">$600.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+          </tbody>
+        </table>
+      </div></div>
+      <p class="note" style="margin-top:10px">
+        <strong>The rule, in one sentence:</strong> a sub-line is named by its note; with no note it
+        is named by its schedule, and then its <em>When</em> cell is empty — because the answer has
+        moved into the name. Nothing on the row is stated twice, nothing echoes the row above, and
+        the same rule runs on both sides of the table. On a phone this is what already happened
+        anyway: there is no When column at that width.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 04 — the coach's answer ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>What the coach does about it — one word, created once</h2>
+    </div>
+    <p>
+      This is the specimen the ruling stands or falls on. The coach adds <em>Chocolate sale</em> and
+      <em>Bottle drive</em> to the Fundraising shelf — from the line editor’s own picker, or from a
+      drive’s <em>Raising for</em> field — and files each line against its own word.
+    </p>
+    <div class="spec">
+      <div class="spec-cap">
+        <span class="who">After — two words created</span>
+        <span class="tag tag-new">New</span>
+        <span class="tag tag-added">Added example</span>
+        <span>The words are now real records, not typed text</span>
+        <span class="measure">Money-in rows: 3 lines, 3 rows</span>
+      </div>
+      <div class="frame"><div class="card">
+        <table class="pt">
+          <colgroup><col><col class="c-when"><col class="c-planned"><col class="c-act"></colgroup>
+          <tbody>
+            <tr class="band"><th scope="row">Funding</th><td></td><td></td><td></td></tr>
+            <tr class="cat">
+              <th scope="row">
+                <button class="toggle" type="button">
+                  <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Fundraising</span>
+                </button>
+              </th>
+              <td></td><td class="money-in">$2,400.00</td><td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name"><span class="hl">Bottle drive</span></span></span>
+              </th>
+              <td class="c-when-cell"><span class="chip">Oct</span></td>
+              <td class="money-in">$600.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead">
+                <span class="exp"><svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="name-i"><span class="name"><span class="hl">Chocolate sale</span></span><span class="rownote">Expected team share</span></span>
+              </th>
+              <td class="c-when-cell"><span class="chip">Mar · Apr</span></td>
+              <td class="money-in">$1,800.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+            <tr class="cat">
+              <th scope="row">
+                <button class="toggle" type="button">
+                  <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Other income</span>
+                </button>
+              </th>
+              <td></td><td class="money-in">$150.00</td><td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="lead">
+                <span class="exp"></span>
+                <span class="name-i"><span class="name">Season interest</span></span>
+              </th>
+              <td class="c-when-cell"><span class="chip chip-none">No date yet</span></td>
+              <td class="money-in">$150.00</td>
+              <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+            </tr>
+            <tr class="total"><th scope="row">Planned funding</th><td></td><td class="money-in">$2,550.00</td><td></td></tr>
+          </tbody>
+        </table>
+      </div></div>
+      <p class="note" style="margin-top:10px">
+        Same words as today’s screen — but now each one is a record. It names the row on the plan, on
+        Budget vs. Actual, in both exports and in the by-period grid; it is offered to the next drive
+        the coach sets up; and it survives into next season’s rollover. <strong>Note the order:</strong>
+        Bottle drive now sorts above Chocolate sale, because item rows sort alphabetically like the
+        cost side. See decision A.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 05 — the editor ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h2>The editor — the sentence that stops being false</h2>
+    </div>
+    <p>
+      No new fields. One sentence is corrected, and the Notes field is given the job the deleted
+      Description field used to do.
+    </p>
+    <div class="pair side">
+      <div class="spec">
+        <div class="spec-cap"><span class="who">Today</span><span class="tag tag-today">Today</span></div>
+        <div class="frame">
+          <div class="modal">
+            <h4>Edit Budget Line</h4>
+            <p class="req">* Required</p>
+            <div class="fld">
+              <label>This line is</label>
+              <div class="ctrl sel" style="background:var(--p-olive-soft)">
+                <span>Money coming in</span>
+                <svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="transform:rotate(90deg)"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Category &amp; Item <span class="star">*</span></label>
+              <div class="ctrl">Fundraising · Fundraising drive</div>
+              <p class="hint"><span class="hl-red">These name this line everywhere.</span> Anything
+                else worth saying goes in Notes.</p>
+            </div>
+            <div class="fld">
+              <label>Notes</label>
+              <div class="ctrl" style="color:var(--p-dim)">Expected team share</div>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:10px">
+          The hint is <strong>false for money coming in</strong>: this line is called
+          <em>Chocolate sale</em> on the plan, and the form offers no way to see or change that.
+        </p>
+      </div>
+
+      <div class="spec">
+        <div class="spec-cap"><span class="who">After</span><span class="tag tag-restyled">Restyled</span><span class="measure">1 sentence + 1 hint</span></div>
+        <div class="frame">
+          <div class="modal">
+            <h4>Edit Budget Line</h4>
+            <p class="req">* Required</p>
+            <div class="fld">
+              <label>This line is</label>
+              <div class="ctrl sel" style="background:var(--p-olive-soft)">
+                <span>Money coming in</span>
+                <svg class="chev" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="transform:rotate(90deg)"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="fld">
+              <label>Category &amp; Item <span class="star">*</span></label>
+              <div class="ctrl">Fundraising · Fundraising drive</div>
+              <p class="hint"><span class="hl">This names the line on your plan, your report and your
+                exports.</span> Want it to say <em>Chocolate sale</em>? Add that word to Fundraising
+                — the picker will create it.</p>
+              <p class="consequence">Fundraising lowers what players are asked to pay. Enter what you
+                expect the <strong>team</strong> to keep.</p>
+            </div>
+            <div class="fld">
+              <label>Notes</label>
+              <div class="ctrl" style="color:var(--p-dim)">Expected team share</div>
+              <p class="hint"><span class="hl">Shown under the line’s name, and what tells two lines
+                on one word apart.</span></p>
+            </div>
+            <div class="modal-foot">
+              <span class="btn-del">Delete line</span>
+              <span class="btn-row"><span class="btn-ghost">Cancel</span><span class="btn-cta">Save Changes</span></span>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:10px">
+          The hint now tells the truth <em>and</em> tells the coach the one move that gets them their
+          own word. The Notes hint is new: it is the field that has quietly inherited the job.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 06 — phone ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <h2>Phone — true size, 390px</h2>
+    </div>
+    <p class="note">
+      <strong>Open this page on your actual phone to judge these two.</strong> These frames are locked
+      to 390px and will not reflow with your window; on a laptop they are indicative only. The When
+      column is not on screen at this width — it lives under the name — and the name column is where
+      the merged row costs the most.
+    </p>
+    <div class="phones">
+      <div>
+        <div class="spec-cap"><span class="who">Merged row, opened</span><span class="tag tag-new">New</span><span class="tag tag-added">Added example</span></div>
+        <div class="phone">
+          <div class="card">
+            <table class="pt">
+              <colgroup><col><col class="c-planned"><col class="c-act"></colgroup>
+              <tbody>
+                <tr class="cat"><th scope="row">Fundraising</th><td class="money-in">$2,400.00</td><td></td></tr>
+                <tr>
+                  <th scope="row" class="lead">
+                    <button class="toggle" type="button">
+                      <svg class="chev chev-d" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span>Fundraising drive</span>
+                    </button>
+                  </th>
+                  <td class="money-in">$2,400.00</td><td></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="lead-2">
+                    <span class="name">Expected team share</span>
+                    <span class="chip" style="padding-left:0">Mar · Apr</span>
+                  </th>
+                  <td class="money-in">$1,800.00</td>
+                  <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="lead-2">
+                    <span class="name"><span class="hl">Oct</span></span>
+                  </th>
+                  <td class="money-in">$600.00</td>
+                  <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ref-rule">44px tap floor — reference block</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="spec-cap"><span class="who">Ordinary rows, own words</span><span class="tag tag-restyled">Restyled</span><span class="tag tag-added">Added example</span></div>
+        <div class="phone">
+          <div class="card">
+            <table class="pt">
+              <colgroup><col><col class="c-planned"><col class="c-act"></colgroup>
+              <tbody>
+                <tr class="cat"><th scope="row">Fundraising</th><td class="money-in">$2,400.00</td><td></td></tr>
+                <tr>
+                  <th scope="row" class="lead">
+                    <span class="name">Bottle drive</span>
+                    <span class="chip" style="padding-left:0">Oct</span>
+                  </th>
+                  <td class="money-in">$600.00</td>
+                  <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="lead">
+                    <span class="name">Chocolate sale</span>
+                    <span class="rownote">Expected team share</span>
+                    <span class="chip" style="padding-left:0">Mar · Apr</span>
+                  </th>
+                  <td class="money-in">$1,800.00</td>
+                  <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+                </tr>
+                <tr class="cat"><th scope="row">Other income</th><td class="money-in">$150.00</td><td></td></tr>
+                <tr>
+                  <th scope="row" class="lead">
+                    <span class="name">Season interest</span>
+                    <span class="chip chip-none" style="padding-left:0">No date yet</span>
+                  </th>
+                  <td class="money-in">$150.00</td>
+                  <td><svg class="pencil" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11.2 2.3l2.5 2.5-8 8-3.2.7.7-3.2 8-8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></td>
+                </tr>
+                <tr class="total"><th scope="row">Planned funding</th><td class="money-in">$2,550.00</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ref-rule">44px tap floor — reference block</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ decisions ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">07</span>
+      <h2>What was ruled, and what moved since</h2>
+    </div>
+
+    <div class="decision" style="border-left-color: var(--teal)">
+      <span class="ask" style="color: var(--teal)">Ruled 2026-09-09 · A1</span>
+      <h3>Money-in rows sort alphabetically</h3>
+      <p>
+        One rule for the whole table. In specimen 04 that puts <em>Bottle drive</em> above
+        <em>Chocolate sale</em> — a visible change riding along with the rename, and the price of the
+        two halves finally behaving identically.
+      </p>
+    </div>
+
+    <div class="decision" style="border-left-color: var(--teal)">
+      <span class="ask" style="color: var(--teal)">Ruled 2026-09-09 · B2, plus one addition</span>
+      <h3>A note-less sub-line takes its schedule as its name — and drops its When cell</h3>
+      <p>
+        The ruling stands as given: a merged sub-line with no note reads “Oct” rather than echoing
+        its parent. <strong>Writing it up revealed a repetition the drawing could not show.</strong>
+        Every line row already prints its schedule in the <em>When</em> column, and again under the
+        name on a phone — so naming the row by its schedule would have printed “Oct” three times.
+      </p>
+      <p>
+        So the rule gains a clause: when the schedule becomes the name, the <em>When</em> cell on that
+        row is empty. Redrawn in section 03. This is the same decision with its duplicate removed,
+        not a different one.
+      </p>
+    </div>
+
+    <div class="decision">
+      <span class="ask">Widened · B2 reaches spending too</span>
+      <h3>The same defect is already live on the cost side</h3>
+      <p>
+        The note-less fallback is shared between both halves of the table. Your test team’s
+        <em>Entry Fees</em> row prints that word three times in one column right now — drawn in
+        section 03’s first frame. Fixing only the money-in half would leave the identical defect on
+        the surface money-in is being aligned <em>to</em>.
+      </p>
+      <p>
+        <strong>I intend to fix both.</strong> It is a small extra edit and a visible change to
+        spending rows you did not ask about — say so if you would rather I left the cost side alone.
+      </p>
+    </div>
+
+    <div class="decision">
+      <span class="ask">Correction · my plan was wrong</span>
+      <h3>No backend change, no migration, nothing rewritten</h3>
+      <p>
+        The earlier plan said the editor would have to stop sending the line’s stored word. It does
+        not. Spending never relied on that — it names a row from the item <em>at display time</em>,
+        and money-in needs the same treatment and nothing more. Re-filing a line renames its row
+        because the row reads the word it is filed against, not because anything is re-saved.
+        <strong>Smaller and safer than described.</strong>
+      </p>
+    </div>
+
+    <p class="note" style="margin-top:22px">
+      The <em>Raising for</em> field on drives and sponsors is untouched throughout — it shipped on
+      2026-09-08 and is already on production.
+    </p>
+  </section>
+
+  <footer class="foot">
+    <span>Mockup round 3 · 2026-09-09 · both decisions ruled · figures corrected against the fixture</span>
+    <span>Plan: COACH_MONEY_IN_ITEM_NAMES_THE_ROW_PLAN.md</span>
+    <span>Coach portal’s real warm tokens; UAT fixture’s real figures except the one row tagged Added</span>
+    <span>Not built — starts once the concurrent money work is committed</span>
+  </footer>
+
+</div>
