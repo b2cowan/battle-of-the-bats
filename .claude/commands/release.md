@@ -114,6 +114,29 @@ npm run check:migrations
 
 **Skip this step for `dev` releases** (the check compares dev↔prod; it's a production gate).
 
+⚠ **`check:migrations` alone is NOT sufficient — it compares live tables and columns, so a
+migration that changes neither is invisible to it.** A cron schedule, a data-only
+INSERT/UPDATE/DELETE, a dropped column (prod having *more* than dev never trips a "prod is
+missing" check) or a created/replaced function all report "prod in sync" whether or not they were
+ever applied — and the miss is silent in both directions: nothing 500s, no gate turns red, the
+product renders perfectly, the change simply never happened on prod. Migration 264 sat outstanding
+on prod for exactly this reason while the check reported green. So run the companion gate too:
+
+```powershell
+node scripts/check-manual-prod-migrations.mjs --promote
+```
+- ✅ pass → continue.
+- ✖ fail → **STOP.** It names each migration and what it does. Apply the outstanding ones to prod
+  (`node scripts/apply-migration-api.mjs supabase/migrations/<file>.sql --prod`), then record the
+  new state in `supabase/migrations/MANUAL_PROD_STEPS.json` — `applied` with its date as the note,
+  or `held` with the reason if the divergence is deliberate. Re-run until it passes, or the user
+  **explicitly confirms** shipping with the item still outstanding.
+
+⚠ **Some of these must travel WITH their code and must not be applied early.** Migration 273 is the
+standing example: it reschedules the demo sandbox's refresh job to nightly, and applying it before
+the matching code is deployed freezes the public demo mid-game. Apply that class *immediately after*
+the deploy lands, not before it. Each entry's `note` says which kind it is.
+
 ### 1d-1 — The live demos still tell the truth (master / promote targets only)
 
 Both sandboxes are **fully public on production** and are the only surfaces where the product sells
@@ -211,6 +234,7 @@ Push:     current branch → [TARGET]
 Commits:  [N commits ahead of target, not counting the pending commit if dirty]
 TS check: ✅ clean
 Migrations: [master/promote only: ✅ prod in sync / ✖ prod BEHIND dev — see check:migrations | dev: n/a]
+Manual prod steps: [master/promote only: ✅ none outstanding / ✖ N outstanding — name them, see check-manual-prod-migrations | dev: n/a]
 Deploy-only: [master/promote only: ✅ verified on deployed dev / n/a — no native/build-config changes | dev: n/a]
 Release notes: [master/promote only: ✅ entry committed on dev / ⏭ skipped — internal-only release | dev: n/a]
 Printed docs: [master/promote only: ✅ N documents render clean / ✖ see npm run check:pdf | dev: n/a]
@@ -512,6 +536,7 @@ Option B — Force reset to previous commit (destructive):
 - **Never call Edit, Write, or any file-modifying tool before fix approval**
 - **Never push with TypeScript errors** — preflight must be clean
 - **Never release to master / promote when `npm run check:migrations` fails** — prod being behind dev means a migration wasn't applied to prod and the new code will 500. Apply it to prod first (`apply-migration-api.mjs <file> --prod`), or get the user's explicit confirmation the drift is intentional.
+- **Never release to master / promote when `check-manual-prod-migrations.mjs --promote` fails** — and never treat a green `check:migrations` as covering it. That check compares tables and columns; a cron schedule, a data-only write, a dropped column or a function change is invisible to it and will report "in sync" whether or not prod ever got it. This one is the only thing that will tell you. ⚠ Note which entries must be applied *after* the deploy rather than before (their note says so) — applying a schedule change ahead of its code can break a live surface.
 - **Always show the Amplify console URL** after a successful push
 - **A master/promote release is not finished at build SUCCEED** — the Phase 2b truth-up (the record catches up) is part of the release
 - **Always use `--force-with-lease`** if a force push is ever needed — never bare `--force`
