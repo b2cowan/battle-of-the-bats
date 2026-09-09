@@ -667,11 +667,17 @@ export const MIDSEASON_CLUB_MONEY = {
       status: 'approved',
       createdOffset: -17,
       reviewedOffset: -12,
-      /** ⚠ A REAL PLATFORM INCOME WORD, not an invented one. "Grant" is the money-IN side of
-       *  Fundraising in the shared library, so the demo shows a coach picking a word the product
-       *  already offers them — and the picker only offers income words once the answer above is
-       *  "new money", which is the behaviour this row exists to demonstrate. */
-      files: { category: 'Fundraising', item: 'Grant' },
+      /** ⚠ A REAL PLATFORM INCOME WORD, not an invented one. "Grant" is a money-IN word in the
+       *  shared library, so the demo shows a coach picking a word the product already offers them —
+       *  and the picker only offers income words once the answer above is "new money", which is the
+       *  behaviour this row exists to demonstrate.
+       *  ⚠⚠ IT MOVED TO SPONSORSHIP (mig 282) AND THIS PAIR HAD TO MOVE WITH IT. A grant is
+       *  sponsor-sourced (mig 280), and leaving the word on the Fundraising shelf made a team that
+       *  budgeted its sponsorship properly read WORSE than one that did not. ⚠ This pair is a
+       *  LOOKUP KEY, not a label: `budgetItemIds` resolves (category, item) and CREATES the word if
+       *  the pair misses — so a stale 'Fundraising' here would not fail, it would quietly mint a
+       *  second, team-owned, money-OUT "Grant" into the public demo. */
+      files: { category: 'Sponsorship', item: 'Grant' },
     },
     {
       requestType: 'payment_to_org',

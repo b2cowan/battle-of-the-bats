@@ -1325,13 +1325,13 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
        calls go through the same helper — so the club's bill and the team's plan land on the SAME
        item row of Budget vs. Actual rather than two rows with one name. A second, separate lookup
        is how the demo would come to show "Facilities · Diamond Permits" twice.
-       ⚠ The grant's word is money-IN ("Grant", the income side of Fundraising in the shared
-       library). `budgetItemIds` defaults a word it has to create to the cost side, so an income
-       pair must say so — a word on the wrong side is one the demo's own picker cannot offer. */
+       ⚠ The grant's word is money-IN ("Grant", which lives under Sponsorship since mig 282).
+       `budgetItemIds` defaults a word it has to create to the cost side, so an income pair must say
+       so — a word on the wrong side is one the demo's own picker cannot offer. */
     const clubFilings = [alloc.files, ...MIDSEASON_CLUB_MONEY.requests.map(r => r.files)].filter(Boolean);
     const clubItems = await budgetItemIds(team.id, clubFilings.map(f => ({
       category: f.category, item: f.item,
-      direction: f.category === 'Fundraising' && f.item === 'Grant' ? 'in' : 'out',
+      direction: f.category === 'Sponsorship' && f.item === 'Grant' ? 'in' : 'out',
     })));
     const filedAs = f => (f ? itemRef(clubItems, f.category, f.item) : {});
 
