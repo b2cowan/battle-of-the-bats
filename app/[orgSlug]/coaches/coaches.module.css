@@ -4249,6 +4249,25 @@ a.oneChip:hover { border-color: currentColor; }
   overflow-y: auto;
 }
 
+/* ⚠⚠ A DIALOG DOES NOT INHERIT THE PLACE IT WAS OPENED FROM (owner, 2026-09-09).
+   The report’s "What families contributed" panel is rendered INSIDE the dues row’s `<td>`, and
+   `.moneyGrid th, .moneyGrid td` sets `text-align: right` and `white-space: nowrap` — both of
+   which inherit straight through the overlay into the dialog. The damage read as a layout bug
+   rather than an inheritance one: every label sat flush RIGHT inside its own column, so a label
+   shorter than the sub-line beneath it (`Fundraising credited to dues` over `money the team
+   raised, put against a bill`) looked indented while its neighbours looked fine — and the closing
+   sentence could not wrap at all, running off the panel’s edge mid-word.
+
+   ⚠ THE RESET BELONGS ON THE DIALOG, NOT ON THAT ONE PANEL. Every figure on both money grids
+   opens something, and each of those buttons lives in a right-aligned, nowrap cell; fixing only
+   the panel that was noticed leaves the same defect armed behind every other door. A dialog is a
+   fresh reading context by definition — it is not part of the cell it was mounted in. */
+.modal,
+.slideOver {
+  text-align: left;
+  white-space: normal;
+}
+
 .modalHeader {
   display: flex;
   align-items: center;

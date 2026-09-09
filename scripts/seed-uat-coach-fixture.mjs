@@ -1054,25 +1054,27 @@ if (!existingDues?.length) {
    this row every new element has ZERO GEOMETRY and a green sweep proves nothing (the
    empty-fixture lesson, again). Guarded separately from the dues block above so existing
    fixtures gain it on re-run. */
-const { data: existingCredit } = await db.from('rep_dues_credits')
-  .select('id').eq('program_year_id', py.id).limit(1);
-if (!existingCredit?.length && ids.length >= 2) {
-  const cc = await db.from('rep_dues_credits').insert({
-    program_year_id: py.id, player_id: ids[1],
-    amount: 150, description: 'Fundraiser rebate — Bottle Drive',
-    credit_type: 'fundraiser', credit_date: new Date().toISOString().slice(0, 10),
-  });
-  if (cc.error) { console.error('✗ dues credit insert', cc.error.message); process.exit(1); }
-  ok('fundraiser credit seeded (part-paid player — the "to send" states now render)');
-} else {
-  ok('dues credit already present (or roster too small)');
-}
+/* ⚠⚠ THE $150 FUNDRAISER CREDIT IS NOT TYPED HERE ANY MORE (2026-09-09). It used to be inserted
+   at this point as a bare credit with no drive behind it — and that is a state the product can no
+   longer produce: R7 closed the door, and `MANUAL_CREDIT_TYPES` is now `['other']` alone. A fixture
+   holding a row the app cannot create is worse than a thin one, because every figure derived from
+   it describes a world that does not exist. It measured, too: Budget vs. Actual excluded $117.00 of
+   this fixture's credits as untraceable, so the Statement and the dues screen disagreed by an
+   amount no customer could ever reproduce.
+
+   It is seeded WITH THE DRIVES instead — a real Bottle drive entry whose rebate mints the credit,
+   linked both ways exactly as the product writes it (search "Bottle drive entry" below). The credit
+   is identical in every figure it feeds; what changed is that it now traces to the act that made
+   it. The ordering is why it moved: the drives are created further down this script, and a credit
+   cannot point at an entry that does not exist yet. */
 
 /* A payout — cash handed BACK to a family (mig 234). `check:money-report`'s strip↔register
    identity (2026-08-23) lists this as a required breaking shape: it was the stream missing from
    the BvA cash strip entirely, so a fixture without one cannot fail the claim and a green run is
-   not evidence. Sized UNDER the $150 credit above so "owed back" stays coherent with the payout
-   writer's own ceiling ($50 remains owed). Guarded separately so existing fixtures gain it. */
+   not evidence. Sized UNDER the $150 Bottle drive credit seeded with the drives BELOW so "owed
+   back" stays coherent with the payout writer's own ceiling ($50 remains owed) — the credit moved
+   down there when it stopped being hand-typed, and this figure follows it rather than the file
+   order. Guarded separately so existing fixtures gain it. */
 const { data: existingPayout } = await db.from('rep_dues_payouts')
   .select('id').eq('program_year_id', py.id).limit(1);
 if (!existingPayout?.length && ids.length >= 2) {
@@ -1762,6 +1764,53 @@ if (chocolate) {
     ok(`drive entries seeded on Chocolate sale (${want.length} added — the room has a table to draw)`);
   } else {
     ok('drive entries already present');
+  }
+}
+
+/**
+ * THE BOTTLE DRIVE ENTRY — the $150 credit the dues block above used to type by hand.
+ *
+ * ⚠⚠ IT IS SEEDED THROUGH A DRIVE BECAUSE THE PRODUCT HAS NO OTHER DOOR (R7, 2026-09-07). Read the
+ * note where it used to live for the full reasoning; the short version is that a hand-typed
+ * fundraiser credit reduces a family's bill while sitting in no revenue figure anywhere, so the
+ * Statement and the dues screen disagreed by an amount no customer could reproduce.
+ *
+ * ⚠ $750.00 AT THE DRIVE'S OWN RATE, NOT A HARD-CODED $150.00. The rebate is derived from
+ * `player_rebate_percent` exactly as the entry writer derives it, so if that rate is ever edited on
+ * the fixture the credit follows instead of silently contradicting the drive it belongs to.
+ *
+ * ⚠ THE PAYOUT ABOVE DRAWS ON THIS CREDIT ($100.00 of it handed back, $50.00 still standing). The
+ * two are a pair: seed one without the other and the fixture either loses its "partly paid back"
+ * state or holds a payout with nothing behind it.
+ */
+const { data: bottle } = await db.from('rep_fundraisers')
+  .select('id, player_rebate_percent').eq('program_year_id', py.id).eq('kind', 'fundraiser')
+  .eq('name', 'Bottle drive').maybeSingle();
+if (bottle && ids.length >= 2) {
+  const { data: bottleLogged } = await db.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', bottle.id);
+  if (!bottleLogged?.length) {
+    const pct = Number(bottle.player_rebate_percent ?? 0);
+    const raised = 750;
+    const rebate = Math.round(raised * pct) / 100;
+    const en = await db.from('rep_fundraiser_entries').insert({
+      fundraiser_id: bottle.id, org_id: org.id, team_id: team.id, player_id: ids[1],
+      amount_raised: raised, rebate_percent: pct, rebate_amount: rebate, received_date: '2026-08-14',
+    }).select('id').single();
+    if (en.error) { console.log(`  ! bottle drive entry skipped (${en.error.message})`); }
+    else if (rebate > 0) {
+      const cr = await db.from('rep_dues_credits').insert({
+        program_year_id: py.id, player_id: ids[1], amount: rebate,
+        description: 'Fundraiser credit — Bottle drive', credit_type: 'fundraiser',
+        credit_date: '2026-08-14', fundraiser_entry_id: en.data.id,
+      }).select('id').single();
+      if (cr.error) console.log(`  ! bottle drive credit skipped (${cr.error.message})`);
+      else {
+        await db.from('rep_fundraiser_entries').update({ credit_id: cr.data.id }).eq('id', en.data.id);
+        ok(`bottle drive entry seeded ($${raised} at ${pct}% — the $${rebate} credit now traces to a drive)`);
+      }
+    }
+  } else {
+    ok('bottle drive entry already present');
   }
 }
 
