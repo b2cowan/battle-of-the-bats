@@ -548,7 +548,12 @@ export function duesExportRows(
 ): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
   const rows: ExportRow[] = players.map(p => ({
     player: [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' '),
-    totalDues: p.schedule?.totalAmount ?? '',
+    /* ⚠⚠ THE LADDER'S BILL, NOT THE SCHEDULE TOTAL (owner R1, 2026-09-09 · /review). A bill written
+       off comes off `ladder.dues`, and the Total row below is summed from those same ladders — so
+       reading the raw schedule total here wrote a file whose Dues column added up to MORE than its
+       own Total line, on any team with an adjustment. A treasurer sums that column; the screen it
+       came from is not there to explain the gap. The blank-on-no-schedule rule below is unchanged. */
+    totalDues: p.schedule ? p.ladder.dues : '',
     /* ⚠ THE LADDER'S FIGURES, NOT THE SCREEN'S OLD PAIR. A real ZERO is written as zero rather
        than blanked, because a spreadsheet column that empties itself cannot be summed and a
        treasurer reading `Fundraising` wants to see that a family raised nothing, not an empty

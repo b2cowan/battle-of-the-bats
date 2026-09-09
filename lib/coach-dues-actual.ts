@@ -166,6 +166,41 @@ export interface FamilyDuesActual {
    * creates it.
    */
   untraced: number;
+  /**
+   * ⚠⚠ WHAT CAME OFF THE BILL — the figure the Player Dues band subtracts from `Dues`
+   * (owner ruling R1, 2026-09-09: "a bill lowered is not a collection").
+   *
+   * A credit with no money behind it lowers what a family OWES; it is not something the team
+   * collected. `Dues` therefore reads `dues − billLowered.total`, and `Collected` reads `actual`.
+   *
+   * ⚠⚠ THE CLAMP IS WHY THIS IS NOT SIMPLY `writeOffs`, AND SUBTRACTING THE WRONG ONE MOVES EVERY
+   * BALANCE — the single way this ruling can be got wrong. `balance` must stay
+   * `dues − netCredits − cappedPaid`, untouched. It does, because
+   *
+   *     (dues − billLowered.total) − actual  ≡  balance        while `untraced` is zero
+   *
+   * and `billLowered.total` is clamped by the SAME rule `excluded` is. Subtract the unclamped
+   * `writeOffs` instead and a family whose payouts exceed their credits shifts by the difference —
+   * the §148 defect shape, where a figure was paired with a differently-clamped twin.
+   *
+   * ⚠ AN UNTRACED CREDIT IS NOT A BILL ADJUSTMENT and deliberately does not appear here: no coach
+   * decided to lower that bill. It is held out of revenue (see `untraced`) but leaves `Dues` alone,
+   * so a season carrying one would show the band short by exactly it. There are none on either
+   * database — R7 closed the door that made them — which is why the band closes today. If one is
+   * ever seen again, that gap is a true statement about a legacy record, not a rounding fault.
+   *
+   * ⚠ FORGIVENESS TAKES THE CLAMP FIRST, matching this module's header rule that a forgiveness
+   * applies to bills before the family's own credits. It only ever changes which WORD the caption
+   * uses, never the total.
+   */
+  billLowered: {
+    /** Standing `forgiven` credits, after the clamp. */
+    forgiven: number;
+    /** Standing `other` credits — what a coach types as an **Adjustment** — after the clamp. */
+    adjustment: number;
+    /** The two together: what `Dues` is reduced by. */
+    total: number;
+  };
 }
 
 /**
@@ -193,6 +228,12 @@ export function creditIsRevenue(c: Pick<DuesCreditInput, 'kind' | 'traced'>): bo
  * ⚠ AND IT EQUALS `dues − balance − excluded` BY CONSTRUCTION, which is the gate. Two
  * ways to the same number, one anchored on the balance a coach has already acted on. The unit tests
  * assert the identity on every case rather than trusting this comment.
+ *
+ * ⚠⚠ SINCE 2026-09-09 THE PLAYER DUES BAND READS THIS FUNCTION TOO, and that is the point rather
+ * than a convenience: `Collected` on the dues screen and `Player dues` on Budget vs. Actual are now
+ * ONE derivation reached from two directions, so they cannot drift apart the way they had. The band
+ * pairs `actual` with `dues − billLowered.total` and lands on the balance a coach already knows —
+ * see `billLowered` for why the pairing is exact and what breaks if the wrong figure is subtracted.
  */
 export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
   const duesC = toCents(input.dues);
@@ -202,6 +243,10 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
   let handedBackC = 0;
   let writeOffsC = 0;
   let untracedC = 0;
+  /* Split the moment they are counted, not re-walked afterwards — the caption names whichever
+     kinds are actually present (R5), and a second pass over the same list is how two figures on
+     one screen start disagreeing about the same credit. */
+  let forgivenC = 0;
   /* The three parts, accumulated from the SAME per-credit standing amounts the exclusions use, so
      the door's lines and the figure it opened from cannot part company. */
   let ownStandingC = 0;
@@ -224,7 +269,11 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
       ownStandingC += standingC;
       continue;
     }
-    if (!KIND_CLAIMS_MONEY[c.kind]) { writeOffsC += standingC; continue; }
+    if (!KIND_CLAIMS_MONEY[c.kind]) {
+      writeOffsC += standingC;
+      if (c.kind === 'forgiven') forgivenC += standingC;
+      continue;
+    }
     if (!c.traced) { untracedC += standingC; continue; }
     if (c.kind === 'reimbursement') familyPaidC += standingC;
     else fundraisingC += standingC;   // fundraiser, sponsorship, contribution
@@ -242,6 +291,12 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
   const excludedC = Math.min(writeOffsC + untracedC, netCreditsC);
   const actualC = cappedC + netCreditsC - excludedC;
 
+  /* ⚠ THE SAME CLAMP, APPLIED TO THE BILL-LOWERING HALF ALONE — see `billLowered` above for why
+     this may not simply be `writeOffsC`. Forgiveness takes it first (module header: a forgiveness
+     meets bills before the family's own credits), which moves no total and only decides the word. */
+  const loweredC = Math.min(writeOffsC, netCreditsC);
+  const loweredForgivenC = Math.min(forgivenC, loweredC);
+
   return {
     actual: toDollars(actualC),
     balance: toDollars(balanceC),
@@ -253,6 +308,11 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
     },
     writeOffs: toDollars(writeOffsC),
     untraced: toDollars(untracedC),
+    billLowered: {
+      forgiven: toDollars(loweredForgivenC),
+      adjustment: toDollars(loweredC - loweredForgivenC),
+      total: toDollars(loweredC),
+    },
   };
 }
 
@@ -266,12 +326,86 @@ export function seasonDuesActual(families: FamilyDuesActualInput[]): number {
   return r2(families.reduce((sum, f) => sum + duesActual(f).actual, 0));
 }
 
+/**
+ * THE PLAYER DUES BAND AND THE MONEY HUB'S CARD, FROM ONE WALK (owner R1–R4, 2026-09-09).
+ *
+ * ⚠⚠ IT EXISTS BECAUSE THREE SURFACES ASK THESE QUESTIONS AND USED TO ANSWER THEM SEPARATELY —
+ * the dues band, the Money Overview card and the Statement. The ruling's whole payoff is that
+ * `contributed` here IS the Statement's `Player dues` figure; a second derivation anywhere is how
+ * that stops being true, quietly, on a screen a coach reconciles their books on.
+ *
+ * ⚠⚠ `settled` IS CAPPED PER FAMILY AND NEVER SEASON-WIDE, and the distinction is load-bearing.
+ * One family's overshoot may not settle another family's bill — a season-level
+ * `min(duesNet, contributed)` would silently let it, reporting a season as further paid down than
+ * any family actually is. That is why this loops rather than taking two totals.
+ *
+ * ⚠ `balanceOwing` COUNTS ONLY THE FAMILIES WHO OWE, exactly as the dues screen has always
+ * counted it — a family in credit is not netted off another family's debt. `owedBack` is the other
+ * side, stated rather than folded in, and the two are what the band's captions name.
+ */
+export interface SeasonDuesBand {
+  /** Everything billed, before anything was written off it. */
+  duesGross: number;
+  /** What came off the bills with no money behind it, split so a caption can name the kinds. */
+  billLowered: { forgiven: number; adjustment: number; total: number };
+  /** The bill as it now stands — the `Dues` tile. */
+  duesNet: number;
+  /** Everything families put in — the `Collected` tile, and the Statement's Player dues figure. */
+  contributed: number;
+  /** How much of the bill is settled — the Money Overview's `Bills settled` card. */
+  settled: number;
+  /** What is left to chase (positive balances only). */
+  balanceOwing: number;
+  /** What is owed back to families in credit (negative balances). */
+  owedBack: number;
+}
+
+export function seasonDuesBand(records: SeasonDuesRecords): SeasonDuesBand {
+  let duesGrossC = 0, forgivenC = 0, adjustmentC = 0, contributedC = 0, settledC = 0;
+  let owingC = 0, owedBackC = 0;
+  for (const input of buildFamilyDuesInputs(records).values()) {
+    const r = duesActual(input);
+    const duesC = toCents(input.dues);
+    const netC = duesC - toCents(r.billLowered.total);
+    duesGrossC += duesC;
+    forgivenC += toCents(r.billLowered.forgiven);
+    adjustmentC += toCents(r.billLowered.adjustment);
+    contributedC += toCents(r.actual);
+    settledC += Math.min(netC, toCents(r.actual));
+    const balC = toCents(r.balance);
+    if (balC > 0) owingC += balC; else if (balC < 0) owedBackC += -balC;
+  }
+  return {
+    duesGross: toDollars(duesGrossC),
+    billLowered: {
+      forgiven: toDollars(forgivenC),
+      adjustment: toDollars(adjustmentC),
+      total: toDollars(forgivenC + adjustmentC),
+    },
+    duesNet: toDollars(duesGrossC - forgivenC - adjustmentC),
+    contributed: toDollars(contributedC),
+    settled: toDollars(settledC),
+    balanceOwing: toDollars(owingC),
+    owedBack: toDollars(owedBackC),
+  };
+}
+
 /** What the season's dues actual is made of — the three lines behind the figure on the Statement. */
 export interface SeasonDuesParts {
   actual: number;
   cashKept: number;
   familyPaidCosts: number;
   fundraisingCredited: number;
+  /**
+   * WHAT CAME OFF THE BILLS THIS SEASON, split by kind (owner R1/R5, 2026-09-09).
+   *
+   * ⚠⚠ THIS IS THE AUTHORITATIVE TOTAL FOR THE REPORT'S PLAN SIDE, and it rides along here rather
+   * than being derived at the report because the report must not reach a different figure from the
+   * Player Dues band — that disagreement is the whole defect this ruling closes. The month-by-month
+   * PLACEMENT is a separate question answered by `duesPositionByInstallment`; read its header,
+   * which explains why a total taken from that walk is wrong.
+   */
+  billLowered: { forgiven: number; adjustment: number; total: number };
 }
 
 /**
@@ -282,18 +416,26 @@ export interface SeasonDuesParts {
  */
 export function seasonDuesParts(families: FamilyDuesActualInput[]): SeasonDuesParts {
   let actual = 0, cashKept = 0, familyPaidCosts = 0, fundraisingCredited = 0;
+  let forgiven = 0, adjustment = 0;
   for (const f of families) {
     const r = duesActual(f);
     actual += toCents(r.actual);
     cashKept += toCents(r.parts.cashKept);
     familyPaidCosts += toCents(r.parts.familyPaidCosts);
     fundraisingCredited += toCents(r.parts.fundraisingCredited);
+    forgiven += toCents(r.billLowered.forgiven);
+    adjustment += toCents(r.billLowered.adjustment);
   }
   return {
     actual: toDollars(actual),
     cashKept: toDollars(cashKept),
     familyPaidCosts: toDollars(familyPaidCosts),
     fundraisingCredited: toDollars(fundraisingCredited),
+    billLowered: {
+      forgiven: toDollars(forgiven),
+      adjustment: toDollars(adjustment),
+      total: toDollars(forgiven + adjustment),
+    },
   };
 }
 

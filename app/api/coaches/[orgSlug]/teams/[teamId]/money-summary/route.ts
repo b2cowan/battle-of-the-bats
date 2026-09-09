@@ -5,6 +5,7 @@ import {
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
+  getRepDuesPaidBackByCredit,
   getRepTeamExpenses,
   getRepTeamMoneyIn,
   getSeasonFundraiserEntries,
@@ -23,6 +24,7 @@ import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/l
 import { tournamentToday } from '@/lib/timezone';
 import { cashOnHandCents, toCents, toDollars } from '@/lib/coach-register';
 import { spendAgainstPlan, moneyBackAgainstSpending } from '@/lib/coach-money-summary';
+import { seasonDuesBand, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import {
   clubRequestReportSide, type ClubMoneyInMeaning, type ClubRequestType,
 } from '@/lib/coach-club-money';
@@ -55,7 +57,7 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 //      hand not move. It reached Budget vs. Actual as revenue and stopped there. The writer's own
 //      comment said the opposite ("CASH ON HAND, NOT COLLECTIONS") — the reader was never wired.
 //   2. THE DUES FIGURE WAS THE CAPPED ONE. `duesCollected` is capped at each schedule total so an
-//      overpayment cannot distort a BALANCE, which is right for the Collections tile and wrong for
+//      overpayment cannot distort a BALANCE, which is right for the Bills settled card and wrong for
 //      cash: the money physically arrived and the team is holding it. Cash now uses the uncapped
 //      receipts (`duesReceived`), exactly as the season close-out pot always has.
 //   3. CLUB REQUESTS WERE TEAM-LIFETIME. They carried no season at all; migration 247 gives them
@@ -136,6 +138,28 @@ export const GET = withObservability(async (_req: Request,
   }
   const creditsByPlayer = groupByPlayer(seasonCredits);
 
+  /* ⚠⚠ THE CARD'S FIGURES COME FROM THE SAME WALK AS THE DUES BAND AND THE STATEMENT
+     (owner R1–R4, 2026-09-09 — "a bill lowered is not a collection"). This route's own header
+     promises that its Collections tile and the dues table "can never disagree"; `seasonDuesBand`
+     is now what keeps that promise, rather than two loops that happen to match today. */
+  const duesPaidBackByCredit = await getRepDuesPaidBackByCredit(programYear.id);
+  const duesBand = seasonDuesBand({
+    schedules: schedules.map(s => ({ playerId: s.playerId, total: s.totalAmount ?? 0 })),
+    payments: seasonPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    payouts: seasonPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    /* Oldest first — the payout allocation assumes it. */
+    credits: [...seasonCredits]
+      .sort((a, b) => a.creditDate.localeCompare(b.creditDate)
+        || String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')))
+      .map(c => ({
+        playerId: c.playerId,
+        kind: c.creditType as DuesCreditKind,
+        amount: c.amount,
+        traced: c.fundraiserEntryId !== null || c.expenseId !== null,
+        paidBack: duesPaidBackByCredit.has(c.id) ? duesPaidBackByCredit.get(c.id) : undefined,
+      })),
+  });
+
   let duesExpected = 0;
   let duesCollected = 0;
   let overdueAmount = 0;
@@ -150,7 +174,7 @@ export const GET = withObservability(async (_req: Request,
     const insts = installmentLists[idx] ?? [];
     duesExpected += schedule.totalAmount ?? 0;
     // Paid = payment FACTS (mig 232), capped at the schedule total — same figure as the dues
-    // route, the digest and Ask, so the Collections tile can never disagree with the table.
+    // route, the digest and Ask, so the Bills settled card can never disagree with the table.
     const payments = paymentsByPlayer.get(schedule.playerId) ?? [];
     const paymentsTotal = payments.reduce((s, p) => s + p.amount, 0);
     const paid = duesPaidAmount(paymentsTotal, schedule.totalAmount ?? 0);
@@ -488,6 +512,18 @@ export const GET = withObservability(async (_req: Request,
       expected: r2(duesExpected),
       collected: r2(duesCollected),
       outstanding: r2(duesExpected - duesCollected),
+      /* ⚠⚠ THE CARD READS THESE THREE, NOT THE PAIR ABOVE (owner R4, 2026-09-09). The card asks
+         "how much of the bill is settled" and now says so in its own name, **Bills settled** —
+         `settled` of `duesNet`, with `balanceOwing` the remainder. The older pair is a gross bill
+         against capped cash and is left for the surfaces that still read it.
+         ⚠ `settled` CAN NEVER EXCEED `duesNet`: it is capped family by family, which is what stops
+         the bar passing 100% the first time a team fundraises hard — the defect that made the
+         rename necessary. */
+      duesNet: r2(duesBand.duesNet),
+      settled: r2(duesBand.settled),
+      balanceOwing: r2(duesBand.balanceOwing),
+      /* What was written off the bills, so a surface can say why `duesNet` is short of the gross. */
+      billLowered: duesBand.billLowered,
       overdueCount: overduePlayers.size,
       overdueAmount: r2(overdueAmount),
       neverPaidCount,

@@ -178,6 +178,12 @@ interface PlayerWithDues {
   totalCredits: number;
   /** The family's own money the team is holding — see `splitFamilyOwnMoney`. */
   ownMoneyHeld: number;
+  /** What this family put toward their dues — cash they sent and still hold no claim on, team
+   *  bills they paid a vendor directly, and fundraising credited to them. The band's `Collected`,
+   *  and the very figure Budget vs. Actual carries for Player dues (owner R2, 2026-09-09). */
+  contributed: number;
+  /** What came off this family's bill with no money behind it (owner R1, 2026-09-09). */
+  billLowered: { forgiven: number; adjustment: number; total: number };
   /** The five figures the table and drawer read left to right — see `splitDuesLadder`. */
   ladder: DuesLadder;
   rollingBalance: number;
@@ -2042,8 +2048,20 @@ export function PlayerDuesPanel({
        silently broke a promise written in the money hub's own code: that its Collections tile and
        this table "can never disagree". The hub was RIGHT and deliberately so: it keeps a capped
        figure for Collections (a balance question) and an uncapped one for Cash on hand (a cash
-       question). This band now does the same, so the two tiles agree again. */
+       question). This band now does the same, so the two tiles agree again.
+
+       ⚠⚠ AND THAT CAP CAME OFF AGAIN ON 2026-09-09 (owner R2/R4), WHICH IS NOT A REVERSAL — read
+       this before restoring it. The 2026-09-06 fix was right that ONE figure could not answer both
+       questions; it settled the collision by capping. The ruling settles it by SPLITTING: this band
+       answers "what came in" with an uncapped `Collected`, and the money hub's card answers "how
+       much of the bill is settled" under its own name, **Bills settled**. The promise that the two
+       agree is kept by them no longer claiming to be the same figure. Re-capping `Collected` here
+       would break the band's arithmetic against `Dues` and re-open the gap the ruling closed. */
     let ownMoneyHeld = 0;
+    /* What came off the bills with no money behind it, split so the caption can name the kinds
+       actually present (R5) — one walk, beside the figure it modifies. */
+    let loweredForgiven = 0;
+    let loweredAdjustment = 0;
     /* ⚠ THE MONEY BEHIND THE COUNT, summed in THIS loop rather than a second walk (2026-09-03).
        The band states past-due money as its figure and the family count as its caption; deriving
        the amount anywhere else would be the fifth hand-copied dues sum this file's own credits
@@ -2051,10 +2069,13 @@ export function PlayerDuesPanel({
     let pastDue = 0;
     for (const p of players) {
       if (p.schedule) assessed += p.schedule.totalAmount;
-      /* The SETTLED half of what they sent. `paidAmount` is cappedPaid + their own standing
-         overpayment, so removing `ownMoneyHeld` recovers the capped figure exactly — no second
-         field on the payload, and no way for the two to drift apart. */
-      collected += p.paidAmount - p.ownMoneyHeld;
+      /* ⚠ EVERYTHING THIS FAMILY PUT IN, and the server derived it — see `contributed` on the
+         payload. Summing it here rather than rebuilding it from `paidAmount` is what keeps this
+         tile equal to the Statement's Player dues row; the old expression was cash-only and is the
+         figure the ruling replaced. */
+      collected += p.contributed;
+      loweredForgiven += p.billLowered.forgiven;
+      loweredAdjustment += p.billLowered.adjustment;
       ownMoneyHeld += p.ownMoneyHeld;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
       if (p.rollingBalance < -0.005) { inCredit += -p.rollingBalance; inCreditFamilies += 1; }
@@ -2077,7 +2098,22 @@ export function PlayerDuesPanel({
         pastDue += installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id));
       }
     }
-    return { assessed, credits, collected, outstanding, overduePlayers, pastDue, inCredit: Math.round(inCredit * 100) / 100, inCreditFamilies, ownMoneyHeld: Math.round(ownMoneyHeld * 100) / 100 };
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    return {
+      assessed, credits, collected, outstanding, overduePlayers, pastDue,
+      inCredit: r2(inCredit), inCreditFamilies, ownMoneyHeld: r2(ownMoneyHeld),
+      /* The bill after everything written off it — the `Dues` tile's figure (R1). */
+      duesNet: r2(assessed - loweredForgiven - loweredAdjustment),
+      loweredForgiven: r2(loweredForgiven),
+      loweredAdjustment: r2(loweredAdjustment),
+      /* ⚠ HOW MUCH OF THE BILL IS SETTLED — capped per family, NEVER season-wide (R4). One
+         family's overshoot may not settle another family's bill, and a season-level
+         `min(duesNet, collected)` would quietly let it. */
+      settled: r2(players.reduce((s, p) => {
+        const net = (p.schedule?.totalAmount ?? 0) - p.billLowered.total;
+        return s + Math.min(net, p.contributed);
+      }, 0)),
+    };
   })();
   /**
    * THE DUES BAND (owner ruling 2026-09-03, D4) — the tab's summary, on BOTH views, in the one
@@ -2103,39 +2139,52 @@ export function PlayerDuesPanel({
          Dues, the tab is Player Dues, the Statement row is Player dues — this tile and the roster
          player page were the only two surfaces still saying Assessed for the same figure. */
       label: 'Dues',
-      figure: fmt(seasonTotals.assessed),
-      caption: `${players.length} player${players.length === 1 ? '' : 's'}`,
+      /* ⚠⚠ NET OF WHAT WAS WRITTEN OFF IT (owner R1, 2026-09-09 — "a bill lowered is not a
+         collection"). An adjustment or a forgiven bill lowers what a family OWES; it is not
+         something the team collected, and counting it as one made this band fail to add up.
+         ⚠ NO BALANCE MOVES BECAUSE OF THIS. `Balance owing` below is untouched — the same figure
+         off the same records — and it stays right precisely BECAUSE `Collected` gained exactly what
+         this figure lost. Subtract the write-off here and *also* leave it reducing the balance and
+         the same dollars are counted twice: that is the one way to get this ruling wrong. */
+      figure: fmt(seasonTotals.duesNet),
+      /* ⚠ THE CAPTION NAMES WHICHEVER KINDS ARE ACTUALLY THERE, and says nothing at all when there
+         are neither — which is most seasons (R5). A standing "$0.00 of adjustments" would be noise
+         on every team that has never written a bill down. */
+      caption: [
+        `${players.length} player${players.length === 1 ? '' : 's'}`,
+        (() => {
+          const adj = seasonTotals.loweredAdjustment > 0.005;
+          const forg = seasonTotals.loweredForgiven > 0.005;
+          if (adj && forg) {
+            return `after ${fmt(Math.round((seasonTotals.loweredAdjustment + seasonTotals.loweredForgiven) * 100) / 100)} of adjustments and forgiveness`;
+          }
+          if (adj) return `after ${fmt(seasonTotals.loweredAdjustment)} of adjustments`;
+          if (forg) return `after ${fmt(seasonTotals.loweredForgiven)} forgiven`;
+          return null;
+        })(),
+      ].filter(Boolean).join(' · '),
     },
     {
       key: 'collected',
       label: 'Collected',
       figure: fmt(seasonTotals.collected),
-      /* Credits are NOT added into the figure — collected is a cash word on every Money tab, and
-         this caption is where the tab says what fundraising did without pretending it was cash.
-         ⚠ IT ALSO HAS TO ACCOUNT FOR THE PAID COLUMN NOW (QA §148). A coach who adds that column up
-         gets a bigger number than this tile whenever a family has overpaid, and without a word here
-         that reads as an error rather than as two different questions. */
-      /* ⚠⚠ THE SECOND CLAUSE IS GROSS, AND IT HAD TO CHANGE WHEN THE COLUMN DID (QA §151).
-         This clause exists to account for the Paid COLUMN — that is the job §148 gave it — and it
-         named the money still HELD, which reconciled a Paid column that was itself netted. The
-         ladder made Paid gross the same day, and the sentence quietly stopped closing: on the QA
-         roster a coach adding Paid gets $3,075.00 against $2,225.00 + $550.00, and the missing
-         $300.00 is Casey's over-send, long since refunded. Gross closes it exactly, on any roster,
-         because `Collected + everything sent over the bills = everything sent`.
-         ⚠ AND IT SAYS WHAT WENT BACK, because "sent" is now a bigger number than the team holds
-         and a caption that stopped there would invite a coach to go looking for $850.00 that is
-         partly gone. The row-level sentence this replaces died of the opposite flaw — it said
-         *sent* about a figure that meant *held* — so both halves are stated rather than implied. */
-      caption: [
-        seasonTotals.credits > 0.005 ? `+ ${fmt(seasonTotals.credits)} from credits` : null,
-        rosterLadder.ownMoney > 0.005
-          ? `${fmt(rosterLadder.ownMoney)} more sent than billed${
-            rosterLadder.ownMoney - seasonTotals.ownMoneyHeld > 0.005
-              ? `, ${fmt(Math.round((rosterLadder.ownMoney - seasonTotals.ownMoneyHeld) * 100) / 100)} of it handed back`
-              : ''
-          }`
-          : null,
-      ].filter(Boolean).join(' · ') || undefined,
+      /* ⚠⚠ MONEY, AND ONLY MONEY — UNCAPPED (owner R2, 2026-09-09). Everything families put in:
+         cash they sent and have not had back, team bills they paid a vendor directly, and
+         fundraising credited to their dues. A credit with no money behind it is NOT here; it came
+         off `Dues` instead, which is what makes the three tiles read as one sentence.
+
+         ⚠⚠ THIS IS THE STATEMENT'S `Player dues` FIGURE, NOT A SECOND OPINION OF IT. The server
+         derives both from one function (see the dues route). Before the ruling these two screens
+         disagreed by every write-off on the team and a coach had no way to close the gap.
+
+         ⚠ ONE CLAUSE, NOT TWO. The old caption carried a credits clause and an over-sent clause
+         because the figure was cash capped at the bill and needed both to be reconcilable. Credits
+         are IN the figure now, so naming them again would double-count them to the reader; what a
+         coach still cannot see is how much went past the bills, and that alone is what remains. */
+      caption: (() => {
+        const beyond = Math.round((seasonTotals.collected - seasonTotals.settled) * 100) / 100;
+        return beyond > 0.005 ? `${fmt(beyond)} of it beyond what those families were billed` : undefined;
+      })(),
     },
     {
       key: 'owing',
@@ -2632,8 +2681,16 @@ export function PlayerDuesPanel({
                           read $50.00; and `Paid` was net of payouts, so Casey read $900.00 against
                           the $1,200.00 they sent. Gross figures plus a column of their own for the
                           money handed back is what makes every heading true. */}
+                      {/* ⚠⚠ THE LADDER'S FIGURE, NOT THE SCHEDULE'S (owner R1, 2026-09-09 · /review).
+                          A bill written off comes off `ladder.dues` — and off `otherCredits` with
+                          it, so the row still closes on the same Balance. Printing the raw schedule
+                          total here instead left the column summing to MORE than its own Total row
+                          on any team with an adjustment, breaking the promise this table's footer
+                          note makes a few hundred lines up: *"the column adds up to the total under
+                          it with nothing left to explain."* It also disagreed with the Dues tile
+                          above it. One figure, three places. */}
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Dues">
-                        {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
+                        {p.schedule ? fmt(p.ladder.dues) : '—'}
                       </td>
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Fundraising" style={{ color: p.ladder.fundraising > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                         {p.ladder.fundraising > 0.005 ? fmt(p.ladder.fundraising) : '—'}

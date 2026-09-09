@@ -1893,6 +1893,38 @@ if (bottle && ids.length >= 2) {
 }
 
 /**
+ * ⚠⚠ THE ONE WRITTEN-OFF BILL — the demonstration case for "a bill lowered is not a collection"
+ * (owner R1–R6, 2026-09-09), and it was living ONLY in the dev database until now.
+ *
+ * ⚠⚠ THIS IS THE "GREEN CHECK OVER AN EMPTY FIXTURE" TRAP, CAUGHT BY `/review`. The whole ruling —
+ * `Dues` reading net, its caption, the report's plan footnote, the write-off's month placement — is
+ * INVISIBLE on a team with no adjustment, and every seeded world had exactly none. The $17.00 was
+ * hand-renamed during the 2026-09-09 re-seed and never written down here, so the next `npm run
+ * seed:uat` would have silently erased the only case the owner's QA walk exists to look at, and
+ * every screen would still have rendered perfectly.
+ *
+ * ⚠ IT GOES ON A FAMILY WHO HAS ALREADY PAID IN FULL, deliberately: that is the case where the
+ * credit can find NO bill to cancel, so the write-off has no month and lands undated on Budget vs.
+ * Actual. It is the exact shape that made the report and the dues band disagree during the build —
+ * pin the harder case, not the easy one.
+ */
+if (ids.length >= 1) {
+  const { data: existingAdj } = await db.from('rep_dues_credits')
+    .select('id').eq('program_year_id', py.id).eq('credit_type', 'other').limit(1);
+  if (!existingAdj?.length) {
+    const adj = await db.from('rep_dues_credits').insert({
+      program_year_id: py.id, player_id: ids[0], amount: 17,
+      /* The description a coach would actually type — the caption and the drawer both show it. */
+      description: 'Team photos not ordered', credit_type: 'other', credit_date: '2026-09-01',
+    }).select('id').single();
+    if (adj.error) console.log(`  ! dues adjustment skipped (${adj.error.message})`);
+    else ok('dues adjustment seeded ($17.00 written off — the demonstration case for R1)');
+  } else {
+    ok('dues adjustment already present');
+  }
+}
+
+/**
  * ⚠⚠ A CLUB BILL, FOR A ROOM THAT WOULD OTHERWISE HAVE NO FIXTURE AND NO SWEEP (List · Room ·
  * Question Phase A, 2026-09-02). The Club tab's fold was rebuilt over a fixture holding ZERO club
  * bills — the QA ledger records the bills fold as unmeasured by it, and the coach sandbox was the

@@ -20371,3 +20371,78 @@ doors on all three panels, the read-only coach's path — the role this dead-end
 shape, where the date line adds a second row to every sponsor line.
 
 Plan pair: `docs/projects/active/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md`.
+
+## §160 · A bill lowered is not a collection — an adjustment or a forgiven bill comes off **Dues**, `Collected` becomes money and nothing else, and the Collections card becomes **Bills settled** — built on dev 2026-09-09 after `/review` (five defects found and fixed) and `/docs`, **no migration**, awaiting QA · decision mockups `b529dd67` (the band) and `cc99aca4` (the report's plan side)
+
+**You raised it reading the Player Dues band beside Budget vs. Actual and asking why two reports about one
+season disagreed by $134.00.** The band did not add up — `Dues` $11,308.30 − `Collected` $2,225.00 = $9,083.30,
+while `Balance owing` said $7,349.32 — and two footnote clauses existed only to explain the gap.
+
+### What was wrong
+
+`Collected` was a **hybrid**: cash, but only the part that landed inside a bill. Underneath it, an
+**adjustment** (the one credit a coach may still type) and a **forgiven** balance lowered what a family owed
+with no dollar existing anywhere — and the band quietly treated that as money coming in. So the figures did
+not close, and the Statement, which correctly refuses to call those credits revenue, reported a different
+number for the same season with no way for a treasurer to reconcile the two.
+
+### What you will see
+
+| | |
+|---|---|
+| **Dues** | Reads the bill **after anything written off it**, with a caption naming whichever kinds are there — *"after $17.00 of adjustments"* — and **nothing at all** when there are neither, which is most seasons. |
+| **Collected** | Money and only money, **uncapped**: cash families sent and have not had back, team bills they paid a supplier directly, fundraising credited to their dues. One clause under it names what went beyond the bills. |
+| **Bills settled** | The Money Overview's Collections card, renamed and capped. Its segments add to `Balance owing` exactly and its bar can never pass 100%. |
+| **The dues table + export** | An adjustment leaves the credits column and comes off the bill, so a row reads charged, adjusted, paid, balance — and the column still adds up to its own total row. |
+| **Budget vs. Actual** | The dues **plan** stops planning revenue you have already written off, in the month holding the bill that was cancelled, with a footnote saying so. |
+
+**Two screens, one number.** `Collected` is now *exactly* the Statement's `Player dues` figure — **$5,124.63
+on both** — because they became one derivation reached from two directions, not two sums kept in step by hand.
+
+### ⚖ The ruling you reversed mid-build, and why the record matters
+
+The first implementation recommended a **footnote only** on the report's plan side, on three objections. You
+rejected it: *"if we write off a future payment, wouldn't that future payment be removed from the planned
+figure? … wouldn't leaving $500 as planned give a false impression that $500 will be coming?"* All three
+objections failed on inspection — the "build gate" one was **backwards** (the row is a sum of the month
+events, so netting the events keeps the gate green), and the standing ruling cited against it had deleted
+netting **outside credits**, whose *reason* — that money does arrive, from elsewhere, on the actual side —
+does not reach a write-off, which arrives nowhere. ⚠ **That deleted proposal stays deleted** and is now pinned
+by a test: fundraising, sponsorship, reimbursement and overpayment credits may never move the plan.
+
+### ⚠⚠ What `/review` found — five defects, and three were one mistake made three times
+
+**Re-pointing a figure and leaving its twin behind.** The Money Overview would have shown *$3,941.98 of
+$11,291.30* on the renamed card and *$2,225.00 of $11,308.30* on the Budget card's dues row — two answers to
+one question, four inches apart. The **Dues column stopped adding up to its own total row**, and the same
+mismatch reached the **downloaded file**, where a treasurer sums the column with no screen to explain it.
+Also: the record-money door could say *"$300.00 still to come"* while the dashboard said the bills were all
+in, and one legacy case could have silently understated the report's plan.
+
+⚖ **The lesson, and it is the second time this month:** a paired treatment moved on one surface and not its
+twin. **Change one half, go find the other.**
+
+### ⚠⚠ The fixture nearly made this walk impossible
+
+The **$17.00 adjustment — the demonstration case for the whole ruling — lived only in the dev database and
+was never in the seed.** The next re-seed would have erased it in silence and every screen would still have
+rendered perfectly: no caption, no footnote, nothing to walk. It is seeded now, deliberately on a family who
+has **already paid in full**, because that is the harder case — the write-off finds no bill, so it has no
+month and lands undated on the report. ⚠ **Neither demo world contains a write-off**, so the public sandbox
+still cannot show what this shipped; that is an open call for the owner, not something done on the way past.
+
+### What proves it
+
+**Twelve families, twelve identical balances** — diffed against a reading taken *before* any code was
+written, and the gate this whole change is held to. The only figure that moved anywhere is one family's bill,
+**$700.00 → $683.00**. Both season identities close to the cent on the live fixture:
+`11,291.30 − (5,124.63 − 1,182.65) = 7,349.32` and `3,941.98 + 7,349.32 = 11,291.30`. Gates: typecheck ·
+**3,324 unit tests** · `check:money-report` (the dues row reads $11,291.30 and ties to the Months grid to the
+cent) · `verify:changed` · lint · spelling · rendered layout sweep clean.
+
+**Owner QA is owed.** Five parts: the band closing by subtraction with no small print; the **Bills settled**
+card and the Budget card's dues row agreeing; the dues table and its **exported file** both adding up; the
+report's plan figure and its footnote; and a season with **nothing** written off, where the extra caption must
+not appear at all.
+
+Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md`.

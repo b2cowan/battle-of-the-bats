@@ -725,10 +725,17 @@ async function main() {
      the same figure whenever a schedule's instalments add up to its own total, and NOTHING IN THE
      DATABASE FORCES THAT. Two screens quoting one fact from two columns is a real defect worth
      finding rather than a difference worth papering over — so it is a claim, not a comment. */
-  if (dues && dues.billed !== null && cents(dues.billed) !== cents(dues.assessed)) {
+  /* ⚠ WRITTEN-OFF BILLS ARE ADDED BACK BEFORE THE COMPARISON (owner ruling 2026-09-09 — "a bill
+     lowered is not a collection"). `billed` is now NET of what a coach has forgiven or adjusted;
+     `assessed` is still the gross schedule total, because it exists to answer a different question
+     (do a schedule's instalments still add up to it?). Comparing them raw would fire on every team
+     that has ever written off a dollar and bury the defect this claim is actually for. */
+  if (dues && dues.billed !== null
+      && cents(dues.billed) + cents(dues.writtenOff ?? 0) !== cents(dues.assessed)) {
     problems.push(
       `THE TWO "WHAT DUES BILL" SOURCES DISAGREE — instalments ${money(cents(dues.billed))} (this`
-      + ` report, and the Months band) vs schedule totals ${money(cents(dues.assessed))} (the Budget`
+      + ` report, and the Months band)${(dues.writtenOff ?? 0) > 0 ? ` + ${money(cents(dues.writtenOff))} written off` : ''}`
+      + ` vs schedule totals ${money(cents(dues.assessed))} (the Budget`
       + ' plan page). One family\'s instalments no longer add up to their own schedule.');
   }
 
@@ -767,7 +774,16 @@ async function main() {
        claim having been dropped. */
     console.log('  the sentence under the table is correctly SILENT (this season\u2019s plan needs nothing from families)  ✓');
   }
-  console.log(`  and both "what dues bill" sources agree: instalments = schedule totals = ${money(cents(dues?.billed ?? 0))}  ✓`);
+  /* ⚠ THE LINE STATES BOTH FIGURES WHEN THEY DIFFER, and that is worth the branch: since bills may
+     be written off (2026-09-09) `billed` is NET and `assessed` is gross, so printing one number
+     under the words "instalments = schedule totals" would assert something false on any team that
+     has forgiven a dollar — a green line telling a small lie is how a gate stops being read. */
+  if ((dues?.writtenOff ?? 0) > 0) {
+    console.log(`  and both "what dues bill" sources agree once ${money(cents(dues.writtenOff))} of written-off bills is`
+      + ` added back: instalments ${money(cents(dues.billed))} → schedule totals ${money(cents(dues.assessed))}  ✓`);
+  } else {
+    console.log(`  and both "what dues bill" sources agree: instalments = schedule totals = ${money(cents(dues?.billed ?? 0))}  ✓`);
+  }
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════
      ⚠ A SKIPPED CLAIM MUST NEVER READ AS A PASS. These used to be `console.log` notes above a green

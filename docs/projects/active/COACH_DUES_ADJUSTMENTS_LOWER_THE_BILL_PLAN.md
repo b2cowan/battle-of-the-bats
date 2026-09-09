@@ -171,6 +171,72 @@ the impossible state. The $100.00 payback is sized under it deliberately; the tw
 | **Balance owing** | **7,349.32** · past due 97.09 |
 | Statement's Player dues actual | **5,124.63** — identical to Collected |
 
+## 7b. R6 — the report's PLAN side is net too *(owner ruling 2026-09-09, after the build)*
+
+§5 said the dues plan becomes net of adjustments; the first implementation attempt recommended a
+**footnote only**, on three objections. The owner rejected that, and was right:
+
+> *"If we write off a future payment, wouldn't that future payment be removed from the planned
+> figure? … wouldn't leaving $500 as planned give a false impression that $500 will be coming?"*
+
+**Decision mockup:** https://claude.ai/code/artifact/cc99aca4-8f5a-4633-8ef9-a2fc9ddd541b
+
+**All three objections failed on inspection, and the record matters because two of them would
+otherwise be re-raised:**
+
+1. *"It breaks `check:money-report`."* Backwards. `billed` is a SUM of the instalment events the
+   month grid is built from, so netting the events nets the row and the guard holds **because of**
+   the change. Only netting the row alone breaks it.
+2. *"The month view would change."* True, and it is the same correction one level down — a forgiven
+   March bill promising $500 in March is wrong exactly as the season figure is.
+3. *"§153 forbids it."* Half true. §153 §9 deleted netting **outside credits** (fundraising,
+   sponsorship, reimbursements) off the plan, and its REASON is that those dollars *do* arrive —
+   from elsewhere, landing on the actual side. **A write-off never arrives anywhere.** The reason
+   does not transfer. ⚠ **The deleted proposal stays deleted** and is pinned by a test: fundraising,
+   sponsorship, reimbursement and overpayment credits may never move the plan.
+
+**Which month loses the money — not a new convention.** Credits already meet bills by the team's own
+setting, and the application walk already names which bill each credit landed on. A write-off comes
+out of the month holding the bill it cancelled.
+
+### ⚠⚠ THE DEFECT THIS BUILD FOUND, AND IT IS THE ONE TO REMEMBER
+
+The first cut took the season's write-off TOTAL from that month-by-month walk. **It read $0.00 on
+the UAT fixture while the dues band read $17.00** — because Avery has already paid every bill in
+cash, so her adjustment lands on no instalment at all. Two figures for one concept, on the two
+screens this whole project exists to reconcile, reintroduced by the fix for it.
+
+**The rule that closes it: the BAND owns the total; the walk owns only the PLACEMENT.** Whatever the
+walk cannot place has no month and lands **undated** — where the report already puts planned money
+with no date. Do not re-derive the total from the walk.
+
+`assessed` stays the GROSS schedule total (its stated job is a comparison source, not a screen), so
+the guard now asserts `billed + writtenOff === assessed` — which still catches the real defect it
+exists for: a schedule whose instalments no longer add up to it.
+
+⚠ **Still open, deliberately not decided here:** the Budget **plan** page shows dues from the
+schedule totals and is therefore still gross. Whether it nets too is its own question, with its own
+mockup — flagged, not folded in.
+
+## 7c. Build state — 2026-09-09
+
+Built against committed code (`d7a40759`), no migration.
+
+**The gate passed: twelve families, zero balances moved.** The only figure that moved is Avery's
+Dues column, $700.00 → $683.00 — the family holding the $17.00 adjustment, which is the case the
+mockup draws. Both season identities close to the cent, verified on the live fixture:
+`11,291.30 − (5,124.63 − 1,182.65) = 7,349.32` and `3,941.98 + 7,349.32 = 11,291.30`.
+Player Dues' `Collected` and the Statement's `Player dues` are **one derivation**, so 5,124.63 on
+both. The report's plan reads 11,291.30, equal to the band's `Dues` tile.
+
+3,321 unit tests pass; typecheck and lint clean. New guards live in
+`tests/unit/coach-dues-band.test.ts` (per-family and season identities, plus the synthetic cases
+§9 named) and `tests/unit/coach-dues-plan-written-off.test.ts` (month placement, and the standing
+ruling that outside credits never touch the plan).
+
+**Owed:** `/review`, `/docs` (two help paragraphs go false), the coach demo's money narration, and a
+new Owner QA Ledger section walked before it ships.
+
 ## 8. Sequencing
 
 Four other sessions were editing coach money on 2026-09-09 (the category-is-the-shelf work, the

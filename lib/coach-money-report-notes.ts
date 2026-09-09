@@ -460,6 +460,20 @@ export interface StatementNoteInput {
    * expects.
    */
   duesNonCash: boolean;
+  /**
+   * What has been written off the dues PLAN — a forgiven bill or a typed adjustment — pre-formatted,
+   * or `null` on a season with neither, which is most seasons (owner R5, 2026-09-09).
+   *
+   * ⚠ IT DESCRIBES A FIGURE THAT IS ALREADY RIGHT, which is the whole difference between this note
+   * and an apology. The plan side is net of these since the same ruling, so the sentence tells a
+   * reader why the figure is lower than the bills they remember setting — it is not reconciling a
+   * gap between two screens.
+   *
+   * ⚠ THIS ONE DOES QUOTE A FIGURE, unlike the dues-actual note above it. It has to: the amount is
+   * the reader's only way to get back to the gross bill, and unlike the actual's three parts there
+   * is no door to tap that adds it up.
+   */
+  duesPlanWrittenOff: string | null;
   /** Undated plan money, pre-formatted. `null` = nothing to say. */
   undatedPlan: string | null;
 }
@@ -512,6 +526,28 @@ export function statementNotes(input: StatementNoteInput): ReportNote[] {
       { text: 'The ' },
       { text: 'Player dues', bold: true },
       { text: ' actual includes team bills families paid and fundraising credited to dues, less money handed back.' },
+    ]));
+  }
+
+  /**
+   * WHAT CAME OFF THE DUES PLAN (owner ruling 2026-09-09 — "a bill lowered is not a collection").
+   *
+   * ⚠⚠ IT SAYS **PLAN**, AND THE WORD IS THE POINT. Before the ruling this report planned to
+   * receive money a coach had already written off, so the variance reported a shortfall the coach
+   * themselves had cancelled — a $500 bill forgiven left the season reading $500 behind for the
+   * rest of the year. The plan is now the bill as it stands, and this sentence says so.
+   *
+   * ⚠ IT NAMES WHICHEVER KINDS ARE THERE, and stays away entirely when there are neither — the
+   * same rule the dues band's own caption follows, so the two surfaces never describe one season
+   * differently. The caller decides the wording; this decides where it sits.
+   */
+  if (input.duesPlanWrittenOff) {
+    out.push(note('dues-plan-written-off', [
+      { text: 'The ' },
+      { text: 'Player dues', bold: true },
+      { text: ' plan is after ' },
+      { text: input.duesPlanWrittenOff, bold: true },
+      { text: ' — bills lowered with no money behind them.' },
     ]));
   }
 

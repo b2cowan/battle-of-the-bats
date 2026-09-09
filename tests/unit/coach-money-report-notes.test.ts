@@ -52,7 +52,7 @@ describe('a gesture never reaches a file, and a fact always does', () => {
       basis: 'season',
       dues: { state: 'short', planNeeds: '$6,600.00', billed: '$5,000.00', gap: '$1,600.00' },
       canWriteDues: true,
-      duesNonCash: false,
+      duesNonCash: false, duesPlanWrittenOff: null,
       undatedPlan: null,
     });
     const file = noteTextForFile(byId(notes, 'dues'));
@@ -67,10 +67,10 @@ describe('a gesture never reaches a file, and a fact always does', () => {
 
   test('the undated-plan note drops its months-view bridge and keeps its verb', () => {
     const seasonFile = noteTextForFile(byId(statementNotes({
-      basis: 'season', dues: null, canWriteDues: false, duesNonCash: false, undatedPlan: '$2,600.00',
+      basis: 'season', dues: null, canWriteDues: false, duesNonCash: false, duesPlanWrittenOff: null, undatedPlan: '$2,600.00',
     }), 'undated-plan'));
     const todateFile = noteTextForFile(byId(statementNotes({
-      basis: 'todate', dues: null, canWriteDues: false, duesNonCash: false, undatedPlan: '$2,600.00',
+      basis: 'todate', dues: null, canWriteDues: false, duesNonCash: false, duesPlanWrittenOff: null, undatedPlan: '$2,600.00',
     }), 'undated-plan'));
 
     for (const file of [seasonFile, todateFile]) {
@@ -93,7 +93,7 @@ describe('a gesture never reaches a file, and a fact always does', () => {
       basis: 'season',
       dues: { state: 'unset', planNeeds: '$6,600.00', billed: '$0.00', gap: '$6,600.00' },
       canWriteDues: false,
-      duesNonCash: false,
+      duesNonCash: false, duesPlanWrittenOff: null,
       undatedPlan: null,
     }), 'dues');
     assert.ok(!readOnly.segments.some(s => s.control === 'set-dues'));
@@ -111,7 +111,7 @@ describe('a gesture never reaches a file, and a fact always does', () => {
       basis: 'season',
       dues: { state: 'short', planNeeds: '$6,600.00', billed: '$5,000.00', gap: '$1,600.00' },
       canWriteDues: true,
-      duesNonCash: true,
+      duesNonCash: true, duesPlanWrittenOff: null,
       undatedPlan: '$2,600.00',
     });
     const file = noteTextForFile(byId(shown, 'dues-actual'));
@@ -136,7 +136,7 @@ describe('a gesture never reaches a file, and a fact always does', () => {
       basis: 'season',
       dues: { state: 'covered', planNeeds: '$6,600.00', billed: '$6,600.00', gap: '$0.00' },
       canWriteDues: true,
-      duesNonCash: false,
+      duesNonCash: false, duesPlanWrittenOff: null,
       undatedPlan: null,
     });
     assert.ok(!notes.some(n => n.id === 'dues-actual'),

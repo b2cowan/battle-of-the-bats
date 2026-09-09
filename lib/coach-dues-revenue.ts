@@ -71,6 +71,13 @@ export interface DuesRevenue {
    * ⚠ NEVER THE PLAN RESIDUAL (owner ruling). Showing what the plan *needs* from families as
    * revenue would report money nobody has been asked for; the gap between the two is the finding
    * this whole change exists to surface.
+   *
+   * ⚠⚠ AND IT IS NET OF WHAT HAS BEEN WRITTEN OFF (owner ruling 2026-09-09 — "a bill lowered is not
+   * a collection"). A forgiven bill is not still planned: leaving it here made the report plan
+   * revenue the coach had themselves cancelled, so a $500 bill written off left the season reading
+   * $500 behind for the rest of the year. The netting happens on the INSTALMENT EVENTS this is
+   * summed from, in the month holding the bill that was cancelled — never on this figure alone,
+   * which is what would break the guard holding this row equal to the Months view.
    */
   billed: number | null;
   /**
@@ -138,6 +145,23 @@ export interface DuesRevenue {
    * real defect worth finding rather than a difference worth papering over.
    */
   assessed: number;
+  /**
+   * WHAT HAS BEEN WRITTEN OFF THE BILLS this season — a forgiven balance or a typed adjustment,
+   * counted where it actually cancelled a bill (owner ruling 2026-09-09). `0` on most seasons.
+   *
+   * ⚠⚠ IT IS THE BRIDGE BETWEEN `billed` AND `assessed`, AND THAT IS ITS FIRST JOB. `billed` is now
+   * net of it and `assessed` is still the gross schedule total, so the two are equal only once this
+   * is added back — which is exactly what `check:money-report` asserts. Without this field the
+   * guard would fire on every team that has ever forgiven a dollar, and the real defect it exists
+   * to catch (a schedule whose instalments no longer add up to it) would be lost in the noise.
+   *
+   * ⚠ ITS SECOND JOB IS THE FOOTNOTE. The report says when its plan side is net, and names the
+   * kinds present — the same sentence the dues band's own caption makes, so one season is never
+   * described two ways.
+   */
+  writtenOff: number;
+  /** Which kinds are behind `writtenOff`, so the footnote can name them (R5). */
+  writtenOffKinds: { forgiven: boolean; adjustment: boolean };
 }
 
 /**

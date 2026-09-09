@@ -45,6 +45,8 @@ function dues(over: Partial<DuesRevenue> = {}): DuesRevenue {
     planNeedsFloored: false,
     familyCount: 12,
     assessed: 11308.30,
+    writtenOff: 0,
+    writtenOffKinds: { forgiven: false, adjustment: false },
     ...over,
   };
 }

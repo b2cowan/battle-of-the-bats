@@ -65,6 +65,38 @@ function assertTiesToBalance(input: FamilyDuesActualInput, label: string) {
     Math.round(r.actual * 100),
     `${label}: the three parts must sum to actual`,
   );
+
+  /* ⚠⚠ THE PLAYER DUES BAND'S OWN IDENTITY (owner R1/R2, 2026-09-09 — "a bill lowered is not a
+     collection"), asserted on EVERY case for the same reason as the one above.
+
+     THE ONE WAY THIS RULING CAN BE GOT WRONG is to make a write-off lower `Dues` while it is ALSO
+     still reducing the balance — the same dollars counted twice, and every affected family's
+     balance shifts. This line is what makes that impossible to ship quietly: the band's two figures
+     must land on the balance the family already had, and nothing else. */
+  assert.equal(
+    Math.round(((input.dues - r.billLowered.total) - r.actual) * 100),
+    Math.round((r.balance + (r.excluded - r.billLowered.total)) * 100),
+    `${label}: (dues − billLowered) − actual must equal the balance, untraced credits aside`,
+  );
+  /* And with no untraced credit — the state of both databases since R7 closed that door — the
+     band closes EXACTLY on the balance, with nothing set aside. */
+  if (Math.round(r.untraced * 100) === 0) {
+    assert.equal(
+      Math.round(((input.dues - r.billLowered.total) - r.actual) * 100),
+      Math.round(r.balance * 100),
+      `${label}: with nothing untraced the band must close on the balance exactly`,
+    );
+  }
+  assert.equal(
+    Math.round((r.billLowered.forgiven + r.billLowered.adjustment) * 100),
+    Math.round(r.billLowered.total * 100),
+    `${label}: the two kinds must add to what came off the bill`,
+  );
+  // Never more than the write-offs there actually were, and never negative.
+  assert.ok(
+    r.billLowered.total >= 0 && r.billLowered.total <= r.writeOffs + 0.0001,
+    `${label}: what came off the bill must be a part of the write-offs, not more`,
+  );
   return r;
 }
 

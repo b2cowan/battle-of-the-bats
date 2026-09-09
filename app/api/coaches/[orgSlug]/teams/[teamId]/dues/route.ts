@@ -25,7 +25,7 @@ import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/l
 import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
-import { settledPerCredit, type DuesCreditKind } from '@/lib/coach-dues-actual';
+import { settledPerCredit, duesActual, buildFamilyDuesInputs, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import { tournamentToday } from '@/lib/timezone';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -120,6 +120,42 @@ export const GET = withObservability(async (_req: Request,
      not the same as nothing paid back: a legacy payout settled something and says nothing about
      what. `payableNow` remains the family-level ceiling and is unchanged. */
   const paidBackByCredit = await getRepDuesPaidBackByCredit(programYear.id);
+
+  /* ⚠⚠ THE BAND'S TWO FIGURES COME FROM THE REPORT'S OWN DERIVATION (owner R1/R2, 2026-09-09 —
+     "a bill lowered is not a collection"). `Collected` is `actual` and `Dues` is
+     `dues − billLowered.total`, both out of `duesActual`.
+
+     ⚠⚠ IT IS THE *SAME FUNCTION*, CALLED ONCE FOR THE SEASON, AND THAT IS DELIBERATE RATHER THAN
+     TIDY. The payoff this ruling buys is that Player Dues' `Collected` and Budget vs. Actual's
+     `Player dues` are ONE number — so the moment this screen re-derives it, the two can part
+     company again and nothing would catch it. `buildFamilyDuesInputs` is what the report calls;
+     calling anything else here would silently reintroduce the disagreement the ruling closed.
+
+     ⚠ AND `settledPerCredit` IS NOT THAT FUNCTION. The route runs it below for the Pay-out sheet's
+     tick-list, and the two allocations differ ON PURPOSE in two documented ways (forgiveness gets
+     no capacity there; a partially-linked credit is handled differently) — see the note on
+     `settledPerCredit`. Feeding its output in here would look right and quietly move `Collected`
+     off the report's figure. The RAW mig-281 links go in, exactly as the report passes them,
+     `undefined` where a credit has no link at all — `0` would mean "recorded as nothing paid
+     back", which is a different claim the allocator acts on differently. */
+  const duesActualByPlayer = buildFamilyDuesInputs({
+    schedules: schedules.map(s => ({ playerId: s.playerId, total: s.totalAmount })),
+    payments: allPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    payouts: allPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    /* Oldest first — the payout allocation assumes that order. The season query above fetches
+       credits NEWEST first for the drawer's list, so this is sorted rather than reused. */
+    credits: [...((allCredits ?? []) as Array<Record<string, unknown>>)]
+      .sort((a, b) => String(a.credit_date).localeCompare(String(b.credit_date))
+        || String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
+      .map(c => ({
+        playerId: c.player_id as string,
+        kind: c.credit_type as DuesCreditKind,
+        amount: Number(c.amount),
+        /* ⚠ TRACED = a record made this credit; a typed assertion may not become revenue (R6/R7). */
+        traced: (c.fundraiser_entry_id ?? null) !== null || (c.expense_id ?? null) !== null,
+        paidBack: paidBackByCredit.has(c.id as string) ? paidBackByCredit.get(c.id as string) : undefined,
+      })),
+  });
 
   const playersWithDues = await Promise.all(
     rosterPlayers.map(async p => {
@@ -233,6 +269,18 @@ export const GET = withObservability(async (_req: Request,
          from. Casey on the QA fixture is exactly that case. */
       const ownMoneyHeld = own.ownMoneyHeld;
 
+      /* ⚠⚠ WHAT THIS FAMILY CONTRIBUTED, AND WHAT CAME OFF THEIR BILL (owner R1/R2, 2026-09-09).
+         Read from the season-wide assembly above — the report's own — so the band cannot disagree
+         with Budget vs. Actual. A family with no schedule is not in that map (it is built from
+         schedules): nothing to contribute, and no bill to lower.
+
+         ⚠ `rollingBalance` BELOW IS NOT RE-DERIVED FROM THIS AND MUST NOT BE. The ruling moves what
+         the screens READ, never what a family owes; the two are proved equal in the unit tests
+         instead, which is the check that this change moved vocabulary rather than money. */
+      const contribution = duesActualByPlayer.has(p.id)
+        ? duesActual(duesActualByPlayer.get(p.id)!)
+        : null;
+
       /* ⚠⚠ THE DUES LADDER (owner ruling 2026-09-07, out of the QA §148 walk) — the five figures the
          table and the drawer now read left to right. GROSS on purpose: `netCredits` and `cappedPaid`
          above quietly absorb payouts, which is invisible while one column holds everything and a lie
@@ -260,6 +308,9 @@ export const GET = withObservability(async (_req: Request,
           credits.filter(c => c.creditType === 'overpayment').map(c => ({ amount: c.amount as number })),
         ),
         paidOut: position.paidOut,
+        /* An adjustment is a smaller BILL, not a credit somebody paid — it comes off `dues` and out
+           of `otherCredits` together, leaving the row's balance exactly where it was (R1). */
+        billLowered: contribution?.billLowered.total ?? 0,
       });
 
       /* ⚠⚠ THE BALANCE SUBTRACTS `netCredits`, NOT THE NARROWED `totalCredits`, AND THAT DISTINCTION
@@ -310,6 +361,12 @@ export const GET = withObservability(async (_req: Request,
         credits,
         totalCredits: Math.round(totalCredits * 100) / 100,
         ownMoneyHeld,
+        /* What this family put toward their dues — the band's `Collected`, and the same figure the
+           Statement's Player dues row carries. See the season assembly above. */
+        contributed: contribution?.actual ?? 0,
+        /* What came off their bill with no money behind it — the band's `Dues` subtracts this, and
+           the caption names whichever kinds are present (R5). */
+        billLowered: contribution?.billLowered ?? { forgiven: 0, adjustment: 0, total: 0 },
         // The ladder the table and drawer read left to right (see splitDuesLadder).
         ladder,
         rollingBalance,

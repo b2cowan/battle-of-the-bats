@@ -252,6 +252,18 @@ export function splitFamilyOwnMoney(input: {
  *  explains why `otherCredits` is smaller than the credits a family holds. ONE shape, imported by
  *  every producer and reader — three inline copies of it drifted within a day of each other. */
 export interface DuesLadder {
+  /**
+   * What this family is billed — **net of anything written off it** when the caller supplies
+   * `billLowered` (owner R1, 2026-09-09).
+   *
+   * ⚠⚠ AND THAT MAKES THIS FIELD MEAN TWO THINGS DEPENDING ON WHO BUILT IT (/review, 2026-09-09).
+   * The Player Dues route passes `billLowered`, so its ladders are NET; `getRepPlayerDuesSummary`
+   * in `lib/db.ts` does not, so the roster player page's ladders are GROSS. Nothing renders the
+   * difference today — that page shows its own `totalAssessed` and reads only the other four
+   * figures — which is precisely why this note exists rather than a fix: **wire this field into a
+   * new screen and you inherit whichever meaning your endpoint happens to carry.** Pass
+   * `billLowered` from any caller whose figure sits beside the dues band or its total row.
+   */
   dues: number;
   fundraising: number;
   otherCredits: number;
@@ -283,6 +295,27 @@ export function splitDuesLadder(input: {
   overpaymentIssued: number;
   /** Everything handed back to this family in cash — `rep_dues_payouts`. */
   paidOut: number;
+  /**
+   * What has been written off this family's bill with no money behind it — a forgiven balance or a
+   * typed **Adjustment**, standing (owner R1, 2026-09-09: "a bill lowered is not a collection").
+   *
+   * ⚠⚠ IT COMES OFF **BOTH** `dues` AND `otherCredits`, WHICH IS WHY THE ROW STILL CLOSES. A
+   * write-off used to sit in the credits column, so the row read as though someone had covered part
+   * of the bill. It is not a credit anyone paid; it is a smaller bill. Subtracting the SAME figure
+   * from both sides moves it without touching the balance:
+   *
+   *     (dues − L) − fundraising − (otherCredits − L) − paid + handedBack  ≡  balance
+   *
+   * ⚠ SUBTRACT IT FROM `dues` ALONE AND EVERY AFFECTED FAMILY'S BALANCE MOVES BY `L`. That is the
+   * single way this ruling can be got wrong, and it is why the two subtractions are written on one
+   * line rather than left to two callers.
+   *
+   * ⚠ STANDING, NOT ISSUED — the same figure the band's `Dues` tile uses, so the column total and
+   * the tile above it are one number. A write-off partly handed back in cash keeps its returned
+   * half in `otherCredits`, where `handedBack` cancels it exactly. `otherCredits` cannot go
+   * negative: a write-off is by definition part of it.
+   */
+  billLowered?: number;
 }): DuesLadder {
   const grossC = toCents(input.grossPayments);
   /* ⚠ CLAMPED, NOT JUST `overpaymentIssued`, AND THE CLAMP IS LOAD-BEARING. A coach can add a credit
@@ -296,11 +329,17 @@ export function splitDuesLadder(input: {
     Math.max(0, grossC - toCents(input.cappedPaid)),
   );
   const fundraisingC = toCents(input.fundraiserIssued);
+  /* Clamped to the credits actually there, so a caller passing a stale figure can never drive
+     `otherCredits` negative or lift `dues` above what was billed. */
+  const loweredC = Math.min(
+    Math.max(0, toCents(input.billLowered ?? 0)),
+    Math.max(0, toCents(input.creditsIssued) - fundraisingC - ownC),
+  );
   return {
-    dues: toDollars(toCents(input.dues)),
+    dues: toDollars(toCents(input.dues) - loweredC),
     fundraising: toDollars(fundraisingC),
     // ≥ 0 by construction: `own` can never exceed the overpayment credits inside `creditsIssued`.
-    otherCredits: toDollars(toCents(input.creditsIssued) - fundraisingC - ownC),
+    otherCredits: toDollars(toCents(input.creditsIssued) - fundraisingC - ownC - loweredC),
     paid: toDollars(grossC),
     handedBack: toDollars(toCents(input.paidOut)),
     ownMoney: toDollars(ownC),

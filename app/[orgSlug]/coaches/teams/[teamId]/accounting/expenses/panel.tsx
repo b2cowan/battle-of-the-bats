@@ -4621,8 +4621,13 @@ function MoneyRecordsPanel({
     if (s) {
       if (s.dues.overdueCount > 0) {
         live.dues = `${s.dues.overdueCount} overdue · ${fmt(s.dues.overdueAmount)}`;
-      } else if (s.dues.outstanding > 0.005) {
-        live.dues = `${fmt(s.dues.outstanding)} still to come`;
+      } else if (s.dues.balanceOwing > 0.005) {
+        /* ⚠ WHAT IS ACTUALLY LEFT TO CHASE, not the gross bill less cash (owner R1, 2026-09-09 ·
+           /review). The old pair ignored every credit, so this chip could say "$300.00 still to
+           come" in the record-money door while the Money Overview beside it said the bills were
+           all in — and a written-off bill made that gap permanent, since it never reaches zero.
+           `balanceOwing` is the figure the dues band and the Bills settled card both use. */
+        live.dues = `${fmt(s.dues.balanceOwing)} still to come`;
       }
       if (s.fundraisers.activeCount > 0) {
         live.drive = s.fundraisers.activeCount === 1 ? '1 drive running'

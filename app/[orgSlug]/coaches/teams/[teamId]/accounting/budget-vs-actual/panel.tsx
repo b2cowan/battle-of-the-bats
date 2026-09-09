@@ -2074,6 +2074,18 @@ export function BudgetVsActualPanel({
     duesNonCash: !!data && duesRowRenders(data.dues) && data.dues.billed !== null
       && (Math.abs(data.dues.actualParts.familyPaidCosts) > 0.005
         || Math.abs(data.dues.actualParts.fundraisingCredited) > 0.005),
+    /* ⚠ WHAT CAME OFF THE PLAN, AND THE WORD FOR IT (owner R5, 2026-09-09). Same shape as the dues
+       band's caption on Player Dues, so one season is never described two ways: name whichever
+       kinds are actually present, and say nothing at all when there are neither — most seasons. */
+    duesPlanWrittenOff: (() => {
+      if (!data || !duesRowRenders(data.dues) || data.dues.billed === null) return null;
+      const off = data.dues.writtenOff ?? 0;
+      if (off <= 0.005) return null;
+      const { forgiven, adjustment } = data.dues.writtenOffKinds;
+      if (forgiven && adjustment) return `${fmt(off)} of adjustments and forgiveness`;
+      if (forgiven) return `${fmt(off)} forgiven`;
+      return `${fmt(off)} of adjustments`;
+    })(),
     undatedPlan: undatedPlan > 0.005 ? fmt(undatedPlan) : null,
   }), [basis, data, moneyCanWrite, undatedPlan]);
 
@@ -2885,7 +2897,7 @@ export function BudgetVsActualPanel({
              <ReportNotes
                notes={statementNoteStack}
                noteClassName={n => n.id === 'variance-key' ? styles.varianceKey
-                 : n.id === 'dues' || n.id === 'dues-actual' ? styles.duesNote : styles.undatedNote}
+                 : n.id === 'dues' || n.id === 'dues-actual' || n.id === 'dues-plan-written-off' ? styles.duesNote : styles.undatedNote}
                controls={{
                  /* The sentence names the control AND is the control. */
                  'compare-to-date': text => (

@@ -59,9 +59,31 @@ export interface MoneySummary {
     perPlayer: number | null;
   };
   dues: {
+    /**
+     * ⚠ THE GROSS BILL AND THE CAPPED CASH — the pair that pre-dates the 2026-09-09 ruling. They
+     * still answer "is a schedule set up at all", and the expenses hub's live hint reads
+     * `outstanding`. **The Bills settled card and the money rail read `settled`/`duesNet` below
+     * instead**; do not re-point either at this pair, and do not delete these without following
+     * their remaining readers.
+     */
     expected: number;
     collected: number;
     outstanding: number;
+    /**
+     * THE BILL AND HOW MUCH OF IT IS DONE (owner R1/R4, 2026-09-09 — "a bill lowered is not a
+     * collection"). `duesNet` is what families are actually asked for, after anything written off;
+     * `settled` is how much of that is settled, capped family by family so one household's
+     * overshoot can never settle another's bill.
+     *
+     * ⚠ `settled + balanceOwing === duesNet`, which is what lets the card's segments add up and
+     * stops its bar passing 100%. Derived by `seasonDuesBand` — the same walk behind the Player
+     * Dues band and the Statement's Player dues row, so the three cannot part company.
+     */
+    duesNet: number;
+    settled: number;
+    balanceOwing: number;
+    /** What was written off the bills, split so a surface can name the kinds present (R5). */
+    billLowered: { forgiven: number; adjustment: number; total: number };
     overdueCount: number;
     overdueAmount: number;
     neverPaidCount: number;

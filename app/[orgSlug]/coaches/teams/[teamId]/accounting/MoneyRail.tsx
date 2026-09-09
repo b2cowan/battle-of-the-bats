@@ -84,9 +84,13 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
       // a collection failure rather than an unfinished setup. Same distinction the
       // Collections card makes with its footnote.
       if (s.dues.expected <= 0) return 'No installments yet';
+      /* ⚠ THE SAME PAIR THE CARD DRAWS (owner R4, 2026-09-09) — `settled` of `duesNet`, not the
+         band's `Collected`. This row makes the card's progress claim in one line, so reading a
+         different pair would put two answers to "how are we doing on dues?" on one screen. That is
+         the defect the card's own rename exists to end; it must not reappear four inches away. */
       return (
         <>
-          <b>{fmt(s.dues.collected)}</b> of {fmt(s.dues.expected)}
+          <b>{fmt(s.dues.settled)}</b> of {fmt(s.dues.duesNet)}
           {s.dues.overdueCount > 0 && <> · {danger(`${s.dues.overdueCount} overdue`)}</>}
         </>
       );

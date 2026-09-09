@@ -6,7 +6,7 @@ import {
   getSeasonFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
   getRepAllocationSplitsForTeam, getCommitmentStandings, getSeasonName,
 } from '@/lib/db';
-import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
+import { duesPositionByInstallment } from '@/lib/coach-dues-remaining';
 import { installmentLabel, paymentLabel, effectivePayerId } from '@/lib/payable-standing';
 import {
   clubRequestOnSide, clubRequestReportSide,
@@ -1530,9 +1530,103 @@ export const GET = withObservability(async (req: Request,
        · the plan's own funding lines, each under the CATEGORY it was filed in (owner ruling
          2026-09-09) — the same identity the Statement gives the same line, so "Tournaments" reads
          "Tournaments" on both. */
+  /* ⚠⚠ WHERE EVERY DUES BILL STANDS, AND WHICH ONES WERE WRITTEN OFF — ONE WALK, TWO READERS
+     (owner ruling 2026-09-09). The Scheduled lens below reads `remaining` and this feed reads
+     `writtenOff`; deriving them separately would be two answers to one question on one report, and
+     this route is already the heaviest read in the portal. */
+  const duesPosition = duesPositionByInstallment({
+    installments: duesInstallments.map(i => ({
+      id: i.id,
+      playerId: i.player_id ?? scheduleOwner.get(i.schedule_id) ?? '',
+      installmentNumber: i.installment_number,
+      amount: i.amount ?? 0,
+      dueDate: i.due_date,
+      paidAt: i.paid_at,
+    })),
+    payments: duesPayments.map(p => ({
+      id: p.id, playerId: p.playerId, amount: p.amount, receivedDate: p.receivedDate, createdAt: p.createdAt,
+    })),
+    credits: duesCredits,
+    payouts: duesPayouts,
+    mode: programYear.creditApplication,
+  });
+
+  /* ⚠⚠ WHAT FAMILIES CONTRIBUTED, NOT WHAT THEY SENT IN CASH (owner rulings R2–R4, 2026-09-07).
+     The Statement's dues actual was the cash strip's dues arrivals, which made the report count a
+     family-paid cost as SPENDING while counting the credit that settled their dues as revenue
+     NOWHERE. Measured on the UAT fixture: $1,379.98 of family-paid spending against $1,379.98 of
+     reimbursement credits — every dollar on one side matched on the other, and the report counting
+     one side.
+
+     ⚠ THE CASH FEED IS UNTOUCHED AND MUST STAY THAT WAY. `revenueActuals` still builds the Months
+     dues band, which is CASH — gross both directions, team-cash only — and it is already right.
+     The two views now differ on dues ACTUAL by design, exactly as they already differ on expenses;
+     the two-truths note under the Months view says so. Only the Statement reads this.
+
+     ⚠ IT IS DERIVED HERE, ABOVE THE BUDGET FEED, because the feed now needs its `billLowered`
+     total (2026-09-09) — the authoritative figure for what came off the bills, shared with the
+     Player Dues band so the two screens cannot reach different answers. */
+  const duesContributed = seasonDuesParts([...buildFamilyDuesInputs({
+    schedules: ((schedules ?? []) as Array<{ player_id: string; total_amount: number | null }>)
+      .map(s => ({ playerId: s.player_id, total: Number(s.total_amount ?? 0) })),
+    payments: duesPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    payouts: duesPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    /* Oldest first — `getRepDuesCreditsByProgramYear` orders by credit date then creation, which is
+       the order the payout allocation assumes. See `allocatePayouts`. */
+    credits: duesCredits.map(c => ({
+      playerId: c.playerId,
+      kind: c.creditType as DuesCreditKind,
+      amount: c.amount,
+      /* ⚠ TRACED = a record made this credit. A coach can type one that CLAIMS money without any
+         money existing (R6/R7), and an assertion may not become revenue. */
+      traced: c.fundraiserEntryId !== null || c.expenseId !== null,
+      /* ⚠ THE RECORDED FACT, WHERE THERE IS ONE (mig 281). A payback now names the debts it
+         settled, so a credit carrying this is never re-guessed. A credit nothing points at is
+         left undefined and falls to the documented assumption — which is every credit a
+         pre-281 payout touched. */
+      paidBack: paidBackByCredit.has(c.id) ? paidBackByCredit.get(c.id) : undefined,
+    })),
+  }).values()]);
+
   const revenueBudgets: CategoryEvent[] = [];
   for (const i of duesInstallments) {
-    revenueBudgets.push(revenueEvent('dues', i.due_date, i.amount ?? 0));
+    /* ⚠⚠ A BILL LOWERED IS NOT STILL PLANNED (owner ruling 2026-09-09). A forgiven March instalment
+       used to leave this feed promising that money in March — so the report planned revenue the
+       coach had themselves cancelled, and the variance reported a shortfall nobody was going to
+       send. The bill drops by what was written off IT, in ITS month.
+
+       ⚠ THE ROW ABOVE IS A SUM OF THESE EVENTS, which is why nothing nets the season figure
+       separately: `billed` reads this feed, so the headline and the month grid can never disagree
+       about the same dollar. The build gate holding those two equal stays green because of this
+       change, not in spite of it — netting the row alone is what would break it. */
+    const off = duesPosition.writtenOff.get(i.id) ?? 0;
+    revenueBudgets.push(revenueEvent('dues', i.due_date, Math.round(((i.amount ?? 0) - off) * 100) / 100));
+  }
+  /* ⚠⚠ THE REST OF THE WRITE-OFF HAS NO MONTH, AND IT STILL HAS TO COME OFF (2026-09-09). A family
+     who has already paid every bill in cash has none left for a write-off to cancel — Avery on the
+     UAT fixture is exactly that, and her $17.00 adjustment lands on no instalment at all. Taking
+     the season total from the walk above would have read $0.00 here while the Player Dues band read
+     $17.00: two figures for one concept, on the two screens this ruling exists to reconcile. So the
+     TOTAL is the band's and only the PLACEMENT is the walk's, with the unplaceable remainder landing
+     undated — where this feed already puts planned money with no month.
+     ⚠ It is appended after `duesContributed` because that is where the band's figure is derived;
+     `billed` reads this array further down, so the ordering holds. */
+  const duesWrittenOffUnplaced = Math.round(
+    (duesContributed.billLowered.total - duesPosition.writtenOffPlaced) * 100) / 100;
+  /* ⚠⚠ EMITTED WHICHEVER WAY THE TWO DERIVATIONS DIFFER, AND THE SIGN IS NOT A DETAIL (/review,
+     2026-09-09). The first cut only emitted a POSITIVE remainder, which quietly assumed the walk
+     can never place more than the band counts. It can: the bill-application walk gives a forgiven
+     credit its full amount, while the band reduces it by anything handed back — so a legacy family
+     with a repaid forgiveness places MORE on bills than the band ever counted, and dropping that
+     case would have subtracted the excess from `billed` with nothing reporting it.
+
+     Emitting the difference either way makes the season total exactly the band's figure by
+     construction — `Σ(instalment − placed) − (total − placed) ≡ Σinstalment − total` — so the
+     placement can only ever redistribute the write-off ACROSS MONTHS, never change how much of it
+     there is. That is the invariant this feed and the `billed + writtenOff === assessed` guard both
+     rest on, and it now holds arithmetically rather than by assumption. */
+  if (Math.abs(duesWrittenOffUnplaced) > 0.005) {
+    revenueBudgets.push(revenueEvent('dues', null, -duesWrittenOffUnplaced));
   }
   for (const line of fundingLines) {
     const where: RevenueWhere = {
@@ -1575,41 +1669,6 @@ export const GET = withObservability(async (req: Request,
      input to the identity the sentence claims. See `duesSentenceRenders`. */
   const planNeedsRaw = Math.round((budgetTotals.totalPlanned - budgetTotals.expectedFunding) * 100) / 100;
 
-  /* ⚠⚠ WHAT FAMILIES CONTRIBUTED, NOT WHAT THEY SENT IN CASH (owner rulings R2–R4, 2026-09-07).
-     The Statement's dues actual was the cash strip's dues arrivals, which made the report count a
-     family-paid cost as SPENDING while counting the credit that settled their dues as revenue
-     NOWHERE. Measured on the UAT fixture: $1,379.98 of family-paid spending against $1,379.98 of
-     reimbursement credits — every dollar on one side matched on the other, and the report counting
-     one side.
-
-     ⚠ THE CASH FEED IS UNTOUCHED AND MUST STAY THAT WAY. `revenueActuals` still builds the Months
-     dues band, which is CASH — gross both directions, team-cash only — and it is already right.
-     The two views now differ on dues ACTUAL by design, exactly as they already differ on expenses;
-     the two-truths note under the Months view says so. Only the Statement reads this.
-
-     ⚠ AND THE BUDGET IS UNTOUCHED (R1). `billed` below is still the instalments. */
-  const duesContributed = seasonDuesParts([...buildFamilyDuesInputs({
-    schedules: ((schedules ?? []) as Array<{ player_id: string; total_amount: number | null }>)
-      .map(s => ({ playerId: s.player_id, total: Number(s.total_amount ?? 0) })),
-    payments: duesPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
-    payouts: duesPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
-    /* Oldest first — `getRepDuesCreditsByProgramYear` orders by credit date then creation, which is
-       the order the payout allocation assumes. See `allocatePayoutsOldestFirst`. */
-    credits: duesCredits.map(c => ({
-      playerId: c.playerId,
-      kind: c.creditType as DuesCreditKind,
-      amount: c.amount,
-      /* ⚠ TRACED = a record made this credit. A coach can type one that CLAIMS money without any
-         money existing (R6/R7), and an assertion may not become revenue. */
-      traced: c.fundraiserEntryId !== null || c.expenseId !== null,
-      /* ⚠ THE RECORDED FACT, WHERE THERE IS ONE (mig 281). A payback now names the debts it
-         settled, so a credit carrying this is never re-guessed. A credit nothing points at is
-         left undefined and falls to the documented assumption — which is every credit a
-         pre-281 payout touched. */
-      paidBack: paidBackByCredit.has(c.id) ? paidBackByCredit.get(c.id) : undefined,
-    })),
-  }).values()]);
-
   const dues: DuesRevenue = {
     /* ⚠ NULL, NEVER ZERO. "No schedule has been set up" and "a schedule of nothing" are different
        facts and a coach acts on them differently — the row shows an em-dash and a door for the
@@ -1646,6 +1705,13 @@ export const GET = withObservability(async (req: Request,
        two equal. It is compared, never shown — see the field's note. */
     assessed: Math.round(((schedules ?? []) as Array<{ total_amount: number | null }>)
       .reduce((sum, sch) => sum + Number(sch.total_amount ?? 0), 0) * 100) / 100,
+    /* What the bills were lowered by — the bridge back to `assessed`, and the footnote's figure.
+       ⚠ THE BAND'S FIGURE, never the month walk's: see the undated-remainder note above. */
+    writtenOff: duesContributed.billLowered.total,
+    writtenOffKinds: {
+      forgiven: duesContributed.billLowered.forgiven > 0.005,
+      adjustment: duesContributed.billLowered.adjustment > 0.005,
+    },
   };
 
   /* ⚠⚠ INJECTED INTO THE ASSEMBLED REPORT, AND NOTHING IS WRITTEN TO THE PLANNER. A fabricated
@@ -1686,23 +1752,11 @@ export const GET = withObservability(async (req: Request,
   {
     /* ⚠ THE REMAINDER, NEVER THE FACE VALUE — the shared derivation, so this lens and the payment
        schedule quote a family the same figure. A family $200 into a $300 instalment has $100
-       coming, and credits their fundraising earned lower it further. */
-    const remaining = duesRemainingByInstallment({
-      installments: duesInstallments.map(i => ({
-        id: i.id,
-        playerId: i.player_id ?? scheduleOwner.get(i.schedule_id) ?? '',
-        installmentNumber: i.installment_number,
-        amount: i.amount ?? 0,
-        dueDate: i.due_date,
-        paidAt: i.paid_at,
-      })),
-      payments: duesPayments.map(p => ({
-        id: p.id, playerId: p.playerId, amount: p.amount, receivedDate: p.receivedDate, createdAt: p.createdAt,
-      })),
-      credits: duesCredits,
-      payouts: duesPayouts,
-      mode: programYear.creditApplication,
-    });
+       coming, and credits their fundraising earned lower it further.
+       ⚠ TAKEN FROM THE ONE WALK ABOVE (2026-09-09) rather than derived again here: the budget feed
+       needs the same position to net a written-off bill, and this route is the portal's heaviest
+       read. Two calls would also be two chances for the lens and the plan to disagree. */
+    const remaining = duesPosition.remaining;
     for (const i of duesInstallments) {
       /* ⚠ A PAID INSTALMENT IS NOT SCHEDULED. Its money is already on the Actual lens as the
          PAYMENT that covered it, and counting the instalment too would double the same dollar —

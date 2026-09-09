@@ -6,15 +6,17 @@ import MoneyRail from './MoneyRail';
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import styles from './overview-dashboard.module.css';
 
-/* Operate-stage Money Overview: three story cards (Collections / Cash / Budget),
+/* Operate-stage Money Overview: three story cards (Bills settled / Cash / Budget),
  * the merged Next-N-days ledger, and the "More in Money" rail. A story card is
  * a fact's one home; the rail's Budget rows repeat two headline figures by
  * design — the rail is a complete tab index with a live stat per line, and a
  * gap there would read as "no data". The Budget card's plan-vs-actual rows
- * (approved mockup 64d49b0e, 2026-08-14) restate dues-collected and
+ * (approved mockup 64d49b0e, 2026-08-14) restate dues-settled and
  * fundraising-raised in BUDGET context for the same reason: the card's job is
  * "how is the plan tracking", and two of the plan's three funding streams live
- * elsewhere as their own facts. Deliberately no lime CTA and no write action
+ * elsewhere as their own facts. ⚠ RESTATE means the SAME figures — the dues row
+ * and the Bills settled card read one pair (`settled` of `duesNet`), and moving
+ * one without the other puts two answers to one question on one screen. Deliberately no lime CTA and no write action
  * anywhere here (owner call 2026-08-11): the dashboard reports; acting happens
  * one click deeper — the dues row's "Set dues for all players" door is the same
  * kind of empty-state door the card already keeps for "no budget yet". */
@@ -83,9 +85,22 @@ function PlanBar({ actual, target, scaleMax, overGood }: {
 
 export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Props) {
   const { dues, budget } = summary;
-  const pct = dues.expected > 0 ? Math.round((dues.collected / dues.expected) * 100) : 0;
-  const toCome = Math.max(dues.expected - dues.collected - dues.overdueAmount, 0);
-  const allCollected = dues.expected > 0 && dues.outstanding <= 0.005;
+  /* ⚠⚠ THE CARD MEASURES THE BILL, AND SINCE 2026-09-09 IT SAYS SO IN ITS OWN NAME (owner R4).
+     `Collected` on the Player Dues band became money and only money — uncapped — so a card reading
+     it as PROGRESS TOWARD THE BILL would have shown 45% beside $7,349.32 still owed, and its bar
+     would pass 100% the first time a team fundraises hard. That is not a figure a coach can
+     interpret. The card now takes the name of the thing it has always actually measured and reads
+     `settled` of `duesNet`, which are capped family by family upstream.
+
+     ⚠ TWO QUESTIONS, TWO NAMES — do not re-point this at `Collected` to "make them agree". They
+     answer different questions and the moment they are one figure, one of the two screens is
+     lying. `dues.settled + dues.balanceOwing === dues.duesNet` is what holds here instead. */
+  const pct = dues.duesNet > 0 ? Math.round((dues.settled / dues.duesNet) * 100) : 0;
+  const toCome = Math.max(dues.duesNet - dues.settled - dues.overdueAmount, 0);
+  /* ⚠ A SEASON FORGIVEN IN FULL IS "all in", not "on track" (/review). Gated on a SCHEDULE
+     existing rather than on the bill being non-zero: write every bill off and `duesNet` is 0.00,
+     which is a season with nothing left to collect — the good news, not an unresolved state. */
+  const allCollected = dues.expected > 0 && dues.balanceOwing <= 0.005;
   /* ⚠⚠ THE REPORT'S SPEND, NOT THE TEAM'S OWN (owner D5, 2026-08-30). This read
      `expenses.paidTotal` — costs the team logged and nothing else — while `headroom` three lines
      down now counts the club's bill and nets every refund. Left as it was, the card's own
@@ -101,16 +116,16 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
   const fundGoal = budget.expectedFunding;
   const duesScheduled = dues.expected > 0.005;
   const scaleMax = Math.max(
-    budget.effectiveTotal, spent, dues.expected, dues.collected, fundGoal, raised, 1,
+    budget.effectiveTotal, spent, dues.duesNet, dues.settled, fundGoal, raised, 1,
   );
 
   return (
     <>
       <div className={styles.row3}>
-        {/* ── Collections ── */}
+        {/* ── Bills settled ── */}
         <div className={`${styles.card} ${dues.overdueCount > 0 ? styles.cardAlert : ''}`}>
           <div className={styles.eyeRow}>
-            <span className={styles.eye}>Collections</span>
+            <span className={styles.eye}>Bills settled</span>
             {/* No chip at all when nothing is scheduled — a green "on track"
                 beside "no installments are set yet" would be a lie. */}
             {dues.expected > 0 && (
@@ -128,18 +143,18 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
           {dues.expected > 0 ? (
             <>
               <div className={styles.big}>
-                {fmt(dues.collected)} <small>of {fmt(dues.expected)} · {pct}%</small>
+                {fmt(dues.settled)} <small>of {fmt(dues.duesNet)} · {pct}%</small>
               </div>
               <div className={styles.bar}>
-                {dues.collected > 0 && (
-                  <div className={`${styles.seg} ${styles.segCollected}`} style={{ width: `${Math.min(segWidth(dues.collected, dues.expected), 100)}%` }} />
+                {dues.settled > 0 && (
+                  <div className={`${styles.seg} ${styles.segCollected}`} style={{ width: `${Math.min(segWidth(dues.settled, dues.duesNet), 100)}%` }} />
                 )}
                 {dues.overdueAmount > 0 && (
-                  <div className={`${styles.seg} ${styles.segOverdue}`} style={{ width: `${segWidth(dues.overdueAmount, dues.expected)}%` }} />
+                  <div className={`${styles.seg} ${styles.segOverdue}`} style={{ width: `${segWidth(dues.overdueAmount, dues.duesNet)}%` }} />
                 )}
               </div>
               <div className={styles.legend}>
-                <span><span className={`${styles.legendDot} ${styles.dotCollected}`} /><b>{fmt(dues.collected)}</b> in</span>
+                <span><span className={`${styles.legendDot} ${styles.dotCollected}`} /><b>{fmt(dues.settled)}</b> settled</span>
                 {dues.overdueAmount > 0 && (
                   <span><span className={`${styles.legendDot} ${styles.dotOverdue}`} /><b>{fmt(dues.overdueAmount)}</b> overdue</span>
                 )}
@@ -181,11 +196,11 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
             </div>
           </div>
           {/* ⚠ THE REGISTER, NOT PLAYER DUES (2026-08-26). This foot read 'See what's outstanding'
-              and opened the dues tab — the SAME door the Collections card beside it already owns, and
+              and opened the dues tab — the SAME door the Bills settled card beside it already owns, and
               only half of what its own words promised: money the team still owes OUT was nowhere on
               that journey. Cash on hand IS the register's running balance at today, and the register
               prints this exact figure in its own toolbar, so the number's one true door is the book
-              that produces it. What is still owed keeps its answers — the Collections card for money
+              that produces it. What is still owed keeps its answers — the Bills settled card for money
               in, the Next-N-days ledger below for everything dated — and the caveat sentence above
               already points at them without spending this link on it. */}
           <div className={styles.foot}>
@@ -239,19 +254,28 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                   <PlanBar actual={spent} target={budget.effectiveTotal} scaleMax={scaleMax} />
                 </div>
 
-                {/* Player dues: collected climbs TO what is actually SCHEDULED — the real
+                {/* Player dues: what is settled climbs TO what is actually SCHEDULED — the real
                     figure, never a computed even split of the plan (the retired $/player
                     projection went stale the moment real installments existed). The word
                     "scheduled" is dropped from the row: "$2,700 of $6,400" needs no help,
-                    and the empty state below says outright when nothing is scheduled. */}
+                    and the empty state below says outright when nothing is scheduled.
+
+                    ⚠⚠ THE SAME PAIR AS THE BILLS SETTLED CARD ABOVE, AND THAT IS NOT OPTIONAL
+                    (/review, 2026-09-09). This row asks the card's question a second time in a
+                    budget context, so the two are promised to restate ONE fact — and the ruling
+                    that renamed the card repointed only the card, leaving this row on the old
+                    capped-cash-over-gross-bill pair. On the QA fixture that reads $2,225.00 of
+                    $11,308.30 four inches under a card saying $3,941.98 of $11,291.30: two answers
+                    to one question on one screen, which is the exact defect the rename exists to
+                    end. Move one, move both. */}
                 <div>
                   <div className={styles.planRowHead}>
                     <span className={styles.planRowLabel}>Player dues</span>
                     <span className={styles.planRowNums}>
                       {duesScheduled ? (
                         <>
-                          <b>{fmt(dues.collected)}</b> of {fmt(dues.expected)}
-                          {dues.outstanding <= 0.005 && <> · <span className={styles.planDeltaGood}>✓ all in</span></>}
+                          <b>{fmt(dues.settled)}</b> of {fmt(dues.duesNet)}
+                          {dues.balanceOwing <= 0.005 && <> · <span className={styles.planDeltaGood}>✓ all in</span></>}
                         </>
                       ) : (
                         <span className={styles.planDelta}>nothing scheduled</span>
@@ -259,7 +283,7 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                     </span>
                   </div>
                   {duesScheduled ? (
-                    <PlanBar actual={dues.collected} target={dues.expected} scaleMax={scaleMax} />
+                    <PlanBar actual={dues.settled} target={dues.duesNet} scaleMax={scaleMax} />
                   ) : (
                     <>
                       {/* A dashed ghost of what dues WOULD cover — never a projected bar
