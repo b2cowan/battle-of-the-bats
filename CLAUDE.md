@@ -96,22 +96,40 @@ not built).
 **⚠ BOTH DEMOS ARE FULLY PUBLIC ON PRODUCTION as of 2026-08-10** (every claim here verified
 against the live prod database/site, never a plan — this paragraph has been wrong in both
 directions before): both `riverdale-*` organizations are seeded on prod (2026-08-08 02:14 UTC),
-the re-anchor schedules are **active on BOTH databases** (tournament every 2 minutes, coach
-nightly — confirmed in `cron.job` on each), and **the doors are OPEN** — owner-directed
+the re-anchor schedules are **active on BOTH databases** and **BOTH are now NIGHTLY**
+(tournament 08:10 UTC, coach 08:20 UTC — migration 273 moved the tournament tick off its old
+2-minute live cycle on 2026-09-08; re-confirmed in `cron.job` on each that day. ⚠ The old
+"every 2 minutes" claim stood here for a month after the daily-snapshot redesign was written), and **the doors are OPEN** — owner-directed
 2026-08-10, via `NEXT_PUBLIC_SEE_IT_LIVE_DOORS=true` set as a **master-branch-scoped** Amplify
 variable + rebuild (job 250, code unchanged at `201ec1bd`). Prod code moved to `ebdf02ea` in the
 2026-08-10 13:37 release push (Amplify job 251 SUCCEED, 13:43 ET), which carries the Sunday
 roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and the coach demo's
 marketing doors: "See it live" verified rendering live post-251 on the homepage hero (both demos),
 both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both door routes 307
-into their worlds. **Prod HEAD is now `7f21df47` (2026-08-27, Amplify master job 260 SUCCEED first time —
+into their worlds. **Prod HEAD is now `2e7ef905` (2026-09-08, Amplify master job 262 SUCCEED first time — 119
+commits, tag `release/2026-09-08`: the coach money quarter (the dues ladder, the budget plan’s
+subtotals, credits and paybacks, fundraising’s one way in), Founding Season 2027 Phases 0–2, the
+notifications redraw, one table standard + its exception register, and the pricing comparison table’s
+removal. **Migrations 273–285 ALL applied to prod that day** — the two schemas are byte-identical
+(DRIFT 0) and the schema-parity ratchet reached **zero accepted divergences** for the first time.
+⚠ FIVE of the thirteen are DATA-ONLY and invisible to every gate, so each was verified by querying
+production directly: the demo tick went nightly, “Other Income” exists with its four words, the
+founding-season end date moved off the January cliff with none left behind, the campaign templates
+match dev at 11, and Grant moved to Sponsorship WITH its one referencing record re-pointed. Live-
+verified post-262 on **www.fieldlogichq.ca**: `/`, `/changelog` and `/pricing` 200, both doors 307
+into their worlds, master stream 0 ERROR, and the new changelog entry rendering. The prior prod HEAD
+was `bf1efee6` (2026-09-02, job 261). Before that, `7f21df47` (2026-08-27, Amplify master job 260 —
 52 commits, tag `release/2026-08-27`: coach money P4, tryout decisions as one tap, the platform no longer
 writing the offer letter, the Add player form at parity with the public form, the roster rework, practice
 staff/equipment libraries, printed posters/cards/brackets, the 641–768 tablet band and "8:00 a.m."
-everywhere; **migrations 262, 263, 265, 266 and 267 applied to prod** that day, with **264 deliberately
-held pending owner approval** — it is a data-only DELETE of three retired tryout email templates, and
-⚠ NO GATE CAN EVER SEE IT: both drift checks compare schema, so a deleted ROW is invisible by
-construction and `check:migrations` reported "in sync" while it was outstanding. Both doors re-verified
+everywhere; **migrations 262, 263, 265, 266 and 267 applied to prod** that day. ⚠⚠ **264 WAS DESCRIBED HERE FOR
+WEEKS AS “held pending owner approval” AND IT HAD IN FACT RUN** — re-verified 2026-09-08 by querying
+production directly: all three keys it deletes (`tryout_offer_extended`, `tryout_declined`,
+`tryout_offer_accepted`) are absent, and migration 083 had seeded them there, so they were deleted.
+The correction is the point: it is a data-only DELETE, and **NO GATE CAN EVER SEE ONE** — both drift
+checks compare schema, so a deleted ROW is invisible by construction and `check:migrations` reported
+“in sync” throughout, which is evidence of nothing in either direction. **A data-only migration’s
+state is knowable only by asking the database for the rows.** Both doors re-verified
 307ing into their worlds post-260 on **www.fieldlogichq.ca**, `/` and `/changelog` 200, master stream
 0 ERROR). ⚠⚠ **THIS RELEASE CHANGED THE COACH DEMO'S STORY AGAIN AND THE NARRATION HAS NOT BEEN FOLLOWED
 UP AT ALL.** The money vocabulary moved a third time: a family can now pay ONE PIECE of a bill directly

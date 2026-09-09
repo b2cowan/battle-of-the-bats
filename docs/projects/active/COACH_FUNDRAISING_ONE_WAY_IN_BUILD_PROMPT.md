@@ -37,7 +37,7 @@ CONTEXT (do not re-derive; argue from the code if you think any of it is wrong):
   null player — copy that pattern everywhere; "A new sponsor…" already exists in "Which sponsor?";
   coach item creation never sets actual_source (default 'typed') and the coach POST allows a
   platform category; mig 280 measured ZERO club/coach-created money-in words on either database.
-- Migrations 274, 280 and 282 are PROD-OWED; this one depends on all three. Next free number is
+- Migrations 274, 280 and 282 are on prod 2026-09-08 (job 262), as is this one (285) — all shipped together. Next free number is
   285 at writing — re-check the folder.
 
 BLOCKING GATE — before any code:

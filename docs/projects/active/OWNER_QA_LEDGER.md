@@ -19740,7 +19740,7 @@ owner ruling until the dues project finishes.
 cleared; whether **Adjustment** is the word for a credit that is neither a rebate nor an overpayment;
 and whether the Pay-out sheet should say what is left when every debt is ticked.
 
-## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — committed `d2b3b2db` on `dev` 2026-09-08 after `/review`, migration 284 applied to dev (PROD-OWED, data-only), awaiting QA · walk artifact `fc80f4bf` · copy approved by the owner on artifact `4e8c6474` before any seed was written
+## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — committed `d2b3b2db` on `dev` 2026-09-08 after `/review`, migration 284 on prod 2026-09-08 (job 262) (data-only — verified by query), awaiting QA · walk artifact `fc80f4bf` · copy approved by the owner on artifact `4e8c6474` before any seed was written
 
 **Founding Season 2027 Phase 1** (`FOUNDING_SEASON_2027_PLAN.md` §3 Phase 1). The free season runs
 through **September 30, 2027** for everyone who signs up by **December 31, 2026** — but every one of
@@ -19794,7 +19794,7 @@ is data-only and invisible to both by construction, so its prod apply must be re
 
 ---
 
-## §155 · The Founding Season desk — every free account in one list, the card recorded in the app, and a 2028 choice that cannot charge early — committed `6eda3722` on `dev` 2026-09-08 after `/simplify` + `/review`, migration 283 applied to dev (PROD-OWED), awaiting QA · walk artifact `29258882` · mockup artifact `587fbd15`
+## §155 · The Founding Season desk — every free account in one list, the card recorded in the app, and a 2028 choice that cannot charge early — committed `6eda3722` on `dev` 2026-09-08 after `/simplify` + `/review`, migration 283 on prod 2026-09-08 (job 262), awaiting QA · walk artifact `29258882` · mockup artifact `587fbd15`
 
 **Plan:** `FOUNDING_SEASON_2027_DESK_PLAN.md` (+ `_PM_BRIEF.md`) · Phase 2 of
 `FOUNDING_SEASON_2027_PLAN.md` §3 · run order **E2** on artifact `5ef0163e`.
@@ -19972,7 +19972,7 @@ affected files; full run recorded below) · `verify:changed` ✓ · rendered che
 new findings · `check:pdf` 23 documents, 98 files read back ✓. The walk's Parts C1 and E1/E2 were updated
 to the reviewed words (Costs shown / Funding shown; COSTS / FUNDING in the file).
 
-## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — committed `1b06f9e7` 2026-09-08, migration 285 applied to dev (PROD-OWED), awaiting QA · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
+## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — committed `1b06f9e7` 2026-09-08, migration 285 on prod 2026-09-08 (job 262), awaiting QA · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
 
 **Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` (+ `_PM_BRIEF.md`). **Migration 285**
 (`285_a_shelf_says_who_fills_it_in.sql`) — applied to dev, **prod-owed behind 274, 276, 277, 280, 281,

@@ -8,7 +8,7 @@ the Months vocabulary, and the headroom fix. Re-measured on the QA fixture: the 
 report now BOTH read **$1,555** (they read $1,980 and $1,555 before), the expense band's Scheduled
 column carries the **$1,570** of unpaid club instalments it used to omit, and answering the $325
 "New money" moves it to its own revenue row with the season net **unchanged at −$3,545** — the
-mockup's central claim, measured rather than asserted. ⚠ **Migration 271 is DEV ONLY**, prod-owed
+mockup's central claim, measured rather than asserted. ✅ **Migration 271 is on prod (verified in sync 2026-09-08)**
 behind 264 (held) / 268 / 269 / 270; its dev-vs-prod divergence is baselined in
 `scripts/.schema-parity-baseline.json` the same way theirs are. ⚠ **One deliberate widening beyond
 the mockup's annotation is recorded in §5.4** — the hub card also nets recorded money back, which

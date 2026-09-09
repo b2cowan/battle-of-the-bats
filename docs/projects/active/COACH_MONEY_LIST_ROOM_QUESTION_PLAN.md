@@ -17,7 +17,7 @@ quiet dev server).
 **Mockups (the spec, rulings stamped in place):** `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` ("List, Room, Question", rounds 1–2c).
 **PM brief:** `COACH_MONEY_LIST_ROOM_QUESTION_PM_BRIEF.md`. **Build session opens with:**
 `COACH_MONEY_LIST_ROOM_QUESTION_BUILD_PROMPT.md` (preconditions §0 are blocking).
-**No migration expected.** Prod-owed migrations 268–272 (and held 264) must reach prod **before or alongside Phase A** so rooms are built against the schema prod runs.
+**No migration expected.** Migrations 268–272 and 264 are on prod (verified in sync 2026-09-08), so rooms are built against the schema prod runs.
 
 ---
 
@@ -331,7 +331,7 @@ open the bill behind it" got *more* true, no new stop) · the header-actions gua
 
 ## 7. Order and gates
 
-1. Prod-owed migrations (268–272; 264 held awaiting owner) promoted first or alongside.
+1. Migrations 268–272 and 264 — on prod (verified in sync 2026-09-08).
 2. Room shell (§1) → Phase A (Club) → Phase B (Fundraising) → Phase C (bill room) → Phase D rides.
 3. Each phase: own mockup-fidelity check against the artifact, own QA section, own commit;
    `/simplify` before `/review` on each.

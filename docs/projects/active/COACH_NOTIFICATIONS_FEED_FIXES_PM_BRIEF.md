@@ -2,7 +2,7 @@
 
 **Plan:** `COACH_NOTIFICATIONS_FEED_FIXES_PLAN.md` · **Mockup (the spec):**
 `https://claude.ai/code/artifact/9427bc24-94e4-47dc-9823-ae94d95d09ff`
-**Status:** built on dev 2026-09-06, awaiting owner QA. One migration, prod-owed.
+**Status:** shipped — `baa9be54`, on prod 2026-09-08 (job 262). Owner QA still owed.
 
 ## What this is
 

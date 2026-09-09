@@ -29,7 +29,7 @@ rows do not open) and sizes the one action on the row, the same ground the two c
 **Verified:** migration applied to dev · typecheck clean · 2,950/2,951 unit tests (the one failure
 is another session's `coach-budget-periods-view` fixture, confirmed unrelated) · spelling, CSS
 purity and dead-selector gates clean · schema parity re-baselined (6 accepted, 3 of them this
-migration's, prod-owed) · dictionary coverage OK · `check:demos` both worlds presentable · UAT
+migration's; now on prod 2026-09-08 (job 262)) · dictionary coverage OK · `check:demos` both worlds presentable · UAT
 fixture now holds **both** failing states (this team's own heading AND another team's, so the filter
 can actually fail) · all six visibility behaviours executed against the live dev schema, not read
 off the code. Grew out of

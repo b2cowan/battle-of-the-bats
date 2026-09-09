@@ -1,6 +1,6 @@
 # Coach Notifications — feed grouping, ordering and filters
 
-**Status: BUILT on dev 2026-09-06 (uncommitted). Migration 278 applied to dev, PROD-OWED.**
+**Status: SHIPPED — committed `baa9be54`, on prod 2026-09-08 (job 262) with migration 278.**
 Owner QA = a new ledger section (§147 proposed). Mockup = the spec:
 Claude Artifact "Four Fixes to the Notification Feed"
 `https://claude.ai/code/artifact/9427bc24-94e4-47dc-9823-ae94d95d09ff`.
@@ -154,7 +154,7 @@ than drawn. Everything else matches the drawing.
 
 ## Files
 
-- `supabase/migrations/278_a_decision_stays_until_you_clear_it.sql` — NEW (dev only; **prod-owed**)
+- `supabase/migrations/278_a_decision_stays_until_you_clear_it.sql` — on prod 2026-09-08 (job 262)
 - `lib/notification-view.ts` — `relativeTime` → `notificationTime` (bucket-derived, `withDay`
   option, injectable `now`); `DAY_ORDER` gains "Earlier this week"; `dayBucket` gains the
   Monday-start branch and an injectable `now`
@@ -177,7 +177,7 @@ than drawn. Everything else matches the drawing.
 - [x] `npx next typegen` + `npx tsc --noEmit` — clean
 - [x] `npm run verify:changed` — green end to end; **3,072 unit tests pass**, 0 lint errors
       (189 pre-existing warnings). Schema parity green after recording mig 278 as accepted
-      prod-owed debt (2 entries added by hand, NOT `--init`, so nothing else was blanket-accepted)
+      debt at the time (2 entries added by hand, NOT `--init`); both cleared when 278 reached prod — the parity baseline is now at ZERO
 - [x] `npm run check:layout -- --only=coach-notifications` — **zero new findings at 361/390/768/1440**
 - [x] `npm run refresh:snapshots` — watermark #278, dictionary coverage OK
 - [x] **Rendered verification as the UAT coach (Playwright, 16/16)** — at 390: pills hidden, read

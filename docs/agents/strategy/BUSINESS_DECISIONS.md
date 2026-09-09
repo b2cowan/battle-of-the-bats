@@ -29,7 +29,7 @@ HANDOFF → `/billing`   — nothing: no gate or inclusion changed.
 
 
 ### 2026-09-07 — FOUNDING SEASON 2027: the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026; the two dates separate; no second promotion; the September ask is a 2028 plan choice, annual first; the offer goes front and centre
-**Status:** Decided (owner, 2026-09-07 — *"I agree with all of your recommendations"* on the six decisions, then *"looks good, go for it"* on the mockup sheet `61a78f09` with the recommended option on each of its three choices). **Committed `2f02a949` on `dev` 2026-09-07** after `/review` (seven findings fixed; migration 279 applied to dev, PROD-OWED). Plan: `docs/projects/active/FOUNDING_SEASON_2027_PLAN.md` (+ PM brief); copy canon: `FOUNDING_SEASON_2027_OFFER_COPY.md`.
+**Status:** Decided (owner, 2026-09-07 — *"I agree with all of your recommendations"* on the six decisions, then *"looks good, go for it"* on the mockup sheet `61a78f09` with the recommended option on each of its three choices). **Committed `2f02a949` on `dev` 2026-09-07** after `/review` (seven findings fixed; migration 279 on prod 2026-09-08 (job 262)). Plan: `docs/projects/active/FOUNDING_SEASON_2027_PLAN.md` (+ PM brief); copy canon: `FOUNDING_SEASON_2027_OFFER_COPY.md`.
 
 **Decision:** Seven parts.
 1. **The free period ends September 30, 2027** (was December 31, 2026) for Tournament Plus and the Premium Coaches Portal. Not August 31: the product's own season model says settlement, awards, documents and next year's tryout all happen after the last game, and ball tryouts run August into September — the conversion moment must coincide with "I have next year's team".

@@ -1,7 +1,7 @@
 # Coach fundraising — one way in
 
 **Status:** **committed `1b06f9e7` 2026-09-08 on `dev`**, migration **285**
-(`285_a_shelf_says_who_fills_it_in.sql`) applied to dev — PROD-OWED, behind 274/276/277/280–284.
+(`285_a_shelf_says_who_fills_it_in.sql`) — on prod 2026-09-08 (job 262), promoted in order behind 274/276/277/280–284.
 Owner QA **§157** written, walk artifact
 [`f8e843e3`](https://claude.ai/code/artifact/f8e843e3-8be2-48d6-bb55-4f93cee0abec) (78 checks, eight
 parts) — **awaiting the owner's walk, and one ruling: F4, whether a whole-team entry is allowed on a

@@ -12,7 +12,7 @@ in place) · auto-memory `project_coach_money_list_room_question.md`.
    (`accounting/budget/`, `budget-vs-actual/`, `expenses/`, `lib/coach-budget-*`, `lib/db.ts`,
    `lib/types.ts`). The pre-commit gates are green on a no-op commit. One hot money stream at a
    time in this shared working copy — that is a standing rule, not a preference.
-2. **Prod-owed migrations 268–272 are promoted** (and the held 264 has an owner ruling) — or the
+2. **Migrations 268–272 and 264 are on prod (verified in sync 2026-09-08)** — or the
    owner has explicitly waived this for Phase A in writing. Rooms are built against the schema
    prod runs.
 3. **BvA Two Truths and the Budget tab revamp have landed their tranches** (their plans in
