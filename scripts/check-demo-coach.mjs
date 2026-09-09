@@ -44,7 +44,11 @@ import {
   SEASON_START_BUDGET_LINES,
   TRYOUT_CANDIDATES, MIDSEASON_RESULTS, SEASONS_END_RESULTS,
 } from '../lib/demo-coach.ts';
-import { sandboxMoments } from '../lib/sandbox-chrome.ts';
+import { sandboxMoments, sandboxTourSteps } from '../lib/sandbox-chrome.ts';
+/* The report's own derivation, not a re-implementation of it — the gate below asserts a sentence
+   about a figure a coach reads on Budget vs. Actual, and a second copy of that arithmetic here
+   would agree with itself while disagreeing with the screen. */
+import { buildFamilyDuesInputs, seasonDuesParts } from '../lib/coach-dues-actual.ts';
 
 const failures = [];
 const ok = (label) => console.log(`  ✓ ${label}`);
@@ -648,6 +652,66 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       check(!(entries ?? []).some(e => overdueIds.has(e.player_id)),
         'no rebate lands on an overdue family — the $240 story is not cleared from the side');
     }
+
+    /* ── The guided tour's dues ratio, recomputed ──────────────────────────────────────────────
+       ⚠⚠ ADDED 2026-09-09 BECAUSE THIS EXACT SENTENCE HAD ALREADY GONE WRONG AND NOTHING COULD
+       SEE IT. The step said "Seven in ten dollars of dues are in", read off a Player dues row that
+       counted CASH; §153 made that row count what families CONTRIBUTED — cash kept, plus team
+       bills families paid, plus fundraising credited — and the Bottle Drive's $335 of rebates took
+       it to 78%. Every page still rendered perfectly, so `check:demos` passed throughout: the world
+       was never broken, only the sentence over it.
+
+       Two assertions, and it needs both. The BAND catches the world drifting under the sentence;
+       the PHRASE catches the sentence being reworded without anyone re-measuring the band — a
+       check pinned to a number nobody re-reads is how the first version of this went stale. */
+    const DUES_CLAIM = { phrase: 'Nearly eight in ten dollars of dues are in', low: 0.75, high: 0.85 };
+    const budgetStep = sandboxTourSteps('coach', { slug: demoOrg.slug, landingPath: demoOrg.landingPath })
+      .find(s => s.said.includes('dollars of dues are in'));
+    check(!!budgetStep && budgetStep.said.includes(DUES_CLAIM.phrase),
+      'the tour still makes the dues claim this check is calibrated for',
+      budgetStep ? `step reads: "${budgetStep.said}"` : 'no step claims a dues ratio at all');
+
+    const [{ data: duesSchedules }, { data: duesPayments }, { data: duesPayouts },
+      { data: duesCredits }, { data: payoutLinks }] = await Promise.all([
+      db.from('rep_player_dues_schedules').select('player_id, total_amount').eq('program_year_id', py.id),
+      db.from('rep_dues_payments').select('player_id, amount').eq('program_year_id', py.id),
+      db.from('rep_dues_payouts').select('player_id, amount').eq('program_year_id', py.id),
+      db.from('rep_dues_credits')
+        .select('id, player_id, amount, credit_type, fundraiser_entry_id, expense_id')
+        .eq('program_year_id', py.id).order('credit_date', { ascending: true }),
+      db.from('rep_dues_payout_credits').select('credit_id, amount').eq('team_id', teamId),
+    ]);
+    /* ⚠ A NULL FEED IS A FAILED QUERY, NOT AN EMPTY SEASON — and it reads as 0% rather than as an
+       error, which is the "green check over an empty fixture" this repo has been bitten by. Writing
+       this check found it live: one non-existent column in the select returned null for the whole
+       credits feed, and the ratio came back as the old cash figure, confirming the sentence. */
+    check(!!duesSchedules && !!duesPayments && !!duesPayouts && !!duesCredits && !!payoutLinks,
+      'every dues feed behind the tour claim actually returned rows');
+
+    const paidBackByCredit = new Map();
+    for (const l of payoutLinks ?? []) {
+      paidBackByCredit.set(l.credit_id, (paidBackByCredit.get(l.credit_id) ?? 0) + Number(l.amount));
+    }
+    const billedTotal = (duesSchedules ?? []).reduce((a, s) => a + Number(s.total_amount ?? 0), 0);
+    const contributed = seasonDuesParts([...buildFamilyDuesInputs({
+      schedules: (duesSchedules ?? []).map(s => ({ playerId: s.player_id, total: Number(s.total_amount ?? 0) })),
+      payments: (duesPayments ?? []).map(p => ({ playerId: p.player_id, amount: Number(p.amount) })),
+      payouts: (duesPayouts ?? []).map(p => ({ playerId: p.player_id, amount: Number(p.amount) })),
+      credits: (duesCredits ?? []).map(c => ({
+        playerId: c.player_id,
+        kind: c.credit_type,
+        amount: Number(c.amount),
+        // Same rule as the report: a credit only counts as revenue while a record backs it.
+        traced: c.fundraiser_entry_id !== null || c.expense_id !== null,
+        ...(paidBackByCredit.has(c.id) ? { paidBack: paidBackByCredit.get(c.id) } : {}),
+      })),
+    }).values()]);
+    const duesRatio = billedTotal > 0 ? contributed.actual / billedTotal : 0;
+    check(duesRatio >= DUES_CLAIM.low && duesRatio <= DUES_CLAIM.high,
+      `the 12U's Player dues row still reads what the tour claims (${DUES_CLAIM.phrase.toLowerCase()})`,
+      `$${contributed.actual.toFixed(2)} of $${billedTotal.toFixed(2)} = ${(duesRatio * 100).toFixed(1)}%`
+        + ` — cash $${contributed.cashKept.toFixed(2)}, family-paid $${contributed.familyPaidCosts.toFixed(2)},`
+        + ` fundraising credited $${contributed.fundraisingCredited.toFixed(2)}`);
 
     /* ── The sponsor: the OTHER kind of money coming in ────────────────────────────────────────
        Added 2026-08-15 with the sponsorships follow-ups. Sponsorships shipped and the shop window

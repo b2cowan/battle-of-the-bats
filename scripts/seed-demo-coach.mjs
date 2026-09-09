@@ -470,10 +470,23 @@ async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map(), p
        no `reimbursement` credit behind it is a state the app cannot produce and its undo path
        refuses to touch, so a seeder that wrote only the payment would leave the shop window in a
        shape the product itself would refuse to change. */
-    const fronted = pieces
-      .filter(p => p.paidDate && p.paidByRosterIndex !== undefined)
+    const declaredFronted = pieces.filter(p => p.paidDate && p.paidByRosterIndex !== undefined);
+    const fronted = declaredFronted
       .map(p => ({ piece: p, playerId: playerIds[p.paidByRosterIndex] }))
       .filter(f => !!f.playerId);
+    /* ⚠⚠ A DROPPED PAYER USED TO BE SILENT, AND IT COST THE SHOP WINDOW ITS ONLY P4 MOMENT (found
+       2026-09-09, §153's demo pass). Two of the three callers omitted `playerIds` entirely, so this
+       filter quietly discarded the off-season Spring Invitational's fronted $400 deposit — the one
+       bill in either sandbox that was designed to hold both a team payment and a family-fronted
+       one, with a comment in `lib/demo-coach.ts` saying exactly that. The world seeded, every page
+       rendered, `check:demos` passed, and the moment simply was not there. A demo descriptor that
+       declares a payer and does not get one is a seeding failure, not a preference. */
+    if (fronted.length !== declaredFronted.length) {
+      die(`front a payment on "${e.description}"`, new Error(
+        `${declaredFronted.length - fronted.length} piece(s) declare paidByRosterIndex but the roster `
+        + `passed to insertDemoExpenses has ${playerIds.length} player(s) — pass playerIds from the `
+        + `caller, or drop the payer from the descriptor.`));
+    }
     const payerOf = new Map(fronted.map(f => [f.piece.installmentNumber, f.playerId]));
 
     const expenseId = await insertCommitmentWithRecords(db, {
@@ -1037,7 +1050,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // the same token, one row that stays unlinked).
   // ⚠ The photo-day cost names an item in a category this plan never mentions, so it lands as its
   // OWN flagged row on the report — a better telling of the unbudgeted beat than a loose list.
-  await insertDemoExpenses(team, pyId, state.expenses, offSeasonItems);
+  /* ⚠ THE ROSTER IS AN ARGUMENT BECAUSE ONE OF THESE COSTS NAMES A PAYER. The Spring Invitational's
+     $400 deposit was fronted by a parent (P4, mig 267), and without the roster here that fact was
+     dropped on the floor — see the guard in `insertDemoExpenses`. */
+  await insertDemoExpenses(team, pyId, state.expenses, offSeasonItems, playerIds);
   /* One income entry and one refund (mig 243). The refund lands on the SAME item the plan's two
      summed Entry Fees lines name, so the row a prospect reads carries the SUM ruling and the
      netting ruling at once. */

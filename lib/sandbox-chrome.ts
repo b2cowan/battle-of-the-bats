@@ -692,7 +692,31 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              budget-dates re-read reached, under the same one-proof-point cap (`ea8ddd14`). The
              seeded world does the showing. If the owner wants "every line gets its own actual"
              narrated, SWAP a clause. */
-      said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
+      /* ⚠⚠ RE-READ FOR CREDITS AND PAYBACKS (§153, 2026-09-09) — AND THIS ONE WAS ACTUALLY WRONG.
+         The first of these re-reads to change a sentence rather than confirm it, and the cause is
+         the exact shape CLAUDE.md's demo rule describes: the SCREEN moved under a sentence about a
+         number, every pixel still rendered, and three earlier re-reads of this same step (09-05,
+         09-06, 09-08) each correctly answered "nothing here names the report's furniture" without
+         noticing that the FIGURE had moved. ⚠ The clause was only three days old as a
+         CHECKABLE claim — the 09-04 note above is what put a Player dues row on this screen at
+         all, and it closes by observing that until then "the tour asserted a dues ratio on a
+         report from which dues were entirely absent". A sentence becomes falsifiable the moment
+         the product starts showing the number it quotes, and that is the moment it needs a gate.
+           · *Still true?* **NO.** "Seven in ten dollars of dues are in" was read off a Player dues
+             row that counted CASH. §153 made that row count what families contributed — cash kept,
+             plus team bills families paid, plus fundraising credited to dues. Measured on the live
+             demo database 2026-09-09: dues billed **$5,760.00**, cash **$4,170.00** (72.4% — the
+             old sentence), Player dues actual **$4,505.00** (**78.2%**), the difference being the
+             Bottle Drive's five rebates totalling **$335.00**. A prospect who divides the two
+             figures the step lands them on gets eight in ten, not seven.
+           · *Should a moment show it?* **No new clause** — the `ea8ddd14` cap holds, and this is a
+             SWAP, which is what the cap says to do. The clause keeps its job (dues are most of the
+             way in) and stops disagreeing with the row underneath it.
+           · ⚠ NOW GATED. `check-demo-coach.mjs` asserts this ratio against the same derivation the
+             report uses, because nothing in `check:demos` could see this: the world was never
+             broken, only the sentence over it. A number in a demo sentence needs a check that
+             recomputes the number. */
+      said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Nearly eight in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
     {
