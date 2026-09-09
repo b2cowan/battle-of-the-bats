@@ -202,25 +202,27 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
 <div class="steps">
 
 <article class="step" data-step="B1">
-  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Eleven words, four groups, a tag on every one</h3></div></div>
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Eleven words, four groups — and only three carry a tag</h3></div></div>
   <div class="step-body">
-    <p class="why">The tag answers "will this row fill itself in, or am I recording it myself?" — the
-      question the old form let you answer <i>wrongly</i>, invisibly, and then never mentioned again.</p>
+    <p class="why">The tag answers "will this row fill itself in from my drives and sponsors?" — the
+      question the old form let you answer <i>wrongly</i>, invisibly, and then never mentioned again.
+      <b>Only the two derived answers speak.</b> A word you record yourself is the default and is on
+      most rows, so tagging it announced on every ordinary word what every ordinary word does — and
+      drowned the two tags that carry a real consequence. Same rule the register's date note is
+      under: <i>the exception speaks; the normal case does not</i>.</p>
     <div class="scrollx"><table class="rowtable">
       <thead><tr><th>Group</th><th>Word</th><th>Tag</th></tr></thead>
       <tbody>
-        <tr><td>Tournaments</td><td>Registration revenue</td><td>You record it</td></tr>
-        <tr><td>Tournaments</td><td>Concession revenue</td><td>You record it</td></tr>
-        <tr><td>Tournaments</td><td>Gate / admission</td><td>You record it</td></tr>
         <tr><td>Fundraising</td><td>Fundraising drive</td><td>From a drive</td></tr>
         <tr><td>Fundraising</td><td>Merchandise sales</td><td>From a drive</td></tr>
-        <tr><td>Fundraising</td><td>Grant</td><td>From a sponsor</td></tr>
         <tr><td>Sponsorship</td><td>Team sponsorship</td><td>From a sponsor</td></tr>
-        <tr><td>Other Income</td><td>Interest · Rebate · Donation · Other income</td><td>You record it</td></tr>
+        <tr><td>Sponsorship</td><td>Grant</td><td>From a sponsor</td></tr>
+        <tr><td>Tournaments</td><td>Registration revenue · Concession revenue · Gate / admission</td><td>— none —</td></tr>
+        <tr><td>Other Income</td><td>Interest · Rebate · Donation · Other income</td><td>— none —</td></tr>
       </tbody>
     </table></div>
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Every one of the eleven carries the tag above, in that group</label></div>
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Exactly <b>four</b> words carry a tag — the two under Fundraising and the two under Sponsorship — and the other seven carry none<span class="hintline">An untagged money-in word is one you record yourself; the paragraph under the picker says so in full once you pick one</span></label></div>
       <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">The tag sits <b>before</b> the Standard / Club / Our own chip, and reads as plain text rather than a second pill<span class="hintline">Deliberate: two pills on one row would read as two of the same kind of fact. One says who owns the word, the other who fills in its money</span></label></div>
       <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">Nothing is cut off or wrapped oddly at the right-hand end of a row</label></div>
     </div>
@@ -233,14 +235,21 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
   <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>Read the Grant row and say what it tells you</h3>
     <div class="tags"><span class="tag think">say it in your own words</span></div></div></div>
   <div class="step-body">
-    <p class="why"><b>Grant</b> sits under <b>Fundraising</b> and is tagged <b>From a sponsor</b>.
-      That looks like a contradiction and is the resolution of one: the product's own sponsorship
-      help text has always read <i>"a business sponsor, a grant, anything given directly rather than
-      raised by selling"</i>, while the library filed it with the bottle drives. Before today a coach
-      budgeting a grant had to choose which way to be wrong.</p>
+    <p class="why"><b>Grant now sits under Sponsorship</b>, tagged <b>From a sponsor</b> — and that
+      settles a disagreement the product has had with itself since both halves shipped. The
+      sponsorship option's own help text has always read <i>"a business sponsor, a grant, anything
+      given directly rather than raised by selling"</i>, while the library filed grants with the
+      bottle drives. Before today a coach budgeting a grant had to choose which way to be wrong.</p>
+    <div class="tip"><b>You ruled the move on 2026-09-07, and it turned out to matter more than a
+      tidy shelf.</b> Sponsor money is placed against the lines that claim it, at the category they
+      agree on. With Grant on the Fundraising shelf, a team that budgeted <i>only</i> a grant saw
+      every sponsor cheque report under <b>Fundraising</b> — and a team that budgeted a grant
+      <i>and</i> a team sponsorship had claims in two categories, so the whole sponsor pool landed
+      with no category at all. <b>Budgeting sponsorship properly gave that coach a worse report than
+      budgeting it carelessly.</b> Both cases now place correctly.</div>
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">Grant reads <b>From a sponsor</b>, under the <b>Fundraising</b> group</label></div>
-      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">Say it aloud: does the pairing read as deliberate, or as a mistake?<span class="hintline">If it reads as a mistake, that is H1 — the category is the report's shelf, and moving it is a separate call I have deliberately not taken</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">Grant reads <b>From a sponsor</b>, under the <b>Sponsorship</b> group — and appears nowhere under Fundraising</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">Say it aloud: does the Sponsorship group now read as one idea — a business sponsor and a grant, both given directly?</label></div>
     </div>
     <textarea placeholder="What does the Grant row tell you? Is it honest?"></textarea>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
@@ -250,11 +259,11 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
 <article class="step" data-step="B3">
   <div class="step-head"><span class="num">B3</span><div class="step-t"><h3>The spending side has no tags at all</h3></div></div>
   <div class="step-body">
-    <p class="why">Every cost's actual is recorded by the coach, so a tag on each of them would say
+    <p class="why">Every cost's actual is recorded by the coach, so a tag on any of them would say
       nothing — and teach you to stop reading the end of the row, which is exactly where the
       ownership chip's signal is.</p>
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="b3a"><label for="b3a">Switch <b>This line is</b> back to <b>Money the team spends</b> and open the picker: <b>no</b> "You record it" tags anywhere</label></div>
+      <div class="chk"><input type="checkbox" id="b3a"><label for="b3a">Switch <b>This line is</b> back to <b>Money the team spends</b> and open the picker: <b>no tags at all</b>, on any row</label></div>
       <div class="chk"><input type="checkbox" id="b3b"><label for="b3b">Switching sides <b>clears</b> the category and item you had picked, and leaves the amount and notes alone<span class="hintline">It must clear: the two sides offer different words, so a kept pick would be one the list will not show you</span></label></div>
     </div>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
@@ -415,7 +424,7 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
     <p class="why">Add Line → <b>Money coming in</b> → in the search box type <b>Bottle drive</b> →
       <b>+ Add "Bottle drive" to your list</b> → category <b>Fundraising</b> → save the word.</p>
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The new word is tagged <b>You record it</b>, and its ownership chip says <b>Our own</b><span class="hintline">There is no machinery behind a name somebody just typed. Anything else would close the row to the only way its money can be recorded</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The new word carries <b>no tag</b>, and its ownership chip says <b>Our own</b><span class="hintline">No tag means you record it yourself — there is no machinery behind a name somebody just typed, and anything else would close the row to the only way its money can be recorded</span></label></div>
       <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Give it $400.00 and <b>No date yet</b>, save. It lands under <b>Expected other income</b> — not Expected fundraising</label></div>
       <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">Money → Transactions: record money coming in against <b>Fundraising → Bottle drive</b>. It is <b>accepted</b></label></div>
     </div>
@@ -500,26 +509,24 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
 <div class="steps">
 
 <article class="step" data-step="H1">
-  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>Does Grant belong on the Fundraising shelf?</h3>
-    <div class="tags"><span class="tag think">your call</span></div></div></div>
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>Grant moved — confirm it reads right</h3>
+    <div class="tags"><span class="tag think">you ruled this; check it landed</span></div></div></div>
   <div class="step-body">
-    <p class="why">Its money now comes from sponsors, but it still <b>reports</b> under Fundraising.
-      That was left open on purpose: the category is the report's shelf, a club may reasonably want
-      grants shelved with its fundraising, and moving an item renames rows a treasurer has already
-      read and exported. Having seen it on the real screen — leave it, or move it to Sponsorship?</p>
-    <div class="ask"><b>The review handed this question a real argument it did not have before.</b>
-      When sponsor money arrives, the product places the total as deep in your plan as your lines
-      agree — on one line if only one claims it, on the category if several do, and <b>nowhere at
-      all</b> if the claiming lines sit in different categories. A team that budgets <i>both</i> a
-      <b>Team sponsorship</b> line and a <b>Grant</b> line now has exactly that: two sponsor lines in
-      two different categories. Their sponsor money would report as an unplaced lump rather than
-      against either line. <b>Moving Grant to Sponsorship would fix it</b> — both would share one
-      category. Nothing is affected today (no team anywhere has a Grant line), so this is a decision
-      about the shape you want, not a repair.</div>
+    <p class="why">This was an open question when the walk was written and <b>you closed it on
+      2026-09-07</b>: Grant moved to the Sponsorship shelf. It is here so you can confirm the move
+      reads right rather than only sounding right.</p>
+    <div class="warn"><b>⚠ One thing the ruling did not know, found by checking before moving it.</b>
+      Moving a shared word is a <b>re-filing, not a rename</b>: every record filed against it stores
+      the category alongside the word, and the report reads those two in different orders — so
+      moving the word alone would make one row report under two headings. <b>One record was affected,
+      on dev and on production: the coach demo's $250 "Association development grant" club request.</b>
+      Its filing moved with the word, and the demo was reseeded to prove a fresh build files it the
+      same way rather than inventing a second "Grant" under the old shelf.</div>
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">Ruled: Grant stays under Fundraising, or moves to Sponsorship</label></div>
+      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">Grant appears under <b>Sponsorship</b> in the picker, and nowhere under Fundraising</label></div>
+      <div class="chk"><input type="checkbox" id="h1b"><label for="h1b">Budget vs. Actual reads sensibly for it — nothing filed under two headings<span class="hintline">The demo's grant is the only real record; on this fixture there is nothing to see, which is itself the answer</span></label></div>
     </div>
-    <textarea placeholder="Stay or move?"></textarea>
+    <textarea placeholder="Does the Sponsorship shelf read right now?"></textarea>
   </div>
 </article>
 

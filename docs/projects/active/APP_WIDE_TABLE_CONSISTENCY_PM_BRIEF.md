@@ -1,6 +1,15 @@
 # App-wide table & list consistency — PM brief
 
-**Status:** built on dev 2026-09-06; `/simplify`, `/review` and `/docs` passed 2026-09-06; owner QA §149 owed; A-08 open; committed `07321b4a` 2026-09-07. Plan: `APP_WIDE_TABLE_CONSISTENCY_PLAN.md`.
+**Status:** built on dev 2026-09-06; `/simplify`, `/review` and `/docs` passed 2026-09-06; committed
+`07321b4a` 2026-09-07. **✅ Owner QA §149 PASSED 2026-09-07 — 40/40, all ten parts.** One defect was
+found on the walk and fixed the same day (`3dd90673`): the Insights report tables had their column
+headings on the left while their figures had moved right — a regression from this project's own
+commit, which changed the figures and left the headings behind. **A-08 was ruled the same day**, as recommended: the admin
+shell keeps its own 38px control height inside a table rather than being overruled by the table
+standard's 44px touch floor — its density is a system tuned across every control it owns, and one
+table is not a reason to give an admin screen two control heights. Nothing on screen changes.
+Every open question this project raised is now answered. Plan:
+`APP_WIDE_TABLE_CONSISTENCY_PLAN.md`.
 Mockups the owner approved: https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
 
 ## What changes for a person using the product

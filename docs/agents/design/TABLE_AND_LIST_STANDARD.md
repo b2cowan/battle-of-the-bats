@@ -72,6 +72,10 @@ Rules:
   gutter (`--scrollx-pin-gutter`), including any hierarchy indent.
 - **At touch widths (≤ 768) a row that carries a control is at least `--tap-min` tall**, because
   the control inside it is. A row with no control keeps its density.
+  - ⚠ **One exception, and it is named: the admin shell and platform console keep their own 38px
+    control height (K-18, owner A-08 2026-09-07).** That shell's density is an owner-ruled system
+    across every control it owns; a table is not a reason to overrule it, and raising it here alone
+    would put two control heights on one admin screen. The 6px is deliberate — do not "fix" it.
 - Two heights on one surface are only ever *compact + comfortable by content*. Three heights side by
   side is the defect §9 of the one-surface plan made visible.
 
@@ -179,7 +183,8 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   read, and exists on every table with more than one fold.
 - **Minimum target: `--tap-min` tall AND wide at ≤ 768, including WIDTH for icon-only controls.**
   The tap-floor gate measures height only; this standard adds the width rule and §9 says how to
-  gate it. On a desktop there is no finger floor, but a semantic control's hit box is the **whole
+  gate it. ⚠ The admin shell's 38px HEIGHT exception (K-18) does **not** extend to width: an
+  icon-only control there still clears `--tap-min` sideways. On a desktop there is no finger floor, but a semantic control's hit box is the **whole
   lead cell**, not the category's name — a toggle called "Gear" must be as easy to hit as one called
   "Tournament entry fees" (F-08).
 - Delete is never a row action; it lives in the record's editor.

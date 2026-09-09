@@ -136,6 +136,7 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
     <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
     <dt>Password</dt><dd>UATPassword2026!</dd>
     <dt>Org</dt><dd>uat-test-org</dd>
+    <dt>Org plan</dt><dd>Tournament Plus or higher — Part G needs the PDF door, which the free Tournament plan does not carry (bumped on dev 2026-09-08; the UAT provisioning SQL and the plan-gating spec both reset this org to Tournament, so re-bump before Part G if either has run)</dd>
   </dl>
   <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b> → <b>Player Dues</b>, <b>Season
     totals</b>. Parts E and H also visit <b>Roster → Avery Test</b> and the statement download.</p>
@@ -428,6 +429,7 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
       <div class="chk"><input type="checkbox" id="g1a"><label for="g1a">The spreadsheet's headings are <b>Player · Dues · Fundraising · Other credits · Paid · Handed back · Balance · Status</b></label></div>
       <div class="chk"><input type="checkbox" id="g1b"><label for="g1b"><b>Handed back</b> is a column even for the nine families without one — it reads <b>$0.00</b> there, not blank<span class="hintline">Unlike the screen, the file always has the column: a spreadsheet whose column count changes with its data cannot be appended to last month's</span></label></div>
       <div class="chk"><input type="checkbox" id="g1c"><label for="g1c">The PDF is <b>landscape</b>, and every one of the eight columns is on the page — no line at the bottom apologising for a column that did not fit</label></div>
+      <div class="chk"><input type="checkbox" id="g1d"><label for="g1d">The whole sheet is <b>one page</b> — all twelve families <i>and</i> the <b>Total</b> row, with the page footer under them<span class="hintline">Before 2026-09-08 the Total row alone spilled onto a second page: twelve families filled the sheet exactly. The rows are now set tighter than the family statement's, on purpose — the sheet holds eighteen families plus the Total before it needs a second page</span></label></div>
     </div>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
     <textarea placeholder="Notes on G1…"></textarea>

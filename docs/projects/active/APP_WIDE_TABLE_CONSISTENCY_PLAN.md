@@ -1,7 +1,10 @@
 # App-wide table & list consistency — the build plan
 
 **Status:** owner approved the standard, the mockups and all seven recommendations on
-2026-09-06 (*"proceed with your recommended updates"*). Built the same day on `dev`; `/simplify`, `/review` and `/docs` passed 2026-09-06 (see the register changelog); owner QA §149 in progress — first finding fixed, see §6.1; A-08 open; committed `07321b4a` 2026-09-07.
+2026-09-06 (*"proceed with your recommended updates"*). Built the same day on `dev`; `/simplify`, `/review` and `/docs` passed 2026-09-06 (see the register changelog); committed `07321b4a` 2026-09-07.
+**✅ Owner QA §149 PASSED 2026-09-07 — 40/40, all ten parts, one defect found in-walk and fixed
+(`3dd90673`, §6.1). **A-08 ruled the same day as recommended — the admin shell keeps its 38px
+control height inside a table, recorded as K-18; the register's ASK column is now empty.**
 **Standard:** `docs/agents/design/TABLE_AND_LIST_STANDARD.md` · **Register:**
 `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` · **Evidence:**
 `docs/agents/design/TABLE_INVENTORY_2026-09-06.md` · **Mockups + decisions:**
@@ -152,7 +155,7 @@ new rules surfaced on pre-existing chrome are in the baseline with reasons (F-21
   targets in 2026; the alternative (a row class in thirteen files) drifts the first time a row gains
   a caption without the class.
 
-## 6. QA §149 findings, fixed as they are found
+## 6. QA §149 findings — ✅ walk PASSED 40/40, 2026-09-07
 
 ### 6.1 The Insights tables were headed left over right-aligned figures (2026-09-07)
 

@@ -41,6 +41,7 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
 | **K-14** | Any figure that is a door | Interaction | dotted underline, opens a panel; one underline means one thing per table | owner QA §132 | — |
 | **K-16** | Public standings, results and the pricing comparison | Density | 16px vertical cell padding (`1rem 1.5rem`) — comfortable for a fan on a phone | owner A-05, 2026-09-06 | heading type/ink/rule · body size · hairline · hover (none) · centred figures (K-11) |
 | **K-17** | Tournament admin flat-row lists | Heading face and ground | the label row (`.tableHeader`) keeps the shell's data face and its `--surface-2` ground — part of the flat-row SHAPE the 2026-06-01 ruling settled | owner 2026-06-01; recorded 2026-09-06 | heading size (`--type-support`) · tracking (0.05em) · ink (`--text-secondary`) — all moved to the standard in the same pass |
+| **K-18** | The admin shell and platform console — a control **inside a table** at touch widths | Minimum target (height) | `--admin-control-h` **38px** in comfortable mode, not the standard's 44px `--tap-min` | the admin shell's density is its own owner-ruled instrument (2026-06-02), tuned as a system across every control it owns — a table is not a reason to overrule it, and raising it here alone would put two control heights on one admin screen. ⚠ The 6px is a **deliberate, named** difference, not drift: do not "fix" it to 44 | owner A-08, 2026-09-07 (QA §149) | everything else the standard asks of those tables — heading type/ink/face · hairline · ground · density by content · alignment · one chevron column (K-08) · a real button on an opening row (K-07) · **control WIDTH** (an icon-only control still clears `--tap-min` sideways) |
 
 ## FIX — drift, bring to the standard
 
@@ -70,7 +71,7 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
 | **F-22** | Budget vs. Actual → By activity, the "See it by month" door under the table | Interaction | a text-link button at 19px tall on a phone | `--tap-min` | pre-existing on a view the sweep first reached 2026-09-06; footnote doors take the floor |
 | **F-23** | Roster, development history, attendance, bills — inline text links inside a card or row (a player's name, a tab link) | Interaction | 19–22px tall on a phone | an inline link is a control and takes the floor, or the card becomes the door and the link stops being one | pre-existing baseline debt that sat without a reason; recorded 2026-09-06 |
 
-## ASK — A-01 to A-07 RULED 2026-09-06, every one the recommended way (owner: "proceed with your recommended updates"); A-08 raised by the build and OPEN
+## ASK — ALL RULED. A-01 to A-07 on 2026-09-06 and A-08 on 2026-09-07, every one the recommended way ("proceed with your recommendation")
 
 | Id | Question | Recommendation | Alternative | What changes on screen |
 |---|---|---|---|---|
@@ -81,7 +82,7 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
 | **A-05** | **Public tables** (standings, pricing) — adopt the standard's tokens; keep fan-facing comfortable density? | adopt heading/hairline/hover tokens; keep 16px padding as K-16 (public comfort) | full standard including compact rows | headings and hairlines change; row height does not |
 | **A-06** | **Column heading face** — the condensed display face is today's de-facto rule in every shell (it comes from the global `th` rule, not a decision) | keep it, and write it down | body face uppercase | none if kept |
 | **A-07** | **The private money ladder (K-02)** — documented exception, or fold into the app ladder? | keep as K-02 | fold: lines to `--type-support`, categories to `--type-body` | none if kept; smaller money figures if folded |
-| **A-08** ⚠ OPEN | **The admin shell's control height inside a table at touch widths.** The standard says a control inside a table clears `--tap-min` (44px) both ways at ≤ 768; the admin shell's own density ruling (2026-06-02) sets its comfortable control height to **38px** (`--admin-control-h`), which is what Check-in's row controls measure (F-16). Two standing rulings disagree by 6px. | keep the shell's 38px and record it as **K-18** — the admin shell's density system is its own owner-ruled instrument, and the standard should not overrule it by accident | raise `--admin-control-h` to 44px in comfortable mode, shell-wide (every admin control on touch, not only tables) | none if kept; every admin control on a phone grows 6px if raised |
+| **A-08** ✅ RULED 2026-09-07 | **The admin shell's control height inside a table at touch widths.** The standard says a control inside a table clears `--tap-min` (44px) both ways at ≤ 768; the admin shell's own density ruling (2026-06-02) sets its comfortable control height to **38px** (`--admin-control-h`), which is what Check-in's row controls measure (F-16). Two standing rulings disagree by 6px. | keep the shell's 38px and record it as **K-18** — the admin shell's density system is its own owner-ruled instrument, and the standard should not overrule it by accident | raise `--admin-control-h` to 44px in comfortable mode, shell-wide (every admin control on touch, not only tables) | **none — the shell keeps its 38px, recorded as K-18.** ⚠ No gate changed, and that is the thing to know: `check:layout` sweeps coach and marketing screens only, so no admin control has ever been measured against the 44px floor. The conflict was between two written rules, not between a rule and a screen. **When the admin shell joins the sweep, K-18 is the reason those rows carry — not a baseline entry with a null reason.** |
 
 ## How to use this register
 
@@ -155,6 +156,17 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
     The demo dock lines and tour narration name no table furniture.
   - **Landed:** `07321b4a` on `dev`, 2026-09-07 — 50 files; the ledger and the decisions log were staged by
     hunk so no other session's work rode along.
+- 2026-09-07 — **✅ OWNER QA §149 PASSED, 40/40, all ten parts.** One defect on the walk (below),
+  fixed in-walk.
+- 2026-09-07 — **A-08 RULED as recommended: the admin shell keeps its 38px control height inside a
+  table, recorded as K-18.** The register's ASK column is now empty — A-01 to A-08 are all ruled.
+  Two standing rulings had disagreed by 6px (the shell's own 2026-06-02 density ruling vs this
+  standard's `--tap-min`); the shell's density is a system the owner tuned across every control it
+  owns, and a table is not a reason to overrule it. ⚠ **Nothing on screen changes and no gate moved.**
+  `check:layout` sweeps coach and marketing screens only — no admin control has ever been measured
+  against the 44px floor — so this was a conflict between two written rules, not between a rule and
+  a rendered screen. **K-18 is what those rows cite when the admin shell eventually joins the
+  sweep**, instead of arriving as findings someone baselines with a null reason.
 - 2026-09-07 — **F-09 CLOSED, and it took a regression from the commit above to close it** (owner
   QA §149; plan §6.1). P2 gave `.insightsNum` its `text-align: right` and gave the column headings
   nothing, so every figure column on Playing Time, Results and Which-lineup-wins was headed hard

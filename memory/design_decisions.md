@@ -18,10 +18,21 @@ Newest entries first. All decisions here are binding in future sessions unless e
 **Same session, (4) — the scrollbar of a scrolling coach modal sits on the modal’s EDGE, not inside its padding** (owner: *"the scroll bar isn’t pinned to the right like the drawer behind it, I like the version behind"*). Every scrolling body under `.modalScrollBody` (the form grid, the bill drawer, the drill editor, the settlement table) bleeds through the modal’s 1.5rem padding and hands it back as its own, so children sit where they did, the bar reaches the border between the pinned header and footer, and a control flush with an edge keeps its focus ring. Applies to every coach modal that scrolls — Record money, Add a bill, New fundraiser, the bill drawer, the practice drill editors, season settlement.
 **Applies to:** Add / Edit a credit (Player Dues drawer), Record money → We paid a family back; the stated-band-at-top rule to any coach form whose kind question collapses to one answer.
 
+### 2026-09-08 — The Player Dues PDF is a COMPACT sheet: eighteen families and the Total on one landscape page (owner: "do we need so much padding? my lean is no")
+**Decision (owner, on the §151 walk's Part G).** The dues team sheet declares `density: 'compact'` beside its landscape orientation, in the same place the shape already lived (`REPORT_SHAPES`, keyed on the columns constant). Measured on the real engine, not the fake: at the org-default *readable* density a landscape page held exactly **twelve** body rows, so a twelve-family roster fit and the **Total row alone spilled to page two** — the line the sheet gained in §151. Compact holds **eighteen families plus the Total** on one sheet; the walk's G1 gained the "one page" check, and the rendered gate (`check:pdf`) renders an eighteen-family bench under a new `maxPages: 1` promise (rule `one-sheet`, with a mutation proving it goes red).
+**Rationale.** A treasurer's eight-column money table at 8pt in landscape is a normal financial print; the sheet is read for its figures, and a Total on its own page is a sheet that does not add up in the hand. Per D2 (2026-08-21) density is the REPORT's property, declared at the call site — so the fix is a declaration, not a new density and not a change to anyone else's paper.
+**⚠ Deliberately NOT decided — put to the owner with numbers.** The padding the owner questioned is not this sheet's own: it is the shared *readable* density every PDF uses, and at 9pt with 4mm above and below, a row stands ~3.6× its text height. Trimming readable's vertical padding to **2mm** keeps 9pt and also fits 18 + Total here (2.5mm fits 16 + Total but not with a second header line) — but it reshapes every readable PDF the product prints (rosters, schedules, contact sheets, tryout reports), which is a product-wide design call needing a rendered before/after, not a side effect of one sheet. If it is ever taken, this entry's compact declaration should be re-measured rather than assumed still necessary.
+**Applies to:** `lib/coach-money-exports.ts` (`REPORT_SHAPES`), `lib/export/index.ts` (exports `ReportShape`), `scripts/pdf-documents.mjs` (`QA151_ROSTER` / `FULL_BENCH` / `duesRows`, the `full-bench` edge case), `scripts/check-pdf-documents.mjs` (R6 `one-sheet`), `scripts/pdf-mutations.mjs`, walk `COACH_DUES_LADDER_WALK.html` (G1d + the Sign-in card's plan line). The family statements, every spreadsheet export and the org-wide density preference are untouched.
+
 ### 2026-09-07 — A MONEY FIGURE HIDES AT ZERO BY ITS KIND, NOT BY ITS SCREEN: event terms hide, the bill's terms never do (owner, QA §151 — "go ahead")
 **Decision (owner, on the dues ladder's three surfaces).** In the Player Dues drawer's tile row, its phone receipt and the player page's money boxes, **Fundraising, Other credits and Handed back hide when they are zero; Dues, Paid and Balance always show**, Paid $0.00 in the quiet ink. This **reverses** the dues-ladder mockup's settled item "zero terms stay visible, in the quiet ink" (round 4, `5df27ea9`) for the drawer. The **dues table keeps its dash at zero** on every rung — a table cannot drop one family's cell — and Handed back keeps hiding as a whole column when nobody on the roster has one. **Same ruling, second half: the player page reads the ladder in the ladder's ORDER** (Dues · Fundraising · Other credits · Paid · Handed back · Balance); its first cut put Paid second.
 **Rationale.** The rule follows the *kind* of figure. Dues, Paid and Balance are the bill's story — Paid $0.00 is the fact a coach opens the drawer to learn, so it is a figure, not a blank. Fundraising, Other credits and Handed back are *events* that may never happen for a family; Handed back already hid at zero on every screen, and its two siblings printed $0.00 beside the gap it left. Three screens had drifted three ways (dash / quiet $0.00 / hidden box) for one family, and the "tile row is the drawer's table of contents" argument for keeping zeros never held: the Fundraising and Payments sections beneath already vanished when empty, so a $0.00 tile pointed at a section that was not there. ⚠ **The general form: when the same figure hides on one screen and prints $0.00 on its sibling, that is drift, not two styles — decide by what the figure IS.** And the order finding is the sharper lesson: **a row that carries no operator glyphs has made its order the arithmetic**, so "same five figures" is not the whole test — a code comment claimed "same order, both screens" while the code disagreed, and the walk step asserted the wrong order as expected.
 **Applies to:** `app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx` (desktop tile row + phone `<details>` receipt), `app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx` (box order; its hide rule was already this one). Walk `COACH_DUES_LADDER_WALK.html` gained C3 (Emerson's three tiles) and F1f (Emerson's two-line receipt); E1a/E1c re-worded. Plan `COACH_DUES_LADDER_PLAN.md` §1 carries the headstone. Not applied: hiding the Fundraising / Other credits *columns* on the table when no family has any (the Handed back precedent) — held as optional, unasked.
+
+### 2026-09-07 — The comparison table LEAVES `/pricing`: the plan cards are the comparison
+**Decision (owner, 2026-09-07 — "let's just remove the comparison table"):** the "Compare all plans" section and its accordion table no longer render on `/pricing`. The four persona pages' doors into it ("Compare all plans in detail →" / "Compare all features →") now open the plans grid (`#org-plans`) and read **"See every plan and price →"**. Section order is now Hero → Segment picker → Plans (org plans + the Premium Coaches Portal card) → Upgrade bridges → Coming soon → FAQ → CTA; the earlier order that placed "Compare table" after the plans is amended by this entry.
+**Rationale:** the table had four columns — Tournament, Tournament Plus, League, Club — so it gave two parked plans equal billing with two live ones and had no column at all for the third live product, the Premium Coaches Portal (raised by the owner in QA §150). Its rows were organization plumbing, so a fifth column would have been a stripe of dashes and a second Basic-vs-Premium table would have been one more surface to keep true. Each plan card already carries its own inclusions and reads price and promotion from config, so the cards are the comparison. Ruling: `BUSINESS_DECISIONS.md` 2026-09-07.
+**Applies to:** `/pricing` (section removed, `ComparisonTable.tsx` deleted, its stylesheet block deleted); `/for-tournament-organizers`, `/for-coaches`, `/for-leagues`, `/for-clubs` (door target + label). Do not restore the table, or add a comparison matrix anywhere on the marketing pages, without a new owner ruling.
 
 ### 2026-09-07 — FOUNDING SEASON 2027 on the marketing pages: a site-wide offer bar, an offer panel in the hero, the offer INSIDE the price block — and the persona-card badge rule stands (owner-approved on mockup artifact `61a78f09`, "looks good, go for it")
 
@@ -36,6 +47,35 @@ Newest entries first. All decisions here are binding in future sessions unless e
 **Rationale:** The offer was on every page as a footnote — the smallest type on the homepage, a badge that contradicted the card's own $39, a hero that led with the permanent free floor, a chooser whose "Free" pill did not say which free. "Front and centre" here meant weight and placement, not new layouts: every element reuses a recipe the marketing pages already had (the sandbox banner's fixed-bar mechanism, the lime-box, `.statusBadge`, the warm pill), so nothing new was added to the design system.
 
 **Applies to:** `components/marketing/FoundingSeasonOfferBar.*`, `components/marketing/FoundingSeasonPanel.*`, `app/page.tsx`, `app/pricing/page.tsx` + `ComparisonTable.tsx`, `components/PricingSection.*`, `app/for-tournament-organizers/*`, `app/for-coaches/page.tsx`, `app/(consumer)/start/*`, `components/Navbar.module.css` (`top` term), `app/globals.css` (`--offer-bar-h` body padding + `--chrome-top-h` term). Mockup source kept at `docs/projects/active/FOUNDING_SEASON_2027_OFFER_MOCKUP.html`.
+
+### 2026-09-07 — A-08 RULED: the admin shell keeps its own 38px control height inside a table (K-18) — a shell's density system is not overruled by a table (owner, QA §149: "go ahead with your recommendation")
+
+**Decision (owner, ruling the last open question the table standard raised).** A control **inside a
+table** in the admin shell and the platform console stays at `--admin-control-h` **38px** in
+comfortable mode, rather than being raised to the table standard's 44px `--tap-min` touch floor.
+Recorded as register **K-18**. With this, register asks A-01 to A-08 are all ruled.
+
+**Rationale.** Two standing rulings disagreed by 6px: the admin shell's own density ruling
+(2026-06-02), which tuned a control height across every control that shell owns, and the table
+standard's touch floor. A table is not a reason to overrule a shell-wide density system, and
+raising it inside tables alone would have put **two control heights on one admin screen** — which
+is the defect the table standard exists to prevent, arriving by a different door. Raising it
+shell-wide was the alternative and was not taken: it would move every admin control on every touch
+device to settle a conflict nobody had reported.
+
+⚠ **The exception is HEIGHT ONLY.** An icon-only control in an admin table still clears
+`--tap-min` **sideways** — the width rule this standard added is not part of K-18.
+
+⚠⚠ **Nothing on screen changed and no gate moved, and the reason is worth knowing: `check:layout`
+sweeps coach and marketing screens only.** Its baseline holds 1,019 entries across ~65 screens and
+not one is an admin or platform surface, so no admin control has ever been measured against the
+44px floor. A-08 was two *written rules* disagreeing — never a rule disagreeing with a rendered
+screen. **K-18 is the reason those rows will cite when the admin shell eventually joins the
+sweep**, instead of arriving as a wave of findings someone baselines with a null reason (the
+hidden-debt failure this same project refused once already).
+
+**Applies to:** `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (K-18 + A-08 ruled),
+`docs/agents/design/TABLE_AND_LIST_STANDARD.md` §3.1 and §3.4.
 
 ### 2026-09-06 — ONE TABLE STANDARD, ONE EXCEPTION REGISTER, and the rule that one axis of difference does not license the others (owner-approved from rendered evidence + true-size mockups; seven rulings)
 

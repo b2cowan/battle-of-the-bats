@@ -19177,7 +19177,7 @@ plus everything steps 2–6 add. ⚠ **The fold is a data-mutating repair** — 
 credit rows on every pass — so when the review runs, it is the hunk that most needs a reviewer's
 attention, and it is the easiest one to lose inside a large report-figures diff.
 
-## §149 · One table standard, one exception register — every table in the product on the ladder, and the places allowed to differ written down — BUILT 2026-09-06, committed `07321b4a` 2026-09-07, awaiting QA · walk artifact `3d981219`
+## §149 · One table standard, one exception register — every table in the product on the ladder, and the places allowed to differ written down — ✅ PASSED 2026-09-07, 40/40, all ten parts · ONE defect found in-walk and fixed: the Insights figure columns were headed left over right-aligned figures, **a regression from this build's own commit** (`3dd90673`) · body committed `07321b4a` 2026-09-07 · **A-08 RULED 2026-09-07 as recommended (K-18)** · walk artifact `3d981219`
 
 **Walk:** https://claude.ai/code/artifact/3d981219-72f7-4c66-aea6-eb52f97bb1ff
 **Plan:** `docs/projects/active/APP_WIDE_TABLE_CONSISTENCY_PLAN.md` (+ `_PM_BRIEF.md`) · **Standard:**
@@ -19219,12 +19219,23 @@ admin's five heading treatments → one. The Months view's figure doors 44 × 44
 44 × 26); two touch floors gated at 640 moved to 768. Public standings, results and pricing on the
 ladder with their 16px padding kept (K-16).
 
+**A-08 RULED 2026-09-07, as recommended: the admin shell keeps its 38px control height inside a
+table, recorded as K-18.** Two standing rulings had disagreed by 6px — the shell's own 2026-06-02
+density ruling and this standard's touch floor. The shell's density is a system the owner tuned
+across every control it owns, and a table is not a reason to overrule it; raising it here alone
+would have put two control heights on one admin screen. The exception is height only — an icon-only
+control there still has to clear the floor sideways. ⚠ **Nothing on screen changed and no gate
+moved:** `check:layout` sweeps coach and marketing screens only, so no admin control has ever been
+measured against 44px — this was a conflict between two written rules, not between a rule and a
+rendered screen. **K-18 is the reason those rows will cite when the admin shell joins the sweep**,
+rather than arriving as findings someone baselines with a null reason. The register's ASK column is
+now empty: A-01 to A-08 are all ruled.
+
 **Rulings (register A-01–A-07, all as recommended):** density by content · platform body 14px in
 the data face · delete the phantom zebra · worklists remember, reports open on their totals (the
 guide now says so) · public tables keep 16px padding · column headings keep the display face ·
-the money grids' private ladder stays (K-02). **⚠ A-08 OPEN — the walk's Part J:** the admin
-shell's comfortable control height is 38px by its own 2026-06-02 ruling; the standard's touch floor
-inside a table says 44. Recommendation: keep 38 and record it (K-18).
+the money grids' private ladder stays (K-02). **A-08 (the walk's Part J) RULED 2026-09-07 — keep
+the shell's 38px, recorded as K-18** (see above).
 
 **Enforcement.** `tests/unit/table-recipe-guard.test.ts` — every table part sizes from `--type-*`
 or carries a register id, and **every token a table rule names must exist** (it caught a second
@@ -19247,11 +19258,44 @@ render them; pinned in the guard) · F-12 beyond Orgs and Users (twelve tables, 
 seed the club fixture org, and Families / Members / Rep teams / Accounting / House League can be
 measured and brought to the standard.
 
-**⚠ Uncommitted, in a working copy that also carries §146 and §148.** The build's edits are in
-named rule blocks so the commit can be split by hunk. Restart the dev server before the walk —
-the global stylesheet and the shared coach stylesheet both moved.
+**Committed `07321b4a` 2026-09-07** (50 files; the ledger and the decisions log staged by hunk so no
+other session's work rode along), with the in-walk fix in `3dd90673` the same day.
 
-**The walk (Parts A–J, 34 steps).** A the Club tab — one line under every row, one frame, one
+### §149 walk finding — the Insights tables were headed left over right-aligned figures (fixed in-walk 2026-09-07)
+
+Found at Part F. On Insights → Playing Time every figure column's heading sat hard left while its
+figures sat hard right; the widest gap put the dash under "BACK-TO-BACK SITS" 170px from the start
+of its own heading. Results, Awards and Which-lineup-wins carried the same split.
+
+**⚠⚠ IT WAS A REGRESSION FROM `07321b4a` ITSELF, and that is the transferable part.** Before the
+build, the insights figure class set **no** alignment at all — figures inherited left and matched
+their left headings. P2 gave the cells `text-align: right` (correctly — that IS finding F-09) and
+gave the column headings nothing.
+
+> **Half a fix reads worse than none.** Those columns had at least been *consistently* left; the
+> consistency pass is what made them inconsistent. When a pass changes one half of a paired
+> treatment, the twin is the thing to go looking for.
+
+**The quieter half, found by reading the COLUMNS rather than the class.** The same figure class had
+been applied to six columns that are not figure columns: the Results and Awards **Date** columns
+(the standard says dates left — and on Results it is the *first* column, so the date had been
+shunted rightward into the game name) and four **figure-plus-words** columns (Pitching; Arm care's
+Season, Last outing and Your per-game cap), whose trailing qualifiers change length per row, so
+right alignment lined up the end of a sentence and put the leading figure at a different x on every
+row. All six returned to left. *The class told you where it had been applied; only the rendered
+column told you where it belonged.*
+
+**One shape change.** "On field"'s share bar now **leads** its figure. Trailing, the bar owned the
+column's right edge — a right-aligned heading would have pointed at the bar with the digits still
+floating, which is the half-fix that leaves the original complaint standing.
+
+**Three rules generalised into the standard §3.4**, because this shape will recur: a column's
+heading goes where its figures go · a column earns right alignment only if **every** row ends at the
+same semantic place (a whole-cell fallback — "—", "no scores yet" — does not disqualify it; a
+varying *suffix* does) · a bar, chip or glyph beside a figure must **lead** it in a right-aligned
+column. Register exception **F-09 is CLOSED** with the regression written up; plan §6.1 carries it.
+
+**The walk (Parts A–J, 40 steps — ✅ all ten parts PASSED 2026-09-07).** A the Club tab — one line under every row, one frame, one
 chevron column, read one row · B Player Dues — density by content, Avery's row · C the Ledger's
 Timeline — density kept, the line back, no banding (and there never was) · D Months at 390 and
 By period at 768 — figures and expanders you can tap · E hover only where a row opens (Roster,
@@ -19259,7 +19303,7 @@ Insights, Club, Statement) · F Insights and development history headings · G t
 (Orgs, Users, Change requests; cards at 390) · H tournament admin Teams / Notifications / Manage,
 public Standings and Pricing · I the dark skin · J A-08.
 
-## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — committed `2f02a949` 2026-09-07 after `/review` · **✅ PASSED 73/73, zero defects, 2026-09-07 — one question, logged as Proposed** · **walk artifact https://claude.ai/code/artifact/7ebf82c3-d404-4dc9-896b-ff267a517e3f** (source `FOUNDING_SEASON_2027_WALK.html`; Parts A–N, verdict + notes per step, Copy findings) · run-order B9 on artifact `5ef0163e` · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
+## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — committed `2f02a949` 2026-09-07 after `/review` · **✅ PASSED 73/73, zero defects, 2026-09-07 — one question, RULED: the comparison table is removed** · **walk artifact https://claude.ai/code/artifact/7ebf82c3-d404-4dc9-896b-ff267a517e3f** (source `FOUNDING_SEASON_2027_WALK.html`; Parts A–N, verdict + notes per step, Copy findings) · run-order B9 on artifact `5ef0163e` · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
 
 **What to pin, not "check the shape":** every Founding Season sentence must read **"free through September 30, 2027"** and **"sign up by December 31, 2026"** — in full, never "Sept 30" or "Dec 31" — and the word "January" must appear nowhere on a customer surface except the pricing FAQ's *post-window* answer (which does not render yet). "Normally $39/month" / "normally $29/month" beside every free claim. No exclamation marks; never "trial", "summer".
 
@@ -19289,19 +19333,14 @@ public Standings and Pricing · I the dark skin · J A-08.
 
 The owner walked every part, A through N, on a laptop and a phone, including the closed-window rehearsal (M) with the env override and the platform-admin tile (J): **73 of 73 checked, every step Pass, no steps flagged.** §150 is closed as built at `2f02a949` + `0b399e74`.
 
-**The one note, on E2, is a question, not a defect of this build — and it is a fair one:** *"why doesn't our comparison table have the coaches portal when that is only 1 of the 3 live plans along with tournaments and tournament plus?"* The pricing page's comparison table has four columns — Tournament, Tournament Plus, League Plus, Club — so it compares two live plans against two parked ones and omits the third live product. The honest reason it was never added: the table's rows are organization plumbing (tournament slots, staff seats, house league, accounting, public site) and almost none of them apply to a coach's single-team portal, so a fifth column would read as a stripe of dashes. But the 2026-08-08 ruling says live products LEAD on every marketing surface, and the coach question this table never answers — *what does Premium add over the free Basic portal?* — is the most-asked one. **Recommendation, logged as Proposed in `BUSINESS_DECISIONS.md` 2026-09-07:** give the Coaches Portal its own short two-column comparison, **Basic vs Premium**, under the organization table — the same free-floor → paid-tier pairing the page already teaches for Tournament → Tournament Plus — rather than forcing a coach product into an organization grid. Owner ruling owed; nothing built.
+**The one note, on E2, is a question, not a defect of this build — and it is a fair one:** *"why doesn't our comparison table have the coaches portal when that is only 1 of the 3 live plans along with tournaments and tournament plus?"* The pricing page's comparison table has four columns — Tournament, Tournament Plus, League Plus, Club — so it compares two live plans against two parked ones and omits the third live product. The honest reason it was never added: the table's rows are organization plumbing (tournament slots, staff seats, house league, accounting, public site) and almost none of them apply to a coach's single-team portal, so a fifth column would read as a stripe of dashes. But the 2026-08-08 ruling says live products LEAD on every marketing surface, and the coach question this table never answers — *what does Premium add over the free Basic portal?* — is the most-asked one. **Recommendation, logged as Proposed in `BUSINESS_DECISIONS.md` 2026-09-07:** give the Coaches Portal its own short two-column comparison, **Basic vs Premium**, under the organization table — the same free-floor → paid-tier pairing the page already teaches for Tournament → Tournament Plus — rather than forcing a coach product into an organization grid. **RULED 2026-09-07: the owner removed the table** — *"let's just remove the comparison table"*. Built the same day on dev: the "Compare all plans" section and its component are gone, the four persona-page doors open the plans grid and read "See every plan and price →", the copy canon's §5 is marked retired. Typecheck, dead-selector and spelling gates green; rendered check of the five pages, no new findings. Ruling logged `BUSINESS_DECISIONS.md` 2026-09-07; design log same date. Phase 1 and Phase 2 build prompts written (`FOUNDING_SEASON_2027_PHASE1_BUILD_PROMPT.md`, `_PHASE2_BUILD_PROMPT.md`) and listed on the run order as E1 and E2.
 
 **Both walk findings above, and the dues ladder they led to, committed `3545b64e` 2026-09-07** after
 a four-lens `/review` (plan `COACH_DUES_LADDER_PLAN.md` §7.8: one Critical, two High and one Medium
 fixed before the commit; the pre-commit PDF gate then refused the eight-column sheet in portrait
 until landscape became the sheet's own shape). The ladder's own owner QA is **§151**, below.
 
-**Both walk findings above, and the dues ladder they led to, committed `3545b64e` 2026-09-07** after
-a four-lens `/review` (plan `COACH_DUES_LADDER_PLAN.md` §7.8: one Critical, two High and one Medium
-fixed before the commit; the pre-commit PDF gate then refused the eight-column sheet in portrait
-until landscape became the sheet's own shape). The ladder's own owner QA is **§151**, below.
-
-## §151 · The dues ladder — Player Dues adds up left to right — committed `3545b64e` 2026-09-07, follow-up (Dues · the picker · the phone shape) `e160f76b` same day, awaiting QA · walk artifact `e148d490`
+## §151 · The dues ladder — Player Dues adds up left to right — committed `3545b64e` 2026-09-07, follow-up (Dues · the picker · the phone shape) `e160f76b` same day · **✅ PASSED 48/48, zero defects, no steps flagged, 2026-09-08** · Part I: I1 closed by the in-walk modal ruling, **I2 RULED 2026-09-08: *Dues* stays** · **the mid-walk build (totals row · Paid dashes at zero · installment Credits column · credit modal) is UNWALKED, re-walk owed** · walk artifact `e148d490`
 
 **Plan:** `docs/projects/active/COACH_DUES_LADDER_PLAN.md` · **PM brief:** `_PM_BRIEF.md` ·
 **Owner-approved mockup (round 4):** https://claude.ai/code/artifact/5df27ea9-8210-45de-a569-26c6c74894dc ·
@@ -19366,6 +19405,99 @@ tests unchanged and green.
 
 **Deferred by owner ruling (taken on the §148 walk):** in-app help and the coach demo's money
 narration wait for the end of the dues project.
+
+### §151 walked — ✅ PASSED 48/48, zero defects, no steps flagged (2026-09-08)
+
+The owner walked all nine parts, A through I, on the UAT Test Team fixture: **48 of 48 checked, every
+step with a verdict reads Pass, no steps flagged, no notes.** The twelve balances re-proved (B1),
+Blake's row read aloud and adding up left to right (A2), Casey's refund said in two places that agree
+(D2), the phone receipt walked by hand — the one part no gate can see (F1) — the landscape export
+with all eight columns on the page (G1) and Casey's statement agreeing with the coach's screen (H1)
+all passed. The E1c follow-up (event terms hide at zero, the bill's never do; the player page in the
+ladder's order) passed on the steps it added — C3, the re-worded E1a/E1c, and F1f. ⚠ **The 48 are the
+steps as walked.** The rulings the owner gave mid-walk were built after those steps were written and
+are **unwalked** — the in-walk block below records them, and their re-walk is owed.
+
+**Part I, the two calls.** **I1** — the *+ Add a credit* door under Other credits — was taken up
+during the walk itself: the owner ruled the add/edit form a modal at the foot of the drawer, so the
+tick closes it by that ruling rather than by a verdict. The modal stands in the working tree keyed to
+this section, beside the other rulings the owner gave while walking (the ladder's proof line under the
+Season-totals table and at the foot of the export, the holding strip speaking only when there is a
+contradiction to settle, Paid dashing at zero on the table like every other rung) and the `/review`
+of 2026-09-08 that followed them — all of it recorded in the in-walk block below, and all of it unwalked.
+**I2 — *Dues* or *Billed* on the season band — RULED 2026-09-08: *Dues* stays.** The tick had carried
+no ruling; the owner settled it in conversation the same day (*"I thought we settled on dues"*). One
+figure, one word on every surface — the band, the column, the drawer tile, the player page, the Statement
+row — and the help guide and the coach demo's money narration take that word when the dues project closes.
+
+### §151 in-walk rulings — built after the 48 steps, UNWALKED (2026-09-08)
+
+⚠ **These are not covered by the 48 verdicts above.** The owner interrupted the walk with a design
+question and ruled from it; everything here was built afterwards, against the same section number.
+It stands in the working tree, uncommitted. **A re-walk of this material is owed** — the steps for it
+do not exist yet.
+
+**The totals row — a proof line, not a second band.** The owner asked whether a `Total` footer still
+made sense now the tiles no longer match the six column sums. The honest answer re-framed the
+question: the tiles never matched *because they answer different questions*, and the ladder had
+already given them different words — only *Dues* is shared, and it ties exactly. What a footer earns
+is different: the six columns are an equation that holds on every row, so it holds on the sums, and
+the footer is the only place a coach can check the whole roster closes. It totals **what is on
+screen**, following the *Showing* filter the way Export already does, and the same row lands at the
+foot of the export. ⚠ **It must never borrow the band's words**: `Paid` totals gross so it runs above
+`Collected`; `Balance` totals net so it sits below `Balance owing`. Both gaps are figures the band's
+own captions already print — which is the point, since the footer turns those captions from
+something a coach takes on faith into something they can check. Unit tests pin the gaps so a later
+change cannot quietly close them.
+
+**Paid dashes at zero** (owner), and its schedule gate went with it — that gate was hiding money a
+family with no dues schedule had actually sent.
+
+**The installment ledger's twin.** *After fundraising* was killed at the tile level by `e160f76b` for
+answering a question about a bill while appearing to answer one about fundraising — and the table
+200px below kept both the heading and the result-shape. It also subtracted every credit kind while
+the Note beside it read *Covered by credit*. Now **Credits**, as a deduction: *Installment − Credits
+− Paid = Owing*. One column, not two: the season's question is where money came from, an
+instalment's is how much of this bill was covered, and the Note names the source.
+
+**The holding strip speaks only when there is a contradiction to settle.** The payments caption's
+*"…of it since handed back"* clause now fires only while the team still holds some of the family's
+own money — on a full refund the strip above names no own-money figure and *Paid out* below states
+the same amount, so Casey read one $300 three times in one column.
+
+**I1's modal.** Add / edit a credit is a dialog at the foot of the drawer, in the shared Question
+chrome. ⚠ Deliberately **not** a branch of Record money: that conversation's every branch is money
+arriving or leaving, and this form's own explainer says an adjustment is the one credit with no money
+behind it.
+
+**`/review` (2026-09-08, high-risk tier, five lenses) confirmed four defects, all fixed.** The
+load-bearing one, found independently by two lenses: **the Balance cell was dashing away a real
+figure the footer was summing** — a player added after dues were set has no schedule, and their
+balance is `0 − netCredits`, real the moment they hold a fundraiser share. The column could not be
+added up to its own total, and the screen and the export called one player two things. Printing it
+closed the gap at source and **deleted a footnote** the first cut had added to explain it. ⚠ *A
+totals row that needs a footnote to be believed is telling you its columns are wrong.* Also fixed:
+the Collected caption summed floats beside a comment, written in the same change, warning that float
+summation lands a footer a cent off; and the PDF exhibit hand-computed a figure the product derives
+with a shared helper — right by the shape of its data rather than by construction.
+
+⚠ **Three `check:layout` findings on `coach-dues-behind` are NOT from this work.** That screen is the
+only dues screen with zero `control-width` entries in the baseline while all 37 other swept screens
+have them — a screen the 2026-09-06 pass missed. Two of the three fire at phone widths where the dues
+table is not rendered at all, and re-running after the fixes returned them byte-identical. Left
+un-baselined deliberately: that debt is register F-21's, and its reason should be its owner's.
+
+**The docs pass ran with it** (`/docs`, same day): the guide still quoted the retired *sent $550.00
+more than billed* row sentence in two places, still called the first tile *Assessed* twice in one
+paragraph, and — the one worth remembering — **an FAQ's searchable text had drifted from its own
+rendered answer**, so help search described a product the article no longer did. The Player Dues
+screenshot was re-taken; its alt text had named a single *Credits* column and a *Partial* status the
+shared word list no longer produces. ⚠ Two gaps left open and reported rather than fixed: the money
+guide's *Player dues & recording payments* sub-topic is **2,444 words against a 350-word standard**
+(14 others in that guide are also over, and a sub-topic cannot be split at its own level — converting
+one means promoting it to a section, which moves anchors the "?" drawer targets), and **adding a
+credit has no help coverage at all**, including what an *adjustment* means now the kinds have
+collapsed to one.
 
 ---
 
@@ -19488,6 +19620,126 @@ no rendered gate can see inside it, which is Part F.
 **Help:** the *"Can fundraising lower what families pay?"* answer was rewritten — it had been stale
 since mig 243 and would have been actively wrong after this. A full `/docs` sweep is still owed.
 
+**⚠⚠ TWO OWNER RULINGS TAKEN AFTER THE BUILD, 2026-09-07 — both applied, migration 282.**
+
+**1. Grant moved to the Sponsorship shelf.** Mig 280 made it sponsor-sourced and left the category
+open on the reasoning that a shelf is a reporting choice. That question closed once the source tags
+made the consequence visible: sponsor money is placed by `placeDerivedActual` at the category the
+CLAIMING lines agree on, so with Grant under Fundraising a team budgeting ONLY a grant reported every
+sponsor dollar — Team sponsorship cheques included — under *Fundraising*, and a team budgeting BOTH
+had claims spanning two categories, so the whole sponsor pool landed with no category at all.
+**Budgeting sponsorship properly gave the coach a worse report than budgeting it carelessly.** Both
+cases now place correctly.
+
+⚠ **The ruling did not know one thing, and checking before moving found it.** Moving a shared word is
+a RE-FILING, not a rename — mig 276's warning is exactly right. Every referencing table stores the
+category ALONGSIDE the item and Budget vs. Actual reads the two in different orders, so moving the
+word alone leaves a row reporting under two headings. **One record was affected on dev AND on
+production — the coach demo's $250 "Association development grant" club request, which is in the shop
+window.** Mig 282 therefore moves the word and the stored category on all six referencing tables
+together, the same shape `repointBudgetItemReferences` already uses for a fold. ⚠ The demo SEED also
+had to move: it resolves that filing by the (category, item) PAIR, and `budgetItemIds` CREATES a word
+when a pair misses — so a stale 'Fundraising' there would not have failed, it would have quietly
+minted a second, team-owned, money-OUT "Grant" into the public demo. Both the seed and its shared
+data file were changed and the demo was reseeded to prove it: exactly one Grant, platform-owned,
+under Sponsorship, with the request still filed correctly.
+
+⚠ Measured before writing the migration: exactly ONE Grant row per database, PLATFORM-owned — no club
+or team override exists (and a club that wants its own creates a separate row with its own category,
+untouched). Zero budget lines, recorded costs, money-in records, club budget lines and club bills
+point at it; no Grant existed under Sponsorship, so the platform unique index could not collide.
+
+**2. The "You record it" tag is gone; only the two DERIVED sources speak.** The tag was the mockup's
+idea and over-applied: it is the DEFAULT, it sat on most rows, and it drowned the two tags that carry
+a real consequence — a derived row takes its actual from the drive or sponsor machinery and REFUSES a
+figure the coach types, which is the genuine surprise worth preventing at pick time. This is the
+standing rule already written into `lib/coach-register-book.ts`: **the exception speaks; the normal
+case does not** (owner ruling 2026-09-02, §132 walk, written after an ordinary row announced
+something every other row does silently). Nothing is lost: an untagged money-in word is one the coach
+records themselves, and the consequence paragraph under the picker says so in full once a word is
+chosen. Four words now carry a tag — two under Fundraising, two under Sponsorship — and seven carry
+none.
+
+**Walk updated for both** (B1's table, B2's Grant row, B3, E1, and H1 — which was the open question
+and is now a confirmation that the move reads right). Gates re-run after the changes: typecheck ·
+3,172 unit tests · spelling · CSS selectors · dictionary · demos · snapshot freshness at #282 ·
+`check:layout --only=coach-budget`, no new findings · the demo reseeded and re-verified.
+
+## §153 · What a credit is, and what happens when you hand it back — a bill a family paid is money they contributed — committed `ce3fb8ab` then `480a008a` 2026-09-07, migration 281 applied to dev, awaiting QA · walk artifact `6f869cb5`
+
+**Plan + PM brief:** `docs/projects/active/COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md` + `_PM_BRIEF.md` ·
+**Walk:** https://claude.ai/code/artifact/6f869cb5-8d38-4c39-8c30-5120ed99371d · run-order **B12** on artifact `5ef0163e` ·
+**Build mockup:** `3ac033cd` · **Decision mockup (round 2):** `0f08e331`
+
+**Where it came from.** The dues-by-family project's step 2. Another chat proposed netting outside
+credits off the *planned* dues figure; reviewing that proposal with the ladder in hand found the real
+defect one level down, and the owner ruled seven questions (R1–R7) before a line was written.
+
+**What was broken.** When a family pays a team bill directly the report counted the **cost** and
+forgot the **settlement**. Player dues actual read **$3,075.00** — dues cash only — while
+**$1,379.98** of bills families had actually paid sat in Season spending with nothing tying them to
+the family who paid. It ties to the cent, and the tie is the proof: $1,179.98 of expense-level
+family-paid costs + $200.00 at the payment level (the P4 case where a parent fronted part of a $600
+bill) = $1,379.98, exactly the reimbursement credits issued. A second, smaller error ran the other
+way: $300.00 returned to a family was still counted as dues revenue. ⚠ **This was first written as
+$600.00 and that was wrong** — the other $300.00 came out of fundraiser credits, which the Statement
+had already netted off fundraising. Two errors pointing opposite ways is why neither was noticed.
+**No family's balance was ever wrong**, which is what makes this a report defect rather than a money
+one.
+
+**What shipped.** Player dues reads **$5,007.63** and **explains itself** — a caption under the row
+name that quotes no figure (so it cannot go stale against one) and a door that opens into three lines
+adding to the total: cash families sent and kept **$2,775.00**, team bills families paid
+**$1,379.98**, fundraising credited to dues **$852.65**. Money handed back is in **none** of them: it
+is absent rather than subtracted, which is what lets three lines reach the total instead of four
+nearly reaching it. The revenue pools became **one row per drive and per sponsor**, each carrying
+what it kept of what it took, and *"No category → Not itemized"* became *"Not in the plan → Sponsor
+money"* on the season's second-largest revenue line. **Cash, every Budget figure and Season spending
+are byte-for-byte unchanged**, re-read off the rendered report after every step.
+
+**Handing money back changed shape (R5, migration 281).** The amount box is gone; a coach ticks
+**whole debts** and the server sums them — a claimed amount that disagrees is refused, never
+reconciled — and 281 records which debts each payback settled. Production has **zero payouts**, so
+there was no backfill to get wrong. ⚠ **281 reverses a documented "there must never be one" note on
+`rep_dues_payouts`; the owner was told, and the old sentence is preserved verbatim in
+`DATA_DICTIONARY.md` beside why it changed.** R6 made a contribution a **payment**; R7 stopped a
+fundraiser credit being typed by hand and made `other` read **Adjustment** on every surface.
+
+⚠⚠ **TWO REAL DEFECTS CAME FROM LIVE DATA, NOT FROM THE TESTS — that is the transferable lesson.**
+(1) The first cut allocated a payback **oldest-first** while the shipped dues screen assumes the
+family's **own money** first and says so at the line. The total was identical either way and the panel
+still added up — but the new door would have told a coach $37.50 of Casey's cash was fundraising while
+the dues screen told them the reverse. The unit tests hand-built the allocation, so they agreed with
+themselves. Three tests now name Casey. (2) After the commit: a payback recorded **before** 281 says
+nothing about what it settled, so the tick-list offered Logan a **$300.00** debt when **$100.00** was
+owed — he would tick it and the server's ceiling would refuse him. Fixed by spreading legacy payouts
+the same own-money-first way; all ten families in credit now reconcile exactly and none can overshoot.
+**That fix is built and gated on dev, uncommitted pending the owner's word** (plan §6d).
+
+**`/review` ran high-risk over the COMMIT and the working tree together**, because half the work was
+already committed and reviewing only `git diff` would have reported a clean, complete-looking pass
+over a deliberately narrower surface. Four findings, all fixed: a recorded payback could be counted
+past the credit it settled; the Pay-out sheet's ceiling and consequence sentence still read the
+retired amount box; two unplanned derived pools merged into one row; and 281's uniqueness was
+per-payout when the rule is one payback per debt.
+
+**Gates.** typecheck · **3,224 unit tests, 0 failures** (re-run 2026-09-07 after the ledger entry was
+written) · `verify:changed` · `check:money-report` (all four cash identities still hold) ·
+`check:layout --changed` · lint. **Twelve of twelve families reproduce their
+live dues balance**, asserted on the pure derivation rather than by eye — that is the gate that
+matters. ⚠ **One earlier version of that gate was vacuous** and read as 12/12 while comparing
+nothing (it read the wrong payload field, so every live balance came back null); it now fails loudly
+on zero rows.
+
+**Known and deliberate, not defects to re-report at the walk:** the row caption partly reverses the
+§146 ruling that the set row says nothing (the owner was told before it was built, and it is recorded
+in the plan); help content and the coach demo's money narration are **knowingly stale**, deferred by
+owner ruling until the dues project finishes.
+
+**Open at the walk (Part F, three calls):** whether the caption's wording is right on the row §146
+cleared; whether **Adjustment** is the word for a credit that is neither a rebate nor an overpayment;
+and whether the Pay-out sheet should say what is left when every debt is ticked.
+
 ## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — committed `d2b3b2db` on `dev` 2026-09-08 after `/review`, migration 284 applied to dev (PROD-OWED, data-only), awaiting QA · walk artifact `fc80f4bf` · copy approved by the owner on artifact `4e8c6474` before any seed was written
 
 **Founding Season 2027 Phase 1** (`FOUNDING_SEASON_2027_PLAN.md` §3 Phase 1). The free season runs
@@ -19539,8 +19791,6 @@ walked into both demos at 390px and 1440px (bar present on `/demos` with the nav
 both sandboxes no bar, no `--offer-bar-h` left set, no reserved gap). `check:migrations` and
 `check:parity` fail on **pre-existing** drift from other sessions' migrations 276–283 — migration 284
 is data-only and invisible to both by construction, so its prod apply must be recorded by hand.
-
----
 
 ---
 
@@ -19644,7 +19894,6 @@ module does not have yet). The rendered check is **n/a**: `check:layout` sweeps 
 screens and the platform-admin Email board is not one of them (asked the script, not the prose). Dev
 server restarted 2026-09-07 after the shared-module changes; the offer-bar walk was re-run against it,
 34/34.
-
 
 ## §156 · The plan adds up — the Budget plan gains Costs and Funding bands, subtotals that wear the tiles' names, and a closing ladder; the word "expected" leaves the plan — committed `e1aa4b6e` on `dev` 2026-09-08 after `/review` (nine findings fixed), awaiting QA · walk artifact `b0baf8b4` · mockup artifact `e94d05d9` (round 2 is the picture)
 

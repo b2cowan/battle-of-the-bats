@@ -86,6 +86,19 @@ pool places with no category at all rather than against either line. Already rea
 change; now the only way a grant can be filed — **the strongest argument yet for §3.3’s open question
 of whether Grant should also MOVE to the Sponsorship category**, where both claims would share one
 category. No team is affected today: there are no Grant lines on either database.
+
+## ⚠ §3.3's open question is CLOSED — Grant moved (owner ruling, 2026-09-07, mig 282)
+
+The consequence above is what closed it. Grant now sits under **Sponsorship**, so both the
+one-line and the two-line cases place correctly. ⚠ Moving a shared word is a **re-filing, not a
+rename**, and one record was affected on dev AND production — the coach demo's $250 club request —
+so mig 282 moves the word and the stored category on all six referencing tables together. The demo
+seed's (category, item) pair moved with it: `budgetItemIds` CREATES a word when a pair misses, so a
+stale pair would have minted a second, money-OUT "Grant" into the public demo rather than failing.
+
+The second ruling of the same day: **the "You record it" tag is gone.** It was the default, it sat on
+most rows, and it drowned the two tags that carry a real consequence. Only the two DERIVED sources
+speak now — the standing "the exception speaks; the normal case does not" rule, applied here.
 **Raised by:** the owner, 2026-09-07 — *"when selecting a budget for sponsorship, why are we
 offering all of these other items? does selecting sponsorship and then selecting concession revenue
 make sense? … does the line item just need to be split into expense and revenue at the top and then

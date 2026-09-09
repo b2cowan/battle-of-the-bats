@@ -1,6 +1,9 @@
 # What a credit is, and what happens when you hand it back
 
-**Status:** R1–R4, R6, R7 (report side) **committed `ce3fb8ab` 2026-09-07** · R5 in build · owner QA owed
+**Status:** R1–R4 and the report side **committed `ce3fb8ab` 2026-09-07**; R5, R6 and R7 **committed
+`480a008a` 2026-09-07** with **migration 281 applied to dev**. Owner QA is **§153** — walk written,
+run-order step **B12**. One follow-up fix (the legacy-payback ceiling, §6d) is built and gated on dev
+and awaits the owner's word to commit.
 ⚠ Do not re-word this as "uncommitted"/"not on prod" — a perishable negative goes stale the moment
 another session ships. Deployment state lives in the release history and the Owner QA Ledger.
 **Build mockup:** https://claude.ai/code/artifact/3ac033cd-e589-4220-a7b6-951e947e6dc2 · **PM brief:** `COACH_MONEY_CREDITS_AND_PAYBACKS_PM_BRIEF.md`
@@ -303,9 +306,48 @@ byte-for-byte unchanged, re-read off the rendered report after every step.
 ~~The dues actual figure has no explanation beside it.~~ **CLOSED — built, see §6a.** The caption
 and the door were approved on the build mockup and shipped together.
 
-**⚠ WHAT IS LEFT:** R5 (a payback selects the debts it settles — needs a migration), R6 (a
-contribution becomes a payment), and R7 (a fundraiser credit may not be typed by hand, and `other`
-becomes **Adjustment** — a sweep across every surface a customer reads it on, not a one-line change).
+~~**⚠ WHAT IS LEFT:** R5, R6, R7.~~ **CLOSED — committed `480a008a` 2026-09-07, see §6c.**
+
+## 6c. ✅ BUILT 2026-09-07 — R5, R6 and R7 (committed `480a008a`, migration 281 on dev)
+
+**R5 — a payback SELECTS the debts it settles.** The amount box on the Pay-out sheet is gone. A coach
+ticks whole debts and **the server sums them**; a claimed amount that disagrees with the ticked set is
+**REFUSED, never reconciled** (`PAYBACK_AMOUNT_DISAGREES`, alongside `PAYBACK_NO_SELECTION`,
+`PAYBACK_UNKNOWN_CREDIT`, `PAYBACK_CREDIT_NOT_PAYABLE`, `PAYBACK_ALREADY_SETTLED`). Migration **281**
+adds the link table so a payback records *which* debts it settled — the link is a stored fact instead
+of an allocation guess.
+
+⚠⚠ **281 REVERSES A DOCUMENTED "THERE MUST NEVER BE ONE" NOTE on `rep_dues_payouts`, and the owner
+was told before it was written.** The old sentence is preserved **verbatim** in `DATA_DICTIONARY.md`
+next to why it changed — a reversed rule that quietly disappears is how the next session re-derives
+the wrong conclusion. **Production has ZERO payouts**, which is why this was the moment: there is no
+backfill to get wrong, in either direction.
+
+**R6 — a contribution is a PAYMENT.** `MANUAL_CREDIT_TYPES` narrowed to `other` alone. **R7 — a
+fundraiser credit may not be typed by hand**; it arrives from the drive. `other` reads **Adjustment**
+everywhere a customer meets it, and the labels moved out of the dues panel so one map serves every
+surface (a guard test holds the two maps equal — it caught an invented `sponsorship` kind on the way
+through; sponsor credits are stored as `fundraiser`).
+
+**`/review` ran high-risk over `ce3fb8ab` AND the working tree**, because reviewing only `git diff`
+would have skipped the committed half and reported a clean pass over a deliberately narrower surface.
+**Four findings, all fixed:** a payback already recorded could be counted past the credit it settled
+(now clamped); the Pay-out sheet's ceiling check and its consequence sentence still read the retired
+amount box rather than the ticked total; two unplanned derived pools from different sources merged
+into one report row; and 281's uniqueness was `(payout_id, credit_id)` when the rule is **one payback
+per debt**, so it is `unique (credit_id)`.
+
+## 6d. ⚠ ONE FIX BUILT AFTER THE COMMIT — awaiting the owner's word
+
+**A payback recorded BEFORE 281 says nothing about what it settled**, so the new tick-list read those
+credits as fully standing: Logan was offered a **$300.00** debt when **$100.00** was owed, and the
+server's ceiling would have refused the coach after they ticked it. Fixed by spreading legacy payouts
+across a family's credits the **same own-money-first way the report does** — the rule and the reason
+live in `settledPerCredit` in `lib/coach-dues-actual.ts`, which is now a `DEFINITION_HOMES` entry so
+the dues route cannot hand-roll the sum again.
+
+**Verified against live data:** all ten families in credit reconcile exactly; families whose tick-list
+can overshoot the ceiling: **0**. Three files, gated, uncommitted pending the owner's go.
 
 ## 6e. ✅ BUILT 2026-09-08 — the two modals' shape (design review; owner: "i agree with your mockups, go ahead and build")
 

@@ -2,6 +2,10 @@
 
 **Plan:** `COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`
 **Decided:** 2026-09-04 (owner, twelve answers on the "Set Once, Chase Weekly" mockup) · **Priority:** high — the Player Dues tab is the coach's weekly money screen
+**Status:** ✅ SHIPPED to `dev` 2026-09-04 (`06645a32` + `d7771935`) and **walked clean** — Owner QA
+§140 PASSED 2026-09-06, 37/37, all nine parts, zero defects, all three open calls ratified as built.
+Eleven of the twelve items are live; sticky column headings (G4) stay deferred to the first
+twenty-family roster.
 
 ---
 

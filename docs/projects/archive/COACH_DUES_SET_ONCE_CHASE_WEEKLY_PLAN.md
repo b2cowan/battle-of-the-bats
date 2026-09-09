@@ -1,5 +1,16 @@
 # Coach Player Dues — Set Once, Chase Weekly (build plan)
 
+**Status:** ✅ COMPLETE — committed `06645a32` (D1–D3 · E1–E5 · G1–G3) + `d7771935` (the owner's
+second look on the built grid) 2026-09-04 on `dev`, Owner QA **§140 PASSED** 2026-09-06, 37/37, all
+nine parts, zero defects. **G4 (sticky headings) is the one item NOT built** — deferred by the owner
+at ruling time to the first twenty-family roster, and carried in TODO.md's Deferred Enhancements so
+it does not retire with this plan.
+**Owner QA:** ledger **§140** — PASSED; Part I's three calls all ratified as built (the never-paid
+nudge's missing "Last reminded" was closed separately in the *stamp it* direction by §136,
+`885e56a1`). One assertion rests on the code rather than a signed-in look: the fixture has no
+read-only money account to prove the set-once door is withheld from a coach who cannot write money.
+**Walk artifact:** https://claude.ai/code/artifact/92122f73-a728-4b60-b913-aa3e994a4601
+
 **Owner decisions:** 2026-09-04, twelve answers on mockup artifact
 `6bd4c6d9-bcfd-4198-8aa5-2fb709284f8b` ("Set Once, Chase Weekly", rev 2). All on the recommended
 path. One refinement (G1 notes): the "Swipe to see later installments" chip is **removed outright**
