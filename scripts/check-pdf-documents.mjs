@@ -463,6 +463,15 @@ function assertDocument(file, read, failures, notes) {
     return;
   }
 
+  /* R6 · A LENGTH PROMISE HOLDS. A document may declare `maxPages` on the fixture built to be its
+   *      longest honest case — the dues sheet's eighteen-family bench must be ONE sheet, because the
+   *      twelve-family roster filled the readable page exactly and put only the Total row on page
+   *      two, which no fixture stopping at twelve could see. Numbered by age, placed here because
+   *      it needs only the page count R1 just proved non-zero. */
+  if (file.doc.maxPages && read.pageCount > file.doc.maxPages) {
+    fail('one-sheet', `promises to fit in ${file.doc.maxPages} page(s) but rendered ${read.pageCount} — a row, a column or the density moved.`);
+  }
+
   /* R2 · A fixed-column report FITS BY CONSTRUCTION. The drop-and-say-so line is reserved for
    *      customer-shaped tables — rubric categories, months, tag names. Seeing it on a report
    *      whose heading list is a literal in the code means a column stopped fitting, and this

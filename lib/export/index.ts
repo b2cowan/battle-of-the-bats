@@ -18,7 +18,7 @@ export { loadBrandMark, BRAND_MARK_SRC } from './brand-mark';
 export type { ICSEventInput } from './ics';
 export { downloadICS } from './ics';
 
-export type { OrgPdfSettings, LineupPosterOptions, LineupPosterPlayer, DevelopmentSummaryOptions, PracticeSheetOptions, PracticeSheetBlock, PracticeSheetRotation, TryoutBoardSummaryOptions, FamilyDuesStatementRender, FamilyDuesStatementsOptions } from './pdf';
+export type { OrgPdfSettings, ReportShape, LineupPosterOptions, LineupPosterPlayer, DevelopmentSummaryOptions, PracticeSheetOptions, PracticeSheetBlock, PracticeSheetRotation, TryoutBoardSummaryOptions, FamilyDuesStatementRender, FamilyDuesStatementsOptions } from './pdf';
 export { BRANDING_TEXT, DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, abbreviateHeadings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary, downloadFamilyDuesStatements } from './pdf';
 
 

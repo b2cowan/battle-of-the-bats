@@ -129,4 +129,12 @@ export const MUTATIONS = [
     only: 'coach-family-statements',
     expects: 'page-total',
   },
+  {
+    name: 'the dues sheet goes back to the readable density (twelve families fill the page and the Total row spills)',
+    file: 'lib/coach-money-exports.ts',
+    find: "  [DUES_EXPORT_COLUMNS, { orientation: 'landscape', density: 'compact' }],",
+    replace: "  [DUES_EXPORT_COLUMNS, { orientation: 'landscape' }],",
+    only: 'coach-player-dues',
+    expects: 'one-sheet',
+  },
 ];
