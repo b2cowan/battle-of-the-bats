@@ -27,11 +27,10 @@
 // Relative, with the extension, so `node --test` can load this module directly — the unit suite's
 // resolver handles these but not the bundler's `@/` alias (see tests/ts-resolver.mjs).
 import { monthKeyOf, addMonths, monthSpan, formatMonthLabel, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
-import { NO_ITEM_LABEL, NO_CATEGORY_LABEL } from './coach-budget-rollup.ts';
 import {
-  LINE_KIND_SECTION, BUDGET_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
-  type BudgetLineKind,
-} from './coach-budget-totals.ts';
+  NO_ITEM_LABEL, categoryGroupOf, compareCategoryGroups, type CategoryGroupRef,
+} from './coach-budget-rollup.ts';
+import { isFundingKind, normalizeBudgetLineKind, type BudgetLineKind } from './coach-budget-totals.ts';
 
 export type PeriodGranularity = 'months' | 'quarters';
 
@@ -64,6 +63,9 @@ export interface PeriodViewLine {
    *  bucket for costs (the List's own rule via the rollup) and stay per-line for money in. */
   itemId?: string | null;
   categoryName: string | null;
+  /** The category's real identity — what a MONEY-IN line is grouped by (owner ruling 2026-09-09),
+   *  keyed exactly as the Statement keys it. Absent on a legacy line = keyed by name. */
+  categoryId?: string | null;
   totalAmount: number;
   lineKind?: BudgetLineKind | null;
   periods: Array<{ periodDate: string | null; amount: number }>;
@@ -325,8 +327,9 @@ function columnFor(
 export function buildPeriodView(
   lines: PeriodViewLine[], granularity: PeriodGranularity,
   /** The season estimate, when one is set — read only to decide `estimateDiffers`; it is never
-   *  spread into a column (it has no dates). */
-  opts: { estimatedTotal?: number | null } = {},
+   *  spread into a column (it has no dates). `categoryOrder` is the picker's category → sort_order,
+   *  so the funding groups read in the order the coach chose them from. */
+  opts: { estimatedTotal?: number | null; categoryOrder?: ReadonlyMap<string, number> } = {},
 ): PeriodView {
   const dated: string[] = [];
   for (const line of lines) {
@@ -339,6 +342,8 @@ export function buildPeriodView(
   const columnKeys = dateColumns.map(c => c.key);
 
   const groupsByKey = new Map<string, PeriodViewGroup>();
+  /** The category behind each group, for the ordering rule below. */
+  const refs = new Map<string, CategoryGroupRef>();
   const totals: Record<string, number> = {};
   let grandTotal = 0;
   /* The two subtotals, accumulated in the SAME pass as the closing row so they cannot disagree
@@ -363,17 +368,22 @@ export function buildPeriodView(
     // then be wrong by twice its amount (2026-08-15).
     const sign = isFundingKind(lineKind) ? -1 : 1;
 
-    // Funding is one group regardless of the categories its lines carry: it is subtracted as a
-    // whole, and splitting it by cost category would put money coming IN under a heading that
-    // names something the team spends on.
-    // Each money-in kind is ONE group, keyed by the kind itself — so fundraising and sponsorship
-    // read as two headings rather than merging back into one the grid cannot tell apart.
-    const groupKey = isFundingKind(lineKind) ? lineKind : (line.categoryName ?? 'Uncategorized');
+    /* ⚠ EVERY LINE IS GROUPED BY ITS CATEGORY'S IDENTITY — the rollup's one rule, keyed by id so two
+       categories sharing a name stay two groups (a club's own "Fundraising" beside the platform's).
+       Money in used to be grouped by its stored KIND — "Fundraising · Sponsorship · Other income" —
+       so a concession stand filed under Tournaments read under "Other income" here while the Statement
+       put it under Tournaments (owner ruling 2026-09-09); and a cost group was keyed by its bare NAME,
+       which also gave a nameless cost category the word "Uncategorized" where every other surface says
+       "No category" — the nameless-last rule below compared against the latter and never fired. The
+       `in:` prefix keeps a funding group from ever sharing a key with the cost group of the SAME
+       category: two bands, opposite signs, and Tournaments legitimately has both. */
+    const ref = categoryGroupOf(line);
+    const groupKey = isFundingKind(lineKind) ? `in:${ref.key}` : ref.key;
     let group = groupsByKey.get(groupKey);
     if (!group) {
       group = {
         key: groupKey,
-        name: isFundingKind(lineKind) ? LINE_KIND_SECTION[lineKind] : groupKey,
+        name: ref.name,
         lineKind,
         rows: [],
         cells: {},
@@ -381,6 +391,7 @@ export function buildPeriodView(
       };
       groupsByKey.set(groupKey, group);
       rowsByKey.set(groupKey, new Map());
+      refs.set(groupKey, ref);
     }
 
     /* The merge key. Same item = same row (by ITEM ID, never by name — two items legitimately
@@ -441,8 +452,9 @@ export function buildPeriodView(
      views sorted differently — the List via the rollup's compareCategories, this view by insertion
      order — so toggling views reshuffled the plan). Cost categories alphabetical with the nameless
      bucket last (§133, and the rule moved here the same day it landed there), the
-     money-in groups after them in kind order; cost rows alphabetical with "Not itemized" last (the
-     rollup's own item sort); money-in rows keep line order, which is what their List section does. */
+     money-in groups after them in the picker's category order (owner 2026-09-09); cost rows
+     alphabetical with "Not itemized" last (the rollup's own item sort); money-in rows keep line
+     order, which is what their List section does. */
   for (const group of groupsByKey.values()) {
     if (isFundingKind(group.lineKind)) continue;
     group.rows.sort((a, b) => {
@@ -452,19 +464,18 @@ export function buildPeriodView(
       return a.description.localeCompare(b.description);
     });
   }
+  /* Costs alphabetical with the nameless bucket last (the List's rule, via the rollup's comparator
+     with no order map); the funding groups in the picker's own category order, which is the order
+     the List prints the same groups in. */
+  const byName = compareCategoryGroups();
+  const byPicker = compareCategoryGroups(opts.categoryOrder);
   const groups = [...groupsByKey.values()]
-    // Costs first, then the money-in groups — and among those, fundraising before sponsorship so
-    // the order is the same everywhere the two appear.
+    // Costs first, then the money-in groups — the funding band.
     .sort((a, b) => {
-      const byKind = BUDGET_LINE_KINDS.indexOf(a.lineKind) - BUDGET_LINE_KINDS.indexOf(b.lineKind);
-      if (byKind !== 0) return byKind;
-      /* ⚠ The nameless bucket LAST, because the rollup's own comparator does that for the List as
-         of the §133 second look — and this view exists to hold one ordering rule for both. It is
-         the same rule the rows above already follow for "Not itemized". */
-      const aNone = a.name === NO_CATEGORY_LABEL;
-      const bNone = b.name === NO_CATEGORY_LABEL;
-      if (aNone !== bNone) return aNone ? 1 : -1;
-      return a.name.localeCompare(b.name);
+      const aIn = isFundingKind(a.lineKind);
+      const bIn = isFundingKind(b.lineKind);
+      if (aIn !== bIn) return aIn ? 1 : -1;
+      return (aIn ? byPicker : byName)(refs.get(a.key)!, refs.get(b.key)!);
     });
 
   /* ⚠ "No date yet", AND IT LEADS (owner ruling 2026-09-04, QA §133). Both halves were drift, and

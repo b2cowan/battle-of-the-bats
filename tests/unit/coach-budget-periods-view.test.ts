@@ -4,6 +4,7 @@ import {
   buildPeriodView, quarterKeyOf, UNSCHEDULED, MAX_PERIOD_MONTHS,
   type PeriodViewLine,
 } from '../../lib/coach-budget-periods-view.ts';
+import { NO_CATEGORY_LABEL } from '../../lib/coach-budget-rollup.ts';
 
 function line(
   id: string,
@@ -177,27 +178,47 @@ describe('funding', () => {
     assert.equal(view.fundingTotals?.total, -1000);
   });
 
-  it('lands in ONE group whatever categories its lines carry', () => {
+  /* ⚠⚠ REVERSED 2026-09-09 (owner ruling: the category is the shelf on both sides). This test used
+     to be "lands in ONE group whatever categories its lines carry" — money in was one shelf per
+     KIND regardless of filing, so a concession stand filed under Tournaments read under "Other
+     income" here and under "Tournaments" on the Statement. Money in is grouped by CATEGORY now,
+     exactly as costs are, through the rollup's one identity helper. */
+  it('groups money in by CATEGORY, exactly as the Statement does — never one merged shelf', () => {
     const view = buildPeriodView([
       line('a', 'Entry fees', 3000, [['2027-01-01', 3000]]),
       line('f', 'Chocolate drive', 1000, [], { funding: true, category: 'Tournaments' }),
       line('g', 'Sponsor', 500, [], { funding: true, category: null }),
     ], 'months');
     const fundingGroups = view.groups.filter(g => g.lineKind === 'funding');
-    assert.equal(fundingGroups.length, 1);
-    assert.equal(fundingGroups[0].rows.length, 2);
-    assert.equal(fundingGroups[0].total, -1500);
+    // Two groups: the drive under Tournaments, the line with no category in the nameless bucket
+    // under the one spelling every surface uses.
+    assert.deepEqual(fundingGroups.map(g => g.name), ['Tournaments', NO_CATEGORY_LABEL]);
+    assert.deepEqual(fundingGroups.map(g => g.total), [-1000, -500]);
+    // And the FUNDING Tournaments group is not the COST Tournaments group — two bands, two signs.
+    const tournaments = view.groups.filter(g => g.name === 'Tournaments');
+    assert.equal(tournaments.length, 2);
+    assert.deepEqual(tournaments.map(g => g.lineKind).sort(), ['cost', 'funding']);
+    assert.equal(view.totals.total, 3000 - 1500);
   });
 
-  it('sorts last, whatever order the lines arrived in', () => {
+  it('sorts last, whatever order the lines arrived in — and in the picker\'s order among themselves', () => {
     const view = buildPeriodView([
-      line('f', 'Fundraising', 1000, [], { funding: true }),
+      line('s', 'Sponsor', 200, [], { funding: true, category: 'Sponsorship' }),
+      line('f', 'Chocolate drive', 1000, [], { funding: true, category: 'Fundraising' }),
       line('a', 'Entry fees', 3000, [], { category: 'Tournaments' }),
       line('b', 'Gear', 500, [], { category: 'Equipment' }),
     ], 'months');
-    assert.deepEqual(view.groups.map(g => g.lineKind), ['cost', 'cost', 'funding']);
-    // Cost categories alphabetical (the List's rule), the money-in group after them.
-    assert.deepEqual(view.groups.map(g => g.name), ['Equipment', 'Tournaments', 'Fundraising']);
+    assert.deepEqual(view.groups.map(g => g.lineKind), ['cost', 'cost', 'funding', 'funding']);
+    // Cost categories alphabetical (the List's rule); the money-in categories after them, alphabetical
+    // when no picker order is handed in…
+    assert.deepEqual(view.groups.map(g => g.name), ['Equipment', 'Tournaments', 'Fundraising', 'Sponsorship']);
+    // …and in the picker's own order when one is. Name-keyed lines carry no id to look up, so the
+    // order is pinned through id-carrying lines here.
+    const ordered = buildPeriodView([
+      { ...line('s', 'Sponsor', 200, [], { funding: true, category: 'Sponsorship' }), categoryId: 'cat-s' },
+      { ...line('f', 'Chocolate drive', 1000, [], { funding: true, category: 'Fundraising' }), categoryId: 'cat-f' },
+    ], 'months', { categoryOrder: new Map([['cat-s', 1], ['cat-f', 2]]) });
+    assert.deepEqual(ordered.groups.map(g => g.name), ['Sponsorship', 'Fundraising']);
   });
 });
 
@@ -229,7 +250,9 @@ describe('grouping and totals', () => {
     const view = buildPeriodView([
       line('a', 'Something', 500, [], { category: null }),
     ], 'months');
-    assert.equal(view.groups[0].name, 'Uncategorized');
+    // ⚠ The one spelling every surface uses (2026-09-09) — it read "Uncategorized" here while the
+    // List and the Statement said "No category" for the same lines.
+    assert.equal(view.groups[0].name, NO_CATEGORY_LABEL);
     assert.equal(view.totals.total, 500);
   });
 

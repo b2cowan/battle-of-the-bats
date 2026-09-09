@@ -11,6 +11,7 @@ import { describe, it } from 'node:test';
 import { WHOLE_TEAM_ENTRY_LABEL } from '../../lib/coach-fundraising.ts';
 import { buildActualCashStrip, type CashStripInputs } from '../../lib/coach-cash-strip.ts';
 import { PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME } from '../../lib/coach-budget-months.ts';
+import { NO_CATEGORY_LABEL } from '../../lib/coach-budget-rollup.ts';
 
 /**
  * A cash-out record's non-money half — the id, the words behind the figure and where it files.
@@ -39,6 +40,7 @@ const duesPay = (amount: number, receivedDate: string | null) => ({
 const arrival = (amount: number, receivedDate: string | null, kind: 'income' | 'money_back') => ({
   id: `in-${amount}`, amount, receivedDate, kind,
   description: `Arrival ${amount}`, itemId: 'item-1', itemName: 'Gate takings', categoryName: 'Other',
+  categoryId: null,
 });
 const entry = (
   amountRaised: number, receivedDate: string | null, createdAt: string,
@@ -48,6 +50,8 @@ const entry = (
   fundraiserId: kind === 'sponsor' ? 'sponsor-1' : 'drive-1',
   fundraiserName: kind === 'sponsor' ? 'Northside Physio' : 'Bottle drive',
   playerId: null, playerName: null, rebateAmount: 0,
+  // Names no line, so its cash falls to the platform shelf its kind was always going to land on.
+  raisingFor: null,
 });
 const payoutRec = (id: string, amount: number, paidDate: string | null) => ({
   id, amount, paidDate,
@@ -62,7 +66,19 @@ const empty = (): CashStripInputs => ({
   expensePayments: [],
   duesPayouts: [],
   clubInstallments: [],
+  shelves: {
+    fundraising: { categoryId: 'cat-fundraising', categoryName: 'Fundraising' },
+    sponsorship: { categoryId: 'cat-sponsorship', categoryName: 'Sponsorship' },
+  },
 });
+
+/** The ROW a revenue dollar lands on: one of the two fixed groups, or its category's name (owner
+ *  ruling 2026-09-09 — every other revenue row is a category). */
+const rowOf = (e: { where: string | { categoryName: string | null } }) =>
+  typeof e.where === 'string' ? e.where : (e.where.categoryName ?? NO_CATEGORY_LABEL);
+/** The category behind a revenue event, or null on one of the two fixed rows. */
+const catOf = (e: { where: string | { categoryId: string | null; incomeSource: string } }) =>
+  typeof e.where === 'string' ? null : e.where;
 
 describe('buildActualCashStrip', () => {
   it('buckets every stream by the month the money moved, both directions, gross', () => {
@@ -224,11 +240,11 @@ describe('buildActualCashStrip', () => {
 describe('buildActualCashStrip — the revenue band', () => {
   const groups = (strip: ReturnType<typeof buildActualCashStrip>) => {
     const by: Record<string, number> = {};
-    for (const e of strip.revenue) by[e.group] = Math.round(((by[e.group] ?? 0) + e.amount) * 100) / 100;
+    for (const e of strip.revenue) by[rowOf(e)] = Math.round(((by[rowOf(e)] ?? 0) + e.amount) * 100) / 100;
     return by;
   };
 
-  it('routes each source to its own group — and money back is REVENUE, never a smaller cost', () => {
+  it('routes each source to its own row — a fixed group or its category — and money back is REVENUE, never a smaller cost', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       duesPayments: [duesPay(2400, '2025-09-04')],
@@ -245,14 +261,14 @@ describe('buildActualCashStrip — the revenue band', () => {
     });
     assert.deepEqual(groups(strip), {
       dues: 2400,
-      other: 500,
+      Other: 500,
       moneyback: 200 + 180,
-      fundraising: 640,
-      sponsorship: 750,
+      Fundraising: 640,
+      Sponsorship: 750,
     });
   });
 
-  it('a drive and a sponsor are two groups, not one “fundraising” figure', () => {
+  it('a drive and a sponsor are two categories, not one “fundraising” figure', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       realisedEntries: [
@@ -260,7 +276,40 @@ describe('buildActualCashStrip — the revenue band', () => {
         entry(250, '2025-09-02', '2025-09-02T12:00:00Z', 'sponsor'),
       ],
     });
-    assert.deepEqual(groups(strip), { fundraising: 100, sponsorship: 250 });
+    assert.deepEqual(groups(strip), { Fundraising: 100, Sponsorship: 250 });
+  });
+
+  /* ⚠ A DRIVE OR SPONSOR REPORTS UNDER THE LINE IT IS RAISING FOR (mig 285 + owner ruling
+     2026-09-09); one that names no line falls to the platform shelf its kind was always going to
+     land on, and neither ever vanishes from the band. The SOURCE travels with the row either way —
+     it is what decides the doors a cell's panel offers. */
+  it('a drive lands under the category it is raising for; a sponsor with no line lands on the Sponsorship shelf', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      realisedEntries: [
+        {
+          ...entry(100, '2025-09-01', '2025-09-01T12:00:00Z', 'fundraiser'),
+          raisingFor: { categoryId: 'cat-team', categoryName: 'Team Fundraising' },
+        },
+        entry(250, '2025-09-02', '2025-09-02T12:00:00Z', 'sponsor'),
+      ],
+    });
+    assert.deepEqual(groups(strip), { 'Team Fundraising': 100, Sponsorship: 250 });
+    assert.deepEqual(
+      strip.revenue.map(e => [catOf(e)?.categoryId, catOf(e)?.incomeSource]),
+      [['cat-team', 'fundraiser'], ['cat-sponsorship', 'sponsor']],
+    );
+    assert.ok(strip.revenue.every(e => typeof e.where !== 'string'), 'a category row is never one of the fixed groups');
+  });
+
+  it('a shelf the database does not have leaves the money visible in the nameless bucket, never dropped', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      shelves: { fundraising: null, sponsorship: null },
+      realisedEntries: [entry(75, '2025-09-03', '2025-09-03T12:00:00Z', 'sponsor')],
+    });
+    assert.deepEqual(groups(strip), { [NO_CATEGORY_LABEL]: 75 });
+    assert.equal(catOf(strip.revenue[0])?.incomeSource, 'sponsor');
   });
 
   /* ⚠⚠ THE TWO INCOMING ANSWERS ARE THE SAME CASH AND DIFFERENT ROWS (mig 271, owner D1). Every
@@ -269,12 +318,12 @@ describe('buildActualCashStrip — the revenue band', () => {
      arriving — this is a cash strip — which is why the test asserts the TOTAL is unchanged and only
      the group moves. Getting that backwards in either direction is a money defect no total can
      catch. */
-  it('new money from the club joins OTHER INCOME under its filed word; a repayment stays in Money back', () => {
+  it('new money from the club joins the CATEGORY it was filed in, under its filed word; a repayment stays in Money back', () => {
     const grant = buildActualCashStrip({
       ...empty(),
       clubRequests: [{ ...outRec(325), side: 'funding' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' }],
     });
-    assert.deepEqual(groups(grant), { other: 325 });
+    assert.deepEqual(groups(grant), { Facilities: 325 });
     assert.equal(grant.expenses.length, 0);
     // Its row is the WORD it was filed under — the only grouping a grant has (D4).
     assert.equal(grant.revenue[0].subject.name, 'Dome time');
@@ -301,7 +350,7 @@ describe('buildActualCashStrip — the revenue band', () => {
         side: 'funding' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z',
       }],
     });
-    assert.deepEqual(groups(strip), { other: 120 });
+    assert.deepEqual(groups(strip), { [NO_CATEGORY_LABEL]: 120 });
     assert.equal(strip.revenue[0].subject.name, 'Not itemized');
   });
 
@@ -326,7 +375,7 @@ describe('buildActualCashStrip — the revenue band', () => {
  */
 describe('buildActualCashStrip — who the money came from', () => {
   const subjects = (strip: ReturnType<typeof buildActualCashStrip>) =>
-    strip.revenue.map(e => [e.group, e.subject.id, e.subject.name, e.kind, e.description, e.note]);
+    strip.revenue.map(e => [rowOf(e), e.subject.id, e.subject.name, e.kind, e.description, e.note]);
 
   /* ⚠⚠ THE KIND AND THE RECORD'S OWN WORDS ARE TWO FIELDS, and every assertion below turns on the
      difference (owner-found 2026-08-25). A panel opened from ONE family is titled with her name, so
@@ -355,7 +404,7 @@ describe('buildActualCashStrip — who the money came from', () => {
     /* ⚠ A DRIVE'S RECORD HAS WORDS OF ITS OWN — one family's effort — where a sponsor's does not:
        a sponsor's arrival IS the sponsor, who is already the row. */
     assert.deepEqual(subjects(strip), [
-      ['fundraising', 'drive-1', 'Bottle drive', 'Fundraising', 'Maya Ledger', '$120 credited to their dues'],
+      ['Fundraising', 'drive-1', 'Bottle drive', 'Fundraising', 'Maya Ledger', '$120 credited to their dues'],
     ]);
   });
 
@@ -365,7 +414,7 @@ describe('buildActualCashStrip — who the money came from', () => {
       realisedEntries: [entry(500, '2026-08-15', '2026-08-15T12:00:00Z', 'sponsor')],
     });
     assert.deepEqual(subjects(strip), [
-      ['sponsorship', 'sponsor-1', 'Northside Physio', 'Season sponsorship', null, 'received'],
+      ['Sponsorship', 'sponsor-1', 'Northside Physio', 'Season sponsorship', null, 'received'],
     ]);
   });
 
@@ -386,7 +435,7 @@ describe('buildActualCashStrip — who the money came from', () => {
       realisedEntries: [entry(240, '2026-08-11', '2026-08-11T12:00:00Z', 'fundraiser')],
     });
     assert.deepEqual(subjects(strip), [
-      ['fundraising', 'drive-1', 'Bottle drive', 'Fundraising', WHOLE_TEAM_ENTRY_LABEL, null],
+      ['Fundraising', 'drive-1', 'Bottle drive', 'Fundraising', WHOLE_TEAM_ENTRY_LABEL, null],
     ]);
   });
 
@@ -399,8 +448,8 @@ describe('buildActualCashStrip — who the money came from', () => {
       ],
     });
     assert.deepEqual(subjects(strip), [
-      ['other', 'item-1', 'Gate takings', 'Income', 'Home opener gate', null],
-      ['other', null, 'Not itemized', 'Income', 'Arrival 120', null],
+      ['Other', 'item-1', 'Gate takings', 'Income', 'Home opener gate', null],
+      ['Other', null, 'Not itemized', 'Income', 'Arrival 120', null],
     ]);
   });
 

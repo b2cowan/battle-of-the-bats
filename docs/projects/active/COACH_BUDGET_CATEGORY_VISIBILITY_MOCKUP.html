@@ -1,0 +1,1016 @@
+<title>The Category Goes Missing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   DOCUMENT CHROME — deliberately COOL, because every specimen inside it is
+   the product's WARM palette. The contrast is what makes a framed thing read
+   as a specimen rather than as more page.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --doc-bg:          #E7EAEF;
+  --doc-panel:       #FBFCFD;
+  --doc-sunk:        #DDE1E8;
+  --doc-ink:         #12161C;
+  --doc-ink-2:       #39424F;
+  --doc-dim:         #616C7C;
+  --doc-rule:        rgba(18, 22, 28, 0.14);
+  --doc-rule-2:      rgba(18, 22, 28, 0.07);
+  --doc-accent:      #1F5A78;
+  --doc-accent-soft: rgba(31, 90, 120, 0.10);
+  --doc-flag:        #9C3D22;
+  --doc-flag-soft:   rgba(156, 61, 34, 0.10);
+  --doc-good:        #2C6B45;
+  --shadow: 0 1px 2px rgba(18,22,28,.06), 0 8px 24px -12px rgba(18,22,28,.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg:          #10141A;
+    --doc-panel:       #171C24;
+    --doc-sunk:        #0B0E13;
+    --doc-ink:         #E6EAF0;
+    --doc-ink-2:       #B8C1CE;
+    --doc-dim:         #8B95A4;
+    --doc-rule:        rgba(230, 234, 240, 0.16);
+    --doc-rule-2:      rgba(230, 234, 240, 0.08);
+    --doc-accent:      #78B4D4;
+    --doc-accent-soft: rgba(120, 180, 212, 0.14);
+    --doc-flag:        #E08061;
+    --doc-flag-soft:   rgba(224, 128, 97, 0.14);
+    --doc-good:        #7FC79C;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 30px -14px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg:          #10141A;
+  --doc-panel:       #171C24;
+  --doc-sunk:        #0B0E13;
+  --doc-ink:         #E6EAF0;
+  --doc-ink-2:       #B8C1CE;
+  --doc-dim:         #8B95A4;
+  --doc-rule:        rgba(230, 234, 240, 0.16);
+  --doc-rule-2:      rgba(230, 234, 240, 0.08);
+  --doc-accent:      #78B4D4;
+  --doc-accent-soft: rgba(120, 180, 212, 0.14);
+  --doc-flag:        #E08061;
+  --doc-flag-soft:   rgba(224, 128, 97, 0.14);
+  --doc-good:        #7FC79C;
+  --shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 30px -14px rgba(0,0,0,.8);
+}
+
+body {
+  background: var(--doc-bg);
+  color: var(--doc-ink);
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+* { box-sizing: border-box; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 44px) 96px; }
+.measure { max-width: 68ch; }
+
+/* ── Masthead ─────────────────────────────────────────────────────────── */
+.mast { padding: clamp(40px, 7vw, 76px) 0 0; }
+.kicker {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11.5px; font-weight: 500; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--doc-accent);
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+}
+h1 {
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-weight: 700; letter-spacing: -.028em; line-height: 1.02;
+  font-size: clamp(38px, 6.4vw, 68px);
+  margin: 18px 0 0; text-wrap: balance; color: var(--doc-ink);
+}
+.deck {
+  font-size: clamp(19px, 2.1vw, 23px); line-height: 1.5; color: var(--doc-ink-2);
+  margin: 20px 0 0; max-width: 42ch; text-wrap: pretty;
+}
+.mast-rule { height: 3px; background: var(--doc-ink); margin: 36px 0 0; opacity: .82; }
+
+/* ── Sections ─────────────────────────────────────────────────────────── */
+section { margin: clamp(46px, 6vw, 78px) 0 0; }
+h2 {
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-weight: 600; letter-spacing: -.018em; line-height: 1.14;
+  font-size: clamp(25px, 3.1vw, 34px);
+  margin: 0 0 14px; text-wrap: balance;
+}
+h3 {
+  font-family: 'Archivo', system-ui, sans-serif;
+  font-weight: 600; letter-spacing: -.012em;
+  font-size: 19px; margin: 36px 0 10px;
+}
+.sec-no {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--doc-dim);
+  display: block; margin-bottom: 12px;
+}
+p { margin: 0 0 16px; text-wrap: pretty; }
+p.lede { font-size: 19px; color: var(--doc-ink-2); }
+strong { font-weight: 600; color: var(--doc-ink); }
+em.term {
+  font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: .86em;
+  background: var(--doc-rule-2); padding: 1px 5px; border-radius: 3px;
+}
+
+ul.pts { margin: 0 0 18px; padding: 0; list-style: none; }
+ul.pts li { position: relative; padding-left: 26px; margin-bottom: 13px; }
+ul.pts li::before {
+  content: ""; position: absolute; left: 4px; top: .68em;
+  width: 7px; height: 7px; border: 1.5px solid var(--doc-accent); border-radius: 50%;
+}
+ul.pts li.flag::before { border-color: var(--doc-flag); background: var(--doc-flag); }
+
+/* ── Callouts ─────────────────────────────────────────────────────────── */
+.note {
+  border-left: 3px solid var(--doc-accent);
+  background: var(--doc-accent-soft);
+  padding: 16px 20px; margin: 26px 0; border-radius: 0 6px 6px 0;
+  max-width: 72ch;
+}
+.note.flagged { border-left-color: var(--doc-flag); background: var(--doc-flag-soft); }
+.note p:last-child { margin-bottom: 0; }
+.note .nlab {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--doc-accent);
+  display: block; margin-bottom: 7px;
+}
+.note.flagged .nlab { color: var(--doc-flag); }
+
+/* ── Specimen frames ──────────────────────────────────────────────────── */
+.spec {
+  margin: 26px 0 30px;
+  background: var(--doc-panel);
+  border: 1px solid var(--doc-rule);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.spec-bar {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  padding: 11px 16px; border-bottom: 1px solid var(--doc-rule);
+  background: var(--doc-sunk);
+}
+.spec-name {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 600;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--doc-ink-2);
+}
+.tag {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 3px; border: 1px solid;
+}
+.t-today { color: var(--doc-flag); border-color: var(--doc-flag); background: var(--doc-flag-soft); }
+.t-new   { color: var(--doc-good); border-color: var(--doc-good); background: transparent; }
+.t-unch  { color: var(--doc-dim);  border-color: var(--doc-rule); background: transparent; }
+.spec-note {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--doc-dim);
+  margin-left: auto;
+}
+.spec-body { padding: 22px; overflow-x: auto; }
+.spec-cap {
+  font-size: 15.5px; color: var(--doc-dim); line-height: 1.55;
+  padding: 0 22px 20px; margin: -4px 0 0; max-width: 84ch;
+}
+.spec-cap strong { color: var(--doc-ink-2); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PRODUCT FRAME — real FieldLogicHQ warm-portal tokens, FIXED in both
+   document themes. A specimen is a picture of the product; it must not flip
+   when the reader's OS does.
+   ───────────────────────────────────────────────────────────────────────── */
+.pf {
+  --paper:  #F8F4ED;
+  --card:   #FFFFFF;
+  --ink:    #241E15;
+  --inkSoft:#4A4235;
+  --dim:    #615A54;
+  --line:   rgba(70, 55, 30, 0.12);
+  --lineHi: rgba(70, 55, 30, 0.20);
+  --olive:  #57651E;
+  --oliveSoft: rgba(87, 101, 30, 0.10);
+  --win:    #34662A;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px; line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--lineHi);
+  border-radius: 8px;
+  padding: 18px;
+}
+.pf-desk  { width: 720px; }
+.pf-phone { width: 390px; }
+.pf-row   { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+
+.pf-close {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-top: 2px solid var(--lineHi); padding-top: 10px; margin-top: 4px;
+  font-size: 14px; font-weight: 700; color: var(--ink);
+}
+.pf-close .num { font-variant-numeric: tabular-nums; }
+
+.pf-ask { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; margin-top: 14px; }
+.pf-ask b {
+  font-size: 12px; font-weight: 700; color: var(--olive);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.pf-ask span { font-size: 12px; color: var(--dim); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.chip {
+  display: inline-flex; align-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  font-size: 12px; overflow: hidden; white-space: nowrap;
+}
+.chip .lab { padding: 5px 3px 5px 10px; font-weight: 700; color: var(--ink); }
+.chip .x   { padding: 5px 9px 5px 5px; color: var(--dim); font-size: 11px; line-height: 1; }
+.pf-foot { font-size: 12px; color: var(--dim); margin: 9px 0 0; }
+
+/* MOCKUP-ONLY annotation — never a product treatment. See the legend. */
+.anno-in { outline: 2px dashed var(--doc-accent); outline-offset: 1px; border-radius: 999px; }
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center;
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--doc-dim);
+  padding: 0 22px 18px;
+}
+.legend i { font-style: normal; display: inline-flex; align-items: center; gap: 8px; }
+.legend .sw {
+  width: 24px; height: 13px; border-radius: 999px; display: inline-block;
+  outline: 2px dashed var(--doc-accent); outline-offset: 1px;
+}
+
+/* proposed strip — direction headings + category structure */
+.dir-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin: 16px 0 0; padding-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+}
+.dir-head .t {
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--inkSoft);
+}
+.dir-head .n { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+.cat-line { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.cat-line:last-of-type { border-bottom: 0; }
+.cat-name { flex: 0 0 116px; font-size: 12px; font-weight: 700; color: var(--inkSoft); }
+.cat-line.stackp { display: block; }
+.cat-line.stackp .cat-name { display: block; margin-bottom: 5px; }
+.cat-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.cat-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.cat-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 11px; min-height: 36px;
+  font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap;
+}
+.cat-btn .ct { font-size: 11px; font-weight: 600; color: var(--dim); font-variant-numeric: tabular-nums; }
+.cat-btn.open { background: var(--oliveSoft); border-color: var(--olive); border-radius: 6px 6px 0 0; }
+.cat-open-body {
+  border: 1px solid var(--olive); border-top: 0; border-radius: 0 6px 6px 6px;
+  background: var(--oliveSoft); padding: 10px 11px;
+}
+
+/* ── Ledger specimen (the plan itself) ────────────────────────────────── */
+table.led { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.led th, table.led td { text-align: left; padding: 6px 8px; }
+table.led td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.band th {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--inkSoft); background: rgba(70,55,30,.05);
+  border-top: 1px solid var(--lineHi); border-bottom: 1px solid var(--line);
+}
+tr.kind th { font-weight: 700; font-size: 13.5px; color: var(--ink); }
+tr.kind td { font-weight: 700; color: var(--win); }
+tr.sub th  { font-weight: 700; font-size: 12.5px; color: var(--inkSoft); padding-left: 26px; }
+tr.sub td  { font-weight: 600; color: var(--win); font-size: 13px; }
+tr.ln th   { font-weight: 400; color: var(--ink); padding-left: 26px; }
+tr.ln.deep th { padding-left: 46px; }
+tr.ln td   { color: var(--win); }
+tr.ln th, tr.ln td { border-bottom: 1px solid var(--line); }
+tr.tot th  { font-weight: 700; border-top: 2px solid var(--lineHi); }
+tr.tot td  { font-weight: 700; color: var(--win); border-top: 2px solid var(--lineHi); }
+.lost   { background: var(--doc-flag-soft); outline: 2px dashed var(--doc-flag); outline-offset: -2px; }
+.gained { outline: 2px dashed var(--doc-good); outline-offset: -2px; }
+
+/* ── picker specimen ──────────────────────────────────────────────────── */
+.pick { width: 330px; }
+.pick-lab { font-size: 12px; font-weight: 700; color: var(--inkSoft); margin-bottom: 6px; }
+.pick-field {
+  border: 1.5px solid var(--olive); border-radius: 7px; padding: 9px 11px;
+  font-size: 14px; color: var(--dim); background: var(--card);
+}
+.pick-list { border: 1px solid var(--line); border-radius: 7px; background: var(--card); margin-top: 5px; padding: 6px 0; }
+.pick-cat {
+  font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--dim); padding: 9px 12px 4px;
+}
+.pick-item {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 7px 12px; font-size: 14px;
+}
+.pick-item .std {
+  font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim);
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; white-space: nowrap;
+}
+.arrow-note {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--doc-flag);
+  text-align: center; align-self: center; font-weight: 600; letter-spacing: .04em;
+  max-width: 150px; line-height: 1.6;
+}
+
+/* ── Comparison tables ────────────────────────────────────────────────── */
+.cmp-wrap { overflow-x: auto; margin: 24px 0; }
+table.cmp { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 15.5px; }
+table.cmp th, table.cmp td {
+  text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--doc-rule-2);
+  vertical-align: top;
+}
+table.cmp thead th {
+  font-family: 'Archivo', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--doc-dim);
+  border-bottom: 1.5px solid var(--doc-rule);
+}
+table.cmp tbody th { font-weight: 600; color: var(--doc-ink); width: 30%; }
+table.cmp .yes { color: var(--doc-good); font-weight: 600; }
+table.cmp .no  { color: var(--doc-flag); font-weight: 600; }
+
+/* ── Question block ───────────────────────────────────────────────────── */
+.q {
+  border: 1px solid var(--doc-rule); border-radius: 8px; background: var(--doc-panel);
+  padding: 18px 22px; margin: 0 0 14px; max-width: 76ch;
+}
+.q .qn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--doc-accent);
+  display: block; margin-bottom: 6px;
+}
+.q h4 {
+  font-family: 'Archivo', sans-serif; font-size: 17.5px; font-weight: 600;
+  margin: 0 0 8px; letter-spacing: -.01em;
+}
+.q p { font-size: 16px; color: var(--doc-ink-2); margin-bottom: 0; }
+.q p + p { margin-top: 10px; }
+
+footer.end {
+  margin-top: 76px; padding-top: 22px; border-top: 3px solid var(--doc-ink);
+  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: .05em;
+  color: var(--doc-dim); display: flex; flex-wrap: wrap; gap: 8px 26px;
+}
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+:focus-visible { outline: 3px solid var(--doc-accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">
+    <span>Coach Portal · Budget Plan</span>
+    <span>Design decision sheet</span>
+    <span>9 September 2026</span>
+  </div>
+  <h1>The Category Goes Missing</h1>
+  <p class="deck">A coach files budget money under a category. The product then throws that category
+  away — twice, on two different screens, for two different reasons.</p>
+  <div class="mast-rule"></div>
+</header>
+
+<div class="note" style="margin-top:28px;border-left-color:var(--doc-good);background:transparent;border:1px solid var(--doc-good);border-left-width:3px;">
+  <span class="nlab" style="color:var(--doc-good);">Decided — 9 September 2026</span>
+  <p><strong>Forgetting list: Option A.</strong> <strong>Plan: Option 2</strong> — the category is the shelf on both
+  sides, on every surface (the owner found the Statement and By activity already do this; the plan, the
+  grid, the exports and the Months view converge on them). <strong>Duplicate words:</strong> two rows are
+  fine when a coach tracks two things; the standard vocabulary gets its own review.
+  Plan: <em class="term">COACH_BUDGET_CATEGORY_IS_THE_SHELF_PLAN.md</em>. Round 1 below is kept as drawn.</p>
+</div>
+
+<section>
+  <span class="sec-no">01 — The finding</span>
+  <h2>One root cause, and it explains both of your questions</h2>
+  <div class="measure">
+    <p class="lede">Every budget word a coach picks lives in a category, and the picker is organised
+    entirely around that: <strong>TOURNAMENTS</strong>, <strong>FUNDRAISING</strong>,
+    <strong>SPONSORSHIP</strong>. It is the only vocabulary they are shown at the moment of
+    choosing.</p>
+
+    <p>Then the category disappears. In the <em class="term">What am I forgetting?</em> list it
+    survives only as a desktop tooltip — invisible on a phone — so fifty-seven words arrive as one
+    undifferentiated wall. And on the money-in side of the plan it disappears completely: the row
+    carries the item name alone, and the heading above it is not a category at all.</p>
+
+    <p>That is why <em>"where is that tournament item I just put in the budget?"</em> is the right
+    question to be asking. It is the same missing thing, one screen later.</p>
+  </div>
+
+  <div class="note flagged">
+    <span class="nlab">Before we go further — the third one is already your ruling</span>
+    <p>Your fundraising ruling of <strong>8 September</strong> settled it: <em>"Tournaments reports
+    as other income, <strong>grouped as its own category inside other income, beside Other
+    Income</strong>."</em> The first half shipped. The second half — the grouping — appears once in
+    the plan, inside the ruling, and <strong>never in a build step</strong>. It was recorded and
+    never scheduled.</p>
+    <p>So this is not a decision to reopen. It is a decision to finish. The only open part is
+    <em>how far</em> to finish it, which is §05.</p>
+  </div>
+</section>
+
+<section>
+  <span class="sec-no">02 — What a coach sees today</span>
+  <h2>Fifty-seven words, no structure, one of them twice</h2>
+  <div class="measure">
+    <p>This is the real list, in the real order, for a team with an empty plan. Nothing here is
+    invented — these are the platform's standard words as they render today.</p>
+  </div>
+
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Budget Plan · the strip expanded</span>
+      <span class="tag t-today">Today</span>
+      <span class="spec-note">720px · true size</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf pf-desk">
+        <div class="pf-close"><span>Planned funding</span><span class="num">$4,762.00</span></div>
+        <div class="pf-ask"><b>Hide</b><span>· 57 items</span></div>
+        <div class="chips">
+          <span class="chip"><span class="lab">+ Entry Fees</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Registration revenue</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Concession revenue</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Gate / admission</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Officials</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Diamond Permits</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Dome Time</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Cage or tunnel rental</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Field Equipment</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Lighting Fees</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Indoor space</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Umpire Fees</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Plate Fees</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Certification</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Referee fees</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Jerseys</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Hats</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Balls</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Bats</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Bags</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Pants</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Socks</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Helmets</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Coach &amp; staff apparel</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Coaching Clinics</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Off-Season Training</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Skills instruction</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Strength &amp; conditioning</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Practice equipment</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Year-End Party</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Photo Day</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Awards Night</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Banquet</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Player awards &amp; gifts</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Registration Fees</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Insurance</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Association Dues</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Software</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Clinics</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Certifications</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Honorariums</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Travel</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Supplies</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Venue</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Printing</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Fundraising drive</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Merchandise sales</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Team sponsorship</span><span class="x">✕</span></span>
+          <span class="chip anno-in"><span class="lab">+ Grant</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Transport</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Accommodation</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Team meals</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ League registration</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Association fees</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Insurance</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Software &amp; subscriptions</span><span class="x">✕</span></span>
+          <span class="chip"><span class="lab">+ Bank &amp; payment fees</span><span class="x">✕</span></span>
+        </div>
+        <p class="pf-foot">+ adds it to your budget — you type the amount. ✕ hides one your team doesn't pay for.</p>
+      </div>
+    </div>
+    <div class="legend">
+      <i><span class="sw"></span> money coming in — 7 words out of 57</i>
+      <i>An annotation on this mockup. The product draws no such marker.</i>
+    </div>
+    <p class="spec-cap">The seven money-in words sit at positions <strong>2, 3, 4</strong> and then
+    <strong>46, 47, 48, 49</strong>. A coach scanning this has no way to know a funding side of the
+    list exists — which is precisely what the walk step asked them to find.</p>
+  </div>
+
+  <h3>And the list argues with itself</h3>
+  <div class="measure">
+    <p>The standard vocabulary was seeded twice — nine categories in May, three more (Travel,
+    League&nbsp;&amp;&nbsp;Fees, Sponsorship) in August — and the two sets were never reconciled. So
+    the tail of the list restates its own middle:</p>
+  </div>
+  <div class="cmp-wrap">
+    <table class="cmp">
+      <thead><tr><th>Seeded in May, under…</th><th>Seeded in August, under…</th><th>What a coach sees</th></tr></thead>
+      <tbody>
+        <tr><th>Admin → Insurance</th><td>League &amp; Fees → Insurance</td><td class="no">Identical. Word for word.</td></tr>
+        <tr><th>Admin → Association Dues</th><td>League &amp; Fees → Association fees</td><td class="no">Two words, one meaning</td></tr>
+        <tr><th>Admin → Software</th><td>League &amp; Fees → Software &amp; subscriptions</td><td class="no">Two words, one meaning</td></tr>
+        <tr><th>Admin → Registration Fees</th><td>League &amp; Fees → League registration</td><td class="no">Two words, one meaning</td></tr>
+        <tr><th>Officials → Certification</th><td>Coaching → Certifications</td><td class="no">Singular and plural</td></tr>
+        <tr><th>Coaching → Clinics</th><td>Training → Coaching Clinics</td><td class="no">Two words, one meaning</td></tr>
+        <tr><th>Coaching → Travel</th><td>Travel — a whole category</td><td class="no">An item and a category, same word</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="measure">
+    <p><strong>Four of League &amp; Fees' five words restate Admin's.</strong> A coach who taps one
+    and meets the other forty chips later has been told they forgot something they did not forget.
+    Grouping by category <em>makes the two Insurances legible</em> — one sits under Admin, one under
+    League &amp; Fees — but it does not make the duplication correct.</p>
+  </div>
+</section>
+
+<section>
+  <span class="sec-no">03 — The two vocabularies</span>
+  <h2>The picker says "Tournaments". The plan never says it again.</h2>
+  <div class="measure">
+    <p>Here is the round trip, drawn side by side: the coach files a concession stand under
+    Tournaments, saves, and goes looking for it.</p>
+  </div>
+
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Pick → save → look for it</span>
+      <span class="tag t-today">Today</span>
+      <span class="spec-note">the disjoint, in one picture</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf-row">
+        <div class="pf pick">
+          <div class="pick-lab">Category &amp; Item *</div>
+          <div class="pick-field">Search what this is — e.g. "sponsorship", "grant"</div>
+          <div class="pick-list">
+            <div class="pick-cat">Tournaments</div>
+            <div class="pick-item"><span>Concession revenue</span><span class="std">Standard</span></div>
+            <div class="pick-item"><span>Gate / admission</span><span class="std">Standard</span></div>
+            <div class="pick-item"><span>Registration revenue</span><span class="std">Standard</span></div>
+            <div class="pick-cat">Fundraising</div>
+            <div class="pick-item"><span>Fundraising drive</span><span class="std">Standard</span></div>
+            <div class="pick-item"><span>Merchandise sales</span><span class="std">Standard</span></div>
+            <div class="pick-cat">Sponsorship</div>
+            <div class="pick-item"><span>Grant</span><span class="std">Standard</span></div>
+          </div>
+        </div>
+        <div class="arrow-note">the coach<br>chooses a<br>CATEGORY<br>▶</div>
+        <div class="pf" style="width:330px;">
+          <table class="led">
+            <tr class="band"><th colspan="2">Funding</th></tr>
+            <tr class="kind"><th>Fundraising</th><td class="n">$1,200.00</td></tr>
+            <tr class="ln"><th>Fall bottle drive</th><td class="n">$800.00</td></tr>
+            <tr class="ln"><th>Chocolate sale</th><td class="n">$400.00</td></tr>
+            <tr class="kind"><th>Sponsorship</th><td class="n">$2,500.00</td></tr>
+            <tr class="ln"><th>Riverdale Dental</th><td class="n">$2,500.00</td></tr>
+            <tr class="kind"><th>Other income</th><td class="n">$1,062.00</td></tr>
+            <tr class="ln lost"><th>Concession revenue</th><td class="n">$400.00</td></tr>
+            <tr class="ln lost"><th>Gate / admission</th><td class="n">$250.00</td></tr>
+            <tr class="ln lost"><th>Registration revenue</th><td class="n">$400.00</td></tr>
+            <tr class="ln"><th>Interest</th><td class="n">$12.00</td></tr>
+            <tr class="tot"><th>Planned funding</th><td class="n">$4,762.00</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="spec-cap">Example figures. The three marked rows are the tournament the team hosted.
+    <strong>The word "Tournaments" appears nowhere on the plan's funding side</strong> — not as a
+    heading, and not on the row, which carries the item name alone. The coach's own filing word has
+    been discarded between one screen and the next.</p>
+  </div>
+
+  <div class="note">
+    <span class="nlab">Worth knowing — it is not only Tournaments</span>
+    <p>Every money-in category that is not literally <em>Fundraising</em> or <em>Sponsorship</em>
+    lands in <em>Other income</em>, including any category a coach invents. Tournaments is simply
+    the only <strong>standard</strong> one, which is what makes it look like a one-off. The moment a
+    coach makes a "Bingo" category and puts money-in words in it, their bingo money reports as other
+    income too.</p>
+  </div>
+</section>
+
+<section>
+  <span class="sec-no">04 — Part one</span>
+  <h2>Fixing the forgetting list</h2>
+  <div class="measure">
+    <p>Two options. Both use the category as the <em>structure</em> rather than a tooltip, both use
+    the form's own direction words as headings, and <strong>neither uses colour</strong> — that is
+    settled: colour is reserved for cash, and a budget word is neither good news nor bad.</p>
+    <p>One shape is ruled out before we start. A "best five, plus 52 more" list was already rejected
+    in the §133 second look, because naming an arbitrary handful out of fifty-odd is a truncated
+    list, not an offer. Both options below show the whole count honestly.</p>
+  </div>
+
+  <h3>Option A — the category index</h3>
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Option A · both sides collapse to categories</span>
+      <span class="tag t-new">New</span>
+      <span class="tag t-unch">Ask + count row unchanged</span>
+      <span class="spec-note">720px · true size</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf pf-desk">
+        <div class="pf-close"><span>Planned funding</span><span class="num">$4,762.00</span></div>
+        <div class="pf-ask"><b>Hide</b><span>· 57 items in 12 categories</span></div>
+
+        <div class="dir-head"><span class="t">Money coming in</span><span class="n">7</span></div>
+        <div class="cat-grid">
+          <span class="cat-btn">Tournaments <span class="ct">3</span></span>
+          <span class="cat-btn">Fundraising <span class="ct">2</span></span>
+          <span class="cat-btn">Sponsorship <span class="ct">2</span></span>
+        </div>
+
+        <div class="dir-head"><span class="t">Money the team spends</span><span class="n">50</span></div>
+        <div class="cat-grid">
+          <span class="cat-btn open">Team Gear <span class="ct">9</span></span>
+        </div>
+        <div class="cat-open-body">
+          <div class="chips" style="margin-top:0;">
+            <span class="chip"><span class="lab">+ Jerseys</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Hats</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Balls</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Bats</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Bags</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Pants</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Socks</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Helmets</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Coach &amp; staff apparel</span><span class="x">✕</span></span>
+          </div>
+        </div>
+        <div class="cat-grid">
+          <span class="cat-btn">Facilities <span class="ct">6</span></span>
+          <span class="cat-btn">Events <span class="ct">5</span></span>
+          <span class="cat-btn">League &amp; Fees <span class="ct">5</span></span>
+          <span class="cat-btn">Training <span class="ct">5</span></span>
+          <span class="cat-btn">Admin <span class="ct">4</span></span>
+          <span class="cat-btn">Coaching <span class="ct">4</span></span>
+          <span class="cat-btn">Officials <span class="ct">4</span></span>
+          <span class="cat-btn">Fundraising <span class="ct">3</span></span>
+          <span class="cat-btn">Travel <span class="ct">3</span></span>
+          <span class="cat-btn">Tournaments <span class="ct">2</span></span>
+        </div>
+        <p class="pf-foot">Open a category to add from it. ✕ hides a word your team doesn't pay for.</p>
+      </div>
+    </div>
+    <p class="spec-cap"><strong>Fourteen rows instead of fifty-seven chips</strong>, with Team Gear
+    shown open. Tournaments and Fundraising appear on both sides because they genuinely hold both
+    kinds of word — the structure telling the truth, not a bug. The count shrinks on its own as the
+    coach budgets, and a category with nothing left in it stops appearing at all.</p>
+  </div>
+
+  <h3>Option B — show the short side, index the long one</h3>
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Option B · money-in in full, costs collapsed</span>
+      <span class="tag t-new">New</span>
+      <span class="tag t-unch">Ask + count row unchanged</span>
+      <span class="spec-note">720px · true size</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf pf-desk">
+        <div class="pf-close"><span>Planned funding</span><span class="num">$4,762.00</span></div>
+        <div class="pf-ask"><b>Hide</b><span>· 57 items in 12 categories</span></div>
+
+        <div class="dir-head"><span class="t">Money coming in</span><span class="n">7</span></div>
+        <div class="cat-line">
+          <span class="cat-name">Tournaments</span>
+          <span class="cat-chips">
+            <span class="chip"><span class="lab">+ Registration revenue</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Concession revenue</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Gate / admission</span><span class="x">✕</span></span>
+          </span>
+        </div>
+        <div class="cat-line">
+          <span class="cat-name">Fundraising</span>
+          <span class="cat-chips">
+            <span class="chip"><span class="lab">+ Fundraising drive</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Merchandise sales</span><span class="x">✕</span></span>
+          </span>
+        </div>
+        <div class="cat-line">
+          <span class="cat-name">Sponsorship</span>
+          <span class="cat-chips">
+            <span class="chip"><span class="lab">+ Team sponsorship</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Grant</span><span class="x">✕</span></span>
+          </span>
+        </div>
+
+        <div class="dir-head"><span class="t">Money the team spends</span><span class="n">50</span></div>
+        <div class="cat-grid">
+          <span class="cat-btn">Team Gear <span class="ct">9</span></span>
+          <span class="cat-btn">Facilities <span class="ct">6</span></span>
+          <span class="cat-btn">Events <span class="ct">5</span></span>
+          <span class="cat-btn">League &amp; Fees <span class="ct">5</span></span>
+          <span class="cat-btn">Training <span class="ct">5</span></span>
+          <span class="cat-btn">Admin <span class="ct">4</span></span>
+          <span class="cat-btn">Coaching <span class="ct">4</span></span>
+          <span class="cat-btn">Officials <span class="ct">4</span></span>
+          <span class="cat-btn">Fundraising <span class="ct">3</span></span>
+          <span class="cat-btn">Travel <span class="ct">3</span></span>
+          <span class="cat-btn">Tournaments <span class="ct">2</span></span>
+        </div>
+        <p class="pf-foot">Open a category to add from it. ✕ hides a word your team doesn't pay for.</p>
+      </div>
+    </div>
+    <p class="spec-cap">The asymmetry is the argument: <strong>the list opens what fits.</strong>
+    Seven money-in words fit on three lines and are the ones a coach most often has not thought
+    about; fifty cost words do not fit, and are the ones they have been working through all evening.
+    The cost side behaves exactly as in Option A.</p>
+  </div>
+
+  <h3>On a phone, where it matters most</h3>
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Phone · today, beside Option B</span>
+      <span class="tag t-today">Today (left)</span>
+      <span class="tag t-new">Option B (right)</span>
+      <span class="spec-note">390px · true size — open this on your phone</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf-row">
+        <div class="pf pf-phone">
+          <div class="pf-ask"><b>Hide</b><span>· 57 items</span></div>
+          <div class="chips">
+            <span class="chip"><span class="lab">+ Entry Fees</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Registration revenue</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Concession revenue</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Gate / admission</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Officials</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Diamond Permits</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Dome Time</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Cage or tunnel rental</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Field Equipment</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Lighting Fees</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Indoor space</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Umpire Fees</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Plate Fees</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Certification</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Referee fees</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Jerseys</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Hats</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Balls</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Bats</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Bags</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Pants</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Socks</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Helmets</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Coach &amp; staff apparel</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Coaching Clinics</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Off-Season Training</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Skills instruction</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Strength &amp; conditioning</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Practice equipment</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Year-End Party</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Photo Day</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Awards Night</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Banquet</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Player awards &amp; gifts</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Registration Fees</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Insurance</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Association Dues</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Software</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Clinics</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Certifications</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Honorariums</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Travel</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Supplies</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Venue</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Printing</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Fundraising drive</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Merchandise sales</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Team sponsorship</span><span class="x">✕</span></span>
+            <span class="chip anno-in"><span class="lab">+ Grant</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Transport</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Accommodation</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Team meals</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ League registration</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Association fees</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Insurance</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Software &amp; subscriptions</span><span class="x">✕</span></span>
+            <span class="chip"><span class="lab">+ Bank &amp; payment fees</span><span class="x">✕</span></span>
+          </div>
+        </div>
+
+        <div class="pf pf-phone">
+          <div class="pf-ask"><b>Hide</b><span>· 57 items in 12 categories</span></div>
+          <div class="dir-head"><span class="t">Money coming in</span><span class="n">7</span></div>
+          <div class="cat-line stackp">
+            <span class="cat-name">Tournaments</span>
+            <span class="cat-chips">
+              <span class="chip"><span class="lab">+ Registration revenue</span><span class="x">✕</span></span>
+              <span class="chip"><span class="lab">+ Concession revenue</span><span class="x">✕</span></span>
+              <span class="chip"><span class="lab">+ Gate / admission</span><span class="x">✕</span></span>
+            </span>
+          </div>
+          <div class="cat-line stackp">
+            <span class="cat-name">Fundraising</span>
+            <span class="cat-chips">
+              <span class="chip"><span class="lab">+ Fundraising drive</span><span class="x">✕</span></span>
+              <span class="chip"><span class="lab">+ Merchandise sales</span><span class="x">✕</span></span>
+            </span>
+          </div>
+          <div class="cat-line stackp">
+            <span class="cat-name">Sponsorship</span>
+            <span class="cat-chips">
+              <span class="chip"><span class="lab">+ Team sponsorship</span><span class="x">✕</span></span>
+              <span class="chip"><span class="lab">+ Grant</span><span class="x">✕</span></span>
+            </span>
+          </div>
+          <div class="dir-head"><span class="t">Money the team spends</span><span class="n">50</span></div>
+          <div class="cat-grid">
+            <span class="cat-btn">Team Gear <span class="ct">9</span></span>
+            <span class="cat-btn">Facilities <span class="ct">6</span></span>
+            <span class="cat-btn">Events <span class="ct">5</span></span>
+            <span class="cat-btn">League &amp; Fees <span class="ct">5</span></span>
+            <span class="cat-btn">Training <span class="ct">5</span></span>
+            <span class="cat-btn">Admin <span class="ct">4</span></span>
+            <span class="cat-btn">Coaching <span class="ct">4</span></span>
+            <span class="cat-btn">Officials <span class="ct">4</span></span>
+            <span class="cat-btn">Fundraising <span class="ct">3</span></span>
+            <span class="cat-btn">Travel <span class="ct">3</span></span>
+            <span class="cat-btn">Tournaments <span class="ct">2</span></span>
+          </div>
+          <p class="pf-foot">Open a category to add from it.</p>
+        </div>
+      </div>
+    </div>
+    <p class="spec-cap">Same 390px width, same type sizes. The left frame is the current strip
+    expanded on a phone — the money-in words at positions 46&ndash;49 sit roughly a screen and a half
+    down. <strong>This is the specimen that decides it.</strong> Check the category buttons with your
+    thumb: they are drawn at the portal's ≤768px touch floor, and that only reads true at real
+    size on real glass.</p>
+  </div>
+</section>
+
+<section>
+  <span class="sec-no">05 — Part two</span>
+  <h2>Where the tournament money went</h2>
+  <div class="measure">
+    <p>Same principle, different screen. Today the cost side of the plan groups by category and the
+    funding side does not — it groups by <em>how the number gets filled in</em>, which is a fact
+    about our plumbing rather than about the coach's season.</p>
+    <p>Two ways to finish it. Both put the word "Tournaments" back on the plan.</p>
+  </div>
+
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Option 1 · the category nests inside Other income</span>
+      <span class="tag t-new">New</span>
+      <span class="spec-note">= the 8 Sept ruling, exactly as written</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf" style="width:420px;">
+        <table class="led">
+          <tr class="band"><th colspan="2">Funding</th></tr>
+          <tr class="kind"><th>Fundraising</th><td class="n">$1,200.00</td></tr>
+          <tr class="ln"><th>Fall bottle drive</th><td class="n">$800.00</td></tr>
+          <tr class="ln"><th>Chocolate sale</th><td class="n">$400.00</td></tr>
+          <tr class="kind"><th>Sponsorship</th><td class="n">$2,500.00</td></tr>
+          <tr class="ln"><th>Riverdale Dental</th><td class="n">$2,500.00</td></tr>
+          <tr class="kind"><th>Other income</th><td class="n">$1,062.00</td></tr>
+          <tr class="sub gained"><th>Tournaments</th><td class="n">$1,050.00</td></tr>
+          <tr class="ln deep"><th>Registration revenue</th><td class="n">$400.00</td></tr>
+          <tr class="ln deep"><th>Concession revenue</th><td class="n">$400.00</td></tr>
+          <tr class="ln deep"><th>Gate / admission</th><td class="n">$250.00</td></tr>
+          <tr class="sub"><th>Other Income</th><td class="n">$12.00</td></tr>
+          <tr class="ln deep"><th>Interest</th><td class="n">$12.00</td></tr>
+          <tr class="tot"><th>Planned funding</th><td class="n">$4,762.00</td></tr>
+        </table>
+      </div>
+    </div>
+    <p class="spec-cap">The three shelves survive; categories nest inside the typed one. Answers the
+    question and changes nothing else. <strong>The cost:</strong> the funding side is now four levels
+    deep — band, shelf, category, line — where the cost side is three, and a coach reads
+    "Other income → Other Income", a heading apologising for itself.</p>
+  </div>
+
+  <div class="spec">
+    <div class="spec-bar">
+      <span class="spec-name">Option 2 · the category IS the shelf, on both sides</span>
+      <span class="tag t-new">New</span>
+      <span class="spec-note">larger change · simpler result</span>
+    </div>
+    <div class="spec-body">
+      <div class="pf" style="width:420px;">
+        <table class="led">
+          <tr class="band"><th colspan="2">Funding</th></tr>
+          <tr class="kind"><th>Fundraising</th><td class="n">$1,200.00</td></tr>
+          <tr class="ln"><th>Fall bottle drive</th><td class="n">$800.00</td></tr>
+          <tr class="ln"><th>Chocolate sale</th><td class="n">$400.00</td></tr>
+          <tr class="kind"><th>Sponsorship</th><td class="n">$2,500.00</td></tr>
+          <tr class="ln"><th>Riverdale Dental</th><td class="n">$2,500.00</td></tr>
+          <tr class="kind gained"><th>Tournaments</th><td class="n">$1,050.00</td></tr>
+          <tr class="ln"><th>Registration revenue</th><td class="n">$400.00</td></tr>
+          <tr class="ln"><th>Concession revenue</th><td class="n">$400.00</td></tr>
+          <tr class="ln"><th>Gate / admission</th><td class="n">$250.00</td></tr>
+          <tr class="kind"><th>Other income</th><td class="n">$12.00</td></tr>
+          <tr class="ln"><th>Interest</th><td class="n">$12.00</td></tr>
+          <tr class="tot"><th>Planned funding</th><td class="n">$4,762.00</td></tr>
+        </table>
+      </div>
+    </div>
+    <p class="spec-cap">Both sides of the plan now group by category, full stop — the same rule the
+    coach already knows from the cost side. Fundraising and Sponsorship keep their headings because
+    those <em>are</em> the category names; they simply stop being a special case. "Other income"
+    stops being a catch-all and becomes what it actually is: the standard category holding interest,
+    rebates and donations. And a coach who invents a "Bingo" category gets a Bingo heading, exactly
+    as they would on the cost side.</p>
+  </div>
+
+  <div class="cmp-wrap">
+    <table class="cmp">
+      <thead><tr><th>&nbsp;</th><th>Option 1 — nest inside</th><th>Option 2 — category is the shelf</th></tr></thead>
+      <tbody>
+        <tr><th>Answers "where's my tournament money?"</th><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+        <tr><th>Matches the 8 Sept ruling as written</th><td class="yes">Exactly</td><td>Goes further than it</td></tr>
+        <tr><th>Both sides of the plan read the same way</th><td class="no">No — funding is a level deeper</td><td class="yes">Yes</td></tr>
+        <tr><th>A coach-invented category gets its own heading</th><td class="no">Only nested, under Other income</td><td class="yes">Yes, like any cost category</td></tr>
+        <tr><th>"Other income → Other Income"</th><td class="no">Happens, and reads badly</td><td class="yes">Cannot happen</td></tr>
+        <tr><th>Surfaces touched</th><td>The plan list only — a display change</td><td>The plan list, the by-period grid, Budget vs. Actual and both exports</td></tr>
+        <tr><th>Risk</th><td>Low.</td><td>Moderate. The grouping rule moves on four surfaces at once, and every one must agree or two screens will disagree about a subtotal.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <span class="sec-no">06 — Recommendation</span>
+  <h2>What I would do, and in what order</h2>
+  <div class="measure">
+    <ul class="pts">
+      <li><strong>Option B for the forgetting list.</strong> It shows the seven words a coach most
+      often forgets, in full, with their category — and indexes the fifty they already know about.
+      Option A is the fallback if the asymmetry bothers you once you see it on your phone.</li>
+      <li><strong>Option 2 for the plan</strong>, on the argument that one rule beats two: a coach
+      files by category on both sides, so both sides should report by category. Option 1 is the
+      lower-risk way to keep your ruling's promise if you would rather not move the grouping rule
+      across four surfaces at once.</li>
+      <li class="flag"><strong>The duplicate vocabulary is its own decision, and it needs you.</strong>
+      Merging two shelves that mean the same thing moves any budget line already filed under the
+      loser, so it is a data change with a blast radius, not a spelling fix.</li>
+    </ul>
+    <p>None of the three is blocked by the others; they can ship in any order.</p>
+  </div>
+
+  <h3>What I need from you before anything is built</h3>
+
+  <div class="q">
+    <span class="qn">Question 1 — the forgetting list</span>
+    <h4>A or B?</h4>
+    <p>Open the phone specimen in §04 on your actual handset before answering. The whole case for B
+    is that the seven money-in words are visible without a tap, and that only reads true at real
+    size.</p>
+  </div>
+
+  <div class="q">
+    <span class="qn">Question 2 — the plan</span>
+    <h4>Finish the ruling as written, or go the whole way?</h4>
+    <p>Option 1 is your 8 September ruling built exactly as recorded. Option 2 is the simpler end
+    state and the bigger change. I lean to 2, and I would understand 1.</p>
+  </div>
+
+  <div class="q">
+    <span class="qn">Question 3 — the standard vocabulary</span>
+    <h4>What happens to the two Insurances?</h4>
+    <p>Three ways out, in rising order of effort. <strong>Leave them</strong> — grouping by category
+    at least makes them legible. <strong>Stop offering the older duplicates</strong> in the
+    forgetting list while both categories stay — cheap, and no existing line moves.
+    <strong>Merge the categories properly</strong> — the honest fix, and the one that moves data.</p>
+    <p>I would take the middle option now and hold the merge until you want to touch the standard
+    vocabulary for other reasons.</p>
+  </div>
+
+  <div class="note">
+    <span class="nlab">Not in scope, deliberately</span>
+    <p>Colour coding by direction. Ruled out on 2 September — colour is reserved for cash, because
+    cash is the one figure with a stable good/bad reading. Green on <em>Grant</em> and red on
+    <em>Umpire Fees</em> would congratulate a coach for planning income and scold them for planning a
+    cost, when both are just the plan being filled in.</p>
+  </div>
+</section>
+
+<footer class="end">
+  <span>FieldLogicHQ · Coach Portal</span>
+  <span>Budget Plan · the standard vocabulary</span>
+  <span>Mockup round 1 · 9 Sept 2026</span>
+  <span>Nothing built — awaiting sign-off</span>
+</footer>
+
+</div>

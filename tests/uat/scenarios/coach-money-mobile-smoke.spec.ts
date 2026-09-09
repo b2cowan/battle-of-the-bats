@@ -873,6 +873,9 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     const strip = page.getByTestId('budget-checklist');
     await strip.getByRole('button', { name: /what am i forgetting/i }).click();
 
+    // Option A (owner ruling 2026-09-09): the list is an INDEX — a word's chip sits inside its
+    // category, so Coaching opens first and "+ Travel" (Coaching → Travel) appears beneath it.
+    await strip.getByRole('button', { name: /^Coaching\b/ }).click();
     // + opens the NORMAL Add Line modal: category+item prefilled, amount empty — the
     // coach types the number.
     await strip.getByRole('button', { name: '+ Travel', exact: true }).click();
@@ -886,13 +889,16 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await expect(page.getByText(/discard this budget line/i)).toHaveCount(0);
     await expect(page.getByText(/add budget line/i)).toHaveCount(0);
 
-    // ✕ dismisses an item this team doesn't pay for — and the device remembers.
+    // ✕ dismisses an item this team doesn't pay for — and the device remembers. Plate Fees and
+    // Umpire Fees both live under Officials, which opens first (one category open at a time).
+    await strip.getByRole('button', { name: /^Officials\b/ }).click();
     await strip.getByRole('button', { name: /we don't pay for plate fees/i }).click();
     await expect(strip.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
     await page.reload();
     await expect(page.locator('main[class*="coachesMain"]').locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
     const strip2 = page.getByTestId('budget-checklist');
     await strip2.getByRole('button', { name: /what am i forgetting/i }).click();
+    await strip2.getByRole('button', { name: /^Officials\b/ }).click();
     await expect(strip2.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
     await expect(strip2.getByRole('button', { name: '+ Umpire Fees', exact: true })).toBeVisible();
   });

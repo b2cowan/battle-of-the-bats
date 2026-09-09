@@ -16,7 +16,7 @@ import { monthKeyOf, monthYearBands, periodRangeLabel, MONTH_WINDOW } from '@/li
 import ColumnPager from '@/components/coaches/ColumnPager';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import { todayLocal } from '@/lib/measurable-format';
-import { rollupBudget } from '@/lib/coach-budget-rollup';
+import { rollupBudget, categoryGroupOf, groupByCategory, type CategoryGroupRef } from '@/lib/coach-budget-rollup';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
   BUDGET_PLAN_COLUMNS, budgetPlanStatementRows, budgetPeriodGridColumns, budgetPeriodGridRows,
@@ -27,8 +27,8 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { fmtCompact } from '@/lib/coach-money-summary';
 import { toggleKey } from '@/lib/toggle-key';
 import {
-  computeBudgetTotals, LINE_KIND_SECTION, PLAN_LADDER_LABEL, budgetLineKindForItem,
-  isFundingKind, normalizeBudgetLineKind, FUNDING_LINE_KINDS,
+  computeBudgetTotals, PLAN_LADDER_LABEL, budgetLineKindForItem,
+  isFundingKind,
   type BudgetLineKind, type BudgetItemActualSource,
 } from '@/lib/coach-budget-totals';
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
@@ -846,6 +846,57 @@ function sameLineForm(a: LineForm, b: LineForm): boolean {
  * Funding lines are deliberately absent: they are money coming IN, carry no category or item, and
  * have their own section at the foot of the plan.
  */
+/**
+ * Group FUNDING lines by CATEGORY (owner ruling 2026-09-09) — the same identity the cost half above
+ * and the Statement already use, through the rollup's one helper. They were grouped by their stored
+ * KIND before ("Fundraising · Sponsorship · Other income"), so a concession stand filed under
+ * Tournaments read under "Other income" here and under "Tournaments" on Budget vs. Actual. The kind
+ * stays a data fact (who fills the number in); it stops naming shelves.
+ */
+function groupFundingLines(lines: RepBudgetLineWithPeriods[], order: ReadonlyMap<string, number>) {
+  return groupByCategory(lines, categoryGroupOf, order).map(({ ref, items }) => ({
+    ref,
+    lines: items,
+    total: Math.round(items.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0) * 100) / 100,
+  }));
+}
+
+type ChecklistItem = {
+  id: string; name: string; categoryId: string; categoryName: string;
+  direction: BudgetItemDirection; actualSource: BudgetItemActualSource;
+};
+type ChecklistCategory = { key: string; ref: CategoryGroupRef; name: string; items: ChecklistItem[] };
+type ChecklistSide = { direction: BudgetItemDirection; name: string; count: number; categories: ChecklistCategory[] };
+
+/**
+ * The forgetting list as an INDEX (owner ruling 2026-09-09, mockup Option A): the form's two direction
+ * answers as headings, one entry per category with its count, the words themselves only inside an
+ * opened category. Fifty-seven flat chips — the seven money-in words at positions 2–4 and 46–49, the
+ * category only in a desktop tooltip — became fourteen rows. A category holding both kinds of word
+ * (Tournaments, Fundraising) appears under both headings, which is the structure telling the truth.
+ * ⚠ Money coming in FIRST: the shorter side, and the one a coach most often has not thought about.
+ */
+function groupChecklist(
+  items: ChecklistItem[], order: ReadonlyMap<string, number>,
+): { sides: ChecklistSide[]; categoryCount: number } {
+  const sides: ChecklistSide[] = [];
+  for (const direction of ['in', 'out'] as const) {
+    // The form's own words, never retyped — one spelling everywhere a coach reads a direction.
+    const answer = DIRECTION_ANSWERS.find(d => d.value === direction)!;
+    // A category on both sides appears under both headings — the key carries the direction so the
+    // two buttons never share an open state.
+    const categories: ChecklistCategory[] = groupByCategory(items.filter(it => it.direction === direction), categoryGroupOf, order)
+      .map(({ ref, items: words }) => ({ key: `${direction}:${ref.key}`, ref, name: ref.name, items: words }));
+    if (categories.length === 0) continue;
+    sides.push({
+      direction, name: answer.name,
+      count: categories.reduce((s, c) => s + c.items.length, 0),
+      categories,
+    });
+  }
+  return { sides, categoryCount: new Set(items.map(i => i.categoryId)).size };
+}
+
 function groupLines(lines: RepBudgetLineWithPeriods[]) {
   const byId = new Map(lines.map(l => [l.id, l]));
   const categories = rollupBudget(
@@ -954,10 +1005,10 @@ export function BudgetPlanPanel({
      collapse it too — one Set, two meanings. Caught in review 2026-08-13. */
   const [closedSections, setClosedSections] = useState<Set<string>>(new Set());
   const catKey = (name: string) => `cat:${name}`;
-  // One key per money-in KIND (`kind:funding`, `kind:sponsorship`) — built at the render site now
-  // that there are two sections. The `kind:` prefix is what keeps a cost category literally named
-  // "Expected funding" from sharing a key with the section and collapsing it too (review
-  // 2026-08-13, and the reason the prefix exists at all).
+  // One key per money-in CATEGORY (`group:id:<uuid>`) — built at the render site. The `group:`
+  // prefix is what keeps a cost section from sharing a key with the funding section of the SAME
+  // category (Tournaments legitimately has both) and collapsing with it (the reason the prefix has
+  // existed since review 2026-08-13, when it was `kind:`).
   const isClosed = (key: string) => closedSections.has(key);
   const toggleSectionClosed = (key: string) => setClosedSections(prev => toggleKey(prev, key));
 
@@ -1047,6 +1098,9 @@ export function BudgetPlanPanel({
   const [sampleOpen,         setSampleOpen]         = useState(false);
   const [checklistExpanded,  setChecklistExpanded]  = useState(false);
   const [dismissedChecklist, setDismissedChecklist] = useState<string[]>([]);
+  /** Which category of the forgetting list is open (Option A, 2026-09-09) — one at a time, nothing
+   *  open on arrival. Plain state, deliberately: the list is a device for one sitting. */
+  const [checklistOpenCat, setChecklistOpenCat] = useState<string | null>(null);
   // The dirty baseline for whatever the line modal is currently showing: BLANK for a plain add,
   // the prefilled form for a checklist-chip add, the loaded record for an edit. Set by every
   // path that opens the modal, so the guard can never count OUR prefill as the coach's work and
@@ -2095,14 +2149,23 @@ export function BudgetPlanPanel({
   const ownItemCount = useMemo(
     () => categories.reduce((n, c) => n + c.items.filter(i => i.teamId === teamId).length, 0),
     [categories, teamId]);
+  /* The picker's category order, so the funding sections (and the forgetting list's categories) read
+     in the order the coach chose them from — the List, the grid and the file all take the same map.
+     Memoised with the siblings above, for the same reason: this component's form state re-renders
+     on every keystroke, and the forgetting list's open/close state now re-renders it on every tap. */
+  const categoryOrder = useMemo(() => new Map(categories.map(c => [c.id, c.sortOrder])), [categories]);
+  /* ⚠ THE FILTERED SET, so the money-in sections narrow with the cost ones. Filtering only half the
+     list would leave a coach who asked for "No date yet" looking at every dated fundraising line as
+     well. */
+  const fundingGroups = useMemo(
+    () => groupFundingLines(shownLines.filter(l => isFundingKind(l.lineKind)), categoryOrder),
+    [shownLines, categoryOrder]);
+  const checklistIndex = useMemo(() => groupChecklist(checklistItems, categoryOrder), [checklistItems, categoryOrder]);
 
   if (ctxLoading) return <CoachLoading label="Loading your budget…" />;
   if (!assignment) return <p className={styles.muted}>Team not found.</p>;
 
-  /* ⚠ THE FILTERED SET, so the money-in sections narrow with the cost ones. Filtering only
-     half the list would leave a coach who asked for "No date yet" looking at every dated
-     fundraising line as well. */
-  const fundingLines = shownLines.filter(l => isFundingKind(l.lineKind));
+  const { sides: checklistSides, categoryCount: checklistCategoryCount } = checklistIndex;
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
   const moneyCanWrite = (page.capabilities?.money === 'write');
@@ -2112,9 +2175,7 @@ export function BudgetPlanPanel({
      means everything. */
   const sectionKeys = [
     ...groups.map(g => catKey(g.categoryName)),
-    ...FUNDING_LINE_KINDS
-      .filter(kind => fundingLines.some(l => normalizeBudgetLineKind(l.lineKind) === kind))
-      .map(kind => `kind:${kind}`),
+    ...fundingGroups.map(g => `group:${g.ref.key}`),
   ];
   const allSectionsClosed = sectionKeys.length > 0 && sectionKeys.every(k => closedSections.has(k));
   function toggleAllSections() {
@@ -2126,7 +2187,7 @@ export function BudgetPlanPanel({
      different shapes — and the button was rendered for the List alone, so a coach in the grid could
      only fold one category at a time. Null here IS "not in the grid": the view builds only where it
      is drawn, and the branch below reads that rather than re-testing the mode. */
-  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal }) : null;
+  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal, categoryOrder }) : null;
   const gridKeys = periodView ? periodView.groups.map(g => g.key) : [];
   const allGridClosed = gridKeys.length > 0 && gridKeys.every(k => gridClosed.has(k));
   const foldAll = periodView
@@ -2227,7 +2288,7 @@ export function BudgetPlanPanel({
       emptyMessage: 'There are no budget lines to export yet — build the plan first.',
     };
     if (viewMode === 'period' && format !== 'pdf') {
-      const view = buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal });
+      const view = buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal, categoryOrder });
       const columns = budgetPeriodGridColumns(view);
       const built = budgetPeriodGridRows(view);
       return {
@@ -2250,6 +2311,7 @@ export function BudgetPlanPanel({
       totals,
       duesAssessed,
       leftToFund,
+      categoryOrder,
     });
     return {
       dataset: 'budget-plan',
@@ -2853,27 +2915,26 @@ export function BudgetPlanPanel({
               {/* ── FUNDING — the band, one section per money-in kind, the subtotal.
                   Money in is shown POSITIVE in green (owner 2026-08-13: the label says the
                   direction; a minus sign made readers re-check arithmetic).
-                  ⚠ ONE SECTION PER MONEY-IN KIND (2026-08-15). Fundraising and sponsorship count
-                  identically — both subtract — but a single merged section could not answer the
-                  question the split was made for: "did our sponsorship hit the number?"
+                  ⚠ ONE SECTION PER MONEY-IN CATEGORY (owner ruling 2026-09-09; one per KIND from
+                  2026-08-15 until then). The category is the shelf on both sides of the plan, exactly
+                  as the Statement reads it — so "Tournaments" heads the concession stand here too,
+                  and "did our sponsorship hit the number?" is still one section's subtotal, because
+                  Sponsorship IS a category.
                   ⚠ FUNDING LINES ONLY. Player dues are the ANSWER to the plan, not an input — they
                   briefly sat inside this section and made its total −$8,000 while the ladder said
                   −$180 (owner catch, 2026-08-13); they close the list below instead.
                   ⚠ The subtotal wears the tile's exact name, "Planned funding" (owner ruling
                   2026-09-08) — "funding", not "fundraising", because it aggregates every kind. */}
-              {fundingLines.length > 0 && (
+              {fundingGroups.length > 0 && (
                 <>
                   <tr className={shared.moneyGridBand}>
                     <th scope="row" className={styles.lead}>{PLAN_LADDER_LABEL.fundingBand}</th>
                     <td className={styles.schedCell} /><td /><td />
                   </tr>
-                  {FUNDING_LINE_KINDS.map(kind => {
-                    const kindLines = fundingLines.filter(l => normalizeBudgetLineKind(l.lineKind) === kind);
-                    if (kindLines.length === 0) return null;
-                    const sectionKey = `kind:${kind}`;
-                    const sectionTotal = kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0);
+                  {fundingGroups.map(group => {
+                    const sectionKey = `group:${group.ref.key}`;
                     return (
-                      <Fragment key={kind}>
+                      <Fragment key={group.ref.key}>
                         <tr
                           className={`${shared.moneyGridCat} ${styles.fundingRow} ${shared.rowTappable}`}
                           onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(sectionKey); }}
@@ -2888,16 +2949,16 @@ export function BudgetPlanPanel({
                               {isClosed(sectionKey)
                                 ? <ChevronRight size={14} aria-hidden />
                                 : <ChevronDown size={14} aria-hidden />}
-                              <span>{LINE_KIND_SECTION[kind]}</span>
+                              <span>{group.ref.name}</span>
                             </button>
                           </th>
                           <td className={styles.schedCell} />
                           <td className={styles.fundingAmount}>
-                            {fmt(Math.round(sectionTotal * 100) / 100)}
+                            {fmt(group.total)}
                           </td>
                           <td />
                         </tr>
-                        {!isClosed(sectionKey) && kindLines.map(line => (
+                        {!isClosed(sectionKey) && group.lines.map(line => (
                           <BudgetLineRow
                             key={line.id}
                             line={line}
@@ -3038,34 +3099,71 @@ export function BudgetPlanPanel({
                 </button>
                 <span className={styles.checklistCount}>
                   · {checklistItems.length} item{checklistItems.length === 1 ? '' : 's'}
+                  {' '}in {checklistCategoryCount} categor{checklistCategoryCount === 1 ? 'y' : 'ies'}
                 </span>
               </p>
+              {/* Option A (owner ruling 2026-09-09, mockup 728dcb1e): an INDEX, not a wall. The
+                  form's two direction answers head the list, each category is one button carrying
+                  its count, and the words appear only inside the open category — so the seven
+                  money-in words a coach most often forgets are on the first screen of a phone
+                  instead of a screen and a half down, and "Insurance" twice reads as Admin's and
+                  League & Fees' rather than as a duplicate. Colour is not used to carry direction
+                  (colour is for cash, 2026-09-02); the heading carries it. */}
               {checklistExpanded && (
                 <div>
-                  <div className={styles.checklistChips}>
-                    {checklistItems.map(item => (
-                      <span key={item.id} className={styles.checklistChip}>
-                        <button
-                          type="button"
-                          className={styles.checklistAdd}
-                          title={item.categoryName}
-                          onClick={() => openAddFromChecklist(item)}
-                        >
-                          + {item.name}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.checklistDismiss}
-                          aria-label={`We don't pay for ${item.name} — hide it`}
-                          onClick={() => dismissChecklistItem(item.id)}
-                        >
-                          <X size={11} aria-hidden />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                  {checklistSides.map(side => (
+                    <div key={side.direction} className={styles.checklistSide}>
+                      <div className={styles.checklistSideHead}>
+                        <span className={styles.checklistSideName}>{side.name}</span>
+                        <span className={styles.checklistSideCount}>{side.count}</span>
+                      </div>
+                      <div className={styles.checklistCats}>
+                        {side.categories.map(cat => {
+                          const open = checklistOpenCat === cat.key;
+                          return (
+                            <button
+                              key={cat.key}
+                              type="button"
+                              className={`${styles.checklistCat} ${open ? styles.checklistCatOpen : ''}`}
+                              aria-expanded={open}
+                              onClick={() => setChecklistOpenCat(open ? null : cat.key)}
+                            >
+                              {cat.name}
+                              <span className={styles.checklistCatCount}>{cat.items.length}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {side.categories.filter(cat => cat.key === checklistOpenCat).map(cat => (
+                        <div key={cat.key} className={styles.checklistCatBody}>
+                          <div className={styles.checklistChips}>
+                            {cat.items.map(item => (
+                              <span key={item.id} className={styles.checklistChip}>
+                                <button
+                                  type="button"
+                                  className={styles.checklistAdd}
+                                  title={item.categoryName}
+                                  onClick={() => openAddFromChecklist(item)}
+                                >
+                                  + {item.name}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.checklistDismiss}
+                                  aria-label={`We don't pay for ${item.name} — hide it`}
+                                  onClick={() => dismissChecklistItem(item.id)}
+                                >
+                                  <X size={11} aria-hidden />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                   <p className={styles.checklistFoot}>
-                    + adds it to your budget — you type the amount. ✕ hides one your team
+                    Open a category to add from it — you type the amount. ✕ hides a word your team
                     doesn&apos;t pay for.
                   </p>
                 </div>

@@ -6,6 +6,7 @@ import {
   monthKeyOf, PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME,
   type MonthKey, type RevenueGroupKey,
 } from './coach-budget-months';
+import type { BudgetItemActualSource } from './coach-budget-totals';
 /* ⚠ THE TYPE ONLY. This module stays pure and framework-free; the club vocabulary's home is
    `coach-club-money`, and importing the union rather than re-declaring three strings is what stops
    a fourth answer reaching the report and silently missing the cash bands. */
@@ -83,6 +84,8 @@ export interface CashStripInputs {
     /** Where the coach filed it — the GROUPING for typed income, and the "what it repaid" line on
      *  money back. Both come off the record's own join; neither is re-derived here. */
     itemId: string | null; itemName: string | null; categoryName: string | null;
+    /** The category's identity — what the row is GROUPED under (owner ruling 2026-09-09). */
+    categoryId: string | null;
   }>;
   /**
    * Realised drive/sponsor entries, GROSS. A rebate is a CREDIT — a family sends less dues — never
@@ -101,6 +104,9 @@ export interface CashStripInputs {
      *  (owner ruling 2026-08-24): the credit already lowered that family's dues, so showing it as
      *  an amount beside gross would read as money leaving. */
     playerId: string | null; playerName: string | null; rebateAmount: number;
+    /** The budget category the drive or sponsor is RAISING FOR (mig 285) — where its cash reports.
+     *  Null on a record that names no line; that money falls to the platform shelf (`shelves`). */
+    raisingFor: { categoryId: string; categoryName: string | null } | null;
   }>;
   /**
    * Approved club requests, settled the day they were DECIDED (approval posts the transfer).
@@ -110,8 +116,8 @@ export interface CashStripInputs {
    * dollar arriving; this is a cash strip, and cash does not care what a dollar means:
    *   · `reimbursement` → the **Money back** group, because the club repaying a cost is the same
    *     species of arrival as a vendor refunding one ("Repaid by the club");
-   *   · `funding`       → **Other income**, on the row it was FILED under, exactly as a typed
-   *     arrival groups — because that is the only grouping a grant has;
+   *   · `funding`       → the **CATEGORY** it was filed under, on the row of its item, exactly as a
+   *     typed arrival groups (owner ruling 2026-09-09);
    *   · `cost`          → cash out, filed where the request itself was filed.
    *
    * ⚠ "Repaid by the club" now means only money back, which it did not before this release: every
@@ -140,6 +146,32 @@ export interface CashStripInputs {
   }>;
   /** Club allocation installments; only PAID ones are cash (on the day the team paid). */
   clubInstallments: Array<CashOutRecord & { paidAt: string | null }>;
+  /**
+   * The platform's two money-in shelves, for a drive or sponsor that names no line (a record
+   * migration 285 could not re-point). Its money still reports under the category its kind was
+   * always going to land on rather than vanishing from the band. Null = the shelf does not exist on
+   * this database, and the money lands in the nameless bucket — visible, never dropped.
+   */
+  shelves: {
+    fundraising: { categoryId: string; categoryName: string | null } | null;
+    sponsorship: { categoryId: string; categoryName: string | null } | null;
+  };
+}
+
+/**
+ * Where a drive's or sponsor's money reports (owner ruling 2026-09-09): the line it is RAISING FOR
+ * when it names one, else the platform shelf its kind was always going to land on — and, on a
+ * database with no such shelf, the nameless bucket rather than nowhere. The SOURCE is the record's
+ * kind either way. ⚠ THE one rule for this, read by the cash strip, the Months pledge rows and the
+ * Statement's unclaimed pool — it was written three times before it was written once.
+ */
+export function incomeCategoryFor(
+  raisingFor: { categoryId: string; categoryName: string | null } | null,
+  source: 'fundraiser' | 'sponsor',
+  shelves: CashStripInputs['shelves'],
+): CashRevenueCategory {
+  const at = raisingFor ?? (source === 'sponsor' ? shelves.sponsorship : shelves.fundraising);
+  return { categoryId: at?.categoryId ?? null, categoryName: at?.categoryName ?? null, incomeSource: source };
 }
 
 /**
@@ -168,9 +200,23 @@ export interface CashOutRecord {
   kind?: string | null;
 }
 
-/** One dollar of revenue, in its group, on the day it arrived. */
+/**
+ * The CATEGORY a revenue dollar reports under (owner ruling 2026-09-09) — a drive's, a sponsor's or a
+ * typed arrival's budget category, with who fills that category's number in. The two rows that are
+ * NOT categories (dues, money back) are a group key instead; an event's `where` is one or the other.
+ */
+export interface CashRevenueCategory {
+  categoryId: string | null;
+  categoryName: string | null;
+  incomeSource: BudgetItemActualSource;
+}
+
+/** One dollar of revenue — in its fixed group OR under its category — on the day it arrived. */
 export interface RevenueCashEvent {
-  group: RevenueGroupKey;
+  /** WHERE the dollar sits on the band: `dues` / `moneyback` (the two rows that are not budget
+   *  categories), or the category it reports under. One field, so the impossible states — neither,
+   *  or both — cannot be written. */
+  where: RevenueGroupKey | CashRevenueCategory;
   date: string | null;
   amount: number;
   /** The record's own id — the panel behind a cell lists records, and a list needs stable keys. */
@@ -272,13 +318,15 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
 
   /* ⚠ A ZERO IS NOT AN EVENT. Emitting it would put a row on the grid for a record that moved
      nothing and, worse, would widen the month range to the day it did not happen. */
+  /** A dollar of revenue — on one of the two FIXED rows (dues, money back) or under its CATEGORY
+   *  (owner ruling 2026-09-09). */
   const income = (
-    group: RevenueGroupKey, date: string | null, amount: number,
+    where: RevenueGroupKey | CashRevenueCategory, date: string | null, amount: number,
     rec: { id: string; subject: CashSubject; kind: string; description?: string | null; note?: string | null },
   ) => {
     if (!amount) return;
     revenue.push({
-      group, date, amount, id: rec.id, subject: rec.subject,
+      where, date, amount, id: rec.id, subject: rec.subject,
       kind: rec.kind, description: rec.description?.trim() || null, note: rec.note ?? null,
     });
     if (date) dates.push(date);
@@ -319,9 +367,10 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
       });
       continue;
     }
-    /* ⚠ TYPED INCOME GROUPS BY WHAT IT WAS FILED UNDER — the only grouping a typed arrival has.
-       An arrival against no item is its own row rather than a dollar with nowhere to sit. */
-    income('other', m.receivedDate, m.amount, {
+    /* ⚠ TYPED INCOME REPORTS UNDER THE CATEGORY IT WAS FILED IN, on the row of its item (owner
+       ruling 2026-09-09 — it was one "Other income" group before). An arrival against no item is
+       its own row rather than a dollar with nowhere to sit. */
+    income({ categoryId: m.categoryId, categoryName: m.categoryName, incomeSource: 'typed' }, m.receivedDate, m.amount, {
       id: `money-in-${m.id}`,
       subject: { id: m.itemId, name: m.itemName?.trim() || 'Not itemized' },
       kind: 'Income',
@@ -331,7 +380,7 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
   for (const e of x.realisedEntries) {
     const sponsor = e.kind === 'sponsor';
     income(
-      sponsor ? 'sponsorship' : 'fundraising',
+      incomeCategoryFor(e.raisingFor, sponsor ? 'sponsor' : 'fundraiser', x.shelves),
       e.receivedDate ?? orgDayKey(e.createdAt),
       e.amountRaised,
       {
@@ -369,13 +418,13 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
         note: repaidLabel({ categoryName: r.place.categoryName, itemName: r.itemName }),
       });
     } else if (r.side === 'funding') {
-      /* ⚠ THE SAME SHAPE AS TYPED INCOME, DELIBERATELY. A grant's only grouping is what it was
-         filed under, so it takes the filed word as its subject — which means a club grant and an
-         arrival the coach typed against the same item share one row, as they should: they are the
-         same money against the same word. ⚠ THE CLUB IS NAMED IN THE **KIND**, so the row says
-         where it came from without inventing a sixth revenue group for one source (D2's reasoning,
-         applied to the band: filing already answers "whose dollar is this?"). */
-      income('other', settledOn, r.amount, {
+      /* ⚠ THE SAME SHAPE AS TYPED INCOME, DELIBERATELY. A grant reports under the category it was
+         filed in and takes the filed word as its subject — which means a club grant and an arrival
+         the coach typed against the same item share one row, as they should: they are the same
+         money against the same word. ⚠ THE CLUB IS NAMED IN THE **KIND**, so the row says where it
+         came from without inventing a revenue group for one source (D2's reasoning, applied to the
+         band: filing already answers "whose dollar is this?"). */
+      income({ categoryId: r.place.categoryId, categoryName: r.place.categoryName, incomeSource: 'typed' }, settledOn, r.amount, {
         id: r.id,
         subject: { id: r.place.itemId, name: r.itemName?.trim() || 'Not itemized' },
         kind: 'From the club',

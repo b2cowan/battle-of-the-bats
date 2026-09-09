@@ -5,7 +5,7 @@ import {
   isElapsed, formatMonthLabel, formatMonthLong,
   lensCell, lensTotal, lensUndated, lensReadsPlan, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
   buildBandCashFlow, balanceShowsMonth, cellPanelSpec, panelRowWords, categoryHasFigure,
-  MONEY_LENSES, scheduledForward, revenueCategoryId,
+  MONEY_LENSES, scheduledForward, revenueCategoryId, REVENUE_GROUPS,
   type GridLine, type CategoryEvent, type MonthCell,
 } from '../../lib/coach-budget-months.ts';
 
@@ -60,7 +60,8 @@ describe('scheduledForward — the banner and the Scheduled note read ONE deriva
         // Committed dues, dated — belongs in the HEADLINE.
         { categoryId: revenueCategoryId('dues'), categoryName: 'Player dues', date: '2026-05-15', amount: 300 },
         // A pledge and a pending ask, undated — the "possible", never banked.
-        { categoryId: revenueCategoryId('sponsorship'), categoryName: 'Sponsorships', date: null, amount: 1170 },
+        // A pledge sits under its CATEGORY (owner ruling 2026-09-09) — an ordinary category row.
+        { categoryId: 'cat-sponsorship', categoryName: 'Sponsorship', date: null, amount: 1170 },
         { categoryId: revenueCategoryId('moneyback'), categoryName: 'Asked of the club', date: null, amount: 450 },
       ],
     });
@@ -643,10 +644,10 @@ describe('the band vocabulary', () => {
     // ⚠ THE SAME NAME ON EVERY LENS (owner 2026-08-24) — a dues instalment still to come IS player
     // dues. Only a group whose forward view is a DIFFERENT OBJECT gets renamed.
     assert.equal(revenueGroupLabel('dues', 'scheduled'), 'Player dues');
-    assert.equal(revenueGroupLabel('sponsorship', 'scheduled'), 'Sponsorships');
     assert.equal(revenueGroupLabel('moneyback', 'scheduled'), 'Asked of the club');
-    // A drive has no forward record; if one ever renders there it still says what it is.
-    assert.equal(revenueGroupLabel('fundraising', 'scheduled'), 'Fundraising');
+    // Fundraising, Sponsorship, Tournaments … are not groups any more (owner ruling 2026-09-09):
+    // they are category rows and take their category's name under every lens, on the grid itself.
+    assert.deepEqual([...REVENUE_GROUPS], ['dues', 'moneyback']);
   });
 
   it('a band total takes the lens own adjective, on screen and in the file alike', () => {
@@ -662,7 +663,9 @@ describe('the band vocabulary', () => {
      re-labelling — which looks like nothing at all going wrong. */
   it('recognises a revenue group from either spelling of its key, and nothing else', () => {
     assert.equal(revenueGroupOf('id:revenue:dues'), 'dues');
-    assert.equal(revenueGroupOf('revenue:sponsorship'), 'sponsorship');
+    assert.equal(revenueGroupOf('revenue:moneyback'), 'moneyback');
+    // Sponsorship is a CATEGORY now, not a group (owner ruling 2026-09-09) — its old key means nothing.
+    assert.equal(revenueGroupOf('revenue:sponsorship'), null);
     assert.equal(revenueGroupOf('id:cat-1'), null);
     assert.equal(revenueGroupOf('name:facilities'), null);
     assert.equal(revenueGroupOf('id:revenue:not-a-group'), null);
@@ -691,11 +694,12 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
      coach chasing a drive wants the second. At the GROUP's grain there is no single drive, so the
      second door is the hub — the right grain rather than no door at all. */
   it('a drive opens THAT drive; the whole group opens the hub', () => {
-    const one = cellPanelSpec({ group: 'fundraising' }, 'actual', { id: 'drive-1', name: 'Bottle drive' });
+    // A category row (owner ruling 2026-09-09): no group — the category's INCOME SOURCE picks the doors.
+    const one = cellPanelSpec({ group: null, incomeSource: 'fundraiser' }, 'actual', { id: 'drive-1', name: 'Bottle drive' });
     assert.deepEqual(labels(one), ['Open Bottle drive', 'Open the Ledger']);
     assert.deepEqual(one.doors[0].extra, { fundraiser: 'drive-1' });
     assert.deepEqual(
-      labels(cellPanelSpec({ group: 'fundraising' }, 'actual', null)),
+      labels(cellPanelSpec({ group: null, incomeSource: 'fundraiser' }, 'actual', null)),
       ['Open Fundraisers', 'Open the Ledger']);
     // Gross, so the panel's own sum is what was RAISED — the rebate is a note on a row, not a figure.
     assert.equal(one.totalLabel, 'Total raised');
@@ -713,12 +717,29 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
   });
 
   it('typed income has one door, because there is nothing else to open', () => {
-    assert.deepEqual(labels(cellPanelSpec({ group: 'other' }, 'actual', null)), ['Open the Ledger']);
+    assert.deepEqual(labels(cellPanelSpec({ group: null, incomeSource: 'typed' }, 'actual', null)), ['Open the Ledger']);
+  });
+
+  it('a sponsor category opens to the sponsor, and its forward view is Possible with one door', () => {
+    const cheque = cellPanelSpec({ group: null, incomeSource: 'sponsor' }, 'actual', { id: 'sponsor-1', name: 'Northside Physio' });
+    assert.deepEqual(labels(cheque), ['Open Northside Physio', 'Open the Ledger']);
+    assert.equal(cheque.totalLabel, 'Total');
+    const pledge = cellPanelSpec({ group: null, incomeSource: 'sponsor' }, 'scheduled', null);
+    assert.equal(pledge.totalLabel, 'Possible');
+    assert.deepEqual(labels(pledge), ['Open Sponsors']);
+  });
+
+  /* ⚠ A REVENUE CATEGORY ROW MUST NEVER FALL THROUGH TO THE EXPENSE ANSWER. The expense branch and
+     the category branch share `group: null`; the income source is what tells them apart, and a
+     revenue row that lost it would offer a cost's doors under a revenue heading. */
+  it('an expense row (no group, no income source) keeps the ledger answers it always had', () => {
+    assert.deepEqual(labels(cellPanelSpec({ group: null }, 'actual', null)), ['Open the Ledger']);
+    assert.deepEqual(labels(cellPanelSpec({ group: null }, 'scheduled', null)), ['Open the payment schedule']);
   });
 
   /* ⚠⚠ ONE WORD IS WHAT STOPS A COACH BANKING MONEY NOBODY HAS AGREED TO SEND. */
   it('a pledge and a pending ask total to “Possible”, never “Total”', () => {
-    assert.equal(cellPanelSpec({ group: 'sponsorship' }, 'scheduled', null).totalLabel, 'Possible');
+    assert.equal(cellPanelSpec({ group: null, incomeSource: 'sponsor' }, 'scheduled', null).totalLabel, 'Possible');
     assert.equal(cellPanelSpec({ group: 'moneyback' }, 'scheduled', null).totalLabel, 'Possible');
     assert.deepEqual(labels(cellPanelSpec({ group: 'moneyback' }, 'scheduled', null)), ['Open Club']);
   });

@@ -96,8 +96,10 @@ export interface MonthGridPayload {
   monthGrid: MonthGrid;
   /**
    * The REVENUE band — the same shape, built by the same function over the SAME months.
-   * Its categories are the five revenue GROUPS (dues, drives, sponsors, other income, money back),
-   * keyed so `revenueGroupOf` can re-label them per lens.
+   * Its categories are Player dues, then the CATEGORIES money in was filed under — Fundraising,
+   * Sponsorship, Tournaments, a coach's own — then Money back (owner ruling 2026-09-09). The two
+   * fixed rows are keyed so `revenueGroupOf` can re-label them per lens; a category row carries its
+   * `incomeSource`, which decides the doors its panel offers.
    */
   revenueGrid: MonthGrid;
   /**
@@ -428,7 +430,10 @@ export default function MoneyMonthGrid({
     if (items.length === 0) return;
     /* ⚠ A SPENDING cell's panel takes the ACTUAL spec — same words, same one Ledger door: the
        records behind it are the statement's own costs and refunds, and Transactions is their book. */
-    const spec = cellPanelSpec({ group: cat.group, payout: cat.payout }, kind === 'spending' ? 'actual' : kind, row?.subject ?? null);
+    const spec = cellPanelSpec(
+      { group: cat.group, payout: cat.payout, incomeSource: cat.incomeSource },
+      kind === 'spending' ? 'actual' : kind, row?.subject ?? null,
+    );
     /* A GROUP's panel names each record's own row; a row's panel does not, because its title
        already did. Built from the band this category belongs to, so a family removed from the
        roster mid-season still resolves through the row her money left behind. */
@@ -442,7 +447,9 @@ export default function MoneyMonthGrid({
          name is expected to come from here, so an empty map reads as "these records have nothing
          to say for themselves" rather than as a broken lookup. The panel still opened, still
          totalled correctly, and simply stopped saying who the money went to. */
-      const band = cat.group ? revenueGrid : cat.payout ? returnedGrid : expensesBand;
+      /* ⚠ BY BAND, NOT BY GROUP: a revenue CATEGORY row has no group (owner ruling 2026-09-09), and
+         resolving it against the expenses band would silently lose every subject name again. */
+      const band = cat.revenue ? revenueGrid : cat.payout ? returnedGrid : expensesBand;
       const owner = band.categories.find(c => c.categoryKey === cat.categoryKey);
       for (const line of owner?.lines ?? []) subjects[line.id] = line.description;
     }
@@ -547,7 +554,12 @@ export default function MoneyMonthGrid({
   }
 
   /** Which row of the table a panel is being opened from — its identity, its words, and its band. */
-  type PanelCategory = { categoryKey: string; label: string; group: RevenueGroupKey | null; payout: boolean };
+  type PanelCategory = {
+    categoryKey: string; label: string; group: RevenueGroupKey | null; payout: boolean;
+    /** On the revenue band. A category row there has no `group`, so the band is carried on its own. */
+    revenue: boolean;
+    incomeSource?: GridCategoryResult['incomeSource'];
+  };
 
   /** Every column the table has, so a band heading spans the grid without breaking the pinned ends. */
   const spacerCells = (key: string) => (
@@ -613,12 +625,15 @@ export default function MoneyMonthGrid({
     const open = expanded.has(cat.categoryKey);
     const group = band === 'in' ? revenueGroupOf(cat.categoryKey) : null;
     const payout = isPayoutCategory(cat.categoryKey);
-    // ⚠ The label MOVES WITH THE LENS on revenue — "Player dues" is money received, "Remaining
-    // dues instalments" is money still to come, and one name for both would flatten the forward
-    // view into a restatement of the past.
+    // ⚠ Only the two FIXED revenue rows are labelled per lens (the club's pending ask is the one
+    // rename). A revenue CATEGORY row takes its category's name under every lens — a pledge still
+    // to arrive is still Sponsorship money (owner ruling 2026-09-09).
     const label = group ? revenueGroupLabel(group, lens) : cat.categoryName;
     const catUndated = lensUndated(cat.undated, lens);
-    const panelCat = { categoryKey: cat.categoryKey, label, group, payout };
+    const panelCat: PanelCategory = {
+      categoryKey: cat.categoryKey, label, group, payout,
+      revenue: band === 'in', incomeSource: band === 'in' ? cat.incomeSource ?? null : null,
+    };
     /* ⚠⚠ A ROW THAT IS A SUBJECT ONLY SHOWS WHERE IT HAS MONEY UNDER THIS LENS (D-2, 2026-08-24).
        The families, drives, sponsors and requests behind a revenue group — and the families behind
        "Paid back to families" — are RECORDS, not plan lines: a family who has paid nothing this

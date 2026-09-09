@@ -312,6 +312,83 @@ export function displayCategoryName(categoryName: string | null | undefined): st
  *     two different headings. That one was live.
  * One function, both modules. Two reports cannot line up on identity they each derive privately.
  */
+/**
+ * A MONEY-IN line's GROUP is its CATEGORY (owner ruling 2026-09-09) — the same identity a cost line
+ * already has here, so the plan list, the by-period grid, both plan files and the Months view cannot
+ * group one funding line four ways. Before this the plan grouped money in by its stored KIND (who
+ * fills the number in), the Statement by category and Months by source — and a coach who filed a
+ * concession stand under Tournaments found the word "Tournaments" nowhere on the funding side.
+ *
+ * Keyed by ID, never by name (two categories may share a name — see `categoryKey`); a line with no
+ * category at all lands in the nameless bucket under the one spelling every surface uses.
+ */
+export interface CategoryGroupRef {
+  key: string;
+  name: string;
+  categoryId: string | null;
+}
+export function categoryGroupOf(
+  line: { categoryId?: string | null; categoryName?: string | null },
+): CategoryGroupRef {
+  const categoryId = line.categoryId ?? null;
+  return {
+    key: categoryKey(categoryId, line.categoryName ?? null),
+    name: displayCategoryName(line.categoryName),
+    categoryId,
+  };
+}
+
+/**
+ * Order groups the way the picker lists categories — sort order, then name — with the nameless
+ * bucket last. `order` is the picker's category id → sort_order map; a group whose order is unknown
+ * (a category the list has no row for) sorts after the known ones, alphabetically. With no map at
+ * all the order is alphabetical — the List's own rule for cost categories.
+ */
+export function compareCategoryGroups(
+  order?: ReadonlyMap<string, number>,
+): (a: CategoryGroupRef, b: CategoryGroupRef) => number {
+  const orderOf = (id: string | null) => (id ? order?.get(id) : undefined);
+  return (a, b) => {
+    const aNone = a.key === 'none';
+    const bNone = b.key === 'none';
+    if (aNone !== bNone) return aNone ? 1 : -1;
+    const ao = orderOf(a.categoryId);
+    const bo = orderOf(b.categoryId);
+    if (ao !== undefined && bo !== undefined && ao !== bo) return ao - bo;
+    if ((ao === undefined) !== (bo === undefined)) return ao === undefined ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  };
+}
+
+/**
+ * Bucket anything that carries a category by its category, in the picker's order — THE one shape
+ * every surface that lists money in by category reads (the plan list's funding sections and its
+ * forgetting-list index, both plan files). Written once because it was written three times in one
+ * release, and a grouping rule that lives in three places is three places to miss on a fix.
+ */
+export function groupByCategory<T>(
+  items: readonly T[],
+  refOf: (item: T) => CategoryGroupRef,
+  order?: ReadonlyMap<string, number>,
+): Array<{ ref: CategoryGroupRef; items: T[] }> {
+  const byKey = new Map<string, { ref: CategoryGroupRef; items: T[] }>();
+  for (const item of items) {
+    const ref = refOf(item);
+    const bucket = byKey.get(ref.key) ?? { ref, items: [] };
+    bucket.items.push(item);
+    byKey.set(ref.key, bucket);
+  }
+  const cmp = compareCategoryGroups(order);
+  return [...byKey.values()].sort((a, b) => cmp(a.ref, b.ref));
+}
+
+/** The category id a grid/report key carries, when it carries one — the inverse of `categoryKey`
+ *  for id-keyed rows, so no reader parses the `id:` prefix for itself. Null for a name-keyed or
+ *  nameless row. */
+export function categoryIdOfKey(key: string | null | undefined): string | null {
+  return key && key.startsWith('id:') ? key.slice(3) : null;
+}
+
 export function categoryKey(categoryId: string | null, categoryName: string | null): string {
   if (categoryId) return `id:${categoryId}`;
   const name = displayCategoryName(categoryName).toLowerCase();

@@ -31,6 +31,7 @@ import {
 /* ⚠ TYPE-ONLY, and that is what keeps this module pure: the section NAMES are a shared vocabulary,
    the href builder is not imported and never should be (see `PanelDoor`). */
 import type { CoachMoneySection } from './coach-money-links.ts';
+import type { BudgetItemActualSource } from './coach-budget-totals.ts';
 
 /** A month key, always `YYYY-MM`. */
 export type MonthKey = string;
@@ -48,14 +49,21 @@ export const UNDATED_CELL = 'no-date';
 // ── the two bands (Option D, owner ruling 2026-08-23) ────────────────────────
 
 /**
- * The REVENUE band's groups, in the order the screen shows them — the Statement's own vocabulary.
+ * The REVENUE band's two FIXED rows — the ones that are genuinely not budget categories.
  *
- * ⚠ FIXED, NOT DERIVED FROM THE DATA. Revenue is grouped by WHERE THE MONEY CAME FROM, not by the
- * budget category a coach happened to file it under: a dues payment and a bottle drive are two
- * different answers to "how does this team fund itself", and filing them both under "Fundraising"
- * because a plan line says so would hide the distinction the band exists to draw.
+ * ⚠⚠ EVERYTHING ELSE ON THE BAND IS A CATEGORY (owner ruling 2026-09-09). Until that day this held
+ * five groups — dues, fundraising, sponsorship, other income, money back — and revenue was grouped by
+ * WHERE THE MONEY CAME FROM, so a concession stand filed under Tournaments read under "Other income"
+ * here and under "Tournaments" on the Statement one tab over. Money from a drive, a sponsor or a
+ * typed arrival now sits under the CATEGORY its line was filed in, keyed exactly as the Statement
+ * keys it (`categoryKey`), which is also what the one-arithmetic guard has been asking of this grid.
+ *
+ * What survives, and why: **Player dues** is a SCHEDULE, never a budget line, so it has no category
+ * to group by and keeps its own row at the head of the band; **Money back & reimbursements** cannot
+ * be routed to a category at all (a payout draws down a POOLED credit — see `PAYOUT_CATEGORY_ID`),
+ * so it keeps its own row too.
  */
-export const REVENUE_GROUPS = ['dues', 'fundraising', 'sponsorship', 'other', 'moneyback'] as const;
+export const REVENUE_GROUPS = ['dues', 'moneyback'] as const;
 export type RevenueGroupKey = (typeof REVENUE_GROUPS)[number];
 
 /**
@@ -153,10 +161,11 @@ export function isPayoutCategory(categoryKeyOrId: string | null | undefined): bo
  */
 export function revenueGroupLabel(group: RevenueGroupKey, lens: MoneyLens): string {
   /* ⚠⚠ EXACTLY ONE GROUP IS RENAMED BY A LENS, AND IT IS THE ONLY ONE THAT CHANGES WHAT IT IS.
-     Player dues and Sponsorships keep their names everywhere (owner rulings 2026-08-24): an unpaid
-     instalment is still dues and an unhonoured pledge is still sponsorship — the same object, read
-     forward — so renaming them made one thing look like two as a coach flipped lenses, and spent
-     the narrowest column in the table saying what the lens already says.
+     Player dues keeps its name everywhere (owner ruling 2026-08-24): an unpaid instalment is still
+     dues — the same object, read forward — so renaming it made one thing look like two as a coach
+     flipped lenses, and spent the narrowest column in the table saying what the lens already says.
+     (The category rows of the band take their category's name under every lens, for the same
+     reason — a pledge still to arrive is still Sponsorship money.)
 
      A request the club has NOT ANSWERED is the genuine exception: it is not money back, it is a
      question. That is what earns it a name of its own. */
@@ -166,11 +175,8 @@ export function revenueGroupLabel(group: RevenueGroupKey, lens: MoneyLens): stri
     return 'Asked of the club';
   }
   switch (group) {
-    case 'dues':        return 'Player dues';
-    case 'fundraising': return 'Fundraising';
-    case 'sponsorship': return 'Sponsorships';
-    case 'other':       return 'Other income';
-    case 'moneyback':   return 'Money back & reimbursements';
+    case 'dues':      return 'Player dues';
+    case 'moneyback': return 'Money back & reimbursements';
   }
 }
 
@@ -259,7 +265,7 @@ export interface PanelSubject { id: string | null; name: string }
  * apart is how the revenue half and the expense half would drift into two vocabularies.
  */
 export function cellPanelSpec(
-  row: { group: RevenueGroupKey | null; payout?: boolean },
+  row: { group: RevenueGroupKey | null; payout?: boolean; incomeSource?: BudgetItemActualSource | null },
   lens: 'actual' | 'scheduled',
   subject: PanelSubject | null,
 ): CellPanelSpec {
@@ -267,6 +273,38 @@ export function cellPanelSpec(
     /* ⚠ MONEY PAID BACK TO A FAMILY IS AN EXPENSE THAT ANSWERS TO DUES. Dues says who is owed; this
        says who was repaid; Transactions is the book both settle into. */
     if (row.payout) return { totalLabel: 'Total', doors: [DUES_DOOR, TRANSACTIONS_DOOR] };
+    /* ⚠ A REVENUE CATEGORY ROW (owner ruling 2026-09-09). Which doors it offers is decided by the
+       category's INCOME SOURCE — the same fact the retired fundraising / sponsorship / other groups
+       used to encode in their names: money a drive raised opens to the drive, a sponsor's to the
+       sponsor, and typed income has no "thing itself" — the record IS the thing, so one door. */
+    if (row.incomeSource) {
+      if (lens === 'scheduled') {
+        return row.incomeSource === 'sponsor'
+          ? { totalLabel: 'Possible', doors: [SPONSORS_DOOR] }
+          /* Neither a drive nor typed income has a forward record, so neither row exists on this
+             lens — but a spec is returned rather than null, because a caller that renders one anyway
+             must get an honest panel instead of a crash. */
+          : { totalLabel: 'Possible', doors: [TRANSACTIONS_DOOR] };
+      }
+      switch (row.incomeSource) {
+        case 'fundraiser':
+          /* ⚠ "Here is the ledger entry" and "here is the thing that earned it" are different
+             answers, and a coach chasing a drive wants the second. */
+          return { totalLabel: 'Total raised', doors: [subjectDoor(subject, FUNDRAISERS_DOOR), TRANSACTIONS_DOOR] };
+        case 'sponsor':
+          return { totalLabel: 'Total', doors: [subjectDoor(subject, SPONSORS_DOOR), TRANSACTIONS_DOOR] };
+        case 'typed':
+          /* ⚠ ONE DOOR. There is no "thing itself" to open — the RECORD is the thing. */
+          return { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] };
+        default: {
+          /* A fourth income source must not fall through to the EXPENSE answers below and quietly
+             hand a revenue row a cost's doors — the same silent-fourth-kind failure this module's
+             `row.group` comments warn about. A compile error here is the cheaper outcome. */
+          const unreachable: never = row.incomeSource;
+          return unreachable;
+        }
+      }
+    }
     return lens === 'actual'
       ? { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] }
       /* ⚠ THE TWO LENSES LAND ON DIFFERENT VIEWS of the one Ledger (fold, 2026-08-28 — they were
@@ -277,27 +315,13 @@ export function cellPanelSpec(
   }
   if (lens === 'scheduled') {
     switch (row.group) {
-      case 'dues':        return { totalLabel: 'Still to come', doors: [DUES_DOOR] };
-      case 'sponsorship': return { totalLabel: 'Possible', doors: [SPONSORS_DOOR] };
-      case 'moneyback':   return { totalLabel: 'Possible', doors: [CLUB_DOOR] };
-      /* Neither a drive nor typed income has a forward record, so neither row exists on this lens —
-         but a spec is returned rather than null, because a caller that renders one anyway must get
-         an honest panel instead of a crash. */
-      default:            return { totalLabel: 'Possible', doors: [TRANSACTIONS_DOOR] };
+      case 'dues':      return { totalLabel: 'Still to come', doors: [DUES_DOOR] };
+      case 'moneyback': return { totalLabel: 'Possible', doors: [CLUB_DOOR] };
     }
   }
   switch (row.group) {
     case 'dues':
       return { totalLabel: 'Total', doors: [DUES_DOOR, TRANSACTIONS_DOOR] };
-    case 'fundraising':
-      /* ⚠ "Here is the ledger entry" and "here is the thing that earned it" are different answers,
-         and a coach chasing a drive wants the second. */
-      return { totalLabel: 'Total raised', doors: [subjectDoor(subject, FUNDRAISERS_DOOR), TRANSACTIONS_DOOR] };
-    case 'sponsorship':
-      return { totalLabel: 'Total', doors: [subjectDoor(subject, SPONSORS_DOOR), TRANSACTIONS_DOOR] };
-    case 'other':
-      /* ⚠ ONE DOOR. There is no "thing itself" to open — the RECORD is the thing. */
-      return { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] };
     case 'moneyback':
       /* ⚠ CLUB MONEY HAS A CLUB SCREEN; A REFUND YOU TYPED IN DOES NOT. Same group, two sources,
          two different numbers of doors — see `MONEY_BACK_CLUB` in lib/coach-cash-strip.ts. */
@@ -484,6 +508,13 @@ export interface GridCategoryResult {
   /** True when this category exists only because something is scheduled or paid against it —
    *  the coach has no budget line for it at all. Worth seeing, never worth hiding. */
   unplanned: boolean;
+  /**
+   * On a REVENUE category row: who fills this category's number in — a drive, a sponsor, or the coach
+   * (owner ruling 2026-09-09). Decides which doors the cell's panel offers (`cellPanelSpec`) and how
+   * `check:money-report` classifies the row against the register. Absent on the two fixed groups and
+   * on every expense row. Set by the route, which knows the categories; the grid never derives it.
+   */
+  incomeSource?: BudgetItemActualSource | null;
 }
 
 export interface MonthGrid {
@@ -1084,10 +1115,12 @@ export function buildBandCashFlow(
  * the Scheduled basis note states the closing balance, the possible, and the headline they net
  * to — read from THIS function, exactly as the banner is, so the two cannot disagree.
  *
- * ⚠ THE TWO-GROUP CARVE-OUT IS AN INVARIANT WITH A GUARD, not an assumption: nothing else can put
- * undated money on the forward view today (a dues instalment always carries a due date; drives
- * and typed income have no forward records), and `check:money-report` claim 2c fails the build if
- * a future revenue source ever does — so it cannot be silently banked into the headline.
+ * ⚠ EVERYTHING BUT DUES IS POSSIBLE, and that is an invariant with a guard, not an assumption: a
+ * sponsor's pledge sits under its CATEGORY (owner ruling 2026-09-09 — it was its own group before)
+ * and a pending club ask under Money back, both undated; a dues instalment always carries a due
+ * date; drives and typed income have no forward records. `check:money-report` claim 2c fails the
+ * build if a future revenue source ever puts undated money here — so it cannot be silently banked
+ * into the headline.
  */
 export interface ScheduledForward {
   /** The Scheduled reading's own season-ending balance — the Closing balance's Total cell. */
@@ -1106,10 +1139,7 @@ export function scheduledForward(
 ): ScheduledForward {
   const flow = buildBandCashFlow(revenue, expenses, 'scheduled', cashOnHand, openingBalance ?? 0, returned);
   const possible = round2(revenue.categories
-    .filter(c => {
-      const g = revenueGroupOf(c.categoryKey);
-      return g === 'sponsorship' || g === 'moneyback';
-    })
+    .filter(c => revenueGroupOf(c.categoryKey) !== 'dues')
     .reduce((s, c) => s + c.undated.scheduled, 0));
   return { ending: flow.ending, possible, headline: round2(flow.ending - possible) };
 }

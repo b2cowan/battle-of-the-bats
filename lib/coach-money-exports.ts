@@ -23,10 +23,8 @@ import {
 } from './export';
 import { duesStatusLabel } from './dues-status';
 import { duesLadderTotals, type DuesLadder } from './dues-payments';
-import {
-  LINE_KIND_SECTION, PLAN_LADDER_LABEL, FUNDING_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
-  type BudgetTotals,
-} from './coach-budget-totals';
+import { PLAN_LADDER_LABEL, isFundingKind, type BudgetTotals } from './coach-budget-totals';
+import { categoryGroupOf, groupByCategory } from './coach-budget-rollup';
 import { whenSummary, whenSummaryText, type PeriodView } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
 import { planColumnLabel, netRowLabel, type CompareBasis } from './coach-budget-basis';
@@ -160,6 +158,9 @@ export interface BudgetPlanExportSource {
   duesAssessed: number;
   /** plan − funding − dues, signed exactly as the screen computes it. */
   leftToFund: number;
+  /** The picker's category → sort_order, so the funding groups print in the order the coach chose
+   *  them from (owner ruling 2026-09-09). Absent = alphabetical. */
+  categoryOrder?: ReadonlyMap<string, number>;
 }
 
 /** The **When** cell, in the screen's own words. `money()` rather than a bare number so the undated
@@ -177,7 +178,7 @@ function whenText(
  *
  * The screen's shape, band for band (owner ruling 2026-09-08): COSTS → category rows → item rows
  * (same-item lines summed) → per-line sub-rows named by their notes → the estimate rows when one
- * is set and differs → Planned costs; FUNDING → one section per kind → Planned funding; then the
+ * is set and differs → Planned costs; FUNDING → one section per CATEGORY → Planned funding; then the
  * close as the screen prints it — Costs less funding, Player installments, Short/buffer — or the
  * single estimated-installments row before dues exist.
  */
@@ -246,15 +247,16 @@ export function budgetPlanStatementRows(
   }
   if (hasCosts) push({ item: L.plannedCosts, schedule: '', planned: totals.totalPlanned, notes: '' }, 'total');
 
-  // ── FUNDING: the band, one section per kind in the shared order, the subtotal ────────────────
+  // ── FUNDING: the band, one section per CATEGORY in the picker's order, the subtotal ──────────
   // Positive figures under headings that say the direction, exactly as the list prints them.
+  // ⚠ Grouped by category, not by stored kind (owner ruling 2026-09-09) — the same identity the
+  // cost half of this file and the Statement already use, through the rollup's one helper.
   if (hasFunding) {
     push({ item: L.fundingBand.toUpperCase(), schedule: '', planned: '', notes: '' }, 'section');
-    for (const kind of FUNDING_LINE_KINDS) {
-      const kindLines = src.lines.filter(l => normalizeBudgetLineKind(l.lineKind) === kind);
-      if (kindLines.length === 0) continue;
+    const fundingLines = src.lines.filter(l => isFundingKind(l.lineKind));
+    for (const { ref, items: kindLines } of groupByCategory(fundingLines, categoryGroupOf, src.categoryOrder)) {
       const sectionTotal = round2(kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0));
-      push({ item: LINE_KIND_SECTION[kind], schedule: '', planned: sectionTotal, notes: '' }, 'category');
+      push({ item: ref.name, schedule: '', planned: sectionTotal, notes: '' }, 'category');
       for (const l of kindLines) {
         push({
           item: `  — ${l.itemName ?? l.description}`,

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-06T21:44:05.240Z",
+  "generated": "2026-09-09T17:48:08.747Z",
   "entries": {
     "coach-attendance|361|tap-floor|a·Take attendance": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
@@ -88,78 +88,6 @@
     "coach-bva-months|361|control-width|button·Show the next month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "36px wide (floor 44) — icon-only control"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·<th>·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·2026·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·2027·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Category / line·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·No date yet·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Mar·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Apr·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·May·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Jun·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Jul·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Aug·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Sep·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Oct·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Nov·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Dec·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Jan·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Feb·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
-    },
-    "coach-bva-months|361|sticky-no-travel|th·Total·y": {
-      "reason": "The Months grid's sticky heading is a DESKTOP affordance; at phone widths its scroller has no vertical travel, so the heading can never engage and simply scrolls away. Pre-existing on a view the sweep first reached on 2026-09-06 (the `storage` hook). Register: standard §3.8 — a comparison keeps its columns and scrolls; the sticky head is moot below 640.",
-      "detail": "sticks on top/bottom but is trapped in <div>, which runs 800px past a 780px viewport yet has no vertical travel (798≤798) — it will scroll away instead of sticking"
     },
     "coach-budget-period|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",

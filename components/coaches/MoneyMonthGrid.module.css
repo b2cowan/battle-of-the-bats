@@ -389,6 +389,22 @@ a.chooserChoice:hover { background: var(--home-raise, rgba(255, 255, 255, 0.05))
 /* The blank cells over Category / No date yet / Total carry NO rule: those columns are outside
    time, and a hairline there would imply they belong to the year beside them. */
 .yearRow th[aria-hidden] { border-bottom-color: transparent; }
-/* The band pins with the rest of the header — without this it scrolls away under the month row
-   and the months are left unlabelled mid-scroll, which is worse than never having had a band. */
+/* The band's first cell is the left pin's heading and needs the pin's stacking, so the months scroll
+   under it rather than over it. (Until 2026-09-09 this comment said the band "pins with the rest of
+   the header" — it never did; see the block below.) */
 .grid thead .yearRow th { z-index: 2; }
+
+/* ── The heading row does NOT stick, and now says so (2026-09-09, §158 /review) ──────────────────
+   The shared `.moneyGrid thead th` declares `position: sticky; top: 0`. Inside <CoachScrollX> that
+   sticks to the SCROLLER, and the scroller has no height of its own — the document scrolls, the pane
+   never does — so the declaration was inert from the day it was written, on every fixture. The Budget
+   tab's two grids cancelled theirs in §156 (budget.module.css `.planTable` / `.periodGrid`) and this
+   one was left "for whoever fixes the sticky properly for all three". The rendered gate then reported
+   it the first time the category rows pushed this pane past a phone viewport (851 vs 844 at 390 — a
+   row either way flips the REPORT, not the fact). Same pattern as §156, same traps:
+   · `top: auto`, never `position: static`, on the FIRST cell — it is the left pin (line-name column).
+   · every other heading cell back to `static` outright — EXCEPT the Total column, which is pinned
+     RIGHT (`.totalCol`); cancelling its position would unpin it. It keeps sticky with `top: auto`.
+   · the class is doubled so this beats the shared rule by specificity, not by bundle order. */
+.grid.grid thead th { top: auto; }
+.grid.grid thead th:not(:first-child):not(.totalCol) { position: static; }

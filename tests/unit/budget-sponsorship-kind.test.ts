@@ -22,13 +22,16 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   computeBudgetTotals, isFundingKind, normalizeBudgetLineKind,
-  BUDGET_LINE_KINDS, FUNDING_LINE_KINDS, LINE_KIND_SECTION,
+  BUDGET_LINE_KINDS, FUNDING_LINE_KINDS,
 } from '../../lib/coach-budget-totals.ts';
 import { buildPeriodView } from '../../lib/coach-budget-periods-view.ts';
 import { isRealisedRecord } from '../../lib/coach-fundraising.ts';
 
+// A line carries the CATEGORY it was filed in — what a money-in line is grouped by since 2026-09-09.
 const line = (kind: 'cost' | 'funding' | 'sponsorship', amount: number, id: string = kind) => ({
-  id, description: `${kind} line`, categoryName: 'Tournaments',
+  id, description: `${kind} line`,
+  categoryId: kind === 'sponsorship' ? 'cat-sponsorship' : 'cat-tournaments',
+  categoryName: kind === 'sponsorship' ? 'Sponsorship' : 'Tournaments',
   totalAmount: amount, lineKind: kind, periods: [] as Array<{ periodDate: string | null; amount: number }>,
 });
 
@@ -127,7 +130,7 @@ describe('a pledge is recorded but is not money', () => {
 });
 
 describe('the period grid keeps a sponsorship on the money-in side', () => {
-  it('carries the minus sign, and gives each kind its own group', () => {
+  it('carries the minus sign, and gives the money-in CATEGORY its own group', () => {
     const view = buildPeriodView([
       { ...line('cost', 1200), periods: [{ periodDate: '2027-03-01', amount: 1200 }] },
       { ...line('sponsorship', 500), periods: [{ periodDate: '2027-03-01', amount: 500 }] },
@@ -142,8 +145,10 @@ describe('the period grid keeps a sponsorship on the money-in side', () => {
     );
 
     const sponsorGroup = view.groups.find(g => g.lineKind === 'sponsorship');
-    assert.ok(sponsorGroup, 'a sponsorship line must get its own group, not merge into fundraising');
-    assert.equal(sponsorGroup!.name, LINE_KIND_SECTION.sponsorship);
+    assert.ok(sponsorGroup, 'a sponsorship line must get its own group, not merge into a cost category');
+    // ⚠ NAMED BY ITS CATEGORY, NOT ITS KIND (owner ruling 2026-09-09) — the same heading the
+    // Statement gives the same line, so "Sponsorship" reads "Sponsorship" on both.
+    assert.equal(sponsorGroup!.name, 'Sponsorship');
     // Costs first, money-in after — the same order everywhere the two appear.
     assert.equal(view.groups[0].lineKind, 'cost');
   });

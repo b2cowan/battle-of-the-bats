@@ -105,7 +105,7 @@ import { resolveUatContext } from './uat-fixture-context.mjs';
  */
 import { PAYOUT_CATEGORY_NAME, revenueGroupOf } from '../lib/coach-budget-months.ts';
 // Each name from the module that OWNS it — the rollup decides what a nameless category is called.
-import { NO_CATEGORY_LABEL } from '../lib/coach-budget-rollup.ts';
+import { NO_CATEGORY_LABEL, categoryKey } from '../lib/coach-budget-rollup.ts';
 /* The dues row's identity and the ONE predicate deciding whether the sentence renders — imported
    from the module the SCREEN renders from, so this script cannot end up checking a different rule
    from the one that ships. (Vocabulary and identity may be shared; the arithmetic below is still
@@ -336,16 +336,19 @@ async function main() {
 
   /* ── 2c. THE FORWARD STAT'S CARVE-OUT COVERS EVERY UNDATED FORWARD DOLLAR (D4/Q2, and a review
      finding, 2026-09-02). The banner's "you end the season with $X" subtracts a "possible" clause
-     of exactly the sponsorship and money-back groups' undated Scheduled money — the pledge and the
-     pending club ask, the two things the product deliberately refuses to bank. That is correct
-     TODAY because nothing else can put undated money on the forward view (a dues instalment always
-     carries a due date; drives and typed income have no forward records at all) — but the banner
-     is the first reader to LEAN on that invariant, so this claim is what makes a future undated
-     revenue source fail loudly instead of being silently banked into the headline as certain. */
+     of every undated Scheduled dollar that is not dues — which today means exactly two things: a
+     sponsor's pledge, sitting under its CATEGORY since 2026-09-09 (a category whose income source
+     is `sponsor`), and a pending club ask under Money back — the two things the product
+     deliberately refuses to bank. That is correct because nothing else can put undated money on the
+     forward view (a dues instalment always carries a due date; drives and typed income have no
+     forward records at all) — but the banner is the first reader to LEAN on that invariant, so this
+     claim is what makes a future undated revenue source fail loudly instead of being silently
+     banked into the headline as certain. */
   for (const cat of revenue.categories ?? []) {
     const group = revenueGroupOf(cat.categoryKey);
     const undatedForward = cents(cat.undated?.scheduled);
-    if (undatedForward !== 0 && group !== 'sponsorship' && group !== 'moneyback') {
+    const possible = group === 'moneyback' || (!group && cat.incomeSource === 'sponsor');
+    if (undatedForward !== 0 && !possible) {
       problems.push(
         `revenue · ${group ?? cat.categoryName}: ${money(undatedForward)} of UNDATED scheduled money`
         + ' — the banner\'s forward stat would bank it as CERTAIN; teach its "possible" clause about'
@@ -445,7 +448,6 @@ async function main() {
      checking. The two groups are summed on the grid side to match. Which of the two a dollar lands
      in is pinned by `tests/unit/coach-cash-strip.test.ts` instead. */
   const REV_GROUP_OF_KIND = { dues: 'dues', fundraising: 'fundraising+sponsorship', income: 'other', refund: 'moneyback', club: 'moneyback' };
-  const GRID_GROUP_MERGE = { fundraising: 'fundraising+sponsorship', sponsorship: 'fundraising+sponsorship' };
   const revByGroup = new Map();
   const bumpRev = (group, side, c) => {
     if (!revByGroup.has(group)) revByGroup.set(group, { grid: 0, register: 0 });
@@ -457,11 +459,18 @@ async function main() {
        group name that matches nothing on the register side — and the loop below compares only the
        groups it FINDS, so the run would have passed while checking nothing. */
     const group = revenueGroupOf(cat.categoryKey);
-    if (!group) {
-      problems.push(`a revenue band row (${cat.categoryName}) carries no recognisable group key — the guard cannot classify it`);
+    /* ⚠ A CATEGORY ROW IS CLASSIFIED BY WHO FILLS ITS NUMBER IN (owner ruling 2026-09-09). The band
+       groups money in by CATEGORY now; the route stamps `incomeSource` on every category row, and
+       that is the same fact the retired fundraising / sponsorship / other groups carried in their
+       names. A row with neither a group nor a source is one this guard cannot place — a failure. */
+    const bucket = group
+      ?? ((cat.incomeSource === 'fundraiser' || cat.incomeSource === 'sponsor') ? 'fundraising+sponsorship'
+        : cat.incomeSource === 'typed' ? 'other' : null);
+    if (!bucket) {
+      problems.push(`a revenue band row (${cat.categoryName}) carries neither a group key nor an income source — the guard cannot classify it`);
       continue;
     }
-    bumpRev(GRID_GROUP_MERGE[group] ?? group, 'grid', cents(cat.total?.actual));
+    bumpRev(bucket, 'grid', cents(cat.total?.actual));
   }
   for (const r of regRows) {
     const inc = cents(r.moneyIn);
@@ -473,6 +482,37 @@ async function main() {
       problems.push(
         `revenue · ${group}: the Months grid says ${money(sides.grid)} and the register says ${money(sides.register)}`
         + ' — one source of money, two answers');
+    }
+  }
+
+  /* ── 5b. THE SAME CATEGORIES ON MONTHS AS ON THE STATEMENT (owner ruling 2026-09-09) ──────────
+     "Consistent across the product", as a gate. The owner found the split from three screenshots:
+     the Statement grouped revenue by category while Months grouped it by source, and nothing here
+     could see it — every total agreed. So: the set of revenue CATEGORIES with a plan or cash figure
+     on Months equals the set on the Statement, keyed as the rollup keys them. The two fixed rows
+     (dues, money back) and a row with only a forward figure (a pledge, an unanswered ask — the
+     Statement has no committed column) are outside the claim, and stated so. */
+  const monthsRevenueKeys = new Set(
+    (revenue.categories ?? [])
+      .filter(c => !revenueGroupOf(c.categoryKey))
+      .filter(c => cents(c.total?.budget) !== 0 || cents(c.total?.actual) !== 0)
+      .map(c => c.categoryKey),
+  );
+  const statementRevenueKeys = new Set(
+    (data.report?.revenue?.categories ?? [])
+      .filter(c => !revenueGroupOf(c.categoryId))
+      .map(c => categoryKey(c.categoryId ?? null, c.categoryName ?? null)),
+  );
+  for (const key of monthsRevenueKeys) {
+    if (!statementRevenueKeys.has(key)) {
+      const c = (revenue.categories ?? []).find(x => x.categoryKey === key);
+      problems.push(`revenue · "${c?.categoryName ?? key}" is a category on Months and not on the Statement — the two views group money in differently`);
+    }
+  }
+  for (const key of statementRevenueKeys) {
+    if (!monthsRevenueKeys.has(key)) {
+      const c = (data.report?.revenue?.categories ?? []).find(x => categoryKey(x.categoryId ?? null, x.categoryName ?? null) === key);
+      problems.push(`revenue · "${c?.categoryName ?? key}" is a category on the Statement and not on Months — the two views group money in differently`);
     }
   }
 

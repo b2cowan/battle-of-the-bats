@@ -165,9 +165,10 @@
    the comparison this report exists to show. So the rule is cancelled where it cannot work rather
    than left declared and inert.
 
-   ⚠ THE MONTH GRID CARRIES THE SAME INERT DECLARATION for the same reason and is deliberately NOT
-   touched here — it is the reference screen this pass was measured against, the rule costs nothing
-   where it sits, and changing it belongs to whoever fixes the sticky properly for all three. */
+   ⚠ THE MONTH GRID CARRIED THE SAME INERT DECLARATION and was left alone by this pass ("for whoever
+   fixes the sticky properly for all three"). It cancelled it the same way on 2026-09-09 (§158 /review)
+   once the category rows pushed its pane past a phone viewport and the rendered gate reported the
+   heading row trapped — MoneyMonthGrid.module.css. All three grids now agree. */
 /* ⚠⚠ `top: auto`, NOT `position: static`, AND THE CLASS IS DOUBLED. Two traps, both measured:
    · `position: static` also kills the LEFT pin. The first heading cell takes `position: sticky;
      left: 0` from `.scrollXSticky th:first-child` — the pinned line-name column, which is the
@@ -1941,7 +1942,83 @@
    ⚠ `top: auto`, NOT `position: static`, on the first cell of each heading row: that cell is the
    LEFT pin (the line-name column), and cancelling its position would cancel the pin with it. Every
    other heading cell goes back to static outright. Doubled class to out-specify the shared rule
-   deterministically rather than by bundle order. The BvA month grid keeps its own copy of the inert
-   declaration and is deliberately not touched from here. */
+   deterministically rather than by bundle order. The BvA month grid cancelled its copy the same way
+   on 2026-09-09 (§158 /review) — MoneyMonthGrid.module.css, with one extra carve-out for its
+   right-pinned Total column. */
 .periodGrid.periodGrid thead th { top: auto; }
 .periodGrid.periodGrid thead th:not(:first-child) { position: static; }
+
+/* ── Option A — the forgetting list is an INDEX, not a wall (owner ruling 2026-09-09, mockup
+   728dcb1e). The form's two direction answers head the list, one button per category with its count,
+   chips only inside the open category. Direction is carried by the heading, never by colour (colour
+   is for cash, 2026-09-02). The open tint is the portal's accent at 10% — olive under warm, lime in
+   dark — the same recipe `.checklistAsk` and the item picker already use. */
+.checklistSide { margin-top: 0.85rem; }
+
+.checklistSideHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0 0.15rem 0.3rem;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12));
+}
+.checklistSideName {
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.checklistSideCount {
+  font-size: var(--type-label);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.checklistCats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+  padding: 0 0.15rem;
+}
+
+.checklistCat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.checklistCat:hover { color: var(--logic-lime); }
+.checklistCatOpen {
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.10));
+  border-color: var(--logic-lime);
+}
+.checklistCatCount {
+  font-size: var(--type-label);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.checklistCatBody {
+  margin: 0.45rem 0.15rem 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--logic-lime);
+  border-radius: 6px;
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.10));
+}
+.checklistCatBody .checklistChips { margin-top: 0; padding: 0; }
+
+/* Same floor and the same reason as .checklistAsk: a real target through the touch band. */
+@media (max-width: 768px) {
+  .checklistCat { min-height: var(--tap-min, 44px); }
+}

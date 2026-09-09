@@ -1,0 +1,674 @@
+<title>The Category Is the Shelf</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.ask{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §158 · Coaches portal → Money</p>
+  <h1>The category is the shelf</h1>
+  <p class="lede">Money coming in reports under the <b>category you filed it in</b> — Fundraising, Sponsorship,
+    Tournaments, Other Income, your own — on the plan list, the by-period grid, both plan files and
+    the Months view, exactly as costs already did on the Statement. And <b>"What am I forgetting?"</b>
+    is an index now: two headings in the form's own words, one button per category with its count,
+    the words inside.
+    <br><br>Three things on this walk are <b>asks</b> rather than ticks — <b>E1</b>, <b>F3</b> and
+    <b>F5</b>. Each is a call the build made that you should see on the screen before it stands. One step,
+    <b>C2</b>, carries a <b>known gap</b> instead: it tells you what Import's preview will show and why that is
+    queued elsewhere rather than a Flag here.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b>. The walk moves Budget (List → By month →
+    downloads) → Budget vs. Actual (Months → Statement) → back to Budget for the forgetting list →
+    Help, in that order.</p>
+  <div class="warn"><b>Another session shares this working copy.</b> If a figure looks wrong, check
+    whether the whole plan moved under us before recording a defect. The dev server was restarted at
+    hand-off; if a page looks stale anyway, stop it, clear <code>.next</code>, start it again.</div>
+  <div class="tip"><b>The identities to hold on to — the shape, not the digits.</b> This team has a
+    <b>Fundraising</b> line (the Chocolate sale), a <b>Tournaments</b> money-in line (Concession
+    revenue), an <b>Other Income</b> line, and <b>sponsor cheques no plan line claims</b>. That last one
+    is the whole test: it used to read <b>"Not in the plan → Sponsor money"</b> on the Statement and
+    <b>"Sponsorships"</b> on Months. It now reads <b>Sponsorship</b> on both — flagged not budgeted on
+    the Statement, with <i>Sponsor money</i> as its row. Every total is unchanged to the cent; only the
+    headings move.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The plan list reads by category on both sides</h2>
+  <p>Money → <b>Budget</b>, View <b>List</b>. Scroll to the <b>FUNDING</b> band under Planned costs.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>The funding band's headings are categories</h3></div></div>
+  <div class="step-body">
+    <p class="why">Until today this band read <b>Fundraising · Sponsorship · Other income</b> — three shelves named
+      for who fills the number in. It reads the categories the lines were filed in now.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a"><b>Concession revenue</b> sits under a heading that says <b>Tournaments</b><span class="hintline">The word a coach filed it under, back on the plan for the first time</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">The Chocolate sale sits under <b>Fundraising</b>; the Other Income line under <b>Other Income</b> (capital I — the category's own name)</label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">No heading anywhere on the page reads <b>Other income</b> (small i) — that shelf no longer exists</label></div>
+      <div class="chk"><input type="checkbox" id="a1d"><label for="a1d">Each heading carries a green subtotal; <b>Planned funding</b> at the foot equals the tile of the same name at the top</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>The headings sit in the picker's order</h3></div></div>
+  <div class="step-body">
+    <p class="why">Open <b>+ Add line</b> → <b>Money coming in</b> → the Category &amp; Item box, and note the order the
+      categories appear in. Close it without saving.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">The funding band's headings appear in the <b>same order</b> the picker lists those categories</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">Tap a funding heading's chevron to fold it; reload; it is <b>still folded</b>. <b>Collapse all</b> / <b>Expand all</b> fold and open the funding sections along with the cost ones</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>A new tournament revenue line lands under Tournaments</h3></div></div>
+  <div class="step-body">
+    <p class="why"><b>+ Add line</b> → <b>Money coming in</b> → <b>Tournaments · Gate / admission</b>, any amount, <b>One month</b>,
+      Add. Then open the row and <b>delete</b> it so the fixture is left as you found it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">The new row appears <b>under Tournaments</b>, beside Concession revenue, never under any other heading</label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">The Tournaments subtotal and <b>Planned funding</b> both rise by the amount; after the delete both fall back</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><div class="step-t"><h3>A new word says which category it will report under</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">In the Category &amp; Item box on the money-in side, start typing a word no shelf has (e.g. <i>Bingo night</i>)
+      and open the <b>create</b> panel; pick a category of the team's own if one exists, else Tournaments. Read the
+      footer sentence. Cancel without creating.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a4a"><label for="a4a">The sentence reads <b>"Will report under &lt;that category's name&gt;."</b> — the category, never "Other income"</label></div>
+      <div class="chk"><input type="checkbox" id="a4b"><label for="a4b">Switch the form to <b>Money the team spends</b> and open the create panel again: <b>no</b> "Will report under" sentence at all — a cost word has nothing to explain</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The by-period grid says the same thing</h2>
+  <p>View <b>By month</b> (then <b>By quarter</b>).</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Same headings, same order, minus sign kept</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Below the cost categories the FUNDING band lists <b>the same category headings in the same order</b> as the List</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">Every funding figure is shown <b>positive in green</b>, and the <b>Costs less funding</b> row subtracts it — a month with $1,200 of costs and $500 of funding closes on $700</label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">The <b>Planned funding</b> row's Total equals the List's Planned funding to the cent</label></div>
+      <div class="chk"><input type="checkbox" id="b1d"><label for="b1d">Fold a funding heading here; switch to the List and back — the grid keeps its own folds, as before</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>One word swept on the way past</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">A cost line with no category read <b>"Uncategorized"</b> on this grid while the List and the Statement
+      said <b>"No category"</b> for the same line. This fixture probably has none; if you can make one (a
+      legacy import), it reads "No category" here too and sorts last.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">Nothing on the grid reads <b>Uncategorized</b> — either there is no nameless line, or it reads <b>No category</b></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The files follow the screen</h2>
+  <p>Budget → <b>Export</b> (Budget plan): Excel and CSV from the List; Excel from By month.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>The plan file's FUNDING band is category headings</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">In the Excel file, under <b>FUNDING</b>, the category rows read <b>Fundraising / Tournaments / Other Income …</b> — the List's headings, in the List's order — each with its subtotal, lines indented beneath</label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b"><b>Planned funding</b> in the file equals the screen; the CSV carries the same rows with the <code>—</code> line prefix</label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">The <b>By month</b> Excel file groups its funding rows by the same categories</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>The CSV reads back — with one known gap you will see in the preview</h3><div class="tags"><span class="tag think">Known gap</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Budget → <b>Import</b>, choose the CSV you just downloaded, and read the preview. <b>Cancel</b> — do not
+      commit it.</p>
+    <p class="why"><b>What you will see, and why it is not a Flag on this build.</b> Import reads every row of a sheet as
+      a <i>cost</i> — the file has no column for "money in" — and matches rows only against your cost lines. So each
+      money-in line (Chocolate Sale, Team Sponsor…) arrives in the preview as a <b>new</b> line under its category
+      rather than matched to the line it came from; commit it and you would gain a cost line inside a revenue
+      category. This predates the build (a <i>Fundraising</i> heading did the same), but the build widens it:
+      those lines now sit under <i>Tournaments</i> and <i>Other Income</i>, beside real cost lines, so the phantom no
+      longer looks out of place. <code>/review</code> found it on 2026-09-09; the fix — Import learning the file's
+      two bands — is queued as its own piece of work in a peer session, not folded into this one.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">Every <b>cost</b> line of the plan is in the preview once, matched to the line it came from (an update, not an add)</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">No phantom line for a heading or a subtotal (no "Planned funding", no "FUNDING", no category name arriving as a line)</label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">The money-in lines arrive as <b>new</b> lines under their categories — seen, and read as the known gap above rather than a defect of this build</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>Months groups revenue by category</h2>
+  <p>Money → <b>Budget vs. Actual</b> → View <b>Months</b>, Showing <b>Cash</b>. This is the view your screenshot
+    caught grouping by source while the Statement grouped by category.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Player dues, then the categories, then Money back</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">REVENUE opens with <b>Player dues</b>, exactly as before</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">Then the categories: <b>Fundraising</b>, <b>Sponsorship</b> (singular — it read <i>Sponsorships</i>), <b>Tournaments</b>, and <b>Other Income</b> only if money was filed there<span class="hintline">In the picker's order, the same order the plan list uses</span></label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">No row reads <b>Other income</b> (small i) — the catch-all is gone; Concession revenue's cash sits under <b>Tournaments</b></label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d"><b>Money back &amp; reimbursements</b> is last in the band, unchanged; <b>Total revenue</b> closes it and equals the Statement's Total revenue (Whole season) to the cent</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>What opens behind a category row</h3></div></div>
+  <div class="step-body">
+    <p class="why">The chevron opens the row to <i>who</i> the money came from; the figure opens <i>what makes it up</i>,
+      with doors. The doors are decided by the category's kind of money now, not by a group name.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a"><b>Sponsorship</b> ▸ chevron: the rows are the <b>sponsors</b>. Tap the row's Total figure: the panel says <b>Total</b> and offers <b>Open Sponsors</b> + <b>Open the Ledger</b>; a sponsor row's own figure offers <b>Open &lt;that sponsor&gt;</b></label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b"><b>Fundraising</b> ▸ the rows are the <b>drives</b>; its figure's panel says <b>Total raised</b> and offers <b>Open Fundraisers</b> + the Ledger; a family's credit is a <i>note</i> on the line, never a second figure</label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c"><b>Tournaments</b> ▸ the rows are the budget words money was filed against (Concession revenue); its figure offers <b>one door</b> — the Ledger</label></div>
+      <div class="chk"><input type="checkbox" id="d2d"><label for="d2d">Every family/drive/sponsor name is present inside its panel — no row reading blank where a name should be</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><div class="step-t"><h3>The forward view keeps the category's name</h3></div></div>
+  <div class="step-body">
+    <p class="why">Showing → <b>Scheduled</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d3a"><label for="d3a">The <b>Sponsorship</b> row is still called Sponsorship (a pledge still to arrive is still sponsorship money); the pledged amounts sit in <b>No date yet</b></label></div>
+      <div class="chk"><input type="checkbox" id="d3b"><label for="d3b">Its figure's panel says <b>Possible</b>, never Total, and offers <b>Open Sponsors</b></label></div>
+      <div class="chk"><input type="checkbox" id="d3c"><label for="d3c"><b>Money back</b> still reads <b>Asked of the club</b> on this lens — the one row that changes what it is</label></div>
+      <div class="chk"><input type="checkbox" id="d3d"><label for="d3d">The banner's forward sentence ("on what's scheduled you end the season with $X") still subtracts the pledge and the ask, and nothing else</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D4">
+  <div class="step-head"><span class="num">D4</span><div class="step-t"><h3>Budget and Difference, and the Months file</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d4a"><label for="d4a">Showing <b>Budget</b>: the plan's funding lines land under their categories, month by month, with the undated part in <b>No date yet</b>; <b>Budgeted revenue</b> equals the Statement's</label></div>
+      <div class="chk"><input type="checkbox" id="d4b"><label for="d4b">Showing <b>Difference</b>: category rows compare plan to cash; sponsor and drive sub-rows do not appear (no per-record plan to compare against), as before</label></div>
+      <div class="chk"><input type="checkbox" id="d4c"><label for="d4c"><b>Export</b> the Months view: the REVENUE rows carry the same category names as the screen</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>The Statement — one row moved, and it needs your word</h2>
+  <p>View <b>Statement</b>, Compare <b>Whole season</b>. The build's new gate compares the Statement's revenue
+    categories to Months' — and on its first run it caught the one place they disagreed.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>"Not in the plan" is now "Sponsorship (not budgeted)"</h3><div class="tags"><span class="tag ask">Ask</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The sponsor cheques no plan line claims used to be a row of their own, <b>Not in the plan → Sponsor
+      money</b>, named that way on 7 September so the row would say what the money is (it had read "No
+      category → Not itemized"). Months now files the same cheques under <b>Sponsorship</b>, so the
+      Statement does too: the money sits under <b>Sponsorship</b>, flagged not budgeted, with <b>Sponsor
+      money</b> as its row. Same figure, same records behind it. <b>The 7 September reason is kept</b> —
+      the row still says what the money is, now in the same word every other surface uses.</p>
+    <div class="ask"><b>Your call:</b> is <b>Sponsorship (not budgeted) → Sponsor money</b> the right reading, or do you
+      want <b>Not in the plan</b> back as a row of its own on the Statement? The first keeps the two views
+      agreeing; the second keeps a heading Months does not have.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">REVENUE shows a <b>Sponsorship</b> category row carrying the "not budgeted" treatment; <b>Sponsor money</b> is its item row; the figure is the sponsor pool you know</label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">No row reads <b>Not in the plan</b> anywhere on the Statement</label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">Tap the Sponsor money figure: the panel lists the <b>named sponsors</b>, as before</label></div>
+      <div class="chk"><input type="checkbox" id="e1d"><label for="e1d"><b>Total revenue</b> and <b>Season net</b> are unchanged from before this build — a heading moved, no dollar did</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Your ruling on the Sponsorship (not budgeted) row, and notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>Everything else on the Statement and By activity is untouched</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Statement REVENUE otherwise reads Player dues, Fundraising, Other Income, Tournaments — the same categories, in the same order, as before</label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">View <b>By activity</b>: the <b>Tournaments</b> block still shows REVENUE (Concession revenue) and COSTS (Entry Fees) together with one net</label></div>
+      <div class="chk"><input type="checkbox" id="e2c"><label for="e2c">Compare <b>To date</b> behaves as it did; the Statement's <b>Export</b> carries the Sponsorship (not budgeted) row where Not in the plan used to be</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>"What am I forgetting?" is an index</h2>
+  <p>Back to Money → <b>Budget</b>, View <b>List</b>. The strip sits under the closing figure. Two of these steps
+    are asks — the build made a call you should see.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>Two headings in the form's own words, money-in first</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">Collapsed, the footnote reads <b>What am I forgetting? · N items in M categories</b></label></div>
+      <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">Expanded: two headings, <b>MONEY COMING IN</b> first, <b>MONEY THE TEAM SPENDS</b> second — the same two phrases the Add Line form uses for "This line is"</label></div>
+      <div class="chk"><input type="checkbox" id="f1c"><label for="f1c">Each heading carries its own count at the right, and the two counts add up to N</label></div>
+      <div class="chk"><input type="checkbox" id="f1d"><label for="f1d"><b>No chips are visible yet</b> — only category buttons, each with its count</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><div class="step-t"><h3>A category on both sides appears under both headings</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f2a"><label for="f2a"><b>Tournaments</b> appears under Money coming in (its revenue words) <i>and</i> under Money the team spends (its cost words) — two different buttons, two different counts</label></div>
+      <div class="chk"><input type="checkbox" id="f2b"><label for="f2b">So does <b>Fundraising</b> (drive/merchandise words on one side, printing/supplies/venue on the other)</label></div>
+      <div class="chk"><input type="checkbox" id="f2c"><label for="f2c">Under each heading the buttons are in the picker's order — Tournaments before Facilities before Officials …</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F3">
+  <div class="step-head"><span class="num">F3</span><div class="step-t"><h3>Opening a category — the chips sit below the row</h3><div class="tags"><span class="tag ask">Ask</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The mockup drew the open category's chips attached directly under its own button, with the other
+      buttons continuing after. The build keeps the button row intact and shows the open category's chips
+      in a tinted body <b>below the whole row</b>, with the open button tinted to match. Same information,
+      one fewer layout mode.</p>
+    <div class="ask"><b>Your call:</b> is the body-below-the-row reading right, or do you want the chips attached
+      to their button as drawn?</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f3a"><label for="f3a">Tap <b>Coaching</b>: the button tints, and its chips (Certifications, Clinics, Honorariums, Travel — whichever this team has not budgeted) appear in a tinted body under the row</label></div>
+      <div class="chk"><input type="checkbox" id="f3b"><label for="f3b">Tap <b>Officials</b>: Coaching closes and Officials opens — one category at a time</label></div>
+      <div class="chk"><input type="checkbox" id="f3c"><label for="f3c">Tap Officials again: it closes; the button loses its tint</label></div>
+      <div class="chk"><input type="checkbox" id="f3d"><label for="f3d">The two <b>Insurance</b> words read as two different shelves' words: one inside <b>Admin</b>, one inside <b>League &amp; Fees</b></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Your ruling on where the chips sit, and notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F4">
+  <div class="step-head"><span class="num">F4</span><div class="step-t"><h3>A chip still opens the form on the right side, word chosen</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f4a"><label for="f4a">Open <b>Coaching</b> → <b>+ Travel</b>: Add Budget Line opens on <b>Money the team spends</b> with <b>Coaching · Travel</b> chosen and the amount <b>empty</b>; <b>Back</b> closes it silently</label></div>
+      <div class="chk"><input type="checkbox" id="f4b"><label for="f4b">Under Money coming in, open <b>Sponsorship</b> → <b>+ Grant</b>: the form opens on <b>Money coming in</b> with <b>Sponsorship · Grant</b> chosen<span class="hintline">The §157 behaviour — a money-in word never arrives on the spending side</span></label></div>
+      <div class="chk"><input type="checkbox" id="f4c"><label for="f4c">Add one of them for real: the word disappears from the strip and the category's count drops by one; delete the line and it returns</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F5">
+  <div class="step-head"><span class="num">F5</span><div class="step-t"><h3>Dismissing, and what the device remembers</h3><div class="tags"><span class="tag ask">Ask</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Dismissals are remembered per device, as before. <b>Which category is open is not</b> — the build
+      keeps that as plain page state, on the argument that the list is a device for one sitting.</p>
+    <div class="ask"><b>Your call:</b> fine that a reload closes the open category, or should the device remember it?</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f5a"><label for="f5a">Open <b>Officials</b> → ✕ on <b>Plate Fees</b>: the chip goes; the Officials count drops by one; the strip's total drops by one</label></div>
+      <div class="chk"><input type="checkbox" id="f5b"><label for="f5b">Reload: Plate Fees is still gone; Officials is <b>closed</b> again; the count is still one lower</label></div>
+      <div class="chk"><input type="checkbox" id="f5c"><label for="f5c">Dismiss every word in some small category (e.g. Travel's three): the <b>category button disappears</b> and M in "N items in M categories" drops</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Your ruling on remembering the open category, and notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F6">
+  <div class="step-head"><span class="num">F6</span><div class="step-t"><h3>On your phone</h3><div class="tags"><span class="tag phone">Phone</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The whole case for the index was the phone: the seven money-in words used to be a screen and a half
+      down. Open the Budget on a real handset.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f6a"><label for="f6a">Expanded, <b>both headings and the Money coming in buttons are visible without scrolling past the strip's top</b></label></div>
+      <div class="chk"><input type="checkbox" id="f6b"><label for="f6b">Every category button is a comfortable thumb target (the 44px floor); a tap opens it first time</label></div>
+      <div class="chk"><input type="checkbox" id="f6c"><label for="f6c">Chips wrap inside the tinted body; nothing on the page scrolls sideways</label></div>
+      <div class="chk"><input type="checkbox" id="f6d"><label for="f6d">✕ on a chip is tappable without hitting the word beside it</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>Help and the demo</h2>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>Help says what the screens now do</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g1a"><label for="g1a">Help search <b>"where does tournament revenue show"</b> finds the Money guide; its Months <b>Revenue</b> definition lists Player dues, then the categories, then Money back — no "Sponsorships", no "Other income"</label></div>
+      <div class="chk"><input type="checkbox" id="g1b"><label for="g1b">The Budget Plan's <b>Planned funding</b> definition says money in reports under the category it was filed in, and names Tournaments and Other Income as such</label></div>
+      <div class="chk"><input type="checkbox" id="g1c"><label for="g1c">The Fundraising screen's own <b>Sponsorships</b> list keeps its name in help — a list of sponsors is a different thing from the Sponsorship category</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G2">
+  <div class="step-head"><span class="num">G2</span><div class="step-t"><h3>The coach demo still tells the truth</h3></div></div>
+  <div class="step-body">
+    <p class="why">Sign out, open the coach sandbox door, go to Money → Budget and Budget vs. Actual. The dock lines
+      and tour steps were re-read at build time and say nothing about how revenue is grouped or about the
+      strip — so the expected finding is <b>nothing stale</b>. Look anyway.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g2a"><label for="g2a">Both pages render; the demo's funding rows sit under category headings like the UAT team's</label></div>
+      <div class="chk"><input type="checkbox" id="g2b"><label for="g2b">No dock line or tour step on these two screens describes a heading that is no longer there</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Everything you ticked, flagged and wrote, as text. <b>Copy findings</b> puts it on the
+    clipboard; paste it back into the chat. <b>E1, F3 and F5 are the three I need a word on.</b></p>
+  <textarea class="out" id="out" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §158</span><span>Built on dev 2026-09-09</span><span>Mockup of record: artifact 728dcb1e</span><span>Plan: COACH_BUDGET_CATEGORY_IS_THE_SHELF_PLAN.md</span><span>No migration</span>
+</footer>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast"></span></div>
+</div>
+
+<script>
+(function(){
+  var KEY='fl-qa-158-category-is-the-shelf';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('.step textarea'));
+  var out=document.getElementById('out');
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v){ st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); }); }
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §158 — The category is the shelf','Fixture: UAT Test Team · built on dev 2026-09-09',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var hint=lab.querySelector('.hintline');
+        var txt=lab.textContent;
+        if(hint) txt=txt.replace(hint.textContent,'');
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt.replace(/\s+/g,' ').trim());
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    lines.push('E1, F3 and F5 are the three asks — a word on each, please.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

@@ -179,14 +179,17 @@ export function budgetLineKindForItem(
 export const DERIVED_INCOME_LINE_KINDS: BudgetLineKind[] =
   FUNDING_LINE_KINDS.filter(k => LINE_KIND_ACTUAL_SOURCE[k] !== 'typed');
 
-/** The heading its section carries — in the plan list, in the period grid and in both exports.
- *  ONE definition: four hardcoded copies of a section name is four places to miss on a rename.
+/** The WORD for a kind — what a kind is called when a sentence has to name one.
  *
- *  ⚠ BARE NOUNS, NO "EXPECTED" (owner ruling 2026-09-08, mockup e94d05d9 round 2). The kind rows
- *  sit under a band that already says FUNDING, and the cost categories beside them never carried a
- *  prefix. "Expected" implied a distinction — money in is less certain than money out — that the
- *  plan does nothing with; every figure on the screen is planned. The one qualifier lives on the
- *  subtotals, and it is the same on both sides: see `PLAN_LADDER_LABEL`. */
+ *  ⚠⚠ NOT A HEADING ANY MORE (owner ruling 2026-09-09). Until that day the plan list, the period
+ *  grid and both plan files grouped money in under these words, while the Statement grouped it by
+ *  CATEGORY — so a concession stand filed under Tournaments read under "Other income" on the plan
+ *  and under "Tournaments" on the report. Every surface now groups a money-in line by its category,
+ *  through `categoryGroupOf` in lib/coach-budget-rollup.ts; the kind stays a data fact (who fills
+ *  the number in) and stops naming shelves. Do not reach for this record to head a section.
+ *
+ *  ⚠ BARE NOUNS, NO "EXPECTED" (owner ruling 2026-09-08): "Expected" implied a distinction — money
+ *  in is less certain than money out — that the plan does nothing with. */
 export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
   cost:         'Costs',
   funding:      'Fundraising',
@@ -204,10 +207,10 @@ export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
  * control takes a `newItemNote` hook and prints whatever words it is handed; this is the money
  * module handing them over. A caller with nothing to say passes nothing and the panel says nothing.
  *
- * ⚠ THE HEADING COMES FROM `LINE_KIND_SECTION`, NEVER A LITERAL. The first cut hardcoded "Other
- * income" — and that word had already moved once that same week (the plan ladder retired "Expected"
- * from every section name), so a hardcoded copy is a sentence that goes quietly wrong the next time
- * the heading is renamed. Derived, it cannot.
+ * ⚠ THE HEADING IS THE CATEGORY'S OWN NAME (owner ruling 2026-09-09). The plan groups money in by
+ * category now, so a word born on a coach's "Bingo" shelf reports under "Bingo" — and that is what
+ * the sentence says. The first cut hardcoded "Other income", then derived it from the kind; both
+ * would now name a heading no plan surface carries.
  *
  * ⚠ ONLY THE TYPED SHELF SPEAKS, and that is the ruling rather than an omission: the two derived
  * shelves are self-explanatory — a word filed under Fundraising is filled in from a drive, which is
@@ -216,7 +219,7 @@ export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
  * one `lib/coach-register-book.ts` states: the exception speaks; the normal case does not.
  */
 export function newMoneyInWordNote(
-  category: { incomeSource?: BudgetItemActualSource },
+  category: { name?: string; incomeSource?: BudgetItemActualSource },
   direction: 'in' | 'out',
 ): string | null {
   /* ⚠⚠ THE DIRECTION IS ASKED FIRST AND WINS — the same rule `budgetItemSourceForCategory` and
@@ -231,7 +234,8 @@ export function newMoneyInWordNote(
   if (direction !== 'in') return null;
   const source = category.incomeSource ?? 'typed';
   if (source !== 'typed') return null;
-  return `Will report under ${LINE_KIND_SECTION[MONEY_IN_KIND_BY_ACTUAL_SOURCE[source]]}.`;
+  const name = category.name?.trim();
+  return name ? `Will report under ${name}.` : null;
 }
 
 /**

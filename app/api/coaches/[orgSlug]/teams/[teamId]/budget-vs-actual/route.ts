@@ -18,11 +18,12 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import {
   buildMonthGrid, monthKeyOf, deriveMonthRange, isPayoutCategory, UNDATED_CELL,
-  revenueCategoryId, revenueGroupLabel, revenueGroupOf, REVENUE_GROUPS,
+  revenueCategoryId, revenueGroupLabel, revenueGroupOf,
   PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME,
   type CategoryEvent, type GridLine, type RevenueGroupKey, type GridCategoryResult,
 } from '@/lib/coach-budget-months';
-import { LINE_KIND_ACTUAL_SOURCE } from '@/lib/coach-budget-totals';
+import { categoryIdOfKey } from '@/lib/coach-budget-rollup';
+import type { BudgetItemActualSource } from '@/lib/coach-budget-totals';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import {
   rollupMoneyReport, categoryKey, displayCategoryName,
@@ -35,7 +36,7 @@ import {
   seasonDuesParts, buildFamilyDuesInputs, type DuesCreditKind,
 } from '@/lib/coach-dues-actual';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
-import { buildActualCashStrip } from '@/lib/coach-cash-strip';
+import { buildActualCashStrip, incomeCategoryFor } from '@/lib/coach-cash-strip';
 import { placeDerivedActual, taxonomyKey, UNPLANNED_DERIVED_CATEGORY, unplannedDerivedItemName } from '@/lib/coach-money-derived';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
@@ -165,7 +166,10 @@ export const GET = withObservability(async (req: Request,
   const [{ data: linesRaw }, { data: expensesRaw }, standings] = await Promise.all([
     supabaseAdmin
       .from('rep_budget_lines')
-      .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
+      // ⚠ `sort_order` and `income_source` ride along (owner ruling 2026-09-09): the revenue band
+      // orders its category rows the way the picker lists them, and a row's income source decides
+      // which doors its panel offers. One join, no second query.
+      .select('*, rep_budget_periods(*), budget_categories(name, sort_order, income_source), budget_items(name)')
       .eq('program_year_id', programYear.id)
       .order('sort_order'),
     supabaseAdmin
@@ -290,7 +294,22 @@ export const GET = withObservability(async (req: Request,
   // honest row of its own rather than a separate section nobody scrolls to.
   const categoryNameById = new Map<string, string>();
   const categoryIdByName = new Map<string, string>();
-  const learnCategory = (catId: string | null, catName: string | null) => {
+  /* ⚠ ONE LEARNING PASS, TWO KINDS OF FACT. The revenue band groups money in by CATEGORY (owner
+     ruling 2026-09-09), so it needs two facts per category the grid cannot derive — its ORDER (the
+     picker's sort order, so the band reads the way a coach chose from it) and its INCOME SOURCE (who
+     fills the number in, which decides a cell panel's doors). They ride the same `learnCategory` that
+     already learns names, from the joins that already carry them; a category no record names is
+     `typed`, which is the column's own default. */
+  type CategoryJoin = { sort_order?: unknown; income_source?: unknown } | null | undefined;
+  const categoryMeta = new Map<string, { sortOrder: number; incomeSource: BudgetItemActualSource }>();
+  const learnCategory = (catId: string | null, catName: string | null, meta?: CategoryJoin) => {
+    if (catId && meta && !categoryMeta.has(catId)) {
+      const src = meta.income_source;
+      categoryMeta.set(catId, {
+        sortOrder: typeof meta.sort_order === 'number' ? meta.sort_order : Number.MAX_SAFE_INTEGER,
+        incomeSource: src === 'fundraiser' || src === 'sponsor' ? src : 'typed',
+      });
+    }
     const name = (catName ?? '').trim();
     if (!catId || !name) return;
     if (!categoryNameById.has(catId)) categoryNameById.set(catId, name);
@@ -301,6 +320,7 @@ export const GET = withObservability(async (req: Request,
     learnCategory(
       line.category_id as string | null,
       ((line.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+      line.budget_categories as CategoryJoin,
     );
   }
   /* ⚠ AND FROM THE SPENDING TOO, or a category the team never budgeted for SPLITS IN TWO. Learning
@@ -425,7 +445,7 @@ export const GET = withObservability(async (req: Request,
      dollar it is. ⚠ GATED EXACTLY AS THE PLAYER DUES TAB IS AND NO WIDER: this whole route already
      refuses a coach without `canViewMoney` above, which is the same key that opens Dues. Nothing
      here widens who can read a family name. */
-  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, paidBackByCredit, rosterRes, fundraiserRecordsRes] = await Promise.all([
+  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, paidBackByCredit, rosterRes, fundraiserRecordsRes, platformCategoriesRes] = await Promise.all([
     getRepTeamMoneyIn(programYear.id),
     getDerivedIncomeClaims(programYear.id),
     getSeasonFundraiserEntries(programYear.id),
@@ -446,8 +466,17 @@ export const GET = withObservability(async (req: Request,
        wave is pure added latency on the screen a coach opens to reconcile their books. */
     supabaseAdmin
       .from('rep_fundraisers')
-      .select('id, name, kind, pledged_amount, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
+      .select('id, name, kind, pledged_amount, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name, sort_order, income_source)')
       .eq('program_year_id', programYear.id),
+    /* ⚠ THE PLATFORM'S SHELVES (owner ruling 2026-09-09). A drive or sponsor that names no line
+       still reports under the category its kind was always going to land on — the platform
+       Fundraising / Sponsorship category — rather than vanishing from the band. Platform rows only:
+       an org's own categories reach this route on the records that use them. Same wave; it depends
+       on nothing here. */
+    supabaseAdmin
+      .from('budget_categories')
+      .select('id, name, sort_order, income_source')
+      .is('org_id', null),
   ]);
   /* ⚠ THE SAME NAME THE REGISTER PRINTS, assembled the same way — a family reading as "Maya Ledger"
      on one screen and "Maya" on the next is the same record answering twice. */
@@ -492,6 +521,36 @@ export const GET = withObservability(async (req: Request,
       itemName,
     });
   }
+  /* ══ WHAT THE REVENUE BAND KNOWS ABOUT EACH CATEGORY (owner ruling 2026-09-09) ═══════════════
+     Money in is grouped by CATEGORY on this band now, exactly as the Statement groups it, so the
+     band needs two facts per category the grid cannot derive: its ORDER (the picker's sort order,
+     so the band reads the way a coach chose from it) and its INCOME SOURCE (who fills the number in
+     — a drive, a sponsor, the coach — which decides the doors a cell's panel offers). Learned from
+     the platform list and from the joins already on the lines and the fundraising records; a
+     category none of those name is `typed`, which is the column's own default. */
+  const platformCategories = (platformCategoriesRes.data ?? []) as Array<{
+    id: string; name: string; sort_order: number | null; income_source: string | null;
+  }>;
+  for (const c of platformCategories) learnCategory(c.id, c.name, c);
+  for (const f of (fundraiserRecordRows ?? []) as Array<Record<string, unknown>>) {
+    const join = f.budget_categories as (CategoryJoin & { name?: string }) | null;
+    learnCategory(f.budget_category_id as string | null, join?.name ?? null, join);
+  }
+  const incomeSourceOf = (categoryId: string | null): BudgetItemActualSource =>
+    (categoryId ? categoryMeta.get(categoryId)?.incomeSource : undefined) ?? 'typed';
+  const categorySortOrder = (categoryId: string | null): number =>
+    (categoryId ? categoryMeta.get(categoryId)?.sortOrder : undefined) ?? Number.MAX_SAFE_INTEGER;
+  const shelfFor = (source: 'fundraiser' | 'sponsor') => {
+    const c = platformCategories.find(p => p.income_source === source);
+    return c ? { categoryId: c.id, categoryName: c.name } : null;
+  };
+  const shelves = { fundraising: shelfFor('fundraiser'), sponsorship: shelfFor('sponsor') };
+  /** The category a drive or sponsor is raising for — its own answer, or null when it names no line. */
+  const raisingForOf = (recordId: string) => {
+    const at = raisingForByRecord.get(recordId);
+    return at ? { categoryId: at.categoryId, categoryName: at.categoryName } : null;
+  };
+
   const sponsorRecordRows = (fundraiserRecordRows ?? []).filter(f => f.kind === 'sponsor');
   const sponsorPledges = (sponsorRecordRows ?? [])
     .map(s => ({
@@ -593,7 +652,21 @@ export const GET = withObservability(async (req: Request,
          instead of falling into a bucket meant for something else.
          ⚠ THE PLACEMENT RULE IS UNTOUCHED — this only supplies WORDS where it returned none. */
       const unplanned = at.categoryId === null && at.itemId === null;
-      const categoryName = unplanned ? UNPLANNED_DERIVED_CATEGORY : at.categoryName;
+      /* ⚠⚠ UNDER ITS OWN SHELF, NOT IN A BUCKET OF ITS OWN (owner ruling 2026-09-09 — the category is
+         the shelf on both sides, on every surface). From 2026-09-07 until then an unclaimed pool
+         named itself "Not in the plan", which fixed the real defect of that day — a row reading "No
+         category → Not itemized" for money the report knew the source of — but it was a heading no
+         other surface carried, and Months (which groups by category too now) filed the same cheque
+         under Sponsorship; `check:money-report` claim 5b caught the two views disagreeing on the
+         fixture the day the claim was written. The pool still refuses to guess a LINE; it no longer
+         refuses to name the CATEGORY, because a sponsor's money is Sponsorship money by construction
+         (the platform shelf whose income source is `sponsor`), exactly as an unbudgeted cost sits in
+         its own category flagged not budgeted. The item row keeps its words — "Sponsor money",
+         "Fundraising money" — and the not-budgeted flag is still the visible gap a coach closes by
+         planning a line. The old name survives only on a database with no such shelf. */
+      const shelf = unplanned ? incomeCategoryFor(null, source, shelves) : null;
+      const poolCategoryId = shelf ? shelf.categoryId : at.categoryId;
+      const categoryName = shelf ? (shelf.categoryName ?? UNPLANNED_DERIVED_CATEGORY) : at.categoryName;
       const itemName = unplanned ? unplannedDerivedItemName(source) : at.itemName;
       /* ⚠⚠ A SYNTHETIC ITEM KEY PER SOURCE, OR THE TWO POOLS MERGE INTO ONE ROW (found by review,
          2026-09-07 — reproduced, not theorised). The rollup buckets items by `itemId ?? NO_ITEM`, so
@@ -638,7 +711,7 @@ export const GET = withObservability(async (req: Request,
           description: row.toFamilies > 0.005
             ? `${row.name} — ${fmtMoney(row.kept)} of ${fmtMoney(row.raised)}, ${fmtMoney(row.toFamilies)} to families`
             : row.name,
-          categoryId: own?.categoryId ?? at.categoryId,
+          categoryId: own?.categoryId ?? poolCategoryId,
           categoryName: own ? own.categoryName : categoryName,
           itemId: own?.itemId ?? itemKey,
           itemName: own ? own.itemName : itemName,
@@ -1170,7 +1243,7 @@ export const GET = withObservability(async (req: Request,
       return {
         id: m.id, amount: m.amount, receivedDate: m.receivedDate, kind: m.kind,
         description: m.description ?? '',
-        categoryName: at.categoryName, itemId: at.itemId, itemName: at.itemName,
+        categoryId: at.categoryId, categoryName: at.categoryName, itemId: at.itemId, itemName: at.itemName,
       };
     }),
     realisedEntries: realisedEntries.map(e => ({
@@ -1178,7 +1251,9 @@ export const GET = withObservability(async (req: Request,
       kind: e.kind, fundraiserId: e.fundraiserId, fundraiserName: e.fundraiserName,
       playerId: e.playerId, playerName: e.playerId ? familyName(e.playerId) : null,
       rebateAmount: e.rebateAmount,
+      raisingFor: raisingForOf(e.fundraiserId),
     })),
+    shelves,
     clubRequests: clubApprovedRequests.map(r => ({
       id: `club-request-${r.id}`,
       description: r.description,
@@ -1310,21 +1385,32 @@ export const GET = withObservability(async (req: Request,
      rather than the thing the table adds up to. Now: REVENUE groups, EXPENSES categories, a total
      under each, and Net = the running balance's step. Revenue − expenses = balance, to the cent.
 
-     ⚠ GROUPED BY WHERE THE MONEY CAME FROM, never by the budget category it was filed under — see
-     `REVENUE_GROUPS`. Five fixed groups; a group with nothing under any lens never renders.
+     ⚠ GROUPED BY CATEGORY, exactly as the Statement groups it (owner ruling 2026-09-09) — Player
+     dues first and Money back last, the two rows that are not categories (`REVENUE_GROUPS`); a row
+     with nothing under any lens never renders.
 
      ⚠⚠ THE SAME `buildMonthGrid` BUILDS BOTH BANDS, and that is the point rather than a shortcut.
      A second builder for revenue would be a parallel copy of the windowing, the undated bucket, the
      category identity and the totals — four rules this module has already been consolidated twice
      to keep in one place. What revenue needed was one honest addition: a plan can arrive as dated
      EVENTS (a dues instalment schedule is a plan, and it is not a budget line). */
+  /**
+   * WHERE A REVENUE DOLLAR SITS (owner ruling 2026-09-09): on one of the two FIXED rows — dues,
+   * money back — or under the CATEGORY its line was filed in, keyed exactly as the Statement keys
+   * it. The five-group vocabulary this band opened with is gone; see `REVENUE_GROUPS`.
+   */
+  type RevenueWhere = RevenueGroupKey | { categoryId: string | null; categoryName: string | null };
+  const revenueIdentity = (where: RevenueWhere): { categoryId: string | null; categoryName: string } =>
+    typeof where === 'string'
+      // The lens-neutral name; the screen re-labels the two fixed rows per lens (`revenueGroupLabel`).
+      ? { categoryId: revenueCategoryId(where), categoryName: revenueGroupLabel(where, 'actual') }
+      : { categoryId: where.categoryId, categoryName: displayCategoryName(where.categoryName) };
+
   const revenueEvent = (
-    group: RevenueGroupKey, date: string | null, amount: number,
+    where: RevenueWhere, date: string | null, amount: number,
     subject: { id: string | null; name: string } | null = null,
   ): CategoryEvent => ({
-    categoryId: revenueCategoryId(group),
-    // The lens-neutral name; the screen re-labels per lens (`revenueGroupLabel`).
-    categoryName: revenueGroupLabel(group, 'actual'),
+    ...revenueIdentity(where),
     /* ⚠⚠ WHO OR WHAT THE MONEY CAME FROM (D-2, owner ruling 2026-08-24) — the family, the drive,
        the sponsor, the filing. It rides in `itemId` because that is the field `buildMonthGrid`
        already keys a row by; giving revenue its own second key would be a parallel copy of the
@@ -1345,8 +1431,8 @@ export const GET = withObservability(async (req: Request,
      ⚠ NOTHING IS ELIDED. Every family renders; the drawing's "…nine more families" was drawing
      economy, not a design (owner ruling 2026-08-24). */
   const revenueRows = new Map<string, GridLine>();
-  function revenueRow(group: RevenueGroupKey, subject: { id: string | null; name: string }) {
-    const categoryId = revenueCategoryId(group);
+  function revenueRow(where: RevenueWhere, subject: { id: string | null; name: string }) {
+    const at = revenueIdentity(where);
     /* ⚠⚠ MONEY NOBODY FILED STILL GETS A ROW, and it took an owner question about sample data to
        notice it did not. This returned early on a null subject, so an arrival with no budget item
        reached the group's TOTAL and no row beneath it — expand the group and the rows silently add
@@ -1354,13 +1440,13 @@ export const GET = withObservability(async (req: Request,
        ⚠ `no-item` IS NOT AN INVENTED KEY: it is the exact fallback `buildMonthGrid` already uses
        when it places an event carrying no item, so the row and its money meet on the same key
        rather than the row being a label with nothing behind it. */
-    const id = `${categoryKey(categoryId, revenueGroupLabel(group, 'actual'))}|${subject.id ?? 'no-item'}`;
+    const id = `${categoryKey(at.categoryId, at.categoryName)}|${subject.id ?? 'no-item'}`;
     if (revenueRows.has(id)) return;
     revenueRows.set(id, {
       id,
       description: subject.name,
-      categoryId,
-      categoryName: revenueGroupLabel(group, 'actual'),
+      categoryId: at.categoryId,
+      categoryName: at.categoryName,
       itemId: subject.id,
       /* ⚠ NO PLAN, ON PURPOSE. A revenue row is a RECORD of where money came from, not a line
          anybody budgeted — so it carries no total and no periods, and the group's own budget
@@ -1374,14 +1460,14 @@ export const GET = withObservability(async (req: Request,
 
   /** A revenue record's own line in the panel behind its cell. */
   function pushRevenueDetail(
-    kind: 'actual' | 'scheduled', group: RevenueGroupKey, date: string | null,
+    kind: 'actual' | 'scheduled', where: RevenueWhere, date: string | null,
     rec: {
       id: string; subject: { id: string | null; name: string };
       description?: string | null; kind?: string | null;
       note?: string | null; amount: number; datePrefix?: string;
     },
   ) {
-    pushDetail(kind, { categoryId: revenueCategoryId(group), categoryName: revenueGroupLabel(group, 'actual') }, date, {
+    pushDetail(kind, revenueIdentity(where), date, {
       id: rec.id, itemId: rec.subject.id, description: rec.description ?? '', kind: rec.kind,
       amount: rec.amount, note: rec.note ?? null, datePrefix: rec.datePrefix,
     });
@@ -1389,38 +1475,40 @@ export const GET = withObservability(async (req: Request,
 
   // ── Revenue · ACTUAL: the cash that arrived, in its group, on the day it arrived.
   const revenueActuals: CategoryEvent[] = cashStrip.revenue.map(e => {
-    revenueRow(e.group, e.subject);
-    pushRevenueDetail('actual', e.group, e.date, e);
-    return revenueEvent(e.group, e.date, e.amount, e.subject);
+    const where: RevenueWhere = e.where;
+    revenueRow(where, e.subject);
+    pushRevenueDetail('actual', where, e.date, e);
+    return revenueEvent(where, e.date, e.amount, e.subject);
   });
 
   /* ── Revenue · BUDGET: what the season PLANNED to bring in.
      Two feeds, and they are genuinely different animals:
        · the dues INSTALMENT SCHEDULE — dated amounts a coach set on Player Dues, the only income
          with a schedule and never a budget line;
-       · the plan's own funding lines, split by KIND so expected fundraising and expected
-         sponsorship land in their own groups (through `LINE_KIND_ACTUAL_SOURCE`, never a ternary —
-         see its header for the nineteen readers that got that wrong). */
+       · the plan's own funding lines, each under the CATEGORY it was filed in (owner ruling
+         2026-09-09) — the same identity the Statement gives the same line, so "Tournaments" reads
+         "Tournaments" on both. */
   const revenueBudgets: CategoryEvent[] = [];
   for (const i of duesInstallments) {
     revenueBudgets.push(revenueEvent('dues', i.due_date, i.amount ?? 0));
   }
   for (const line of fundingLines) {
-    const source = LINE_KIND_ACTUAL_SOURCE[normalizeBudgetLineKind(line.line_kind as string | null)];
-    const group: RevenueGroupKey = source === 'sponsor' ? 'sponsorship'
-      : source === 'fundraiser' ? 'fundraising' : 'other';
+    const where: RevenueWhere = {
+      categoryId: (line.category_id as string | null) ?? null,
+      categoryName: ((line.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+    };
     const periods = ((line.rep_budget_periods ?? []) as Array<Record<string, unknown>>);
     let placed = 0;
     for (const p of periods) {
       const amt = (p.amount as number) ?? 0;
       placed += amt;
-      revenueBudgets.push(revenueEvent(group, p.period_date as string | null, amt));
+      revenueBudgets.push(revenueEvent(where, p.period_date as string | null, amt));
     }
     /* ⚠ THE UNDATED REMAINDER IS EMITTED, NOT DROPPED. A budget LINE hands the grid its total and
        the grid works out what has no date; an event stream has to say so itself, or a funding line
        nobody has phased would silently plan nothing. */
     const rest = Math.round((((line.total_amount as number) ?? 0) - placed) * 100) / 100;
-    if (rest > 0.005) revenueBudgets.push(revenueEvent(group, null, rest));
+    if (rest > 0.005) revenueBudgets.push(revenueEvent(where, null, rest));
   }
 
   /* ══ PLAYER DUES JOIN THE STATEMENT (owner ruling 2026-09-04) ════════════════════════════════
@@ -1605,12 +1693,15 @@ export const GET = withObservability(async (req: Request,
      POSSIBLE and can never rescue a month the team has to get through without them. */
   for (const e of sponsorPledges) {
     const subject = { id: e.fundraiserId, name: e.fundraiserName };
-    revenueRow('sponsorship', subject);
-    pushRevenueDetail('scheduled', 'sponsorship', null, {
+    /* The pledge sits where the sponsor's cash will: the line it is raising for, else the platform
+       Sponsorship shelf (owner ruling 2026-09-09). */
+    const where: RevenueWhere = incomeCategoryFor(raisingForOf(e.fundraiserId), 'sponsor', shelves);
+    revenueRow(where, subject);
+    pushRevenueDetail('scheduled', where, null, {
       id: `sponsor-pledge-${e.fundraiserId}`, subject, amount: e.remaining,
       description: 'Pledged', note: `recorded ${fmtDay(e.recordedDay)}`,
     });
-    revenueScheduled.push(revenueEvent('sponsorship', null, e.remaining, subject));
+    revenueScheduled.push(revenueEvent(where, null, e.remaining, subject));
   }
   for (const r of allClubRequests) {
     /* ⚠ INCOMING ONLY, AND THIS IS NOW AN ASYMMETRY WORTH STATING (2026-08-30). The expense band's
@@ -1748,16 +1839,30 @@ export const GET = withObservability(async (req: Request,
     months: gridMonths,
     truncated: gridTruncated,
   });
-  /* ⚠ THE BAND'S ORDER IS THE VOCABULARY'S, not the order money happened to arrive in. Groups
-     reach the grid as events, so without this a team whose first record was a sponsor cheque would
-     read Sponsorships · Player dues · Fundraising — a different statement every season. */
-  const revenueRank = (c: GridCategoryResult) => {
+  /* ⚠ THE BAND'S ORDER IS THE VOCABULARY'S, not the order money happened to arrive in: Player dues
+     first, then the categories in the picker's own order (sort order, then name), Money back last
+     (owner ruling 2026-09-09). Rows reach the grid as events, so without this a team whose first
+     record was a sponsor cheque would read Sponsorship · Player dues · Fundraising — a different
+     statement every season. */
+  const revenueRank = (c: GridCategoryResult): [number, number, string] => {
     const group = revenueGroupOf(c.categoryKey);
-    return group ? REVENUE_GROUPS.indexOf(group) : REVENUE_GROUPS.length;
+    if (group === 'dues') return [0, 0, ''];
+    if (group === 'moneyback') return [2, 0, ''];
+    return [1, categorySortOrder(categoryIdOfKey(c.categoryKey)), c.categoryName];
   };
   const revenueGrid = {
     ...revenueGridRaw,
-    categories: [...revenueGridRaw.categories].sort((a, b) => revenueRank(a) - revenueRank(b)),
+    categories: [...revenueGridRaw.categories]
+      .sort((a, b) => {
+        const ra = revenueRank(a);
+        const rb = revenueRank(b);
+        return (ra[0] - rb[0]) || (ra[1] - rb[1]) || ra[2].localeCompare(rb[2]);
+      })
+      /* A category row carries who fills its number in — the doors its panel offers, and how
+         `check:money-report` classifies it against the register. The two fixed rows carry nothing. */
+      .map(c => (revenueGroupOf(c.categoryKey)
+        ? c
+        : { ...c, incomeSource: incomeSourceOf(categoryIdOfKey(c.categoryKey)) })),
   };
 
 

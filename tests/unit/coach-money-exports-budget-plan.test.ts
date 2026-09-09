@@ -55,7 +55,10 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
     ],
   }],
   lines: [
-    planLine({ id: 'f', description: 'Chocolate Sale', totalAmount: 1800, lineKind: 'funding' }),
+    planLine({
+      id: 'f', description: 'Chocolate Sale', totalAmount: 1800, lineKind: 'funding',
+      categoryId: 'cat-fundraising', categoryName: 'Fundraising',
+    }),
   ],
   totals: totalsOf({}),
   duesAssessed: 0,
@@ -63,7 +66,7 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
 };
 
 describe('the statement file (List view, and every PDF)', () => {
-  it('reads band for band: COSTS → category → summed item → per-line sub-rows → Planned costs; FUNDING → kind → Planned funding; the estimated close', () => {
+  it('reads band for band: COSTS → category → summed item → per-line sub-rows → Planned costs; FUNDING → category → Planned funding; the estimated close', () => {
     const { rows, kinds } = budgetPlanStatementRows(STATEMENT_SOURCE);
     assert.deepEqual(rows.map(r => r.item), [
       // ⚠ UPPERCASE in the file — the statement export's own band convention (REVENUE / EXPENSES),
@@ -78,7 +81,8 @@ describe('the statement file (List view, and every PDF)', () => {
       '  — Regional qualifier',
       'Planned costs',
       'FUNDING',
-      // Bare noun (owner ruling 2026-09-08): the band above it already says Funding.
+      // The CATEGORY the line was filed in (owner ruling 2026-09-09) — never its stored kind. Bare
+      // noun: the band above it already says Funding.
       'Fundraising',
       '  — Chocolate Sale',
       'Planned funding',
@@ -208,7 +212,7 @@ describe('the period-grid file (By-period view)', () => {
     },
     {
       id: 'f', description: 'Chocolate Sale', itemId: null, itemName: null,
-      categoryName: null, totalAmount: 1000, lineKind: 'funding', periods: [],
+      categoryId: 'cat-fundraising', categoryName: 'Fundraising', totalAmount: 1000, lineKind: 'funding', periods: [],
     },
   ];
 

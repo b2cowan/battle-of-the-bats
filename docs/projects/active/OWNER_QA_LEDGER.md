@@ -20116,3 +20116,93 @@ records and lines to one program year pins them to one team — checked independ
 and confirmed against every linked record on dev. Re-verified after the fixes: **3,238 unit tests**,
 typecheck, `check:money-report` (all four cash identities still hold), spelling, dead-selector,
 dictionary, both demo worlds, and the rendered sweep on five screens at four widths.
+
+## §158 · The category is the shelf — money in reports under the category it was filed in on every surface (plan list, by-period grid, both plan files, Months), the Statement's unclaimed sponsor pool takes its shelf, and "What am I forgetting?" becomes an index — built on dev 2026-09-09 (typecheck · 3,251 unit tests · `check:money-report` · `verify:changed` all green), awaiting QA · walk artifact `c8659d30` · mockup artifact `728dcb1e` · **`/simplify` + `/review` run 2026-09-09:** eight cleanups; the review fixed two stale help sentences and the Months grid's inert sticky heading (the §156 pattern), and found **one HIGH pre-existing gap this build widens — the plan's money-in lines re-import as new cost lines** (walk step C2 says so; the importer fix is queued in a peer session, plan §7c)
+
+**Plan:** `COACH_BUDGET_CATEGORY_IS_THE_SHELF_PLAN.md` (+ `_PM_BRIEF.md`). **No migration.**
+**Walk:** https://claude.ai/code/artifact/c8659d30-dc1e-414e-91b8-39c5a548ea9d — 55 checks across 19
+steps, seven parts (A the plan list · B the by-period grid · C the files · D Months · E the Statement ·
+F the forgetting list, desktop and phone · G help + demo). Source
+`COACH_BUDGET_CATEGORY_IS_THE_SHELF_WALK.html`.
+
+**⚠ THREE ASKS ON THE WALK — calls the build made that want the owner's word on the built screen.**
+**E1:** the sponsor cheques no plan line claims read *"Not in the plan → Sponsor money"* on the Statement
+since 2026-09-07; they now read **Sponsorship (not budgeted) → Sponsor money**, because Months files the
+same cheques under Sponsorship and the new gate caught the two views disagreeing on its first run. The
+09-07 reason (the row should say what the money is, not "No category → Not itemized") is kept — it now
+says it in the word every other surface uses. **F3:** the open category's chips render in a tinted body
+below the button row rather than attached to their button as drawn. **F5:** which category is open is
+plain page state, not remembered across a reload (dismissals still are).
+
+**Where it came from.** The owner asked, from a QA-walk screenshot of the strip, whether revenue and
+expense words should be grouped or colour-coded; then, from three Budget vs. Actual screenshots, why
+Tournaments revenue was a category on the Statement and By activity but "Other income" on Months and on
+the plan. One root cause: the picker is organised by category — the only vocabulary a coach sees when
+choosing — and the product then discarded it, on the strip (57 flat chips, the seven money-in words at
+positions 2–4 and 46–49, the category only in a desktop tooltip) and on the plan (the row carried the
+item name alone under a KIND heading, so "Tournaments" appeared nowhere on the funding side a coach had
+just filed under). The product was grouping money in **three ways** — kind on the plan and its files,
+category on the Statement, source on Months — and printing two spellings of one heading
+(*Sponsorships*/*Sponsorship*, *Other income*/*Other Income*). ⚠ Found by the owner from screenshots:
+`check:money-report` proves the totals agree and had nothing to say about the headings.
+
+**The rule (owner ruling 2026-09-09).** *The category is the group and the items underneath; no category
+within a category; consistent across the product.* Colour by direction rejected (colour is for cash,
+2026-09-02). The forgetting list is **Option A** of mockup `728dcb1e`. Two same-named rows are fine when
+a coach tracks two things; the standard vocabulary offering *Insurance* twice is a **separate review**.
+**Recorded as reference, not authority** — the owner's 2026-09-09 instruction that past decisions are
+weighed for their reasons, never their dates, is in the design log's header and the assistant's memory.
+
+**What shipped.** One identity helper in the rollup (`categoryGroupOf` + `compareCategoryGroups`,
+keyed by category id exactly as the Statement keys it, ordered by the picker's sort order) read by the
+plan list, the by-period grid, both plan exports and the Months route. `REVENUE_GROUPS` shrank to the
+two rows that are genuinely not categories — Player dues (a schedule) and Money back (unroutable) —
+and every other revenue row is its category, carrying `incomeSource` so the cell panel's doors and the
+gate's register comparison still know who fills the number in; a drive or sponsor that names no line
+falls to the **platform shelf** of its kind (Fundraising / Sponsorship) rather than vanishing. The
+Statement's unclaimed pool does the same (the E1 ask). The by-period grid's nameless cost bucket took
+the one spelling ("No category" — it read "Uncategorized" while its own nameless-last rule compared
+against the other word and never fired). The create panel's sentence names the **category** ("Will
+report under Bingo."). The strip: two direction headings in the form's own words (money in first), one
+button per category with its count, chips only inside the open category, "N items in M categories".
+Help: the Revenue and Planned funding definitions, the Sponsorship row, the money-back grant sentence,
+plus search terms. `check:money-report` gained claim **5b** — the set of revenue categories on Months
+equals the Statement's — and claim 2c learned that a pledge sits on a sponsor-sourced category row.
+Demo narration re-read: nothing in the dock or tour describes these groupings, so nothing to change.
+
+**Superseded on the record (plan §1.1):** the 2026-09-08 fundraising rule 4 (Tournaments nested inside
+Other income — the half that never shipped is built as a peer instead); the 2026-08-23 Months "by
+source" grouping, for the three funding groups only (its dues-vs-drive reasoning survives — dues was
+never a category); the 2026-08-24 "Sponsorships keeps its name" ruling, for the Months row only (it was
+about lens renaming, which still holds); the 2026-09-07 "Not in the plan" naming (E1).
+
+**Verification on dev, 2026-09-09:** `npm run typecheck` clean; unit suite **3,251/3,251** (the
+period-grid tests that pinned the old one-shelf rule were rewritten to the new one; a new
+`coach-budget-category-group.test.ts` pins the helper); `npm run check:money-report` green on the UAT
+fixture **after** the E1 change — before it, claim 5b failed in both directions on its first run, which
+is the claim earning its place; `npm run verify:changed` green end to end. The mobile-smoke UAT spec's
+two strip steps were rewritten for Option A (a word's chip sits inside its category, so the category
+opens first).
+
+**⚠ The mobile-smoke UAT spec (`coach-money-mobile-smoke.spec.ts`) is RED and it is NOT this build — 21 of 37
+on two runs (2026-09-09, 38 min each), the same 21 on an idle server.** Every failure was screenshotted and
+read. The spec was last maintained **2026-09-04** and **fourteen feature commits** have touched the screens
+it walks since (09-05 → 09-08): it looks for a **"Running balance"** row the grid renamed to Opening / Closing
+balance; it expects the starter to produce a **Uniforms** line where the starter now produces Umpire Fees
+(and the checklist-chip test then finds no plan to render a strip under — a cascade, not a defect); it waits
+for an **Import** button inside the page body that now lives in the hub header; its read-only test trips a
+strict-mode violation on **"See it in the months view"**, a link added 09-04; its fixture inserts budget lines
+with **no item and no category**, so the grid's "Not itemized" row is correct and the line-level link it
+expects cannot exist. Three assertion failures are unrelated product behaviour worth their own look (a write
+API accepting a foreign category id; a phone card action 130px wide; a blank action line on read-only Org
+Allocations). ⚠ Two confounders on the day, named so nobody re-derives them: the first run overlapped a
+full `verify:changed` on the same dev server (starvation), and **another session was editing the report
+rollup, the Budget vs. Actual panel and the report-notes module while both runs and the probes ran** — one
+probe caught a transient "rowLabel is not defined" from a chunk compiled mid-edit, gone on the next probe.
+**What proves this build instead:** a direct signed-in probe of the UAT team — the Budget page renders, the
+strip reads *40 items in 10 categories · Money coming in 5 (Tournaments 2 · Fundraising 1 · Sponsorship 2) ·
+Money the team spends 35*, Budget vs. Actual answers 200 with Months rows *Player dues · Tournaments ·
+Fundraising · Sponsorship · Other Income · Money back* (each category carrying its income source) and the
+Statement showing *Sponsorship (not budgeted)* where "Not in the plan" was, the Months grid rendering those
+rows under the Budget lens, zero console errors — plus typecheck, 3,251 unit tests, `check:money-report`
+and `verify:changed`. **The spec needs its own maintenance pass** (TODO), against a quiet working copy.
