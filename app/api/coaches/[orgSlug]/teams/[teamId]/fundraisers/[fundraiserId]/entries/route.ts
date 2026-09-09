@@ -19,6 +19,7 @@ import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilitie
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
+import { WHOLE_TEAM_ENTRY_LABEL } from '@/lib/coach-fundraising';
 import { creditExposure } from '@/lib/dues-credit-guards';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -152,10 +153,19 @@ export const GET = withObservability(async (_req: Request,
   const nameByAnyPlayer = new Map((fullRoster ?? []).map(p =>
     [p.id as string, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
   const activeIds = new Set(roster.map(p => p.id as string));
+  /* ⚠⚠ A NULL PLAYER ON A DRIVE IS "THE WHOLE TEAM", NOT AN UNKNOWN ONE (owner ruling 2026-09-08).
+     Hoodies sold at a table with nobody counting who sold what are a real entry with real money and
+     no family share — and with Fundraising words removed from "Other money in", it is the ONLY way
+     that money reaches the books. It reads through `WHOLE_TEAM_ENTRY_LABEL` so the board, the
+     confirmations, the register's cash strip and the demo all print one spelling.
+     ⚠ `playerActive: true` because there is no player to have left: the "no longer on roster" mark
+     beside a name is about a person, and marking a team entry would invent one. */
   const driveEntries = allEntries.map(e => ({
     ...mapEntry(e as Record<string, unknown>),
-    playerName:   nameByAnyPlayer.get(e.player_id as string) ?? 'Unknown player',
-    playerActive: activeIds.has(e.player_id as string),
+    playerName:   e.player_id
+      ? (nameByAnyPlayer.get(e.player_id as string) ?? 'Unknown player')
+      : WHOLE_TEAM_ENTRY_LABEL,
+    playerActive: e.player_id ? activeIds.has(e.player_id as string) : true,
   }));
 
   // ⚠ Sponsor only (arrivals model, mig 268): the record page's raw material — the credit PLAN,
@@ -272,6 +282,17 @@ export const GET = withObservability(async (_req: Request,
       // What THIS DRIVE awarded (Σ rebate_amount) — deliberately not a credits-table read: a
       // credit can later be applied, paid out or forgiven while the award stands (plan §7.5).
       totalCredits: Math.round(totalRebates * 100) / 100,
+      /* ⚠⚠ EVERY ENTRY, WHATEVER IT IS ATTACHED TO — and the name understates it since whole-team
+         entries exist (2026-09-08). This is what the client's DELETE GUARD reads, and it must be
+         every row that holds money: the board is built from the ACTIVE roster, so an inactive
+         player's entry is invisible there while its dollars are on the books, and a guard counting
+         the board promised "no money moves" over a delete the server then refused (UAT
+         coach-sponsor-money-lifecycle pins both halves). A whole-team entry is off the board for the
+         same reason and blocks the delete for the same reason.
+         ⚠ THE PARTICIPATION FRACTION IS NOT THIS FIGURE. "2 of 14 players logged" is computed on
+         the board from `entries`, where a team entry is counted separately and never as a player —
+         see `driveFacts`. The list route's own `playerCount` is that other question and excludes a
+         null player deliberately. */
       playerCount:  allEntries.length,
     },
     sponsorCreditExposure,
@@ -328,7 +349,29 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json();
   const { playerId, amountRaised, notes = null, receivedDate = null } = body;
 
-  if (!playerId) return NextResponse.json({ error: 'playerId is required' }, { status: 400 });
+  /**
+   * ⚠⚠ AN EXPLICIT `null` PLAYER IS "THE WHOLE TEAM" — the load-bearing half of the fundraising
+   * model (owner ruling 2026-09-08). A team sold hoodies at a table and banked $400 with nobody
+   * counting who sold what: no player, no family share, no dues credit, and the income row still
+   * written so the ledger sees the money. Once Fundraising words leave "Other money in", this is
+   * the ONLY way that money can be recorded at all.
+   *
+   * ⚠ NO SCHEMA CHANGE WAS NEEDED and that is worth knowing: `player_id` has been nullable since
+   * mig 237, and `UNIQUE (fundraiser_id, player_id)` does not cap NULLs — SQL NULLs are distinct
+   * for uniqueness, which is exactly what mig 268 relies on for a sponsor's several arrivals. So a
+   * drive may carry several team entries, deliberately: two hoodie tables on two weekends are two
+   * events, not one to be edited.
+   *
+   * ⚠ EXPLICIT, NOT MERELY ABSENT. `undefined` — a caller that forgot the field — is still refused,
+   * because "I did not say" and "nobody in particular" are different answers and only one of them
+   * is a coach's. This is the same distinction the tag writers draw between `undefined` and `[]`.
+   */
+  const wholeTeam = playerId === null;
+  if (!wholeTeam && !playerId) {
+    return NextResponse.json({
+      error: 'Say who raised it — a player, or the whole team.',
+    }, { status: 400 });
+  }
   const raised = Number(amountRaised);
   if (isNaN(raised) || raised < 0) {
     return NextResponse.json({ error: 'amountRaised must be a non-negative number' }, { status: 400 });
@@ -348,36 +391,47 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: futureRefusal }, { status: 400 });
   }
 
-  const { data: player } = await supabaseAdmin
-    .from('rep_roster_players')
-    .select('id, player_first_name, player_last_name')
-    .eq('id', playerId)
-    .eq('program_year_id', programYear.id)
-    .single();
+  /* The roster check and the one-entry-per-player rule are both questions about a PLAYER, so a
+     whole-team entry asks neither: there is nobody to find on the roster, and several team entries
+     on one drive are legal (see the note above the `wholeTeam` test). */
+  let playerName = WHOLE_TEAM_ENTRY_LABEL;
+  if (!wholeTeam) {
+    const { data: player } = await supabaseAdmin
+      .from('rep_roster_players')
+      .select('id, player_first_name, player_last_name')
+      .eq('id', playerId)
+      .eq('program_year_id', programYear.id)
+      .single();
 
-  if (!player) return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });
+    if (!player) return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });
+    playerName = [player.player_first_name, player.player_last_name].filter(Boolean).join(' ');
 
-  const { data: existingEntry } = await supabaseAdmin
-    .from('rep_fundraiser_entries')
-    .select('id')
-    .eq('fundraiser_id', fundraiserId)
-    .eq('player_id', playerId)
-    .maybeSingle();
+    const { data: existingEntry } = await supabaseAdmin
+      .from('rep_fundraiser_entries')
+      .select('id')
+      .eq('fundraiser_id', fundraiserId)
+      .eq('player_id', playerId)
+      .maybeSingle();
 
-  if (existingEntry) {
-    return NextResponse.json(
-      { error: 'An entry already exists for this player. Use PATCH to update it.' },
-      { status: 409 },
-    );
+    if (existingEntry) {
+      return NextResponse.json(
+        { error: 'An entry already exists for this player. Use PATCH to update it.' },
+        { status: 409 },
+      );
+    }
   }
 
-  const rebatePct    = Number(fundraiser.player_rebate_percent);
+  /* ⚠⚠ A TEAM ENTRY IS STAMPED 0%, NOT THE DRIVE'S RATE, and the stamp is what keeps it that way
+     forever. `rebate_percent` is a SNAPSHOT the edit path re-multiplies by (dictionary gotcha 4), so
+     storing the drive's rate here with a zero amount would mean the first amount correction
+     silently minted a family credit — for a family the row does not name. Nobody raised this
+     individually, so nothing comes off anyone's dues. */
+  const rebatePct    = wholeTeam ? 0 : Number(fundraiser.player_rebate_percent);
   const rebateAmount = Math.round(raised * rebatePct / 100 * 100) / 100;
   /* The day the money ARRIVED — coach-typed or today. It dates BOTH writes below: the ledger
      entry (which is what places the income in a month on every report) and the family's credit
      (earned the day the money arrived; credit ordering applies by this date). */
   const receivedDay  = receivedDate ?? tournamentToday();
-  const playerName   = [player.player_first_name, player.player_last_name].filter(Boolean).join(' ');
 
   // 1 — Create team ledger income entry
   const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
@@ -401,7 +455,9 @@ export const POST = withObservability(async (req: Request,
       fundraiser_id:      fundraiserId,
       org_id:             team.orgId,
       team_id:            team.id,
-      player_id:          playerId,
+      // Null = the whole team raised it. Read the PARENT'S KIND to tell this from a sponsor's
+      // arrival, never the null itself — see this table's dictionary entry.
+      player_id:          wholeTeam ? null : playerId,
       amount_raised:      raised,
       rebate_percent:     rebatePct,
       rebate_amount:      rebateAmount,
@@ -417,8 +473,13 @@ export const POST = withObservability(async (req: Request,
 
   let credit = null;
 
-  // 3 — Create dues credit if rebate > 0
-  if (rebateAmount > 0) {
+  /* 3 — Create dues credit if rebate > 0.
+     ⚠ `!wholeTeam` IS A BELT, not the trousers: a team entry stamps 0% above, so `rebateAmount` is
+     already 0 and this branch is unreachable for one. It is written out because the alternative
+     failure is a NOT NULL violation on `rep_dues_credits.player_id` AFTER the income row and the
+     entry are already committed — a half-written record, from a rounding change three releases
+     from now. The condition that must never be true says so. */
+  if (rebateAmount > 0 && !wholeTeam) {
     const { data: creditRow, error: cErr } = await supabaseAdmin
       .from('rep_dues_credits')
       .insert({

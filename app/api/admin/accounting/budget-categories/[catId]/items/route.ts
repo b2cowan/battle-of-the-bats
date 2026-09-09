@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import {
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
-  categoryOfferedToClub, type OwnedBudgetCategory,
+  budgetItemSourceForCategory, categoryOfferedToClub, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -46,7 +46,9 @@ export const POST = withObservability(async (req: Request,
      everything filed under them. Same predicate as the club's own budget-line write path. */
   const { data: cat, error: catErr } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, org_id, team_id')
+    // ⚠ `income_source` (mig 285) — the shelf decides who fills its money-in words in, and this row
+    // is already being fetched for the tier check.
+    .select('id, org_id, team_id, income_source')
     .eq('id', catId)
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     .single();
@@ -88,6 +90,12 @@ export const POST = withObservability(async (req: Request,
       is_default:       false,
       is_misc:          false,
       direction,
+      /* ⚠⚠ THE SHELF DECIDES, NOT THE BODY (mig 285, owner ruling 2026-09-08) — the same rule and
+         the same function the coach's door uses, because a club word and a coach word filed on one
+         shelf must behave identically. A club publishing "Jersey sponsor" onto the Sponsorship shelf
+         gets a word its teams' sponsors report, and the club's own Org Budget is a spending plan, so
+         its `direction='out'` words are unaffected. */
+      actual_source:    budgetItemSourceForCategory(direction, cat as { income_source?: string | null }),
     })
     .select()
     .single();

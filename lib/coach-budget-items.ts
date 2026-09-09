@@ -279,6 +279,37 @@ export const BUDGET_ITEM_DIRECTION_REQUIRED =
   'direction is required and must be "in" or "out" — an item has to belong to one side';
 
 /**
+ * WHAT A NEWLY-CREATED WORD'S `actual_source` IS (mig 285) — the shelf's answer, or `typed`.
+ *
+ * ⚠⚠ THE OWNER RULING THIS ENCODES (2026-09-08): *the category a word sits in decides who fills its
+ * number in and where it reports.* A word filed on the platform Fundraising shelf is a fundraising
+ * word from birth — recorded on the Fundraising tab, reported under Fundraising. Before this, every
+ * coach- and club-created word was born `'typed'` whatever shelf it sat on, and `'typed'` derives
+ * `other_income` — so a coach's own "Bake sale money" sat in a row reading "Fundraising · …" under a
+ * heading reading "Other income", forever, with no way to correct it.
+ *
+ * ⚠ THE DIRECTION IS ASKED FIRST AND WINS, exactly as `budgetLineKindForItem` asks it first: a
+ * money-OUT word is always typed whatever its shelf says (every cost's actual is recorded by the
+ * coach, and `budget_items_out_is_typed_check` refuses anything else). That also means a coach
+ * adding a SPENDING word to the Fundraising shelf — the raffle's printing, say — is unaffected.
+ *
+ * ⚠ ONE FUNCTION, TWO WRITE DOORS, and that is the whole reason it exists rather than being inlined
+ * twice: the coach's item POST and the club's both create money-in words, and a rule with two
+ * spellings on its first day has no chance of surviving its third call site (the exact reasoning
+ * `parseBudgetItemDirection` above is under). ⚠ IT NEVER READS A REQUEST BODY — the caller passes
+ * the CATEGORY ROW IT ALREADY FETCHED for the visibility check, so nothing a client sends can
+ * decide who reports a word's money.
+ */
+export function budgetItemSourceForCategory(
+  direction: BudgetItemDirection,
+  category: { income_source?: string | null },
+): BudgetItemActualSource {
+  if (direction !== 'in') return 'typed';
+  const source = category.income_source;
+  return source === 'fundraiser' || source === 'sponsor' ? source : 'typed';
+}
+
+/**
  * A `budget_items` row → the shape every client reads.
  *
  * ⚠ ONE MAPPER, THREE ROUTES (/simplify, 2026-08-16). This was copied byte-for-byte into the coach
@@ -346,6 +377,16 @@ export interface ResolvedBudgetItem {
    */
   direction: BudgetItemDirection;
   actualSource: BudgetItemActualSource;
+  /**
+   * The SHELF's answer to who fills its money-in words in (mig 285), carried beside the word's own.
+   *
+   * ⚠ IT IS HERE FOR THE FUNDRAISERS' "Raising for" CHECK, which is a question about the shelf and
+   * not about the word: a `kind='fundraiser'` record may raise only for a word on a `fundraiser`
+   * shelf. Reading `actualSource` instead would work today — mig 285 part 3 pins the two in step —
+   * and would be the wrong question asked of the right answer, which is how a rule survives until
+   * the day the two can differ.
+   */
+  categoryIncomeSource: BudgetItemActualSource;
 }
 
 /**
@@ -385,7 +426,7 @@ export async function resolveBudgetItem(
 
   const { data } = await supabaseAdmin
     .from('budget_items')
-    .select('id, category_id, org_id, team_id, sports, name, direction, actual_source, budget_categories(name, sports)')
+    .select('id, category_id, org_id, team_id, sports, name, direction, actual_source, budget_categories(name, sports, income_source)')
     .eq('id', itemId)
     .maybeSingle();
 
@@ -411,8 +452,60 @@ export async function resolveBudgetItem(
       categoryName: ((row.budget_categories as { name?: string } | null)?.name) ?? null,
       direction: row.direction as BudgetItemDirection,
       actualSource: row.actual_source as BudgetItemActualSource,
+      /* Through the same rule the create doors use, so "what does this shelf report?" is answered
+         once. The direction is the item's own, so a money-out word on the Fundraising shelf reads
+         `typed` here as well — which is what it is. */
+      categoryIncomeSource: budgetItemSourceForCategory(
+        row.direction as BudgetItemDirection,
+        (row.budget_categories ?? {}) as { income_source?: string | null },
+      ),
     },
   };
+}
+
+/**
+ * Resolve the word a DRIVE OR A SPONSOR is "raising for" (mig 285) — `resolveBudgetItem` plus the
+ * one rule that is about the record rather than the word: **the shelf has to match the kind.**
+ *
+ * ⚠⚠ THE FILTER IN THE PICKER IS NOT THE GUARD. The forms offer a fundraiser only `fundraiser`-shelf
+ * words and a sponsor only `sponsor`-shelf ones, and that is what a coach experiences — but a filter
+ * is a courtesy and this is the rule. Without it the API would accept a drive raising for *Team
+ * sponsorship*, and Budget vs. Actual would then land bottle-drive money on the sponsorship row
+ * while the sponsorship line read as unmet: the report would be confidently wrong with nothing on
+ * screen to say why, which is the exact failure mig 280 removed one level up.
+ *
+ * ⚠ IT ASKS THE SHELF (`categoryIncomeSource`), NOT THE WORD (`actualSource`). Mig 285 part 3 keeps
+ * the two in step, so today either answers — and "may a drive raise for this?" is a question about
+ * where the word is FILED. Asking the right question of the right column is what keeps the rule
+ * correct on the day they can differ.
+ *
+ * ⚠ `kind` IS TYPED INLINE rather than as `FundraisingKind`, the same reason `budgetLineKindForItem`
+ * types `direction` inline: the union is identical and this module has no other need of the
+ * fundraising vocabulary.
+ *
+ * ⚠ NULL IS A LEGITIMATE ANSWER — "Raising for" is pre-filled, not required (owner, 2026-09-08), and
+ * every record written before this migration starts NULL. `{ ok: true, item: null }` means the
+ * record raises for nothing in particular and places by the legacy pool rule.
+ */
+export async function resolveRaisingForItem(
+  itemId: unknown,
+  kind: 'fundraiser' | 'sponsor',
+  orgId: string,
+  teamId: string,
+  teamSport?: string | null,
+): Promise<BudgetItemResult> {
+  const resolved = await resolveBudgetItem(itemId, orgId, teamId, teamSport);
+  if (!resolved.ok || !resolved.item) return resolved;
+
+  if (resolved.item.direction !== 'in' || resolved.item.categoryIncomeSource !== kind) {
+    return {
+      ok: false,
+      error: kind === 'sponsor'
+        ? 'A sponsor can only raise for a word on your Sponsorship shelf. Add one there on the Budget Plan first.'
+        : 'A fundraiser can only raise for a word on your Fundraising shelf. Add one there on the Budget Plan first.',
+    };
+  }
+  return resolved;
 }
 
 /**

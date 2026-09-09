@@ -31,6 +31,7 @@ import {
   isFundingKind, normalizeBudgetLineKind, FUNDING_LINE_KINDS,
   type BudgetLineKind, type BudgetItemActualSource,
 } from '@/lib/coach-budget-totals';
+import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
   buildPeriodView, whenSummary, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
   type PeriodGranularity,
@@ -62,29 +63,6 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import { tournamentToday } from '@/lib/timezone';
-
-/**
- * WHO REPORTS A WORD'S ACTUAL, in the coach's words (mig 280) — the tag on each money-in option.
- *
- * ⚠ IT LIVES HERE, NOT IN THE PICKER. The shared control renders on the Budget Plan, the Club tab
- * and the Org Budget, and its own header forbids it learning a domain: it takes a `rowTag` hook and
- * lays out whatever words it is handed. This screen is the one place where the answer decides
- * something — the word chosen here IS the line's kind — so this screen owns the sentence.
- *
- * ⚠ AN EXHAUSTIVE NAMED RECORD, not a ternary — the same rule `LINE_KIND_ACTUAL_SOURCE` is under
- * one module over: a fourth source becomes a compile error here instead of falling silently into an
- * else branch and telling a coach the wrong thing about where their money comes from.
- *
- * ⚠ NEVER COLOUR ALONE, and never an icon — each tag carries its words, because this list renders
- * in a warm theme and a dark one and beside the three ownership chips. The two DERIVED answers are
- * a shade stronger because they are the ones that change what a coach must do afterwards; "you
- * record it" is quiet because it is the common case and the absence of news.
- */
-const ACTUAL_SOURCE_TAG: Record<BudgetItemActualSource, { text: string; tone: 'quiet' | 'strong' }> = {
-  typed:      { text: 'You record it',  tone: 'quiet'  },
-  fundraiser: { text: 'From a drive',   tone: 'strong' },
-  sponsor:    { text: 'From a sponsor', tone: 'strong' },
-};
 
 /**
  * ⚠⚠ THE FORM ASKS ONE QUESTION NOW, NOT TWO (mig 280, owner-approved mockup 3913e207).
@@ -3232,24 +3210,22 @@ export function BudgetPlanPanel({
                    translating a four-answer question into a two-sided one; there is nothing left
                    to translate, which is the point. */
                 direction={form.direction}
-                /* ⚠ THE TAG IS WHAT MAKES ONE QUESTION HONEST (mig 280). The word chosen here
-                   DECIDES this line's kind, and therefore where its actual is looked for — so a
-                   coach has to be able to see, before saving, whether the row will fill itself in
-                   from their drives and sponsors or wait for them to record it. This is the only
-                   caller that passes a row tag; the recording conversation deliberately does not,
-                   because there the refusal depends on what the budget LINES claim rather than on
-                   the word alone, so a tag would promise something that may not apply.
-                   ⚠ MONEY-OUT ROWS GET NOTHING. Every cost's actual is typed, so a tag on each of
-                   them says nothing and teaches a coach to stop reading the end of the row — which
-                   is exactly where the ownership chip's signal is. `form.direction` is checked as
-                   well as the row's own, because the list keeps an already-chosen off-side word
-                   visible and that row is a money-out one. */
-                rowTag={item => (
-                  form.direction === 'in' && item.direction === 'in'
-                    ? ACTUAL_SOURCE_TAG[item.actualSource]
-                    : null
-                )}
+                /* ⚰ THE "From a drive" / "From a sponsor" ROW TAG IS GONE, AND NOTHING REPLACES IT
+                   (owner ruling 2026-09-08, mockup 8aa1e633). It shipped with mig 280 to make the
+                   one-question form honest — the word chosen here decides the line's kind, so a
+                   coach ought to see which rows fill themselves in — and the owner's own question
+                   about it is what opened this whole thread: *"why does the row say From a drive
+                   under a heading that already says FUNDRAISING?"* The answer is that the note was
+                   describing where the app would make them stand three months later. It is a fact
+                   about our filing system, not about their money. A coach choosing a budget word is
+                   choosing a KIND OF MONEY, not a room. The consequence paragraph under the picker
+                   still says, in full, what the chosen word means for this line — see
+                   `KIND_HINT_LONG` — which is the sentence that was always doing the work. The
+                   shared control's `rowTag` prop went with it: this was its only caller. */
                 manageHint="Rename or remove it later from Manage our words — but it stays on this side."
+                /* Where a word invented here will report. The money module owns the sentence; this
+                   screen just hands it over (the retired row tag's lesson). */
+                newItemNote={newMoneyInWordNote}
               />
               <p className={styles.kindHint}>
                 These name this line everywhere. Anything else worth saying goes in Notes.

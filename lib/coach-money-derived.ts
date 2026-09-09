@@ -7,19 +7,37 @@
  * rebates depend on those figures**. If a coach could also type an income record against the same
  * row, the same dollar would be counted twice and the season would read better than it is.
  *
- * So: **one row, one source.** A category+item that an expected-fundraising or expected-sponsorship
- * budget line claims takes its actual from the fundraiser machinery, and the money form refuses a
- * typed one there and says why. Every other income row is typed.
+ * So: **one row, one source.** A WORD whose `actual_source` is `fundraiser` or `sponsor` takes its
+ * actual from that machinery, and the money-in write paths refuse a typed record on it and say
+ * where to go instead. Every other income row is typed.
+ *
+ * ⚠⚠ IT USED TO BE "A ROW THAT A BUDGET LINE CLAIMS", and the difference is which team got
+ * protected (owner ruling 2026-09-08). The claim-based version refused the team that had budgeted a
+ * fundraising line and let the identical double count through on the team that had not — the guard
+ * fired on the careful one. The word decides now, whatever the plan says, and the words themselves
+ * left the "Other money in" picker entirely: there is nothing to refuse because there is nothing to
+ * pick.
  *
  * ⚠ MONEY BACK IS EXEMPT. A refund is not a second source for the row's income — it reduces it. A
  * tournament refunding a registration the team took is a real event on a derived row, and blocking
  * it would leave the coach with no way to record it at all.
  *
- * ── Where the derived pool LANDS ────────────────────────────────────────────────────────────────
+ * ── Where the derived pool LANDS — THE LEGACY FALLBACK SINCE MIGRATION 285 ──────────────────────
+ *
+ * ⚠⚠ READ THIS BEFORE THE RULE BELOW. Everything from here to `placeDerivedActual` describes how
+ * raised money was placed when **nothing linked a drive to a budget item**. Since mig 285 a drive
+ * and a sponsor each name the line they are *raising for*, so each record's own total lands on its
+ * own row, and the pool is what is left over: records written before that migration whose season's
+ * plan was too ambiguous to link them safely, and records a coach has deliberately cleared.
+ *
+ * The rule below is unchanged and still correct for that residue — it is just no longer the normal
+ * case. The defect it could not avoid is the one mig 285 exists to remove: **budget two fundraising
+ * lines and both rows read blank** while every raised dollar collected under "Not itemized". Placing
+ * the pool honestly was the best answer available to a pool; the answer was to stop having one.
  *
  * The fundraiser side produces ONE number per kind. It cannot be split across items, because
- * nothing links a drive to a budget item — so `placeDerivedActual` puts it as deep in the taxonomy
- * as the claiming lines actually agree, and no deeper:
+ * nothing links THOSE records to a budget item — so `placeDerivedActual` puts it as deep in the
+ * taxonomy as the claiming lines actually agree, and no deeper:
  *
  *   · every claiming line on one category AND one item  → that item's row;
  *   · every claiming line in one category, several items → that category's "Not itemized" bucket;
@@ -108,18 +126,15 @@ export function placeDerivedActual(claims: DerivedClaim[]): Omit<DerivedClaim, '
 }
 
 /**
- * Every category+item pair a typed income record must NOT be filed against.
- *
- * Both the pairs the claiming lines name AND each pool's landing spot: with one line per item those
- * coincide, but two fundraising lines in one category put that pool in the category's bucket, and a
- * typed record landing there would still double-count.
- *
- * ⚠ TAKES EVERY CLAIM, BOTH SOURCES. Unlike placement, the refusal does not care which machinery
- * answers for a row — only that something already does.
- */
-/**
  * May a TYPED income record be filed against this row? Null when yes; the coach-facing refusal
  * when no.
+ *
+ * ⚠⚠ IT ASKS THE WORD, NOT THE PLAN (owner ruling 2026-09-08) — and that is the fix, not a
+ * simplification. It used to take the season's budget LINES and refuse only where one of them
+ * claimed the row, which meant the same money saved without complaint on a team that had not
+ * budgeted for it: **the guard fired on the careful team and not on the careless one.** A word
+ * whose actual comes from a drive cannot take a typed figure whether or not anybody planned a line
+ * against it, so the word is what decides. Structural, unconditional, both write doors.
  *
  * ⚠ ONE PLACE, TWO WRITE PATHS. Create and edit both have to enforce this — an edit door that
  * skipped it would be the way around the guard — and the rule was written out twice, error string
@@ -127,25 +142,46 @@ export function placeDerivedActual(claims: DerivedClaim[]): Omit<DerivedClaim, '
  * protects are what player rebates are computed from, so counting a dollar twice reaches a
  * family's dues and not just a report.
  *
+ * ⚠⚠ THE EDIT DOOR ASKS IT ONLY WHEN THE ITEM IS ACTUALLY CHANGING, and that is deliberate: the
+ * money-in form resends the item on every save, so an unconditional check there would freeze a
+ * LEGACY record — one written under the old conditional rule — the moment a coach tried to correct
+ * its amount or its note. The door closes; history stays correctable (plan §3.8's rule). Re-filing
+ * such a record ONTO a derived word is refused like any other, and re-filing it OFF one is exactly
+ * the repair a coach should be able to make.
+ *
  * ⚠ MONEY BACK NEVER ASKS. A refund reduces such a row rather than being a second source for it —
  * a tournament really can refund a registration the team took — so callers only consult this for
  * `income`.
+ *
+ * ⚠ THE SENTENCE NAMES THE DOOR, per source. It is now practically unreachable from the product —
+ * the words are no longer in the "Other money in" list to pick — so anyone who meets it arrived by
+ * API or through a stale screen, and "record it somewhere else" without saying where would be the
+ * least useful moment for vagueness.
  */
 export function whyIncomeIsRefused(
-  claims: DerivedClaim[],
-  item: { id: string; categoryId: string; name: string },
+  item: { name: string; actualSource: 'typed' | DerivedSource },
 ): string | null {
-  if (!derivedIncomeKeys(claims).has(taxonomyKey(item.categoryId, item.id))) return null;
-  return `${item.name}'s actual already comes from your fundraisers and sponsors. `
-    + 'Record the money there and it will appear here — logging it twice would count it twice.';
+  if (item.actualSource === 'typed') return null;
+  return item.actualSource === 'sponsor'
+    ? `${item.name} is filled in from your sponsors. Record it on Fundraising, against the sponsor `
+      + 'or grant that gave it — it lands on this line from there.'
+    : `${item.name} is filled in from your fundraisers. Record it on Fundraising, against the drive `
+      + 'that raised it — for one player, or for the whole team.';
 }
 
-export function derivedIncomeKeys(claims: DerivedClaim[]): Set<string> {
-  if (claims.length === 0) return new Set();
-  const keys = new Set(claims.map(c => taxonomyKey(c.categoryId, c.itemId)));
-  for (const source of ['fundraiser', 'sponsor'] as const) {
-    const landing = placeDerivedActual(claims.filter(c => c.source === source));
-    if (landing.categoryId || landing.itemId) keys.add(taxonomyKey(landing.categoryId, landing.itemId));
-  }
-  return keys;
-}
+/* ⚰ `derivedIncomeKeys(claims)` IS DELETED (owner ruling 2026-09-08). It answered "which
+   category+item pairs must the money form refuse?" by reading the season's budget LINES — every
+   claiming pair, plus each pool's landing spot, since two fundraising lines in one category put the
+   pool in that category's bucket where a typed record would still double-count. Careful, and
+   answering a question that turned out to be the wrong one: a word whose actual comes from a drive
+   cannot take a typed figure whether or not anybody planned a line against it, so the refusal moved
+   onto the WORD (`whyIncomeIsRefused` above) and stopped depending on the plan.
+
+   ⚠ ITS SECOND JOB WENT TOO, and that is the visible half: the keys travelled to the client so the
+   picker could grey those rows and explain them. The rows are simply not in the "Other money in"
+   list any more, so there is nothing to grey and no note to write.
+
+   Do not restore it as "the client's copy of the rule". `placeDerivedActual` below is the only
+   claims reader left, it serves Budget vs. Actual's legacy fallback alone, and a second reader of
+   the same claims answering a question the word already answers is how the form and the report
+   started disagreeing about one row in the first place. */

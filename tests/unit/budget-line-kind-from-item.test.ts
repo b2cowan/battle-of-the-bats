@@ -36,6 +36,10 @@ import {
   FUNDING_LINE_KINDS, DERIVED_INCOME_LINE_KINDS, BUDGET_LINE_KINDS, computeBudgetTotals,
   type BudgetItemActualSource, type BudgetLineKind,
 } from '../../lib/coach-budget-totals.ts';
+/* ⚠ THE SERVER MODULE, imported for ONE pure function — and that is safe here and nowhere in a
+   'use client' file: `coach-budget-items` constructs the service-role Supabase client at module
+   load. A test runs on the server by definition. */
+import { budgetItemSourceForCategory } from '../../lib/coach-budget-items.ts';
 
 /** Every source a word can declare — the three the database CHECK allows (mig 280). */
 const SOURCES: BudgetItemActualSource[] = ['typed', 'fundraiser', 'sponsor'];
@@ -145,21 +149,75 @@ describe('the source map is the exact inverse of the kind map', () => {
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
- * §3 — A WORD A COACH INVENTS IS THEIRS TO RECORD AGAINST
+ * §3 — A WORD IS BORN ON ITS SHELF
+ *
+ * ⚠⚠ THIS SECTION REVERSED ON 2026-09-08, AND THE OLD RULE IS KEPT BELOW BECAUSE HALF OF IT
+ * SURVIVES. It read *"a coach-created word defaults to 'the coach types it'"* — full stop, whatever
+ * shelf it was filed on — and mig 280's own header called that "a real narrowing accepted on
+ * purpose". The consequence was finding 5: a word a coach added to the FUNDRAISING shelf reported
+ * under "Other income" while its own row read "Fundraising · …", forever, with no way to correct it.
+ *
+ * The owner's ruling: **the category a word sits in decides who fills its number in and where it
+ * reports.** So the default survives — every shelf but the two platform ones is `typed`, and a
+ * heading a coach invents is one of those — and what changed is that the shelf can now say
+ * otherwise. `budgetItemSourceForCategory` is the one place that decision is made, and both write
+ * doors go through it.
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
-describe("a coach-created word defaults to 'the coach types it'", () => {
-  it('produces a kind whose actuals the coach records themselves', () => {
-    // The database default for every club- and coach-created row (mig 280). There is no machinery
-    // behind a name somebody just invented, and defaulting it to a derived source would CLOSE its
-    // rows to typed income — the §1 failure reached from the other side.
-    const invented = budgetLineKindForItem({ direction: 'in', actualSource: 'typed' });
+describe('a word takes its source from the shelf it is filed on', () => {
+  it('a word on the Fundraising shelf is a fundraising word FROM BIRTH — finding 5', () => {
+    const source = budgetItemSourceForCategory('in', { income_source: 'fundraiser' });
+    assert.equal(source, 'fundraiser');
+    const kind = budgetLineKindForItem({ direction: 'in', actualSource: source });
+    assert.equal(kind, 'funding',
+      'a coach’s own "Bake sale money" on the Fundraising shelf must report under Fundraising — '
+      + 'reporting it as other income while its row reads "Fundraising · …" is the defect this '
+      + 'ruling removes.');
+  });
+
+  it('a word on the Sponsorship shelf reports under Sponsorship', () => {
+    const source = budgetItemSourceForCategory('in', { income_source: 'sponsor' });
+    assert.equal(budgetLineKindForItem({ direction: 'in', actualSource: source }), 'sponsorship');
+  });
+
+  it('every other shelf is typed — including a CLUB heading that shares a platform name', () => {
+    /* ⚠ THE COLUMN, NEVER THE NAME. Only the two PLATFORM shelves are marked by mig 285; a club
+       that invents its own category called "Fundraising" has no drives behind it and its words must
+       stay open to typed income. A name-keyed lookup would have got this exactly backwards. */
+    for (const shelf of [{ income_source: 'typed' }, { income_source: null }, {}]) {
+      assert.equal(budgetItemSourceForCategory('in', shelf), 'typed');
+    }
+  });
+
+  it('a MONEY-OUT word is always typed, whatever shelf it sits on', () => {
+    /* The raffle's printing lives on the Fundraising shelf and is a cost. The direction is asked
+       first and wins — which is also what makes the database's out_is_typed CHECK a belt rather
+       than a load-bearing part. */
+    assert.equal(budgetItemSourceForCategory('out', { income_source: 'fundraiser' }), 'typed');
+    assert.equal(budgetLineKindForItem({ direction: 'out', actualSource: 'typed' }), 'cost');
+  });
+
+  it("a word on a coach's own heading still keeps its rows open to typed money", () => {
+    // The half of the old rule that survives intact, and the reason the default is load-bearing:
+    // there is no machinery behind a name somebody just invented, and marking it derived would
+    // CLOSE its rows to the only way their money can ever be recorded.
+    const invented = budgetLineKindForItem({
+      direction: 'in',
+      actualSource: budgetItemSourceForCategory('in', { income_source: 'typed' }),
+    });
     assert.equal(LINE_KIND_ACTUAL_SOURCE[invented], 'typed');
     assert.ok(
       !DERIVED_INCOME_LINE_KINDS.includes(invented),
-      'a word a coach invented derived a kind on the DERIVED list, so the money form would refuse '
-      + 'the only figure that can ever reach that row.',
+      'a word on a coach-invented heading derived a kind on the DERIVED list, so the money form '
+      + 'would refuse the only figure that can ever reach that row.',
     );
+  });
+
+  it('an unknown source is read as typed rather than trusted', () => {
+    /* A value the CHECK constraint does not allow can only arrive from a hand-edited row or a
+       future migration. Falling back to typed keeps the row RECORDABLE, which is the recoverable
+       failure; trusting it would hand `budgetLineKindForItem` a source it throws on. */
+    assert.equal(budgetItemSourceForCategory('in', { income_source: 'raffle' }), 'typed');
   });
 });
 

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode } from 'react';
+import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
   Building2, ArrowUpRight, ArrowDownLeft, Plus, Trash2, Clock,
   ChevronRight, AlertTriangle, CheckCircle2, Undo2,
@@ -300,6 +301,9 @@ function ClubFilingControl({
           createItemMode="coach"
           teamId={teamId}
           allowCreateCategory
+          /* Where a word invented here will report, when the coach has pointed this picker at the
+             money-in side. The money module owns the sentence. */
+          newItemNote={newMoneyInWordNote}
           selectId={selectId}
           disabled={busy || askUnanswered}
         />
@@ -2075,6 +2079,9 @@ export function ClubPanel({
                     createItemMode="coach"
                     teamId={teamId}
                     allowCreateCategory
+                    /* Where a word invented here will report, when the coach has pointed this picker at the
+                       money-in side. The money module owns the sentence. */
+                    newItemNote={newMoneyInWordNote}
                     selectId="club-item"
                     disabled={saving}
                   />

@@ -1,0 +1,690 @@
+<title>One Way In</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.ask{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.rowtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:2px 0}
+.rowtable th,.rowtable td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rowtable th{font-family:var(--disp);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.rowtable td:first-child,.rowtable th:first-child{text-align:left}
+.rowtable tr.sum td{border-top:2px solid var(--rule-strong);font-weight:600}
+.scrollx{overflow-x:auto}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §157 · Coaches portal → Money</p>
+  <h1>One way in</h1>
+  <p class="lede">The shelf a budget word sits on now decides who fills its number in. <b>Fundraising
+    and Sponsorship money is always recorded on the Fundraising tab</b> — every drive and sponsor
+    names the line it is <b>raising for</b> — and those words are simply <b>not in "Other money in"</b>
+    any more. A drive entry can be logged for <b>the whole team</b>. And every record lands its money
+    on its own row of Budget vs. Actual instead of piling into "Not itemized".
+    <br><br>One question is genuinely open, at <b>F4</b>. It is the only thing on this walk I need a
+    ruling on rather than a tick.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b>. The walk moves Budget → Record →
+    Fundraising → Budget vs. Actual, in that order, because each part sets up the next.</p>
+  <div class="warn"><b>Restart the dev server first.</b> A migration, two new shared modules and six
+    changed ones. And <b>another session shares this working copy</b> — if a figure looks wrong,
+    check whether the whole plan moved under us before recording a defect.</div>
+  <div class="tip"><b>The identities to hold on to.</b> The team's five received sponsors keep
+    <b>$2,085.75</b> between them, and Northside Physio's share of that is <b>$375.75</b>. When you
+    name Northside's line in Part E, those two figures must split — $375.75 onto a named row, the
+    other <b>$1,710.00</b> left in the pool — and still add back to $2,085.75. <b>The split is the
+    test, not the digits.</b><br>The Chocolate sale has raised <b>$916.00</b> and credited
+    <b>$137.40</b>, so the team keeps <b>$778.60</b>. Its credit share is <b>15%</b>.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The budget picker has nothing left to explain</h2>
+  <p>Money → <b>Budget</b> → <b>+ Add line</b> → <b>Money coming in</b>. This is where the whole thread
+    started: <i>"why does the row say From a drive under a heading that already says FUNDRAISING?"</i></p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>The note is gone, and nothing replaced it</h3></div></div>
+  <div class="step-body">
+    <p class="why">Open the <b>Category &amp; Item</b> box on the money-in side. Four shelves group the
+      list — Tournaments, Fundraising, Sponsorship, Other income — and every row now carries only its
+      name and its ownership chip.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">No row says <b>From a drive</b> or <b>From a sponsor</b> — on either side of the books<span class="hintline">A coach choosing a budget word is choosing a kind of money, not a room</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">The <b>Standard</b> / <b>Our own</b> chips are untouched, and still sit at the end of the row</label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Pick <b>Fundraising · Fundraising drive</b> — the paragraph under the picker still explains, in full, that fundraising lowers what players are asked to pay</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>A word you add to Fundraising is a fundraising word</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">In the same picker, type <b>Bake sale money</b> and press <b>+ Add "Bake sale money"
+      to your list</b>. Choose the category <b>Fundraising</b>. This is the defect being fixed: until
+      today every word a coach invented reported under "Other income" whatever shelf it was filed on,
+      so the row read <i>Fundraising · Bake sale money</i> under a heading saying otherwise.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">With <b>Fundraising</b> chosen, the sentence under the form reads only <b>"Saved as money coming in — because that is what you are recording."</b> — no extra clause</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">Change the category to <b>Other Income</b> (or a heading of your own) and a second sentence appears: <b>"Will report under Other income."</b><span class="hintline">Stated at the moment the word is created, never asked as a question</span></label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">Put it back on <b>Fundraising</b>, save the word, give the line an amount and save it</label></div>
+      <div class="chk"><input type="checkbox" id="a2d"><label for="a2d">On the plan list the new line sits under <b>FUNDING</b>, reading <b>Fundraising · Bake sale money</b> — not under Other income</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>And a second fundraising line, for Part G</h3></div></div>
+  <div class="step-body">
+    <p class="why">Add one more money-in line: <b>Fundraising · Merchandise sales</b>, any amount you
+      like (say <b>$500</b>). Part G needs two fundraising lines on one plan — the exact shape that
+      used to blank both of them.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">The plan now shows three money-in lines: Fundraising drive, Bake sale money, Merchandise sales — plus Other Income · Interest</label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b"><b>Planned funding</b> at the foot of the Funding band went up by exactly what you added</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The first question stops contradicting itself</h2>
+  <p>Press <b>+ Record</b> anywhere in Money and open <b>"What happened?"</b>. Read the five money-in
+    answers before ticking. Two of them used to both claim grants.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Three sub-lines changed</h3></div></div>
+  <div class="step-body">
+    <div class="scrollx"><table class="rowtable">
+      <tr><th>Answer</th><th>Sub-line now reads</th></tr>
+      <tr><td>Fundraiser money came in</td><td>Logged to a drive — the whole team, or one player</td></tr>
+      <tr><td>A sponsor came through</td><td>A business or a grant gave directly</td></tr>
+      <tr><td>Other money in</td><td>Interest, a facility rebate, a plain donation</td></tr>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">All three read exactly as above</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b"><b>Other money in</b> no longer says "a grant" — only one answer in the list claims grants now</label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">The other five answers (dues, money back, we paid for something, settled up with the club, paid a family back) are untouched</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>"Other money in" holds only what you type</h2>
+  <p>Record → <b>Other money in</b> → open <b>What is this?</b>. This is the removal the whole model
+    turns on: the four Fundraising and Sponsorship words are <i>not there</i>, so there is nothing to
+    refuse and nothing to warn about.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>Two shelves are simply absent</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">No <b>Fundraising</b> group and no <b>Sponsorship</b> group anywhere in the list — including the <b>Bake sale money</b> you invented in A2<span class="hintline">Your own word left the list on the day you created it, without anybody maintaining anything</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b"><b>Tournaments</b> and <b>Other income</b> are both there, with all their words</label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">The box's own hint reads <b>Search what this is — e.g. "interest", "rebate"</b><span class="hintline">It used to suggest "sponsorship", "grant" — two words you can no longer find here</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>The coach who types "merch" first</h3></div></div>
+  <div class="step-body">
+    <p class="why">Type <b>merch</b> into that box. Nothing matches, and the empty state says where to go.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">It reads <b>Nothing on this side matches "merch".</b> then, on its own line, <b>Fundraising and sponsor money is recorded under "Fundraiser money came in" or "A sponsor came through", above.</b></label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">Type <b>interest</b> instead and the list finds it normally — the sentence is only on the empty state</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><div class="step-t"><h3>The amber note that wasn't a warning is gone</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Fill the branch in properly — pick <b>Tournaments · Concession revenue</b>, an
+      amount, today's date — and save. There is nowhere left in this form for the old note ("…already
+      comes from your fundraisers and sponsors") to appear, because there is no row that would trigger
+      it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c3a"><label for="c3a">No amber note appears under the picker at any point</label></div>
+      <div class="chk"><input type="checkbox" id="c3b"><label for="c3b">The record saves and shows on the Ledger as income</label></div>
+      <div class="chk"><input type="checkbox" id="c3c"><label for="c3c">Open the Ledger's existing <b>Concession takings, home opener</b> row, change its amount by a dollar and save — an existing record still edits normally</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>A fundraiser says which line it is raising for</h2>
+  <p>Money → <b>Fundraising</b>. The team has two drives (Chocolate sale, running; Bottle drive,
+    closed) and six sponsors.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>New fundraiser: pre-filled, filtered, changeable</h3></div></div>
+  <div class="step-body">
+    <p class="why">Press <b>+ Fundraiser</b>. A new field sits second, right under the name.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a"><b>Raising for</b> is the second field, above Description, and is already filled in with <b>Fundraising · Fundraising drive</b><span class="hintline">Never a question you have to answer — only one you can change</span></label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">Its label carries <b>no asterisk</b>, and the hint under it reads "Which budget line this drive's money counts towards."</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Open the list: <b>only the Fundraising shelf</b> — Fundraising drive, Merchandise sales, and the Bake sale money you invented. No Sponsorship words, no Tournaments, no Other income</label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d">Close the form without saving — because it was only pre-filled and you changed nothing, it closes <b>without</b> asking you to discard anything</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>Point the Chocolate sale at Merchandise sales</h3></div></div>
+  <div class="step-body">
+    <p class="why">Open the <b>Chocolate sale</b> and press <b>Edit</b>. It already names a line: the
+      migration linked every existing drive to the line today's report was already placing it on,
+      rather than defaulting them all to the standard word.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">Edit opens with <b>Raising for = Fundraising · Fundraising drive</b> already selected<span class="hintline">Nobody typed that — the migration read the plan and linked it</span></label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">Change it to <b>Merchandise sales</b> and save</label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">The room's facts line now reads <b>Raising for Merchandise sales</b>, beside the "3 of 31 players logged" count</label></div>
+      <div class="chk"><input type="checkbox" id="d2d"><label for="d2d">The three tiles (Raised / Team keeps / Credited to families) did not move — changing where money reports never moves money</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>A sponsor and a grant differ by one field</h2>
+  <p>Three labels now say "grant", and there is deliberately <b>no sponsor-or-grant switch</b>: which
+    Sponsorship line it reports against <i>is</i> the difference.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>Record a grant as a new sponsor</h3></div></div>
+  <div class="step-body">
+    <p class="why">Record → <b>A sponsor came through</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The first question reads <b>Which sponsor or grant? *</b></label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Its second option reads <b>A new sponsor or grant…</b> — pick it</label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">The name field reads <b>Sponsor or grant *</b>, with the placeholder <b>e.g. Riverdale Dental, or Community Sport Grant</b></label></div>
+      <div class="chk"><input type="checkbox" id="e1d"><label for="e1d">Under it, <b>Raising for</b>, pre-filled <b>Sponsorship · Team sponsorship</b>, listing <b>only</b> Sponsorship words (Grant, Team sponsorship) — no Fundraising words<span class="hintline">This is what the drawing got wrong first time round: a sponsor may not raise for a fundraising line</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1e"><label for="e1e">Change it to <b>Grant</b>, name it <b>QA Community Sport Grant</b>, $250, today, and save</label></div>
+      <div class="chk"><input type="checkbox" id="e1f"><label for="e1f">It lands on the Fundraising tab's sponsor list, and its room's facts line reads <b>Raising for Grant</b></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>The legacy nudge — the one place you meet it</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">This team has <b>no sponsorship budget line</b>, so the migration had nothing safe
+      to link its sponsors to and deliberately left them blank rather than guessing. Open
+      <b>Northside Physio</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Its facts line shows a quiet <b>Pick the budget line this sponsor is raising for</b> instead of a "Raising for" name</label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">Nothing else about the room is different, and none of its figures moved</label></div>
+      <div class="chk"><input type="checkbox" id="e2c"><label for="e2c">Press <b>Edit</b> — <b>Raising for</b> is <b>empty</b>, not pre-filled<span class="hintline">An edit sheet shows what is true; only a NEW record gets the suggestion</span></label></div>
+      <div class="chk"><input type="checkbox" id="e2d"><label for="e2d">Set it to <b>Team sponsorship</b> and save. The nudge is replaced by <b>Raising for Team sponsorship</b></label></div>
+      <div class="chk"><input type="checkbox" id="e2e"><label for="e2e">Leave the other five sponsors alone — Part G needs the mixed state</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>The whole team can be the one who raised it</h2>
+  <p>The load-bearing half. With Fundraising words out of "Other money in", this is the <i>only</i> way
+    hoodie-table money — money raised with nobody counting who sold what — reaches the books at all.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>"Who raised it", with the whole team first</h3></div></div>
+  <div class="step-body">
+    <p class="why">Open the <b>Chocolate sale</b> and press <b>Record</b> in its room.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">The drive is <b>stated</b>, not asked, and under it a quiet line reads <b>Raising for Fundraising · Merchandise sales</b> (what you set in D2)</label></div>
+      <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">The question is <b>Who raised it *</b> — not "Which player"</label></div>
+      <div class="chk"><input type="checkbox" id="f1c"><label for="f1c">Its first option is <b>The whole team</b>, then a <b>Players</b> group holding those with nothing logged yet</label></div>
+      <div class="chk"><input type="checkbox" id="f1d"><label for="f1d">Pick <b>The whole team</b> — a hint appears: <b>"Nobody raised it individually, so no family share comes off anyone's dues."</b></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><div class="step-t"><h3>Save $400 for the whole team</h3></div></div>
+  <div class="step-body">
+    <p class="why">Amount <b>400</b>, today's date, save.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f2a"><label for="f2a">Before saving, the consequence line reads <b>"the drive's total rises by $400.00 · no family share, because nobody raised it individually. Shows on the ledger as fundraising income."</b><span class="hintline">The credit clause is not silently dropped — it says why there isn't one</span></label></div>
+      <div class="chk"><input type="checkbox" id="f2b"><label for="f2b">It saves, and the drive's <b>Raised</b> tile goes from $916.00 to <b>$1,316.00</b></label></div>
+      <div class="chk"><input type="checkbox" id="f2c"><label for="f2c"><b>Credited to families</b> did <b>not</b> move — still $137.40</label></div>
+      <div class="chk"><input type="checkbox" id="f2d"><label for="f2d">On the board, the new row's <b>Who</b> reads <b>The whole team</b> and its <b>Credit</b> cell is a <b>dash</b></label></div>
+      <div class="chk"><input type="checkbox" id="f2e"><label for="f2e">The facts line reads <b>3 of 31 players logged · plus 1 team entry</b> — the fraction did not become 4 of 31</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F3">
+  <div class="step-head"><span class="num">F3</span><div class="step-t"><h3>It edits and it unwinds</h3><div class="tags"><span class="tag phone">Phone</span></div></div></div>
+  <div class="step-body">
+    <p class="why">A row you can create and not correct is worse than no row.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f3a"><label for="f3a"><b>Edit</b> on the team row opens the small window titled with <b>The whole team</b>; change $400 to $450 and save — the tile follows and the Credit cell is still a dash</label></div>
+      <div class="chk"><input type="checkbox" id="f3b"><label for="f3b">Log a <b>second</b> team entry ($60, another day). Both stand; the facts line reads <b>plus 2 team entries</b><span class="hintline">Two hoodie tables on two weekends are two events, not one to be edited</span></label></div>
+      <div class="chk"><input type="checkbox" id="f3c"><label for="f3c"><b>Remove</b> the $60 one — the confirm names <b>the $60.00 logged for The whole team</b> and says no family credit was earned on it</label></div>
+      <div class="chk"><input type="checkbox" id="f3d"><label for="f3d">On a <b>phone width</b>, the team row's card title reads "The whole team" and the Credit cell still shows its dash under a <b>Credit</b> label</label></div>
+      <div class="chk"><input type="checkbox" id="f3e"><label for="f3e">Money → <b>Ledger</b> → Timeline: the remaining team entry is on the book, dated, described by the drive's name</label></div>
+      <div class="chk"><input type="checkbox" id="f3f"><label for="f3f">Money → <b>Player Dues</b>: no family's balance moved because of any of this</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F4">
+  <div class="step-head"><span class="num">F4</span><div class="step-t"><h3>The one open question</h3><div class="tags"><span class="tag ask">Ruling</span></div></div></div>
+  <div class="step-body">
+    <div class="ask"><b>Should a whole-team entry be allowed on a drive that has a family share set at
+      all?</b> The Chocolate sale pays <b>15%</b> to whoever raised the money, and you have just logged
+      an entry on it that pays nobody. I built it <b>allowed</b>, because refusing it would mean a team
+      running one drive with both a bake table and per-player selling has nowhere to put the table's
+      takings — and because the board says out loud which entries carried a share (a dash) and the
+      facts line counts team entries separately. But it is a real question: a coach could reasonably
+      expect 15% of $450 to reach somebody.<br><br><b>The alternatives, if you want one:</b> refuse a
+      team entry on a drive with a share above 0% and say why; or ask at the moment of saving. Both
+      cost a step the current design does not.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f4a"><label for="f4a">Looked at the board with both kinds of row on it and formed a view</label></div>
+      <div class="chk"><input type="checkbox" id="f4b"><label for="f4b"><b>Ruling: allowed as built</b> — the dash and the separate count are enough</label></div>
+      <div class="chk"><input type="checkbox" id="f4c"><label for="f4c"><b>Ruling: something else</b> — write it in the box below</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Your ruling…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>The report: every line gets its own actual</h2>
+  <p>Money → <b>Budget vs. Actual</b> → <b>Statement</b>. This is finding four: budget two fundraising
+    lines and, until today, <i>both</i> read blank while every raised dollar collected in a row called
+    "Not itemized".</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>Two fundraising lines, each with its own money</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">You planned three fundraising lines in Part A and pointed the Chocolate sale at
+      <b>Merchandise sales</b> in D2.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g1a"><label for="g1a"><b>Fundraising · Merchandise sales</b> carries the Chocolate sale's kept money — <b>$778.60</b> plus whatever your team entries came to</label></div>
+      <div class="chk"><input type="checkbox" id="g1b"><label for="g1b">Open that row: behind the figure is <b>the drive itself, by name</b>, not a phrase like "From your fundraisers"</label></div>
+      <div class="chk"><input type="checkbox" id="g1c"><label for="g1c"><b>Fundraising · Fundraising drive</b> ($1,800 planned) reads a dash for Actual — the Bottle drive that points at it has raised nothing<span class="hintline">Honest: an empty line, not a blank caused by the report refusing to guess</span></label></div>
+      <div class="chk"><input type="checkbox" id="g1d"><label for="g1d">There is <b>no "Fundraising · Not itemized"</b> row anywhere</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G2">
+  <div class="step-head"><span class="num">G2</span><div class="step-t"><h3>The sponsor pool splits, and adds back up</h3><div class="tags"><span class="tag think">Think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Only <b>Northside Physio</b> was given a line in E2. The other five sponsors still
+      name none, so they keep the old pooled behaviour — which is exactly the mixed state the fallback
+      exists for.</p>
+    <div class="scrollx"><table class="rowtable">
+      <tr><th>Row</th><th>Holds</th><th>At build time</th></tr>
+      <tr><td>Sponsorship · Team sponsorship</td><td>Northside Physio alone</td><td>$375.75</td></tr>
+      <tr><td>Not in the plan · Sponsor money</td><td>the other four received sponsors</td><td>$1,710.00</td></tr>
+      <tr class="sum"><td>Together</td><td>what the five sponsors keep</td><td>$2,085.75</td></tr>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g2a"><label for="g2a">Both rows exist, and the two figures <b>add to what the sponsors keep between them</b><span class="hintline">If a figure has drifted, check the SUM — the split is the test</span></label></div>
+      <div class="chk"><input type="checkbox" id="g2b"><label for="g2b">Opening the <b>Team sponsorship</b> row shows Northside Physio by name, and nobody else</label></div>
+      <div class="chk"><input type="checkbox" id="g2c"><label for="g2c">The QA grant you made in E1 sits on its own <b>Sponsorship · Grant</b> row</label></div>
+      <div class="chk"><input type="checkbox" id="g2d"><label for="g2d"><b>Total revenue</b> and <b>Season net</b> are the same as before you started naming lines — only the distribution across rows moved</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G3">
+  <div class="step-head"><span class="num">G3</span><div class="step-t"><h3>The rest of the report is untouched</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g3a"><label for="g3a"><b>Months</b> view: the fundraising and sponsorship bands still carry their money, in the months it arrived</label></div>
+      <div class="chk"><input type="checkbox" id="g3b"><label for="g3b"><b>By activity</b>: Fundraising's block now has both its cost side and its revenue side on real named rows</label></div>
+      <div class="chk"><input type="checkbox" id="g3c"><label for="g3c">The Statement's expenses half, Player dues row and the sentence beneath the table are exactly as they were</label></div>
+      <div class="chk"><input type="checkbox" id="g3d"><label for="g3d">Export the Statement — the file's revenue rows carry the same names the screen does</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART H ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>The demo, and the help</h2>
+  <p>The coach sandbox held the exact state this model removes — a typed $480 hoodie margin, on
+    production. It is a drive now.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="H1">
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>The shop window tells the hoodie story through a drive</h3></div></div>
+  <div class="step-body">
+    <p class="why">Open the coach sandbox's <b>Off-season</b> moment (Riverdale Ridge 14U) →
+      <b>Money → Fundraising</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">A closed drive called <b>Team hoodie order</b> exists, its facts line reading <b>Raising for Merchandise sales</b></label></div>
+      <div class="chk"><input type="checkbox" id="h1b"><label for="h1b">Its board holds <b>one</b> row: <b>The whole team</b>, <b>$480.00</b>, Credit a dash</label></div>
+      <div class="chk"><input type="checkbox" id="h1c"><label for="h1c">Budget vs. Actual still shows that $480 on <b>Fundraising · Merchandise sales</b> — the same row it was on before, reached a different way</label></div>
+      <div class="chk"><input type="checkbox" id="h1d"><label for="h1d">Nobody's dues moved: the 14U still shows one family behind by one instalment</label></div>
+      <div class="chk"><input type="checkbox" id="h1e"><label for="h1e">Mid-season (12U) → Budget vs. Actual: the Bottle Drive's money now reads on a named <b>Fundraising · Fundraising drive</b> row and the sponsor's on <b>Sponsorship · Team sponsorship</b>, where both used to say "Not in the plan"</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="H2">
+  <div class="step-head"><span class="num">H2</span><div class="step-t"><h3>Help says the same words the screens do</h3></div></div>
+  <div class="step-body">
+    <p class="why">Coaches → <b>Help</b> → search.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h2a"><label for="h2a">Search <b>whole team</b> — the Record article comes back, and its "Fundraiser money came in" entry describes the whole-team option</label></div>
+      <div class="chk"><input type="checkbox" id="h2b"><label for="h2b">Search <b>raising for</b> — the fundraising article explains the field and says it is pre-filled</label></div>
+      <div class="chk"><input type="checkbox" id="h2c"><label for="h2c">Search <b>sponsor or grant</b> — the sponsor article uses the reworded labels</label></div>
+      <div class="chk"><input type="checkbox" id="h2d"><label for="h2d">The "Other money in" entry says fundraising and sponsorship money is recorded on the two answers above it</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Everything you ticked, flagged and wrote, as text. <b>Copy findings</b> puts it on the
+    clipboard; paste it back into the chat. <b>F4 is the one I need an answer to.</b></p>
+  <textarea class="out" id="out" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §157</span><span>Built on dev 2026-09-08</span><span>Mockup of record: artifact 8aa1e633</span><span>Plan: COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md</span><span>Migration 285</span>
+</footer>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast"></span></div>
+</div>
+
+<script>
+(function(){
+  var KEY='fl-qa-157-fundraising-one-way-in';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('.step textarea'));
+  var out=document.getElementById('out');
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v){ st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); }); }
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §157 — Coach fundraising: one way in','Fixture: UAT Test Team + coach sandbox · built on dev 2026-09-08',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var hint=lab.querySelector('.hintline');
+        var txt=lab.textContent;
+        if(hint) txt=txt.replace(hint.textContent,'');
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt.replace(/\s+/g,' ').trim());
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    lines.push('F4 is the open ruling — whole-team entry on a drive that pays a family share.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

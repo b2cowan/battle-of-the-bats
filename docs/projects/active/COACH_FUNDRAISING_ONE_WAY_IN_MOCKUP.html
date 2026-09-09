@@ -1,0 +1,1006 @@
+<title>Where Fundraising Money Goes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+/* ───────────────────────────────────────────────────────────────────────────
+   Where Fundraising Money Goes — the agreed model, drawn screen by screen.
+   Page chrome: theme-aware tokens.
+   Product exhibits: pinned to the coach portal's WARM palette in both themes,
+   because they are pictures of one specific product theme. Labelled as such.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --ground:      #FBF9F5;
+  --panel:       #FFFFFF;
+  --ink:         #241E15;
+  --ink-soft:    #4A4235;
+  --ink-dim:     #6E665C;
+  --rule:        rgba(70, 55, 30, 0.16);
+  --rule-soft:   rgba(70, 55, 30, 0.09);
+  --accent:      #57651E;
+  --accent-soft: rgba(87, 101, 30, 0.10);
+  --flag:        #8A4A12;
+  --flag-soft:   rgba(138, 74, 18, 0.09);
+  --stop:        #A6371C;
+  --shadow:      0 1px 2px rgba(70,55,30,0.05), 0 12px 32px rgba(70,55,30,0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #17150F;
+    --panel:       #1F1C16;
+    --ink:         #EFEADF;
+    --ink-soft:    #C9C1B2;
+    --ink-dim:     #97907F;
+    --rule:        rgba(239, 234, 223, 0.16);
+    --rule-soft:   rgba(239, 234, 223, 0.08);
+    --accent:      #B3C55F;
+    --accent-soft: rgba(179, 197, 95, 0.12);
+    --flag:        #DFA85A;
+    --flag-soft:   rgba(223, 168, 90, 0.13);
+    --stop:        #E4816A;
+    --shadow:      0 1px 2px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.45);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:      #17150F;
+  --panel:       #1F1C16;
+  --ink:         #EFEADF;
+  --ink-soft:    #C9C1B2;
+  --ink-dim:     #97907F;
+  --rule:        rgba(239, 234, 223, 0.16);
+  --rule-soft:   rgba(239, 234, 223, 0.08);
+  --accent:      #B3C55F;
+  --accent-soft: rgba(179, 197, 95, 0.12);
+  --flag:        #DFA85A;
+  --flag-soft:   rgba(223, 168, 90, 0.13);
+  --stop:        #E4816A;
+  --shadow:      0 1px 2px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.45);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1020px; margin: 0 auto; padding: 56px 28px 96px; display: flex; flex-direction: column; gap: 54px; }
+
+/* ── Masthead ─────────────────────────────────────────────────────────────── */
+
+.mast { display: flex; flex-direction: column; gap: 14px; }
+.eyebrow {
+  font-family: "Familjen Grotesk", system-ui, sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent);
+}
+h1 {
+  font-family: "Familjen Grotesk", system-ui, sans-serif;
+  font-size: clamp(34px, 5.4vw, 52px); font-weight: 700; line-height: 1.03; letter-spacing: -0.02em;
+  margin: 0; text-wrap: balance; max-width: 17ch;
+}
+.stand { font-size: 20px; line-height: 1.5; color: var(--ink-soft); max-width: 62ch; margin: 0; }
+.mast-meta {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 12.5px; color: var(--ink-dim);
+  border-top: 1px solid var(--rule); padding-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 22px;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+
+section { display: flex; flex-direction: column; gap: 22px; }
+h2 {
+  font-family: "Familjen Grotesk", system-ui, sans-serif;
+  font-size: 27px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.15;
+  margin: 0; text-wrap: balance; max-width: 26ch;
+}
+.sec-head { display: flex; flex-direction: column; gap: 10px; border-top: 2px solid var(--ink); padding-top: 14px; }
+.sec-head p { color: var(--ink-soft); }
+p { margin: 0; max-width: 64ch; }
+.prose { display: flex; flex-direction: column; gap: 14px; }
+.prose strong { font-weight: 500; color: var(--ink); background: var(--accent-soft); padding: 0 3px; border-radius: 2px; }
+.sub-head {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim);
+  border-bottom: 1px solid var(--rule); padding-bottom: 7px;
+}
+
+.aside {
+  border-left: 3px solid var(--flag); background: var(--flag-soft);
+  padding: 14px 18px; max-width: 64ch; font-size: 16px; line-height: 1.55; color: var(--ink-soft);
+}
+.aside b {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-weight: 600; color: var(--ink);
+  font-size: 14px; letter-spacing: 0.02em; display: block; margin-bottom: 3px;
+}
+
+/* ── The rule card ────────────────────────────────────────────────────────── */
+
+.rule {
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 4px;
+  padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 18px;
+}
+.rule-top { font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 12px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+.rule-line {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: clamp(22px, 3vw, 28px);
+  font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; text-wrap: balance; max-width: 30ch;
+}
+.rule-arms { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+.arm { border-top: 3px solid var(--accent); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.arm.dim { border-top-color: var(--ink-dim); }
+.arm .k { font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.arm .v { font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 17px; font-weight: 600; color: var(--ink); line-height: 1.25; }
+.arm .why { font-size: 15px; line-height: 1.5; color: var(--ink-soft); }
+
+/* ── Exhibit frame ────────────────────────────────────────────────────────── */
+
+.exhibit {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+  box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;
+}
+.exhibit-bar {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px;
+  padding: 11px 18px; border-bottom: 1px solid var(--rule-soft);
+  font-family: "Familjen Grotesk", system-ui, sans-serif;
+}
+.exhibit-name { font-size: 14.5px; font-weight: 600; letter-spacing: -0.005em; }
+.exhibit-note { font-size: 12.5px; color: var(--ink-dim); }
+.exhibit-flag {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+  border: 1px solid; border-radius: 999px; padding: 1px 7px; color: var(--flag); border-color: var(--flag);
+}
+.exhibit-flag.is-now { color: var(--stop); border-color: var(--stop); }
+.exhibit-flag.is-pick { color: var(--accent); border-color: var(--accent); }
+
+/* The warm-portal stage — a photograph of one theme, fixed palette on purpose. */
+.stage {
+  --w-paper:  #F8F4ED;
+  --w-card:   #FFFFFF;
+  --w-ink:    #241E15;
+  --w-soft:   #4A4235;
+  --w-dim:    #615A54;
+  --w-line:   rgba(70, 55, 30, 0.12);
+  --w-line2:  rgba(70, 55, 30, 0.20);
+  --w-olive:  #57651E;
+  --w-amber:  #835006;
+  --w-live:   #B03A22;
+  --w-win:    #34662A;
+  background: var(--w-paper); padding: 26px 22px 30px; overflow-x: auto;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.stage-inner { min-width: 420px; max-width: 560px; width: 100%; margin: 0 auto; }
+.stage-inner.wide { max-width: 620px; }
+
+.fieldLabel { font-size: 12px; font-weight: 600; color: var(--w-ink); margin-bottom: 5.6px; letter-spacing: 0.02em; }
+.fieldLabel.caps { text-transform: uppercase; font-size: 11px; letter-spacing: 0.07em; color: var(--w-soft); }
+.fieldLabel .req { color: var(--w-live); }
+
+.combo, .selectBox {
+  width: 100%; background: var(--w-card); border: 1px solid var(--w-olive); border-radius: 8px;
+  padding: 8.8px 12px; font-size: 14px; color: var(--w-dim);
+}
+.combo.filled, .selectBox.filled { color: var(--w-ink); font-weight: 600; }
+.selectBox { background: #F3EFE6; border-color: var(--w-line2); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.selectBox .chev { color: var(--w-dim); font-size: 11px; }
+.inputBox {
+  width: 100%; background: #FBF7F0; border: 1px solid var(--w-line2); border-radius: 6px;
+  padding: 8.8px 12px; font-size: 14px; color: var(--w-dim);
+}
+.inputBox.filled { color: var(--w-ink); }
+.formHint { font-size: 11.5px; color: var(--w-dim); margin-top: 4px; line-height: 1.4; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Dropdown menus */
+.menu {
+  margin-top: 4px; background: var(--w-card); border: 1px solid var(--w-line); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(36, 30, 21, 0.18); padding: 4px 0;
+}
+.grp { padding: 6.4px 12px 3.2px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--w-dim); }
+.opt { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6.4px 12px; font-size: 14px; color: var(--w-ink); }
+.opt.on { background: rgba(87, 101, 30, 0.10); }
+.opt.newish { background: rgba(87, 101, 30, 0.09); box-shadow: inset 3px 0 0 var(--w-olive); font-weight: 600; color: #3E4A12; }
+.tag { margin-left: auto; flex: 0 0 auto; font-size: 11px; font-weight: 600; color: var(--w-dim); white-space: nowrap; }
+.tag + .tier { margin-left: 6.4px; }
+.tier {
+  margin-left: auto; flex: 0 0 auto; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  border: 1px solid var(--w-line); border-radius: 999px; padding: 0.8px 6.4px; white-space: nowrap; color: var(--w-dim);
+}
+.tier.own { color: var(--w-olive); background: rgba(87, 101, 30, 0.10); border-color: rgba(87, 101, 30, 0.45); }
+.emptyState { padding: 10px 12px 8px; font-size: 13px; color: var(--w-dim); line-height: 1.45; }
+.emptyState .added { color: #6B3F0C; font-weight: 600; }
+
+/* "What happened?" chooser */
+.whatList {
+  background: var(--w-card); border: 1px solid var(--w-line); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(36, 30, 21, 0.18); padding: 4px 0;
+}
+.whatGrp { padding: 8px 14px 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--w-dim); }
+.whatOpt { display: flex; align-items: baseline; gap: 10px; padding: 7px 14px; }
+.whatOpt .txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.whatOpt .nm { font-size: 14px; color: var(--w-ink); }
+.whatOpt .sb { font-size: 11.5px; color: var(--w-dim); line-height: 1.35; }
+.whatOpt .hint { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--w-olive); white-space: nowrap; flex: 0 0 auto; }
+.whatOpt.bad { background: rgba(176, 58, 34, 0.07); box-shadow: inset 3px 0 0 var(--w-live); }
+.whatOpt.bad .sb { color: var(--w-live); font-weight: 600; }
+.whatOpt.fixed { background: rgba(87, 101, 30, 0.09); box-shadow: inset 3px 0 0 var(--w-olive); }
+.whatOpt.fixed .sb { color: #47540F; font-weight: 600; }
+
+/* Tables — Budget vs. Actual and the drive's board share one recipe */
+.bva { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bva th, .bva td { padding: 7px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+.bva th.lead, .bva td.lead { text-align: left; color: var(--w-ink); }
+.bva thead th {
+  font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--w-dim);
+  font-weight: 600; border-bottom: 1px solid var(--w-line2);
+}
+.bva .sect th {
+  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--w-olive); font-weight: 600; padding-top: 14px;
+}
+.bva tbody tr { border-bottom: 1px solid var(--w-line); }
+.bva tbody tr.sect { border-bottom: 0; }
+.bva td.lead { padding-left: 16px; }
+.bva td.lead .cat { color: var(--w-dim); }
+.bva .neg { color: var(--w-live); font-weight: 600; }
+.bva .pos { color: var(--w-win); font-weight: 600; }
+.bva .dash { color: var(--w-dim); }
+.bva tr.orphan td { background: rgba(176, 58, 34, 0.07); }
+.bva tr.orphan td.lead { font-style: italic; color: var(--w-live); }
+.bva tr.gained td { background: rgba(87, 101, 30, 0.09); }
+.bva td.lead.flat { padding-left: 8px; }
+.bva .team { font-weight: 600; }
+.factsLine { font-size: 12px; color: var(--w-dim); margin-bottom: 10px; }
+.factsLine strong { color: var(--w-ink); }
+
+/* Bands inside the stage */
+.warnLine { display: flex; gap: 7px; align-items: flex-start; margin-top: 8px; font-size: 12.5px; line-height: 1.45; color: var(--w-amber); }
+.warnLine .gl { flex: 0 0 auto; }
+.errBand {
+  display: flex; gap: 7px; align-items: flex-start; margin-top: 10px;
+  background: rgba(176,58,34,0.08); border: 1px solid rgba(176,58,34,0.35); border-radius: 6px;
+  padding: 9px 11px; font-size: 12.5px; line-height: 1.45; color: var(--w-live); font-weight: 600;
+}
+.btnRow { display: flex; justify-content: flex-end; gap: 10px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--w-line); }
+.btn { border-radius: 7px; padding: 7px 15px; font-size: 13px; font-weight: 600; }
+.btn.ghost { color: var(--w-soft); }
+.btn.primary { background: #C9E265; color: #241E15; }
+
+.modalTitle { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
+.modalTitle .t { font-size: 16px; font-weight: 700; color: var(--w-ink); }
+.modalTitle .s { font-size: 12.5px; color: var(--w-dim); }
+
+.newFlag {
+  display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--w-olive); border: 1px solid rgba(87,101,30,0.5);
+  background: rgba(87,101,30,0.10); border-radius: 999px; padding: 1px 6px; margin-left: 7px; vertical-align: 1.5px;
+}
+.newFlag.word { color: var(--w-amber); border-color: rgba(131,80,6,0.45); background: rgba(131,80,6,0.09); }
+
+/* Verdict strip */
+.verdict {
+  display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px;
+  padding: 13px 18px 15px; border-top: 1px solid var(--rule-soft);
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 13.5px; line-height: 1.45; color: var(--ink-soft);
+}
+.verdict dt {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-dim); padding-top: 3px; white-space: nowrap;
+}
+.verdict dd { margin: 0; }
+.verdict .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; color: var(--ink); }
+
+/* ── Ships-with list and decisions ────────────────────────────────────────── */
+
+.ship { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--rule); }
+.ship-row { display: grid; grid-template-columns: 34px 1fr; gap: 0 14px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.ship-n {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 20px; font-weight: 700;
+  color: var(--accent); line-height: 1.2; padding-top: 1px;
+}
+.ship-body { display: flex; flex-direction: column; gap: 5px; }
+.ship-body h3 { font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 17px; font-weight: 600; margin: 0; line-height: 1.25; letter-spacing: -0.01em; }
+.ship-body p { font-size: 15.5px; line-height: 1.5; color: var(--ink-soft); }
+.ship-body .tagline { font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--stop); }
+
+.decisions { display: grid; grid-template-columns: max-content 1fr; gap: 10px 18px; font-size: 15.5px; line-height: 1.5; }
+.decisions dt { font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); padding-top: 3px; white-space: nowrap; }
+.decisions dd { margin: 0; color: var(--ink-soft); max-width: 60ch; }
+.decisions dd strong { color: var(--ink); font-weight: 500; }
+
+.rec {
+  background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 4px;
+  padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 14px;
+}
+.rec h2 { font-size: 22px; }
+.ask {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 15.5px; font-weight: 600;
+  color: var(--ink); border-top: 1px solid var(--accent); padding-top: 13px; max-width: 64ch; line-height: 1.5;
+}
+
+footer {
+  font-family: "Familjen Grotesk", system-ui, sans-serif; font-size: 12.5px; color: var(--ink-dim);
+  border-top: 1px solid var(--rule); padding-top: 14px;
+}
+
+@media (max-width: 620px) {
+  .wrap { padding: 40px 18px 72px; gap: 44px; }
+  .stand { font-size: 18px; }
+  .verdict, .decisions { grid-template-columns: 1fr; gap: 2px; }
+  .verdict dt, .decisions dt { padding-top: 8px; }
+  .pair { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">Coach money · fundraising, sponsors, the budget plan</div>
+    <h1>Where fundraising money actually goes</h1>
+    <p class="stand">It started as “why does the row say From a drive?” It ends as one rule the coach never
+      has to be told: <strong>the category decides everything.</strong> Fundraising and sponsorship money is
+      always recorded on the Fundraising tab; everything else is always typed in; and a line reports under
+      the shelf it was filed on.</p>
+    <div class="mast-meta">
+      <span>8 September 2026</span>
+      <span>Model agreed with the owner · nothing built</span>
+      <span>Exhibits at true size, warm coach theme</span>
+    </div>
+  </header>
+
+  <!-- ── THE RULE ─────────────────────────────────────────────────────────── -->
+
+  <section>
+    <div class="rule">
+      <div class="rule-top">The model</div>
+      <div class="rule-line">The category a word sits in decides who fills its number in and where it reports.</div>
+      <div class="rule-arms">
+        <div class="arm">
+          <span class="k">Fundraising · Sponsorship</span>
+          <span class="v">Always filled in from the Fundraising tab</span>
+          <span class="why">A fundraiser says which Fundraising line it is raising for; a sponsor says which
+            Sponsorship line. The standard words and the team’s own, from that shelf only. Never typed into
+            the money form.</span>
+        </div>
+        <div class="arm dim">
+          <span class="k">Tournaments · Other Income · anything a coach invents</span>
+          <span class="v">Always typed in</span>
+          <span class="why">Recorded under “Other money in”, exactly like a cost. No drive or sponsor is
+            ever involved.</span>
+        </div>
+        <div class="arm">
+          <span class="k">On Budget vs. Actual</span>
+          <span class="v">A line reports under its category’s shelf</span>
+          <span class="why">Fundraising under Expected fundraising, Sponsorship under Expected
+            sponsorship, everything else under Expected other income — grouped by category inside it.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>What this replaces: a note on the budget picker telling coaches where the app would make them
+        stand later; a refusal in the money form that fired only if a budget line happened to exist; and a
+        whole design about blocked rows and “carry me there” switches. None of it is needed once fundraising
+        money has exactly one way in.</p>
+    </div>
+  </section>
+
+  <!-- ── WHY ──────────────────────────────────────────────────────────────── -->
+
+  <section>
+    <div class="sec-head">
+      <h2>Why — five things true in the product today</h2>
+      <p>All verified in the running product, not read off a plan. They are the case for the model, and the
+        things it has to fix.</p>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">The money form claims grants twice</span>
+        <span class="exhibit-flag is-now">Today</span>
+        <span class="exhibit-note">Record money → “What happened?”</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <div class="whatList">
+            <div class="whatGrp">Money came in</div>
+            <div class="whatOpt">
+              <span class="txt"><span class="nm">A family paid their dues</span><span class="sb">Lands on that player’s bill</span></span>
+              <span class="hint">2 overdue · $340.00</span>
+            </div>
+            <div class="whatOpt">
+              <span class="txt"><span class="nm">Fundraiser money came in</span><span class="sb">Logged to a drive, counts for a player</span></span>
+              <span class="hint">1 drive running</span>
+            </div>
+            <div class="whatOpt bad">
+              <span class="txt"><span class="nm">A sponsor came through</span><span class="sb">A business or grant gave directly</span></span>
+            </div>
+            <div class="whatOpt">
+              <span class="txt"><span class="nm">Money back on something we paid</span><span class="sb">A refund against a cost on the books</span></span>
+            </div>
+            <div class="whatOpt bad">
+              <span class="txt"><span class="nm">Other money in</span><span class="sb">Interest, a grant, anything else</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>The clash</dt><dd>Two answers claim grants; only one can take them. “Other money in” sends a
+          coach with a grant to the place that refuses it. Creating a sponsor from inside Record already
+          works — the words are the whole problem.</dd>
+      </dl>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Team-raised money can’t be entered at all</span>
+        <span class="exhibit-flag is-now">Today</span>
+        <span class="exhibit-note">Fundraising → a drive → Record</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner">
+          <div class="modalTitle"><span class="t">Record money</span><span class="s">Fundraiser money came in</span></div>
+          <div class="stack">
+            <div>
+              <div class="fieldLabel caps">Which drive <span class="req">*</span></div>
+              <div class="selectBox filled"><span>Hoodie sales at the rink</span><span class="chev">▾</span></div>
+            </div>
+            <div>
+              <div class="fieldLabel caps">Which player <span class="req">*</span></div>
+              <div class="selectBox"><span>Choose a player…</span><span class="chev">▾</span></div>
+              <div class="warnLine"><span class="gl">⚠</span><span>Every entry names one player. There is no
+                “the whole team” option — hoodies sold at a table with nobody counting who sold what have
+                nowhere to go.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Why it matters more now</dt><dd>Under the model this becomes the <em>only</em> way to record
+          team-raised money. It is load-bearing, not a nicety.</dd>
+      </dl>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">The warning isn’t a warning</span>
+        <span class="exhibit-flag is-now">Today</span>
+        <span class="exhibit-note">Record money → Other money in → Save</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner">
+          <div class="modalTitle"><span class="t">Record money</span><span class="s">Other money in</span></div>
+          <div class="stack">
+            <div>
+              <div class="fieldLabel caps">What is this? <span class="req">*</span></div>
+              <div class="combo filled">Fundraising · Fundraising drive</div>
+              <div class="warnLine"><span class="gl">⚠</span><span>Fundraising drive’s actual already comes
+                from your fundraisers and sponsors. Record the money there — logging it here as well would
+                count it twice.</span></div>
+            </div>
+            <div class="errBand"><span class="gl">✕</span><span>Fundraising drive’s actual already comes from
+              your fundraisers and sponsors. Record the money there — logging it here as well would count it
+              twice.</span></div>
+          </div>
+          <div class="btnRow"><span class="btn ghost">Cancel</span><span class="btn primary">Save</span></div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>What happens</dt><dd>The note reads like advice, Save stays live, the server refuses with the
+          same sentence. And it only fires if the team <em>budgeted</em> that word — otherwise the same
+          money saves without complaint.</dd>
+      </dl>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Even recorded properly, it can’t land on the line</span>
+        <span class="exhibit-flag is-now">Today</span>
+        <span class="exhibit-note">Budget vs. Actual · a team that planned two fundraising lines</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <table class="bva">
+            <thead><tr><th class="lead" scope="col">&nbsp;</th><th scope="col">Budgeted</th><th scope="col">Actual</th><th scope="col">Variance</th></tr></thead>
+            <tbody>
+              <tr class="sect"><th class="lead" colspan="4" scope="colgroup">Expected fundraising</th></tr>
+              <tr><td class="lead"><span class="cat">Fundraising ·</span> Fundraising drive</td><td>1,200.00</td><td class="dash">—</td><td class="neg">−1,200.00</td></tr>
+              <tr><td class="lead"><span class="cat">Fundraising ·</span> Merchandise sales</td><td>800.00</td><td class="dash">—</td><td class="neg">−800.00</td></tr>
+              <tr class="orphan"><td class="lead"><span class="cat">Fundraising ·</span> Not itemized</td><td class="dash">—</td><td>1,640.00</td><td class="pos">+1,640.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Why</dt><dd>A drive has no budget line. All drives make one pool, placed by what the coach
+          <em>planned</em>: one fundraising line and it lands there; two and it collapses into “Not
+          itemized”. A team is punished for planning carefully. Same on the sponsor side.</dd>
+      </dl>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">A coach’s own word reports under the wrong heading</span>
+        <span class="exhibit-flag is-now">Today</span>
+        <span class="exhibit-note">Budget vs. Actual · no drives involved</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <table class="bva">
+            <thead><tr><th class="lead" scope="col">&nbsp;</th><th scope="col">Budgeted</th><th scope="col">Actual</th><th scope="col">Variance</th></tr></thead>
+            <tbody>
+              <tr class="sect"><th class="lead" colspan="4" scope="colgroup">Expected fundraising</th></tr>
+              <tr><td class="lead"><span class="cat">Fundraising ·</span> Fundraising drive</td><td>1,200.00</td><td>1,100.00</td><td class="neg">−100.00</td></tr>
+              <tr class="sect"><th class="lead" colspan="4" scope="colgroup">Expected other income</th></tr>
+              <tr class="orphan"><td class="lead"><span class="cat">Fundraising ·</span> Bake sale money</td><td>300.00</td><td>265.00</td><td class="neg">−35.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Why</dt><dd>Every word a coach invents is born “typed”, and “typed” currently means “other
+          income” — whatever shelf they filed it on. The row says Fundraising; the heading says otherwise.</dd>
+        <dt>Blast radius today</dt><dd><strong>Zero.</strong> No coach or club has invented a money-in word
+          on either database yet. Fix it now and nobody’s report moves.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ── THE MODEL, SCREEN BY SCREEN ──────────────────────────────────────── -->
+
+  <section>
+    <div class="sec-head">
+      <h2>The model, screen by screen</h2>
+      <p>Seven screens. Everything a coach touches for money coming in, in the order they meet it.</p>
+    </div>
+
+    <div class="sub-head">A · Planning — the budget picker has nothing to explain</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Four shelves, no notes</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">Budget plan → add a line → money coming in</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <div class="fieldLabel">Category &amp; Item <span class="req">*</span></div>
+          <div class="combo">Search what this is — e.g. “sponsorship”, “grant”</div>
+          <div class="menu">
+            <div class="grp">Tournaments</div>
+            <div class="opt"><span>Registration revenue</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Concession revenue</span><span class="tier">Standard</span></div>
+            <div class="grp">Fundraising</div>
+            <div class="opt"><span>Fundraising drive</span><span class="tier">Standard</span></div>
+            <div class="opt on"><span>Merchandise sales</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Bake sale money</span><span class="tier own">Our own</span></div>
+            <div class="grp">Sponsorship</div>
+            <div class="opt"><span>Grant</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Team sponsorship</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Jersey sponsor</span><span class="tier own">Our own</span></div>
+            <div class="grp">Other income</div>
+            <div class="opt"><span>Interest</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Donation</span><span class="tier">Standard</span></div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>What a coach reads</dt><dd>The kind of money and who owns the word. The “From a drive” note is
+          gone and nothing replaces it — the coach is choosing a kind of money, not a room.</dd>
+        <dt>Adding a word</dt><dd>Works as now, into any shelf. A word added to Fundraising or Sponsorship is
+          a fundraising or sponsorship word from birth — recorded on the Fundraising tab, reported under
+          that heading. That is the fix for finding five.</dd>
+      </dl>
+    </div>
+
+    <div class="sub-head">B · Recording — the first question does the routing</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">One answer per kind of money</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">Record money → “What happened?”</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <div class="whatList">
+            <div class="whatGrp">Money came in</div>
+            <div class="whatOpt">
+              <span class="txt"><span class="nm">A family paid their dues</span><span class="sb">Lands on that player’s bill</span></span>
+              <span class="hint">2 overdue · $340.00</span>
+            </div>
+            <div class="whatOpt fixed">
+              <span class="txt"><span class="nm">Fundraiser money came in</span><span class="sb">Logged to a drive — the whole team, or one player</span></span>
+              <span class="hint">1 drive running</span>
+            </div>
+            <div class="whatOpt fixed">
+              <span class="txt"><span class="nm">A sponsor came through</span><span class="sb">A business or a grant gave directly</span></span>
+            </div>
+            <div class="whatOpt">
+              <span class="txt"><span class="nm">Money back on something we paid</span><span class="sb">A refund against a cost on the books</span></span>
+            </div>
+            <div class="whatOpt fixed">
+              <span class="txt"><span class="nm">Other money in</span><span class="sb">Interest, a facility rebate, a plain donation</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Three sub-lines change</dt><dd>“Other money in” stops claiming grants; the sponsor line says
+          “a grant” plainly; the fundraiser line says the whole team can be the one who raised it.</dd>
+        <dt>This is the routing</dt><dd>A coach with fundraising money picks the fundraising answer. There is
+          no second place for it to go — which is why the next screen can be so short.</dd>
+      </dl>
+    </div>
+
+    <div class="sub-head">C · Recording — “Other money in” holds only what is typed</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Fundraising and Sponsorship are simply not here</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">Record money → Other money in → “What is this?”</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <div class="fieldLabel caps">What is this? <span class="req">*</span></div>
+          <div class="combo">Search what this is — e.g. “interest”, “rebate”</div>
+          <div class="menu">
+            <div class="grp">Tournaments</div>
+            <div class="opt"><span>Registration revenue</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Concession revenue</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Gate / admission</span><span class="tier">Standard</span></div>
+            <div class="grp">Other income</div>
+            <div class="opt on"><span>Interest</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Rebate</span><span class="tier">Standard</span></div>
+            <div class="opt"><span>Donation</span><span class="tier">Standard</span></div>
+            <div class="grp">Team stuff</div>
+            <div class="opt"><span>Jersey deposit returns</span><span class="tier own">Our own</span></div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>What’s gone</dt><dd>The four Fundraising and Sponsorship words, and with them the conditional
+          refusal, the save error, and the blocked-row design. There is nothing to refuse because there is
+          nothing to pick.</dd>
+        <dt>What’s here</dt><dd>Tournaments, Other Income, and any category a coach makes themselves. All
+          typed, all reporting under Expected other income, grouped by category.</dd>
+        <dt>Placeholder</dt><dd class="mono">e.g. “interest”, “rebate” — it used to suggest “sponsorship”, “grant”</dd>
+      </dl>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">The coach who types “merch” first</span>
+        <span class="exhibit-flag is-pick">Proposed · optional</span>
+        <span class="exhibit-note">Same screen, nothing matched</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <div class="fieldLabel caps">What is this? <span class="req">*</span></div>
+          <div class="combo filled">merch</div>
+          <div class="menu">
+            <div class="emptyState">Nothing on this side matches “merch”. <span class="added">Fundraising and
+              sponsor money is recorded under “Fundraiser money came in” or “A sponsor came through”,
+              above.</span></div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Cheap insurance</dt><dd>One sentence on an empty state that already exists. Not a hill — the
+          first dropdown already says where fundraising goes — but it catches the coach who searched before
+          reading.</dd>
+      </dl>
+    </div>
+
+    <div class="sub-head">D · A fundraiser says which Fundraising line it is raising for</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Pre-filled, filtered to the shelf, changeable</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">Fundraising → a drive → Edit</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner">
+          <div class="modalTitle"><span class="t">Edit fundraiser</span></div>
+          <div class="stack">
+            <div>
+              <div class="fieldLabel">Name <span class="req">*</span></div>
+              <div class="inputBox filled">Hoodie sales at the rink</div>
+            </div>
+            <div>
+              <div class="fieldLabel">Raising for<span class="newFlag">New field</span></div>
+              <div class="combo filled">Fundraising · Fundraising drive</div>
+              <div class="menu">
+                <div class="grp">Fundraising</div>
+                <div class="opt on"><span>Fundraising drive</span><span class="tag">Default</span><span class="tier">Standard</span></div>
+                <div class="opt"><span>Merchandise sales</span><span class="tier">Standard</span></div>
+                <div class="opt"><span>Bake sale money</span><span class="tier own">Our own</span></div>
+                <div class="opt"><span>Rink 50/50</span><span class="tier own">Our own</span></div>
+              </div>
+              <p class="formHint">Which budget line this drive’s money counts towards.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Only Fundraising words</dt><dd>The standard two and the team’s own, from that shelf and no
+          other. A drive cannot raise for a sponsorship line — that was the drawing error you caught.</dd>
+        <dt>Pre-filled</dt><dd>Defaults to <em>Fundraising drive</em>, so it is never a question the coach
+          has to answer — only one they can change. That settles required-versus-optional: neither.</dd>
+      </dl>
+    </div>
+
+    <div class="sub-head">E · A sponsor says which Sponsorship line — and that is how a grant is told apart</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Same field, the other shelf</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">Record money → A sponsor came through → a new one</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner">
+          <div class="modalTitle"><span class="t">Record money</span><span class="s">A sponsor came through</span></div>
+          <div class="stack">
+            <div>
+              <div class="fieldLabel caps">Which sponsor or grant? <span class="req">*</span><span class="newFlag word">Reworded</span></div>
+              <div class="selectBox filled"><span>A new sponsor or grant…</span><span class="chev">▾</span></div>
+            </div>
+            <div>
+              <div class="fieldLabel caps">Sponsor or grant <span class="req">*</span><span class="newFlag word">Reworded</span></div>
+              <div class="inputBox filled">Riverdale Community Sport Grant</div>
+            </div>
+            <div>
+              <div class="fieldLabel caps">Raising for<span class="newFlag">New field</span></div>
+              <div class="combo filled">Sponsorship · Grant</div>
+              <div class="menu">
+                <div class="grp">Sponsorship</div>
+                <div class="opt on"><span>Grant</span><span class="tier">Standard</span></div>
+                <div class="opt"><span>Team sponsorship</span><span class="tag">Default</span><span class="tier">Standard</span></div>
+                <div class="opt"><span>Jersey sponsor</span><span class="tier own">Our own</span></div>
+                <div class="opt"><span>Tournament travel grant</span><span class="tier own">Our own</span></div>
+              </div>
+            </div>
+            <div class="pair">
+              <div><div class="fieldLabel caps">Amount <span class="req">*</span></div><div class="inputBox filled">500.00</div></div>
+              <div><div class="fieldLabel caps">Date received <span class="req">*</span></div><div class="inputBox filled">Sep 8, 2026</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>No sponsor-or-grant switch</dt><dd>A grant and a sponsor behave identically — a promise, then
+          money arriving, optionally crediting families. The only thing that differs is which line it
+          reports against, and this field is that. A separate switch would be a second place to say one
+          thing.</dd>
+        <dt>Defaults to Team sponsorship</dt><dd>The coach with a grant changes it once. “A new sponsor…”
+          already exists in that list; only the words change.</dd>
+        <dt>The team’s own words, too</dt><dd>Exactly as on the fundraiser side — a coach adds a word to
+          the Sponsorship shelf on the budget plan and it appears here with its “Our own” chip. The two
+          shelves work the same way; nothing about sponsorship is limited to the standard pair.</dd>
+      </dl>
+    </div>
+
+    <div class="sub-head">F · Team-raised money — the whole team can be the one who raised it</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">“The whole team” in the player list</span>
+        <span class="exhibit-flag is-pick">Proposed · load-bearing</span>
+        <span class="exhibit-note">Record money → Fundraiser money came in</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner">
+          <div class="modalTitle"><span class="t">Record money</span><span class="s">Fundraiser money came in</span></div>
+          <div class="stack">
+            <div>
+              <div class="fieldLabel caps">Which drive <span class="req">*</span></div>
+              <div class="selectBox filled"><span>Hoodie sales at the rink</span><span class="chev">▾</span></div>
+              <p class="formHint">Raising for <strong>Fundraising · Merchandise sales</strong></p>
+            </div>
+            <div>
+              <div class="fieldLabel caps">Who raised it <span class="req">*</span><span class="newFlag">New option</span></div>
+              <div class="menu">
+                <div class="opt on"><span>The whole team</span><span class="tag">No family share</span></div>
+                <div class="grp">Players</div>
+                <div class="opt"><span>Avery Boulanger</span></div>
+                <div class="opt"><span>Sam Chartrand</span></div>
+                <div class="opt"><span>Rowan Desjardins</span></div>
+              </div>
+            </div>
+            <div class="pair">
+              <div><div class="fieldLabel caps">Amount <span class="req">*</span></div><div class="inputBox filled">400.00</div></div>
+              <div><div class="fieldLabel caps">Date</div><div class="inputBox filled">Sep 8, 2026</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Why it is load-bearing now</dt><dd>With the typed path closed, this is the only way hoodie
+          money gets in. It ships with the model or the model isn’t honest.</dd>
+        <dt>No family share</dt><dd>Nobody raised it individually, so nothing comes off anyone’s dues. The
+          money counts for the drive and the season.</dd>
+      </dl>
+    </div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">The drive’s board says which entries carried a share</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">Fundraising → Hoodie sales at the rink</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <div class="factsLine"><strong>2 of 14</strong> players logged · plus <strong>1</strong> team entry · Raising for <strong>Merchandise sales</strong></div>
+          <table class="bva">
+            <thead><tr><th class="lead flat" scope="col">Received</th><th class="lead" scope="col">Who</th><th scope="col">Amount</th><th scope="col">Family share</th></tr></thead>
+            <tbody>
+              <tr class="gained"><td class="lead flat">Sep 8</td><td class="lead team">The whole team</td><td>400.00</td><td class="dash">—</td></tr>
+              <tr><td class="lead flat">Sep 5</td><td class="lead">Avery Boulanger</td><td>120.00</td><td>24.00</td></tr>
+              <tr><td class="lead flat">Sep 5</td><td class="lead">Sam Chartrand</td><td>80.00</td><td>16.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>Two kinds of entry, one board</dt><dd>A team entry shows a dash where a share would be, and the
+          facts line counts it separately — so “2 of 14 players” stays true and nobody thinks a family’s
+          credit went missing.</dd>
+        <dt>Still to rule</dt><dd>Whether a team entry is allowed on a drive that has a family share set at
+          all. My recommendation: yes, drawn exactly like this.</dd>
+      </dl>
+    </div>
+
+    <div class="sub-head">G · The report — every line gets its own actual</div>
+
+    <div class="exhibit">
+      <div class="exhibit-bar">
+        <span class="exhibit-name">Budget vs. Actual, after</span>
+        <span class="exhibit-flag is-pick">Proposed</span>
+        <span class="exhibit-note">The teams from findings four and five, together</span>
+      </div>
+      <div class="stage">
+        <div class="stage-inner wide">
+          <table class="bva">
+            <thead><tr><th class="lead" scope="col">&nbsp;</th><th scope="col">Budgeted</th><th scope="col">Actual</th><th scope="col">Variance</th></tr></thead>
+            <tbody>
+              <tr class="sect"><th class="lead" colspan="4" scope="colgroup">Expected fundraising</th></tr>
+              <tr class="gained"><td class="lead"><span class="cat">Fundraising ·</span> Fundraising drive</td><td>1,200.00</td><td>1,100.00</td><td class="neg">−100.00</td></tr>
+              <tr class="gained"><td class="lead"><span class="cat">Fundraising ·</span> Merchandise sales</td><td>800.00</td><td>540.00</td><td class="neg">−260.00</td></tr>
+              <tr class="gained"><td class="lead"><span class="cat">Fundraising ·</span> Bake sale money</td><td>300.00</td><td>265.00</td><td class="neg">−35.00</td></tr>
+              <tr class="sect"><th class="lead" colspan="4" scope="colgroup">Expected sponsorship</th></tr>
+              <tr class="gained"><td class="lead"><span class="cat">Sponsorship ·</span> Grant</td><td>500.00</td><td>500.00</td><td class="dash">0.00</td></tr>
+              <tr class="gained"><td class="lead"><span class="cat">Sponsorship ·</span> Team sponsorship</td><td>750.00</td><td>250.00</td><td class="neg">−500.00</td></tr>
+              <tr class="gained"><td class="lead"><span class="cat">Sponsorship ·</span> Jersey sponsor</td><td>600.00</td><td>600.00</td><td class="dash">0.00</td></tr>
+              <tr class="sect"><th class="lead" colspan="4" scope="colgroup">Expected other income</th></tr>
+              <tr><td class="lead"><span class="cat">Tournaments ·</span> Registration revenue</td><td>2,400.00</td><td>2,400.00</td><td class="dash">0.00</td></tr>
+              <tr><td class="lead"><span class="cat">Other Income ·</span> Interest</td><td>20.00</td><td>18.40</td><td class="neg">−1.60</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <dl class="verdict">
+        <dt>What changed</dt><dd>“Not itemized” is gone from both shelves — each fundraiser and sponsor
+          named its line. <em>Bake sale money</em> and <em>Jersey sponsor</em> — both the team’s own words —
+          report under the shelf they were filed on. Tournaments sits under other income as its own group,
+          beside Other Income. All settled.</dd>
+        <dt>What didn’t</dt><dd>The season’s totals. Only the distribution across rows moves.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ── WHAT A COACH GIVES UP ────────────────────────────────────────────── -->
+
+  <section>
+    <div class="sec-head">
+      <h2>What a coach can no longer do — said plainly</h2>
+    </div>
+    <div class="aside">
+      <b>Fundraising and sponsorship money cannot be recorded without a fundraiser or sponsor record.</b>
+      A coach who ran a bake sale and banked $265 has to create a fundraiser called “Bake sale” first —
+      three fields, pre-filled where it can be — and log the money to it for the whole team. That is one
+      more step than typing it in. In return they get a record with a board and a date, the money lands on
+      the line they planned, and the product has exactly one way for fundraising money to exist, which is
+      what makes every screen above so short. I think the trade is right. It is a trade.
+    </div>
+  </section>
+
+  <!-- ── WHAT SHIPS WITH IT ───────────────────────────────────────────────── -->
+
+  <section>
+    <div class="sec-head">
+      <h2>What ships with it — or the model isn’t honest</h2>
+      <p>Five things the model implies that a build could skip and still look done.</p>
+    </div>
+
+    <div class="ship">
+      <div class="ship-row">
+        <div class="ship-n">1</div>
+        <div class="ship-body">
+          <span class="tagline">Load-bearing</span>
+          <h3>The whole-team entry, in the same release</h3>
+          <p>It is the only way team-raised money gets in once the typed path closes. And the drive’s board
+            must show which entries carried a family share, or a coach reads a missing credit.</p>
+        </div>
+      </div>
+      <div class="ship-row">
+        <div class="ship-n">2</div>
+        <div class="ship-body">
+          <h3>A word added to Fundraising or Sponsorship is born a fundraising word</h3>
+          <p>Today every coach-made word is born “typed”, which is why <em>Bake sale money</em> reports as
+            other income. Under the model the shelf decides at creation — and finding five is fixed as a side
+            effect. Zero words affected today; that changes the first time a coach adds one.</p>
+        </div>
+      </div>
+      <div class="ship-row">
+        <div class="ship-n">3</div>
+        <div class="ship-body">
+          <span class="tagline">The one that bites</span>
+          <h3>Existing drives and sponsors get their “Raising for” carefully, not by default</h3>
+          <p>A team that budgeted only <em>Merchandise sales</em> sees their drive money on that line today.
+            Default their drive to <em>Fundraising drive</em> and it jumps to an unplanned row while
+            Merchandise goes blank. Rule: link an existing record to the line today’s report already places
+            it on; fall back to the standard word only when there isn’t one.</p>
+        </div>
+      </div>
+      <div class="ship-row">
+        <div class="ship-n">4</div>
+        <div class="ship-body">
+          <h3>Check production for money typed against the four words before removing them</h3>
+          <p>Budget <em>lines</em> were measured last week and were clean. Typed <em>arrivals</em> weren’t.
+            If any exist they need a home before the words leave the list — most likely re-filed onto a
+            fundraiser or sponsor.</p>
+        </div>
+      </div>
+      <div class="ship-row">
+        <div class="ship-n">5</div>
+        <div class="ship-body">
+          <h3>The coach demo’s narration and the help guides</h3>
+          <p>Both describe today’s Record flow, including “Other money in” taking fundraising words. This
+            is the surface that has gone quietly stale three releases running. Same unit of work.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DECISIONS ────────────────────────────────────────────────────────── -->
+
+  <section class="rec">
+    <h2>Decided along the way</h2>
+    <dl class="decisions">
+      <dt>The model</dt>
+      <dd><strong>The category decides everything.</strong> Fundraising and Sponsorship words are always
+        filled in from the Fundraising tab; everything else is always typed; a line reports under its
+        category’s shelf.</dd>
+      <dt>Other money in</dt>
+      <dd>Fundraising and Sponsorship words are <strong>removed</strong> from it, not blocked. The first
+        question already routes.</dd>
+      <dt>The budget note</dt>
+      <dd>Comes off, and <strong>nothing replaces it</strong>. The coach is choosing a kind of money.</dd>
+      <dt>Raising for</dt>
+      <dd><strong>Pre-filled</strong> with the standard word, filtered to its own shelf, changeable. Neither
+        required nor nudged.</dd>
+      <dt>Grants</dt>
+      <dd><strong>No sponsor-or-grant switch.</strong> “Raising for” is the difference. Three labels say
+        “grant” where they didn’t.</dd>
+      <dt>Tournaments</dt>
+      <dd>Reports as <strong>other income</strong>, as its own category group. Settled, not assumed.</dd>
+      <dt>A coach’s own category</dt>
+      <dd>Reports as other income, <strong>stated at the moment a word is created</strong>, never asked as
+        a question.</dd>
+    </dl>
+    <p class="ask">One call still open: is a whole-team entry allowed on a drive that has a family share
+      percentage set? I recommend yes, with the board drawn as in screen F — the team row shows a dash where
+      a share would be, and the facts line counts it separately.</p>
+  </section>
+
+  <footer>Mockup only — no code changed. Every “Today” exhibit is the running product; every “Proposed” one is a drawing. Figures are illustrative. Rows, type sizes, spacing and colours are the product’s own, at true size, in the warm coach theme.</footer>
+
+</div>

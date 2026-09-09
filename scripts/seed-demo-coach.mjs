@@ -44,6 +44,7 @@ import {
   SEASONS_END_PRACTICE_PLANS, SEASONS_END_PRACTICE_RECAPS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
   OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_MONEY_IN,
+  OFFSEASON_HOODIE_DRIVE,
   OFFSEASON_DUES,
   OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES,
   OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue,
@@ -976,6 +977,11 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     ...OFFSEASON_BUDGET_LINES, ...state.expenses,
     ...OFFSEASON_FUNDING_LINES.map(l => ({ ...l, direction: 'in' })),
     ...state.moneyIn.map(m => ({ ...m, direction: m.kind === 'income' ? 'in' : 'out' })),
+    /* The word the hoodie drive is RAISING FOR (mig 285) — money-IN, and resolved in the same call
+       as everything else this world files, so the drive's row and the plan's rows share one item.
+       ⚠ It is *Merchandise sales*, not the shelf's standard *Fundraising drive*: a drive landing on
+       the line the coach filed it against, rather than on a default, is the whole demonstration. */
+    { ...OFFSEASON_HOODIE_DRIVE.raisingFor, direction: 'in' },
   ]);
   const budgetLineRows = [
     ...OFFSEASON_BUDGET_LINES.map((line, i) => ({
@@ -1016,6 +1022,41 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
      summed Entry Fees lines name, so the row a prospect reads carries the SUM ruling and the
      netting ruling at once. */
   await insertDemoMoneyIn(team, pyId, state.moneyIn, offSeasonItems);
+
+  /* ── THE TEAM HOODIE ORDER — a drive, with ONE entry for the whole team (mig 285) ───────────
+     ⚠⚠ THIS IS THE $480 THAT USED TO BE TYPED, and moving it is the point rather than a tidy-up.
+     It sat on *Fundraising · Merchandise sales* as a typed income record — on PRODUCTION — and the
+     fundraising model closes that door: a Fundraising word is filled in from the Fundraising tab
+     and is not offered in "Other money in" at all. Same money, same day, same word; it now arrives
+     through the door the product has for it, and the whole-team entry it brings is the release's
+     load-bearing feature made visible.
+     ⚠ NO CREDIT ROW, and no `player_id`. Nobody raised it individually — that is the honest fact
+     about a hoodie table and the reason the feature exists — so the entry is stamped 0% and writes
+     nothing to `rep_dues_credits`. The 14U's dues story survives BY CONSTRUCTION, exactly as the
+     12U's sponsor being club-wide protects the tour's pinned bills.
+     ⚠ NO LEDGER ROW EITHER, matching every other seeded money record in this file — see
+     `insertDemoMoneyIn`'s own note. */
+  {
+    const hoodie = OFFSEASON_HOODIE_DRIVE;
+    const driveId = randomUUID();
+    die('insert 14U hoodie drive', (await db.from('rep_fundraisers').insert({
+      id: driveId, org_id: org.id, team_id: team.id, program_year_id: pyId,
+      name: hoodie.name, description: hoodie.description,
+      player_rebate_percent: hoodie.rebatePercent,
+      start_date: orgDateWithOffset(now, hoodie.startOffset),
+      end_date: orgDateWithOffset(now, hoodie.endOffset),
+      is_active: false,
+      // The line it is raising for — resolved through the SAME index the plan and the refund use,
+      // so the drive and the budget row land on one item rather than two rows with one name.
+      ...itemRef(offSeasonItems, hoodie.raisingFor.category, hoodie.raisingFor.item),
+    })).error);
+    die('insert 14U hoodie whole-team entry', (await db.from('rep_fundraiser_entries').insert({
+      id: randomUUID(), fundraiser_id: driveId, org_id: org.id, team_id: team.id,
+      player_id: null,
+      amount_raised: hoodie.entry.amount, rebate_percent: 0, rebate_amount: 0,
+      received_date: orgDateWithOffset(now, -7 * hoodie.entry.weeksBack),
+    })).error);
+  }
 
   // Dues: two instalments settled, two ahead — and one family a payment behind.
   await seedDues(team, pyId, playerIds, {
@@ -1196,6 +1237,16 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // thing this product does and which the sandbox could not show at all before 2026-08-14.
   // ⚠ Written the authoritative direction (entry first, credit carrying fundraiser_entry_id, then
   // the entry's credit_id back-filled) so the leaderboard and the dues screen agree.
+  /* ⚠ THE WORDS THE DRIVE AND THE SPONSOR RAISE FOR (mig 285), resolved ONCE and above both
+     blocks — the same reason the club block resolves its filings before the plan does: every record
+     naming one word must land on ONE item row of Budget vs. Actual, not two rows with one name.
+     Both pairs are money-IN and say so; `budgetItemIds` defaults a word it has to create to the
+     cost side, and a word on the wrong side is one the demo's own picker cannot offer. (Both are
+     platform words, so neither is actually created here.) */
+  const fundraisingItems = await budgetItemIds(team.id, [
+    { ...MIDSEASON_FUNDRAISER.raisingFor, direction: 'in' },
+    { ...MIDSEASON_SPONSOR.raisingFor, direction: 'in' },
+  ]);
   {
     const fundraiserId = randomUUID();
     die('insert 12U fundraiser', (await db.from('rep_fundraisers').insert({
@@ -1205,6 +1256,8 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       start_date: orgDateWithOffset(now, MIDSEASON_FUNDRAISER.startOffset),
       end_date: orgDateWithOffset(now, MIDSEASON_FUNDRAISER.endOffset),
       is_active: false,
+      ...itemRef(fundraisingItems,
+        MIDSEASON_FUNDRAISER.raisingFor.category, MIDSEASON_FUNDRAISER.raisingFor.item),
     })).error);
     for (const entry of MIDSEASON_FUNDRAISER.entries) {
       const rebate = Math.round(entry.raised * MIDSEASON_FUNDRAISER.rebatePercent) / 100;
@@ -1244,6 +1297,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       start_date: orgDateWithOffset(now, MIDSEASON_SPONSOR.receivedOffset),
       end_date: null,
       is_active: true,
+      // Its Sponsorship line (mig 285) — *Team sponsorship*, deliberately not *Grant*: the demo's
+      // grant is the club's own approved request one block up, and keeping the two apart shows the
+      // shelf holding both of its standard words with money on each.
+      ...itemRef(fundraisingItems, MIDSEASON_SPONSOR.raisingFor.category, MIDSEASON_SPONSOR.raisingFor.item),
     })).error);
     // An entry is an ARRIVAL — dated, with a method; the two together keep the pledge exactly,
     // so every figure downstream reads the same $750 it always has.

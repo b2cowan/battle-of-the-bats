@@ -85,7 +85,8 @@ button{font:inherit;cursor:pointer}
 .prompt pre{margin:0;padding:13px 14px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word;max-height:300px}
 .warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
 .tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
-.warn b,.tip b{color:var(--ink)}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
 .walklink{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;padding:6px 11px;border:1px solid var(--olive);border-radius:99px;color:var(--olive);text-decoration:none;background:var(--olive-soft);width:fit-content}
 .parked ul{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5;color:var(--ink-soft)}
 .parked li b{color:var(--ink)}
@@ -690,7 +691,7 @@ is mine when you hand over.</pre></div>
 <div class="trackhead">
   <p class="eyebrow">Track B</p>
   <h2>Built, waiting on your walk</h2>
-  <p>Seven items are finished and sitting on dev, and every one of them now has a walkthrough ready to run. None of these block Track A. <b>B7 is the newest and did not exist when this page was written</b> — it came out of the §146 walk itself.</p>
+  <p>Fourteen items are finished and sitting on dev, and every one of them now has a walkthrough ready to run. None of these block Track A. <b>B7 and B8 came out of the §146 walk itself; B9 is the Founding Season 2027 work</b> (2026-09-07) — not a report item, parked here so its walk is not forgotten; <b>B10 is the dues ladder</b>, out of B7's own walk; <b>B11 is the budget line's one question</b>, which you raised reading the add-a-line form; <b>B12 is what a credit is and what happens when you hand it back</b>, out of B10's own ladder; <b>B13 is the Budget plan ladder</b> (2026-09-08) — the plan adds up on the page, out of your own screenshot of it; <b>B14 is fundraising’s one way in</b> (2026-09-08) — out of your question about that same picker’s “From a drive” note, and it carries <b>the one ruling still open on this track</b>.</p>
 </div>
 
 <div class="steps">
@@ -918,7 +919,7 @@ remind me the walk itself is mine to do.</pre></div>
 <article class="step" data-step="B7">
   <div class="step-head"><span class="num">B7</span>
     <div class="step-t"><h3>A family's own money leaves the Credits column (§148)</h3>
-      <div class="tags"><span class="tag">built 2026-09-06 · §148 walk ready</span><span class="tag owner">your go to commit</span></div></div></div>
+      <div class="tags"><span class="tag">✅ passed 28/28 · committed</span></div></div></div>
   <div class="step-body">
     <p class="why"><b>This was not a planned project.</b> It fell out of your §146 walk: you asked
       whether Player dues could open into the families behind it, which produced a plan, which
@@ -950,17 +951,494 @@ remind me the walk itself is mine to do.</pre></div>
       <code>verify:changed</code> · rendered layout sweep at 361/390/768/1440, no new findings. All
       twelve rows were read off the page and compared to their pre-change values; the season-totals
       band still ties, and the roster player panel agrees with the dues table to the cent.</div>
-    <div class="warn"><b>Two things are owed and neither has been done:</b> <code>/review</code> has
-      not run, and the in-app dues help almost certainly still describes <b>Credits</b> and <b>Paid</b>
-      the old way (the demo's money narration wants the same question). Walk step E1 asks you to
-      sequence them. Given this build shipped a balance defect three automated gates called green, I
-      would run the review before committing.</div>
+    <div class="tip"><b>✅ Walked 2026-09-07 — 28 of 28, zero defects.</b> Two findings from the walk
+      itself were fixed and committed <code>3545b64e</code> with B10: the overpayment credit's fold ran
+      only when the credit <i>grew</i> (Avery's $58.33 + $491.67 survived nine days), and step B2 was
+      describing a table foot retired three days earlier. <code>/review</code> ran over both together.
+      <b>Help and the demo narration wait for the end of the dues project by your ruling on the
+      walk</b> — undone by design, not by neglect.</div>
     <div class="checks">
       <div class="chk"><input type="checkbox" id="b7a" checked><label for="b7a">Built on dev · gates green · walk artifact written</label></div>
-      <div class="chk"><input type="checkbox" id="b7b"><label for="b7b">Walked, findings fixed, section closed</label></div>
-      <div class="chk"><input type="checkbox" id="b7c"><label for="b7c">Part C ruled — is “Overpaid” the right word?</label></div>
-      <div class="chk"><input type="checkbox" id="b7d"><label for="b7d">/review run · help + demo updated</label></div>
-      <div class="chk"><input type="checkbox" id="b7e"><label for="b7e">Committed<span class="hintline">Waiting on you — your standing rule is that nothing commits without your word</span></label></div>
+      <div class="chk"><input type="checkbox" id="b7b" checked><label for="b7b">Walked, findings fixed, section closed<span class="hintline">28/28 on 2026-09-07; the two in-walk fixes landed in <code>3545b64e</code></span></label></div>
+      <div class="chk"><input type="checkbox" id="b7c" checked><label for="b7c">Part C ruled — is “Overpaid” the right word?<span class="hintline">Part C passed inside the 28 — the word stands</span></label></div>
+      <div class="chk"><input type="checkbox" id="b7d"><label for="b7d">/review run · help + demo updated<span class="hintline">The review ran 2026-09-07; help + demo wait for the END of the dues project by your ruling, so this box stays open on purpose</span></label></div>
+      <div class="chk"><input type="checkbox" id="b7e" checked><label for="b7e">Committed<span class="hintline"><code>1d9b627b</code> the body · <code>3545b64e</code> the walk fixes, with the ladder</span></label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B8">
+  <div class="step-head"><span class="num">B8</span>
+    <div class="step-t"><h3>One table standard, one exception register (§149)</h3>
+      <div class="tags"><span class="tag">built 2026-09-06 · §149 walk ready</span><span class="tag owner">you walk it · one ruling</span><span class="tag">committed 07321b4a</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>This is A9's Part F3, grown into what you asked for.</b> You declined to rule on
+      row heights alone — <i>"not just heights but font, color, etc consistency as well … exceptions
+      should be documented so the non-exceptions still follow the same rules"</i> — so a review
+      rendered <b>319 tables across 74 surfaces</b> in both skins, you approved the standard, the
+      true-size frames and all seven recommendations on sight, and it was <b>built the same day</b>.
+      The rule that holds it: <b>one axis of difference does not license the others.</b></p>
+    <p class="why"><b>What you will see.</b> Every table on the ladder's text size (15px was the app's
+      commonest body size and no stylesheet asked for it — a global cell rule beat every table). A
+      visible line under every money-tab row in the warm skin, where it was paper on white. One-line
+      rows shorter and two-line rows not: Player Dues 47 → 37px, Avery's captioned row kept. Hover only
+      on rows that open. The register keeps its tight rows by rule and loses a zebra that never
+      painted. The platform console's headings readable (8.8 → 12px), sixteen recipes become one,
+      Orgs and Users as cards on a phone. Tournament admin's five heading treatments become one. The
+      Months view's figures tappable on a phone (26 → 44px).</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/3d981219-72f7-4c66-aea6-eb52f97bb1ff">§149 walkthrough →</a>
+    <a class="walklink" href="https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1">the standard, the frames and your seven calls →</a>
+    <div class="warn"><b>⚠ Part J is the one ruling this build could not take for you (A-08).</b>
+      Check-in's row controls are 38px on a phone because the admin shell's own density ruling
+      (2026-06-02) says 38; the table standard's touch floor says 44. Two of your rulings disagree by
+      6px. Recommendation: keep the shell's 38 and record it as an exception. Nothing is built for it
+      either way until you say.</div>
+    <div class="tip"><b>Read one row.</b> Parts A and B each ask you to read a row aloud — Team share of
+      league fee on the Club tab, Avery on Player Dues — and say whether the smaller text still reads.
+      If it does not, flag it there; the size is the ladder's and the ladder is yours to move.</div>
+    <div class="tip"><b>Gates:</b> typecheck · <b>3,099 unit tests</b> including a new guard that fails
+      the build when a table invents a size or names a colour token that does not exist (it caught a
+      second phantom token on its first run) · every static gate · a rendered sweep of 19 coach screens
+      at four widths, with two new rules (an icon-only control clears the floor <i>sideways</i>; every
+      cell sits on the ladder) and the report views finally swept · the review's own measurement re-run
+      and read back against the standard. <b>Restart the dev server before you walk it</b> — the global
+      stylesheet and the shared coach stylesheet both moved.</div>
+    <div class="warn"><b>Not built, with reasons, and none of them hidden:</b> the coach portal's
+      non-table row lists (own session, own frames); the club-side admin tables (still no fixture can
+      render them — one membership row on the families fixture unblocks it); phone cards for twelve
+      platform tables beyond Orgs and Users. <b>The three passes have run (2026-09-06):</b> <code>/simplify</code> folded five duplications back into one mechanism each; <code>/review</code> (high-risk tier, four lenses) found the new stylesheet guard anchored to the start of a line — it would have passed a size written mid-line — and missing two cell classes, both fixed, plus a hover the dues drill-down had lost, a phone-card control floor, and ink tokens the help surface could not resolve; <code>/docs</code> found no help sentence that describes a table the product no longer draws. ⚠ The rendered sweep also surfaced <b>49 pre-existing touch-floor misses on eight non-money screens</b> (staff row buttons, Share your season, the opponent tag picker, the bill room’s item picker) that nobody had measured before — left red for their owners, not baselined.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b8a" checked><label for="b8a">Standard + register + frames approved · built on dev · gates green · walk artifact written</label></div>
+      <div class="chk"><input type="checkbox" id="b8b" checked><label for="b8b">/simplify · /review · /docs run, findings fixed and re-verified</label></div>
+      <div class="chk"><input type="checkbox" id="b8c"><label for="b8c">Walked, findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b8d"><label for="b8d">A-08 ruled — the admin shell's 38px control inside a table<span class="hintline">Part J of the walk. Keep 38 and record it, or raise the shell to 44 everywhere on touch.</span></label></div>
+      <div class="chk"><input type="checkbox" id="b8e" checked><label for="b8e">Committed <code>07321b4a</code> on dev, 2026-09-07<span class="hintline">50 files. The ledger and the decisions log were staged by hunk so nobody else’s work rode along; a docs truth-up naming the hash followed.</span></label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B9">
+  <div class="step-head"><span class="num">B9</span>
+    <div class="step-t"><h3>Founding Season 2027 — the offer front and centre (§150)</h3>
+      <div class="tags"><span class="tag">✅ passed 73/73 · ruled</span><span class="tag owner">your go to commit</span><span class="tag">committed 2f02a949 + 0b399e74</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Not a Budget vs Actual item — added here so the walk is not forgotten.</b> You reviewed
+      the marketing strategy for 2027 and ruled six things in one sitting: the free season for Tournament
+      Plus and the Premium Coaches Portal now runs <b>through September 30, 2027</b> for everyone who
+      <b>signs up by December 31, 2026</b>; the two dates are separate for the first time; no second
+      promotion after the window; the September ask is a 2028 plan choice, annual first; coaches who stop
+      get a read-only window (agreed in principle, not built); the homepage badge rule stands. Then you
+      approved the mockup sheet as drawn, and it was built and committed the same day.</p>
+    <p class="why"><b>What you will see.</b> A one-line offer bar above the navigation on every marketing
+      page; an offer panel under the homepage headline ("Your 2027 season, free.") with the two prices being
+      waived; the persona pages leading with the season; pricing cards reading <b>$0 through
+      September 30, 2027</b> with the normal price beneath; the get-started chooser's coach door opening
+      the <i>Premium</i> portal being advertised. On January 1, 2027 every offer element switches off by
+      itself and the pages read as list price. The billing page no longer asks for a card in October 2026 —
+      the card ask opens June 1, 2027.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/7ebf82c3-d404-4dc9-896b-ff267a517e3f">§150 walkthrough →</a>
+    <a class="walklink" href="https://claude.ai/code/artifact/61a78f09-7402-48fa-ac0d-5a7822e78d33">the approved mockups →</a>
+    <div class="warn"><b>⚠ <code>/review</code> (high-risk, five lenses) found seven real things, all fixed
+      before the commit.</b> The one that mattered most is the trap the build itself warned about: the org
+      billing page's <i>current plan</i> card keyed on the signup window, so after December 31 a still-free
+      organization would have been shown its list price. It now keys on the account's own free-season
+      status, and so does an operator's "Current plan" card on <code>/pricing</code>. Second: the code and
+      the data backfill were two separately-shippable artifacts, and between them every existing founding
+      account would have dropped out of recognition — recognition is now tolerant of both dates, so the
+      order no longer matters. The rendered check also caught every nav link sitting <i>under</i> the new
+      bar, a contrast miss on its separators, and a tap-floor miss at tablet width.</div>
+    <div class="warn"><b>Two things no gate can see.</b> (1) <b>Migration 279 is DATA-ONLY and PROD-OWED</b>
+      — it moves the three live accounts' free period to the new date and is invisible to
+      <code>check:migrations</code> by construction; it must ride the same promote as this code (add it to
+      D1's list). (2) <b>The ten campaign emails still describe the January cliff</b>; they are hand-sent, so
+      nothing wrong fires on its own — but do not send the renewal or final-reminder campaigns this autumn.
+      Rewriting them against the summer calendar is the autumn phase.</div>
+    <div class="tip"><b>Walk it on your phone as well as a laptop</b> — two of the specimens only make sense
+      at phone size. The walkthrough above is the instrument (14 parts, verdict and notes per step, Copy findings at the top); §150 in the ledger is the record. It pins the exact sentences (full dates, never "Sept 30"); Parts K–N are the
+      review's own findings, including a rehearsal of "the window closed but my account is still free".
+      <b>Restart the dev server before you walk it</b> — shared modules moved.</div>
+    <div class="tip"><b>✅ Walked 2026-09-07 — 73 of 73, all fourteen parts, zero defects.</b> Laptop and phone,
+      including the closed-window rehearsal and the platform-admin tile. §150 is closed as built.</div>
+    <div class="warn"><b>⚠ One question came out of E2, and it is yours to rule.</b> You asked why the pricing
+      comparison table has no Coaches Portal column when it is one of the three live plans. It has four
+      columns — Tournament, Tournament Plus, League, Club — so it compares two live plans against two parked
+      ones and leaves the third live product out, against the 2026-08-08 rule that live products lead on
+      every marketing surface. It was never added because the rows are organization plumbing (tournament
+      slots, staff seats, house league, accounting) and a fifth column would read as a stripe of dashes.
+      <b>Recommendation, logged as Proposed in the decisions log:</b> a short <b>Basic vs Premium Coaches
+      Portal</b> comparison under the organization table — the same free-floor-to-paid pairing the page
+      already teaches for Tournament → Tournament Plus. Nothing is built until you say.</div>
+    <div class="tip"><b>✅ Ruled 2026-09-07 — <i>"let's just remove the comparison table."</i></b> Done on dev the
+      same day: the "Compare all plans" section is gone from the pricing page, the four persona pages'
+      doors into it now open the plans grid and read <b>See every plan and price →</b>, and the copy
+      canon's table section is marked retired. The plan cards are the comparison. Typecheck, dead-selector
+      and spelling gates green; the rendered check of all five pages found nothing new. Logged in the
+      decisions log and the design log. <b>Staged, not committed — your standing rule.</b> Also from the
+      same sitting: <b>Stripe is live in production and smoke-tested</b> (you confirmed it), so the
+      plan's hard December deadline is closed, and the Phase 1 and Phase 2 build prompts are written —
+      <b>Track E below</b>, two fresh chats that can run at the same time.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b9a" checked><label for="b9a">Strategy reviewed · six rulings taken · mockups approved (artifact 61a78f09)</label></div>
+      <div class="chk"><input type="checkbox" id="b9b" checked><label for="b9b">Built on dev · gates green · /review run, seven findings fixed and re-verified<span class="hintline">typecheck · 3,135 unit tests · full verify:changed · rendered check on all seven marketing screens at 361/390/768/1440</span></label></div>
+      <div class="chk"><input type="checkbox" id="b9c" checked><label for="b9c">Committed <code>2f02a949</code> on dev, 2026-09-07<span class="hintline">59 files, explicit pathspecs; the other session's coach-dues work in the working copy was left untouched.</span></label></div>
+      <div class="chk"><input type="checkbox" id="b9d" checked><label for="b9d">Walked (§150, Parts A–N), findings fixed, section closed<span class="hintline">73/73 on 2026-09-07, zero defects — nothing to fix; the docs truth-up followed</span></label></div>
+      <div class="chk"><input type="checkbox" id="b9f" checked><label for="b9f">E2 ruled — the pricing comparison table<span class="hintline">Ruled 2026-09-07: removed outright. Built on dev the same day; BUSINESS_DECISIONS.md 2026-09-07</span></label></div>
+      <div class="chk"><input type="checkbox" id="b9g"><label for="b9g">Comparison-table removal committed<span class="hintline">Waiting on you — your standing rule is that nothing commits without your word</span></label></div>
+      <div class="chk"><input type="checkbox" id="b9e"><label for="b9e">Migration 279 applied to production in the same promote as the code (see D1)</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B10">
+  <div class="step-head"><span class="num">B10</span>
+    <div class="step-t"><h3>The dues ladder — Player Dues adds up left to right (§151)</h3>
+      <div class="tags"><span class="tag">committed 3545b64e + e160f76b · §151 walk ready</span><span class="tag owner">you walk it · two calls</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Out of your §148 walk.</b> You asked why Avery's <i>After fundraising</i> read
+      $700.00 when she had raised $198.15. It did, correctly — her cash had already settled every
+      instalment, so there was no bill left for the fundraising to reduce — and that was the defect:
+      it hit every family who pays <i>promptly</i>, not just the overpaid ones. Player Dues now reads
+      <b>Dues − Fundraising − Other credits − Paid + Handed back = Balance</b>, on the table and in a
+      player's record, with no symbols between the figures.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/e148d490-9980-4704-9e8c-54d4b2329f2e">§151 walkthrough →</a>
+    <p class="why"><b>Every figure is gross, and that is the correction.</b> The old columns were
+      netting payouts away silently: Blake's $150 Bottle Drive rebate would have read $50 under a
+      heading saying Fundraising, and Casey read <i>Paid $900</i> against the $1,200 they sent.
+      <b>No balance moves</b> — pinned against today's figure for all twelve families. The record
+      becomes one section per tile, each carrying its total; the overpayment row retires into the
+      Payments heading; the roster page, the export and the family statement read the same five
+      figures. §148's "sent $550.00 more than billed" line is superseded — six columns say it now.</p>
+    <div class="warn"><b>⚠ <code>/review</code> found a Critical before the commit</b> — a fold that
+      dropped a trim on a coach-typed row — plus the statement PDF still reading the old netted pair
+      (a parent's document said Casey received $900 while your screen said $1,200). Both fixed first.
+      Then the pre-commit PDF gate refused the eight-column sheet in portrait until landscape became
+      the sheet's own shape.</div>
+    <div class="warn"><b>⚠ The phone shape had NOT been built in the first commit</b> — six tiles
+      across 390px spill, and the rendered gate cannot see inside an open record, so it passed.
+      Built the same day (<code>e160f76b</code>, with Assessed → Dues and the picker losing
+      Overpayment): the balance leads, the working folds out beneath it, each line naming its source.
+      <b>Part F of the walk is the only measurement that shape will ever get.</b></div>
+    <div class="tip"><b>Two calls in Part I.</b> The <i>+ Add a credit</i> button lives under Other
+      credits but can create a Fundraiser row that lands in the section above — the review flagged
+      it; you approved the placement. And <i>Dues</i> replaced <i>Assessed</i> on the band and the
+      player page — <i>Billed</i> was the alternative. Say which.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b10a" checked><label for="b10a">Built · /review run and fixed · committed <code>3545b64e</code> · walk artifact written<span class="hintline">The same-day follow-up — Dues, the picker, the phone shape — committed <code>e160f76b</code></span></label></div>
+      <div class="chk"><input type="checkbox" id="b10b"><label for="b10b">Walked, findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b10c"><label for="b10c">Part I ruled — the Add-a-credit placement, and Dues vs Billed</label></div>
+      <div class="chk"><input type="checkbox" id="b10d"><label for="b10d">Help + demo narration — at the END of the dues project, by your ruling</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B11">
+  <div class="step-head"><span class="num">B11</span>
+    <div class="step-t"><h3>A budget line asks one question, not two (§152)</h3>
+      <div class="tags"><span class="tag">committed 2273e0b9 · §152 walk ready</span><span class="tag owner">you walk it · one call</span><span class="tag">two rulings applied · mig 282</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>You raised it reading the add-a-line form:</b> <i>"when selecting a budget for
+      sponsorship, why are we offering all of these other items? does selecting sponsorship and then
+      selecting concession revenue make sense?"</i> It does not, and the form allowed it. That first
+      answer quietly decided <b>where the row's actual comes from</b>, so a coach who paired
+      <i>Expected sponsorship</i> with <i>Tournaments → Concession revenue</i> got a budget line whose
+      money was looked for in sponsor cheques and which <b>refused the figure they typed</b> — a row
+      they could never report against, with nothing on screen saying why. <b>And the second question
+      had never carried information:</b> across every money-in line on dev and production, all of them
+      already used the obvious pairing.</p>
+    <p class="why"><b>What you will see.</b> <b>One</b> question — <i>Money the team spends</i> /
+      <i>Money coming in</i> — then the category and item. Four money-in words wear a tag saying who
+      reports their actual — <b>From a drive</b> and <b>From a sponsor</b> — and the other seven wear
+      none. Pick a word and the paragraph explaining that kind of money appears beneath it. <b>Grant is
+      now sponsor money and sits under Sponsorship</b> (it arrives as a cheque, and the sponsorship
+      help text has always said so). The section names on the plan — <i>Expected fundraising</i> and
+      friends — are untouched; they simply stopped being something you pick.</p>
+    <div class="tip"><b>⚖ You ruled twice on this after seeing it, and both are applied
+      (migration 282).</b> <b>(1) Grant moved to the Sponsorship shelf.</b> Sponsor money is placed
+      against the lines that claim it, at the category they agree on — so with Grant under Fundraising
+      a team budgeting <i>only</i> a grant saw every sponsor cheque report under <b>Fundraising</b>,
+      and a team budgeting a grant <i>and</i> a team sponsorship had claims in two categories, so the
+      whole pool landed with no category at all. <b>Budgeting sponsorship properly gave that coach a
+      worse report than budgeting it carelessly.</b> Both cases now place correctly.
+      <b>(2) The "You record it" tag is gone.</b> It was the default, it sat on most rows, and it
+      drowned the two tags that carry a real consequence — the standing rule that <i>the exception
+      speaks; the normal case does not</i>.</div>
+    <div class="warn"><b>⚠ Moving a shared word is a RE-FILING, not a rename — and one record was
+      affected, on production.</b> Every record filed against a word stores its category alongside it,
+      and the report reads the two in different orders, so moving the word alone makes a row report
+      under two headings. <b>The coach demo's $250 "Association development grant" club request is
+      that record</b>, live on prod. Migration 282 moves the word and all six reference tables
+      together. The demo seed had to move too: it resolves that filing by the (category, item) PAIR
+      and CREATES a word when a pair misses, so a stale pair would not have failed — it would have
+      quietly minted a second, money-OUT "Grant" into the shop window. Reseeded and re-verified:
+      exactly one Grant, under Sponsorship, request filed correctly.</div>
+    <a class="walklink" href="https://claude.ai/code/artifact/a31b0e6c-c822-43cd-a086-a8cbdd9f1677">§152 walkthrough →</a>
+    <a class="walklink" href="https://claude.ai/code/artifact/3913e207-d697-402b-b6eb-0468d38fd3cb">the approved mockup →</a>
+    <div class="tip"><b>No figure moves, and it was measured rather than argued.</b> On dev AND
+      production every money-in budget line points at a standard word and already used the obvious
+      pairing, so all 48 lines on dev derive exactly the kind they already store — and there are no
+      club- or coach-invented money-in words anywhere. Re-proved after re-running all three seeders:
+      zero disagreements in any seeded world.</div>
+    <div class="warn"><b>⚠ <code>/review</code> found a real defect on a door the redesign never
+      looked at.</b> <b>What am I forgetting?</b> — the checklist under the plan list — offers standard
+      words including money-IN ones, quite rightly. But its chips opened the form on the <i>spending</i>
+      side with a money-in word already chosen: the screen contradicting itself. <b>It was worse before
+      this project, which is why it survived</b> — the server then trusted the form, so tapping
+      <i>+ Grant</i> and saving stored the line as a COST, <b>adding</b> its amount to what families are
+      asked for instead of subtracting it. Fixed, and Part B4 of the walk is you confirming it.</div>
+    <div class="warn"><b>⚠⚠ THIS CODE CANNOT GO TO PRODUCTION AHEAD OF MIGRATION 274</b> — see D1.
+      Production's budget-line check does not yet admit the fourth money-in kind, and that kind is now
+      what an ordinary typed word derives. Migrations <b>274 and 280 must ride the same promote as this
+      code</b>, or a coach meets a raw database error on one of the commonest money actions there is.</div>
+    <div class="tip"><b><code>/simplify</code> found two real things and a third fell out of the same
+      reading:</b> the shared item picker was being taught a money vocabulary, against its own written
+      rule; <b>three seed scripts — including the one that builds the public demo — could still write a
+      line whose kind disagreed with its word</b>; and the budget importer's guard against overwriting a
+      money-in line named only two of the three kinds, so an other-income line was open to being
+      overwritten with a spending row's word and amount. All three closed.</div>
+    <div class="ask"><b>Part H is one call now.</b> Grant's category was the other one and you have
+      ruled it. What is left: should <b>Manage our words</b> show who reports each word, or is that
+      only worth saying at the moment of choosing? Part H1 became a confirmation instead — that the
+      move reads right on the real screen rather than only sounding right on this page.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b11a" checked><label for="b11a">Three calls taken before building · built on dev · gates green · walk artifact written<span class="hintline">Dropdown not radio rows · the tag alone, no duplicate sub-line · the source lives on the word</span></label></div>
+      <div class="chk"><input type="checkbox" id="b11b" checked><label for="b11b">/simplify · /review run, findings fixed and re-verified<span class="hintline">typecheck · 3,172 unit tests · verify:changed · layout sweep on the Budget Plan, no new findings · all three seeders re-run, zero disagreements</span></label></div>
+      <div class="chk"><input type="checkbox" id="b11c"><label for="b11c">Walked (§152, Parts A–H), findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b11d"><label for="b11d">Part H ruled — whether Manage our words shows the source<span class="hintline">Grant's category was the other call and you ruled it 2026-09-07; migration 282 applied it</span></label></div>
+      <div class="chk"><input type="checkbox" id="b11e" checked><label for="b11e">Committed <code>2273e0b9</code> on dev, 2026-09-07<span class="hintline">31 files, explicit pathspecs. Four files another session was mid-edit on were staged as reconstructed HEAD+mine blobs so none of their work rode along.</span></label></div>
+      <div class="chk"><input type="checkbox" id="b11g"><label for="b11g">The two rulings committed<span class="hintline">Grant's move (mig 282), the retired tag, the demo seed and the docs — built and gated, waiting on your word to commit</span></label></div>
+      <div class="chk"><input type="checkbox" id="b11f"><label for="b11f">Migrations 274 + 280 + 282 applied to production in the same promote as the code (see D1)</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B12">
+  <div class="step-head"><span class="num">B12</span>
+    <div class="step-t"><h3>A bill a family paid is money they contributed (§153)</h3>
+      <div class="tags"><span class="tag">committed ce3fb8ab · 480a008a · mig 281</span><span class="tag owner">you walk it · three calls</span><span class="tag">one fix awaiting your go</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>You found it reading the ladder:</b> when a family pays a team bill directly,
+      the product recorded the <i>cost</i> and never credited the family for it. So the Statement's
+      <b>Player dues</b> actual read <b>$3,075.00</b> — the cash that reached the team's bank and
+      nothing else — while <b>$1,379.98</b> of bills families had actually paid sat in Expenses with
+      nothing tying them to the family who paid, and $852.65 of fundraising credited to dues was
+      invisible on the same row. <b>No family's balance was ever wrong</b>; the report disagreeing
+      with the balances is what made this a report defect rather than a money one.</p>
+    <p class="why"><b>What you will see.</b> Player dues now reads <b>$5,007.63</b> and
+      <b>explains itself</b>: a quiet caption under the row name, and the figure OPENS into three
+      lines that add up to it — cash families sent and kept <b>$2,775.00</b>, team bills families
+      paid <b>$1,379.98</b>, fundraising credited to dues <b>$852.65</b>. Money handed back is in
+      none of them: it is absent rather than subtracted, which is what lets three lines reach the
+      total instead of four nearly reaching it. The revenue rows above it stopped being pools —
+      sponsor and fundraising money now opens into <b>one row per drive and per sponsor</b>, each
+      carrying what it kept of what it took.</p>
+    <div class="tip"><b>⚖ Seven rulings, taken before a line was written (R1–R7, 2026-09-07).</b>
+      A credit is revenue <b>only while it stands</b> — hand it back and it stops being revenue
+      rather than becoming an expense. A cost a family fronted counts on <b>both</b> sides: the team
+      spent it and the family contributed it. <b>Cash never moves</b>, because no cash did. A payback
+      <b>selects whole debts</b> — you ruled a coach may hand back one debt or several, but never
+      part of one. A contribution is a <b>payment</b>, not a credit. A fundraiser credit <b>may not
+      be typed by hand</b> — it comes from the drive. And the dues-by-family <b>netting was
+      deleted</b>: under these rulings the rows read honestly from the actual side with the budget
+      untouched, so there is nothing left to net.</div>
+    <a class="walklink" href="https://claude.ai/code/artifact/6f869cb5-8d38-4c39-8c30-5120ed99371d">§153 walkthrough →</a>
+    <div class="tip"><b>Handing money back is a different conversation now.</b> The amount box is
+      gone. You <b>tick the debts you are settling</b> and the server adds them up — a claimed amount
+      that disagrees is <b>refused, never quietly reconciled</b> — and migration 281 records
+      <i>which</i> debts each payback settled, so the link is a recorded fact rather than an
+      assumption. <b>Production has zero payouts</b>, which is why this was the moment to do it: no
+      backfill exists to get wrong. ⚠ 281 reverses a documented <i>"there must never be one"</i>
+      note on <code>rep_dues_payouts</code> — you were told before it was written, and the old
+      sentence is preserved verbatim in the Data Dictionary beside why it changed.</div>
+    <div class="warn"><b>⚠ A real defect the tests could not see, caught by the live fixture.</b> The
+      first cut allocated a payback <b>oldest-first</b>; the shipped dues screen assumes the family's
+      <b>own money</b> first and says so at the line. The total was identical either way and the
+      panel still added up — but the new door would have told a coach $37.50 of Casey's cash was
+      fundraising while the dues screen told them the reverse. The unit tests could not catch it
+      because they hand-built the allocation, so they agreed with themselves. Three tests now name
+      Casey.</div>
+    <div class="warn"><b>⚠ A second one turned up AFTER the commit, also from live data — and it is
+      the one box below that is still open.</b> A payback recorded <i>before</i> migration 281 says
+      nothing about what it settled, so Logan's new tick-list offered a <b>$300</b> debt when only
+      <b>$100</b> was still owed: a coach would tick it and the server's ceiling would refuse them.
+      Fixed by spreading legacy paybacks the same own-money-first way the report does — all ten
+      families in credit now reconcile exactly and none can overshoot. <b>Built and gated, waiting
+      on your word to commit</b>; it is three files.</div>
+    <div class="tip"><b><code>/review</code> ran high-risk over the commit AND the working tree,
+      because half this work was already committed</b> — reviewing only the diff would have read as
+      a clean, complete-looking pass over a deliberately narrower surface. Four things it found, all
+      fixed: a payback already recorded could be counted past the credit it settled; the payback
+      sheet's ceiling and its consequence sentence were still reading the retired amount box rather
+      than the ticked total; two unplanned pools from different sources merged into one row; and
+      migration 281's uniqueness was per-payout when it needed to be per-debt.</div>
+    <div class="ask"><b>Part F is three calls.</b> Whether the caption's wording is right on the row
+      you cleared in §146 — it partly reverses that ruling, and you were told before it was built;
+      whether <b>Adjustment</b> is the word for a credit that is neither a rebate nor an
+      overpayment; and whether the payback sheet should say what is left when every debt is
+      ticked.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b12a" checked><label for="b12a">Seven rulings taken before building · built on dev · migration 281 applied to dev<span class="hintline">Twelve of twelve families reproduce their live dues balance, asserted on the pure derivation rather than by eye</span></label></div>
+      <div class="chk"><input type="checkbox" id="b12b" checked><label for="b12b">/review run over the commit AND the working tree · four findings fixed and re-verified<span class="hintline">typecheck · 3,224 unit tests, 0 failures · verify:changed · check:money-report, all four cash identities still holding · layout sweep on the changed screens</span></label></div>
+      <div class="chk"><input type="checkbox" id="b12c" checked><label for="b12c">Committed <code>ce3fb8ab</code> then <code>480a008a</code> on dev, 2026-09-07<span class="hintline">Explicit pathspecs; files another session was mid-edit on were staged as reconstructed HEAD+mine blobs so none of their work rode along</span></label></div>
+      <div class="chk"><input type="checkbox" id="b12d"><label for="b12d">The legacy-payback fix committed<span class="hintline">Built and gated — waiting on you, since nothing commits without your word</span></label></div>
+      <div class="chk"><input type="checkbox" id="b12e"><label for="b12e">Walked (§153, Parts A–F), findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b12f"><label for="b12f">Part F ruled — the caption, "Adjustment", and what the payback sheet says when everything is ticked</label></div>
+      <div class="chk"><input type="checkbox" id="b12g"><label for="b12g">Migration 281 applied to production in the same promote as the code (see D1)</label></div>
+      <div class="chk"><input type="checkbox" id="b12h"><label for="b12h">Help + demo narration — at the END of the dues project, by your ruling</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B13">
+  <div class="step-head"><span class="num">B13</span>
+    <div class="step-t"><h3>The plan adds up — bands, subtotals and a closing ladder (§156)</h3>
+      <div class="tags"><span class="tag">built 2026-09-08 · §156 walk ready</span><span class="tag owner">you walk it · two calls</span><span class="tag">committed e1aa4b6e</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Out of your own screenshot of the Budget plan:</b> <i>"with no grouping or subtotals it
+      doesn't read like x + y = plan … users are left to mentally sum up lots of rows."</i> The recorded
+      reasons for the old shape all explained why there is no <i>Revenue</i> band; none explained why there
+      was no <i>subtotal</i>. Round 1 drew bands-and-subtotals against subtotals-alone; you chose the bands,
+      and in round 2 retired the word <b>"expected"</b>: <i>"technically everything here is planned/expected,
+      so throwing that on any item rows does seem redundant."</i></p>
+    <p class="why"><b>What you will see.</b> The List and the By-period grid split into a <b>Costs</b> band
+      closing on <b>Planned costs</b> and a <b>Funding</b> band closing on <b>Planned funding</b> — the tiles'
+      exact names, so the tiles are the table's headline. The close is a ladder: <b>Costs less funding →
+      Player installments</b> (Scheduled) <b>→ Short of covering the plan</b>. Before dues exist, one row:
+      Player installments (Estimated). Money-in rows read Fundraising · Sponsorship · Other income. A season
+      estimate's gap becomes rows under the costs. Both exports follow; the set-dues window and five help
+      articles say "planned funding".</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/b0baf8b4-db04-4221-9a49-4c9cd57fef61">§156 walkthrough →</a>
+    <a class="walklink" href="https://claude.ai/code/artifact/e94d05d9-2f07-455d-8cd9-93ea7b1c3f48">the approved mockup, round 2 →</a>
+    <div class="ask"><b>Two build-time calls, yours to overturn in the walk.</b> Subtotals always render when
+      their band does, even over a single row. And under the "No date yet" filter the subtotals sum the rows
+      shown — and say so, reading <b>Costs shown</b> / <b>Funding shown</b> rather than borrowing the tiles'
+      names — while the season's close steps aside (Part C1); a slice has no shortfall, and the tiles keep
+      saying it.</div>
+    <div class="warn"><b>⚠ <code>/review</code> (high-risk, four lenses) found nine real things, all fixed
+      before you see it.</b> The two that mattered most were in the FILE, not on the screen: the estimate
+      rows were written as indented items, so Excel <b>hid them inside the last category's collapsed
+      group</b> — and the importer, reading that same indent, would have <b>re-imported the team's own
+      export with two phantom budget lines</b> worth the itemized sum and the estimate gap. Both closed;
+      every ladder word is now skipped by the importer by construction, and a round-trip test pins it.
+      Also fixed: the new "Planned funding" subtotal shipped in plain ink beside green section rows (a
+      specificity contest, the exact trap this stylesheet warns about); the By-period grid's cost subtotal
+      wore the name "Planned costs" while showing a <i>different number</i> from the List's when an
+      estimate is set — the very "one name, two numbers" rule that grid's close has carried since August
+      (it now reads <b>Lines so far</b> in that case, and says why in its footnote); a filtered export
+      carried season subtotals over a slice of rows (the file is now always the whole plan); "Costs less
+      funding" was signed in the file and absolute on screen (both now the floored figure the tile prints);
+      the PDF exhibit fixture still passed the old three-field totals and printed an em-dash for Planned
+      funding; band rows printed a dash in the PDF's money column. <b>The rendered check caught a tenth:</b>
+      the grid's heading row had an inert sticky rule that only started "sticking to nothing" once the
+      bands made the grid taller than a phone — cancelled the way the List's was.</div>
+    <div class="tip"><b>Gates, after the fixes:</b> typecheck · <b>3,243 unit tests</b> (the two export
+      builders' subtotals, the estimate label and the importer round-trip asserted as numbers and rows) ·
+      full <code>verify:changed</code> · spelling and dead-selector gates · both demo worlds presentable ·
+      rendered check on both Budget screens, no new findings · PDF exhibit gate, 98 files read back.
+      <b>Restart the dev server before you walk it</b> — three shared modules moved. Part I (the pre-dues
+      close, the estimate rows) has no fixture on the UAT team and is pinned by the export tests.</div>
+    <div class="tip"><b>Logged:</b> the vocabulary decision in the Business Decisions Log (2026-09-08) with
+      an open question for later — the hub now uses three pairs of direction words across the form, the plan
+      and the statement; the bands-and-ladder ruling in the design log.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b13a" checked><label for="b13a">Mockup approved (round 2) · built on dev · gates green · walk artifact written</label></div>
+      <div class="chk"><input type="checkbox" id="b13b" checked><label for="b13b">/review run · nine findings fixed and re-verified<span class="hintline">Plus the rendered check's inert-sticky finding on the grid</span></label></div>
+      <div class="chk"><input type="checkbox" id="b13c"><label for="b13c">Walked (§156, Parts A–I), findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b13d"><label for="b13d">Two calls ruled — always-on subtotals, and the close under the When filter</label></div>
+      <div class="chk"><input type="checkbox" id="b13e" checked><label for="b13e">Committed <code>e1aa4b6e</code> on dev, 2026-09-08<span class="hintline">22 files, explicit pathspecs. The other session's retired-tag hunk in the same panel file, and the foreign hunks in TODO, the ledger and both decision logs, were kept out by staging HEAD+mine blobs.</span></label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B14">
+  <div class="step-head"><span class="num">B14</span>
+    <div class="step-t"><h3>Fundraising has one way in (§157)</h3>
+      <div class="tags"><span class="tag">built 2026-09-08 · §157 walk ready</span><span class="tag owner">you walk it · one ruling</span><span class="tag">mig 285 · your go to commit</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Out of your own question about the Budget plan's picker:</b> <i>"why does the row
+      say From a drive under a heading that already says FUNDRAISING?"</i> Chasing it found five things
+      true in the running product — the money form claimed grants in <b>two</b> answers, one of which
+      refused them; <b>team-raised money could not be entered at all</b>; the amber "warning" was advice
+      over a live Save in front of a server refusal, and it only fired if the team had <i>budgeted</i>
+      that word, so the careful team was guarded and the careless one was not; budgeting <b>two</b>
+      fundraising lines <b>blanked both</b> while the money collected under "Not itemized"; and a word a
+      coach added to the Fundraising shelf reported under "Expected other income".</p>
+    <p class="why"><b>The rule you took:</b> the category a word sits in decides who fills its number in
+      and where it reports. <b>Fundraising and Sponsorship money is always recorded on the Fundraising
+      tab</b> — every drive and sponsor names the line it is <b>raising for</b>, pre-filled, filtered to
+      its own shelf — and those four words are simply <b>not in "Other money in"</b> any more. <b>"The
+      whole team" can be who raised it</b>: a drive entry with no player and no family share, which is
+      the only way hoodie-table money reaches the books once the typed path closes. And every record
+      lands its money on <b>its own row</b> of Budget vs. Actual.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/f8e843e3-8be2-48d6-bb55-4f93cee0abec">§157 walkthrough →</a>
+    <a class="walklink" href="https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3">the approved mockup →</a>
+    <div class="ask"><b>ONE RULING, and it is walk step F4 — the only item on §157 that asks for a
+      decision rather than a tick.</b> May a whole-team entry be logged on a drive that <i>pays a family
+      share</i>? Built <b>allowed</b>: the board shows a dash where a share would be and the facts line
+      counts team entries separately, and refusing it would leave a team running one drive with both a
+      bake table and per-player selling nowhere to put the table's takings. But a coach could reasonably
+      expect 15% of $450 to reach somebody. The alternatives, if you want one: refuse above 0%, or ask
+      at save time — both cost a step the current design does not.</div>
+    <div class="tip"><b>Two mockup words were corrected before a line was written, both put to you and
+      both answered.</b> The create panel says <b>"Will report under Other income."</b>, not the drawn
+      "Expected other income" — B13 took the word "expected" off every section heading the same day, so
+      the drawn wording would have named a heading no screen carries. And <b>"Who raised it" is a
+      dropdown</b> with <i>The whole team</i> first and a <b>Players</b> group under it, not the drawn
+      open list with a chip: every sibling identity question on that form is a dropdown and the house
+      rule says so, and the chip's fact became a hint under the field where a phone can read it.</div>
+    <div class="tip"><b>⚠ The production count you gated the removal on, read before the migration was
+      written.</b> Typed income sitting on a Fundraising or Sponsorship word: <b>exactly one row on dev,
+      exactly one on production, and it is the same record both times</b> — the coach demo's $480 hoodie
+      margin. Nothing else. And <b>no club or coach has invented a money-in word on either
+      database</b>, so the shelf rule moves no figure anywhere today. That window closes the first time a
+      coach names their own word. The demo's record is now a drive with one whole-team entry — the shop
+      window showing the feature instead of holding the state it removes.</div>
+    <div class="warn"><b>⚠ Three things the PLAN got wrong, reported rather than followed.</b> Its
+      reader list sent me to two places that have nothing to do with fundraising (an evaluation-sessions
+      count, and a register row that never names a player); the reader that actually needed fixing was
+      the register's cash strip, which was calling a playerless entry <i>"Team collection"</i> with a
+      note reading <i>"not attributed"</i> — two more names for a row the product now calls one thing.
+      And its "refuse unconditionally on save <b>and on edit</b>" would have <b>frozen every legacy
+      record</b>: the money form resends the item on every save, so correcting an old row's amount would
+      have been refused. The edit door now refuses only a record being <i>moved onto</i> a fundraising
+      word — the door closes, history stays correctable.</div>
+    <div class="warn"><b>⚠⚠ <code>/review</code> found five real things, and two of them were mine from
+      earlier the same session.</b> (1) <b>The placement fallback was over-implemented and
+      re-introduced the exact defect the module exists to prevent:</b> I filtered the plan's CLAIMS as
+      well as the records, so on a plan with two fundraising lines where one drive is linked, an
+      <i>unlinked</i> drive's money would have landed <b>confidently on a line it has no connection
+      to</b> — the "guessing which of two items a total belongs to" this report refuses to do. Filter
+      deleted; the residue pools exactly as it did before. (2) <b>A coach's own new sponsorship word
+      blanked the field they had just chosen it in</b> — the branch stored only the id and looked it
+      up again against a list that cannot know a word created inside the picker. Display only, but it
+      read as unanswered for the rest of the modal. (3) <b>The <code>/simplify</code> pass itself
+      introduced one:</b> moving the create panel's "Will report under Other income." sentence out of
+      the shared control was right — the control was interpreting a money field it had been told not
+      to learn — but the move dropped the money-in gate, so a coach adding a new <b>cost</b> word
+      would have read <i>"Saved as an expense … Will report under Other income."</i> on three screens.
+      (4) A discard guard that could cry wolf for one render when the taxonomy landed after the form
+      opened. (5) The Data Dictionary still said Grant keeps its Fundraising shelf, a week after
+      migration 282 moved it. <b>The security-and-tenancy lens found nothing</b>, and the migration's
+      backfill cannot cross a tenant boundary by construction.</div>
+    <div class="warn"><b>⚠ Running the sponsor UAT spec turned up a hole that is NOT this release's —
+      see Parked.</b> Three of its seventeen tests fail on an assertion that reads a payload block
+      A3's release deleted on 2026-09-04, so <b>the sponsor money lifecycle has had no passing UAT
+      coverage since 2026-09-07</b> — through §153's commit and through this one.</div>
+    <div class="tip"><b>Gates:</b> typecheck · <b>3,238 unit tests, 0 failures</b> · full
+      <code>verify:changed</code> (warnings only, all pre-existing) · dictionary + snapshots refreshed ·
+      both demo worlds presentable, with new checks pinning the hoodie drive's line, its one whole-team
+      entry and that it credits nobody. <b>Dev server stopped, cache cleared and restarted</b> — a
+      migration and two new shared modules. <b>The rendered sweep RAN and is clean</b> — five coach money screens at
+      361 / 390 / 768 / 1440, no new findings. ⚠ It cannot open a modal, so the new field inside the
+      four forms is measured by the §157 walk and by nothing else. ⚠ <b>Schema parity fails and already did before
+      this change</b> — production is behind on eight migrations as well as this one (see D1).</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b14a" checked><label for="b14a">Production count taken on BOTH databases before the migration was written<span class="hintline">One record on each, the same one — and no coach- or club-invented money-in word anywhere</span></label></div>
+      <div class="chk"><input type="checkbox" id="b14b" checked><label for="b14b">Built on dev · migration 285 applied to dev · gates green · walk artifact written<span class="hintline">Two mockup deviations put to you and answered before any code</span></label></div>
+      <div class="chk"><input type="checkbox" id="b14c" checked><label for="b14c">/simplify then /review run · findings fixed and re-verified<span class="hintline">Four cleanup lenses, then five adversarial ones. Five real defects, TWO of them introduced earlier the same session — including one the /simplify pass itself created.</span></label></div>
+      <div class="chk"><input type="checkbox" id="b14d"><label for="b14d">Committed<span class="hintline">Waiting on you — your standing rule is that nothing commits without your word</span></label></div>
+      <div class="chk"><input type="checkbox" id="b14e"><label for="b14e">Walked (§157, Parts A–H), findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b14f"><label for="b14f">F4 ruled — a whole-team entry on a drive that pays a family share</label></div>
+      <div class="chk"><input type="checkbox" id="b14g"><label for="b14g">Migration 285 applied to production in the same promote as the code (see D1)<span class="hintline">⚠ And the prod coach demo reseeded by hand in the same release, or it keeps a record the product no longer offers</span></label></div>
     </div>
   </div>
 </article>
@@ -1154,12 +1632,13 @@ Step C3:
       ever flag it because it changes rows, not structure. (2) Another data-only change from the report's
       row work is owed for the same reason. (3) The tournament demo's real-time refresh: the code
       retiring it is on dev only, so <b>production is still ticking every two minutes</b> until the
-      release lands <i>and</i> the production schedule is updated to match.</div>
+      release lands <i>and</i> the production schedule is updated to match. <b>(4) Added 2026-09-07: migration 279 — the Founding Season's move to September 30, 2027 for the three live accounts — is data-only and prod-owed too</b>; the code tolerates either date, but the accounts' own rows should move in the same promote (B9). <b>(5) Added 2026-09-07: migrations 274, 280 AND 282 must ride this promote together with the code (B11).</b> Production's budget-line check still admits only three money kinds; the fourth arrived in 274 and is what an ordinary typed word now derives, so code without both migrations hands a coach a raw database error on one of the commonest money actions there is — including an ordinary amount edit to an existing money-in line. This is the one ordering dependency on this page that no gate reports as a blocker. ⚠ <b>282 moves the platform "Grant" word to the Sponsorship shelf AND re-files the records pointing at it</b> — one of which is the coach demo's own club request, on production. It must not be split from 280. <b>(7) Added 2026-09-07: migration 284 is prod-owed too (E1)</b> — it rewrites the campaign email copy for the summer-2027 calendar and adds the new August reminder. Data-only, so no gate can see it; and until it runs on prod the live send copy still describes the January 2027 cliff. No ordering hazard either way — nothing sends by itself. <b>(8) Added 2026-09-08: migration 285 is prod-owed with this code too (B14)</b> — the shelf that says who fills a money-in word in, and the line each drive and sponsor is raising for. It reads <code>budget_items.actual_source</code> and the platform "Other Income" shelf, so it <b>must not be applied ahead of 274, 276, 277, 280 and 282</b>; applied out of order it fails outright rather than silently, which is the cheaper of the two, but it is written down so nobody discovers it. ⚠ <b>And the production coach demo must be RESEEDED BY HAND in the same release</b>: its $480 hoodie margin is a typed income record on a fundraising word, which is exactly the state this release closes — leave it and the shop window holds a record the product no longer offers. No gate can see either fact. <b>(6) Added 2026-09-07: migration 281 is prod-owed with this code too (B12)</b> — a payback now records WHICH debts it settles, and the code writes that link every time money goes back. Production has ZERO payouts today, so there is nothing to backfill and no ordering hazard in either direction — but code without the table hands a coach a raw database error the first time they hand money back.</div>
     <div class="checks">
       <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">Held migration 264 — approved or explicitly parked</label></div>
       <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">Prod-owed database changes listed from the parity check, not the migration folder</label></div>
       <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Promote pinned to a SHA, Amplify green, both demo doors verified live</label></div>
       <div class="chk"><input type="checkbox" id="d1d"><label for="d1d">Tournament demo's production schedule updated to nightly</label></div>
+      <div class="chk"><input type="checkbox" id="d1f"><label for="d1f">Production coach demo RESEEDED by hand after the promote<span class="hintline">B14 closes the door its $480 hoodie record came through — the cron re-anchors dates, it never reseeds</span></label></div>
       <div class="chk"><input type="checkbox" id="d1e"><label for="d1e">Post-release truth-up run (ledger, release history, CLAUDE.md prod-HEAD paragraph)</label></div>
     </div>
     <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p12">Copy</button></div>
@@ -1219,30 +1698,373 @@ never from a green build.</pre></div>
 
 </div>
 
+<!-- ═══════════════════════ TRACK E ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Track E</p>
+  <h2>Founding Season 2027 — the autumn and winter phases</h2>
+  <p>Two builds that can run at the same time in two fresh chats: the autumn acquisition push (the ten
+    campaign emails against the summer calendar, the demos, help) and the winter platform-admin desk
+    (every free account on one list, card on file recorded in the app, the coach card-save door, the 2028
+    plan-choice checkout, the "no card yet" reminder). Each prompt names what it owns and what it must not
+    touch, so the two chats do not collide in the one working copy. Stripe is already live in production
+    and smoke-tested, so the plan's December deadline is closed. The prompts also live in the repo:
+    <code>FOUNDING_SEASON_2027_PHASE1_BUILD_PROMPT.md</code> and <code>_PHASE2_BUILD_PROMPT.md</code>.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span>
+    <div class="step-t"><h3>Phase 1 — the autumn acquisition push</h3>
+      <div class="tags"><span class="tag">built 2026-09-07 · mig 284 · §154 walk ready</span><span class="tag">committed d2b3b2db</span><span class="tag owner">you walk it</span></div></div></div>
+  <div class="step-body">
+    <a class="walklink" href="https://claude.ai/code/artifact/4e8c6474-12f0-4735-907c-0a435d5cdcb0">the send book — approve the copy here →</a>
+    <a class="walklink" href="https://claude.ai/code/artifact/fc80f4bf-5331-47e8-8b5e-26ed4d0828e0">§154 walkthrough →</a>
+    <p class="why"><b>Built on dev 2026-09-07 — ten campaigns became EIGHT, and nothing has been sent.</b>
+      The two that still described the January cliff were scheduled to go out <i>within weeks</i>
+      (Nov 1 and Dec 15, 2026); they now sit at <b>Jun 1</b> and <b>Sep 15, 2027</b>, with a new
+      <b>Aug 1, 2027</b> reminder between them. The Club and House League spotlights and "Club last
+      call" are <b>retired</b> — parked products, and two of them were sitting on your board marked
+      <i>past due</i>. Retiring keeps the row and its copy so a campaign can be revived; it is
+      deliberately not a deletion, which no drift gate can see. Every date and price reads from config.
+      Migration 284 applied to dev, <b>prod-owed and data-only</b> (add it to D1).</p>
+    <p class="why"><b>The campaign set was declared in FIVE places and all five had drifted.</b> The
+      board's table already read the live subject, so the rewrite looked complete — but the
+      <b>Confirm Send dialog</b> read its own hardcoded copy and would have quoted you a December 31
+      subject while sending a September 30 email, at the one moment you are committing to mail real
+      customers. The set now lives once and the other four derive from it, with a test that fails the
+      build if they disagree again.</p>
+    <p class="why"><b>One live defect fixed in passing:</b> the welcome email every new organization
+      receives promised "up to 3 active tournaments at once". Tournament Plus is <b>unlimited</b>, and
+      three is not even the free plan's limit. We had been understating the paid product to every
+      customer at the moment they arrived.</p>
+    <div class="warn"><b>⚠ <code>/review</code> found a Critical, and it reversed what I first told
+      you.</b> I reported that coaches were in none of these audiences and would simply hear nothing.
+      The truth was worse: a comped coach portal carries the <i>same</i> Founding Season marker a real
+      organization does, so every one of these emails would have gone to coaches too — telling them
+      Tournament Plus was free, quoting <b>$39/month for a product they never had</b>, and linking them
+      to an organization billing page their account does not have. It had not fired only because no
+      coach has taken the comp yet, and the two Coaches Portal emails in this very set exist to change
+      that. The audience is now filtered to real organizations. Seven more were found and fixed —
+      including the wrap-up email crediting the FREE plan with auto-scheduling and implying the free
+      tier expires, and the final notice telling anyone with a saved card "nothing else to do" when
+      they still had to choose a plan.</div>
+    <div class="tip"><b>✅ Copy approved and committed 2026-09-08.</b> You approved the send book, and
+      it landed as <code>d2b3b2db</code> (17 files) with a docs truth-up in <code>04a19e96</code>.
+      <b>What is left here is yours: walk §154.</b></div>
+    <div class="warn"><b>⚠ The gap that is now real, and deliberate.</b> With the filter in place a
+      coach on a standalone Premium Coaches Portal is in none of these audiences — so as things stand a
+      coach's free season would end on September 30, 2027 with no email ever having warned them. It was
+      not papered over with one product-neutral email because the honest sentence differs: an
+      organization drops to the free plan and keeps everything, a coach's portal closes.
+      <b>E2 owns the audience</b>; these three then want coach-facing twins. Part I of the walk asks you
+      to rule on whether that is Phase 2 or a Phase 1b before next summer.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a" checked><label for="e1a">Email copy approved by the owner (artifact)<span class="hintline">Approved 2026-09-08 on the send book <code>4e8c6474</code> — before the seed was written, as the gate required</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1b" checked><label for="e1b">Ten campaigns become EIGHT · reseed migration 284 applied to dev · nothing sent<span class="hintline">Two retimed to Jun 1 and Sep 15, 2027 · one new (Aug 1, 2027) · three retired, copy kept not deleted</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1c" checked><label for="e1c">Demos checked · help swept · offer bar walked inside both demos<span class="hintline">Neither demo has a pricing moment — verified, nothing added. Offer bar: 34/34 browser checks at 390px and 1440px</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1d" checked><label for="e1d">Gates green · /review run · walk artifact written · §154 claimed<span class="hintline">Every gate that applies to this build is green; the four that fail belong to concurrent sessions (migs 276–283, the coach stylesheet, Phase 2’s own test). /review found a Critical — see the paragraph above.</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1e" checked><label for="e1e">Committed <code>d2b3b2db</code> on dev, 2026-09-08<span class="hintline">17 files, explicit pathspecs. TODO, the ledger and the Data Dictionary were staged as reconstructed HEAD+mine blobs so the concurrent sessions’ work did not ride along. Docs truth-up <code>04a19e96</code>.</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1f"><label for="e1f">Walked, findings fixed, section closed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p13">Copy</button></div>
+<pre id="p13">Build Phase 1 of Founding Season 2027 — the autumn acquisition push: the campaign emails, the
+demos, the help, and one walk of the offer bar inside a demo.
+
+CONTEXT (do not re-derive; argue from the code if you think any of it is wrong):
+- Ruling 2026-09-07 (BUSINESS_DECISIONS.md, same date): the free season for Tournament Plus and
+  the Premium Coaches Portal runs THROUGH SEPTEMBER 30, 2027 for everyone who SIGNS UP BY
+  DECEMBER 31, 2026. Two dates, and they are separate: the signup window closes Dec 31, the
+  free period ends Sept 30. No second promotion after the window. The September ask is a 2028
+  plan choice, annual first. The card ask opens June 1, 2027.
+- Phase 0 is built, reviewed, walked (Owner QA §150, 73/73) and committed (2f02a949, 0b399e74,
+  69ebe04a). Every offer surface derives its words from lib/plan-config.ts — the instants,
+  the labels (FOUNDING_SEASON_END_LABEL, _SIGNUP_CLOSE_LABEL, _FIRST_CHARGE_LABEL,
+  _DECISION_MONTH_LABEL, _CARD_WINDOW_OPEN …) and the offer sentence helpers. NEVER hand-type a
+  Founding Season date; the old world had two dozen hand-typed "January 1, 2027"s and that is
+  the defect this project exists to end.
+- Plan: docs/projects/active/FOUNDING_SEASON_2027_PLAN.md (§3 Phase 1 is your scope; read §1,
+  §2 and §3b too). Copy canon: FOUNDING_SEASON_2027_OFFER_COPY.md (approved; append, never
+  contradict). Stripe is LIVE in production and smoke-tested (owner-confirmed 2026-09-07).
+- The pricing comparison table was REMOVED 2026-09-07 by owner ruling. If any email, demo line
+  or help article says "compare all plans" or points at /pricing#compare, that is now wrong.
+
+SCOPE — four things, in this order:
+
+1. THE TEN CAMPAIGN EMAILS. Their defaults live in lib/marketing-email-defaults.ts; the LIVE
+   send copy is the platform_email_templates row seeded by migration 179 (planned dates in 180),
+   re-seeded by the migration-198 pattern (data-only; touches a row only while it is NOT
+   operator-customised — a saved override always wins). They still describe the January 1, 2027
+   cliff. Rewrite them against the summer-2027 calendar:
+   - welcome + check-in: dates from the labels, the offer sentence from the helper;
+   - a NEW three-step sequence: JUNE 1 "your free season ends September 30 — choose your 2028
+     plan" (the card window opens the same day), AUGUST 1 nudge, MID-SEPTEMBER final notice;
+   - RETIRE the Club and League spotlights (parked products) and "Club last chance";
+   - welcome-email polish per the plan.
+   Every date and price reads from config. Planned send dates (the 180 table) move with them.
+   ⚠ /marketing writes the copy FIRST and the owner approves it in a Claude Artifact BEFORE you
+   write the reseed migration — copy is a mockup gate here, not an afterthought. Brand voice
+   canon applies (no "unlock", no superlatives; full plan names). ⚠ Do NOT send anything.
+   The renewal and final-notice campaigns are hand-sent and must not go out this autumn.
+
+2. THE DEMOS. Both sandboxes (riverdale-minor-ball, riverdale-ridge) run the real product, so the
+   offer bar already renders on the marketing pages a prospect walks through to reach them.
+   Establish from lib/demo-moments.ts and the tour data whether either demo has a pricing or
+   offer moment (none was found 2026-09-07 — verify, don't trust). If a tour has one, add ONE
+   arrival line on it from the canon. Otherwise say so and add nothing. Do not touch the coach
+   demo's money narration — it is stale for other reasons and is its own job.
+
+3. HELP. The platform-admin "batch marketing email" article describes the founding sends; check
+   it after the rewrite. Then grep every help article (lib/help-content/*.tsx, keywords and
+   searchText included) and every customer-visible string for "January 1, 2027", "Dec 31",
+   "December 31, 2026", "Founding Season" and "compare all plans" — anything that hand-types a
+   date or describes the old cliff or the removed table gets fixed in this unit of work.
+
+4. THE OFFER BAR INSIDE A DEMO. The bar is marketing-path-only and a sandbox is an org, so by
+   construction they never share a screen — but the sandbox banner and the bar publish sibling
+   layout variables. Walk it in the browser: enter each demo from /demos and confirm no bar, no
+   double chrome, no gap where the bar's height is still being reserved. Record the result.
+
+OWNERSHIP — a Phase 2 chat is building the platform-admin Founding Season desk in the SAME
+working copy at the same time. You own: lib/marketing-email-defaults.ts, the reseed migration,
+lib/email.ts campaign copy, lib/demo-*.ts and the seeders' narration, lib/help-content/*.tsx,
+and copy on marketing pages. You do NOT touch: anything under app/platform-admin/, app/api/admin/,
+app/api/billing/, lib/email-sender.ts (audiences — Phase 2's), lib/plan-config.ts constants,
+lib/db.ts, or the schema. If your work needs one of those, stop and say so. Claim your migration
+number at the moment you write the file (ls supabase/migrations | tail) and re-check it right
+before you commit — Phase 2 may claim one too. Stage EXPLICIT PATHSPECS ONLY; never git add -A;
+before staging a shared file (TODO.md, the ledger, the decisions log) diff it against HEAD and
+stage only your own hunk. Confirm with the owner before committing. Do not push. Never master.
+
+REQUIRED:
+- PM UX summary in the chat before any code (AGENCY_RULES). Update FOUNDING_SEASON_2027_PLAN.md
+  Phase 1 + the PM brief + the TODO line as you go; positive facts with hashes, never "uncommitted".
+- Verification: npm test · npm run typecheck (lib/ changed) · npm run verify:changed (spelling,
+  contrast, CSS, dictionary, demos) · npm run check:migrations · a rendered check of any
+  marketing page you touched (npm run check:layout -- --only=&lt;screens&gt;, dev server up — run
+  npm run check:layout -- --list to name them). State any check you skipped and why.
+- Offer /review after the build, then /docs if a help article changed.
+- Owner QA: claim the next free § at the TAIL of docs/projects/active/OWNER_QA_LEDGER.md (never
+  renumber) and build the walk as a checkable Claude Artifact (checkboxes, saved state, verdict +
+  notes per step, Copy findings, the Sign-in-as card — dev credentials only, never a prod
+  account). Pin the FULL date strings in every step. Include a rendered specimen of each rewritten
+  email (the repo has an email preview route/script — find it), because a walk over a template's
+  source is a walk over nothing.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step E1:
+  e1a  Email copy approved by the owner (artifact)      ⚠ ONLY after I have approved it
+  e1b  Ten campaigns rewritten · reseed migration applied to dev · nothing sent
+  e1c  Demos checked · help swept · offer bar walked inside both demos
+  e1d  Gates green · /review run · walk artifact written · § claimed
+  e1e  Committed
+
+⚠ e1f ("Walked, findings fixed, section closed") IS NOT YOURS — that is my walk. Leave it, and
+remind me the walk itself is mine to do.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span>
+    <div class="step-t"><h3>Phase 2 — the platform-admin Founding Season desk</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag">runs beside E1</span><span class="tag owner">you approve the mockups · two decisions</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>The mechanism you asked for on day one.</b> One list of every free organization and
+      coach workspace with their free-period end, whether a card is on file (recorded in the app at the
+      moment Stripe saves it, not looked up), last activity, what they have done with the product, and
+      their 2028 choice once made; a filter for "no card yet" and a reminder aimed at exactly them; the
+      card-save door coaches do not have yet; and the 2028 plan-choice checkout — annual first — that
+      charges nothing before October 1, 2027. <b>Two decisions come back to you:</b> when the coach
+      read-only window gets built, and whether account notices honour the marketing opt-out.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Plan + PM brief written · mockups approved by the owner</label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">Desk built · card on file recorded at the webhook · backfill plan presented</label></div>
+      <div class="chk"><input type="checkbox" id="e2c"><label for="e2c">Coach card-save · 2028 plan-choice checkout · "no card yet" audience — built, nothing charged, nothing sent</label></div>
+      <div class="chk"><input type="checkbox" id="e2d"><label for="e2d">D4 and the opt-out question brought to me</label></div>
+      <div class="chk"><input type="checkbox" id="e2e"><label for="e2e">Gates green · /simplify + /review run · walk artifact written · § claimed</label></div>
+      <div class="chk"><input type="checkbox" id="e2f"><label for="e2f">Committed</label></div>
+      <div class="chk"><input type="checkbox" id="e2g"><label for="e2g">Walked, findings fixed, section closed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p14">Copy</button></div>
+<pre id="p14">Plan and build Phase 2 of Founding Season 2027 — the platform-admin Founding Season desk: the
+mechanism that lets the owner see every free account next summer, remind the ones with no card,
+and convert or turn off each one on October 1, 2027 without a spreadsheet.
+
+CONTEXT (do not re-derive; argue from the code if you think any of it is wrong):
+- Ruling 2026-09-07 (BUSINESS_DECISIONS.md, same date): the free season for Tournament Plus and
+  the Premium Coaches Portal runs THROUGH SEPTEMBER 30, 2027 for everyone who SIGNS UP BY
+  DECEMBER 31, 2026. No second promotion. The September ask is a 2028 PLAN CHOICE, annual first,
+  monthly available. Orgs that choose nothing drop to the free Tournament plan; coach workspaces
+  that choose nothing are cancelled (a read-only window for them is ratified in principle, NOT
+  built — decision D4 below). The card window opens JUNE 1, 2027. Unsettled money WARNS, never
+  blocks. Under ~50 accounts the October turn-off is a hand-run runbook; over it, a job (that
+  is Phase 3, decided by May 1, 2027 — you are building the desk the runbook will use either way).
+- Phase 0 is built, walked (Owner QA §150, 73/73) and committed (2f02a949, 0b399e74, 69ebe04a).
+  Read docs/projects/active/FOUNDING_SEASON_2027_PLAN.md in full — §2 has the verified facts
+  (three live founding accounts on prod; nothing turns a comp off by itself; card-on-file lives
+  ONLY in Stripe today; the January runbook was never written) and §3 Phase 2 is your scope.
+- Stripe is LIVE in production and smoke-tested (owner-confirmed 2026-09-07).
+- The recognition rules are in lib/plan-config.ts and lib/founding-season.ts: an org is founding
+  when it holds an unrevoked comp_period override expiring on the Founding Season date (either
+  the current or the legacy instant — FOUNDING_SEASON_COMP_EXPIRIES); a coach workspace when it
+  is platform_override with that period end. The founding-season-status endpoint and the
+  batch-email audience already read them — reuse, never re-derive. NEVER hand-type a Founding
+  Season date; every label comes from plan-config.
+
+SCOPE — five things. Plan first, then mockups, then build.
+
+1. THE DESK — one platform-admin page listing EVERY founding account, orgs AND coach workspaces
+   in one list: name, kind, free-period end, CARD ON FILE (yes/no/date), last activity, what they
+   have done with it (events run / roster size), the billing contact, and their 2028 choice once
+   made. Filters for "no card yet" and "no choice yet". Export. Establish from the live dev schema
+   (npm run refresh:snapshots; never the migration folder) what already exists — org_overrides,
+   team_workspaces billing fields, organizations.current_period_end, the retention queue and
+   bulk-operations pages under app/platform-admin/ — before proposing anything new.
+
+2. CARD ON FILE, RECORDED IN THE APP. Today it lives only in Stripe. Record it at webhook time
+   (the setup-mode checkout / setup_intent path in app/api/billing/webhook/route.ts and
+   lib/billing-setup.ts) so the desk can read it without a Stripe round-trip. Schema change =
+   migration + DATA_DICTIONARY.md + refreshed snapshots in the same unit of work. Backfill what
+   Stripe already knows for the existing accounts (read-only Stripe call; present the plan
+   before running anything against prod).
+
+3. CARD SAVING FOR COACH WORKSPACES. The "Add payment method" path (setup-mode Checkout, charges
+   nothing) exists for orgs only (app/api/billing/setup-payment-method). Coach workspaces need the
+   same door, gated to the card window (isFoundingSeasonCardWindowOpen) exactly as the org billing
+   page is.
+
+4. THE 2028 PLAN-CHOICE CHECKOUT. From June 1, 2027 a founding org or coach picks their 2028 plan
+   — annual first, monthly available — using the saved card, and NOTHING IS CHARGED BEFORE
+   OCTOBER 1, 2027. Propose the Stripe mechanics (a subscription with a deferred start, a trial
+   ending on the first-charge instant, or a schedule) with the trade-offs, and say how a choice
+   is recorded so the desk shows it. This replaces "add a payment method" as the summer ask on the
+   billing page; the card-save door stays for accounts that want to save a card without choosing.
+
+5. THE "NO CARD YET" REMINDER. A new audience for the batch-email tool (lib/email-sender.ts,
+   app/platform-admin/email) — founding accounts with no card on file — with the account-notice
+   framing the plan describes. You own the AUDIENCE and the tool; the Phase 1 chat owns the
+   campaign COPY (lib/marketing-email-defaults.ts) — coordinate through the template KEY, not
+   the file. ⚠ Nothing sends this autumn.
+
+DECISIONS TO BRING ME (do not build them):
+- D4: when does the coach read-only window get built, and what does a lapsed coach see until
+  it is? Present the options; until it exists the coach copy stays on its fallback line.
+- Whether account notices to founding accounts honour the MARKETING opt-out or bypass it as
+  service messages. Argue it from what the code does today and from the customer's side.
+- Anything in 4 that would charge, or could charge, before October 1, 2027.
+
+OWNERSHIP — a Phase 1 chat is rewriting the campaign emails, the demos and help in the SAME
+working copy at the same time. You own: app/platform-admin/** (a new desk page + nav entry),
+app/api/admin/**, app/api/billing/**, lib/billing-setup.ts, lib/founding-season.ts,
+lib/email-sender.ts (audiences only), lib/db.ts, the schema, and the org/coach billing pages'
+summer ask. You do NOT touch: lib/marketing-email-defaults.ts, campaign copy in lib/email.ts,
+the reseed migration, lib/demo-*.ts, lib/help-content/*.tsx, marketing pages. If your work needs
+one of those, stop and say so. Claim your migration number at the moment you write the file
+(ls supabase/migrations | tail) and re-check it right before you commit — Phase 1 claims one
+too. Stage EXPLICIT PATHSPECS ONLY; never git add -A; before staging a shared file (TODO.md,
+the ledger, the decisions log, DATA_DICTIONARY.md) diff it against HEAD and stage only your own
+hunk. Confirm with the owner before committing. Do not push. Never master. Production data is
+read-only through scripts/db-query.mjs --prod unless the owner approves a specific write.
+
+REQUIRED:
+- Plan + PM brief pair (FOUNDING_SEASON_2027_DESK_PLAN.md + _PM_BRIEF.md) and a TODO line, then
+  the PM UX summary in the chat (AGENCY_RULES). Then MOCKUPS as a Claude Artifact — the desk at
+  desktop width, the "no card yet" filter, the billing page's summer ask and the plan-choice
+  checkout at TRUE SIZE, before AND after — and wait for approval before code. Form selects are
+  dropdowns; required fields wear a plain asterisk; every table on the ladder (TABLE_AND_LIST
+  _STANDARD.md) — a platform-admin table is on the standard, not exempt.
+- Verification: npm test · npm run typecheck · npm run verify:changed · npm run check:migrations
+  · npm run check:dictionary · a rendered check of every screen you touched that the sweep
+  knows (npm run check:layout -- --list). Platform-admin screens are NOT in the sweep — say so,
+  and measure the desk's phone shape by hand. State any check you skipped and why.
+- Offer /simplify (new abstractions likely) then /review (high-risk: billing, webhook, admin).
+- Owner QA: claim the next free § at the TAIL of docs/projects/active/OWNER_QA_LEDGER.md (never
+  renumber) and build the walk as a checkable Claude Artifact (checkboxes, saved state, verdict +
+  notes per step, Copy findings, the Sign-in-as card — the dev platform-admin account only,
+  never a prod account). Seed the fixture so the walk has a founding org WITH a card, one
+  WITHOUT, and a founding coach workspace — a walk over an empty list reports coverage it lacks.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step E2:
+  e2a  Plan + PM brief written · mockups approved by the owner   ⚠ ONLY after I have approved
+  e2b  Desk built · card on file recorded at the webhook · backfill plan presented
+  e2c  Coach card-save · 2028 plan-choice checkout · "no card yet" audience — built, nothing charged, nothing sent
+  e2d  D4 and the opt-out question brought to me                  ⚠ presented, not decided by you
+  e2e  Gates green · /simplify + /review run · walk artifact written · § claimed
+  e2f  Committed
+
+⚠ e2g ("Walked, findings fixed, section closed") IS NOT YOURS — that is my walk. Leave it, and
+remind me the walk itself is mine to do.</pre></div>
+  </div>
+</article>
+
+</div>
+
 <!-- ═══════════════════════ PARKED ═══════════════════════ -->
 <div class="trackhead parked">
   <p class="eyebrow">Parked — noted so nothing is lost</p>
   <h2>Older than three days, or deliberately not now</h2>
   <ul style="margin-top:12px">
+    <li><b>⚠ The sponsor-money UAT spec has been silently red since 2026-09-07</b> — found by running
+      it during B14's review, and it is <b>not</b> B14's. <code>coach-sponsor-money-lifecycle</code>
+      runs 17 tests; <b>3 fail</b>, all three from one assertion in the first: it reads a
+      <code>funding</code> block off the Budget vs. Actual payload that <b>A3's release deleted on
+      2026-09-04</b>. The other two are collateral — the sponsor id is set by the first test, so when
+      it dies they POST to an empty URL. <b>The sponsor money lifecycle therefore has no passing UAT
+      coverage</b>, through §153's commit and through B14's. Re-pointing it is not a one-line fix: the
+      spec's money-picture helper has to read the report's revenue ROWS instead, and then decide what
+      it asserts now that each drive and sponsor lands on its own row. Belongs to whoever owns §142 /
+      §153.</li>
     <li><b>⚠ The Ledger Timeline's layout debt, and the blind gate under it</b> — found by
       <code>/review</code> 2026-09-04. 19 findings on <code>coach-transactions</code>, none of them
       new: the screen's accepted baseline was written 2026-08-26 and never re-swept, and because the
       baseline keys on visible label text, the date-range buttons' labels rotted with the calendar.
       Two jobs, not one: fix the phone spill, and re-record the baseline so the gate stops reporting
       green on a screen it is not measuring.</li>
-    <li><b>Row density across the money tabs</b> — surfaced by A8 and deliberately left for its own
-      session. Budget vs Actual, Dues, Fundraising, Club and Transactions were already consistent
-      with each other and were aligned to the budget grids back in August; what remains is that they
-      run at <b>three different row heights</b>, which nobody could see while one of them was a card
-      stack. Recommendation on the table: two heights, chosen by what a row <i>holds</i> rather than
-      which screen it is on. A9 Part F3 asks you to look at it.</li>
-    <li><b>Player dues opens into the families — steps 2 to 7</b> — the project B7 is step 1 of.
-      Approved from its mockup; <b>step 2 moves a number on the face of Budget vs Actual</b>, so it
-      ships alone: credits from anyone but the family come off the planned dues figure, taking dues
-      planned $11,308.30 → <b>$8,958.67</b> and Total revenue $13,258.30 → <b>$10,908.67</b>. The
-      report currently overstates what families owe by $2,349.63 nobody will be asked for. Then the
-      per-family fold rows on the Statement, By activity, Months and the Budget plan. Plan:
-      <code>COACH_DUES_BY_PLAYER_PLAN.md</code>;
+    <li><b>Row density across the money tabs</b> — <b>no longer parked: it became B8.</b> You widened
+      A9's Part F3 into an app-wide table standard with an exception register; the review ran, you
+      approved it, and it was built on 2026-09-06. The two-heights-by-what-a-row-holds recommendation
+      is what shipped. What is still parked out of it: the coach portal's div-based row lists, the
+      club-side admin tables (no fixture), and phone cards for twelve platform tables — all listed in
+      <code>APP_WIDE_TABLE_CONSISTENCY_PLAN.md</code> §4.</li>
+    <li><b>Player dues opens into the families — steps 2 to 7</b> — the project B7 is step 1 of and
+      B10 is step 2 of. <b>⚠ Step 3 as originally planned is now in doubt.</b> The plan said credits
+      from anyone but the family come off the planned dues figure (dues $11,308.30 → $8,958.67,
+      Total revenue → $10,908.67). A netting proposal was written against that (artifact
+      <code>0f08e331</code>) and reviewed 2026-09-07 with the ladder in hand: its numbers are exactly
+      right and its diagnosis holds — netting the <i>whole</i> plan double-subtracts reimbursements
+      — but its recommended reconciling line lumps $1,379.98 of costs families paid (which arrived in
+      <i>Expenses</i>) in with fundraising, and the Fundraising row has the mirror-image
+      budget-vs-actual problem it doesn't reach. Nothing built; it wants a re-plan against the ladder.
+      Plan: <code>COACH_DUES_BY_PLAYER_PLAN.md</code>;
       <a href="https://claude.ai/code/artifact/73f68f92-603f-47eb-8c1d-d12dc5bd1496">mockup, round 3</a>.</li>
     <li><b>The Budget tab's item-library review</b> — kept out of the revamp by ruling and given its own session. Unstarted.</li>
     <li><b>Two walk parts are now vacuous</b> — §134 Part C and the §135 walk's Part E test states that no longer exist after later rulings. Not defects; worth a line in each section so a future re-walk doesn't count them as coverage.</li>
@@ -1315,7 +2137,4 @@ never from a green build.</pre></div>
   document.getElementById('resetall').addEventListener('click',function(){boxes.forEach(function(b){b.checked=false});write({});paint();say('Reset')});
 })();
 </script>
-
-
-
 

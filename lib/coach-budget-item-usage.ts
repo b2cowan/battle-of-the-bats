@@ -19,9 +19,12 @@
 /**
  * ⚠⚠ EVERYTHING THAT POINTS AT A BUDGET WORD — the single list every guard and the fold count from.
  *
- * All four foreign keys are `ON DELETE SET NULL`, which is deliberate for a genuine deletion (a
- * record keeps its money and reads as the honest gap it now is) and catastrophic for a MERGE: the
+ * EVERY foreign key into `budget_items` is `ON DELETE SET NULL` — deliberate for a genuine deletion
+ * (a record keeps its money and reads as the honest gap it now is) and catastrophic for a MERGE: the
  * rows must be re-pointed first, or the money survives with its classification silently gone.
+ * (The count is deliberately not stated here. It has been wrong twice — the list was described as
+ * "four" while holding six — and the guard test below counts the SCHEMA, which is the only tally
+ * that cannot go stale.)
  *
  * **This list exists because that is exactly how it went wrong.** The publish route was written
  * when two of these existed, named them both in a careful comment about re-pointing before
@@ -105,6 +108,17 @@ export const BUDGET_ITEM_REFERENCES: readonly BudgetItemReference[] = [
      one shared cost under different words. The split is this team's share, and the coach files it. */
   { table: 'rep_team_payment_requests', column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'club requests' },
   { table: 'rep_allocation_splits',     column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'club bills' },
+  /* ⚠ THE SEVENTH ARRIVED WITH MIGRATION 285 (fundraising — one way in), and it is the first entry
+     that is not a RECORD OF MONEY but a record of where money will COME FROM: a drive or a sponsor
+     now names the budget line it is "raising for", and Budget vs. Actual lands its whole realised
+     total on that word. Skipping it here would be the 2026-08-17 defect with the largest possible
+     figure attached — a fold or a publish would leave a season's drive raising for a word that no
+     longer exists, and every dollar it raised would fall back into the pooled "Not itemized" row
+     the link was added to empty.
+     ⚠ THE LABEL COVERS BOTH KINDS on purpose: a coach's list holds drives and sponsors together,
+     and one refusal naming "2 fundraising records" is truer than one naming a kind the coach then
+     has to go and check. */
+  { table: 'rep_fundraisers',           column: 'budget_item_id', categoryColumn: 'budget_category_id', label: 'fundraising records' },
 ] as const;
 
 /** How many records of each kind point at these words — the count every guard and the fold need. */

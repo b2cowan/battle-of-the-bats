@@ -10,12 +10,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  placeDerivedActual, derivedIncomeKeys, taxonomyKey, type DerivedClaim,
+  placeDerivedActual, whyIncomeIsRefused, type DerivedClaim,
 } from '../../lib/coach-money-derived.ts';
 
 const FUNDRAISING = 'cat-fundraising';
 const DRIVE = 'item-drive';
 const MERCH = 'item-merch';
+
 
 function claim(over: Partial<DerivedClaim> = {}): DerivedClaim {
   return {
@@ -62,35 +63,58 @@ describe('placeDerivedActual — as deep as the plan actually agrees, and no dee
   });
 });
 
-describe('derivedIncomeKeys — which rows the money form must refuse', () => {
-  it('closes the row the pool lands on', () => {
-    const keys = derivedIncomeKeys([claim()]);
-    assert.ok(keys.has(taxonomyKey(FUNDRAISING, DRIVE)));
+describe('whyIncomeIsRefused — the WORD decides, not the plan', () => {
+  /* ⚠⚠ THIS SUITE REPLACES `derivedIncomeKeys`, WHICH IS DELETED (owner ruling 2026-09-08).
+     Those tests pinned a rule that read the season's budget LINES: every claimed pair was closed to
+     typing, plus each pool's landing spot, because two fundraising lines in one category put the
+     pool in that category's bucket. Careful, and answering the wrong question — it meant the guard
+     fired on the team that had BUDGETED a fundraising line and let the identical double count
+     through on the team that had not.
+
+     The refusal is structural now: a word whose actual comes from a drive or a sponsor cannot take
+     a typed income figure, whatever anybody planned. What follows is that rule, and it is
+     deliberately short — a rule with no conditions has no edges to pin. */
+  it('refuses a word a drive reports, and names the door', () => {
+    const refusal = whyIncomeIsRefused({ name: 'Merchandise sales', actualSource: 'fundraiser' });
+    assert.ok(refusal);
+    // ⚠ THE SENTENCE POINTS SOMEWHERE. It is practically unreachable from the product — the words
+    // are not in the "Other money in" list to pick — so whoever meets it arrived by API or from a
+    // stale screen, and "record it elsewhere" without saying where is the least useful moment for
+    // vagueness. It must also offer the whole-team route, which is the only way team-raised money
+    // can be recorded at all.
+    assert.match(refusal!, /Fundraising/);
+    assert.match(refusal!, /whole team/);
   });
 
-  it('closes BOTH claimed items AND the category bucket the pool falls back to', () => {
-    // Two fundraising lines on two items: the pool sits in the category bucket, so a typed record
-    // there would double-count — and so would one on either claimed item.
-    const keys = derivedIncomeKeys([claim(), claim({ itemId: MERCH, itemName: 'Merchandise sales' })]);
-    assert.ok(keys.has(taxonomyKey(FUNDRAISING, DRIVE)));
-    assert.ok(keys.has(taxonomyKey(FUNDRAISING, MERCH)));
-    assert.ok(keys.has(taxonomyKey(FUNDRAISING, null)));
+  it('refuses a word a sponsor reports, and points at the sponsor rather than the drive', () => {
+    const refusal = whyIncomeIsRefused({ name: 'Grant', actualSource: 'sponsor' });
+    assert.ok(refusal);
+    assert.match(refusal!, /sponsor/);
+    assert.equal(/whole team/.test(refusal!), false);
   });
 
-  it('leaves every other row open, including a sibling item in the same category', () => {
-    const keys = derivedIncomeKeys([claim()]);
-    assert.equal(keys.has(taxonomyKey(FUNDRAISING, MERCH)), false);
-    assert.equal(keys.has(taxonomyKey('cat-tournaments', 'item-registration')), false);
+  it('allows every typed word — the ordinary case, and the whole of "Other money in"', () => {
+    assert.equal(whyIncomeIsRefused({ name: 'Interest', actualSource: 'typed' }), null);
+    assert.equal(whyIncomeIsRefused({ name: 'Registration revenue', actualSource: 'typed' }), null);
   });
 
-  it('closes nothing when the team plans no fundraising or sponsorship at all', () => {
-    assert.equal(derivedIncomeKeys([]).size, 0);
+  it('does not depend on the plan at all — the same word answers the same way for any team', () => {
+    /* The defect the claim-based version had: a team with no fundraising budget line saved the
+       double count without complaint. There is no team-shaped input left to differ on. */
+    assert.deepEqual(
+      whyIncomeIsRefused({ name: 'Fundraising drive', actualSource: 'fundraiser' }),
+      whyIncomeIsRefused({ name: 'Fundraising drive', actualSource: 'fundraiser' }),
+    );
   });
+});
 
-  it('places the two sources SEPARATELY rather than merging their claims', () => {
+describe('the two sources place separately — the legacy fallback', () => {
+  it('places each source against its OWN lines rather than merging their claims', () => {
     /* ⚠ Drives and sponsors report two different totals. Merged, a fundraising figure would be
-       placed using a sponsorship line's category — precise-looking and wrong. Here each lands on
-       its own item, and both rows are closed to typing. */
+       placed using a sponsorship line's category — precise-looking and wrong.
+       ⚠ THIS IS NOW THE FALLBACK, not the rule: since mig 285 each record names the line it is
+       raising for and lands there. What still reaches this code is the residue — records written
+       before the migration whose season's plan was too ambiguous to link safely. */
     const claims = [
       claim(),
       claim({ source: 'sponsor', categoryId: 'cat-sponsorship', categoryName: 'Sponsorship', itemId: 'item-team-sponsor', itemName: 'Team sponsorship' }),
@@ -99,9 +123,5 @@ describe('derivedIncomeKeys — which rows the money form must refuse', () => {
     assert.equal(placeDerivedActual(claims.filter(c => c.source === 'sponsor')).itemId, 'item-team-sponsor');
     // Merged they would place nowhere at all, which is what makes the split load-bearing.
     assert.equal(placeDerivedActual(claims).categoryId, null);
-
-    const keys = derivedIncomeKeys(claims);
-    assert.ok(keys.has(taxonomyKey(FUNDRAISING, DRIVE)));
-    assert.ok(keys.has(taxonomyKey('cat-sponsorship', 'item-team-sponsor')));
   });
 });

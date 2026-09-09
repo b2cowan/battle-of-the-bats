@@ -19722,3 +19722,145 @@ finding was adjudicated against the code in the main loop.
 affected files; full run recorded below) · `verify:changed` ✓ · rendered check on both Budget screens: no
 new findings · `check:pdf` 23 documents, 98 files read back ✓. The walk's Parts C1 and E1/E2 were updated
 to the reviewed words (Costs shown / Funding shown; COSTS / FUNDING in the file).
+
+## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — built on `dev` 2026-09-08, migration 285 applied to dev (PROD-OWED), awaiting QA · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
+
+**Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` (+ `_PM_BRIEF.md`). **Migration 285**
+(`285_a_shelf_says_who_fills_it_in.sql`) — applied to dev, **prod-owed behind 274, 276, 277, 280, 281,
+282, 283 and 284**, which are all prod-owed themselves. **Not committed at time of writing** — the
+owner's word is owed first.
+**Walk:** https://claude.ai/code/artifact/f8e843e3-8be2-48d6-bb55-4f93cee0abec — 78 checks across 20 steps, eight parts
+(A the budget picker · B the first question · C "Other money in" · D a drive names its line · E a
+sponsor and a grant · F the whole team · G the report · H demo + help). Source
+`COACH_FUNDRAISING_ONE_WAY_IN_WALK.html`.
+
+**⚠ ONE OPEN RULING, AT F4 — the only thing on the walk that is a question rather than a tick.** May a
+**whole-team entry** be logged on a drive that has a **family share** set? Built ALLOWED (the board
+shows a dash where a share would be; the facts line counts team entries separately), because refusing
+it would leave a team running one drive with both a bake table and per-player selling nowhere to put
+the table's takings. The owner has not said the word. The alternatives, if he wants one: refuse above
+0%, or ask at save time — both cost a step the current design does not.
+
+**Where it came from.** The owner asked why the Budget Plan's money-in picker says *"From a drive"*
+under a heading that already says FUNDRAISING. Chasing it found five things true in the running
+product: (1) the money form claimed grants in TWO answers, one of which refused them; (2) team-raised
+money could not be entered at all; (3) the "warning" under the picker was advice-shaped over a live
+Save in front of a server refusal — **and fired only if the team had budgeted that word**, so the
+careful team was guarded and the careless one was not; (4) a drive had no budget line, so budgeting
+TWO fundraising lines blanked both while the money collected under "Not itemized"; (5) a word a coach
+added to the Fundraising shelf reported under "Expected other income".
+
+**The rule (owner ruling 2026-09-08, binding).** *The category a word sits in decides who fills its
+number in and where it reports.* Fundraising and Sponsorship money is ALWAYS recorded on the
+Fundraising tab; everything else is always typed; a line reports under its category's shelf.
+
+**What shipped.** `budget_categories.income_source` (platform Fundraising → fundraiser, Sponsorship →
+sponsor, set once by name in the migration) — every other shelf, a club's own "Fundraising" included,
+is typed. A new word takes its source from its shelf on BOTH item-create doors, so a coach's word on
+the Fundraising shelf is a fundraising word from birth. `rep_fundraisers` gains `budget_item_id` +
+`budget_category_id`, filled by a **"Raising for"** field on New fundraiser, Edit fundraiser, Edit
+sponsor and both sponsor branches of the recording conversation — pre-filled, filtered to the record's
+own shelf, neither required nor nudged, and re-checked server-side. A drive entry accepts an explicit
+`playerId: null` = **"The whole team"** (rebate 0, no credit, ledger row still written); the board
+shows a dash, the facts line reads "N of M players logged · plus K team entries". Budget vs. Actual
+lands each record on ITS OWN row, with the old pool surviving as the fallback for records that name
+no line. "Other money in" no longer lists a Fundraising or Sponsorship word, the amber note and the
+`derivedKeys` payload are deleted, and the server refusal became structural (the WORD decides, not the
+plan). Three sponsor labels say "grant". The budget picker's row tag is gone, and the shared control's
+`rowTag` prop with it.
+
+**Two deviations from the mockup, both put to the owner before any code and both answered:**
+(1) the create panel's new sentence reads **"Will report under Other income."**, not the drawn
+"Expected other income" — §156 took "Expected" off every section heading the same day, so the mockup's
+words would have named a heading no screen carries; (2) **"Who raised it" is a dropdown**, not the
+drawn open list with a chip — every sibling identity question on that form is a dropdown and the house
+rule says so; the chip's fact moved to a hint under the field.
+
+**Three things the plan got wrong, reported rather than followed.** Its reader list sent me to
+`lib/db.ts`'s `playerCount` (that is the EVALUATION-SESSIONS aggregation, nothing to do with
+fundraisers) and to the register book's row detail (which never names a player at all). The reader
+that actually needed the fix was `lib/coach-cash-strip.ts`, which called a playerless drive entry
+"Team collection" with a note reading "not attributed" — two more names for a row the product now
+calls one thing. And the plan's "refuse unconditionally on POST and PATCH" would have **frozen every
+legacy record**: the money-in form resends the item on every save, so correcting an old typed row's
+amount would have been refused. The edit door now refuses only a record being moved ONTO a derived
+word — the door closes, history stays correctable.
+
+**The production count (plan §3.8, read-only, both databases, before the migration was written).**
+Typed income sitting on a Fundraising or Sponsorship word: **exactly one row on each**, and the same
+record both times — the coach demo's $480 "Team hoodie order — margin" on Fundraising · Merchandise
+sales. Nothing else. And **no club or coach has invented a money-in word on either database**, so the
+shelf rule moves no figure anywhere today. That single record is now a DRIVE with one whole-team
+entry, which is the demo's showing of the feature. ⚠ **Production's demo is reseeded only by hand** —
+the release runbook must reseed `riverdale-ridge` after the deploy, or the prod demo keeps a typed
+record the product no longer offers.
+
+**Verification on dev, 2026-09-08:** full unit suite **3238/3238**; `npm run typecheck` clean;
+`check:dictionary` ✓ (both tables documented, snapshots refreshed); `check:demos` — both worlds
+presentable, with new assertions pinning the hoodie drive's line, its one whole-team entry and that it
+credits nobody; `verify:changed` — lint warnings only, all pre-existing (0 errors). ⚠ **Schema parity
+fails, and it already did before this change**: prod is behind on 274/276/277/280–284 as well as 285.
+**The rendered layout sweep RAN and is clean** — `coach-fundraisers`, `coach-fundraiser`,
+`coach-sponsor`, `coach-budget` and `coach-club` at 361 / 390 / 768 / 1440: **no new findings**, every
+finding on those screens already in the accepted baseline. ⚠ The sweep cannot open a modal, so the
+"Raising for" field inside the four forms and the Record window's "Who raised it" are measured by the
+§157 walk (Part F3 asks for a phone) and by nothing else.
+**⚠⚠ A PRE-EXISTING UAT HOLE FOUND BY RUNNING THE SPEC, AND IT IS NOT THIS RELEASE'S — REPORTED, NOT
+FIXED.** `coach-sponsor-money-lifecycle` runs 17 tests and **3 fail**, all three tracing to one
+assertion in the first: `expect(before.bvaFundingBudget).toBe(2000)` receives **null**. The spec reads
+a `funding` block off the Budget vs. Actual payload — and **that block was deleted on 2026-09-04** by
+the dues-on-the-Statement release (its headstone is in HEAD, four days before this work; the spec was
+never re-pointed). The other two failures are collateral: `sponsorId` is a module-scope variable the
+first test sets, so when it dies the next two POST to `…/fundraisers//entries` and get a 405.
+
+⚠ **The consequence is the finding: the sponsor money lifecycle has had NO passing UAT coverage since
+2026-09-07** — through §153's commit and through this one. Verified as not-mine three ways: the spec
+file is untouched by this release, the `funding` headstone is in HEAD, and the failing assertion runs
+*before* any code this release changed. Re-pointing it is a real piece of work rather than a one-line
+fix — the spec's `moneyPicture` helper would have to read the report's revenue ROWS instead, and then
+decide what it asserts now that each drive and sponsor lands on its own row — so it belongs to
+whoever owns §142/§153 rather than being rewritten unreviewed at the end of this session.
+
+**⚠⚠ `/simplify` THEN `/review` RAN 2026-09-08 (high-risk tier: a migration, six shared modules,
+coaches money write paths; four cleanup lenses then five adversarial ones). `/review` found FIVE real
+things, all fixed and re-verified before the walk — and TWO of them were mine from earlier the same
+session.**
+
+1. **The placement fallback was over-implemented, and it re-introduced the exact defect this module
+   exists to prevent.** The plan said the pool falls back "over the NULL subset" — meaning the
+   RECORDS. I filtered the CLAIMS as well, dropping any budget line a record already named. On a plan
+   with TWO fundraising lines where the coach has linked ONE drive, that leaves the other claim
+   standing alone, so an *unlinked* drive's money would have been placed **confidently onto a line it
+   has no connection to** — "guessing which of two fundraising items a total belongs to", which
+   `coach-money-derived`'s own header calls the thing it refuses to do. The filter is deleted: the
+   residue pools by the plan's whole claim set, exactly as it did before mig 285.
+2. **A coach's own new sponsorship word blanked the field they had just chosen it in.** The sponsor
+   branches stored only the item's id and re-looked it up against the panel's category list — which
+   cannot know a word created inside the picker until the next full reload. Display only (the save
+   always sent the right id), but the field read as unanswered for the rest of the modal. It is the
+   same trap `BLANK_RECORD.budgetItemName` records two hundred lines up, reached from a new
+   direction; fixed the same way — keep what the picker handed back rather than looking it up again.
+3. **⚠ MY OWN `/simplify` PASS INTRODUCED A DEFECT, AND `/review` CAUGHT IT.** Moving the create
+   panel's "Will report under Other income." sentence out of the shared picker was the right move —
+   the control was reading and interpreting a money field, breaking the very rule the retired row tag
+   had broken — but the move **dropped the `direction === 'in'` gate on the way**. Every ordinary
+   cost shelf is `typed`, so a coach adding a new COST word would have read *"Saved as an expense —
+   because that is what you are recording. Will report under Other income."* on three screens, on one
+   of the commonest actions there is. The rule now lives in the same function as its subject, where
+   the next move cannot leave it behind.
+4. The discard guard could cry wolf for one render: with the field still unset and the taxonomy
+   landing after the form opened, it compared null against the default and read dirty on a form
+   nobody had touched. An unset field is never dirty now.
+5. The Data Dictionary still said *Grant keeps its Fundraising category, and whether it moves is
+   deliberately left open* — a week after migration 282 moved it. Corrected in the same entry mig 285
+   extended.
+
+**Refuted / cleared:** the security-and-tenancy lens found nothing — org, team-tier and sport gates
+are all still enforced on the new "Raising for" path, the two refusal sentences cannot be used to
+probe for another team's private word, `actual_source` can never come from a request body on either
+create door, and both money-in WRITE paths still refuse structurally. The migration's backfill cannot
+cross a tenant boundary **by construction**: a program year belongs to exactly one team, so pinning
+records and lines to one program year pins them to one team — checked independently in the main loop
+and confirmed against every linked record on dev. Re-verified after the fixes: **3,238 unit tests**,
+typecheck, `check:money-report` (all four cash identities still hold), spelling, dead-selector,
+dictionary, both demo worlds, and the rendered sweep on five screens at four widths.

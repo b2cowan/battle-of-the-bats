@@ -34,7 +34,7 @@ import { commitmentStanding } from '../lib/payable-standing.ts';
 import { normalizeOpponentName } from '../lib/opponent-name-key.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
-  OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES,
+  OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_HOODIE_DRIVE,
   OFFSEASON_TESTING_SESSIONS, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
@@ -312,16 +312,18 @@ console.log('\nOff-season — Riverdale Ridge 14U');
        ⚠⚠ BOTH, AND THE PAIR IS THE POINT. A prospect who only ever meets income learns that money
        arriving is one thing, and the whole release exists because it is not: a refunded entry
        means the team SPENT LESS, not that it EARNED. The refund is what makes the report
-       demonstrate its own rule, so a world carrying only the income entry is a world that has
-       quietly lost the harder half of the feature — which is exactly the drift this file exists
-       to catch. */
+       demonstrate its own rule, so a world that lost either half is a world that has quietly lost
+       the harder half of the feature — which is exactly the drift this file exists to catch.
+       ⚠⚠ THE PAIR NOW SPANS TWO SCREENS (mig 285). The income half was a TYPED $480 on
+       *Fundraising · Merchandise sales*; the fundraising model closes that door, so it is a DRIVE
+       with a whole-team entry and is pinned below rather than here. Same money, same word, same
+       day — a different door. Do not "restore" a typed income row to this world: the product would
+       refuse it. */
     const { data: arrivals } = await db.from('rep_team_money_in')
       .select('entry_kind, amount, received_date, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
       .eq('program_year_id', py.id);
     const income = (arrivals ?? []).filter(a => a.entry_kind === 'income');
     const back = (arrivals ?? []).filter(a => a.entry_kind === 'money_back');
-    check(income.length > 0 && income.every(a => a.budget_item_id),
-      `${income.length} income entry logged, on a real category + item — the Revenue section has a named row`);
     check(back.length > 0 && back.every(a => a.budget_item_id),
       `${back.length} money-back entry logged — the prospect meets the refund rule, not just income`);
     /* ⚠ THE REFUND MUST POINT AT AN ITEM THE TEAM ACTUALLY SPENT ON, or it nets into a row with
@@ -331,13 +333,54 @@ console.log('\nOff-season — Riverdale Ridge 14U');
       'the refund points at an item this team really paid for, so it nets into a row that exists');
     check((arrivals ?? []).every(a => Number(a.amount) > 0),
       'every arrival is stored POSITIVE — the kind carries the sign, never the amount');
-    /* ⚠ AND NOT ON A ROW THE FUNDRAISERS ALREADY ANSWER FOR (one row, one source). The write path
-       refuses a typed income there; a seeded world must never hold a state the product rejects. */
-    const derivedItemIds = new Set(fundingLines.map(l => l.item_id).filter(Boolean));
+    /* ⚠⚠ AND NOTHING TYPED SITS ON A WORD A DRIVE OR A SPONSOR ANSWERS FOR (one row, one source).
+       The write path refuses it, and since 2026-09-08 those words are not even OFFERED in "Other
+       money in" — a seeded world must never hold a state the product would reject, and this world
+       held exactly one until that release (the hoodie order's typed $480, on production).
+       ⚠ THE TEST WIDENED WITH THE MODEL. It used to compare against the items this season's FUNDING
+       LINES happened to name, which would pass a typed record on *Merchandise sales* on any team
+       that had not budgeted for it — the same "fires on the careful team only" hole the product's
+       own guard had. It now asks the WORD, which is what decides. */
+    const { data: derivedWords } = await db.from('budget_items')
+      .select('id')
+      .neq('actual_source', 'typed');
+    const derivedItemIds = new Set((derivedWords ?? []).map(i => i.id));
     check(income.every(a => !derivedItemIds.has(a.budget_item_id)),
-      'no typed income sits on a row whose actual comes from a fundraiser — the seed cannot hold a refused state');
+      'no typed income sits on a fundraising or sponsorship word — the seed cannot hold a refused state');
     check((arrivals ?? []).every(a => a.received_date <= today),
       'every arrival is dated on or before today — nothing has arrived from the future');
+
+    /* ── THE HOODIE ORDER — a drive, raising for a line, with ONE whole-team entry (mig 285) ────
+       ⚠⚠ THE INCOME HALF OF THE PAIR ABOVE, and the release's load-bearing feature standing in the
+       shop window. Three separate things are pinned because losing any ONE of them leaves a world
+       that renders perfectly and demonstrates nothing:
+         1. the drive names the budget line it is RAISING FOR — and *Merchandise sales*, not the
+            shelf's standard *Fundraising drive*: a drive landing where the coach filed it rather
+            than on a default is the whole point of the change;
+         2. ONE entry with NO PLAYER — team-raised money, the only way a hoodie table's takings can
+            reach the books at all now;
+         3. it credits NOBODY. A share would land on a 14U family's bill, and this world's dues
+            story (two instalments settled, one family behind) is narrated by the off-season dock
+            line. Same rule the 12U's sponsor is club-wide under. */
+    const { data: hoodieRows } = await db.from('rep_fundraisers')
+      .select('id, name, kind, is_active, budget_item_id, budget_items(name), budget_categories(name)')
+      .eq('program_year_id', py.id);
+    const hoodie = (hoodieRows ?? []).find(f => f.name === OFFSEASON_HOODIE_DRIVE.name)
+      ?? (hoodieRows ?? [])[0];
+    check(!!hoodie && hoodie.budget_items?.name === OFFSEASON_HOODIE_DRIVE.raisingFor.item,
+      `the ${OFFSEASON_HOODIE_DRIVE.name} raises for ${OFFSEASON_HOODIE_DRIVE.raisingFor.item} — not the shelf's default`,
+      hoodie ? `raising for ${hoodie.budget_items?.name ?? 'nothing'}` : 'no drive found');
+    if (hoodie) {
+      const { data: hoodieEntries } = await db.from('rep_fundraiser_entries')
+        .select('player_id, amount_raised, rebate_amount, credit_id').eq('fundraiser_id', hoodie.id);
+      const rows = hoodieEntries ?? [];
+      check(rows.length === 1 && rows[0].player_id === null
+        && Number(rows[0].amount_raised) === OFFSEASON_HOODIE_DRIVE.entry.amount,
+        `its one entry is $${OFFSEASON_HOODIE_DRIVE.entry.amount} for THE WHOLE TEAM — the feature, in the window`,
+        `${rows.length} entries, player ${rows[0]?.player_id ?? 'null'}, $${rows[0]?.amount_raised}`);
+      check(rows.every(e => Number(e.rebate_amount) === 0 && !e.credit_id),
+        'and it credits nobody — no family share can reach the dues story this world narrates');
+    }
 
     // Dues: two settled instalments and one family behind.
     const { data: installments } = await db.from('rep_player_dues_installments')

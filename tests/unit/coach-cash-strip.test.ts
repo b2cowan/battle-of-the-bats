@@ -8,6 +8,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { WHOLE_TEAM_ENTRY_LABEL } from '../../lib/coach-fundraising.ts';
 import { buildActualCashStrip, type CashStripInputs } from '../../lib/coach-cash-strip.ts';
 import { PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME } from '../../lib/coach-budget-months.ts';
 
@@ -368,13 +369,24 @@ describe('buildActualCashStrip — who the money came from', () => {
     ]);
   });
 
-  it('says so when a drive entry was not attributed to anybody', () => {
+  it('names a drive entry with no player "The whole team", and does not apologise for it', () => {
+    /* ⚠⚠ THIS TEST REVERSED ON 2026-09-08, AND THE REVERSAL IS THE FEATURE. It read "says so when a
+       drive entry was not attributed to anybody" and pinned two words this row no longer wears:
+       "Team collection" as its description, and a note reading "not attributed". Both were written
+       when a null player on a drive was an ANOMALY — a row nobody could create through the product.
+
+       It is a deliberate answer now: **the whole team raised it**, and with Fundraising words out of
+       "Other money in" it is the only way hoodie-table money reaches the books at all. So the note
+       goes (there is nothing to explain) and the description takes the product's ONE spelling of
+       that answer — the same words the Record window offers, the drive's board prints and the
+       remove confirmation names. Two spellings of one thing is the defect the one-word ruling
+       exists to catch, and this module was carrying the other two. */
     const strip = buildActualCashStrip({
       ...empty(),
       realisedEntries: [entry(240, '2026-08-11', '2026-08-11T12:00:00Z', 'fundraiser')],
     });
     assert.deepEqual(subjects(strip), [
-      ['fundraising', 'drive-1', 'Bottle drive', 'Fundraising', 'Team collection', 'not attributed'],
+      ['fundraising', 'drive-1', 'Bottle drive', 'Fundraising', WHOLE_TEAM_ENTRY_LABEL, null],
     ]);
   });
 

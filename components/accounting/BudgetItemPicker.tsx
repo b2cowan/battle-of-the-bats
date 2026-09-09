@@ -104,6 +104,36 @@ interface Props {
    *  being circular against a question the label no longer asks. Callers that keep a
    *  question-shaped label leave this unset and get the built-in hints. */
   placeholder?: string;
+  /**
+   * One sentence appended to the "nothing matches" state — where else to look.
+   *
+   * ⚠ THE CALLER'S WORDS, LAID OUT BY THE CONTROL, which is the same contract `placeholder` is
+   * under and the line the retired `rowTag` hook drew: this control renders on the Budget Plan, the
+   * Club tab, the Org Budget and the recording conversation, and it must not learn what any of them
+   * MEAN. It knows there is a sentence; it does not know it is about fundraising.
+   *
+   * ⚠ ONLY ON THE EMPTY STATE, deliberately. The one caller that passes it is "Other money in",
+   * whose list no longer holds the Fundraising and Sponsorship words at all — so the coach it is
+   * for is the one who typed "merch" before reading the question above, and a note that showed
+   * beside a full list would be advice nobody asked for on every keystroke.
+   */
+  emptyNote?: string;
+  /**
+   * A sentence for the CREATE panel about the category being filed under — where the new word will
+   * report, typically. Return null for a category with nothing to say.
+   *
+   * ⚠⚠ A HOOK, AND THE CALLER OWNS THE WORDS — the same contract `emptyNote` and `placeholder` are
+   * under, and the line the retired `rowTag` broke. This control renders on the Budget Plan, the
+   * Club tab, the Org Budget and the recording conversation; its header forbids it learning a
+   * DOMAIN, and the first cut of this sentence broke that rule twice over: it read `incomeSource`
+   * off a category, compared it to `'typed'`, and held a hardcoded heading name of its own. It
+   * knows there is a sentence; it does not know what it is about.
+   *
+   * ⚠ WHY A HOOK RATHER THAN A STRING, unlike `emptyNote`: the note depends on which category is
+   * chosen INSIDE the create panel, and that selection is this control's own state. A caller cannot
+   * compute it without the control lifting state it has no other reason to lift.
+   */
+  newItemNote?: (category: BudgetCategoryWithItems, direction: 'in' | 'out') => string | null;
   /** Opt the combobox into the portal's standard field ground — paper fill, strong hairline,
    *  6px radius — instead of this control's own white/r8 clothes. Added for the bill form
    *  (Add-a-bill design pass D3, owner-approved 2026-08-29): that form has ONE grounds story,
@@ -149,27 +179,6 @@ interface Props {
   suggestAmount?: boolean;
   /** Lets a caller point its "you must pick one" message at the search box. */
   selectId?: string;
-  /**
-   * A trailing note on a row, decided BY THE CALLER — return null for a row that gets none.
-   *
-   * ⚠⚠ A HOOK, NOT A FLAG, AND THAT IS THE HEADER'S RULE APPLIED (see "THE CONTROL LEARNS A GROUP,
-   * NOT A DOMAIN"). The first cut of this was `showActualSource`, a boolean that made this control
-   * import a money-domain enum, hold its English ("From a drive", "You record it") and key CSS
-   * classes off its values — inside a component the Budget Plan, the Club tab and the Org Budget
-   * all render. That is precisely the shape `leadGroup.metaTone` was kept generic to avoid, one
-   * prop earlier and for the same reason. The caller hands over the words; the control lays them
-   * out and knows nothing about what they mean.
-   *
-   * ⚠ `tone` IS A WEIGHT, NOT A MEANING — 'quiet' for the ordinary case, 'strong' for the rows a
-   * reader must not skim past. Naming it after a domain state is how the generic prop stops being
-   * generic.
-   *
-   * ⚠ WHY IT IS A HOOK RATHER THAN A FIELD ON THE ITEM: the same word can warrant a note on one
-   * surface and none on another. The Budget Plan turns it on because the word chosen there decides
-   * the line's kind; the recording conversation deliberately does not, because there the refusal
-   * depends on what the team's budget LINES claim rather than on the word alone.
-   */
-  rowTag?: (item: BudgetItem) => { text: string; tone?: 'quiet' | 'strong' } | null;
   /** Draw the control as at fault — the picker is a required field since mig 240. */
   invalid?: boolean;
   disabled?: boolean;
@@ -244,13 +253,14 @@ export default function BudgetItemPicker({
   teamId,
   allowCreateCategory = false,
   suggestAmount = false,
-  rowTag,
   selectId,
   invalid = false,
   disabled = false,
   manageHint,
   leadGroup,
   placeholder,
+  emptyNote,
+  newItemNote,
   paperGround = false,
 }: Props) {
   const [query, setQuery] = useState('');
@@ -624,17 +634,6 @@ export default function BudgetItemPicker({
           onClick={() => choose(row)}
         >
           <span>{row.item.name}</span>
-          {/* The caller's own trailing note, if it wants one on this row — see `rowTag`. The
-              control renders it and knows nothing about what it says. */}
-          {(() => {
-            const tag = rowTag?.(row.item);
-            if (!tag) return null;
-            return (
-              <span className={`${styles.optSource} ${tag.tone === 'strong' ? styles.optSourceStrong : ''}`}>
-                {tag.text}
-              </span>
-            );
-          })()}
           {/* The one word that can be off-side is the one already chosen — say so rather than
               letting it look like the filter is leaking. */}
           {row.item.direction !== direction && (
@@ -723,6 +722,7 @@ export default function BudgetItemPicker({
                   {q
                     ? <>Nothing on this side matches “{query.trim()}”.</>
                     : <>Your list has no words for {SIDE_WORD[direction]} yet.</>}
+                  {emptyNote && <span className={styles.dropEmptyNote}>{emptyNote}</span>}
                 </div>
               )}
               {canCreate && (
@@ -852,6 +852,27 @@ export default function BudgetItemPicker({
               getting a different answer is how a word ends up somewhere they cannot find it. */}
           <p className={styles.sideNote}>
             Saved as <strong>{SIDE_WORD[direction]}</strong> — because that is what you are recording.
+            {/* ⚠⚠ WHERE THE WORD WILL REPORT, STATED AT THE MOMENT IT IS CREATED AND NEVER ASKED
+                (owner ruling 2026-09-08). The shelf decides who fills a money-in word in, and the
+                two derived shelves are self-explanatory — a word on Fundraising is filled in from a
+                drive, which is the whole point of putting it there. The one that needs saying is the
+                other case: a coach inventing a heading ("Team stuff") is not choosing a side of the
+                books, and most coach-made categories are cost categories, so the product answers the
+                question rather than posing it. ⚠ ONLY on the money-IN side: every spending word
+                reports under Costs, and saying so on each would be noise.
+                ⚠ "Other income", NOT "Expected other income" (owner, 2026-09-08). The budget
+                ladder took "Expected" off every section heading the same day, so the mockup's own
+                wording would have named a heading no screen carries. */}
+            {(() => {
+              /* Computed HERE rather than in the render body, so it costs nothing on the keystrokes
+                 that re-render this control while the create panel is closed. */
+              const chosen = localCategories.find(c => c.id === newItemCatId);
+              /* ⚠ THE SIDE GOES WITH IT. The caller's sentence is usually about one side of the
+                 books, and this control is the only thing that knows which side it is choosing for —
+                 handing over the category alone is how the money-in note ended up on cost words. */
+              const note = chosen ? newItemNote?.(chosen, direction) : null;
+              return note ? ` ${note}` : null;
+            })()}
             {manageHint ? ` ${manageHint}` : ''}
           </p>
           {saveError && <p className={styles.error}>{saveError}</p>}

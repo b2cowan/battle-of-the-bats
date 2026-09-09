@@ -1595,6 +1595,15 @@
         "column_default": null
       },
       {
+        "table_name": "budget_categories",
+        "pos": 10,
+        "column_name": "income_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'typed'::text"
+      },
+      {
         "table_name": "budget_items",
         "pos": 1,
         "column_name": "id",
@@ -10654,6 +10663,24 @@
         "column_name": "expected_by",
         "data_type": "date",
         "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 17,
+        "column_name": "budget_item_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "pos": 18,
+        "column_name": "budget_category_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -19910,6 +19937,20 @@
       },
       {
         "table_name": "rep_fundraisers",
+        "column_name": "budget_category_id",
+        "foreign_table": "budget_categories",
+        "foreign_column": "id",
+        "constraint_name": "rep_fundraisers_budget_category_id_fkey"
+      },
+      {
+        "table_name": "rep_fundraisers",
+        "column_name": "budget_item_id",
+        "foreign_table": "budget_items",
+        "foreign_column": "id",
+        "constraint_name": "rep_fundraisers_budget_item_id_fkey"
+      },
+      {
+        "table_name": "rep_fundraisers",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -20094,21 +20135,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -20116,6 +20150,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -20136,21 +20177,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -20158,6 +20192,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -20367,14 +20408,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -23920,6 +23961,11 @@
       },
       {
         "tablename": "rep_fundraisers",
+        "indexname": "idx_rep_fundraisers_budget_item",
+        "indexdef": "CREATE INDEX idx_rep_fundraisers_budget_item ON public.rep_fundraisers USING btree (budget_item_id)"
+      },
+      {
+        "tablename": "rep_fundraisers",
         "indexname": "rep_fundraisers_org_id_idx",
         "indexdef": "CREATE INDEX rep_fundraisers_org_id_idx ON public.rep_fundraisers USING btree (org_id)"
       },
@@ -25886,6 +25932,12 @@
         "table_name": "billing_retention_intents",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "budget_categories",
+        "detail": "budget_categories_income_source_check",
+        "check_clause": "(income_source = ANY (ARRAY['typed'::text, 'fundraiser'::text, 'sponsor'::text]))"
       },
       {
         "kind": "CHECK",

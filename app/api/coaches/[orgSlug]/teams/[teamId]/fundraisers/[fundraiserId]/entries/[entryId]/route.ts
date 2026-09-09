@@ -192,8 +192,13 @@ export const PATCH = withObservability(async (req: Request,
       // Credit reduced to zero — delete it
       await supabaseAdmin.from('rep_dues_credits').delete().eq('id', entry.credit_id);
       updates.credit_id = null;
-    } else if (!entry.credit_id && rebateAmount > 0) {
+    } else if (!entry.credit_id && rebateAmount > 0 && entry.player_id) {
       /* No credit existed but now one is needed (rebate was 0 before, amount changed).
+         ⚠ NEVER FOR A WHOLE-TEAM ENTRY (2026-09-08). Such a row is stamped 0% at creation, so its
+         rebate stays 0 whatever the amount becomes and this branch is already unreachable — but
+         `player_id` is null on it, and `rep_dues_credits.player_id` is NOT NULL, so a future
+         rounding or rate change reaching here would fail the insert AFTER the ledger row has been
+         moved. Stated as a condition rather than left to arithmetic.
          ⚠ DATED THE DAY THE MONEY ARRIVED, NOT TODAY (found at the P2 gate, 2026-08-23). A
          back-dated entry that later grew a credit stamped it with the edit date, so the family
          credit landed in a different month from the income that created it — a mig-261 loose

@@ -1,17 +1,21 @@
 {
-  "generated": "2026-09-08",
-  "total": 48,
+  "generated": "2026-09-09",
+  "total": 55,
   "counts": {
     "tables": 2,
-    "columns": 21,
-    "indexes": 9,
-    "constraints": 9,
-    "rls": 7
+    "columns": 24,
+    "indexes": 10,
+    "constraints": 11,
+    "rls": 8
   },
   "items": [
     {
       "key": "check:changed:rep_budget_lines.rep_budget_lines_line_kind_check",
       "sig": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text, 'other_income'::text])) :: (line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))"
+    },
+    {
+      "key": "check:only-dev:budget_categories.budget_categories_income_source_check",
+      "sig": ""
     },
     {
       "key": "check:only-dev:budget_items.budget_items_actual_source_check",
@@ -35,6 +39,10 @@
     },
     {
       "key": "check:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:budget_categories.income_source",
       "sig": ""
     },
     {
@@ -122,6 +130,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_fundraisers.budget_category_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraisers.budget_item_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:budget_categories.budget_categories_team_id_fkey",
       "sig": ""
     },
@@ -158,6 +174,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_fundraisers.rep_fundraisers_budget_category_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraisers.rep_fundraisers_budget_item_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:budget_categories_team_idx",
       "sig": ""
     },
@@ -179,6 +203,10 @@
     },
     {
       "key": "index:only-dev:idx_org_billing_facts_no_next_season_choice",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_fundraisers_budget_item",
       "sig": ""
     },
     {

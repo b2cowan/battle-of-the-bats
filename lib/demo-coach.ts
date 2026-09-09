@@ -520,6 +520,9 @@ export const MIDSEASON_DUES = {
 export const MIDSEASON_FUNDRAISER = {
   name: 'Bottle Drive',
   description: 'Spring bottle drive — half of what each player raises comes straight off their dues.',
+  /** Which budget line it is raising for (mig 285) — the standard Fundraising word, exactly as a
+   *  coach creating a drive finds it pre-filled. */
+  raisingFor: { category: 'Fundraising', item: 'Fundraising drive' },
   rebatePercent: 50,
   /** Opened / closed, relative to the anchored clock (days). Closed, so the credits are real. */
   startOffset: -56,
@@ -559,6 +562,11 @@ export const MIDSEASON_FUNDRAISER = {
 export const MIDSEASON_SPONSOR = {
   name: 'Riverdale Dental',
   description: 'Season sponsor — banner at the diamond and a name on the practice jerseys.',
+  /** Its Sponsorship line (mig 285). ⚠ Deliberately *Team sponsorship* rather than *Grant*: the demo
+   *  already carries a real grant on the CLUB tab (MIDSEASON_CLUB_MONEY's charge_to_org, filed under
+   *  Sponsorship · Grant), so pointing this here keeps the two apart and shows the shelf holding
+   *  both of its standard words with money on each. */
+  raisingFor: { category: 'Sponsorship', item: 'Team sponsorship' },
   /** The PLEDGE — the agreed sponsorship (mig 268: lives on the record as pledged_amount). */
   amount: 750,
   /** Received, relative to the anchored clock (days). Well inside the season already played. */
@@ -1195,33 +1203,39 @@ export const OFFSEASON_FUNDING_LINES = [
 ] as const;
 
 /**
- * Money that ACTUALLY ARRIVED — the record the portal gained on 2026-08-16 (mig 243).
+ * Money that ACTUALLY ARRIVED and was TYPED IN — the record the portal gained on 2026-08-16
+ * (mig 243).
  *
- * ⚠ ONE OF EACH, DELIBERATELY, because the pair is the feature. A prospect who only ever sees
- * income learns that money in is one thing, and it is not:
+ * ⚠⚠ IT IS ONE RECORD NOW, AND THE PAIR IT USED TO HOLD IS THE STORY. This list carried an income
+ * row and a money-back row, deliberately, "because the pair is the feature": a prospect who only
+ * ever meets income learns that money arriving is one thing, and it is not. The income half was the
+ * hoodie order's $480 — and the fundraising model (2026-09-08) closed the door it came through, so
+ * it is a DRIVE now (`OFFSEASON_HOODIE_DRIVE`). The pair survives; it simply spans two screens, as
+ * the product itself does.
  *
- *   · **Income** — the hoodie order's margin. Its own row under Revenue, in a category that also
- *     carries a cost, so the by-activity lens has something two-sided to show.
  *   · **Money back** — a cancelled entry refunded. It NETS into Tournaments → Entry Fees rather
- *     than becoming revenue, so the demo's own report demonstrates the rule the whole release
- *     rests on: the team did not EARN $400, it SPENT $400 less.
+ *     than becoming revenue, so the demo's own report demonstrates the rule the whole money-in
+ *     release rests on: the team did not EARN $400, it SPENT $400 less.
+ *   · **Income** — still on the report, still on *Fundraising · Merchandise sales*, arriving from
+ *     the drive instead of from this list.
  *
- * ⚠ The refund points at the item the plan's two summed Entry Fees lines already name, so the row
- * a prospect reads is one row carrying $2,600 planned, $2,400 paid and $400 back — the SUM ruling
- * and the netting ruling visible in the same line.
+ * ⚠ The refund points at the item the plan's two summed Entry Fees lines already name, so the row a
+ * prospect reads is one row carrying $2,600 planned, $2,400 paid and $400 back — the SUM ruling and
+ * the netting ruling visible in the same line.
  *
- * ⚠ NOT ON `Fundraising → Fundraising drive`. That row's actual is DERIVED from the fundraiser
- * records, and the write path refuses a typed one there (one row, one source) — a seeded world
- * must never hold a state the product would reject.
+ * ⚠ NOTHING TYPED MAY SIT ON A FUNDRAISING OR SPONSORSHIP WORD. Those rows' actuals come from the
+ * records, the write path refuses a typed one, and since 2026-09-08 the words are not even offered
+ * in "Other money in" — a seeded world must never hold a state the product would reject.
  */
 export const OFFSEASON_MONEY_IN = [
-  {
-    key: 'OS-IN-MERCH', kind: 'income' as const,
-    category: 'Fundraising', item: 'Merchandise sales',
-    amount: 480, weeksBack: 4,
-    description: 'Team hoodie order — margin',
-    receivedFrom: null,
-  },
+  /* ⚰⚰ `OS-IN-MERCH` LIVED HERE AND IS NOW A DRIVE — see `OFFSEASON_HOODIE_DRIVE` below.
+     It was a TYPED $480 income record on *Fundraising · Merchandise sales*, and it was seeded on
+     PRODUCTION: the shop window holding the exact state the fundraising model removes. Under that
+     model a Fundraising word is filled in from the Fundraising tab and is not offered in "Other
+     money in" at all, so this is a record no coach could create any more — and the note above
+     already said a seeded world must never hold a state the product would reject.
+     ⚠ THE MONEY DID NOT MOVE. Same $480, same day, same word — it simply arrives through the door
+     the product now has for it, and brings the whole-team entry with it, which is the feature. */
   {
     key: 'OS-IN-REFUND', kind: 'money_back' as const,
     category: 'Tournaments', item: 'Entry Fees',
@@ -1230,6 +1244,41 @@ export const OFFSEASON_MONEY_IN = [
     receivedFrom: 'other' as const,
   },
 ] as const;
+
+/**
+ * THE TEAM HOODIE ORDER — the off-season's drive, and the demo's showing of the whole-team entry
+ * (mig 285, owner-approved mockup 8aa1e633 screen F).
+ *
+ * ⚠⚠ IT REPLACES A TYPED INCOME RECORD, AND THAT IS THE POINT. The $480 hoodie margin used to be
+ * typed straight onto *Fundraising · Merchandise sales* — the one state on either database that the
+ * fundraising model closes, and it was in the shop window. The money is identical; what changed is
+ * that it now arrives the way the product offers: a drive, raising for the line it was always filed
+ * against, with ONE entry logged for **the whole team**.
+ *
+ * ⚠ NOBODY RAISED IT INDIVIDUALLY, which is the honest fact about a hoodie table and the reason the
+ * feature exists: nobody counted who sold what. So the credit percentage is ZERO and no family
+ * credit is written — and the 14U's dues story (two instalments paid, one family behind) is
+ * untouched BY CONSTRUCTION rather than by arithmetic that has to be re-checked. It is the same
+ * rule MIDSEASON_SPONSOR is club-wide under.
+ *
+ * ⚠ CLOSED, like the bottle drive: the order was placed, the money is in, and a closed record is
+ * what a coach reading their off-season books actually has. It also keeps the Record door off it,
+ * so the demo cannot be nudged into a state the nightly re-anchor would then have to repair.
+ */
+export const OFFSEASON_HOODIE_DRIVE = {
+  name: 'Team hoodie order',
+  description: 'Hoodies sold at the rink — the team’s margin on the order.',
+  /** ⚠ NOT the standard *Fundraising drive*: the whole demonstration is a drive landing on the line
+   *  the coach filed it against rather than on the shelf's default. */
+  raisingFor: { category: 'Fundraising', item: 'Merchandise sales' },
+  /** Zero, and load-bearing — see the note above. */
+  rebatePercent: 0,
+  startOffset: -42,
+  endOffset: -21,
+  /** ONE entry, for the whole team. `weeksBack` matches the record it replaces, so the month grid
+   *  and the register read the same day they always did. */
+  entry: { amount: 480, weeksBack: 4 },
+} as const;
 
 /** Each line is phased across four months (this month ±). Quarters divide every total exactly —
  *  the planner enforces periods summing to their line within $0.02, and the demo must not sit on

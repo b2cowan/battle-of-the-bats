@@ -73,9 +73,12 @@ import {
 import { formatPlayerLastFirst, formatPlayerFirstLast } from '@/lib/player-name';
 import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
 import { fetchAccountingSettings } from '@/lib/coach-accounting-settings';
-import { type CreditUnit } from '@/lib/coach-fundraising';
+import { WHOLE_TEAM_ENTRY_LABEL, type CreditUnit } from '@/lib/coach-fundraising';
+import RaisingForField, { defaultRaisingFor } from '@/components/coaches/RaisingForField';
+import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import { accrueArrival, deriveAllArrivalCredits, creditPlanProblem, sharesFromRows, stillToCome } from '@/lib/sponsor-arrivals';
 import { isFundingKind } from '@/lib/coach-budget-totals';
+import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import { formatMonthLong, monthKeyOf } from '@/lib/coach-budget-months';
 import { toggleKey } from '@/lib/toggle-key';
 import { useMoneyRevision, useBumpMoneyRevision, useOnMoneyRevisionBump, useSharedMoneyRead } from '@/lib/coach-money-refresh';
@@ -668,6 +671,21 @@ function kindForFace(onPayables: boolean): { kind: EntryKind; timing: CostTiming
  * four of them and silently miss the fifth (/simplify, 2026-08-23). A missing key here is a
  * compile error, which is the same lesson FORM_COPY already encodes two screens up.
  */
+/**
+ * "The whole team" as the drive branch's answer to *who raised it* (owner ruling 2026-09-08).
+ *
+ * ⚠⚠ A SENTINEL, NOT AN EMPTY STRING, and the distinction is the whole reason it is named. The
+ * branch already uses '' for UNANSWERED — the state that refuses the save and greys the button —
+ * and "nobody in particular raised it" is a real, deliberate answer that must be able to save. Two
+ * meanings on one value would make the required-field check either refuse a legitimate entry or
+ * accept an empty form; a value no player id can ever be keeps them apart.
+ *
+ * ⚠ IT NEVER LEAVES THE BROWSER. The write path translates it to an explicit `playerId: null`,
+ * which is what the entries route reads (and which it deliberately distinguishes from a MISSING
+ * field). Nothing on the server has heard of this string.
+ */
+const WHOLE_TEAM_ANSWER = '__whole-team__';
+
 const CONV_BRANCH: Record<ConversationBranch, {
   /** The chosen sentence, exactly as mockup 01 words it — doubles as the modal subtitle. */
   name: string;
@@ -684,10 +702,10 @@ const CONV_BRANCH: Record<ConversationBranch, {
   noun?: string;
 }> = {
   dues:       { name: 'A family paid their dues',        group: 'in',  sub: "Lands on that player's bill",            direct: true, noun: 'payment' },
-  drive:      { name: 'Fundraiser money came in',        group: 'in',  sub: 'Logged to a drive, counts for a player', direct: true, noun: 'fundraiser amount' },
-  sponsor:    { name: 'A sponsor came through',          group: 'in',  sub: 'A business or grant gave directly',      direct: true, noun: 'sponsor' },
+  drive:      { name: 'Fundraiser money came in',        group: 'in',  sub: 'Logged to a drive — the whole team, or one player', direct: true, noun: 'fundraiser amount' },
+  sponsor:    { name: 'A sponsor came through',          group: 'in',  sub: 'A business or a grant gave directly',    direct: true, noun: 'sponsor' },
   refund:     { name: 'Money back on something we paid', group: 'in',  sub: 'A refund against a cost on the books',   side: 'out' },
-  'other-in': { name: 'Other money in',                  group: 'in',  sub: 'Interest, a grant, anything else',       side: 'in' },
+  'other-in': { name: 'Other money in',                  group: 'in',  sub: 'Interest, a facility rebate, a plain donation', side: 'in' },
   spend:      { name: 'We paid for something',           group: 'out', sub: 'Paid already — or owed on a schedule',   side: 'out' },
   club:       { name: 'We settled up with the club',     group: 'out', sub: 'Pay down what the club has billed',      direct: true, noun: 'settlement' },
   payout:     { name: 'We paid a family back',           group: 'out', sub: 'Return credit a family has built up',    direct: true, noun: 'payout' },
@@ -745,6 +763,7 @@ const BLANK_CONV = {
   duesPlayerId: '',
   duesMethod: 'etransfer' as DuesPaymentMethod,
   driveId: '',
+  /** '' = unanswered · `WHOLE_TEAM_ANSWER` = the whole team raised it · otherwise a player id. */
   drivePlayerId: '',
   clubInstallmentId: '',   // `${splitId}:${installmentId}`
   payoutPlayerId: '',
@@ -769,6 +788,27 @@ const BLANK_CONV = {
    *  (kept in step with sponsorId). A door's lock never sets this — a locked door has already
    *  answered. */
   sponsorPicked: '',
+  /**
+   * Which SPONSORSHIP budget line a sponsor created here is raising for (mig 285) — the id only,
+   * because the picker's full selection is rebuildable from the taxonomy this panel already holds
+   * and a flat string is what `touched()` can compare.
+   *
+   * ⚠ ON THE COLD BRANCH ONLY. Recording an arrival against an EXISTING sponsor does not ask: the
+   * record already answered it, and re-asking would be the second control the identity-lock ruling
+   * exists to remove. It is edited afterwards in the sponsor's own room.
+   */
+  sponsorBudgetItemId: '',
+  /**
+   * ⚠⚠ AND THE NAMES THE PICKER HANDED BACK, because this panel's `categories` cannot resolve a word
+   * the coach invented inside the picker itself (`/review`, 2026-09-08). The picker appends a new
+   * item to its OWN local list and never to ours, so an id-only answer re-looked-up against
+   * `categories` misses — and the field a coach had just filled in went BLANK in front of them, for
+   * the rest of the modal. Display only; the save always sent the right id. This is the same trap
+   * `BLANK_RECORD.budgetItemName` records two hundred lines up, reached from a new direction: the
+   * fix there is the fix here — keep what the picker told us rather than looking it up again.
+   */
+  sponsorBudgetItemName: '',
+  sponsorBudgetCategoryName: '',
   /* ── Paying down a bill the team already owes (money centralization P2, owner ruling C2) ─────
      Set when the "we paid for something" picker's FIRST group — "Bills you owe" — is what the
      coach chose. It turns the branch from *create a cost* into *record a payment against this
@@ -805,7 +845,9 @@ interface ConvDuesPlayer {
   /** Every debt still standing, newest first. Empty for a family owed nothing. */
   debts: ConvDebt[];
 }
-interface ConvDrive { id: string; name: string }
+/** A drive the conversation can log against — and, since mig 285, the budget line it is raising
+ *  for, so the form can state where this money will land before the coach saves it. */
+interface ConvDrive { id: string; name: string; raisingFor: string | null }
 interface ConvDriveDetail {
   rebatePercent: number;
   players: {
@@ -998,10 +1040,11 @@ function MoneyRecordsPanel({
    */
 
   /* Money coming IN (mig 243): income and money back, in one list beside the two money-out ones.
-     `derivedKeys` are the category+item rows whose actual already comes from a fundraiser or a
-     sponsor — the form greys those out and says why, and the server refuses them regardless. */
+     ⚰ `derivedKeys` IS GONE (owner ruling 2026-09-08). It held the category+item rows whose actual
+     comes from a drive or a sponsor, so this form could grey them and warn — a courtesy in front of
+     a save-time refusal. The words themselves left the "Other money in" list, so there is nothing to
+     grey, nothing to warn about, and no payload to carry: see `otherInCategories`. */
   const [moneyIn, setMoneyIn] = useState<RepTeamMoneyIn[]>([]);
-  const [derivedKeys, setDerivedKeys] = useState<Set<string>>(new Set());
 
   /* ── The register (money redesign P3) ──────────────────────────────────────────────────────
      The whole season's book, assembled server-side, with each row's balance already attached.
@@ -1889,6 +1932,32 @@ function MoneyRecordsPanel({
   }
 
   /**
+   * "Raising for" opens on the Sponsorship shelf's standard word — on BOTH sponsor branches.
+   *
+   * ⚠ PRE-FILLED, NEVER ASKED (owner ruling 2026-09-08): the coach does not have to answer it, only
+   * change it. A render-phase adjustment through `prefillConv`, the idiom the club branch's
+   * single-bill pre-answer already uses — mirrored into the discard baseline so the product
+   * answering does not read as the coach typing, and re-applied on re-entry because `selectBranch`
+   * clears the branch's questions.
+   *
+   * ⚠ ONE FUNCTION, TWO BRANCHES. "A sponsor came through" and "A sponsor promised us money" both
+   * create a sponsor and both need the same opening word; written out twice it was the same three
+   * lines 450 lines apart, with nothing to tell a maintainer fixing one that the other existed.
+   */
+  function prefillSponsorRaisingFor() {
+    if (conv.sponsorBudgetItemId) return;
+    const fallback = defaultRaisingFor(categories, 'sponsor');
+    if (fallback?.itemId) {
+      prefillConv(c => ({
+        ...c,
+        sponsorBudgetItemId: fallback.itemId!,
+        sponsorBudgetItemName: fallback.itemName,
+        sponsorBudgetCategoryName: fallback.categoryName,
+      }));
+    }
+  }
+
+  /**
    * Open the conversation the way a DOOR asked for it (money centralization P2).
    *
    * ⚠ COMPOSES `openConversation` + `selectBranch` rather than re-implementing either. Every door
@@ -2007,8 +2076,17 @@ function MoneyRecordsPanel({
       // finished one — offering it would be a refusal wearing a picker.
       setDrives(((data.fundraisers ?? []) as Array<{
         id: string; name: string; kind?: string; isActive?: boolean;
+        budgetCategoryName?: string | null; budgetItemName?: string | null;
       }>).filter(f => (f.kind ?? 'fundraiser') !== 'sponsor' && f.isActive !== false)
-        .map(f => ({ id: f.id, name: f.name })));
+        .map(f => ({
+          id: f.id,
+          name: f.name,
+          /* "Fundraising · Merchandise sales" — the shelf and the word, the way every other money
+             surface prints a filing. Null on a legacy drive, which simply shows no note. */
+          raisingFor: f.budgetItemName
+            ? [f.budgetCategoryName, f.budgetItemName].filter(Boolean).join(' · ')
+            : null,
+        })));
     } catch (e: any) {
       if (gen === convLoadGen.current) setDrivesError(e.message);
     }
@@ -2411,7 +2489,7 @@ function MoneyRecordsPanel({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
     } else if (convBranch === 'drive') {
       if (!conv.driveId) throw new Error('Pick which drive the money came from.');
-      if (!conv.drivePlayerId) throw new Error('Pick which player it counts for.');
+      if (!conv.drivePlayerId) throw new Error('Say who raised it — a player, or the whole team.');
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
       if (!form.receivedDate) throw new Error('Enter the day the money arrived.');
       // The same grammar as the dues branch above (Phase C) — the third money-in door, kept in
@@ -2423,7 +2501,10 @@ function MoneyRecordsPanel({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            playerId: conv.drivePlayerId,
+            /* ⚠ AN EXPLICIT null IS "the whole team" — the server distinguishes it from a MISSING
+               field, because "I did not say" and "nobody in particular" are different answers and
+               only one of them is a coach's. The sentinel never leaves the browser. */
+            playerId: conv.drivePlayerId === WHOLE_TEAM_ANSWER ? null : conv.drivePlayerId,
             amountRaised: amount,
             receivedDate: form.receivedDate,
             notes: form.notes.trim() || null,
@@ -2486,6 +2567,9 @@ function MoneyRecordsPanel({
             sponsorAmount: amount,
             receivedDate: form.receivedDate,
             method: conv.sponsorMethod || null,
+            // Which Sponsorship line it is raising for (mig 285) — the same field the sponsor's own
+            // room edits later, and the server re-checks the shelf whatever is sent.
+            budgetItemId: conv.sponsorBudgetItemId || null,
             creditPlan: plan,
             tagIds: formTags,
           }),
@@ -2605,6 +2689,61 @@ function MoneyRecordsPanel({
     // its ids can never arrive on different renders and half-answer the form.
     if (!formOpen && canWriteMoney) openConversationFrom(recordSignal.intent);
   }
+  /**
+   * ⚠⚠ WHAT "OTHER MONEY IN" MAY BE FILED AGAINST — the typed words, and nothing else (owner
+   * ruling 2026-09-08, mockup 8aa1e633 screen C).
+   *
+   * THE REMOVAL IS THE MODEL. Fundraising and Sponsorship words are filled in from the Fundraising
+   * tab now, so they are not offered here at all — not blocked, not greyed, not warned about:
+   * simply absent. What that deletes with it is the whole apparatus that used to stand in for this
+   * one filter — an amber note that read like advice over a live Save, a server 409 repeating the
+   * same sentence as an error, and a "carry me there" design that was drawn and dropped. **There is
+   * nothing to refuse because there is nothing to pick.** The first question of the conversation
+   * already routes fundraising money to its own answer.
+   *
+   * ⚠ THE FILTER IS THE WORD'S OWN SOURCE, never a list of names. A coach's word on the Fundraising
+   * shelf is born `fundraiser` (mig 285), so it leaves this list on the day it is created without
+   * anybody maintaining anything.
+   *
+   * ⚠⚠ EXCEPT THE ROW ALREADY CHOSEN, WHICH IS THE PICKER'S OWN LOAD-BEARING RULE ("a saved
+   * record's own word must never fall out of the list it is displayed in"). A LEGACY income record
+   * — one written before this release, when the words were still offered — must stay editable: its
+   * amount, its date and its note are all correctable, and a picker that answered "nothing
+   * selected" would let an ordinary edit silently strip the item off the row. The server agrees:
+   * it refuses only a record being MOVED onto a derived word, never one already sitting there.
+   *
+   * ⚠ EMPTY CATEGORIES ARE DROPPED, so the list never shows a heading with no rows under it — the
+   * platform Fundraising shelf disappears entirely rather than becoming an empty group.
+   */
+  const otherInCategories = useMemo(() => categories
+    .map(c => ({
+      ...c,
+      items: c.items.filter(i =>
+        i.direction !== 'in' || i.actualSource === 'typed' || i.id === form.budgetItemId),
+    }))
+    .filter(c => c.items.length > 0),
+  [categories, form.budgetItemId]);
+
+  /**
+   * The sponsor branch's "Raising for", as the picker's own shape — assembled from what the branch
+   * stored, never looked up again.
+   *
+   * ⚠⚠ IT USED TO SCAN `categories` FOR THE ID, AND THAT WAS THE DEFECT. A word created inside the
+   * picker exists only in the picker's own local list until this panel's next full reload, so the
+   * scan missed and the field blanked itself the moment a coach added their own sponsorship word.
+   * Holding the two names beside the id costs two flat strings `touched()` can compare and removes
+   * the lookup entirely.
+   */
+  const sponsorRaisingFor = useMemo<BudgetItemSelection | null>(() => (
+    conv.sponsorBudgetItemId
+      ? {
+        categoryId: '', categoryName: conv.sponsorBudgetCategoryName,
+        itemId: conv.sponsorBudgetItemId, itemName: conv.sponsorBudgetItemName,
+        suggestedAmount: null,
+      }
+      : null
+  ), [conv.sponsorBudgetItemId, conv.sponsorBudgetItemName, conv.sponsorBudgetCategoryName]);
+
   /** The category+item pairs this team budgeted for — rebuilt only when the plan reloads, not on
    *  every keystroke in the open form (the form's state lives in this same component). */
   const plannedPairs = useMemo(() => ({
@@ -2710,7 +2849,6 @@ function MoneyRecordsPanel({
          expenses list a coach came here for. The tab shows its own empty state instead. */
       if (inData) {
         setMoneyIn(inData.moneyIn ?? []);
-        setDerivedKeys(new Set<string>(inData.derivedKeys ?? []));
       }
       /* ⚠ NOT BEST-EFFORT. The other reads here decorate a list; this one IS the list. A silent
          failure would render an empty book on a team with a season of money in it — the worst
@@ -4055,6 +4193,12 @@ function MoneyRecordsPanel({
         description: form.notes.trim() || null,
         sponsorAmount: n,
         expectedBy: pledgeExpected || null,
+        /* ⚠ THE PROMISE NAMES ITS LINE TOO (mig 285), and this half is the one that matters most: a
+           pledge is precisely the record whose money has not landed yet, so telling the plan where
+           it will land is the whole point of budgeting it. Leaving the pledge form off while its
+           received twin carried the field would have been the same record born two different ways
+           on one screen. */
+        budgetItemId: conv.sponsorBudgetItemId || null,
         creditPlan: plan,
         tagIds: formTags,
       }),
@@ -4650,19 +4794,39 @@ function MoneyRecordsPanel({
      * look the same" cannot rot: there is no second thing to keep in step.
      */
     if (pledgeHandOff) {
+      prefillSponsorRaisingFor();
       const plan = sharesFromRows(convSponsorPlan);
       const planProblem = amount > 0 ? creditPlanProblem(plan, amount) : null;
       return (
         <>
           <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label}>Sponsor *</label>
+            {/* ⚠ "Sponsor or grant", and the picker above says the same (owner ruling
+                2026-09-08). The two behave identically — a promise, then money arriving, optionally
+                crediting families — and the only consequence of the difference is which Sponsorship
+                line it reports against, which is what "Raising for" answers. Three labels say
+                "grant" where none did; there is no sponsor-or-grant switch and there is not going
+                to be one. */}
+            <label className={styles.label}>Sponsor or grant *</label>
             <input
               className={styles.input}
               value={conv.sponsorName}
               onChange={e => setConv(c => ({ ...c, sponsorName: e.target.value }))}
-              placeholder="e.g. Riverdale Dental"
+              placeholder="e.g. Riverdale Dental, or Community Sport Grant"
             />
           </div>
+          <RaisingForField
+            kind="sponsor"
+            categories={categories}
+            value={sponsorRaisingFor}
+            onChange={v => setConv(c => ({
+              ...c,
+              sponsorBudgetItemId: v.itemId ?? '',
+              sponsorBudgetItemName: v.itemName,
+              sponsorBudgetCategoryName: v.categoryName,
+            }))}
+            orgSlug={orgSlug}
+            teamId={teamId}
+          />
           {convAmountField('Pledged amount *')}
           <div className={styles.field}>
             {/* ⚠ NO `max`. Every other date on this form is a day money moved and cannot be in the
@@ -4754,8 +4918,14 @@ function MoneyRecordsPanel({
       const detail = conv.driveId ? driveDetail[conv.driveId] : undefined;
       const openPlayers = detail?.players.filter(p => p.logged === null) ?? [];
       const loggedCount = (detail?.players.length ?? 0) - openPlayers.length;
+      /* ⚠ "The whole team" IS AN ANSWER TO "who raised it", NOT A PLAYER — so it never resolves to
+         one, never earns a credit, and never counts toward the drive's participation fraction. The
+         sentinel is checked by identity against the constant, never by an empty string: '' is the
+         unanswered state and the two must not collapse into each other. */
+      const raisedByTeam = conv.drivePlayerId === WHOLE_TEAM_ANSWER;
       const selPlayer = detail?.players.find(p => p.playerId === conv.drivePlayerId) ?? null;
-      const credit = detail ? r2c(amount * detail.rebatePercent / 100) : 0;
+      const selDrive = (drives ?? []).find(d => d.id === conv.driveId) ?? null;
+      const credit = detail && !raisedByTeam ? r2c(amount * detail.rebatePercent / 100) : 0;
       return (
         <>
           {convPickerField({
@@ -4779,6 +4949,14 @@ function MoneyRecordsPanel({
                 {(drives ?? []).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             ),
+            /* ⚠ WHERE THIS MONEY WILL LAND, STATED BEFORE THE SAVE (mig 285, mockup screen F). A
+               drive names the budget line it is raising for, and this is the moment a coach cares:
+               the money is about to exist and they are choosing which drive gets it. Quiet, and
+               absent on a legacy drive that names no line — the nudge for that lives in the drive's
+               own room, where it can be acted on. */
+            after: selDrive?.raisingFor
+              ? <p className={styles.formHint}>Raising for <strong>{selDrive.raisingFor}</strong></p>
+              : undefined,
           })}
           {/* Hand-built rather than `convPickerField` (it has a retry link and a footnote), but it
               goes through the SAME lock gate — see `identityField`. Opened from a leaderboard row,
@@ -4793,7 +4971,11 @@ function MoneyRecordsPanel({
               it and the reason the key is matched rather than merely present. */}
           {conv.driveId && identityField(
             <div className={`${styles.field} ${styles.formGridFull}`}>
-              <label className={styles.label}>Which player *</label>
+              {/* ⚠⚠ "WHO RAISED IT", NOT "WHICH PLAYER" (owner ruling 2026-09-08, mockup screen F).
+                  The question changed because the answer set did: the whole team can be the one who
+                  raised it, and with Fundraising words gone from "Other money in" that is the ONLY
+                  way hoodie-table money reaches the books at all. */}
+              <label className={styles.label}>Who raised it *</label>
               {driveDetailError ? (
                 /* Its own slot + a retry — re-picking the same drive can't refire onChange, so
                    without this link a failed leaderboard read wedged the branch on "Loading…"
@@ -4822,32 +5004,56 @@ function MoneyRecordsPanel({
                    opened this FROM that room was being sent to where they already stood. The
                    entries list with its Edit door is the thing that actually changes a logged
                    amount, so that is what both states point at. */
-                : openPlayers.length === 0 ? (
-                  <p className={styles.formHint}>
-                    {detail.players.length === 0
-                      ? <>Nobody is on this team&rsquo;s roster yet, so there is no one to credit.</>
-                      : <>Every player already has an amount logged for this drive. To change one,
-                          use <strong>Edit</strong> on their row in the drive&rsquo;s entries.</>}
-                  </p>
-                ) : (
+                : (
                 <>
+                  {/* ⚠⚠ A DROPDOWN, NOT AN OPEN LIST (owner ruling 2026-09-08). The mockup drew this
+                      as a menu standing open with a "No family share" chip on the first row; every
+                      other identity question on this form — which drive, which sponsor, which
+                      installment — is a plain dropdown, and the house rule says form selects are
+                      dropdowns. The chip's fact moved to the hint below, where a phone can read it.
+                      ⚠ "The whole team" IS FIRST, above the Players group, because it is the answer
+                      the model made load-bearing rather than an afterthought at the end of a
+                      roster.
+                      ⚠ AND THE LIST IS NEVER EMPTY ANY MORE — which retires a whole dead end. A
+                      drive where every player already had an amount used to draw a select holding
+                      only "Choose…" beside a required label, over a Save that could not succeed;
+                      §135's lock had closed the coach's one exit (re-pointing "Which drive"), so
+                      the dead end was terminal. The team answer is always available, so the
+                      leaderboard's state can no longer strand the form. The two sentences that
+                      described that state survive as the PLAYERS group's own empty note. */}
                   <select
                     className={styles.select}
                     value={conv.drivePlayerId}
                     onChange={e => setConv(c => ({ ...c, drivePlayerId: e.target.value }))}
                   >
                     <option value="">Choose…</option>
-                    {openPlayers.map(p => (
-                      <option key={p.playerId} value={p.playerId}>{p.playerName}</option>
-                    ))}
+                    <option value={WHOLE_TEAM_ANSWER}>{WHOLE_TEAM_ENTRY_LABEL}</option>
+                    {openPlayers.length > 0 && (
+                      <optgroup label="Players">
+                        {openPlayers.map(p => (
+                          <option key={p.playerId} value={p.playerId}>{p.playerName}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
-                  {loggedCount > 0 && (
+                  {raisedByTeam ? (
+                    <p className={styles.formHint}>
+                      Nobody raised it individually, so no family share comes off anyone&rsquo;s dues.
+                    </p>
+                  ) : openPlayers.length === 0 ? (
+                    <p className={styles.formHint}>
+                      {detail.players.length === 0
+                        ? <>Nobody is on this team&rsquo;s roster yet — log it for the whole team.</>
+                        : <>Every player already has an amount logged for this drive. To change one,
+                            use <strong>Edit</strong> on their row in the drive&rsquo;s entries.</>}
+                    </p>
+                  ) : loggedCount > 0 ? (
                     <p className={styles.formHint}>
                       {loggedCount === 1 ? '1 player already has' : `${loggedCount} players already have`}{' '}
                       an amount logged — change those with <strong>Edit</strong> on their row in the
                       drive&rsquo;s entries.
                     </p>
-                  )}
+                  ) : null}
                 </>
               )}
             </div>,
@@ -4877,10 +5083,15 @@ function MoneyRecordsPanel({
               every application mode, whether the credit lowers what they still send or becomes
               money owed back. The landing arithmetic still runs where it always really lived:
               in the save itself, and on the family's own dues screen. */}
-          {detail && selPlayer && amount > 0 && consequence(<>
+          {detail && (selPlayer || raisedByTeam) && amount > 0 && consequence(<>
             <strong>the drive&apos;s total rises by {fmt(amount)}</strong>
-            {credit > 0.005 && <> · <strong>{fmt(credit)}</strong> is credited to{' '}
-              {selPlayer.playerName}&apos;s family ({detail.rebatePercent}%)</>}.
+            {/* ⚠ THE CREDIT CLAUSE IS ABOUT A FAMILY, so a team entry does not get a silent
+                omission — it gets the reason. A coach logging hoodie money on a drive that DOES pay
+                a share would otherwise be left to wonder whether the share was forgotten. */}
+            {raisedByTeam
+              ? <> · <strong>no family share</strong>, because nobody raised it individually</>
+              : credit > 0.005 && <> · <strong>{fmt(credit)}</strong> is credited to{' '}
+                {selPlayer!.playerName}&apos;s family ({detail.rebatePercent}%)</>}.
             {' '}Shows on the ledger as fundraising income.
           </>)}
         </>
@@ -4943,7 +5154,7 @@ function MoneyRecordsPanel({
        *  rather than a separate form. A locked door never draws this: it has already answered. */
       const sponsorPicker = () => (
         <div className={`${styles.field} ${styles.formGridFull}`}>
-          <label className={styles.label}>Which sponsor? *</label>
+          <label className={styles.label}>Which sponsor or grant? *</label>
           {convSponsors === null ? (
             <p className={styles.formHint} style={{ margin: 0 }}>Loading your sponsors…</p>
           ) : (
@@ -4953,7 +5164,7 @@ function MoneyRecordsPanel({
               onChange={e => pickSponsor(e.target.value)}
             >
               <option value="">Choose…</option>
-              <option value="new">A new sponsor…</option>
+              <option value="new">A new sponsor or grant…</option>
               {convSponsors.map(sp => (
                 <option key={sp.id} value={sp.id}>
                   {sp.name}{sp.stillToCome > 0.005 ? ` — ${fmt(sp.stillToCome)} still to come` : ''}
@@ -5024,6 +5235,7 @@ function MoneyRecordsPanel({
       }
 
       // ── COLD: a sponsor came through — create the record with its first arrival. ──
+      prefillSponsorRaisingFor();
       const coldPlan = sharesFromRows(convSponsorPlan);
       const coldPlanProblem = amount > 0 ? creditPlanProblem(coldPlan, amount) : null;
       const coldShares = amount > 0 && !coldPlanProblem
@@ -5033,14 +5245,40 @@ function MoneyRecordsPanel({
         <>
           {sponsorPicker()}
           <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label}>Sponsor *</label>
+            {/* ⚠ "Sponsor or grant", and the picker above says the same (owner ruling
+                2026-09-08). The two behave identically — a promise, then money arriving, optionally
+                crediting families — and the only consequence of the difference is which Sponsorship
+                line it reports against, which is what "Raising for" answers. Three labels say
+                "grant" where none did; there is no sponsor-or-grant switch and there is not going
+                to be one. */}
+            <label className={styles.label}>Sponsor or grant *</label>
             <input
               className={styles.input}
               value={conv.sponsorName}
               onChange={e => setConv(c => ({ ...c, sponsorName: e.target.value }))}
-              placeholder="e.g. Riverdale Dental"
+              placeholder="e.g. Riverdale Dental, or Community Sport Grant"
             />
           </div>
+          {/* ⚠⚠ THIS FIELD *IS* THE SPONSOR-VERSUS-GRANT DISTINCTION (owner ruling 2026-09-08), which
+              is why no type switch was added beside it. A grant and a sponsor behave identically —
+              a promise, then money arriving, optionally crediting families — and the only
+              consequence of the difference is which Sponsorship line it reports against. A separate
+              control would be a second place to say one thing.
+              ⚠ THE SAME COMPONENT THE SPONSOR'S OWN ROOM USES, so a sponsor born here and one
+              edited later meet one field with one filter and one set of words. */}
+          <RaisingForField
+            kind="sponsor"
+            categories={categories}
+            value={sponsorRaisingFor}
+            onChange={v => setConv(c => ({
+              ...c,
+              sponsorBudgetItemId: v.itemId ?? '',
+              sponsorBudgetItemName: v.itemName,
+              sponsorBudgetCategoryName: v.categoryName,
+            }))}
+            orgSlug={orgSlug}
+            teamId={teamId}
+          />
           {convAmountField('Amount *')}
           <div className={styles.field}>
             {/* ⚠ THE DAY THE MONEY ARRIVED (SP-2, 2026-08-28) — this branch posted income dated
@@ -5701,16 +5939,6 @@ function MoneyRecordsPanel({
       && !planned.has(taxonomyKey(form.budgetCategoryId, form.budgetItemId)),
     );
 
-    /* ⚠⚠ ONE ROW, ONE SOURCE (§4.1). Fundraisers and sponsors already report their own actuals and
-       PLAYER REBATES ARE COMPUTED FROM THEM, so a typed income record on the same row would count
-       the same dollar twice and reach a family's dues, not just a report. Said here, in the moment,
-       rather than only at save time. The server refuses it regardless — this is the courtesy.
-       Money back is exempt: it reduces such a row rather than being a second source for it. */
-    const derived = Boolean(
-      entryKind === 'income' && form.budgetItemId
-      && derivedKeys.has(taxonomyKey(form.budgetCategoryId || null, form.budgetItemId)),
-    );
-
     /* ⚠⚠ ONE FIELD, TWO KINDS OF ANSWER (owner ruling C2, 2026-08-23). On the "we paid for
        something" branch this picker also offers the bills the team already owes, as its FIRST
        group — so a coach never has to decide whether their payment is "a cost" or "a payable"
@@ -5747,11 +5975,27 @@ function MoneyRecordsPanel({
             our filing system before the word they wanted would appear. The picker searches both
             halves at once: four letters of "diamond" finds Facilities · Diamond permits. */}
         <BudgetItemPicker
-          categories={categories}
+          /* ⚠⚠ "OTHER MONEY IN" HOLDS ONLY WHAT IS TYPED (owner ruling 2026-09-08) — the removal
+             this whole model turns on. See `otherInCategories`. */
+          categories={wantIn ? otherInCategories : categories}
           /* ⚠ The bill form's label is "Filed under", so the picker's default "Search what this
              is…" hint went back to being circular — the override states the act instead (fold form
-             redesign, finding 2, caught live in the §119 walk). */
-          placeholder={isPayableForm ? 'Choose a budget item — e.g. Tournaments · Entry fees' : undefined}
+             redesign, finding 2, caught live in the §119 walk).
+             ⚠ AND THE INCOME HINT CHANGED WITH THE LIST. It used to suggest "sponsorship", "grant"
+             — two words that are no longer in it, so the box was offering an example of something a
+             coach could search for and never find. */
+          placeholder={isPayableForm ? 'Choose a budget item — e.g. Tournaments · Entry fees'
+            : wantIn ? 'Search what this is — e.g. “interest”, “rebate”'
+            : undefined}
+          /* One sentence for the coach who typed "merch" before reading the question above. Cheap
+             insurance on an empty state that already existed — the first dropdown already says
+             where fundraising goes. */
+          emptyNote={wantIn
+            ? 'Fundraising and sponsor money is recorded under “Fundraiser money came in” or “A sponsor came through”, above.'
+            : undefined}
+          /* Where a word invented here will report — the money module's sentence, not this
+             control's. It only ever speaks for a typed shelf; see `newMoneyInWordNote`. */
+          newItemNote={newMoneyInWordNote}
           /* ⚠ The bill form's ONE grounds story (design pass D3, owner-approved 2026-08-29): its
              picker wears the portal's standard field ground like every input beside it. Only the
              bill branch — the conversation's branches keep the picker's own clothes until the
@@ -5808,9 +6052,13 @@ function MoneyRecordsPanel({
             ? `${chosenName || 'This'} isn’t in your budget — it will show on Budget vs. Actual as income you didn’t plan for.`
             : `${chosenName || 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
         )}
-        {derived && fieldWarning(
-          `${chosenName || 'This row'}’s actual already comes from your fundraisers and sponsors. Record the money there — logging it here as well would count it twice.`,
-        )}
+        {/* ⚰ THE DERIVED-ROW WARNING IS GONE, AND IT WAS NEVER A WARNING (owner ruling 2026-09-08).
+            It showed an amber note under this field when the chosen row's actual came from a drive
+            or a sponsor — advice-shaped, with Save still live, in front of a server refusal that
+            said the same sentence back as an error after the coach had typed everything in. And it
+            was conditional on the team having BUDGETED that word, so the identical double count
+            saved without complaint on a team that had not. Both halves go: the words are not in
+            this list any more (see `otherInCategories`), so there is nothing to warn about. */}
         {/* ⚠ "PICK AN ITEM TOO" IS GONE, AND THAT IS THE POINT OF ONE CONTROL. It existed because
             the two chained selects let a coach answer half the question — a category with no item —
             and leave the form looking finished. A single searchable control cannot reach that

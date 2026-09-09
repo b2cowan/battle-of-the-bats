@@ -36,7 +36,7 @@ import {
 } from '@/lib/coach-dues-actual';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip } from '@/lib/coach-cash-strip';
-import { placeDerivedActual, UNPLANNED_DERIVED_CATEGORY, unplannedDerivedItemName } from '@/lib/coach-money-derived';
+import { placeDerivedActual, taxonomyKey, UNPLANNED_DERIVED_CATEGORY, unplannedDerivedItemName } from '@/lib/coach-money-derived';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 
@@ -425,7 +425,7 @@ export const GET = withObservability(async (req: Request,
      dollar it is. ⚠ GATED EXACTLY AS THE PLAYER DUES TAB IS AND NO WIDER: this whole route already
      refuses a coach without `canViewMoney` above, which is the same key that opens Dues. Nothing
      here widens who can read a family name. */
-  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, paidBackByCredit, rosterRes] = await Promise.all([
+  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, paidBackByCredit, rosterRes, fundraiserRecordsRes] = await Promise.all([
     getRepTeamMoneyIn(programYear.id),
     getDerivedIncomeClaims(programYear.id),
     getSeasonFundraiserEntries(programYear.id),
@@ -436,6 +436,17 @@ export const GET = withObservability(async (req: Request,
     supabaseAdmin
       .from('rep_roster_players')
       .select('id, player_first_name, player_last_name')
+      .eq('program_year_id', programYear.id),
+    /* ⚠ EVERY fundraising record, not just the sponsors — ONE read doing two jobs (mig 285). The
+       pledge line below wants sponsors only; the placement below that wants the word each record is
+       RAISING FOR, whichever kind it is. Two queries against one table on the season's heaviest
+       report would be a round trip bought to keep a filter in the SQL.
+       ⚠ IN THIS WAVE, not after it. It depends on none of its eight neighbours, and this route's own
+       header calls itself the heaviest read in the portal — a widened query left sitting below the
+       wave is pure added latency on the screen a coach opens to reconcile their books. */
+    supabaseAdmin
+      .from('rep_fundraisers')
+      .select('id, name, kind, pledged_amount, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
       .eq('program_year_id', programYear.id),
   ]);
   /* ⚠ THE SAME NAME THE REGISTER PRINTS, assembled the same way — a family reading as "Maya Ledger"
@@ -460,11 +471,28 @@ export const GET = withObservability(async (req: Request,
       arrivedBySponsor.set(e.fundraiserId, (arrivedBySponsor.get(e.fundraiserId) ?? 0) + e.amountRaised);
     }
   }
-  const { data: sponsorRecordRows } = await supabaseAdmin
-    .from('rep_fundraisers')
-    .select('id, name, pledged_amount, created_at')
-    .eq('program_year_id', programYear.id)
-    .eq('kind', 'sponsor');
+  const fundraiserRecordRows = fundraiserRecordsRes.data;
+  /**
+   * WHERE EACH DRIVE AND SPONSOR SAYS ITS MONEY BELONGS (mig 285) — the record's own answer, which
+   * replaces the pooled guess for every record that has one.
+   *
+   * ⚠ THE NAMES COME FROM THE JOINS, not from anything stored on the record: a word renamed on the
+   * Budget Plan reads renamed here in the same breath.
+   */
+  const raisingForByRecord = new Map<string, { categoryId: string; categoryName: string | null; itemId: string; itemName: string }>();
+  for (const f of (fundraiserRecordRows ?? []) as Array<Record<string, unknown>>) {
+    const itemId = f.budget_item_id as string | null;
+    const categoryId = f.budget_category_id as string | null;
+    const itemName = ((f.budget_items as { name?: string } | null)?.name) ?? null;
+    if (!itemId || !categoryId || !itemName) continue;
+    raisingForByRecord.set(f.id as string, {
+      categoryId,
+      categoryName: ((f.budget_categories as { name?: string } | null)?.name) ?? null,
+      itemId,
+      itemName,
+    });
+  }
+  const sponsorRecordRows = (fundraiserRecordRows ?? []).filter(f => f.kind === 'sponsor');
   const sponsorPledges = (sponsorRecordRows ?? [])
     .map(s => ({
       fundraiserId: s.id as string,
@@ -526,7 +554,29 @@ export const GET = withObservability(async (req: Request,
      rows (the money-in write path refuses it), so counting both here is impossible by construction
      rather than by care.
      ⚠ SPLIT BY SOURCE. Drives and sponsors are two totals against two sets of lines; placing one
-     with the other's category would look precise and be wrong. */
+     with the other's category would look precise and be wrong.
+
+     ⚠⚠ AND SINCE MIG 285 EACH RECORD PLACES ITSELF — the pool is the FALLBACK now, not the rule.
+     A drive or a sponsor names the budget line it is "raising for", so its realised total lands on
+     that word's row and nowhere else. What is left for `placeDerivedActual` is exactly the honest
+     residue: records written before the migration whose season's plan was too ambiguous to link
+     them safely, and records a coach deliberately cleared.
+
+     ⚠⚠ THE RESIDUE IS POOLED BY THE PLAN'S WHOLE SET OF CLAIMS, UNCHANGED — the subset that narrows
+     is the RECORDS, never the claims (`/review`, correctness lens, 2026-09-08, and the plan said so
+     first). The first cut also filtered the CLAIMS, dropping any line a record already named, on the
+     reasoning that such a line no longer claims the pool. That is wrong in the direction this module
+     exists to prevent: a team budgeting TWO fundraising lines whose coach has linked ONE drive would
+     have had the remaining claim stand alone, so `placeDerivedActual` would resolve the leftover
+     pool CONFIDENTLY onto the other line — money placed on a row it has no connection to, and no way
+     for the coach to tell. The honest answer for an unlinked record is the one the plan's claims give
+     on their own: one item and it lands there (which is also what the report said before mig 285),
+     two and it lands in the category's "Not itemized", none and it names itself.
+
+     ⚠ THE DEFECT THIS REMOVES was the one that opened the whole thread: budget TWO fundraising
+     lines and `placeDerivedActual` refused to guess between them, so both rows read blank while
+     every raised dollar collected in a row called "Not itemized". A team was punished for planning
+     carefully. */
   const derivedSpend: RollupSpend[] = [];
   {
     for (const source of ['fundraiser', 'sponsor'] as const) {
@@ -576,6 +626,11 @@ export const GET = withObservability(async (req: Request,
       }
       for (const [id, row] of byParent) {
         if (Math.abs(row.kept) < 0.005) continue;
+        /* ⚠ THE RECORD'S OWN ANSWER WINS (mig 285); the pool above is what a record without one
+           falls back to. This is the whole placement change: one drive raising for *Merchandise
+           sales* and another for *Fundraising drive* now land on two different rows, which is what
+           the coach planned and what the pool could never express. */
+        const own = raisingForByRecord.get(id);
         derivedSpend.push({
           id: `derived-${source}-${id}`,
           /* The drive or sponsor's own name, and what it kept out of what it took — the figure a
@@ -583,8 +638,10 @@ export const GET = withObservability(async (req: Request,
           description: row.toFamilies > 0.005
             ? `${row.name} — ${fmtMoney(row.kept)} of ${fmtMoney(row.raised)}, ${fmtMoney(row.toFamilies)} to families`
             : row.name,
-          categoryId: at.categoryId, categoryName,
-          itemId: itemKey, itemName,
+          categoryId: own?.categoryId ?? at.categoryId,
+          categoryName: own ? own.categoryName : categoryName,
+          itemId: own?.itemId ?? itemKey,
+          itemName: own ? own.itemName : itemName,
           amount: Math.round(row.kept * 100) / 100,
           paidDate: null,
           direction: 'in' as const,

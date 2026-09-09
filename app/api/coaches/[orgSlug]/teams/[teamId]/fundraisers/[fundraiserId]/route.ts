@@ -16,6 +16,7 @@ import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { isSponsorStatus } from '@/lib/coach-fundraising';
 import { creditPlanProblem, type CreditPlanShare } from '@/lib/sponsor-arrivals';
+import { resolveRaisingForItem } from '@/lib/coach-budget-items';
 import { applySponsorAgreement, getSponsorCreditPlan } from '@/lib/sponsor-arrivals-server';
 
 /**
@@ -105,6 +106,24 @@ export const PATCH = withObservability(async (req: Request,
   if (body.startDate !== undefined) updates.start_date = body.startDate || null;
   if (body.endDate   !== undefined) updates.end_date   = body.endDate   || null;
   if (body.isActive  !== undefined) updates.is_active  = Boolean(body.isActive);
+  /* ⚠⚠ "RAISING FOR" IS RE-AUTHORISED ON EVERY EDIT, against THIS record's own shelf (mig 285) —
+     the same resolver the create door uses, so the two cannot drift into different ideas of what a
+     drive may raise for. `undefined` means "not editing it"; an explicit null clears it back to the
+     legacy state, which is a legitimate thing to want and which the room's own picker cannot
+     express, so it is accepted rather than refused.
+     ⚠ THE CATEGORY MOVES WITH THE ITEM, re-derived here rather than trusted (mig 282 part 2). A
+     record keeping its old shelf while its word lives under a new one is the two-headings-for-one-
+     row state the Data Dictionary warns about, and this is the door that would create it.
+     ⚠ NO UNDO, and that is deliberate (plan §4): the board re-reads and the report follows. */
+  if (body.budgetItemId !== undefined) {
+    const raisingFor = await resolveRaisingForItem(
+      body.budgetItemId, existing.kind === 'sponsor' ? 'sponsor' : 'fundraiser',
+      ctx!.org.id, team.id, team.sport,
+    );
+    if (!raisingFor.ok) return NextResponse.json({ error: raisingFor.error }, { status: 400 });
+    updates.budget_item_id     = raisingFor.item?.id ?? null;
+    updates.budget_category_id = raisingFor.item?.categoryId ?? null;
+  }
   // Q13 (mig 269): the pledge's optional expected-by date — edited on the agreement sheet.
   if (body.expectedBy !== undefined) {
     if (body.expectedBy !== null && body.expectedBy !== '' &&

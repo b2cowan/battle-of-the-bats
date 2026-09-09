@@ -3,12 +3,14 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
+import type { BudgetItemActualSource } from '@/lib/coach-budget-totals';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless, denyUnlessTeamMoneyWrite } from '@/lib/coach-capabilities';
 import {
   budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
   countBudgetItemUsageByItem, categoryVisibleToTeam, listVisibleBudgetCategories,
+  budgetItemSourceForCategory,
   type BudgetItemTier, type OwnedBudgetItem, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 
@@ -104,6 +106,12 @@ export const GET = withObservability(async (req: Request,
     scope:     row.scope as 'org' | 'team' | 'both',
     sortOrder: row.sort_order as number,
     isDefault: row.is_default as boolean,
+    /* ⚠ THE SHELF'S OWN ANSWER (mig 285), carried to the client for exactly two jobs: the create
+       panel's footer says where a `typed` shelf's word will report, and the "Raising for" pickers
+       filter to their own shelf. Read raw, never coalesced — the column is NOT NULL with a database
+       default, so a value that is missing means the select forgot to ask for it, and hiding that
+       behind a plausible 'typed' would put the whole Fundraising shelf in the other-money-in list. */
+    incomeSource: row.income_source as BudgetItemActualSource,
     createdAt: row.created_at as string,
     items:     ((row.budget_items ?? []) as Record<string, unknown>[])
       .filter(item => !item.is_misc)
@@ -231,6 +239,11 @@ export const POST = withObservability(async (req: Request,
       scope:     cat.scope as 'org' | 'team' | 'both',
       sortOrder: cat.sort_order as number,
       isDefault: cat.is_default as boolean,
+      /* ⚠ A COACH'S OWN SHELF IS ALWAYS `typed` (mig 285) — nothing reports the money on a heading
+         somebody just invented. Read off the created row rather than hardcoded, so this cannot drift
+         from what the database stored; it is what tells the create panel to say "Will report under
+         Other income." about the next word filed here. */
+      incomeSource: cat.income_source as BudgetItemActualSource,
       createdAt: cat.created_at as string,
       items:     [],
     };
@@ -286,7 +299,9 @@ export const POST = withObservability(async (req: Request,
      is the point: what a list offers and what a save accepts must be one rule. */
   const { data: cat, error: catErr } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, scope, org_id, team_id')
+    // ⚠ `income_source` (mig 285) — the shelf decides who fills this word's number in, and the row
+    // is already being fetched for the visibility check, so the answer costs nothing extra.
+    .select('id, scope, org_id, team_id, income_source')
     .eq('id', catId)
     .or(`org_id.is.null,org_id.eq.${ctx.org.id}`)
     .in('scope', ['team', 'both'])
@@ -340,6 +355,12 @@ export const POST = withObservability(async (req: Request,
       is_default:       false,
       is_misc:          false,
       direction,
+      /* ⚠⚠ THE SHELF DECIDES, NOT THE BODY (mig 285, owner ruling 2026-09-08). A word a coach files
+         under Fundraising is a fundraising word from birth — recorded on the Fundraising tab and
+         reported under Fundraising — where before this every word they invented was born 'typed' and
+         reported under Other income whatever shelf it sat on. Derived from the category row the
+         visibility check above already fetched; the request body is never consulted. */
+      actual_source:    budgetItemSourceForCategory(direction, cat as { income_source?: string | null }),
     })
     .select()
     .single();

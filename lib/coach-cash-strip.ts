@@ -10,6 +10,9 @@ import {
    `coach-club-money`, and importing the union rather than re-declaring three strings is what stops
    a fourth answer reaching the report and silently missing the cash bands. */
 import type { ClubRequestReportSide } from './coach-club-money';
+/* ⚠ ONE SPELLING OF "The whole team" (owner ruling 2026-09-08). A drive entry with no player is a
+   real answer now, not a gap, and this module used to give it two different names of its own. */
+import { WHOLE_TEAM_ENTRY_LABEL } from './coach-fundraising';
 
 /**
  * The Months view's CASH arithmetic — every dollar that actually moved, by the month it moved,
@@ -337,8 +340,13 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
         kind: sponsor ? 'Season sponsorship' : 'Fundraising',
         /* ⚠ A DRIVE'S RECORD HAS WORDS OF ITS OWN AND A SPONSOR'S DOES NOT: a drive entry is one
            family's effort, so WHO raised it is the record; a sponsor's arrival is the sponsor, who
-           is already the row. */
-        description: sponsor ? null : (e.playerName?.trim() || 'Team collection'),
+           is already the row.
+           ⚠⚠ A NULL PLAYER ON A DRIVE IS "The whole team" AND NOT AN ANOMALY (owner ruling
+           2026-09-08). This read "Team collection" with a note reading "not attributed" — two more
+           names for a row the product now calls one thing everywhere, and a note apologising for a
+           state that is a coach's deliberate answer. `WHOLE_TEAM_ENTRY_LABEL` is the single
+           spelling; the note goes because there is nothing to explain. */
+        description: sponsor ? null : (e.playerName?.trim() || WHOLE_TEAM_ENTRY_LABEL),
         /* ⚠⚠ THE REBATE IS A NOTE, NOT A SECOND FIGURE. The credit already lowered that family's
            dues; printing it as an amount beside the gross would read as money leaving, which is
            the one thing a drive's cash never does. */
@@ -346,7 +354,7 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
           ? 'received'
           : e.rebateAmount > 0.005
             ? `${money(e.rebateAmount)} credited to their dues`
-            : e.playerId ? null : 'not attributed',
+            : null,
       },
     );
   }

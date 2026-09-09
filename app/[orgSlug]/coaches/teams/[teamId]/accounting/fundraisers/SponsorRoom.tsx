@@ -34,8 +34,15 @@ import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { moneyMovedMaxDate } from '@/lib/money-date-guards';
 import { writeFailure } from '@/lib/coach-sandbox-refusal';
-import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod, type RepTeamTag } from '@/lib/types';
-import { SPONSOR_STANDING_LABEL, type CreditUnit, type SponsorStanding } from '@/lib/coach-fundraising';
+import {
+  DUES_PAYMENT_METHOD_LABEL,
+  type BudgetCategoryWithItems, type DuesPaymentMethod, type RepTeamTag,
+} from '@/lib/types';
+import {
+  RAISING_FOR_NUDGE, SPONSOR_STANDING_LABEL, type CreditUnit, type SponsorStanding,
+} from '@/lib/coach-fundraising';
+import RaisingForField, { storedRaisingFor } from '@/components/coaches/RaisingForField';
+import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import {
   accruedByFamilyFromRounds, deriveAllArrivalCredits, sharesFromRows, stillToCome, creditPlanProblem,
   type CreditPlanShare,
@@ -121,8 +128,20 @@ function RefusalLines({ refusals }: { refusals: { playerId: string; exposure: nu
 /** The sponsor's quiet facts — its note and tags — for the shell's action row (§135 walk). Needs
  *  only the record itself, so the panel can draw it before the room's own read has landed. */
 export function sponsorFacts(s: Fundraiser, moneyTags: RepTeamTag[]): ReactNode {
-  if (!s.description && s.tagIds.length === 0) return null;
-  return <>{s.description}<TagChips tagIds={s.tagIds} moneyTags={moneyTags} /></>;
+  /* ⚠ RAISING FOR JOINS THE FACTS (mig 285) — the sponsor half of the drive room's own line, and
+     the reason the row can never be empty any more: a legacy sponsor with no description and no
+     tags still has the one thing worth saying, which is that nobody has told it where its money
+     belongs. The exception speaks; the standard word does not. */
+  const raising = s.budgetItemName
+    ? <>Raising for <strong>{s.budgetItemName}</strong></>
+    : <span className={styles.mutedInline}>{RAISING_FOR_NUDGE.sponsor}</span>;
+  return (
+    <>
+      {raising}
+      {s.description && <> · {s.description}</>}
+      <TagChips tagIds={s.tagIds} moneyTags={moneyTags} />
+    </>
+  );
 }
 
 export function SponsorRoomBody({
@@ -618,6 +637,7 @@ export function EditSponsorshipSheet({
   sponsor,
   record,
   roster,
+  categories,
   moneyTags,
   onCreateTag,
   onManageChanged,
@@ -630,6 +650,8 @@ export function EditSponsorshipSheet({
   sponsor: Fundraiser;
   record: RoomRecord | null;
   roster: { id: string; name: string }[];
+  /** The team's budget taxonomy, for the "Raising for" picker (mig 285). */
+  categories: BudgetCategoryWithItems[];
   moneyTags: RepTeamTag[];
   onCreateTag: (name: string) => Promise<RepTeamTag | null>;
   onManageChanged: () => void;
@@ -643,6 +665,10 @@ export function EditSponsorshipSheet({
   const [pledged, setPledged] = useState(storedPledged);
   const [expected, setExpected] = useState(sponsor.expectedBy ?? '');
   const [tags, setTags] = useState<string[]>(sponsor.tagIds);
+  /* The record's OWN word, never a default — the same rule the drive's sheet is under: an edit
+     sheet pre-fills what is true, so a legacy sponsor opens with the field empty and its nudge
+     still showing. */
+  const [raisingFor, setRaisingFor] = useState<BudgetItemSelection | null>(storedRaisingFor(sponsor));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -660,6 +686,7 @@ export function EditSponsorshipSheet({
     || notes !== (sponsor.description ?? '')
     || pledgeMoved
     || expected !== (sponsor.expectedBy ?? '')
+    || (raisingFor?.itemId ?? null) !== sponsor.budgetItemId
     || tags.length !== sponsor.tagIds.length
     || tags.some(id => !sponsor.tagIds.includes(id));
   const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to the sponsor' });
@@ -683,6 +710,7 @@ export function EditSponsorshipSheet({
           pledgedAmount: amount,
           expectedBy: expected || null,
           tagIds: tags,
+          budgetItemId: raisingFor?.itemId ?? null,
         }),
       });
       if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
@@ -707,9 +735,22 @@ export function EditSponsorshipSheet({
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             {/* "Sponsor", matching the pledge sheet — one field, one name on the sibling forms. */}
-            <label className={styles.label}>Sponsor *</label>
+            <label className={styles.label}>Sponsor or grant *</label>
             <input className={styles.input} value={name} onChange={e => setName(e.target.value)} required />
           </div>
+          {/* ⚠⚠ THIS FIELD *IS* THE SPONSOR-VERSUS-GRANT DISTINCTION (owner ruling 2026-09-08), and
+              it is why no switch was added. A grant and a sponsor behave identically — a promise,
+              then money arriving, optionally crediting families — and the only consequence of the
+              difference is which Sponsorship line it reports against. A separate type control would
+              be a second place to say one thing. */}
+          <RaisingForField
+            kind="sponsor"
+            categories={categories}
+            value={raisingFor}
+            onChange={setRaisingFor}
+            orgSlug={orgSlug}
+            teamId={teamId}
+          />
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Notes</label>
             {/* ⚠⚠ CAPPED, AND THE CAP IS WHAT LETS THE NOTE SHARE THE DOORS' ROW (§135 walk,

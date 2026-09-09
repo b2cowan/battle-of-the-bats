@@ -7,13 +7,12 @@ import {
   getActiveRepProgramYear,
   getRepTeamMoneyIn,
   createRepTeamMoneyIn,
-  getDerivedIncomeClaims,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
-import { derivedIncomeKeys, whyIncomeIsRefused } from '@/lib/coach-money-derived';
+import { whyIncomeIsRefused } from '@/lib/coach-money-derived';
 import { MONEY_IN_KINDS, MONEY_IN_SOURCES } from '@/lib/coach-money-in';
 import type { MoneyInKind, MoneyInSource } from '@/lib/types';
 
@@ -63,15 +62,14 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
-  const [moneyIn, claims] = await Promise.all([
-    getRepTeamMoneyIn(programYear.id),
-    getDerivedIncomeClaims(programYear.id),
-  ]);
-  const derivedKeys = derivedIncomeKeys(claims);
-  /* The closed rows travel WITH the list so the form can grey them and say why, rather than
-     letting a coach fill in a whole record and meet a refusal at save time. The server refuses
-     regardless — this is the courtesy, not the guard. */
-  return NextResponse.json({ moneyIn, derivedKeys: [...derivedKeys] });
+  /* ⚰ `derivedKeys` LEFT THIS PAYLOAD (owner ruling 2026-09-08). It travelled with the list so the
+     money form could grey the closed rows and say why — a courtesy in front of a save-time refusal.
+     Under the fundraising model there is nothing to grey: Fundraising and Sponsorship words are not
+     in the "Other money in" list at all, so a coach cannot pick one and the amber note under the
+     field went with the rows it described. The refusal survives on the server, structurally, for
+     anything arriving by API. */
+  const moneyIn = await getRepTeamMoneyIn(programYear.id);
+  return NextResponse.json({ moneyIn });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/money-in' });
 
 export const POST = withObservability(async (req: Request,
@@ -131,14 +129,18 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  /* ⚠⚠ ONE ROW, ONE SOURCE (§4.1). A row whose actual already comes from a fundraiser or a sponsor
-     cannot also accept a typed one — player rebates are computed off those figures, so the same
-     dollar counted twice reaches a family's dues, not just a report.
+  /* ⚠⚠ ONE ROW, ONE SOURCE (§4.1). A word whose actual comes from a fundraiser or a sponsor cannot
+     also accept a typed one — player rebates are computed off those figures, so the same dollar
+     counted twice reaches a family's dues, not just a report.
+     ⚠⚠ IT ASKS THE WORD NOW, NOT THE PLAN (owner ruling 2026-09-08). This used to read the season's
+     budget LINES and refuse only where one claimed the row — so a team that had not budgeted for
+     fundraising saved the very same double count without complaint. The guard fired on the careful
+     team and not on the careless one. Structural now, and the claims read leaves this route.
      ⚠ MONEY BACK IS EXEMPT and must be: a tournament really can refund a registration the team
      took, and refusing it would leave the coach no way to record a real event. A refund reduces the
      row rather than being a second source for it. */
   if (kind === 'income') {
-    const refusal = whyIncomeIsRefused(await getDerivedIncomeClaims(programYear.id), linked.item);
+    const refusal = whyIncomeIsRefused(linked.item);
     if (refusal) return NextResponse.json({ error: refusal }, { status: 409 });
   }
 

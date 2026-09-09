@@ -33,8 +33,11 @@ import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSea
 import { formatStoredDate } from '@/lib/timezone';
 import { moneyMovedMaxDate } from '@/lib/money-date-guards';
 import { writeFailure } from '@/lib/coach-sandbox-refusal';
-import type { RepTeamTag } from '@/lib/types';
+import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
 import { fmt } from '@/lib/coach-money-summary';
+import { RAISING_FOR_NUDGE } from '@/lib/coach-fundraising';
+import RaisingForField, { storedRaisingFor } from '@/components/coaches/RaisingForField';
+import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import { TagChips } from './TagChips';
 import type { DriveEntryRow, Fundraiser, RoomRecord } from './types';
 
@@ -54,7 +57,13 @@ export function DriveStatusChip({ active }: { active: boolean }) {
  *  body (§135 walk, 2026-09-03) — so the panel that mounts the shell composes them, while the
  *  composing stays here with the room that owns the words. */
 export function driveFacts(d: Fundraiser, record: RoomRecord, moneyTags: RepTeamTag[]): ReactNode {
-  const loggedActive = record.entries.filter(en => en.playerActive).length;
+  /* ⚠⚠ A TEAM ENTRY IS NEVER A PLAYER (owner ruling 2026-09-08). The fraction answers "how many of
+     the team have logged something", so hoodie-table money — raised by nobody in particular —
+     counts beside it rather than in it, or "2 of 14 players" quietly becomes 3 and a coach reads a
+     player who has not taken part. The two are told apart by `playerId`, never by the absence of a
+     name: the entries GET gives a team row the label "The whole team", so a name is always there. */
+  const teamEntries = record.entries.filter(en => !en.playerId).length;
+  const loggedActive = record.entries.filter(en => en.playerActive && en.playerId).length;
   const dates = d.startDate && d.endDate
     ? `${formatStoredDate(d.startDate, { withYear: false })} → ${formatStoredDate(d.endDate, { withYear: false })}`
     : d.startDate ? `From ${formatStoredDate(d.startDate, { withYear: false })}`
@@ -63,6 +72,15 @@ export function driveFacts(d: Fundraiser, record: RoomRecord, moneyTags: RepTeam
   return (
     <>
       <strong>{loggedActive} of {record.rosterCount}</strong> players logged
+      {teamEntries > 0 && <> · plus <strong>{teamEntries}</strong> {teamEntries === 1 ? 'team entry' : 'team entries'}</>}
+      {/* ⚠ THE EXCEPTION SPEAKS; THE NORMAL CASE DOES NOT — the standing rule this file's siblings
+          are under. A drive raising for the standard word says nothing; a drive raising for
+          *Merchandise sales* says so, because that is where a coach will go looking for its money.
+          A LEGACY record (no word at all) gets the one nudge instead: it is the only place in the
+          product a coach meets that state, and without it there is nothing to act on. */}
+      {d.budgetItemName
+        ? <> · Raising for <strong>{d.budgetItemName}</strong></>
+        : <> · <span className={styles.mutedInline}>{RAISING_FOR_NUDGE.fundraiser}</span></>}
       {dates && <> · {dates}</>}
       {d.description && <> · {d.description}</>}
       <TagChips tagIds={d.tagIds} moneyTags={moneyTags} />
@@ -363,6 +381,7 @@ export function EditDriveSheet({
   orgSlug,
   teamId,
   drive,
+  categories,
   moneyTags,
   onCreateTag,
   onManageChanged,
@@ -373,6 +392,8 @@ export function EditDriveSheet({
   orgSlug: string;
   teamId: string;
   drive: Fundraiser;
+  /** The team's budget taxonomy, for the "Raising for" picker (mig 285). */
+  categories: BudgetCategoryWithItems[];
   moneyTags: RepTeamTag[];
   onCreateTag: (name: string) => Promise<RepTeamTag | null>;
   onManageChanged: () => void;
@@ -387,6 +408,11 @@ export function EditDriveSheet({
   const [end, setEnd] = useState(drive.endDate ?? '');
   const [active, setActive] = useState(drive.isActive);
   const [tags, setTags] = useState<string[]>(drive.tagIds);
+  /* ⚠ THE RECORD'S OWN WORD, NOT THE SHELF'S DEFAULT. An edit sheet pre-fills what is TRUE, so a
+     legacy record opens with the field empty and its nudge still showing — the create form is where
+     the standard word is suggested. Pre-filling a default here would turn "you never answered this"
+     into "you answered it with our guess" on a save the coach made for another reason. */
+  const [raisingFor, setRaisingFor] = useState<BudgetItemSelection | null>(storedRaisingFor(drive));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -396,6 +422,7 @@ export function EditDriveSheet({
     || start !== (drive.startDate ?? '')
     || end !== (drive.endDate ?? '')
     || active !== drive.isActive
+    || (raisingFor?.itemId ?? null) !== drive.budgetItemId
     // Compared as SETS — the picker appends and the server returns its own order.
     || tags.length !== drive.tagIds.length
     || tags.some(id => !drive.tagIds.includes(id));
@@ -420,6 +447,7 @@ export function EditDriveSheet({
           endDate: end || null,
           isActive: active,
           tagIds: tags,
+          budgetItemId: raisingFor?.itemId ?? null,
         }),
       });
       if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
@@ -446,6 +474,16 @@ export function EditDriveSheet({
             <label className={styles.label}>Name *</label>
             <input className={styles.input} type="text" value={name} onChange={e => setName(e.target.value)} required />
           </div>
+          {/* Second field, under the name — the same position the create form puts it in, so the
+              two forms read as one form (mockup 8aa1e633 screen D). */}
+          <RaisingForField
+            kind="fundraiser"
+            categories={categories}
+            value={raisingFor}
+            onChange={setRaisingFor}
+            orgSlug={orgSlug}
+            teamId={teamId}
+          />
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Description</label>
             <textarea className={styles.textarea} value={desc} onChange={e => setDesc(e.target.value)} rows={2} />

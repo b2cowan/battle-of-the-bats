@@ -1986,6 +1986,11 @@
   },
   {
     "tablename": "rep_fundraisers",
+    "indexname": "idx_rep_fundraisers_budget_item",
+    "indexdef": "CREATE INDEX idx_rep_fundraisers_budget_item ON public.rep_fundraisers USING btree (budget_item_id)"
+  },
+  {
+    "tablename": "rep_fundraisers",
     "indexname": "rep_fundraisers_org_id_idx",
     "indexdef": "CREATE INDEX rep_fundraisers_org_id_idx ON public.rep_fundraisers USING btree (org_id)"
   },

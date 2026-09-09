@@ -176,6 +176,23 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
              winter's spending already against it") are the expenses half and are untouched.
            · *Should a moment show it?* **Not a new one.** This moment already opens on the screen
              that changed, so the world does the showing. No copy is added. */
+      /* ⚠⚠ RE-READ FOR FUNDRAISING — ONE WAY IN (2026-09-08), and this moment needed it: the world
+         it lands on GAINED A FUNDRAISING RECORD in that release. CLAUDE.md's two questions:
+           · *Still true?* **Yes, every clause.** "a budget built line by line", "the winter's
+             spending already against it", "dues two payments in — and one family behind" all
+             describe the seeded world, and none of the three moved: the hoodie order's $480 is the
+             same $480, on the same day, on the same word. What changed is the DOOR it came through
+             — it was a typed income record and is now a drive with one whole-team entry — and no
+             sentence here ever named that door.
+           · ⚠ THE SEEDED WORLD DID CHANGE, which is where the feature shows: this team now has a
+             Fundraising tab with a real drive on it, raising for *Merchandise sales* rather than
+             the shelf's standard word, and a board whose one row reads "The whole team" with a dash
+             where a family share would be. A prospect who opens Fundraising from this moment meets
+             the release without a sentence over it.
+           · *Should a moment show it?* **No new clause.** The `ea8ddd14` cap holds every moment to
+             its own one fact, and this one's is the books being open mid-build. If the owner wants
+             team-raised money narrated, the honest move is to SWAP a clause, not append a fourth.
+             Flagged at Owner QA §157. */
       said: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       bannerNote: 'The season is still being built',
     }),
@@ -659,6 +676,22 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          on the STATEMENT, whose folds already behaved this way and did not move. *Should a moment
          show it?* No — same `ea8ddd14` cap, same reasoning: a prospect should find the report easy,
          not be told it folds. Nothing changed here. */
+      /* (Re-read for FUNDRAISING — ONE WAY IN, 2026-09-08. This step LANDS a prospect on Budget vs.
+         Actual, and that report's revenue side moved, so the read is not optional:
+           · *Still true?* YES. The three clauses are the variance verdict on DIAMOND RENTALS, the
+             plan being built in the spring, and the dues ratio — none of them touches fundraising,
+             and the expenses half did not move at all. Season net is unchanged: the same dollars
+             are on the report, distributed differently across its rows.
+           · ⚠ WHAT A PROSPECT SEES DIFFERENTLY, measured rather than assumed: the Bottle Drive's
+             money used to land in a row called "Not in the plan · Fundraising money" because
+             nothing linked a drive to a budget word. It now reads *Fundraising · Fundraising
+             drive*, and the sponsor's $750 reads *Sponsorship · Team sponsorship* — two named rows
+             where there were two anonymous ones. Strictly better and strictly quieter; nothing
+             here claimed either way.
+           · *Should a moment show it?* NO CLAUSE IS ADDED — the same answer §137, §142 and the
+             budget-dates re-read reached, under the same one-proof-point cap (`ea8ddd14`). The
+             seeded world does the showing. If the owner wants "every line gets its own actual"
+             narrated, SWAP a clause. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },

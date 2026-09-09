@@ -16,6 +16,7 @@ import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilitie
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { tournamentToday } from '@/lib/timezone';
 import { isFundraisingKind, isSponsorStatus } from '@/lib/coach-fundraising';
+import { resolveRaisingForItem } from '@/lib/coach-budget-items';
 import { accrueArrival, creditPlanProblem, stillToCome, type CreditPlanShare } from '@/lib/sponsor-arrivals';
 import { writeSponsorArrivalRow } from '@/lib/sponsor-arrivals-server';
 
@@ -24,6 +25,11 @@ function mapNewRecord(
   row: Record<string, any>,
   money?: { arrived: number; credit: number },
   tagIds: string[] = [],
+  /* The word this record is RAISING FOR (mig 285). Passed in rather than read back off `row`,
+     because the insert stores ids and the room needs the names — and the resolver that authorised
+     the word is already holding both. Null is a real answer: the field is pre-filled, never
+     required. */
+  raisingFor?: { itemId: string; itemName: string; categoryId: string; categoryName: string | null } | null,
 ) {
   const arrived = money?.arrived ?? 0;
   const credit = money?.credit ?? 0;
@@ -49,6 +55,10 @@ function mapNewRecord(
     pledgedAmount:       pledged,
     stillToCome:         stillToCome(pledged, arrived),
     tagIds,
+    budgetItemId:        raisingFor?.itemId ?? null,
+    budgetItemName:      raisingFor?.itemName ?? null,
+    budgetCategoryId:    raisingFor?.categoryId ?? null,
+    budgetCategoryName:  raisingFor?.categoryName ?? null,
   };
 }
 
@@ -120,9 +130,14 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
+  /* ⚠ THE WORD IT IS RAISING FOR TRAVELS WITH THE ROW (mig 285), names and all — one join here
+     rather than a second read per open record. The room prints the name in its facts line, the
+     Edit sheets pre-select it, and the recording conversation's drive picker states it under
+     "Which drive"; three surfaces, one answer. The two names are read through the joins rather
+     than stored on the record, so a renamed word reads renamed everywhere at once. */
   const { data: fundraisers, error: fErr } = await supabaseAdmin
     .from('rep_fundraisers')
-    .select('*')
+    .select('*, budget_items(name), budget_categories(name)')
     .eq('program_year_id', programYear.id)
     .order('created_at', { ascending: false });
 
@@ -217,6 +232,12 @@ export const GET = withObservability(async (_req: Request,
       // the list carries them only so the export can, and so opening a record does not need a
       // second fetch to know what it is already labelled.
       tagIds:              tagsByFundraiserId[f.id] ?? [],
+      // The budget line this record is raising for (mig 285). All four null on a legacy record,
+      // which is the state its room shows one quiet nudge about.
+      budgetItemId:        (f.budget_item_id as string | null) ?? null,
+      budgetItemName:      ((f.budget_items as { name?: string } | null)?.name) ?? null,
+      budgetCategoryId:    (f.budget_category_id as string | null) ?? null,
+      budgetCategoryName:  ((f.budget_categories as { name?: string } | null)?.name) ?? null,
     };
   });
 
@@ -271,6 +292,29 @@ export const POST = withObservability(async (req: Request,
     tagIds = resolvedTags;
   }
 
+  /* ⚠⚠ THE WORD THIS RECORD IS RAISING FOR (mig 285), AUTHORISED BEFORE ANYTHING IS WRITTEN — and
+     against the record's OWN SHELF: a drive may only raise for a Fundraising word, a sponsor only
+     for a Sponsorship one. The forms filter their pickers to exactly that, so a coach never meets
+     this refusal; it is the rule the filter is a courtesy for. Absent or null is legitimate — the
+     field is pre-filled, not required — and leaves the record placing by the legacy pool rule.
+     ⚠ The CATEGORY is derived from the item and never taken from the body (mig 282 part 2's rule):
+     Budget vs. Actual reads the two levels in different orders, so a record carrying a category its
+     own word does not live under reports under two headings at once. */
+  const raisingFor = await resolveRaisingForItem(
+    body.budgetItemId, kind, ctx!.org.id, team.id, team.sport,
+  );
+  if (!raisingFor.ok) return NextResponse.json({ error: raisingFor.error }, { status: 400 });
+  const raisedFor = raisingFor.item
+    ? {
+      itemId: raisingFor.item.id, itemName: raisingFor.item.name,
+      categoryId: raisingFor.item.categoryId, categoryName: raisingFor.item.categoryName,
+    }
+    : null;
+  const raisingForColumns = {
+    budget_item_id:     raisingFor.item?.id ?? null,
+    budget_category_id: raisingFor.item?.categoryId ?? null,
+  };
+
   // ── A DRIVE: the record is the whole of it; its rows arrive later, one per player. ──
   if (kind === 'fundraiser') {
     const { data, error } = await supabaseAdmin
@@ -285,13 +329,14 @@ export const POST = withObservability(async (req: Request,
         player_rebate_percent: rebatePct,
         start_date:           startDate || null,
         end_date:             endDate   || null,
+        ...raisingForColumns,
       })
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     if (tagIds.length > 0) await setRepTeamFundraiserTags(data.id, tagIds);
-    return NextResponse.json({ fundraiser: mapNewRecord(data, undefined, tagIds) }, { status: 201 });
+    return NextResponse.json({ fundraiser: mapNewRecord(data, undefined, tagIds, raisedFor) }, { status: 201 });
   }
 
   // ── A SPONSOR: the record (with its promise), the credit plan, and — if the money is already
@@ -375,6 +420,7 @@ export const POST = withObservability(async (req: Request,
       player_rebate_percent: singlePct,
       start_date:           startDate || null,
       end_date:             endDate   || null,
+      ...raisingForColumns,
     })
     .select()
     .single();
@@ -426,6 +472,6 @@ export const POST = withObservability(async (req: Request,
   if (tagIds.length > 0) await setRepTeamFundraiserTags(record.id, tagIds);
 
   return NextResponse.json({
-    fundraiser: mapNewRecord(record, { arrived: received ? amount : 0, credit: Math.round(arrivedCredit * 100) / 100 }, tagIds),
+    fundraiser: mapNewRecord(record, { arrived: received ? amount : 0, credit: Math.round(arrivedCredit * 100) / 100 }, tagIds, raisedFor),
   }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers' });

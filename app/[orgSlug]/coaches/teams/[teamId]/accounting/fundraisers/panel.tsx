@@ -45,11 +45,13 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
-import type { RepTeamTag } from '@/lib/types';
+import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 import { rollUpFundraising, normalizeKindFilter, sponsorStanding } from '@/lib/coach-fundraising';
+import RaisingForField, { defaultRaisingFor } from '@/components/coaches/RaisingForField';
+import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import { stillToCome } from '@/lib/sponsor-arrivals';
 import { fmt } from '@/lib/coach-money-summary';
@@ -86,6 +88,9 @@ export function FundraisersPanel({
   const [defaultCreditPercent, setDefaultCreditPercent] = useState(0);
   /** The team's money-tag vocabulary — the SAME library expenses use (mig 239). */
   const [moneyTags, setMoneyTags] = useState<RepTeamTag[]>([]);
+  /** The team's budget taxonomy, for the "Raising for" pickers (mig 285) — fetched once beside the
+   *  roster, because a picker inside a modal must not open on a spinner. */
+  const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
 
   // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
   // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
@@ -202,11 +207,20 @@ export function FundraisersPanel({
     let cancelled = false;
     (async () => {
       try {
-        const [teamRes, rosterRes] = await Promise.all([
+        /* ⚠ THE BUDGET TAXONOMY RIDES THIS WAVE TOO (mig 285) — every form on this tab now asks
+           which budget line the record is raising for, and the picker cannot open on a spinner. It
+           joins the roster and the team's split for exactly the reason those are here: they matter
+           only when a form opens, and fetching them there would put a spinner inside a modal. */
+        const [teamRes, rosterRes, itemsRes] = await Promise.all([
           fetch(`/api/coaches/${orgSlug}/teams/${teamId}`),
           fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`),
+          fetch(`/api/coaches/${orgSlug}/budget-items?teamId=${teamId}`),
         ]);
         if (cancelled) return;
+        if (itemsRes.ok) {
+          const data = await itemsRes.json();
+          setCategories((data.categories ?? []) as BudgetCategoryWithItems[]);
+        }
         if (teamRes.ok) {
           const data = await teamRes.json();
           setDefaultCreditPercent(Number(data.money?.defaultPlayerCreditPercent ?? 0));
@@ -230,6 +244,8 @@ export function FundraisersPanel({
   const [showCreate, setShowCreate] = useState(false);
   const [formName, setFormName] = useState('');
   const [formDesc, setFormDesc] = useState('');
+  /** Which budget line the new drive is raising for (mig 285) — pre-filled on open, never asked. */
+  const [formRaisingFor, setFormRaisingFor] = useState<BudgetItemSelection | null>(null);
   const [formRebate, setFormRebate] = useState('0');
   const [formStart, setFormStart] = useState('');
   const [formEnd, setFormEnd] = useState('');
@@ -237,10 +253,33 @@ export function FundraisersPanel({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
+  /** The word a NEW drive opens on — computed here so the pre-fill and the dirty test read one
+   *  value and cannot disagree about whether the coach has touched the field. */
+  const raisingForDefault = useMemo(
+    () => defaultRaisingFor(categories, 'fundraiser'),
+    [categories],
+  );
+  /* ⚠ THE TAXONOMY CAN LAND AFTER THE FORM OPENS. It is fetched on mount beside the roster, but a
+     coach who presses "+ Fundraiser" in the first moment would meet an empty picker with no way to
+     get the default back. The picker itself can never set this to null — every pick is a
+     selection — so null unambiguously means "not filled in yet" and this cannot overwrite a
+     deliberate choice. */
+  useEffect(() => {
+    if (showCreate && !formRaisingFor && raisingForDefault) setFormRaisingFor(raisingForDefault);
+  }, [showCreate, formRaisingFor, raisingForDefault]);
+
   // Rebate opens at '0', so it only counts as entered once the coach moves it off that default.
   // ⚠ Tags count as typing — a coach who picked three labels has done work the guard protects.
+  // ⚠ And so does MOVING "Raising for" off the word it opened on — but never the pre-fill itself,
+  //   which is the product answering rather than the coach (the same rule the rebate % is under).
   const formDirty = Boolean(
-    formName || formDesc || formStart || formEnd || formRebate !== '0' || formTags.length > 0,
+    formName || formDesc || formStart || formEnd || formRebate !== '0' || formTags.length > 0
+    // ⚠ AN UNSET FIELD IS NEVER DIRTY (`/review`, 2026-09-08). Comparing a null field against the
+    //   default meant that when the taxonomy landed AFTER the form opened — default null → a word,
+    //   field still null — the guard read dirty for one render on a form nobody had touched. That is
+    //   the wolf-cry `formOpenedWith` carries its own warning about. Only a field the coach has
+    //   actually filled in can differ from the word it opened on.
+    || (formRaisingFor !== null && formRaisingFor.itemId !== (raisingForDefault?.itemId ?? null)),
   );
   const closeCreate = useDiscardGuard({
     dirty: formDirty,
@@ -267,6 +306,11 @@ export function FundraisersPanel({
     setFormStart('');
     setFormEnd('');
     setFormTags([]);
+    /* ⚠ PRE-FILLED WITH THE SHELF'S STANDARD WORD, so "Raising for" is never a question the coach
+       has to answer — only one they can change (owner ruling 2026-09-08). ⚠ It is set here, on
+       OPEN, and mirrored into the dirty baseline below, so the pre-fill never counts as the coach's
+       typing and the discard guard does not fire on a form nobody touched. */
+    setFormRaisingFor(defaultRaisingFor(categories, 'fundraiser'));
     setFormError('');
     setShowCreate(true);
   }
@@ -293,6 +337,9 @@ export function FundraisersPanel({
           startDate:          formStart || null,
           endDate:            formEnd   || null,
           tagIds:             formTags,
+          // Which budget line this drive is raising for (mig 285). Null is accepted — the field is
+          // pre-filled, not required — and the server re-checks the shelf whatever is sent.
+          budgetItemId:       formRaisingFor?.itemId ?? null,
         }),
       });
       if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
@@ -916,6 +963,7 @@ export function FundraisersPanel({
           orgSlug={orgSlug}
           teamId={teamId}
           drive={editDrive}
+          categories={categories}
           moneyTags={moneyTags}
           onCreateTag={addMoneyTag}
           onManageChanged={quietReload}
@@ -932,6 +980,7 @@ export function FundraisersPanel({
           sponsor={editSponsor}
           record={roomRead?.for === editSponsor.id ? roomRead.data : null}
           roster={roster}
+          categories={categories}
           moneyTags={moneyTags}
           onCreateTag={addMoneyTag}
           onManageChanged={quietReload}
@@ -965,6 +1014,17 @@ export function FundraisersPanel({
                 required
               />
             </div>
+            {/* ⚠ THE SECOND FIELD, UNDER THE NAME (mockup 8aa1e633 screen D). It sits above the
+                description on purpose: what this drive is raising for is part of what it IS, and
+                the description is the optional note. */}
+            <RaisingForField
+              kind="fundraiser"
+              categories={categories}
+              value={formRaisingFor}
+              onChange={setFormRaisingFor}
+              orgSlug={orgSlug}
+              teamId={teamId}
+            />
             <div className={`${styles.field} ${styles.formGridFull}`}>
               <label className={styles.label}>Description</label>
               <textarea

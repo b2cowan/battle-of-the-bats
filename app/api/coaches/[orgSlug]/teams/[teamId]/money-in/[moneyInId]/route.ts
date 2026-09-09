@@ -7,7 +7,6 @@ import {
   getRepTeamMoneyInRecord,
   updateRepTeamMoneyIn,
   deleteRepTeamMoneyIn,
-  getDerivedIncomeClaims,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
@@ -117,11 +116,20 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Pick a category and item — this record has to point at one.' }, { status: 400 });
     }
     /* ⚠ ONE ROW, ONE SOURCE, ON THE WAY IN AND ON THE WAY ACROSS. Re-filing an income record onto a
-       row the fundraisers already answer for double-counts it exactly as creating one there would;
+       word the fundraisers already answer for double-counts it exactly as creating one there would;
        an edit door that skipped this check would be the way around the guard. Money back stays
-       exempt — it reduces a row rather than being a second source for it. */
-    if (record.kind === 'income') {
-      const refusal = whyIncomeIsRefused(await getDerivedIncomeClaims(programYear.id), linked.item);
+       exempt — it reduces a row rather than being a second source for it.
+
+       ⚠⚠ ONLY WHEN THE WORD IS ACTUALLY CHANGING, and the difference is history (plan §3.8's rule:
+       the door closes, history does not). The form resends `budgetItemId` on EVERY save, so an
+       unconditional test here would freeze every LEGACY record — one written under the old
+       conditional rule, before Fundraising words left the picker — the moment a coach corrected its
+       amount, its date or its note. There is exactly one such record on each database today (the
+       coach demo's hoodie margin, which this release converts), but a frozen record is an
+       unexplainable dead end and the fix costs one comparison. Moving such a record ONTO a derived
+       word is still refused; moving it OFF one is the repair a coach should be able to make. */
+    if (record.kind === 'income' && linked.item.id !== record.budgetItemId) {
+      const refusal = whyIncomeIsRefused(linked.item);
       if (refusal) return NextResponse.json({ error: refusal }, { status: 409 });
     }
     patch.budgetItemId     = linked.item.id;

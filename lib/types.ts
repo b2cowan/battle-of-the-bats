@@ -2490,6 +2490,21 @@ export interface BudgetCategory {
   scope: BudgetScope;
   sortOrder: number;
   isDefault: boolean;
+  /**
+   * Who fills in the money-in words on this shelf (mig 285): `typed` = the coach records each
+   * arrival themselves, `fundraiser` = a drive reports it, `sponsor` = a sponsor does.
+   *
+   * ⚠⚠ THIS IS WHAT A NEW WORD'S `BudgetItem.actualSource` IS DERIVED FROM, on the server, at
+   * creation — "the category a word sits in decides who fills its number in and where it reports"
+   * (owner ruling 2026-09-08). It reaches the client for two jobs and no others: the create panel's
+   * footer says where a `typed` shelf's word will report, and the "Raising for" pickers on a
+   * fundraiser and a sponsor filter the list to their own shelf.
+   *
+   * ⚠ OPTIONAL, because not every category read carries it — the club's category panel and the
+   * cross-team reads have no use for it. A reader that needs it says so; a reader that omits it must
+   * never fall back to a guess, since "which shelf is this?" has exactly one answer.
+   */
+  incomeSource?: BudgetItemActualSource;
   createdAt: string;
   items?: BudgetItem[];
 }
@@ -2554,6 +2569,13 @@ export interface BudgetItem {
   actualSource: BudgetItemActualSource;
   createdAt: string;
 }
+
+/* ⚠ THE COMMENT ABOVE `actualSource` IS NOW HALF-RIGHT AND THE OTHER HALF IS RECORDED HERE, beside
+   the type it changed: since mig 285 a money-IN word takes its source from its category's
+   `incomeSource` at creation (owner ruling 2026-09-08 — a word filed on the Fundraising shelf is a
+   fundraising word from birth). What survives verbatim is "NO WRITE PATH ACCEPTS IT": the value is
+   still never read off a request body, on either the coach's door or the club's. Only the shelf
+   decides, and only a migration moves a shelf. */
 
 export interface BudgetCategoryWithItems extends BudgetCategory {
   items: BudgetItem[];

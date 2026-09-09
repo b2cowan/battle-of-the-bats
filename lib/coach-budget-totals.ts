@@ -195,6 +195,46 @@ export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
 };
 
 /**
+ * WHAT A NEW MONEY-IN WORD'S CREATE PANEL SAYS ABOUT WHERE IT WILL REPORT (owner ruling
+ * 2026-09-08) — the sentence, built from the section record rather than typed out.
+ *
+ * ⚠⚠ IT LIVES HERE SO THE SHARED PICKER DOES NOT HAVE TO LEARN A DOMAIN. `BudgetItemPicker`
+ * renders on the Budget Plan, the Club tab, the Org Budget and the recording conversation, and its
+ * header forbids it holding money vocabulary — the exact rule the retired `rowTag` hook broke. The
+ * control takes a `newItemNote` hook and prints whatever words it is handed; this is the money
+ * module handing them over. A caller with nothing to say passes nothing and the panel says nothing.
+ *
+ * ⚠ THE HEADING COMES FROM `LINE_KIND_SECTION`, NEVER A LITERAL. The first cut hardcoded "Other
+ * income" — and that word had already moved once that same week (the plan ladder retired "Expected"
+ * from every section name), so a hardcoded copy is a sentence that goes quietly wrong the next time
+ * the heading is renamed. Derived, it cannot.
+ *
+ * ⚠ ONLY THE TYPED SHELF SPEAKS, and that is the ruling rather than an omission: the two derived
+ * shelves are self-explanatory — a word filed under Fundraising is filled in from a drive, which is
+ * the whole point of putting it there. The one that needs saying is the other case, because a coach
+ * inventing a heading is not choosing a side of the books. The standing rule this is under is the
+ * one `lib/coach-register-book.ts` states: the exception speaks; the normal case does not.
+ */
+export function newMoneyInWordNote(
+  category: { incomeSource?: BudgetItemActualSource },
+  direction: 'in' | 'out',
+): string | null {
+  /* ⚠⚠ THE DIRECTION IS ASKED FIRST AND WINS — the same rule `budgetItemSourceForCategory` and
+     `budgetLineKindForItem` are under, and it is load-bearing rather than tidy. EVERY ordinary cost
+     shelf is `typed` (mig 285 marks only the two platform money-in shelves), so without this a coach
+     adding a new COST word would read "Saved as an expense — because that is what you are recording.
+     Will report under Other income." on the commonest action there is, across three screens.
+     ⚠ Found by `/review` (regression lens, 2026-09-08) AFTER the gate had been lost: the sentence
+     was born inside the picker behind a `direction === 'in'` test, and moving it out here — the
+     right move — dropped the test on the way. A rule that lives in the same function as its subject
+     cannot be left behind by the next move. */
+  if (direction !== 'in') return null;
+  const source = category.incomeSource ?? 'typed';
+  if (source !== 'typed') return null;
+  return `Will report under ${LINE_KIND_SECTION[MONEY_IN_KIND_BY_ACTUAL_SOURCE[source]]}.`;
+}
+
+/**
  * Every label the plan's LADDER prints — the List, the By-period grid, both exports and the tiles
  * read these and nothing else, so the words cannot fork (owner ruling 2026-09-08).
  *

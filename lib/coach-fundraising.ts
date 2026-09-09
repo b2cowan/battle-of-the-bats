@@ -54,6 +54,59 @@ export function isFundraisingKind(v: unknown): v is FundraisingKind {
 }
 
 /**
+ * WHICH BUDGET LINE THIS RECORD'S MONEY COUNTS TOWARDS (mig 285) — the field's own words, in one
+ * place, because five surfaces print them: New fundraiser, Edit fundraiser, Edit sponsor, the
+ * recording conversation's new-sponsor branch, and both rooms' facts lines.
+ *
+ * ⚠ THE LABEL CARRIES NO ASTERISK. "Raising for" is pre-filled and changeable, **neither required
+ * nor nudged** (owner ruling 2026-09-08) — a coach never has to answer it, only correct it. Marking
+ * it required would be the third time this product asked a question it had already answered.
+ */
+export const RAISING_FOR_LABEL = 'Raising for';
+export const RAISING_FOR_HINT: Record<FundraisingKind, string> = {
+  fundraiser: 'Which budget line this drive’s money counts towards.',
+  sponsor:    'Which budget line this sponsor’s money counts towards.',
+};
+/** The nudge a LEGACY record meets — the only place a coach ever sees the unlinked state. */
+export const RAISING_FOR_NUDGE: Record<FundraisingKind, string> = {
+  fundraiser: 'Pick the budget line this drive is raising for',
+  sponsor:    'Pick the budget line this sponsor is raising for',
+};
+
+/**
+ * The word each shelf's picker OPENS ON — a pre-fill, and nothing more.
+ *
+ * ⚠⚠ A NAME LOOKUP, DELIBERATELY, AND ONLY BECAUSE OF WHAT IT DECIDES. Every other "which word is
+ * this?" question in the product is keyed by id or by a column precisely so a rename cannot move
+ * money (mig 280's own header argues that at length). This one moves nothing: it chooses which of
+ * the shelf's words a NEW form opens with, the coach sees it in the field, and changing it is one
+ * click. The alternative — a `is_standard_default` column on the platform library — would be a
+ * migration to decide a default value.
+ *
+ * ⚠ MATCHED CASE-INSENSITIVELY AGAINST THE SHELF'S OWN WORDS, and a miss is not an error: the form
+ * simply opens with the shelf's first word instead. Nothing downstream depends on which one it was.
+ */
+export const RAISING_FOR_DEFAULT_WORD: Record<FundraisingKind, string> = {
+  fundraiser: 'Fundraising drive',
+  sponsor:    'Team sponsorship',
+};
+
+/**
+ * WHO RAISED IT, when nobody in particular did (owner ruling 2026-09-08) — the drive entry with no
+ * player, no family share and no dues credit.
+ *
+ * ⚠⚠ ONE SPELLING, EVERYWHERE A COACH READS IT: the Record window's first option, the drive board's
+ * Who column, the remove confirmation, the facts line's separate count, the register's cash strip
+ * and the demo's seeded world. It replaced "Team collection" and a "not attributed" note in the cash
+ * strip, which were the two other names this same row already had.
+ *
+ * ⚠ IT IS LOAD-BEARING, NOT A NICETY. With Fundraising and Sponsorship words removed from "Other
+ * money in", this is the ONLY way hoodie-table money — money a team raised with nobody counting who
+ * sold what — gets into the books at all.
+ */
+export const WHOLE_TEAM_ENTRY_LABEL = 'The whole team';
+
+/**
  * What the Fundraising list is showing — and, since 2026-08-15, a URL parameter rather than a
  * component state.
  *

@@ -11918,9 +11918,18 @@ function mapRepTeamMoneyIn(r: any): RepTeamMoneyIn {
  * FUNDING_LINE_KINDS (mig 274): an `other_income` line's actuals are TYPED, so claiming it here
  * would refuse the coach the only way its money can be recorded at all.
  *
- * Returns the CLAIMS, not an answer: `lib/coach-money-derived.ts` decides both what they close to
- * typing (`derivedIncomeKeys`) and where the derived pool lands (`placeDerivedActual`), and those
- * two must be worked out from one reading or the report and the form disagree about the same row.
+ * Returns the CLAIMS, not an answer: `lib/coach-money-derived.ts` decides where the leftover pool
+ * lands (`placeDerivedActual`).
+ *
+ * ⚠⚠ ONE CALLER SINCE 2026-09-08, AND ONLY FOR THE LEGACY CASE — read this before adding a second.
+ * It used to serve the money-in write paths as well, deciding which rows refused a typed income
+ * record. That question is answered by the WORD now (`budget_items.actual_source`, mig 280/285),
+ * unconditionally, which fixed a real defect: the plan-derived version refused the team that had
+ * budgeted a fundraising line and let the identical double count through on the team that had not.
+ * What survives here is Budget vs. Actual's placement fallback for drives and sponsors that name no
+ * budget line — records written before mig 285's backfill could safely link them, and records a
+ * coach has cleared. **A new caller asking "may this be typed here?" wants the item's own column,
+ * not this.**
  */
 export async function getDerivedIncomeClaims(programYearId: string): Promise<DerivedClaim[]> {
   const { data, error } = await supabaseAdmin
