@@ -369,6 +369,49 @@ export function allocatePayouts(
 }
 
 /**
+ * Fill in what a PRE-281 payback settled, for a screen that has to offer whole debts.
+ *
+ * ⚠⚠ A LEGACY PAYOUT SETTLED SOMETHING AND SAYS NOTHING ABOUT WHAT, AND A TICK-LIST HAS TO COPE
+ * (found on the UAT fixture while writing the QA walk, 2026-09-07). Reading each credit's settled
+ * amount from the links alone left every credit a legacy payout had touched reading as fully
+ * standing — so one family's list offered a $300.00 debt while the team held $100.00 of their
+ * money, and another's offered an overpayment that had already been handed back. A coach ticks it,
+ * the server's ceiling refuses the save, and they have met a dead end wearing a button's clothes.
+ *
+ * ⚠ THE SAME ALLOCATION THE REPORT USES — own money first, then oldest — so the debts a coach is
+ * OFFERED and the figures the Statement SHOWS can never disagree about which credit a legacy
+ * payback consumed. Only the UNEXPLAINED remainder is spread: a payback that named its debts is
+ * already accounted for, and spreading the whole payout total again would settle the same dollars
+ * twice.
+ *
+ * ⚠ IT LIVES HERE, NOT AT THE SCREEN. `dues-definition-guard` refuses a hand-rolled credit sum
+ * outside the definition homes, and it is right to: five hand-copies existed before that guard. It
+ * caught this one the same day it was written.
+ *
+ * @returns the settled amount per credit, in the order given.
+ */
+export function settledPerCredit(
+  credits: readonly { kind: DuesCreditKind; amount: number; linkedPaidBack: number }[],
+  totalPaidOut: number,
+): number[] {
+  const linkedC = credits.reduce((s, c) => s + toCents(c.linkedPaidBack), 0);
+  const legacyC = Math.max(0, toCents(totalPaidOut) - linkedC);
+  if (legacyC <= 0) return credits.map(c => c.linkedPaidBack);
+
+  const spread = allocatePayouts(
+    credits.map(c => ({ kind: c.kind, amount: c.amount, traced: true })),
+    toDollars(legacyC),
+  );
+  /* ⚠ CLAMPED TO THE CREDIT, like every other reader of this figure — a linked amount plus a
+     legacy share must never exceed what the credit holds, or the panel behind the dues figure
+     stops adding up to it (the review finding of the same day). */
+  return credits.map((c, i) => toDollars(Math.min(
+    toCents(c.linkedPaidBack) + toCents(spread[i].handedBack),
+    toCents(c.amount),
+  )));
+}
+
+/**
  * Group a season's records into one input per family.
  *
  * ⚠ `cappedPaid` IS COMPUTED HERE, THE SAME WAY EVERY DUES SURFACE COMPUTES IT — payments capped at

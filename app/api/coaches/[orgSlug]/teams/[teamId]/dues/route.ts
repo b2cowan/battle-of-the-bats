@@ -25,6 +25,7 @@ import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/l
 import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
+import { settledPerCredit, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import { tournamentToday } from '@/lib/timezone';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -156,10 +157,26 @@ export const GET = withObservability(async (_req: Request,
         expenseId:   c.expense_id ?? null,
         createdAt:   c.created_at,
         /* What earlier paybacks have already settled off THIS credit (mig 281). Drives the Pay out
-           sheet's tick-list; 0 for every credit nothing points at, which includes every credit a
-           pre-281 payout touched. */
+           sheet's tick-list. ⚠ Filled in below for credits a LEGACY payout touched — see
+           `legacyPaidBack`. */
         paidBack:    paidBackByCredit.get(c.id as string) ?? 0,
       }));
+
+      /* ⚠ A PRE-281 PAYOUT SETTLED SOMETHING AND SAYS NOTHING ABOUT WHAT, and the Pay out sheet
+         offers WHOLE debts — so a credit a legacy payback touched must not read as fully standing,
+         or a coach ticks a debt the server's ceiling then refuses. The rule, and the reason it uses
+         the same own-money-first allocation the report does, live in `settledPerCredit`. */
+      {
+        const settled = settledPerCredit(
+          credits.map(c => ({
+            kind: c.creditType as DuesCreditKind,
+            amount: c.amount as number,
+            linkedPaidBack: (c.paidBack as number) ?? 0,
+          })),
+          amountsTotal(payoutsByPlayer.get(p.id) ?? []),
+        );
+        credits.forEach((c, i) => { c.paidBack = settled[i]; });
+      }
       // ONE credit definition (lib/dues-credits.ts) — one of five hand-copied credit sums.
       const creditsIssuedTotal = creditsTotal(credits.map(c => ({ amount: c.amount as number })));
 

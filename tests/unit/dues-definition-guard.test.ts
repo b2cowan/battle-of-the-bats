@@ -62,6 +62,19 @@ const DEFINITION_HOMES = new Set([
   'lib/dues-status.ts',
   'lib/dues-payments.ts',
   'lib/dues-credits.ts',
+  /**
+   * ⚠ ADDED 2026-09-07 (owner rulings R1–R7) — "what has this family CONTRIBUTED to their dues?"
+   * on the Season-spending reading, which is a different question from every figure above it and
+   * had no home before. It owns the split into cash-they-kept, team-bills-they-paid and
+   * fundraising-credited-to-dues, and the allocation of a payback across a family's credits.
+   *
+   * ⚠ IT IS ON THIS LIST FOR THE SAME REASON THE OTHERS ARE, not as an exemption. The guard
+   * caught a hand-rolled credit sum in the dues ROUTE the day this module was written, and the
+   * fix was to move that arithmetic here — which is exactly what the guard exists to force. A
+   * home earns its place by being the ONE place a definition lives; this one is, and the route
+   * now imports it rather than re-deriving.
+   */
+  'lib/coach-dues-actual.ts',
   // Pass 3: the season pot and the even-share solver. It derives no credit figure of its own —
   // it is handed the three-state position — but it IS where "what cash does the team hold"
   // lives, and the settlement assembly beside it is the one place the sheet is built.
