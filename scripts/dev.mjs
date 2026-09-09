@@ -35,8 +35,19 @@ import os from 'node:os';
 
 const require = createRequire(import.meta.url);
 
-/** Owner-set 2026-08-11. Override for a one-off with DEV_HEAP_MB=<mb> npm run dev. */
-const DEFAULT_HEAP_MB = 6144;
+/**
+ * Owner-set 2026-08-11 at 6144. Raised to 8192 on 2026-09-08: the coach-money
+ * budget-vs-actual route (app/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual/route.ts,
+ * now ~1900 lines) started reproducibly crashing its Turbopack compile worker at 6144 —
+ * "Jest worker encountered 2 child process exceptions, exceeding retry limit" on every
+ * fresh-cache hit, not a one-off sweep artifact. Reproduced twice at 6144, then confirmed
+ * clean (repeated fresh-cache hits, no WorkerError) at both 8192 and 10240; 8192 chosen to
+ * stay well clear of the 2026-08-11 whole-machine-freeze scenario this ceiling exists to
+ * prevent. If a future route needs more, prefer trimming/splitting the module over raising
+ * this again — the ceiling is a safety net, not a budget to grow into.
+ * Override for a one-off with DEV_HEAP_MB=<mb> npm run dev.
+ */
+const DEFAULT_HEAP_MB = 8192;
 const MIN_HEAP_MB = 512;
 
 const totalMb = Math.floor(os.totalmem() / 1024 / 1024);
