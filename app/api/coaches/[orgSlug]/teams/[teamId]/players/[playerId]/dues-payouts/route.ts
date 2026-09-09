@@ -79,6 +79,15 @@ export const POST = withObservability(async (req: Request,
     if (!Array.isArray(creditIds) || creditIds.some(id => typeof id !== 'string')) {
       return NextResponse.json({ error: 'creditIds must be an array of credit ids' }, { status: 400 });
     }
+    /* ⚖ THE READ-THEN-WRITE RACE HERE IS ACCEPTED, NOT MISSED (owner ruling, §153 walk 2026-09-09).
+       Two coaches paying the SAME family back at the same instant both read the credits below, and
+       the second write can record its dollars against a debt the first one just settled. What
+       cannot go wrong is the money: `recordRepDuesPayout`'s ceiling still caps the cash, mig 281's
+       `(credit_id)` key refuses an outright double-settle, and the report clamps the rest — so only
+       WHICH debt is named can be wrong, never a figure. Closing it properly is one transaction
+       across four writes, and the owner ruled that is not worth its own piece of work.
+       **Do not re-report this as a defect, and do not close it unasked** — if it ever earns the
+       work, it is a plan, not a drive-by. */
     const [credits, paidBack, payouts] = await Promise.all([
       getRepDuesCreditsForPlayer(programYear.id, playerId),
       getRepDuesPaidBackByCredit(programYear.id),

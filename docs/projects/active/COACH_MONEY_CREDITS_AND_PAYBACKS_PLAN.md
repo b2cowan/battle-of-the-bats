@@ -1,9 +1,13 @@
 # What a credit is, and what happens when you hand it back
 
-**Status:** R1–R4 and the report side **committed `ce3fb8ab` 2026-09-07**; R5, R6 and R7 **committed
-`480a008a` 2026-09-07** with **migration 281 applied to dev**. Owner QA is **§153** — walk written,
-run-order step **B12**. One follow-up fix (the legacy-payback ceiling, §6d) is built and gated on dev
-and awaits the owner's word to commit.
+**Status: ✅ WALKED AND PASSED — Owner QA §153, 45/45, zero defects, no step flagged, 2026-09-09.**
+R1–R4 and the report side **committed `ce3fb8ab` 2026-09-07**; R5, R6 and R7 **committed `480a008a`
+2026-09-07**; the modals' shape `cd89ff36` 2026-09-08; the legacy-payback ceiling `9d8fa6ae`
+2026-09-08 (§6d) and its twin on the save door `6ae7a7e7` 2026-09-09 (§6f); the dues caption's move
+out of the table and into the report footnotes `f4a291f5` 2026-09-09. **Migration 281 applied to
+prod 2026-09-08 (Amplify job 262).**
+
+**All three Part F calls ruled at the walk (2026-09-09) — see §11.**
 ⚠ Do not re-word this as "uncommitted"/"not on prod" — a perishable negative goes stale the moment
 another session ships. Deployment state lives in the release history and the Owner QA Ledger.
 **Build mockup:** https://claude.ai/code/artifact/3ac033cd-e589-4220-a7b6-951e947e6dc2 · **PM brief:** `COACH_MONEY_CREDITS_AND_PAYBACKS_PM_BRIEF.md`
@@ -337,7 +341,7 @@ amount box rather than the ticked total; two unplanned derived pools from differ
 into one report row; and 281's uniqueness was `(payout_id, credit_id)` when the rule is **one payback
 per debt**, so it is `unique (credit_id)`.
 
-## 6d. ⚠ ONE FIX BUILT AFTER THE COMMIT — awaiting the owner's word
+## 6d. ✅ BUILT 2026-09-08, committed `9d8fa6ae` — one fix after the commit
 
 **A payback recorded BEFORE 281 says nothing about what it settled**, so the new tick-list read those
 credits as fully standing: Logan was offered a **$300.00** debt when **$100.00** was owed, and the
@@ -347,7 +351,9 @@ live in `settledPerCredit` in `lib/coach-dues-actual.ts`, which is now a `DEFINI
 the dues route cannot hand-roll the sum again.
 
 **Verified against live data:** all ten families in credit reconcile exactly; families whose tick-list
-can overshoot the ceiling: **0**. Three files, gated, uncommitted pending the owner's go.
+can overshoot the ceiling: **0**. ⚠⚠ **THAT VERIFICATION LINE IS THE MOST EXPENSIVE SENTENCE IN THIS
+PLAN** — it measured the SHEET against the rule the sheet is built from, and the save door was never
+asked. §6f is what that cost.
 
 ## 6e. ✅ BUILT 2026-09-08 — the two modals' shape (design review; owner: "i agree with your mockups, go ahead and build")
 
@@ -522,3 +528,43 @@ of the arbitrary payout allocation the netting would have inherited.
 `COACH_DUES_BY_PLAYER_PLAN.md` §7.2 is superseded; its D8, D9 and D10 point here. The fold itself
 (steps 3–6 of that plan) is unaffected and still wanted — it just opens onto figures that are
 already right.
+
+## 10. ✅ WALKED 2026-09-09 — Owner QA §153, 45 of 45, zero defects
+
+Every step ticked; no step flagged. Steps 10 and 14 carry no verdict button because none was
+pressed, not because anything was withheld — step 10's four checks (record a payback, pay the same
+debt twice and be refused in words, undo it) all passed, and step 14 has no verdict control at all.
+
+**Confirmed on the walk, worth keeping:** Kai's story reads correctly out loud (billed $970.83, a
+$700.00 bat their family bought, $200.00 of sponsor money, no cash sent, owes $70.83) — that step
+exists because §132 went 42 for 42 and still shipped three defects inside one row. The five named
+sponsors add to $2,085.75; the three lines behind the dues figure add to it; the tick-list offers
+Logan $100.00 and Casey $37.50, not $300.00 and $337.50. **Cash, every budgeted figure and Season
+spending are unmoved**, which was the safety net this whole change had to clear.
+
+**Step 11d cleared the word:** *Adjustment* reads right to the owner, so the credit a coach can add
+by hand keeps its name on every surface. (⚠ The Owner QA Ledger had recorded this as one of the
+three Part F calls. It was not — see the correction in §153 of that ledger.)
+
+## 11. The three rulings, 2026-09-09
+
+**1 · The caption on Player dues — "it's already removed."** Another session had moved the sentence
+out of the table cell and into the report's footnote stack (`f4a291f5`, adopted work) before the
+walk reached it, for a reason worth more than the question being asked: as JSX inside a `<th>` it
+reached the **screen and never the exported file**, so a treasurer emailing the report to a board
+sent a dues figure counting a bill a family paid with nothing beside it saying so. **The §146 ruling
+that a set row says nothing is whole again** — the row carries a caption in exactly one state now,
+the "Not set yet" door. Nothing further to build.
+
+**2 · Help and the demo — "update docs."** The deferral holding help content and the coach
+sandbox's money narration until the dues project finished is **lifted**. Help still tells a coach
+they can type a contribution (R6 removed that), still describes a credit's kinds as four things a
+coach picks between, and the demo's money narration has now been stale across three consecutive
+releases. Tracked in TODO.md; not this plan's remaining work.
+
+**3 · The payback race — "accept it."** Two coaches paying the same family back at the same instant
+can mis-record *which* debt was settled. The cash cannot go wrong (the ceiling caps it, mig 281's
+`(credit_id)` key refuses an outright double-settle, the report clamps the rest) — only the naming.
+Closing it properly is one transaction across four writes, and it does not earn that. **Written on
+the write path itself** (`dues-payouts/route.ts`) so a later session neither re-reports it as a
+defect nor closes it unasked.

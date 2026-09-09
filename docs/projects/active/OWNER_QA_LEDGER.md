@@ -17287,7 +17287,7 @@ stored), a names split with one dated and one dateless chunk (`Jersey order`), a
 `other_income` line (`Season interest`).
 
 **What was built (plan `docs/projects/active/COACH_BUDGET_TAB_REVAMP_PLAN.md`, owner-ruled Q1–Q8
-+ export rider 2026-09-02; mockup gate artifact `f1bd6e4d`; migration 274 applied to dev
++ export rider 2026-09-02; mockup gate artifact `f1bd6e4d`; migration 274 on prod 2026-09-08 (job 262)
 2026-09-02):** all six phases, with Q6 (category rename) deliberately HELD at its owner
 checkpoint — categories are org-shared with no team column (verified live), so the policy
 question is the owner's before any variant is built. Eight parts to walk: (A) one grain — the
@@ -19501,7 +19501,7 @@ collapsed to one.
 
 ---
 
-## §152 · A budget line asks one question, not two — the item decides what the line is — BUILT 2026-09-07 on dev, migration 280 applied to dev, awaiting QA · walk artifact `a31b0e6c`
+## §152 · A budget line asks one question, not two — the item decides what the line is — committed `2273e0b9` 2026-09-07, the Grant move `6976ec8f` 2026-09-08, migrations 280 + 282 on prod 2026-09-08 (job 262) · **✅ PASSED 41/41, zero defects, no steps flagged, 2026-09-09** · **H1 CONFIRMED — Grant reads right on the Sponsorship shelf**, closing the one call the build left open · **walked on a TRIMMED walk (no Part E, no per-row tags): §156 and §157 had already superseded two of this project’s own visible pieces — see the walk note at the foot of this section** · walk artifact `a31b0e6c`
 
 **Plan + PM brief (archived on completion):** `docs/projects/archive/COACH_BUDGET_LINE_ONE_QUESTION_PLAN.md` + `_PM_BRIEF.md` ·
 **Owner-approved mockup:** https://claude.ai/code/artifact/3913e207-d697-402b-b6eb-0468d38fd3cb ·
@@ -19578,7 +19578,7 @@ the row would have been stored as a cost — silently); the demo seed's line-kin
 instead of falling back to 'cost'; and the fixture's own guard no longer disarms itself when its
 query fails.
 
-**⚠⚠⚠ RELEASE ORDER — THIS CODE CANNOT REACH PRODUCTION AHEAD OF MIGRATION 274.** Production's
+**⚠⚠⚠ RELEASE ORDER — THIS CODE CANNOT REACH PRODUCTION AHEAD OF MIGRATION 274.** ✅ **Satisfied: 274, 280 and 282 all rode the 2026-09-08 promote (prod HEAD `2e7ef905`, master job 262), so the dependency below is history rather than a live risk — the reasoning is kept because the shape recurs.** Production's
 `rep_budget_lines_line_kind_check` still admits only `('cost','funding','sponsorship')`;
 `other_income` arrived in mig 274 and is prod-owed with 280. And `other_income` is what a TYPED
 money-in word derives — which is now the ORDINARY case, not a rare one: every word a coach invents is
@@ -19601,7 +19601,7 @@ only way a grant can be filed — **which is the strongest argument yet for movi
 Sponsorship category**, and is put to the owner as Part H1 of the walk. No team is affected today:
 there are no Grant lines on either database.
 
-**What the walk asks.** Eight parts. A: the form offers exactly two answers, and the deleted words
+**What the walk asks** *(as first issued — it was trimmed before it was taken; see the walk note at the foot of this section)*. Eight parts. A: the form offers exactly two answers, and the deleted words
 are still on the plan behind you. B: the tag on all eleven money-in words, reading the Grant row
 aloud, no tags on the spending side, and **B4 the checklist defect the review found**. C: try to
 build the broken row, build the honest one, then record money against it — and confirm a fundraising
@@ -19665,7 +19665,32 @@ and is now a confirmation that the move reads right). Gates re-run after the cha
 3,172 unit tests · spelling · CSS selectors · dictionary · demos · snapshot freshness at #282 ·
 `check:layout --only=coach-budget`, no new findings · the demo reseeded and re-verified.
 
-## §153 · What a credit is, and what happens when you hand it back — a bill a family paid is money they contributed — committed `ce3fb8ab` then `480a008a` 2026-09-07, migration 281 applied to dev, awaiting QA · walk artifact `6f869cb5`
+**⚠ THE WALK PASSED — 41 of 41, 2026-09-09, nothing flagged — BUT READ WHAT IT WAS WALKED AGAINST.**
+The walk was **trimmed on 2026-09-08 before it was taken**, because §156 and §157 shipped in
+between and removed two of the things described above: the **per-row source tags** (⚰ withdrawn by
+the 2026-09-08 ruling — a tag describing where the app will file money is a fact about our filing
+system, not about the coach’s money) and **Part E**, invent-a-word-and-record-against-it, which
+§157 re-answered by making the shelf decide who fills a word in. B1 therefore reads *eleven words,
+four groups, and no tags on any row, either side*. **Everything above about tags is this project’s
+own history, not a description of today’s screen** — what survives of it is the one question, the
+server-derived kind and Grant’s shelf, and all three were walked and passed.
+
+**What the walk proved.** The trap is gone at both ends. There is no control left anywhere in the
+form that would build a sponsorship line pointed at *Concession revenue* (C1) — and the honest
+version of that line saves, explains itself in a paragraph under the picker, lands under *Other
+income* beside Season interest, reopens unchanged, and then **accepts a typed income record with no
+refusal and no double-count warning** (C2–C3). That last tick is the whole project: the row a coach
+could once own but never report against is now a row that reports. **No figure moved** — planned
+costs unchanged, planned funding up by exactly the amount added, per player down and not up, every
+existing line on both sides re-saved unchanged, the Statement, By activity, Months and both exports
+carrying the same section names as the screen (D1–D3). **B4 closed the defect `/review` found on a
+door this project never looked at**: a money-in chip in *What am I forgetting?* now opens the form on
+*Money coming in* with its word already chosen, and a cost chip on the spending side. F1 covered the
+part no rendered gate can see — the open dropdown at phone width, word and ownership chip on one row,
+no spill. And **H1 came back a confirmation rather than a question**: Grant reads under Sponsorship,
+nowhere under Fundraising, and Budget vs. Actual files it under one heading.
+
+## §153 · What a credit is, and what happens when you hand it back — a bill a family paid is money they contributed — committed `ce3fb8ab` then `480a008a` 2026-09-07, the payback-ceiling fix `6ae7a7e7` and the caption's move to a footnote `f4a291f5` 2026-09-09, migration 281 on prod 2026-09-08 (job 262) · **✅ PASSED 45/45, zero defects, no steps flagged, 2026-09-09** · **all three Part F calls RULED** — the caption was already gone, help + the demo narration are to be brought current NOW, and the payback race is ACCEPTED · walk artifact `6f869cb5`
 
 **Plan + PM brief:** `docs/projects/active/COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md` + `_PM_BRIEF.md` ·
 **Walk:** https://claude.ai/code/artifact/6f869cb5-8d38-4c39-8c30-5120ed99371d · run-order **B12** on artifact `5ef0163e` ·
@@ -19731,14 +19756,38 @@ matters. ⚠ **One earlier version of that gate was vacuous** and read as 12/12 
 nothing (it read the wrong payload field, so every live balance came back null); it now fails loudly
 on zero rows.
 
-**Known and deliberate, not defects to re-report at the walk:** the row caption partly reverses the
-§146 ruling that the set row says nothing (the owner was told before it was built, and it is recorded
-in the plan); help content and the coach demo's money narration are **knowingly stale**, deferred by
-owner ruling until the dues project finishes.
+**Known and deliberate, not defects at the walk:** the row caption partly reversed the §146 ruling
+that the set row says nothing (the owner was told before it was built) — **that is now moot, see
+ruling 1 below**; help content and the coach demo's money narration were **knowingly stale**,
+deferred by owner ruling until the dues project finished — **that deferral is now lifted, see ruling
+2**.
 
-**Open at the walk (Part F, three calls):** whether the caption's wording is right on the row §146
-cleared; whether **Adjustment** is the word for a credit that is neither a rebate nor an overpayment;
-and whether the Pay-out sheet should say what is left when every debt is ticked.
+⚠ **THIS SECTION'S OWN SUMMARY OF PART F WAS WRONG, AND THE WALK IS THE RECORD.** It listed the
+three calls as the caption's wording, the word *Adjustment*, and whether the Pay-out sheet should
+state what is left. The walk artifact — the thing the owner actually read and answered — asked the
+caption, the help/demo timing, and the race. **Adjustment** was never a Part F call: it was step
+11d, and it was ticked, so the word is cleared. A ledger sentence written from memory of a plan
+rather than from the artifact drifted within two days of being written.
+
+### Ruled at the walk, 2026-09-09 — three for three
+
+1. **The caption on Player dues — gone, and it had already gone.** The owner's answer was *"it's
+   already removed… another chat moved it to the footer"*. The sentence left the table cell and
+   joined the report's footnote stack (`f4a291f5`, work adopted from a session that had exited).
+   **The §146 ruling that a set row says nothing is therefore whole again** — the row now carries a
+   caption in exactly one state, the "Not set yet" door. The sentence itself survives, still quotes
+   no figure, and now reaches the **exported file** as well as the screen, which is the defect that
+   forced the move: a treasurer emailing the report to a board was sending a dues figure that counts
+   a bill a family paid with nothing beside it saying so.
+2. **Help and the demo — do it now.** The deferral that held help content and the coach sandbox's
+   money narration until the dues project finished is **lifted**. Help still tells a coach they can
+   type a contribution, which R6 removed; the demo's money narration has been stale across three
+   consecutive releases. Follow-through is tracked in TODO.md.
+3. **The payback race — accepted, and it does not get its own piece of work.** If two coaches pay
+   the same family back at the same instant, the cash stays correctly capped and no figure can
+   break; only *which* debt was recorded as settled can be wrong. Closing it properly means one
+   transaction across four writes. ⚠ **Recorded on the write path itself** so a later session
+   neither re-reports it as a defect nor spends a session closing it unasked.
 
 ## §154 · The send book — ten campaign emails become eight, and the two that must not fire this autumn move to next summer — committed `d2b3b2db` on `dev` 2026-09-08 after `/review`, migration 284 on prod 2026-09-08 (job 262) (data-only — verified by query), awaiting QA · walk artifact `fc80f4bf` · copy approved by the owner on artifact `4e8c6474` before any seed was written
 
@@ -20206,3 +20255,119 @@ Fundraising · Sponsorship · Other Income · Money back* (each category carryin
 Statement showing *Sponsorship (not budgeted)* where "Not in the plan" was, the Months grid rendering those
 rows under the Budget lens, zero console errors — plus typecheck, 3,251 unit tests, `check:money-report`
 and `verify:changed`. **The spec needs its own maintenance pass** (TODO), against a quiet working copy.
+
+---
+
+## §159 · Behind the figure — the dates were never missing, and the panel now has a way out — committed `b66d9257` on `dev` 2026-09-09 after `/review` (one defect found and fixed) and `/docs`, no migration, awaiting QA · walk artifact `c43dfaef` · mockup artifact `7af46200`
+
+**You found it from three screenshots in one sitting:** *"why do these say 'no date recorded' when clearly
+they arrived on certain dates? and why aren't we providing button links on the statement modals like we are
+on the monthly? to me the format of these modals should be the same, not sure why we would differentiate a
+look through like that."* Both halves were right, and the second was wider than it looked.
+
+### What was wrong
+
+**1 — "no date recorded" on money that is fully dated.** A drive's or sponsor's row on the Statement is
+**one row per RECORD** (owner ruling 2026-09-07 — the pool stopped being a pool so a figure would open into
+something with a name). That row therefore **sums every arrival** the record has taken and carries no single
+day, so the payload's date field is null and the panel printed the words that field's null branch has always
+printed. **The words were true of the FIELD and false of the money.** Five ZZ QA sponsor rows read that way
+at once, while the **Months** view of the *same report* printed `Sep 4 · received` for one of the very
+cheques the Statement called undated. One report, two answers about one arrival.
+
+**2 — the panel dead-ended, for every role.** The spent side closed on *"Every payment counted against this
+row… **Edit them on Transactions.**"* — naming a destination and refusing to go there, with nothing
+clickable on it for a head coach or an assistant. Its twin on the Months grid has carried doors since
+2026-08-24 under `cellPanelSpec`'s at-most-two rule, and the **2026-09-04 "no panel with no way out" ruling
+was enforced against `MoneyMonthGrid` only** — the guard's own prose cites the Months panel's doors as the
+reason the *other* Months panel needed one. **Nobody checked the Statement's own panels**, which are the
+same question asked from the other view of one report. `DuesBehind` ("What families contributed") had the
+identical shape, closing on *"see Cash for what your account did"*.
+
+⚖ **The lesson, recorded because it will recur:** a ruling pinned on ONE surface's guard did not reach its
+twin. When a rule governs *"this kind of panel"*, assert it on **every file that draws one**.
+
+### What you will see
+
+**Dates.** Each drive/sponsor row now says how many payments it holds and the span they landed in —
+**"2 payments · May 10 – Jun 14"** — or the bare date when only one arrived. Several arrivals on one day
+still say so ("3 payments · May 10"). **"no date recorded" survives** for the case it was always about: a
+record somebody typed in without a date.
+
+**Doors.** Every drive/sponsor row **opens that record's own room** — the mirror of the plan half opening its
+budget line, and the reason this panel needs no second *Open Sponsors* hub button beside rows that already
+are the door. One ungated **Open the Ledger** sits in the spent panel's footer; **DuesBehind** takes the two
+doors its Months twin already had (**Open Player Dues** + **Open the Ledger**). The plan half keeps the rule
+as written — the door appears exactly when the lines are *not* links, so a writer still gets none. **All
+doors are ungated**, matching the QA §132 precedent: reading what a figure is made of is not an edit.
+
+### Three decisions taken, drawn before any code (mockup `7af46200`)
+
+1. **The row stays a SUM, not a list of cheques.** Its figure is what the team **kept** (gross less the
+   family's share); the cheques are **gross**. Per-cheque rows would visibly not add up to the number above
+   them unless the rebate became its own subtraction line — which duplicates the "money back, netted off"
+   group two inches below. **The payment count is what tells a coach the row is an addition.**
+2. **`1 payment · Sep 4` was drawn and rejected** — two words heavier on every single-cheque row, saying
+   nothing the date does not. Do not re-propose it.
+3. **"payments" for a drive as well as a sponsor.** The panel's own closing sentence already calls every
+   record on it a payment; a second word for one thing on one screen is the drift the one-spelling rule
+   exists to stop. ⚠ **The drive case reads "8 payments · May 2 – Jun 14" and is the one to watch on the
+   walk** — it is the only place this wording has not had your eye on it.
+
+### ⚠ The `/review` defect, and why it mattered twice
+
+A drive may legally record a **$0 entry** — a family who took part and sold nothing (`amount_raised >= 0`,
+deliberately; the dictionary's own words are *"a player can be recorded with $0 raised"*), and a drive's
+entries are **always realised**, so such a row reached the aggregation exactly like a paid one. Counted, it
+would have said *"3 payments"* where two dollars-worth arrived **and — the worse half — dragged the span's
+first day back to a day on which no money came in.** Screened on **gross**, so a fully-rebated entry still
+counts: that money *did* arrive, it just all went to the family. Both halves are guarded.
+
+⚠ **`paidDate` STAYS NULL on those rows and must not be repurposed.** It is the dated grain every month and
+chart feed reads, and the cash strip **already places each arrival**; a synthesised value there would place
+derived money a second time — a wrong FIGURE where this was a wrong sentence. The span travels beside it,
+using the cash strip's **exact** fallback so the two views cannot disagree one level down.
+
+### Also fixed on the way, and it was silent
+
+Both panels asked `QuestionShell` for the scrolling recipe (`scroll`) and **named no child that scrolls** —
+`.modalScrollBody` is `overflow: hidden` and expects exactly one scrolling pane, and the list was a
+shrinking flex item inside a clipped box. **A row with enough records lost its tail with no error
+anywhere.** The stylesheet's own note asked for a generalisation on the fifth shape rather than a fifth
+entry; `.scrollPane` is it. ⚠ A peer session swept further and found **roughly ten more dialogs** using the
+recipe by hand, **four of which name nothing in the window it checked** — leads, not findings, and listed in
+Parked. The failure is invisible by construction, which is the argument for a gate rather than a sweep.
+
+### Help
+
+The guide claimed **"Player dues is the one row that doesn't open"** — false since 2026-09-07, when the dues
+actual gained its panel — and pointed at a caption removed since. Corrected, along with what a payment row
+now says and the fact that every panel has a way onward. New search terms added.
+
+### What proves it
+
+`/review` at high-risk tier, **four lenses** (correctness · payload contract and blast radius · security and
+tenancy · shared-stylesheet blast radius). **One defect found and fixed** (the $0 entry); three lenses clean.
+The security lens also verified, unasked, that the new doors and the record id **never reach the
+closed-season page** — the "a closed season is one page" ruling holds. Typecheck clean · **3,287 unit
+tests** · full `verify:changed` exit 0 · `check:money-report` every identity holding — **no figure moves**.
+
+⚠ **The rendered gate cannot see any of this.** `check:layout` never opens a dialog, so these panels are
+measured by this walk and by nothing else. The full sweep was also attempted and **aborted on memory** (it
+widens to all 73 screens when a shared stylesheet is dirty); a run scoped to the four money screens found 20
+findings, **none of them reachable by this change** — proven by the fact that the class it adds is not in the
+rendered DOM unless a coach taps a figure.
+
+⚠ **Committed in a working copy shared by FIVE sessions**, four of which were writing while this landed. The
+commit was built in a **private git index** and its 12 files verified to contain no foreign hunk before it
+was written; three other sessions' work was left untouched in the tree. See
+`memory/reference_shared_worktree_stage_race.md` — **the git INDEX is shared too**, which nothing had
+recorded before today.
+
+### The walk
+
+**Owner QA is owed.** Four parts: the honest dates (including a drive, which is the unreviewed wording), the
+doors on all three panels, the read-only coach's path — the role this dead-ended hardest for — and the phone
+shape, where the date line adds a second row to every sponsor line.
+
+Plan pair: `docs/projects/active/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md`.
