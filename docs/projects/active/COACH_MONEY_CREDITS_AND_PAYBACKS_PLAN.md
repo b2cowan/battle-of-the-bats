@@ -423,12 +423,17 @@ at the layer the defect was not in, is exactly the reassurance that let this shi
 generalised from the four cases actually re-run. Load-bearing on the old rule: the ordering case,
 the forgiven case, both capacity cases, the same-day tiebreak, and all three compositions.
 
-## 6g. ⚠ FOUND BY THE §6f REVIEW, NOT FIXED — two report defects the fix made visible
+## 6g. ✅ FOUND BY THE §6f REVIEW AND FIXED THE SAME DAY — two report defects §6f made visible
 
 Both live in `buildFamilyDuesInputs` / `allocatePayouts` — the **report** side, which §6f deliberately
-did not touch. Both are **pre-existing**: they were there before §6f and are unchanged by it. What
-§6f did was produce the correct answer next to them, which is why they are now legible at all. Both
-move figures a coach reads, so both want an owner's word before anyone touches them.
+did not touch. The CODE is unchanged by §6f in both cases. **But "pre-existing" was the wrong word for
+the second one and this section said it (owner question, 2026-09-09):** defect 2 needs a credit
+carrying a PARTIAL link, no such row could exist before §6f, and §6f is what lets one land. The
+latent bug is old; the door to it is new, and it is mine. Defect 1 is genuinely pre-existing.
+
+⚠⚠ **NEITHER NEEDS STALE DATA. The season settlement writes paybacks with NO links BY DESIGN and
+still does** — that is the precondition for both, on a brand-new season, with today's code. "Production
+has zero payouts" is a fact about today, not a property of the design.
 
 **1. A write-off can absorb a payback, and it changes the season's dues actual.** A payout allocated
 onto a `forgiven` credit erases a write-off instead of reducing a real credit — and because
@@ -455,19 +460,40 @@ report accounts for $350.00 of it and the Statement's balance reads **$950.00 wh
 renders $1,000.00.** That is the §148 shape — a balance a coach chases families on, disagreeing with
 itself across two screens — and it is live today.
 
-**⚠ THE FIX FOR BOTH IS ONE CHANGE, AND IT IS NOT THE OBVIOUS ONE.** Do not simply exclude forgiven
-credits from `allocatePayouts`: in the tail where payouts exceed the payable credits, the leftover
-must still land somewhere or `netCredits` stops matching the shipped family-level balance and the
-Statement desyncs — which is defect 2 arriving from the other direction. The shape that satisfies
-both: **spread over payable credits' STANDING capacity first, then let anything still unplaced fall
-to the write-offs** — truthful wherever it can be, arithmetically closed always. That is also what
-would bring the report into line with `settledPerCredit`, collapsing seam 1 to nothing.
+**✅ BOTH FIXED 2026-09-09, and it was ONE change — the same fix as §6f, arriving a step late.** The
+report was giving the assumption only credits with NO link at all; it now gives EVERY credit the room
+it has left (`amount` less what its own links already settled), which is exactly the capacity rule
+§6f put on the tick-list. `allocatePayouts` and `settledPerCredit` now share `spreadPayback` — one
+home for the capacity and the order — and differ in one documented respect only: **the tail.** Payable
+credits are consumed first and identically on both sides, so the debts a coach is OFFERED and the
+credits the Statement says were consumed name the same rows. What is left when payable capacity runs
+out lands on the write-offs in the report (the balance identity requires it) and is dropped by the
+tick-list (the ceiling excludes forgiveness anyway).
 
-**Blast radius before anyone builds it:** it moves the Statement's Player-dues actual and its
-three-part split for any family holding a write-off or a part-linked credit alongside a payback.
-On the UAT fixture today: **no family holds both**, so the headline $5,007.63 does not move — but
-that is a fact about the fixture, not a property of the fix, and it must be re-measured against the
-data of the day.
+⚠ **DO NOT "SIMPLIFY" THAT TAIL AWAY.** Excluding forgiven credits from `allocatePayouts` entirely is
+the obvious tidy-up and it re-opens defect 2 from the other direction: in the regime where payouts
+exceed the payable credits, the leftover must still land somewhere or `netCredits` stops matching the
+shipped family-level balance.
+
+**Measured after the fix:**
+
+| | before | after |
+|---|---|---|
+| Write-off dated OLDER than the rebate → dues actual | $200.00 | **$100.00** |
+| Write-off dated NEWER than the rebate → dues actual | $100.00 | **$100.00** |
+| Settle-then-pay-the-rest: Statement balance vs dues screen | $900.00 vs $1,000.00 | **$1,000.00 vs $1,000.00** |
+| …and that family's dues actual, having had every credit returned | $100.00 | **$0.00** |
+
+The date order of a write-off no longer changes a season's dues actual, which the module header had
+always claimed and only now delivers. Gated by five cases asserting the SHIPPED balance formula rather
+than this module's own answer; all four allocation shapes were run against the pre-fix rule first and
+fail on it.
+
+**Blast radius, measured not assumed:** it moves the Statement's Player-dues actual and its three-part
+split only for a family holding a write-off or a part-linked credit alongside a payback. Queried on
+dev the day of the fix: **zero families hold that shape**, so the headline $5,007.63 does not move.
+Production has no paybacks at all. Re-measure against the data of the day rather than trusting this
+line.
 
 ## 7. Gates
 

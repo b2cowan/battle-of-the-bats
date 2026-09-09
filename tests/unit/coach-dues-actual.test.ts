@@ -553,3 +553,119 @@ describe('the tick-list can never offer more than the ceiling allows', () => {
     assert.deepEqual(settledPerCredit([], 250), []);
   });
 });
+
+/**
+ * EVERY PAID-OUT DOLLAR LANDS ON SOME CREDIT (owner question, 2026-09-09).
+ *
+ * ⚠⚠ THE BALANCE A COACH CHASES FAMILIES ON IS DERIVED IN TWO PLACES, and they agree only while the
+ * allocation accounts for the whole payout total. `lib/db.ts` and the dues route both render
+ * `Math.max(0, creditsIssued − paidOut)` over ALL credits at the family level; `duesActual` derives
+ * its balance from what the allocator actually placed. Drop a dollar and the two part — the §148
+ * shape, and the reason this block asserts the SHIPPED formula rather than trusting the module.
+ *
+ * ⚠ NO STALE DATA IS REQUIRED, which is what makes it worth a block of its own. The season
+ * settlement writes paybacks with no links BY DESIGN, so "settle a season, then hand the family the
+ * rest" reaches it on a season with no history at all.
+ */
+describe('the report accounts for every dollar handed back', () => {
+  /** The figure the dues screen renders. Restated here ON PURPOSE — it is the OTHER derivation,
+   *  and a test that reached for this module's own answer would agree with itself. */
+  const shippedBalance = (dues: number, credits: readonly { amount: number }[], paidOut: number) =>
+    Math.round((dues - Math.max(0, credits.reduce((s, c) => s + c.amount, 0) - paidOut)) * 100) / 100;
+
+  const family = (
+    dues: number,
+    credits: Parameters<typeof buildFamilyDuesInputs>[0]['credits'],
+    payouts: number[],
+  ) => {
+    const f = buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: dues }],
+      payments: [],
+      payouts: payouts.map(amount => ({ playerId: 'p', amount })),
+      credits,
+    }).get('p')!;
+    const r = assertTiesToBalance(f, 'accounted');
+    assert.equal(
+      r.balance,
+      shippedBalance(dues, credits, payouts.reduce((s, n) => s + n, 0)),
+      'the Statement balance must equal the one the dues screen renders',
+    );
+    return { f, r };
+  };
+
+  it('⚠⚠ settle the season, then pay the family the rest — no legacy data anywhere', () => {
+    /* The family raised $300.00. The settlement handed them $100.00 and named no debt (it never
+       does). The coach later paid back the remaining $200.00, which DID name its debt — so that
+       credit now carries a PARTIAL link, a row that could not exist before the Pay-out sheet
+       learned to settle a remainder. The old rule skipped any credit carrying a link, so the
+       settlement's $100.00 had nowhere to go: balance $900.00 against the dues screen's $1,000.00,
+       and a family who had every credit returned still reading as having contributed $100.00. */
+    const { f, r } = family(1000, [
+      { playerId: 'p', kind: 'fundraiser', amount: 300, traced: true, paidBack: 200 },
+    ], [100, 200]);
+    assert.equal(f.credits[0].handedBack, 300, 'all $300.00 came back, not just the linked $200.00');
+    assert.equal(r.actual, 0, 'every credit was returned, so nothing was contributed');
+  });
+
+  it('a part-linked credit takes the remainder up to its room, and the rest spills on', () => {
+    const { f } = family(1000, [
+      { playerId: 'p', kind: 'fundraiser', amount: 300, traced: true, paidBack: 250 },
+      { playerId: 'p', kind: 'fundraiser', amount: 100, traced: true },
+    ], [400]);
+    assert.deepEqual(f.credits.map(c => c.handedBack), [300, 100]);
+  });
+});
+
+/**
+ * A WRITE-OFF IS NOT MONEY THE TEAM CAN HAND BACK, ON EITHER SCREEN (owner question, 2026-09-09).
+ *
+ * ⚠⚠ IT USED TO CHANGE THE SEASON'S DUES ACTUAL BY DATE ORDER ALONE. Cash handed back can only have
+ * come out of money the family was owed — never out of forgiveness — but the report let a write-off
+ * absorb it, and because forgiveness flows through the CLAMPED `excluded` term rather than a
+ * symmetric pot, the figure moved with it: the same family, the same money, read $200.00 with the
+ * write-off dated older than their rebate and $100.00 with it dated newer. The module header's claim
+ * that the allocation "only moves money between kinds, never the total" was false wherever a
+ * forgiven credit was in play.
+ */
+describe('a write-off cannot absorb a payback while a real credit has room', () => {
+  const forgivenFirst = [
+    { playerId: 'p', kind: 'forgiven' as const, amount: 100, traced: true },
+    { playerId: 'p', kind: 'fundraiser' as const, amount: 200, traced: true },
+  ];
+  const rebateFirst = [forgivenFirst[1], forgivenFirst[0]];
+  const run = (credits: typeof forgivenFirst) => duesActual(
+    buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: 1000 }],
+      payments: [], payouts: [{ playerId: 'p', amount: 100 }],
+      credits,
+    }).get('p')!,
+  );
+
+  it('⚠⚠ the answer does not depend on which was dated first', () => {
+    assert.equal(run(forgivenFirst).actual, 100);
+    assert.equal(run(rebateFirst).actual, 100);
+  });
+
+  it('the payback comes off the rebate, and the write-off is still standing', () => {
+    const r = run(forgivenFirst);
+    assert.equal(r.parts.fundraisingCredited, 100, 'the rebate is worth $100.00 now, not $200.00');
+    assert.equal(r.writeOffs, 100, 'the forgiveness was never handed back, so it still stands');
+  });
+
+  it('⚠ but it DOES take the tail, or the balance identity breaks', () => {
+    /* The one case forgiveness must absorb: more paid out than the payable credits can hold. The
+       settlement pays a family's share of the SURPLUS too, which is not a credit at all, so this is
+       reachable. Every dollar has to land somewhere or the two balances part. */
+    const f = buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: 1000 }],
+      payments: [], payouts: [{ playerId: 'p', amount: 100 }],
+      credits: [
+        { playerId: 'p', kind: 'forgiven', amount: 100, traced: true },
+        { playerId: 'p', kind: 'fundraiser', amount: 50, traced: true },
+      ],
+    }).get('p')!;
+    assert.deepEqual(f.credits.map(c => c.handedBack), [50, 50], 'the write-off took what was left');
+    const r = assertTiesToBalance(f, 'tail');
+    assert.equal(r.balance, 950, 'and it equals the balance the dues screen renders');
+  });
+});

@@ -350,23 +350,73 @@ export interface SeasonDuesRecords {
  * getting right even though no total moves.
  */
 export function allocatePayouts(
-  credits: Array<{ kind: DuesCreditKind; amount: number; traced: boolean }>,
+  credits: Array<{
+    kind: DuesCreditKind; amount: number; traced: boolean;
+    /** What this credit's OWN paybacks say they settled (mig 281). Absent = nothing recorded. */
+    recorded?: number;
+  }>,
   paidOut: number,
 ): DuesCreditInput[] {
-  /* ⚠⚠ CAPACITY HERE IS THE WHOLE ISSUED AMOUNT, FORGIVEN CREDITS INCLUDED, AND IT MUST STAY THAT
-     WAY. `settledPerCredit` deliberately uses a NARROWER capacity for a different question, and the
-     temptation to unify them is why this is written down: the identity `actual = dues − balance −
-     excluded` holds only while every paid-out dollar lands on some credit, because the shipped
-     balance subtracts the payout total from ALL credits at the family level (`Math.max(0,
-     creditsIssued − paidOut)`, in `lib/db.ts` and the dues route). Narrow the capacity here and a
-     family holding a written-off balance reads one balance on the Statement and another on the dues
-     screen — the §148 defect shape, arriving by way of a tidy-up. */
-  const takenC = spreadOwnMoneyFirst(
-    credits.map(c => toCents(c.amount)),
-    credits.map(c => c.kind),
-    toCents(paidOut),
+  const recordedC = credits.map(c => Math.min(toCents(c.recorded ?? 0), toCents(c.amount)));
+  const unexplainedC = Math.max(0, toCents(paidOut) - recordedC.reduce((s, n) => s + n, 0));
+  /* ⚠⚠ FORGIVEN CREDITS TAKE THE TAIL HERE AND ONLY HERE, and it is the identity that demands it,
+     not fairness: `actual = dues − balance − excluded` holds only while every paid-out dollar lands
+     on SOME credit, because the shipped balance subtracts the payout total from ALL credits at the
+     family level (`Math.max(0, creditsIssued − paidOut)`, in `lib/db.ts` and the dues route). Leave
+     a dollar unplaced and the Statement's balance parts from the one the dues screen renders — the
+     §148 shape. `settledPerCredit` answers a different question and gives forgiveness nothing; the
+     payable credits come out the same either way, which is what lets the two doors agree. */
+  const takenC = spreadPayback(
+    credits.map((c, i) => ({ kind: c.kind, amount: c.amount, recordedC: recordedC[i] })),
+    unexplainedC,
+    true,
   );
-  return credits.map((c, i) => ({ ...c, handedBack: toDollars(takenC[i]) }));
+  return credits.map((c, i) => ({
+    kind: c.kind, amount: c.amount, traced: c.traced,
+    handedBack: toDollars(recordedC[i] + takenC[i]),
+  }));
+}
+
+/**
+ * WHICH CREDITS A PAYBACK CONSUMED WHEN NOTHING RECORDED IT — the capacity and the order, in one
+ * place, for both readers of the assumption.
+ *
+ * ⚠⚠ CAPACITY IS WHAT IS STILL STANDING, never the issued amount. A credit its own links have
+ * already spent cannot absorb unexplained money as well — and when it was allowed to, the clamp
+ * threw those dollars away and they were simply lost. Measured on the sequence that reaches it with
+ * no legacy data at all (settle a season, then pay the family the rest): $300.00 of paybacks with
+ * $200.00 accounted for, the Statement's balance $900.00 against the dues screen's $1,000.00, and a
+ * family who had every credit returned still reading as having contributed $100.00.
+ *
+ * ⚠ THE ONLY DIFFERENCE BETWEEN THE TWO READERS IS THE TAIL. Payable credits are consumed first,
+ * identically, so the debts a coach is OFFERED and the credits the Statement says were consumed
+ * name the same rows. What is left when payable capacity runs out either lands on the write-offs
+ * (the report — see `allocatePayouts`, where the balance identity requires it) or is dropped
+ * (the tick-list — see `settledPerCredit`, where the ceiling excludes forgiveness anyway).
+ *
+ * @returns how much each credit absorbed of the UNEXPLAINED money, in cents, in the order given
+ */
+function spreadPayback(
+  credits: readonly { kind: DuesCreditKind; amount: number; recordedC: number }[],
+  unexplainedC: number,
+  forgivenTakesTail: boolean,
+): number[] {
+  const capacityC = credits.map(c => Math.max(0, toCents(c.amount) - c.recordedC));
+  const kinds = credits.map(c => c.kind);
+  const takenC = spreadOwnMoneyFirst(
+    credits.map((c, i) => (c.kind === 'forgiven' ? 0 : capacityC[i])),
+    kinds,
+    unexplainedC,
+  );
+  if (!forgivenTakesTail) return takenC;
+  const leftC = unexplainedC - takenC.reduce((s, n) => s + n, 0);
+  if (leftC <= 0) return takenC;
+  const tailC = spreadOwnMoneyFirst(
+    credits.map((c, i) => (c.kind === 'forgiven' ? capacityC[i] : 0)),
+    kinds,
+    leftC,
+  );
+  return takenC.map((n, i) => n + tailC[i]);
 }
 
 /**
@@ -484,10 +534,13 @@ export function settledPerCredit(
       || (credits[a].createdAt ?? '').localeCompare(credits[b].createdAt ?? '')
       || a - b
     ));
-    const takenC = spreadOwnMoneyFirst(
-      order.map(i => (credits[i].kind === 'forgiven' ? 0 : toCents(credits[i].amount) - settledC[i])),
-      order.map(i => credits[i].kind),
+    /* ⚠ THE SAME CAPACITY AND ORDER THE REPORT USES (`spreadPayback`) — one home, so the two doors
+       cannot part company again about which credit a legacy payback consumed. Only the TAIL differs,
+       and the difference is documented at both ends. */
+    const takenC = spreadPayback(
+      order.map(i => ({ kind: credits[i].kind, amount: credits[i].amount, recordedC: settledC[i] })),
       legacyC,
+      false,
     );
     order.forEach((i, pos) => { settledC[i] += takenC[pos]; });
   }
@@ -538,37 +591,30 @@ export function buildFamilyDuesInputs(records: SeasonDuesRecords): Map<string, F
        credit (mig 281's unique key is per payout, not per credit), and a credit's amount can be
        edited down after a payback already pointed at it. Clamping here is the belt; do not remove
        it on the grounds that the writers "should" prevent it. */
-    const recordedFor = (c: { amount: number; paidBack?: number }) =>
-      Math.min(toCents(c.paidBack ?? 0), toCents(c.amount));
+    /* ⚠⚠ EVERY CREDIT IS OFFERED TO THE ASSUMPTION, EACH WITH THE ROOM IT HAS LEFT (owner question,
+       2026-09-09). This used to hand the assumption only credits with NO link at all — "one that
+       already says what it settled must not be reached for again" — which is true of the dollars its
+       link NAMED and false of the rest of it. When the unexplained money outgrew the unlinked
+       credits, the remainder landed nowhere and was silently dropped, and the Statement's balance
+       parted from the one the dues screen renders.
 
-    const recordedC = mine.reduce((s, c) => s + recordedFor(c), 0);
-    const unexplainedC = Math.max(0, toCents(outBy.get(playerId) ?? 0) - recordedC);
+       ⚠ IT NEEDS NO STALE DATA, which is why it is worth the words. The season settlement writes
+       paybacks with no links BY DESIGN, so: settle a season, then hand the family the rest.
+       Measured — $300.00 of paybacks, $200.00 accounted for, balance $900.00 against $1,000.00, and
+       a family who had every credit returned still reading as having contributed $100.00. The
+       partial link that triggers it could not exist before the Pay-out sheet learned to settle the
+       remainder of a credit, which is what makes this the same fix arriving a step late.
 
-    /* Only credits with NO recorded settlement are offered to the assumption; one that already
-       says what it settled must not be reached for again. */
-    const unnamed = mine.filter(c => c.paidBack === undefined);
-    const allocated = allocatePayouts(unnamed, toDollars(unexplainedC));
-
+       `allocatePayouts` now takes the recorded figure per credit and subtracts it from that credit's
+       CAPACITY rather than from the list — so a linked credit is neither double-spent nor skipped,
+       and it returns rows in the order given, which is why there is no re-merge here any more. */
     out.set(playerId, {
       dues,
       cappedPaid: Math.min(paidBy.get(playerId) ?? 0, dues),
-      /* ⚠ THE ORDER IS REBUILT FROM `mine`, not concatenated. `allocatePayouts` walks own-money
-         first, so its output is NOT in the caller's date order — and the per-kind figures behind
-         the dues figure are summed off these rows. Restoring the original sequence keeps the
-         season's oldest-first contract intact for every other reader.
-         ⚠ PAIRED BY POSITION, NOT BY OBJECT IDENTITY (found by review, 2026-09-07). A Map keyed on
-         the credit object collapsed two occurrences of the SAME object reference into one entry and
-         kept only the last write, silently losing a real payout. Today's only caller builds fresh
-         objects so it could not fire, but a pure function must not depend on its caller's
-         allocation habits. */
-      credits: (() => {
-        let next = 0;
-        return mine.map(c => (
-          c.paidBack !== undefined
-            ? { kind: c.kind, amount: c.amount, traced: c.traced, handedBack: toDollars(recordedFor(c)) }
-            : allocated[next++]
-        ));
-      })(),
+      credits: allocatePayouts(
+        mine.map(c => ({ kind: c.kind, amount: c.amount, traced: c.traced, recorded: c.paidBack })),
+        outBy.get(playerId) ?? 0,
+      ),
     });
   }
   return out;

@@ -106,3 +106,31 @@ Two smaller disagreements were found and fixed in the same pass: the Pay-out she
 could name **different credits** as the one an old payback consumed, and a **written-off balance**
 could absorb part of a refund even though a write-off is not the family's money to return. Nothing a
 coach does changes; three screens that were quietly telling different stories now tell one.
+
+## Update — 2026-09-09 (second pass): the report was losing money too
+
+The question that found it: *"can those unfixed issues come up in our current state, or only with old
+stale data?"* Current state — and the honest answer was worse than the one first given.
+
+The end-of-season settlement writes paybacks without recording which debt they settled. That is
+deliberate and correct (a settlement cheque covers more than credits), but it means the ingredient is
+made fresh by ordinary use, not inherited from old data. Two consequences, both now fixed:
+
+**A family could be shown as having contributed money they gave back.** Settle a season, hand a family
+part of what they are owed, then pay them the rest later — an ordinary sequence. The report lost track
+of the settlement half: it said the family's balance was $900.00 while their own dues screen said
+$1,000.00, and counted $100.00 as contributed by a family who had every dollar returned. Two screens,
+two answers, about the number a coach uses to chase people.
+
+**And a written-off balance could swallow a refund.** Cash handed back can only come out of money the
+family was owed — never out of a balance the team forgave. Because it could, the season's dues figure
+depended on nothing more than the date the write-off was granted: $200.00 if it was dated before the
+family's fundraising credit, $100.00 if after. Same family, same money, two answers.
+
+Both are gone. The fix is the same one the Pay-out sheet got earlier in the day, applied to the report:
+count what each credit still has left rather than skipping any credit that has been touched. The two
+screens now name the same credit as the one a payback consumed, so the door between them can be opened
+without contradiction.
+
+No figure a coach is looking at today changes — no family on the current season holds the shape that
+triggers either, and production has recorded no paybacks at all. It was checked rather than assumed.
