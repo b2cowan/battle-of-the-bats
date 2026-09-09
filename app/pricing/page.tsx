@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import ViewerAwarePlans from './ViewerAwarePlans';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
-import ComparisonTable from './ComparisonTable';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import {
   PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
@@ -75,8 +74,6 @@ const BUYER_SEGMENTS: Array<{
   },
 ];
 
-
-/* Comparison categories are defined in ComparisonTable.tsx */
 
 const UPGRADE_BRIDGES = [
   {
@@ -335,25 +332,6 @@ export default async function PricingPage() {
               {FOUNDING_SEASON_AFTER_LINE}
             </p>
           )}
-        </div>
-      </section>
-
-      {/* ── Comparison table ─────────────────────────────────────────────── */}
-      <section className={styles.tableSection} id="compare">
-        <div className="container">
-          <h2 className={styles.sectionTitle}>Compare all plans</h2>
-          <p className={styles.sectionSub}>
-            {teamCheckoutOpen
-              ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now. League Plus and Club are open for early interest.'
-              : 'Tournament and Tournament Plus are available now. League Plus and Club are open for early interest.'}
-          </p>
-          <ComparisonTable />
-          <p className="font-mono text-xs text-data-gray mt-4 text-center">
-            League Plus and Club are available for early interest — express interest to be notified when self-serve checkout opens.
-            {teamCheckoutOpen
-              ? ' The Premium Coaches Portal is available standalone for coaches managing one team — see the plans above.'
-              : ' Coaches Portal is also available standalone for coaches managing one team.'}
-          </p>
         </div>
       </section>
 

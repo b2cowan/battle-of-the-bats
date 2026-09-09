@@ -283,8 +283,8 @@ export default async function ForCoachesPage() {
 
           </div>
           <p className={styles.planNote2}>
-            <Link href="/pricing#compare" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
-              Compare all plans in detail →
+            <Link href="/pricing#org-plans" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
+              See every plan and price →
             </Link>
           </p>
         </div>

@@ -291,8 +291,8 @@ export default async function ForTournamentOrganizersPage() {
           </div>
           <p className={styles.planNote2}>
             Not sure which plan? Start free — you can upgrade at any time.{' '}
-            <Link href="/pricing#compare" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
-              Compare all features →
+            <Link href="/pricing#org-plans" className="tap-target text-logic-lime hover:opacity-75 transition-opacity">
+              See every plan and price →
             </Link>
           </p>
         </div>

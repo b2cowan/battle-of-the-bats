@@ -418,6 +418,8 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 
 ## 5. FEATURE COMPARISON TABLE
 
+> ⚠ **RETIRED 2026-09-07 — owner ruling, `BUSINESS_DECISIONS.md` 2026-09-07.** The comparison table no longer renders on `/pricing`: it compared two live plans against two parked ones and had no column for the Premium Coaches Portal. **The plan cards are the comparison.** The rows below are kept as the historical inclusion record only; do not restore the table without a new ruling.
+
 Full breakdown, grouped by category. Shown below the pricing cards with a "Compare all plans" toggle or section anchor.
 
 ### Table Headers
