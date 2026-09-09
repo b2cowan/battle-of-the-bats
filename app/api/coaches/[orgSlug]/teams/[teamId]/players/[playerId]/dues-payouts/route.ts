@@ -7,8 +7,12 @@ import {
   recordRepDuesPayout,
   getRepDuesCreditsForPlayer,
   getRepDuesPaidBackByCredit,
+  getRepDuesPayoutsForPlayer,
   PayoutExceedsOwedError,
+  PaybackAlreadyLinkedError,
 } from '@/lib/db';
+import { settledPerCredit, type DuesCreditKind } from '@/lib/coach-dues-actual';
+import { amountsTotal } from '@/lib/dues-credits';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
@@ -75,16 +79,37 @@ export const POST = withObservability(async (req: Request,
     if (!Array.isArray(creditIds) || creditIds.some(id => typeof id !== 'string')) {
       return NextResponse.json({ error: 'creditIds must be an array of credit ids' }, { status: 400 });
     }
-    const [credits, paidBack] = await Promise.all([
+    const [credits, paidBack, payouts] = await Promise.all([
       getRepDuesCreditsForPlayer(programYear.id, playerId),
       getRepDuesPaidBackByCredit(programYear.id),
+      getRepDuesPayoutsForPlayer(programYear.id, playerId),
     ]);
-    const chosen = selectPayback(
+    /* ⚠⚠ THE SAME STANDING RULE THE TICK-LIST IS BUILT FROM, AND IT HAS TO BE (found on the UAT
+       fixture 2026-09-09). A payback recorded before mig 281 settled something and says nothing
+       about WHAT, so a credit it touched is not fully standing — the dues route spreads it
+       (`settledPerCredit`) before offering the debt. This door read the LINKS alone, valued that
+       same credit at its full issued amount, summed a payback the family is not owed, and then its
+       own ceiling refused it. Measured: a $300.00 sponsorship share carrying a $200.00 unlinked
+       payback offered $100.00 on screen and refused every single time it was ticked, so that
+       family's remaining credit could not be handed back through any door in the product.
+       **Two doors, one rule** — the sentence `payoutCeiling` and `selectPayback` already answer to;
+       this door was the one saying it and not doing it. */
+    const settled = settledPerCredit(
       credits.map(c => ({
+        kind: c.creditType as DuesCreditKind,
+        amount: c.amount,
+        linkedPaidBack: paidBack.get(c.id) ?? 0,
+        creditDate: c.creditDate,
+        createdAt: c.createdAt,
+      })),
+      amountsTotal(payouts),
+    );
+    const chosen = selectPayback(
+      credits.map((c, i) => ({
         id: c.id,
         amount: c.amount,
         creditType: c.creditType,
-        alreadyPaidBack: paidBack.get(c.id) ?? 0,
+        alreadyPaidBack: settled[i],
       })),
       creditIds,
       typeof amount === 'number' ? amount : undefined,
@@ -146,6 +171,22 @@ export const POST = withObservability(async (req: Request,
             : 'This family has no credit left, so there is nothing to pay out.',
           code: 'PAYOUT_EXCEEDS_OWED',
           owedBack: owed,
+        },
+        { status: 409 },
+      );
+    }
+    /* ⚠ A REFUSAL, NOT A CRASH (found by review, 2026-09-09). A credit may carry only ONE payback
+       (mig 281's `(credit_id)` key), and this fix made a SECOND legitimate attempt reachable: a
+       partial link can now land, and undoing the legacy payout that caused it re-opens the rest of
+       that credit. The database said 23505, the route said 500, and the coach read the generic
+       "Could not record the payout" beside cash that had already been correctly put back. The way
+       out is real, so the sentence names it. */
+    if (e instanceof PaybackAlreadyLinkedError) {
+      return NextResponse.json(
+        {
+          error: 'One of those debts already has a payback recorded against it. Undo that payback '
+            + 'first, then record one payment covering the whole of what is owed.',
+          code: 'PAYBACK_ALREADY_LINKED',
         },
         { status: 409 },
       );

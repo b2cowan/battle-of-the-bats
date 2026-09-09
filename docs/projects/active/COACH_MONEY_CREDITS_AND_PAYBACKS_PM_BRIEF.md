@@ -86,3 +86,23 @@ both.
 - Every budget figure is unchanged.
 - Fundraising on the report equals the "Team keeps" figure the Fundraising tab already shows.
 - A coach handing money back picks what it is for, and cannot return more than is owed.
+## Update — 2026-09-09: the last criterion above was only half true
+
+*"A coach handing money back picks what it is for, and cannot return more than is owed"* — the
+picking shipped, and the **not more than is owed** part refused everything instead.
+
+Where a family had been paid back once before the product started recording *what* a payback settled,
+the tick-list and the Save disagreed about how much of that credit was left. The list was right; the
+Save read the credit as untouched, asked to hand back the whole original amount, and its own ceiling
+refused it. The coach met a button that could not work, and that family's remaining credit could not
+be returned through any door in the product. Every family on the test season was in this state.
+
+It has not bitten a real club yet only because no real payback has been recorded. It would have: the
+end-of-season settlement writes paybacks without naming debts on purpose (a settlement cheque covers
+more than credits), so *settle the season, then pay a family back afterwards* — an ordinary sequence,
+and one the "a season stays live until it is closed" ruling exists to support — walks straight into it.
+
+Two smaller disagreements were found and fixed in the same pass: the Pay-out sheet and the Statement
+could name **different credits** as the one an old payback consumed, and a **written-off balance**
+could absorb part of a refund even though a write-off is not the family's money to return. Nothing a
+coach does changes; three screens that were quietly telling different stories now tell one.

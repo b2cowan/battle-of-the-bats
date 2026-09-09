@@ -20,6 +20,11 @@ import {
   PAYBACK_ALREADY_SETTLED, PAYBACK_AMOUNT_DISAGREES,
   type SelectableCredit,
 } from '../../lib/dues-payback-selection.ts';
+/* The other two modules the save runs through — imported, never restated. The defect these guard
+   was two doors disagreeing about one figure, and a test carrying its own copy would agree with
+   whichever door it was copied from. */
+import { settledPerCredit, type DuesCreditKind } from '../../lib/coach-dues-actual.ts';
+import { payoutCeiling } from '../../lib/dues-credits.ts';
 
 const c = (
   id: string, amount: number, creditType = 'fundraiser', alreadyPaidBack = 0,
@@ -117,5 +122,81 @@ describe('legacy payouts, which carry no links at all', () => {
     const r = ok(selectPayback(part, ['rebate']));
     assert.equal(r.amount, 50);
     assert.deepEqual(r.links, [{ creditId: 'rebate', amount: 50 }]);
+  });
+});
+
+/**
+ * THE SAVE'S OWN WIRING — the three modules the Pay out door runs through, composed here in the
+ * order the route composes them.
+ *
+ * ⚠⚠ THIS IS THE TEST THE DEFECT OF 2026-09-09 WALKED PAST. Every piece was individually right and
+ * individually tested: `settledPerCredit` knew a legacy payback had consumed part of a credit, the
+ * ceiling knew what the family was owed, and `selectPayback` knew how to sum a tick-list. The route
+ * simply did not put the first one in front of the third — it fed the LINKS to the selection — so
+ * the sheet offered $100.00 of Logan's $300.00 sponsorship share and the save asked to hand back
+ * $300.00, which its own ceiling then refused. A unit test per module cannot see that; only the
+ * composition can, which is why the composition is pinned rather than described.
+ */
+describe('what the coach ticks is what the ceiling will accept', () => {
+  type Credit = {
+    id: string; kind: DuesCreditKind; amount: number; linked: number;
+    creditDate: string; createdAt?: string | null;
+  };
+
+  /**
+   * Exactly what the route does: derive each credit's standing, then sum the ticks against it.
+   *
+   * ⚠ IT MIRRORS THE ROUTE FIELD FOR FIELD, INCLUDING THE TWO IT IS TEMPTING TO DROP (`createdAt`,
+   * and the claimed amount the route passes through as a CHECK). A composition test that quietly
+   * simplifies the composition stops describing the thing it is named after — which is the very
+   * failure this block exists to catch, one level up.
+   */
+  const save = (credits: Credit[], paidOut: number, ticked: string[], claimedAmount?: number) => {
+    const settled = settledPerCredit(
+      credits.map(x => ({
+        kind: x.kind, amount: x.amount, linkedPaidBack: x.linked,
+        creditDate: x.creditDate, createdAt: x.createdAt ?? null,
+      })),
+      paidOut,
+    );
+    return selectPayback(
+      credits.map((x, i) => ({
+        id: x.id, amount: x.amount, creditType: x.kind, alreadyPaidBack: settled[i],
+      })),
+      ticked,
+      claimedAmount,
+    );
+  };
+  const ceilingOf = (credits: Credit[], paidOut: number) => payoutCeiling(
+    credits.map(x => ({ amount: x.amount, creditType: x.kind })),
+    [{ amount: paidOut }],
+  );
+
+  it('⚠⚠ Logan: the $300.00 share carrying a $200.00 legacy payback hands back the $100.00 left', () => {
+    const credits: Credit[] = [
+      { id: 'share', kind: 'fundraiser', amount: 300, linked: 0, creditDate: '2026-08-28' },
+    ];
+    const r = ok(save(credits, 200, ['share']));
+    assert.equal(r.amount, 100, 'the save asks for what the sheet offered, not the issued amount');
+    assert.deepEqual(r.links, [{ creditId: 'share', amount: 100 }]);
+    assert.ok(r.amount <= ceilingOf(credits, 200), 'and the ceiling accepts it');
+  });
+
+  it('a write-off beside a real credit does not push the tick past the ceiling', () => {
+    const credits: Credit[] = [
+      { id: 'written-off', kind: 'forgiven', amount: 100, linked: 0, creditDate: '2026-08-01' },
+      { id: 'rebate', kind: 'fundraiser', amount: 200, linked: 0, creditDate: '2026-08-15' },
+    ];
+    const r = ok(save(credits, 100, ['rebate']));
+    assert.equal(r.amount, 100);
+    assert.ok(r.amount <= ceilingOf(credits, 100));
+  });
+
+  it('a family whose paybacks have taken everything is told there is nothing left', () => {
+    const credits: Credit[] = [
+      { id: 'share', kind: 'fundraiser', amount: 300, linked: 0, creditDate: '2026-08-28' },
+    ];
+    assert.equal(refused(save(credits, 300, ['share'])).code, PAYBACK_ALREADY_SETTLED);
+    assert.equal(ceilingOf(credits, 300), 0);
   });
 });

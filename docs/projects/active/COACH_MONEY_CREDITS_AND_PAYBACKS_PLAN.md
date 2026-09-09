@@ -361,6 +361,114 @@ and "Paying back" is the list's own footer row; Date paid and How pair on one ro
 one cause — text placed in a modal with no type token inherited the browser's 16px. Logged in
 `memory/design_decisions.md` 2026-09-08. Uses the shared band classes; `.readonlyValue` is retired.
 
+## 6f. ✅ BUILT 2026-09-09 — the OTHER door never got 6d's fix
+
+**6d fixed the list and not the save, and §6d's own verification line is how it hid.** "Families whose
+tick-list can overshoot the ceiling: 0" was measured against `settledPerCredit` — the rule the SHEET
+is built from. The write door never called it: `dues-payouts/route.ts` fed `selectPayback` the mig-281
+LINKS alone, so it valued a legacy-touched credit at its full issued amount, summed a payback the
+family is not owed, and its own ceiling refused it. Every one of the six dev families that has ever
+been paid back was dead-ended — measured before and after:
+
+| Family | Team holds | Old save asked | Now asks |
+|---|---|---|---|
+| Blake Test | $176.98 | $276.98 ✗ | $176.98 ✓ |
+| Gus Ledger | $0.00 | $20.00 ✗ | — ✓ |
+| Ash Ledger | $75.00 | $150.00 ✗ | $75.00 ✓ |
+| Casey Test | $37.50 | $337.50 ✗ | $37.50 ✓ |
+| Logan Test | $100.00 | $300.00 ✗ | $100.00 ✓ |
+| Gio Ledger | $0.00 | $120.00 ✗ | — ✓ |
+
+**⚠⚠ IT IS REACHABLE ON PROD, and "production has zero payouts" is not the shield it reads as.** The
+season settlement writes paybacks with no links **by design** (a settlement cheque covers a family's
+share of the surplus, and a share is not a credit) — so *settle the season, then pay a family back*
+walks straight into it, and that sequence sits inside the standing ruling that a season stays live
+after the last game precisely so money can be settled afterwards.
+
+**Two more breaks of the same invariant, found while confirming the first.** The invariant is now
+written on `settledPerCredit` and asserted per case in the tests: **what the tick-list offers may
+never exceed what the ceiling allows.**
+
+1. **The order was the caller's and the caller had it backwards.** "Oldest first" was a contract
+   stated in a comment; the dues route holds its credits **newest-first** (`credit_date` descending),
+   so the spread ate the wrong end and this sheet named a different credit from the one the Statement
+   named — R5's own defect class, rebuilt one level down. The dates are inputs now and the rule sorts
+   them itself, so no caller can get it wrong again.
+2. **A written-off balance could absorb a legacy payback.** `payoutCeiling` excludes `forgiven` — debt
+   relief is never the family's money — but the spread did not, so a write-off soaked up money that
+   should have come off a payable credit and the credit beside it read fuller than the save allows.
+   Forgiven credits absorb nothing now. Fixed with it: a credit its own links had already settled
+   could swallow the remainder and then have it clamped away, leaving the NEXT credit reading fully
+   standing. **Capacity is what is still STANDING**, not what was issued.
+
+**⚠ AND THE REPORT'S SPREAD DELIBERATELY DID *NOT* NARROW WITH IT.** `allocatePayouts` still gives
+every credit — forgiven included — its full issued amount as capacity, and the reason is written on
+it: the identity `actual = dues − balance − excluded` holds only while every paid-out dollar lands on
+some credit, because the shipped balance subtracts the payout total from ALL credits at the family
+level. Narrowing it there would have made a family's Statement balance disagree with their dues-screen
+balance — the §148 defect shape, arriving disguised as a consistency fix. The two functions now share
+their ORDER (`spreadOwnMoneyFirst`, one home) and differ only on capacity, with the divergence
+documented at both ends.
+
+**Gated:** `settledPerCredit` gains nine cases, each asserting the invariant as well as its figure,
+and the three modules the save runs through are composed in `dues-payback-selection.test.ts` — the
+shape a per-module test cannot see, and the shape that let this through.
+
+⚠ **A CLAIM THIS SECTION MADE AND HAD TO WITHDRAW: "every new case fails against the pre-fix rule".**
+It does not, and the correction is the interesting part. **All three COMPOSITION cases fail** on the
+pre-fix wiring — that is the defect. But four of the rule-level cases pass on the OLD rule too,
+**including the one named "Logan"** — because at that layer the old rule was already right: the
+sheet showed 00.00 correctly, and only the save disagreed. A test named after the defect, sitting
+at the layer the defect was not in, is exactly the reassurance that let this ship. The claim was
+generalised from the four cases actually re-run. Load-bearing on the old rule: the ordering case,
+the forgiven case, both capacity cases, the same-day tiebreak, and all three compositions.
+
+## 6g. ⚠ FOUND BY THE §6f REVIEW, NOT FIXED — two report defects the fix made visible
+
+Both live in `buildFamilyDuesInputs` / `allocatePayouts` — the **report** side, which §6f deliberately
+did not touch. Both are **pre-existing**: they were there before §6f and are unchanged by it. What
+§6f did was produce the correct answer next to them, which is why they are now legible at all. Both
+move figures a coach reads, so both want an owner's word before anyone touches them.
+
+**1. A write-off can absorb a payback, and it changes the season's dues actual.** A payout allocated
+onto a `forgiven` credit erases a write-off instead of reducing a real credit — and because
+forgiveness flows through the CLAMPED `excluded` term rather than a symmetric pot, `actual` moves
+with it. Measured on one family, billed $1,000.00, holding a $100.00 write-off and a $200.00 rebate,
+handed back $100.00:
+
+| Write-off dated… | Statement's dues actual | Fundraising credited | Write-offs |
+|---|---|---|---|
+| **older** than the rebate | **$200.00** | $200.00 | $0.00 |
+| **newer** than the rebate | **$100.00** | $100.00 | $100.00 |
+
+Same money, same family, two different report figures decided by nothing but the DATE ORDER of a
+write-off. The module header's claim that the allocation *"only moves money between kinds, never the
+total"* is false wherever a forgiven credit is in play. **$100.00 is the right answer** — the team
+handed back cash, and cash can only come out of money the family was owed, never out of forgiveness.
+The balance identity holds in both rows, which is why nothing caught it.
+
+**2. A partially-linked credit drops payback money on the floor, and the two balances part.**
+`buildFamilyDuesInputs` offers the assumption only credits with NO link at all, so when the unnamed
+remainder exceeds what those credits can hold, the leftover is simply lost. Measured: a $300.00
+credit carrying a $250.00 link, beside a $100.00 unlinked credit, with $400.00 of payouts — the
+report accounts for $350.00 of it and the Statement's balance reads **$950.00 while the dues screen
+renders $1,000.00.** That is the §148 shape — a balance a coach chases families on, disagreeing with
+itself across two screens — and it is live today.
+
+**⚠ THE FIX FOR BOTH IS ONE CHANGE, AND IT IS NOT THE OBVIOUS ONE.** Do not simply exclude forgiven
+credits from `allocatePayouts`: in the tail where payouts exceed the payable credits, the leftover
+must still land somewhere or `netCredits` stops matching the shipped family-level balance and the
+Statement desyncs — which is defect 2 arriving from the other direction. The shape that satisfies
+both: **spread over payable credits' STANDING capacity first, then let anything still unplaced fall
+to the write-offs** — truthful wherever it can be, arithmetically closed always. That is also what
+would bring the report into line with `settledPerCredit`, collapsing seam 1 to nothing.
+
+**Blast radius before anyone builds it:** it moves the Statement's Player-dues actual and its
+three-part split for any family holding a write-off or a part-linked credit alongside a payback.
+On the UAT fixture today: **no family holds both**, so the headline $5,007.63 does not move — but
+that is a fact about the fixture, not a property of the fix, and it must be re-measured against the
+data of the day.
+
 ## 7. Gates
 
 - **Twelve of twelve** — each family's variance equals their dues Balance, asserted in a unit test

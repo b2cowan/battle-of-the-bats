@@ -167,11 +167,18 @@ export const GET = withObservability(async (_req: Request,
          or a coach ticks a debt the server's ceiling then refuses. The rule, and the reason it uses
          the same own-money-first allocation the report does, live in `settledPerCredit`. */
       {
+        /* ⚠ THE DATES GO IN, AND THAT IS THE FIX (2026-09-09). These credits arrive NEWEST first —
+           the query orders `credit_date` descending — while the spread is oldest-first, so the
+           legacy payback was being eaten off the wrong end of the list and this sheet named a
+           different credit from the one the Statement named. The rule sorts them itself now; the
+           order they are fetched in is no longer load-bearing. */
         const settled = settledPerCredit(
           credits.map(c => ({
             kind: c.creditType as DuesCreditKind,
             amount: c.amount as number,
             linkedPaidBack: (c.paidBack as number) ?? 0,
+            creditDate: c.creditDate as string,
+            createdAt: (c.createdAt as string | null) ?? null,
           })),
           amountsTotal(payoutsByPlayer.get(p.id) ?? []),
         );

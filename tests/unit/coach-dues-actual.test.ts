@@ -26,8 +26,13 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   duesActual, seasonDuesActual, seasonDuesParts, creditIsRevenue, allocatePayouts, buildFamilyDuesInputs,
+  settledPerCredit,
   type FamilyDuesActualInput, type DuesCreditInput,
 } from '../../lib/coach-dues-actual.ts';
+/* ⚠ THE SAVE'S CEILING, IMPORTED RATHER THAN RESTATED. The whole defect this block guards was two
+   modules disagreeing about one figure; a test that hand-rolls the ceiling would agree with
+   whichever side it copied and prove nothing. */
+import { payoutCeiling } from '../../lib/dues-credits.ts';
 
 /** A credit, with the two flags spelled out at every call site so no case reads as a default. */
 const credit = (
@@ -391,5 +396,160 @@ describe('the season total', () => {
     assert.equal(before.fundraisingCredited, 150);
     assert.equal(after.fundraisingCredited, 0);
     assert.equal(after.actual, 0);
+  });
+});
+
+/**
+ * WHAT A TICK-LIST MAY OFFER (`settledPerCredit`) — the Pay out sheet's half of the payback rule.
+ *
+ * ⚠⚠ ONE INVARIANT RULES THIS WHOLE BLOCK: **the standing amounts this hands the sheet must never
+ * add up to more than the save's ceiling** (`payoutCeiling` — payable credits minus every payout).
+ * The two are computed in different modules from different inputs, and when they disagree the
+ * coach meets a button that refuses every time it is pressed. So every case below asserts the
+ * invariant as well as the figure, and `assertOffersFitCeiling` is deliberately the last line of
+ * each: a case that pins a number but not the invariant is how the first cut passed review.
+ *
+ * ⚠ THE SHAPE IS THE ONE THAT SHIPPED BROKEN (found on the UAT fixture 2026-09-09). Logan's family:
+ * a $300.00 sponsorship share, one $200.00 payback recorded before mig 281 that says nothing about
+ * what it settled. The sheet offered $100.00, the save valued the same credit at $300.00, and the
+ * ceiling refused it — leaving that family's real $100.00 unreturnable through any door.
+ */
+describe('the tick-list can never offer more than the ceiling allows', () => {
+  const offered = (
+    credits: Parameters<typeof settledPerCredit>[0],
+    paidOut: number,
+  ): number[] => {
+    const settled = settledPerCredit(credits, paidOut);
+    // What the sheet shows on each row, and what the save re-derives for the same tick.
+    return credits.map((c, i) => Math.round((c.amount - settled[i]) * 100) / 100);
+  };
+
+  /** The gate: what a coach may tick, against what the write will accept. */
+  const assertOffersFitCeiling = (
+    credits: Parameters<typeof settledPerCredit>[0],
+    paidOut: number,
+  ) => {
+    const payable = offered(credits, paidOut)
+      .filter((_, i) => credits[i].kind !== 'forgiven')
+      .reduce((s, n) => s + n, 0);
+    const ceiling = payoutCeiling(
+      credits.map(c => ({ amount: c.amount, creditType: c.kind })),
+      [{ amount: paidOut }],
+    );
+    assert.ok(
+      Math.round(payable * 100) <= Math.round(ceiling * 100),
+      `the sheet offers ${payable} but the save allows ${ceiling}`,
+    );
+  };
+
+  it('⚠⚠ Logan: a legacy payback takes the credit it touched down to what is really left', () => {
+    const credits = [{ kind: 'fundraiser' as const, amount: 300, linkedPaidBack: 0, creditDate: '2026-08-28' }];
+    assert.deepEqual(offered(credits, 200), [100], 'the row reads $100.00, not $300.00');
+    assertOffersFitCeiling(credits, 200);
+  });
+
+  it('⚠ the order is the RULE’S, not the caller’s — newest-first in, same answer out', () => {
+    /* The dues route holds its credits newest-first; the report holds them oldest-first. Both must
+       name the same credit, or one screen says a coach’s own money came back and the other says
+       their rebate did. */
+    const oldest = { kind: 'fundraiser' as const, amount: 150, linkedPaidBack: 0, creditDate: '2026-08-01' };
+    const newest = { kind: 'fundraiser' as const, amount: 150, linkedPaidBack: 0, creditDate: '2026-09-01' };
+    assert.deepEqual(settledPerCredit([oldest, newest], 100), [100, 0], 'oldest first');
+    assert.deepEqual(settledPerCredit([newest, oldest], 100), [0, 100], 'and still oldest first');
+    assertOffersFitCeiling([oldest, newest], 100);
+    assertOffersFitCeiling([newest, oldest], 100);
+  });
+
+  it('own money comes back first, whatever order the credits arrive in', () => {
+    const rebate = { kind: 'fundraiser' as const, amount: 150, linkedPaidBack: 0, creditDate: '2026-08-20' };
+    const own = { kind: 'overpayment' as const, amount: 300, linkedPaidBack: 0, creditDate: '2026-09-01' };
+    // Casey's shape: oldest-first alone would eat the rebate — the shipped dues screen says the
+    // family's own money goes back first, and it does even though it is the NEWER credit.
+    assert.deepEqual(settledPerCredit([own, rebate], 100), [100, 0]);
+    assert.deepEqual(settledPerCredit([rebate, own], 100), [0, 100]);
+    assertOffersFitCeiling([own, rebate], 100);
+    assertOffersFitCeiling([rebate, own], 100);
+  });
+
+  it('⚠ a forgiven balance absorbs nothing — it is not the family’s money to hand back', () => {
+    /* The ceiling excludes write-offs. If one could soak up a legacy payback, the payable credit
+       beside it would read fuller than the save allows — the dead end in a second costume. */
+    const credits = [
+      { kind: 'forgiven' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-01' },
+      { kind: 'fundraiser' as const, amount: 200, linkedPaidBack: 0, creditDate: '2026-08-15' },
+    ];
+    assert.deepEqual(offered(credits, 100), [100, 100], 'the payback came off the rebate');
+    assertOffersFitCeiling(credits, 100);
+  });
+
+  it('⚠ a credit its own links already settled cannot swallow legacy money too', () => {
+    /* Capacity is what is STANDING. Letting a settled credit take the remainder and then clamping
+       it threw those dollars away, and the next credit read fully standing. */
+    const credits = [
+      { kind: 'fundraiser' as const, amount: 300, linkedPaidBack: 300, creditDate: '2026-08-01' },
+      { kind: 'fundraiser' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-15' },
+    ];
+    assert.deepEqual(offered(credits, 400), [0, 0], 'both are spent');
+    assertOffersFitCeiling(credits, 400);
+  });
+
+  it('a part-linked credit takes only what it has room for, and the rest spills on', () => {
+    const credits = [
+      { kind: 'fundraiser' as const, amount: 300, linkedPaidBack: 250, creditDate: '2026-08-01' },
+      { kind: 'fundraiser' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-15' },
+    ];
+    assert.deepEqual(offered(credits, 400), [0, 0]);
+    assertOffersFitCeiling(credits, 400);
+  });
+
+  it('nothing paid back leaves every credit whole', () => {
+    const credits = [
+      { kind: 'fundraiser' as const, amount: 300, linkedPaidBack: 0, creditDate: '2026-08-01' },
+      { kind: 'overpayment' as const, amount: 50, linkedPaidBack: 0, creditDate: '2026-08-15' },
+    ];
+    assert.deepEqual(offered(credits, 0), [300, 50]);
+    assertOffersFitCeiling(credits, 0);
+  });
+
+  it('a payback larger than the credits leaves nothing standing and no negative', () => {
+    const credits = [{ kind: 'fundraiser' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-01' }];
+    assert.deepEqual(offered(credits, 250), [0]);
+    assertOffersFitCeiling(credits, 250);
+  });
+
+  it('two credits dated the same day fall back on when they were created', () => {
+    const a = { kind: 'fundraiser' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-01', createdAt: '2026-08-01T10:00:00Z' };
+    const b = { kind: 'fundraiser' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-01', createdAt: '2026-08-01T18:00:00Z' };
+    assert.deepEqual(settledPerCredit([b, a], 100), [0, 100], 'the earlier one was consumed');
+    assertOffersFitCeiling([b, a], 100);
+  });
+
+  it('⚠ a link bigger than its own credit is clamped, and does not turn into a negative', () => {
+    /* Reachable without a bug elsewhere: a credit can be edited DOWN after a payback already
+       pointed at it, and nothing caps the cumulative linked amount per credit. */
+    const credits = [{ kind: 'fundraiser' as const, amount: 100, linkedPaidBack: 400, creditDate: '2026-08-01' }];
+    assert.deepEqual(settledPerCredit(credits, 400), [100], 'settled can never exceed the credit');
+    assert.deepEqual(offered(credits, 400), [0]);
+    assertOffersFitCeiling(credits, 400);
+  });
+
+  it('two overpayments come back oldest first, not array first', () => {
+    const newer = { kind: 'overpayment' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-09-01' };
+    const older = { kind: 'overpayment' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-01' };
+    assert.deepEqual(settledPerCredit([newer, older], 100), [0, 100]);
+    assertOffersFitCeiling([newer, older], 100);
+  });
+
+  it('a payback beyond every payable credit empties them all and stops at zero', () => {
+    const credits = [
+      { kind: 'fundraiser' as const, amount: 200, linkedPaidBack: 0, creditDate: '2026-08-01' },
+      { kind: 'overpayment' as const, amount: 100, linkedPaidBack: 0, creditDate: '2026-08-15' },
+    ];
+    assert.deepEqual(offered(credits, 900), [0, 0]);
+    assertOffersFitCeiling(credits, 900);
+  });
+
+  it('no credits at all is not an error', () => {
+    assert.deepEqual(settledPerCredit([], 250), []);
   });
 });

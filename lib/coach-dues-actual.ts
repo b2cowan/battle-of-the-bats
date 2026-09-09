@@ -353,19 +353,51 @@ export function allocatePayouts(
   credits: Array<{ kind: DuesCreditKind; amount: number; traced: boolean }>,
   paidOut: number,
 ): DuesCreditInput[] {
-  let leftC = Math.max(0, toCents(paidOut));
-  const out: DuesCreditInput[] = credits.map(c => ({ ...c, handedBack: 0 }));
-  /* Two passes over the same array, in the order the product already assumes: the family's own
-     money, then everything else oldest-first (the order the caller supplies them in). */
+  /* ⚠⚠ CAPACITY HERE IS THE WHOLE ISSUED AMOUNT, FORGIVEN CREDITS INCLUDED, AND IT MUST STAY THAT
+     WAY. `settledPerCredit` deliberately uses a NARROWER capacity for a different question, and the
+     temptation to unify them is why this is written down: the identity `actual = dues − balance −
+     excluded` holds only while every paid-out dollar lands on some credit, because the shipped
+     balance subtracts the payout total from ALL credits at the family level (`Math.max(0,
+     creditsIssued − paidOut)`, in `lib/db.ts` and the dues route). Narrow the capacity here and a
+     family holding a written-off balance reads one balance on the Statement and another on the dues
+     screen — the §148 defect shape, arriving by way of a tidy-up. */
+  const takenC = spreadOwnMoneyFirst(
+    credits.map(c => toCents(c.amount)),
+    credits.map(c => c.kind),
+    toCents(paidOut),
+  );
+  return credits.map((c, i) => ({ ...c, handedBack: toDollars(takenC[i]) }));
+}
+
+/**
+ * THE ORDER A PAYBACK IS ASSUMED TO HAVE CONSUMED A FAMILY'S CREDITS, and the one place it is
+ * written: the family's own money first, then everything else oldest-first. Both readers of the
+ * assumption go through here, so they can never part company about the ORDER — what they differ on
+ * is each credit's CAPACITY, which is a genuinely different question and is documented at each
+ * caller.
+ *
+ * @param capacitiesC how much each credit may absorb, in cents, in the caller's order
+ * @param kinds       the same credits' kinds, for the own-money-first pass
+ * @param amountC     the payback money to spread, in cents
+ * @returns how much each credit absorbed, in cents, in the order given
+ */
+function spreadOwnMoneyFirst(
+  capacitiesC: readonly number[],
+  kinds: readonly DuesCreditKind[],
+  amountC: number,
+): number[] {
+  let leftC = Math.max(0, amountC);
+  const takenC = capacitiesC.map(() => 0);
+  // Two passes over the same array: the family's own money, then everything else in the order given.
   for (const wantOwn of [true, false]) {
-    for (const c of out) {
-      if ((c.kind === 'overpayment') !== wantOwn) continue;
-      const takeC = Math.min(leftC, toCents(c.amount));
-      c.handedBack = toDollars(takeC);
+    for (let i = 0; i < capacitiesC.length; i++) {
+      if ((kinds[i] === 'overpayment') !== wantOwn) continue;
+      const takeC = Math.min(leftC, Math.max(0, capacitiesC[i]));
+      takenC[i] = takeC;
       leftC -= takeC;
     }
   }
-  return out;
+  return takenC;
 }
 
 /**
@@ -378,11 +410,40 @@ export function allocatePayouts(
  * money, and another's offered an overpayment that had already been handed back. A coach ticks it,
  * the server's ceiling refuses the save, and they have met a dead end wearing a button's clothes.
  *
- * ⚠ THE SAME ALLOCATION THE REPORT USES — own money first, then oldest — so the debts a coach is
- * OFFERED and the figures the Statement SHOWS can never disagree about which credit a legacy
- * payback consumed. Only the UNEXPLAINED remainder is spread: a payback that named its debts is
- * already accounted for, and spreading the whole payout total again would settle the same dollars
- * twice.
+ * ⚠⚠ THE ONE INVARIANT THIS FUNCTION EXISTS TO HOLD: **what the tick-list OFFERS may never exceed
+ * what the save's ceiling ALLOWS** (`payoutCeiling` — payable credits minus every payout). Each
+ * clause below is one way the first cut broke it, and each was a live dead end on the UAT fixture:
+ *
+ *   • **FORGIVEN CREDITS ABSORB NOTHING.** The ceiling excludes them — debt relief is never the
+ *     family's money — so a write-off soaking up part of a legacy payback leaves the payable
+ *     credits reading fuller than the ceiling allows.
+ *   • **CAPACITY IS WHAT IS STILL STANDING**, not the issued amount. A credit its own links have
+ *     already settled cannot swallow legacy money as well; the first cut let it, the clamp then
+ *     threw those dollars away, and the NEXT credit read fully standing.
+ *   • **THE ORDER IS DECIDED HERE, NOT AT THE CALLER.** "Oldest first" was stated as a contract in
+ *     a comment and the only caller was breaking it: the dues route holds its credits newest-first,
+ *     so the spread ate the wrong end of the list. A rule a caller can get wrong is a rule that
+ *     will be got wrong — so the dates come in and the sort happens here.
+ *
+ * ⚠ THE SAME ORDER THE REPORT USES — own money first, then oldest (`spreadOwnMoneyFirst`) — so the
+ * debts a coach is OFFERED and the figures the Statement SHOWS name the same credit wherever both
+ * can. Only the UNEXPLAINED remainder is spread: a payback that named its debts is already accounted
+ * for, and spreading the whole payout total again would settle the same dollars twice.
+ *
+ * ⚠⚠ **THIS COMMENT ONCE SAID "the forgiven case is where they cannot", AND THAT WAS AN OVERSTATED
+ * GUARANTEE** (review, 2026-09-09). There are TWO places this function and `buildFamilyDuesInputs`
+ * part company, and only the first is a seam anyone chose:
+ *   1. **Forgiven credits** — deliberate, and the reason is written on `allocatePayouts`: the
+ *      report's capacity is pinned by the balance identity and must not narrow.
+ *   2. **A credit carrying a PARTIAL link** — not deliberate, and it is a live defect in the
+ *      report rather than in this function. `buildFamilyDuesInputs` hands the assumption only
+ *      credits with NO link at all, so when the unnamed remainder is larger than those credits can
+ *      hold, the leftover lands nowhere and `duesActual`'s balance drifts from the balance the dues
+ *      screen renders. **Measured: $950.00 against $1,000.00** on a $300 credit (linked $250)
+ *      beside a $100 credit with $400 of payouts — the §148 shape, in code this change did not
+ *      touch. Do not "align" this function to it; the report is the side that is wrong.
+ * Both are recorded in `COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md` §6g, awaiting an owner call
+ * because the fix moves figures a coach reads.
  *
  * ⚠ IT LIVES HERE, NOT AT THE SCREEN. `dues-definition-guard` refuses a hand-rolled credit sum
  * outside the definition homes, and it is right to: five hand-copies existed before that guard. It
@@ -391,24 +452,46 @@ export function allocatePayouts(
  * @returns the settled amount per credit, in the order given.
  */
 export function settledPerCredit(
-  credits: readonly { kind: DuesCreditKind; amount: number; linkedPaidBack: number }[],
+  credits: readonly {
+    kind: DuesCreditKind;
+    amount: number;
+    /** What this credit's OWN paybacks say they settled (mig 281). */
+    linkedPaidBack: number;
+    /** YYYY-MM-DD. Required — the spread is oldest-first and no caller may decide the order. */
+    creditDate: string;
+    /** Tiebreak for two credits dated the same day. */
+    createdAt?: string | null;
+  }[],
   totalPaidOut: number,
 ): number[] {
-  const linkedC = credits.reduce((s, c) => s + toCents(c.linkedPaidBack), 0);
-  const legacyC = Math.max(0, toCents(totalPaidOut) - linkedC);
-  if (legacyC <= 0) return credits.map(c => c.linkedPaidBack);
+  /* ⚠ CLAMPED TO ITS OWN CREDIT, like every other reader of this figure. Nothing caps the
+     CUMULATIVE linked amount per credit (mig 281's unique key is per payout, not per credit) and a
+     credit's amount can be edited down after a payback already pointed at it. */
+  const settledC = credits.map(c => Math.min(toCents(c.linkedPaidBack), toCents(c.amount)));
 
-  const spread = allocatePayouts(
-    credits.map(c => ({ kind: c.kind, amount: c.amount, traced: true })),
-    toDollars(legacyC),
-  );
-  /* ⚠ CLAMPED TO THE CREDIT, like every other reader of this figure — a linked amount plus a
-     legacy share must never exceed what the credit holds, or the panel behind the dues figure
-     stops adding up to it (the review finding of the same day). */
-  return credits.map((c, i) => toDollars(Math.min(
-    toCents(c.linkedPaidBack) + toCents(spread[i].handedBack),
-    toCents(c.amount),
-  )));
+  /* What the payouts took that no link accounts for. Only PAYABLE credits' links count against it:
+     a link on a forgiven credit is not a state any door can create, and reading one as explained
+     would understate the remainder — in the direction that offers a coach too much. */
+  let namedC = 0;
+  for (let i = 0; i < credits.length; i++) {
+    if (credits[i].kind !== 'forgiven') namedC += settledC[i];
+  }
+  const legacyC = Math.max(0, toCents(totalPaidOut) - namedC);
+
+  if (legacyC > 0) {
+    const order = credits.map((_, i) => i).sort((a, b) => (
+      credits[a].creditDate.localeCompare(credits[b].creditDate)
+      || (credits[a].createdAt ?? '').localeCompare(credits[b].createdAt ?? '')
+      || a - b
+    ));
+    const takenC = spreadOwnMoneyFirst(
+      order.map(i => (credits[i].kind === 'forgiven' ? 0 : toCents(credits[i].amount) - settledC[i])),
+      order.map(i => credits[i].kind),
+      legacyC,
+    );
+    order.forEach((i, pos) => { settledC[i] += takenC[pos]; });
+  }
+  return settledC.map(toDollars);
 }
 
 /**

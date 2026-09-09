@@ -10013,6 +10013,34 @@ export class PayoutExceedsOwedError extends Error {
 }
 
 /**
+ * Refused because one of the ticked debts ALREADY has a payback pointing at it.
+ *
+ * ⚠⚠ THE UNIQUE KEY IS `(credit_id)` ALONE — a credit is settled ONCE, EVER (mig 281, and the
+ * dictionary explains why: a per-payout key would let two payouts each claim the whole of one
+ * credit). That was airtight while a link always covered a credit's WHOLE issued amount, which was
+ * true until 2026-09-09: a payback may now settle the remainder a pre-281 payout left, so a credit
+ * can carry a PARTIAL link, and the coach can afterwards undo the legacy payout that caused the
+ * partial — which legitimately re-opens the rest of that credit and sends them back here.
+ *
+ * ⚠ WITHOUT THIS THE DATABASE ANSWERED, AND IT ANSWERED WITH A 500. The insert raised a raw 23505,
+ * `withObservability` rethrew it, and the coach read "Could not record the payout" beside a ledger
+ * entry that had already been correctly undone — a crash where the same route gives a real sentence
+ * for every other refusal. **The money is safe either way; what was missing was the sentence.**
+ *
+ * ⚠ IT IS NOT A DEAD END, and the message has to say so: undoing the smaller payback and recording
+ * ONE that covers the whole of what is owed reaches the same place with one link, which is exactly
+ * what the constraint is asking for. Lifting the restriction properly means moving the key to
+ * `(payout_id, credit_id)` and replacing it with a cumulative "links may not exceed the credit"
+ * guard — a migration, and an owner's call, not something to slip in behind a bug fix.
+ */
+export class PaybackAlreadyLinkedError extends Error {
+  constructor() {
+    super('PAYBACK_ALREADY_LINKED');
+    this.name = 'PaybackAlreadyLinkedError';
+  }
+}
+
+/**
  * Hand a family their money back — the mirror of `recordRepDuesPayment`, and the same order for
  * the same reason: the LEDGER ENTRY FIRST (dated the day the money left), then the row that
  * points at it. A payout row with no entry would be money that left the books' sight; an entry
@@ -10164,6 +10192,10 @@ export async function recordRepDuesPayout(opts: RepDuesPayoutWrite): Promise<{ p
        believes they recorded a fact. Undo and refuse rather than keep the money movement. */
     if (linkErr) {
       await removeRepDuesPayout(payout, opts.team);
+      /* ⚠ THE ONE FAILURE THAT IS A COACH'S TO FIX, NOT A CRASH. 23505 here is the `(credit_id)`
+         key: something already points at one of these debts. Everything else is a real fault and
+         still rethrows — see `PaybackAlreadyLinkedError` for why this became reachable. */
+      if ((linkErr as { code?: string }).code === '23505') throw new PaybackAlreadyLinkedError();
       throw linkErr;
     }
   }
