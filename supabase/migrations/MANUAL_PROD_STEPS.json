@@ -42,8 +42,8 @@
       "note": "Drops columns (prod having MORE than dev never fails a 'prod is missing' check, so this is invisible in the opposite direction). Same sponsorship batch as 268 — confirm against live prod."
     },
     "273_demo_sandbox_tick_goes_nightly.sql": {
-      "prod": "pending",
-      "note": "Reschedules the tournament demo's refresh job from every 2 minutes to nightly. Applied to dev 2026-09-02 and verified. MUST travel WITH its code: applying it to prod before the daily-snapshot code ships would freeze the public demo mid-game. Apply immediately after the prod deploy lands, then verify prod's cron.job schedule reads '10 8 * * *'."
+      "prod": "applied",
+      "note": "Reschedules the tournament demo's refresh job from every 2 minutes to nightly. Applied to dev 2026-09-02; applied to prod 2026-09-08 immediately AFTER the deploy carrying its code (ordering was mandatory — applying it while prod still ran the old live-cycling code would have frozen the public demo mid-game). Preconditions verified before applying: 14e7a5e4 an ancestor of origin/master, and the deleted /api/sandbox/live-beat route returning 404 on www.fieldlogichq.ca, proving the new code was actually serving. Verified after: prod cron.job reads '10 8 * * *' and check:demos:prod passes."
     },
     "275_a_club_payment_can_be_taken_back.sql": {
       "prod": "unverified",
