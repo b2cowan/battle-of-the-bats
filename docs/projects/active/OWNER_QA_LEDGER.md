@@ -19723,12 +19723,15 @@ affected files; full run recorded below) · `verify:changed` ✓ · rendered che
 new findings · `check:pdf` 23 documents, 98 files read back ✓. The walk's Parts C1 and E1/E2 were updated
 to the reviewed words (Costs shown / Funding shown; COSTS / FUNDING in the file).
 
-## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — built on `dev` 2026-09-08, migration 285 applied to dev (PROD-OWED), awaiting QA · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
+## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — committed `1b06f9e7` 2026-09-08, migration 285 applied to dev (PROD-OWED), awaiting QA · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
 
 **Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` (+ `_PM_BRIEF.md`). **Migration 285**
 (`285_a_shelf_says_who_fills_it_in.sql`) — applied to dev, **prod-owed behind 274, 276, 277, 280, 281,
-282, 283 and 284**, which are all prod-owed themselves. **Not committed at time of writing** — the
-owner's word is owed first.
+282, 283 and 284**, which are all prod-owed themselves. **Committed `1b06f9e7` 2026-09-08** on the owner's word, 55 files.
+TODO, this ledger, the data dictionary, the decisions log and the two demo-seed files were staged
+as reconstructed HEAD+mine blobs rather than by `git add`, so none of the other sessions live in
+this working copy rode along — audited afterwards against the keep-out list, with every foreign
+marker re-checked as still present in the working tree.
 **Walk:** https://claude.ai/code/artifact/f8e843e3-8be2-48d6-bb55-4f93cee0abec — 78 checks across 20 steps, eight parts
 (A the budget picker · B the first question · C "Other money in" · D a drive names its line · E a
 sponsor and a grant · F the whole team · G the report · H demo + help). Source

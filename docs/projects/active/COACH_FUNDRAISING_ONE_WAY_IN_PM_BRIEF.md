@@ -1,6 +1,6 @@
 # PM brief — Fundraising money gets exactly one way in
 
-**Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` · **Mockup:** https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3 · **Rulings:** owner, 2026-09-08 · **Status:** **built on `dev` 2026-09-08** (migration 285, prod-owed) · Owner QA **§157**, walk artifact `f8e843e3` · one confirmation still open (F4)
+**Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` · **Mockup:** https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3 · **Rulings:** owner, 2026-09-08 · **Status:** **committed `1b06f9e7` 2026-09-08 on `dev`** (migration 285, prod-owed) · Owner QA **§157**, walk artifact `f8e843e3` · one confirmation still open (F4)
 
 ## The problem, in one sentence
 
