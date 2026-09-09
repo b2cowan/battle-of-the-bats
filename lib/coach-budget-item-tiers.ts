@@ -22,6 +22,9 @@
  *   • **team**     — a coach's. **That team's picker only.**
  */
 
+import type { BudgetItemDirection } from './types';
+import type { BudgetItemActualSource } from './coach-budget-totals';
+
 export type BudgetItemTier = 'platform' | 'club' | 'team';
 
 /** Anything with the ownership columns and the sport tag — all any reader here needs. */
@@ -122,3 +125,42 @@ export const categoryOfferedToClub = itemOfferedToClub;
 
 /** A category row carries the same ownership columns an item does — same shape, honest name. */
 export type OwnedBudgetCategory = OwnedBudgetItem;
+
+/* ⚠ MOVED HERE 2026-09-09 (/simplify, reuse + altitude lenses). It lived in
+   `coach-budget-items.ts` — which imports `supabase-admin` at module load — so the two SEED
+   SCRIPTS that need it each grew their own copy instead, one of them commented "inlined because a
+   seed script must not import a route's module". That reason was false twice over: the module is
+   not a route, and the real obstacle was the service-role import this very file exists to escape.
+   Three spellings of a two-line money-classification rule, on a release that changed it once
+   already (mig 285). It is a pure rule over a category row, so it belongs on the pure side. */
+
+/**
+ * WHAT A NEWLY-CREATED WORD'S `actual_source` IS (mig 285) — the shelf's answer, or `typed`.
+ *
+ * ⚠⚠ THE OWNER RULING THIS ENCODES (2026-09-08): *the category a word sits in decides who fills its
+ * number in and where it reports.* A word filed on the platform Fundraising shelf is a fundraising
+ * word from birth — recorded on the Fundraising tab, reported under Fundraising. Before this, every
+ * coach- and club-created word was born `'typed'` whatever shelf it sat on, and `'typed'` derives
+ * `other_income` — so a coach's own "Bake sale money" sat in a row reading "Fundraising · …" under a
+ * heading reading "Other income", forever, with no way to correct it.
+ *
+ * ⚠ THE DIRECTION IS ASKED FIRST AND WINS, exactly as `budgetLineKindForItem` asks it first: a
+ * money-OUT word is always typed whatever its shelf says (every cost's actual is recorded by the
+ * coach, and `budget_items_out_is_typed_check` refuses anything else). That also means a coach
+ * adding a SPENDING word to the Fundraising shelf — the raffle's printing, say — is unaffected.
+ *
+ * ⚠ ONE FUNCTION, TWO WRITE DOORS, and that is the whole reason it exists rather than being inlined
+ * twice: the coach's item POST and the club's both create money-in words, and a rule with two
+ * spellings on its first day has no chance of surviving its third call site (the exact reasoning
+ * `parseBudgetItemDirection` above is under). ⚠ IT NEVER READS A REQUEST BODY — the caller passes
+ * the CATEGORY ROW IT ALREADY FETCHED for the visibility check, so nothing a client sends can
+ * decide who reports a word's money.
+ */
+export function budgetItemSourceForCategory(
+  direction: BudgetItemDirection,
+  category: { income_source?: string | null },
+): BudgetItemActualSource {
+  if (direction !== 'in') return 'typed';
+  const source = category.income_source;
+  return source === 'fundraiser' || source === 'sponsor' ? source : 'typed';
+}

@@ -64,6 +64,9 @@ import {
    window. Migration 246 made the same point about `direction` and named this file among the insert
    paths it updated in the same unit of work. */
 import { budgetLineKindForItem } from '../lib/coach-budget-totals.ts';
+/* ⚠ THE PURE HALF, deliberately — `coach-budget-items.ts` holds the same rule but imports
+   `supabase-admin` at module load. Read that file's header before changing this import. */
+import { budgetItemSourceForCategory } from '../lib/coach-budget-item-tiers.ts';
 
 const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';
 const allowProd = process.argv.includes('--allow-prod');
@@ -670,12 +673,16 @@ async function budgetItemIds(teamId, pairs) {
   return index;
 }
 
-/** Who fills a newly-invented word's number in — the shelf, never the caller (mig 285). Mirrors
- *  `budgetItemSourceForCategory`; inlined because a seed script must not import a route's module. */
+/** Who fills a newly-invented word's number in — the shelf, never the caller (mig 285).
+ *  ⚠ THE RULE IS IMPORTED, NOT RESTATED. This was a hand-rolled copy of
+ *  `budgetItemSourceForCategory` until /simplify caught it, justified by a claim that a seed
+ *  script must not import the module holding it — false twice over: that module is not a route,
+ *  and its pure half exists precisely so a script can call it. This function now does nothing but
+ *  look the category up. */
 function sourceForNewWord(direction, categoryId) {
-  if (direction !== 'in') return 'typed';
-  const source = budgetCategorySources.get(categoryId);
-  return source === 'fundraiser' || source === 'sponsor' ? source : 'typed';
+  return budgetItemSourceForCategory(direction, {
+    income_source: budgetCategorySources.get(categoryId) ?? null,
+  });
 }
 
 const wordKey = (category, item) =>

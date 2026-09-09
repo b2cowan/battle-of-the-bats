@@ -55,6 +55,9 @@ import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-rec
    the rendered layout sweep self-heals with. Migration 246 made the same point about `direction` —
    "every insert path is updated in the same unit of work". */
 import { budgetLineKindForItem } from '../lib/coach-budget-totals.ts';
+/* ⚠ THE PURE HALF — `coach-budget-items.ts` holds the same rule behind a `supabase-admin`
+   import. Read that file's header before changing this import. */
+import { budgetItemSourceForCategory } from '../lib/coach-budget-item-tiers.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -841,13 +844,11 @@ let teamWordId = null;
   if (existing) {
     teamWordId = existing.id;
   } else {
-    /* The shelf decides who fills the number in — never the caller. Same derivation the coach's
-       own POST uses (`budgetItemSourceForCategory`), inlined here because this script must not
-       import a route. Fundraising ⇒ 'fundraiser'. */
-    const actualSource = fundraisingCat.income_source === 'fundraiser'
-      || fundraisingCat.income_source === 'sponsor'
-      ? fundraisingCat.income_source
-      : 'typed';
+    /* The shelf decides who fills the number in — never the caller, and the rule is IMPORTED
+       rather than restated. It was inlined here carrying the same false reason the demo seed had
+       ("this script must not import a route"): the rule lives in a lib module, and its pure half
+       exists precisely so a script can call it. Fundraising ⇒ 'fundraiser'. */
+    const actualSource = budgetItemSourceForCategory('in', fundraisingCat);
     const { data: made, error: makeErr } = await db.from('budget_items').insert({
       category_id: fundraisingCat.id,
       org_id: org.id,

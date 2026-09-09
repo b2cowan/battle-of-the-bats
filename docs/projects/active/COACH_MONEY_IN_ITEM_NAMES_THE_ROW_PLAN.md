@@ -202,6 +202,79 @@ have reported under **Other income** while its row read "Fundraising ·" — the
 2026-09-08 ruling names, reproduced in the shop window. The seed now derives the source from the
 shelf, which also re-files the hoodie drive's *Merchandise sales*.
 
+### 0.1b ⚠⚠ THE SEED CHANGES ARE COMMITTED AND DORMANT — no database has them yet
+
+**Verified by querying dev, not inferred:** `Raffle proceeds` and `Chocolate sale` are **absent**, and
+there are **zero** team- or club-owned money-in words on dev at all. The seeds are **find-or-create**
+and never delete a budget word, so the coach demo and the UAT fixture still show the old state and
+will until someone **re-seeds**. Committed ≠ live, and the nightly demo tick re-anchors schedules
+rather than re-seeding.
+
+⚠ **Re-seeding the coach demo is now entangled and is the owner's call.** Another session has an
+**uncommitted** fix for a separate demo defect — the off-season Spring Invitational deposit is meant
+to be fronted by a parent and has never reached the database (two of three expense-seeding callers
+omitted the roster, so the payer was silently filtered away and no reimbursement credit was ever
+written; every coach demo team currently has **zero** family-paid costs). Their fix deliberately does
+**not** re-seed, because that moves the off-season dues story. Whoever re-seeds gets both changes at
+once. **Do not re-seed on the way past.**
+
+**A claim this session made and had to withdraw:** that the hoodie drive's *Merchandise sales* would
+move from Other income to Fundraising. It does not — that word is **platform-owned and already
+carries the right source**; only words the seed INVENTS are affected, and the only two are this
+work's own. The peer caveat it triggered (a row changing shelf moves BOTH shelf subtotals even though
+no line moved) is sound in general and simply has nothing to act on here. The lesson is the ordinary
+one: **query the database rather than reason from the diff.**
+
+### 0.1c `/simplify` then `/review`, 2026-09-09 — TWO REAL DEFECTS, BOTH SHIPPED BY THIS WORK
+
+Both passes were pointed at the **committed** range, not the working tree — the tree held only doc
+edits and four other sessions' work, so a default run would have reviewed almost nothing and reported
+clean. (The standing lesson: *"/review reads the WORKING TREE only — name a committed body or it is
+skipped."*)
+
+**⚠⚠ DEFECT 1 — B2 APPLIED TO THE EXPORT BROKE THE ROUND TRIP (High; found by two lenses
+independently; fixed).** Naming a note-less merged sub-line by its SCHEDULE was right on screen and
+wrong in a file. The importer mints a team budget item from any row name the library does not know,
+so re-importing a freshly exported plan **created budget items literally called "Oct" and "No date
+yet"**, filed as costs, permanently in the coach's picker.
+
+⚠ **And the mechanism is the part worth remembering: this change DISARMED the guard that was hiding
+it.** While every note-less child echoed its item's name, the importer's duplicate-name guard blocked
+them all and a re-import was a harmless no-op. Giving each child a *distinct* name switched that
+protection off and let the rows through to commit. **A fix that makes two things distinguishable can
+disable a guard that depended on them being identical.**
+
+**The fix is narrower than the finding, and it is the honest one:** B2 exists because the SCREEN
+drops that row's When cell, so the schedule has nowhere else to live. **A file drops nothing** — every
+exported row still carries its own schedule column, so the fallback was never needed there and
+printed the same answer twice. The file now reads *note, else the word*; the screen is unchanged.
+Pinned by a new round-trip suite, because `check:export-catalog` proves only that the round-trip
+module **exists**, never that a round trip works.
+
+**⚠⚠ DEFECT 2 — TWO UNRELATED MONEY-IN ROWS SILENTLY MERGED (Medium-High; REPRODUCED BY EXECUTION;
+fixed).** `groupByItem` keys a word-less line on its own id. The PDF exhibit's fixture supplies none,
+so every funding line keyed the same and a $1,800 fundraiser and a $1,500 sponsorship summed into one
+$3,300 row — **the sponsorship vanished from the page whose job is to demonstrate this feature.** The
+type requires an id; that fixture is untypechecked JS, so nothing said a word. Fixed at **both** ends:
+the fixture carries real ids, and the function no longer trusts a caller for the only key that can
+collide. **Silently merging two rows is the one thing that function must never do by accident.**
+
+**`/simplify` fixed four, all mine:** a comment that stated a **false** reason for duplicating a rule
+(the repo had already solved that problem twice, and the right home existed); a 26-line essay
+documenting the deleted `rowLabel` and arguing *for* the reversed rule, left standing by the
+hand-revert during the collision; two no-op period remaps in the export; and a comparator duplicated
+while its own comment admitted the duplication.
+
+**Rejected on merit, recorded so they are not re-raised:** moving `mergedSubLineName` to sit beside
+`groupByItem` would create a circular import; and leaving the stored description written-but-unread
+is correct, because making it nullable for money-in while costs keep it forever would create a **new**
+asymmetry in a change whose whole theme is one rule for both directions.
+
+**Verified safe, with negative results stated:** no reader turned a row LABEL into a key; the moved
+rule resolves at every importer and the pure module stays free of runtime imports; the phone keeps its
+schedule (it becomes the row's visible name); no fixture, spec or layout baseline assertion went
+stale. Gate green throughout: `verify:changed` end to end, 3,328 tests, typecheck clean.
+
 ### 0.2 Owed
 
 - **`check:layout` has NOT been run** — it needs a dev server and is the heaviest thing in the repo.

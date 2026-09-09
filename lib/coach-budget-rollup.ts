@@ -459,8 +459,17 @@ export function groupByItem<T extends {
   totalAmount: number;
 }>(lines: readonly T[]): Array<ItemGroup<T>> {
   const byKey = new Map<string, ItemGroup<T>>();
-  for (const line of lines) {
-    const key = line.itemId ? `item:${line.itemId}` : `line:${line.id}`;
+  lines.forEach((line, i) => {
+    /* ⚠⚠ THE INDEX IS A TIEBREAKER, NOT DECORATION (`/review`, blast-radius lens, 2026-09-09,
+       REPRODUCED BY EXECUTION). A word-less line keys on its own id — but a caller that omits
+       `id` gave EVERY word-less line the key `line:undefined`, and two unrelated rows silently
+       SUMMED into one. It happened on the PDF exhibit fixture the moment this function took over
+       the money-in side: a $1,800 fundraiser and a $1,500 sponsorship became one $3,300 row and
+       the sponsorship vanished from the page meant to demonstrate this very feature. The type
+       says `id: string`, but that fixture is untypechecked JS, so nothing said a word.
+       ⚠ MERGING TWO ROWS IS THE ONE THING THIS FUNCTION MUST NEVER DO BY ACCIDENT, so it no
+       longer trusts the caller for the only key that can collide. */
+    const key = line.itemId ? `item:${line.itemId}` : `line:${line.id ?? `#${i}`}`;
     const bucket = byKey.get(key) ?? {
       key,
       itemId: line.itemId,
@@ -471,11 +480,27 @@ export function groupByItem<T extends {
     bucket.lines.push(line);
     bucket.total = r2(bucket.total + (Number(line.totalAmount) || 0));
     byKey.set(key, bucket);
-  }
-  return [...byKey.values()].sort((a, b) => {
-    if ((a.itemId === null) !== (b.itemId === null)) return a.itemId === null ? 1 : -1;
-    return a.itemName.localeCompare(b.itemName);
   });
+  return [...byKey.values()].sort(compareItemRows);
+}
+
+/**
+ * HOW ITEM ROWS ORDER, in one place — alphabetical, with the word-less bucket last.
+ *
+ * ⚠ IT WAS WRITTEN TWICE. `groupByItem` above and `buildCategoryRow` below sorted with the same
+ * two comparisons, and `groupByItem`'s own comment admitted it ("buildCategoryRow's item sort is
+ * the same comparison") rather than resolving it. `compareCategoryGroups` is the precedent one
+ * level up: the category order is an exported comparator, and the item order had no equivalent.
+ *
+ * ⚠ THE PLANNED/UNPLANNED SPLIT IS THE REPORT'S ALONE and stays at its call site — a plan list has
+ * no unplanned rows to sort, so folding `inPlan` in here would be a term one caller can never use.
+ */
+export function compareItemRows(
+  a: { itemId: string | null; itemName: string },
+  b: { itemId: string | null; itemName: string },
+): number {
+  if ((a.itemId === null) !== (b.itemId === null)) return a.itemId === null ? 1 : -1;
+  return a.itemName.localeCompare(b.itemName);
 }
 
 /** The category id a grid/report key carries, when it carries one — the inverse of `categoryKey`
@@ -709,32 +734,27 @@ function varianceFor(direction: MoneyDirection, budgeted: number, actual: number
 }
 
 /**
- * THE NAME A REVENUE ROW WEARS — the ONE amendment to "the item names the row" (owner ruling
- * 2026-09-06, QA §146), and it is deliberately the narrowest one that answers the complaint.
+ * ⚰ `rowLabel` STOOD HERE AND IS GONE (owner ruling 2026-09-09). It was the ONE amendment to "the
+ * item names the row": a revenue row wore the coach's TYPED description when its item held exactly
+ * one line — ruled 2026-09-06 (QA §146) after the owner saw the Budget list say "Chocolate sale"
+ * while Budget vs. Actual said "Fundraising drive".
  *
- * ⚠ THE COMPLAINT. Owner, comparing the two reports side by side: *"why does the budget break out
- * fundraising into the fundraiser but the statement does not?"* The Budget list showed **Chocolate
- * sale**; Budget vs. Actual showed **Fundraising drive** — the same money, two names, and only one
- * of them the coach's own word.
+ * ⚠⚠ IT WAS UNREACHABLE FOR ANYTHING A COACH COULD CREATE, which is why it went rather than being
+ * fixed. The money-in Description input was deleted on 2026-08-16, when mig 243 made a category and
+ * an item required in both directions — three weeks BEFORE the amendment was ruled. From that day
+ * the form stored the ITEM'S OWN NAME in that column, so the amendment read it back and printed
+ * "Fundraising drive": the exact label the ruling called worse. Only seeded rows and rows written
+ * before 2026-08-16 could ever show anything else.
  *
- * ⚠⚠ NEITHER SCREEN WAS WRONG, WHICH IS WHY THIS IS SO NARROW. Two standing rulings met:
- *   · Here (2026-08-15): the ITEM names the row, because a coach once picked "Entry Fees" and their
- *     plan rendered a row called "test". Two reports cannot line up on words somebody typed.
- *   · On the plan (mig 243): a money-in line keeps whatever the coach typed and does NOT fall back
- *     to its item, because "Fundraising drive" is a worse row label than "Chocolate sale".
- * A cost line's description already falls back to its item name, so the two agree on the whole
- * expense side by construction. The divergence exists only where the plan deliberately created it.
+ * ⚠ THE INTENT SURVIVES BY A BETTER ROUTE. A coach who wants their plan to say "Chocolate sale"
+ * CREATES that word; it then names the row on every surface, is offered to the next drive, and
+ * survives the rollover. One record, one name.
  *
- * ⚠ SO: MONEY IN, and ONLY when the item holds exactly ONE line. Two lines summing into one row
- * (rule 3) have two typed names and no honest way to choose between them — the same "as deep as the
- * plan actually agrees, and no deeper" answer `placeDerivedActual` gives for raised money, and for
- * the same reason. It also stops the 2026-08-15 defect returning: a cost row can never reach here.
- *
- * ⚠ THE KEY DOES NOT MOVE. Rows are keyed on `itemId`; this changes the LABEL only, so the two
- * reports still line up on the taxonomy and the export (which reads this same field) says what the
- * screen says. Do not start matching on it.
- *
- * ⚠ AND NOT FOR "Not itemized". That row is a gap to close, not a line with a name.
+ * **Do not reinstate a label that reads a description.** The 2026-08-15 defect it re-opens is a
+ * coach picking "Entry Fees" and their plan rendering a row called "test". Two rules from the old
+ * essay survive and are worth keeping: match on IDS, never names (two words legitimately share a
+ * spelling across tiers), and never rename "Not itemized" — that row is a gap to close, not a line
+ * with a name.
  */
 
 function buildCategoryRow(
@@ -776,9 +796,9 @@ function buildCategoryRow(
   // Planned items first, then unplanned; alphabetical inside each, with the "Not itemized"
   // prompt last wherever it falls — it is a gap to close, not a row to read.
   items.sort((a, b) => {
+    // Planned rows lead; everything below that is the shared item order.
     if (a.inPlan !== b.inPlan) return a.inPlan ? -1 : 1;
-    if ((a.itemId === null) !== (b.itemId === null)) return a.itemId === null ? 1 : -1;
-    return a.itemName.localeCompare(b.itemName);
+    return compareItemRows(a, b);
   });
 
   const budgeted = r2(items.reduce((s, i) => s + i.budgeted, 0));

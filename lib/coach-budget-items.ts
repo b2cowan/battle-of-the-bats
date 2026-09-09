@@ -41,9 +41,11 @@ export {
   /* Categories read the same three rules since mig 277 — aliases of the three above, not copies. */
   budgetCategoryTier, categoryVisibleToTeam, categoryOfferedToClub,
   type BudgetItemTier, type OwnedBudgetItem, type OwnedBudgetCategory,
+  budgetItemSourceForCategory,
 } from './coach-budget-item-tiers';
 import {
   itemVisibleToTeam, itemOfferedToClub, categoryVisibleToTeam, categoryOfferedToClub,
+  budgetItemSourceForCategory,
   type OwnedBudgetItem, type OwnedBudgetCategory,
 } from './coach-budget-item-tiers';
 
@@ -278,36 +280,10 @@ export function parseBudgetItemDirection(raw: unknown): BudgetItemDirection | nu
 export const BUDGET_ITEM_DIRECTION_REQUIRED =
   'direction is required and must be "in" or "out" — an item has to belong to one side';
 
-/**
- * WHAT A NEWLY-CREATED WORD'S `actual_source` IS (mig 285) — the shelf's answer, or `typed`.
- *
- * ⚠⚠ THE OWNER RULING THIS ENCODES (2026-09-08): *the category a word sits in decides who fills its
- * number in and where it reports.* A word filed on the platform Fundraising shelf is a fundraising
- * word from birth — recorded on the Fundraising tab, reported under Fundraising. Before this, every
- * coach- and club-created word was born `'typed'` whatever shelf it sat on, and `'typed'` derives
- * `other_income` — so a coach's own "Bake sale money" sat in a row reading "Fundraising · …" under a
- * heading reading "Other income", forever, with no way to correct it.
- *
- * ⚠ THE DIRECTION IS ASKED FIRST AND WINS, exactly as `budgetLineKindForItem` asks it first: a
- * money-OUT word is always typed whatever its shelf says (every cost's actual is recorded by the
- * coach, and `budget_items_out_is_typed_check` refuses anything else). That also means a coach
- * adding a SPENDING word to the Fundraising shelf — the raffle's printing, say — is unaffected.
- *
- * ⚠ ONE FUNCTION, TWO WRITE DOORS, and that is the whole reason it exists rather than being inlined
- * twice: the coach's item POST and the club's both create money-in words, and a rule with two
- * spellings on its first day has no chance of surviving its third call site (the exact reasoning
- * `parseBudgetItemDirection` above is under). ⚠ IT NEVER READS A REQUEST BODY — the caller passes
- * the CATEGORY ROW IT ALREADY FETCHED for the visibility check, so nothing a client sends can
- * decide who reports a word's money.
- */
-export function budgetItemSourceForCategory(
-  direction: BudgetItemDirection,
-  category: { income_source?: string | null },
-): BudgetItemActualSource {
-  if (direction !== 'in') return 'typed';
-  const source = category.income_source;
-  return source === 'fundraiser' || source === 'sponsor' ? source : 'typed';
-}
+/* `budgetItemSourceForCategory` MOVED to `coach-budget-item-tiers.ts` (2026-09-09) and is
+   re-exported above. It is a pure rule over a category row, and two seed scripts need it
+   without this module's `supabase-admin` import riding along — each had grown its own copy
+   instead, one of them justified by a claim that a seed script cannot import it. */
 
 /**
  * A `budget_items` row → the shape every client reads.

@@ -26,7 +26,7 @@ import { duesLadderTotals, type DuesLadder } from './dues-payments';
 import { PLAN_LADDER_LABEL, isFundingKind, type BudgetTotals } from './coach-budget-totals';
 import { categoryGroupOf, groupByCategory, groupByItem } from './coach-budget-rollup';
 import {
-  whenSummary, whenSummaryText, mergedSubLineName, type PeriodView,
+  whenSummary, whenSummaryText, type PeriodView,
 } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
 import { planColumnLabel, netRowLabel, type CompareBasis } from './coach-budget-basis';
@@ -167,6 +167,41 @@ export interface BudgetPlanExportSource {
 
 /** The **When** cell, in the screen's own words. `money()` rather than a bare number so the undated
  *  half of a partly-dated line reads as the money it is. */
+/**
+ * WHAT A MERGED SUB-LINE IS CALLED IN A FILE — its note, else the word it is filed against.
+ *
+ * ⚠⚠ THE FILE DELIBERATELY DIVERGES FROM THE SCREEN, and this is the one place in this release
+ * where that is the correct answer (`/review`, correctness lens, 2026-09-09). On screen a note-less
+ * merged sub-line is named by its SCHEDULE (`mergedSubLineName`, decision B2) — because the screen
+ * DROPS the When cell for that row, so the schedule has nowhere else to be. **A file drops nothing:
+ * every row here still carries its own `schedule` column.** So naming the row by its schedule as
+ * well printed the same answer twice in one row, and worse:
+ *
+ * ⚠⚠⚠ IT BROKE THE ROUND TRIP, ON THE COST SIDE, WITH A HIGH-SEVERITY CONSEQUENCE. The importer
+ * matches a row to an existing line by its NAME text, and mints a brand-new team budget item from
+ * any name the library does not know (`budget-plan/import/route.ts`). A sub-line exported as "Oct"
+ * or "No date yet" therefore matched nothing, and re-importing the plan a coach had just exported
+ * would CREATE A BUDGET ITEM CALLED "Oct" — permanently in their picker — while leaving the two
+ * real lines untouched. The module's own header promises "export it, edit it, import it back" is a
+ * real round trip; naming a row after its dates broke that promise.
+ *
+ * ⚠ THE NOTE STILL WINS, exactly as it does on screen — that half was never the problem, and it is
+ * what tells two lines on one word apart in the file. With no note the WORD is the honest fallback:
+ * it is what the importer can match, and it is what the stored column already holds.
+ *
+ * ⚠ NOT A FULL FIX FOR EVERY SHAPE, stated so nobody reads more into it: two note-less lines on one
+ * word still export under the same name (as they did before this release), which the importer
+ * resolves ambiguously. That is a SEPARATE, pre-existing defect on the same door as the known
+ * "funding lines re-import as costs" one, and it is queued with that work rather than widened into
+ * here.
+ */
+function subLineLabel(
+  line: { notes: string | null },
+  itemName: string,
+): string {
+  return (line.notes ?? '').trim() || itemName;
+}
+
 function whenText(
   periods: Array<{ periodDate: string | null; amount?: number | string | null }>,
   lineTotal: number | string | null | undefined,
@@ -229,7 +264,7 @@ export function budgetPlanStatementRows(
            the parent's word one row above itself — on the UAT fixture, "Entry Fees" three times in
            one column. Same rule as the money-in half below; the two are deliberately identical. */
         push({
-          item: `  — ${mergedSubLineName({ notes: l.notes ?? null, totalAmount: l.totalAmount, periods: l.periods.map(pd => ({ periodDate: pd.periodDate })) }).name}`,
+          item: `  — ${subLineLabel(l, item.itemName)}`,
           schedule: whenText(l.periods, l.totalAmount),
           planned: l.totalAmount,
           notes: l.notes ?? '',
@@ -286,7 +321,7 @@ export function budgetPlanStatementRows(
              fallback was the item's name, which printed the parent's word again one row down —
              the same echo the screen was carrying. */
           push({
-            item: `    — ${mergedSubLineName({ notes: l.notes ?? null, totalAmount: l.totalAmount, periods: (l.periods ?? []).map(pd => ({ periodDate: pd.periodDate, amount: pd.amount })) }).name}`,
+            item: `    — ${subLineLabel(l, item.itemName)}`,
             schedule: whenText(l.periods ?? [], l.totalAmount),
             planned: l.totalAmount,
             notes: l.notes ?? '',

@@ -699,8 +699,14 @@ export async function buildDocuments() {
         },
       ],
       lines: [
-        { itemName: 'Chocolate Sale', description: 'Chocolate Sale', lineKind: 'funding', totalAmount: 1800, notes: null, periods: [] },
-        { itemName: 'Hometown Sports Shop', description: 'Hometown Sports Shop', lineKind: 'sponsorship', totalAmount: 1500, notes: null, periods: [] },
+        /* ⚠⚠ THE `id` AND `itemId` ARE LOAD-BEARING, and this exhibit proved it the hard way
+           (`/review`, 2026-09-09). Money-in rows now group by their budget WORD, falling back to the
+           line's own id when it has none. With neither field, every funding line here keyed the same
+           and the two below SUMMED into one $3,300 row — the sponsorship vanished from the page whose
+           whole job is to demonstrate the money-in side. The type requires an id; this file is
+           untypechecked JS, so nothing said a word. An exhibit has to carry the real shape. */
+        { id: 'pdf-fund-1', itemId: 'pdf-item-choc', itemName: 'Chocolate Sale', description: 'Chocolate Sale', lineKind: 'funding', totalAmount: 1800, notes: null, periods: [] },
+        { id: 'pdf-fund-2', itemId: 'pdf-item-sponsor', itemName: 'Hometown Sports Shop', description: 'Hometown Sports Shop', lineKind: 'sponsorship', totalAmount: 1500, notes: null, periods: [] },
       ],
       // The screen's own totals shape (lib/coach-budget-totals BudgetTotals). ⚠ This file is not
       // typechecked, so a widened contract is invisible here: the 2026-09-08 ladder read

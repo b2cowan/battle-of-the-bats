@@ -202,6 +202,66 @@ describe('the statement file (List view, and every PDF)', () => {
    TWO MONEY-IN LINES ON ONE WORD (owner ruling 2026-09-09)
    ══════════════════════════════════════════════════════════════════════════════════════════ */
 
+describe('the statement file — a sub-line is named by its note, never by its schedule', () => {
+  /* ⚠⚠ THE DEFECT THIS PINS SHIPPED FOR ONE AFTERNOON, AND TWO REVIEW LENSES FOUND IT SEPARATELY.
+     Decision B2 names a note-less merged sub-line by its SCHEDULE on screen, because the screen
+     drops that row's When cell. The same rule was applied to the EXPORT — where nothing is dropped
+     and every row still carries its own schedule column — and the consequence was not cosmetic:
+
+       · the importer cannot tell a parent row from an indented child (its indent match accepts any
+         leading whitespace), so a merged item exports as THREE importable rows;
+       · it MINTS a team budget item from any row name the library does not know;
+       · and — the sharp edge — its duplicate-name guard had been the thing saving this shape. While
+         every note-less child echoed the item's name, that guard blocked them and a re-import was a
+         harmless no-op. Giving each child a DISTINCT schedule name DISARMED the guard, so the rows
+         sailed through and created budget items literally called "May" and "No date yet", on the
+         EXPENSE side, in the coach's picker, permanently.
+
+     ⚠ So the file's rule is: the note, else the WORD. `check:export-catalog` cannot see this — it
+     proves only that the round-trip module named in the catalog EXISTS, never that a round trip
+     works — which is why the assertion lives here rather than in a gate. */
+
+  const twoNoteless = (): BudgetPlanExportSource => ({
+    groups: [{
+      categoryName: 'Tournaments',
+      total: 2500,
+      items: [{
+        itemName: 'Entry Fees',
+        total: 2500,
+        lines: [
+          { description: 'Entry Fees', notes: null, totalAmount: 1600, periods: [] },
+          { description: 'Entry Fees', notes: null, totalAmount: 900, periods: [{ periodDate: '2026-05-01' }] },
+        ],
+      }],
+    }],
+    lines: [],
+    totals: totalsOf({ totalPlanned: 2500, itemized: 2500 }),
+    duesAssessed: 0,
+    leftToFund: 2500,
+  } as never);
+
+  it('names note-less sub-lines by their WORD, so the importer can still match them', () => {
+    const { rows } = budgetPlanStatementRows(twoNoteless());
+    const leaves = rows.map(r => String(r.item)).filter(i => i.startsWith('  — '));
+    assert.deepEqual(leaves, ['  — Entry Fees', '  — Entry Fees'],
+      'a schedule ("May", "No date yet") here becomes a phantom budget item on re-import');
+  });
+
+  it('still lets a NOTE name the sub-line — that half was never the problem', () => {
+    const src = twoNoteless();
+    (src.groups[0].items[0].lines[0] as { notes: string | null }).notes = 'Spring classic';
+    const { rows } = budgetPlanStatementRows(src);
+    const leaves = rows.map(r => String(r.item)).filter(i => i.startsWith('  — '));
+    assert.deepEqual(leaves, ['  — Spring classic', '  — Entry Fees']);
+  });
+
+  it('keeps the schedule in its OWN column, which is why the name never needs it', () => {
+    const { rows } = budgetPlanStatementRows(twoNoteless());
+    const dated = rows.find(r => r.planned === 900);
+    assert.equal(dated?.schedule, 'May', 'the file drops nothing; only the screen does');
+  });
+});
+
 describe('the statement file — money in merges by word', () => {
   /* ⚠⚠ THE DEFECT THIS PINS WAS LIVE AND SILENT. The money-in loop printed one row per LINE while
      naming each by its ITEM, so two lines filed against one word exported as two rows with the SAME
@@ -243,7 +303,7 @@ describe('the statement file — money in merges by word', () => {
       //   (decision B2). Before this the note-less line printed "Fundraising drive" again — the
       //   parent's word, one row below the parent.
       '    — Expected team share',
-      '    — Oct',
+      '    — Fundraising drive',
       'Planned funding',
       // The builder always closes on the players' side; not part of this rule, asserted so the
       // shape above is the WHOLE file rather than a prefix of it.
@@ -262,7 +322,7 @@ describe('the statement file — money in merges by word', () => {
     const by = (label: string) => rows.find(r => r.item === label);
     assert.equal(by('  — Fundraising drive')?.planned, 2400);
     assert.equal(by('    — Expected team share')?.planned, 1800);
-    assert.equal(by('    — Oct')?.planned, 600);
+    assert.equal(by('    — Fundraising drive')?.planned, 600);
   });
 });
 
