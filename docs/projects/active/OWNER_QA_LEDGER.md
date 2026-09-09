@@ -20372,7 +20372,7 @@ shape, where the date line adds a second row to every sponsor line.
 
 Plan pair: `docs/projects/active/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md`.
 
-## §160 · A bill lowered is not a collection — an adjustment or a forgiven bill comes off **Dues**, `Collected` becomes money and nothing else, and the Collections card becomes **Bills settled** — built on dev 2026-09-09 after `/review` (five defects found and fixed) and `/docs`, **no migration**, awaiting QA · decision mockups `b529dd67` (the band) and `cc99aca4` (the report's plan side)
+## §160 · A bill lowered is not a collection — an adjustment or a forgiven bill comes off **Dues**, `Collected` becomes money and nothing else, and the Collections card becomes **Bills settled** — built on dev 2026-09-09 after `/review` (five defects found and fixed) and `/docs`, **no migration**, awaiting QA · walk artifact `b16c4350` · decision mockups `b529dd67` (the band) and `cc99aca4` (the report's plan side)
 
 **You raised it reading the Player Dues band beside Budget vs. Actual and asking why two reports about one
 season disagreed by $134.00.** The band did not add up — `Dues` $11,308.30 − `Collected` $2,225.00 = $9,083.30,
