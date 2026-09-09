@@ -21,6 +21,8 @@ import {
   type DuesRevenue,
 } from '@/lib/coach-dues-revenue';
 import ReportNotes from '@/components/coaches/ReportNotes';
+import { arrivalsNote } from '@/lib/coach-money-derived';
+import type { DerivedArrivals } from '@/lib/coach-budget-rollup';
 import { statementNotes, monthGridNotesFor } from '@/lib/coach-money-report-notes';
 import {
   COMPARE_BASES, normalizeBasis, budgetedOn, varianceOn,
@@ -96,16 +98,24 @@ interface ItemResult {
   lines?: Array<{ id: string; description: string; notes: string | null; totalAmount: number }>;
   /** The individual payments summed into this row — what the ACTUAL figure opens (QA §132 round
    *  three). ⚠ NOT ALL OF THESE ARE RECORDS A COACH CAN OPEN: a payable contributes one entry per
-   *  instalment, club money arrives as a synthetic id, and the derived pools are a NAME with no
-   *  record at all ("From your fundraisers"). That is why this panel states and never links, where
-   *  the plan panel beside it does both — see the note on `RecordsBehind`.
+   *  instalment and club money arrives as a synthetic id, so most rows state rather than link.
+   *  ⚠⚠ THE EXCEPTION IS `derived`, AND IT IS WHY THE OLD BLANKET RULE EXPIRED — this comment used
+   *  to say the derived pools were "a NAME with no record at all"; since 2026-09-07 there is one
+   *  row per DRIVE OR SPONSOR, each with a room of its own. Those rows link; see `RecordsBehind`.
    *  ⚠⚠ OPTIONAL FOR THE SAME REASON `lines` IS, AND IT WAS MISSED ON THE FIRST PASS (`/review`,
    *  2026-09-04). Both fields were stripped by the SAME deleted helper, so both are newer than a
    *  client that may be asking for them — but only `lines` was typed possibly-absent. Reading
    *  `item.costs.length` unguarded runs for EVERY row on every render, so during a rolling deploy
    *  (new bundle, old route) the whole statement threw before a single figure painted. A guarded
    *  read degrades to a plain number; an unguarded one takes the page down. */
-  costs?: Array<{ id: string; description: string; amount: number; paidDate: string | null }>;
+  costs?: Array<{
+    id: string; description: string; amount: number; paidDate: string | null;
+    /** Set only on a drive's or sponsor's row, which sums several arrivals rather than being one.
+     *  ⚠ Optional on the SAME rolling-deploy reasoning as the two fields above: an old route
+     *  answering a new bundle sends rows without it, and every reader here must degrade to the
+     *  plain dated row rather than throw. */
+    derived?: DerivedArrivals | null;
+  }>;
 }
 
 interface CategoryResult {
@@ -577,13 +587,23 @@ type BehindSide = 'plan' | 'actual';
  * which is only visually covered. This is the exact defect class the §134 walk found on the bill
  * room, and the shared shell exists because of it — so it is used rather than re-derived.
  *
- * ⚠⚠ THE PLAN LIST LINKS AND THE ACTUAL LIST DOES NOT, and that asymmetry is deliberate rather
- * than unfinished. A budget line is one editable record with a stable id, so the panel can open it.
- * A movement is not: a commitment contributes one entry PER INSTALMENT, club money arrives under a
- * synthetic id, and a derived pool is a name with no record behind it at all ("From your
- * fundraisers"). Linking those would mean four kinds of door, three of which 404 — the politer face
- * of a dead end, which is the thing this whole change removes. The list states; Transactions is
- * where a coach edits.
+ * ⚠⚠ WHICH ACTUAL ROWS LINK, AND WHY IT IS NOT ALL OF THEM. A budget line is one editable record
+ * with a stable id, so the plan list opens each line. Most MOVEMENTS are not: a commitment
+ * contributes one entry PER INSTALMENT and club money arrives under a synthetic id, so linking
+ * those would mean doors that 404 — the politer face of a dead end. **A drive's or a sponsor's row
+ * is the exception, and the reason the old blanket rule expired.** That row used to be a pool ("From
+ * your fundraisers") with no record behind it; since the 2026-09-07 ruling it is one row per DRIVE
+ * OR SPONSOR, each of which has a room of its own, so it opens there — the exact mirror of a budget
+ * line opening its line, and the reason this panel needs no second "Open Sponsors" button beside
+ * rows that already are the door. Everything else states, and the footer's one door goes to the
+ * book of record.
+ *
+ * ⚠⚠ AND IT HAS A FOOTER AT ALL ONLY SINCE 2026-09-09. Before that the actual side ended on the
+ * sentence *"Edit them on Transactions"* — naming a destination and refusing to go there — with
+ * nothing clickable on it for ANY role. Its twin on the Months grid has carried doors since
+ * 2026-08-24 under `cellPanelSpec`'s at-most-two rule; the guard that pinned the PLAN panel's
+ * read-only door cited those doors as the reason, and nobody checked this half, which dead-ended
+ * for everybody. If a row here ever stops linking, the footer is what must still be true.
  */
 function RecordsBehind({ item, side, base, canWrite, onClose }: {
   item: ItemResult;
@@ -606,6 +626,13 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
       scroll
     >
       <>
+        {/* ⚠⚠ THE SCROLLING CHILD `scroll` WAS ALWAYS PROMISING. `.modalScrollBody` is
+            `display:flex; overflow:hidden` and expects exactly ONE child that scrolls; this panel
+            rendered a bare fragment, so the list was a shrinking flex item inside a clipped box and
+            a row with enough records lost its tail SILENTLY. Nothing failed, nothing logged — the
+            list just ended early. Found while adding the footer, which is what made it visible: a
+            pinned footer needs something to pin against. */}
+        <div className={shared.scrollPane}>
         {side === 'plan' ? (
           <>
             {/* The figure is the answer; the lines are listed directly underneath it. Counting
@@ -671,19 +698,40 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
               )}
             </p>
             <ul className={styles.linesBehindList}>
-              {(item.costs ?? []).map(c => (
-                <li key={c.id}>
-                  <span className={styles.linesBehindRow}>
+              {(item.costs ?? []).map(c => {
+                const body = (
+                  <>
                     <span className={styles.linesBehindWho}>
                       {c.description || 'No description'}
-                      <span className={styles.linesBehindNote}>
-                        {c.paidDate ? formatStoredDate(c.paidDate, { withYear: false }) : 'no date recorded'}
-                      </span>
+                      <span className={styles.linesBehindNote}>{whenMoved(c)}</span>
                     </span>
                     <span className={styles.linesBehindAmt}>{fmt(c.amount)}</span>
-                  </span>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={c.id}>
+                    {/* ⚠ THE ROW IS THE DOOR WHERE THERE IS SOMETHING TO OPEN — a drive or a
+                        sponsor, which is a record with a room. Ungated, exactly as the month
+                        panel's subject door is: reading where a dollar came from is not writing.
+                        Every other movement stays plain text and leans on the footer. */}
+                    {c.derived ? (
+                      <Link
+                        href={moneySectionHref(base, 'fundraisers', { fundraiser: c.derived.recordId })}
+                        className={styles.linesBehindRow}
+                        onClick={onClose}
+                        /* ⚠ NOT the row's own words. A derived row's description is a whole
+                           sentence — "Northside Physio — $375.75 of $501, $125.25 to families" —
+                           and a tooltip repeating it says nothing about where the click GOES. */
+                        title={c.derived.kind === 'sponsor' ? 'Open this sponsor' : 'Open this drive'}
+                      >
+                        {body}
+                      </Link>
+                    ) : (
+                      <span className={styles.linesBehindRow}>{body}</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
             {/* ⚠ MONEY BACK IS LISTED APART, NEVER MERGED INTO THE PAYMENTS. Merging them would
                 hide which records were spending and which were repayment — one of those is the
@@ -709,15 +757,68 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
                 </ul>
               </>
             )}
+            {/* ⚠ THE SENTENCE LOST ITS LAST CLAUSE (" Edit them on Transactions.") ON 2026-09-09.
+                It named a destination the panel would not take the coach to; the footer door below
+                says the same thing and goes there. Putting the words back beside the button would
+                be the screen explaining its own button. */}
             <p className={styles.linesBehindFoot}>
               Every payment counted against this row, on the day it happened — whoever paid it.
-              {canWrite ? ' Edit them on Transactions.' : ''}
             </p>
           </>
+        )}
+        </div>
+        {/* ⚠⚠ NEITHER HALF OF THIS PANEL MAY DEAD-END (the 2026-09-04 rule, applied to the panel it
+            was written about a ruling too late — it reached the Months grid's twin panels and not
+            this one, which ended in prose for every role).
+            · ACTUAL: one door, ungated. Transactions is the book of record for every movement, and
+              the rows that have a "thing itself" already open it themselves.
+            · PLAN: the door appears exactly when the lines are NOT links — a writer's lines each
+              open their own budget line, which lands closer to the work than any button, so a
+              button beside them would be a second, worse door to the same screen. */}
+        {side === 'plan' ? (!canWrite && (
+          <div className={shared.modalFooter}>
+            <Link
+              href={moneySectionHref(base, 'budget')}
+              className={shared.btnSecondary}
+              onClick={onClose}
+            >
+              Open Budget Plan
+            </Link>
+          </div>
+        )) : (
+          <div className={shared.modalFooter}>
+            <Link
+              href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
+              className={shared.btnSecondary}
+              onClick={onClose}
+            >
+              Open the Ledger
+            </Link>
+          </div>
         )}
       </>
     </QuestionShell>
   );
+}
+
+/**
+ * When a movement on the actual list happened.
+ *
+ * ⚠⚠ MOST ROWS ARE ONE PAYMENT AND ONE OF THEM IS NOT. A drive's or sponsor's row sums every
+ * arrival that record has taken, so it carries no single day — and this used to print
+ * "no date recorded", which was true of the FIELD and false of the money: five fully-dated sponsor
+ * cheques read as undated on the statement while the Months view of the same report printed their
+ * dates. The words survive for the case they are actually about — a record somebody typed in
+ * without a date.
+ */
+function whenMoved(c: NonNullable<ItemResult['costs']>[number]): string {
+  const day = (d: string) => formatStoredDate(d, { withYear: false });
+  /* ⚠ `count`, NOT the mere presence of `derived`. A drive whose every entry raised $0 — a family
+     who took part and sold nothing, which the entries table allows on purpose — is a record with a
+     name and no arrivals. It still LINKS to its room (that half of `derived` is always true); it
+     just has no day to name, so it falls through to the words that are honest about that. */
+  if (c.derived?.count) return arrivalsNote(c.derived.count, day(c.derived.firstDay), day(c.derived.lastDay));
+  return c.paidDate ? day(c.paidDate) : 'no date recorded';
 }
 
 /**
@@ -1423,8 +1524,14 @@ function SubtotalRow({
  *
  * ⚠ IT IS A `QuestionShell`, like every other figure's panel — see `RecordsBehind`'s header for the
  * accessibility floor a hand-rolled overlay does not stand on.
+ *
+ * ⚠⚠ AND IT TAKES THE SAME TWO DOORS ITS TWIN ON THE MONTHS GRID TAKES (2026-09-09), which is the
+ * whole point of there being a rule: `cellPanelSpec` answers "dues, actual" with Player Dues and the
+ * Ledger, and this panel is the statement's reading of the same figure. Until then it ended on a
+ * sentence naming a screen it would not open — the identical dead end `RecordsBehind` had, on the
+ * row directly above it.
  */
-function DuesBehind({ dues, onClose }: { dues: DuesRevenue; onClose: () => void }) {
+function DuesBehind({ dues, base, onClose }: { dues: DuesRevenue; base: string; onClose: () => void }) {
   const p = dues.actualParts;
   const rows: Array<{ label: string; sub: string; amount: number }> = [
     { label: 'Cash families sent', sub: 'and have not had back', amount: p.cashKept },
@@ -1434,24 +1541,41 @@ function DuesBehind({ dues, onClose }: { dues: DuesRevenue; onClose: () => void 
   return (
     <QuestionShell open onClose={onClose} ariaLabel="What families contributed" title="What families contributed" scroll>
       <>
-        <p className={styles.linesBehindSub}><strong>{fmt(dues.actual)}</strong> contributed</p>
-        <ul className={styles.linesBehindList}>
-          {rows.map(r => (
-            <li key={r.label}>
-              <span className={styles.linesBehindRow}>
-                <span className={styles.linesBehindWho}>
-                  {r.label}
-                  <span className={styles.linesBehindNote}>{r.sub}</span>
+        <div className={shared.scrollPane}>
+          <p className={styles.linesBehindSub}><strong>{fmt(dues.actual)}</strong> contributed</p>
+          <ul className={styles.linesBehindList}>
+            {rows.map(r => (
+              <li key={r.label}>
+                <span className={styles.linesBehindRow}>
+                  <span className={styles.linesBehindWho}>
+                    {r.label}
+                    <span className={styles.linesBehindNote}>{r.sub}</span>
+                  </span>
+                  <span className={styles.linesBehindAmt}>{fmt(r.amount)}</span>
                 </span>
-                <span className={styles.linesBehindAmt}>{fmt(r.amount)}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className={styles.linesBehindFoot}>
-          Money you have handed back to a family is in none of these — see <strong>Cash</strong> for
-          what your account did.
-        </p>
+              </li>
+            ))}
+          </ul>
+          {/* ⚠ THE CASH SENTENCE STAYS AND GETS NO BUTTON. `Cash` is a LENS on this same report, not
+              a screen — a door for it would land the coach back where they already are, which is
+              the "politer face of a dead end" this pass exists to remove rather than re-dress. */}
+          <p className={styles.linesBehindFoot}>
+            Money you have handed back to a family is in none of these — see <strong>Cash</strong> for
+            what your account did.
+          </p>
+        </div>
+        <div className={shared.modalFooter}>
+          <Link href={moneySectionHref(base, 'dues')} className={shared.btnSecondary} onClick={onClose}>
+            Open Player Dues
+          </Link>
+          <Link
+            href={moneySectionHref(base, 'ledger', { view: 'timeline' })}
+            className={shared.btnSecondary}
+            onClick={onClose}
+          >
+            Open the Ledger
+          </Link>
+        </div>
       </>
     </QuestionShell>
   );
@@ -1548,7 +1672,7 @@ function DuesRow({ cat, dues, base, canWrite }: {
             </button>
           ) : fmtCell(cat.actual)
         ) : '—'}
-        {behindOpen && <DuesBehind dues={dues} onClose={() => setBehindOpen(false)} />}
+        {behindOpen && <DuesBehind dues={dues} base={base} onClose={() => setBehindOpen(false)} />}
       </td>
       {/* ⚠ NO VARIANCE WITHOUT A PLAN TO VARY FROM. With no schedule there is no budgeted figure,
           so "−$0.00" would be arithmetic on an absence. */}

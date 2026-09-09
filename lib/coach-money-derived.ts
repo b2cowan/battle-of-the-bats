@@ -107,6 +107,36 @@ export function unplannedDerivedItemName(source: DerivedSource): string {
   return source === 'sponsor' ? 'Sponsor money' : 'Fundraising money';
 }
 
+/**
+ * WHEN A ROW THAT SUMS SEVERAL ARRIVALS GOT ITS MONEY (owner ruling 2026-09-09).
+ *
+ * ⚠⚠ THE DEFECT THIS CLOSES WAS A SENTENCE THAT WAS SIMPLY FALSE. A drive's or sponsor's row on the
+ * statement is one row per RECORD, so it adds up every arrival that record has taken and carries no
+ * single day — and the panel behind it printed **"no date recorded"** for five fully-dated sponsor
+ * cheques in a row, while the Months view of the SAME report printed "Sep 4 · received" for one of
+ * them. One report, two answers about one cheque.
+ *
+ * ⚠ THE COUNT IS THE SIGNAL, not decoration: it is the only thing on the line telling a coach that
+ * the row is an ADDITION rather than one payment. Which is also why a single arrival gets no count —
+ * "1 payment · Sep 4" is two words heavier on every single-cheque row and says nothing the date does
+ * not (drawn, and rejected, in the approved mockup — do not re-propose it).
+ *
+ * ⚠ "payments" FOR A DRIVE TOO. The panel's own closing sentence already calls every record on it a
+ * payment; a second word for one thing on one screen is what the one-spelling rule exists to stop.
+ *
+ * Takes day LABELS, already formatted by the caller — this module stays free of `Date` and of the
+ * timezone layer, and the panel formats through `formatStoredDate` exactly as every other date on
+ * that screen does.
+ */
+export function arrivalsNote(count: number, firstDay: string, lastDay: string): string {
+  if (count <= 1 || firstDay === lastDay) {
+    /* Several arrivals on ONE day still say so — the money is still a sum, and the coach still has
+       to know that before they go looking for one payment of that size in the Ledger. */
+    return count <= 1 ? firstDay : `${count} payments · ${firstDay}`;
+  }
+  return `${count} payments · ${firstDay} – ${lastDay}`;
+}
+
 export function placeDerivedActual(claims: DerivedClaim[]): Omit<DerivedClaim, 'source'> {
   const none = { categoryId: null, categoryName: null, itemId: null, itemName: null };
   if (claims.length === 0) return none;

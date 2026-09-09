@@ -1,0 +1,628 @@
+<title>Dates and Doors</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap">
+<style>
+/* ═══ CHROME TOKENS — cool slate, deliberately NOT the product's warm palette, so a
+       specimen frame never reads as part of this page. ═══════════════════════════ */
+:root {
+  --ch-ground:   #E6E9ED;
+  --ch-panel:    #F4F6F8;
+  --ch-ink:      #1A1F26;
+  --ch-ink-2:    #48525E;
+  --ch-ink-3:    #6C7683;
+  --ch-rule:     rgba(26, 31, 38, 0.14);
+  --ch-rule-2:   rgba(26, 31, 38, 0.07);
+  --ch-accent:   #235C8C;
+  --ch-accent-s: rgba(35, 92, 140, 0.10);
+  --ch-warn:     #8A5A0B;
+  --ch-warn-s:   rgba(138, 90, 11, 0.11);
+  --ch-quiet:    #5D6873;
+  --ch-quiet-s:  rgba(93, 104, 115, 0.11);
+  --ch-stage:    #DCE1E7;
+}
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --ch-ground:   #14181D;
+    --ch-panel:    #1C2128;
+    --ch-ink:      #E4E8ED;
+    --ch-ink-2:    #A8B2BD;
+    --ch-ink-3:    #7E8894;
+    --ch-rule:     rgba(228, 232, 237, 0.16);
+    --ch-rule-2:   rgba(228, 232, 237, 0.08);
+    --ch-accent:   #7FB3DC;
+    --ch-accent-s: rgba(127, 179, 220, 0.14);
+    --ch-warn:     #D9A94F;
+    --ch-warn-s:   rgba(217, 169, 79, 0.14);
+    --ch-quiet:    #97A1AC;
+    --ch-quiet-s:  rgba(151, 161, 172, 0.13);
+    --ch-stage:    #0E1216;
+  }
+}
+:root[data-theme="dark"] {
+  --ch-ground:   #14181D;
+  --ch-panel:    #1C2128;
+  --ch-ink:      #E4E8ED;
+  --ch-ink-2:    #A8B2BD;
+  --ch-ink-3:    #7E8894;
+  --ch-rule:     rgba(228, 232, 237, 0.16);
+  --ch-rule-2:   rgba(228, 232, 237, 0.08);
+  --ch-accent:   #7FB3DC;
+  --ch-accent-s: rgba(127, 179, 220, 0.14);
+  --ch-warn:     #D9A94F;
+  --ch-warn-s:   rgba(217, 169, 79, 0.14);
+  --ch-quiet:    #97A1AC;
+  --ch-quiet-s:  rgba(151, 161, 172, 0.13);
+  --ch-stage:    #0E1216;
+}
+
+body {
+  background: var(--ch-ground);
+  color: var(--ch-ink);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ch-ink-3); margin: 0 0 0.65rem;
+}
+h1 {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 600; line-height: 1.1;
+  letter-spacing: -0.02em; margin: 0 0 0.75rem; text-wrap: balance;
+}
+.standfirst {
+  max-width: 64ch; font-size: 1.0625rem; color: var(--ch-ink-2); margin: 0;
+}
+.masthead { border-bottom: 2px solid var(--ch-ink); padding-bottom: 2rem; margin-bottom: 2.5rem; }
+
+/* ── the two decisions ────────────────────────────────────────────────── */
+.decisions { display: grid; gap: 1rem; grid-template-columns: 1fr; margin-bottom: 3.5rem; }
+@media (min-width: 820px) { .decisions { grid-template-columns: 1fr 1fr; } }
+.decision {
+  background: var(--ch-panel);
+  border-left: 3px solid var(--ch-accent);
+  padding: 1.15rem 1.35rem;
+}
+.decision h2 {
+  font-size: 1rem; font-weight: 600; margin: 0 0 0.4rem; letter-spacing: -0.01em;
+}
+.decision p { margin: 0; font-size: 0.9375rem; color: var(--ch-ink-2); }
+.decision p + p { margin-top: 0.5rem; }
+
+/* ── section rhythm ───────────────────────────────────────────────────── */
+section { margin-bottom: 3.5rem; }
+.secHead { display: flex; align-items: baseline; gap: 0.85rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.secNum {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ch-ink-3);
+  border: 1px solid var(--ch-rule); padding: 0.1rem 0.45rem; flex: none;
+}
+h2.secTitle { font-size: 1.35rem; font-weight: 600; margin: 0; letter-spacing: -0.015em; }
+.secNote { max-width: 68ch; color: var(--ch-ink-2); margin: 0 0 1.5rem; font-size: 0.9375rem; }
+.secNote code {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.85em;
+  background: var(--ch-quiet-s); padding: 0.1em 0.35em; border-radius: 3px;
+}
+
+/* ── specimen staging ─────────────────────────────────────────────────── */
+.pair { display: grid; gap: 1.5rem; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 1080px) { .pair { grid-template-columns: 1fr 1fr; } }
+
+.specimen { min-width: 0; }
+.specHead { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+.tag {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 0.16rem 0.5rem; font-weight: 500; flex: none;
+}
+.tag.now    { background: var(--ch-quiet-s);  color: var(--ch-quiet);  }
+.tag.new    { background: var(--ch-accent-s); color: var(--ch-accent); }
+.tag.re     { background: var(--ch-warn-s);   color: var(--ch-warn);   }
+.tag.same   { background: var(--ch-quiet-s);  color: var(--ch-quiet);  }
+.specName { font-size: 0.9375rem; font-weight: 600; }
+.stage {
+  background: var(--ch-stage);
+  padding: 1.5rem;
+  overflow-x: auto;
+  border: 1px solid var(--ch-rule-2);
+}
+.specCap {
+  margin: 0.7rem 0 0; font-size: 0.875rem; color: var(--ch-ink-2); max-width: 56ch;
+}
+.specCap b { color: var(--ch-ink); font-weight: 600; }
+
+/* ═══ PRODUCT FRAME — FieldLogicHQ warm portal, LIGHT, pinned. These values are the
+       product's own tokens; they do not follow the reader's theme, because the frame is
+       a photograph of a screen, not part of this page. ═══════════════════════════ */
+.fl {
+  /* warm palette (globals.css, html[data-user-theme="warm"]) */
+  --home-card: #FFFFFF;
+  --home-paper: #F8F4ED;
+  --home-ink: #241E15;
+  --home-ink-soft: #4A4235;
+  --home-dim: #615A54;
+  --home-line: rgba(70, 55, 30, 0.12);
+  --home-line-strong: rgba(70, 55, 30, 0.20);
+  --home-olive: #57651E;
+  --home-olive-soft: rgba(87, 101, 30, 0.10);
+
+  width: 520px; max-width: 100%;
+  background: var(--home-card);
+  border: 1px solid rgba(87, 101, 30, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--home-ink);
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.fl.hasFooter { padding-bottom: 0; }
+
+/* header */
+.flHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; gap: 1rem; }
+.flTitle {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem; font-weight: 700; line-height: 1.15; letter-spacing: 0.01em;
+  color: var(--home-ink); margin: 0;
+}
+.flX { color: var(--home-dim); display: flex; flex: none; }
+
+/* sub-line above the list */
+.flSub { margin: 0 0 0.5rem; font-size: 0.75rem; color: var(--home-dim); }
+.flSub strong { color: var(--home-dim); font-weight: 700; }
+
+/* the list */
+.flList { list-style: none; margin: 0; padding: 0; }
+.flList li + li { border-top: 1px solid var(--home-line); }
+.flRow {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem;
+  padding: 0.6rem 0.5rem; margin: 0 -0.5rem; border-radius: 6px;
+  font-size: 0.875rem; color: inherit; text-decoration: none;
+}
+.flRow.isLink { cursor: pointer; }
+.flRow.hover { background: var(--home-olive-soft); }
+.flWho { display: flex; flex-direction: column; min-width: 0; }
+.flNote { font-size: 0.75rem; color: var(--home-dim); }
+.flNote.lie {
+  background: rgba(176, 58, 34, 0.16);
+  box-shadow: 0 0 0 2px rgba(176, 58, 34, 0.16);
+  border-radius: 2px;
+}
+.flNote.fixed { color: var(--home-ink-soft); font-weight: 500; }
+.flAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+.flGroup { margin: 0.9rem 0 0.2rem; font-size: 0.75rem; color: var(--home-dim); }
+.flFoot { margin: 0.7rem 0 0; font-size: 0.75rem; color: var(--home-dim); }
+.flFoot .strike { text-decoration: line-through; opacity: 0.55; }
+
+/* footer + doors */
+.flFooter {
+  display: flex; justify-content: flex-end; gap: 0.5rem;
+  margin: 1.25rem -1.5rem 0; padding: 1rem 1.5rem;
+  border-top: 1px solid var(--home-line);
+  background: var(--home-card);
+  border-radius: 0 0 12px 12px;
+}
+.flBtn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: var(--home-card); color: var(--home-ink-soft);
+  border: 1px solid var(--home-line-strong); border-radius: 6px;
+  padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600;
+  font-family: Inter, system-ui, sans-serif; cursor: pointer;
+}
+.flTotalRow {
+  display: flex; justify-content: space-between; gap: 0.8rem;
+  border-top: 1px solid var(--home-line); margin-top: 0.4rem; padding-top: 0.6rem;
+  font-weight: 700; font-size: 0.875rem;
+}
+.flTotalRow span:last-child { font-variant-numeric: tabular-nums; }
+
+/* the dead-end marker */
+.deadEnd {
+  margin: 0.7rem 0 0; font-size: 0.75rem;
+  color: #B03A22; font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.04em;
+}
+
+/* ── the date-line study ──────────────────────────────────────────────── */
+.study { display: grid; gap: 0; background: var(--ch-panel); border: 1px solid var(--ch-rule-2); }
+.studyRow {
+  display: grid; grid-template-columns: 1fr; gap: 0.85rem;
+  padding: 1.1rem 1.35rem;
+}
+@media (min-width: 760px) { .studyRow { grid-template-columns: 300px 1fr; align-items: center; } }
+.studyRow + .studyRow { border-top: 1px solid var(--ch-rule-2); }
+.studySpec {
+  background: var(--home-card, #FFFFFF);
+  border: 1px solid rgba(70, 55, 30, 0.12);
+  border-radius: 6px; padding: 0.55rem 0.7rem;
+  font-family: Inter, system-ui, sans-serif;
+  --home-dim: #615A54; --home-ink: #241E15; --home-ink-soft: #4A4235;
+  color: #241E15;
+}
+.studySpec .flNote { display: block; }
+.studyWhen { font-size: 0.9375rem; font-weight: 600; margin: 0 0 0.2rem; }
+.studyWhy { font-size: 0.875rem; color: var(--ch-ink-2); margin: 0; }
+.rejected { position: relative; opacity: 0.62; }
+.rejectMark {
+  display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ch-ink-3);
+  margin-top: 0.35rem;
+}
+
+/* ── closing question ─────────────────────────────────────────────────── */
+.ask {
+  background: var(--ch-panel); border-top: 3px solid var(--ch-accent);
+  padding: 1.5rem 1.75rem;
+}
+.ask h2 { font-size: 1.15rem; font-weight: 600; margin: 0 0 0.75rem; }
+.ask ol { margin: 0; padding-left: 1.2rem; color: var(--ch-ink-2); }
+.ask li { margin-bottom: 0.6rem; }
+.ask li:last-child { margin-bottom: 0; }
+.ask b { color: var(--ch-ink); font-weight: 600; }
+
+.footnote {
+  margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--ch-rule-2);
+  font-size: 0.8125rem; color: var(--ch-ink-3); max-width: 72ch;
+}
+*:focus-visible { outline: 2px solid var(--ch-accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Coach money · Budget vs Actual · behind-the-figure panel</p>
+    <h1>Dates and Doors</h1>
+    <p class="standfirst">
+      Two fixes to the panel that opens when a coach taps a spent or received figure on the
+      statement. One stops it saying something untrue; the other stops it dead-ending.
+    </p>
+  </header>
+
+  <div class="decisions">
+    <div class="decision">
+      <h2>1 · The dates are not missing</h2>
+      <p>
+        A sponsor's row on the statement is one row per <em>sponsor</em>, not per cheque — so it
+        adds up several arrivals, and the panel prints “no date recorded” because no single date
+        fits. Every one of those cheques is dated, and the Months panel two views away shows those
+        dates.
+      </p>
+      <p>The row should say how many payments it holds, and when they landed.</p>
+    </div>
+    <div class="decision">
+      <h2>2 · The panel has no way out</h2>
+      <p>
+        The spent side ends with the sentence <em>“Edit them on Transactions”</em> — it names the
+        destination and then doesn't take you there. There is no button, and for an assistant coach
+        there is nothing clickable in the panel at all.
+      </p>
+      <p>Its twin on the Months grid has carried doors since August. This one never got them.</p>
+    </div>
+  </div>
+
+  <!-- ══ 1. the whole panel, before and after ══════════════════════════ -->
+  <section>
+    <div class="secHead">
+      <span class="secNum">01</span>
+      <h2 class="secTitle">The panel that started it</h2>
+    </div>
+    <p class="secNote">
+      Whole panel, true size (520&nbsp;px wide — the same width the product draws it). Same data
+      both sides.
+    </p>
+
+    <div class="pair">
+      <div class="specimen">
+        <div class="specHead">
+          <span class="tag now">Today</span>
+          <span class="specName">Sponsor money</span>
+        </div>
+        <div class="stage">
+          <div class="fl">
+            <div class="flHead">
+              <h3 class="flTitle">Sponsor money</h3>
+              <span class="flX" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <p class="flSub"><strong>$2,085.75</strong> received</p>
+            <ul class="flList">
+              <li><span class="flRow"><span class="flWho">ZZ QA Hilltop — $800 of $1,000, $200 to families<span class="flNote lie">no date recorded</span></span><span class="flAmt">$800.00</span></span></li>
+              <li><span class="flRow"><span class="flWho">ZZ QA Twin Oaks — $250 of $500, $250 to families<span class="flNote lie">no date recorded</span></span><span class="flAmt">$250.00</span></span></li>
+              <li><span class="flRow"><span class="flWho">ZZ QA Maple Hardware — $360 of $400, $40 to families<span class="flNote lie">no date recorded</span></span><span class="flAmt">$360.00</span></span></li>
+              <li><span class="flRow"><span class="flWho">ZZ QA floor test — $300 of $600, $300 to families<span class="flNote lie">no date recorded</span></span><span class="flAmt">$300.00</span></span></li>
+              <li><span class="flRow"><span class="flWho">Northside Physio — $375.75 of $501, $125.25 to families<span class="flNote lie">no date recorded</span></span><span class="flAmt">$375.75</span></span></li>
+            </ul>
+            <p class="flFoot">Every payment counted against this row, on the day it happened — whoever paid it. Edit them on Transactions.</p>
+            <p class="deadEnd">↳ nothing here opens</p>
+          </div>
+        </div>
+        <p class="specCap">
+          Five sponsors, five claims that nobody wrote a date down. Northside alone has two dated
+          cheques sitting one click away.
+        </p>
+      </div>
+
+      <div class="specimen">
+        <div class="specHead">
+          <span class="tag re">Restyled</span>
+          <span class="tag new">New door</span>
+          <span class="specName">Sponsor money</span>
+        </div>
+        <div class="stage">
+          <div class="fl hasFooter">
+            <div class="flHead">
+              <h3 class="flTitle">Sponsor money</h3>
+              <span class="flX" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <p class="flSub"><strong>$2,085.75</strong> received</p>
+            <ul class="flList">
+              <li><span class="flRow isLink"><span class="flWho">ZZ QA Hilltop — $800 of $1,000, $200 to families<span class="flNote fixed">2 payments · Apr 18 – Jun 2</span></span><span class="flAmt">$800.00</span></span></li>
+              <li><span class="flRow isLink"><span class="flWho">ZZ QA Twin Oaks — $250 of $500, $250 to families<span class="flNote fixed">Jun 27</span></span><span class="flAmt">$250.00</span></span></li>
+              <li><span class="flRow isLink"><span class="flWho">ZZ QA Maple Hardware — $360 of $400, $40 to families<span class="flNote fixed">Sep 4</span></span><span class="flAmt">$360.00</span></span></li>
+              <li><span class="flRow isLink"><span class="flWho">ZZ QA floor test — $300 of $600, $300 to families<span class="flNote fixed">3 payments · May 2 – Aug 19</span></span><span class="flAmt">$300.00</span></span></li>
+              <li><span class="flRow isLink hover"><span class="flWho">Northside Physio — $375.75 of $501, $125.25 to families<span class="flNote fixed">2 payments · May 10 – Jun 14</span></span><span class="flAmt">$375.75</span></span></li>
+            </ul>
+            <p class="flFoot">Every payment counted against this row, on the day it happened — whoever paid it. <span class="strike">Edit them on Transactions.</span></p>
+            <div class="flFooter">
+              <span class="flBtn">Open the Ledger</span>
+            </div>
+          </div>
+        </div>
+        <p class="specCap">
+          <b>Northside is shown hovered</b> — every sponsor row now opens that sponsor's own room,
+          the same way a budget line opens on the planned side. The footer's one door goes to the
+          book of record. The sentence loses its last clause, because the button says it better.
+        </p>
+      </div>
+    </div>
+
+    <p class="specCap" style="max-width:72ch;margin-top:1.5rem">
+      Two of the dates above are read off your own screenshots (Maple Hardware, Northside);
+      the other three are stand-ins so the specimen shows every shape at once.
+    </p>
+  </section>
+
+  <!-- ══ 2. the date line ══════════════════════════════════════════════ -->
+  <section>
+    <div class="secHead">
+      <span class="secNum">02</span>
+      <h2 class="secTitle">What the date line says, in every case</h2>
+    </div>
+    <p class="secNote">
+      You asked for the payment count. It earns its place when there is more than one arrival and
+      says nothing when there isn't — so the count itself is the signal that the row is a sum.
+    </p>
+
+    <div class="study">
+      <div class="studyRow">
+        <div class="studySpec">
+          <span class="flWho">Northside Physio — $375.75 of $501, $125.25 to families<span class="flNote fixed">2 payments · May 10 – Jun 14</span></span>
+        </div>
+        <div>
+          <p class="studyWhen">Several arrivals</p>
+          <p class="studyWhy">The count tells the coach the row is an addition, and the span tells them where to look in the Ledger. Two facts, one line.</p>
+        </div>
+      </div>
+
+      <div class="studyRow">
+        <div class="studySpec">
+          <span class="flWho">ZZ QA Maple Hardware — $360 of $400, $40 to families<span class="flNote fixed">Sep 4</span></span>
+        </div>
+        <div>
+          <p class="studyWhen">One arrival</p>
+          <p class="studyWhy">The date alone, exactly as an ordinary expense row reads today. This is the one worth a second look — see the question at the bottom.</p>
+        </div>
+      </div>
+
+      <div class="studyRow">
+        <div class="studySpec rejected">
+          <span class="flWho">ZZ QA Maple Hardware — $360 of $400, $40 to families<span class="flNote fixed">1 payment · Sep 4</span></span>
+          <span class="rejectMark">Not recommended</span>
+        </div>
+        <div>
+          <p class="studyWhen">One arrival, counted anyway</p>
+          <p class="studyWhy">Consistent, and two words heavier on every single-cheque row on the screen. My call is to drop it, but it's yours.</p>
+        </div>
+      </div>
+
+      <div class="studyRow">
+        <div class="studySpec">
+          <span class="flWho">Team hoodie order — cash from the tuck shop<span class="flNote">no date recorded</span></span>
+        </div>
+        <div>
+          <p class="studyWhen">Genuinely undated</p>
+          <p class="studyWhy">The words survive, and after this change they are only ever true — a record somebody typed in without a date. Today they appear on money that is fully dated, which is what makes them a bug rather than a style.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 3. the ordinary case ══════════════════════════════════════════ -->
+  <section>
+    <div class="secHead">
+      <span class="secNum">03</span>
+      <h2 class="secTitle">The ordinary panel — where only the door changes</h2>
+    </div>
+    <p class="secNote">
+      Most of these panels hold plain costs. Their dates are already right; what they don't have is
+      a way out. Nothing else about them moves.
+    </p>
+
+    <div class="pair">
+      <div class="specimen">
+        <div class="specHead">
+          <span class="tag now">Today</span>
+          <span class="specName">Umpire Fees</span>
+        </div>
+        <div class="stage">
+          <div class="fl">
+            <div class="flHead">
+              <h3 class="flTitle">Umpire Fees</h3>
+              <span class="flX" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <p class="flSub"><strong>$815.00</strong> paid · <strong>$125.00</strong> back</p>
+            <ul class="flList">
+              <li><span class="flRow"><span class="flWho">District umpire pool<span class="flNote">May 12</span></span><span class="flAmt">$500.00</span></span></li>
+              <li><span class="flRow"><span class="flWho">District umpire pool<span class="flNote">Jun 9</span></span><span class="flAmt">$315.00</span></span></li>
+            </ul>
+            <p class="flGroup">Money back, netted off the figure above</p>
+            <ul class="flList">
+              <li><span class="flRow"><span class="flWho">Rained-out doubleheader<span class="flNote">Jun 21</span></span><span class="flAmt">−$125.00</span></span></li>
+            </ul>
+            <p class="flFoot">Every payment counted against this row, on the day it happened — whoever paid it. Edit them on Transactions.</p>
+            <p class="deadEnd">↳ nothing here opens</p>
+          </div>
+        </div>
+        <p class="specCap">
+          A head coach can at least go and find Transactions by hand. An assistant reads this and
+          the panel is over.
+        </p>
+      </div>
+
+      <div class="specimen">
+        <div class="specHead">
+          <span class="tag same">Unchanged list</span>
+          <span class="tag new">New door</span>
+          <span class="specName">Umpire Fees</span>
+        </div>
+        <div class="stage">
+          <div class="fl hasFooter">
+            <div class="flHead">
+              <h3 class="flTitle">Umpire Fees</h3>
+              <span class="flX" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <p class="flSub"><strong>$815.00</strong> paid · <strong>$125.00</strong> back</p>
+            <ul class="flList">
+              <li><span class="flRow"><span class="flWho">District umpire pool<span class="flNote">May 12</span></span><span class="flAmt">$500.00</span></span></li>
+              <li><span class="flRow"><span class="flWho">District umpire pool<span class="flNote">Jun 9</span></span><span class="flAmt">$315.00</span></span></li>
+            </ul>
+            <p class="flGroup">Money back, netted off the figure above</p>
+            <ul class="flList">
+              <li><span class="flRow"><span class="flWho">Rained-out doubleheader<span class="flNote">Jun 21</span></span><span class="flAmt">−$125.00</span></span></li>
+            </ul>
+            <p class="flFoot">Every payment counted against this row, on the day it happened — whoever paid it.</p>
+            <div class="flFooter">
+              <span class="flBtn">Open the Ledger</span>
+            </div>
+          </div>
+        </div>
+        <p class="specCap">
+          Rows stay plain text — a typed cost has no “thing itself” to open, the record <em>is</em>
+          the thing. One door, and everybody gets it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 4. the twin ═══════════════════════════════════════════════════ -->
+  <section>
+    <div class="secHead">
+      <span class="secNum">04</span>
+      <h2 class="secTitle">The pattern already exists — this is the twin</h2>
+    </div>
+    <p class="secNote">
+      Same report, other view. Tap a month cell and you get this. It is not being changed; it is
+      the thing the statement panel should have matched from the start.
+    </p>
+
+    <div class="pair">
+      <div class="specimen">
+        <div class="specHead">
+          <span class="tag same">Unchanged</span>
+          <span class="specName">Months grid · cell panel</span>
+        </div>
+        <div class="stage">
+          <div class="fl hasFooter" style="width:420px">
+            <div class="flHead">
+              <h3 class="flTitle">Sponsorship · September 2026</h3>
+              <span class="flX" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <ul class="flList">
+              <li><span class="flRow"><span class="flWho">ZZ QA Maple Hardware<span class="flNote">Sep 4 · received</span></span><span class="flAmt">$400.00</span></span></li>
+            </ul>
+            <div class="flTotalRow"><span>Total</span><span>$400.00</span></div>
+            <div class="flFooter">
+              <span class="flBtn">Open Sponsors</span>
+              <span class="flBtn">Open the Ledger</span>
+            </div>
+          </div>
+        </div>
+        <p class="specCap">
+          Two doors: the book of record, and the thing itself. The house rule caps it there — a
+          panel with five doors is a menu, not an answer.
+        </p>
+      </div>
+
+      <div class="specimen">
+        <div class="specHead">
+          <span class="tag same">Unchanged</span>
+          <span class="specName">Statement · the planned side</span>
+        </div>
+        <div class="stage">
+          <div class="fl">
+            <div class="flHead">
+              <h3 class="flTitle">Umpire Fees</h3>
+              <span class="flX" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </div>
+            <p class="flSub"><strong>$900.00</strong> planned</p>
+            <ul class="flList">
+              <li><span class="flRow isLink hover"><span class="flWho">Regular season umpires<span class="flNote">18 home games</span></span><span class="flAmt">$720.00</span></span></li>
+              <li><span class="flRow isLink"><span class="flWho">Playoff umpires<span class="flNote"></span></span><span class="flAmt">$180.00</span></span></li>
+            </ul>
+            <p class="flFoot">These are shown as one row because they name the same item. Open one to edit it.</p>
+          </div>
+        </div>
+        <p class="specCap">
+          The other half of the same panel already works this way — <b>every line is a link</b>, so
+          it needs no button. That's the precedent the sponsor rows are copying.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ask">
+    <h2>Three things to say yes or no to</h2>
+    <ol>
+      <li>
+        <b>The date line.</b> <code style="font-family:'IBM Plex Mono',monospace">2 payments · May 10 – Jun 14</code>
+        when there's more than one, the bare date when there's one.
+      </li>
+      <li>
+        <b>Sponsor and drive rows become links</b> into that sponsor's or drive's own room —
+        ungated, so an assistant coach gets them too.
+      </li>
+      <li>
+        <b>One footer door, “Open the Ledger”, on every spent-side panel.</b> I've deliberately
+        <em>not</em> added a second “Open Sponsors” button on the sponsor panel: the rows are
+        already the better door, and a hub button beside them lands further from the work. Say the
+        word if you'd rather have both.
+      </li>
+    </ol>
+  </div>
+
+  <p class="footnote">
+    Frames are drawn at the product's real width (520&nbsp;px) using the warm portal's own colour,
+    type and spacing tokens, and are pinned to the light theme — they don't follow your reader
+    theme, because they're photographs of a screen rather than part of this page. The page chrome
+    around them is deliberately a different, cooler palette so the two never blur.
+  </p>
+
+</div>

@@ -147,6 +147,38 @@ export interface RollupSpend {
   paidDate: string | null;
   /** Defaults to `out`. */
   direction?: MoneyDirection;
+  /**
+   * Set only on a DRIVE'S OR SPONSOR'S row, which is the one kind of movement here that is not one
+   * movement: it sums every arrival that record has taken (owner ruling 2026-09-07 — one row per
+   * drive or sponsor, so the figure opens into something with a name rather than a pool).
+   *
+   * ⚠⚠ IDENTITY AND DATES IN ONE FIELD BECAUSE THEY ARE ONE FACT — "this row is a roll-up of a
+   * fundraising record's arrivals". Both things the panel does with it (say when the money landed,
+   * and open the record) are only correct on a row where this is set.
+   *
+   * ⚠⚠ AND `paidDate` STAYS NULL BESIDE IT. It is genuinely not one day, and it is the dated grain
+   * every month and chart feed reads — synthesising a value there would place derived money a
+   * second time on feeds the cash strip already places it on correctly.
+   */
+  derived?: DerivedArrivals | null;
+}
+
+/**
+ * How many arrivals one drive or sponsor row sums, and the days they landed between.
+ *
+ * ⚠ `firstDay` / `lastDay` come from the CASH STRIP'S OWN fallback (`receivedDate ?? the org-day of
+ * createdAt`). Any other reading re-opens the defect this exists to close one level down: the
+ * statement and the Months grid would agree on the count and disagree on the day for a legacy row.
+ */
+export interface DerivedArrivals {
+  /** The drive or sponsor — the room this row opens to. */
+  recordId: string;
+  kind: 'fundraiser' | 'sponsor';
+  /** How many arrivals were summed. Never 0. */
+  count: number;
+  /** `YYYY-MM-DD`. Equal to each other when every arrival landed on one day. */
+  firstDay: string;
+  lastDay: string;
 }
 
 /**
@@ -195,8 +227,12 @@ export interface ItemRow {
   periods: Array<{ label: string; date: string | null; amount: number; actual: number }>;
   /** The individual lines behind the row, so the plan list can still edit one of them. */
   lines: Array<{ id: string; description: string; notes: string | null; totalAmount: number }>;
-  /** The individual amounts behind the row, for the drill-in. */
-  costs: Array<{ id: string; description: string; amount: number; paidDate: string | null }>;
+  /** The individual amounts behind the row, for the drill-in. ⚠ `derived` rides along or the panel
+   *  cannot tell a one-payment record from a roll-up of eight — see `RollupSpend.derived`. */
+  costs: Array<{
+    id: string; description: string; amount: number; paidDate: string | null;
+    derived?: DerivedArrivals | null;
+  }>;
   /** The money back behind the row. Separate from `costs` on purpose — merging them would hide
    *  which records were spending and which were repayment, and one of those is the out-of-pocket
    *  trap the money-back plan's §2 exists to keep apart. */
@@ -672,6 +708,7 @@ function buildCategoryRow(
       })),
       costs: entry.costs.map(c => ({
         id: c.id, description: c.description, amount: c.amount, paidDate: c.paidDate,
+        derived: c.derived ?? null,
       })),
       refunds: entry.refunds.map(b => ({
         id: b.id, description: b.description, amount: b.amount, receivedDate: b.receivedDate,

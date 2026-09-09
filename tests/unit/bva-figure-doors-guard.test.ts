@@ -286,3 +286,148 @@ test('the plan panel gives a read-only coach a door, and gives a writer none', (
     + 'further from the work.',
   );
 });
+
+/**
+ * **AND THE RULE ABOVE REACHED THE WRONG PANELS FIRST** (owner, 2026-09-09: *"why aren't we
+ * providing button links on the statement modals like we are on the monthly?"*).
+ *
+ * The 2026-09-04 ruling was written about the MONTHS GRID's two panels and pinned there — the test
+ * above even cites the spent panel's ungated doors as the reason the plan panel needed one. Nobody
+ * checked the STATEMENT's own panels, which are the same question asked from the other view of the
+ * same report. Both of them ended in prose:
+ *
+ *   · `RecordsBehind`'s actual half closed on *"Edit them on Transactions."* — naming a destination
+ *     and refusing to go there, with nothing clickable on it for ANY role, writer included;
+ *   · `DuesBehind` closed on *"see Cash for what your account did"* with the same shape.
+ *
+ * That is the defect the ruling describes, one screen over, surviving the gate written for it.
+ * These assertions are on the STATEMENT panel, so the next person to take a door off has to argue
+ * with the file that owns the panel rather than with its twin.
+ */
+test('the statement panel does not dead-end either — every figure it opens has a way out', () => {
+  assert.match(
+    panel,
+    /moneySectionHref\(base, 'ledger', \{ view: 'timeline' \}\)/,
+    'The statement\'s spent-figure panel has lost its ledger door. It closes on a sentence naming '
+    + 'Transactions; without the button that sentence tells a coach where to go and does not take '
+    + 'them, which is the dead end QA §132 closed on the Months grid and this ruling closed here.',
+  );
+  assert.match(
+    panel,
+    /Open Player Dues[\s\S]{0,400}?Open the Ledger/,
+    'The dues panel ("What families contributed") no longer offers both doors. Its twin on the '
+    + 'Months grid answers "dues, actual" with Player Dues AND the Ledger (`cellPanelSpec`); one '
+    + 'report giving two answers to one figure is the thing that rule exists to stop.',
+  );
+  /* ⚠ AND THE PLAN HALF TAKES THE SAME SHAPE THE GRID'S DOES — the door exactly when the lines are
+     NOT links. Same rule, same reason, now pinned on both files rather than on one of the two
+     surfaces it governs, which is how the statement went a ruling without it. */
+  assert.match(
+    panel,
+    /side === 'plan' \? \(!canWrite && \(\s*<div className={shared\.modalFooter}>/,
+    'The statement\'s PLAN panel has lost its read-only door. Its lines are links only for a coach '
+    + 'who can write, so without it an assistant opens the panel, reads it, and can go nowhere.',
+  );
+  assert.ok(
+    !/side === 'plan' \? \((?<![!\w])canWrite && /.test(panel),
+    'The statement\'s plan panel is offering its budget door to a coach who can WRITE. Their lines '
+    + 'already open the exact budget line; a button beside them is a second door to the same screen '
+    + 'that lands further from the work.',
+  );
+});
+
+/**
+ * **A DRIVE'S OR SPONSOR'S ROW IS THE ONE MOVEMENT THAT OPENS SOMETHING**, and the reason the old
+ * blanket rule ("the actual list states and never links") expired.
+ *
+ * That row used to be a POOL — one line reading "From your fundraisers", a name with no record
+ * behind it. Since the 2026-09-07 ruling it is one row per drive or sponsor, each of which has a
+ * room. Linking it is the exact mirror of the plan half opening its budget line, and it is why this
+ * panel needs no second "Open Sponsors" hub button beside rows that already ARE the door.
+ */
+test('a derived row opens the drive or sponsor it names', () => {
+  assert.match(
+    panel,
+    /c\.derived[\s\S]{0,400}?moneySectionHref\(base, 'fundraisers', \{ fundraiser: c\.derived\.recordId \}\)/,
+    'A sponsor\'s row on the statement no longer opens that sponsor. The row names a record with a '
+    + 'room of its own; leaving it as plain text sends the coach back to a hub to find it by hand, '
+    + 'while the identical row on the Months grid opens it directly.',
+  );
+});
+
+/**
+ * **THE UNTRUTH THIS RELEASE REMOVED, AND THE FIX THAT WOULD PUT IT BACK.**
+ *
+ * A derived row sums several arrivals, so `paidDate` is null on it — and the panel printed
+ * "no date recorded" for five fully-dated sponsor cheques while the Months view of the same report
+ * printed their dates. The obvious-looking repair is to synthesise a date into `paidDate`. **That is
+ * the wrong one**: `paidDate` is the dated grain every month and chart feed reads, and a value there
+ * would place derived money a SECOND time on feeds the cash strip already places per arrival — a
+ * figure defect, where today's is only a wording one. The span travels beside it instead.
+ */
+test('a derived row keeps a null paidDate and carries its span separately', () => {
+  assert.match(
+    route,
+    /paidDate: null,[\s\S]{0,600}?derived: \{[\s\S]{0,200}?firstDay:[\s\S]{0,120}?lastDay:/,
+    'The derived rows have stopped carrying their arrival span beside a null `paidDate`. If a date '
+    + 'was synthesised into `paidDate` to fix the panel\'s wording, revert it: that field feeds the '
+    + 'month grid and the cumulative chart, which already place every one of these arrivals through '
+    + 'the cash strip, and a second placement is a wrong FIGURE rather than a wrong sentence.',
+  );
+  assert.match(
+    panel,
+    /c\.derived\.count[\s\S]{0,160}?c\.derived\.firstDay[\s\S]{0,80}?c\.derived\.lastDay/,
+    'The panel has stopped reading the arrival span, so every drive and sponsor row is back to '
+    + '"no date recorded" on money that is fully dated — the exact sentence the owner found on '
+    + 'five sponsor rows at once.',
+  );
+});
+
+/**
+ * **A RECORD THAT RAISED NOTHING IS NOT A PAYMENT** (`/review` correctness lens, 2026-09-09).
+ *
+ * `rep_fundraiser_entries` is CHECK `amount_raised >= 0` — deliberately, so a coach can log a family
+ * who took part in the drive and sold nothing — and a drive's entries are ALWAYS realised. Counted,
+ * such a row inflates "N payments" past what arrived AND, worse, drags `firstDay` back to a day on
+ * which no money came in. The count exists to tell a coach the row is an addition; a signal that
+ * counts non-events is worse than no signal.
+ *
+ * ⚠ THE TEST IS GROSS, NOT KEPT: a fully-rebated entry is a real arrival on a real day (the row's
+ * own words already say "$X of $Y, $Z to families"), so it must keep counting. Only "nothing came
+ * in" is skipped — which is why the guard below pins `amountRaised`, not `kept`.
+ */
+test('an entry that brought no money in is not counted as a payment', () => {
+  assert.match(
+    route,
+    /e\.amountRaised > 0\.005\)\s*row\.days\.push/,
+    'The arrival-day collection has stopped screening $0 entries. A drive with three participants '
+    + 'and one sale now reads "3 payments", and its date span starts on a day nothing arrived. '
+    + 'Screen on amountRaised (gross), never on kept — a fully-rebated entry IS an arrival.',
+  );
+  assert.match(
+    panel,
+    /c\.derived\?\.count/,
+    'The panel is back to keying the date line on the mere presence of `derived` rather than on its '
+    + 'count. A record whose every entry raised $0 has a name and a room but no arrivals — it must '
+    + 'still link, and must fall through to wording that is honest about having no day.',
+  );
+});
+
+/**
+ * **A DIALOG THAT OPTS INTO THE SCROLLING RECIPE MUST NAME THE PART THAT SCROLLS.**
+ *
+ * `.modalScrollBody` is `display:flex; overflow:hidden` and expects one child that scrolls. Both
+ * statement panels passed `scroll` and rendered a bare fragment, so no child matched: the list was
+ * a shrinking flex item inside a clipped box, and a row with enough records lost its tail with no
+ * error anywhere. It stayed invisible because the panels people opened were short.
+ */
+test('the statement panels name a scrolling pane for the recipe they opted into', () => {
+  const opens = (panel.match(/scroll\s*\n?\s*>/g) ?? []).length;
+  const panes = (panel.match(/shared\.scrollPane/g) ?? []).length;
+  assert.ok(
+    panes >= opens && panes > 0,
+    `${opens} panel(s) here ask QuestionShell for the scrolling recipe and only ${panes} name a `
+    + 'pane for it. A dialog that opts in without one clips its own content silently — nothing '
+    + 'throws, nothing logs, the list simply ends early.',
+  );
+});

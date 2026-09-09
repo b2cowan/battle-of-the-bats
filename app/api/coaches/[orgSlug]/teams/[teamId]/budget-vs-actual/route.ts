@@ -688,13 +688,34 @@ export const GET = withObservability(async (req: Request,
          revenue side did not, which is the asymmetry the owner found.
          ⚠ THE TOTAL AND THE PLACEMENT ARE IDENTICAL — these rows carry the same category+item and
          sum to the same figure. Only what a coach finds behind it changes. */
-      const byParent = new Map<string, { name: string; kept: number; raised: number; toFamilies: number }>();
+      const byParent = new Map<string, {
+        name: string; kept: number; raised: number; toFamilies: number; days: string[];
+      }>();
       for (const e of mine) {
         const row = byParent.get(e.fundraiserId)
-          ?? { name: e.fundraiserName, kept: 0, raised: 0, toFamilies: 0 };
+          ?? { name: e.fundraiserName, kept: 0, raised: 0, toFamilies: 0, days: [] };
         row.kept += e.amountRaised - e.rebateAmount;
         row.raised += e.amountRaised;
         row.toFamilies += e.rebateAmount;
+        /* ⚠⚠ A $0 ENTRY IS NOT AN ARRIVAL, AND COUNTING IT BREAKS BOTH HALVES OF THE LINE
+           (`/review`, correctness lens, 2026-09-09 — reproduced from the dictionary, not theorised).
+           `rep_fundraiser_entries` is CHECK `amount_raised >= 0`, deliberately: *"a player can be
+           recorded with $0 raised"* — a family who took part in the drive and sold nothing — and a
+           drive's entries are ALWAYS realised, so such a row reaches this loop exactly like a paid
+           one. Left in, it would say "3 payments" where two dollars-worth arrived, and — the worse
+           half — a participation row logged in March would drag `firstDay` back to a day on which
+           NO MONEY CAME IN. The count is the signal that the row is an addition; a signal that
+           counts non-events is worse than none.
+           ⚠ THE TEST IS GROSS, NOT KEPT. A fully-rebated entry (every dollar credited to the family
+           who raised it) is a real arrival on a real day — the row's own words already say "$X of
+           $Y, $Z to families" — so it counts. Only a record where nothing came in is skipped.
+
+           ⚠⚠ THE CASH STRIP'S OWN FALLBACK, CHARACTER FOR CHARACTER (`receivedDate ?? the org-day of
+           createdAt`). The defect being fixed here IS the two views of one report disagreeing about
+           one cheque; reading these days any other way would reproduce it one level down — the
+           statement and the Months grid agreeing on the count and disagreeing on the day, for
+           exactly the legacy rows nobody has a fixture for. */
+        if (e.amountRaised > 0.005) row.days.push(e.receivedDate ?? orgDayKey(e.createdAt));
         byParent.set(e.fundraiserId, row);
       }
       for (const [id, row] of byParent) {
@@ -716,7 +737,28 @@ export const GET = withObservability(async (req: Request,
           itemId: own?.itemId ?? itemKey,
           itemName: own ? own.itemName : itemName,
           amount: Math.round(row.kept * 100) / 100,
+          /* ⚠⚠ STILL NULL, AND DELIBERATELY (owner ruling 2026-09-09). This row is a SUM of
+             arrivals, so there is no one day it was paid — and `paidDate` is the dated grain every
+             month and chart feed reads. Synthesising the first or the last day here would place
+             derived money a SECOND time on feeds the cash strip already places it on correctly,
+             per arrival. What the panel needs is the span, which travels beside it. */
           paidDate: null,
+          /* ⚠ WHY THE PANEL STOPPED SAYING "no date recorded" ON FULLY-DATED MONEY. Those words are
+             `paidDate`'s null branch, and they were true of the FIELD and false of the money: five
+             dated sponsor cheques read as undated while the Months view printed their dates. */
+          /* ⚠ THE EMPTY CASE IS GUARDED RATHER THAN ASSUMED. With the $0 filter above, a record
+             whose every entry raised nothing contributes no days — and such a record also has
+             `kept` of 0, so it is already dropped by the guard at the top of this loop and never
+             reaches here. Written defensively anyway because the alternative is a bare `reduce`
+             that throws on an empty array: an unreachable branch costs one `?.`, an unhandled one
+             costs the whole report. The panel reads `count` and says "no date recorded" at 0. */
+          derived: {
+            recordId: id,
+            kind: source,
+            count: row.days.length,
+            firstDay: row.days.reduce((a, b) => (b < a ? b : a), row.days[0] ?? ''),
+            lastDay: row.days.reduce((a, b) => (b > a ? b : a), row.days[0] ?? ''),
+          },
           direction: 'in' as const,
         });
       }

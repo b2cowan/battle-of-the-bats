@@ -4470,6 +4470,22 @@ a.oneChip:hover { border-color: currentColor; }
 /* The drill editor carries 0.9rem of its own inset; the bleed hands back the modal’s 1.5rem on top
    of it, so its rows sit exactly where they did before the bar moved to the edge. */
 .modalScrollBody > .ppDrillWrite { padding-inline: 2.4rem; }
+/* ⚠⚠ THE GENERALISATION THE NOTE ABOVE ASKED FOR, taken on the fifth shape exactly as instructed
+   (2026-09-09). `.scrollPane` carries no meaning of its own — it says "this is the part of the
+   dialog that scrolls", which is the only thing the four named shapes above have in common. A NEW
+   adopter uses this and the list stops growing.
+
+   The four stay named because each also carries an inset of its own (`.ppDrillWrite`'s 2.4rem,
+   `.settlementScroll`'s missing bottom pad) and re-pointing them is a sweep across nine dialogs,
+   not a rename — that is a separate unit of work, and doing it on the way past is how a layout
+   regression ships inside a copy fix.
+
+   ⚠ THE SHAPE THIS FOUND: the statement's behind-a-figure panel passed `scroll` and rendered a
+   bare fragment, so NOTHING matched the list — the list became a shrinking flex item inside an
+   `overflow: hidden` box and a row with enough records lost its tail with no error anywhere. A
+   dialog that opts into this recipe and names no pane clips silently, which is why the answer is
+   a class anyone can reach for rather than a fifth entry only the author knows about. */
+.modalScrollBody > .scrollPane { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; }
 .modalScrollBody > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 /* ⚠ A MODAL MAY KEEP ITS <form>, and until 2026-08-15 this primitive silently did not cover that
    shape. The rules above are direct-child selectors, so a modal whose fields sit inside a
