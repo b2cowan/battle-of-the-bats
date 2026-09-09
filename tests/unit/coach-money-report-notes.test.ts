@@ -52,6 +52,7 @@ describe('a gesture never reaches a file, and a fact always does', () => {
       basis: 'season',
       dues: { state: 'short', planNeeds: '$6,600.00', billed: '$5,000.00', gap: '$1,600.00' },
       canWriteDues: true,
+      duesNonCash: false,
       undatedPlan: null,
     });
     const file = noteTextForFile(byId(notes, 'dues'));
@@ -66,10 +67,10 @@ describe('a gesture never reaches a file, and a fact always does', () => {
 
   test('the undated-plan note drops its months-view bridge and keeps its verb', () => {
     const seasonFile = noteTextForFile(byId(statementNotes({
-      basis: 'season', dues: null, canWriteDues: false, undatedPlan: '$2,600.00',
+      basis: 'season', dues: null, canWriteDues: false, duesNonCash: false, undatedPlan: '$2,600.00',
     }), 'undated-plan'));
     const todateFile = noteTextForFile(byId(statementNotes({
-      basis: 'todate', dues: null, canWriteDues: false, undatedPlan: '$2,600.00',
+      basis: 'todate', dues: null, canWriteDues: false, duesNonCash: false, undatedPlan: '$2,600.00',
     }), 'undated-plan'));
 
     for (const file of [seasonFile, todateFile]) {
@@ -92,9 +93,54 @@ describe('a gesture never reaches a file, and a fact always does', () => {
       basis: 'season',
       dues: { state: 'unset', planNeeds: '$6,600.00', billed: '$0.00', gap: '$6,600.00' },
       canWriteDues: false,
+      duesNonCash: false,
       undatedPlan: null,
     }), 'dues');
     assert.ok(!readOnly.segments.some(s => s.control === 'set-dues'));
+  });
+
+  /**
+   * ⚠ THE CAPTION THAT NEVER REACHED A FILE (owner ruling 2026-09-09). This sentence spent its
+   * life as JSX inside the Player dues `<th>`, so a treasurer who downloaded the report and
+   * emailed it to a board sent a dues figure that counts a team bill a family paid, with nothing
+   * beside it saying so. It is a footnote now, which means it travels — and this test is the
+   * thing that stops it quietly becoming screen-only again.
+   */
+  test('what the dues actual counts is a footnote, and it travels into a file', () => {
+    const shown = statementNotes({
+      basis: 'season',
+      dues: { state: 'short', planNeeds: '$6,600.00', billed: '$5,000.00', gap: '$1,600.00' },
+      canWriteDues: true,
+      duesNonCash: true,
+      undatedPlan: '$2,600.00',
+    });
+    const file = noteTextForFile(byId(shown, 'dues-actual'));
+
+    assert.equal(
+      file,
+      'The Player dues actual includes team bills families paid and fundraising credited to dues, less money handed back.',
+      'no clause of this note is a gesture, so a file keeps all of it');
+
+    /* ⚠ THE DUES PAIR STAYS TOGETHER. Two answers about one row; an unrelated sentence between
+       them would split a question from its other half. */
+    const ids = shown.map(n => n.id);
+    assert.deepEqual(ids, ['variance-key', 'dues', 'dues-actual', 'undated-plan']);
+
+    /* ⚠ IT QUOTES NO FIGURE, so it can never go stale against one. The amounts are one tap away
+       on the Actual figure, where they add up. */
+    assert.ok(!/\$/.test(file), 'the note must name no amount');
+  });
+
+  test('a season where every dues dollar arrived as cash says nothing', () => {
+    const notes = statementNotes({
+      basis: 'season',
+      dues: { state: 'covered', planNeeds: '$6,600.00', billed: '$6,600.00', gap: '$0.00' },
+      canWriteDues: true,
+      duesNonCash: false,
+      undatedPlan: null,
+    });
+    assert.ok(!notes.some(n => n.id === 'dues-actual'),
+      'a figure that is exactly what a coach expects needs no footnote');
   });
 });
 

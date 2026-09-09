@@ -453,6 +453,13 @@ export interface StatementNoteInput {
   } | null;
   /** Whether this coach may set dues — decides whether the "Set player dues" door is offered. */
   canWriteDues: boolean;
+  /**
+   * Does the dues ACTUAL hold anything other than cash — a team bill a family paid themselves, or
+   * fundraising credited against their dues? `false` on a season where every dollar arrived as
+   * cash, and the note stays away: the figure needs no caption when it is exactly what a coach
+   * expects.
+   */
+  duesNonCash: boolean;
   /** Undated plan money, pre-formatted. `null` = nothing to say. */
   undatedPlan: string | null;
 }
@@ -460,6 +467,11 @@ export interface StatementNoteInput {
 /**
  * The footnote stack under the Statement, in the order the owner ruled (2026-09-04): the key that
  * says how to read the columns, then what the bottom line means, then what could not be compared.
+ *
+ * ⚠ THE DUES PAIR STAYS TOGETHER (2026-09-09). What dues bill and what the dues actual counts are
+ * two answers about one row, so the second follows the first and both sit ahead of "what could not
+ * be compared" — splitting them would put an unrelated sentence between a question and its other
+ * half.
  */
 export function statementNotes(input: StatementNoteInput): ReportNote[] {
   const out: ReportNote[] = [];
@@ -475,6 +487,33 @@ export function statementNotes(input: StatementNoteInput): ReportNote[] {
   ]));
 
   if (input.dues) out.push(duesNote(input.basis, input.dues, input.canWriteDues));
+
+  /**
+   * WHAT THE DUES ACTUAL COUNTS (owner ruling 2026-09-09).
+   *
+   * ⚠⚠ THIS WAS A CAPTION ON THE ROW AND IT IS A FOOTNOTE NOW, at the owner's direction: every
+   * other claim this report makes about its own basis is said down here, and one row explaining
+   * itself in the table was the odd one out — a second voice on a screen whose sentences were
+   * deliberately consolidated into one place.
+   *
+   * ⚠ AND THE CAPTION NEVER REACHED A FILE. It was JSX inside a `<th>`, so a treasurer who
+   * downloaded this report and emailed it to a board sent a dues figure that silently counts a
+   * team bill a family paid — with nothing beside it saying so. That is the exact failure this
+   * module exists to end, still standing on the one sentence that had not moved in.
+   *
+   * ⚠ IT QUOTES NO FIGURE, so it can never go stale against one — the discipline the dues ladder
+   * follows in its columns. The amounts are one tap away on the Actual figure, where they add up.
+   *
+   * ⚠ IT NAMES THE COLUMN, not just the row. The Budgeted side is the instalment schedule and this
+   * says nothing about it; "the Player dues actual" is the whole of what the sentence covers.
+   */
+  if (input.duesNonCash) {
+    out.push(note('dues-actual', [
+      { text: 'The ' },
+      { text: 'Player dues', bold: true },
+      { text: ' actual includes team bills families paid and fundraising credited to dues, less money handed back.' },
+    ]));
+  }
 
   /**
    * HOW MUCH PLAN HAS NO DATE (owner ruling 2026-09-04, QA §132).

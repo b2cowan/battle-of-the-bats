@@ -1588,15 +1588,18 @@ function DuesRow({ cat, dues, base, canWrite }: {
   const duesHref = moneySectionHref(base, 'dues');
   const [behindOpen, setBehindOpen] = useState(false);
   /* ⚠ ONLY WHEN THERE IS SOMETHING TO EXPLAIN. On a season where every dollar arrived as cash the
-     figure needs no caption and the door has one line — both would be noise. The predicate is the
-     two non-cash parts, never `actual > 0`. */
+     door has one line and there is nothing to footnote — both would be noise. The predicate is the
+     two non-cash parts, never `actual > 0`.
+     ⚠ THE SAME PREDICATE DECIDES THE `dues-actual` FOOTNOTE, derived at panel level from the same
+     `actualParts`. A figure that opens a door and a footnote that explains it must appear and
+     disappear together, or the report says a thing it cannot show. */
   const hasNonCash =
     Math.abs(dues.actualParts.familyPaidCosts) > 0.005
     || Math.abs(dues.actualParts.fundraisingCredited) > 0.005;
   return (
     /* ⚠ AN ORDINARY CATEGORY ROW SINCE 2026-09-05. It had a card of its own in the outline, which
        made the row holding one figure the tallest object in the revenue band. It takes the
-       category treatment now and keeps only what is genuinely different: the caption, and the
+       category treatment now and keeps only what is genuinely different: the not-set door, and the
        chevron spacer that lines its name up with the rows that do open. */
     <tr className={`${shared.moneyGridCat}${isSet ? '' : ` ${styles.catTwoLine}`}`}>
       <th scope="row" className={styles.lead}>
@@ -1632,24 +1635,16 @@ function DuesRow({ cat, dues, base, canWrite }: {
             )}
           </span>
         )}
-        {/* ⚠⚠ THIS CAPTION PARTLY REVERSES THE §146 RULING THAT THE SET ROW SAYS NOTHING, and it is
-            deliberate rather than forgotten. That ruling killed a caption reading "N families · set
-            on Player Dues" — the owner's objection was that a family COUNT is not a money fact and
-            that naming the screen told a coach something they had just done. Both true of THAT
-            sentence. What is said here is a money fact, about a figure that has just stopped meaning
-            what a coach expects: the actual now counts a team bill a family paid and fundraising put
-            against their dues, so it reads higher than the cash they know arrived.
-            ⚠ IT QUOTES NO FIGURE, so it can never go stale against one — the same discipline the
-            dues ladder now follows in its columns. ⚰ This once cited that screen's row-level "sent $550.00
-            more than billed" note as the precedent; the note was retired into the ladder on
-            2026-09-07, so the sentence it pointed at is gone and the DISCIPLINE is what survived —
-            which is exactly the stale cross-reference this rule protects against. The amounts are
-            one tap away in `DuesBehind`, where they add up. */}
-        {isSet && hasNonCash && (
-          <span className={styles.duesCaption}>
-            Includes team bills families paid and fundraising credited to dues, less money handed back.
-          </span>
-        )}
+        {/* ⚰ THE "Includes team bills families paid…" CAPTION LIVED HERE, and it is a FOOTNOTE now
+            (owner ruling 2026-09-09). Two reasons, and the second is the one that mattered: every
+            other claim this report makes about its own basis is made in the stack under the table,
+            so a row explaining itself in the middle of the figures was the last second voice on a
+            screen whose sentences were deliberately consolidated; and being JSX inside a `<th>` it
+            reached no FILE, so a board reading the emailed report got a dues figure counting a team
+            bill a family paid with nothing beside it saying so. The wording and its rulings are in
+            lib/coach-money-report-notes.ts under `dues-actual`. The §146 ruling that a set row says
+            nothing is therefore whole again — this row carries a caption in exactly one state, the
+            "Not set yet" door above. */}
       </th>
       <td className={isSet ? '' : shared.moneyGridNumMuted}>
         {isSet ? fmt(cat.budgeted) : '—'}
@@ -2072,6 +2067,13 @@ export function BudgetVsActualPanel({
       }
       : null,
     canWriteDues: moneyCanWrite,
+    /* ⚠ THE ROW'S OWN PREDICATE, LIFTED (2026-09-09) — same three conditions the caption used to
+       carry before it became a footnote: the row is on the report at all, dues are set, and the
+       actual holds something other than cash. A footnote about a row a reader cannot see explains
+       nothing; a footnote about a figure that is pure cash is noise. */
+    duesNonCash: !!data && duesRowRenders(data.dues) && data.dues.billed !== null
+      && (Math.abs(data.dues.actualParts.familyPaidCosts) > 0.005
+        || Math.abs(data.dues.actualParts.fundraisingCredited) > 0.005),
     undatedPlan: undatedPlan > 0.005 ? fmt(undatedPlan) : null,
   }), [basis, data, moneyCanWrite, undatedPlan]);
 
@@ -2876,11 +2878,14 @@ export function BudgetVsActualPanel({
 
                  ⚠ THE PER-NOTE CLASSES SURVIVE. Each of the three has its own, and folding them
                  into one would have restyled the stack on adoption — so the class comes from this
-                 call site and the words come from the module. */}
+                 call site and the words come from the module. The two dues notes share one class:
+                 they are two halves of one answer about one row, and giving the newer half its own
+                 declaration would be the byte-identical duplication /simplify already cleared out
+                 of this file's stylesheet once. */}
              <ReportNotes
                notes={statementNoteStack}
                noteClassName={n => n.id === 'variance-key' ? styles.varianceKey
-                 : n.id === 'dues' ? styles.duesNote : styles.undatedNote}
+                 : n.id === 'dues' || n.id === 'dues-actual' ? styles.duesNote : styles.undatedNote}
                controls={{
                  /* The sentence names the control AND is the control. */
                  'compare-to-date': text => (
