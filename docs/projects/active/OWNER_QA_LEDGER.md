@@ -21097,7 +21097,7 @@ application fee updates both without either touching the other.
 `check:public-tokens` is red on two of its hex literals (`.managerChipOn`, the Categories & Items
 door). Not this change; not touched.
 
-## §167 · Things, not dates — the report names what a figure is made of, and Player dues folds to players — built on dev 2026-09-10 after the mockup was approved the same day, **no migration**, awaiting QA · mockup artifact `e2264b06`
+## §167 · Things, not dates — the report names what a figure is made of, and Player dues folds to players — built on dev 2026-09-10 (`d04df49e` the build, `406a7153` the `/simplify` pass, `3783c571` the `/review` fix), **no migration**, awaiting QA · walk artifact `fac2cc0f` · mockup artifact `e2264b06` · run order step **B24**
 
 **You raised it on the §157 walk.** You opened `Fundraising · Merchandise sales` on the Statement and
 it unfolded to one sub-row reading **Feb 2027**, against money that arrived on **Aug 31** and
@@ -21206,6 +21206,55 @@ right for a family paid in full, part-paid, and untouched; the composition panel
 there is something to explain; a team with dues **not set** (no chevron, the door still there); a
 read-only coach meeting no dead end; both Compare bases agreeing that the category is the sum of its
 rows; and the exported file naming no family while matching the screen's dues figure.
+
+### ⚖ Two rulings the walk carries, and only one is about this change
+
+1. **The Months view's Excel/CSV export names every family** — verified against the live payload, not
+   argued. It **predates this work**: the 2026-08-24 ruling deliberately put "the families, drives and
+   sponsors behind a revenue group" into that file. But it sits on the SAME tab as the statement whose
+   per-family rows were just ruled screen-only, for the same season and the same coach, so two rulings
+   are in tension and one has to give. ⚠ The public coach demo offers that download with no login.
+   Walk step **F2**. Nothing built either way.
+2. **The Variance column's sign on a family row.** The brief calls it "what they still owe", but it is
+   signed the report's way round — a family who owes shows a negative in red, a family who has overpaid
+   shows a positive in green (Avery reads about +$1,145 on this fixture). Walk step **C2**; **C4** asks
+   the lighter question of whether twelve rows is the right length for the fold.
+
+### ⚠ Pre-existing, surfaced rather than caused
+
+A family whose write-off could not be attached to any of their own bills can read a **To date** figure
+higher than their whole-season bill. Checked against the code at both commits: the old report compared a
+season figure net of the **whole** write-off against a to-date figure net only of the **placed** part, so
+the asymmetry is identical — it was simply hidden inside one category total. The fold makes it legible.
+Walk step **E2**.
+
+### What `/simplify` and `/review` changed after the build
+
+`/simplify` (four lenses) took five: the fold predicate was written twice per report shape, the variance
+formula was hand-derived beside a comment citing the rule it copied, two maps shared a key set by
+construction, the installment-owner fallback was written four times in two spellings, and the new guard
+had rolled a fourth copy of a comment-stripper the repo already owns in a hardened form.
+⚠ **Then the guard caught the cleanup** — merging two maps renamed a variable and the test failed on a
+change no coach could see, because it pinned literal text. A guard that fires on a rename teaches people
+to edit the guard; it pins the behaviour now, and was re-mutation-tested afterwards (seven regressions,
+each caught).
+
+`/review` (high-risk, four lenses) found **one real defect**, in the half no other gate here can see: on
+a team with no dues set, that row announced *"Nothing in Player dues was budgeted for this season"* to a
+screen reader only — **unreferenced**, and **false**, since a dues dash means no schedule has been SET.
+It contradicted the visible "Not set yet" caption while a sighted coach saw only the true half. It
+arrived with the fold; the old hand-rolled row never took that sentence. Fixed both ways in `3783c571`,
+guarded, and mutation-tested. Walk step **G3** is the confirmation. The review also cleared, by tracing
+rather than assuming: no path around the statement export's suppression in any of its three formats;
+org and team scoping sound; no dead end for a read-only coach; every optional payload field guarded at
+every read; no stale reader of the deleted per-period actual anywhere; and the Months view and Budget
+plan tab provably untouched.
+
+⚠ **One accepted risk, named rather than buried.** During a deploy window a coach whose remembered basis
+is **To date** could briefly see the dues plan figure read zero, because a client that has the new bundle
+and an old route sees a dues category with no rows to re-sum. It self-heals on reload, only affects a
+non-default basis, and every available code fix is wrong in a different way — recorded as a release note
+rather than built around.
 
 Plan pair: `docs/projects/active/COACH_BVA_THINGS_NOT_DATES_{PLAN,PM_BRIEF}.md`.
 

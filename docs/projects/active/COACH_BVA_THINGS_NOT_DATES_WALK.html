@@ -1,0 +1,677 @@
+<title>Things, Not Dates Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.9em;background:var(--fill);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.signin{margin-top:20px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--sunk);padding:11px 14px;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--ink-soft);max-width:64ch;overflow-x:auto}
+.signin b{color:var(--ink);font-weight:600}
+
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:120px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+.count .bad{color:var(--brick);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+
+.parthead{margin-top:44px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:3px}
+
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step.pass{border-color:rgba(79,93,27,.45)}
+.step.fail{border-color:rgba(140,47,30,.5)}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--mono);font-weight:600;font-size:12.5px;line-height:1.5;color:var(--dim);min-width:3.2ch;padding-top:3px}
+.step.pass .num{color:var(--olive)}
+.step.fail .num{color:var(--brick)}
+.step-t{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.15;margin:0;text-wrap:balance}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.do{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.do b{color:var(--ink)}
+.expect{border-left:3px solid var(--olive);background:var(--olive-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.expect .lbl{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--olive);display:block;margin-bottom:2px}
+.expect b{color:var(--ink)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.ask b{color:var(--ink)}
+.illus{font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:1.6}
+
+.verdict{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.vlabel{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.v{position:relative}
+.v input{position:absolute;opacity:0;width:0;height:0}
+.v span{display:inline-block;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:5px 13px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);background:var(--card);user-select:none}
+.v input:checked+span{color:var(--card);border-color:transparent}
+.v.p input:checked+span{background:var(--olive)}
+.v.n input:checked+span{background:var(--gold)}
+.v.f input:checked+span{background:var(--brick)}
+.v input:focus-visible+span{outline:2px solid var(--olive);outline-offset:2px}
+.v span:hover{border-color:var(--olive)}
+textarea{width:100%;min-height:0;height:38px;resize:vertical;font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:8px 11px}
+textarea:focus{outline:2px solid var(--olive);outline-offset:-1px;border-color:transparent}
+textarea::placeholder{color:var(--dim)}
+
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §167 · Coaches portal · Money · Budget vs. Actual</p>
+  <h1>Things, not dates</h1>
+  <p class="lede">You raised this on the §157 walk: <b>Merchandise sales</b> unfolded to one row
+    reading <b>Feb 2027</b>, against money that arrived on August 31st and September 10th. The fold is
+    gone from both report shapes, and <b>Player dues now folds to your players</b> instead. Nine parts.
+    Each step says what to do and what must be true; mark it and move on. Your marks and notes save in
+    this browser, and <b>Copy findings</b> at the top puts the whole thing on your clipboard to paste
+    back to me.</p>
+  <div class="signin">
+    <b>Sign in</b> · uat-coach@uat-test-org.local / UATPassword2026!<br>
+    <b>Where</b> · localhost:3000 → uat-test-org → UAT Test Team → <b>Money</b> → <b>Budget vs. Actual</b><br>
+    <b>Restart the dev server first.</b> Shared modules changed, and a stale cache reads as a defect.
+  </div>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b>/<b id="ctotal">0</b> · <span class="bad" id="cfail">0</span> failed</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<!-- ══════════════ A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>No line carries a date</h2>
+  <p>The removal itself. This is the half you asked for, and the fastest to disprove — one date
+    anywhere on a line and the part fails.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="a1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>The row that started it</h3></div></div>
+  <div class="step-body">
+    <p class="do">On the <b>Statement</b>, open the <b>Fundraising</b> category. Find
+      <b>Merchandise sales</b>. Try to open the row itself — click the name, click the row, look for a
+      chevron.</p>
+    <div class="expect"><span class="lbl">Must be true</span>The row has <b>no chevron and does not
+      open</b>. There is no <b>Feb 2027</b> row underneath it, and no date anywhere on the line.</div>
+    <div class="verdict" data-for="a1"></div>
+    <textarea data-note="a1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="a2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>Sweep both shapes for a date</h3></div></div>
+  <div class="step-body">
+    <p class="do">Open <b>every</b> category on the Statement (<b>Expand all</b> does it in one tap),
+      then switch to <b>By activity</b> and do the same. Read down the name column.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Not one date on either report. Category
+      rows still open and close; <b>only the line items lost their fold</b>.</div>
+    <div class="ask"><b>Worth your eye:</b> does the Statement read as <i>shorter and cleaner</i>, or
+      does anything feel like it went missing? The fold is the only thing removed.</div>
+    <div class="verdict" data-for="a2"></div>
+    <textarea data-note="a2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="a3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>On a phone</h3></div></div>
+  <div class="step-body">
+    <p class="do">Narrow the window to phone width (or use your phone). Expand all again on both
+      shapes. Swipe the table sideways to the Variance column and back.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Still no date. Line names line up
+      <b>underneath</b> the category names above them — the indent that used to be a chevron is still
+      holding their place, so nothing has shifted left.</div>
+    <div class="verdict" data-for="a3"></div>
+    <textarea data-note="a3" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The two doors the row already had</h2>
+  <p>The argument for removing the fold was that it was a third, weaker answer on a row with two
+    better ones. This is where you check that claim is true.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="b1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>The plan behind a Budget figure</h3></div></div>
+  <div class="step-body">
+    <p class="do">On the Statement, tap the <b>Budgeted</b> figure on any planned expense line.</p>
+    <div class="expect"><span class="lbl">Must be true</span>A panel names the line and lists
+      <b>when its money is due</b> — the plan's own schedule — plus any note you wrote. There is a way
+      onward at the bottom.</div>
+    <div class="ask"><b>This is the one date that survives, deliberately.</b> It is the
+      <i>plan's</i> schedule, and it claims nothing about when money moved. Does it read that way here,
+      or does it feel like the fold came back in a panel?</div>
+    <div class="verdict" data-for="b1"></div>
+    <textarea data-note="b1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="b2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>The records behind an Actual figure</h3></div></div>
+  <div class="step-body">
+    <p class="do">Tap the <b>Actual</b> figure on <b>Merchandise sales</b> — the row from A1.</p>
+    <div class="expect"><span class="lbl">Must be true</span>The drives that raised it, <b>by name</b>,
+      each with the day the money actually arrived, and each row opens that drive's own page.</div>
+    <div class="ask"><b>The whole trade, in one screen.</b> This is what you asked for on the §157 walk
+      — "break it out by fundraiser". It was already built; the fold was crowding it. Is this the
+      answer you wanted, and does losing the fold cost you anything now you can see it?</div>
+    <div class="verdict" data-for="b2"></div>
+    <textarea data-note="b2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="b3">
+  <div class="step-head"><span class="num">B3</span><div class="step-t"><h3>Read one row out loud</h3></div></div>
+  <div class="step-body">
+    <p class="do">Pick any expense line. <b>Say out loud what that row is telling you</b>, then tell me
+      whether the row supports it. Not a checkbox — the instrument that caught what §132's 42-for-42
+      walk missed, three times, all inside a row.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Everything the row asserts is true and
+      reachable. Nothing on it promises something it cannot open.</div>
+    <div class="verdict" data-for="b3"></div>
+    <textarea data-note="b3" placeholder="What the row said, and whether it held up"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>Player dues folds to your players</h2>
+  <p>The half that <i>adds</i> an answer. This row was the largest figure on the report and the one
+    row you could not open at all.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="c1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>It opens now</h3></div></div>
+  <div class="step-body">
+    <p class="do">Reload the report. Look at <b>Player dues</b> before touching anything, then open it.</p>
+    <div class="expect"><span class="lbl">Must be true</span>It starts <b>closed</b>, like every other
+      category. Opening it shows <b>one row per family</b> — twelve on this team — each named.</div>
+    <p class="illus">As measured 2026-09-10 — illustration, not a pass condition:
+      Avery Test · Blake Test · Casey Test · Devon Test · Emerson Test · Frankie Test · Gray Test ·
+      Harper Test · Indigo Test · Jules Test · Kai Test · Logan Test</p>
+    <div class="verdict" data-for="c1"></div>
+    <textarea data-note="c1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="c2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>The three columns say something useful</h3></div></div>
+  <div class="step-body">
+    <p class="do">Read across one family's row: <b>Budgeted</b>, <b>Actual</b>, <b>Variance</b>.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Budgeted is what that family was
+      <b>billed</b>. Actual is what has <b>come in</b> from them. They are the report's own columns —
+      no new panel was built.</div>
+    <div class="ask"><b>⚠ A question I want your ruling on, and it is the one I am least sure of.</b>
+      The brief calls Variance "what they still owe" — but it is signed the report's way round, so a
+      family who owes you money shows a <b>negative in red</b>, and a family who has <b>overpaid</b>
+      shows a <b>positive in green</b>. On this fixture <b>Avery Test</b> reads roughly
+      <span class="illus">+$1,145</span> because credits and fundraising went against her bill. Does
+      that column read as a chase list to you, or does the sign fight you? It is easy to flip.</div>
+    <div class="verdict" data-for="c2"></div>
+    <textarea data-note="c2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="c3">
+  <div class="step-head"><span class="num">C3</span><div class="step-t"><h3>The category row went plain</h3></div></div>
+  <div class="step-body">
+    <p class="do">Try to tap the figures on the <b>Player dues</b> heading row itself — all three.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Nothing opens. They are plain numbers now,
+      exactly like Fundraising and Tournaments. <b>The door moved down onto the family rows</b>, which
+      settles the rule report-wide: a door lives on a line, never on a heading.</div>
+    <div class="verdict" data-for="c3"></div>
+    <textarea data-note="c3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="c4">
+  <div class="step-head"><span class="num">C4</span><div class="step-t"><h3>Twelve rows — is that right?</h3></div></div>
+  <div class="step-body">
+    <p class="do">Leave it open and look at the shape of the whole report with twelve families in it.</p>
+    <div class="ask"><b>Your call.</b> It is the longest fold on the report, and closed by default. On a
+      twenty-player team it is twenty rows. Is that the thing a treasurer most wants one tap away — or
+      is it too much, and should it cap, or sort by who owes most?</div>
+    <div class="verdict" data-for="c4"></div>
+    <textarea data-note="c4" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>Behind one family's money</h2>
+  <p>The panel that used to hang off the category total, moved down a level to where it says
+    something.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="d1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>How their money got here</h3></div></div>
+  <div class="step-body">
+    <p class="do">Tap a family's <b>Actual</b> figure — one whose money did not all arrive as cash.
+      <b>Blake Test</b> is a good one on this fixture.</p>
+    <div class="expect"><span class="lbl">Must be true</span>The panel is titled with <b>that family's
+      name</b> and splits their money into <b>cash they sent</b>, <b>team bills they paid</b> and
+      <b>fundraising credited</b>. <b>Add the lines up — they must reach the figure you tapped.</b>
+      Two ways onward at the bottom.</div>
+    <div class="verdict" data-for="d1"></div>
+    <textarea data-note="d1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="d2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>A family with nothing to explain</h3></div></div>
+  <div class="step-body">
+    <p class="do">Find a family whose money all arrived as cash and try to tap their Actual figure.
+      (Ten of the twelve have a door; two do not.)</p>
+    <div class="expect"><span class="lbl">Must be true</span>It is a <b>plain number that does not
+      open</b>. A panel with one line restating the figure you just tapped is furniture, so it is not
+      offered.</div>
+    <div class="verdict" data-for="d2"></div>
+    <textarea data-note="d2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="d3">
+  <div class="step-head"><span class="num">D3</span><div class="step-t"><h3>A family's bill does not open</h3></div></div>
+  <div class="step-body">
+    <p class="do">Try to tap any family's <b>Budgeted</b> figure.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Plain number, no door. A bill is one
+      assessed figure rather than a pile of records — their instalment dates live on <b>Player Dues</b>,
+      which is where you go to chase.</div>
+    <div class="ask"><b>Check this is the right call.</b> Would you want their instalment dates here
+      instead of a trip to Player Dues?</div>
+    <div class="verdict" data-for="d3"></div>
+    <textarea data-note="d3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="d4">
+  <div class="step-head"><span class="num">D4</span><div class="step-t"><h3>The $17 that was written off</h3></div></div>
+  <div class="step-body">
+    <p class="do">Look at <b>Avery Test</b>'s <b>Budgeted</b> figure and compare it to a family on a
+      full bill.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Hers is <b>lower by exactly the adjustment
+      you wrote off</b> — the §160 case, landing on the one family it belongs to. A bill lowered is not
+      a bill still planned.</div>
+    <p class="illus">As measured 2026-09-10 — illustration: Avery $683.00 against a $700.00 bill less
+      a $17.00 adjustment.</p>
+    <div class="verdict" data-for="d4"></div>
+    <textarea data-note="d4" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>The figures still add up</h2>
+  <p>A heading that disagrees with the rows underneath it is the one defect a fold cannot survive —
+    and nothing on screen would tell you. This is you checking by hand.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="e1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>Add the families up</h3></div></div>
+  <div class="step-body">
+    <p class="do">With Player dues open, add the <b>Budgeted</b> column of the twelve family rows and
+      compare it to the <b>Player dues</b> heading. Then do the same for <b>Actual</b>.</p>
+    <div class="expect"><span class="lbl">Must be true</span>They match <b>to the cent</b>, both
+      columns. The heading is now literally the sum of the rows you can open.</div>
+    <p class="illus">Whole-season pass conditions — these are gate-enforced and should not drift:
+      Player dues Budgeted <b>$11,291.30</b> · Actual <b>$5,124.63</b>.</p>
+    <div class="verdict" data-for="e1"></div>
+    <textarea data-note="e1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="e2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>And on the other basis</h3></div></div>
+  <div class="step-body">
+    <p class="do">Switch <b>Compare</b> to <b>To date</b>. Add the family rows up again against the
+      heading.</p>
+    <div class="expect"><span class="lbl">Must be true</span>Still matches. The heading changes to
+      <b>Plan to date</b> and the figures shrink to what is actually due by today.</div>
+    <div class="warn"><b>⚠ Known, and NOT introduced by this change — tell me if it bothers you.</b> A
+      family whose write-off could not be attached to any of their own bills can read a
+      <b>To date</b> figure <i>higher</i> than their whole-season bill. The old report did the same
+      thing; it was just hidden inside one category total instead of visible on a row. The fold did not
+      cause it — it made it legible.</div>
+    <div class="verdict" data-for="e2"></div>
+    <textarea data-note="e2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="e3">
+  <div class="step-head"><span class="num">E3</span><div class="step-t"><h3>Nothing else moved</h3></div></div>
+  <div class="step-body">
+    <p class="do">Compare Total revenue, Total expenses and <b>Season net</b> against what you remember,
+      then open the <b>Months</b> view and check its Player dues total.</p>
+    <div class="expect"><span class="lbl">Must be true</span>No figure anywhere has moved, and the
+      Months view is untouched by all of this.</div>
+    <div class="verdict" data-for="e3"></div>
+    <textarea data-note="e3" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>The file names no family</h2>
+  <p>You ruled the per-family rows are screen-only, because the statement gets emailed round a board.
+    This is the check that the ruling actually holds.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="f1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>Download the Statement</h3></div></div>
+  <div class="step-body">
+    <p class="do">From the <b>Statement</b>, export <b>Excel</b>. Open it and find Player dues. Then do
+      the same for <b>CSV</b> and <b>PDF</b>, and repeat from <b>By activity</b>.</p>
+    <div class="expect"><span class="lbl">Must be true</span><b>One Player dues row, no family named</b>,
+      in every format and from both shapes — and its figure matches the screen. Drives and sponsors
+      <b>are</b> named: they are businesses and events, not children.</div>
+    <div class="verdict" data-for="f1"></div>
+    <textarea data-note="f1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="f2">
+  <div class="step-head"><span class="num">F2</span><div class="step-t"><h3>⚠ The Months view's spreadsheet does name them</h3></div></div>
+  <div class="step-body">
+    <p class="do">Switch to the <b>Months</b> view and export <b>Excel</b>. Look under Player dues.</p>
+    <div class="warn"><b>⚠ This is a finding, not a check — and it is a decision only you can make.</b>
+      That file lists <b>every family by name</b>, with a figure per month. It is not new and this
+      change did not cause it: a ruling of <b>2026-08-24</b> deliberately put "the families, drives and
+      sponsors behind a revenue group" into that file. But it sits on the <b>same tab</b> as the
+      statement whose family rows you have just ruled screen-only, for the same season, for the same
+      coach — so the two rulings are in tension and one of them has to give.</div>
+    <div class="ask"><b>Which wins?</b> Either the Months file loses its family rows too, or the
+      screen-only rule is really "the Statement file only" and should say so. Also worth knowing: the
+      <b>public coach demo</b> offers this same download to anyone, with no login — fictional names, but
+      it demonstrates the pattern the ruling rejects.</div>
+    <div class="verdict" data-for="f2"></div>
+    <textarea data-note="f2" placeholder="Your ruling"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>The states that are easy to forget</h2>
+  <p>A team with no dues set, and a coach who cannot write.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-s="g1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>A team that has not set dues up</h3></div></div>
+  <div class="step-body">
+    <p class="do">Open the report on a team with <b>no dues schedule</b>. If you do not have one to
+      hand, say so and mark this <b>Not run</b> rather than guessing — I will seed one.</p>
+    <div class="expect"><span class="lbl">Must be true</span>The row reads <b>Not set yet</b> with a
+      dash rather than $0.00, and offers a link straight to Player Dues. It draws <b>no chevron</b>,
+      because there are no families under it yet — it does not pretend to fold.</div>
+    <div class="verdict" data-for="g1"></div>
+    <textarea data-note="g1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="g2">
+  <div class="step-head"><span class="num">G2</span><div class="step-t"><h3>An assistant coach</h3></div></div>
+  <div class="step-body">
+    <p class="do">Sign in as a coach who can <b>see</b> money but not change it. Open Player dues, open a
+      family's panel, and try every way out of it.</p>
+    <div class="expect"><span class="lbl">Must be true</span>They can read every family row and open
+      every panel. <b>No door dead-ends</b>, and the "Set player dues" invitation is <b>not</b> offered
+      to someone the server would refuse.</div>
+    <div class="ask"><b>A question while you are there:</b> should an assistant coach see what each
+      family still owes at all? Today they can — the Player Dues screen already shows them the same
+      thing — but this puts it on the report too.</div>
+    <div class="verdict" data-for="g2"></div>
+    <textarea data-note="g2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="g3">
+  <div class="step-head"><span class="num">G3</span><div class="step-t"><h3>A screen reader on the not-set row</h3></div></div>
+  <div class="step-body">
+    <p class="do">Optional, and only if you have one to hand. On the <b>Not set yet</b> dues row, listen
+      to what the row announces.</p>
+    <div class="expect"><span class="lbl">Must be true</span>It says <b>Not set yet</b> and nothing
+      else. It must <b>not</b> also claim "nothing in Player dues was budgeted for this season" — that
+      sentence was being announced here and is false for dues, where a dash means no schedule has been
+      set. Fixed; this is the confirmation.</div>
+    <div class="verdict" data-for="g3"></div>
+    <textarea data-note="g3" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ H ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>The demo, and the thing you traded away</h2>
+</div>
+<div class="steps">
+
+<article class="step" data-s="h1">
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>The coach demo still tells the truth</h3></div></div>
+  <div class="step-body">
+    <p class="do">Open the public coach demo, go to its Budget vs. Actual, and read the tour's line
+      about dues against the row underneath it.</p>
+    <div class="expect"><span class="lbl">Must be true</span>"Nearly eight in ten dollars of dues are
+      in" still matches the row — and a prospect can now <b>open that row and see which family is
+      behind</b>, which the dock's own line already claims.</div>
+    <div class="ask"><b>Optional swap.</b> No sentence was added — the seeded world does the showing. If
+      you want "open the dues row and see who owes you" <i>told</i> rather than found, it is a swap of
+      an existing clause, not a fourth one.</div>
+    <div class="verdict" data-for="h1"></div>
+    <textarea data-note="h1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-s="h2">
+  <div class="step-head"><span class="num">H2</span><div class="step-t"><h3>Confirm what you gave up</h3></div></div>
+  <div class="step-body">
+    <p class="do">Nothing to click. Read this and tell me it is still the trade you want.</p>
+    <div class="warn"><b>"We're over on ice time — which month?" has left the product.</b> The Months
+      view answers by <b>category</b>, not by line, so that one intersection is gone. You accepted this
+      on the mockup; this is the confirmation now that you have used the report without it.</div>
+    <div class="verdict" data-for="h2"></div>
+    <textarea data-note="h2" placeholder="Still the right trade?"></textarea>
+  </div>
+</article>
+</div>
+
+<footer>
+  <span>Owner QA §167</span>
+  <span>Built on dev 2026-09-10 · no migration</span>
+  <span>Commits: the build, a /simplify pass, one /review fix</span>
+  <span>Mockup: artifact e2264b06</span>
+</footer>
+
+</div>
+
+<div class="toastwrap" id="toastwrap"></div>
+
+<script>
+(function(){
+  var KEY = 'bva-things-not-dates-167';
+  var VERDICTS = [['p','Pass'],['n','Note'],['f','Fail'],['x','Not run']];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e) { state = {}; }
+
+  // Build the verdict pills for every step.
+  var holders = document.querySelectorAll('.verdict');
+  holders.forEach(function(h){
+    var id = h.getAttribute('data-for');
+    var lab = document.createElement('span');
+    lab.className = 'vlabel'; lab.textContent = 'Verdict';
+    h.appendChild(lab);
+    VERDICTS.forEach(function(v){
+      var wrap = document.createElement('label');
+      wrap.className = 'v ' + v[0];
+      var input = document.createElement('input');
+      input.type = 'radio'; input.name = 'v-' + id; input.value = v[0];
+      var span = document.createElement('span');
+      span.textContent = v[1];
+      wrap.appendChild(input); wrap.appendChild(span);
+      h.appendChild(wrap);
+      input.addEventListener('change', function(){
+        state[id] = state[id] || {};
+        state[id].v = v[0];
+        save(); paint();
+      });
+    });
+  });
+
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+
+  function paint(){
+    var total = 0, done = 0, failed = 0;
+    document.querySelectorAll('.step').forEach(function(step){
+      var id = step.getAttribute('data-s');
+      var v = (state[id] || {}).v;
+      total++;
+      step.classList.remove('pass','fail');
+      if (v === 'p') { done++; step.classList.add('pass'); }
+      else if (v === 'f') { done++; failed++; step.classList.add('fail'); }
+      else if (v === 'n' || v === 'x') { done++; }
+      if (v) {
+        var picked = step.querySelector('input[value="' + v + '"]');
+        if (picked) picked.checked = true;
+      }
+      var note = step.querySelector('textarea');
+      if (note && (state[id] || {}).n) note.value = state[id].n;
+    });
+    document.getElementById('cdone').textContent = done;
+    document.getElementById('ctotal').textContent = total;
+    document.getElementById('cfail').textContent = failed;
+    document.getElementById('fillbar').style.width = total ? (done / total * 100) + '%' : '0%';
+  }
+
+  document.querySelectorAll('textarea[data-note]').forEach(function(t){
+    t.addEventListener('input', function(){
+      var id = t.getAttribute('data-note');
+      state[id] = state[id] || {};
+      state[id].n = t.value;
+      save();
+    });
+  });
+
+  function toast(msg){
+    var w = document.getElementById('toastwrap');
+    w.innerHTML = '';
+    var d = document.createElement('div');
+    d.className = 'toast'; d.textContent = msg;
+    w.appendChild(d);
+    setTimeout(function(){ if (w.firstChild === d) w.innerHTML = ''; }, 2200);
+  }
+
+  document.getElementById('copyfind').addEventListener('click', function(){
+    var out = ['Owner QA §167 — Things, not dates', ''];
+    var names = { p:'PASS', n:'NOTE', f:'FAIL', x:'NOT RUN' };
+    var done = 0, total = 0, failed = 0;
+    document.querySelectorAll('.step').forEach(function(step){
+      var id = step.getAttribute('data-s');
+      var st = state[id] || {};
+      var h3 = step.querySelector('h3');
+      total++;
+      if (st.v) done++;
+      if (st.v === 'f') failed++;
+      var line = id.toUpperCase() + '  [' + (names[st.v] || '—') + ']  ' + (h3 ? h3.textContent : '');
+      out.push(line);
+      if (st.n && st.n.trim()) out.push('      ' + st.n.trim().replace(/\n/g, '\n      '));
+    });
+    out.splice(1, 0, done + ' of ' + total + ' marked · ' + failed + ' failed');
+    var text = out.join('\n');
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('Findings copied'); }
+      catch(e){ toast('Copy failed — select and copy by hand'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ toast('Findings copied'); }, fallback);
+    } else { fallback(); }
+  });
+
+  document.getElementById('resetall').addEventListener('click', function(){
+    if (!confirm('Clear every verdict and note on this walk?')) return;
+    state = {}; save();
+    document.querySelectorAll('input[type=radio]').forEach(function(i){ i.checked = false; });
+    document.querySelectorAll('textarea').forEach(function(t){ t.value = ''; });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>
