@@ -29,7 +29,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   budgetPlanStatementRows, budgetPeriodGridColumns, budgetPeriodGridRows,
-  BUDGET_PLAN_COLUMNS, type BudgetPlanExportSource, type MoneyRowKind,
+  BUDGET_PLAN_COLUMNS, stripItemPrefix, type BudgetPlanExportSource, type MoneyRowKind,
 } from '../../lib/coach-money-exports.ts';
 import { buildPeriodView, type PeriodViewLine } from '../../lib/coach-budget-periods-view.ts';
 import {
@@ -40,21 +40,30 @@ import type { ParsedImportFile, ParsedImportRow } from '../../lib/import/types.t
 
 /* ── the plan, once — a cost line and TWO money-in categories, which is the shape §158 made
    ordinary: money in is grouped by the category it was filed in, so Tournaments holds both an
-   entry fee to pay and gate revenue to take. ─────────────────────────────────────────────────── */
+   entry fee to pay and gate revenue to take.
+
+   ⚠⚠ EVERY LINE'S DESCRIPTION DIFFERS FROM ITS WORD, AND THAT IS THE POINT (/review, 2026-09-10).
+   The first cut of this fixture set `description` equal to `itemName` on every line — and it was
+   green while a coach's own exported plan came back almost entirely unmatched, because the file
+   names a row by its WORD and matching keyed on the DESCRIPTION. On dev, 43 of 48 real lines have
+   the two differing ("Umpire Fees" the word, "Umpires" the description; "Accommodation" the word,
+   "Provincials hotel block" the description) — so the shape this test used to assert was the RARE
+   one. A round-trip test that hard-codes the one field real data varies is testing a file that
+   resembles ours, which is the exact failure this whole file exists to end. Keep them different. */
 
 const LINES: PeriodViewLine[] = [
   {
-    id: 'l1', description: 'Entry Fees', itemId: 'i-entry', itemName: 'Entry Fees',
+    id: 'l1', description: 'Entry fees — 3 tournaments', itemId: 'i-entry', itemName: 'Entry Fees',
     categoryId: 'cat-tourn', categoryName: 'Tournaments', lineKind: 'cost',
     totalAmount: 2500, notes: 'Spring classic', periods: [{ periodDate: '2027-04-01', amount: 2500 }],
   },
   {
-    id: 'l2', description: 'Gate Revenue', itemId: 'i-gate', itemName: 'Gate Revenue',
+    id: 'l2', description: 'Gate takings (estimated)', itemId: 'i-gate', itemName: 'Gate Revenue',
     categoryId: 'cat-tourn', categoryName: 'Tournaments', lineKind: 'other_income',
     totalAmount: 1200, notes: null, periods: [{ periodDate: '2027-04-01', amount: 1200 }],
   },
   {
-    id: 'l3', description: 'Chocolate Sale', itemId: 'i-choc', itemName: 'Chocolate Sale',
+    id: 'l3', description: 'Chocolate sale — team share', itemId: 'i-choc', itemName: 'Chocolate Sale',
     categoryId: 'cat-fund', categoryName: 'Fundraising', lineKind: 'funding',
     totalAmount: 1800, notes: null, periods: [{ periodDate: '2027-05-01', amount: 1800 }],
   },
@@ -67,7 +76,7 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
     items: [{
       itemId: 'i-entry', itemName: 'Entry Fees', total: 2500,
       lines: [{
-        description: 'Entry Fees', notes: 'Spring classic', totalAmount: 2500,
+        description: 'Entry fees — 3 tournaments', notes: 'Spring classic', totalAmount: 2500,
         periods: [{ periodDate: '2027-04-01' }],
       }],
     }],
@@ -103,6 +112,8 @@ const EXISTING: ExistingBudgetLine[] = LINES.map(l => ({
   description: l.description,
   categoryName: l.categoryName,
   totalAmount: l.totalAmount,
+  // The WORD is the identity a row is matched on; the description is only what the coach typed.
+  itemId: l.itemId ?? null,
   direction: (l.lineKind === 'cost' ? 'out' : 'in') as 'in' | 'out',
 }));
 
@@ -124,6 +135,11 @@ function csvFile(columns: Col[], rows: Array<Record<string, unknown>>): ParsedIm
 /**
  * The Excel file: the same rows, minus the `— ` on every item row, plus the outline indent that
  * replaces it — exactly what `writeMoneyExport` does for xlsx and `parseXLSX` hands back.
+ *
+ * ⚠ THE STRIP IS THE EXPORTER'S OWN (`stripItemPrefix`), NOT A COPY OF ITS REGEX (/simplify,
+ * 2026-09-10). A hand-typed `/^\s*(?:—\s*)?/` here would be this very file's own subject repeated
+ * one level down: two hand-maintained things that must agree, with nothing tying them together.
+ * Change the marker and the private copy drifts in silence, leaving the Excel half unwatched.
  */
 function xlsxFile(
   columns: Col[], rows: Array<Record<string, unknown>>, kinds: (MoneyRowKind | undefined)[],
@@ -132,7 +148,7 @@ function xlsxFile(
   file.rows.forEach((row, i) => {
     if (kinds[i] !== 'item') return;
     const label = columns[0].label;
-    row.values[label] = row.values[label].replace(/^\s*(?:—\s*)?/, '');
+    row.values[label] = stripItemPrefix(row.values[label]);
     row.indented = true;
   });
   return file;
@@ -204,8 +220,8 @@ describe('the season plan, exported and imported back', () => {
       ],
     }]);
     const existing: ExistingBudgetLine[] = [
-      { id: 'x1', description: 'Grant', categoryName: 'Fundraising', totalAmount: 250, direction: 'out' },
-      { id: 'x2', description: 'Grant', categoryName: 'Fundraising', totalAmount: 5000, direction: 'in' },
+      { id: 'x1', description: 'Grant', categoryName: 'Fundraising', totalAmount: 250, itemId: 'i-fee', direction: 'out' },
+      { id: 'x2', description: 'Grant', categoryName: 'Fundraising', totalAmount: 5000, itemId: 'i-cheque', direction: 'in' },
     ];
     const file: ParsedImportFile = {
       headers: BUDGET_PLAN_COLUMNS.map(c => c.label),

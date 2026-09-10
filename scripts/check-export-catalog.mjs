@@ -101,6 +101,8 @@ function readCatalog() {
       omittedReason: get('omittedReason'),
       plannedPhase: get('plannedPhase'),
       roundTrip: get('roundTrip'),
+      roundTripTest: get('roundTripTest'),
+      roundTripTestGap: get('roundTripTestGap'),
     });
   }
   /* A parse that finds nothing is a broken parser, never an empty registry — the registry is a
@@ -150,11 +152,33 @@ for (const file of walk(path.join(ROOT, 'app'))) {
   }
 }
 
-// ── D. A declared round trip must name an importer that exists ───────────────
+// ── D. A declared round trip must name an importer that exists, AND a test that proves it ────
+//
+// ⚠⚠ THE TEST HALF WAS ADDED 2026-09-10, AND THE REASON IS WORTH THE LINES. This check used to be
+// only the first clause: does the named reader FILE EXIST. That is a spell-check of a path, not
+// evidence of anything — and it reported green for eight days over a Budget plan export whose own
+// file came back with no amounts, with every cost line silently dropped, and with every money-in
+// line re-read as a new cost. `roundTrip` is not an internal note: it is published to the
+// platform-admin Export Registry and to the customer help system, so it is the PRODUCT telling a
+// coach "edit this file and bring it back". A claim like that is either proven or recorded as
+// unproven — there is no third state, and "the reader file exists" was pretending to be one.
 for (const e of catalog) {
   if (!e.roundTrip || e.roundTrip === 'none') continue;
   if (!fs.existsSync(path.join(ROOT, e.roundTrip))) {
     problems.push(`${e.id} — \`roundTrip\` names a reader that does not exist: ${e.roundTrip}`);
+  }
+  if (e.roundTripTest) {
+    if (!fs.existsSync(path.join(ROOT, e.roundTripTest))) {
+      problems.push(`${e.id} — \`roundTripTest\` names a test that does not exist: ${e.roundTripTest}`
+        + '\n      (that test is the only thing standing behind this claim — restore it, or record the'
+        + ' gap in `roundTripTestGap`)');
+    }
+  } else if (!e.roundTripTestGap) {
+    problems.push(`${e.id} — declares \`roundTrip\` with no \`roundTripTest\` and no \`roundTripTestGap\``
+      + '\n      (this export tells coaches their edited file reads back. Prove it with a round-trip'
+      + " test built from the exporter's OWN column definitions — copy"
+      + ' tests/unit/coach-budget-plan-round-trip.test.ts — or say in `roundTripTestGap` why there'
+      + ' is nothing behind the promise yet.)');
   }
 }
 
@@ -168,6 +192,15 @@ if (problems.length) {
 }
 
 const live = catalog.filter(e => !e.omittedReason && !e.plannedPhase).length;
-const trips = catalog.filter(e => e.roundTrip && e.roundTrip !== 'none').length;
+const roundTrips = catalog.filter(e => e.roundTrip && e.roundTrip !== 'none');
+const proven = roundTrips.filter(e => e.roundTripTest).length;
+const gaps = roundTrips.filter(e => !e.roundTripTest && e.roundTripTestGap);
 console.log(`✓ Export registry: ${catalog.length} surface(s) — ${live} live, `
-  + `${catalog.length - live} deliberately none, ${trips} round trip(s) — all agree with the code.`);
+  + `${catalog.length - live} deliberately none, ${roundTrips.length} round trip(s) `
+  + `(${proven} proven by a test) — all agree with the code.`);
+/* ⚠ A RECORDED GAP IS NOT A PASS. The registry stays green because the gap is DECLARED rather than
+   silent — but a promise the product makes to a coach with nothing standing behind it gets read out
+   on every single run. A line nobody sees is how the last one survived eight days. */
+for (const e of gaps) {
+  console.log(`  ⚠ ${e.id} — round trip CLAIMED, not proven: ${e.roundTripTestGap}`);
+}

@@ -77,6 +77,20 @@ const ROW_KIND_STYLE: Record<MoneyRowKind, XlsxRowStyle> = {
 const ITEM_PREFIX = /^\s*(?:—\s*)?/;
 
 /**
+ * That same strip, as the one function anybody else may call.
+ *
+ * ⚠ EXPORTED FOR THE ROUND-TRIP TEST, AND THE REASON IS THE TEST'S OWN SUBJECT (/simplify,
+ * 2026-09-10). `coach-budget-plan-round-trip.test.ts` simulates the Excel writer to prove a plan
+ * reads back, and it had HAND-COPIED this regex to do it — recreating, inside the guard, the exact
+ * "two hand-maintained things that must agree, with nothing tying them together" failure the guard
+ * exists to catch. Change the marker and that private copy would have drifted in silence, leaving
+ * the Excel half of the round trip unwatched.
+ */
+export function stripItemPrefix(label: string): string {
+  return label.replace(ITEM_PREFIX, '');
+}
+
+/**
  * Excel number formats for a currency column. Display only — the stored value is the raw signed
  * number either way, so a formatted file re-imports identically (parseXLSX reads cell.value).
  *

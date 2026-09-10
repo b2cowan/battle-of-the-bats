@@ -116,7 +116,13 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
     re-importing as new costs. Building the fix turned up <b>two more breaks in the same file</b>,
     both older and both worse, and neither visible to any gate. This walk checks all three at once —
     and the fastest way to fail it is to find <i>anything</i> in the preview that is not the word
-    <b>Updates</b>.</p>
+    <b>Updates</b>.
+    <br><br>⚠ <b>This walk grew after it was written.</b> <code>/simplify</code> and <code>/review</code> ran
+    <i>after</i> the commit, and the review found that the fix did not actually work on real data —
+    a plan’s lines are usually named one thing and described another, and matching had keyed on the
+    description. Three more defects came with it. <b>Steps A1e, A1f and C1c are those findings</b>,
+    and they are the ones worth your attention: each is a case the first version of this walk could
+    not have failed on.</p>
 </header>
 
 <div class="bar">
@@ -167,6 +173,8 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
       <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">Every row's verdict reads <b>Updates</b>. Not one says <b>Adds</b><span class="hintline">An "Adds" here means a line failed to find itself — the defect this walk is about.</span></label></div>
       <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Every row carries its <b>amount</b>, and nothing says <b>Can't import</b><span class="hintline">Since 2026-09-02 the money column has been called "Planned" and the importer had never heard of that word, so every row arrived blank and was refused. That is the break you would have hit first.</span></label></div>
       <div class="chk"><input type="checkbox" id="a1d"><label for="a1d">Your <b>cost</b> lines are all present — not one has vanished<span class="hintline">Since 2026-09-09 a cost row printed with no line marker, so the importer read it as a category name and dropped the line. Count them.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1e"><label for="a1e">Pick a line whose <b>name on the plan differs from the description you typed</b> — most of them do — and confirm it reads <b>Updates</b>, not Adds<span class="hintline">⚠ The step most worth your attention. The file names a row by its budget WORD (&ldquo;Umpire Fees&rdquo;); the line also carries whatever you typed (&ldquo;Umpires&rdquo;). Matching used to key on what you typed, so 43 of 48 lines on this fixture came back as an ADD and were then refused as &ldquo;already on this plan&rdquo; — readable, and still not importable. Found by /review AFTER the commit, because the guard&rsquo;s own fixture had made the two the same.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1f"><label for="a1f">If your plan has a <b>Not itemized</b> row, it does <b>not</b> appear in the preview at all<span class="hintline">That row is a total of every line with no word, not a line. Read as one it added a new budget word called &ldquo;Not itemized&rdquo; carrying the whole sum while the lines behind it stayed — importing twice charged the category twice.</span></label></div>
     </div>
     <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
     <textarea placeholder="Notes…"></textarea>
@@ -283,6 +291,7 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
       them deliberately named after a fundraiser (say <i>Fundraising · Chocolate Sale · 1800</i>).</p>
     <div class="checks">
       <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">All three arrive as <b>costs</b> — not one is marked <b>Funding</b>, including the one named after a fundraiser<span class="hintline">A sheet with no FUNDING heading is a spending sheet, exactly as it has always been. Only our own file says otherwise.</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">Now paste a sheet with a row reading <b>Costs</b> that <i>does</i> carry a figure — it is read as an ordinary <b>category</b>, not as a band<span class="hintline">A club may genuinely own a category by that name. A band heading is bare in every other cell; a category always carries its own total. The first version of this rule asked only &ldquo;does it carry money&rdquo;, and because the side is remembered as you read down the file, ONE misread row flipped every row after it.</span></label></div>
       <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Cancelled</label></div>
     </div>
     <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
@@ -392,7 +401,7 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
   }
 
   function build(){
-    var lines=['OWNER QA §165 — The plan file reads back whole','Fixture: UAT Test Team · built on dev 2026-09-10',''];
+    var lines=['OWNER QA §165 — The plan file reads back whole','Fixture: UAT Test Team · built on dev 2026-09-10, /simplify + /review applied',''];
     [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
       var id=st.dataset.step;
       var title=st.querySelector('h3').textContent.trim();

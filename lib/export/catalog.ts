@@ -106,6 +106,31 @@ export interface ExportCatalogEntry {
    */
   roundTrip?: string;
   /**
+   * The test that PROVES the round trip — the file built from the exporter, read back by the reader.
+   *
+   * ⚠⚠ REQUIRED WHENEVER `roundTrip` IS SET, AND THIS FIELD EXISTS BECAUSE THE CLAIM WAS FALSE FOR
+   * A WEEK (2026-09-10). `roundTrip` is published to the platform-admin Export Registry and to the
+   * customer help system — it is the product telling a coach "edit this file and bring it back" —
+   * and the gate behind it verified only that the named reader FILE EXISTED. Meanwhile the Budget
+   * plan's own file came back with no amounts (its money column was renamed `Planned` on 2026-09-02
+   * and the reader's alias list was never told), with every cost line silently dropped (the line
+   * marker went with the sub-rows on 2026-09-09), and with every money-in line re-read as a new
+   * cost. Three defects, eight days, one green gate.
+   *
+   * ⚠ THE TEST MUST BUILD ITS FIXTURE FROM THE EXPORTER'S OWN COLUMN DEFINITIONS, never from
+   * hand-typed headers — a test that spells the headings out cannot see a rename, and a rename was
+   * two of those three defects. That is the whole technique; copy it rather than inventing another.
+   */
+  roundTripTest?: string;
+  /**
+   * Why a `roundTrip` claim has no test yet — the exception register, in this repo's usual shape.
+   *
+   * A claim with neither a test nor a stated gap fails the build. This field is deliberately
+   * uncomfortable to write: it records a promise the product is making to a coach with nothing
+   * standing behind it, and it should read that way to whoever finds it.
+   */
+  roundTripTestGap?: string;
+  /**
    * A file whose columns happen to match an importer's aliases without being designed to — a
    * coach could reasonably try it and get a wrong result. Recorded so the answer to "can I
    * re-upload this?" is never a shrug.
@@ -429,10 +454,12 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
        the plan's own file came back with no amounts (the money column was renamed `Planned`
        2026-09-02 and the reader's aliases were never told), with every cost line dropped (a word's
        row lost its line marker 2026-09-09), and with every money-in line re-read as a new cost.
-       The claim now names its proof: tests/unit/coach-budget-plan-round-trip.test.ts writes both
-       files with THIS builder and reads them back with that reader. Do not let this entry outlive
-       that test. */
+       The claim now names its proof in `roundTripTest`, and `check:export-catalog` ENFORCES it.
+       This comment used to end "do not let this entry outlive that test" — a note asking a human to
+       remember something a gate can simply check, which is the shape of every rule in this file
+       that has ever gone stale. */
     roundTrip: 'lib/coach-budget-import.ts',
+    roundTripTest: 'tests/unit/coach-budget-plan-round-trip.test.ts',
     label: 'Coaches Portal — Budget plan',
     module: 'coaches',
     page: 'Money → Export ▾',
@@ -509,6 +536,22 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   {
     id: 'coaches-schedule',
     roundTrip: 'lib/coach-schedule-import.ts',
+    /* ⚠ FOUND BY THE SAME `/simplify` PASS THAT ADDED `roundTripTest` (2026-09-10), and it is the
+       Budget plan's own defect sitting one file away: this export's column labels are hand-typed on
+       the screen (`SCHEDULE_EXPORT_COLS`) and the reader's aliases are hand-typed in
+       `coach-schedule-import.ts` — two lists that must agree with nothing tying them together — and
+       **no test anywhere calls `rowsFromScheduleFile`**. So this claim has LESS standing behind it
+       than the Budget plan's had on the morning its three defects were found.
+       It is recorded as a gap rather than quietly accepted. The fix is a round-trip test built from
+       `SCHEDULE_EXPORT_COLS`, copying `coach-budget-plan-round-trip.test.ts`, and it belongs to
+       whoever owns the schedule importer. ⚠ Do NOT close this by deleting the `roundTrip` claim: the
+       product does tell coaches this file reads back, so that promise is either true or it is a
+       defect, and deleting the claim would hide the question rather than answer it. */
+    /* ⚠ ONE LINE, SINGLE-QUOTED, DELIBERATELY. The gate reads this file as TEXT with a regex (it
+       would otherwise need the whole app's module graph to resolve four fields), so a value split
+       across lines or built by concatenation is INVISIBLE to it — and an invisible gap reads exactly
+       like a missing one. Found on this field's first run. */
+    roundTripTestGap: 'No test calls rowsFromScheduleFile. The export column labels are hand-typed on the screen and the reader aliases are hand-typed in the importer, with nothing tying them together — the same shape as the Budget plan rename defect of 2026-09-02. Needs a round-trip test built from SCHEDULE_EXPORT_COLS.',
     label: 'Coaches Portal — Team Schedule',
     module: 'coaches',
     page: 'Team Schedule',

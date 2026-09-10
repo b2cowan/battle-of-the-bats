@@ -21017,8 +21017,8 @@ test, and a `coach-budget-import` assertion that passed thirty seconds earlier i
 ## §165 · The plan file reads back whole — Import learns the file's two bands, and two further breaks in the same round trip — built on dev 2026-09-10 (typecheck clean · 3,415 unit tests · `check:money-report` · `check:export-catalog` · the static gates all green), awaiting QA · **no migration** · **its own walk**
 
 **Plan:** `COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md` (+ `_PM_BRIEF.md`).
-**Walk:** https://claude.ai/code/artifact/e3dbfafa-ce42-4e7e-a4af-732061747d69 — **30 checks across 10
-steps, four parts**
+**Walk:** https://claude.ai/code/artifact/e3dbfafa-ce42-4e7e-a4af-732061747d69 — **33 checks across 10
+steps, four parts** (30 as first written; three added by the review below)
 (A the statement file out and back · B the by-period file, including the quarter-grain limit · C a
 hand-built sheet and the blank template, the regression half · D one real commit, and the help
 sentence). Only Part D writes; everything before it ends on Cancel.
@@ -21092,6 +21092,52 @@ but not its amounts, because a quarter column is not a month and splitting one w
 shape, and asserts every line comes back as an **update on its own side** — plus that no band,
 subtotal or ladder rung survives as a line, and that a plan holding "Grant" as both a cheque and an
 application fee updates both without either touching the other.
+
+**⚠⚠ `/simplify` AND `/review` RAN AFTER THE COMMIT (2026-09-10), AND THE REVIEW FOUND THAT THIS
+SECTION’S OWN HEADLINE CLAIM WAS FALSE.** Both passes were offered before committing and not taken
+up; the owner asked for them afterwards. Recorded here rather than folded away, because the finding
+is the same lesson as the defect it was fixing.
+
+**The fix did not work on real data.** The plan file names a row by its **word** ("Umpire Fees");
+matching keyed on the line’s **description** ("Umpires"). On dev **43 of 48 lines have the two
+differing**. A coach re-importing their own exported plan therefore got most rows back as an ADD for
+a word already on the plan, which the one-word-one-line guard refused as *"already on this plan"* —
+the file readable, and still not importable.
+
+**The round-trip guard missed it because its fixture set `description` equal to `itemName` on every
+line** — the rare shape. The lesson written into this section was "build the fixture from the
+producer"; it was followed for the column HEADERS and broken for the row CONTENT one field away. The
+fixture now uses real divergent pairs and is mutation-tested: 3 of its 5 cases fail against the old
+matching. **Matching is by word now, with description as the fallback** — since mig 286 a word
+carries one line, so the word IS the line’s identity, the same rule the plan list and the report
+already run on.
+
+**Three more real defects fixed with it.** The word-LESS **"Not itemized"** bucket — a rollup, not a
+line — became readable when cost rows gained the line marker, and re-imported as a budget word
+literally called "Not itemized" carrying the bucket’s whole sum while the lines it summarised stayed
+put: **import twice, charge the category twice**. A **band row must now be BARE**, not merely
+money-free — the first rule failed both ways (a real band with a stray note stopped being one; a
+hand-blanked category named "Costs" started being one) and because `band` is loop state, **one bad
+row flipped the side of every row after it**. And the plan file’s `Planned` column no longer widens
+the **BILLS** reader, which shares that alias record.
+
+**`/simplify` (seven fixes)** turned a silent `'cost'` fallback in the write path into a loud
+refusal, replaced a fourth hand-rolled copy of `parseBudgetItemDirection`, derived one value once
+instead of twice, gave both import doors one shared mapping, stopped the round-trip test
+hand-copying the exporter’s marker regex — and **taught `check:export-catalog` to enforce a
+round-trip claim**: an entry must name a test that exists, or record why it has none
+(mutation-tested). That immediately caught **`coaches-schedule` promising a round trip with nothing
+behind it at all** — recorded as a gap and read out on every run; it needs its own small piece of
+work from that importer’s owner.
+
+**Proven safe, and worth stating:** no ownership filter was lost when the vocabulary moved to the
+shared builder; the item CHECK constraints cannot be violated and the kind derivation’s throw cannot
+fire; the one-word-one-line index cannot collide across sides; the hedges removed by `/simplify` are
+provably safe. **Accepted:** a band row carrying a stray note is still missed (visible in the
+preview, pinned by a test); the check-then-act race on an update now covers money-in too.
+
+⚠ **THE WALK’S PART A CHANGED WITH THIS** — it now asks the owner to check a line whose description
+differs from its word, which is the ordinary case and was the unwalkable one.
 
 **Concurrent-session note:** `coaches.module.css` carries another session's uncommitted hunks, and
 `check:public-tokens` is red on two of its hex literals (`.managerChipOn`, the Categories & Items

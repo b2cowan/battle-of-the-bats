@@ -15,7 +15,7 @@ import {
 } from '@/lib/coach-budget-totals';
 import { budgetItemSourceForCategory } from '@/lib/coach-budget-item-tiers';
 import {
-  itemVisibleToTeam, categoryVisibleToTeam, isDuplicateItemLineError,
+  itemVisibleToTeam, categoryVisibleToTeam, isDuplicateItemLineError, parseBudgetItemDirection,
   type OwnedBudgetItem, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 import {
@@ -67,8 +67,14 @@ function toBudgetDraft(raw: unknown, index: number): DraftBudgetRow {
        not the word 'in' is money out, which is also what every payload written before this field
        existed meant. The client is not the authority here — the route re-reviews every row against
        live data — but a row's side decides which words it may match and which kind it writes, so it
-       is normalised at the door like every other field. */
-    direction: (source.direction === 'in' ? 'in' : 'out') as 'in' | 'out',
+       is normalised at the door like every other field.
+       ⚠ THROUGH `parseBudgetItemDirection`, WHICH IS THE ONE PARSER FOR THIS RULE (/simplify,
+       2026-09-10). It carries the comment "ONE PARSER, THREE WRITE DOORS", written after the coach
+       item POST, the coach item PATCH and the admin item POST had each grown their own copy and
+       drifted — and this was a fourth copy sitting in the same file that imports three other names
+       from that module. `?? 'out'` is the same fallback the hand-written ternary computed for a
+       missing field, a wrong type or a garbage string. */
+    direction: parseBudgetItemDirection(source.direction) ?? 'out',
   };
 }
 
@@ -195,9 +201,9 @@ export const POST = withObservability(async (req: Request,
     visibleCategoryRows.map(({ row }) => [row.id as string, (row.income_source as string | null) ?? null]),
   );
   /** A word's own stored source, which is what its line's KIND derives from. */
-  const itemActualSource = new Map<string, string>();
+  const itemActualSource = new Map<string, BudgetItemActualSource>();
   for (const { visible } of visibleCategoryRows) {
-    for (const i of visible) itemActualSource.set(i.id as string, i.actual_source as string);
+    for (const i of visible) itemActualSource.set(i.id as string, i.actual_source as BudgetItemActualSource);
   }
   const categoryByName = new Map(categories.map(c => [c.name.trim().toLowerCase(), c]));
 
@@ -278,7 +284,9 @@ export const POST = withObservability(async (req: Request,
        — in BOTH directions rather than by concealment. */
     const { data: lineRows } = await supabaseAdmin
       .from('rep_budget_lines')
-      // ⚠ `item_id` rides along for the one-word-one-line guard below (owner ruling 2026-09-09).
+      /* ⚠ `item_id` rides along for TWO rules now: the one-word-one-line guard below (owner ruling
+         2026-09-09), and — since 2026-09-10 — the MATCH itself, because a line's word is its
+         identity on the plan and its description is only what the coach typed. */
       .select('id, description, item_id, total_amount, sort_order, line_kind, budget_categories(name)')
       .eq('program_year_id', programYear.id)
       .order('sort_order');
@@ -289,6 +297,7 @@ export const POST = withObservability(async (req: Request,
         description: l.description as string,
         categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
         totalAmount: (l.total_amount as number) ?? 0,
+        itemId: (l.item_id as string | null) ?? null,
         // The stored kind, narrowed through the ONE home for that question — not a hand-written
         // list of money-in kinds, which has gone stale twice in this file alone.
         direction: (isFundingKind(l.line_kind as string | null) ? 'in' : 'out') as 'in' | 'out',
@@ -349,6 +358,18 @@ export const POST = withObservability(async (req: Request,
       let item = words.find(i => i.name.trim().toLowerCase() === row.lineName.trim().toLowerCase());
       if (!item && row.lineName.trim()) {
         const name = row.lineName.trim().slice(0, 80);
+        /* ⚠ THE SHELF DECIDES WHO FILLS IT IN (mig 285), never this door's own guess — the same call
+           `budgetItemSourceForCategory` makes for the Add-item form, so a word invented here is
+           indistinguishable from one the coach typed in the picker. A money-out word is always
+           'typed', which the database's own CHECK also insists on.
+           ⚠ DERIVED ONCE (/simplify, 2026-09-10). It was computed twice from the same two inputs —
+           once into the insert and once into the map the line's KIND is read from — which is two
+           chances for a future edit to change one and not the other, and the two disagreeing is
+           precisely the "kind disagrees with its item" state migration 280 exists to forbid. */
+        const newWordSource = budgetItemSourceForCategory(
+          row.direction,
+          { income_source: categoryIncomeSource.get(category.id) ?? null },
+        );
         const { data: madeItem, error: itemError } = await supabaseAdmin
           .from('budget_items')
           .insert({
@@ -359,19 +380,15 @@ export const POST = withObservability(async (req: Request,
                outright" — true until the day the file's FUNDING band could be read, and the reason
                a re-imported plan minted "Chocolate Sale" as something the team SPENDS money on. */
             direction: row.direction,
-            /* ⚠ THE SHELF DECIDES WHO FILLS IT IN (mig 285), never this door's own guess — the same
-               call `budgetItemSourceForCategory` makes for the Add-item form, so a word invented
-               here is indistinguishable from one the coach typed in the picker. A money-out word is
-               always 'typed', which the database's own CHECK also insists on. */
-            actual_source: budgetItemSourceForCategory(
-              row.direction,
-              { income_source: categoryIncomeSource.get(category.id) ?? null },
-            ),
+            actual_source: newWordSource,
           })
           .select('id, name')
           .single();
         if (madeItem) {
           item = { id: madeItem.id as string, name: madeItem.name as string };
+          // The word this run invented takes the source it was WRITTEN with, so the line's kind
+          // below reads it from the same place a pre-existing word's does.
+          itemActualSource.set(item.id, newWordSource);
           // Keep the in-memory library current so two sheet rows naming the same thing land on ONE
           // item rather than racing to create it twice.
           words.push(item);
@@ -395,17 +412,9 @@ export const POST = withObservability(async (req: Request,
             .maybeSingle();
           if (winner) {
             item = { id: winner.id as string, name: winner.name as string };
-            itemActualSource.set(item.id, winner.actual_source as string);
+            itemActualSource.set(item.id, winner.actual_source as BudgetItemActualSource);
             words.push(item);
           }
-        }
-        /* The word this run invented takes the source we just wrote, so the line's KIND below reads
-           it from the same place a pre-existing word's does. */
-        if (item && !itemActualSource.has(item.id)) {
-          itemActualSource.set(item.id, budgetItemSourceForCategory(
-            row.direction,
-            { income_source: categoryIncomeSource.get(category.id) ?? null },
-          ));
         }
         if (!item) {
           // Still nothing to name it with — refuse the row rather than importing a nameless line
@@ -415,14 +424,29 @@ export const POST = withObservability(async (req: Request,
         }
       }
 
+      /* ⚠⚠ EVERY ROW PAST THIS POINT HAS A WORD, AND IT REFUSES RATHER THAN DEFAULTS (/simplify,
+         2026-09-10). It cannot be reached today: a nameless row is blocked in the review, and every
+         path through the block above either sets `item` or `continue`s. It is here because the four
+         places below USED to hedge — `item ? … : undefined`, `item && …`, `item?.id ?? null` twice,
+         and worst of all a `line_kind` falling back to `'cost'`. That last one is not an inert
+         placeholder the way a null item id is; it is a MEANING, and if the invariant ever moved it
+         would silently file money coming in as SPENDING — the exact state migration 280 and this
+         whole build exist to forbid. `budgetLineKindForItem` two modules away made the same call in
+         the same words: "a loud failure on a developer's own mistake is the cheaper of the two".
+         Stated once, here, so the rest of the loop can simply say what it means. */
+      if (!item) {
+        failed.push({ rowNumber: row.rowNumber, name: label, error: 'Could not work out what this row is — it was left out.' });
+        continue;
+      }
+
       /* ⚠ THE WORD IS ALREADY SPOKEN FOR — SKIPPED, NOT SUMMED AND NOT OVERWRITTEN. A file has one
          row per word, so a second row naming a word this plan (or this file) already used is a
          mistake in the sheet, and the coach is the only one who can say which figure they meant.
          Summing would invent an amount nobody typed; overwriting would lose one in silence, which
          is what used to happen when two rows shared a match. It lands in the skipped list with the
          word named, beside every other row that needs a look. */
-      const takenLineId = item ? (itemsWrittenThisRun.has(item.id) ? 'this-file' : lineIdByItem.get(item.id)) : undefined;
-      if (item && takenLineId && takenLineId !== row.matchedLineId) {
+      const takenLineId = itemsWrittenThisRun.has(item.id) ? 'this-file' : lineIdByItem.get(item.id);
+      if (takenLineId && takenLineId !== row.matchedLineId) {
         skipped.push({
           rowNumber: row.rowNumber,
           name: label,
@@ -441,12 +465,10 @@ export const POST = withObservability(async (req: Request,
          with a money-IN item and a `cost` kind, the exact "the kind disagrees with its item" state
          mig 280 exists to make unexpressible. Reading the item's own source means a fifth money-in
          kind is covered by nothing more than being declared. */
-      const lineKind = item
-        ? budgetLineKindForItem({
-            direction: row.direction,
-            actualSource: (itemActualSource.get(item.id) ?? 'typed') as BudgetItemActualSource,
-          })
-        : 'cost';
+      const lineKind = budgetLineKindForItem({
+        direction: row.direction,
+        actualSource: itemActualSource.get(item.id) ?? 'typed',
+      });
       if (row.outcome === 'update' && lineId) {
         const write = supabaseAdmin
           .from('rep_budget_lines')
@@ -454,7 +476,7 @@ export const POST = withObservability(async (req: Request,
             total_amount: row.total,
             notes: row.notes || null,
             category_id: category.id,
-            item_id: item?.id ?? null,
+            item_id: item.id,
             // Written on the way through so the line's kind can never disagree with the word it now
             // names — the same derivation the single-line edit door goes through.
             line_kind: lineKind,
@@ -462,11 +484,18 @@ export const POST = withObservability(async (req: Request,
           })
           .eq('id', lineId)
           .eq('program_year_id', programYear.id);
-        /* ⚠ A ROW MAY ONLY EVER CHANGE A LINE ON ITS OWN SIDE. The matched id came from a payload
-           the client sends back, so this is belt and braces against a stale or crafted one — but it
-           is SYMMETRIC now, where it used to be a one-way "cost rows may not touch money-in lines".
-           A money-in row must not reach a cost line either; the review above already refuses to
-           match one, and this is that same rule at the write.
+        /* ⚠ A ROW MAY ONLY EVER CHANGE A LINE ON ITS OWN SIDE, and it is SYMMETRIC now where it used
+           to be a one-way "cost rows may not touch money-in lines". A money-in row must not reach a
+           cost line either; the review above already refuses to match one, and this is that same
+           rule restated at the write.
+           ⚠ THIS COMMENT USED TO SAY THE MATCHED ID "CAME FROM A PAYLOAD THE CLIENT SENDS BACK",
+           AND THAT WAS FALSE (/review, 2026-09-10) — inherited from an earlier draft and extended
+           without being checked. `toBudgetDraft` never reads `matchedLineId`; it is computed HERE by
+           `reviewBudgetRows`, against lines this route read itself under this program year. A
+           crafted id in the request body is discarded before it can reach this filter. The guard is
+           still worth keeping — it is the rule stated where the write happens — but it defends an
+           invariant, not a hostile input, and a comment that misnames its own threat model teaches
+           the next reader the wrong thing about where this door's trust boundary sits.
            ⚠⚠ THE HAND-WRITTEN LIST WENT STALE TWICE, so it is gone. It named only 'funding' until
            2026-08-15 — and its replacement comment then claimed "both kinds" while migration 274 was
            about to add a THIRD money-in kind (2026-09-02), which nobody came back for. Built from
@@ -484,7 +513,7 @@ export const POST = withObservability(async (req: Request,
             team_id: team.id,
             program_year_id: programYear.id,
             category_id: category.id,
-            item_id: item?.id ?? null,
+            item_id: item.id,
             description: row.lineName,
             total_amount: row.total,
             notes: row.notes || null,
@@ -501,7 +530,7 @@ export const POST = withObservability(async (req: Request,
             rowNumber: row.rowNumber,
             name: label,
             error: isDuplicateItemLineError(error)
-              ? `${item?.name ?? label} is already on this plan — change that line instead.`
+              ? `${item.name} is already on this plan — change that line instead.`
               : (error?.message ?? 'Could not be saved'),
           });
           continue;
@@ -511,7 +540,7 @@ export const POST = withObservability(async (req: Request,
         created.push({ rowNumber: row.rowNumber, name: label });
       }
       // Written — so a later row in this same file naming the same word is caught above.
-      if (item) itemsWrittenThisRun.add(item.id);
+      itemsWrittenThisRun.add(item.id);
 
       // Payment periods, when the sheet had month columns. A full replace, matching the periods
       // endpoint's own contract: the sheet is the coach's statement of when this line is paid.

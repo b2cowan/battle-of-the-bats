@@ -262,6 +262,58 @@ describe('rowsFromList', () => {
     assert.deepEqual(rowsFromList(file).map(r => [r.categoryName, r.direction]), [['Funding', 'out']]);
   });
 
+  it('a band heading must be BARE — a category row that merely lacks money is still a category', () => {
+    /* ⚠ The first cut asked only "does any cell parse as money". A club that owns a category called
+       "Costs" and left its total blank would have had that row read as a band — and `band` is loop
+       state, so the misread would have flipped the side of every row after it, silently. */
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['Costs', '', 'the club calls its spending heading this'],
+      ['Umpire Fees', '1200', ''],
+    ], [1]);
+    assert.deepEqual(rowsFromList(file).map(r => [r.categoryName, r.lineName, r.direction]), [
+      ['Costs', 'Umpire Fees', 'out'],
+    ]);
+  });
+
+  it('a real band row with a stray value on it is NOT swallowed as a category', () => {
+    // The same rule read the other way: anything on the row means it is not a band, so the reader
+    // must not then treat the band word as the category every following line attaches to.
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['FUNDING', '', 'note somebody typed'],
+      ['Fundraising', '1800', ''],
+      ['Chocolate Sale', '1800', ''],
+    ], [2]);
+    const rows = rowsFromList(file);
+    assert.deepEqual(rows.map(r => [r.categoryName, r.lineName, r.direction]), [
+      ['Fundraising', 'Chocolate Sale', 'out'],
+    ], 'the band was not taken, so the rows stay on the default side rather than inheriting a heading');
+  });
+
+  it('the word-LESS bucket is a derived row, not a line — it never re-imports', () => {
+    /* "Not itemized" is the ROLLUP of every line in a category that has no word. Read as a line it
+       minted a budget word literally called "Not itemized" carrying the whole bucket's sum, while
+       the lines it summarised stayed put — so importing a plan twice charged the category twice. */
+    const file = sheet(['Category / line', 'Planned', 'Notes'], [
+      ['Facilities', '2500', ''],
+      ['  — Not itemized', '2500', ''],
+    ], [1]);
+    assert.deepEqual(rowsFromList(file), []);
+  });
+
+  it('reads the plan file’s own money column, and does not teach the BILLS reader to', () => {
+    // §133 renamed it to "Planned" and the reader was never told, so every row came back amountless.
+    const plan = sheet(['Category / line', 'Planned', 'Notes'], [
+      ['Tournaments', '2500', ''],
+      ['  — Entry Fees', '2500', ''],
+    ], [1]);
+    assert.equal(rowsFromList(plan)[0].amount, '2500');
+    // …but a bills sheet with its own "Planned" column means something else entirely.
+    const bills = sheet(['Payee', 'Description', 'Planned', 'Due Date'], [
+      ['City of Toronto', 'Diamond permits', '600', '2026-04-01'],
+    ]);
+    assert.equal(rowsFromPayables(bills)[0].amount, '', 'the bills reader never learned this word');
+  });
+
   it('the by-period grid carries its bands too — the same file, spread over months', () => {
     const file = sheet(['Category / line', 'Sep 2026', 'Oct 2026', 'No date yet', 'Total'], [
       ['COSTS', '', '', '', ''],
@@ -303,8 +355,8 @@ describe('rowsFromPayables', () => {
 
 describe('reviewBudgetRows', () => {
   const existing: ExistingBudgetLine[] = [
-    { id: 'l1', description: 'Entry Fees', categoryName: 'Tournaments', totalAmount: 3300, direction: 'out' },
-    { id: 'l2', description: 'Gate Revenue', categoryName: 'Tournaments', totalAmount: 1200, direction: 'in' },
+    { id: 'l1', description: 'Entry Fees', categoryName: 'Tournaments', totalAmount: 3300, itemId: 'i1', direction: 'out' },
+    { id: 'l2', description: 'Gate Revenue', categoryName: 'Tournaments', totalAmount: 1200, itemId: 'i9', direction: 'in' },
   ];
 
   function review(rows: Parameters<typeof reviewBudgetRows>[0]) {
@@ -551,7 +603,7 @@ describe('telling the coach when a row would mint a new cost name', () => {
 
   it('leaves an UPDATE alone — it matched an existing line, so it is not inventing anything', () => {
     const existing: ExistingBudgetLine[] = [
-      { id: 'l1', description: 'Entry Fee', categoryName: 'Tournaments', totalAmount: 100, direction: 'out' },
+      { id: 'l1', description: 'Entry Fee', categoryName: 'Tournaments', totalAmount: 100, itemId: 'i1', direction: 'out' },
     ];
     const [row] = reviewBudgetRows([draft({ lineName: 'Entry Fee' })], CATEGORIES, existing);
     assert.equal(row.outcome, 'update');

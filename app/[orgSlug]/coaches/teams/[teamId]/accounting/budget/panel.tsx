@@ -9,7 +9,7 @@ import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
-import { toKnownCategories } from '@/lib/coach-budget-import';
+import { toKnownCategories, existingBudgetLinesFrom } from '@/lib/coach-budget-import';
 import BudgetItemManagerModal, { MANAGE_DOOR_LABEL } from '@/components/coaches/BudgetItemManagerModal';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf, monthYearBands, periodRangeLabel, MONTH_WINDOW } from '@/lib/coach-budget-months';
@@ -4360,14 +4360,10 @@ export function BudgetPlanPanel({
              let "Fundraising" in a spreadsheet overwrite the money the team plans to raise. The
              overwrite is still refused — a row matches only its own side now, in the review and
              again at the write — but hiding those lines is exactly why every money-in line of the
-             plan's OWN exported file came back as a new cost. */
-          existingLines={(plan?.lines ?? []).map(l => ({
-            id: l.id,
-            description: l.description,
-            categoryName: l.categoryName,
-            totalAmount: l.totalAmount,
-            direction: (isFundingKind(l.lineKind) ? 'in' : 'out') as 'in' | 'out',
-          }))}
+             plan's OWN exported file came back as a new cost.
+             ⚠ Through the shared mapping, not an inline one: its twin in the Money hub's import
+             menu builds the same shape, and the side derivation is the half that must not drift. */
+          existingLines={existingBudgetLinesFrom(plan?.lines ?? [])}
           existingPayableDescriptions={[]}
           seasonYear={seasonYear}
           gridMonths={planMonths}

@@ -2,7 +2,8 @@ import { getCell } from './import/tabular.ts';
 import type { ParsedImportFile, ParsedImportRow } from './import/types.ts';
 import type { XlsxOptions, XlsxColumnChoice, XlsxColumnFlag, XlsxGuideLine } from './export/xlsx.ts';
 import { formatMonthLabel, type MonthKey } from './coach-budget-months.ts';
-import { PLAN_LADDER_LABEL } from './coach-budget-totals';
+import { PLAN_LADDER_LABEL, isFundingKind } from './coach-budget-totals';
+import { NO_ITEM_LABEL } from './coach-budget-rollup.ts';
 
 /**
  * Spreadsheet intake for the coach's budget (Coach Portal chunk H2).
@@ -113,15 +114,7 @@ export const ALIASES = {
   category:    ['category', 'cat', 'budget category'],
   line:        ['line', 'line item', 'item', 'description', 'cost', 'what'],
   combined:    ['category / line', 'category line', 'category or line'],
-  /* ⚠ 'planned' IS THE PLAN FILE'S OWN MONEY COLUMN, and its absence here made the whole statement
-     export unreadable. The column was renamed `Planned` on 2026-09-02 (§133, the Budget tab
-     revamp); `getCell` matches a header EXACTLY, so from that day every row of a re-imported plan
-     arrived with no amount and was blocked "No amount. Add one here, or leave the row out." — the
-     file the product itself writes, refused by the door it was written for. Nothing could see it:
-     the reader's tests spell their own headers, and the header they spelled was `Amount`.
-     ⚠ A ROUND-TRIP TEST NOW BUILDS ITS SHEET FROM `BUDGET_PLAN_COLUMNS` rather than typing the
-     headers out, which is the only shape of test that can catch a rename. */
-  amount:      ['amount', 'total', 'cost', 'budget', 'estimated', 'estimate', 'planned'],
+  amount:      ['amount', 'total', 'cost', 'budget', 'estimated', 'estimate'],
   notes:       ['notes', 'note', 'comment', 'comments'],
   /* ⚠ 'unscheduled' IS HERE FOR THE FILES ALREADY ON PEOPLE'S MACHINES. The by-period export wrote
      that heading until 2026-09-04 and nothing here matched it, so those sheets round-tripped with
@@ -136,6 +129,23 @@ export const ALIASES = {
   balance:     ['balance', 'balance amount'],
   balanceDue:  ['balance due', 'balance due date'],
 } as const;
+
+/**
+ * The money column of a BUDGET sheet — the shared aliases plus the plan file's own heading.
+ *
+ * ⚠ 'planned' IS THE PLAN FILE'S OWN MONEY COLUMN, and its absence made the whole statement export
+ * unreadable. §133 renamed that column to `Planned` on 2026-09-02; `getCell` matches a header
+ * EXACTLY, so from that day every row of a re-imported plan arrived with no amount and was refused
+ * — the file the product itself writes, turned away by the door it was written for. Nothing could
+ * see it: the reader's tests spell their own headers, and the header they spelled was `Amount`.
+ *
+ * ⚠⚠ AND IT IS SEPARATE FROM `ALIASES.amount` ON PURPOSE (/review, 2026-09-10). That record is
+ * SHARED with the bills reader, so widening it in place quietly taught the payables importer to
+ * read a column called "Planned" as a bill's amount — a plausible heading in an outside treasurer's
+ * spreadsheet meaning something else entirely, and nothing to do with the defect being fixed. A fix
+ * scoped to one reader belongs to that reader.
+ */
+const BUDGET_AMOUNT_ALIASES = [...ALIASES.amount, 'planned'];
 
 /**
  * Read a money cell. Accepts what a spreadsheet actually produces — `$1,200.00`, `1 200`,
@@ -225,9 +235,20 @@ export function parseMonthHeader(header: string, carriedYear: number): { month: 
 const PLAN_LADDER_DERIVED = Object.entries(PLAN_LADDER_LABEL)
   .filter(([key]) => key !== 'costsBand' && key !== 'fundingBand' && key !== 'costsLessFundingNote')
   .map(([, label]) => label.toLowerCase());
+/* ⚠⚠ "NOT ITEMIZED" IS A DERIVED ROW, AND LEAVING IT OUT COST A CATEGORY ITS TOTAL (/review,
+   2026-09-10). It is not a line — it is the ROLLUP of every line in a category that has no word,
+   summed into one row (`NO_ITEM_LABEL`, and it is read from there rather than retyped). It only
+   became reachable when cost rows started carrying the line marker: before that it was dropped
+   along with every other cost item row. Read as a line it re-imported as a NEW budget word
+   literally called "Not itemized", carrying the whole bucket's sum — while the word-less lines it
+   summarised stayed exactly where they were. Import twice and the category is charged twice.
+   ⚠ The consequence of skipping it: a plan made only of word-less lines re-imports as nothing at
+   all. That is the honest answer — those lines have no word, and a word is what this door matches
+   on. Giving them one is the Budget screen's job, not the importer's. */
 const DERIVED_ROW_LABELS = new Set([
   'total', 'money in', 'money out', 'running balance', 'grand total',
   'total planned budget',
+  NO_ITEM_LABEL.toLowerCase(),
   ...PLAN_LADDER_DERIVED,
 ]);
 
@@ -249,11 +270,20 @@ function isDerivedRow(label: string): boolean {
  * the plan screen has two bands, not a direction column — and the band is already sitting in every
  * file a coach has on disk, which a column added today would not be.
  *
- * ⚠⚠ THE "NO MONEY ON IT" CLAUSE IS LOAD-BEARING, NOT A TIDINESS CHECK. A club may legitimately own
- * a category called "Funding" or "Costs" — that is exactly why these two labels were kept OUT of
- * `DERIVED_ROW_LABELS` — and a category row always carries its own total while a band heading never
- * does (`budgetPlanStatementRows` writes `planned: ''`, `budgetPeriodGridRows`'s `band()` blanks
- * every cell). Without the clause, that club's plan would import with half its costs read as income.
+ * ⚠⚠ THE "BARE ROW" CLAUSE IS LOAD-BEARING, NOT A TIDINESS CHECK. A club may legitimately own a
+ * category called "Funding" or "Costs" — that is exactly why these two labels were kept OUT of
+ * `DERIVED_ROW_LABELS` — and a category row always carries its own total while a band heading is
+ * blank in EVERY other cell (`budgetPlanStatementRows` writes `planned: ''`, `schedule: ''`,
+ * `notes: ''`; `budgetPeriodGridRows`'s `band()` blanks every period cell and the total). Without
+ * the clause, that club's plan would import with half its costs read as income.
+ *
+ * ⚠ IT TESTS EMPTINESS, NOT "NO MONEY", AND THE DIFFERENCE IS THE BLAST RADIUS (/review, 2026-09-10).
+ * The first cut asked only whether any cell PARSED AS MONEY. Two ways that went wrong, and both are
+ * worse than a single misread row: a real band row carrying any stray text or digit stopped being a
+ * band, and a hand-blanked category row named "Costs" started being one. Either way `band` is loop
+ * state, so ONE bad row silently flips the side of every row after it — a misread that propagates is
+ * a different class of defect from a misread that does not. Matching the exporter exactly (label
+ * cell only, everything else empty) is both stricter and easier to state.
  */
 const BAND_LABELS: Array<{ label: string; direction: 'in' | 'out' }> = [
   { label: PLAN_LADDER_LABEL.costsBand.toLowerCase(),   direction: 'out' },
@@ -273,12 +303,14 @@ function bandOf(label: string, indented: boolean, source: ParsedImportRow): 'in'
   const text = label.trim().toLowerCase();
   const band = BAND_LABELS.find(b => b.label === text);
   if (!band) return null;
-  /* Any figure anywhere on the row disqualifies it — the month columns of a by-period file as much
-     as a single Amount column, which is why this reads the row's own values rather than a column
-     list it would have to be kept in step with. The label cell needs no exclusion: "FUNDING" is not
-     a number, and `moneyValue` hands junk back rather than pretending it read one. */
-  const carriesMoney = Object.values(source.values).some(v => moneyValue(v ?? '') != null);
-  return carriesMoney ? null : band.direction;
+  /* ANY other content disqualifies it — a figure, a note, a stray digit, in the month columns of a
+     by-period file as much as in a single Amount column. Reading the row's own values rather than a
+     column list keeps this from becoming one more list that has to be held in step with the
+     exporter. The label cell is excluded by VALUE, not by column name: a band row's own text is the
+     one thing on it, and its heading differs between the two files. */
+  const bare = Object.values(source.values)
+    .every(v => !(v ?? '').trim() || (v ?? '').trim().toLowerCase() === text);
+  return bare ? band.direction : null;
 }
 
 /**
@@ -432,7 +464,7 @@ export function rowsFromList(file: ParsedImportFile): DraftBudgetRow[] {
       rowNumber: rows.length + 1,
       categoryName,
       lineName,
-      amount: parseMoneyCell(getCell(source, [...ALIASES.amount]).value),
+      amount: parseMoneyCell(getCell(source, BUDGET_AMOUNT_ALIASES).value),
       notes: getCell(source, [...ALIASES.notes]).value.trim(),
       periods: [],
       direction: band,
@@ -585,6 +617,49 @@ export interface ExistingBudgetLine {
    * directions and leaves a money-in row able to find the line it came from.
    */
   direction: 'in' | 'out';
+  /**
+   * The budget WORD this line is filed against — its identity on the plan, and what a sheet row is
+   * matched to.
+   *
+   * ⚠⚠ MATCHING USED TO KEY ON `description`, AND THAT IS WHY THE ROUND TRIP DID NOT WORK ON REAL
+   * DATA (/review, 2026-09-10). Both plan files NAME a row by its word ("Umpire Fees") while a
+   * line's stored description is whatever the coach typed ("Umpires", "Provincials hotel block") —
+   * and on dev 43 of 48 lines have the two differing. Matching by description meant a coach's own
+   * exported plan came back with almost every row unmatched: an ADD for a word already on the plan,
+   * which the one-word-one-line guard then refused as "already on this plan". The file was readable
+   * and still would not import.
+   *
+   * ⚠ The word is the right key for a deeper reason than the bug: since migration 286 a word
+   * carries exactly ONE line, so the word IS the line's identity — the same rule the plan list, the
+   * report and the export already run on. `description` stays as the FALLBACK for lines that have
+   * no word at all, which is the only case it can still identify.
+   */
+  itemId: string | null;
+}
+
+/**
+ * The plan's lines, as the importer needs to see them — ONE mapping, not one per door.
+ *
+ * ⚠ THE `direction` LINE IS WHY THIS EXISTS (/simplify, 2026-09-10). Both screens that mount the
+ * import sheet built this shape inline, and the two-bands change added the same new derivation to
+ * each of them — a second place that has to agree, forever, about how a stored kind becomes a side.
+ * `isFundingKind`'s own history is the argument: its list of money-in kinds went stale TWICE while
+ * two readers held copies of it. One mapping, in the module that owns the type.
+ */
+export function existingBudgetLinesFrom(
+  lines: ReadonlyArray<{
+    id: string; description: string; categoryName: string | null;
+    totalAmount: number; lineKind: string | null; itemId: string | null;
+  }>,
+): ExistingBudgetLine[] {
+  return lines.map(l => ({
+    id: l.id,
+    description: l.description,
+    categoryName: l.categoryName,
+    totalAmount: l.totalAmount,
+    itemId: l.itemId,
+    direction: isFundingKind(l.lineKind) ? 'in' : 'out',
+  }));
 }
 
 function key(value: string): string {
@@ -768,8 +843,17 @@ export function reviewBudgetRows(
      funding band could be read it would let a money-in row update a cost line of the same name. */
   const pairKey = (categoryName: string, lineName: string, direction: 'in' | 'out') =>
     `${direction}|${key(categoryName)}|${key(lineName)}`;
+  /* ⚠⚠ BY WORD FIRST — the line's identity since migration 286 — AND BY DESCRIPTION ONLY AS A
+     FALLBACK. The file names a row by its word; a line's description is whatever the coach typed,
+     and on real data the two usually differ, so a description-keyed match left a coach's own
+     exported plan almost entirely unmatched (see `ExistingBudgetLine.itemId`). The fallback still
+     earns its place twice over: a line with NO word can only be identified by its description, and
+     a coach's hand-maintained sheet that says "Umpires" — the description, not the word — still
+     finds the line it has always found. */
+  const existingByItem = new Map<string, ExistingBudgetLine>();
   const existingByPair = new Map<string, ExistingBudgetLine>();
   for (const line of existing) {
+    if (line.itemId) existingByItem.set(line.itemId, line);
     existingByPair.set(pairKey(line.categoryName ?? '', line.description, line.direction), line);
   }
 
@@ -817,7 +901,12 @@ export function reviewBudgetRows(
       return { ...base, outcome: 'blocked' as const, reason: 'This line appears more than once in the sheet — keep one.' };
     }
 
-    const match = existingByPair.get(pair);
+    /* The WORD this row names, resolved on its own side — the same lookup the commit route makes,
+       so the preview's verdict and the write cannot disagree about which line a row is. */
+    const namedItem = categoryByName.get(key(row.categoryName)) &&
+      wordsFor(categoryByName.get(key(row.categoryName))!, row.direction)
+        .find(i => key(i.name) === key(row.lineName));
+    const match = (namedItem && existingByItem.get(namedItem.id)) ?? existingByPair.get(pair);
     if (match) {
       return {
         ...base,

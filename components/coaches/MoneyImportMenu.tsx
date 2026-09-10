@@ -5,10 +5,9 @@ import { useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 import type { BudgetCategoryWithItems, RepBudgetPlan, RepTeamExpense, RepTeamImportEvent } from '@/lib/types';
 import type { MonthKey } from '@/lib/coach-budget-months';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
-import { toKnownCategories } from '@/lib/coach-budget-import';
+import { toKnownCategories, existingBudgetLinesFrom } from '@/lib/coach-budget-import';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import { isFundingKind } from '@/lib/coach-budget-totals';
 import {
   CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator,
 } from '@/components/coaches/CoachToolbarMenu';
@@ -217,15 +216,10 @@ export default function MoneyImportMenu({
           /* ⚠ EVERY LINE, EACH CARRYING ITS SIDE — the twin of the Budget panel's own list, and it
              moved for the same reason: a row matches only its own side now, so the "Fundraising"
              overwrite this used to prevent by CONCEALMENT is prevented by the rule instead, and a
-             money-in row can finally find the line it was exported from. */
+             money-in row can finally find the line it was exported from. Both doors go through the
+             one shared mapping, so the side derivation cannot drift between them. */
           existingLines={importTarget === 'budget'
-            ? (importPrep.plan?.lines ?? []).map(l => ({
-                id: l.id,
-                description: l.description,
-                categoryName: l.categoryName,
-                totalAmount: l.totalAmount,
-                direction: (isFundingKind(l.lineKind) ? 'in' : 'out') as 'in' | 'out',
-              }))
+            ? existingBudgetLinesFrom(importPrep.plan?.lines ?? [])
             : []}
           existingPayableDescriptions={importTarget === 'payables' ? importPrep.payableDescriptions : []}
           seasonYear={importPrep.seasonYear}

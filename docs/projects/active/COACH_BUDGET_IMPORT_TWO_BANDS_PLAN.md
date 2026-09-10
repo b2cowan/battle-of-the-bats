@@ -3,7 +3,7 @@
 **Status: BUILT on dev 2026-09-10** — typecheck clean, 3,415 unit tests green, `check:money-report`,
 `check:export-catalog`, spelling, CSS purity, dictionary, date-correctness and CSS selectors all
 green. **No migration.** Owner QA rides **ledger §165** and its own instrument,
-`COACH_BUDGET_IMPORT_TWO_BANDS_WALK.html` — published at https://claude.ai/code/artifact/e3dbfafa-ce42-4e7e-a4af-732061747d69 (30 checks, 10 steps, four parts).
+`COACH_BUDGET_IMPORT_TWO_BANDS_WALK.html` — published at https://claude.ai/code/artifact/e3dbfafa-ce42-4e7e-a4af-732061747d69 (33 checks, 10 steps, four parts — three added by §9b).
 
 Owner asked for it from a screenshot of that step: *"have we addressed this?"*
 
@@ -234,3 +234,93 @@ other. The catalog entry now carries a headstone naming that test as its proof.
 
 **The rule worth keeping:** a round trip is a claim about two modules, so it cannot be tested inside
 either one. Build the fixture from the producer.
+
+## 9. `/simplify` and `/review` — run 2026-09-10, AFTER the commit
+
+Both were offered before the commit and not taken up; the owner asked for them afterwards. They are
+recorded here in full because **the review found that the headline claim of this plan was false**,
+and a plan that quietly absorbs that is worth less than one that says so.
+
+### 9a. `/simplify` — four lenses, seven fixes
+
+Efficiency came back clean. The others:
+
+- **A silent fallback in the write path became a loud refusal.** The line's kind read
+  `item ? derive(…) : 'cost'`. That branch is unreachable today, but `'cost'` is a MEANING, not an
+  inert placeholder — if the invariant above it ever moved, it would file money coming in as
+  spending, the exact state mig 280 exists to forbid. Moving the check to where the invariant is
+  established let four downstream hedges say what they mean.
+- **A fourth hand-rolled copy of `parseBudgetItemDirection`** — the parser whose own comment reads
+  "ONE PARSER, THREE WRITE DOORS", written after three doors had drifted. Now it is called.
+- **One derivation computed twice** from the same inputs, where the two disagreeing is precisely
+  what mig 280 forbids. Derived once.
+- **Both import doors share one mapping** (`existingBudgetLinesFrom`) instead of each carrying the
+  side derivation.
+- **The round-trip test had hand-copied the exporter's `ITEM_PREFIX` regex** — recreating, inside
+  the guard, the "two hand-maintained things must agree" failure the guard exists to catch. It calls
+  `stripItemPrefix` now.
+- **`check:export-catalog` enforces the round-trip claim.** A `roundTrip` entry must name a
+  `roundTripTest` that exists, or a `roundTripTestGap` saying why it has none. Mutation-tested:
+  delete the proof and the build fails.
+- That immediately caught **`coaches-schedule` making the same promise with nothing behind it** —
+  hand-typed column labels on one side, hand-typed aliases on the other, and no test calling its
+  reader. Recorded as a gap and read out on every run; the fix belongs to that importer's owner.
+
+### 9b. `/review` — four lenses, high-risk tier
+
+**Proven safe, and worth stating because they were the likely failures:** no ownership filter was
+lost when the vocabulary moved to the shared builder (checked line by line, both sides); the
+`budget_items` CHECKs cannot be violated and `budgetLineKindForItem`'s throw cannot fire; the
+one-word-one-line index cannot collide across sides (an item's direction is immutable, so the two
+sides are always different ids); the removed hedges are provably safe; `existingBudgetLinesFrom` is
+field-for-field identical to what it replaced; the catalog gate still parses all 34 entries.
+
+**⚠⚠ AND THEN THE THING THIS SECTION EXISTS FOR — §1's fix did not actually work on real data.**
+
+The file names a row by its **word** ("Umpire Fees"); matching keyed on the line's **description**
+("Umpires"). On dev **43 of 48 lines have the two differing**. So a coach re-importing their own
+exported plan got most rows back as an ADD for a word already on the plan, which the
+one-word-one-line guard then refused as *"already on this plan"*. The file was readable and still
+would not import.
+
+**The test did not catch it because its fixture set `description` equal to `itemName` on every
+line** — the rare shape. §8c's lesson was "build the fixture from the producer", and it was followed
+for the column HEADERS and then broken for the row CONTENT, one field away. A guard that hard-codes
+the one thing real data varies is testing a file that resembles ours. The fixture now uses real
+divergent pairs, and was mutation-tested: 3 of its 5 cases fail against the old matching.
+
+**Fixed with it:**
+- **Matching is by WORD, description as the fallback.** Since mig 286 a word carries exactly one
+  line, so the word IS the line's identity — the same rule the plan list, the report and the export
+  already run on. The description fallback still earns its place: a line with no word can only be
+  identified that way, and a coach's hand-maintained sheet that says "Umpires" still finds its line.
+- **The word-LESS bucket is a derived row.** "Not itemized" is the rollup of every word-less line in
+  a category. My own line-marker change made it readable, and read as a line it minted a budget word
+  literally called "Not itemized" carrying the bucket's whole sum while the lines it summarised
+  stayed put — importing twice charged the category twice. It is skipped by construction now, read
+  from `NO_ITEM_LABEL` rather than retyped.
+- **A band row must be BARE, not merely money-free.** The first rule asked only "does any cell parse
+  as money", which failed both ways: a real band row carrying a stray note stopped being a band, and
+  a hand-blanked category named "Costs" started being one. `band` is loop state, so **one bad row
+  flipped the side of every row after it** — a misread that propagates is a different class of
+  defect from one that does not. It now matches the exporter exactly: the label cell, everything
+  else empty.
+- **The plan file's money column no longer widens the BILLS reader.** `'planned'` was added to a
+  record shared with payables, quietly teaching that importer to read a column called "Planned" as a
+  bill's amount. Scoped to the budget reader.
+- **A comment that misnamed its own threat model.** It claimed the matched line id "came from a
+  payload the client sends back"; it is computed server-side. Inherited from an earlier draft and
+  extended without being checked.
+
+### 9c. Accepted, with reasons
+
+- **A band row carrying a stray note is still missed**, and its rows import on the default side. The
+  band word never becomes a category a line attaches to (the next real category row replaces it, or
+  the row is blocked with "No category called FUNDING"), and money-in rows are tagged in the
+  preview — so the failure is visible before anything is written. Recorded rather than engineered
+  around; a test pins the behaviour.
+- **The check-then-act race on an update now covers money-in as well as costs.** Pre-existing shape
+  (`memory/reference_coach_money_check_then_act.md`); its surface doubled rather than its nature
+  changing.
+- **`pairKey` joins on `|`**, so a category or word containing a literal pipe could collide. Two
+  fields wide before this change, three now. Not worth a keyed tuple for a character no coach types.
