@@ -21061,8 +21061,13 @@ vocabulary is held apart one list per side (mig 248's rule, made structural), a 
 lines **only on its own side**, an invented money-in word is created with the **shelf's** income
 source (mig 285) and the line's kind is **derived** through `budgetLineKindForItem` rather than
 defaulted — the insert wrote no `line_kind` at all, which was harmless only while every row was a
-cost. The preview marks a money-in row with a quiet **Money in** chip (from `SIDE_FLOW_SHORT`, the
-one home for that word) and follows the row's side in its type-ahead. **No new column in the file:**
+cost. The preview marks a money-in row **Funding** — the band's own name, read from
+`PLAN_LADDER_LABEL`, which is the record the reader matches the band row against and the word the
+plan screen and both plan files print over those lines — and follows the row's side in its
+type-ahead. ⚠ It read **Money in** (`SIDE_FLOW_SHORT`) until the commit, and the reason it does not
+is worth keeping: that record lives in a **peer session's untracked file**, so committing against it
+would have shipped a build that cannot resolve its own import. In a shared working copy, "the one
+home for this word" is a question about what is COMMITTED, not about what is on disk. **No new column in the file:**
 an export's shape is its screen's shape (QA §146 F2), the screen has bands rather than a direction
 column, and the band reaches every file already on a coach's disk.
 

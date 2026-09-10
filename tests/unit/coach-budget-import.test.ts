@@ -26,8 +26,15 @@ function sheet(headers: string[], rows: string[][], indentedRows: number[] = [])
 }
 
 const CATEGORIES: KnownCategory[] = [
-  { id: 'c1', name: 'Tournaments', items: [{ id: 'i1', name: 'Entry Fees' }, { id: 'i2', name: 'Uniforms' }] },
-  { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees' }] },
+  {
+    id: 'c1',
+    name: 'Tournaments',
+    items: [{ id: 'i1', name: 'Entry Fees' }, { id: 'i2', name: 'Uniforms' }],
+    // The same heading holds both sides, which is the shape the whole product is built on:
+    // Tournaments has entry fees to pay AND gate revenue to take.
+    incomeItems: [{ id: 'i9', name: 'Gate Revenue' }],
+  },
+  { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees' }], incomeItems: [] },
 ];
 
 describe('money cells', () => {
@@ -177,8 +184,9 @@ describe('rowsFromList', () => {
     // CSV carries. ⚠ /review caught the first cut re-importing "Lines so far" and "Still to
     // itemize" as two phantom cost lines worth the itemized sum and the estimate gap; every ladder
     // word is now skipped by construction (DERIVED_ROW_LABELS reads PLAN_LADDER_LABEL). The band
-    // headings are deliberately NOT skipped — a coach may own a category called Costs — and as
-    // non-indented rows they act only as a category name the next real category replaces.
+    // headings are not skipped either — they are READ, as the switch that says which side the rows
+    // beneath them are on (2026-09-10), which is what makes this file's funding half come back as
+    // funding rather than as new spending.
     const file = sheet(['Category / line', 'Amount', 'Notes'], [
       ['COSTS', '', ''],
       ['Tournaments', '2500', ''],
@@ -197,9 +205,75 @@ describe('rowsFromList', () => {
       ['Total planned budget', '2500', ''],
     ], [2, 8]);
     const rows = rowsFromList(file);
-    assert.deepEqual(rows.map(r => [r.categoryName, r.lineName, r.amount]), [
-      ['Tournaments', 'Entry Fees', '2500'],
-      ['Fundraising', 'Chocolate Sale', '1800'],
+    assert.deepEqual(rows.map(r => [r.categoryName, r.lineName, r.amount, r.direction]), [
+      ['Tournaments', 'Entry Fees', '2500', 'out'],
+      ['Fundraising', 'Chocolate Sale', '1800', 'in'],
+    ]);
+  });
+
+  /* ══ THE FILE'S TWO BANDS (2026-09-10) ═════════════════════════════════════════════════════
+     The defect these exist for: the plan's own export writes COSTS and FUNDING, the importer read
+     every row beneath both as a cost, and so a coach who exported their plan and imported it back
+     gained a cost line inside every revenue category. */
+
+  it('a sheet with no bands is all money out — every hand-built sheet, unchanged', () => {
+    const file = sheet(['Category', 'Line', 'Amount', 'Notes'], [
+      ['Tournaments', 'Entry Fees', '3600', ''],
+      ['Fundraising', 'Chocolate Sale', '1800', ''],
+    ]);
+    assert.deepEqual(rowsFromList(file).map(r => r.direction), ['out', 'out']);
+  });
+
+  it('a band heading switches the side and does NOT become the category', () => {
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['FUNDING', '', ''],
+      ['Fundraising', '1800', ''],
+      ['Chocolate Sale', '1800', ''],
+      ['COSTS', '', ''],
+      ['Tournaments', '2500', ''],
+      ['Entry Fees', '2500', ''],
+    ], [2, 5]);
+    assert.deepEqual(rowsFromList(file).map(r => [r.categoryName, r.direction]), [
+      ['Fundraising', 'in'],
+      ['Tournaments', 'out'],
+    ]);
+  });
+
+  it('a line under a bare band heading is left categoryless, never filed under the other band', () => {
+    // The band forgets the category it switched away from. Blocked at review with "No category" —
+    // which the coach fixes in the preview — rather than filed under whatever came before it.
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['Tournaments', '2500', ''],
+      ['Entry Fees', '2500', ''],
+      ['FUNDING', '', ''],
+      ['Chocolate Sale', '1800', ''],
+    ], [1, 3]);
+    assert.deepEqual(rowsFromList(file).map(r => [r.categoryName, r.lineName, r.direction]), [
+      ['Tournaments', 'Entry Fees', 'out'],
+      ['', 'Chocolate Sale', 'in'],
+    ]);
+  });
+
+  it('a real category called Funding is still a category — it carries a figure, a band never does', () => {
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['Funding', '1800', ''],
+      ['Grant application fee', '1800', ''],
+    ], [1]);
+    assert.deepEqual(rowsFromList(file).map(r => [r.categoryName, r.direction]), [['Funding', 'out']]);
+  });
+
+  it('the by-period grid carries its bands too — the same file, spread over months', () => {
+    const file = sheet(['Category / line', 'Sep 2026', 'Oct 2026', 'No date yet', 'Total'], [
+      ['COSTS', '', '', '', ''],
+      ['Tournaments', '2500', '', '', '2500'],
+      ['Entry Fees', '2500', '', '', '2500'],
+      ['FUNDING', '', '', '', ''],
+      ['Fundraising', '', '1800', '', '1800'],
+      ['Chocolate Sale', '', '1800', '', '1800'],
+    ], [2, 5]);
+    assert.deepEqual(rowsFromMonthGrid(file, 2026).map(r => [r.lineName, r.amount, r.direction]), [
+      ['Entry Fees', '2500', 'out'],
+      ['Chocolate Sale', '1800', 'in'],
     ]);
   });
 });
@@ -229,7 +303,8 @@ describe('rowsFromPayables', () => {
 
 describe('reviewBudgetRows', () => {
   const existing: ExistingBudgetLine[] = [
-    { id: 'l1', description: 'Entry Fees', categoryName: 'Tournaments', totalAmount: 3300 },
+    { id: 'l1', description: 'Entry Fees', categoryName: 'Tournaments', totalAmount: 3300, direction: 'out' },
+    { id: 'l2', description: 'Gate Revenue', categoryName: 'Tournaments', totalAmount: 1200, direction: 'in' },
   ];
 
   function review(rows: Parameters<typeof reviewBudgetRows>[0]) {
@@ -238,7 +313,7 @@ describe('reviewBudgetRows', () => {
 
   const row = (over: Partial<Parameters<typeof reviewBudgetRows>[0][number]>) => ({
     rowNumber: 1, categoryName: 'Tournaments', lineName: 'Uniforms',
-    amount: '900', notes: '', periods: [], ...over,
+    amount: '900', notes: '', periods: [], direction: 'out' as const, ...over,
   });
 
   it('adds a line that does not exist and updates one that does', () => {
@@ -295,7 +370,7 @@ describe('reviewPayableRows', () => {
     amount: '600', depositAmount: '600', depositDueDate: '2026-04-01',
     balanceAmount: '', balanceDueDate: '', ...over,
   });
-  const cats: KnownCategory[] = [...CATEGORIES, { id: 'c3', name: 'Facilities', items: [] }];
+  const cats: KnownCategory[] = [...CATEGORIES, { id: 'c3', name: 'Facilities', items: [], incomeItems: [] }];
 
   it('always adds — a commitment has no identity to overwrite', () => {
     const [r] = reviewPayableRows([row({})], cats, []);
@@ -362,7 +437,10 @@ describe('templates (D-G1: structure, never amounts)', () => {
    ══════════════════════════════════════════════════════════════════════════════════════════ */
 
 function draft(over: Partial<DraftBudgetRow> = {}): DraftBudgetRow {
-  return { rowNumber: 1, categoryName: 'Tournaments', lineName: 'Entry Fees', amount: '100', notes: '', periods: [], ...over };
+  return {
+    rowNumber: 1, categoryName: 'Tournaments', lineName: 'Entry Fees', amount: '100',
+    notes: '', periods: [], direction: 'out', ...over,
+  };
 }
 
 describe('normalizeWord', () => {
@@ -412,8 +490,7 @@ describe('snapping a sheet to the library’s own spelling', () => {
   it('snaps NOTHING when two library words normalise the same — mig 248 keys on lower(name), so both can exist', () => {
     const ambiguous: KnownCategory[] = [{
       id: 'c1', name: 'Tournaments',
-      items: [{ id: 'i1', name: 'Entry Fees' }, { id: 'i9', name: 'Entry-Fees' }],
-    }];
+      items: [{ id: 'i1', name: 'Entry Fees' }, { id: 'i9', name: 'Entry-Fees' }], incomeItems: [] }];
     const [row] = snapBudgetRowsToLibrary([draft({ lineName: 'entry fees' })], ambiguous);
     assert.equal(row.lineName, 'entry fees');
   });
@@ -466,8 +543,7 @@ describe('telling the coach when a row would mint a new cost name', () => {
   it('suggests nothing when two library words are equally close — a coin-toss fix is worse than none', () => {
     const twins: KnownCategory[] = [{
       id: 'c1', name: 'Tournaments',
-      items: [{ id: 'i1', name: 'Bat' }, { id: 'i2', name: 'Hat' }],
-    }];
+      items: [{ id: 'i1', name: 'Bat' }, { id: 'i2', name: 'Hat' }], incomeItems: [] }];
     const [row] = reviewBudgetRows([draft({ lineName: 'Cat' })], twins, []);
     assert.equal(row.suggestion, undefined);
     assert.match(row.warning ?? '', /New name — adds/);
@@ -475,7 +551,7 @@ describe('telling the coach when a row would mint a new cost name', () => {
 
   it('leaves an UPDATE alone — it matched an existing line, so it is not inventing anything', () => {
     const existing: ExistingBudgetLine[] = [
-      { id: 'l1', description: 'Entry Fee', categoryName: 'Tournaments', totalAmount: 100 },
+      { id: 'l1', description: 'Entry Fee', categoryName: 'Tournaments', totalAmount: 100, direction: 'out' },
     ];
     const [row] = reviewBudgetRows([draft({ lineName: 'Entry Fee' })], CATEGORIES, existing);
     assert.equal(row.outcome, 'update');
@@ -489,10 +565,10 @@ describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
       { id: 'c1', name: 'Tournaments', items: [
         { id: 'i1', name: 'Entry Fees', source: 'standard' },
         { id: 'i2', name: 'Charter Bus', source: 'team' },
-      ] },
-      { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }] },
-      { id: 'c3', name: 'Empty', items: [] },
-      { id: 'c4', name: 'Other Income', items: [], incomeNameCount: 4 },
+      ], incomeItems: [] },
+      { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }], incomeItems: [] },
+      { id: 'c3', name: 'Empty', items: [], incomeItems: [] },
+      { id: 'c4', name: 'Other Income', items: [], incomeItems: [{ id: 'in1', name: 'Income 1' }, { id: 'in2', name: 'Income 2' }, { id: 'in3', name: 'Income 3' }, { id: 'in4', name: 'Income 4' }] },
     ];
     assert.deepEqual(referenceSheetRows(cats), [
       ['Tournaments', 'Entry Fees', 'Standard'],
@@ -515,10 +591,9 @@ describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
       id: 'c1', name: 'Fundraising', items: [
         { id: 'i1', name: 'Raffle', orgId: null, teamId: null, direction: 'in' },
         { id: 'i2', name: 'Bottle drive', orgId: null, teamId: null, direction: 'in' },
-      ],
-    }]);
-    assert.deepEqual(fundraising.items, [], 'cost words only, as it has always been');
-    assert.equal(fundraising.incomeNameCount, 2);
+      ] }]);
+    assert.deepEqual(fundraising.items, [], 'the cost list holds only cost words, as it always has');
+    assert.deepEqual(fundraising.incomeItems.map(i => i.name), ['Raffle', 'Bottle drive']);
     assert.deepEqual(referenceSheetRows([fundraising]), [
       ['Fundraising', 'Income names only — type your own', ''],
     ]);
@@ -526,9 +601,9 @@ describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
 
   it('builds dropdown sources: a de-duplicated fallback list, and a GROUPED pair block', () => {
     const cats: KnownCategory[] = [
-      { id: 'c1', name: 'Tournaments', items: [{ id: 'i1', name: 'Uniforms' }, { id: 'i2', name: 'Entry Fees' }] },
+      { id: 'c1', name: 'Tournaments', items: [{ id: 'i1', name: 'Uniforms' }, { id: 'i2', name: 'Entry Fees' }], incomeItems: [] },
       // 'uniforms' again, under another category — one entry in the flat fallback, not two…
-      { id: 'c2', name: 'Team Gear', items: [{ id: 'i3', name: 'uniforms' }, { id: 'i4', name: 'Bats' }] },
+      { id: 'c2', name: 'Team Gear', items: [{ id: 'i3', name: 'uniforms' }, { id: 'i4', name: 'Bats' }], incomeItems: [] },
     ];
     const lists = templateChoiceLists(cats);
     assert.deepEqual(lists.categories, ['Tournaments', 'Team Gear'], 'categories keep the library’s order');
@@ -563,34 +638,45 @@ describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
   });
 });
 
-describe('toKnownCategories — one mapping for all three screens that mount the importer', () => {
+describe('toKnownCategories — one mapping for all three screens AND the commit route', () => {
   const raw = [{
     id: 'c1', name: 'Fundraising', items: [
       { id: 'i1', name: 'Grant', orgId: null, teamId: null, direction: 'out' },
       // The same WORD on the income side. Mig 248 made the side part of its identity and the
-      // coach's picker shows one at a time — a cost import must never be able to match this.
+      // coach's picker shows one at a time — neither side may ever match against the other.
       { id: 'i2', name: 'Grant', orgId: 'org1', teamId: null, direction: 'in' },
       { id: 'i3', name: 'Raffle Licence', orgId: 'org1', teamId: 't1', direction: 'out' },
     ],
   }];
 
-  it('keeps cost words only', () => {
+  it('holds the two sides apart, one list each', () => {
     const [category] = toKnownCategories(raw);
     assert.deepEqual(category.items.map(i => i.id), ['i1', 'i3']);
+    assert.deepEqual(category.incomeItems.map(i => i.id), ['i2']);
   });
 
-  it('names each word’s tier in words a coach reads', () => {
+  it('names each word’s tier in words a coach reads, on both sides', () => {
     const [category] = toKnownCategories(raw);
     assert.deepEqual(category.items.map(i => i.source), ['standard', 'team']);
+    assert.deepEqual(category.incomeItems.map(i => i.source), ['club']);
   });
 
-  it('so an income word is never matched, suggested, or offered in a dropdown', () => {
+  it('so a cost row can never reach the income word of the same name, or the other way about', () => {
     const categories = toKnownCategories(raw);
-    const [row] = reviewBudgetRows(
+    const [cost] = reviewBudgetRows(
       [draft({ categoryName: 'Fundraising', lineName: 'Grant' })], categories, [],
     );
-    // Matched the COST "Grant" (i1) — the only one left standing — so no new-word warning.
-    assert.equal(row.warning, undefined);
+    // Matched the COST "Grant" (i1) — the only one its side can see — so no new-word warning.
+    assert.equal(cost.warning, undefined);
+
+    const [income] = reviewBudgetRows(
+      [draft({ categoryName: 'Fundraising', lineName: 'Grant', direction: 'in' })], categories, [],
+    );
+    // And this one matched the INCOME "Grant" (i2). Same word, two rows, neither borrowing the
+    // other's — which is the whole of what mig 248 says a word IS.
+    assert.equal(income.warning, undefined);
+
+    // The template is still spending-only, by design: its dropdowns offer cost words alone.
     assert.deepEqual(templateChoiceLists(categories).items, ['Grant', 'Raffle Licence']);
   });
 });

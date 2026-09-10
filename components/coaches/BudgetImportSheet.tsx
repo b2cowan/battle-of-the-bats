@@ -10,7 +10,7 @@ import type { ParsedImportFile } from '@/lib/import/types';
 import {
   rowsFromMonthGrid, rowsFromList, rowsFromPayables,
   reviewBudgetRows, reviewPayableRows, committable,
-  snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
+  snapBudgetRowsToLibrary, snapPayableRowsToLibrary, wordsFor,
   monthGridTemplateHeaders, templateExampleRows, templateMonths,
   budgetTemplateWorkbook, TEMPLATE_DATA_SHEET,
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS, MAX_IMPORT_ROWS,
@@ -19,6 +19,7 @@ import {
   type RowSuggestion,
 } from '@/lib/coach-budget-import';
 import { formatMonthLabel, type MonthKey } from '@/lib/coach-budget-months';
+import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './BudgetImportSheet.module.css';
 
@@ -272,10 +273,14 @@ export default function BudgetImportSheet({
 
   const categoryOptions = categories.map(c => c.name);
 
-  /** The type-ahead list for a row, keyed off whichever category that row currently names. */
-  function itemListId(categoryName: string): string | undefined {
+  /** The type-ahead list for a row, keyed off the category that row names AND the side it is on.
+   *
+   *  ⚠ THE SIDE IS PART OF THE KEY. A plan file's funding band brings in money-in rows, and mig 248
+   *  makes a word's side part of its identity — so offering a fundraising row the category's COST
+   *  names would be suggesting words it cannot legally become. */
+  function itemListId(categoryName: string, direction: 'in' | 'out'): string | undefined {
     const index = categories.findIndex(c => c.name.trim().toLowerCase() === categoryName.trim().toLowerCase());
-    return index >= 0 ? `budget-import-items-${index}` : undefined;
+    return index >= 0 ? `budget-import-items-${index}-${direction}` : undefined;
   }
 
   return (
@@ -407,11 +412,11 @@ export default function BudgetImportSheet({
 
             {/* One list per category, mounted once and pointed at by whichever rows name that
                 category. Rendered for the budget shapes only; a bill's description is free text. */}
-            {!isPayables && categories.map((c, index) => (
-              <datalist key={c.id} id={`budget-import-items-${index}`}>
-                {c.items.map(item => <option key={item.id} value={item.name} />)}
+            {!isPayables && categories.map((c, index) => (['out', 'in'] as const).map(side => (
+              <datalist key={`${c.id}-${side}`} id={`budget-import-items-${index}-${side}`}>
+                {wordsFor(c, side).map(item => <option key={item.id} value={item.name} />)}
               </datalist>
-            ))}
+            )))}
 
             <div className={styles.reviewWrap}>
               {isPayables ? (
@@ -480,16 +485,29 @@ export default function BudgetImportSheet({
                           </select>
                         </td>
                         <td>
-                          {/* Type-ahead over the cost names this category already holds — still a
-                              free-text field, because a coach must be able to name a cost we have
-                              never heard of. A closed <select> here would forbid that. */}
+                          {/* Type-ahead over the names this category already holds ON THIS ROW'S
+                              SIDE — still a free-text field, because a coach must be able to name
+                              something we have never heard of. A closed <select> would forbid it. */}
                           <input
                             className={styles.cellInput}
                             value={row.lineName}
-                            list={itemListId(row.categoryName)}
+                            list={itemListId(row.categoryName, row.direction)}
                             aria-label={`Line, row ${row.rowNumber}`}
                             onChange={e => updateBudgetRow(i, { lineName: e.target.value })}
                           />
+                          {/* ⚠ THE SIDE IS SHOWN, NOT ASSUMED. A plan file's FUNDING band is read as
+                              money in, and a coach must be able to SEE that before they commit —
+                              the whole point of a preview-first door.
+                              ⚠ THE WORD IS THE BAND'S OWN, from `PLAN_LADDER_LABEL` — the same
+                              record the reader matches the band row against, and the same word the
+                              plan screen and both plan files print above these lines. This chip
+                              answers "which band of your file did this row come from?", so the
+                              band's name is the honest answer as well as the one that cannot drift.
+                              Costs are the ordinary case and say nothing, exactly as the file's own
+                              Costs band is the one a sheet falls back to. */}
+                          {row.direction === 'in' && (
+                            <span className={styles.cellMeta}>{PLAN_LADDER_LABEL.fundingBand}</span>
+                          )}
                         </td>
                         <td className={styles.numCol}>
                           {row.periods.length > 0 ? (

@@ -10,13 +10,16 @@ import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
-import { isFundingKind, FUNDING_LINE_KINDS } from '@/lib/coach-budget-totals';
+import {
+  isFundingKind, FUNDING_LINE_KINDS, budgetLineKindForItem, type BudgetItemActualSource,
+} from '@/lib/coach-budget-totals';
+import { budgetItemSourceForCategory } from '@/lib/coach-budget-item-tiers';
 import {
   itemVisibleToTeam, categoryVisibleToTeam, isDuplicateItemLineError,
   type OwnedBudgetItem, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 import {
-  reviewBudgetRows, reviewPayableRows, moneyValue,
+  reviewBudgetRows, reviewPayableRows, moneyValue, toKnownCategories, wordsFor,
   snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
   MAX_IMPORT_ROWS,
   type DraftBudgetRow, type DraftPayableRow, type KnownCategory, type ExistingBudgetLine,
@@ -60,6 +63,12 @@ function toBudgetDraft(raw: unknown, index: number): DraftBudgetRow {
       const period = (p ?? {}) as Record<string, unknown>;
       return { month: str(period.month, 7), amount: str(period.amount, 40) };
     }).filter(p => /^\d{4}-\d{2}$/.test(p.month)),
+    /* Which BAND of the plan file this row came from. Narrowed rather than trusted: anything that is
+       not the word 'in' is money out, which is also what every payload written before this field
+       existed meant. The client is not the authority here — the route re-reviews every row against
+       live data — but a row's side decides which words it may match and which kind it writes, so it
+       is normalised at the door like every other field. */
+    direction: (source.direction === 'in' ? 'in' : 'out') as 'in' | 'out',
   };
 }
 
@@ -136,45 +145,60 @@ export const POST = withObservability(async (req: Request,
   // The taxonomy this org may link to: platform defaults + its own custom entries.
   const { data: categoryRows } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, name, org_id, team_id, budget_items(id, name, org_id, team_id, direction)')
+    /* ⚠ `income_source` rides along because THE SHELF DECIDES who fills a money-in word in (mig
+       285): a money-in word this import invents takes its `actual_source` from the heading it lands
+       under, exactly as the Add-item door does. The items' own `actual_source` is the same fact for
+       a word that already exists, and is what a line's KIND is derived from. */
+    .select('id, name, org_id, team_id, income_source, budget_items(id, name, org_id, team_id, direction, actual_source)')
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
-    // Team-visible categories only â the same filter the coach's own picker applies, so an
+    // Team-visible categories only - the same filter the coach's own picker applies, so an
     // imported sheet can never link a team budget to an org-admin-only category.
     .in('scope', ['team', 'both']);
 
-  const categories: KnownCategory[] = (categoryRows ?? [])
+  const visibleCategoryRows = (categoryRows ?? [])
     /* ⚠⚠ AND THIS TEAM'S VISIBLE CATEGORIES ONLY (mig 277) — the same rule the items below have
        carried since mig 240, now that the heading has an owner too. Without it an imported sheet
        could name another team's private heading in free text, match it, and file this team's whole
        plan under a category its own picker will never show it. An import matches on WORDS, which is
        exactly why it needs the ownership filter the picker applies: a name is guessable. */
     .filter(c => categoryVisibleToTeam(c as OwnedBudgetCategory, ctx!.org.id, team.id))
-    .map((c: Record<string, unknown>) => {
+    .map((c: Record<string, unknown>) => ({
+      row: c,
       // ⚠ THIS TEAM'S VISIBLE ITEMS ONLY (mig 240) — platform, club-published, or its own. Another
       // team's word must never be matched against, or an import would silently file this team's
       // budget under vocabulary its own picker will not even show.
-      const visible = ((c.budget_items ?? []) as Array<Record<string, unknown>>)
-        .filter(i => itemVisibleToTeam(i as OwnedBudgetItem, ctx!.org.id, team.id));
-      return {
-        id: c.id as string,
-        name: c.name as string,
-        /* ⚠ AND COST WORDS ONLY (mig 248). A word's SIDE is part of what identifies it — a team may
-           hold "Grant" as income (the cheque) and "Grant" as an expense (the application fee) — and
-           the coach's own picker shows one side at a time. This importer writes cost lines and
-           nothing else, so an unfiltered list let a spending row attach itself to an income word
-           the coach was never offered, on a screen where they could not see it happen. */
-        items: visible
-          .filter(i => (i.direction as string) === 'out')
-          .map(i => ({ id: i.id as string, name: i.name as string })),
-        /* ⚠ COUNTED EVEN THOUGH THIS ROUTE NEVER READS IT (/review, 2026-09-06). It is the field
-           that lets the template tell "no cost names yet" from "income names only", and this is the
-           second place in the product that builds a `KnownCategory`. Leaving it off here is correct
-           only for as long as nobody feeds this list to a reader that shows it — and the day someone
-           does, the failure is a category quietly mislabelled on a coach's downloaded file, with no
-           gate anywhere able to see it. Two lines now beats that. */
-        incomeNameCount: visible.filter(i => (i.direction as string) === 'in').length,
-      };
-    });
+      visible: ((c.budget_items ?? []) as Array<Record<string, unknown>>)
+        .filter(i => itemVisibleToTeam(i as OwnedBudgetItem, ctx!.org.id, team.id)),
+    }));
+
+  /* ⚠⚠ ONE BUILDER, SHARED WITH THE THREE SCREENS THAT MOUNT THE IMPORT SHEET (2026-09-10). This
+     route used to write the mapping out by hand, and its own comment called that "the second place
+     in the product that builds a `KnownCategory`" — correct, and the day the two sides had to be
+     held apart, both places needed the same change made the same way by two different people.
+     `toKnownCategories` holds that split (mig 248: a word's side is part of its identity); this
+     route asks it rather than re-deriving it. */
+  const categories: KnownCategory[] = toKnownCategories(
+    visibleCategoryRows.map(({ row, visible }) => ({
+      id: row.id as string,
+      name: row.name as string,
+      items: visible.map(i => ({
+        id: i.id as string,
+        name: i.name as string,
+        orgId: (i.org_id as string | null) ?? null,
+        teamId: (i.team_id as string | null) ?? null,
+        direction: i.direction as string,
+      })),
+    })),
+  );
+  /** The shelf's own answer to who fills its money-in words in — for a word this run has to create. */
+  const categoryIncomeSource = new Map(
+    visibleCategoryRows.map(({ row }) => [row.id as string, (row.income_source as string | null) ?? null]),
+  );
+  /** A word's own stored source, which is what its line's KIND derives from. */
+  const itemActualSource = new Map<string, string>();
+  for (const { visible } of visibleCategoryRows) {
+    for (const i of visible) itemActualSource.set(i.id as string, i.actual_source as string);
+  }
   const categoryByName = new Map(categories.map(c => [c.name.trim().toLowerCase(), c]));
 
   const created: Array<{ rowNumber: number; name: string }> = [];
@@ -244,10 +268,14 @@ export const POST = withObservability(async (req: Request,
     }
   } else {
     // ââ budget lines âââââââââââââââââââââââââââââââââââââââââââââââââââââ
-    // â  COST lines only. An imported sheet row is a cost by definition (the sheet has no column
-    // for a kind), and matching is by DESCRIPTION â so without this filter a row called
-    // "Fundraising" would match the team's expected-FUNDING line and quietly overwrite its amount
-    // and category, turning money coming in into money going out.
+    /* ⚠⚠ EVERY LINE, BOTH SIDES — AND THE SIDE IS PART OF THE MATCH (2026-09-10). This read was
+       cost-only, with a comment declaring "an imported sheet row is a cost by definition (the sheet
+       has no column for a kind)". That was true of the DATA and false of the FILE: the plan's own
+       export writes two bands, and hiding the money-in lines from the matcher is precisely why
+       every one of them re-imported as a NEW COST inside a revenue category. `ExistingBudgetLine`
+       carries its side now and `reviewBudgetRows` matches within it, which keeps the thing the old
+       filter was protecting — a row called "Fundraising" can still never overwrite the funding line
+       — in BOTH directions rather than by concealment. */
     const { data: lineRows } = await supabaseAdmin
       .from('rep_budget_lines')
       // ⚠ `item_id` rides along for the one-word-one-line guard below (owner ruling 2026-09-09).
@@ -255,17 +283,15 @@ export const POST = withObservability(async (req: Request,
       .eq('program_year_id', programYear.id)
       .order('sort_order');
 
-    // â  COST lines only for MATCHING. An imported sheet row is a cost by definition (the sheet has
-    // no column for a kind), and matching is by DESCRIPTION â so without this filter a row called
-    // "Fundraising" would match the team's expected-FUNDING line and quietly overwrite its amount
-    // and category, turning money coming in into money going out.
     const existing: ExistingBudgetLine[] = (lineRows ?? [])
-      .filter((l: Record<string, unknown>) => !isFundingKind(l.line_kind as string | null))
       .map((l: Record<string, unknown>) => ({
         id: l.id as string,
         description: l.description as string,
         categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
         totalAmount: (l.total_amount as number) ?? 0,
+        // The stored kind, narrowed through the ONE home for that question — not a hand-written
+        // list of money-in kinds, which has gone stale twice in this file alone.
+        direction: (isFundingKind(l.line_kind as string | null) ? 'in' : 'out') as 'in' | 'out',
       }));
 
     // Continue the plan's existing order rather than restarting at 0 â write order IS display
@@ -316,7 +342,11 @@ export const POST = withObservability(async (req: Request,
          sheet name the library does not know CREATES a team item from it: the same thing the coach
          would have done in the picker, done for them by the door they actually used. It belongs to
          this team alone, like every other item a coach creates. */
-      let item = category.items.find(i => i.name.trim().toLowerCase() === row.lineName.trim().toLowerCase());
+      /* ⚠ AND ON THE ROW'S OWN SIDE, ALWAYS. `wordsFor` is the one answer to "which words may this
+         row become" — shared with the snapper, the preview's type-ahead and the new-word verdict,
+         so a money-in row can neither match nor mint a spending word. */
+      const words = wordsFor(category, row.direction);
+      let item = words.find(i => i.name.trim().toLowerCase() === row.lineName.trim().toLowerCase());
       if (!item && row.lineName.trim()) {
         const name = row.lineName.trim().slice(0, 80);
         const { data: madeItem, error: itemError } = await supabaseAdmin
@@ -324,12 +354,19 @@ export const POST = withObservability(async (req: Request,
           .insert({
             category_id: category.id, org_id: ctx!.org.id, team_id: team.id,
             name, is_default: false, is_misc: false,
-            /* ⚠ ALWAYS 'out', AND THAT IS A FACT ABOUT THIS DOOR, NOT A DEFAULT (mig 246). The
-               importer refuses money-IN lines outright — funding and sponsorship rows are filtered
-               at the read and blocked again at the write — so every line it can possibly create an
-               item for is a cost. A word invented here therefore belongs on the Expense side, and
-               the coach finds it exactly where the row that created it lives. */
-            direction: 'out',
+            /* ⚠ THE ROW'S OWN SIDE, READ FROM THE FILE'S BANDS (mig 246 + 2026-09-10). This was
+               hardcoded `'out'`, on the reasoning that "the importer refuses money-IN lines
+               outright" — true until the day the file's FUNDING band could be read, and the reason
+               a re-imported plan minted "Chocolate Sale" as something the team SPENDS money on. */
+            direction: row.direction,
+            /* ⚠ THE SHELF DECIDES WHO FILLS IT IN (mig 285), never this door's own guess — the same
+               call `budgetItemSourceForCategory` makes for the Add-item form, so a word invented
+               here is indistinguishable from one the coach typed in the picker. A money-out word is
+               always 'typed', which the database's own CHECK also insists on. */
+            actual_source: budgetItemSourceForCategory(
+              row.direction,
+              { income_source: categoryIncomeSource.get(category.id) ?? null },
+            ),
           })
           .select('id, name')
           .single();
@@ -337,27 +374,38 @@ export const POST = withObservability(async (req: Request,
           item = { id: madeItem.id as string, name: madeItem.name as string };
           // Keep the in-memory library current so two sheet rows naming the same thing land on ONE
           // item rather than racing to create it twice.
-          category.items.push(item);
+          words.push(item);
         } else if (itemError?.code === '23505') {
           /* ⚠ SOMEBODY ELSE CREATED IT BETWEEN OUR READ AND OUR WRITE — a second import in another
              tab, or a coach using "+ Add custom item" mid-import. Swallowing this left `item`
              undefined and wrote the line with NO item, reported as a clean import: the row lands
              under "Not itemized" and neither coach is told. Take the winner instead. */
           /* ⚠ `direction` IS PART OF THE KEY THIS RECOVERY IS RECOVERING FROM (mig 248). Without
-             it, a team already holding this name on the INCOME side matches two rows and
+             it, a team already holding this name on the OTHER side matches two rows and
              `maybeSingle()` fails — turning a race we know how to survive into "Could not add this
-             to your item list", which tells the coach nothing they can act on. */
+             to your item list", which tells the coach nothing they can act on. It is the ROW's side
+             now, not a literal: a money-in row recovering onto the cost word of the same name would
+             file money coming in as spending, which is the very thing this build exists to stop. */
           const { data: winner } = await supabaseAdmin
             .from('budget_items')
-            .select('id, name')
+            .select('id, name, actual_source')
             .eq('category_id', category.id).eq('org_id', ctx!.org.id).eq('team_id', team.id)
-            .eq('direction', 'out')
+            .eq('direction', row.direction)
             .ilike('name', name)
             .maybeSingle();
           if (winner) {
             item = { id: winner.id as string, name: winner.name as string };
-            category.items.push(item);
+            itemActualSource.set(item.id, winner.actual_source as string);
+            words.push(item);
           }
+        }
+        /* The word this run invented takes the source we just wrote, so the line's KIND below reads
+           it from the same place a pre-existing word's does. */
+        if (item && !itemActualSource.has(item.id)) {
+          itemActualSource.set(item.id, budgetItemSourceForCategory(
+            row.direction,
+            { income_source: categoryIncomeSource.get(category.id) ?? null },
+          ));
         }
         if (!item) {
           // Still nothing to name it with — refuse the row rather than importing a nameless line
@@ -386,30 +434,46 @@ export const POST = withObservability(async (req: Request,
       }
 
       let lineId = row.matchedLineId;
+      /* ⚠⚠ THE KIND IS DERIVED FROM THE WORD, NEVER DEFAULTED (mig 280, and the one home for that
+         question is `budgetLineKindForItem`). This insert wrote no `line_kind` at all and took the
+         column default, `cost` — which was invisible for as long as every row was a cost, and is
+         the write half of the round-trip defect: a fundraising line re-imported would have landed
+         with a money-IN item and a `cost` kind, the exact "the kind disagrees with its item" state
+         mig 280 exists to make unexpressible. Reading the item's own source means a fifth money-in
+         kind is covered by nothing more than being declared. */
+      const lineKind = item
+        ? budgetLineKindForItem({
+            direction: row.direction,
+            actualSource: (itemActualSource.get(item.id) ?? 'typed') as BudgetItemActualSource,
+          })
+        : 'cost';
       if (row.outcome === 'update' && lineId) {
-        const { error } = await supabaseAdmin
+        const write = supabaseAdmin
           .from('rep_budget_lines')
           .update({
             total_amount: row.total,
             notes: row.notes || null,
             category_id: category.id,
             item_id: item?.id ?? null,
+            // Written on the way through so the line's kind can never disagree with the word it now
+            // names — the same derivation the single-line edit door goes through.
+            line_kind: lineKind,
             updated_at: new Date().toISOString(),
           })
           .eq('id', lineId)
-          .eq('program_year_id', programYear.id)
-          /* Belt and braces with the cost-only read above: the matched id came from a payload the
-             client sends back, so the write refuses a MONEY-IN line even if that payload is stale
-             or crafted.
-             ⚠⚠ THE HAND-WRITTEN LIST WENT STALE TWICE, so it is gone. It named only 'funding'
-             until 2026-08-15 — and its replacement comment then claimed "both kinds" while
-             migration 274 was about to add a THIRD money-in kind (2026-09-02), which nobody came
-             back for. So an `other_income` line has been open to being overwritten with a COST
-             row's word and amount: the exact "the kind disagrees with its item" state migration
-             280 exists to make unexpressible, arriving through the one write door that does not
-             go through the derivation. Built from the shared list now, so a fifth kind is covered
-             by nothing more than being declared. */
-          .not('line_kind', 'in', `(${FUNDING_LINE_KINDS.join(',')})`);
+          .eq('program_year_id', programYear.id);
+        /* ⚠ A ROW MAY ONLY EVER CHANGE A LINE ON ITS OWN SIDE. The matched id came from a payload
+           the client sends back, so this is belt and braces against a stale or crafted one — but it
+           is SYMMETRIC now, where it used to be a one-way "cost rows may not touch money-in lines".
+           A money-in row must not reach a cost line either; the review above already refuses to
+           match one, and this is that same rule at the write.
+           ⚠⚠ THE HAND-WRITTEN LIST WENT STALE TWICE, so it is gone. It named only 'funding' until
+           2026-08-15 — and its replacement comment then claimed "both kinds" while migration 274 was
+           about to add a THIRD money-in kind (2026-09-02), which nobody came back for. Built from
+           the shared list, so a fifth kind is covered by nothing more than being declared. */
+        const { error } = await (row.direction === 'in'
+          ? write.in('line_kind', FUNDING_LINE_KINDS)
+          : write.not('line_kind', 'in', `(${FUNDING_LINE_KINDS.join(',')})`));
         if (error) { failed.push({ rowNumber: row.rowNumber, name: label, error: error.message }); continue; }
         updated.push({ rowNumber: row.rowNumber, name: label });
       } else {
@@ -424,6 +488,7 @@ export const POST = withObservability(async (req: Request,
             description: row.lineName,
             total_amount: row.total,
             notes: row.notes || null,
+            line_kind: lineKind,
             sort_order: nextSortOrder,
           })
           .select('id')

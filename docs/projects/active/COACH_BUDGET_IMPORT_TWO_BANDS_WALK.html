@@ -1,0 +1,460 @@
+<title>The Plan File Reads Back Whole</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.ask{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §165 · Coaches portal → Money → Budget</p>
+  <h1>The plan file reads back whole</h1>
+  <p class="lede">Download your season budget plan, then import that same file. Every line should come
+    back as a change <b>to itself</b> — costs to your cost lines, money in to your money-in lines —
+    with nothing added, nothing dropped and nothing refused.
+    <br><br>This walk exists because <b>§158's step C2</b> described one known gap: money-in lines
+    re-importing as new costs. Building the fix turned up <b>two more breaks in the same file</b>,
+    both older and both worse, and neither visible to any gate. This walk checks all three at once —
+    and the fastest way to fail it is to find <i>anything</i> in the preview that is not the word
+    <b>Updates</b>.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b> → <b>Budget</b>. Every step is
+    <b>Export</b> then <b>Import</b> on that one tab. Only the last part commits anything; everything
+    before it ends on <b>Cancel</b>.</p>
+  <div class="warn"><b>Cancel every preview until Part D.</b> If you commit one by accident the plan
+    gains duplicate lines and the later steps stop meaning anything — say so in the notes and stop
+    rather than carrying on.</div>
+  <div class="tip"><b>What to hold on to — the shape, not the digits.</b> This team's plan has cost
+    lines under real categories, and money-in lines under <b>Fundraising</b>, <b>Tournaments</b> and
+    <b>Other Income</b>. Before you start, note two things off the Budget tab: <b>how many lines the
+    plan has</b>, and the two tile figures <b>Planned costs</b> and <b>Planned funding</b>. Every
+    preview in this walk should show that same number of rows, all of them <b>Updates</b>. Whether the
+    dollars are right is the tiles' job; what this walk tests is that every line finds <i>itself</i>.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The statement file, out and back</h2>
+  <p>Money → <b>Budget</b>, <b>List</b> view. <b>Export ▾ → CSV</b>, then <b>Import</b> at the top of
+    Money → <b>Budget lines</b> → the <b>Simple list</b> shape → choose that file.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>Every row says Updates</h3></div></div>
+  <div class="step-body">
+    <p class="why">This is the whole test, and until 2026-09-10 it failed three different ways at once.
+      Read the preview before touching anything.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">The preview holds <b>one row per line of your plan</b> — the count you noted, no more and no fewer</label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">Every row's verdict reads <b>Updates</b>. Not one says <b>Adds</b><span class="hintline">An "Adds" here means a line failed to find itself — the defect this walk is about.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Every row carries its <b>amount</b>, and nothing says <b>Can't import</b><span class="hintline">Since 2026-09-02 the money column has been called "Planned" and the importer had never heard of that word, so every row arrived blank and was refused. That is the break you would have hit first.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1d"><label for="a1d">Your <b>cost</b> lines are all present — not one has vanished<span class="hintline">Since 2026-09-09 a cost row printed with no line marker, so the importer read it as a category name and dropped the line. Count them.</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>The funding band is marked as funding</h3></div></div>
+  <div class="step-body">
+    <p class="why">The file writes two bands, <b>COSTS</b> and <b>FUNDING</b>. Rows under the second one
+      are money coming in, and the preview should say so where you can see it <i>before</i> committing.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">Each money-in line (the drive, the sponsor, the tournament revenue) is marked <b>Funding</b> under its name</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">No <b>cost</b> row carries that word</label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">Click into a money-in row's <b>Line</b> box: the suggestions offered are your <b>money-in</b> words, not your costs</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>Nothing the file computed comes back as a line</h3></div></div>
+  <div class="step-body">
+    <p class="why">The file carries headings, subtotals and a closing ladder. None of them is a budget
+      line, and a re-import that invented one would quietly inflate the plan.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">No row named <b>COSTS</b>, <b>FUNDING</b>, <b>Planned costs</b> or <b>Planned funding</b></label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">No row named <b>Costs less funding</b>, <b>Player installments</b>, <b>Lines so far</b> or <b>Still to itemize</b></label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">No <b>category name</b> arriving as a line of its own</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><div class="step-t"><h3>Cancel — then the same plan as Excel</h3></div></div>
+  <div class="step-body">
+    <p class="why"><b>Cancel.</b> Then <b>Export ▾ → Excel</b> and import that. Excel nests its lines
+      with a real indent instead of the dash the CSV uses, so it is a genuinely different read of the
+      same plan — and it is the format most coaches will actually use.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a4a"><label for="a4a">The Excel file gives the <b>same rows, the same verdicts and the same tags</b> as the CSV did</label></div>
+      <div class="chk"><input type="checkbox" id="a4b"><label for="a4b">Cancelled again — nothing has been written to the plan by either pass</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The by-period file, out and back</h2>
+  <p>Still on <b>Budget</b>, switch to <b>By period</b> at <b>month</b> grain. <b>Export ▾ → Excel</b>,
+    then Import → <b>Budget lines</b> → the <b>Month grid</b> shape.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>The same answers, plus the schedule</h3></div></div>
+  <div class="step-body">
+    <p class="why">This file spreads each line across months, so it carries something the statement file
+      does not: <b>when</b> the money moves. A re-import that flattened it would rewrite every line's
+      payment plan on commit.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Every row is an <b>Update</b>, both bands, with its amount — as in Part A</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">The <b>Dates</b> column shows each line's own months, not "no dates"</label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">Money-in rows are marked <b>Funding</b> here too</label></div>
+      <div class="chk"><input type="checkbox" id="b1d"><label for="b1d">Cancelled</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>Quarter grain — a known limit, not a defect</h3><div class="tags"><span class="tag think">Known limit</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Switch <b>By period</b> to <b>quarters</b>, export, and import that. A quarter column
+      is not a month, and the importer will not split one into three — inventing dates a coach never
+      typed is the thing this door is built never to do. So the rows come back <b>named correctly but
+      without amounts</b>, and are refused rather than guessed at. <b>This is the intended behaviour</b>,
+      and it predates this build. Seen and understood, not a Flag — unless you would rather it did
+      something else, in which case say so in the notes.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">The rows are there with the right names and categories, refused for want of an amount — not silently filed with a wrong figure</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">Cancelled</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>Everything that is not our own file</h2>
+  <p>The band rule must not reach a sheet that never asked for it. These two steps are the regression
+    check on every coach who builds their own spreadsheet.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>A hand-built sheet is still all spending</h3></div></div>
+  <div class="step-body">
+    <p class="why">Import → <b>Budget lines</b> → <b>Simple list</b> → the <b>paste</b> tab. Paste three
+      lines of your own with no headings at all — a category, a name and an amount per line, one of
+      them deliberately named after a fundraiser (say <i>Fundraising · Chocolate Sale · 1800</i>).</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">All three arrive as <b>costs</b> — not one is marked <b>Funding</b>, including the one named after a fundraiser<span class="hintline">A sheet with no FUNDING heading is a spending sheet, exactly as it has always been. Only our own file says otherwise.</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Cancelled</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>The blank template still works, and now says how to plan money in</h3></div></div>
+  <div class="step-body">
+    <p class="why">Import → <b>Budget lines</b> → <b>Download a template</b> (Excel). Open it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">The <b>Reference</b> tab still lists your categories and cost names, with no amount anywhere</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">The note under that table now ends by telling you to add a row saying <b>FUNDING</b> if you want to plan money coming in from the sheet<span class="hintline">The template itself is still built for spending — its Line dropdown offers cost names only. The sentence stops the promise being half-true now that the importer reads bands.</span></label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">Type two cost rows into the <b>Data</b> tab, add a <b>FUNDING</b> row beneath them and a money-in line under that, and import it: the costs arrive as costs and the last one is marked <b>Funding</b></label></div>
+      <div class="chk"><input type="checkbox" id="c2d"><label for="c2d">Cancelled</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The one commit, and the help sentence</h2>
+  <p>One step actually writes, so that "Updates" is proved to mean what it says rather than merely to
+    read well in a preview.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Commit an untouched round trip and watch the plan not move</h3><div class="tags"><span class="tag ask">Writes</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Note <b>Planned costs</b> and <b>Planned funding</b> and the line count. Export the
+      List as Excel, import it back <b>without editing the file</b>, and this time press <b>Import</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">The result says everything was <b>updated</b> and <b>nothing was added</b></label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">Both tiles read <b>exactly what they read before</b>, to the cent</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">The plan has the <b>same number of lines</b>, and no line has moved band<span class="hintline">The old behaviour would have left a cost line sitting inside Fundraising here.</span></label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d">Open <b>Manage categories &amp; items</b>: no new word has appeared on the spending side named after a fundraiser or a sponsor</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>The guide no longer states the old rule as a fact</h3></div></div>
+  <div class="step-body">
+    <p class="why">Money → the <b>?</b> → the import guide → <b>Templates, and what an import will not
+      do</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">It no longer says "a spreadsheet row is always a cost… add those on the plan itself"</label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">It explains the <b>FUNDING</b> heading, the mark the preview puts on those rows, and that costs and funding can never land on each other — and reads as one paragraph rather than a patch</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<footer>
+  <p><b>§165</b> · The plan file reads back whole · plan
+    <code>docs/projects/active/COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md</code></p>
+  <p>Press <b>Copy findings</b> and paste the result back into the chat.</p>
+</footer>
+
+<textarea id="out" class="out" readonly></textarea>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast"></span></div>
+
+</div>
+
+<script>
+(function(){
+  var KEY='fl-qa-165-plan-file-round-trip';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('.step textarea'));
+  var out=document.getElementById('out');
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v){ st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); }); }
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §165 — The plan file reads back whole','Fixture: UAT Test Team · built on dev 2026-09-10',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var hint=lab.querySelector('.hintline');
+        var txt=lab.textContent;
+        if(hint) txt=txt.replace(hint.textContent,'');
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt.replace(/\s+/g,' ').trim());
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    lines.push('B2 is a known limit rather than a defect — a word on it if you would rather it behaved differently.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

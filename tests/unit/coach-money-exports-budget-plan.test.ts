@@ -81,7 +81,11 @@ describe('the statement file (List view, and every PDF)', () => {
          IS that line — its schedule, its amount, its note. The nesting is what kept breaking the
          round trip: a spreadsheet can hide an indented row and the importer reads it back as a line
          the coach never wrote. */
-      'Entry Fees',
+      /* ⚠ THE LINE MARKER (2026-09-10). A cost word's row printed FLUSH, so a flat file had nothing
+         to tell it from the category heading above it, and the re-importer read every cost line as
+         a category name and dropped it. The funding half of this same file never stopped writing
+         the dash; Excel strips it from both and indents instead. */
+      '  — Entry Fees',
       'Planned costs',
       'FUNDING',
       // The CATEGORY the line was filed in (owner ruling 2026-09-09) — never its stored kind. Bare
@@ -134,7 +138,7 @@ describe('the statement file (List view, and every PDF)', () => {
     const { rows, kinds } = budgetPlanStatementRows(src);
     // No Funding band, no Planned funding, no Costs less funding: nothing to subtract. The old
     // "Total planned budget" close is retired — Planned costs already says it one row up.
-    assert.deepEqual(rows.map(r => r.item), ['COSTS', 'Facilities', 'Dome Time', 'Planned costs', 'Player installments (estimated)']);
+    assert.deepEqual(rows.map(r => r.item), ['COSTS', 'Facilities', '  — Dome Time', 'Planned costs', 'Player installments (estimated)']);
     assert.deepEqual(kinds, ['section', 'category', 'item', 'total', 'total']);
     // ⚠ THE MONTHS THEMSELVES, not "Jan–Mar · 3 chunks". A count is not an answer to "when",
     // and the old label could not say that a partly-dated line had money with no date at all.
@@ -248,7 +252,7 @@ describe('the statement file — a word is one row, on both sides of the plan', 
     const { rows } = budgetPlanStatementRows(oneWord());
     const nested = rows.map(r => String(r.item)).filter(i => i.startsWith('    '));
     assert.deepEqual(nested, [], 'a nested row is one the spreadsheet can hide and the importer can invent');
-    const word = rows.find(r => r.item === 'Entry Fees');
+    const word = rows.find(r => r.item === '  — Entry Fees');
     assert.equal(word?.planned, 2500);
     assert.equal(word?.schedule, 'May', 'the file drops nothing — the schedule stays in its own column');
     assert.equal(word?.notes, 'Spring classic');
@@ -268,7 +272,7 @@ describe('the statement file — a word is one row, on both sides of the plan', 
       ],
     }];
     const { rows } = budgetPlanStatementRows(src);
-    const bucket = rows.find(r => r.item === 'Not itemized');
+    const bucket = rows.find(r => r.item === '  — Not itemized');
     assert.equal(bucket?.planned, 2500, 'the bucket carries its own sum, never one line’s figure');
     assert.equal(bucket?.schedule, '', 'no single line speaks for the bucket, so it claims no schedule');
   });

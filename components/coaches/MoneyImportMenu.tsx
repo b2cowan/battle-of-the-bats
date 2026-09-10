@@ -214,13 +214,18 @@ export default function MoneyImportMenu({
           orgSlug={orgSlug}
           teamId={teamId}
           categories={toKnownCategories(importPrep.categories)}
-          // COST lines only, matching what the import's write path enforces: a sheet row has no
-          // kind, so offering a funding line as a match target would let "Fundraising" in a
-          // spreadsheet overwrite the money the team plans to RAISE.
+          /* ⚠ EVERY LINE, EACH CARRYING ITS SIDE — the twin of the Budget panel's own list, and it
+             moved for the same reason: a row matches only its own side now, so the "Fundraising"
+             overwrite this used to prevent by CONCEALMENT is prevented by the rule instead, and a
+             money-in row can finally find the line it was exported from. */
           existingLines={importTarget === 'budget'
-            ? (importPrep.plan?.lines ?? [])
-                .filter(l => !isFundingKind(l.lineKind))
-                .map(l => ({ id: l.id, description: l.description, categoryName: l.categoryName, totalAmount: l.totalAmount }))
+            ? (importPrep.plan?.lines ?? []).map(l => ({
+                id: l.id,
+                description: l.description,
+                categoryName: l.categoryName,
+                totalAmount: l.totalAmount,
+                direction: (isFundingKind(l.lineKind) ? 'in' : 'out') as 'in' | 'out',
+              }))
             : []}
           existingPayableDescriptions={importTarget === 'payables' ? importPrep.payableDescriptions : []}
           seasonYear={importPrep.seasonYear}

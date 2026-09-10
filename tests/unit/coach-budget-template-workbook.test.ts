@@ -26,12 +26,12 @@ const CATEGORIES: KnownCategory[] = [
   { id: 'c1', name: 'Tournaments', items: [
     { id: 'i1', name: 'Entry Fees', source: 'standard' },
     { id: 'i2', name: 'Charter Bus', source: 'team' },
-  ] },
-  { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }] },
+  ], incomeItems: [] },
+  { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }], incomeItems: [] },
   // The two blanks that are NOT the same blank — a heading waiting for its first cost name, and a
   // heading whose whole vocabulary sits on the income side this sheet filters out.
-  { id: 'c3', name: 'Provincials Trip', items: [] },
-  { id: 'c4', name: 'Other Income', items: [], incomeNameCount: 4 },
+  { id: 'c3', name: 'Provincials Trip', items: [], incomeItems: [] },
+  { id: 'c4', name: 'Other Income', items: [], incomeItems: [{ id: 'in1', name: 'Income 1' }, { id: 'in2', name: 'Income 2' }, { id: 'in3', name: 'Income 3' }, { id: 'in4', name: 'Income 4' }] },
 ];
 
 const MONTHS = ['2026-09', '2026-10'] as const;
@@ -284,9 +284,9 @@ describe('the budget template workbook', () => {
        team. Left as two blocks, MATCH finds the first and COUNTIF counts both, so the dropdown
        serves one over-long slice that reaches into whatever category sits between them. */
     const twins: KnownCategory[] = [
-      { id: 'c1', name: 'Travel', items: [{ id: 'i1', name: 'Transport' }] },
-      { id: 'c2', name: 'Officials', items: [{ id: 'i2', name: 'Umpire Fees' }] },
-      { id: 'c3', name: 'travel', items: [{ id: 'i3', name: 'Accommodation' }] }, // the club's own
+      { id: 'c1', name: 'Travel', items: [{ id: 'i1', name: 'Transport' }], incomeItems: [] },
+      { id: 'c2', name: 'Officials', items: [{ id: 'i2', name: 'Umpire Fees' }], incomeItems: [] },
+      { id: 'c3', name: 'travel', items: [{ id: 'i3', name: 'Accommodation' }], incomeItems: [] }, // the club's own
     ];
     const { rows, options } = budgetTemplateWorkbook(HEADERS, twins);
     const { book } = await reload(buildXLSXWorkbook(HEADERS, rows, TEMPLATE_DATA_SHEET, options));

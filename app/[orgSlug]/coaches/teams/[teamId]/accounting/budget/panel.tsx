@@ -4256,11 +4256,18 @@ export function BudgetPlanPanel({
           orgSlug={orgSlug}
           teamId={teamId}
           categories={toKnownCategories(categories)}
-          // COST lines only — the same rule the import's write path enforces. A sheet row has no
-          // kind, so it is always a cost; offering an expected-funding line as a match target
-          // would let "Fundraising" in a spreadsheet overwrite the money the team plans to raise.
-          existingLines={(plan?.lines ?? []).filter(l => !isFundingKind(l.lineKind)).map(l => ({
-            id: l.id, description: l.description, categoryName: l.categoryName, totalAmount: l.totalAmount,
+          /* ⚠ EVERY LINE, EACH CARRYING ITS SIDE (2026-09-10). This filtered the funding lines OUT,
+             on the reasoning that a sheet row has no kind and offering one as a match target would
+             let "Fundraising" in a spreadsheet overwrite the money the team plans to raise. The
+             overwrite is still refused — a row matches only its own side now, in the review and
+             again at the write — but hiding those lines is exactly why every money-in line of the
+             plan's OWN exported file came back as a new cost. */
+          existingLines={(plan?.lines ?? []).map(l => ({
+            id: l.id,
+            description: l.description,
+            categoryName: l.categoryName,
+            totalAmount: l.totalAmount,
+            direction: (isFundingKind(l.lineKind) ? 'in' : 'out') as 'in' | 'out',
           }))}
           existingPayableDescriptions={[]}
           seasonYear={seasonYear}

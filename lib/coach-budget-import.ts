@@ -1,5 +1,5 @@
 import { getCell } from './import/tabular.ts';
-import type { ParsedImportFile } from './import/types.ts';
+import type { ParsedImportFile, ParsedImportRow } from './import/types.ts';
 import type { XlsxOptions, XlsxColumnChoice, XlsxColumnFlag, XlsxGuideLine } from './export/xlsx.ts';
 import { formatMonthLabel, type MonthKey } from './coach-budget-months.ts';
 import { PLAN_LADDER_LABEL } from './coach-budget-totals';
@@ -50,6 +50,18 @@ export interface DraftBudgetRow {
   notes: string;
   /** month-grid only. Empty = a lump sum with no date. */
   periods: DraftPeriod[];
+  /**
+   * Which side of the plan this row belongs to, read from the file's own BAND rows.
+   *
+   * ⚠ MONEY OUT IS THE DEFAULT AND ALWAYS WILL BE. A sheet with no band row — every hand-built
+   * one, every template download, every plan file written before 2026-09-08 — is a spending sheet,
+   * exactly as this importer has always read it. Only a file that says otherwise, in the words the
+   * plan screen itself prints, is read otherwise. See `bandOf`.
+   *
+   * ⚠ Typed inline rather than as `BudgetItemDirection`: this module stays free of `lib/types` so
+   * it can be pulled into a client bundle unchanged (the same reason `budgetLineKindForItem` does).
+   */
+  direction: 'in' | 'out';
 }
 
 export interface DraftPayableRow {
@@ -101,7 +113,15 @@ export const ALIASES = {
   category:    ['category', 'cat', 'budget category'],
   line:        ['line', 'line item', 'item', 'description', 'cost', 'what'],
   combined:    ['category / line', 'category line', 'category or line'],
-  amount:      ['amount', 'total', 'cost', 'budget', 'estimated', 'estimate'],
+  /* ⚠ 'planned' IS THE PLAN FILE'S OWN MONEY COLUMN, and its absence here made the whole statement
+     export unreadable. The column was renamed `Planned` on 2026-09-02 (§133, the Budget tab
+     revamp); `getCell` matches a header EXACTLY, so from that day every row of a re-imported plan
+     arrived with no amount and was blocked "No amount. Add one here, or leave the row out." — the
+     file the product itself writes, refused by the door it was written for. Nothing could see it:
+     the reader's tests spell their own headers, and the header they spelled was `Amount`.
+     ⚠ A ROUND-TRIP TEST NOW BUILDS ITS SHEET FROM `BUDGET_PLAN_COLUMNS` rather than typing the
+     headers out, which is the only shape of test that can catch a rename. */
+  amount:      ['amount', 'total', 'cost', 'budget', 'estimated', 'estimate', 'planned'],
   notes:       ['notes', 'note', 'comment', 'comments'],
   /* ⚠ 'unscheduled' IS HERE FOR THE FILES ALREADY ON PEOPLE'S MACHINES. The by-period export wrote
      that heading until 2026-09-04 and nothing here matched it, so those sheets round-tripped with
@@ -216,6 +236,52 @@ function isDerivedRow(label: string): boolean {
 }
 
 /**
+ * The plan file's two BANDS, read as the switch that says which side a row is on.
+ *
+ * ⚠⚠ THIS IS WHY THE PRODUCT CAN READ THE FILE IT WROTE. Until 2026-09-10 every row of a plan file
+ * was a cost by construction, so exporting a plan and importing it back turned every fundraiser,
+ * sponsor and tournament-revenue line into a NEW COST inside a revenue category — planned costs up
+ * by the size of the plan's own funding, and a spending word minted on the wrong side of the
+ * library. `/review` found it 2026-09-09; the walk step that documented it as a known gap is now a
+ * check. See docs/projects/active/COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md.
+ *
+ * ⚠ NO NEW COLUMN, DELIBERATELY (plan §2). An export's shape is its screen's shape (QA §146 F2) and
+ * the plan screen has two bands, not a direction column — and the band is already sitting in every
+ * file a coach has on disk, which a column added today would not be.
+ *
+ * ⚠⚠ THE "NO MONEY ON IT" CLAUSE IS LOAD-BEARING, NOT A TIDINESS CHECK. A club may legitimately own
+ * a category called "Funding" or "Costs" — that is exactly why these two labels were kept OUT of
+ * `DERIVED_ROW_LABELS` — and a category row always carries its own total while a band heading never
+ * does (`budgetPlanStatementRows` writes `planned: ''`, `budgetPeriodGridRows`'s `band()` blanks
+ * every cell). Without the clause, that club's plan would import with half its costs read as income.
+ */
+const BAND_LABELS: Array<{ label: string; direction: 'in' | 'out' }> = [
+  { label: PLAN_LADDER_LABEL.costsBand.toLowerCase(),   direction: 'out' },
+  { label: PLAN_LADDER_LABEL.fundingBand.toLowerCase(), direction: 'in' },
+];
+
+/**
+ * Is this row one of the file's band headings? The band it switches to, or null for "an ordinary
+ * row" — which is every row of every sheet that has no bands at all, so a hand-built spending sheet
+ * reads exactly as it always has.
+ *
+ * `label` is the row's text with any line indent already stripped; `indented` is that same reader's
+ * verdict, because a band heading is never nested.
+ */
+function bandOf(label: string, indented: boolean, source: ParsedImportRow): 'in' | 'out' | null {
+  if (indented) return null;
+  const text = label.trim().toLowerCase();
+  const band = BAND_LABELS.find(b => b.label === text);
+  if (!band) return null;
+  /* Any figure anywhere on the row disqualifies it — the month columns of a by-period file as much
+     as a single Amount column, which is why this reads the row's own values rather than a column
+     list it would have to be kept in step with. The label cell needs no exclusion: "FUNDING" is not
+     a number, and `moneyValue` hands junk back rather than pretending it read one. */
+  const carriesMoney = Object.values(source.values).some(v => moneyValue(v ?? '') != null);
+  return carriesMoney ? null : band.direction;
+}
+
+/**
  * The CSV export writes line rows as `  — Entry Fees` under their category; the Excel export
  * (since 2026-08-25) writes them dash-free and nested by STYLING instead — an outline level and a
  * cell indent, which parseXLSX reads and hands over as the row's `indented` flag. Both spellings
@@ -265,6 +331,7 @@ export function rowsFromMonthGrid(file: ParsedImportFile, seasonYear: number): D
 
   const rows: DraftBudgetRow[] = [];
   let currentCategory = '';
+  let band: 'in' | 'out' = 'out';
 
   for (const source of file.rows) {
     const combined = getCell(source, [...ALIASES.combined]);
@@ -279,6 +346,17 @@ export function rowsFromMonthGrid(file: ParsedImportFile, seasonYear: number): D
       const { text, indented } = stripLineIndent(combined.value, source.indented);
       if (!text) continue;
       if (isDerivedRow(text)) continue;
+      const switched = bandOf(text, indented, source);
+      if (switched) {
+        /* ⚠ AND IT FORGETS THE CATEGORY. A band heading used to BECOME `currentCategory` and rely
+           on the next real category row replacing it before any line attached. Now that it means
+           something, a line sitting under a bare band heading with no category between them must
+           be blocked ("No category. Pick one to import this row.") rather than inherit the
+           category from the OTHER band, which is what carrying the old value would do. */
+        band = switched;
+        currentCategory = '';
+        continue;
+      }
       if (indented) {
         lineName = text;
         categoryName = currentCategory;
@@ -315,6 +393,7 @@ export function rowsFromMonthGrid(file: ParsedImportFile, seasonYear: number): D
       amount: total > 0 ? String(total) : '',
       notes: getCell(source, [...ALIASES.notes]).value.trim(),
       periods,
+      direction: band,
     });
     if (rows.length >= MAX_IMPORT_ROWS) break;
   }
@@ -328,6 +407,7 @@ export function rowsFromMonthGrid(file: ParsedImportFile, seasonYear: number): D
 export function rowsFromList(file: ParsedImportFile): DraftBudgetRow[] {
   const rows: DraftBudgetRow[] = [];
   let currentCategory = '';
+  let band: 'in' | 'out' = 'out';
 
   for (const source of file.rows) {
     const combined = getCell(source, [...ALIASES.combined]);
@@ -337,6 +417,9 @@ export function rowsFromList(file: ParsedImportFile): DraftBudgetRow[] {
     if (combined.present && !lineName) {
       const { text, indented } = stripLineIndent(combined.value, source.indented);
       if (!text || isDerivedRow(text)) continue;
+      // The band switch, and it forgets the category with it — see the twin in `rowsFromMonthGrid`.
+      const switched = bandOf(text, indented, source);
+      if (switched) { band = switched; currentCategory = ''; continue; }
       if (indented) { lineName = text; categoryName = currentCategory; }
       else { currentCategory = text; continue; }
     } else {
@@ -352,6 +435,7 @@ export function rowsFromList(file: ParsedImportFile): DraftBudgetRow[] {
       amount: parseMoneyCell(getCell(source, [...ALIASES.amount]).value),
       notes: getCell(source, [...ALIASES.notes]).value.trim(),
       periods: [],
+      direction: band,
     });
     if (rows.length >= MAX_IMPORT_ROWS) break;
   }
@@ -413,30 +497,41 @@ export interface KnownItem {
 }
 
 /**
- * The vocabulary an import may match against.
+ * The vocabulary an import may match against, ONE LIST PER SIDE.
  *
- * ⚠ COST WORDS ONLY. Every caller filters `direction` to `out` before building this, because the
- * importer writes cost lines and nothing else. Migration 248 made a word's SIDE part of what
+ * ⚠ THE SIDES ARE HELD APART, NEVER MERGED. Migration 248 made a word's SIDE part of what
  * identifies it — "Grant" the income and "Grant" the application fee are two different words, and
- * the coach's own picker shows one side at a time — so an unfiltered list lets a cost row attach
- * itself to an income word the coach was never offered.
+ * the coach's own picker shows one side at a time — so a row must only ever match the side it is
+ * on. A single merged list would let a spending row attach itself to an income word the coach was
+ * never offered, which is the defect mig 248 exists to make unexpressible.
+ *
+ * ⚠ `items` KEEPS ITS MEANING — the COST words — because the template, its Reference sheet and its
+ * Excel dropdowns are spending-only by design and say so in their own words. Widening those is a
+ * design question about the template, not part of reading a plan file back.
  */
 export interface KnownCategory {
   id: string;
   name: string;
+  /** The COST words under this heading. */
   items: KnownItem[];
   /**
-   * How many names this heading holds on the INCOME side — the ones `items` deliberately drops.
+   * The MONEY-IN words under this heading — the ones `items` deliberately drops.
    *
-   * ⚠ IT EXISTS SO THE TEMPLATE CAN TELL TWO BLANKS APART, and they are not the same fact. A
-   * heading with nothing under it at all ("Provincials Trip", freshly created) is waiting for its
-   * first cost name. A heading whose every name is income ("Other Income", "Sponsorship") has a
-   * full vocabulary that this sheet is simply not about. Both used to render as an empty row on the
-   * Reference sheet, which reads as missing data rather than as either state.
-   *
-   * Never consulted by the readers or the writer — a cost import still matches `items` alone.
+   * ⚠ THIS REPLACED AN `incomeNameCount` NUMBER (2026-09-10). The count existed so the template's
+   * Reference sheet could tell two blanks apart — a heading waiting for its first cost name
+   * ("Provincials Trip", freshly created) from an income heading whose full vocabulary this sheet
+   * is simply not about ("Other Income", "Sponsorship"). It still answers that, as `.length`, and
+   * one field cannot fall out of step with itself the way two that must agree eventually do.
    */
-  incomeNameCount?: number;
+  incomeItems: KnownItem[];
+}
+
+/**
+ * The words a row of THIS side may match — the one answer, so the snapper, the new-word verdict,
+ * the preview's type-ahead and the writer cannot disagree about what a row is allowed to become.
+ */
+export function wordsFor(category: KnownCategory, direction: 'in' | 'out'): KnownItem[] {
+  return direction === 'in' ? category.incomeItems : category.items;
 }
 
 /**
@@ -445,9 +540,14 @@ export interface KnownCategory {
  * Structurally typed rather than importing `BudgetCategoryWithItems`, so this module stays free of
  * `lib/types` and can be pulled into a client bundle unchanged.
  *
- * ⚠ THE DIRECTION FILTER IS THE POINT OF HAVING THIS FUNCTION AT ALL. Three screens mount the
+ * ⚠ THE DIRECTION SPLIT IS THE POINT OF HAVING THIS FUNCTION AT ALL. Three screens mount the
  * import sheet and each used to write the mapping out by hand; the day one of them needed a filter,
  * all three needed it, and nothing would have said so.
+ *
+ * ⚠⚠ AND THE IMPORT ROUTE NOW CALLS IT TOO (2026-09-10). That route built its own `KnownCategory`
+ * inline — the "second place in the product that builds one", as its own comment warned — so this
+ * change would otherwise have had to be made correctly twice, in two files, by two people. It is
+ * made once.
  */
 export function toKnownCategories(
   categories: Array<{
@@ -456,20 +556,17 @@ export function toKnownCategories(
     items: Array<{ id: string; name: string; orgId: string | null; teamId: string | null; direction: string }>;
   }>,
 ): KnownCategory[] {
+  // The three tiers migration 240 built, said in words a coach reads.
+  const word = (i: { id: string; name: string; orgId: string | null; teamId: string | null }): KnownItem => ({
+    id: i.id,
+    name: i.name,
+    source: (i.orgId === null ? 'standard' : i.teamId === null ? 'club' : 'team') as BudgetWordSource,
+  });
   return categories.map(c => ({
     id: c.id,
     name: c.name,
-    items: c.items
-      .filter(i => i.direction === 'out')
-      .map(i => ({
-        id: i.id,
-        name: i.name,
-        // The three tiers migration 240 built, said in words a coach reads.
-        source: (i.orgId === null ? 'standard' : i.teamId === null ? 'club' : 'team') as BudgetWordSource,
-      })),
-    // Counted from the SAME list, before the filter above throws them away — the only place both
-    // sides of a category are in hand at once. See `KnownCategory.incomeNameCount`.
-    incomeNameCount: c.items.filter(i => i.direction === 'in').length,
+    items: c.items.filter(i => i.direction === 'out').map(word),
+    incomeItems: c.items.filter(i => i.direction === 'in').map(word),
   }));
 }
 
@@ -478,6 +575,16 @@ export interface ExistingBudgetLine {
   description: string;
   categoryName: string | null;
   totalAmount: number;
+  /**
+   * Which side of the plan this line is already on, so a sheet row matches only its own.
+   *
+   * ⚠ THIS REPLACED A COST-ONLY FILTER AT THE CALLER, and it is strictly the safer shape. The old
+   * filter stopped a sheet row called "Fundraising" overwriting the team's funding line — a real
+   * defect — but it did it by hiding those lines, which also made every money-in row look new. The
+   * rule that actually holds is *match your own side*, which stops that overwrite in BOTH
+   * directions and leaves a money-in row able to find the line it came from.
+   */
+  direction: 'in' | 'out';
 }
 
 function key(value: string): string {
@@ -576,8 +683,10 @@ export function snapBudgetRowsToLibrary(rows: DraftBudgetRow[], categories: Know
   return rows.map(row => {
     const categoryName = soleMatch(row.categoryName, categoryNames) ?? row.categoryName;
     const category = categories.find(c => key(c.name) === key(categoryName));
+    // Its own side's words only — a bottle drive must never be snapped onto a cost called
+    // "Bottle Drive", which mig 248 says is a different word entirely.
     const lineName = category
-      ? soleMatch(row.lineName, category.items.map(i => i.name)) ?? row.lineName
+      ? soleMatch(row.lineName, wordsFor(category, row.direction).map(i => i.name)) ?? row.lineName
       : row.lineName;
     return categoryName === row.categoryName && lineName === row.lineName
       ? row
@@ -606,15 +715,19 @@ function newWordVerdict(
   lineName: string,
   category: KnownCategory,
   categories: KnownCategory[],
+  direction: 'in' | 'out',
 ): { warning: string; suggestion?: RowSuggestion } | null {
   const typed = normalizeWord(lineName);
   if (!typed) return null;
-  if (category.items.some(i => normalizeWord(i.name) === typed)) return null;
+  /* ⚠ EVERY QUESTION THIS ASKS IS ASKED OF THE ROW'S OWN SIDE. A money-in row told "did you mean
+     Entry Fees?" would be offered a word it cannot legally become, and taking the suggestion would
+     file a bottle drive as spending. `wordsFor` is the one answer to which list. */
+  if (wordsFor(category, direction).some(i => normalizeWord(i.name) === typed)) return null;
 
   // The exact word, under a different heading. A stronger signal than any fuzzy match here, so it
   // is tested first: the coach knows the word, they have filed it in the wrong place.
   const elsewhere = categories.find(
-    c => c.id !== category.id && c.items.some(i => normalizeWord(i.name) === typed),
+    c => c.id !== category.id && wordsFor(c, direction).some(i => normalizeWord(i.name) === typed),
   );
   if (elsewhere) {
     return {
@@ -623,7 +736,7 @@ function newWordVerdict(
     };
   }
 
-  const near = category.items.filter(i => isNearMatch(typed, normalizeWord(i.name)));
+  const near = wordsFor(category, direction).filter(i => isNearMatch(typed, normalizeWord(i.name)));
   // One candidate or none. Two words this close to the typed one means we cannot tell which was
   // meant, and a coin-toss suggestion is worse than none.
   if (near.length === 1) {
@@ -649,25 +762,37 @@ export function reviewBudgetRows(
   existing: ExistingBudgetLine[],
 ): ReviewedBudgetRow[] {
   const categoryByName = new Map(categories.map(c => [key(c.name), c]));
+  /* ⚠ THE SIDE IS PART OF THE KEY, exactly as mig 248 made it part of a word's identity. A plan may
+     hold "Tournaments · Entry Fees" as a cost and "Tournaments · Tournament revenue" as income;
+     keying on category+name alone was safe only while every row was a cost, and the moment a file's
+     funding band could be read it would let a money-in row update a cost line of the same name. */
+  const pairKey = (categoryName: string, lineName: string, direction: 'in' | 'out') =>
+    `${direction}|${key(categoryName)}|${key(lineName)}`;
   const existingByPair = new Map<string, ExistingBudgetLine>();
   for (const line of existing) {
-    existingByPair.set(`${key(line.categoryName ?? '')}|${key(line.description)}`, line);
+    existingByPair.set(pairKey(line.categoryName ?? '', line.description, line.direction), line);
   }
 
   // Two rows in one sheet that name the same line would fight each other on commit.
   const seen = new Map<string, number>();
   for (const row of rows) {
-    const pair = `${key(row.categoryName)}|${key(row.lineName)}`;
+    const pair = pairKey(row.categoryName, row.lineName, row.direction);
     seen.set(pair, (seen.get(pair) ?? 0) + 1);
   }
 
   return rows.map(row => {
     const total = moneyValue(row.amount) ?? 0;
-    const pair = `${key(row.categoryName)}|${key(row.lineName)}`;
+    const pair = pairKey(row.categoryName, row.lineName, row.direction);
     const base = { ...row, total };
 
     if (!row.lineName) {
-      return { ...base, outcome: 'blocked' as const, reason: 'No name for this cost — add one, or leave the row out.' };
+      return {
+        ...base,
+        outcome: 'blocked' as const,
+        reason: row.direction === 'in'
+          ? 'No name for this money in — add one, or leave the row out.'
+          : 'No name for this cost — add one, or leave the row out.',
+      };
     }
     if (!row.categoryName) {
       return { ...base, outcome: 'blocked' as const, reason: 'No category. Pick one to import this row.' };
@@ -709,7 +834,7 @@ export function reviewBudgetRows(
        warning is about gets created on the ADD path, which is the one a coach can still change
        their mind about. */
     const category = categoryByName.get(key(row.categoryName))!;
-    const verdict = newWordVerdict(row.lineName, category, categories);
+    const verdict = newWordVerdict(row.lineName, category, categories, row.direction);
     return { ...base, outcome: 'add' as const, ...verdict };
   });
 }
@@ -899,10 +1024,17 @@ const SOURCE_LABELS: Record<BudgetWordSource, string> = {
 export const NO_COST_NAMES_YET = 'No cost names yet — type your own';
 export const INCOME_NAMES_ONLY = 'Income names only — type your own';
 
-/** The sentence under the Reference table, saying once what the two labels above imply. */
+/** The sentence under the Reference table, saying once what the two labels above imply.
+ *
+ * ⚠ THE SECOND SENTENCE KEEPS THE FIRST ONE TRUE (2026-09-10). The template is still built for
+ * spending — its Line dropdown offers cost names and nothing else — but the importer now reads the
+ * plan file's two bands, so "spending only" had quietly become half a fact: a coach CAN plan money
+ * in from this sheet, by typing the band row the plan file itself writes. Saying so is cheaper than
+ * a coach discovering it from a support answer, and far cheaper than the sentence going stale. */
 export const REFERENCE_SHEET_NOTE =
-  'This template plans spending only. A category with no cost names still works — type the cost '
-  + 'yourself and we add it to your list when you import.';
+  'This template plans spending. A category with no cost names still works — type the cost '
+  + 'yourself and we add it to your list when you import. To plan money coming in as well, add a '
+  + 'row that says FUNDING and list those lines under it, the way your exported plan does.';
 
 export function referenceSheetRows(categories: KnownCategory[]): string[][] {
   const rows: string[][] = [];
@@ -913,7 +1045,7 @@ export function referenceSheetRows(categories: KnownCategory[]): string[][] {
          be a different question answered in the same column. */
       rows.push([
         category.name,
-        (category.incomeNameCount ?? 0) > 0 ? INCOME_NAMES_ONLY : NO_COST_NAMES_YET,
+        category.incomeItems.length > 0 ? INCOME_NAMES_ONLY : NO_COST_NAMES_YET,
         '',
       ]);
       continue;

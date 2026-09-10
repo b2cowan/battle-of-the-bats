@@ -424,6 +424,14 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
        month/quarter columns from the By-period view, BvA's own date-header format), with a PDF
        added — the flat one-row-per-line dataset it described is gone. */
     id: 'coaches-budget-lines',
+    /* ⚠⚠ THIS CLAIM WAS FALSE FOR A WEEK AND THE GATE COULD NOT SEE IT (2026-09-10). `check:export-
+       catalog` verifies only that the named reader FILE EXISTS — so "round trip" stood here while
+       the plan's own file came back with no amounts (the money column was renamed `Planned`
+       2026-09-02 and the reader's aliases were never told), with every cost line dropped (a word's
+       row lost its line marker 2026-09-09), and with every money-in line re-read as a new cost.
+       The claim now names its proof: tests/unit/coach-budget-plan-round-trip.test.ts writes both
+       files with THIS builder and reads them back with that reader. Do not let this entry outlive
+       that test. */
     roundTrip: 'lib/coach-budget-import.ts',
     label: 'Coaches Portal — Budget plan',
     module: 'coaches',
