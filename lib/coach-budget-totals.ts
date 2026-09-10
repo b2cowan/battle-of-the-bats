@@ -260,6 +260,12 @@ export const PLAN_LADDER_LABEL = {
   costsShown:            'Costs shown',
   fundingShown:          'Funding shown',
   costsLessFunding:      'Costs less funding',
+  /* ⚠ THE EXPORT'S NOTES COLUMN ONLY — it is NOT a sub-line on the screen any more (owner
+     ruling 2026-09-09). On the plan the row sits directly under the two band subtotals it is the
+     difference of, so the arithmetic is already visible and the gloss was restating the row above
+     it. In a spreadsheet the row arrives with no neighbours, which is the case the words still
+     earn. Keep it read from here rather than typed into the exporter: it is the same sentence,
+     and the importer skips ladder ROW labels by reading this map (see `coach-budget-import`). */
   costsLessFundingNote:  'What player installments need to cover',
   installments:          'Player installments',
   installmentsEstimated: 'Player installments (estimated)',

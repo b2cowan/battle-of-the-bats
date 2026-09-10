@@ -10,7 +10,7 @@ import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import { toKnownCategories } from '@/lib/coach-budget-import';
-import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
+import BudgetItemManagerModal, { MANAGE_DOOR_LABEL } from '@/components/coaches/BudgetItemManagerModal';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf, monthYearBands, periodRangeLabel, MONTH_WINDOW } from '@/lib/coach-budget-months';
 import ColumnPager from '@/components/coaches/ColumnPager';
@@ -534,12 +534,33 @@ function BudgetLineRow({
  * already enter. Read-only by design: this is a way to SEE the plan, and every edit still happens
  * in the list's own form, so there is exactly one place a budget line can be changed.
  */
-function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onSetDues }: {
+function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onSetDues, onEditLine }: {
+  view: ReturnType<typeof buildPeriodView>;
+  /**
+   * Open a line's edit form (owner, 2026-09-10: *"should I be able to click a number in the report
+   * and open up the edit modal? why am I only allowed to edit on the list view?"*).
+   *
+   * ⚠⚠ THE ANSWER IS THE **ROW**, NOT THE NUMBER, and the difference matters. Underlining figures
+   * would put a second meaning on the one notation Budget vs. Actual spent three rounds of rulings
+   * settling — there an underlined figure means *"show me what is behind this"* and it opens a
+   * panel. This tab has never used that notation: the List's rows have opened the form on a tap
+   * anywhere since 2026-08-13, and this is the same worklist wearing a different view, so it
+   * borrows the gesture it already has. A coach who clicks the number gets the form, because the
+   * number is inside the row.
+   *
+   * ⚠ NO INTERMEDIATE PANEL, and that is only true since migration 286. While a word could carry
+   * several lines a cell genuinely could not name one, which is why the month grid asks first. One
+   * word carries one line now, so asking would be a tap that tells the coach what the row above
+   * them already says.
+   *
+   * Absent for a coach who cannot write money — the rows then carry no affordance at all, rather
+   * than offering a form the server would refuse.
+   */
+  onEditLine?: (lineId: string) => void;
   /** Opens the Set-dues sheet, offered under the table only while no dues are scheduled. Absent
    *  for a coach who cannot write money, which is why the note tests for it rather than for a
    *  separate permission flag. */
   onSetDues?: () => void;
-  view: ReturnType<typeof buildPeriodView>;
   /** Months page; quarters never do — eight columns always fit. Passed rather than inferred from
    *  a column key's shape, so the reason is stated where the decision is made. */
   granularity: PeriodGranularity;
@@ -609,6 +630,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
         <td>{fmtCell(fundingCell(kind, t.total))}</td>
       </>
     );
+  };
   /**
    * A CLOSING row's cells — the two rows that subtract, drawn signed.
    *
@@ -629,18 +651,37 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
       <td className={t.total < -0.005 ? styles.periodGridAhead : undefined}>{fmtCell(t.total)}</td>
     </>
   );
-  };
   /** One group — a cost category or a money-in kind — with its fold. ONE renderer for both bands. */
   const renderGroup = (group: ReturnType<typeof buildPeriodView>['groups'][number]) => {
     const open = !closed.has(group.key);
     return (
       <Fragment key={group.key}>
-        <tr className={`${shared.moneyGridCat} ${isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}`}>
+        {/* ⚠ THE WHOLE CATEGORY ROW FOLDS, exactly as it does on the List (2026-09-10). A grid
+            whose line rows open on a tap anywhere while the category above them answers only to a
+            13px chevron is one table teaching two rules — the defect QA §132 named on the
+            statement. The chevron stays the SEMANTIC control (keyboard, screen reader,
+            `aria-expanded`); the row is the pointer shortcut, so it stops propagation below.
+            A category with nothing under it has nothing to fold and takes no affordance. */}
+        <tr
+          className={`${shared.moneyGridCat} ${isFundingKind(group.lineKind) ? styles.periodGridFunding : ''} ${group.rows.length > 0 ? shared.rowTappable : ''}`}
+          onClick={group.rows.length > 0
+            ? () => { if (window.getSelection()?.toString()) return; onToggle(group.key); }
+            : undefined}
+        >
           <th scope="rowgroup">
             <button
               type="button"
               className={shared.moneyGridToggle}
-              onClick={() => onToggle(group.key)}
+              /* ⚠ THE SELECTION GUARD BELONGS ON THE BUTTON TOO, and putting it only on the row
+                 is a guard that never runs (`/review` correctness lens, 2026-09-10). This control
+                 is a full-width flex box filling its cell, so a drag across the category name ends
+                 its mouseup HERE, not on bare cell — the click is swallowed by `stopPropagation`
+                 and the row's own guard is never reached. Both halves, or neither works. */
+              onClick={e => {
+                e.stopPropagation();
+                if (window.getSelection()?.toString()) return;
+                onToggle(group.key);
+              }}
               aria-expanded={open}
               disabled={group.rows.length === 0}
             >
@@ -655,10 +696,66 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
           {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
           <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
         </tr>
-        {open && group.rows.map(row => (
-          <tr key={row.id} className={isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}>
+        {open && group.rows.map(row => {
+          /* ⚠ BUILT FROM THE LINE ID, NEVER FROM `row.id` — that one is `group|rowKey`, a name for
+             a position in this view that matches no record. The month grid shipped exactly that
+             door once: it handed the budget page a composite id, found nothing and returned in
+             silence. Null here is the word-LESS bucket, which stands for several lines and so
+             names none; it stays plain text rather than opening one of them at random. */
+          const lineId = row.lineId;
+          const openLine = onEditLine && lineId ? () => onEditLine(lineId) : null;
+          return (
+          <tr
+            key={row.id}
+            className={`${isFundingKind(group.lineKind) ? styles.periodGridFunding : ''} ${openLine ? shared.rowTappable : ''}`}
+            // The List's own copy-gesture guard: a click that ends a text selection is somebody
+            // lifting an amount out of the cell, not asking for the form.
+            onClick={openLine ? () => { if (window.getSelection()?.toString()) return; openLine(); } : undefined}
+          >
             <th scope="row" className={shared.moneyGridLead}>
-              {row.description}
+              {/* ⚠ THE KEYBOARD'S DOOR, and the row's tap is the pointer shortcut over the top of
+                  it — the same split the List uses with its pencil, and the category row above
+                  with its chevron. Without a real control in here the form would be reachable by
+                  thumb and mouse and by nothing else, on the one view that just gained it.
+                  ⚠⚠ `title`, NOT `aria-label`, AND THE REASON IS THIS CELL (`/review`
+                  accessibility lens, 2026-09-10). An `aria-label` was written here first and it
+                  quietly made things WORSE for the exact readers the button was added for: this
+                  button is the SOLE content of a `<th scope="row">`, and a labelled descendant
+                  contributes its own accessible NAME when the header's name is computed from
+                  content — so the row header became "Edit Dome Time", and a screen reader paging
+                  across the period columns re-announced the verb against every figure in the row
+                  ("Edit Dome Time, $500 · Edit Dome Time, $300 …"). `title` cannot do that: with
+                  text content present it never becomes the name, so the header stays "Dome Time"
+                  and the verb travels as the button's DESCRIPTION, read on focus where it is
+                  actually wanted. It buys a native tooltip for a mouse as well, which is the only
+                  visible cue this door has.
+
+                  ⚠⚠ `moneyGridToggle`, THE SHARED CLASS, AND THE NAME IS A DELIBERATE MISNOMER —
+                  it dresses the category chevron two rows up, and this opens a form. A local copy
+                  was written first and the rendered sweep caught it at 26px against a 44px floor:
+                  the shared rule sits inside the ≤768 touch band, and a fresh copy inherits none
+                  of the fixes the original has collected. The tombstone in budget.module.css
+                  keeps the full reasoning. It is invisible until focus, by design: the ROW is the
+                  affordance, and a name that underlined itself would announce a second, different
+                  door in a table whose other view keeps the same name as plain text. */}
+              {openLine ? (
+                <button
+                  type="button"
+                  className={shared.moneyGridToggle}
+                  /* Same pair as the category toggle above: this button fills the cell, so it is
+                     where a drag across the LINE NAME ends — and the row's guard behind it never
+                     gets the click. Before today selecting this text was safe because nothing on
+                     the row listened; it listens now. */
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (window.getSelection()?.toString()) return;
+                    openLine();
+                  }}
+                  title={`Edit ${row.description}`}
+                >
+                  {row.description}
+                </button>
+              ) : row.description}
               {/* ⚠ NO "N lines" COUNT ON THIS ROW, and none on the Budget list or the Budget vs.
                   Actual statement either — owner ruling 2026-09-04, QA §133. The full reasoning
                   lives with the gate that enforces it, tests/unit/bva-figure-doors-guard.test.ts.
@@ -668,7 +765,8 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
             {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
             <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
           </tr>
-        ))}
+          );
+        })}
       </Fragment>
     );
   };
@@ -855,6 +953,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
           </tbody>
         </table>
       </CoachScrollX>
+      {view.hasUnscheduled && (
         /* ⚠ The wording widened with the column's contents (2026-09-09): it now also holds the
            un-itemized part of a season estimate and any dues not yet on a dated schedule. A note
            that still said "split a line by period" over a column holding two other things would
@@ -867,7 +966,6 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
       {view.hasNegative && (
         /* ⚠ ONLY WHEN A BRACKET IS ON SCREEN. A legend explaining a notation the coach cannot see
            is furniture, and this table already carries two other notes. */
-      {view.hasUnscheduled && (
         <p className={styles.periodGridNote}>
           A figure in <strong>brackets</strong> on a closing row is a period where the money lands
           ahead of the bills — it goes toward the rest of the season.
@@ -1090,12 +1188,12 @@ export function BudgetPlanPanel({
   // can show players' side of the funding and read as a complete budget. Display-only: it is never
   // a budget line and never enters computeBudgetTotals (dues are DERIVED from the plan — feeding
   // them back in as funding would be circular).
+  const [duesAssessed, setDuesAssessed] = useState(0);
   /** The dated instalments behind that figure, for the By-period grid's Player installments row.
    *  Kept separate from `duesAssessed` deliberately: that is the schedules' total and the plan's
    *  number, these are the dates to spread it over, and the two can genuinely differ — see the
    *  route, which explains why the difference lands in No date yet rather than being dropped. */
   const [duesInstallments, setDuesInstallments] = useState<Array<{ date: string | null; amount: number }>>([]);
-  const [duesAssessed, setDuesAssessed] = useState(0);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
@@ -1117,7 +1215,7 @@ export function BudgetPlanPanel({
     return null;
   }
 
-  /** "Manage our words" — the one door to a team's own vocabulary (mig 246). See `addLineButton`. */
+  /** The vocabulary dialog (`MANAGE_DOOR_LABEL`) — one of its two doors; the picker carries the other. See `addLineButton`. */
   const [itemManagerOpen, setItemManagerOpen] = useState(false);
 
   // The optional ESTIMATED TOTAL — what the coach thinks the season costs before it is all
@@ -1482,8 +1580,8 @@ export function BudgetPlanPanel({
       setError(''); // a winning load that succeeded means there is no error any more — see the convention
       setPlan(planData.plan);
       setPriorPlan(planData.priorPlan ?? null);
-      setDuesInstallments(planData.duesInstallments ?? []);
       setDuesAssessed(planData.duesAssessed ?? 0);
+      setDuesInstallments(planData.duesInstallments ?? []);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
       if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
@@ -2381,15 +2479,9 @@ export function BudgetPlanPanel({
   ), [allLines, whenFilter, lineIsUndated]);
 
   const groups   = useMemo(() => groupLines(shownLines), [shownLines]);
-  /** How many of the words in this team's picker the team itself created — the gate on the
-   *  "Manage our words" door, since the modal can only ever change those.
-   *  ⚠ UP HERE WITH THE OTHER MEMOS, ABOVE THE EARLY RETURNS. It is memoised for the same reason
-   *  they are — the line-edit form's state lives in this component, so an un-memoised version
-   *  re-scans every category on every keystroke — and a hook below `if (ctxLoading) return` would
-   *  change hook order between renders. */
-  const ownItemCount = useMemo(
-    () => categories.reduce((n, c) => n + c.items.filter(i => i.teamId === teamId).length, 0),
-    [categories, teamId]);
+  /* ⚰ `ownItemCount` — the gate on the vocabulary door — is gone (owner ruling Q2, 2026-09-09).
+     The dialog can ADD now, so a coach setting vocabulary up before their first line needs the door
+     most of all; gating it on already owning an item hid it from exactly that coach. */
   /* The picker's category order, so the funding sections (and the forgetting list's categories) read
      in the order the coach chose them from — the List, the grid and the file all take the same map.
      Memoised with the siblings above, for the same reason: this component's form state re-renders
@@ -2503,18 +2595,18 @@ export function BudgetPlanPanel({
           carries "Manage tags" beside its own create, for exactly the same reason. Team Settings was
           considered and refused: these are budget content a coach writes while working, not
           configuration.
-          ⚠ Only when the team HAS words of its own — an empty manager is a button that teaches
-          nothing, the same gate "Manage tags" applies to its own library. */}
-      {ownItemCount > 0 && (
-        <button
-          type="button"
-          className={shared.btnSecondary}
-          onClick={() => setItemManagerOpen(true)}
-          title="Rename one of your team's own items, or move it to the other side"
-        >
-          <Settings2 size={15} aria-hidden /> Manage our words
-        </button>
-      )}
+          ⚠ NOT GATED on the team owning anything (owner ruling Q2, 2026-09-09): the dialog adds
+          as well as renames, so the coach with nothing yet is the one who needs it. ⚠ The tooltip
+          no longer offers to "move it to the other side" — that control was retracted 2026-08-17
+          and the sentence outlived it here for three weeks. */}
+      <button
+        type="button"
+        className={shared.btnSecondary}
+        onClick={() => setItemManagerOpen(true)}
+        title="Rename, add or remove your team's own categories and items"
+      >
+        <Settings2 size={15} aria-hidden /> {MANAGE_DOOR_LABEL}
+      </button>
     </>
   ) : null;
 
@@ -2914,8 +3006,15 @@ export function BudgetPlanPanel({
               monthStart={gridMonthStart}
               onMonthStart={setGridMonthStart}
               closed={gridClosed}
-              onSetDues={moneyCanWrite ? () => setGenOpen(true) : undefined}
               onToggle={toggleGridGroup}
+              onSetDues={moneyCanWrite ? () => setGenOpen(true) : undefined}
+              /* ⚠ RESOLVED AGAINST `allLines`, WHICH IS THE SAME ARRAY THE VIEW WAS BUILT FROM, so
+                 a row can only carry an id this lookup finds. It still tests the result rather than
+                 asserting it: a line deleted in another tab between render and tap would otherwise
+                 open an empty form on a record that is gone. */
+              onEditLine={moneyCanWrite
+                ? (lineId: string) => { const line = allLines.find(l => l.id === lineId); if (line) openEdit(line); }
+                : undefined}
             />
           ) : (
             <>
@@ -3267,7 +3366,6 @@ export function BudgetPlanPanel({
                       <tr className={`${styles.ladderRow} ${styles.ladderGap}`}>
                         <th scope="row" className={styles.lead}>
                           {PLAN_LADDER_LABEL.costsLessFunding}
-                          <span className={styles.rowNote}>{PLAN_LADDER_LABEL.costsLessFundingNote}</span>
                         </th>
                         <td className={styles.schedCell} />
                         {/* ⚠ THE SIGNED FIGURE, NOT THE FLOORED ONE (owner ruling 2026-09-09). This
@@ -3301,12 +3399,12 @@ export function BudgetPlanPanel({
                       <td />
                     </tr>
                     {Math.abs(leftToFund) >= 0.005 && (
-                      <tr className={styles.closeRow}>
+                      <tr className={`${styles.closeRow}${leftToFund > 0 ? ` ${styles.closeShort}` : ''}`}>
                         <th scope="row" className={styles.lead}>
                           {leftToFund < 0 ? PLAN_LADDER_LABEL.buffer : PLAN_LADDER_LABEL.shortOfPlan}
                         </th>
                         <td className={styles.schedCell} />
-                        <td className={leftToFund > 0 ? styles.closeWarn : ''}>
+                        <td>
                           {fmt(leftToFund)}
                         </td>
                         <td />
@@ -3608,7 +3706,8 @@ export function BudgetPlanPanel({
                    still says, in full, what the chosen word means for this line — see
                    `KIND_HINT_LONG` — which is the sentence that was always doing the work. The
                    shared control's `rowTag` prop went with it: this was its only caller. */
-                manageHint="Rename or remove it later from Manage our words — but it stays on this side."
+                /* The picker's own door to the same dialog (owner ruling Q5, 2026-09-09). */
+                manage={{ orgSlug, categories, onChanged: () => { void load(); bumpMoneyRevision(); } }}
                 /* Where a word invented here will report. The money module owns the sentence; this
                    screen just hands it over (the retired row tag's lesson). */
                 newItemNote={newMoneyInWordNote}

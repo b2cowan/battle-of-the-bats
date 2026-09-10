@@ -55,6 +55,11 @@ export const GRANULARITY_LABEL: Record<PeriodGranularity, string> = {
  *  the real columns or be mistaken for one. */
 export const UNSCHEDULED = 'unscheduled';
 
+/** The row key every word-LESS cost line folds into — the one row on this grid that can stand for
+ *  more than one budget line, and therefore the one that never carries a `lineId`. Named because
+ *  two places have to agree about it, and a bare `'noitem'` in the second was how they'd drift. */
+const NO_ITEM_ROW_KEY = 'noitem';
+
 /**
  * ⚠ ONE SPELLING OF UNDATED MONEY, AND NOW ONE HOME FOR IT. "No date yet" is this grid's column
  * heading, the line form's third answer, the plan list's When chip, the export's own word and —
@@ -108,6 +113,26 @@ export interface PeriodViewRow {
    *  §133 — a fact the coach gets by opening the row does not need a label promising it). The
    *  count still decides shape upstream; nothing prints it. */
   lineCount: number;
+  /**
+   * The ONE budget line this row stands for, or `null` when it stands for several — which is what
+   * makes a row on the grid openable (2026-09-10).
+   *
+   * ⚠⚠ IT EXISTS BECAUSE THE ROW ID CANNOT DO THIS JOB. `id` is `group|rowKey`, a composite that
+   * names a POSITION in this view and matches no record anywhere. Handing it to a door is the
+   * precise bug the month grid shipped and fixed: the cell passed the composite row id to the
+   * budget page, which found nothing and returned silently. A door is built from this field or it
+   * is not built at all.
+   *
+   * ⚠ NULL IS A REAL ANSWER, NOT A MISSING ONE. The "Not itemized" bucket folds every word-less
+   * legacy line in a category into one row, so no single line is behind its figures — the row
+   * stays plain text rather than guessing which of them a coach meant.
+   *
+   * ⚠ AND IT SURVIVES A TWIN. One word carries one line since migration 286 (a partial unique
+   * index enforces it), so an item row is one line today; if a second ever merges in below, this
+   * goes back to null on its own rather than trusting the first one it saw. The invariant is
+   * "never guess", and it is structural here rather than an assumption held in a comment.
+   */
+  lineId: string | null;
   /** Column key → amount. Absent key = nothing in that column (rendered as a dash, never $0.00 —
    *  a zero and a nothing are different facts). */
   cells: Record<string, number>;
@@ -548,7 +573,7 @@ export function buildPeriodView(
     const isCost = !isFundingKind(lineKind);
     const rowKey = line.itemId
       ? `item:${line.itemId}`
-      : isCost ? 'noitem' : `line:${line.id}`;
+      : isCost ? NO_ITEM_ROW_KEY : `line:${line.id}`;
     const groupRows = rowsByKey.get(groupKey)!;
     let row = groupRows.get(rowKey);
     if (!row) {
@@ -559,12 +584,17 @@ export function buildPeriodView(
           : isCost ? NO_ITEM_LABEL : (line.itemName ?? line.description),
         lineKind,
         lineCount: 0,
+        // The word-less bucket holds several lines by construction; every other row is one line.
+        lineId: rowKey === NO_ITEM_ROW_KEY ? null : line.id,
         cells: {},
         total: 0,
       };
       groupRows.set(rowKey, row);
       group.rows.push(row);
     }
+    // A second line arriving on a row that already named one means the row names neither — see
+    // `lineId`. Cheap, and it keeps "never guess which line" true without depending on the index.
+    if (row.lineId !== line.id) row.lineId = null;
     row.lineCount += 1;
 
     const cells: Record<string, number> = {};

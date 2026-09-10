@@ -362,6 +362,83 @@ describe('the merge — two lines on one item are one row (P1, 2026-09-02)', () 
 });
 
 /**
+ * **THE ROW SAYS WHICH LINE IT IS, SO THE GRID CAN OPEN IT** (owner, 2026-09-10: *"should I be
+ * able to click a number in the report and open up the edit modal? why am I only allowed to edit
+ * on the list view?"*).
+ *
+ * ⚠⚠ THE WHOLE POINT IS THAT `row.id` COULD NOT DO THIS. It is `group|rowKey` — a name for a
+ * POSITION in this view, matching no record in the database. The month grid built a door out of
+ * exactly that composite once: the cell handed the budget page an id, the page found nothing, and
+ * it returned in silence. So `lineId` is carried deliberately, and it is `null` — never a guess —
+ * wherever a row genuinely stands for more than one line.
+ */
+describe('lineId — the door a row can honestly open', () => {
+  it('names the one line behind an item row', () => {
+    const view = buildPeriodView([
+      line('line-dome', 'Dome Time', 5200, [['2027-03-01', 5200]]),
+    ], 'months');
+    const row = view.groups[0].rows[0];
+    assert.equal(row.lineId, 'line-dome');
+    // ⚠ And it is emphatically NOT the row id, which is what a door must never be built from.
+    assert.notEqual(row.lineId, row.id);
+  });
+
+  it('names it on a money-in row too — a funding line opens the same form a cost line does', () => {
+    const view = buildPeriodView([
+      line('line-sponsor', 'Team Sponsorship', 1500, [['2027-02-01', 1500]], { funding: true }),
+    ], 'months');
+    const fundingGroup = view.groups.find(g => g.lineKind === 'funding')!;
+    assert.equal(fundingGroup.rows[0].lineId, 'line-sponsor');
+  });
+
+  it('names it on an item-less MONEY-IN row, which is one line wearing its own description', () => {
+    const view = buildPeriodView([
+      line('line-choc', 'Chocolate Sale', 1800, [], { funding: true, itemId: null }),
+    ], 'months');
+    const fundingGroup = view.groups.find(g => g.lineKind === 'funding')!;
+    assert.equal(fundingGroup.rows[0].lineId, 'line-choc');
+  });
+
+  it('⚠ refuses to name one for "Not itemized" — that bucket stands for several word-less lines', () => {
+    const view = buildPeriodView([
+      line('a', 'Old line one', 500, [], { itemId: null }),
+      line('b', 'Old line two', 300, [], { itemId: null }),
+      line('c', 'Entry Fees', 1600, [['2027-04-01', 1600]]),
+    ], 'months');
+    const rows = view.groups[0].rows;
+    const bucket = rows.find(r => r.description === 'Not itemized')!;
+    assert.equal(bucket.lineId, null);
+    // The real row beside it still opens, so the null above is a decision and not a failure.
+    assert.equal(rows.find(r => r.description === 'Entry Fees')!.lineId, 'c');
+  });
+
+  it('⚠ gives a bucket of ONE word-less line no door either — the row is the bucket, not the line', () => {
+    /* A single legacy line still renders under the "Not itemized" heading rather than its own
+       typed description, so a door here would open a form whose name matches nothing on screen.
+       The row names the bucket; only the List names those lines. */
+    const view = buildPeriodView([
+      line('a', 'Old line one', 500, [], { itemId: null }),
+    ], 'months');
+    const bucket = view.groups[0].rows[0];
+    assert.equal(bucket.description, 'Not itemized');
+    assert.equal(bucket.lineId, null);
+  });
+
+  it('⚠⚠ drops the name when a twin merges in, rather than opening whichever line it saw first', () => {
+    /* One word carries one line since migration 286 and a partial unique index enforces it, so
+       this shape should not reach the view at all. It is guarded anyway because the failure is
+       SILENT: the door would work, open a real form, and edit the wrong half of the row's figure. */
+    const view = buildPeriodView([
+      line('a', 'Entry Fees', 1600, [['2027-04-01', 1600]], { itemId: 'item-entry' }),
+      line('b', 'Entry Fees', 900, [['2027-05-01', 900]], { itemId: 'item-entry' }),
+    ], 'months');
+    const row = view.groups[0].rows[0];
+    assert.equal(row.lineCount, 2);
+    assert.equal(row.lineId, null);
+  });
+});
+
+/**
  * THE CLOSE (owner ruling 2026-09-09, mockup 4a8f3335 round 3).
  *
  * The plan's two views close on one ladder: Costs less funding → Player installments →

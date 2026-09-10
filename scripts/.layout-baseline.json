@@ -4005,6 +4005,10 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
+    "coach-budget|768|tap-floor|button·Rename, add or remove your team's own ca": {
+      "reason": "The Budget Plan toolbar's third button (Manage categories & items, 2026-09-09). It is the same control as its two siblings on this row — Export and Add Line, both already recorded here at 31–33px — and takes their standing reason: desktop widths keep the portal's compact control heights by a portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and it clears it there. It appears in the sweep now because the door is no longer gated on the team owning an item (owner ruling Q2), so the layout fixture renders it for the first time. Not a new height; a newly visible one.",
+      "detail": "33px tall (floor 44)"
+    },
     "coach-budget-period|361|control-width|button·Show the previous month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
       "detail": "36px wide (floor 44) — icon-only control"

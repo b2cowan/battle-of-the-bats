@@ -85,10 +85,6 @@
   color: var(--text-secondary);
 }
 
-/* The amber close on the list below ("Short of covering the plan") — same voice as
-   .planCapWarn, on the ledger's total row. */
-.closeWarn { color: var(--warning-light); }
-
 /* RETIRED WITH THE PLAN CARD (2026-09-03). It stacked the three terms below the SHELL
    breakpoint because the rendered sweep caught the old flex row spilling 25px at 768 with
    nothing owning the overflow. The shared `MoneySummaryBand` cannot reproduce that: it is a
@@ -260,6 +256,22 @@
   padding-top: 0.7rem;
   padding-bottom: 0.7rem;
 }
+
+/* SHORT OF COVERING THE PLAN — the one cautionary state on the close, amber for attention and
+   never alarm (owner ruling 2026-08-13, restated on the tile's caption above). A PLANNED BUFFER
+   takes no colour: it reads as confirmation, so only the shortfall wears the modifier.
+
+   ⚠⚠ (0,3,3) AND THE LABEL TOO, BOTH LEARNED FROM DEFECTS ONE TABLE APART:
+     · The amber lived on the FIGURE cell as a bare `.closeWarn` (0,1,0) and lost outright to the
+       `color: var(--text-primary)` three lines above it (0,2,3) — so from the day the close row
+       shipped, a shortfall rendered in plain ink and the state was invisible. The same cascade
+       collision this file already records twice; a modifier on the ROW is the shape that survives
+       it, and `.estimateRow.estimateOver` further down is the working precedent.
+     · It coloured the AMOUNT alone, so the one row on the plan a coach must not skim carried its
+       meaning in a colour attached to the number rather than to the sentence. `.estimateOver`
+       takes th AND td, and this is the same reading. */
+.planTable tbody tr.closeRow.closeShort th,
+.planTable tbody tr.closeRow.closeShort td { color: var(--warning-light); }
 
 /* ── P3: thirty lines on a screen ─────────────────────────────────────────────
    The Schedule cell — each line's phasing at a glance ("Jan–Mar · 3 chunks"), the idle middle
@@ -634,6 +646,26 @@
 @media (max-width: 640px) {
   .periodGrid .periodGridBadge { display: none; }
 }
+/* ⚰ `.periodGridLineBtn` NEVER SHIPPED — it was written here and deleted the same hour, and the
+   note stays because the mistake is the reusable part.
+
+   The By-period row opens the edit form on a tap anywhere, exactly as the List's rows have since
+   2026-08-13. That gesture is POINTER-ONLY, so the line's own name became a real control, to give a
+   keyboard and a screen reader the door the view had just gained. The class written to dress it —
+   background:none, border:0, font/colour inherit, left-aligned, a focus ring, the same
+   `calc(100% + 0.4rem)` and negative margins — was `.moneyGridToggle` with `display:block` instead
+   of `flex`. Two declarations apart, and one of the two things it did NOT copy was the tap floor.
+
+   ⚠⚠ THE RENDERED SWEEP IS WHAT FOUND IT: eleven `Edit <line>` buttons at 26px against a 44px
+   floor, on a grid whose category toggles two rows up were already compliant — because the shared
+   class sits inside the ≤768 touch band and the copy did not. A duplicate does not inherit the
+   fixes the original has accumulated, and nothing short of a browser can see that it hasn't.
+
+   The button uses `.moneyGridToggle` itself now. That name says "toggle" and this one opens a form:
+   a misnomer kept on purpose, exactly as the month grid's `chooser` classes are. What the class
+   actually describes is presentational — an unstyled control inside a money-grid cell, inheriting
+   the cell's type and taking the touch floor — and that is true of both. */
+
 .periodGridNote {
   margin: 0;
   font-size: var(--type-support);
