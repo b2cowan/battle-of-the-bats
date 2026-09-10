@@ -44,6 +44,64 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-10',
+    title: 'Budget categories in one place, and a plan you can edit where you read it',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Budget categories and items now have their own place — search them, filter them, and add one without leaving the line you were building.',
+      },
+      {
+        category: 'new',
+        text: 'A category or item carries one line per season. Choose it again and the amount is added to the line already there, instead of a second row appearing beside it.',
+      },
+      {
+        category: 'new',
+        text: 'Figures in the By period view open the line behind them, so you can correct a number where you spotted it.',
+      },
+      {
+        category: 'new',
+        text: 'Player installments now appear in the By period plan grid alongside everything else, and money owed back reads in brackets.',
+      },
+      {
+        category: 'new',
+        text: 'A player can be recorded handing money in to a fundraiser more than once, and their total adds up across every hand-in.',
+      },
+      {
+        category: 'new',
+        text: "Lowering a family's bill is recorded as a lower bill, not as money collected — so what you've actually taken in stays true.",
+      },
+      {
+        category: 'improved',
+        text: 'Money reports under the category it was filed in, on every screen and every spreadsheet.',
+      },
+      {
+        category: 'fixed',
+        text: 'Closing a help tip with the Escape key no longer closes the record open behind it.',
+      },
+      {
+        category: 'fixed',
+        text: 'An assistant coach invitation now knows when you already have an account, instead of asking you to create a second one.',
+      },
+      {
+        category: 'fixed',
+        text: 'Budget plans export and import as the same file, including plans carrying both costs and funding.',
+      },
+      {
+        category: 'fixed',
+        text: 'Reports no longer lose money that was paid back, and writing off a bill cannot swallow a refund.',
+      },
+      {
+        category: 'fixed',
+        text: 'Families with a repayment on their account can be ticked off the dues list again.',
+      },
+      {
+        category: 'fixed',
+        text: 'The operator link on a public tournament page is readable on events using a light colour scheme.',
+      },
+    ],
+  },
+  {
     date: '2026-09-08',
     title: 'Money that adds up, clearer dues, and a free 2027 season',
     highlights: [
