@@ -74,6 +74,24 @@ export const RAISING_FOR_NUDGE: Record<FundraisingKind, string> = {
 };
 
 /**
+ * THE FILING A RECORD NAMES, spelled the way every money surface prints one: **shelf · word**
+ * ("Fundraising · Merchandise sales"). Null when the record names no line — a LEGACY record —
+ * and each caller answers that state in its own voice (a room shows `RAISING_FOR_NUDGE`; a
+ * stated door falls back to its running figure).
+ *
+ * ⚠ ONE SPELLING, because three surfaces print it and they must agree: the recording
+ * conversation's "Which drive" hint, and BOTH rooms' stated Record doors. The rooms' own facts
+ * lines print the word alone — that line is already dense with the fraction, the dates and the
+ * note, and it sits inside the shelf's own screen.
+ */
+export function raisingForFiling(
+  r: { budgetCategoryName?: string | null; budgetItemName?: string | null },
+): string | null {
+  if (!r.budgetItemName) return null;
+  return [r.budgetCategoryName, r.budgetItemName].filter(Boolean).join(' · ');
+}
+
+/**
  * The word each shelf's picker OPENS ON — a pre-fill, and nothing more.
  *
  * ⚠⚠ A NAME LOOKUP, DELIBERATELY, AND ONLY BECAUSE OF WHAT IT DECIDES. Every other "which word is
@@ -277,13 +295,150 @@ export function rollUpFundraising(
     r.teamKeeps += row.teamNet;
     r.creditedToFamilies += row.totalCredits;
   }
-  const round = (n: number) => Math.round(n * 100) / 100;
   return {
     ...r,
-    fundraiserRaised: round(r.fundraiserRaised),
-    sponsorReceived: round(r.sponsorReceived),
-    sponsorPledged: round(r.sponsorPledged),
-    teamKeeps: round(r.teamKeeps),
-    creditedToFamilies: round(r.creditedToFamilies),
+    fundraiserRaised: round2(r.fundraiserRaised),
+    sponsorReceived: round2(r.sponsorReceived),
+    sponsorPledged: round2(r.sponsorPledged),
+    teamKeeps: round2(r.teamKeeps),
+    creditedToFamilies: round2(r.creditedToFamilies),
   };
+}
+
+/**
+ * A DRIVE'S BOARD ROW IS A PARTICIPANT, NOT AN ENTRY (owner ruling 2026-09-10, mockup `94c27428`;
+ * `COACH_FUNDRAISER_MORE_THAN_ONCE_PLAN.md` §3). A player — or the whole team — carrying their
+ * TOTAL for this drive, with each dated hand-in under it.
+ *
+ * ⚠⚠ THE ONE-ENTRY PARTICIPANT MUST RENDER EXACTLY AS IT DID BEFORE THIS EXISTED. `entries.length
+ * === 1` is the whole test the board draws on: date inline, Edit and Remove on the row, no chevron,
+ * no fold. A drive where nobody handed in twice is byte-for-byte the drive that shipped before mig
+ * 287. That is the load-bearing constraint on the design, not a nicety — the fold is the EXCEPTION
+ * speaking, and it must cost the common case nothing.
+ *
+ * ⚠⚠ THE CREDIT IS SUMMED, NEVER RE-MULTIPLIED. `rebate_percent` is a snapshot stamped on each row
+ * (dictionary gotcha 4), so a share changed mid-drive leaves two hand-ins legitimately carrying
+ * different rates. Multiplying a participant's TOTAL by the drive's CURRENT rate would silently
+ * rewrite history — and on the whole-team participant, whose rows are stamped 0% precisely to stop
+ * an amount correction minting a credit for a family the row does not name (owner ruling
+ * 2026-09-08), it would mint one out of nothing.
+ *
+ * ⚠ ANYTHING COUNTING PLAYERS COUNTS PARTICIPANTS, NEVER ROWS. Until mig 287 the two were the same
+ * number and four surfaces quietly relied on it — the board's fraction, the Fundraising list's
+ * per-drive count (which prints as the money export's "Players" column), and the Record door's
+ * roster projection and its sort. A player who hands in twice is one player.
+ */
+export interface DriveParticipant {
+  /** Stable React key and grouping key — the player's id, or `WHOLE_TEAM_PARTICIPANT` for the
+   *  team's rows, which group together under ONE row like everybody else (ruling 3 of three). */
+  key: string;
+  /** Null on the whole-team participant. */
+  playerId: string | null;
+  playerName: string;
+  /** False = this player has left the active roster. Always true for the whole team: there is no
+   *  person to have left. */
+  playerActive: boolean;
+  /** Σ amountRaised across the hand-ins. */
+  total: number;
+  /** Σ rebateAmount across the hand-ins — see the summed-never-re-multiplied note above. */
+  credit: number;
+  /** The MOST RECENT hand-in's date: the Received column answers "when did money last come in
+   *  from them", which is the question a coach chasing a drive is asking. */
+  latestDate: string;
+  /** OLDEST FIRST — the order money actually arrived in, which is how a fold reads as a history. */
+  entries: DriveParticipantEntry[];
+}
+
+/** The subset of a board entry this grouping needs. Structural, so both the room's `DriveEntryRow`
+ *  and a test fixture satisfy it without either importing the other's shape. */
+export interface DriveParticipantEntry {
+  id: string;
+  playerId: string | null;
+  playerName: string;
+  playerActive: boolean;
+  amountRaised: number;
+  rebateAmount: number;
+  effectiveDate: string;
+  createdAt: string;
+}
+
+/** The grouping key every whole-team row shares. ⚠ Not an empty string and not the null itself: it
+ *  has to survive being a React key and a Map key, and it must never collide with a player id. */
+export const WHOLE_TEAM_PARTICIPANT = 'whole-team';
+
+/** Dollars, to the cent. ⚠ Hoisted to module scope by `/simplify` (2026-09-10): `rollUpFundraising`
+ *  had declared a byte-identical `round` closure of its own 70 lines up. */
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Group a drive's entries into board rows. Pure, so the board, the facts line and the tests all
+ * decide participation the same way.
+ *
+ * Participants come back LARGEST TOTAL FIRST, ties broken by name — the order the board has always
+ * drawn (the entries GET sorts by `amount_raised` desc) plus a tie-break, so equal totals stop
+ * depending on the database's row order and a re-read cannot shuffle the board under a coach.
+ */
+/** The participant as this function returns it: the summary fields, plus the CALLER'S OWN entry
+ *  shape rather than the structural minimum — so the board gets its `notes` and its `id` back out
+ *  of the grouping instead of having to re-find each row. ⚠ `Omit`, not `&`: intersecting the two
+ *  `entries` arrays leaves the narrower declaration winning and the caller's fields invisible. */
+export type DriveParticipantOf<E extends DriveParticipantEntry> = Omit<DriveParticipant, 'entries'> & { entries: E[] };
+
+export function driveParticipants<E extends DriveParticipantEntry>(entries: E[]): DriveParticipantOf<E>[] {
+  const byKey = new Map<string, DriveParticipantOf<E>>();
+  for (const e of entries) {
+    const key = e.playerId ?? WHOLE_TEAM_PARTICIPANT;
+    let p = byKey.get(key);
+    if (!p) {
+      p = {
+        key,
+        playerId: e.playerId,
+        playerName: e.playerName,
+        playerActive: e.playerActive,
+        total: 0, credit: 0, latestDate: e.effectiveDate,
+        entries: [],
+      };
+      byKey.set(key, p);
+    }
+    p.total += e.amountRaised;
+    p.credit += e.rebateAmount;
+    p.entries.push(e);
+  }
+  const out = [...byKey.values()];
+  for (const p of out) {
+    p.total = round2(p.total);
+    p.credit = round2(p.credit);
+    /* One sort answers both questions: the fold reads oldest-first, and the last row is therefore
+       the most recent hand-in. ⚠ `createdAt` breaks a same-day tie — two hand-ins on one day are
+       ordered as they were recorded, never arbitrarily. */
+    p.entries.sort((a, b) =>
+      a.effectiveDate.localeCompare(b.effectiveDate) || a.createdAt.localeCompare(b.createdAt));
+    p.latestDate = p.entries[p.entries.length - 1]!.effectiveDate;
+  }
+  out.sort((a, b) => b.total - a.total || a.playerName.localeCompare(b.playerName));
+  return out;
+}
+
+/**
+ * THE PARTICIPATION FRACTION'S NUMERATOR — how many of the team have logged something.
+ *
+ * ⚠⚠ DISTINCT PLAYERS, AND A TEAM ENTRY IS NEVER ONE (owner ruling 2026-09-08, carried forward
+ * unchanged by mig 287). Hoodie-table money is raised by nobody in particular, so it counts BESIDE
+ * the fraction rather than in it, or "2 of 14 players" quietly becomes 3 and a coach reads a player
+ * who has not taken part. An inactive player's entry stays on the board and outside the fraction,
+ * because the denominator is the ACTIVE roster.
+ *
+ * ⚠ IT TAKES THE ENTRIES, NOT THE PARTICIPANTS (`/simplify`, 2026-09-10). The first cut took a
+ * grouped `DriveParticipant[]`, which meant the facts line had to build the whole board — a Map, a
+ * per-participant sort of its hand-ins and a sort of the participants themselves — to print one
+ * headcount, and it did that on every render BESIDE the board body doing the identical grouping for
+ * its own rows. A cardinality question wants one pass and a Set, and answering it this way also
+ * stops a trivial fact depending on the board's display-ordering rules.
+ */
+export function driveLoggedPlayerCount(
+  entries: Pick<DriveParticipantEntry, 'playerId' | 'playerActive'>[],
+): number {
+  const seen = new Set<string>();
+  for (const e of entries) if (e.playerId && e.playerActive) seen.add(e.playerId);
+  return seen.size;
 }

@@ -64,6 +64,9 @@ export interface DriveEntryRow {
   /** What the coach SEES this row dated — the stored date or the org-clock creation day. The
    *  ONLY value an edit may pre-fill (see the entries route's own note). */
   effectiveDate: string;
+  /** When the row was WRITTEN — not when the money arrived (`effectiveDate` is that). Carried so a
+   *  participant's hand-ins have a stable order when two of them share a date. */
+  createdAt: string;
 }
 
 /** One cheque, as the entries route's `sponsorArrivals` serves it (mig 268). */

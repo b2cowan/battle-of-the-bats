@@ -100,6 +100,47 @@ function invisibleOps(sql) {
   if (/(^|;|\bbegin\b|\bthen\b)\s*(insert\s+into\b|update\s+(?=[a-z_."])|delete\s+from\b)/m.test(body)) ops.push('data');
   if (/\bdrop\s+column\b/.test(body)) ops.push('drop-column');
   if (/\b(create\s+(or\s+replace\s+)?function|drop\s+function)\b/.test(body)) ops.push('function');
+  /* A DROPPED CONSTRAINT — the hole mig 287 fell through, and it is the same shape as `drop-column`:
+     the drift check compares TABLES AND COLUMNS plus CHECK constraints that admit LESS in prod, so a
+     UNIQUE or FK constraint that dev has dropped and prod still holds adds no table, adds no column
+     and loosens no CHECK. `check:migrations` reports "in sync" with the rule still standing on
+     production — and the code that ships expecting it gone gets refused by the live database.
+     ⚠ THE DROP, NOT THE ADD. An ADDED constraint that prod lacks fails loudly the first time prod
+     writes a row dev would have refused; what needs declaring is the direction where prod is
+     STRICTER than the code expects.
+     ⚠⚠ AND `check-schema-parity` DOES SEE THIS ONE — it diffs constraints both ways off the
+     snapshots and reports `constraint:only-prod:…`. So the reason an entry here still earns its
+     place is NOT that nothing else can see the drop; it is that the parity ratchet can be SILENCED
+     with `--init`, which accepts the divergence into the baseline and is afterwards
+     indistinguishable from having applied the migration, whereas a `pending` status in this file
+     BLOCKS a promote and cannot be quieted that way. State it that way round: the first draft of
+     this comment claimed the drop was invisible everywhere, and it is not.
+     ⚠ `if exists` is matched too — every drop in this repo is written that way. */
+  /* ⚠⚠ A DROP THAT LEAVES NOTHING BEHIND — not every `drop constraint`, and the difference is the
+     whole accuracy of this rule. The commonest use of `DROP CONSTRAINT` in this repo is the
+     drop-then-re-ADD that WIDENS a CHECK (migs 266 and 274 both do it, to admit a new enum value),
+     and the drift gate compares CHECK DEFINITIONS in both directions — that is the `divergentChecks`
+     mechanism built for the 266 incident itself — so a re-added CHECK is perfectly visible to it.
+     Flagging those was a false positive on this gate's first widened run, and it dragged two
+     unrelated pre-existing migrations in front of an authoring check they had never needed.
+     What IS invisible is a constraint dropped and NOT put back: no table added, no column added, no
+     CHECK to compare, so `check:migrations` reports "in sync" with the rule still standing on prod.
+     ⚠ Matched by NAME, so `drop constraint x` immediately followed by `add constraint x` is not a
+     finding, while mig 287 — which drops a UNIQUE and never re-adds it — is. */
+  /* ⚠ WHITESPACE FLATTENED AND MATCHED AS PLAIN TEXT, deliberately. The first cut built the
+     re-add test with `new RegExp(`\badd\s+constraint …`)` inside a TEMPLATE LITERAL, where `\b` is
+     the backspace character and `\s` is just an `s` — so the pattern was
+     "backspace-a-d-d-s-plus…", it matched nothing, every drop-and-re-add read as a bare drop, and
+     the gate reported two false positives on its first run. A regex LITERAL would have been fine;
+     a template literal is where that escape silently changes meaning. */
+  const flat = body.replace(/\s+/g, ' ');
+  for (const name of flat.matchAll(/\bdrop constraint (?:if exists )?([a-z0-9_."]+)/g)) {
+    const dropped = name[1].replace(/["']/g, '');
+    if (!flat.includes(`add constraint ${dropped}`)) {
+      ops.push('drop-constraint');
+      break;
+    }
+  }
   return ops;
 }
 

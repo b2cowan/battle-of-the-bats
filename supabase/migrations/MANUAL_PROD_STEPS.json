@@ -74,6 +74,10 @@
     "286_one_word_one_line_on_a_plan.sql": {
       "prod": "pending",
       "note": "Part 1 JOINS duplicate budget lines on one word (data-only, invisible to every drift check); part 2 adds the partial unique index that keeps them joined (visible). Applied to dev 2026-09-09 and verified there by query: 0 twin groups left, every split still sums to its total, no orphaned periods. PROD STILL HOLDS ONE TWIN PAIR (measured 2026-09-09: 1 group, 2 lines, neither carrying a note, on 1 of 4 plans) — the join must run on prod BEFORE the index, which this file does in order. Apply before promoting the code that reads one line per word."
+    },
+    "287_a_player_hands_in_more_than_once.sql": {
+      "prod": "pending",
+      "note": "Drops UNIQUE (fundraiser_id, player_id) so a player can hand money in to a drive more than once. Applied to dev 2026-09-10; PROD STILL HOLDS THE CONSTRAINT. ⚠ THIS IS THE FIRST 'drop-constraint' ENTRY AND THE GATE COULD NOT SEE IT UNTIL THIS MIGRATION ADDED THE PATTERN: check:migrations compares tables, columns and CHECK constraints that admit LESS in prod, so a dropped UNIQUE adds no table, adds no column and loosens no CHECK — it reported 'in sync' with the rule still standing. Promote the code without this and prod's own database refuses the second entry with the 409 the code no longer writes, on a form that has just told the coach what their total would become. Nothing to back-fill: every existing row is already valid under the looser rule."
     }
   }
 }

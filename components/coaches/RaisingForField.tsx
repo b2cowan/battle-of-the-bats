@@ -6,6 +6,7 @@ import {
   RAISING_FOR_LABEL, RAISING_FOR_HINT, RAISING_FOR_DEFAULT_WORD, type FundraisingKind,
 } from '@/lib/coach-fundraising';
 import type { BudgetCategoryWithItems } from '@/lib/types';
+import { useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 
 /**
  * "RAISING FOR" — the field a drive and a sponsor answer with the budget line their money counts
@@ -56,6 +57,7 @@ export default function RaisingForField({
   disabled?: boolean;
 }) {
   const shelf = useMemo(() => raisingForShelf(categories, kind), [categories, kind]);
+  const bumpMoneyRevision = useBumpMoneyRevision();
 
   return (
     <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -71,7 +73,7 @@ export default function RaisingForField({
         placeholder={kind === 'sponsor'
           ? 'Search your sponsorship lines — e.g. “grant”'
           : 'Search your fundraising lines — e.g. “merchandise”'}
-        manageHint="Rename or remove it later from Budget Plan → Manage our words."
+        manage={{ orgSlug, categories, onChanged: bumpMoneyRevision }}
         disabled={disabled}
       />
       <p className={styles.formHint}>{RAISING_FOR_HINT[kind]}</p>

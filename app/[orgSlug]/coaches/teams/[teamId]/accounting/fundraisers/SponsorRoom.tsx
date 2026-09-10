@@ -131,7 +131,9 @@ export function sponsorFacts(s: Fundraiser, moneyTags: RepTeamTag[]): ReactNode 
   /* ⚠ RAISING FOR JOINS THE FACTS (mig 285) — the sponsor half of the drive room's own line, and
      the reason the row can never be empty any more: a legacy sponsor with no description and no
      tags still has the one thing worth saying, which is that nobody has told it where its money
-     belongs. The exception speaks; the standard word does not. */
+     belongs. ⚠ EVERY NAMED WORD SPEAKS, the standard one included — an earlier draft of this
+     comment claimed otherwise and the code never did it; see the drive room's twin. The word alone
+     here, the shelf too on the stated Record door. */
   const raising = s.budgetItemName
     ? <>Raising for <strong>{s.budgetItemName}</strong></>
     : <span className={styles.mutedInline}>{RAISING_FOR_NUDGE.sponsor}</span>;

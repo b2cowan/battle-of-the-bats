@@ -73,7 +73,7 @@ import {
 import { formatPlayerLastFirst, formatPlayerFirstLast } from '@/lib/player-name';
 import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
 import { fetchAccountingSettings } from '@/lib/coach-accounting-settings';
-import { WHOLE_TEAM_ENTRY_LABEL, type CreditUnit } from '@/lib/coach-fundraising';
+import { WHOLE_TEAM_ENTRY_LABEL, raisingForFiling, type CreditUnit } from '@/lib/coach-fundraising';
 import RaisingForField, { defaultRaisingFor } from '@/components/coaches/RaisingForField';
 import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import { accrueArrival, deriveAllArrivalCredits, creditPlanProblem, sharesFromRows, stillToCome } from '@/lib/sponsor-arrivals';
@@ -853,6 +853,10 @@ interface ConvDriveDetail {
   players: {
     playerId: string;
     playerName: string;
+    /** THE PLAYER'S TOTAL for this drive so far, or null when they have handed nothing in.
+     *  ⚠ Since mig 287 this is a SUM, not "their entry" — a player may have handed in several
+     *  times. ⚠ `null` is not 0: a player can be recorded with $0 raised, and the consequence
+     *  sentence asks this exact question to decide whether to name a resulting total. */
     logged: number | null;
   }[];
 }
@@ -2083,9 +2087,7 @@ function MoneyRecordsPanel({
           name: f.name,
           /* "Fundraising · Merchandise sales" — the shelf and the word, the way every other money
              surface prints a filing. Null on a legacy drive, which simply shows no note. */
-          raisingFor: f.budgetItemName
-            ? [f.budgetCategoryName, f.budgetItemName].filter(Boolean).join(' · ')
-            : null,
+          raisingFor: raisingForFiling(f),
         })));
     } catch (e: any) {
       if (gen === convLoadGen.current) setDrivesError(e.message);
@@ -2104,12 +2106,14 @@ function MoneyRecordsPanel({
         ...prev,
         [driveId]: {
           rebatePercent: Number(data.fundraiser?.playerRebatePercent ?? 0),
+          /* ⚠ THE SERVER SUMS IT NOW (mig 287). This used to unwrap a single `entry` object, which
+             the route could only serve while the database guaranteed one row per player. */
           players: ((data.players ?? []) as Array<{
-            playerId: string; playerName: string; entry: { amountRaised?: number } | null;
+            playerId: string; playerName: string; logged: number | null;
           }>).map(p => ({
             playerId: p.playerId,
             playerName: p.playerName,
-            logged: p.entry ? Number(p.entry.amountRaised ?? 0) : null,
+            logged: p.logged === null || p.logged === undefined ? null : Number(p.logged),
           })),
         },
       }));
@@ -4921,8 +4925,16 @@ function MoneyRecordsPanel({
 
     if (convBranch === 'drive') {
       const detail = conv.driveId ? driveDetail[conv.driveId] : undefined;
-      const openPlayers = detail?.players.filter(p => p.logged === null) ?? [];
-      const loggedCount = (detail?.players.length ?? 0) - openPlayers.length;
+      /* ⚰⚰ THE EXCLUSION STOOD HERE AND IS GONE (mig 287, owner ruling 2026-09-10 on mockup
+         `94c27428`). `openPlayers` filtered the roster down to players with nothing logged and
+         `loggedCount` counted the ones it had hidden — so on a running drive the three players most
+         likely to hand in AGAIN were the three missing from the list, and the form told the coach to
+         go and find their row instead. It was the friction that surfaced this whole change, at step
+         F1 of the §157 walk.
+         Every player is in the list now, permanently. What went with the filter: its "N players
+         already have an amount logged" hint, and the dead end underneath it — a drive where
+         everybody had logged once drew a `<select>` holding only "Choose…" beside a required label,
+         over a Save that could not succeed. */
       /* ⚠ "The whole team" IS AN ANSWER TO "who raised it", NOT A PLAYER — so it never resolves to
          one, never earns a credit, and never counts toward the drive's participation fraction. The
          sentinel is checked by identity against the constant, never by an empty string: '' is the
@@ -4996,19 +5008,16 @@ function MoneyRecordsPanel({
                   </button>
                 </p>
               ) : !detail ? <p className={styles.formHint}>Loading the leaderboard…</p>
-                /* ⚠⚠ NOBODY LEFT TO NAME IS AN ANSWER, NOT AN EMPTY DROPDOWN (/review, §135 walk
-                   2026-09-03 — the finding this pass was pointed at). A drive whose every player
-                   already has an amount drew a `<select>` holding only "Choose…" beside a required
-                   label, over a Save that could never succeed. It was survivable while this door
-                   was unlocked — the coach could re-point "Which drive" in place — but §135's lock
-                   states the drive, so that exit closed and the dead end became terminal. Every
-                   other branch's identity question already says its empty state out loud through
-                   `convPickerField`'s `empty`; this block is hand-built and never got one.
-                   ⚠ AND IT NAMES THE RIGHT DOOR. The old hint sent the coach to "the drive's own
-                   row on Fundraising" — written before the drive became a ROOM, so a coach who
-                   opened this FROM that room was being sent to where they already stood. The
-                   entries list with its Edit door is the thing that actually changes a logged
-                   amount, so that is what both states point at. */
+                /* ⚰ THE EVERY-PLAYER-LOGGED DEAD END IS GONE WITH THE RULE THAT CAUSED IT (mig 287).
+                   A drive whose every player already had an amount drew a `<select>` holding only
+                   "Choose…" beside a required label, over a Save that could never succeed — and
+                   §135's lock, which states the drive, had closed the coach's one exit out of it.
+                   /review found it on 2026-09-03 and answered it with words; the state cannot occur
+                   at all now, because a player who has logged something is still in the list.
+                   ⚠ THE ONE LESSON THAT OUTLIVES IT, because this block is still hand-built while
+                   every other identity question on this form says its empty state through
+                   `convPickerField`'s `empty`: if you add a state this control can reach, say it
+                   out loud here. The roster-is-empty note below is the only one left. */
                 : (
                 <>
                   {/* ⚠⚠ A DROPDOWN, NOT AN OPEN LIST (owner ruling 2026-09-08). The mockup drew this
@@ -5019,13 +5028,13 @@ function MoneyRecordsPanel({
                       ⚠ "The whole team" IS FIRST, above the Players group, because it is the answer
                       the model made load-bearing rather than an afterthought at the end of a
                       roster.
-                      ⚠ AND THE LIST IS NEVER EMPTY ANY MORE — which retires a whole dead end. A
-                      drive where every player already had an amount used to draw a select holding
-                      only "Choose…" beside a required label, over a Save that could not succeed;
-                      §135's lock had closed the coach's one exit (re-pointing "Which drive"), so
-                      the dead end was terminal. The team answer is always available, so the
-                      leaderboard's state can no longer strand the form. The two sentences that
-                      described that state survive as the PLAYERS group's own empty note. */}
+                      ⚠⚠ AND THE PLAYERS GROUP IS THE WHOLE ROSTER (mig 287). It was the roster
+                      MINUS whoever had already logged something, which is why the group could empty
+                      and why this block once needed an every-player-logged dead end. A player hands
+                      in as many times as it takes now, so the list neither shrinks as the drive runs
+                      nor has anything to explain: no "N players already have an amount logged"
+                      sentence, and nothing to say about a group that can no longer be empty except
+                      when the roster itself is. */}
                   <select
                     className={styles.select}
                     value={conv.drivePlayerId}
@@ -5033,9 +5042,9 @@ function MoneyRecordsPanel({
                   >
                     <option value="">Choose…</option>
                     <option value={WHOLE_TEAM_ANSWER}>{WHOLE_TEAM_ENTRY_LABEL}</option>
-                    {openPlayers.length > 0 && (
+                    {detail.players.length > 0 && (
                       <optgroup label="Players">
-                        {openPlayers.map(p => (
+                        {detail.players.map(p => (
                           <option key={p.playerId} value={p.playerId}>{p.playerName}</option>
                         ))}
                       </optgroup>
@@ -5045,18 +5054,13 @@ function MoneyRecordsPanel({
                     <p className={styles.formHint}>
                       Nobody raised it individually, so no family share comes off anyone&rsquo;s dues.
                     </p>
-                  ) : openPlayers.length === 0 ? (
+                  ) : detail.players.length === 0 ? (
+                    /* The one state that still says something: a team with nobody on its roster.
+                       It is about the ROSTER, not about what has been logged, so mig 287 leaves it
+                       exactly as it was — and the whole-team answer above is still available, which
+                       is what keeps the form from stranding. */
                     <p className={styles.formHint}>
-                      {detail.players.length === 0
-                        ? <>Nobody is on this team&rsquo;s roster yet — log it for the whole team.</>
-                        : <>Every player already has an amount logged for this drive. To change one,
-                            use <strong>Edit</strong> on their row in the drive&rsquo;s entries.</>}
-                    </p>
-                  ) : loggedCount > 0 ? (
-                    <p className={styles.formHint}>
-                      {loggedCount === 1 ? '1 player already has' : `${loggedCount} players already have`}{' '}
-                      an amount logged — change those with <strong>Edit</strong> on their row in the
-                      drive&rsquo;s entries.
+                      Nobody is on this team&rsquo;s roster yet — log it for the whole team.
                     </p>
                   ) : null}
                 </>
@@ -5096,7 +5100,26 @@ function MoneyRecordsPanel({
             {raisedByTeam
               ? <> · <strong>no family share</strong>, because nobody raised it individually</>
               : credit > 0.005 && <> · <strong>{fmt(credit)}</strong> is credited to{' '}
-                {selPlayer!.playerName}&apos;s family ({detail.rebatePercent}%)</>}.
+                {selPlayer!.playerName}&apos;s family ({detail.rebatePercent}%)</>}
+            {/* ⚠⚠ THIS CLAUSE IS THE WHOLE DEFENCE AGAINST THE ACCIDENTAL DOUBLE, and it is the
+                answer the owner chose over a refusal (ruling 2 of three, 2026-09-10 on mockup
+                `94c27428`). Before mig 287 the server turned a player's second entry away with a
+                409; now it succeeds, so recording $60 for Avery twice by mistake leaves Avery
+                quietly holding $120. Rather than block the door, the form STATES THE CONSEQUENCE —
+                the same trade this product made when a bill lowered stopped being a collection.
+                ⚠ IT APPEARS EXACTLY WHEN THE RISK DOES: only for a player who ALREADY has an entry,
+                which is the only case where the saved amount and the resulting total differ.
+                ⚠ `!== null` RATHER THAN TRUTHY. A player recorded with $0 raised has an entry and a
+                total of zero (`amount_raised` is CHECK `>= 0`, deliberately) — a truthiness test
+                would treat them as never having handed anything in and silently drop the clause on
+                the one shape where the arithmetic is least obvious.
+                ⚠ A REJECTED ALTERNATIVE, so it is not re-proposed as new: a soft confirm on a
+                same-day, same-amount repeat. Ruled against — one extra tap on a rare shape is a rule
+                that shapes the whole board. */}
+            {!raisedByTeam && selPlayer && selPlayer.logged !== null && (
+              <> · <strong>{selPlayer.playerName}&apos;s total for this drive becomes{' '}
+                {fmt(r2c(selPlayer.logged + amount))}</strong></>
+            )}.
             {' '}Shows on the ledger as fundraising income.
           </>)}
         </>
@@ -6021,7 +6044,7 @@ function MoneyRecordsPanel({
           createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
           createItemMode="coach"
           allowCreateCategory
-          manageHint="Rename or remove it later from Budget Plan → Manage our words — but it stays on this side."
+          manage={{ orgSlug, categories, onChanged: bumpMoneyRevision }}
           /* The bills group (C2). What is still owing rides each row — it is the fact that makes
              one worth choosing, and the reason a coach recognises their bill in a list of words. */
           /* The bills group (C2), built once above — a fresh object here would be a new identity

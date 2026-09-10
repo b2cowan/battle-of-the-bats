@@ -3974,23 +3974,32 @@ yet"). NULL on a fundraiser.
 ### `rep_fundraiser_entries`
 <!-- dict:table:rep_fundraiser_entries -->
 
-**Purpose:** for a DRIVE, one row per player — how much that player raised and the resulting dues
-rebate — **plus, since 2026-09-08, any number of WHOLE-TEAM rows** (`player_id` NULL, `rebate_percent`
-and `rebate_amount` 0, no credit): hoodies sold at a table with nobody counting who sold what. For a
-SPONSOR (**since mig 268**), one row per **ARRIVAL** — a dated cheque, `player_id` always NULL, its
-family credits hanging off `rep_dues_credits.fundraiser_entry_id` per the
-`rep_fundraiser_credit_plan`. The hub of a cross-domain triple-write either way.
+**Purpose:** one DATED ARRIVAL of money against a fundraising record. For a DRIVE, what a
+participant handed in — **any number of rows per player since mig 287**, and **any number of
+WHOLE-TEAM rows since 2026-09-08** (`player_id` NULL, `rebate_percent` and `rebate_amount` 0, no
+credit: hoodies sold at a table with nobody counting who sold what). For a SPONSOR (**since mig
+268**), one row per **cheque** — `player_id` always NULL, its family credits hanging off
+`rep_dues_credits.fundraiser_entry_id` per the `rep_fundraiser_credit_plan`. The hub of a
+cross-domain triple-write either way.
+
+⚠ **A ROW IS NOT A PERSON, AND SINCE MIG 287 IT IS NOT A BOARD ROW EITHER.** The drive's board
+groups these into PARTICIPANTS — a player, or the whole team, carrying their **total**, folding open
+onto each dated hand-in — via `driveParticipants` in `lib/coach-fundraising.ts`. A participant's
+credit is **summed** from its rows' stamped `rebate_percent`, never re-multiplied from the drive's
+current rate (gotcha 4), which is also why the whole team's rows carry a 0% stamp.
 
 ⚠⚠ **A NULL `player_id` NO LONGER MEANS "SPONSOR ARRIVAL" — READ THE PARENT'S `kind`.** It did from
 mig 268 until the fundraising-one-way-in release, and the register book already keyed on `kind` for
 exactly this reason; anything that inferred "arrival" from a null player is now wrong on a drive's
 whole-team row. The whole-team entry needed **no schema change**: the column has been nullable since
-mig 237 and `UNIQUE (fundraiser_id, player_id)` does not cap NULLs (gotcha 2), so several are legal
-per drive, exactly as arrivals are per sponsor.
+mig 237, and the then-standing `UNIQUE (fundraiser_id, player_id)` did not cap NULLs, so several
+were legal per drive exactly as arrivals are per sponsor. ⚠ **That NULL trick is no longer what
+permits them** — mig 287 dropped the constraint outright (gotcha 2), so several rows per PLAYER are
+legal too, and a whole-team row is now legal for the same plain reason every other row is.
 
 **Gotchas (read first):**
 1. **Recording an entry triple-writes across two domains, non-transactionally.** POST creates (1) an `accounting_entries` income row in the **org** ledger (category `fundraising`, status `posted`), (2) this entry row, and (3) — only if `rebate_amount > 0` — a `rep_dues_credits` row, then a 4th write back-linking `credit_id`. There is **no rollback**: if the credit insert fails, the entry + accounting row persist with `credit_id=NULL`.
-2. **UNIQUE `(fundraiser_id, player_id)`** — one entry per player per DRIVE (POST 409s if it exists → "use PATCH"). ⚠ Does **not** cap a sponsor's arrivals: they all carry `player_id` NULL, and SQL NULLs are distinct for uniqueness — deliberate (mig 268).
+2. ⚰⚰ **THERE IS NO UNIQUENESS ON `(fundraiser_id, player_id)` ANY MORE — mig 287 DROPPED IT.** It said one entry per player per DRIVE and the POST 409'd on a second ("use PATCH"); it came from mig 030, roughly a year before whole-team entries, and **nobody ever decided it** — the whole-team entry (2026-09-08) landed in the gap it leaves because SQL NULLs do not collide, exactly as a sponsor's arrivals do (mig 268). A player now hands in as many times as it takes, each hand-in its own dated row, and the board draws a player as one PARTICIPANT row carrying their total. ⚠⚠ **ANYTHING COUNTING PLAYERS MUST COUNT DISTINCT `player_id`, NOT ROWS** — "how many players logged something" and "how many entry rows have a player" were the same number only while this constraint stood, and four readers relied on that (the board's fraction, the list route's `playerCount` → the money export's "Players" column, and the entries route's roster projection and its sort). ⚠ The POST refuses nothing now; the Record door states the player's **resulting total** before the save instead (owner ruling 2026-09-10: state the consequence, don't block the door).
 3. **A DELETE route EXISTS** (`…/entries/[entryId]`, R5-A, owner-ruled 2026-08-30) — this gotcha said "no DELETE route" for months after one shipped. It unwinds three rows in order (family credit → the dated income row → the entry), **credits first** because both FKs are `ON DELETE SET NULL` rather than CASCADE, and asks the payout floor **pre-flight**. A sponsor's cheque is refused here and undone from the sponsor's own row instead. PATCH still works too: setting amount to 0 zeroes the rebate and **deletes the linked credit**, leaving the entry and its (now-$0) accounting income row standing.
 4. **`rebate_percent` is a SNAPSHOT** copied from the fundraiser at POST and **never recomputed** from the live fundraiser; PATCH uses the stored snapshot. **`rebate_amount = round(amount_raised × rebate_percent / 100, 2)`**, computed and stored (not DB-generated); recomputed on PATCH.
 5. **CHECK `amount_raised >= 0`** (`rep_fundraiser_entries_amount_raised_check`) — note `>= 0`, not `> 0`: a player can be recorded with $0 raised.
@@ -4002,7 +4011,7 @@ per drive, exactly as arrivals are per sponsor.
 <!-- dict:col:rep_fundraiser_entries.org_id -->
 <!-- dict:col:rep_fundraiser_entries.team_id -->
 <!-- dict:col:rep_fundraiser_entries.player_id -->
-**`fundraiser_id`** (FK → `rep_fundraisers.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, **NULLABLE since migration 237**) — parent campaign + scope + the player; UNIQUE `(fundraiser_id, player_id)`; indexes `fundraiser_idx`, `player_idx`.
+**`fundraiser_id`** (FK → `rep_fundraisers.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, **NULLABLE since migration 237**) — parent campaign + scope + the player; **no uniqueness on the pair since mig 287** (gotcha 2); indexes `fundraiser_idx`, `player_idx` — plain, from mig 030, and they are what every read path actually uses.
 
 ⚠ **`player_id` IS NULLABLE AND THAT REACHES ~20 READERS (mig 237; semantics widened by 268).**
 A **sponsor's** entry (an arrival) is **always** NULL since 268 — the credited families live on

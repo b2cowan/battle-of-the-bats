@@ -318,6 +318,25 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
    * fundraisers need `.not(col, 'is', null)` — so a table-driven version needs an escape hatch and
    * is not yet a clean win. **Trigger for revisiting: a THIRD dated table gets forgotten. Two is a
    * coincidence; three is the pattern that pays for the abstraction.**
+   *
+   * ⚠⚠ **THE THIRD ONE ARRIVED: `rep_fundraiser_entries.received_date`, 2026-09-10** — seeded with
+   * the sponsor's two dated cheques on 2026-09-08 and never shifted, so those dates stood still
+   * while the season they arrived in walked forward. **The trigger is met and the full refactor was
+   * still declined, deliberately**, because the heterogeneity above is real rather than rhetorical:
+   * events need a two-phase anchor-then-siblings write across two columns, installments and
+   * fundraisers each shift two independently-nullable columns, and credits have no `team_id` at all
+   * and are reached through the roster. A `{table, dateColumn, filter}` loop cannot express four of
+   * the nine without an escape hatch.
+   *
+   * **What IS available, and is the follow-up worth taking:** five of the nine are the uniform
+   * single-column-shift-with-a-filter shape (`rep_dues_payments`, `rep_fundraiser_entries`,
+   * `rep_player_awards`, `rep_team_opponents`, arguably `rep_team_opponent_observations`). A
+   * declarative list scoped to just those — leaving events, installments, fundraisers and credits
+   * hand-written as the genuinely special cases — would have made this addition one array literal
+   * instead of the FOUR touch points it cost (the read, the error check, the row type, the shift),
+   * and would lower the cost of the next forgotten table of the same shape. Not taken here because
+   * it is a refactor of nine call sites in a nightly job that this change had no other reason to
+   * touch; taken on its own it is small and safe. (`/simplify` altitude lens, 2026-09-10.)
    */
   const [
     { data: events, error: eventsError },
@@ -331,6 +350,16 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
     // the drive closed — leave it unshifted and the demo's credits stand still while the bills they
     // are lowering walk forward, until "closed last month" quietly becomes "closed last year".
     { data: fundraisers, error: fundError },
+    /* ⚠⚠ AND SO DO THE DATED ROWS INSIDE IT — THE THIRD FORGOTTEN DATED TABLE, which is the count
+       the note above named as the trigger for rethinking this list. `rep_fundraiser_entries`
+       carries a `received_date` (mig 261) and was seeded with real ones for the sponsor's two
+       arrivals on 2026-09-08, and NOTHING has been shifting them since: the sponsor's cheques have
+       been standing still while the season they arrived in walks forward. The drive's entries join
+       them here (mig 287 gave a player several dated hand-ins, and the demo shows one), so the fold
+       a prospect opens reads two dates that stay where the drive is.
+       ⚠ `.not(…, 'is', null)` like the fundraisers above: a pre-mig-261 row stores no date and is
+       read off its creation day, so writing one now would invent a fact the seed never stated. */
+    { data: fundraiserEntries, error: fundEntryError },
     // Awards and the scouting log ride the clock too (both added to the 12U 2026-08-20). An award
     // is dated the GAME it was given at and the book's log is grouped by meeting, so leaving either
     // behind would walk the schedule forward past its own record: awards night would show trophies
@@ -347,6 +376,7 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
     db.from('rep_player_dues_installments').select('id, due_date, paid_at').eq('team_id', teamId),
     db.from('rep_dues_payments').select('id, received_date').eq('team_id', teamId),
     db.from('rep_fundraisers').select('id, start_date, end_date').eq('team_id', teamId).not('end_date', 'is', null),
+    db.from('rep_fundraiser_entries').select('id, received_date').eq('team_id', teamId).not('received_date', 'is', null),
     db.from('rep_player_awards').select('id, awarded_at').eq('team_id', teamId),
     db.from('rep_team_opponent_observations').select('id, created_at').eq('team_id', teamId),
     db.from('rep_team_opponents').select('id, last_note_updated_at')
@@ -359,6 +389,7 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   if (duesError) throw new Error(duesError.message);
   if (payError) throw new Error(payError.message);
   if (fundError) throw new Error(fundError.message);
+  if (fundEntryError) throw new Error(fundEntryError.message);
   if (awardError) throw new Error(awardError.message);
   if (obsError) throw new Error(obsError.message);
   if (oppError) throw new Error(oppError.message);
@@ -376,6 +407,7 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   type InstallmentRow = { id: string; due_date: string; paid_at: string | null };
   type PaymentRow = { id: string; received_date: string };
   type FundraiserRow = { id: string; start_date: string | null; end_date: string | null };
+  type FundraiserEntryRow = { id: string; received_date: string };
   type CreditRow = { id: string; credit_date: string };
   type AwardRow = { id: string; awarded_at: string };
   type ObservationRow = { id: string; created_at: string };
@@ -407,6 +439,12 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
         start_date: f.start_date ? addCalendarDays(f.start_date, days) : null,
         end_date: f.end_date ? addCalendarDays(f.end_date, days) : null,
       }))
+  ) + (
+    /* ⚠ THE SAME `days` AS THE CREDITS BELOW, and that is what keeps them in step: a drive entry
+       and the credit it minted are dated the same day by the write path, so shifting one without
+       the other would make the demo's own books disagree with themselves. */
+    await shiftRows(db, 'rep_fundraiser_entries', (fundraiserEntries ?? []) as FundraiserEntryRow[], 'received_date',
+      e => ({ received_date: addCalendarDays(e.received_date, days) }))
   ) + (
     await shiftRows(db, 'rep_dues_credits', (duesCredits ?? []) as CreditRow[], 'credit_date',
       c => ({ credit_date: addCalendarDays(c.credit_date, days) }))

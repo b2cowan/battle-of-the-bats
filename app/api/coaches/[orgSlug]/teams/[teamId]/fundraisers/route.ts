@@ -167,15 +167,20 @@ export const GET = withObservability(async (_req: Request,
 
   // Entries are ARRIVALS for a sponsor (mig 268) and per-player rows for a drive — the sum works
   // for both, and a pledged sponsor deliberately has none: its figure is the pledge column.
-  const totalsMap = new Map<string, { totalRaised: number; totalRebates: number; playerCount: number }>();
+  const totalsMap = new Map<string, { totalRaised: number; totalRebates: number; players: Set<string> }>();
   for (const e of entries ?? []) {
-    const existing = totalsMap.get(e.fundraiser_id) ?? { totalRaised: 0, totalRebates: 0, playerCount: 0 };
+    const existing = totalsMap.get(e.fundraiser_id) ?? { totalRaised: 0, totalRebates: 0, players: new Set<string>() };
+    /* ⚠⚠ DISTINCT PLAYERS, COUNTED IN A SET (mig 287) — this added 1 PER ROW, which was the same
+       number right up until a player could hand in twice. `playerCount` prints as the money
+       export's "Players" column, so a player who handed in three times would have read there as
+       three players under a heading that says otherwise. Rows are not people.
+       ⚠ Only a real player counts: a sponsor's playerless arrivals and a drive's whole-team rows
+       must not read as players (owner ruling 2026-09-08 — a team entry is never a player). */
+    if (e.player_id) existing.players.add(e.player_id as string);
     totalsMap.set(e.fundraiser_id, {
       totalRaised:  existing.totalRaised  + Number(e.amount_raised),
       totalRebates: existing.totalRebates + Number(e.rebate_amount),
-      // Only a real player counts toward "how many have logged something" — a sponsor's
-      // playerless arrivals must not read as players.
-      playerCount:  existing.playerCount  + (e.player_id ? 1 : 0),
+      players:      existing.players,
     });
   }
 
@@ -200,7 +205,7 @@ export const GET = withObservability(async (_req: Request,
   }
 
   const result = fundraisers.map(f => {
-    const t = totalsMap.get(f.id) ?? { totalRaised: 0, totalRebates: 0, playerCount: 0 };
+    const t = totalsMap.get(f.id) ?? { totalRaised: 0, totalRebates: 0, players: new Set<string>() };
     const isSponsor = (f.kind ?? 'fundraiser') === 'sponsor';
     const plan = isSponsor ? (planByFundraiser.get(f.id) ?? []) : [];
     const first = plan[0]?.playerId ?? null;
@@ -220,7 +225,7 @@ export const GET = withObservability(async (_req: Request,
       totalRaised:         Math.round(t.totalRaised  * 100) / 100,
       teamNet:             Math.round((t.totalRaised - t.totalRebates) * 100) / 100,
       totalCredits:        Math.round(t.totalRebates * 100) / 100,
-      playerCount:         t.playerCount,
+      playerCount:         t.players.size,
       // First credited family (the muted words beside the name); the whole plan rides too.
       broughtInBy:         first ? (nameById.get(first) ?? null) : null,
       broughtInById:       first,

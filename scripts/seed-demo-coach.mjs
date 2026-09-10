@@ -1302,21 +1302,30 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       ...itemRef(fundraisingItems,
         MIDSEASON_FUNDRAISER.raisingFor.category, MIDSEASON_FUNDRAISER.raisingFor.item),
     })).error);
+    /* ⚠ ONE PASS PER HAND-IN, NOT PER PLAYER — Theo has two rows (mig 287), and this loop needed no
+       change to seed them: it always wrote one entry per array element, and the constraint that
+       would have refused the second is gone. */
     for (const entry of MIDSEASON_FUNDRAISER.entries) {
       const rebate = Math.round(entry.raised * MIDSEASON_FUNDRAISER.rebatePercent) / 100;
       const entryId = randomUUID();
+      /* ⚠ THE DAY THE MONEY ARRIVED, dating BOTH writes exactly as the product's own Record door
+         does. Dating the credit off the drive's CLOSING day instead — which this did until
+         2026-09-10, while the entry carried no date at all — put a family's credit in a month the
+         money had not moved in, and made the two rows of one act disagree about when it happened. */
+      const receivedDay = orgDateWithOffset(now, entry.receivedOffset);
       die('insert 12U fundraiser entry', (await db.from('rep_fundraiser_entries').insert({
         id: entryId, fundraiser_id: fundraiserId, org_id: org.id, team_id: team.id,
         player_id: playerIds[entry.rosterIndex],
         amount_raised: entry.raised, rebate_percent: MIDSEASON_FUNDRAISER.rebatePercent,
         rebate_amount: rebate,
+        received_date: receivedDay,
       })).error);
       const creditId = randomUUID();
       die('insert 12U fundraiser credit', (await db.from('rep_dues_credits').insert({
         id: creditId, program_year_id: pyId, player_id: playerIds[entry.rosterIndex],
         amount: rebate, description: `Fundraiser rebate — ${MIDSEASON_FUNDRAISER.name}`,
         credit_type: 'fundraiser',
-        credit_date: orgDateWithOffset(now, MIDSEASON_FUNDRAISER.endOffset),
+        credit_date: receivedDay,
         fundraiser_entry_id: entryId,
       })).error);
       die('link 12U entry credit', (await db.from('rep_fundraiser_entries')

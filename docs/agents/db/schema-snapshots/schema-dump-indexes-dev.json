@@ -1961,11 +1961,6 @@
   },
   {
     "tablename": "rep_fundraiser_entries",
-    "indexname": "rep_fundraiser_entries_fundraiser_id_player_id_key",
-    "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_entries_fundraiser_id_player_id_key ON public.rep_fundraiser_entries USING btree (fundraiser_id, player_id)"
-  },
-  {
-    "tablename": "rep_fundraiser_entries",
     "indexname": "rep_fundraiser_entries_fundraiser_idx",
     "indexdef": "CREATE INDEX rep_fundraiser_entries_fundraiser_idx ON public.rep_fundraiser_entries USING btree (fundraiser_id)"
   },

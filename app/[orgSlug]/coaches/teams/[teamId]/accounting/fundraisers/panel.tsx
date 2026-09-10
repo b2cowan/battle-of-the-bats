@@ -49,7 +49,7 @@ import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
-import { rollUpFundraising, normalizeKindFilter, sponsorStanding } from '@/lib/coach-fundraising';
+import { rollUpFundraising, normalizeKindFilter, sponsorStanding, raisingForFiling, RAISING_FOR_LABEL } from '@/lib/coach-fundraising';
 import RaisingForField, { defaultRaisingFor } from '@/components/coaches/RaisingForField';
 import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
@@ -789,9 +789,19 @@ export function FundraisersPanel({
                     branch: 'drive',
                     lock: {
                       subject: openRecord.name,
-                      detail: openRecord.totalRaised > 0.005
-                        ? `${fmt(openRecord.totalRaised)} raised so far`
-                        : 'opened from its room',
+                      /* ⚠⚠ THE ONE QUIET LINE NAMES THE FILING, NOT THE RUNNING TOTAL (owner
+                         ruling, §157 walk 2026-09-10, and the same ruling swapped the sponsor
+                         twin below). This door opens ON TOP of the room, so the tiles behind it
+                         still show Raised — the line was spending itself on a figure the coach
+                         can read anyway — while the facts line carrying "Raising for" is the
+                         thing the sheet covers up. It is the moment money is about to exist;
+                         where it will land is what a coach cannot otherwise see.
+                         The old wording survives for a LEGACY record, which names no line. */
+                      detail: raisingForFiling(openRecord)
+                        ? `${RAISING_FOR_LABEL} ${raisingForFiling(openRecord)}`
+                        : openRecord.totalRaised > 0.005
+                          ? `${fmt(openRecord.totalRaised)} raised so far`
+                          : 'opened from its room',
                       asks: 'drive-player',
                     },
                     ids: { driveId: openRecord.id },
@@ -876,7 +886,12 @@ export function FundraisersPanel({
                     branch: 'sponsor',
                     lock: {
                       subject: openRecord.name,
-                      detail: openRecord.stillToCome > 0.005 ? `${fmt(openRecord.stillToCome)} still to come` : 'opened from its room',
+                      /* The drive door's twin, under the same ruling and for the same reason: the
+                         "To come" tile is still on screen behind the sheet, and the sponsor's
+                         "Raising for" line is not. */
+                      detail: raisingForFiling(openRecord)
+                        ? `${RAISING_FOR_LABEL} ${raisingForFiling(openRecord)}`
+                        : openRecord.stillToCome > 0.005 ? `${fmt(openRecord.stillToCome)} still to come` : 'opened from its room',
                     },
                     ids: { sponsorId: openRecord.id },
                   })}

@@ -631,16 +631,23 @@ test.describe('a sponsor’s money follows its arrivals, in every reader', () =>
 
     const before = await call(page, `${api()}/fundraisers/${driveId}/entries`);
     expect(before.status).toBe(200);
-    const b = before.body as { summary: { playerCount: number; totalRaised: number }; players: { entry: unknown }[] };
+    /* ⚠ `logged` (a player's TOTAL, or null), NOT the retired `entry` object — mig 287 reshaped this
+       projection when a player gained the right to hand in more than once. Read as `p.entry` this
+       test does not merely fail: the assertion BELOW would pass for the wrong reason, filtering to
+       zero because the field no longer exists rather than because the row is absent, and the
+       regression guard this whole test exists to be would report green while proving nothing. */
+    const b = before.body as { summary: { playerCount: number; totalRaised: number }; players: { logged: number | null }[] };
     expect(b.summary.playerCount, 'the entry is counted while the player is active').toBe(1);
-    expect(b.players.filter(p => p.entry), 'and visible on the board').toHaveLength(1);
+    expect(b.players.filter(p => p.logged !== null), 'and visible on the board').toHaveLength(1);
 
     // The ordinary, reversible roster toggle that opens the hole.
     await admin.from('rep_roster_players').update({ status: 'inactive' }).eq('id', playerId);
 
     const after = await call(page, `${api()}/fundraisers/${driveId}/entries`);
-    const a = after.body as { summary: { playerCount: number; totalRaised: number }; players: { entry: unknown }[] };
-    expect(a.players.filter(p => p.entry),
+    const a = after.body as { summary: { playerCount: number; totalRaised: number }; players: { logged: number | null }[] };
+    /* Zero because the inactive player is not in the ACTIVE-roster projection at all — which is the
+       trap. ⚠ Assert it on a field that still exists, or this reads green on a broken contract. */
+    expect(a.players.filter(p => p.logged !== null),
       'the board cannot show it — this is the trap').toHaveLength(0);
     expect(a.summary.playerCount,
       '⚠ but the SUMMARY still counts it, which is what the delete guard must read').toBe(1);

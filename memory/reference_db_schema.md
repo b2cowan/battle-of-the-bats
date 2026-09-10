@@ -165,7 +165,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 
 ### rep_fundraiser_entries
 id (uuid), fundraiser_id (uuid) → rep_fundraisers.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id, amount_raised (numeric) NOT NULL, rebate_percent (numeric), rebate_amount (numeric), accounting_entry_id (uuid) → accounting_entries.id, credit_id (uuid) → rep_dues_credits.id, notes, created_at, updated_at, received_date, method
-- Indexes: rep_fundraiser_entries_accounting_entry_id_idx, rep_fundraiser_entries_credit_id_idx, rep_fundraiser_entries_fundraiser_id_player_id_key, rep_fundraiser_entries_fundraiser_idx, rep_fundraiser_entries_org_id_idx, rep_fundraiser_entries_player_idx, rep_fundraiser_entries_team_id_idx
+- Indexes: rep_fundraiser_entries_accounting_entry_id_idx, rep_fundraiser_entries_credit_id_idx, rep_fundraiser_entries_fundraiser_idx, rep_fundraiser_entries_org_id_idx, rep_fundraiser_entries_player_idx, rep_fundraiser_entries_team_id_idx
 
 ### rep_fundraisers
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, name NOT NULL, description, player_rebate_percent (numeric), start_date, end_date, is_active (boolean), created_at, updated_at, kind, sponsor_status, pledged_amount (numeric), expected_by, budget_item_id (uuid) → budget_items.id, budget_category_id (uuid) → budget_categories.id

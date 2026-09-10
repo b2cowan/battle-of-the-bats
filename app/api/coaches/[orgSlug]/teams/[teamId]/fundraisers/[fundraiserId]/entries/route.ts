@@ -122,23 +122,39 @@ export const GET = withObservability(async (_req: Request,
      efficiency lens, 2026-09-01): only the payout-floor exposure needs them, and a drive's
      expansion was paying for two whole-season table reads it never looked at. */
 
-  const entryMap = new Map<string, Record<string, unknown>>();
-  for (const e of entries ?? []) entryMap.set(e.player_id as string, e as Record<string, unknown>);
+  /* ⚠⚠ A PLAYER'S TOTAL, NOT "THEIR ENTRY" (mig 287). This projection served one entry per player
+     and was keyed by a Map that overwrote — safe only while the database guaranteed one row per
+     player, which it no longer does. Left as it was, a player who handed in twice would have
+     reported whichever row the amount-desc read happened to set LAST: their SMALLEST hand-in,
+     silently, as though it were everything they had raised. It is summed instead, and `logged`
+     names what it now is.
+     ⚠ `null` MEANS "HAS NOT HANDED ANYTHING IN", and it is not the same as 0 — a player CAN be
+     recorded with $0 raised (dictionary gotcha 5), and the Record door's consequence sentence asks
+     this exact question to decide whether to name a resulting total. */
+  const loggedByPlayer = new Map<string, number>();
+  for (const e of entries ?? []) {
+    if (!e.player_id) continue; // the whole team is not a player — it is never in this list
+    loggedByPlayer.set(e.player_id as string,
+      (loggedByPlayer.get(e.player_id as string) ?? 0) + Number(e.amount_raised));
+  }
 
+  /* ⚠ ROUNDED ONCE, AT THE READ (`/simplify`, 2026-09-10). The first cut rounded inside the loop,
+     on every addition to a player's running total — work whose only meaningful result is the final
+     figure, and which reads as though the intermediate cents mattered. They do not; the sum does. */
   const playerRows = (roster ?? []).map(p => {
-    const entry = entryMap.get(p.id);
+    const logged = loggedByPlayer.get(p.id);
     return {
       playerId:       p.id,
       playerName:     [p.player_first_name, p.player_last_name].filter(Boolean).join(' '),
-      entry:          entry ? mapEntry(entry) : null,
+      logged:         logged === undefined ? null : Math.round(logged * 100) / 100,
     };
   });
 
-  // Sort: players with entries first (desc by amount_raised), then remaining roster
+  // Sort: players who have logged something first (desc by total), then the rest of the roster.
   playerRows.sort((a, b) => {
-    if (a.entry && !b.entry) return -1;
-    if (!a.entry && b.entry) return  1;
-    if (a.entry && b.entry) return (b.entry.amountRaised as number) - (a.entry.amountRaised as number);
+    if (a.logged !== null && b.logged === null) return -1;
+    if (a.logged === null && b.logged !== null) return  1;
+    if (a.logged !== null && b.logged !== null && a.logged !== b.logged) return b.logged - a.logged;
     return a.playerName.localeCompare(b.playerName);
   });
 
@@ -391,9 +407,25 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: futureRefusal }, { status: 400 });
   }
 
-  /* The roster check and the one-entry-per-player rule are both questions about a PLAYER, so a
-     whole-team entry asks neither: there is nobody to find on the roster, and several team entries
-     on one drive are legal (see the note above the `wholeTeam` test). */
+  /* The roster check is a question about a PLAYER, so a whole-team entry does not ask it: there is
+     nobody to find on the roster.
+
+     ⚰⚰ THE ONE-ENTRY-PER-PLAYER REFUSAL STOOD HERE AND IS GONE (mig 287, owner ruling 2026-09-10 on
+     mockup `94c27428`). It read a `maybeSingle()` for an existing row and 409'd with "An entry
+     already exists for this player. Use PATCH to update it." — the server half of a rule migration
+     030 imposed a year before whole-team entries existed and that NOBODY EVER DECIDED. A player who
+     sells six boxes in August and three more in September has handed in twice, exactly as a
+     sponsor's two cheques are two arrivals and the team's two hoodie tables are two entries; those
+     two were designed, this one was inherited.
+
+     ⚠ THE PATCH IS UNCHANGED, and that is the point of writing this here. Editing one hand-in has
+     always meant editing ONE ROW; it did not need the constraint and does not miss it.
+
+     ⚠ WHAT REPLACES THE REFUSAL IS A SENTENCE, NOT A GUARD. Recording $60 twice for one player by
+     mistake now succeeds. The Record door answers it before the save — its consequence line names
+     the player's resulting total whenever they already have an entry — which is the same trade this
+     product made when a bill lowered stopped being a collection: state the consequence, don't block
+     the door. Do not restore a refusal here without re-opening that ruling. */
   let playerName = WHOLE_TEAM_ENTRY_LABEL;
   if (!wholeTeam) {
     const { data: player } = await supabaseAdmin
@@ -405,20 +437,6 @@ export const POST = withObservability(async (req: Request,
 
     if (!player) return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });
     playerName = [player.player_first_name, player.player_last_name].filter(Boolean).join(' ');
-
-    const { data: existingEntry } = await supabaseAdmin
-      .from('rep_fundraiser_entries')
-      .select('id')
-      .eq('fundraiser_id', fundraiserId)
-      .eq('player_id', playerId)
-      .maybeSingle();
-
-    if (existingEntry) {
-      return NextResponse.json(
-        { error: 'An entry already exists for this player. Use PATCH to update it.' },
-        { status: 409 },
-      );
-    }
   }
 
   /* ⚠⚠ A TEAM ENTRY IS STAMPED 0%, NOT THE DRIVE'S RATE, and the stamp is what keeps it that way

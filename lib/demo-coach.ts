@@ -516,6 +516,19 @@ export const MIDSEASON_DUES = {
  *      bill into instalment #3 and clear an overdue one from the side.
  *   3. **Priya (3) is not on the list either** — her instalment #4 is the "$90 of $120" part-paid
  *      showcase, and a credit settling the remaining $30 would take that row off the screen.
+ *
+ * ⚠⚠ THEO HANDS IN TWICE, AND THAT IS THE SHOP WINDOW FOR MIG 287 (2026-09-10). A player may now
+ * hand money in as many times as it takes, and the drive's board draws them as ONE row carrying
+ * their total that folds open onto each dated hand-in — a product gain a prospect could not
+ * otherwise see, because `check:demos` can prove this world unbroken but can never tell you it is
+ * missing something the product grew.
+ *   · **It is a SPLIT, not an addition.** $100 + $60 is the same $160 Theo always raised, so his
+ *     rebate is still $80 (as $50 + $30), the drive still raises $670, its rebates still come to
+ *     $335, and all three pins above are untouched. Nothing downstream moves — deliberately: a
+ *     demo moment that changed a narrated figure would be paying for itself with the tour.
+ *   · **Wes is NOT the one who hands in twice**, though his $240 splits just as neatly. His single
+ *     $120 rebate is the "Covered by fundraising" row the gate asserts by exact amount, and two
+ *     credits of $60 would satisfy the bill and fail the check.
  */
 export const MIDSEASON_FUNDRAISER = {
   name: 'Bottle Drive',
@@ -527,13 +540,24 @@ export const MIDSEASON_FUNDRAISER = {
   /** Opened / closed, relative to the anchored clock (days). Closed, so the credits are real. */
   startOffset: -56,
   endOffset: -21,
-  /** rosterIndex → raised. Rebate is half, and never more than one instalment (pin 2). */
+  /**
+   * rosterIndex → raised. Rebate is half, and never more than one instalment (pin 2).
+   *
+   * ⚠ ONE ROW IS ONE HAND-IN, NOT ONE PLAYER — Theo appears twice, on purpose. The demo gate counts
+   * this array against the rows in the database, so the two stay in step by construction.
+   * ⚠ `receivedOffset` IS THE DAY THE MONEY ARRIVED and it dates BOTH writes: the entry (which is
+   * what the board's Received column reads) and the family's credit. Every one falls inside the
+   * drive's own window — outside it, a prospect would read a bottle drive taking money after it
+   * closed. Before 2026-09-10 no entry carried a date at all, so all five read the seed day and
+   * the board showed one date five times.
+   */
   entries: [
-    { rosterIndex: 0,  raised: 160 }, // Theo Marsh      → $80
-    { rosterIndex: 1,  raised: 90  }, // Nadia Osei      → $45
-    { rosterIndex: 2,  raised: 240 }, // Wes Calloway    → $120, covers the last bill exactly
-    { rosterIndex: 4,  raised: 60  }, // Marco Reyes     → $30
-    { rosterIndex: 5,  raised: 120 }, // June Whitfield  → $60
+    { rosterIndex: 0,  raised: 100, receivedOffset: -49 }, // Theo Marsh      → $50 ┐ one player,
+    { rosterIndex: 0,  raised: 60,  receivedOffset: -26 }, // Theo Marsh      → $30 ┘ two hand-ins
+    { rosterIndex: 1,  raised: 90,  receivedOffset: -44 }, // Nadia Osei      → $45
+    { rosterIndex: 2,  raised: 240, receivedOffset: -38 }, // Wes Calloway    → $120, covers the last bill exactly
+    { rosterIndex: 4,  raised: 60,  receivedOffset: -31 }, // Marco Reyes     → $30
+    { rosterIndex: 5,  raised: 120, receivedOffset: -24 }, // June Whitfield  → $60
   ],
 } as const;
 

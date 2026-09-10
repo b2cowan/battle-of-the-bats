@@ -1,0 +1,888 @@
+<title>More Than Once Walk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:40px 20px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:.1em .35em;border-radius:4px}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(36px,6vw,56px);line-height:.97;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:15px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.signin{margin-top:22px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r);padding:14px 17px;display:flex;flex-direction:column;gap:7px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:19px;margin:0}
+.signin dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.signin dt{color:var(--dim)}
+.signin dd{margin:0;font-family:var(--mono);font-size:12.5px}
+.parthead{margin-top:42px;border-top:2px solid var(--ink);padding-top:12px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:28px;line-height:1.06;margin:3px 0 0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:5px}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--dim);min-width:3.2ch;padding-top:3px}
+.step.done .num{color:var(--olive)}
+.step-head h3{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.15;margin:0;text-wrap:balance;flex:1}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.do{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.do b{color:var(--ink)}
+.expect{border-left:3px solid var(--olive);background:var(--olive-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.expect b,.warn b,.ask b{color:var(--ink)}
+.verdict{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.verdict label{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;border:1px solid var(--rule-strong);border-radius:99px;padding:5px 12px;cursor:pointer;background:var(--card);min-height:34px}
+.verdict input{accent-color:var(--olive);cursor:pointer;margin:0}
+.verdict label.pick{border-color:var(--olive);background:var(--olive-soft);color:var(--olive);font-weight:600}
+.verdict label.pickbad{border-color:var(--brick);background:var(--brick-soft);color:var(--brick);font-weight:600}
+textarea{width:100%;min-height:0;height:34px;resize:vertical;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--sunk);color:var(--ink)}
+textarea:focus{outline:2px solid var(--olive);outline-offset:1px}
+.jot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:14px}
+.jot input[type=text]{font:inherit;font-size:13.5px;padding:6px 10px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--sunk);color:var(--ink);width:9ch;text-align:center;font-family:var(--mono)}
+.jot input[type=text]:focus{outline:2px solid var(--olive);outline-offset:1px}
+.toastwrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on{background:var(--olive-soft)}
+.chk.on label{color:var(--olive);font-weight:600}
+.hintline{display:block;font-size:12.5px;color:var(--dim);font-weight:400;margin-top:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA §166 · a player hands in more than once · 2026-09-10</p>
+  <h1>More than once</h1>
+  <p class="lede">Twenty-six checks and three calls, in eight parts. A drive's board row is now a
+    <b>participant</b> carrying their total, folding open onto each dated hand-in — and every player
+    is back in the Record door's list, permanently. Verdicts and notes save in this browser;
+    <b>Copy findings</b> at the top puts everything you have written into one block to paste back.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> judged</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Before you start</h2>
+  <dl>
+    <dt>Head coach</dt><dd>uat-coach@uat-test-org.local / UATPassword2026!</dd>
+    <dt>Where</dt><dd>localhost:3000 → uat-test-org → UAT Test Team → Money → Fundraising → <b>Chocolate sale</b></dd>
+    <dt>Season</dt><dd>2026 — the only live season in this org</dd>
+  </dl>
+  <p class="do"><b>Do not reseed.</b> This walk needs the drive exactly as it stands. It creates its
+    own hand-ins as it goes and Part F takes every one of them back off, so it leaves the fixture
+    where it found it.</p>
+  <p class="do"><b>Restart the dev server first.</b> New files, a new shared helper and a changed
+    stylesheet — a half-warm cache is the one thing that would make this walk lie to you.</p>
+  <p class="do"><b>Keep this page private</b> — it carries a dev password.</p>
+</div>
+
+<div class="warn" style="margin-top:16px">
+  <b>⚠ Nothing here is pinned to a dollar figure, on purpose.</b> The §157 walk ran on this same
+  drive earlier today and entries were added and removed during it, so <i>Raised</i>, the
+  participation fraction and the row totals are all wherever that left them. Every step below asks
+  you to check a <b>relationship</b> — this row equals the sum of the rows under it, this figure went
+  up by exactly what you typed, this count did <i>not</i> move — which survives the fixture drifting
+  and still fails loudly on bad arithmetic. Where a step needs a number from an earlier step, there
+  is a box to write it in.
+</div>
+
+<div class="warn" style="margin-top:12px">
+  <b>⚠ This build carries migration 287, and it is on dev only.</b> The rule that refused a player's
+  second entry lives in the database, not just the code — so this walk cannot be run against
+  production, and the migration has to be applied there before the code ships. It is registered as
+  <code>pending</code> in the manual prod-steps file, because the pre-promote drift check
+  <i>cannot see a dropped constraint</i> and would report "in sync" with the rule still standing.
+</div>
+
+<!-- ══════════ PART A ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The board you already know, untouched</h2>
+  <p>The load-bearing promise of this change is that it costs the ordinary case nothing. Before
+    anything is recorded, the board must be <b>exactly</b> what it was — and it is worth looking
+    hard now, because after Part C you will not be able to tell from memory.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><h3>⚠ No chevrons, no indent, nothing new</h3></div>
+  <div class="step-body">
+    <p class="do">Money → <b>Fundraising</b> → tap <b>Chocolate sale</b> to open its room. Look at
+      the entries table.</p>
+    <div class="expect"><b>Expect the board that shipped before this change.</b> Every name flush
+      against the left edge of its cell, its date inline under <b>Received</b>, <b>Edit</b> and
+      <b>Remove</b> on every row. <b>No chevron anywhere and no blank space where one would go.</b>
+      If any name looks nudged to the right, that is a defect and this is the step that catches it.</div>
+    <div class="verdict" data-v="a1"></div>
+    <textarea data-n="a1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><h3>Write down the fraction before you change anything</h3></div>
+  <div class="step-body">
+    <p class="do">Read the quiet facts line above the table — <b>"N of M players logged"</b>, and
+      after it <b>"plus N team entries"</b> if the drive has any. Write both down here.</p>
+    <div class="jot">
+      <label>players logged <input type="text" data-j="a2players" placeholder="N of M"></label>
+      <label>team entries <input type="text" data-j="a2team" placeholder="N"></label>
+    </div>
+    <div class="expect"><b>Expect them to be what they were.</b> You will check both again in C6 and
+      D3 — the players count must <i>not</i> move when somebody hands in a second time, and the team
+      count must.</div>
+    <div class="verdict" data-v="a2"></div>
+    <textarea data-n="a2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><h3>Note a player who already has an amount, and one who has none</h3></div>
+  <div class="step-body">
+    <p class="do">From the board, pick a player who is <b>on it</b> (they have handed something in)
+      — note their name and the amount beside it. That is your <b>repeat player</b> for the rest of
+      the walk.</p>
+    <div class="jot">
+      <label>repeat player <input type="text" data-j="a3who" placeholder="name" style="width:14ch"></label>
+      <label>their amount now <input type="text" data-j="a3amt" placeholder="$"></label>
+    </div>
+    <div class="expect"><b>Expect their row to have one date and one amount</b>, with Edit and
+      Remove on it. Nothing to open.</div>
+    <div class="verdict" data-v="a3"></div>
+    <textarea data-n="a3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART B ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Every player is in the list</h2>
+  <p>This is the half you actually felt on the §157 walk: the Record door hid every player who had
+    already handed something in, which is exactly the three most likely to hand in again.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><h3>⚠ Your repeat player is in "Who raised it"</h3></div>
+  <div class="step-body">
+    <p class="do">Press <b>Record</b> in the drive's room. The drive is stated in the band at the
+      top. Open the <b>Who raised it</b> dropdown.</p>
+    <div class="expect"><b>Expect the whole roster.</b> <i>The whole team</i> first, then a
+      <b>Players</b> group holding <b>every active player</b> — including the repeat player you noted
+      in A3, and everyone else who is already on the board. Count them against the roster if you
+      like; nobody is missing.</div>
+    <div class="verdict" data-v="b1"></div>
+    <textarea data-n="b1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><h3>The sentence under it is gone</h3></div>
+  <div class="step-body">
+    <p class="do">Look immediately under the dropdown, with a <b>player</b> chosen.</p>
+    <div class="expect"><b>Expect nothing there.</b> The line that said
+      <i>"N players already have an amount logged — change those with Edit on their row"</i> is
+      deleted. Choosing <i>The whole team</i> still shows its own sentence about no family share —
+      that one stays.</div>
+    <div class="warn"><b>The one note that survives</b> is for a team with an empty roster
+      (<i>"Nobody is on this team's roster yet — log it for the whole team"</i>). This fixture has a
+      roster, so you should not see it.</div>
+    <div class="verdict" data-v="b2"></div>
+    <textarea data-n="b2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span><h3>⚠⚠ The sentence names the resulting total</h3></div>
+  <div class="step-body">
+    <p class="do">Choose your <b>repeat player</b>. Type <b>90</b> into <b>Amount raised</b> and pick
+      today for the date. Read the green consequence line above the buttons.</p>
+    <div class="expect"><b>Expect three clauses, the third of them new:</b> the drive's total rises
+      by $90.00 · a credit to that family (this drive pays 15%, so $13.50) · and
+      <b>"[player]'s total for this drive becomes $X"</b> — where X is the amount you wrote in A3
+      <b>plus $90.00</b>. Check that addition yourself; it is the whole defence against recording
+      the same money twice by accident.</div>
+    <div class="ask"><b>This is the step I most want your eye on.</b> The old behaviour <i>refused</i>
+      a second entry outright. We took that away and replaced it with this sentence. If it does not
+      stop you in your tracks when the number is wrong, the trade was a bad one.</div>
+    <div class="verdict" data-v="b3"></div>
+    <textarea data-n="b3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B4">
+  <div class="step-head"><span class="num">B4</span><h3>…and only for somebody who already has one</h3></div>
+  <div class="step-body">
+    <p class="do">Without saving, switch <b>Who raised it</b> to a player who is <b>not</b> on the
+      board. Leave the amount at 90.</p>
+    <div class="expect"><b>Expect the third clause to disappear.</b> Two clauses only — the drive's
+      total, and the family credit. Nothing about a total, because for them $90.00 <i>is</i> the
+      total and saying so twice would be noise. Switch back to your repeat player and it returns.</div>
+    <div class="verdict" data-v="b4"></div>
+    <textarea data-n="b4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B5">
+  <div class="step-head"><span class="num">B5</span><h3>Save it</h3></div>
+  <div class="step-body">
+    <p class="do">Put <b>Who raised it</b> back to your <b>repeat player</b>, confirm the amount is
+      <b>90</b> and the date is today, and press <b>Save</b>.</p>
+    <div class="expect"><b>Expect it to save.</b> No refusal, no 409, no "an entry already exists".
+      The form closes and the room re-reads.</div>
+    <div class="warn"><b>If this refuses</b>, migration 287 has not reached the database you are
+      pointed at. Stop here and say so — every step after this one depends on it.</div>
+    <div class="verdict" data-v="b5"></div>
+    <textarea data-n="b5" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART C ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>One row, two hand-ins</h2>
+  <p>The board's answer to "who raised what" has to survive at a glance, so a player stays one row.
+    What is behind that row is now reachable.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><h3>⚠ One row, carrying the sum</h3></div>
+  <div class="step-body">
+    <p class="do">Find your repeat player on the board.</p>
+    <div class="expect"><b>Expect ONE row, not two.</b> Its <b>Amount</b> is what they had in A3
+      <b>plus $90.00</b> — the same figure the form promised in B3. There is a <b>chevron</b> in
+      front of their name now, and <b>no Edit or Remove on this row at all</b>: a total is not a
+      thing you can correct.</div>
+    <div class="jot">
+      <label>their row now reads <input type="text" data-j="c1total" placeholder="$"></label>
+    </div>
+    <div class="verdict" data-v="c1"></div>
+    <textarea data-n="c1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><h3>Received is the most recent, and the row climbed</h3></div>
+  <div class="step-body">
+    <p class="do">Read the <b>Received</b> date on that row, and notice where the row now sits in the
+      table.</p>
+    <div class="expect"><b>Expect today's date</b> — the later of their two hand-ins, because the
+      column answers "when did money last come in from them". And the board is still ordered
+      <b>largest total first</b>, so the row may have moved <i>up</i> past somebody it used to sit
+      below. That is correct: they have raised more than they had.</div>
+    <div class="verdict" data-v="c2"></div>
+    <textarea data-n="c2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><h3>It opens onto the two hand-ins, oldest first</h3></div>
+  <div class="step-body">
+    <p class="do">Tap the row (or its chevron).</p>
+    <div class="expect"><b>Expect two rows to appear underneath it</b>, stepped in, on a quieter
+      ground: the <b>older one first</b>, then today's. Each shows <b>its own date in the leading
+      column</b> (the Received column beside it is empty — the date is not repeated), its own amount
+      and its own credit, and each carries <b>its own Edit and Remove</b>.</div>
+    <div class="expect"><b>The amounts under the fold are quiet ink, not the money green.</b> The
+      green figure is the participant's total above them; its parts should not compete with it.</div>
+    <div class="verdict" data-v="c3"></div>
+    <textarea data-n="c3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C4">
+  <div class="step-head"><span class="num">C4</span><h3>⚠ The two credits add up to the row's credit</h3></div>
+  <div class="step-body">
+    <p class="do">Add the <b>Credit</b> figures on the two hand-ins and compare with the
+      <b>Credit</b> on the row above them.</p>
+    <div class="expect"><b>Expect them to match exactly.</b> The row <i>sums</i> what each hand-in
+      was stamped with; it never re-multiplies the total by the drive's current rate. That
+      distinction has teeth — the whole-team entry is stamped 0% precisely so a correction cannot
+      mint a credit for a family the row does not name.</div>
+    <div class="verdict" data-v="c4"></div>
+    <textarea data-n="c4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C5">
+  <div class="step-head"><span class="num">C5</span><h3>Everybody else kept their row</h3></div>
+  <div class="step-body">
+    <p class="do">Look at the other players on the board — the ones who have handed in once.</p>
+    <div class="expect"><b>Expect their rows unchanged in every way but one:</b> date inline, Edit
+      and Remove still on the row, <b>no chevron</b>. The one change is that their names now line up
+      with the folding row's name — an invisible step where its chevron sits — so the column reads
+      straight instead of ragged.</div>
+    <div class="verdict" data-v="c5"></div>
+    <textarea data-n="c5" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C6">
+  <div class="step-head"><span class="num">C6</span><h3>⚠⚠ The players fraction did NOT move</h3></div>
+  <div class="step-body">
+    <p class="do">Read <b>"N of M players logged"</b> again and compare with what you wrote in A2.</p>
+    <div class="expect"><b>Expect the identical fraction.</b> Your repeat player was already counted;
+      handing in a second time does not make them two people. <b>This is the single most likely
+      thing to be wrong in this build</b> — four different places used to count players by counting
+      rows, and they were the same number right up until today.</div>
+    <div class="verdict" data-v="c6"></div>
+    <textarea data-n="c6" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C7">
+  <div class="step-head"><span class="num">C7</span><h3>The tiles rose by exactly what you typed</h3></div>
+  <div class="step-body">
+    <p class="do">Read the three tiles at the top of the room — <b>Raised</b>, <b>Team keeps</b>,
+      <b>Credited to families</b>.</p>
+    <div class="expect"><b>Expect Raised up by $90.00</b>, <b>Credited to families up by $13.50</b>,
+      and <b>Team keeps up by $76.50</b> — the two halves the $90.00 divides into. And Raised should
+      equal the sum of the Amount column, counting each participant row once.</div>
+    <div class="verdict" data-v="c7"></div>
+    <textarea data-n="c7" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART D ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The whole team folds the same way</h2>
+  <p>One grammar for the board. This was ruled knowingly against §157 step F3b, which liked seeing
+    two team entries as two separate rows — so it is worth deciding again on the built screen.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><h3>Record a second whole-team entry</h3></div>
+  <div class="step-body">
+    <p class="do"><b>Record</b> → <b>Who raised it</b> → <b>The whole team</b> → <b>60</b> → today →
+      Save. (If the drive has no team entry yet, do this twice so there are two.)</p>
+    <div class="expect"><b>Expect one "The whole team" row</b> carrying the sum of its entries, with
+      a chevron, opening onto them the same way a player's does.</div>
+    <div class="verdict" data-v="d1"></div>
+    <textarea data-n="d1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><h3>Still no family share, on the row and under it</h3></div>
+  <div class="step-body">
+    <p class="do">Read the <b>Credit</b> column on the team row, and on each hand-in under it.</p>
+    <div class="expect"><b>Expect an em dash in all of them</b>, and <b>Credited to families</b>
+      unchanged by the $60.00. Nobody raised it individually, so nothing comes off anyone's dues —
+      summing two zeroes must not have invented one.</div>
+    <div class="verdict" data-v="d2"></div>
+    <textarea data-n="d2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><h3>⚠ "plus N team entries" counts ENTRIES, and went up</h3></div>
+  <div class="step-body">
+    <p class="do">Read the facts line again and compare the team count with A2.</p>
+    <div class="expect"><b>Expect it to have gone UP by one</b> — the opposite of the players
+      fraction in C6, and deliberately so. Two hoodie tables on two weekends are two events; that
+      count says <i>entries</i> and must keep meaning entries even though they now share a row.</div>
+    <div class="verdict" data-v="d3"></div>
+    <textarea data-n="d3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART E ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>Edit and Remove act on one hand-in</h2>
+  <p>They moved off the summary row and onto the thing they change.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><h3>Editing one hand-in moves only that one</h3></div>
+  <div class="step-body">
+    <p class="do">Open your repeat player's fold. Press <b>Edit</b> on <b>today's $90.00</b>, change
+      it to <b>100</b>, save.</p>
+    <div class="expect"><b>Expect the older hand-in untouched</b>, today's now $100.00, the row's
+      total up by $10.00, and the row's credit up by $1.50. The other hand-in's credit must not have
+      been recomputed.</div>
+    <div class="verdict" data-v="e1"></div>
+    <textarea data-n="e1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><h3>⚠ The remove confirm names the date</h3></div>
+  <div class="step-body">
+    <p class="do">Press <b>Remove</b> on that same $100.00 hand-in and read the dialog — but
+      <b>cancel</b> it.</p>
+    <div class="expect"><b>Expect the amount, the player and the DATE</b> — "Takes the $100.00
+      logged for [player] on [date] off the team's books", plus what it takes back off their family's
+      credit. The date is new: without it, two same-sized hand-ins by one player would raise two
+      identical dialogs and you could not tell which one you were about to undo.</div>
+    <div class="verdict" data-v="e2"></div>
+    <textarea data-n="e2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E3">
+  <div class="step-head"><span class="num">E3</span><h3>Removing one leaves a plain row again</h3></div>
+  <div class="step-body">
+    <p class="do">Now actually <b>Remove</b> the $100.00 hand-in.</p>
+    <div class="expect"><b>Expect the player back to exactly the row they had in A3</b> — original
+      amount, original date, <b>no chevron</b>, Edit and Remove back on the row itself. The fold
+      disappears because there is nothing left to open, and the players fraction still has not moved.</div>
+    <div class="verdict" data-v="e3"></div>
+    <textarea data-n="e3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E4">
+  <div class="step-head"><span class="num">E4</span><h3>The team's entries come off the same way</h3></div>
+  <div class="step-body">
+    <p class="do">Open <b>The whole team</b>'s fold and <b>Remove</b> the $60.00 you added in D1.</p>
+    <div class="expect"><b>Expect the team back to however many entries it had before D1</b> — one
+      row with no fold if that leaves one, off the board entirely if that leaves none — and
+      <b>"plus N team entries"</b> back to the number you wrote in A2.</div>
+    <div class="verdict" data-v="e4"></div>
+    <textarea data-n="e4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART F ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>On a phone</h2>
+  <p>The board is a card list below 640px, and a hand-in has to read as belonging to the card above
+    it without an indent to do it with.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><h3>Record one more, then narrow the window</h3></div>
+  <div class="step-body">
+    <p class="do">Record <b>50</b> for your repeat player again so there is a fold to look at, then
+      narrow the browser to about <b>390px</b> (or open dev-tools device mode).</p>
+    <div class="expect"><b>Expect the participant card</b> to carry the name as its title with the
+      chevron beside it <b>on the same line</b> — not stacked above it — plus Received, Amount and
+      Credit as labelled lines.</div>
+    <div class="verdict" data-v="f1"></div>
+    <textarea data-n="f1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><h3>A hand-in card reads as nested</h3></div>
+  <div class="step-body">
+    <p class="do">Open the fold at phone width.</p>
+    <div class="expect"><b>Expect each hand-in as its own card, inset from the left with a heavier
+      edge down that side</b> — so it plainly belongs to the card above rather than looking like
+      another participant. Its date leads the card, its Edit and Remove sit at the foot, and the
+      empty Received line is not drawn at all.</div>
+    <div class="verdict" data-v="f2"></div>
+    <textarea data-n="f2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F3">
+  <div class="step-head"><span class="num">F3</span><h3>Put the fixture back</h3></div>
+  <div class="step-body">
+    <p class="do">Back at full width, <b>Remove</b> the $50.00 you added in F1.</p>
+    <div class="expect"><b>Expect the drive back where the §157 walk left it</b> — your repeat
+      player on one plain row, Raised back to its earlier figure, and both counts in the facts line
+      matching what you wrote in A2.</div>
+    <div class="verdict" data-v="f3"></div>
+    <textarea data-n="f3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART G ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>What a row is worth everywhere else</h2>
+  <p>Four places counted "how many players" by counting rows. Three of them are behind screens; this
+    is the one a customer can hold in their hand.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><h3>⚠⚠ The export's Players column counts people</h3></div>
+  <div class="step-body">
+    <p class="do">Record <b>40</b> for your repeat player one more time so they have two hand-ins.
+      Go back to the <b>Fundraising list</b> and export it. Open the file and find the
+      <b>Chocolate sale</b> row.</p>
+    <div class="expect"><b>Expect the Players column NOT to have gone up.</b> It counts distinct
+      people who raised something, not rows in the table — a player who hands in three times is one
+      player under a heading that says "Players". Check <b>Raised</b> did go up by $40.00 in the
+      same row, so you know the export re-read.</div>
+    <div class="verdict" data-v="g1"></div>
+    <textarea data-n="g1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G2">
+  <div class="step-head"><span class="num">G2</span><h3>The ledger has two dated lines, not one moved one</h3></div>
+  <div class="step-body">
+    <p class="do">Money → <b>Ledger</b> → Timeline. Find the fundraiser income from this drive.</p>
+    <div class="expect"><b>Expect two separate lines for your repeat player</b> — one on the original
+      date, one today — each for its own amount. This is the thing the old model could not do:
+      overwriting the amount also overwrote the date, so most of the money ended up filed in the
+      wrong month.</div>
+    <div class="verdict" data-v="g2"></div>
+    <textarea data-n="g2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G3">
+  <div class="step-head"><span class="num">G3</span><h3>The family's dues show both credits</h3></div>
+  <div class="step-body">
+    <p class="do">Money → <b>Player dues</b> → open your repeat player's record and look at their
+      credits.</p>
+    <div class="expect"><b>Expect two fundraiser credits from this drive</b>, each dated with its own
+      hand-in, and their family's position lower by both. Neither should have been recomputed when
+      the other was written.</div>
+    <div class="verdict" data-v="g3"></div>
+    <textarea data-n="g3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G4">
+  <div class="step-head"><span class="num">G4</span><h3>Put it back one last time</h3></div>
+  <div class="step-body">
+    <p class="do"><b>Remove</b> the $40.00 from G1.</p>
+    <div class="expect"><b>Expect the drive, the ledger and the family's dues all back</b> to where
+      Part F left them. This walk should leave the fixture exactly as it found it.</div>
+    <div class="verdict" data-v="g4"></div>
+    <textarea data-n="g4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART H ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>The demo, and the help</h2>
+  <p>Two surfaces that describe this screen to somebody who is not you.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="H1">
+  <div class="step-head"><span class="num">H1</span><h3>The coach sandbox shows a fold</h3></div>
+  <div class="step-body">
+    <p class="do">Open the coach demo → the <b>mid-season</b> team → Money → Fundraising →
+      <b>Bottle Drive</b>.</p>
+    <div class="expect"><b>Expect Theo Marsh to have a chevron</b>, opening onto two dated hand-ins
+      of $100.00 and $60.00. Every other figure in that world is unchanged — his $160.00 was split,
+      not added to, so the drive still raises the same money and the guided tour's dues sentence
+      still holds.</div>
+    <div class="expect"><b>And every player's Received date should differ.</b> Until today the demo's
+      drive entries carried no date at all and the board printed the seed day five times.</div>
+    <div class="verdict" data-v="h1"></div>
+    <textarea data-n="h1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="H2">
+  <div class="step-head"><span class="num">H2</span><h3>The help article says the new thing</h3></div>
+  <div class="step-body">
+    <p class="do">Open <b>Help</b> from the Money screen — it lands on <i>Fundraisers and
+      sponsors</i>. Read <b>Logging what people raised</b>.</p>
+    <div class="expect"><b>Expect a paragraph about handing in more than once</b> (one line carrying
+      the total, a <b>›</b> that opens it, Received being the most recent), the "who raised it" list
+      described as <b>the whole roster</b>, the resulting-total sentence mentioned, and Edit/Remove
+      described as sitting on the hand-in. <b>Nothing left saying players who have logged something
+      are hidden.</b></div>
+    <div class="verdict" data-v="h2"></div>
+    <textarea data-n="h2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART I ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part I</p>
+  <h2>Three calls</h2>
+  <p>Tick the option you want. The tick <i>is</i> the answer — <b>Copy findings</b> prints which one
+    you chose, so it travels without a note.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="I1">
+  <div class="step-head"><span class="num">I1</span><h3>Should the whole team really fold?</h3></div>
+  <div class="step-body">
+    <p class="do">Ruled <b>yes</b> on the mockup, knowingly against §157 step F3b — which celebrated
+      seeing two team entries as two rows. Now you have seen it built.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i1a" data-c="i1a"><label for="i1a">Keep it folded — one grammar for the board<span class="hintline">As built. A player and the team behave identically; the two entries are one click away.</span></label></div>
+      <div class="chk"><input type="checkbox" id="i1b" data-c="i1b"><label for="i1b">Unfold the team — two team entries are two rows again<span class="hintline">Reverts ruling 3. The team becomes the only participant that can occupy more than one line.</span></label></div>
+      <div class="chk"><input type="checkbox" id="i1c" data-c="i1c"><label for="i1c">Fold it, but open by default<span class="hintline">Middle path — the team's row starts expanded, a player's starts closed.</span></label></div>
+    </div>
+    <textarea data-n="i1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="I2">
+  <div class="step-head"><span class="num">I2</span><h3>Are the hand-in amounts quiet enough — or too quiet?</h3></div>
+  <div class="step-body">
+    <p class="do">Under the fold the amounts are plain ink; the money green is reserved for the
+      participant's total. The mockup drew it that way so a total does not compete with its parts.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i2a" data-c="i2a"><label for="i2a">Quiet, as built<span class="hintline">The green figure is the answer; the rows under it are the working.</span></label></div>
+      <div class="chk"><input type="checkbox" id="i2b" data-c="i2b"><label for="i2b">Green like every other money row<span class="hintline">Consistency over hierarchy — every amount on the tab reads the same colour.</span></label></div>
+    </div>
+    <textarea data-n="i2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="I3">
+  <div class="step-head"><span class="num">I3</span><h3>Is the consequence sentence enough on its own?</h3></div>
+  <div class="step-body">
+    <p class="do">Recording $60 twice by mistake used to be <b>refused</b>. It now saves, and the
+      form's third clause is the only thing standing between you and a quiet double. The rejected
+      alternative was a soft confirm on a <i>same-day, same-amount</i> repeat.</p>
+    <div class="warn"><b>⚠⚠ READ THIS BEFORE YOU TICK — the review found two cases where the sentence
+      is SILENT, and they are the cases it exists for.</b> Both are new, and both used to be caught by
+      the database rule this change removes.
+      <br><br><b>1 · Two tabs, or you and an assistant on two devices.</b> Both open Record for the
+      same drive before either saves. Both read "nothing logged yet" for Avery, both type $60, both
+      save. Both now succeed — <i>and neither form shows "Avery's total becomes…"</i>, because each
+      one's snapshot was taken before the other's write. The safeguard is quiet in exactly the
+      double it was built to catch.
+      <br><br><b>2 · A dropped connection on a phone.</b> The server finishes writing, the reply is
+      lost, you press Save again. That used to hit a clear <i>"an entry already exists for this
+      player"</i>. It now writes a second income row and a second family credit, silently.
+      <br><br><b>What is NOT affected:</b> double-clicking Save in one window is still safe — that
+      has its own guard, and the review confirmed it fires before anything is sent.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i3a" data-c="i3a"><label for="i3a">The sentence is enough — as built, accepting both cases above<span class="hintline">State the consequence, don't block the door. Ruling 2 confirmed on the built screen, now with the two silent cases known and accepted.</span></label></div>
+      <div class="chk"><input type="checkbox" id="i3d" data-c="i3d"><label for="i3d">⭐ Close the retry hole only — leave the ruling alone<span class="hintline">A one-per-submission key, so the SAME save landing twice is ignored while two DELIBERATE hand-ins stay perfectly legal. This is not the refusal you rejected: it never blocks a second real entry, it only stops one entry being written twice. Not built — needs your word.</span></label></div>
+      <div class="chk"><input type="checkbox" id="i3b" data-c="i3b"><label for="i3b">Add the soft confirm on a same-day, same-amount repeat<span class="hintline">One extra tap on a rare shape. Catches case 1 and case 2 in one move, but shapes the whole board. Not built.</span></label></div>
+      <div class="chk"><input type="checkbox" id="i3c" data-c="i3c"><label for="i3c">The sentence needs to be louder before it ships<span class="hintline">Keep the model, change the treatment — say what it should look like in the note. ⚠ Note this does nothing for the two cases above, where it does not appear at all.</span></label></div>
+    </div>
+    <textarea data-n="i3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<footer>
+  <span>Owner QA §166</span>
+  <span>Plan: COACH_FUNDRAISER_MORE_THAN_ONCE_PLAN.md</span>
+  <span>Mockup: 94c27428</span>
+  <span>Migration 287 — dev only</span>
+  <span>Run order step B22</span>
+</footer>
+</div>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast">Copied</span></div>
+
+<script>
+(function(){
+  var KEY='more-than-once-walk-v1';
+  var OPTS=[['pass','Pass'],['fail','Defect'],['na','N/A']];
+  document.querySelectorAll('.verdict').forEach(function(v){
+    var id=v.getAttribute('data-v');
+    OPTS.forEach(function(o){
+      var l=document.createElement('label');
+      var i=document.createElement('input');
+      i.type='radio';i.name='v-'+id;i.value=o[0];
+      l.appendChild(i);l.appendChild(document.createTextNode(o[1]));
+      v.appendChild(l);
+    });
+  });
+  var radios=Array.prototype.slice.call(document.querySelectorAll('.verdict input'));
+  var notes=Array.prototype.slice.call(document.querySelectorAll('textarea[data-n]'));
+  /* ⚠ A RULING STEP IS ONE CHECKBOX PER OPTION (owner, 2026-09-08, out of §151). A "your call"
+     step written as a single verdict came back ticked with no note and the ruling never travelled:
+     the tick said "I decided", not WHAT. These boxes ARE the answer, and the builder prints which
+     one was ticked. */
+  var calls=Array.prototype.slice.call(document.querySelectorAll('input[data-c]'));
+  /* ⚠ THE JOTTED FIGURES TRAVEL TOO. This walk pins RELATIONSHIPS, not dollars — the fixture moved
+     under it during §157 — so several steps compare against a number the walker wrote down earlier.
+     If those did not come back with the findings, a "C6 failed" would arrive with nothing to
+     compare it to. */
+  var jots=Array.prototype.slice.call(document.querySelectorAll('input[data-j]'));
+  var steps=Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var done=document.getElementById('cdone'),total=document.getElementById('ctotal'),fill=document.getElementById('fillbar');
+  var toastwrap=document.getElementById('toastwrap'),toast=document.getElementById('toast'),timer=0;
+  total.textContent=String(steps.length);
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+  function write(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+  function say(m){toast.textContent=m;toastwrap.hidden=false;clearTimeout(timer);timer=setTimeout(function(){toastwrap.hidden=true},1600)}
+  function paint(){
+    var n=0;
+    document.querySelectorAll('.verdict').forEach(function(v){
+      var picked=v.querySelector('input:checked');
+      v.querySelectorAll('label').forEach(function(l){
+        var i=l.querySelector('input');
+        l.classList.toggle('pick',i.checked&&i.value!=='fail');
+        l.classList.toggle('pickbad',i.checked&&i.value==='fail');
+      });
+      if(picked)n++;
+    });
+    calls.forEach(function(c){
+      var row=c.closest('.chk');
+      if(row)row.classList.toggle('on',c.checked);
+    });
+    steps.forEach(function(s){
+      var judged=!!s.querySelector('.verdict input:checked')||!!s.querySelector('input[data-c]:checked');
+      s.classList.toggle('done',judged);
+    });
+    /* A ruling step has no verdict, so it counts as judged once any of its options is ticked —
+       otherwise the progress bar could never reach the end of the walk. */
+    n=steps.filter(function(s){
+      return !!s.querySelector('.verdict input:checked')||!!s.querySelector('input[data-c]:checked');
+    }).length;
+    done.textContent=String(n);
+    fill.style.width=(steps.length?Math.round(n/steps.length*100):0)+'%';
+  }
+  var st=read();
+  radios.forEach(function(r){
+    var k='v:'+r.name+':'+r.value;
+    if(st[k])r.checked=true;
+    r.addEventListener('change',function(){
+      var s=read();
+      OPTS.forEach(function(o){delete s['v:'+r.name+':'+o[0]]});
+      s['v:'+r.name+':'+r.value]=1;write(s);paint();
+    });
+  });
+  calls.forEach(function(c){
+    var k='c:'+c.getAttribute('data-c');
+    if(st[k])c.checked=true;
+    c.addEventListener('change',function(){
+      var s=read();
+      if(c.checked)s[k]=1;else delete s[k];
+      write(s);paint();
+    });
+  });
+  notes.forEach(function(t){
+    var k='n:'+t.getAttribute('data-n');
+    if(st[k])t.value=st[k];
+    t.addEventListener('input',function(){var s=read();if(t.value.trim())s[k]=t.value;else delete s[k];write(s)});
+  });
+  jots.forEach(function(t){
+    var k='j:'+t.getAttribute('data-j');
+    if(st[k])t.value=st[k];
+    t.addEventListener('input',function(){var s=read();if(t.value.trim())s[k]=t.value;else delete s[k];write(s)});
+  });
+  paint();
+  function fallback(t,ok){
+    var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');say(ok)}catch(e){say('Select and copy manually')}
+    document.body.removeChild(ta);
+  }
+  function copyText(t,ok){
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){say(ok)},function(){fallback(t,ok)})}
+    else fallback(t,ok);
+  }
+  document.getElementById('copyfind').addEventListener('click',function(){
+    var lines=['Owner QA §166 — More than once — '+new Date().toISOString().slice(0,10)];
+    var pass=0,fail=0,na=0,none=0,ruled=0;
+    steps.forEach(function(s){
+      var id=s.getAttribute('data-step');
+      var h=s.querySelector('h3');
+      var picked=s.querySelector('.verdict input:checked');
+      var note=s.querySelector('textarea[data-n]');
+      var opts=Array.prototype.slice.call(s.querySelectorAll('input[data-c]'));
+      var written=Array.prototype.slice.call(s.querySelectorAll('input[data-j]'));
+      var title=h?h.textContent.replace(/^⚠+\s*/,''):'';
+      if(opts.length){
+        var chosen=opts.filter(function(o){return o.checked}).map(function(o){
+          var l=s.querySelector('label[for="'+o.id+'"]');
+          var txt=l?l.textContent.trim():o.getAttribute('data-c');
+          return txt.split('\n')[0].trim();
+        });
+        if(chosen.length)ruled++;else none++;
+        lines.push('');
+        lines.push('['+(chosen.length?'RULED':'—')+'] '+id+'  '+title);
+        chosen.forEach(function(c){lines.push('   → '+c)});
+      }else{
+        var v=picked?picked.value:'';
+        if(v==='pass')pass++;else if(v==='fail')fail++;else if(v==='na')na++;else none++;
+        var label=v==='pass'?'PASS':v==='fail'?'DEFECT':v==='na'?'N/A':'—';
+        lines.push('');
+        lines.push('['+label+'] '+id+'  '+title);
+      }
+      written.forEach(function(w){
+        if(w.value.trim())lines.push('   ['+w.getAttribute('data-j')+'] '+w.value.trim());
+      });
+      if(note&&note.value.trim())lines.push('   '+note.value.trim().replace(/\n/g,'\n   '));
+    });
+    lines.splice(1,0,'','Pass '+pass+' · Defect '+fail+' · N/A '+na+' · ruled '+ruled+' · not judged '+none+' of '+steps.length);
+    copyText(lines.join('\n'),'Findings copied');
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    radios.forEach(function(r){r.checked=false});
+    calls.forEach(function(c){c.checked=false});
+    notes.forEach(function(t){t.value=''});
+    jots.forEach(function(t){t.value=''});
+    write({});paint();say('Reset');
+  });
+})();
+</script>

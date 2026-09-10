@@ -3681,26 +3681,6 @@
   },
   {
     "table_name": "rep_fundraiser_entries",
-    "constraint_name": "rep_fundraiser_entries_fundraiser_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "fundraiser_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "rep_fundraiser_entries",
-    "constraint_name": "rep_fundraiser_entries_fundraiser_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "player_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "rep_fundraiser_entries",
     "constraint_name": "rep_fundraiser_entries_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
@@ -4045,7 +4025,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4055,17 +4035,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4081,11 +4051,11 @@
   },
   {
     "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "current_roster_id",
-    "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4096,6 +4066,16 @@
     "column_name": "current_roster_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "current_roster_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4155,7 +4135,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4165,7 +4145,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4195,7 +4175,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4205,16 +4185,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_roster_players",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
@@ -4226,6 +4196,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "team_id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },

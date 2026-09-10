@@ -627,7 +627,7 @@ console.log('\nMid-season — Riverdale Ridge 12U');
             why the entry list excludes them, and why that exclusion is asserted rather than
             trusted. */
     const { data: drives } = await db.from('rep_fundraisers')
-      .select('id, name, end_date, is_active, player_rebate_percent, kind, sponsor_status, pledged_amount')
+      .select('id, name, start_date, end_date, is_active, player_rebate_percent, kind, sponsor_status, pledged_amount')
       .eq('program_year_id', py.id);
     const drive = (drives ?? []).find(f => f.name === MIDSEASON_FUNDRAISER.name);
     check(!!drive && !drive.is_active && drive.end_date < today,
@@ -636,13 +636,38 @@ console.log('\nMid-season — Riverdale Ridge 12U');
 
     if (drive) {
       const { data: entries } = await db.from('rep_fundraiser_entries')
-        .select('player_id, amount_raised, rebate_amount, credit_id').eq('fundraiser_id', drive.id);
+        .select('player_id, amount_raised, rebate_amount, credit_id, received_date').eq('fundraiser_id', drive.id);
       const { data: credits } = await db.from('rep_dues_credits')
         .select('player_id, amount, credit_type, credit_date').eq('program_year_id', py.id);
       check((entries ?? []).length === MIDSEASON_FUNDRAISER.entries.length
         && (entries ?? []).every(e => e.credit_id),
-        `${MIDSEASON_FUNDRAISER.entries.length} families raised, each with its rebate credit linked`,
+        `${MIDSEASON_FUNDRAISER.entries.length} hand-ins recorded, each with its rebate credit linked`,
         `${(entries ?? []).length} entries, ${(entries ?? []).filter(e => e.credit_id).length} linked`);
+      /* ⚠⚠ PIN 4 — SOMEBODY HAS TO HAND IN TWICE (mig 287, added 2026-09-10). The drive's board
+         draws a participant as ONE row carrying their total that folds open onto each dated
+         hand-in, and this world is the only place a prospect meets it. A seed edit that quietly
+         flattened Theo's two rows back into one $160 would leave the fold unreachable in the shop
+         window with every page still rendering perfectly — the exact shape of demo rot this file
+         exists to catch, and the reason a demo MOMENT needs a gate and not just a comment.
+         ⚠ ASSERTED ON THE ROWS, NOT ON THE SEED CONSTANT. Counting distinct players in
+         `MIDSEASON_FUNDRAISER.entries` would only prove the file agrees with itself. */
+      /* ⚠ REAL PLAYERS ONLY, and that filter is the whole correctness of this check. A whole-team
+         row carries `player_id` NULL, so counting rows by player id straight would let TWO TEAM
+         ENTRIES satisfy "somebody handed in twice" — a green tick for a board with no player fold
+         on it at all. Fewer distinct players than player rows is the same question asked safely
+         (`/simplify` proposed the comparison; the null filter is why it is written this way). */
+      const playerHandIns = (entries ?? []).filter(e => e.player_id);
+      const distinctPlayers = new Set(playerHandIns.map(e => e.player_id)).size;
+      check(distinctPlayers < playerHandIns.length,
+        'one player handed in more than once — the board’s fold has something to open',
+        `${distinctPlayers} players across ${playerHandIns.length} player hand-ins, none repeated`);
+      /* ⚠ AND EVERY HAND-IN IS DATED INSIDE THE DRIVE'S OWN WINDOW. Undated rows read off their
+         creation day, so before 2026-09-10 the board showed one date five times; a row dated after
+         the drive closed would read as money arriving at a drive that had stopped taking it. */
+      check((entries ?? []).every(e => e.received_date
+          && e.received_date <= drive.end_date && e.received_date >= drive.start_date),
+        'every hand-in is dated, and dated inside the drive’s own run',
+        (entries ?? []).map(e => e.received_date ?? 'undated').join(', '));
       check((credits ?? []).every(c => c.credit_date <= today),
         'every rebate credit is dated on or before today (the re-anchor moves them with the bills)');
       const covered = (entries ?? []).some(e => Number(e.rebate_amount) === MIDSEASON_DUES.installmentAmount);

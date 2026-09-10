@@ -1,0 +1,377 @@
+<title>More Than Once</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --plum:#6E3355;
+  --money:#3F6B2E;
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --plum:#D79ABE;
+  --money:#8FCB6E;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --plum:#D79ABE;
+  --money:#8FCB6E;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:980px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:17ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:66ch;margin-top:16px}
+.sub-head{margin-top:52px;border-top:2px solid var(--ink);padding-top:13px;font-family:var(--disp);font-weight:700;font-size:27px;line-height:1.06;text-wrap:balance}
+.sub-head + p{margin-top:7px;color:var(--ink-soft);max-width:70ch;font-size:14.5px}
+
+/* ── exhibits ───────────────────────────────────────────────── */
+.exhibit{margin-top:20px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.exhibit-bar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:10px 15px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.exhibit-name{font-family:var(--disp);font-weight:700;font-size:17px}
+.exhibit-note{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-left:auto}
+.flag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.flag.today{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.flag.prop{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.stage{padding:20px 15px;background:var(--sunk);overflow-x:auto}
+.stage-inner{min-width:660px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:18px 20px 20px;box-shadow:var(--shadow)}
+
+/* ── the drive room, at size ────────────────────────────────── */
+.roomTitle{display:flex;align-items:center;gap:10px}
+.roomTitle h4{font-family:var(--disp);font-weight:700;font-size:23px;margin:0;letter-spacing:-.01em}
+.chip{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border-radius:5px;border:1px solid var(--rule-strong);color:var(--dim)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:14px;border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.tile{padding:12px 16px;border-right:1px solid var(--rule)}
+.tile:last-child{border-right:0}
+.tile dt{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.tile dd{margin:3px 0 0;font-family:var(--disp);font-weight:700;font-size:27px;line-height:1.05;font-variant-numeric:tabular-nums}
+.tile.good dd{color:var(--money)}
+.factsRow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.facts{font-size:13.5px;color:var(--ink-soft);flex:1 1 320px;min-width:0}
+.roomBtns{display:flex;gap:8px;align-items:center}
+.gbtn{font-size:12.5px;padding:5px 11px;border-radius:7px;border:1px solid var(--rule-strong);background:none;color:var(--ink-soft)}
+.pbtn{font-size:12.5px;font-weight:600;padding:5px 14px;border-radius:7px;border:1px solid var(--olive);background:var(--olive-soft);color:var(--olive)}
+
+table.board{width:100%;border-collapse:collapse;margin-top:13px}
+table.board th,table.board td{padding:9px 12px;border-bottom:1px solid var(--rule);font-size:14px;text-align:left;vertical-align:middle}
+table.board thead th{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--rule-strong)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.amt{color:var(--money);font-weight:700}
+.cred{color:var(--plum);font-weight:600}
+.dash{color:var(--dim)}
+.who{font-weight:600}
+.acts{text-align:right;white-space:nowrap;font-size:13px;color:var(--dim)}
+.acts .rm{color:var(--brick);margin-left:14px}
+.chev{display:inline-flex;width:15px;color:var(--dim);font-size:11px}
+.sub td,.sub th{background:var(--fill);font-size:13.5px;padding-top:7px;padding-bottom:7px}
+.sub .lead{padding-left:40px;color:var(--ink-soft)}
+.new{box-shadow:inset 3px 0 0 var(--olive)}
+
+/* ── the record sheet, at size ──────────────────────────────── */
+.sheet{max-width:520px;margin:0 auto;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:17px 19px 19px}
+.sheetTitle{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.sheetSub{font-size:13px;color:var(--dim);margin-top:1px}
+.lock{margin-top:14px;border:1px solid var(--olive);background:var(--olive-soft);border-radius:var(--r-sm);padding:11px 14px}
+.lock b{font-size:14.5px}
+.lock span{display:block;font-size:13px;color:var(--ink-soft);margin-top:2px}
+.field{margin-top:14px}
+.fieldLabel{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim)}
+.req{color:var(--brick);margin-left:3px}
+.selectBox{margin-top:5px;border:1px solid var(--rule-strong);border-radius:7px;background:var(--sunk);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;font-size:14.5px;color:var(--dim)}
+.menu{margin-top:5px;border:1px solid var(--rule-strong);border-radius:7px;overflow:hidden}
+.opt{padding:7px 13px;font-size:14px;border-bottom:1px solid var(--rule);background:var(--card)}
+.opt:last-child{border-bottom:0}
+.opt.on{background:var(--olive);color:var(--paper);font-weight:600}
+.opt.was{color:var(--dim)}
+.grp{padding:6px 13px;font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);background:var(--fill);border-bottom:1px solid var(--rule)}
+.opt.ind{padding-left:26px}
+.hint{margin-top:6px;font-size:12.5px;color:var(--dim);line-height:1.45}
+.hint.gone{text-decoration:line-through;text-decoration-color:var(--brick)}
+.consq{margin-top:14px;border-left:3px solid var(--olive);background:var(--olive-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13.5px;line-height:1.5}
+
+/* ── prose furniture ────────────────────────────────────────── */
+.verdict{display:grid;grid-template-columns:minmax(150px,auto) 1fr;gap:6px 20px;padding:14px 16px;border-top:1px solid var(--rule);font-size:14px}
+.verdict dt{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding-top:3px}
+.verdict dd{margin:0;color:var(--ink-soft);line-height:1.55}
+.verdict dd b{color:var(--ink)}
+.ask{margin-top:18px;border-left:3px solid var(--gold);background:var(--gold-soft);padding:11px 15px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14.5px;line-height:1.55;max-width:74ch}
+.ask b{color:var(--ink)}
+.note{margin-top:18px;border-left:3px solid var(--brick);background:var(--brick-soft);padding:11px 15px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14.5px;line-height:1.55;max-width:74ch}
+table.rules{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+table.rules th,table.rules td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.rules thead th{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--rule-strong)}
+table.rules td:first-child{width:30%;font-weight:600}
+.scrollx{overflow-x:auto}
+footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} .tiles{grid-template-columns:1fr} .tile{border-right:0;border-bottom:1px solid var(--rule)} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Coaches portal · Money · Fundraising · Proposal</p>
+  <h1>More than once</h1>
+  <p class="lede">A drive lets the <b>whole team</b> hand money in as many times as it likes — two hoodie
+    tables on two weekends are two events. A <b>player</b> gets exactly one amount, which you overwrite.
+    Nobody chose that: the one-per-player rule predates whole-team entries, and the team entry landed in
+    a gap in it. This proposes making the player side match, without making the board noisier for the
+    drive where nobody hands in twice.</p>
+</header>
+
+<div class="note"><b>The asymmetry, in one line.</b> On the same tab, a <b>sponsor</b> can send five
+  cheques and each is its own dated arrival; the <b>whole team</b> can hand in five times and each is its
+  own dated entry; a <b>player</b> hands in five times and the drive remembers one number and one date.
+  Only the third is a running total, and only the third makes the coach do the arithmetic.</div>
+
+<!-- ══════════════ THE BOARD ══════════════ -->
+<h2 class="sub-head">1 · The board keeps its leaderboard, and grows a fold</h2>
+<p>The drive's board answers <i>who raised what</i>. That has to stay true at a glance, so a player is
+  still <b>one row</b> — their total. The individual hand-ins live under it, reached the same way every
+  other money row on the portal opens.</p>
+
+<div class="exhibit">
+  <div class="exhibit-bar">
+    <span class="exhibit-name">The Chocolate sale, today</span>
+    <span class="flag today">Today</span>
+    <span class="exhibit-note">UAT Test Team · 2026 Season</span>
+  </div>
+  <div class="stage">
+    <div class="stage-inner">
+      <div class="roomTitle"><h4>Chocolate sale</h4><span class="chip">Active</span></div>
+      <dl class="tiles">
+        <div class="tile good"><dt>Raised</dt><dd>$1,366.00</dd></div>
+        <div class="tile"><dt>Team keeps</dt><dd>$1,228.60</dd></div>
+        <div class="tile"><dt>Credited to families</dt><dd>$137.40 · 15%</dd></div>
+      </dl>
+      <div class="factsRow">
+        <p class="facts"><b>3 of 12</b> players logged · plus <b>1</b> team entry · Raising for
+          <b>Merchandise sales</b> · Boxes of 30 bars</p>
+        <span class="roomBtns"><span class="gbtn">Edit drive</span><span class="pbtn">Record</span></span>
+      </div>
+      <table class="board">
+        <thead><tr><th>Player</th><th>Received</th><th class="num">Amount</th><th class="num">Credit</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="who">Avery Test</td><td>Aug 31</td><td class="num amt">$486.00</td><td class="num cred">$72.90</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+          <tr><td class="who">The whole team</td><td>Sep 10</td><td class="num amt">$450.00</td><td class="num dash">—</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+          <tr><td class="who">Casey Test</td><td>Aug 20</td><td class="num amt">$250.00</td><td class="num cred">$37.50</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+          <tr><td class="who">Devon Test</td><td>Aug 24</td><td class="num amt">$180.00</td><td class="num cred">$27.00</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <dl class="verdict">
+    <dt>What it can't say</dt><dd>Avery sold six boxes in August and three more in September. The board
+      can hold <b>one</b> of those facts. To record the second the coach opens Avery's row, adds 90 to
+      486 in their head, and overwrites Aug 31 with a date that is now wrong for most of the money.</dd>
+    <dt>Two team entries</dt><dd>Would appear as <b>two separate top-level rows</b> both called "The
+      whole team" — the only participant on the board that can occupy more than one line.</dd>
+  </dl>
+</div>
+
+<div class="exhibit">
+  <div class="exhibit-bar">
+    <span class="exhibit-name">The same drive, proposed</span>
+    <span class="flag prop">Proposed</span>
+    <span class="exhibit-note">Avery hands in again · a second hoodie table</span>
+  </div>
+  <div class="stage">
+    <div class="stage-inner">
+      <div class="roomTitle"><h4>Chocolate sale</h4><span class="chip">Active</span></div>
+      <dl class="tiles">
+        <div class="tile good"><dt>Raised</dt><dd>$1,516.00</dd></div>
+        <div class="tile"><dt>Team keeps</dt><dd>$1,365.10</dd></div>
+        <div class="tile"><dt>Credited to families</dt><dd>$150.90 · 15%</dd></div>
+      </dl>
+      <div class="factsRow">
+        <p class="facts"><b>3 of 12</b> players logged · plus <b>2</b> team entries · Raising for
+          <b>Merchandise sales</b> · Boxes of 30 bars</p>
+        <span class="roomBtns"><span class="gbtn">Edit drive</span><span class="pbtn">Record</span></span>
+      </div>
+      <table class="board">
+        <thead><tr><th>Player</th><th>Received</th><th class="num">Amount</th><th class="num">Credit</th><th></th></tr></thead>
+        <tbody>
+          <tr class="new"><td class="who"><span class="chev">▾</span>Avery Test</td><td>Sep 12</td><td class="num amt">$576.00</td><td class="num cred">$86.40</td><td class="acts"></td></tr>
+          <tr class="sub"><th class="lead" scope="row">Aug 31</th><td></td><td class="num">$486.00</td><td class="num cred">$72.90</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+          <tr class="sub"><th class="lead" scope="row">Sep 12</th><td></td><td class="num">$90.00</td><td class="num cred">$13.50</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+          <tr class="new"><td class="who"><span class="chev">▸</span>The whole team</td><td>Sep 14</td><td class="num amt">$510.00</td><td class="num dash">—</td><td class="acts"></td></tr>
+          <tr><td class="who"><span class="chev"></span>Casey Test</td><td>Aug 20</td><td class="num amt">$250.00</td><td class="num cred">$37.50</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+          <tr><td class="who"><span class="chev"></span>Devon Test</td><td>Aug 24</td><td class="num amt">$180.00</td><td class="num cred">$27.00</td><td class="acts">Edit<span class="rm">Remove</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <dl class="verdict">
+    <dt>One hand-in, no fold</dt><dd>Casey and Devon are <b>byte-for-byte what they are today</b> —
+      their date inline, Edit and Remove on the row, no chevron. A drive where nobody hands in twice
+      looks exactly like the drive above. The fold is the exception speaking.</dd>
+    <dt>Received</dt><dd>On a folded row it is the <b>most recent</b> hand-in — the column answers
+      "when did money last come in from them", which is the question a coach chasing a drive is asking.</dd>
+    <dt>Edit and Remove</dt><dd>Move onto the hand-in they act on. A summary row has nothing to edit;
+      a single-hand-in row keeps them, because there is no ambiguity about which one it means.</dd>
+    <dt>Credit</dt><dd>Each hand-in carries the share stamped at the time, and the row sums them. If
+      you change the drive's share mid-season, the board can now say so honestly instead of
+      re-multiplying one merged number.</dd>
+    <dt>The fraction</dt><dd><b>3 of 12 players logged</b> is unchanged — it counts distinct players,
+      not rows. The team's count still counts entries, because that is what "2 team entries" means.</dd>
+  </dl>
+</div>
+
+<!-- ══════════════ THE RECORD DOOR ══════════════ -->
+<h2 class="sub-head">2 · Every player is in the list, always</h2>
+<p>This is the half a coach actually feels. Today the Record door hides the three players most likely
+  to hand in again, and tells you to go and find their row instead.</p>
+
+<div class="exhibit">
+  <div class="exhibit-bar">
+    <span class="exhibit-name">Who raised it</span>
+    <span class="flag today">Today</span>
+    <span class="exhibit-note">Record → Fundraiser money came in</span>
+  </div>
+  <div class="stage">
+    <div class="stage-inner">
+      <p class="sheetTitle">Record money</p>
+      <p class="sheetSub">Fundraiser money came in</p>
+      <div class="lock"><b>Fundraiser money came in — Chocolate sale</b><span>Raising for Fundraising · Merchandise sales</span></div>
+      <div class="field">
+        <div class="fieldLabel">Who raised it<span class="req">*</span></div>
+        <div class="menu">
+          <div class="opt on">The whole team</div>
+          <div class="grp">Players</div>
+          <div class="opt ind">Blake Test</div>
+          <div class="opt ind">Emerson Test</div>
+          <div class="opt ind">Frankie Test</div>
+          <div class="opt ind was">…nine more. Avery, Casey and Devon are not here.</div>
+        </div>
+        <p class="hint">3 players already have an amount logged — change those with <b>Edit</b> on their
+          row in the drive's entries.</p>
+      </div>
+    </div>
+  </div>
+  <dl class="verdict">
+    <dt>The dead end</dt><dd>Once every player has handed in once, the list empties out entirely and the
+      form says <b>"Every player already has an amount logged for this drive."</b> — the Record door on a
+      running drive, with nothing left to record.</dd>
+  </dl>
+</div>
+
+<div class="exhibit">
+  <div class="exhibit-bar">
+    <span class="exhibit-name">Who raised it</span>
+    <span class="flag prop">Proposed</span>
+    <span class="exhibit-note">Two words removed, one sentence added</span>
+  </div>
+  <div class="stage">
+    <div class="stage-inner">
+      <p class="sheetTitle">Record money</p>
+      <p class="sheetSub">Fundraiser money came in</p>
+      <div class="lock"><b>Fundraiser money came in — Chocolate sale</b><span>Raising for Fundraising · Merchandise sales</span></div>
+      <div class="field">
+        <div class="fieldLabel">Who raised it<span class="req">*</span></div>
+        <div class="menu">
+          <div class="opt">The whole team</div>
+          <div class="grp">Players</div>
+          <div class="opt ind on">Avery Test</div>
+          <div class="opt ind">Blake Test</div>
+          <div class="opt ind">Casey Test</div>
+          <div class="opt ind">Devon Test</div>
+          <div class="opt ind was">…and the rest of the roster, in one list</div>
+        </div>
+        <p class="hint">No sentence here at all. The whole roster is the list.</p>
+      </div>
+      <div class="field">
+        <div class="fieldLabel">Amount raised<span class="req">*</span></div>
+        <div class="selectBox" style="color:var(--ink)">90.00</div>
+      </div>
+      <div class="consq">Saving this: <b>the drive's total rises by $90.00</b> · <b>$13.50</b> is
+        credited to Avery Test's family (15%) · <b>Avery Test's total for this drive becomes
+        $576.00</b>. Shows on the ledger as fundraising income.</div>
+    </div>
+  </div>
+  <dl class="verdict">
+    <dt>The one new clause</dt><dd><b>"Avery Test's total for this drive becomes $576.00"</b> — added
+      only when the player already has a hand-in. It is the whole defence against the risk below, and
+      it appears exactly when that risk exists.</dd>
+    <dt>What is deleted</dt><dd>The "N players already have an amount logged" sentence, the "every
+      player already has an amount" dead end, and the rule underneath both.</dd>
+  </dl>
+</div>
+
+<div class="note"><b>The one thing this gives up, stated plainly.</b> Today, recording $60 for Avery
+  twice by mistake is <b>refused</b> — the second save is turned away. After this change it succeeds and
+  Avery quietly has $120. The proposed answer is not to refuse it but to <b>say what will happen before
+  the save</b>, in the sentence the form already writes. That is the same trade this product made when a
+  bill lowered stopped being a collection: state the consequence, don't block the door. If you'd rather
+  keep a guard, the alternative is a soft confirm on a same-day, same-amount repeat — one extra tap on a
+  rare shape, rather than a rule that shapes the whole board.</div>
+
+<!-- ══════════════ THE RULES ══════════════ -->
+<h2 class="sub-head">3 · The rules, in one place</h2>
+<div class="scrollx">
+<table class="rules">
+  <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+  <tbody>
+    <tr><td>What is a row on the board?</td><td>A <b>participant</b> — a player, or the whole team — carrying their total for this drive. It was a single amount; it becomes a sum.</td></tr>
+    <tr><td>What is under the fold?</td><td>Each hand-in, oldest first, with its own date, amount and credit.</td></tr>
+    <tr><td>When is there a fold?</td><td>Only when a participant has <b>two or more</b> hand-ins. One hand-in renders exactly as it does today.</td></tr>
+    <tr><td>What does Received show?</td><td>The most recent hand-in's date.</td></tr>
+    <tr><td>Who gets Edit and Remove?</td><td>The hand-in. On a one-hand-in row that is the row itself, unchanged.</td></tr>
+    <tr><td>Removing the last hand-in?</td><td>The participant leaves the board — same as removing an entry today.</td></tr>
+    <tr><td>What happens to the credit?</td><td>Each hand-in keeps the share it was stamped with; the row sums them. A share changed mid-drive no longer rewrites history.</td></tr>
+    <tr><td>Does the ledger change?</td><td>Each hand-in is already its own ledger line. Two hand-ins are two lines, dated correctly — which is more honest than one line whose date moves.</td></tr>
+    <tr><td>Does anything move money?</td><td>No. Every existing entry becomes a one-hand-in participant, and no figure on any screen changes.</td></tr>
+    <tr><td>Phone?</td><td>The board is already a card list on a phone. The participant card carries the total and opens; hand-ins are cards under it.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="ask"><b>Three things I need from you before this is built.</b><br><br>
+  <b>1 · The word.</b> This page says <b>hand-in</b> to keep the prose readable, but the product's own
+  word is <b>entry</b> ("plus 1 team entry"). Introducing a second word for one object is exactly what
+  the one-spelling rule exists to stop, so my recommendation is that the screens keep saying
+  <b>entry</b> and "hand-in" never ships. Say if you'd rather have the friendlier word everywhere —
+  it is a bigger change than it looks, because it touches the facts line, both confirms, help and the
+  demo narration.<br><br>
+  <b>2 · The accidental double.</b> Consequence sentence only (recommended), or consequence sentence
+  plus a soft confirm on a same-day same-amount repeat?<br><br>
+  <b>3 · Does the whole team get the same fold?</b> Grouping its entries under one row is what makes
+  the board one grammar — but it also means the team's two hoodie tables stop being visible without a
+  click, and F3b of the §157 walk deliberately celebrated seeing them both. My recommendation is yes,
+  fold it, because a board where one participant type stacks and another doesn't is the asymmetry this
+  whole proposal exists to remove.</div>
+
+<footer>
+  <span>Proposal · coach fundraising</span>
+  <span>Raised on the §157 walk, 2026-09-10</span>
+  <span>Plan: COACH_FUNDRAISER_MORE_THAN_ONCE_PLAN.md</span>
+  <span>Not built — mockup for ruling</span>
+</footer>
+
+</div>
