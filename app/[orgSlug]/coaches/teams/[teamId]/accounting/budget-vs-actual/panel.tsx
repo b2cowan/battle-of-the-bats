@@ -1160,7 +1160,11 @@ function CatFoldRow({
              open is also the one row whose name starts in a different place. */
           <>
             <span className={shared.moneyGridChevronSpacer} aria-hidden />
-            <span>{name}</span>
+            {/* ⚠ THE DESCRIPTION RIDES THE NAME WHEN THERE IS NO BUTTON TO HANG IT ON. `aria-describedby`
+                lived only on the foldable branch's button, so an unfoldable heading rendered the
+                hidden sentence with NOTHING referencing it — a description a screen reader meets as
+                loose prose rather than as this row's explanation (`/review`, 2026-09-10). */}
+            <span aria-describedby={noteId}>{name}</span>
           </>
         )}
         {caption}
@@ -1195,7 +1199,13 @@ function CategoryGroup({
      rather than left to read as a lost number. The sentence rides the header via aria-describedby:
      a screen reader meeting a bare em-dash would otherwise get no explanation, because the flag is
      a visual one (/review, 2026-08-15). */
-  const noteId = cat.inPlan ? undefined : `bva-cat-note-${catKey.replace(/\W+/g, '-')}`;
+  /* ⚠⚠ A CAPTION REPLACES THE NOTE, IT DOES NOT JOIN IT (`/review`, 2026-09-10). The generic
+     sentence explains an em-dash under Budgeted with "nothing here was budgeted for this season" —
+     which is TRUE of an unplanned category and FALSE of Player dues, where a dash means no schedule
+     has been set. A not-set dues row satisfies `!inPlan`, so it used to render both: a visible
+     "Not set yet · Set player dues" and, for a screen reader only, a contradicting sentence about
+     budgeting. The caption is the truer half and it is the one every reader gets. */
+  const noteId = cat.inPlan || caption ? undefined : `bva-cat-note-${catKey.replace(/\W+/g, '-')}`;
   const open = expandedCats.has(catKey);
   return (
     <>

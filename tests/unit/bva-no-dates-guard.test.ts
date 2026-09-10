@@ -190,6 +190,51 @@ test('the dues category folds to families, and the to-date basis rides on their 
 });
 
 /**
+ * **A HEADING THAT CANNOT FOLD STILL EXPLAINS ITS OWN DASH — AND EXPLAINS IT ONCE** (`/review`,
+ * 2026-09-10).
+ *
+ * The category row carries a hidden sentence for a screen reader, because a dash and a colour are
+ * not readable. Two things went wrong when Player dues became an ordinary category:
+ *
+ *   · `aria-describedby` sat only on the FOLDABLE branch's button, so an unfoldable heading rendered
+ *     the hidden sentence with nothing referencing it — a description a screen reader meets as loose
+ *     prose rather than as this row's explanation.
+ *   · Worse, the sentence was WRONG. The generic one reads "Nothing in <category> was budgeted for
+ *     this season", which is true of an unplanned category and false of Player dues, where the dash
+ *     means **no schedule has been set**. A not-set dues row satisfies `!inPlan`, so a screen reader
+ *     got that sentence CONTRADICTING the visible "Not set yet · Set player dues" caption beside it.
+ *
+ * Both are invisible to every other gate in this repo: nothing throws, nothing renders wrong for a
+ * sighted reader, and the rendered layout sweep cannot hear a sentence.
+ */
+test('an unfoldable heading explains its dash once, and to everyone', () => {
+  const cat = bodyOf(panel, 'function CatFoldRow(');
+  const split = cat.indexOf(') : (');
+  assert.notEqual(split, -1, 'CatFoldRow no longer has a foldable / plain split to check.');
+  const foldable = cat.slice(0, split);
+  const plain = cat.slice(split);
+  assert.match(
+    foldable, /aria-describedby={noteId}/,
+    'The foldable category row has lost its description reference. A dash and an ink have no '
+    + 'reading; that sentence is the only carrier for anyone not looking at the colour.',
+  );
+  assert.match(
+    plain, /aria-describedby={noteId}/,
+    'A category row that draws no chevron renders the hidden sentence with NOTHING referencing it. '
+    + 'Put the description reference on the name in the non-foldable branch too, or the sentence is '
+    + 'loose prose rather than that row\'s explanation.',
+  );
+  const group = bodyOf(panel, 'function CategoryGroup(');
+  assert.match(
+    group, /cat\.inPlan \|\| caption \? undefined/,
+    'A category with a CAPTION is asserting the generic "nothing was budgeted" sentence again. For '
+    + 'Player dues that sentence is false — its dash means no schedule has been SET — so a screen '
+    + 'reader would hear it contradict the visible "Not set yet" caption. A caption replaces the '
+    + 'note; it does not join it.',
+  );
+});
+
+/**
  * **THE EXPORT KEEPS ITS SINGLE PLAYER DUES ROW — a deliberate, named exception to
  * `EXPORT SHAPE = SCREEN SHAPE`** (owner ruling 2026-09-10).
  *
