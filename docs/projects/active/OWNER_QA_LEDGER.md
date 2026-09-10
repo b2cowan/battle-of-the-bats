@@ -19944,12 +19944,13 @@ screens and the platform-admin Email board is not one of them (asked the script,
 server restarted 2026-09-07 after the shared-module changes; the offer-bar walk was re-run against it,
 34/34.
 
-## §156 · The plan adds up — the Budget plan gains Costs and Funding bands, subtotals that wear the tiles' names, and a closing ladder; the word "expected" leaves the plan — committed `e1aa4b6e` on `dev` 2026-09-08 after `/review` (nine findings fixed), awaiting QA · walk artifact `b0baf8b4` · mockup artifact `e94d05d9` (round 2 is the picture)
+## §156 · The plan adds up — the Budget plan gains Costs and Funding bands, subtotals that wear the tiles' names, and a closing ladder; the word "expected" leaves the plan — committed `e1aa4b6e` on `dev` 2026-09-08 after `/review` (nine findings fixed) · **✅ PASSED 40 of 43 walked, zero defects, no steps flagged, 2026-09-09** · **both build-time calls ACCEPTED as built** · **three steps the fixture cannot show were deliberately NOT walked** (Part I — accepted on the unit tests, as the walk itself offered) · walk artifact `b0baf8b4` · mockup artifact `e94d05d9` (round 2 is the picture)
 
-**Plan:** `COACH_BUDGET_PLAN_LADDER_PLAN.md` (+ `_PM_BRIEF.md`). **Decision records:** Business Decisions
+**Plan:** `COACH_BUDGET_PLAN_LADDER_PLAN.md` (+ `_PM_BRIEF.md`), both archived to
+`docs/projects/archive/` 2026-09-09; the walk and mockup stay in `active/`. **Decision records:** Business Decisions
 Log 2026-09-08 ("expected" retired; one qualifier, Planned) · design log 2026-09-08 (bands, subtotals,
 ladder). No migration.
-**Walk:** https://claude.ai/code/artifact/b0baf8b4-db04-4221-9a49-4c9cd57fef61 — 33 checks, nine parts
+**Walk:** https://claude.ai/code/artifact/b0baf8b4-db04-4221-9a49-4c9cd57fef61 — 43 checks, nine parts (33 when it was written; `/review`'s fixes were written into it before it was taken)
 (A the List adds up · B the word is gone · C the When filter · D By period · E the files · F phone ·
 G the set-dues window · H help + Budget vs. Actual untouched · I two states the fixture cannot show).
 Source `COACH_BUDGET_PLAN_LADDER_WALK.html`.
@@ -19966,7 +19967,7 @@ that on any item rows does seem redundant."*
 verbatim — **Planned costs · Planned funding · Player installments**. List and By-period grid both
 split into a **COSTS** band (closing on Planned costs) and a **FUNDING** band (closing on Planned
 funding), using the statement's own band and total recipes. The List's close is a ladder: **Costs
-less funding** (sub-line "What player installments need to cover") → **Player installments** with
+less funding** → **Player installments** with
 the tile's Scheduled tag, restyled off the category tint → **Short of covering the plan** / Planned
 buffer / no row when equal. Before dues exist: one row, Player installments [Estimated], captioned
 "Costs less funding, until dues are set". A season estimate that differs from the lines gets *Lines
@@ -20021,7 +20022,52 @@ affected files; full run recorded below) · `verify:changed` ✓ · rendered che
 new findings · `check:pdf` 23 documents, 98 files read back ✓. The walk's Parts C1 and E1/E2 were updated
 to the reviewed words (Costs shown / Funding shown; COSTS / FUNDING in the file).
 
-## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — committed `1b06f9e7` 2026-09-08, migration 285 on prod 2026-09-08 (job 262), awaiting QA · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
+**✅ THE WALK PASSED — 40 of 43, 2026-09-09, zero defects, nothing flagged.** The three unticked
+boxes are Part I and are recorded as **unwalked, not as passed** — see the caveat at the foot of this
+section.
+
+**What the walk proved.** The project's whole claim is arithmetic a coach can do with their eyes, and
+that is what came back ticked: the four category figures add to **13,621**, the two money-in rows add
+to **1,950**, and **13,621 − 1,950 = 11,671**, then **11,671 − 11,308.30 = 362.70** — every step
+readable from rows on the same screen, said aloud without a calculator (A2, A3). The subtotals wear
+the tiles' names verbatim and equal them. Player installments reads as a row rather than a section
+now that its tint is gone. Folding still folds only what folds: Collapse all leaves both bands, both
+subtotals and all three ladder rows standing (A4). **B1 closed the rename** — Ctrl-F for "expected"
+on the whole Budget tab returns **zero hits**, the line form's consequence sentence included.
+
+**⚠ THE WALK INDEPENDENTLY CONFIRMED FOUR OF `/review`'s TEN FIXES ON THE SCREEN — this is the most
+valuable thing in the result**, because each had been adjudicated in the main loop against the code
+rather than seen: a filtered List **exports the whole plan, not the slice** (C1); the filtered
+on-screen subtotals read **Costs shown / Funding shown** over the rows actually visible while the
+tiles keep the season (C1); the two band rows print **bold, UPPERCASE, with a blank money cell** in
+Excel and PDF alike — the statement export's REVENUE / EXPENSES convention, no dash (E1); and at
+**390px** nothing new scrolls sideways, the bands and subtotals read in the pinned first column and
+the Scheduled tag sits under the installments label rather than beside it (F1) — the state in which
+the grid's inert sticky rule was found. E2 held the per-period file to the same shape, with **Planned
+funding positive** (150 / 900 / 900) and Costs less funding still a real subtraction.
+
+**Both build-time calls are now ACCEPTED, by walking rather than by ruling.** C1 came back
+five-for-five with no flag: under the When filter the ladder's close **steps aside** — Costs less
+funding, Player installments and Short of covering the plan all absent while the tiles above still say
+$362.70 short — and the owner would rather have that than a season's ladder sitting over a slice of
+rows. The second call (subtotals always render when their band does) passed silently in A2 and D1. G1
+and H1 closed the surfaces off the table: the set-dues window's arithmetic line reads "**planned
+funding**", help search finds the new word and lands on a definition titled *Planned funding* naming
+all three kinds, and **Budget vs. Actual is untouched** — still Revenue / Expenses, Sponsorship still
+its own row.
+
+**⚠ WHAT WAS NOT WALKED, AND WHY IT IS NOT A PASS.** Part I's three states — the pre-dues close (one
+row, Player installments with the dashed amber Estimated tag), the estimate-larger-than-lines case
+(*Lines so far* + *Still to itemize*, and the grid's cost subtotal reading **Lines so far** with its
+footnote) and the over-your-estimate case in red — need a team with **no dues set** and a **season
+estimate that differs from its lines**, and the UAT fixture is neither. The walk carried its own
+escape hatch ("Not walked here — accepted on the unit tests") and the owner took it. The export unit
+tests pin those labels and their arithmetic, and `/review` found and fixed two real defects in exactly
+that code path (the estimate rows' Excel outline level, and their re-import as phantom lines) — but
+**no human has read either state on a screen.** If a fixture ever grows those two conditions, walk
+Part I before treating this section as fully covered.
+
+## §157 · Fundraising has one way in — the shelf decides who fills a word in, every drive and sponsor names the line it is raising for, "the whole team" can be who raised it, and the fundraising words leave "Other money in" — committed `1b06f9e7` 2026-09-08, migration 285 on prod 2026-09-08 (job 262) · **✅ PASSED 74/74 walked, zero defects, no steps flagged, 2026-09-10** · **F4 RULED — the whole-team entry stands as built**, closing the one question the walk carried · **Part H1 (the demo world) NOT WALKED — owner-waived, not missed** · walk artifact `f8e843e3` · mockup artifact `8aa1e633` ("Sponsorship words symmetric")
 
 **Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` (+ `_PM_BRIEF.md`). **Migration 285**
 (`285_a_shelf_says_who_fills_it_in.sql`) — applied to dev, **prod-owed behind 274, 276, 277, 280, 281,
@@ -20035,12 +20081,32 @@ marker re-checked as still present in the working tree.
 sponsor and a grant · F the whole team · G the report · H demo + help). Source
 `COACH_FUNDRAISING_ONE_WAY_IN_WALK.html`.
 
-**⚠ ONE OPEN RULING, AT F4 — the only thing on the walk that is a question rather than a tick.** May a
-**whole-team entry** be logged on a drive that has a **family share** set? Built ALLOWED (the board
-shows a dash where a share would be; the facts line counts team entries separately), because refusing
-it would leave a team running one drive with both a bake table and per-player selling nowhere to put
-the table's takings. The owner has not said the word. The alternatives, if he wants one: refuse above
-0%, or ask at save time — both cost a step the current design does not.
+**✅ RESULT, 2026-09-10 — PASSED 74 of 74 walked checks, no defects, nothing flagged.** Parts A–G
+(the budget picker · the first question · "Other money in" · a drive names its line · a sponsor and a
+grant · the whole team · the report) and H2 (help) all clean, including the two figures the walk
+checks arithmetically: the drive's Raised tile following a whole-team entry up and back down while
+*Credited to families* never moves, and the report's revenue rows redistributing across named lines
+with **Total revenue and Season net unchanged**.
+
+**✅ F4 RULED — ALLOWED AS BUILT, and the ruling is that the dash and the separate count are enough.**
+May a **whole-team entry** be logged on a drive that has a **family share** set? The owner looked at
+the board with both kinds of row on it, formed a view, and took the built answer: a team row shows a
+dash where a family share would be, and the facts line counts team entries separately ("N of M
+players logged · plus K team entries") rather than folding them into the fraction. **The two
+alternatives are refused, not deferred** — refusing a team entry above 0%, or asking at save time,
+both cost a step, and the coach running one drive with both a bake table and per-player selling would
+have nowhere to put the table's takings. **This closes the last open question on §157.**
+
+**⚠ H1 — the demo world — was NOT walked, by the owner's decision ("I don't need to check the
+demo"), so it is waived rather than owed.** Recorded because a waiver read later as a pass is the
+mistake to avoid. What still stands behind it: `check:demos` was re-run at the time of this recording
+and reports **both worlds presentable** (exit 0), and its assertions pin the hoodie story's data half
+— the drive exists, it raises for *Fundraising · Merchandise sales*, it carries exactly one
+whole-team entry, and that entry credits nobody. **Not machine-covered, and therefore genuinely
+unverified:** the three screen reads — that Budget vs. Actual shows the $480 on the *Merchandise
+sales* row, that no family's dues moved, and that the mid-season team's Bottle Drive and sponsor now
+read on named rows where both used to say "Not in the plan". These are consequences of the seeded
+data the check does verify, so the risk is low, but nobody has looked at them.
 
 **Where it came from.** The owner asked why the Budget Plan's money-in picker says *"From a drive"*
 under a heading that already says FUNDRAISING. Chasing it found five things true in the running
@@ -20166,22 +20232,57 @@ and confirmed against every linked record on dev. Re-verified after the fixes: *
 typecheck, `check:money-report` (all four cash identities still hold), spelling, dead-selector,
 dictionary, both demo worlds, and the rendered sweep on five screens at four widths.
 
-## §158 · The category is the shelf — money in reports under the category it was filed in on every surface (plan list, by-period grid, both plan files, Months), the Statement's unclaimed sponsor pool takes its shelf, and "What am I forgetting?" becomes an index — built on dev 2026-09-09 (typecheck · 3,251 unit tests · `check:money-report` · `verify:changed` all green), awaiting QA · walk artifact `c8659d30` · mockup artifact `728dcb1e` · **`/simplify` + `/review` run 2026-09-09:** eight cleanups; the review fixed two stale help sentences and the Months grid's inert sticky heading (the §156 pattern), and found **one HIGH pre-existing gap this build widens — the plan's money-in lines re-import as new cost lines** (walk step C2 says so; the importer fix is queued in a peer session, plan §7c)
+## §158 · The category is the shelf — money in reports under the category it was filed in on every surface (plan list, by-period grid, both plan files, Months), the Statement's unclaimed sponsor pool takes its shelf, and "What am I forgetting?" becomes an index — committed `8921d864` on `dev` 2026-09-09 (typecheck · 3,251 unit tests · `check:money-report` · `verify:changed` all green) · **✅ PASSED 69/69, zero defects, no steps flagged, 2026-09-10** · **all three asks RULED — E1, F3 and F5 stand as built** · walk artifact `c8659d30` · mockup artifact `728dcb1e` · **`/simplify` + `/review` run 2026-09-09:** eight cleanups; the review fixed two stale help sentences and the Months grid's inert sticky heading (the §156 pattern), and found **one HIGH pre-existing gap this build widens — the plan's money-in lines re-import as new cost lines** (walk step C2 says so) — **that gap now has its own plan and its own walk: `COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md`, owner QA §165**, the importer learning the file's two bands rather than gaining a column
 
 **Plan:** `COACH_BUDGET_CATEGORY_IS_THE_SHELF_PLAN.md` (+ `_PM_BRIEF.md`). **No migration.**
-**Walk:** https://claude.ai/code/artifact/c8659d30-dc1e-414e-91b8-39c5a548ea9d — 55 checks across 19
-steps, seven parts (A the plan list · B the by-period grid · C the files · D Months · E the Statement ·
+**Walk:** https://claude.ai/code/artifact/c8659d30-dc1e-414e-91b8-39c5a548ea9d — **69 checks across 22
+steps** (this line said 55 across 19 until 2026-09-10 — the draft count, written before the walk grew;
+the taken walk is the 69), seven parts (A the plan list · B the by-period grid · C the files · D Months · E the Statement ·
 F the forgetting list, desktop and phone · G help + demo). Source
 `COACH_BUDGET_CATEGORY_IS_THE_SHELF_WALK.html`.
 
-**⚠ THREE ASKS ON THE WALK — calls the build made that want the owner's word on the built screen.**
-**E1:** the sponsor cheques no plan line claims read *"Not in the plan → Sponsor money"* on the Statement
-since 2026-09-07; they now read **Sponsorship (not budgeted) → Sponsor money**, because Months files the
-same cheques under Sponsorship and the new gate caught the two views disagreeing on its first run. The
-09-07 reason (the row should say what the money is, not "No category → Not itemized") is kept — it now
-says it in the word every other surface uses. **F3:** the open category's chips render in a tinted body
-below the button row rather than attached to their button as drawn. **F5:** which category is open is
-plain page state, not remembered across a reload (dismissals still are).
+**⚠ STEP C2’s KNOWN GAP IS FIXED — §165, 2026-09-10, the day after this walk passed.** That step
+told the owner the re-import would show every money-in line as a new cost, and to read it as a queued
+gap rather than a defect; check **c2c** records exactly that. It is no longer true, and **building the
+fix found two further breaks in the same round trip** that no gate could see: every cost line had been
+silently dropped since 09-09, and no row had carried an amount at all since 09-02 — which means a
+coach doing this on the day of the walk would have met a preview of nothing but refusals before ever
+reaching the phantoms. **This walk and its C2 stand exactly as taken**; §165 carries its own
+instrument rather than editing a completed record. If C2 is ever re-run, run §165’s walk instead.
+
+**⚠ THREE ASKS ON THE WALK — ALL THREE RULED AS BUILT, 2026-09-10.** They were calls the build made
+that wanted the owner's word on the built screen; the walk passed all three, and the owner ruled each
+to stand.
+
+**E1 · the unclaimed sponsor pool.** The sponsor cheques no plan line claims read *"Not in the plan →
+Sponsor money"* on the Statement from 2026-09-07; they now read **Sponsorship (not budgeted) → Sponsor
+money**. **Ruled as built** — and the reason is that this stopped being a wording preference during the
+build. Months files those same cheques under Sponsorship, so the old heading is precisely what put the
+two views of one report into disagreement about one cheque; claim 5b was written for that disagreement
+and caught it on its first run. The 09-07 reason survives intact: the row still says what the money IS
+(*Sponsor money* is the item beneath it, not "No category → Not itemized"), and the not-budgeted flag
+is still the visible gap a coach closes by planning a line. Revenue now wears the treatment costs
+already wore. ⚠ The old constant is not dead code — it is the last resort for a database with no
+sponsorship shelf at all.
+
+**F3 · the chips sit below the button row, not attached to their button as the mockup drew. Ruled as
+built.** The link is carried by colour rather than by adjacency: the open button and the chip panel
+share one lime outline and one olive fill, and no other button is tinted. Attaching them would mean
+splitting the wrapping button row at the tapped button and pushing every later button below the chips —
+the row rearranges under the coach's finger, and rearranges differently at every window width. On a
+phone, where this list is actually used, the row is short and there is nothing to win; the cost is
+confined to a wide desktop, where a category on the first row can have its chips appear below the
+second. ⚠ If that travel is ever worth closing, the fix is capping each side at one row of buttons —
+**not** re-proposing the attached panel.
+
+**F5 · the open category is not remembered across a reload (dismissals still are). Ruled as built.**
+Two things sound like "remembering" and only one of them matters. The *working loop* already survives
+everything: adding a line from a chip, dismissing a word, saving — all leave the strip open, the
+category open and the counts ticking down, because nothing in those paths resets either piece of state.
+What forgets is a full browser reload, and the strip itself starts **collapsed** on every load — so
+remembering which category was open would surface last week's category the next time a coach expanded
+it, rather than a clean index. The memory that must persist is what the coach TOLD it — the ✕
+dismissals — and that does, per device, permanently.
 
 **Where it came from.** The owner asked, from a QA-walk screenshot of the strip, whether revenue and
 expense words should be grouped or colour-coded; then, from three Budget vs. Actual screenshots, why
@@ -20258,7 +20359,7 @@ and `verify:changed`. **The spec needs its own maintenance pass** (TODO), agains
 
 ---
 
-## §159 · Behind the figure — the dates were never missing, and the panel now has a way out — committed `b66d9257` on `dev` 2026-09-09 after `/review` (one defect found and fixed) and `/docs`, no migration, awaiting QA · walk artifact `c43dfaef` · mockup artifact `7af46200`
+## §159 · Behind the figure — the dates were never missing, and the panel now has a way out — committed `b66d9257` on `dev` 2026-09-09 after `/review` (one defect found and fixed) and `/docs`, no migration · **✅ PASSED 20/20, zero defects, no steps flagged, 2026-09-10** · **both asks RULED — F1 and F2 stand as built** · walk artifact `c43dfaef` · mockup artifact `7af46200`
 
 **You found it from three screenshots in one sitting:** *"why do these say 'no date recorded' when clearly
 they arrived on certain dates? and why aren't we providing button links on the statement modals like we are
@@ -20364,11 +20465,30 @@ was written; three other sessions' work was left untouched in the tree. See
 `memory/reference_shared_worktree_stage_race.md` — **the git INDEX is shared too**, which nothing had
 recorded before today.
 
-### The walk
+### The walk — ✅ PASSED 20/20, 2026-09-10
 
-**Owner QA is owed.** Four parts: the honest dates (including a drive, which is the unreviewed wording), the
-doors on all three panels, the read-only coach's path — the role this dead-ended hardest for — and the phone
-shape, where the date line adds a second row to every sponsor line.
+Six parts, **20 checks, zero defects and no step flagged**: A the honest dates (including the drive wording,
+which no eye had been on) · B the doors on all three panels · C the dues and cash panels · D the read-only
+assistant, the role this dead-ended hardest for · E the phone shape, where the date line adds a second row
+to every sponsor line · F the two open asks. **A4 is the check this project existed for** — the Statement
+and the Months view now say the same thing about one cheque — and it passed.
+
+**⚠ TWO ASKS ON THE WALK — BOTH RULED AS BUILT, 2026-09-10.** Each was a call the build had already made
+that wanted the owner's word on the built screen; both stand, so **no code is owed by this walk**.
+
+**F1 · no "Open Sponsors" button on the sponsor panel.** The rows in that panel already ARE the doors — each
+opens the sponsor it names — so a hub button beside them would be a second door landing *further* from the
+work, which is the same reasoning that keeps the writer's plan panel button-free. The counter-argument was
+real and was put on the walk: the house rule allows two doors, and a reader who does not realise the rows
+are tappable would find a button faster. **Ruled: one door.** ⚖ The rule this leaves behind is that the
+at-most-two-doors budget is a **ceiling, not a target** — a panel whose rows are already doors has spent it.
+
+**F2 · the payment count stays, always, whenever more than one arrival is summed.** The alternative drawn was
+the span alone ("May 10 – Jun 14") letting the range imply the plural. **Ruled: count + span.** The count is
+the only thing on the row that tells a coach the figure is an ADDITION rather than one cheque, and the case
+it protects against — hunting the Ledger for a single payment of a size that never existed — is exactly the
+confusion the panel exists to end. This closes the third of the three mockup decisions: the row is a sum
+(not a list of cheques), `1 payment · Sep 4` stays rejected, and the count earns its place above one.
 
 Plan pair: `docs/projects/active/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md`.
 
@@ -20446,6 +20566,93 @@ report's plan figure and its footnote; and a season with **nothing** written off
 not appear at all.
 
 Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md`.
+
+## §161 · The WORD names a money-in budget row, and two lines on one word are one row — built on dev 2026-09-09 (`879209d6`), cleaned by `/simplify` and hardened by `/review` (`31d9d7b1`, two real defects), **no migration**, awaiting QA · walk artifact `5b6ebe17` · decision mockups `151bc861`
+
+⚠⚠ **READ THE CONFLICT FIRST — THIS WALK MAY BE HALF OBSOLETE BEFORE IT IS RUN.** Another session has
+**One Word, One Line** in front of the owner (mockup `a6a3b078`, plan
+`COACH_BUDGET_ONE_WORD_ONE_LINE_PLAN.md`, blocked on his approval). It proposes a budget word carrying
+**exactly one line**, and its own task list retires *by name* the sub-line render and `mergedSubLineName`
+that this section exists to walk. **Rule on that first.** If it is approved, walk steps A2, A3 and E2 here
+inspect a shape that will not exist, and this section's ruling E2 is answered by that project rather than by
+a walk. A1, B1, B2, C1, C2 and D1 hold either way.
+
+### What it was
+
+A money-in budget row was named by a stored description **no form had offered since 2026-08-16**, when
+mig 243 made a category and an item required in both directions and the money-in Description field was
+deleted. So a row could wear a word a coach could neither see, change nor delete. The owner opened such a
+line — *"how did this fundraising item in the budget get called 'chocolate sale'? I don't see anywhere in
+the modal where I can select its budget item name"* — and ruled that the **word** names the row everywhere.
+
+⚠ **This finishes the 2026-08-15 ruling rather than making a new one.** *"The item names the row; the
+description is just a note"* was applied to the **cost** side in full and to the **money-in** side not at
+all. It also **retires the §146 amendment** (2026-09-06), which had a revenue row wear the coach's typed
+word — **and that amendment was never reachable for anything a coach could create**: the field that
+produced the word had been gone three weeks when it was ruled, so it read the item's own name back and
+printed the very label the ruling called worse.
+
+### The two rulings taken
+
+**A1 — money-in rows sort alphabetically**, where they had kept creation order. One rule for the whole
+table beat a special case for half of it. ⚠ Walk step E1 asks whether that was an improvement or merely a
+change; a coach who ordered their plan deliberately has lost that order.
+
+**B2 — a merged sub-line with no note is named by its SCHEDULE**, not by its parent's word, and its
+**When cell drops** so the answer is not printed twice. ⚠ The owner **widened this to the cost side**
+himself; the fallback is shared, and the UAT fixture was printing "Entry Fees" three times in one column
+with nobody reporting it, because the rows still added up.
+
+### ⚠⚠ Two real defects, both shipped by this work, both found after the build
+
+1. **The round trip (High, found independently by two `/review` lenses).** B2 applied to the **export**
+   named a note-less line after its dates. The importer mints a team budget item from any row name its
+   library does not know, so re-importing a freshly exported plan **created budget items literally called
+   "Oct" and "No date yet"**, filed as costs, permanently in the coach's picker.
+   ⚠ **And the mechanism is the part to keep:** this change **disarmed the guard** that was hiding it.
+   While every note-less child echoed its item's name, the importer's duplicate-name guard blocked them
+   and a re-import was a harmless no-op. Giving each child a *distinct* name switched that protection off.
+   **A fix that makes two things distinguishable can disable a guard that relied on them being identical.**
+   The fix is narrower than the finding: B2 exists because the **screen** drops that row's When cell —
+   **a file drops nothing**, so the fallback was never needed there. The file now reads *note, else the
+   word*; the screen is unchanged.
+2. **Two unrelated money-in rows merged (Medium-High, reproduced by execution).** The grouping keys a
+   word-less line on its own id; the PDF exhibit's fixture supplied none, so a $1,800 fundraiser and a
+   $1,500 sponsorship summed into one $3,300 row and **the sponsorship vanished from the page whose job is
+   to demonstrate this feature.** The type requires an id; that fixture is untypechecked JS. Fixed at both
+   ends — and the function no longer trusts a caller for the only key that can collide.
+
+### What proves it
+
+**3,328 unit tests · typecheck clean · `verify:changed` green end to end · `check:money-report` holds every
+identity.** A new round-trip suite pins the corrected export rule, because `check:export-catalog` proves
+only that the round-trip module **exists**, never that a round trip works.
+
+⚠⚠ **`check:layout` WAS NOT RUN — it needs a dev server and none was up.** A static CSS+JSX lens covered
+that ground and found nothing (the phone keeps its schedule: it becomes the row's visible name), **but that
+is a substitute, not the gate.** Walk part D is the real test. Do not let the skip read as a pass.
+
+### ⚠ The fixture and the demo are seeded but DORMANT
+
+Verified by querying dev, not inferred: *Raffle proceeds* and *Chocolate sale* are **absent**, and there
+are **zero** team- or club-owned money-in words on dev at all. The seeds are **find-or-create** and never
+delete a word, so **re-seed before walking** (`node scripts/seed-uat-coach-fixture.mjs`) or the walk shows
+the old screen and passes it.
+
+⚠ **Re-seeding the coach demo is entangled and is the owner's call.** Another session holds an uncommitted
+fix for a separate demo defect — the off-season Spring Invitational deposit is meant to be fronted by a
+parent and has **never** reached the database, so every coach demo team currently has zero family-paid
+costs. Whoever re-seeds gets both changes at once.
+
+### Owed
+
+`check:layout`; the owner walk; and two panel cleanups deferred because that file was another session's all
+afternoon — the money-in and cost sections of the plan list are near-verbatim copies, and the money-in
+grouping is called unmemoized where its cost twin is cached with a comment saying why. Both are consistency,
+not defects. **⚠ Both are moot if One Word, One Line is approved** — that project deletes the duplicated
+block outright.
+
+Plan pair: `docs/projects/active/COACH_MONEY_IN_ITEM_NAMES_THE_ROW_{PLAN,PM_BRIEF}.md`.
 
 ---
 
@@ -20541,6 +20748,74 @@ repair, so an older fixture heals on its next run.
 
 Plan pair: `docs/projects/active/COACH_BUDGET_ONE_WORD_ONE_LINE_{PLAN,PM_BRIEF}.md`.
 
+## §163 · Categories & Items Door — the coach's vocabulary dialog read by side, one "+ Item" per band, a heading born with its first item, the picker's own door, and the category-create step that had been refused since mig 277 — built on dev 2026-09-09, **no migration**, awaiting QA · walk artifact `a4f50a36` · mockup artifact `43698c62` (rounds 1–4c on one link)
+
+**What the owner hit (verified on the live demo world, not inferred):** *Manage our words* opened on
+eleven read-only headings and ended at the box's bottom edge — 4,296px of content in an 810px dialog,
+`overflow: hidden`, the wheel doing nothing, and "Our items" (the only editable rows) 81px below the
+edge. It read as "my item isn't editable". Third instance of the scrolling-recipe clip
+(`memory/reference_modal_scroll_body_clips_silently`); the guard that catches it covered two files.
+
+**Found on the way, a live defect:** the picker's inline *"+ Add custom category…"* posted no
+`teamId`; since mig 277 (2026-09-04) the route answered **400 "teamId is required and must be a team
+you coach"** to every coach from every money form. Fixed in the picker; the server was always right.
+
+**Rulings (mockup rounds 1–4b, all approved as recommended, 2026-09-09):** Q1 the door is **Manage
+categories & items**, the dialog **Categories & items**, groups **Our own · Club · Standard** · Q2 add
+from the dialog (one **+ Item** per band), door un-gated · Q3 an own heading removable while it holds
+nothing · Q4 *Our own* by default · Q5 the picker's last row is a second door · Q6 **withdrawn** (no
+side stored on a category; the shelf earns its side from its items) · Q7 one reporting line, corrected
+at build to the same-day shelf ruling (a heading of your own reports under **its own name**) · Q8
+money coming in first · Q9 the Category list ordered, never filtered, with "Not taking money in yet —
+pick one and it will" and *New category* last · Q10 categories created only inside the item form.
+
+**Built:** `lib/coach-budget-manager-view.ts` (pure view: bands by side, tier filter, search, the
+ordered category list, the reporting line — 10 unit tests) · the dialog rewritten on `scrollPane` ·
+DELETE on the coach category route (counts items AND walks `BUDGET_ITEM_REFERENCES` before deleting) ·
+the item POST creates category + item together and undoes the heading if the item fails · the picker
+hosts the dialog behind a `manage` prop and carries the last-row door; `teamId` on category create ·
+the budget toolbar door renamed, un-gated, tooltip corrected; the three other forms' hints renamed and
+given the door · help (two articles + search keywords) · `tests/unit/modal-scroll-recipe-guard.test.ts`
+scans every coach dialog on the recipe · the ownership guard now pins the new delete rule.
+
+**Gates:** typecheck ✓ · **3,347 unit tests** ✓ (2 new files) · focused lint no errors (pre-existing
+warnings only) · spelling ✓ · CSS purity ✓ · dead selectors ✓ · `check:layout --only=coach-budget`
+✓ at 390/768/1440 (the un-gated door recorded beside its two toolbar siblings at 768 with their
+standing reason) · `check:demos` ✓ both worlds. **Executed against dev, not inferred:** create heading +
+item (201 with both) → delete heading refused 409 "holds 1 item" → delete item → delete heading 200 and
+gone → sideless combined request 400 with no stray heading → picker's category-only path 201 → the old
+shape without `teamId` 400 → standard heading delete 403. **Playwright on the demo world:** dialog opens
+via the new door, own item visible without scrolling, Everything view 3,241px in a 627px pane and the
+wheel scrolls it, usage line "1 budget line · 1 recorded cost", the search door appears, the picker's
+last row present. **Not measured by a machine:** the phone's native category picker with its two group
+labels (Part J), and every rename/remove/fold through the real UI (Parts C–F, I).
+
+**What the walk asks:** A the door and the clip · B yours by default · C add under an existing money-in
+heading, the grouped list and the reporting line · D a heading born with its first item · E a mixed
+shelf of your own, with no setting · F rename, remove, the empty heading · G search and Everything · H
+the picker's own door and the door that was broken · I the fold with the new noun · J the phone · K
+help, and the fixture put back.
+
+**Concurrent-session note:** `budget/panel.tsx` and `lib/help-content/coaches.tsx` carry another
+session's uncommitted hunks; this build's edits there are surgical (import, door button, one picker
+prop; three help strings). Commit is held for the owner's word and stages explicit paths.
+
+**`/simplify` ran 2026-09-09 (four lenses, seven fixes):** the category delete now counts through
+the item counter's twin and refuses in the shared sentence; the "1 budget lines" plural fixed where it
+lives; the four hand-typed picker hints replaced by one the picker writes; one inline-rename block; one
+miss message; no read-back of a just-inserted heading. Re-verified: typecheck, the suites, lint, the
+doors script on the fixture, and the dialog probe on the demo world (the row reads "1 budget line and
+1 recorded cost").
+
+**`/review` ran 2026-09-09 (high-risk, five lenses):** **one High** — the dialog opened from the
+fundraising form's picker, or from the money form's other-money-in branch, showed only that picker's
+filtered slice of the library (every spending heading unreachable from that door); the picker now
+hands the dialog the host's whole library, proven on the demo world. Also fixed: an over-long item
+name after the heading was created left an orphan (validated before any write now); the picker's
+field kept a stale name after an in-dialog rename; double-submit guards on add and remove; verb
+agreement at four refusal sites; three dead imports. Accepted with reasons: the category delete's
+check-then-act window (the house posture, one round trip, same team only). Gates green again.
+
 ## §164 · The By-period close — player installments join the Budget plan's period grid, and every negative on both money grids wears brackets — built on dev 2026-09-10, **no migration**, awaiting QA · walk artifact `c84c2f34` · mockup artifact `4a8f3335` (rounds 1–3 on one link) · run order step **B21**
 
 **What the owner asked, and where it went.** Two questions off one screenshot of the By-period grid:
@@ -20627,3 +20902,293 @@ brackets appear "everywhere money appears", which is not true of the rows whose 
 direction. The demo narration was **checked, not assumed**: no sentence in the tour or dock quotes a
 signed figure, and no step stops on the Budget plan tab, so nothing went stale — recorded next to the
 existing re-read notes.
+
+---
+
+## §166 · More than once — a player hands money in to a drive as many times as it takes, and a board row becomes a participant carrying their total — built on dev 2026-09-10, **migration 287 applied to dev and PROD-PENDING**, awaiting QA · walk artifact `0c968647` · mockup artifact `94c27428` · run order step **B22**
+
+**What it is.** A drive allowed several whole-team entries and exactly ONE per player. Nobody ever
+decided that: `UNIQUE (fundraiser_id, player_id)` is migration **030**'s — the original fundraisers
+table, roughly a year before whole-team entries — and the whole-team entry landed in the gap it
+leaves because SQL NULLs do not collide. So one tab carried three shapes for one idea and only the
+player's was a running total the coach had to maintain in their head. Raised by the owner at step F1
+of the §157 walk, drawn as mockup `94c27428` and approved the same day with all three of its
+recommendations.
+
+Built as ruled:
+
+- **A board row is a PARTICIPANT** — a player, or the whole team — carrying their **total**, folding
+  open onto each dated hand-in with its own amount and credit, oldest first. **Received** on a folded
+  row is the **most recent**. **Edit and Remove sit on the hand-in**, never on the summary row.
+- **The credit is SUMMED from what each hand-in was stamped with**, never re-multiplied from the
+  drive's current rate — which is the same trap the whole-team entry's 0% stamp exists to avoid.
+- **A participant with ONE entry renders byte-for-byte as before**, and a drive where nobody handed
+  in twice draws **no chevrons and no spacers at all** — the alignment step only appears on a board
+  that actually has a fold. That is the load-bearing constraint on the design, and walk step A1 is
+  what catches it going wrong.
+- **The Record door's exclusion is deleted**, with its "N players already have an amount logged" hint
+  and its every-player-logged dead end. Every player is in "Who raised it", permanently.
+- **The consequence line gains one clause** — *"…and Avery Test's total for this drive becomes
+  $576.00"* — shown only when that player already has an entry. **This replaces a refusal**: the
+  second entry used to 409. Ruling 2 chose the sentence over the block, the same trade taken when a
+  bill lowered stopped being a collection.
+- **The whole team folds the same way** (ruling 3), accepted knowingly against §157 step F3b, which
+  had celebrated seeing two team entries as two rows. Walk step I1 asks again on the built screen.
+- **The product's word stays `entry`** (ruling 1). The mockup's prose says *hand-in* for readability
+  and it ships nowhere.
+
+⚠⚠ **THE PLAN'S "no figure on any screen changes" HELD ONLY BECAUSE THE CONSTRAINT MADE IT HOLD, and
+the build had to widen to keep it true.** Four readers answered "how many players" by counting **entry
+ROWS**, which was the same number right up until a player could hand in twice:
+
+1. the board's `N of M players logged` fraction;
+2. the Fundraising list route's per-drive `playerCount` — which prints as the money export's
+   **Players** column, the one a customer can hold in their hand;
+3. the entries route's **roster projection**, which keyed a Map by `player_id` and therefore
+   overwrote: sorted amount-descending, a repeat player would have reported their **smallest**
+   hand-in as though it were everything they had raised — and that is the exact number the new
+   consequence clause reads;
+4. that projection's **sort**.
+
+All four now count distinct players, and the projection sums. Walk steps **C6** and **G1** are the
+two that would catch a regression, and C6 is flagged in the instrument as the single most likely
+thing to be wrong.
+
+**Two things found while building that the plan had not anticipated.**
+
+- **The remove confirm named no date.** Plan §5 asserts it "already names one entry by amount and
+  date"; it named the amount only — so two $60 hand-ins by one player would have raised two
+  identical dialogs with no way to tell which was about to be unwound. It names the date now
+  (walk step E2).
+- ⚠ **The coach demo's nightly re-anchor has never shifted `rep_fundraiser_entries.received_date`** —
+  a **pre-existing** gap, not caused by this change. The sponsor's two dated cheques have been
+  standing still since 2026-09-08 while the season they arrived in walked forward. It is the **third**
+  dated table that reconcile has forgotten, which is precisely the trigger its own header names for
+  replacing that hand-maintained list with something declarative. Fixed here; the deeper rework is
+  not taken.
+
+**The demo shows the new shape, and it is gated.** Theo Marsh now hands in twice in the coach sandbox
+— a **split** of the $160 he already raised ($100 + $60), so the drive still raises the same money,
+its rebates still total $335.00, and the guided tour's dues-ratio sentence is untouched. Wes Calloway
+was deliberately *not* the one split: his single $120 rebate is the "Covered by fundraising" row the
+demo gate asserts by exact amount. `check-demo-coach.mjs` gained two assertions — that somebody has
+handed in more than once, and that every hand-in is dated inside the drive's own run — because a seed
+edit that flattened Theo back to one row would leave the fold unreachable in the shop window with
+every page still rendering perfectly. The tour and dock were re-read for the fifth time: **no step or
+dock line describes the drive's board**, so nothing went stale, and the "should a moment show it?"
+half was answered in the WORLD rather than in a sentence, per the one-proof-point cap.
+
+⚠⚠ **RELEASE ORDER — migration 287 must reach production before this code does, and NO GATE WILL TELL
+YOU.** `check:migrations` compares tables, columns and CHECK constraints that admit *less* in prod; a
+**dropped UNIQUE constraint** adds no table, adds no column and loosens no CHECK, so it reports "in
+sync" with the rule still standing on production. Ship the code without it and prod's own database
+refuses the second entry — on a form that has just told the coach what their total would become. It
+is registered `pending` in `MANUAL_PROD_STEPS.json`, and **the classifier that builds that register
+was widened in this same change to recognise `drop constraint`**: mig 287 is the first of its kind,
+and the hole was real until it was found. Nothing to back-fill — every existing row is already valid
+under the looser rule.
+
+**Verified before hand-off:** `npx tsc --noEmit` clean on every file this touches; **3,405 unit tests
+pass**, including 19 new ones over the participant grouping (sums, most-recent date, oldest-first
+folds, the same-day tie-break, the no-fold single case, credits summed across differing stamped
+shares, and the fraction under repeat hand-ins); `check:demos` reports both worlds presentable and
+the coach demo's own gate passes all of its Bottle Drive assertions including the two new ones;
+`check-css-selectors`, `check-css-module-purity`, `check-spelling-consistency`, `check-dictionary`,
+`check-public-tokens`, contrast, date-correctness, snapshot-freshness, index-coverage, export-catalog
+and root-files all green. `check-schema-parity` is **red by design** — it names migration 287 and
+migration 286 as the dev-only divergences, which is the gate correctly reporting a prod-owed
+migration. Two failures during the run were **another session's concurrent work in this shared
+working copy** and are not this change: a parse error in an untracked `coach-budget-manager-view`
+test, and a `coach-budget-import` assertion that passed thirty seconds earlier in the same session.
+
+---
+
+## §165 · The plan file reads back whole — Import learns the file's two bands, and two further breaks in the same round trip — built on dev 2026-09-10 (typecheck clean · 3,415 unit tests · `check:money-report` · `check:export-catalog` · the static gates all green), awaiting QA · **no migration** · **its own walk**
+
+**Plan:** `COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md` (+ `_PM_BRIEF.md`).
+**Walk:** https://claude.ai/code/artifact/e3dbfafa-ce42-4e7e-a4af-732061747d69 — **30 checks across 10
+steps, four parts**
+(A the statement file out and back · B the by-period file, including the quarter-grain limit · C a
+hand-built sheet and the blank template, the regression half · D one real commit, and the help
+sentence). Only Part D writes; everything before it ends on Cancel.
+
+⚠ **IT WAS ALMOST FOLDED INTO §158's STEP C2 INSTEAD, AND THAT WOULD HAVE BEEN AN EDIT TO A
+COMPLETED RECORD.** C2 was written as a known gap on a walk that was still owed — and §158 was
+walked and **passed 69/69 the same morning this was built**. Rewriting that step would have changed
+what the owner is recorded as having checked, and pushed its count to 71. The step stands as taken;
+§158's entry above simply notes that its C2 gap is fixed here.
+
+**Where it came from.** The owner asked, from a screenshot of §158's step C2: *"have we addressed
+this?"* No. `/review` found the money-in half on 2026-09-09 and handed it to "peer session 7a, which
+owns that importer"; that session then shipped *one word, one line* (`88ecf2ac`) and *the By-period
+close* (`3d6289be`) — both touching the importer — without picking it up. **Work handed to a session
+rather than to a task disappears when the session ends**, which is why this now has its own plan and
+its own TODO line.
+
+**⚠⚠ THE ASK WAS ONE DEFECT; THE FILE HAD THREE, AND THE OTHER TWO WERE WORSE.** Building the fix
+meant round-tripping the real file for the first time, and the plan's own export did not survive it:
+
+1. **Money-in lines came back as costs** — the reported gap. The file writes `COSTS` and `FUNDING`
+   bands; the reader ignored them, so every fundraiser, sponsor and tournament-revenue line
+   re-imported as a **new cost inside a revenue category**.
+2. **Every cost line was silently dropped** — since **2026-09-09**, one day old. When a word became
+   its own line (mig 286) the indented sub-rows beneath it went, and the `—` marker went with them;
+   in a flat file that marker is the *only* thing distinguishing a line from the category heading
+   above it, so the reader took each cost row for a category name and dropped it.
+3. **No row had an amount** — since **2026-09-02**. §133 renamed the money column to `Planned`;
+   `getCell` matches a header exactly and the reader's alias list had never heard of it. Every row of
+   a re-imported plan was refused with *"No amount. Add one here, or leave the row out."*
+
+So for eight days the product could not read the file it writes, and for one of them it would have
+deleted the cost half of a plan a coach re-imported. **Nothing could see any of it.** The exporter's
+tests assert every row it writes; the reader's tests assert every shape it reads — including one
+called *"reads the plan's own statement export back"* — but the reader's tests **spell their own
+column headers and hand-write the rows**, so they were testing a file that *resembled* ours. A rename
+is invisible to a test that types the name out, and two of the three defects were renames.
+
+**⚠ AND THE GATE THAT NAMES THIS ROUND TRIP COULD NOT SEE IT EITHER.** `lib/export/catalog.ts` has
+declared `roundTrip: 'lib/coach-budget-import.ts'` for the Budget plan throughout — a claim the
+platform-admin Export Registry page and the customer help system both read. `check:export-catalog`
+verifies only that the named reader **file exists**. The claim now names its proof in a headstone, and
+the proof is a new test.
+
+**What changed.** Import reads the file's two bands: a **band row** is a non-indented row whose text
+is `Costs`/`Funding` and which **carries no money** — the third clause protecting a club that owns a
+real category by either name, since a category row always prints its own total and a band heading
+never does. A band switches the side and **clears the remembered category**, so a line under a bare
+band heading is blocked with "No category" rather than filed under the other band's last heading. The
+vocabulary is held apart one list per side (mig 248's rule, made structural), a row matches existing
+lines **only on its own side**, an invented money-in word is created with the **shelf's** income
+source (mig 285) and the line's kind is **derived** through `budgetLineKindForItem` rather than
+defaulted — the insert wrote no `line_kind` at all, which was harmless only while every row was a
+cost. The preview marks a money-in row with a quiet **Money in** chip (from `SIDE_FLOW_SHORT`, the
+one home for that word) and follows the row's side in its type-ahead. **No new column in the file:**
+an export's shape is its screen's shape (QA §146 F2), the screen has bands rather than a direction
+column, and the band reaches every file already on a coach's disk.
+
+**Deliberately not done:** the blank template stays spending-only (its Reference note gained one
+sentence saying how to plan money in from it, so the promise stays true rather than half-true); no
+per-row side flip in the preview; the **quarter**-grain by-period file still round-trips its rows
+but not its amounts, because a quarter column is not a month and splitting one would invent dates.
+
+**The guard against a fourth:** `tests/unit/coach-budget-plan-round-trip.test.ts` builds both files
+**from the exporters, with `BUDGET_PLAN_COLUMNS` as its headers**, in both the CSV and the Excel
+shape, and asserts every line comes back as an **update on its own side** — plus that no band,
+subtotal or ladder rung survives as a line, and that a plan holding "Grant" as both a cheque and an
+application fee updates both without either touching the other.
+
+**Concurrent-session note:** `coaches.module.css` carries another session's uncommitted hunks, and
+`check:public-tokens` is red on two of its hex literals (`.managerChipOn`, the Categories & Items
+door). Not this change; not touched.
+
+## §167 · Things, not dates — the report names what a figure is made of, and Player dues folds to players — built on dev 2026-09-10 after the mockup was approved the same day, **no migration**, awaiting QA · mockup artifact `e2264b06`
+
+**You raised it on the §157 walk.** You opened `Fundraising · Merchandise sales` on the Statement and
+it unfolded to one sub-row reading **Feb 2027**, against money that arrived on **Aug 31** and
+**Sep 10**.
+
+### What was wrong
+
+Not one bad row. The fold showed the **plan's** periods, and real money was then placed against them
+by a rule: each amount landed in the first planned slot **on or after** the day it moved, and
+anything later — or with no date at all — landed in the last one. So the fold was **dated on the
+budget side and swept on the actual side**. On a line planned across five months that reads correctly
+and usefully. On a line with one planned slot in February it reports the whole season as February.
+
+**Your own argument for removal is the decisive one, and it is a proof rather than a preference:**
+dating one side honestly requires dating the other, and dating the other means a row per line per
+month on both halves of a report meant to be read in one screen. *There is no version of the fold
+that is both truthful and short.*
+
+### What you will see
+
+| | |
+|---|---|
+| **Any line item** | No chevron, no sub-rows, **no date anywhere on either report**. Both figures still open: Budget shows that line's plan and when it is due; Actual shows every payment, with drives and sponsors named and clickable. |
+| **Any category** | Unchanged — still folds, still closed by default. That is a fold onto **things**. |
+| **Player dues** | Now folds like every other category, to **one row per family**: what they were billed, what has come in, what they still owe, in the report's own three columns. Closed by default. |
+| **A family's Actual** | Opens the composition panel that used to hang off the category figure — cash they sent, team bills they paid, fundraising credited — and only when there is something to explain. |
+| **A family's Budgeted** | A plain number. A bill is one assessed figure, not a pile of records. |
+| **The Player dues row itself** | Plain figures. Its door moved **down** onto the family rows. |
+| **The downloaded file** | Unchanged: one Player dues row, no family named. |
+
+**No figure moves.** Proved on the live UAT fixture: the dues category still reads **$11,291.30** and
+still ties to the Months band to the cent, and it is now the exact sum of its twelve family rows.
+
+### ⚖ The rule this settles, report-wide
+
+**A door lives on an ITEM number, never on a CATEGORY number.** Verified against the code rather than
+a plan: every category row already rendered three plain cells, and Player dues — a synthetic category
+carrying a drill-in on a category row — was the report's **only** violation. Folding it to players
+resolves it by moving the door to where doors belong rather than by special-casing anything.
+
+### ⚖ The export is a named exception, and the ruling made it sharper
+
+While the families were going to be a modal, keeping them out of the file was a small divergence. As
+**rows in the table**, the default pull is the other way. **RULED: the per-family rows are
+screen-only** and the file keeps its single Player dues row — a statement gets emailed round a board,
+and what each family still owes is not ours to send on. Drives and sponsors stay named: they are
+businesses and events, not children.
+
+⚠ This deliberately breaks the standing `EXPORT SHAPE = SCREEN SHAPE` lesson, so it is commented as
+an exception at **both** export push sites **and** pinned by a test. Without that a later session
+"fixes" the divergence with a perfectly good local argument.
+
+### ⚠ What is knowingly lost — accepted, not discovered
+
+*"We're over on ice time — which month?"* leaves the product. Months answers by category, not by
+line. You accepted this explicitly on the mockup. A replacement is re-opening a settled trade.
+
+### What the build did beyond the plan, and why
+
+- **The sweep is deleted at source, not merely unrendered.** With the fold gone, the placement rule
+  had no reader left — and a figure nobody can date honestly, sitting in the payload, is a wrong
+  figure waiting for its next reader. `PeriodResult.actual` is off the type, so a quiet re-add is a
+  compile error rather than a judgement call.
+- **The comparison basis lost its dues special case.** It read a whole-team `billedToDate` because an
+  item-less category has nothing to re-sum. Each family row now carries its own installment due
+  dates, so the ordinary rule (*plan dated on or before today*) lands on the identical figure —
+  **verified on the live fixture at $97.09**, against the route's own untouched `billedToDate`.
+- **`DuesRow` dissolved rather than moved.** What was genuinely different about it survives as two
+  ordinary props on the shared row: a category with nothing under it draws no chevron, and one
+  category is allowed a second line ("Not set yet · Set player dues").
+- **The per-family arithmetic left the route** and is a pure, unit-tested function. It decides
+  whether a heading equals the twelve rows underneath it; inside the route no test could reach it.
+
+### What proves it
+
+**Gates:** typecheck (my files clean) · **3,429 unit tests, 0 failures** · `check:money-report` fully
+green on the live fixture, including *"the Player dues row matches the Months dues group to the cent:
+$11,291.30"* · `check:demos` — both worlds presentable, including the tour's recomputed dues ratio ·
+spelling · CSS selectors · CSS-module purity · export catalog · lint (0 errors).
+
+**A live-fixture check written for this build** confirms, against the real payload: no item ships a
+period carrying an actual; the dues category equals the sum of its 12 families on **both** bases; the
+to-date sum reproduces `billedToDate` exactly; every family panel sums to the figure that opens it;
+no family row carries budget lines. Avery Test reads **$683.00** — the §160 write-off case ($700 less
+a $17 adjustment) — landing correctly on her row.
+
+**A new build-enforced guard,** `tests/unit/bva-no-dates-guard.test.ts`, carries the whole argument
+and was **mutation-tested**: re-adding the fold, re-adding the chevron, putting a door back on a
+category figure, letting the export name families, and restoring the sweep are each caught.
+
+### ⚠⚠ Two things to know before you walk it
+
+1. **§160 is still unwalked and its Part D is this row** — the report's dues plan figure and its
+   footnote. Both are **unchanged**; what changed underneath them is that the row gained a fold and
+   lost its door. Nothing in §160's pass conditions moves, but walk it knowing the row looks
+   different from the day that walk was written.
+2. **This tree is shared and was being edited during the build.** `panel.tsx` took another session's
+   "Costs → Expenses" sub-heading rename mid-flight (a different region; both survive), and
+   `DriveRoom.tsx` / the budget-import files carry that session's in-flight typecheck errors. Not
+   this change; not touched. `check:public-tokens` is red on two hex literals in
+   `coaches.module.css` from the Categories & Items work — also not this change.
+
+**Owner QA is owed.** Suggested parts: no date at any width on either report; item rows without
+expanders and category rows with them; Player dues folding to families and the three columns reading
+right for a family paid in full, part-paid, and untouched; the composition panel appearing only where
+there is something to explain; a team with dues **not set** (no chevron, the door still there); a
+read-only coach meeting no dead end; both Compare bases agreeing that the category is the sum of its
+rows; and the exported file naming no family while matching the screen's dues figure.
+
+Plan pair: `docs/projects/active/COACH_BVA_THINGS_NOT_DATES_{PLAN,PM_BRIEF}.md`.

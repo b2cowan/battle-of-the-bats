@@ -231,8 +231,17 @@ export function budgetPlanStatementRows(
          has no single line to speak for it — its sum is the answer and its When column stays
          empty, exactly as the screen's own bucket row does. */
       const only = item.itemId ? item.lines[0] : null;
+      /* ⚠⚠ THE LINE MARKER IS NOT DECORATION — IT IS THE ONLY THING A FLAT FILE HAS (2026-09-10).
+         A cost word's row printed FLUSH, so in the CSV and the PDF nothing distinguished it from
+         the category heading above it, and the re-importer — whose only nesting signal in a flat
+         file is this dash — read every cost line as a CATEGORY NAME and dropped it. It survived
+         until now because the sub-rows underneath used to carry the dash and be read as the lines;
+         when a word became its own line (owner ruling 2026-09-09, mig 286) the sub-rows went and
+         the marker went with them. The funding half of this same file never stopped writing it.
+         ⚠ Excel is unaffected: the XLSX writer strips `ITEM_PREFIX` from every `item` row and
+         replaces it with a real outline indent. */
       push({
-        item: item.itemName,
+        item: `  — ${item.itemName}`,
         schedule: only ? whenText(only.periods, only.totalAmount) : '',
         // The group's own sum, never one line's figure: identical for a word, correct for the bucket.
         planned: item.total,
@@ -1227,10 +1236,9 @@ export function bvaCategoryRows(
   const pushCategory = (cat: BvaCategory) => {
     /* ⚠ "not budgeted" IS THE WRONG WORD FOR THE DUES ROW, and it is the only row on this file that
        is not a budget category. A team with no schedule has not failed to budget something — it has
-       not set its dues up yet, which is a different fact and the one the screen states. The row
-       carries no items either, so the loop below writes nothing under it: a lone item repeating its
-       own category's name would print the same figures twice. */
-    const notPlannedSuffix = isDuesCategory(cat.categoryId) ? ' (not set yet)' : ' (not budgeted)';
+       not set its dues up yet, which is a different fact and the one the screen states. */
+    const isDues = isDuesCategory(cat.categoryId);
+    const notPlannedSuffix = isDues ? ' (not set yet)' : ' (not budgeted)';
     push({
       item: cat.inPlan ? cat.categoryName : `${cat.categoryName}${notPlannedSuffix}`,
       // ⚠ BLANK, NEVER ZERO, where nothing was budgeted. A 0 in a spreadsheet is a plan of nothing;
@@ -1240,6 +1248,31 @@ export function bvaCategoryRows(
       actual: cat.actual,
       variance: cat.variance,
     }, 'category');
+    /* ⚠⚠⚠ THE PER-FAMILY ROWS ARE **SCREEN-ONLY**, AND THIS IS A DELIBERATE, NAMED EXCEPTION TO
+       `EXPORT SHAPE = SCREEN SHAPE` (owner ruling 2026-09-10). Read this before "fixing" it.
+
+       Since 2026-09-10 the Player dues category on screen folds to ONE ROW PER FAMILY, each naming
+       a child and carrying what that family was billed, what has come in, and **what they still
+       owe**. Every other category's items follow the screen into this file, and the standing lesson
+       (`project_coach_bva_activity_fold`) says these two shapes must not drift — which is exactly
+       why the divergence has to be argued here rather than discovered later.
+
+       ⚠⚠ THE STATEMENT EXPORTS TO A FILE A TREASURER EMAILS TO A BOARD. Following the screen would
+       put twelve families' debts into that file, where it is forwarded, printed and left on a table
+       — and the coach who pressed Export never chose to publish it. The alternative (the file
+       matching the screen) was considered and REJECTED by the owner on exactly that ground: it
+       changes what a treasurer is handing round a table.
+
+       ⚠ DRIVES AND SPONSORS STAY NAMED in this file, and the line is not arbitrary: they are
+       businesses and events. These are children.
+
+       ⚠ THE FIGURE IS UNCHANGED — the category row above already carries the season's dues total,
+       and it is the sum of the rows being suppressed. Nothing is lost from the file's arithmetic;
+       only the names are.
+
+       ⚠ IF THE OWNER EVER REVERSES THIS, delete the branch — do NOT add a flag. A file that
+       sometimes names children is worse than either answer. */
+    if (isDues) return;
     pushItemRows(cat.items, push);
   };
 
@@ -1374,6 +1407,17 @@ export function bvaActivityRows(
       actual: cat.actual,
       variance: cat.variance,
     }, 'category');
+    /* ⚠⚠⚠ NO `pushItemRows` HERE, AND ITS ABSENCE IS NOW A RULING RATHER THAN AN ACCIDENT (owner
+       2026-09-10). Until that date the dues block genuinely had no items, so this loop wrote a bare
+       row because there was nothing else to write. It has one row per FAMILY now — each naming a
+       child and what they still owe — and adding the call would put all of them into a file a
+       treasurer emails to a board.
+
+       ⚠ THE SAME EXCEPTION AS THE STATEMENT FILE'S, ARGUED IN FULL AT `pushCategory` above: the
+       per-family rows are SCREEN-ONLY, drives and sponsors stay named because they are businesses
+       and events rather than children, and the category figure here is already the sum of what is
+       being suppressed, so the file's arithmetic loses nothing. This is a deliberate, named
+       exception to EXPORT SHAPE = SCREEN SHAPE — not a divergence to tidy up. */
   }
 
   for (const block of data.activities) {
@@ -1425,7 +1469,13 @@ export function bvaActivityRows(
       pushItemRows(block.revenue.items, push);
     }
     if (block.costs) {
-      if (bothHalves) push({ item: 'COSTS', budgeted: '', actual: '', variance: '' }, 'item');
+      /* ⚠ "EXPENSES", NOT "COSTS" (owner ruling 2026-09-10). The screen's inner sub-label moved to
+         Expenses when the two-register rule was settled — the Statement half of this same file has
+         always shouted EXPENSES — and this literal is the one the file's own header rule is about:
+         the export's shape is the screen's shape, in the same unit of work. ⚠ The Budget PLAN's
+         COSTS band above is a DIFFERENT register (Costs / Funding, a plan not a statement) and is
+         deliberately left alone. */
+      if (bothHalves) push({ item: 'EXPENSES', budgeted: '', actual: '', variance: '' }, 'item');
       pushItemRows(block.costs.items, push);
     }
   }

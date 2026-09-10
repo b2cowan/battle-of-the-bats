@@ -250,7 +250,21 @@ describe('rollupBudget — the arithmetic every screen quotes', () => {
     assert.equal(cat.variance, 350);
   });
 
-  it('places each cost in the first period on or after the day it was paid', () => {
+  /* ⚰ TWO TESTS PINNING THE ACTUAL-PLACEMENT RULE STOOD HERE AND ARE DELETED WITH IT (owner
+     ruling 2026-09-10, "Things, not dates"). They asserted that a cost landed in the first planned
+     period on or after the day it was paid, and that anything later — or undated — landed in the
+     last one. Both were faithful to the code; the RULE was the defect. A row planned once in
+     February reported August money as February, and nothing on the row said so.
+
+     ⚠ THEY ARE NOT REPLACED, because there is nothing left to replace them with: a period no longer
+     carries an actual at all. What survives is the schedule merge below, and the two questions the
+     placement was pretending to answer both have honest homes — the **Months view** dates both
+     sides the same way, and the panel behind an Actual figure dates each RECORD by the day it
+     moved. See `mergeSchedules`. */
+  it('a period carries the PLAN and never a placed actual', () => {
+    /* The teeth on the deletion. Nothing may re-attach spending to a planned date: the whole
+       argument is that the plan is dated on one side and the money would be swept onto it on the
+       other, which is a claim about time the report cannot support. */
     const rows = rollupBudget([line({ periods: [
       { label: 'Sep', date: '2026-09-30', amount: 100, sortOrder: 0 },
       { label: 'Oct', date: '2026-10-31', amount: 100, sortOrder: 1 },
@@ -258,18 +272,18 @@ describe('rollupBudget — the arithmetic every screen quotes', () => {
       spend({ id: 'c1', amount: 60, paidDate: '2026-09-02' }),
       spend({ id: 'c2', amount: 25, paidDate: '2026-10-15' }),
     ]);
-    assert.deepEqual(rows[0].items[0].periods.map(p => p.actual), [60, 25]);
-  });
-
-  it('puts a cost paid after the last period, and one with no date, in the final period', () => {
-    const rows = rollupBudget([line({ periods: [
-      { label: 'Sep', date: '2026-09-30', amount: 100, sortOrder: 0 },
-      { label: 'Oct', date: '2026-10-31', amount: 100, sortOrder: 1 },
-    ] })], [
-      spend({ id: 'c1', amount: 80, paidDate: '2027-03-01' }),
-      spend({ id: 'c2', amount: 20, paidDate: null }),
-    ]);
-    assert.deepEqual(rows[0].items[0].periods.map(p => p.actual), [0, 100]);
+    const periods = rows[0].items[0].periods;
+    assert.deepEqual(periods.map(p => p.amount), [100, 100]);
+    for (const p of periods) {
+      assert.ok(
+        !('actual' in p),
+        'A budget period is carrying an actual again. That field was deleted, not hidden: it placed '
+        + 'money on a date the report cannot date honestly. "When did this move?" is the Months '
+        + "view's question, and it dates both sides the same way.",
+      );
+    }
+    // The row's own actual is untouched — the figures never depended on the placement.
+    assert.equal(rows[0].items[0].actual, 85);
   });
 
   it('rounds to cents rather than carrying a float tail onto a money screen', () => {
@@ -449,8 +463,11 @@ describe('rollupMoneyReport — money back nets into the row it repaid', () => {
       ],
       refunds: [refund({ amount: 325, receivedDate: '2026-09-03' })],
     });
-    const periods = r.expenses.categories[0].items[0].periods;
-    assert.deepEqual(periods.map(p => p.actual), [300, 300, -325]);
+    /* ⚠ THE PER-PERIOD ASSERTION WENT WITH THE PLACEMENT (2026-09-10) — it read [300, 300, -325],
+       the refund netted into the September slot it arrived in rather than the July one the cost was
+       paid in. The ROW's arithmetic is what the rule was always about and it is unchanged: $600 out,
+       $325 back, $275 net. Where the $325 arrived is a fact about the RECORD, and the panel behind
+       the Actual figure states it there. */
     assert.equal(r.expenses.categories[0].items[0].actual, 275);
   });
 

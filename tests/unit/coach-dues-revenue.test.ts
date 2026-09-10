@@ -21,10 +21,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  DUES_CATEGORY_ID, isDuesCategory, buildDuesCategory,
+  DUES_CATEGORY_ID, isDuesCategory, buildDuesCategory, buildDuesFamilyRows,
   duesRowRenders, duesSentenceRenders, duesFundingState, duesGap,
   type DuesRevenue,
 } from '../../lib/coach-dues-revenue.ts';
+/* ⚠ THE REAL BASIS RULE, not a re-statement of it. The family rows exist partly so the To date
+   basis needs no dues special case; asserting that with a local copy of the filter would prove
+   nothing about the function the screen actually calls. */
+import { budgetedOn } from '../../lib/coach-budget-basis.ts';
 
 /** The UAT team's real shape: the plan needs $11,650 and dues bill $11,308.30.
  *  ⚠ `billedToDate` IS 0 ON THIS TEAM AND THAT IS NOT A PLACEHOLDER — every one of its instalments
@@ -195,8 +199,18 @@ describe('the synthetic category the report is handed', () => {
     assert.equal(cat.variance, -6300.67);
   });
 
-  it('carries NO items, so the export prints one row rather than the same figures twice', () => {
-    assert.deepEqual(buildDuesCategory(dues()).items, []);
+  it('carries no items when there is no schedule — the "Not set yet" row has nothing to fold to', () => {
+    /* ⚠⚠ THIS TEST USED TO ASSERT THE OPPOSITE FOR EVERY SEASON, and reading it is the point. Until
+       2026-09-10 the dues category carried NO items at all, deliberately: the export walks a
+       category and then its items, and a lone item repeating its own category's name would print
+       the row twice. Player dues folds to ONE ROW PER FAMILY now (owner ruling, "Things, not
+       dates"), and the export's single row is kept by an explicit, commented exception in
+       `lib/coach-money-exports.ts` rather than by the category being empty.
+
+       What survives is the ONE state where empty is still right: a team with no schedule. There is
+       nothing to fold to, so the row draws no chevron — a fold onto an empty list is the dead end
+       this change exists to remove. */
+    assert.deepEqual(buildDuesCategory(dues({ billed: null, actual: 0 })).items, []);
   });
 
   it('is `inPlan` only when a schedule exists — which is what makes the file write a blank', () => {
@@ -206,5 +220,150 @@ describe('the synthetic category the report is handed', () => {
     // ⚠ And its budgeted figure is a plain zero rather than anything exotic: the SCREEN and the
     // FILE both decide what to draw from `inPlan`, never from the number.
     assert.equal(unset.budgeted, 0);
+  });
+});
+
+/**
+ * ONE ROW PER FAMILY — the arithmetic that decides whether the category equals the rows underneath
+ * it (owner ruling 2026-09-10, "Things, not dates").
+ *
+ * ⚠⚠ THIS IS THE HALF THAT CANNOT BE CHECKED BY LOOKING. Every figure on the screen renders
+ * perfectly whether or not twelve rows add up to the heading above them — a coach only finds out by
+ * summing a column by hand, in front of a board. So the identity is asserted here rather than
+ * trusted, and it is asserted in the two directions that can drift apart independently: the sum of
+ * the rows against the category, and the category against `billed`.
+ *
+ * ⚠ IT IS TESTABLE AT ALL ONLY BECAUSE THE ARITHMETIC LEFT THE ROUTE. It was written inline in
+ * `app/api/.../budget-vs-actual/route.ts` first, where no test could reach it.
+ */
+describe('Player dues folds to families, and the fold adds up', () => {
+  /** Three families on one team: paid in full, part-paid, and one with a bill written down. */
+  function family(over: Partial<{ actual: number; cashKept: number; familyPaid: number; raised: number; lowered: number }> = {}) {
+    const o = { actual: 0, cashKept: 0, familyPaid: 0, raised: 0, lowered: 0, ...over };
+    return {
+      actual: o.actual,
+      parts: { cashKept: o.cashKept, familyPaidCosts: o.familyPaid, fundraisingCredited: o.raised },
+      billLowered: { forgiven: 0, adjustment: o.lowered, total: o.lowered },
+    };
+  }
+  const NAMES: Record<string, string> = { p1: 'Avery Test', p2: 'Blake Test', p3: 'Casey Test' };
+  const nameOf = (id: string) => NAMES[id] ?? 'A family';
+
+  /** Two installments each, October and January. */
+  function installments(): Array<{ id: string; playerId: string; number: number; amount: number; dueDate: string | null }> {
+    return [
+      { id: 'i1', playerId: 'p1', number: 1, amount: 560, dueDate: '2026-10-01' },
+      { id: 'i2', playerId: 'p1', number: 2, amount: 560, dueDate: '2027-01-01' },
+      { id: 'i3', playerId: 'p2', number: 1, amount: 560, dueDate: '2026-10-01' },
+      { id: 'i4', playerId: 'p2', number: 2, amount: 560, dueDate: '2027-01-01' },
+      { id: 'i5', playerId: 'p3', number: 1, amount: 470, dueDate: '2026-10-01' },
+      { id: 'i6', playerId: 'p3', number: 2, amount: 470, dueDate: '2027-01-01' },
+    ];
+  }
+  function rows(over: Partial<Parameters<typeof buildDuesFamilyRows>[0]> = {}) {
+    return buildDuesFamilyRows({
+      installments: installments(),
+      writtenOffBy: new Map(),
+      byFamily: new Map([
+        ['p1', family({ actual: 1120, cashKept: 1120 })],
+        ['p2', family({ actual: 560, cashKept: 420, familyPaid: 95, raised: 45 })],
+        ['p3', family({ actual: 235, cashKept: 235 })],
+      ]),
+      nameOf,
+      ...over,
+    });
+  }
+
+  it('gives every family a row, named and in roster order', () => {
+    assert.deepEqual(rows().map(r => r.itemName), ['Avery Test', 'Blake Test', 'Casey Test']);
+  });
+
+  it('bills what the family was billed, credits what came in, and leaves the rest as variance', () => {
+    const [avery, blake, casey] = rows();
+    // Paid in full: the variance column reads nothing to chase.
+    assert.equal(avery.budgeted, 1120);
+    assert.equal(avery.actual, 1120);
+    assert.equal(avery.variance, 0);
+    // Part-paid: the variance IS what they still owe, in the column the report already uses for it.
+    assert.equal(blake.budgeted, 1120);
+    assert.equal(blake.actual, 560);
+    assert.equal(blake.variance, -560);
+    assert.equal(casey.variance, -705);
+  });
+
+  it('⚠⚠ the category is the SUM of its families, on the figure a board reads', () => {
+    /* The identity the whole fold rests on. A heading that disagrees with the rows a coach can open
+       underneath it is the one defect a fold cannot survive, and nothing on screen would show it. */
+    const items = rows();
+    const cat = buildDuesCategory(dues({ billed: 3180, actual: 1915 }), items);
+    assert.equal(cat.budgeted, items.reduce((s, i) => s + i.budgeted, 0));
+    assert.equal(cat.budgeted, 3180);
+    assert.equal(cat.variance, -1265);
+  });
+
+  it('⚠ and the sum still holds when a bill has been written down', () => {
+    /* A lowered bill is not still planned (owner ruling 2026-09-09). It comes off the family's own
+       Budgeted, so the category drops by exactly the same amount — the two figures can only move
+       together, which is what keeps this row equal to the Months band. */
+    const withWriteOff = rows({
+      byFamily: new Map([
+        ['p1', family({ actual: 1103, cashKept: 1103, lowered: 17 })],
+        ['p2', family({ actual: 560, cashKept: 560 })],
+        ['p3', family({ actual: 235, cashKept: 235 })],
+      ]),
+    });
+    assert.equal(withWriteOff[0].budgeted, 1103);
+    const cat = buildDuesCategory(dues({ billed: 3163 }), withWriteOff);
+    assert.equal(cat.budgeted, 3163);
+    assert.equal(cat.budgeted, withWriteOff.reduce((s, i) => s + i.budgeted, 0));
+  });
+
+  it('⚠⚠ carries each family\'s own due dates, so the To date basis needs no special case', () => {
+    /* The reason `rebaseReport` could delete its dues branch. On 1 November only the October half
+       is due, and the ordinary rule (*plan dated on or before today*) has to land on it. */
+    const [avery] = rows();
+    assert.deepEqual(avery.periods.map(p => p.date), ['2026-10-01', '2027-01-01']);
+    assert.equal(budgetedOn('todate', avery.budgeted, avery.periods, '2026-11-01'), 560);
+    // And the whole season is still the row's own figure, untouched by the periods.
+    assert.equal(budgetedOn('season', avery.budgeted, avery.periods, '2026-11-01'), 1120);
+  });
+
+  it('⚠ nets a write-off off the installment it was placed on, in that installment\'s own month', () => {
+    const off = rows({ writtenOffBy: new Map([['i2', 17]]) });
+    assert.deepEqual(off[0].periods.map(p => p.amount), [560, 543]);
+  });
+
+  it('⚠⚠ an installment nobody owns still reaches a row, or the fold stops adding up', () => {
+    /* `player_id` is denormalised and null on older rows; when the schedule cannot answer either,
+       the empty key collects it. Dropping it would leave the rows quietly short of their heading. */
+    const orphaned = buildDuesFamilyRows({
+      installments: [...installments(), { id: 'i7', playerId: '', number: 1, amount: 100, dueDate: '2026-10-01' }],
+      writtenOffBy: new Map(),
+      byFamily: new Map([['p1', family({ actual: 0 })]]),
+      nameOf,
+    });
+    const stray = orphaned.find(r => r.itemName === 'A family');
+    assert.ok(stray, 'the unowned installment lost its row');
+    assert.equal(stray.budgeted, 100);
+    assert.equal(orphaned.reduce((s, r) => s + r.budgeted, 0), 3280);
+  });
+
+  it('a family row is a plain BUDGETED figure and a door on its ACTUAL — never the other way round', () => {
+    /* ⚠ THE REPORT-WIDE RULE, expressed as data rather than as markup: a family's bill is one
+       assessed figure (no `lines`, so the screen draws no plan door), and its contribution is three
+       kinds of money (`duesParts`, which is what the screen opens). */
+    for (const r of rows()) {
+      assert.deepEqual(r.lines, []);
+      assert.deepEqual(r.costs, []);
+      assert.ok(r.duesParts, 'a family row must carry the three parts its Actual opens onto');
+    }
+    /* ⚠ THE FIELD IS OPTIONAL ON THE TYPE — deliberately, for the same rolling-deploy reason
+       `lines` and `costs` are — so this asserts its presence before reading it rather than
+       reaching through it. A non-null assertion here would hide exactly the regression the
+       assertion above is for. */
+    const blake = rows()[1];
+    const parts = blake.duesParts;
+    assert.ok(parts, "Blake’s row lost its parts");
+    assert.equal(parts.cashKept + parts.familyPaidCosts + parts.fundraisingCredited, blake.actual);
   });
 });

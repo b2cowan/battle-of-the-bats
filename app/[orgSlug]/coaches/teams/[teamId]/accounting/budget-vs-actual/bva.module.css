@@ -306,56 +306,20 @@
   color: var(--text-tertiary);
 }
 
-/* A line's expanded payment periods — one step deeper than the line, in quieter ink.
-   ⚠ THE PERIOD'S DATE RIDES IN THE NAME CELL. The outline gave sub-rows a fifth track, so they
-   laid out on different columns from the rows above them — something a table cannot do, and does
-   not want to: a period's date is meta about that period, so it reads as meta beside its name.
+/* ⚰ THE EXPANDED-PERIOD ROWS' STYLES STOOD HERE — the quieter label ink, a measured 4.45rem
+   indent (re-measured after the owner found a period sitting FIVE PIXELS SHALLOWER than its own
+   line, QA §146), the 3rem phone variant, and `.periodDate`. All deleted 2026-09-10 with the fold
+   they dressed ("Things, not dates"): an item row no longer opens, so there is no sub-row to
+   indent and no date to quieten.
 
-   ⚠ (0,2,3) AGAIN for the label, same reason as the sub-label above.
-   ⚠⚠ AND THE VALUE CELLS DELIBERATELY DO **NOT** TAKE A BLANKET COLOUR. A `.periodRow td { color }`
-   rule at (0,1,1) beats the shared `.moneyGridNumMuted` (0,1,0) that an unmoved period's em-dash
-   carries — so every "nothing happened here" dash rendered at reading strength instead of the
-   quiet ink, which is the one thing that class exists to prevent ("a nil is not news"). The row's
-   cells inherit the grid's ordinary cell colour instead, and only the LABEL is quietened. */
-.reportTable tbody tr.periodRow th.lead {
-  font-size: var(--money-line-size);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-/* ⚠⚠ 4.45rem IS MEASURED, NOT CHOSEN — and the number it replaced put a period ABOVE its own line
-   in the tree. Owner-found, QA §146: *"shouldn't the date rows be indented more than their
-   preceding item rows?"* They were not. Rendered at 1440, the label positions were:
-
-       band heading   14px        Revenue / Expenses
-       category       35px        Facilities
-       line           53px        Dome Time
-       period         48px   ←    January — FIVE PIXELS SHALLOWER THAN ITS PARENT
-
-   The comment above has said "one step deeper than the line" since the outline, and it was true
-   THERE: a period was a nested block inside its line's card, so the indent was structural and 3rem
-   was measured against a different left edge. In a flat table every row starts at the same place
-   and the indent is the ONLY thing saying who belongs to whom — so the number had to be re-measured
-   against the line's real text position, which is 1.55rem of cell padding PLUS a 20px chevron PLUS
-   the 0.5rem gap = 53px. One family step (18px, the same gap category→line) lands at 71px.
-
-   ⚠ THE PHONE KEEPS 3rem, because below 640 the line's name does not sit beside its chevron at all
-   — the 44px tap floor pushes it onto its own line at the cell's padding (17.6px), so 48px is
-   already a clear step deeper there and 71px would eat a third of a 138px name column.
-
-   ⚠ IF THE CHEVRON'S WIDTH OR THE LEAD PADDING EVER MOVES, THIS MOVES WITH IT. It is derived from
-   both. Re-measure rather than nudge: the defect this replaces was invisible for exactly as long as
-   nobody put a ruler on two adjacent rows. */
-.reportTable tbody tr.periodRow th.lead { padding-left: 4.45rem; }
-@media (max-width: 640px) {
-  .reportTable tbody tr.periodRow th.lead { padding-left: 3rem; }
-}
-.periodDate {
-  margin-left: 0.5rem;
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: var(--text-tertiary);
-}
+   ⚠ TWO HARD-WON RULES DIED WITH THEM AND ARE WORTH CARRYING TO WHATEVER NESTS NEXT IN THIS TABLE:
+     · AN INDENT IS THE ONLY THING SAYING WHO BELONGS TO WHOM in a flat table. Measure it against
+       the parent row's real text position (cell padding + chevron + gap), never against the cell
+       edge — that is how the shallower-than-its-parent defect survived unseen.
+     · DO NOT PUT A BLANKET COLOUR ON A NESTED ROW'S VALUE CELLS. `tr.x td { color }` at (0,1,1)
+       beats the shared `.moneyGridNumMuted` (0,1,0), so every "nothing happened here" em-dash
+       renders at reading strength — the one thing that class exists to prevent. Quieten the LABEL
+       only, and let the cells inherit. */
 
 /* ── Where both shapes end ───────────────────────────────────────────────────
    The season's closing figure — set apart by SPACE and POSITION, never by size (owner ruling

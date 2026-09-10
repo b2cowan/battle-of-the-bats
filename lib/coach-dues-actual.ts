@@ -413,12 +413,30 @@ export interface SeasonDuesParts {
  *
  * ⚠ ONE PASS, NOT FOUR SUMS. Totalling each part separately is how a door stops adding up to the
  * figure above it — the same defect shape as a fold whose rows do not reach their parent.
+ *
+ * ⚠⚠ IT IS A ONE-LINE WRAPPER SINCE 2026-09-10, AND THE SPLIT IS THE POINT. Budget vs. Actual now
+ * folds Player dues to ONE ROW PER FAMILY, so the report needs each family's own `FamilyDuesActual`
+ * as well as the season's total. Written the obvious way that would run `duesActual` twice over the
+ * same families — once for the rows and once for the total — and two passes over one input is
+ * precisely how a category stops equalling the sum of the rows underneath it. Callers that want
+ * both take `sumDuesParts` over the results they already have; callers that only want the season
+ * figure keep this signature and pay for one pass exactly as before.
  */
 export function seasonDuesParts(families: FamilyDuesActualInput[]): SeasonDuesParts {
+  return sumDuesParts(families.map(duesActual));
+}
+
+/**
+ * The same three parts, summed from families ALREADY computed.
+ *
+ * ⚠ THE ACCUMULATION IS IN CENTS AND THAT IS NOT A STYLE CHOICE — it is what makes the season
+ * figure the exact sum of the per-family figures a coach can now open and add up by hand, rather
+ * than the same number to within a rounding tail.
+ */
+export function sumDuesParts(families: FamilyDuesActual[]): SeasonDuesParts {
   let actual = 0, cashKept = 0, familyPaidCosts = 0, fundraisingCredited = 0;
   let forgiven = 0, adjustment = 0;
-  for (const f of families) {
-    const r = duesActual(f);
+  for (const r of families) {
     actual += toCents(r.actual);
     cashKept += toCents(r.parts.cashKept);
     familyPaidCosts += toCents(r.parts.familyPaidCosts);

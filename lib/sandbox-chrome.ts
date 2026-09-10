@@ -193,6 +193,25 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
              its own one fact, and this one's is the books being open mid-build. If the owner wants
              team-raised money narrated, the honest move is to SWAP a clause, not append a fourth.
              Flagged at Owner QA §157. */
+      /* ⚠⚠ RE-READ FOR THINGS, NOT DATES (2026-09-10) — mandatory here, because this is the one
+         dock moment that lands a prospect directly on Budget vs. Actual and it makes a claim about
+         DUES, which is the row that changed.
+           · *Still true?* **Yes — and one clause got its evidence.** "dues two payments in — and one
+             family behind" describes the seeded world, and no figure on that report moved: the
+             Player dues total is still the sum of the same dollars, now re-summed from one row per
+             family instead of stated as a single number. What changed is that a prospect can now
+             OPEN that row and see WHICH family is behind, with what they were billed, what has come
+             in, and what they still owe. The sentence has been checkable-in-principle since
+             2026-09-04; it is checkable in two taps now.
+           · ⚠ THE OTHER HALF OF THIS RELEASE IS A REMOVAL, and removals are the ones that quietly
+             falsify demo copy. Line items on this report no longer open into their planned months.
+             Nothing in this sentence — or anywhere in this file — names that fold, which was checked
+             rather than assumed (the 09-05 and 09-06 re-reads below reached the same answer about
+             the same furniture, and this release is the one that removes it).
+           · *Should a moment show it?* **No new clause.** The `ea8ddd14` cap holds every moment to
+             one fact and this one's is the books being open mid-build. "Open the dues row and see
+             who owes you" is a genuinely strong shop-window fact, and the honest move if the owner
+             wants it is a SWAP rather than a fourth clause. Flagged at Owner QA. */
       said: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       bannerNote: 'The season is still being built',
     }),
@@ -548,6 +567,18 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // so nothing here went stale and nothing is added — `ea8ddd14` still caps every step at one
       // proof point. The seeded world renders the rooms; `check-demo-coach` pins the drive and
       // the sponsor it opens.)
+      // (Re-read for MORE THAN ONCE, mig 287 — 2026-09-10. A player may now hand money in as many
+      // times as it takes, and a drive's board draws a participant as one row carrying their total
+      // that folds open onto each dated hand-in. Same verdict, fifth time, on the "still true?"
+      // half: NO step or dock line describes the drive's board, its rows or its Record door, so
+      // nothing here went stale — and the one figure this tour does quote off fundraising, the
+      // $335.00 of rebates behind the dues ratio, is UNCHANGED because the demo's new second
+      // hand-in is a SPLIT of an amount that was already there.
+      // ⚠ The *should a moment show it?* half was answered YES, and answered in the WORLD rather
+      // than in a sentence: Theo Marsh now hands in twice, so a prospect who opens Fundraising
+      // finds a row with something to open. That is the `ea8ddd14` cap working as intended — the
+      // world grows, the narration does not — and `check-demo-coach` pins the repeat hand-in so a
+      // later seed edit cannot quietly flatten it back with every page still rendering.)
       // (Re-read for the MONEY BANNER STANDARD, 2026-09-04 — the tab's four summary cards became
       // the shared band, and one of the four figures is genuinely NEW: "Still to come", the money
       // sponsors have promised and not sent. Same verdict, fourth time — no step or dock line names
@@ -719,7 +750,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              plus team bills families paid, plus fundraising credited to dues. Measured on the live
              demo database 2026-09-09: dues billed **$5,760.00**, cash **$4,170.00** (72.4% — the
              old sentence), Player dues actual **$4,505.00** (**78.2%**), the difference being the
-             Bottle Drive's five rebates totalling **$335.00**. A prospect who divides the two
+             Bottle Drive's rebates totalling **$335.00**. A prospect who divides the two
              figures the step lands them on gets eight in ten, not seven.
            · *Should a moment show it?* **No new clause** — the `ea8ddd14` cap holds, and this is a
              SWAP, which is what the cap says to do. The clause keeps its job (dues are most of the
@@ -728,6 +759,27 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              report uses, because nothing in `check:demos` could see this: the world was never
              broken, only the sentence over it. A number in a demo sentence needs a check that
              recomputes the number. */
+      /* ⚠⚠ RE-READ FOR THINGS, NOT DATES (2026-09-10) — and the §153 note above is why this one
+         was done as arithmetic rather than as reading. That re-read is the standing proof that a
+         sentence quoting a NUMBER goes stale when the product changes what the number counts, while
+         every pixel still renders.
+           · *Still true?* **YES, and this time it is provable rather than argued.** The dues ratio
+             cannot move: the Player dues figure is now re-summed from one row per family, and both
+             the season total and the per-family rows come from the SAME `duesActual` pass the
+             sentence's own gate recomputes. "Nearly eight in ten" is measured, not restated —
+             `check-demo-coach.mjs` recomputes it on every run and it is green.
+           · "Diamond rentals are over plan — the report says so rather than hiding it" is the
+             expenses half and did not move.
+           · ⚠ WHAT A PROSPECT SEES DIFFERENTLY, measured rather than assumed: a line item no longer
+             opens into the months its plan was split across. That fold was the report's only date,
+             and on a line planned once it filed money under the month it was PLANNED for rather
+             than the month it arrived. Nothing in this step's sentence names it — the same answer
+             the 09-05 and 09-06 re-reads reached about the same furniture, now checked against the
+             release that actually removes it. Player dues gained a fold in the same breath, so the
+             report has not lost a gesture; it has moved it onto rows a prospect can act on.
+           · *Should a moment show it?* **No new clause**, under the same `ea8ddd14` cap. If the
+             owner wants "open Player dues and see who still owes you" told rather than found, the
+             move is a SWAP — this step already carries its one dues clause. Flagged at Owner QA. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Nearly eight in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },

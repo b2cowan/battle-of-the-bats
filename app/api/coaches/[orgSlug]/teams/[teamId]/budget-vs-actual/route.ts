@@ -30,10 +30,11 @@ import {
   type RollupLine, type RollupSpend, type RollupRefund,
 } from '@/lib/coach-budget-rollup';
 import {
-  buildDuesCategory, duesRowRenders, type DuesRevenue,
+  buildDuesCategory, buildDuesFamilyRows, duesRowRenders, type DuesRevenue,
 } from '@/lib/coach-dues-revenue';
 import {
-  seasonDuesParts, buildFamilyDuesInputs, type DuesCreditKind,
+  duesActual, sumDuesParts, buildFamilyDuesInputs,
+  type DuesCreditKind, type FamilyDuesActual,
 } from '@/lib/coach-dues-actual';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip, incomeCategoryFor } from '@/lib/coach-cash-strip';
@@ -1566,7 +1567,15 @@ export const GET = withObservability(async (req: Request,
      ⚠ IT IS DERIVED HERE, ABOVE THE BUDGET FEED, because the feed now needs its `billLowered`
      total (2026-09-09) — the authoritative figure for what came off the bills, shared with the
      Player Dues band so the two screens cannot reach different answers. */
-  const duesContributed = seasonDuesParts([...buildFamilyDuesInputs({
+  /* ⚠⚠ PER FAMILY FIRST, SEASON SECOND — ONE PASS, AND THAT ORDER IS THE RULING (2026-09-10).
+     Player dues folds to one row per family on the Statement now, so the report needs each
+     family's own reading AND the season's total. Computing them separately would run `duesActual`
+     twice over one input, which is exactly how a category heading stops equalling the twelve rows
+     underneath it — the one defect a fold cannot survive. `sumDuesParts` totals what is already
+     here, in cents, so the heading is the arithmetic sum of the rows rather than the same number
+     to within a rounding tail. */
+  const duesByFamily = new Map<string, FamilyDuesActual>();
+  for (const [playerId, input] of buildFamilyDuesInputs({
     schedules: ((schedules ?? []) as Array<{ player_id: string; total_amount: number | null }>)
       .map(s => ({ playerId: s.player_id, total: Number(s.total_amount ?? 0) })),
     payments: duesPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
@@ -1586,7 +1595,10 @@ export const GET = withObservability(async (req: Request,
          pre-281 payout touched. */
       paidBack: paidBackByCredit.has(c.id) ? paidBackByCredit.get(c.id) : undefined,
     })),
-  }).values()]);
+  })) {
+    duesByFamily.set(playerId, duesActual(input));
+  }
+  const duesContributed = sumDuesParts([...duesByFamily.values()]);
 
   const revenueBudgets: CategoryEvent[] = [];
   for (const i of duesInstallments) {
@@ -1722,8 +1734,33 @@ export const GET = withObservability(async (req: Request,
      ⚠ BOTH SHAPES, OR THEY STOP ENDING ON THE SAME FIGURE. Season net is shared; without a block of
      its own in `activities`, the by-activity blocks would no longer sum to the net a coach reads
      underneath them — the dues would be in the closing figure and in no block above it. */
+  /* ══ ONE ROW PER FAMILY, UNDER THE DUES CATEGORY (owner ruling 2026-09-10) ═══════════════════
+     The arithmetic is pure and lives in `lib/coach-dues-revenue.ts` — read `buildDuesFamilyRows`
+     for why each family's two figures sum EXACTLY to the category above them, which is the only
+     thing that makes a fold on the season's largest figure safe. It is out of this route on
+     purpose: it decides whether a heading equals the rows underneath it, and in here no test could
+     reach it.
+
+     ⚠ ROWS ONLY WHEN A SCHEDULE EXISTS. `billed === null` is the "Not set yet" state — there is
+     nothing to fold to, the row renders without a chevron, and it keeps the door that sets dues up.
+     A fold onto an empty list is the dead end this whole change removes. */
+  const duesItems = dues.billed === null ? [] : buildDuesFamilyRows({
+    installments: duesInstallments.map(i => ({
+      id: i.id,
+      /* ⚠ THE SAME OWNER FALLBACK THE POSITION WALK USES, and it must stay the same one: an
+         installment resolved two ways is money in two rows or in none. */
+      playerId: i.player_id ?? scheduleOwner.get(i.schedule_id) ?? '',
+      number: i.installment_number,
+      amount: i.amount ?? 0,
+      dueDate: i.due_date,
+    })),
+    writtenOffBy: duesPosition.writtenOff,
+    byFamily: duesByFamily,
+    nameOf: owner => familyName(owner || null),
+  });
+
   if (duesRowRenders(dues)) {
-    const duesCategory = buildDuesCategory(dues);
+    const duesCategory = buildDuesCategory(dues, duesItems);
     report.revenue.categories = [duesCategory, ...report.revenue.categories];
     report.revenue.budgeted = r2(report.revenue.budgeted + duesCategory.budgeted);
     report.revenue.actual   = r2(report.revenue.actual + duesCategory.actual);

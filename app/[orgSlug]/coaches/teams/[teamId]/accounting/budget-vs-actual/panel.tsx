@@ -56,11 +56,24 @@ import shared from '../../../../coaches.module.css';
    item "Entry Fees" could render as a row called "test" and why the plan and the books could never
    be matched to each other. The shapes below mirror `lib/coach-budget-rollup.ts`, which owns the
    grouping for this screen and for the route together. */
+/**
+ * One slot of the PLAN's own schedule.
+ *
+ * ⚠⚠ NOTHING RENDERS THESE, AND THEY ARE STILL LOAD-BEARING (owner ruling 2026-09-10, "Things, not
+ * dates"). The item fold that drew them as rows is gone from both report shapes — but the dates
+ * drive the **To date** comparison basis (`budgetedOn`, via `rebaseReport`), and `RecordsBehind`
+ * lists them behind a Budget figure, where they are the plan's schedule and claim nothing about
+ * when money moved. Drop them from the payload and every to-date reading silently becomes a
+ * whole-season one.
+ *
+ * ⚠ IT NO LONGER CARRIES AN `actual`. Real money used to be swept onto these planned dates, so a
+ * line planned once in February reported August money as February. The sweep is deleted at source
+ * (`mergeSchedules` in lib/coach-budget-rollup.ts), not merely unrendered.
+ */
 interface PeriodResult {
   label: string;
   date: string | null;
   amount: number;
-  actual: number;
 }
 
 interface ItemResult {
@@ -117,6 +130,22 @@ interface ItemResult {
      *  plain dated row rather than throw. */
     derived?: DerivedArrivals | null;
   }>;
+  /**
+   * ⚠⚠ PRESENT ON A **PLAYER DUES** ROW AND ON NOTHING ELSE, and its presence is how this screen
+   * tells a family apart from a budget item (owner ruling 2026-09-10).
+   *
+   * Player dues stopped being a hand-rolled row and became an ordinary category folding to one row
+   * per family. A family's ACTUAL is not a list of records — it is three kinds of contribution —
+   * so its figure opens `DuesBehind` where every other row opens `RecordsBehind`. The three sum to
+   * `actual` by construction (lib/coach-dues-actual.ts), which is what lets the panel state a total
+   * a coach can check against the number that opened it.
+   *
+   * ⚠ OPTIONAL FOR THE SAME ROLLING-DEPLOY REASON `lines` AND `costs` ARE — it is newer than a
+   * bundle that may be asking for it, and every read here degrades to a plain figure rather than
+   * throwing. A player row against an old route is a number with no door, which is exactly what the
+   * row was yesterday.
+   */
+  duesParts?: { cashKept: number; familyPaidCosts: number; fundraisingCredited: number };
 }
 
 interface CategoryResult {
@@ -172,13 +201,23 @@ interface MoneyReport {
  * its items' to-date plans; a section's is the sum of its categories'. Anything else lets a
  * category disagree with the rows a coach can open underneath it.
  *
- * ⚠ THE DUES ROW IS THE ONE SPECIAL CASE, and it has to be. Dues are not budget lines and carry no
- * periods, so the generic rule would report $0.00 for the season's largest money in — on a team
- * whose families are being billed perfectly on schedule. Its instalments already carry due dates,
- * so the route ships `billedToDate` and this reads it (owner ruling 2026-09-04).
+ * ⚰ THE DUES ROW WAS THE ONE SPECIAL CASE AND IS NOT ANY MORE (owner ruling 2026-09-10, "Things,
+ * not dates"). It read a whole-team `dues.billedToDate` off the payload, because dues are not budget
+ * lines and the synthetic category carried NO ITEMS to re-sum — so the generic rule would have
+ * reported $0.00 for the season's largest money in.
+ *
+ * ⚠⚠ THE SPECIAL CASE DIED OF THE RULING RATHER THAN BEING CLEANED UP, and that order matters. Dues
+ * now fold to ONE ROW PER FAMILY, and each of those rows carries that family's own instalment dates
+ * as its `periods` — so "plan dated on or before today" is exactly the rule every other row obeys,
+ * and it lands on the identical figure. The route still ships `dues.billedToDate`; the guard script
+ * reads it, and it is the second derivation this one is proved against.
+ *
+ * ⚠ IF YOU EVER MAKE THE DUES CATEGORY ITEM-LESS AGAIN, THIS BREAKS SILENTLY — the to-date revenue
+ * band would read $0.00 on a team billing perfectly on schedule, with nothing on screen saying so.
+ * That is the whole reason the items exist rather than a display convenience.
  */
 function rebaseReport(
-  report: MoneyReport, dues: DuesRevenue, basis: CompareBasis, today: string,
+  report: MoneyReport, basis: CompareBasis, today: string,
 ): MoneyReport {
   if (basis === 'season') return report;
 
@@ -188,11 +227,6 @@ function rebaseReport(
   };
 
   const rebaseCat = (cat: CategoryResult): CategoryResult => {
-    /* The synthetic dues category has no items to sum — see the note above. */
-    if (isDuesCategory(cat.categoryId)) {
-      const budgeted = dues.billedToDate ?? 0;
-      return { ...cat, budgeted, variance: varianceOn('in', budgeted, cat.actual) };
-    }
     const items = cat.items.map(rebaseItem);
     const budgeted = r2(items.reduce((s, i) => s + i.budgeted, 0));
     return { ...cat, items, budgeted, variance: varianceOn(cat.direction, budgeted, cat.actual) };
@@ -847,16 +881,38 @@ function whenMoved(c: NonNullable<ItemResult['costs']>[number]): string {
  *   · the BUDGET figure had a door ("N lines") and the actual figure did not, so one report
  *     answered "what is behind this number?" on one column and refused on the other.
  *   · the category bar opened on a click anywhere; the item row opened only on its 13px chevron.
- * Both figures now open the same shape of panel, the whole row toggles its schedule, and the
- * sub-row is gone — its two figures moved INTO the panel, where they are the sentence naming what
- * the list adds up to.
+ * Both figures open the same shape of panel, and the sub-row is gone — its two figures moved INTO
+ * the panel, where they are the sentence naming what the list adds up to.
+ *
+ * ⚠⚠ AND THE ROW NO LONGER FOLDS AT ALL (owner ruling 2026-09-10, "Things, not dates", raised on
+ * the §157 walk). It used to open onto the PLAN's periods with real money swept onto them: each
+ * amount landing in the first planned slot on or after the day it moved. On a line planned across
+ * five months that read correctly; on `Fundraising · Merchandise sales`, planned once in February,
+ * it reported money that arrived Aug 31 and Sep 10 as **Feb 2027**.
+ *
+ * ⚠ IT COULD NOT BE REPAIRED, ONLY REMOVED, and the argument is a proof rather than a preference:
+ * dating one side honestly requires dating the other, and dating the other means a row per line per
+ * month on BOTH halves of a report a treasurer is meant to read in one screen. There is no version
+ * of the fold that is both truthful and short.
+ *
+ * ⚠⚠ NOTHING IS LOST THAT THE ROW DID NOT ALREADY ANSWER BETTER. The fold was a THIRD answer on a
+ * row that has two: the Budget figure opens the plan (its schedule included — that is the PLAN's
+ * dates, claiming nothing about when money moved), and the Actual figure opens the records that
+ * made it, which on a revenue row are the drives and sponsors BY NAME, each linking to its room.
+ * The one question that genuinely leaves the product is *"we are over on ice time — which month?"*;
+ * Months answers by category rather than by line, and the owner accepted that trade explicitly.
+ *
+ * ⚠ CATEGORY ROWS STILL FOLD. That is a fold onto THINGS, which is the whole point — and since
+ * 2026-09-10 Player dues is one of them, folding to one row per family.
+ *
+ * ⚠⚠ THE BUILD ENFORCES THE ABSENCE — tests/unit/bva-no-dates-guard.test.ts. This rule will be
+ * re-added by a future session with a perfectly good local reason (the "N lines" caption changed
+ * hands three times in three days before the owner ended it); that test is where to argue first.
  */
 function ItemRows({
-  cat, expandedLines, toggleLine, openBehind,
+  cat, openBehind,
 }: {
   cat: CategoryResult;
-  expandedLines: Set<string>;
-  toggleLine: (id: string) => void;
   /** Opens "what is behind this figure?" for one side of the row — see `RecordsBehind`. */
   openBehind: (item: ItemResult, side: BehindSide) => void;
 }) {
@@ -865,8 +921,6 @@ function ItemRows({
     <>
       {cat.items.map(item => {
         const key = `${catKey}|${item.itemId ?? 'none'}`;
-        const open = expandedLines.has(key);
-        const canExpand = item.periods.length > 0;
         /* What each figure has to SHOW, which is not the same as whether it is non-zero: a row can
            hold only money back (actual negative, nothing "paid"), and an unplanned row has no lines
            at all. A figure with an empty list behind it stays a plain number — a door onto nothing
@@ -874,51 +928,41 @@ function ItemRows({
         /* ⚠⚠ `item.lines?.length`, NOT `.length` — see the field's own note. This predicate runs
            on every row of the statement, so an unguarded read against a stale payload would not
            merely break the panel, it would take the whole table down before a figure rendered. */
+        /* ⚠⚠ AND IT IS WHAT GIVES A **PLAYER ROW** A PLAIN BUDGETED FIGURE, with no special case
+           written anywhere: a family's row carries no budget lines, so this is false and the number
+           stays a number. That is the report's existing rule applying, not an exception to it — a
+           family's bill is one assessed figure, not a pile of records, and the instalment dates
+           behind it live on Player Dues, which is where a coach goes to chase. */
         const planBehind = (item.lines?.length ?? 0) > 0;
         /* ⚠ `item.costs?.length`, NOT `.length` — same deploy-skew note as `lines`, and the same
            predicate position: this runs unconditionally for every row. `refunds` needs no guard,
            it was never stripped. */
-        const actualBehind = (item.costs?.length ?? 0) > 0 || item.refunds.length > 0;
+        /* ⚠⚠ THE THIRD CLAUSE IS THE PLAYER ROW'S DOOR, AND IT KEEPS THE OLD PREDICATE EXACTLY
+           (owner ruling 2026-09-10). The dues composition panel moved DOWN from the category figure
+           onto each family's Actual, and its "only when there is something to explain" rule came
+           with it: a family whose every dollar arrived as cash has one line to show, and a panel
+           with one row restating the figure that opened it is furniture. So the predicate is the
+           two NON-CASH parts, never `actual > 0`. */
+        const actualBehind = (item.costs?.length ?? 0) > 0 || item.refunds.length > 0
+          || duesDoorOpens(item);
         return (
           <Fragment key={key}>
-            {/* The whole row opens its schedule, matching the category bar above it. The chevron stays
-                the SEMANTIC control — keyboard and screen reader reach the fold through it — and the
-                row is the pointer/touch shortcut. Every control inside stops propagation, so
-                opening a panel never also folds the row underneath it.
+            {/* ⚰ THE ROW WAS TAPPABLE AND CARRIED A CHEVRON, AND BOTH ARE GONE WITH THE FOLD (owner
+                ruling 2026-09-10). There is nothing left for a tap on the row to mean: the two
+                figures are the doors, and each is its own control. A row-level handler with no
+                behaviour is worse than none — it teaches a gesture that does nothing.
 
-                ⚠⚠ THIS DOES **NOT** MATCH THE BUDGET PLAN'S ROWS, AND THE DIFFERENCE IS DELIBERATE
-                (owner ruling 2026-09-05). This comment claimed it did — wrongly, and for long enough
-                that the claim was cited as precedent. Over there the row opens the EDITOR; here it
-                folds. The reason is the job each screen does:
-                  · This is the REPORT. Nothing on it can be edited, most rows have figures behind
-                    them, and folding is the only thing a tap could mean.
-                  · The plan tab is the WORKLIST. Its pencil is clipped out of the layout on a phone
-                    (its own ruling), so the row is the ONLY edit door a thumb has; and its chevron
-                    exists only on lines split across two or more periods — "One month" and
-                    "No date yet" have nothing to open — so row-to-fold would be a dead gesture on
-                    most rows and on every row of the coach demo's mid-season plan.
-                Reading a plan line's split is served over there by its WHEN CELL, which folds the row
-                the same way this one does. Before "aligning" the two screens, re-read those two
-                bullets — they are why they differ. */}
-            <tr
-              className={canExpand ? shared.rowTappable : ''}
-              // Selecting text to copy an amount must not toggle the row — a click that ends a
-              // selection is a copy gesture, not a tap (the same guard the plan page carries).
-              onClick={canExpand ? () => { if (window.getSelection()?.toString()) return; toggleLine(key); } : undefined}
-            >
+                ⚠ THE SPACER STAYS, AND IT IS NOT LEFTOVER. It is what lines every item name up
+                under the chevron of the CATEGORY row above it, which still folds. Remove it and
+                every line item shifts 13px left of the heading it belongs to.
+
+                ⚠⚠ DO NOT "RESTORE PARITY" WITH THE BUDGET PLAN'S ROWS. Over there the row opens the
+                EDITOR, because that screen is the WORKLIST and its pencil is clipped out of the
+                layout on a phone, so the row is the only edit door a thumb has. This is the REPORT:
+                nothing on it can be edited. The two screens differ on purpose. */}
+            <tr>
               <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
-                {canExpand ? (
-                  <button
-                    className={shared.moneyGridExpand}
-                    aria-expanded={open}
-                    aria-label={open ? `Hide ${item.itemName}'s periods` : `Show ${item.itemName}'s periods`}
-                    onClick={e => { e.stopPropagation(); toggleLine(key); }}
-                  >
-                    {open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
-                  </button>
-                ) : (
-                  <span className={shared.moneyGridExpandSpacer} />
-                )}
+                <span className={shared.moneyGridExpandSpacer} />
                 <span className={styles.lineName}>{item.itemName}</span>
                 {/* ⚠⚠ THE "N lines" CAPTION IS GONE — FROM EVERY SURFACE (owner ruling 2026-09-04,
                     QA §133), together with its twins on the Budget list and the by-period grid. It
@@ -967,7 +1011,12 @@ function ItemRows({
                     type="button"
                     className={styles.figureBtn}
                     onClick={e => { e.stopPropagation(); openBehind(item, 'actual'); }}
-                    title={`See what ${item.itemName} has actually cost`}
+                    /* ⚠ A FAMILY DID NOT "COST" ANYTHING. The dues rows are the one place on this
+                       table where the Actual figure is a contribution rather than a movement, and
+                       the tooltip is the only words the control has. */
+                    title={item.duesParts
+                      ? `See what ${item.itemName} has contributed`
+                      : `See what ${item.itemName} has actually cost`}
                   >
                     {fmtCell(item.actual)}
                   </button>
@@ -978,38 +1027,21 @@ function ItemRows({
               </td>
             </tr>
 
-            {open && canExpand && item.periods.map((p, pi) => {
-              const moved = Math.abs(p.actual) > 0.005;
-              const variance = item.direction === 'in' ? p.actual - p.amount : p.amount - p.actual;
-              return (
-                <tr key={pi} className={styles.periodRow}>
-                  {/* ⚠ THE DATE RIDES IN THE NAME CELL. The outline gave it a fifth track, which
-                      meant the sub-rows laid out on different columns from the rows above them —
-                      something a table cannot do, and does not want to: a period's date is meta
-                      about that period, so it reads as meta beside its name. */}
-                  <th scope="row" className={styles.lead}>
-                    {p.label}
-                    {p.date && <span className={styles.periodDate}>{formatStoredDate(p.date)}</span>}
-                  </th>
-                  <td>{fmt(p.amount)}</td>
-                  <td
-                    className={moved ? '' : shared.moneyGridNumMuted}
-                    style={moved && p.actual > 0 ? { color: 'var(--success-light)' } : undefined}
-                  >
-                    {moved ? fmtCell(p.actual) : '—'}
-                  </td>
-                  <td
-                    className={moved ? '' : shared.moneyGridNumMuted}
-                    style={moved ? { color: varianceInk(variance, item.direction, p.actual) } : undefined}
-                  >
-                    {/* The same negative guard as the row above: the September period of a
-                        refunded item has a negative actual, and "under" would be wrong there
-                        for exactly the same reason. */}
-                    {moved ? varianceText(variance, item.direction, p.actual) : '—'}
-                  </td>
-                </tr>
-              );
-            })}
+            {/* ⚰ THE PERIOD SUB-ROWS STOOD HERE — a row per planned slot, carrying that slot's
+                date, its planned amount, and the real money swept onto it. Deleted 2026-09-10, and
+                with them the last date on either report.
+
+                ⚠⚠ DO NOT REBUILD THEM FROM `item.periods`, WHICH IS STILL IN THE PAYLOAD AND STILL
+                HAS TO BE. Those dates are the PLAN's schedule: they drive the To date comparison
+                basis and they are the list behind a Budget figure, where a date claims nothing about
+                when money moved. What was wrong was pairing them with an ACTUAL — the plan dated on
+                one side, the money swept onto it on the other, which reported August takings as
+                February on any line with a single planned slot.
+
+                ⚠ THE THREE HONEST ANSWERS, so you do not need this one: the **Months view** dates
+                both sides the same way and is built on time; the **Actual** figure's panel dates
+                each RECORD by the day it moved; and the **Budget** figure's panel lists the plan's
+                own schedule. Between them there is no question this fold answered. */}
           </Fragment>
         );
       })}
@@ -1045,7 +1077,7 @@ function ItemRows({
  * which reads as a row that ignores you.
  */
 function CatFoldRow({
-  name, open, onToggle, noteId, note, children,
+  name, open, onToggle, noteId, note, foldable = true, caption, children,
 }: {
   name: string;
   open: boolean;
@@ -1053,27 +1085,61 @@ function CatFoldRow({
   /** Set together with `note` when the row needs a screen-reader explanation for its dash. */
   noteId?: string;
   note?: string;
+  /**
+   * ⚠⚠ FALSE WHEN THERE IS NOTHING UNDERNEATH TO FOLD TO — a chevron promising a list and opening
+   * on nothing is the exact dead end this report has spent three rulings removing.
+   *
+   * Exactly one row reaches this today: **Player dues on a team that has not set any** (2026-09-10).
+   * Every other category exists because it has a line or a payment in it, so it always has at least
+   * one item. The spacer keeps its name aligned with the rows that do open.
+   */
+  foldable?: boolean;
+  /**
+   * A second line under the category's name.
+   *
+   * ⚠ ONE CATEGORY USES IT, AND IT IS A FACT A COACH MAY GENUINELY NOT KNOW: *"Not set yet · Set
+   * player dues"*. Every other category on this report says nothing (owner ruling 2026-09-06,
+   * QA §146 — a caption naming the screen a thing was set on tells a coach what they just did).
+   * The exception survives because "no dues schedule exists" is the reason the Plan cell shows a
+   * dash, and the row is where a coach is looking when they wonder why.
+   */
+  caption?: ReactNode;
   /** The three figure cells — Budgeted, Actual, Variance. */
   children: ReactNode;
 }) {
   return (
     <tr
-      className={`${shared.moneyGridCat} ${shared.rowTappable}`}
+      className={[
+        shared.moneyGridCat,
+        foldable ? shared.rowTappable : '',
+        caption ? styles.catTwoLine : '',
+      ].filter(Boolean).join(' ')}
       // Selecting text to copy a figure must not fold the row — a click that ends a selection is
       // a copy gesture, not a tap (the same guard every other row on this report carries).
-      onClick={() => { if (window.getSelection()?.toString()) return; onToggle(); }}
+      onClick={foldable ? () => { if (window.getSelection()?.toString()) return; onToggle(); } : undefined}
     >
       <th scope="row" className={styles.lead}>
-        <button
-          type="button"
-          className={shared.moneyGridToggle}
-          aria-expanded={open}
-          aria-describedby={noteId}
-          onClick={e => { e.stopPropagation(); onToggle(); }}
-        >
-          {open ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
-          <span>{name}</span>
-        </button>
+        {foldable ? (
+          <button
+            type="button"
+            className={shared.moneyGridToggle}
+            aria-expanded={open}
+            aria-describedby={noteId}
+            onClick={e => { e.stopPropagation(); onToggle(); }}
+          >
+            {open ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
+            <span>{name}</span>
+          </button>
+        ) : (
+          /* ⚠ THE SPACER IS WHAT KEEPS AN UNFOLDABLE HEADING'S NAME IN LINE with the categories
+             above and below it, which all carry a 14px chevron. Without it the one row that cannot
+             open is also the one row whose name starts in a different place. */
+          <>
+            <span className={shared.moneyGridChevronSpacer} aria-hidden />
+            <span>{name}</span>
+          </>
+        )}
+        {caption}
         {/* No visible "not planned" word here either — see the item rows' note. The dash in the
             Budget cell says it, and this sentence says it for a screen reader.
             ⚠⚠ OUTSIDE THE BUTTON, AND THAT IS NOT COSMETIC. A button's accessible NAME comes from
@@ -1090,14 +1156,14 @@ function CatFoldRow({
 
 /** A category: its collapsible header, then its items. */
 function CategoryGroup({
-  cat, expandedCats, toggleCat, expandedLines, toggleLine, openBehind,
+  cat, expandedCats, toggleCat, openBehind, caption,
 }: {
   cat: CategoryResult;
   expandedCats: Set<string>;
   toggleCat: (id: string) => void;
-  expandedLines: Set<string>;
-  toggleLine: (id: string) => void;
   openBehind: (item: ItemResult, side: BehindSide) => void;
+  /** See `CatFoldRow.caption` — one category on this report has a second line, and it is dues. */
+  caption?: ReactNode;
 }) {
   const catKey = catKeyOf(cat);
   /* ⚠ A CATEGORY NOBODY BUDGETED FOR IS THE POINT, NOT AN EDGE CASE (owner ruling 2026-08-15). It
@@ -1115,7 +1181,18 @@ function CategoryGroup({
         onToggle={() => toggleCat(catKey)}
         noteId={noteId}
         note={`Nothing in ${cat.categoryName} was budgeted for this season.`}
+        /* ⚠ A CATEGORY WITH NOTHING IN IT DOES NOT OFFER A FOLD — see `CatFoldRow.foldable`. Only
+           the not-set Player dues row reaches this; every other category owes its existence to
+           having at least one line or payment in it. */
+        foldable={cat.items.length > 0}
+        caption={caption}
       >
+        {/* ⚠⚠ A CATEGORY'S FIGURES ARE PLAIN CELLS, AND SINCE 2026-09-10 THERE ARE NO EXCEPTIONS
+            (owner ruling — the rule the dues change settles report-wide): **a door lives on an ITEM
+            number, never on a CATEGORY number.** Player dues was the report's only violation: a
+            synthetic category carrying a drill-in on a category row. Folding it to players moved
+            that door DOWN onto each family's Actual, which is where every other door already sits —
+            so the rule is now true by construction rather than by everyone remembering it. */}
         <td className={cat.inPlan ? '' : styles.unplannedDash}>
           {cat.inPlan ? fmt(cat.budgeted) : '—'}
         </td>
@@ -1124,9 +1201,7 @@ function CategoryGroup({
           {varianceText(cat.variance, cat.direction, cat.actual)}
         </td>
       </CatFoldRow>
-      {open && (
-        <ItemRows cat={cat} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
-      )}
+      {open && <ItemRows cat={cat} openBehind={openBehind} />}
     </>
   );
 }
@@ -1159,20 +1234,30 @@ function CategoryGroup({
  * Budgeted is a net that prints a figure either way — `fmtCell` never emits a dash.
  */
 function ActivityGroup({
-  block, expandedCats, toggleCat, expandedLines, toggleLine, openBehind,
+  block, expandedCats, toggleCat, openBehind, caption,
 }: {
   block: ActivityBlock;
   expandedCats: Set<string>;
   toggleCat: (id: string) => void;
-  expandedLines: Set<string>;
-  toggleLine: (id: string) => void;
   openBehind: (item: ItemResult, side: BehindSide) => void;
+  /** See `CatFoldRow.caption`. Player dues is a block on this shape too, and carries the same
+   *  second line — a coach must not learn a fact on one tab and lose it on the next. */
+  caption?: ReactNode;
 }) {
   const key = activityKeyOf(block);
   const open = expandedCats.has(key);
+  /* ⚠ A BLOCK WITH NO ROWS ON EITHER HALF DOES NOT FOLD — the not-set Player dues block, and
+     nothing else. The same rule as the statement's, because it is the same row component. */
+  const foldable = (block.revenue?.items.length ?? 0) + (block.costs?.items.length ?? 0) > 0;
   return (
     <>
-      <CatFoldRow name={block.categoryName} open={open} onToggle={() => toggleCat(key)}>
+      <CatFoldRow
+        name={block.categoryName}
+        open={open}
+        onToggle={() => toggleCat(key)}
+        foldable={foldable}
+        caption={caption}
+      >
         <td>{fmtCell(block.net.budgeted)}</td>
         <td>{fmtCell(block.net.actual)}</td>
         <td style={{ color: varianceInk(block.net.variance, 'in', block.net.actual) }}>
@@ -1181,16 +1266,19 @@ function ActivityGroup({
       </CatFoldRow>
       {open && block.revenue && (
         <>
-          {/* The inner Revenue/Costs labels appear only when the block has BOTH — on a one-sided
-              category they would be a heading distinguishing nothing from nothing. */}
+          {/* The inner Revenue/Expenses labels appear only when the block has BOTH — on a one-sided
+              category they would be a heading distinguishing nothing from nothing.
+              ⚠ "Expenses", NOT "Costs" (owner ruling 2026-09-10): this sub-heading sat a few rows
+              under the band heading that has always read "Expenses", so one statement named its own
+              spending half two things. The Statement's register is Revenue / Expenses throughout. */}
           {block.costs && <SubLabelRow label="Revenue" />}
-          <ItemRows cat={block.revenue} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
+          <ItemRows cat={block.revenue} openBehind={openBehind} />
         </>
       )}
       {open && block.costs && (
         <>
-          {block.revenue && <SubLabelRow label="Costs" />}
-          <ItemRows cat={block.costs} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
+          {block.revenue && <SubLabelRow label="Expenses" />}
+          <ItemRows cat={block.costs} openBehind={openBehind} />
         </>
       )}
     </>
@@ -1467,7 +1555,7 @@ function SectionBand({ label }: { label: string }) {
 }
 
 /**
- * The quiet inner label of an activity block — "Revenue" or "Costs".
+ * The quiet inner label of an activity block — "Revenue" or "Expenses".
  *
  * ⚠ NOT A BAND, and the difference is the whole reason By activity got shorter. As a band each of
  * these was a full-height tinted bar, so a block cost three rows before its first figure. It is a
@@ -1521,10 +1609,21 @@ function SubtotalRow({
  * already writes a blank rather than a 0 for the same reason.
  */
 /**
- * What the dues ACTUAL is made of (owner rulings R2–R4, 2026-09-07).
+ * What ONE FAMILY'S dues ACTUAL is made of (owner rulings R2–R4, 2026-09-07; moved down a level
+ * 2026-09-10).
+ *
+ * ⚠⚠ IT USED TO EXPLAIN THE WHOLE CATEGORY AND NOW EXPLAINS A FAMILY, and that is a better question
+ * rather than a smaller one. *"How did their $560 get here?"* is something a coach acts on — they
+ * are about to chase that family, or about to not. *"How did the team's $5,124.63 get here?"* was
+ * mostly a curiosity, and it was the report's only door hanging off a CATEGORY figure, which is the
+ * one place this report had agreed doors do not belong.
+ *
+ * ⚠ THE PANEL ITSELF IS UNCHANGED — same three lines, same words, same two doors. What moved is
+ * which figure opens it. That is the whole shape of the 2026-09-10 ruling: build nothing new, move
+ * the door to where the rows already are.
  *
  * ⚠⚠ ITS THREE LINES ADD UP TO THE FIGURE THAT OPENED IT, and that is the whole reason it exists.
- * A coach who knows what arrived in cash now reads a larger number on the Statement — because a team
+ * A coach who knows what arrived in cash reads a larger number on the Statement — because a team
  * bill a family paid themselves, and fundraising credited against their dues, are both money that
  * family put toward what they owed. A door whose lines did not reach the number would be worse than
  * no door; the sum is asserted on every case in `tests/unit/coach-dues-actual.test.ts`.
@@ -1542,19 +1641,43 @@ function SubtotalRow({
  * Ledger, and this panel is the statement's reading of the same figure. Until then it ended on a
  * sentence naming a screen it would not open — the identical dead end `RecordsBehind` had, on the
  * row directly above it.
+ *
+ * ⚠ AND THOSE TWO DOORS ARE STILL BOTH RIGHT ONE LEVEL DOWN. Player Dues is where a coach chases
+ * THIS family (the screen has no per-family address, so it lands on the band that lists them all),
+ * and the Ledger is the book of record for every movement. A panel about a child that ended in
+ * prose would be the same dead end wearing a smaller hat.
  */
-function DuesBehind({ dues, base, onClose }: { dues: DuesRevenue; base: string; onClose: () => void }) {
-  const p = dues.actualParts;
+function DuesBehind({ item, base, onClose }: {
+  /** ⚠ A PLAYER DUES ROW — `duesParts` present. Its absence is what routes a row to `RecordsBehind`. */
+  item: ItemResult;
+  base: string;
+  onClose: () => void;
+}) {
+  /* ⚠ THE GUARD IS NOT DEFENSIVE FUSS — `duesParts` is optional for the same rolling-deploy reason
+     `lines` and `costs` are, and a panel that threw would take the table down with it. A row that
+     reaches here without parts cannot exist (the door is only drawn when they are non-zero), so the
+     zeros simply render an empty list rather than a crash. */
+  const p = item.duesParts ?? { cashKept: 0, familyPaidCosts: 0, fundraisingCredited: 0 };
+  /* ⚠ THE WORDS ARE THIS FAMILY'S NOW, NOT THE TEAM'S — "Cash they sent", not "Cash families sent".
+     A panel titled with one child's name and captioned in the plural reads like the wrong panel. */
   const rows: Array<{ label: string; sub: string; amount: number }> = [
-    { label: 'Cash families sent', sub: 'and have not had back', amount: p.cashKept },
-    { label: 'Team bills families paid', sub: 'paid to the vendor directly', amount: p.familyPaidCosts },
-    { label: 'Fundraising credited to dues', sub: 'money the team raised, put against a bill', amount: p.fundraisingCredited },
+    { label: 'Cash they sent', sub: 'and have not had back', amount: p.cashKept },
+    { label: 'Team bills they paid', sub: 'paid to the vendor directly', amount: p.familyPaidCosts },
+    { label: 'Fundraising credited to dues', sub: 'money the team raised, put against their bill', amount: p.fundraisingCredited },
   ].filter(r => Math.abs(r.amount) > 0.005);
   return (
-    <QuestionShell open onClose={onClose} ariaLabel="What families contributed" title="What families contributed" scroll>
+    <QuestionShell
+      open
+      onClose={onClose}
+      /* Names the panel for assistive tech and says whose money it is — "What they contributed"
+         alone would read identically from any of twelve rows. */
+      ariaLabel={`What ${item.itemName} has contributed`}
+      title={item.itemName}
+      scroll
+    >
       <>
         <div className={shared.scrollPane}>
-          <p className={styles.linesBehindSub}><strong>{fmt(dues.actual)}</strong> contributed</p>
+          <p className={styles.linesBehindSub}><strong>{fmt(item.actual)}</strong> contributed</p>
           <ul className={styles.linesBehindList}>
             {rows.map(r => (
               <li key={r.label}>
@@ -1572,7 +1695,7 @@ function DuesBehind({ dues, base, onClose }: { dues: DuesRevenue; base: string; 
               a screen — a door for it would land the coach back where they already are, which is
               the "politer face of a dead end" this pass exists to remove rather than re-dress. */}
           <p className={styles.linesBehindFoot}>
-            Money you have handed back to a family is in none of these — see <strong>Cash</strong> for
+            Money you have handed back to this family is in none of these — see <strong>Cash</strong> for
             what your account did.
           </p>
         </div>
@@ -1593,101 +1716,75 @@ function DuesBehind({ dues, base, onClose }: { dues: DuesRevenue; base: string; 
   );
 }
 
-function DuesRow({ cat, dues, base, canWrite }: {
-  cat: CategoryResult; dues: DuesRevenue; base: string; canWrite: boolean;
-}) {
-  const isSet = dues.billed !== null;
-  const duesHref = moneySectionHref(base, 'dues');
-  const [behindOpen, setBehindOpen] = useState(false);
-  /* ⚠ ONLY WHEN THERE IS SOMETHING TO EXPLAIN. On a season where every dollar arrived as cash the
-     door has one line and there is nothing to footnote — both would be noise. The predicate is the
-     two non-cash parts, never `actual > 0`.
-     ⚠ THE SAME PREDICATE DECIDES THE `dues-actual` FOOTNOTE, derived at panel level from the same
-     `actualParts`. A figure that opens a door and a footnote that explains it must appear and
-     disappear together, or the report says a thing it cannot show. */
-  const hasNonCash =
-    Math.abs(dues.actualParts.familyPaidCosts) > 0.005
-    || Math.abs(dues.actualParts.fundraisingCredited) > 0.005;
-  return (
-    /* ⚠ AN ORDINARY CATEGORY ROW SINCE 2026-09-05. It had a card of its own in the outline, which
-       made the row holding one figure the tallest object in the revenue band. It takes the
-       category treatment now and keeps only what is genuinely different: the not-set door, and the
-       chevron spacer that lines its name up with the rows that do open. */
-    <tr className={`${shared.moneyGridCat}${isSet ? '' : ` ${styles.catTwoLine}`}`}>
-      <th scope="row" className={styles.lead}>
-        <span className={shared.moneyGridChevronSpacer} aria-hidden />
-        <span>{cat.categoryName}</span>
-        {/* ⚠⚠ NOTHING IS SAID HERE ONCE DUES ARE SET (owner ruling 2026-09-06, QA §146). The row
-            used to caption itself "N families · set on Player Dues" — the ONLY category on the
-            report carrying a message, and owner: *"the user at the point of running this report
-            would know that."* He is right on both halves: the family COUNT is not a money fact and
-            appears on no other row, and naming the screen the schedule was set on tells a coach who
-            just opened the Money hub something they already did. What it cost was real — the row ran
-            52px against every other category's 36px, so the quietest fact on the report was also the
-            tallest row in the revenue band.
-            ⚠ THE DUES SENTENCE UNDER THE TABLE ALREADY CARRIES THIS GROUND — what dues bill, whether
-            they cover the plan, and on what basis (lib/coach-money-report-notes.ts). The caption was
-            a second author on one screen, which is the thing that file exists to stop.
+/**
+ * ⚰ `DuesRow` STOOD HERE — a hand-rolled category row for Player dues, with a chevron SPACER where
+ * every other category had a control, its own not-set caption, and a drill-in hanging off its
+ * ACTUAL figure. Deleted 2026-09-10 ("Things, not dates"), and its deletion is the point rather
+ * than a tidy-up: it was the report's ONLY violation of its own grammar, a door sitting on a
+ * CATEGORY number where every other category renders three plain cells.
+ *
+ * ⚠⚠ IT DID NOT MOVE, IT DISSOLVED. Player dues now folds to one row per family through the same
+ * `CategoryGroup` → `ItemRows` path as Fundraising, Tournaments and everything else, so there is no
+ * second row component that can drift from the first. What was genuinely different survives as two
+ * ordinary props on the shared row: `caption` (the not-set door below) and `foldable` (a category
+ * with nothing under it does not offer a chevron).
+ *
+ * ⚠ IF YOU FIND YOURSELF WRITING A THIRD ROW COMPONENT FOR THIS TABLE, that is the mistake this
+ * deletion exists to prevent. The rows and the figures are the grammar; a row that needs to say
+ * something extra says it in a caption.
+ */
 
-            ⚠ THE NOT-SET STATE STAYS, and the difference is not squeamishness. "Not set yet" is a
-            fact a coach may NOT know — it is the reason the Plan cell shows a dash — and the row is
-            where they are looking when they wonder. The footnote says it too, but a footnote under
-            thirty rows is not where a new team finds the one thing it has to do first. */}
-        {!isSet && (
-          <span className={styles.duesCaption}>
-            {canWrite ? (
-              <>
-                Not set yet · <Link href={duesHref} className={styles.duesLink}>Set player dues</Link>
-              </>
-            ) : (
-              /* ⚠ NO DOOR A READ-ONLY COACH CANNOT WALK THROUGH. The words are an invitation to act;
-                 offered to someone the server will refuse, they are a dead end wearing a link's
-                 clothes. The fact still gets said. */
-              'Not set yet'
-            )}
-          </span>
-        )}
-        {/* ⚰ THE "Includes team bills families paid…" CAPTION LIVED HERE, and it is a FOOTNOTE now
-            (owner ruling 2026-09-09). Two reasons, and the second is the one that mattered: every
-            other claim this report makes about its own basis is made in the stack under the table,
-            so a row explaining itself in the middle of the figures was the last second voice on a
-            screen whose sentences were deliberately consolidated; and being JSX inside a `<th>` it
-            reached no FILE, so a board reading the emailed report got a dues figure counting a team
-            bill a family paid with nothing beside it saying so. The wording and its rulings are in
-            lib/coach-money-report-notes.ts under `dues-actual`. The §146 ruling that a set row says
-            nothing is therefore whole again — this row carries a caption in exactly one state, the
-            "Not set yet" door above. */}
-      </th>
-      <td className={isSet ? '' : shared.moneyGridNumMuted}>
-        {isSet ? fmt(cat.budgeted) : '—'}
-      </td>
-      <td>
-        {/* ⚠ THE ONE FIGURE ON THIS ROW WITH RECORDS BEHIND IT. The row carries no items by design
-            (see `buildDuesCategory`), which is why it renders itself — but the ACTUAL now has three
-            things behind it that a coach cannot otherwise reach, so it opens like every other figure
-            on the report. The BUDGETED side still has nothing to open: it is the instalment
-            schedule, which is a door on Player Dues rather than a list here. */}
-        {Math.abs(cat.actual) > 0.005 ? (
-          hasNonCash ? (
-            <button
-              type="button"
-              className={styles.figureBtn}
-              onClick={e => { e.stopPropagation(); setBehindOpen(true); }}
-              title="See what families contributed"
-            >
-              {fmtCell(cat.actual)}
-            </button>
-          ) : fmtCell(cat.actual)
-        ) : '—'}
-        {behindOpen && <DuesBehind dues={dues} base={base} onClose={() => setBehindOpen(false)} />}
-      </td>
-      {/* ⚠ NO VARIANCE WITHOUT A PLAN TO VARY FROM. With no schedule there is no budgeted figure,
-          so "−$0.00" would be arithmetic on an absence. */}
-      <td style={{ color: isSet ? varianceColor(cat.variance) : undefined }}>
-        {isSet ? varianceText(cat.variance, 'in') : '—'}
-      </td>
-    </tr>
+/**
+ * THE NOT-SET DOOR — the one caption any category on this report is allowed.
+ *
+ * ⚠⚠ "Not set yet" IS A FACT A COACH MAY GENUINELY NOT KNOW, which is why it survived the ruling
+ * that stripped every other category caption (owner 2026-09-06, QA §146: a row captioning itself
+ * "N families · set on Player Dues" was telling a coach what they had just done). This one is the
+ * reason the Plan cell shows a dash, and the row is where they are looking when they wonder why.
+ * The footnote stack says it too, but a footnote under thirty rows is not where a new team finds
+ * the one thing it has to do first.
+ *
+ * ⚠ NOTHING IS SAID ONCE DUES ARE SET. The row is then an ordinary category with an ordinary fold.
+ *
+ * ⚠ AND NO DOOR A READ-ONLY COACH CANNOT WALK THROUGH. The words are an invitation to act; offered
+ * to someone the server will refuse, they are a dead end wearing a link's clothes. The fact still
+ * gets said.
+ *
+ * ⚠ BOTH SHAPES CALL THIS. The Statement and By activity draw dues from different objects (a
+ * category and an activity block), and a coach must not learn a fact on one tab and lose it on the
+ * next — which is exactly what happened to the category fold before 2026-09-06.
+ */
+function duesNotSetCaption(
+  categoryId: string | null, dues: DuesRevenue, base: string, canWrite: boolean,
+): ReactNode {
+  if (!isDuesCategory(categoryId) || dues.billed !== null) return undefined;
+  return (
+    <span className={styles.duesCaption}>
+      {canWrite ? (
+        <>
+          Not set yet · <Link href={moneySectionHref(base, 'dues')} className={styles.duesLink}>Set player dues</Link>
+        </>
+      ) : 'Not set yet'}
+    </span>
   );
+}
+
+/**
+ * Does this row's ACTUAL figure open the dues composition panel?
+ *
+ * ⚠⚠ ONLY WHEN THERE IS SOMETHING TO EXPLAIN — the predicate came down from the category row
+ * unchanged (owner ruling 2026-09-04, carried to the family row 2026-09-10). On a family whose
+ * every dollar arrived as cash the panel would have ONE line restating the figure that opened it,
+ * which is furniture. So it is the two NON-CASH parts, never `actual > 0`.
+ *
+ * ⚠ THE SAME PREDICATE STILL DECIDES THE `dues-actual` FOOTNOTE, one level up and team-wide. That
+ * pairing survives the move: the team total of a non-negative part is above zero exactly when at
+ * least one family's is, so a report can never carry the footnote with no door beneath it, nor a
+ * door with no footnote explaining the category figure.
+ */
+function duesDoorOpens(item: ItemResult): boolean {
+  const p = item.duesParts;
+  return !!p && (Math.abs(p.familyPaidCosts) > 0.005 || Math.abs(p.fundraisingCredited) > 0.005);
 }
 
 /*
@@ -1716,7 +1813,8 @@ export function BudgetVsActualPanel({
   const [sampleOpen, setSampleOpen] = useState(false);
 
   const [expandedCats,  setExpandedCats]  = useState<Set<string>>(new Set());
-  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
+  /* ⚰ `expandedLines` STOOD HERE and went with the item fold (2026-09-10). An item row has no
+     fold to remember any more — the two figures are its doors, and a panel is not a row state. */
 
   // Chunk H — the month grid. Which view and which lens a coach reads in is DEVICE memory
   // (localStorage per team+season, the shipped pattern for quiet per-coach state): a treasurer
@@ -2110,7 +2208,7 @@ export function BudgetVsActualPanel({
    * `data.report` below this line, it will silently ignore the control.
    */
   const report = useMemo(
-    () => (data ? rebaseReport(data.report, data.dues, basis, today) : null),
+    () => (data ? rebaseReport(data.report, basis, today) : null),
     [data, basis, today]);
 
   /**
@@ -2342,7 +2440,7 @@ export function BudgetVsActualPanel({
      (Months keeps its folds inside the grid component and is not wired to this yet.)
      ⚠ The dues row is excluded because it is not a foldable group — counting it would make "all
      open" unreachable and leave the button stuck on one word. */
-  function toggleLine(id: string)  { setExpandedLines(prev => toggleKey(prev, id)); }
+
 
   /* ⚠ THESE READ `report`, THE RE-CUT ONE — the rule stated over the memo above, which the first
      version of this list broke and the fold's version then copied (/review, correctness lens).
@@ -2352,14 +2450,22 @@ export function BudgetVsActualPanel({
      cut drops a category with nothing in it, `Expand all` would count rows that are not on screen
      and stick on one word. Reading the same object every other render site reads costs nothing and
      removes the dependency. */
+  /* ⚠⚠ THE FILTER IS "HAS SOMETHING TO OPEN", NOT "IS NOT DUES" (2026-09-10). It used to exclude
+     the dues row by its sentinel, because that row was not a foldable group at all and counting it
+     would make "all open" unreachable and leave the button stuck on one word. Dues fold to families
+     now, so excluding them would strand twelve rows the control claims to reach; what actually has
+     to be excluded is any category with nothing under it — which is the same not-set dues row, and
+     only in the one state where it genuinely has no fold. Same rule as `CatFoldRow.foldable`, and
+     it has to stay the same rule: a key here that draws no chevron on screen is a control that
+     cannot reach its own target. */
   const statementCatKeys = report
-    ? [
-        ...report.revenue.categories.filter(c => !isDuesCategory(c.categoryId)),
-        ...report.expenses.categories,
-      ].map(catKeyOf)
+    ? [...report.revenue.categories, ...report.expenses.categories]
+        .filter(c => c.items.length > 0).map(catKeyOf)
     : [];
   const activityCatKeys = report
-    ? report.activities.filter(b => !isDuesCategory(b.categoryId)).map(activityKeyOf)
+    ? report.activities
+        .filter(b => (b.revenue?.items.length ?? 0) + (b.costs?.items.length ?? 0) > 0)
+        .map(activityKeyOf)
     : [];
   /** The folds this control can actually reach — whichever shape is on screen. */
   const foldableCatKeys = view === 'activity' ? activityCatKeys : statementCatKeys;
@@ -2381,11 +2487,9 @@ export function BudgetVsActualPanel({
       for (const k of foldableCatKeys) { if (openNow) next.delete(k); else next.add(k); }
       return next;
     });
-    /* ⚠ IT DOES NOT TOUCH THE ITEM FOLDS, and the first version did (/review). `expandedLines` is
-       shared by both shapes — an item's key is its category+item, whichever view drew it — so
-       "Collapse all" here was quietly shutting rows a coach had opened on the other view. Leaving
-       them be also means their place survives a collapse-and-expand, which is the better
-       behaviour anyway. */
+    /* ⚰ A NOTE HERE WARNED THAT THIS MUST NOT TOUCH THE ITEM FOLDS (`expandedLines`, shared by
+       both shapes, quietly shut by an early version). There are no item folds left to touch since
+       2026-09-10 — the whole state is gone. */
   }
 
   if (ctxLoading) return <CoachLoading label="Loading the report…" />;
@@ -2727,7 +2831,7 @@ export function BudgetVsActualPanel({
               </tr>
             ) : null;
 
-            const groupProps = { expandedCats, toggleCat, expandedLines, toggleLine, openBehind };
+            const groupProps = { expandedCats, toggleCat, openBehind };
 
             return (
             // data-sandbox-tour: the beat the demo's "is the season on budget" step rings —
@@ -2779,16 +2883,19 @@ export function BudgetVsActualPanel({
                   {report!.revenue.categories.length > 0 && (
                     <>
                       <SectionBand label="Revenue" />
-                        {/* ⚠ THE DUES ROW IS RECOGNISED BY ITS KEY, the same sentinel pattern
-                            `isPayoutCategory` established for the payouts band — the route injects a
-                            synthetic category carrying the id the Months band already uses for its
-                            dues group, so the two views name one thing one way. It renders itself
-                            because it has no records of this report's kind behind it (see
-                            `DuesRow`); everything else goes through the ordinary group. */}
+                        {/* ⚠⚠ EVERY REVENUE CATEGORY GOES THROUGH THE SAME GROUP, DUES INCLUDED
+                            (owner ruling 2026-09-10). This used to branch on the dues sentinel and
+                            hand that one row to a component of its own, because the synthetic dues
+                            category carried no items and had nothing to fold to. It folds to one row
+                            per FAMILY now, so there is nothing left to special-case: the only thing
+                            still different about it is a caption, and a caption is a prop. */}
                         {report!.revenue.categories.map(cat => (
-                          isDuesCategory(cat.categoryId)
-                            ? <DuesRow key={catKeyOf(cat)} cat={cat} dues={data.dues} base={base} canWrite={moneyCanWrite} />
-                            : <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
+                          <CategoryGroup
+                            key={catKeyOf(cat)}
+                            cat={cat}
+                            {...groupProps}
+                            caption={duesNotSetCaption(cat.categoryId, data.dues, base, moneyCanWrite)}
+                          />
                         ))}
                       <SubtotalRow
                         label="Total revenue"
@@ -2832,27 +2939,25 @@ export function BudgetVsActualPanel({
                       shapes close on the same figure, and it moved when dues joined the revenue
                       half — so a by-activity reading without them would show a coach blocks that
                       sum to one number under a total that says another.
-                      ⚠ AS A ROW, NOT A BLOCK. A band, one row and a subtotal would be the words
-                      "Player dues" three times over a category that has exactly one figure and can
-                      never have a cost half; the payload still carries the block so nothing reading
-                      `activities` is short of a category. */}
-                  {report!.activities.filter(b => isDuesCategory(b.categoryId)).map(block => (
-                    block.revenue && (
-                      <DuesRow key="dues" cat={block.revenue} dues={data.dues} base={base} canWrite={moneyCanWrite} />
-                    )
-                  ))}
-                  {/* One foldable block per activity — the row states its own net, the fold holds
-                      both halves. The whole argument, and why the fold arrived a day after the row
-                      did, lives on `ActivityGroup`. */}
-                  {report!.activities.filter(b => !isDuesCategory(b.categoryId)).map(block => (
+
+                      ⚠⚠ AND THEY LEAD IT AS AN ORDINARY BLOCK NOW (owner ruling 2026-09-10). This
+                      was TWO passes over `activities` — one filtering the dues block out to a row
+                      component of its own, one drawing everything else — because a dues block had a
+                      single figure and nothing to fold to. It folds to families like any other
+                      block, so one pass draws the whole shape and the sentinel leaves this file's
+                      render path entirely. Dues still lead because the route puts them first.
+
+                      ⚠ A dues block has no cost half and never will (collecting dues costs the
+                      season nothing), so `ActivityGroup` draws it with no inner Revenue/Expenses
+                      labels — which is the same rule every one-sided category already gets. */}
+                  {report!.activities.map(block => (
                     <ActivityGroup
                       key={activityKeyOf(block)}
                       block={block}
                       expandedCats={expandedCats}
                       toggleCat={toggleCat}
-                      expandedLines={expandedLines}
-                      toggleLine={toggleLine}
                       openBehind={openBehind}
+                      caption={duesNotSetCaption(block.categoryId, data.dues, base, moneyCanWrite)}
                     />
                   ))}
                   {/* ⚠ NO BAND OVER THE BUFFER ANY MORE. It was a band plus a row saying the same
@@ -2940,14 +3045,33 @@ export function BudgetVsActualPanel({
                  One report answering "which two?" on one of its two views is the drift this report
                  has been consolidated twice to remove. Same words, same shape, same door — and now
                  on the ACTUAL column too, which never had an answer of any kind. */}
+             {/* ⚠⚠ ONE STATE, TWO PANELS, AND THE ROW DECIDES WHICH (owner ruling 2026-09-10).
+                 A PLAYER DUES row's Actual is not a list of records — it is three kinds of
+                 contribution — so it opens `DuesBehind` where every other row opens
+                 `RecordsBehind`. Deciding here rather than at the figure is deliberate: the row
+                 keeps exactly TWO controls that open a panel (the guard in
+                 bva-figure-doors-guard.test.ts counts them), so a coach has one habit to learn on
+                 every row of the table and the panel is an implementation detail of the row.
+
+                 ⚠ `duesParts` IS THE DISCRIMINATOR, not the category id. The sentinel would work on
+                 the statement and mean nothing inside an activity block's revenue half; the field
+                 travels with the row wherever it is drawn. */}
              {behind && (
-               <RecordsBehind
-                 item={behind.item}
-                 side={behind.side}
-                 base={base}
-                 canWrite={moneyCanWrite}
-                 onClose={() => setBehind(null)}
-               />
+               behind.item.duesParts ? (
+                 <DuesBehind
+                   item={behind.item}
+                   base={base}
+                   onClose={() => setBehind(null)}
+                 />
+               ) : (
+                 <RecordsBehind
+                   item={behind.item}
+                   side={behind.side}
+                   base={base}
+                   canWrite={moneyCanWrite}
+                   onClose={() => setBehind(null)}
+                 />
+               )
              )}
              {/* The Spending trend shelf (D2, G3-approved): the chart, below the table it used to
                  sit above, closed by default and remembered per device. */}

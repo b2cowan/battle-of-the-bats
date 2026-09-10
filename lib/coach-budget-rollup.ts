@@ -223,8 +223,21 @@ export interface ItemRow {
   costCount: number;
   /** ⚠ DERIVED: is there a budget line for this category+item? False = moved, never budgeted. */
   inPlan: boolean;
-  /** The merged payment schedule — same date from two lines is ONE period carrying the sum. */
-  periods: Array<{ label: string; date: string | null; amount: number; actual: number }>;
+  /** The merged payment schedule — same date from two lines is ONE period carrying the sum.
+   *
+   *  ⚠⚠ IT CARRIES NO `actual`, AND THAT FIELD IS DELETED RATHER THAN LEFT UNREAD (owner ruling
+   *  2026-09-10, "Things, not dates"). Real money used to be PLACED against these planned dates —
+   *  each amount landing in the first planned slot on or AFTER the day it moved, anything later or
+   *  undated landing in the last one — so a row planned once in February reported August money as
+   *  February. The plan is dated on one side and the money SWEPT onto it on the other, and the fold
+   *  that displayed the result is now gone from both report shapes. The placement rule goes with
+   *  it: a figure nobody can date honestly, left in the payload, is a wrong figure waiting for its
+   *  next reader.
+   *
+   *  ⚠ THE DATES THEMSELVES STAY AND ARE LOAD-BEARING. They are the PLAN's own schedule; they drive
+   *  the report's **to date** comparison basis (`budgetedOn`), and they are the list behind a
+   *  Budget figure. Delete them and every to-date reading silently becomes a whole-season one. */
+  periods: Array<{ label: string; date: string | null; amount: number }>;
   /** The individual lines behind the row, so the plan list can still edit one of them. */
   lines: Array<{ id: string; description: string; notes: string | null; totalAmount: number }>;
   /** The individual amounts behind the row, for the drill-in. ⚠ `derived` rides along or the panel
@@ -237,6 +250,24 @@ export interface ItemRow {
    *  which records were spending and which were repayment, and one of those is the out-of-pocket
    *  trap the money-back plan's §2 exists to keep apart. */
   refunds: Array<{ id: string; description: string; amount: number; receivedDate: string | null }>;
+  /**
+   * ⚠⚠ ONE FAMILY'S DUES CONTRIBUTION, SPLIT — **present on a Player dues row and on nothing else**
+   * (owner ruling 2026-09-10, "Things, not dates").
+   *
+   * ⚠ THIS ROLLUP NEVER PRODUCES IT. Dues are not budget lines and reach no rollup; the synthetic
+   * dues category is assembled after the fact in `lib/coach-dues-revenue.ts` from the route's own
+   * per-family pass. The field lives on this type only because a dues family row IS an `ItemRow` —
+   * it has to be, or it could not sit in `CategoryRow.items` and be drawn by the one row component
+   * both report shapes share, which is the entire reason Player dues stopped being a hand-rolled
+   * special case.
+   *
+   * ⚠ IT IS WHAT THE ROW'S **ACTUAL** FIGURE OPENS, and it is the reason a player row opens a
+   * different panel from every other row: an ordinary row's Actual is a list of RECORDS, a family's
+   * is three kinds of contribution. The three sum to `actual` by construction.
+   *
+   * ⚠ DO NOT REACH FOR IT ON AN ORDINARY ROW — its absence is how the screen tells the two apart.
+   */
+  duesParts?: { cashKept: number; familyPaidCosts: number; fundraisingCredited: number };
 }
 
 export interface CategoryRow {
@@ -779,7 +810,7 @@ function buildCategoryRow(
       lineCount: entry.lines.length,
       costCount: entry.costs.length,
       inPlan: entry.lines.length > 0,
-      periods: mergePeriods(entry.lines, entry.costs, entry.refunds),
+      periods: mergeSchedules(entry.lines),
       lines: entry.lines.map(l => ({
         id: l.id, description: l.description, notes: l.notes, totalAmount: l.totalAmount,
       })),
@@ -828,7 +859,7 @@ export function rollupBudget(lines: RollupLine[], spend: RollupSpend[]): Categor
 }
 
 /**
- * Merge the payment schedules of every line on one item, and place what actually moved against them.
+ * Merge the payment schedules of every line on one item — the PLAN's own dates, and nothing else.
  *
  * ⚠ THE SAME DATE FROM TWO LINES IS ONE PERIOD CARRYING THE SUM. Two lines on one item is now an
  * ordinary shape (rule 3), and listing "Nov 30" twice would report one month as two — the visual
@@ -839,15 +870,27 @@ export function rollupBudget(lines: RollupLine[], spend: RollupSpend[]): Categor
  * That matches the month grid, which has always kept undated budget out of the month columns and
  * said so rather than smearing it.
  *
- * ⚠ MONEY BACK IS PLACED BY THE DAY IT ARRIVED and SUBTRACTS, so a period can go negative — $600
- * of permits across July and August with $325 back in September reads 300 / 300 / (325). Placing
- * it against the month the cost was paid would rewrite a month already reconciled.
+ * ⚠⚠ IT USED TO PLACE THE ACTUALS TOO, AND IT WAS CALLED `mergePeriods` FOR IT (deleted by owner
+ * ruling 2026-09-10, "Things, not dates"). Each amount that moved landed in the first planned slot
+ * on or after the day it moved, and anything after the last dated slot — or with no date at all —
+ * landed in the final one. On a line planned across five months that read correctly and usefully;
+ * on a line with ONE planned slot in February it reported August money as February, which is what
+ * the owner hit on the §157 walk. The proof that it could not be repaired is short: dating one side
+ * honestly requires dating the other, and dating the other means a row per line per month on both
+ * halves of a report meant to be read in one screen.
+ *
+ * ⚠ SO THE ONE HONEST HOME FOR "WHEN DID THIS MOVE?" IS THE **MONTHS VIEW**, where both sides are
+ * dated the same way — and the one honest home for "what is this figure made of?" is the panel
+ * behind the figure, where a date belongs to the RECORD that carries it. If you are about to bring
+ * the placement back for a good local reason, those two are the reason you do not need to.
+ *
+ * ⚠ THE REFUND NOTE THAT LIVED HERE WENT WITH THE ARITHMETIC: money back was placed by the day it
+ * arrived and SUBTRACTED, so a period could go negative. Nothing reads a period's actual now, so
+ * there is nothing for a refund to be netted out of.
  */
-function mergePeriods(
+function mergeSchedules(
   lines: RollupLine[],
-  costs: RollupSpend[],
-  refunds: RollupRefund[],
-): Array<{ label: string; date: string | null; amount: number; actual: number }> {
+): Array<{ label: string; date: string | null; amount: number }> {
   const byDate = new Map<string, { label: string; date: string | null; amount: number }>();
   for (const line of lines) {
     for (const p of line.periods) {
@@ -864,33 +907,10 @@ function mergePeriods(
   }
   if (byDate.size === 0) return [];
 
-  const periods = [...byDate.values()].sort((a, b) => {
+  return [...byDate.values()].sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;
     if (!b.date) return -1;
     return a.date.localeCompare(b.date);
   });
-
-  // Each amount lands in the first period falling on or after the day it moved; anything after the
-  // last dated period, and anything with no date at all, lands in the final period. Identical to
-  // the rule the retired per-line module encoded, applied to a MERGED schedule instead of one line.
-  const actuals = new Array<number>(periods.length).fill(0);
-  const last = periods.length - 1;
-  const place = (amount: number, date: string | null) => {
-    if (!amount) return;
-    if (date) {
-      for (let i = 0; i < periods.length; i++) {
-        if (!periods[i].date || periods[i].date! >= date) {
-          actuals[i] += amount;
-          return;
-        }
-      }
-    }
-    actuals[last] += amount;
-  };
-
-  for (const cost of costs) place(cost.amount, cost.paidDate);
-  for (const back of refunds) place(-back.amount, back.receivedDate);
-
-  return periods.map((p, i) => ({ ...p, actual: r2(actuals[i]) }));
 }
