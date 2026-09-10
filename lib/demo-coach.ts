@@ -1171,17 +1171,19 @@ export const OFFSEASON_ROSTER: readonly DemoPlayer[] = [
  * enforces the scope so this cannot be reintroduced by choosing a plausible-sounding name.
  */
 export const OFFSEASON_BUDGET_LINES = [
-  { description: 'Tournament entries — four weekends', category: 'Tournaments',       item: 'Entry Fees',    total: 3600 },
+  { description: 'Tournament entries — four weekends', category: 'Tournaments',       item: 'Entry Fees',    total: 4000 },
   { description: 'Diamond and dome rentals',           category: 'Facilities',        item: 'Dome Time',     total: 2800 },
   { description: 'Uniforms, caps and helmets',         category: 'Team Gear',         item: 'Jerseys',       total: 2100 },
   { description: 'Winter cage sessions',               category: 'Training',          item: 'Batting Cages', total: 1400 },
   { description: 'Umpire fees',                        category: 'Officials',         item: 'Umpire Fees',   total: 1200 },
   { description: 'Raffle licence and printing',        category: 'Fundraising', item: 'Printing',      total: 600 },
-  // ⚠ A SECOND LINE ON THE SAME ITEM AS THE FIRST, deliberately (mig 240). The owner's own screen
-  // was two lines filed under 'Entry Fees'; the plan and the report SUM them into one row that
-  // OPENS to reveal both. Without this the demo never shows the rule. (That row carried a
-  // '2 lines' caption until 2026-09-04, when the count came off every surface — QA §133.)
-  { description: 'Provincials entry — deposit',         category: 'Tournaments',       item: 'Entry Fees',    total: 400 },
+  /* ⚰ THE DELIBERATE TWIN IS GONE — 'Provincials entry — deposit', a SECOND line on 'Entry Fees'
+     (owner ruling 2026-09-09, migration 286: one word carries one line, and the database now
+     refuses a second). It was seeded to demonstrate the summed-and-openable row, which no longer
+     exists; seeding it today would fail the unique index and leave the demo a line short.
+     ⚠ ITS MONEY STAYED WITH THE WORD. Entry Fees went from $3,600 to $4,000 rather than losing
+     $400 — a demo whose season total quietly drops is exactly the silent drift the demo checks
+     exist to catch. */
 ] as const;
 
 /**

@@ -7,7 +7,9 @@ import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { budgetLineKindForItem, isFundingKind } from '@/lib/coach-budget-totals';
 import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { readPeriodsPayload, type PeriodPayloadRow } from '@/lib/coach-budget-periods-payload';
-import { resolveBudgetItem } from '@/lib/coach-budget-items';
+import {
+  resolveBudgetItem, findLineHoldingItem, isDuplicateItemLineError, duplicateItemLineResponse,
+} from '@/lib/coach-budget-items';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -67,6 +69,31 @@ export const PATCH = withObservability(async (req: Request,
     updates.description = d;
   }
 
+  /* ⚠⚠ A JOIN SENDS THE FIGURE IT WAS COMPUTED AGAINST, AND THIS IS WHERE IT EARNS ITS KEEP
+     (`/review`, concurrency lens, 2026-09-09). "Add $250 to Entry Fees" reaches this route as an
+     ABSOLUTE total — what the browser last saw the line holding, plus the addition — so if the line
+     moved in between (a second tab, a money assistant, an import), the later save would silently
+     erase the earlier one. No error, no 409: the unique index guards a second LINE, never a stale
+     figure, and nothing else on this route has ever compared what it is about to overwrite.
+     ⚠ SENT ONLY BY A JOIN, deliberately. An ordinary edit shows the coach the exact number they are
+     replacing, and refusing that would be a new obstacle in front of an old, understood action; a
+     join merges a figure they may never have looked at. Absent = the old behaviour, unchanged.
+     ⚠ A CENT of tolerance, because the figure round-trips through JSON as a float. */
+  if (body.expectedTotalAmount !== undefined) {
+    const expected = Number(body.expectedTotalAmount);
+    const actual = Number(existing.total_amount);
+    if (!Number.isFinite(expected) || Math.abs(expected - actual) > 0.005) {
+      return NextResponse.json(
+        {
+          error: 'This line changed while you were adding to it — it now reads '
+            + `${actual.toFixed(2)}. Open it and check the figure before adding again.`,
+          staleTotalAmount: actual,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   if (body.totalAmount !== undefined) {
     const amt = Number(body.totalAmount);
     if (isNaN(amt) || amt <= 0) {
@@ -98,6 +125,12 @@ export const PATCH = withObservability(async (req: Request,
      ⚠ `categoryId` FROM THE REQUEST IS IGNORED for the same reason. The POST was hardened during
      the Chunk G review and its PATCH sibling was not — that gap is closed here for good, because
      there is now nothing to accept. */
+  /* ⚠⚠ ONE WORD, ONE LINE ON A PLAN (owner ruling 2026-09-09, migration 286). Re-filing a saved
+     line onto a word another line already holds has no honest answer that keeps both — joining them
+     would destroy one line, its schedule and anything pointing at it, from a control that only says
+     "change the word". The index refuses it; this remembers the word so the refusal can be turned
+     into a sentence naming the line that is in the way. */
+  let refilingOnto: { id: string; name: string } | null = null;
   if ('itemId' in body) {
     const itemId = body.itemId || null;
     const resolved = await resolveBudgetItem(itemId, ctx!.org.id, teamId, team.sport);
@@ -126,6 +159,7 @@ export const PATCH = withObservability(async (req: Request,
        ⚠ Left alone when the item is CLEARED: there is nothing to derive a kind from, and blanking
        or guessing one would re-file a row nobody asked to move. */
     if (resolved.item) updates.line_kind = budgetLineKindForItem(resolved.item);
+    if (resolved.item) refilingOnto = { id: resolved.item.id, name: resolved.item.name };
     // The NOT NULL text column follows the item, so anything reading it raw shows something true.
     if (resolved.item && typeof body.description !== 'string') updates.description = resolved.item.name;
   }
@@ -179,6 +213,16 @@ export const PATCH = withObservability(async (req: Request,
     .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
     .single();
 
+  /* ⚠ THE WORD WAS TAKEN — the index's refusal, turned into a sentence naming the line in the way
+     (one word, one line; owner ruling 2026-09-09). Read after the failure rather than checked
+     before it: a pre-check costs a round trip on every ordinary save and still loses the race. */
+  if (refilingOnto && isDuplicateItemLineError(error)) {
+    const existingLineId = await findLineHoldingItem({
+      orgId: ctx!.org.id, teamId, programYearId: programYear.id,
+      itemId: refilingOnto.id, excludeLineId: lineId,
+    });
+    return NextResponse.json(duplicateItemLineResponse(refilingOnto.name, existingLineId), { status: 409 });
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (periodRows !== null) {

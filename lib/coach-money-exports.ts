@@ -134,6 +134,9 @@ export interface BudgetPlanExportGroup {
   categoryName: string;
   total: number;
   items: Array<{
+    /** Null = the word-LESS bucket ("Not itemized"), the only item row that can still hold several
+     *  lines since one word carries one line (migration 286). */
+    itemId: string | null;
     itemName: string;
     total: number;
     lines: Array<{
@@ -167,40 +170,15 @@ export interface BudgetPlanExportSource {
 
 /** The **When** cell, in the screen's own words. `money()` rather than a bare number so the undated
  *  half of a partly-dated line reads as the money it is. */
-/**
- * WHAT A MERGED SUB-LINE IS CALLED IN A FILE — its note, else the word it is filed against.
- *
- * ⚠⚠ THE FILE DELIBERATELY DIVERGES FROM THE SCREEN, and this is the one place in this release
- * where that is the correct answer (`/review`, correctness lens, 2026-09-09). On screen a note-less
- * merged sub-line is named by its SCHEDULE (`mergedSubLineName`, decision B2) — because the screen
- * DROPS the When cell for that row, so the schedule has nowhere else to be. **A file drops nothing:
- * every row here still carries its own `schedule` column.** So naming the row by its schedule as
- * well printed the same answer twice in one row, and worse:
- *
- * ⚠⚠⚠ IT BROKE THE ROUND TRIP, ON THE COST SIDE, WITH A HIGH-SEVERITY CONSEQUENCE. The importer
- * matches a row to an existing line by its NAME text, and mints a brand-new team budget item from
- * any name the library does not know (`budget-plan/import/route.ts`). A sub-line exported as "Oct"
- * or "No date yet" therefore matched nothing, and re-importing the plan a coach had just exported
- * would CREATE A BUDGET ITEM CALLED "Oct" — permanently in their picker — while leaving the two
- * real lines untouched. The module's own header promises "export it, edit it, import it back" is a
- * real round trip; naming a row after its dates broke that promise.
- *
- * ⚠ THE NOTE STILL WINS, exactly as it does on screen — that half was never the problem, and it is
- * what tells two lines on one word apart in the file. With no note the WORD is the honest fallback:
- * it is what the importer can match, and it is what the stored column already holds.
- *
- * ⚠ NOT A FULL FIX FOR EVERY SHAPE, stated so nobody reads more into it: two note-less lines on one
- * word still export under the same name (as they did before this release), which the importer
- * resolves ambiguously. That is a SEPARATE, pre-existing defect on the same door as the known
- * "funding lines re-import as costs" one, and it is queued with that work rather than widened into
- * here.
- */
-function subLineLabel(
-  line: { notes: string | null },
-  itemName: string,
-): string {
-  return (line.notes ?? '').trim() || itemName;
-}
+/* ⚰ `subLineLabel` IS DELETED WITH THE ROWS IT NAMED (owner ruling 2026-09-09, migration 286).
+   It answered "what is a merged sub-line called in a file?" — a question that no longer has a
+   subject, because a word carries one line and this file has no rows beneath an item.
+   ⚠ WORTH KNOWING WHY IT EXISTED, because the same trap is still live one door away. The importer
+   matches a row to a line by its NAME TEXT and mints a brand-new team budget word from any name the
+   library does not know. A sub-row exported as "Oct" therefore matched nothing, and re-importing a
+   plan a coach had just exported CREATED A BUDGET WORD CALLED "Oct", permanently, in their picker.
+   The flat file cannot produce that row at all — but the rule it teaches survives: **never print a
+   name into this file that the library could not match back.** */
 
 function whenText(
   periods: Array<{ periodDate: string | null; amount?: number | string | null }>,
@@ -241,35 +219,25 @@ export function budgetPlanStatementRows(
 
   for (const cat of src.groups) {
     push({ item: cat.categoryName, schedule: '', planned: cat.total, notes: '' }, 'category');
+    /* ⚠⚠ ONE ROW PER WORD, AND NOTHING BENEATH IT (owner ruling 2026-09-09, migration 286). A word
+       carries one line, so an item row IS that line: its schedule, its amount, its note. The
+       indented sub-rows this printed underneath are gone with the twins they described — and with
+       them goes the shape that kept breaking the round trip, since a nested row is one the
+       spreadsheet can hide and the importer can read back as a line the coach never wrote.
+       ⚠ The word-LESS bucket still prints as one "Not itemized" row carrying its own sum; those
+       lines have no word to be joined on and the rollup already sums them. */
     for (const item of cat.items) {
-      if (item.lines.length === 1) {
-        const l = item.lines[0];
-        push({
-          item: item.itemName,
-          schedule: whenText(l.periods, l.totalAmount),
-          planned: l.totalAmount,
-          notes: l.notes ?? '',
-        }, 'item');
-        continue;
-      }
-      // The SUM ruling's shape: one summed row per item, the lines beneath it named by the note
-      // the form asked for ("What makes this line different?") — never two identical twins.
-      // ⚠ NO "(N lines)" ON THE LABEL (owner ruling 2026-09-04, QA §133 — the same ruling took it
-      // off all three screens). Here it was the emptiest version of it: the lines it counts are
-      // the very next rows in the file.
-      push({ item: item.itemName, schedule: '', planned: item.total, notes: '' }, 'item');
-      for (const l of item.lines) {
-        /* ⚠ THE SCHEDULE, NOT THE DESCRIPTION, when there is no note (decision B2, 2026-09-09).
-           The stored description is kept synced to the ITEM's name, so this fell back to printing
-           the parent's word one row above itself — on the UAT fixture, "Entry Fees" three times in
-           one column. Same rule as the money-in half below; the two are deliberately identical. */
-        push({
-          item: `  — ${subLineLabel(l, item.itemName)}`,
-          schedule: whenText(l.periods, l.totalAmount),
-          planned: l.totalAmount,
-          notes: l.notes ?? '',
-        }, 'item');
-      }
+      /* A word carries one line, so that line IS the row and speaks for it. The word-LESS bucket
+         has no single line to speak for it — its sum is the answer and its When column stays
+         empty, exactly as the screen's own bucket row does. */
+      const only = item.itemId ? item.lines[0] : null;
+      push({
+        item: item.itemName,
+        schedule: only ? whenText(only.periods, only.totalAmount) : '',
+        // The group's own sum, never one line's figure: identical for a word, correct for the bucket.
+        planned: item.total,
+        notes: only ? (only.notes ?? '') : '',
+      }, 'item');
     }
   }
 
@@ -304,29 +272,18 @@ export function budgetPlanStatementRows(
          the same schedule column and nothing to tell them apart. The cost half of this file has
          summed them into one openable row since the 2026-08-15 ruling; `groupByItem` is that rule,
          shared with the plan list so the file and the screen cannot say different things. */
+      /* ⚠ ONE ROW PER WORD, AND NOTHING BENEATH IT (owner ruling 2026-09-09, migration 286). A
+         money-in word carries one line and a word-LESS money-in line is its own group, so every
+         group here holds exactly one line — `groupByItem` is still what ORDERS them and what keeps
+         this file and the plan list from ever saying different things. */
       for (const item of groupByItem(kindLines)) {
-        if (item.lines.length === 1) {
-          const l = item.lines[0];
-          push({
-            item: `  — ${item.itemName}`,
-            schedule: whenText(l.periods ?? [], l.totalAmount),
-            planned: l.totalAmount,
-            notes: l.notes ?? '',
-          }, 'item');
-          continue;
-        }
-        push({ item: `  — ${item.itemName}`, schedule: '', planned: item.total, notes: '' }, 'item');
-        for (const l of item.lines) {
-          /* The note names the sub-line; with no note its SCHEDULE does (decision B2). The old
-             fallback was the item's name, which printed the parent's word again one row down —
-             the same echo the screen was carrying. */
-          push({
-            item: `    — ${subLineLabel(l, item.itemName)}`,
-            schedule: whenText(l.periods ?? [], l.totalAmount),
-            planned: l.totalAmount,
-            notes: l.notes ?? '',
-          }, 'item');
-        }
+        const only = item.lines[0];
+        push({
+          item: `  — ${item.itemName}`,
+          schedule: whenText(only.periods ?? [], only.totalAmount),
+          planned: item.total,
+          notes: only.notes ?? '',
+        }, 'item');
       }
     }
     push({ item: L.plannedFunding, schedule: '', planned: totals.expectedFunding, notes: '' }, 'total');

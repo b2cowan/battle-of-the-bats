@@ -36,7 +36,7 @@ import {
 } from '@/lib/coach-budget-totals';
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
-  buildPeriodView, whenSummary, mergedSubLineName, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
+  buildPeriodView, whenSummary, whenMonthsText, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
   type PeriodGranularity,
 } from '@/lib/coach-budget-periods-view';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
@@ -47,6 +47,7 @@ import {
   derivedPeriodLabel, splitYears, readDate, monthDate, quarterDate, quarterOf,
   type PeriodSplitMode,
 } from '@/lib/coach-budget-period-modes';
+import { joinPeriodSplits } from '@/lib/coach-budget-periods-payload';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import type {
   RepBudgetPlan,
@@ -379,7 +380,7 @@ function WhenChip({ line, className, onToggle }: {
 }
 
 function BudgetLineRow({
-  line, expanded, funding, canWrite, onToggle, onEdit, hideWhen = false,
+  line, expanded, funding, canWrite, onToggle, onEdit,
 }: {
   line: RepBudgetLineWithPeriods;
   expanded: boolean;
@@ -387,16 +388,10 @@ function BudgetLineRow({
   canWrite: boolean;
   onToggle: () => void;
   onEdit: () => void;
-  /**
-   * Suppress BOTH copies of the schedule on this row — the When cell and the phone chip under the
-   * name (owner ruling 2026-09-09, decision B2).
-   *
-   * ⚠ SET ONLY WHERE THE SCHEDULE HAS BECOME THE NAME. A merged sub-line with no note is titled by
-   * its own schedule (`mergedSubLineName`); leaving the cell and the chip in place would print that
-   * same answer THREE times on one row. The name IS the When answer, so nothing is lost. A noted
-   * sub-line, and every ordinary row, keeps both.
-   */
-  hideWhen?: boolean;
+  /* ⚰ `hideWhen` IS GONE WITH THE ROWS IT EXISTED FOR (2026-09-09). It suppressed both copies of
+     the schedule on a merged sub-line that had been NAMED by its schedule — a row that can no
+     longer exist now one word carries one line. Every row on this table is a line wearing its own
+     word, so every row wants its When answer. */
 }) {
   const moneyClass = funding ? styles.fundingAmount : '';
   /* One predicate for "this line has a fold", read by the chevron and by both When chips — they
@@ -469,8 +464,7 @@ function BudgetLineRow({
                 take room from the line name, which already ellipses, or from the money. The note
                 slot is already here, already quiet, and already where a line says something extra
                 about itself. */}
-            {!hideWhen
-              && <WhenChip line={line} className={styles.whenUnderName} onToggle={foldFromChip} />}
+            <WhenChip line={line} className={styles.whenUnderName} onToggle={foldFromChip} />
           </span>
         </th>
 
@@ -478,7 +472,7 @@ function BudgetLineRow({
             whose undated half it never mentioned. See `whenSummary` for both defects.
             ⚠ The chip inside it FOLDS THE ROW on a split line (2026-09-05) — see WhenChip. */}
         <td className={styles.schedCell}>
-          {!hideWhen && <WhenChip line={line} onToggle={foldFromChip} />}
+          <WhenChip line={line} onToggle={foldFromChip} />
         </td>
 
         <td className={moneyClass}>{fmt(line.totalAmount)}</td>
@@ -936,6 +930,12 @@ function groupLines(lines: RepBudgetLineWithPeriods[]) {
     total: cat.budgeted,
     items: cat.items.map(item => ({
       key: item.itemId ?? `${cat.categoryName}|no-item`,
+      /* ⚠ CARRIED SO THE RENDER CAN NAME THE ONE CASE THAT STILL OPENS (owner ruling 2026-09-09).
+         Since migration 286 a word holds exactly one line, so the ONLY bucket that can hold several
+         is the word-LESS one — pre-mig-243 lines, which have no word to be joined on. Branching on
+         `itemId === null` says that; branching on `lines.length > 1` would look like the old
+         two-lines-on-one-word case and invite someone to re-add it. */
+      itemId: item.itemId,
       itemName: item.itemName,
       total: item.budgeted,
       lines: item.lines.map(l => byId.get(l.id)).filter((l): l is RepBudgetLineWithPeriods => !!l),
@@ -1492,6 +1492,9 @@ export function BudgetPlanPanel({
 
   /** Everything a freshly-opened modal must forget from the last one it showed. */
   function resetModalTransients() {
+    // Every door into this form goes through here, which is why the typed-note flag lives with the
+    // rest of the per-opening state rather than being reset at three call sites.
+    noteTyped.current = false;
     setSaveError('');
     setSaveTried(false);
     setPeriodUndo(null);
@@ -1843,12 +1846,50 @@ export function BudgetPlanPanel({
   }
 
   /**
+   * ⚠⚠ ONE WORD, ONE LINE ON A PLAN (owner ruling 2026-09-09; migration 286 makes it true in the
+   * database, with a partial unique index).
+   *
+   * This form used to let a coach start a SECOND line on a word the plan already held, and then
+   * asked them to invent a phrase telling the two apart — "What makes this line different?".
+   * Nothing downstream could ever use that phrase: real money is matched to the WORD, never to the
+   * line, so two lines on one word were one thing wearing two labels — and a phrase-less second
+   * line ended up named after its own month, which the When column beside it already printed.
+   *
+   * This is the line that word already has, if any, and the whole change hangs off it: ADDING to
+   * that word adds to its line; EDITING a line onto a word another line holds is refused, here and
+   * on the server.
+   *
+   * ⚠ `plan?.lines` rather than `allLines` only because `allLines` is memoised further down the
+   * component than `collectProblems` reads. Same rows, same source.
+   */
+  const lineHolding = (itemId: string | null) => (itemId
+    ? (plan?.lines ?? []).find(l => l.itemId === itemId && l.id !== editingLine?.id) ?? null
+    : null);
+  const lineOnChosenItem = modalOpen ? lineHolding(form.itemId) : null;
+  /** Has the coach typed in Notes? A pre-filled note must be replaceable; a typed one must not. */
+  const noteTyped = useRef(false);
+
+  /** Adding, and the word is already on the plan: this save ADDS to the line that is there. */
+  const addingToLine = editingLine ? null : lineOnChosenItem;
+  /** The schedule the joined line will read — the preview under the form. Amounts are irrelevant to
+   *  the month list, so the dates are all this has to carry. */
+  const joinedScheduleSummary = addingToLine
+    ? whenMonthsText(whenSummary(
+        [
+          ...(addingToLine.periods ?? []).map(p => ({ periodDate: p.periodDate, amount: Number(p.amount) })),
+          ...(usesPeriods(form) ? form.periods.map(p => ({ periodDate: p.date || null, amount: 0 })) : []),
+        ],
+        Number(addingToLine.totalAmount) || 0,
+      ))
+    : '';
+
+  /**
    * Everything that would stop this line saving, in the order the coach meets it on screen.
    *
    * Deliberately short. A period's NAME is derived when left blank and its DATE is optional
    * (an undated period simply can't be placed on a calendar, which the row says out loud), so the
    * only things left that can block a save are the ones that are genuinely wrong: money missing,
-   * or money that doesn't add up.
+   * money that doesn't add up, or a word that is already taken.
    */
   function collectProblems(): FormProblem[] {
     const out: FormProblem[] = [];
@@ -1865,6 +1906,19 @@ export function BudgetPlanPanel({
         focusId: FOCUS_ITEM,
       });
     }
+    /* ⚠ THE WORD IS TAKEN (owner ruling 2026-09-09). Only reachable while EDITING — adding to a word
+       already on the plan is a supported move that adds to its line, and the form says so. Re-filing
+       a SAVED line onto a taken word has no honest answer that keeps both: joining them would destroy
+       one line, its schedule and anything pointing at it, from a control that only says "change the
+       word". So it is named and blocked here, and migration 286's index refuses it regardless. */
+    if (editingLine && lineOnChosenItem) {
+      out.push({
+        id: 'item',
+        message: `${form.itemName || 'That word'} is already on this plan. Open that line to change it, or pick a different word.`,
+        focusId: FOCUS_ITEM,
+      });
+    }
+
     const total = parseFloat(form.totalAmount);
     if (isNaN(total) || total <= 0) {
       out.push({ id: 'total', message: 'Enter a total amount for this line.', focusId: FOCUS_TOTAL });
@@ -2006,9 +2060,14 @@ export function BudgetPlanPanel({
     setSaving(true);
     setSaveError('');
     try {
-      const isEdit = !!editingLine;
-      const url    = isEdit
-        ? `/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${editingLine!.id}`
+      /* ⚠⚠ ADDING TO A WORD ALREADY ON THE PLAN IS AN EDIT OF ITS LINE (owner ruling 2026-09-09).
+         One word carries one line, so there is no second row to create — the amount joins the line
+         that is there, and its dates join that line's schedule. The coach who meant to CORRECT the
+         existing figure rather than add to it has "Open that line instead" beside the panel. */
+      const targetId = editingLine?.id ?? addingToLine?.id ?? null;
+      const isEdit = !!targetId;
+      const url    = targetId
+        ? `/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${targetId}`
         : `/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines`;
 
       /* ⚠ THE SPLIT RIDES THE SAME REQUEST NOW (P2). This used to be a second POST after the line
@@ -2041,6 +2100,24 @@ export function BudgetPlanPanel({
               sortOrder:   i,
             }));
 
+      /* ── The join, when this save is adding to a word already on the plan ───────────────────
+         The amount is added to the line's total and the two schedules are concatenated.
+
+         ⚠⚠ AND A SIDE WITH NO SCHEDULE BECOMES A REAL UNDATED PERIOD (owner ruling Q4). Add dated
+         money to an undated line and the result is legitimately part-scheduled — but every write
+         door enforces "the split sums to the total" (±$0.02), so an implicit gap would make the
+         very next edit of that line impossible to save. "No date yet" is a shape the product
+         already has: it is what the grid's undated column is built from, and it is the honest
+         answer rather than a date nobody chose. Both sides bare = no split at all, which every
+         reader already treats as wholly undated; inventing a period there would be noise. */
+      const joinTotal = addingToLine ? r2(Number(addingToLine.totalAmount) + totalAmount) : totalAmount;
+      const joinedPeriods = addingToLine
+        ? joinPeriodSplits(
+            { total: Number(addingToLine.totalAmount), periods: addingToLine.periods },
+            { total: totalAmount, periods: periodsPayload },
+          )
+        : periodsPayload;
+
       const res  = await fetch(url, {
         method:  isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2050,17 +2127,39 @@ export function BudgetPlanPanel({
           // keeps working in the "No category / Not itemized" bucket until a coach re-files it.
           categoryId:  form.categoryId || null,
           itemId:      form.itemId,
-          totalAmount,
+          totalAmount: joinTotal,
           /* ⚠ NO `lineKind` (mig 280). The server derives it from the item this line is filed
              against, so the impossible pairing is not merely refused — there is nothing left to
              express it with. Sending one would be ignored; sending none says so honestly. */
           notes:       form.notes.trim() || null,
-          // HOW the split was built (mig 274) — remembered, so it reopens as it was made.
-          splitMode:   periodsPayload.length > 0 ? form.splitMode : null,
-          periods:     periodsPayload,
+          /* ⚠⚠ THE FIGURE THIS ADDITION WAS COMPUTED AGAINST (`/review`, concurrency lens). A join
+             sends an ABSOLUTE total — what the line held plus what is being added — read from a
+             snapshot the browser fetched earlier. Two tabs, or a coach and their money assistant,
+             could each add to the same word and the second save would silently erase the first,
+             with no error: the unique index guards a second LINE, never a stale figure. So the
+             server is told what the line was expected to hold and refuses if it has moved.
+             ⚠ Only on a JOIN. An ordinary edit shows the coach the exact number they are replacing;
+             a join merges a figure they may never have looked at, which is the difference. */
+          expectedTotalAmount: addingToLine ? Number(addingToLine.totalAmount) : undefined,
+          /* HOW the split was built (mig 274) — remembered, so it reopens as it was made.
+             ⚠ A JOIN KEEPS THE EXISTING LINE'S MODE where it had one: the coach chose quarters (or
+             specific dates) for that line, and adding a month to it must not silently re-answer
+             that. With no split of its own it takes the mode this save was entered in. */
+          splitMode:   joinedPeriods.length === 0
+            ? null
+            : (addingToLine?.periods.length ? addingToLine.splitMode : null) ?? form.splitMode,
+          periods:     joinedPeriods,
         }),
       });
       const data = await res.json();
+      /* ⚠ THE REFUSAL NAMES A LINE, SO OPEN IT. Both write doors answer a duplicate word with the
+         id of the line already holding it; a message telling a coach to "open that line" while
+         leaving them to find it is a promise the product does not keep. Reached only from a stale
+         tab or a client that never learned the rule — the form itself steers away from it. */
+      if (res.status === 409 && data.existingLineId) {
+        const clash = (plan?.lines ?? []).find(l => l.id === data.existingLineId);
+        if (clash) { setSaveError(data.error ?? ''); openEdit(clash); return; }
+      }
       if (!res.ok) throw new Error(data.error ?? 'Failed to save');
 
       setModalOpen(false);
@@ -2212,14 +2311,6 @@ export function BudgetPlanPanel({
       }
     : { keys: sectionKeys, allClosed: allSectionsClosed, toggle: toggleAllSections };
 
-  /* P1 — is the form's chosen item already carrying another line on this plan? Then this line is
-     a SECOND line on that item, and the Notes field becomes the one question that keeps the fold
-     and the export from ever being nameless: "What makes this line different?". Encouraged, never
-     blocking — collectProblems never reads it. The editing line itself doesn't count: reopening
-     an existing line must not tell a coach their only line is a second one. */
-  const itemSiblingCount = modalOpen && form.itemId
-    ? allLines.filter(l => l.itemId === form.itemId && l.id !== editingLine?.id).length
-    : 0;
 
   // ONE arithmetic, computed in one place (lib/coach-budget-totals) so the planner, the Money hub
   // and Budget vs. Actual cannot drift apart on the same two numbers. ⚠ The effective total is the
@@ -2812,12 +2903,16 @@ export function BudgetPlanPanel({
                     <td />
                   </tr>
                   {!isClosed(catKey(catName)) && items.map(item => (
-                    /* ⚠ ONE ROW PER ITEM. With a single line behind it — which is the ordinary
-                       shape — the row IS that line, named by its item, and behaves exactly as it
-                       always has: tap to edit, chevron for its payment periods. Two or more lines
-                       on one item is the case the owner's SUM ruling exists for, and only then does
-                       the row become a group that opens to reveal them. */
-                    item.lines.length === 1 ? (
+                    /* ⚠⚠ ONE WORD, ONE LINE (owner ruling 2026-09-09, migration 286). Every row
+                       here IS a line, named by its word: tap to edit, chevron for its payment
+                       periods. The plan used to nest one level deeper — a summed head that opened
+                       to reveal two lines on one word, the second of them named after its own month
+                       because nothing else told it apart — and that level never reached a figure:
+                       real money is matched to the WORD, never the line.
+                       ⚠ THE GROUP BELOW IS NOT THAT LEVEL COMING BACK. It is the word-LESS bucket,
+                       the only thing that can still hold several lines: pre-mig-243 rows with no
+                       word to be joined on, each carrying the description its coach typed. */
+                    item.itemId ? (
                       <BudgetLineRow
                         key={item.key}
                         line={{ ...item.lines[0], description: item.itemName }}
@@ -2853,31 +2948,22 @@ export function BudgetPlanPanel({
                           <td>{fmt(item.total)}</td>
                           <td />
                         </tr>
-                        {!isClosed(item.key) && item.lines.map(line => {
-                          /* ⚠ THE NOTE NAMES THE SUB-LINE, AND WITH NO NOTE ITS SCHEDULE DOES
-                             (owner ruling 2026-09-09, decision B2). The old fallback was the
-                             line's stored description — which the server keeps synced to the
-                             ITEM's name, so a note-less line echoed the row directly above it.
-                             On this repo's own fixture "Entry Fees" printed THREE times in one
-                             column, on the cost side, and nobody reported it because the rows
-                             still added up.
-                             ⚠ THE RULE IS SHARED with the money-in section below: fixing one half
-                             would leave the identical echo on the surface the other half is being
-                             aligned to. Half a fix reads worse than none. */
-                          const sub = mergedSubLineName(line);
-                          return (
-                            <BudgetLineRow
-                              key={line.id}
-                              line={{ ...line, description: sub.name, notes: null }}
-                              funding={false}
-                              hideWhen={!sub.showWhen}
-                              expanded={expandedLines.has(line.id)}
-                              canWrite={moneyCanWrite}
-                              onToggle={() => toggleLineExpanded(line.id)}
-                              onEdit={() => openEdit(line)}
-                            />
-                          );
-                        })}
+                        {/* ⚠ THE DESCRIPTION NAMES THESE, and only these. A word-less line's stored
+                            description is the one the coach typed and nothing keeps it synced to
+                            anything — unlike a worded line, whose description the server holds
+                            equal to its word (which is why a sub-row here used to echo the row
+                            above it). These rows are the only place that text is still a name. */}
+                        {!isClosed(item.key) && item.lines.map(line => (
+                          <BudgetLineRow
+                            key={line.id}
+                            line={line}
+                            funding={false}
+                            expanded={expandedLines.has(line.id)}
+                            canWrite={moneyCanWrite}
+                            onToggle={() => toggleLineExpanded(line.id)}
+                            onEdit={() => openEdit(line)}
+                          />
+                        ))}
                       </Fragment>
                     )
                   ))}
@@ -2990,61 +3076,21 @@ export function BudgetPlanPanel({
                             two cannot drift apart again.
                             ⚠ ALPHABETICAL now, where this kept creation order — one rule for the
                             whole table rather than a special case for half of it (decision A1). */}
-                        {!isClosed(sectionKey) && groupByItem(group.lines).map(item => (
-                          item.lines.length === 1 ? (
-                            /* The ordinary shape: the row IS the line, wearing its word. */
-                            <BudgetLineRow
-                              key={item.key}
-                              line={{ ...item.lines[0], description: item.itemName }}
-                              funding
-                              expanded={expandedLines.has(item.lines[0].id)}
-                              canWrite={moneyCanWrite}
-                              onToggle={() => toggleLineExpanded(item.lines[0].id)}
-                              onEdit={() => openEdit(item.lines[0])}
-                            />
-                          ) : (
-                            /* Two or more lines on one word: the summed head opens to reveal them,
-                               exactly as a cost item does. */
-                            <Fragment key={item.key}>
-                              <tr
-                                className={`${shared.rowTappable} ${styles.fundingRow}`}
-                                onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(item.key); }}
-                              >
-                                <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
-                                  <button
-                                    type="button"
-                                    className={shared.moneyGridToggle}
-                                    aria-expanded={!isClosed(item.key)}
-                                    onClick={e => { e.stopPropagation(); toggleSectionClosed(item.key); }}
-                                  >
-                                    {isClosed(item.key)
-                                      ? <ChevronRight size={14} aria-hidden />
-                                      : <ChevronDown size={14} aria-hidden />}
-                                    <span>{item.itemName}</span>
-                                  </button>
-                                </th>
-                                <td className={styles.schedCell} />
-                                <td className={styles.fundingAmount}>{fmt(item.total)}</td>
-                                <td />
-                              </tr>
-                              {!isClosed(item.key) && item.lines.map(line => {
-                                const sub = mergedSubLineName(line);
-                                return (
-                                  <BudgetLineRow
-                                    key={line.id}
-                                    line={{ ...line, description: sub.name, notes: null }}
-                                    funding
-                                    hideWhen={!sub.showWhen}
-                                    expanded={expandedLines.has(line.id)}
-                                    canWrite={moneyCanWrite}
-                                    onToggle={() => toggleLineExpanded(line.id)}
-                                    onEdit={() => openEdit(line)}
-                                  />
-                                );
-                              })}
-                            </Fragment>
-                          )
-                        ))}
+                        {/* ⚠⚠ ONE WORD, ONE LINE HERE TOO (owner ruling 2026-09-09, migration 286).
+                            `groupByItem` keys a word-less money-in line to itself, so on this side
+                            every group holds exactly one line and every row IS a line. The summed
+                            head that opened to reveal twins is gone with the twins. */}
+                        {!isClosed(sectionKey) && groupByItem(group.lines).flatMap(item => item.lines.map(line => (
+                          <BudgetLineRow
+                            key={line.id}
+                            line={{ ...line, description: item.itemName }}
+                            funding
+                            expanded={expandedLines.has(line.id)}
+                            canWrite={moneyCanWrite}
+                            onToggle={() => toggleLineExpanded(line.id)}
+                            onEdit={() => openEdit(line)}
+                          />
+                        )))}
                       </Fragment>
                     );
                   })}
@@ -3370,6 +3416,17 @@ export function BudgetPlanPanel({
                      reaches THIS handler sets it. */
                   itemActualSource: v.actualSource ?? null,
                   totalAmount:  f.totalAmount || (v.suggestedAmount ? String(v.suggestedAmount) : f.totalAmount),
+                  /* ⚠ THE WORD'S EXISTING NOTE COMES WITH IT. One word carries one line, so it
+                     carries one note — and a join that silently blanked it would lose words the
+                     coach wrote, from a control that says "pick a category". Never over anything
+                     already typed here: theirs wins. */
+                  /* ⚠ THE WORD'S EXISTING NOTE COMES WITH IT — and LEAVES with it. A pre-fill written
+                     into the field is indistinguishable from typing, so the first version kept
+                     item A's note after the coach reconsidered and picked item B, saving B's brand
+                     new line wearing A's words. It is replaced on every pick unless the coach has
+                     actually typed in the field (`noteTyped`), which is the only thing that must
+                     survive a change of mind. */
+                  notes: noteTyped.current ? f.notes : (editingLine ? f.notes : (lineHolding(v.itemId)?.notes ?? '')),
                 }))}
                 createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
                 createItemMode="coach"
@@ -3420,6 +3477,34 @@ export function BudgetPlanPanel({
               {formLineKind && KIND_HINT_LONG[formLineKind] && (
                 <p className={styles.kindHint}>{KIND_HINT_LONG[formLineKind]}</p>
               )}
+
+              {/* ⚠⚠ "ALREADY ON THIS PLAN" — THE MOMENT THE WORD IS PICKED, NOT AT SAVE (owner
+                  ruling 2026-09-09, mockup a6a3b078 specimen 1). A coach who is about to add to
+                  something they already budgeted should learn it while they can still change their
+                  mind; the same fact delivered on the way out is a surprise, which is the thing
+                  worth designing away.
+                  ⚠ AND THE WAY OUT IS A DOOR, NOT A REFUSAL. "Open that line instead" is the undo
+                  story for this whole change: a coach meaning to CORRECT the $600 rather than add
+                  to it used to get there by deleting the twin they had just made, and after this
+                  there is no twin to delete. Losing that escape is how a merge becomes manual
+                  arithmetic — see the plan's Q2. */}
+              {addingToLine && (
+                <div className={styles.addToLine}>
+                  <p className={styles.addToHead}>{form.itemName} is already on this plan</p>
+                  <p className={styles.addToFig}>
+                    {fmt(Number(addingToLine.totalAmount))} planned
+                    {' · '}
+                    {whenMonthsText(whenSummary(addingToLine.periods ?? [], Number(addingToLine.totalAmount) || 0))}
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.addToDoor}
+                    onClick={() => openEdit(addingToLine)}
+                  >
+                    Open that line instead
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* ⚠ THE TYPED DESCRIPTION IS GONE FROM BOTH DIRECTIONS (mig 243), and its removal from
@@ -3440,7 +3525,12 @@ export function BudgetPlanPanel({
               {/* "Amount", not "Total Amount ($)" (owner 2026-09-04) — every other money form in the portal
                   says Amount, and the currency marker was a third thing the label was doing that
                   the field itself already says. */}
-              <label className={styles.label} htmlFor={FOCUS_TOTAL}>Amount *</label>
+              {/* ⚠ "Amount to add" WHEN THE WORD IS ALREADY THERE. The figure typed here is not the
+                  line's total any more — it joins one — and a label that still said "Amount" beside
+                  a panel reading "$600.00 planned" is the ambiguity that makes a coach type 1500. */}
+              <label className={styles.label} htmlFor={FOCUS_TOTAL}>
+                {addingToLine ? 'Amount to add *' : 'Amount *'}
+              </label>
               <input
                 id={FOCUS_TOTAL}
                 className={`${styles.input} ${flagged('total') ? styles.inputBad : ''}`}
@@ -3466,8 +3556,14 @@ export function BudgetPlanPanel({
                 in a row of captions.
                 ⚠ NO GROUP HINT EITHER. A disabled "Save Line" already says the form is waiting. */}
             <div className={styles.field}>
+              {/* ⚠ THE DATES BELONG TO THE MONEY BEING ADDED, not to the joined total — so when
+                  there is an amount to name, the question names it. Falls back to the plain wording
+                  before anything is typed: "When does this $0.00 happen?" would be worse than the
+                  general question. */}
               <span className={`${styles.label} ${flagged('when') ? styles.labelBad : ''}`} id={FOCUS_WHEN}>
-                When does this money move? *
+                {addingToLine && parseFloat(form.totalAmount) > 0
+                  ? `When does this ${fmt(parseFloat(form.totalAmount))} happen? *`
+                  : 'When does this money move? *'}
               </span>
               <div
                 className={`${styles.whenAnswers} ${flagged('when') ? styles.whenAnswersBad : ''}`}
@@ -3852,32 +3948,47 @@ export function BudgetPlanPanel({
               </div>
             )}
 
-            {/* Notes — and, on a SECOND line for an item already in the plan, the one question
-                that keeps the fold and the export from being nameless (P1, owner Q1). Same field,
-                same column: the answer IS the note, so nothing new is stored and an existing note
-                edits in place under the sharper label. */}
+            {/* ⚰ "WHAT MAKES THIS LINE DIFFERENT?" IS GONE, AND SO IS ITS HINT (owner ruling
+                2026-09-09). The field mutated its own label and grew a paragraph the moment a coach
+                picked a word already on the plan — asking them to invent a phrase telling two rows
+                apart. Nothing downstream could use it: money is matched to the WORD, so the phrase
+                named a distinction no report could make.
+                ⚠ NOTHING EXPLAINS THE PRE-FILLED NOTE. When a join pre-fills this field the coach
+                can SEE it; a sentence saying "this is the word's one note" is exactly the
+                over-explaining `decision_no_line_count_on_a_row` bans — the test is not "would this
+                be useful?" but "does the coach get this fact by looking anyway?" */}
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="budget-line-notes">
-                {itemSiblingCount > 0 ? 'What makes this line different?' : 'Notes'}
-              </label>
+              <label className={styles.label} htmlFor="budget-line-notes">Notes</label>
               <input
                 id="budget-line-notes"
                 className={styles.input}
                 type="text"
                 value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                placeholder={itemSiblingCount > 0 ? 'e.g. Regional qualifier' : 'Any additional context'}
+                onChange={e => { noteTyped.current = true; setForm(f => ({ ...f, notes: e.target.value })); }}
+                placeholder="Any additional context"
                 maxLength={500}
               />
-              {itemSiblingCount > 0 && (
-                <p className={styles.kindHint}>
-                  {form.itemName || 'This item'} already has {itemSiblingCount === 1
-                    ? 'a line' : `${itemSiblingCount} lines`} on this plan, so they share one row —
-                  a few words here name this one inside it. Without them it is named by when the
-                  money moves.
-                </p>
-              )}
             </div>
+
+            {/* ⚠ THE ARITHMETIC, WHERE THE COACH IS ABOUT TO COMMIT IT. Two quiet rows: what the
+                word already holds plus what is being added, and what its schedule becomes. The
+                second row is the one that earns its place — the months view is where this whole
+                change pays off, so a coach must be able to see that their new date joined the old
+                ones rather than replacing them. */}
+            {addingToLine && parseFloat(form.totalAmount) > 0 && (
+              <div className={styles.joinPreview}>
+                <p className={styles.joinRow}>
+                  <span>
+                    {fmt(Number(addingToLine.totalAmount))} planned&nbsp; +&nbsp; {fmt(parseFloat(form.totalAmount))}
+                  </span>
+                  <strong>{fmt(r2(Number(addingToLine.totalAmount) + parseFloat(form.totalAmount)))}</strong>
+                </p>
+                <p className={styles.joinRow}>
+                  <span>Scheduled</span>
+                  <span>{joinedScheduleSummary}</span>
+                </p>
+              </div>
+            )}
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}
             <div className={shared.modalFooter}>
@@ -3908,8 +4019,14 @@ export function BudgetPlanPanel({
                 </button>
               )}
               <button type="button" className={shared.btnGhost} onClick={closeLineModal}>Cancel</button>
+              {/* ⚠ THE BUTTON NAMES THE WORD IT IS ABOUT TO CHANGE. "Add Line" would be a lie on a
+                  save that creates no line — and it is the last thing a coach reads before the
+                  money joins something they already budgeted. */}
               <button type="button" className={shared.btnPrimary} onClick={handleSaveLine} disabled={saving}>
-                {saving ? 'Saving…' : editingLine ? 'Save Changes' : 'Add Line'}
+                {saving ? 'Saving…'
+                  : editingLine ? 'Save Changes'
+                  : addingToLine ? `Add to ${form.itemName}`
+                  : 'Add Line'}
               </button>
             </div>
           </div>

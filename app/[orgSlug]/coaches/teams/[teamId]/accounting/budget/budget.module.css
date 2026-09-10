@@ -2022,3 +2022,65 @@
 @media (max-width: 768px) {
   .checklistCat { min-height: var(--tap-min, 44px); }
 }
+
+/* ══ ONE WORD, ONE LINE — the join, on the add form (owner ruling 2026-09-09) ══════════════════
+   Two blocks, deliberately different weights. `.addToLine` is a STATEMENT OF FACT the coach needs
+   before they type ("this word is already here"), so it carries the olive rail every consequence
+   panel in this form uses. `.joinPreview` is ARITHMETIC they are about to commit, so it sits quiet
+   above the footer in the same register as the period sum row — a total, not an announcement. */
+.addToLine {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.2));
+  border-left: 3px solid var(--home-olive, var(--logic-lime));
+  border-radius: 0 8px 8px 0;
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.10));
+}
+.addToHead {
+  margin: 0;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.addToFig {
+  margin: 0.15rem 0 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+/* The way back to the existing line. A link, not a button: it LEAVES this form rather than doing
+   anything to it, and a second filled control beside "Add to …" would compete with the save. */
+.addToDoor {
+  margin-top: 0.35rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--home-olive, var(--logic-lime));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.joinPreview {
+  margin-bottom: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--home-line-strong, rgba(255, 255, 255, 0.2));
+}
+.joinRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.2rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.joinRow:last-child { margin-bottom: 0; }
+.joinRow strong { color: var(--text-primary); }
+
+/* Same touch floor as every other in-form action through the phone band. */
+@media (max-width: 768px) {
+  .addToDoor { min-height: var(--tap-min, 44px); }
+}

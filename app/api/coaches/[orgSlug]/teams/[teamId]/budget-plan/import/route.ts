@@ -12,7 +12,7 @@ import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
 import { isFundingKind, FUNDING_LINE_KINDS } from '@/lib/coach-budget-totals';
 import {
-  itemVisibleToTeam, categoryVisibleToTeam,
+  itemVisibleToTeam, categoryVisibleToTeam, isDuplicateItemLineError,
   type OwnedBudgetItem, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 import {
@@ -250,7 +250,8 @@ export const POST = withObservability(async (req: Request,
     // and category, turning money coming in into money going out.
     const { data: lineRows } = await supabaseAdmin
       .from('rep_budget_lines')
-      .select('id, description, total_amount, sort_order, line_kind, budget_categories(name)')
+      // ⚠ `item_id` rides along for the one-word-one-line guard below (owner ruling 2026-09-09).
+      .select('id, description, item_id, total_amount, sort_order, line_kind, budget_categories(name)')
       .eq('program_year_id', programYear.id)
       .order('sort_order');
 
@@ -272,6 +273,20 @@ export const POST = withObservability(async (req: Request,
     // â  Measured over EVERY line, funding included: ordering is a property of the whole plan, and
     // taking the maximum over the cost-only subset lets an imported line collide with the
     // sort_order of a funding line that already holds it.
+    /* ⚠⚠ ONE WORD, ONE LINE ON A PLAN, THROUGH THIS DOOR TOO (owner ruling 2026-09-09, migration
+       286). This is one of the three doors that create budget lines, and the only one where the
+       coach is not watching the plan while it happens — so a sheet holding two rows that snap to
+       the same library word used to mint a twin in silence.
+       Two lookups, and both are needed: the plan's existing words catch a NEW row for a word that
+       is already there, and the words written during this run catch two rows in the SAME file
+       naming one word — which the review cannot see, because it matches sheet text against the
+       database, never rows against each other. */
+    const lineIdByItem = new Map<string, string>();
+    for (const l of (lineRows ?? []) as Array<Record<string, unknown>>) {
+      if (l.item_id) lineIdByItem.set(l.item_id as string, l.id as string);
+    }
+    const itemsWrittenThisRun = new Set<string>();
+
     let nextSortOrder = (lineRows ?? []).reduce(
       (max: number, l: Record<string, unknown>) => Math.max(max, (l.sort_order as number) ?? 0), -1,
     ) + 1;
@@ -352,6 +367,24 @@ export const POST = withObservability(async (req: Request,
         }
       }
 
+      /* ⚠ THE WORD IS ALREADY SPOKEN FOR — SKIPPED, NOT SUMMED AND NOT OVERWRITTEN. A file has one
+         row per word, so a second row naming a word this plan (or this file) already used is a
+         mistake in the sheet, and the coach is the only one who can say which figure they meant.
+         Summing would invent an amount nobody typed; overwriting would lose one in silence, which
+         is what used to happen when two rows shared a match. It lands in the skipped list with the
+         word named, beside every other row that needs a look. */
+      const takenLineId = item ? (itemsWrittenThisRun.has(item.id) ? 'this-file' : lineIdByItem.get(item.id)) : undefined;
+      if (item && takenLineId && takenLineId !== row.matchedLineId) {
+        skipped.push({
+          rowNumber: row.rowNumber,
+          name: label,
+          reason: takenLineId === 'this-file'
+            ? `${item.name} appears more than once in this file — only the first row was imported.`
+            : `${item.name} is already on this plan. Change that line instead, or give this row a different item.`,
+        });
+        continue;
+      }
+
       let lineId = row.matchedLineId;
       if (row.outcome === 'update' && lineId) {
         const { error } = await supabaseAdmin
@@ -395,11 +428,25 @@ export const POST = withObservability(async (req: Request,
           })
           .select('id')
           .single();
-        if (error || !data) { failed.push({ rowNumber: row.rowNumber, name: label, error: error?.message ?? 'Could not be saved' }); continue; }
+        if (error || !data) {
+          /* ⚠ THE INDEX REFUSED A SECOND LINE ON ONE WORD — say so in the coach's words rather than
+             Postgres's. The map above catches the ordinary case; this is the race it cannot close,
+             where a single-line save lands between this run's read and this insert. */
+          failed.push({
+            rowNumber: row.rowNumber,
+            name: label,
+            error: isDuplicateItemLineError(error)
+              ? `${item?.name ?? label} is already on this plan — change that line instead.`
+              : (error?.message ?? 'Could not be saved'),
+          });
+          continue;
+        }
         lineId = data.id as string;
         nextSortOrder += 1;
         created.push({ rowNumber: row.rowNumber, name: label });
       }
+      // Written — so a later row in this same file naming the same word is caught above.
+      if (item) itemsWrittenThisRun.add(item.id);
 
       // Payment periods, when the sheet had month columns. A full replace, matching the periods
       // endpoint's own contract: the sheet is the coach's statement of when this line is paid.

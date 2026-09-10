@@ -1,0 +1,929 @@
+<title>One Word, One Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   THE CHROME — a plan table's own drafting sheet. Cool blue-grey, indigo
+   rules, and a left rail of INDENT GUIDES: the page is about how many levels
+   deep a budget goes, so the document itself is ruled by level. Deliberately
+   cool so the warm coach-portal frames read as specimens pinned to it.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --sheet:      #EBEDF2;
+  --sheet-2:    #F7F8FB;
+  --sheet-3:    #DFE3EC;
+  --rule:       rgba(28, 38, 72, 0.13);
+  --rule-hard:  rgba(28, 38, 72, 0.30);
+  --ink:        #191F33;
+  --ink-2:      #333B55;
+  --dim:        #5C6580;
+  --indigo:     #33437F;
+  --indigo-soft: rgba(51, 67, 127, 0.10);
+  --clay:       #9A4527;
+  --clay-soft:  rgba(154, 69, 39, 0.10);
+  --moss:       #3B6140;
+  --moss-soft:  rgba(59, 97, 64, 0.11);
+
+  /* ── The PRODUCT's own warm tokens, fixed in both sheet themes: a specimen
+        shows the coaches portal as the coach actually sees it. ── */
+  --p-paper:       #F8F4ED;
+  --p-card:        #FFFFFF;
+  --p-ink:         #241E15;
+  --p-ink-soft:    #4A4235;
+  --p-dim:         #615A54;
+  --p-line:        rgba(70, 55, 30, 0.12);
+  --p-line-strong: rgba(70, 55, 30, 0.22);
+  --p-fill:        rgba(70, 55, 30, 0.075);
+  --p-band:        #E4E8F0;
+  --p-olive:       #57651E;
+  --p-win:         #34662A;
+  --p-amber:       #835006;
+  --p-lime:        #D9F99D;
+  --p-radius:      13px;
+  --p-radius-sm:   8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet:       #0E1220;
+    --sheet-2:     #161C2E;
+    --sheet-3:     #1E2639;
+    --rule:        rgba(178, 192, 226, 0.15);
+    --rule-hard:   rgba(178, 192, 226, 0.34);
+    --ink:         #E5E9F4;
+    --ink-2:       #C4CBDF;
+    --dim:         #939CB8;
+    --indigo:      #93A6E8;
+    --indigo-soft: rgba(147, 166, 232, 0.14);
+    --clay:        #E08A64;
+    --clay-soft:   rgba(224, 138, 100, 0.14);
+    --moss:        #86C08E;
+    --moss-soft:   rgba(134, 192, 142, 0.14);
+  }
+}
+:root[data-theme="dark"] {
+  --sheet:       #0E1220;
+  --sheet-2:     #161C2E;
+  --sheet-3:     #1E2639;
+  --rule:        rgba(178, 192, 226, 0.15);
+  --rule-hard:   rgba(178, 192, 226, 0.34);
+  --ink:         #E5E9F4;
+  --ink-2:       #C4CBDF;
+  --dim:         #939CB8;
+  --indigo:      #93A6E8;
+  --indigo-soft: rgba(147, 166, 232, 0.14);
+  --clay:        #E08A64;
+  --clay-soft:   rgba(224, 138, 100, 0.14);
+  --moss:        #86C08E;
+  --moss-soft:   rgba(134, 192, 142, 0.14);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--sheet);
+  color: var(--ink);
+  font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15.5px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 40px 22px 110px; }
+
+/* ── Masthead ──────────────────────────────────────────────────────────── */
+.mast { border-top: 4px solid var(--indigo); padding-top: 18px; margin-bottom: 30px; }
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--dim);
+  display: flex; flex-wrap: wrap; gap: 5px 16px; margin: 0 0 12px;
+}
+.eyebrow span::after { content: " ·"; color: var(--rule-hard); }
+.eyebrow span:last-child::after { content: ""; }
+h1 {
+  font-family: Archivo, system-ui, sans-serif;
+  font-weight: 700; font-size: clamp(34px, 5.4vw, 52px);
+  letter-spacing: -0.022em; line-height: 1.03; margin: 0 0 14px;
+  text-wrap: balance;
+}
+.stand { max-width: 64ch; font-size: 17.5px; color: var(--ink-2); margin: 0 0 6px; }
+.stand strong { color: var(--ink); font-weight: 600; }
+
+/* ── Legend ────────────────────────────────────────────────────────────── */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 10px;
+  margin: 26px 0 0; padding: 14px 16px;
+  background: var(--sheet-2); border: 1px solid var(--rule);
+  border-radius: 3px;
+}
+.tag {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 2px;
+  white-space: nowrap;
+}
+.tag--new       { background: var(--indigo-soft); color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); }
+.tag--restyled  { background: var(--moss-soft);   color: var(--moss);   box-shadow: inset 0 0 0 1px var(--moss); }
+.tag--unchanged { background: transparent;        color: var(--dim);    box-shadow: inset 0 0 0 1px var(--rule-hard); }
+.tag--gone      { background: var(--clay-soft);   color: var(--clay);   box-shadow: inset 0 0 0 1px var(--clay); }
+.legend .lg-txt { font-size: 13.5px; color: var(--dim); align-self: center; }
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+.sec { margin-top: 54px; }
+.sec-head { border-bottom: 1px solid var(--rule-hard); padding-bottom: 10px; margin-bottom: 20px; }
+.sec-num {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+  color: var(--indigo); text-transform: uppercase; display: block; margin-bottom: 5px;
+}
+h2 {
+  font-family: Archivo, system-ui, sans-serif;
+  font-weight: 600; font-size: clamp(21px, 3vw, 27px);
+  letter-spacing: -0.014em; margin: 0; text-wrap: balance;
+}
+.lede { max-width: 68ch; color: var(--ink-2); margin: 0 0 22px; }
+.lede code, .inline-code {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.9em; background: var(--sheet-3); padding: 1px 5px; border-radius: 2px;
+}
+
+/* ── The level rail — the page's one structural motif ──────────────────── */
+.levels {
+  background: var(--sheet-2); border: 1px solid var(--rule);
+  border-left: 3px solid var(--indigo);
+  padding: 18px 20px; margin: 0 0 24px; border-radius: 0 3px 3px 0;
+  overflow-x: auto;
+}
+.lv { display: flex; align-items: baseline; gap: 14px; padding: 5px 0; white-space: nowrap; }
+.lv-k {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--dim); width: 92px; flex: none;
+}
+.lv-v { font-family: Inter, system-ui, sans-serif; font-size: 15px; color: var(--ink); }
+.lv-note { font-size: 13px; color: var(--dim); }
+.lv--d1 .lv-v { padding-left: 0; }
+.lv--d2 .lv-v { padding-left: 22px; }
+.lv--d3 .lv-v { padding-left: 44px; }
+.lv--d4 .lv-v { padding-left: 66px; }
+.lv--cut .lv-v { color: var(--clay); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.lv--cut .lv-k { color: var(--clay); }
+
+/* ── Specimen frames ───────────────────────────────────────────────────── */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
+.one { display: grid; grid-template-columns: 1fr; gap: 18px; }
+
+.frame { border: 1px solid var(--rule-hard); background: var(--sheet-2); border-radius: 3px; overflow: hidden; }
+.frame-cap {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase;
+  padding: 8px 12px; border-bottom: 1px solid var(--rule);
+  display: flex; justify-content: space-between; gap: 10px; align-items: center;
+}
+.cap--before { background: var(--clay-soft); color: var(--clay); }
+.cap--after  { background: var(--indigo-soft); color: var(--indigo); }
+.cap--same   { background: var(--sheet-3); color: var(--dim); }
+.frame-body { padding: 14px; overflow-x: auto; }
+
+/* ══ THE PRODUCT SPECIMEN — coaches portal, warm ═══════════════════════════ */
+.app {
+  background: var(--p-paper); color: var(--p-ink);
+  font-family: Inter, system-ui, sans-serif; font-size: 13.5px; line-height: 1.45;
+  border: 1px solid var(--p-line-strong); border-radius: var(--p-radius);
+  padding: 12px; min-width: 400px;
+}
+.app-head {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  padding: 2px 4px 12px; border-bottom: 1px solid var(--p-line); margin-bottom: 10px;
+}
+.app-team { font-family: "Barlow Condensed", Archivo, sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+.app-crumb { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--p-dim); letter-spacing: 0.03em; }
+
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl td, .tbl th { padding: 7px 10px; text-align: left; vertical-align: baseline; }
+.tbl th { font-weight: 600; }
+.amt {
+  text-align: right; white-space: nowrap;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; font-size: 12.5px;
+}
+.when { color: var(--p-dim); font-size: 11.5px; white-space: nowrap; }
+
+tr.band td {
+  background: var(--p-band); color: var(--p-olive);
+  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 10px;
+}
+tr.cat td { background: var(--p-fill); font-weight: 700; border-top: 1px solid var(--p-line); }
+tr.item td { background: var(--p-fill); font-weight: 600; }
+tr.line td { background: var(--p-card); border-top: 1px solid var(--p-line); }
+tr.sub td  { background: var(--p-card); color: var(--p-ink-soft); border-top: 1px solid var(--p-line); }
+tr.per td  { background: var(--p-paper); color: var(--p-dim); font-size: 12px; border-top: 1px dotted var(--p-line); }
+tr.total td { border-top: 2px solid var(--p-line-strong); font-weight: 700; background: var(--p-card); }
+tr.total .amt { font-weight: 700; font-size: 13px; }
+.pos { color: var(--p-win); }
+.ind1 { padding-left: 22px !important; }
+.ind2 { padding-left: 40px !important; }
+.ind3 { padding-left: 58px !important; }
+.chev { color: var(--p-dim); font-size: 10px; display: inline-block; width: 12px; }
+.pencil {
+  border: 1px solid var(--p-line-strong); border-radius: 6px;
+  padding: 0 5px; font-size: 11px; color: var(--p-dim); background: var(--p-card);
+}
+.mark {
+  background: var(--p-lime); border-radius: 3px; padding: 0 3px;
+  box-shadow: 0 0 0 1px rgba(87, 101, 30, 0.35);
+}
+.strike { color: var(--p-dim); text-decoration: line-through; }
+
+/* ── Product: a form ───────────────────────────────────────────────────── */
+.form { display: grid; gap: 11px; }
+.f-title { font-family: "Barlow Condensed", Archivo, sans-serif; font-weight: 700; font-size: 17px; }
+.f-lab { display: block; font-size: 11.5px; font-weight: 600; color: var(--p-ink-soft); margin-bottom: 3px; }
+.f-ctl {
+  border: 1px solid var(--p-line-strong); border-radius: var(--p-radius-sm);
+  background: var(--p-card); padding: 7px 9px; font-size: 13px; color: var(--p-ink);
+}
+.f-ctl.sel::after { content: "⌄"; float: right; color: var(--p-dim); }
+.f-ctl.dim { color: var(--p-dim); }
+.f-hint { font-size: 11.5px; color: var(--p-dim); margin: 4px 0 0; }
+.f-hint.warn { color: var(--p-amber); }
+.f-panel {
+  border: 1px solid var(--p-line-strong); border-left: 3px solid var(--p-olive);
+  background: var(--p-card); border-radius: var(--p-radius-sm);
+  padding: 9px 11px; display: grid; gap: 3px;
+}
+.f-panel .fp-h { font-weight: 700; font-size: 13px; }
+.f-panel .fp-s { font-size: 12px; color: var(--p-dim); font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+.f-link { color: var(--p-olive); font-weight: 600; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+.f-sum {
+  font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+  font-size: 12.5px; color: var(--p-ink-soft);
+  display: flex; justify-content: space-between; gap: 10px;
+  border-top: 1px dashed var(--p-line-strong); padding-top: 7px;
+}
+.f-sum b { font-size: 13.5px; }
+.f-foot { display: flex; gap: 8px; justify-content: flex-end; padding-top: 3px; }
+.btn { border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; }
+.btn--p { background: var(--p-lime); color: #2F3A10; border: 1px solid var(--p-olive); }
+.btn--g { background: transparent; color: var(--p-dim); border: 1px solid var(--p-line-strong); }
+
+/* ── Product: the records-behind panel ─────────────────────────────────── */
+.rpanel {
+  background: var(--p-card); border: 1px solid var(--p-line-strong);
+  border-radius: var(--p-radius); padding: 12px; display: grid; gap: 9px;
+}
+.rp-title { font-family: "Barlow Condensed", Archivo, sans-serif; font-weight: 700; font-size: 17px; }
+.rp-fig { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; font-size: 13px; }
+.rp-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  border-top: 1px solid var(--p-line); padding-top: 7px; font-size: 13px;
+}
+.rp-note { display: block; font-size: 11.5px; color: var(--p-dim); }
+.rp-foot { font-size: 11.5px; color: var(--p-dim); border-top: 1px solid var(--p-line); padding-top: 7px; }
+
+/* ── Product: the exported file ────────────────────────────────────────── */
+.sheetgrid { border-collapse: collapse; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; width: 100%; }
+.sheetgrid td, .sheetgrid th {
+  border: 1px solid var(--p-line-strong); padding: 4px 8px; background: var(--p-card); white-space: nowrap;
+}
+.sheetgrid th { background: var(--p-fill); font-weight: 600; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+.sheetgrid .num { text-align: right; font-variant-numeric: tabular-nums; }
+.sheetgrid .ghost { color: var(--p-dim); font-style: italic; }
+
+/* ── Captions under specimens ──────────────────────────────────────────── */
+.note {
+  margin: 14px 0 0; padding: 13px 15px;
+  background: var(--sheet-2); border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule-hard);
+  font-size: 14.5px; color: var(--ink-2); border-radius: 0 3px 3px 0;
+}
+.note p { margin: 0 0 8px; }
+.note p:last-child { margin-bottom: 0; }
+.note strong { color: var(--ink); }
+.note .tag { margin-right: 5px; vertical-align: 1px; }
+.tagline { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+
+/* ── Decision sheet ────────────────────────────────────────────────────── */
+.qs { display: grid; gap: 14px; }
+.q {
+  background: var(--sheet-2); border: 1px solid var(--rule-hard);
+  border-top: 3px solid var(--indigo); border-radius: 0 0 3px 3px; padding: 16px 18px;
+}
+.q-id {
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.13em; color: var(--indigo); text-transform: uppercase;
+}
+.q h3 { font-family: Archivo, sans-serif; font-weight: 600; font-size: 18px; margin: 4px 0 8px; letter-spacing: -0.01em; }
+.q p { margin: 0 0 8px; color: var(--ink-2); }
+.q p:last-child { margin-bottom: 0; }
+.q-rec {
+  display: block; margin-top: 10px; padding: 9px 12px;
+  background: var(--moss-soft); border-left: 3px solid var(--moss);
+  font-size: 14px; color: var(--ink-2); border-radius: 0 3px 3px 0;
+}
+.q-rec b { color: var(--moss); font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.foot {
+  margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--rule-hard);
+  font-size: 13px; color: var(--dim);
+}
+.foot code { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+</style>
+
+<div class="wrap">
+
+  <div class="mast">
+    <p class="eyebrow">
+      <span>Coaches portal</span><span>Money · Budget plan</span><span>Mockup round 1</span><span>2026-09-09</span>
+    </p>
+    <h1>One Word, One Line</h1>
+    <p class="stand">
+      A team's budget is four levels deep today: a category holds a word, a word holds one or more
+      <em>lines</em>, and a line holds its payment dates. This proposes cutting the third level out.
+      <strong>One budget word carries exactly one line on a plan</strong> — pick a word that is already
+      there and you add to it, rather than starting a twin nobody downstream can tell apart.
+    </p>
+    <div class="legend">
+      <span class="tag tag--new">New</span>
+      <span class="tag tag--restyled">Restyled</span>
+      <span class="tag tag--unchanged">Unchanged</span>
+      <span class="tag tag--gone">Goes away</span>
+      <span class="lg-txt">Every specimen below is tagged. Warm frames are the product; the cool sheet is this document.</span>
+    </div>
+  </div>
+
+  <!-- ═══ 1 — THE QUESTION ═══════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">The question</span>
+      <h2>Which level is doing work, and which one is only doing words?</h2>
+    </div>
+    <p class="lede">
+      Here is one tournament entry fee as the plan holds it today. Read down the indents: the third
+      level is the only one that never reaches a total, a variance, or a match against real spending.
+    </p>
+
+    <div class="levels">
+      <div class="lv lv--d1"><span class="lv-k">Category</span><span class="lv-v">Tournaments</span><span class="lv-note">groups the plan, the grid, the report</span></div>
+      <div class="lv lv--d2"><span class="lv-k">Word</span><span class="lv-v">Entry Fee</span><span class="lv-note">names the row; matches real spending to the plan</span></div>
+      <div class="lv lv--d3 lv--cut"><span class="lv-k">Line</span><span class="lv-v">Regional qualifier · Provincials</span><span class="lv-note">words only — never totalled, never matched</span></div>
+      <div class="lv lv--d4"><span class="lv-k">When</span><span class="lv-v">Nov 15 · Mar 1</span><span class="lv-note">drives the months view and cash flow</span></div>
+    </div>
+
+    <div class="note">
+      <p><strong>Money never moves at the third level.</strong> When a coach records what they actually
+      paid, it is matched to the <em>word</em> — never to the line. So two lines on one word are, to
+      every figure this product prints, one thing wearing two labels.</p>
+      <p><strong>And it already fails quietly.</strong> On our own test team the word "Entry Fees"
+      printed three times in one column for weeks and nobody reported it, because the rows still added
+      up. A level of detail that can be visibly wrong that long is not being read.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 2 — THE ADD FORM ═══════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 1 · the decision that matters most</span>
+      <h2>Adding a word the plan already has</h2>
+    </div>
+    <p class="lede">
+      The coach has $600.00 of entry fees planned for November. They are now adding $900.00 for the
+      March provincials. Today the form quietly changes shape and asks them to invent a distinguishing
+      word. Instead, it should tell them what is already there and add to it.
+    </p>
+
+    <div class="pair">
+      <div class="frame">
+        <div class="frame-cap cap--before"><span>Before — today on dev</span><span>Add Line</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <div class="form">
+              <div class="f-title">Add a budget line</div>
+              <div>
+                <span class="f-lab">Category and item</span>
+                <div class="f-ctl sel">Tournaments · Entry Fee</div>
+              </div>
+              <div>
+                <span class="f-lab">Total amount</span>
+                <div class="f-ctl">900.00</div>
+              </div>
+              <div>
+                <span class="f-lab">When does this happen?</span>
+                <div class="f-ctl dim">March</div>
+              </div>
+              <div>
+                <span class="f-lab"><span class="mark">What makes this line different?</span></span>
+                <div class="f-ctl dim">e.g. Regional qualifier</div>
+                <p class="f-hint"><span class="mark">Entry Fee already has a line on this plan, so they
+                share one row — a few words here name this one inside it. Without them it is named by
+                when the money moves.</span></p>
+              </div>
+              <div class="f-foot">
+                <span class="btn btn--g">Cancel</span><span class="btn btn--p">Save line</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-cap cap--after"><span>After — proposed</span><span>Add Line</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <div class="form">
+              <div class="f-title">Add a budget line</div>
+              <div>
+                <span class="f-lab">Category and item</span>
+                <div class="f-ctl sel">Tournaments · Entry Fee</div>
+              </div>
+              <div class="f-panel">
+                <span class="fp-h">Entry Fee is already on this plan</span>
+                <span class="fp-s">$600.00 planned · Nov</span>
+                <span class="f-link">Open that line instead</span>
+              </div>
+              <div>
+                <span class="f-lab">Amount to add</span>
+                <div class="f-ctl">900.00</div>
+              </div>
+              <div>
+                <span class="f-lab">When does this $900.00 happen?</span>
+                <div class="f-ctl dim">March</div>
+              </div>
+              <div>
+                <span class="f-lab">Notes</span>
+                <div class="f-ctl">Regional qualifier</div>
+              </div>
+              <div class="f-sum">
+                <span>$600.00 planned&nbsp; +&nbsp; $900.00</span><b>$1,500.00</b>
+              </div>
+              <div class="f-sum">
+                <span>Scheduled</span><span>Nov $600.00 · Mar $900.00</span>
+              </div>
+              <div class="f-foot">
+                <span class="btn btn--g">Cancel</span><span class="btn btn--p">Add to Entry Fee</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p class="tagline">
+        <span class="tag tag--gone">"What makes this line different?" + its hint</span>
+        <span class="tag tag--new">"Already on this plan" panel</span>
+        <span class="tag tag--new">"Amount to add" + running total</span>
+        <span class="tag tag--new">Save button names the word</span>
+        <span class="tag tag--unchanged">Category / item picker, When, Notes</span>
+      </p>
+      <p><strong>The panel appears the moment the word is picked</strong>, not at save. A surprise on the
+      way out is the thing worth designing away.</p>
+      <p><strong>"Open that line instead" is the escape.</strong> A coach who meant to correct the $600.00,
+      not add to it, has one click out — which is also the undo story: today a mistaken twin is one
+      delete, and after this it must not become manual arithmetic.</p>
+      <p><strong>No sentence explains the pre-filled note.</strong> Under the standing rule against
+      over-explaining, a coach who can see the note in the field does not need a caption telling them
+      it is the word's one note.</p>
+      <p><strong>The two schedules combine.</strong> November keeps its $600.00 and March gets its
+      $900.00 — the months view is where this change actually pays off, so the added money must never
+      land in "No date yet" by accident. See <span class="inline-code">Q4</span>.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 3 — THE PLAN LIST ══════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 2</span>
+      <h2>The row still opens — onto the schedule, not onto duplicate names</h2>
+    </div>
+    <p class="lede">
+      Today the plan list nests four deep, and the third level is where the echo lives: a line with no
+      distinguishing words is named by its month, which is also printed in the column beside it.
+    </p>
+
+    <div class="pair">
+      <div class="frame">
+        <div class="frame-cap cap--before"><span>Before — today on dev</span><span>Budget · List</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="tbl">
+              <tr class="cat"><td><span class="chev">▾</span>Tournaments</td><td class="when"></td><td class="amt">$2,500.00</td><td></td></tr>
+              <tr class="item"><td class="ind1"><span class="chev">▾</span>Entry Fee</td><td class="when"></td><td class="amt">$1,500.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2"><span class="chev">▾</span>Regional qualifier</td><td class="when">Nov</td><td class="amt">$600.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="per"><td class="ind3">Nov 15</td><td class="when"></td><td class="amt">$600.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2"><span class="chev">›</span><span class="mark">Mar</span></td><td class="when"></td><td class="amt">$900.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="line"><td class="ind1">Travel</td><td class="when">Mar</td><td class="amt">$1,000.00</td><td><span class="pencil">✎</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-cap cap--after"><span>After — proposed</span><span>Budget · List</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="tbl">
+              <tr class="cat"><td><span class="chev">▾</span>Tournaments</td><td class="when"></td><td class="amt">$2,500.00</td><td></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">▾</span>Entry Fee</td><td class="when">Nov · Mar</td><td class="amt">$1,500.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="per"><td class="ind2">Nov 15</td><td class="when"></td><td class="amt">$600.00</td><td></td></tr>
+              <tr class="per"><td class="ind2">Mar 1</td><td class="when"></td><td class="amt">$900.00</td><td></td></tr>
+              <tr class="line"><td class="ind1">Travel</td><td class="when">Mar</td><td class="amt">$1,000.00</td><td><span class="pencil">✎</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p class="tagline">
+        <span class="tag tag--gone">The sub-line level, and the rule that names it by its month</span>
+        <span class="tag tag--restyled">Entry Fee becomes an ordinary line row — one pencil, one When</span>
+        <span class="tag tag--unchanged">Category rows, indents, amounts, the chevron</span>
+      </p>
+      <p><strong>Every row on the plan becomes the same kind of thing.</strong> Today "Entry Fee" is a
+      summary row with no edit door of its own while "Travel" beside it is a real line — same
+      indent, two different objects. After, they are both lines: open either one to see when its money
+      moves, click the pencil to change it.</p>
+      <p><strong>The accepted loss:</strong> a coach can no longer delete "the regionals half" on its
+      own. They edit the word's total and its dates. In exchange, nothing in the plan can be created
+      that the report cannot tell apart.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 4 — THE MONTHS GRID ════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 3</span>
+      <h2>The by-period view was already right</h2>
+    </div>
+    <p class="lede">
+      This is the view that has always shown one row per word — it merges twins on the way in and its
+      rows cannot be opened at all. Nothing here changes; it simply stops being the odd one out.
+    </p>
+
+    <div class="one">
+      <div class="frame">
+        <div class="frame-cap cap--same"><span>Unchanged — before and after</span><span>Budget · By period</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="tbl">
+              <tr class="band"><td>Costs</td><td class="amt">No date yet</td><td class="amt">Nov</td><td class="amt">Dec</td><td class="amt">Mar</td><td class="amt">Total</td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Tournaments</td><td class="amt">—</td><td class="amt">600</td><td class="amt">—</td><td class="amt">1,900</td><td class="amt">2,500</td></tr>
+              <tr class="line"><td class="ind1">Entry Fee</td><td class="amt">—</td><td class="amt">600</td><td class="amt">—</td><td class="amt">900</td><td class="amt">1,500</td></tr>
+              <tr class="line"><td class="ind1">Travel</td><td class="amt">—</td><td class="amt">—</td><td class="amt">—</td><td class="amt">1,000</td><td class="amt">1,000</td></tr>
+              <tr class="total"><td>Planned costs</td><td class="amt">—</td><td class="amt">600</td><td class="amt">—</td><td class="amt">1,900</td><td class="amt">2,500</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p><strong>This is the argument in one picture.</strong> The months view has never been able to
+      show the third level, and no one has ever asked it to. The plan is being brought up to the
+      shape its own cash-flow view already uses.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 5 — BUDGET VS ACTUAL ═══════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 4</span>
+      <h2>What the Budget figure opens onto</h2>
+    </div>
+    <p class="lede">
+      On Budget vs. Actual, clicking a row's planned figure opens the records behind it. Today that
+      panel exists largely to explain the twins. After, it answers a better question: what is this
+      figure made of, and where do I go to change it?
+    </p>
+
+    <div class="pair">
+      <div class="frame">
+        <div class="frame-cap cap--before"><span>Before — today on dev</span><span>Budget vs. Actual</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <div class="rpanel">
+              <div class="rp-title">Entry Fee</div>
+              <div class="rp-fig"><b>$1,500.00</b> planned</div>
+              <div class="rp-row"><span>Entry Fee<span class="rp-note">Regional qualifier</span></span><span class="rp-fig">$600.00</span></div>
+              <div class="rp-row"><span>Entry Fee</span><span class="rp-fig">$900.00</span></div>
+              <div class="rp-foot"><span class="mark">These are shown as one row because they name the
+              same item.</span> Open one to edit it.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-cap cap--after"><span>After — proposed</span><span>Budget vs. Actual</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <div class="rpanel">
+              <div class="rp-title">Entry Fee</div>
+              <div class="rp-fig"><b>$1,500.00</b> planned</div>
+              <div class="rp-row"><span>Nov 15</span><span class="rp-fig">$600.00</span></div>
+              <div class="rp-row"><span>Mar 1</span><span class="rp-fig">$900.00</span></div>
+              <div class="rp-row"><span class="rp-note">Regional qualifier</span><span></span></div>
+              <div class="rp-foot">Open the line on your plan to change it.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p class="tagline">
+        <span class="tag tag--gone">The "shown as one row" explanation</span>
+        <span class="tag tag--restyled">The panel lists the schedule instead of the twins</span>
+        <span class="tag tag--unchanged">The panel itself, the figure, the door to the plan</span>
+      </p>
+      <p><strong>The sentence that explained the merge can retire</strong> — there is nothing left to
+      explain. The panel keeps its job as the only door from the report back to the plan line.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 6 — THE FILE ═══════════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 5 · the practical prize</span>
+      <h2>The exported plan becomes a flat table</h2>
+    </div>
+    <p class="lede">
+      The third level is why the exported plan is a nested document rather than a table — and nesting
+      is where the round-trip keeps breaking. Indented rows have been hidden in the spreadsheet and
+      re-imported as phantom lines before.
+    </p>
+
+    <div class="pair">
+      <div class="frame">
+        <div class="frame-cap cap--before"><span>Before — today on dev</span><span>Budget plan · export</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="sheetgrid">
+              <tr><th>Category / line</th><th>When</th><th class="num">Planned</th></tr>
+              <tr><td>Tournaments</td><td></td><td class="num">2,500.00</td></tr>
+              <tr><td>&nbsp;&nbsp;Entry Fee</td><td>Nov · Mar</td><td class="num">1,500.00</td></tr>
+              <tr><td class="ghost">&nbsp;&nbsp;&nbsp;&nbsp;— Regional qualifier</td><td>Nov</td><td class="num">600.00</td></tr>
+              <tr><td class="ghost">&nbsp;&nbsp;&nbsp;&nbsp;— Mar</td><td></td><td class="num">900.00</td></tr>
+              <tr><td>&nbsp;&nbsp;Travel</td><td>Mar</td><td class="num">1,000.00</td></tr>
+            </table>
+            <p class="f-hint warn" style="margin-top:8px">Two rows carry the same money at two depths.
+            Read the file back in and the plan can gain lines it never had.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-cap cap--after"><span>After — proposed</span><span>Budget plan · export</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="sheetgrid">
+              <tr><th>Category</th><th>Item</th><th>When</th><th class="num">Planned</th></tr>
+              <tr><td>Tournaments</td><td>Entry Fee</td><td>Nov · Mar</td><td class="num">1,500.00</td></tr>
+              <tr><td>Tournaments</td><td>Travel</td><td>Mar</td><td class="num">1,000.00</td></tr>
+              <tr><td>Facilities</td><td>Ice rental</td><td>Sep–Mar</td><td class="num">8,400.00</td></tr>
+            </table>
+            <p class="f-hint" style="margin-top:8px">One row per word. Every row is a line the importer
+            can match, edit and write back.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p class="tagline">
+        <span class="tag tag--gone">Indented sub-rows in the file</span>
+        <span class="tag tag--new">Category and Item as their own columns</span>
+      </p>
+      <p><strong>This is where the change pays for itself in defects rather than in taste.</strong> A flat
+      table is a shape the spreadsheet, the coach and the importer all agree on.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 7 — WHOLE SCREEN ═══════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 6 · the cumulative view</span>
+      <h2>The whole plan, before and after</h2>
+    </div>
+    <p class="lede">
+      Individual specimens each look reasonable; this is the one that decides. Same money, same
+      categories, same subtotals — twenty-one rows become fifteen, and the closing ladder moves up the
+      screen.
+    </p>
+
+    <div class="pair">
+      <div class="frame">
+        <div class="frame-cap cap--before"><span>Before — today on dev</span><span>Budget plan · List · 2026 Season</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <div class="app-head">
+              <span class="app-team">UAT Test Team</span>
+              <span class="app-crumb">UAT Test Org · 2026 Season</span>
+            </div>
+            <table class="tbl">
+              <tr class="band"><td colspan="4">Costs</td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Facilities</td><td class="when"></td><td class="amt">$8,400.00</td><td></td></tr>
+              <tr class="item"><td class="ind1"><span class="chev">▾</span>Ice rental</td><td class="when"></td><td class="amt">$6,400.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2">Main rink</td><td class="when">Sep</td><td class="amt">$3,200.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="sub"><td class="ind2"><span class="mark">Jan</span></td><td class="when"></td><td class="amt">$3,200.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="line"><td class="ind1">Dressing room</td><td class="when">Sep</td><td class="amt">$2,000.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Officials</td><td class="when"></td><td class="amt">$1,215.00</td><td></td></tr>
+              <tr class="item"><td class="ind1"><span class="chev">▾</span>Umpire fees</td><td class="when"></td><td class="amt">$1,215.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2"><span class="mark">Oct</span></td><td class="when"></td><td class="amt">$300.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="sub"><td class="ind2"><span class="mark">Jan</span></td><td class="when"></td><td class="amt">$615.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="sub"><td class="ind2"><span class="mark">Apr</span></td><td class="when"></td><td class="amt">$300.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Tournaments</td><td class="when"></td><td class="amt">$2,500.00</td><td></td></tr>
+              <tr class="item"><td class="ind1"><span class="chev">▾</span>Entry Fee</td><td class="when"></td><td class="amt">$1,500.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2">Regional qualifier</td><td class="when">Nov</td><td class="amt">$600.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="sub"><td class="ind2"><span class="mark">Mar</span></td><td class="when"></td><td class="amt">$900.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="line"><td class="ind1">Travel</td><td class="when">Mar</td><td class="amt">$1,000.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="total"><td>Planned costs</td><td></td><td class="amt">$12,115.00</td><td></td></tr>
+              <tr class="band"><td colspan="4">Funding</td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Fundraising</td><td class="when"></td><td class="amt pos">$2,800.00</td><td></td></tr>
+              <tr class="item"><td class="ind1"><span class="chev">▾</span>Fundraising drive</td><td class="when"></td><td class="amt pos">$2,800.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2">Chocolate sale</td><td class="when">Dec</td><td class="amt pos">$1,000.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="sub"><td class="ind2">Expected team share</td><td class="when">Mar · Apr</td><td class="amt pos">$1,800.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="total"><td>Planned funding</td><td></td><td class="amt pos">$2,800.00</td><td></td></tr>
+              <tr class="total"><td>Player installments</td><td></td><td class="amt">$9,315.00</td><td></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-cap cap--after"><span>After — proposed</span><span>Budget plan · List · 2026 Season</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <div class="app-head">
+              <span class="app-team">UAT Test Team</span>
+              <span class="app-crumb">UAT Test Org · 2026 Season</span>
+            </div>
+            <table class="tbl">
+              <tr class="band"><td colspan="4">Costs</td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Facilities</td><td class="when"></td><td class="amt">$8,400.00</td><td></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">›</span>Ice rental</td><td class="when">Sep · Jan</td><td class="amt">$6,400.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">›</span>Dressing room</td><td class="when">Sep</td><td class="amt">$2,000.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Officials</td><td class="when"></td><td class="amt">$1,215.00</td><td></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">›</span>Umpire fees</td><td class="when">Oct · Jan · Apr</td><td class="amt">$1,215.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Tournaments</td><td class="when"></td><td class="amt">$2,500.00</td><td></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">›</span>Entry Fee</td><td class="when">Nov · Mar</td><td class="amt">$1,500.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">›</span>Travel</td><td class="when">Mar</td><td class="amt">$1,000.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="total"><td>Planned costs</td><td></td><td class="amt">$12,115.00</td><td></td></tr>
+              <tr class="band"><td colspan="4">Funding</td></tr>
+              <tr class="cat"><td><span class="chev">▾</span>Fundraising</td><td class="when"></td><td class="amt pos">$2,800.00</td><td></td></tr>
+              <tr class="line"><td class="ind1"><span class="chev">›</span>Fundraising drive</td><td class="when">Dec · Mar · Apr</td><td class="amt pos">$2,800.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="total"><td>Planned funding</td><td></td><td class="amt pos">$2,800.00</td><td></td></tr>
+              <tr class="total"><td>Player installments</td><td></td><td class="amt">$9,315.00</td><td></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p class="tagline">
+        <span class="tag tag--unchanged">Bands, categories, subtotals, the closing ladder, every figure</span>
+        <span class="tag tag--restyled">Every word is now one openable line row</span>
+        <span class="tag tag--gone">Six echo rows named after their own month</span>
+      </p>
+      <p><strong>Not one total moves.</strong> Planned costs, Planned funding and Player installments are
+      identical on both sides — this changes how the plan is written and read, never what it adds up to.</p>
+      <p><strong>What the coach loses is the per-piece words.</strong> "Main rink" and "Regional qualifier"
+      become notes on their word rather than rows of their own. "Chocolate sale" and "Expected team
+      share" fold into one Fundraising drive line — worth a look, because that is the least comfortable
+      row on this page and it is a real case from our own test team.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 8 — THE PLANS THAT ALREADY HAVE TWINS ══════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Specimen 7 · the choice that sizes the prize</span>
+      <h2>What happens to the plans that already have twins</h2>
+    </div>
+    <p class="lede">
+      Closing the door on new twins does not remove the ones already written. Three doors create budget
+      lines — the form, "bring last season's plan", and the spreadsheet import — and every plan on both
+      databases may already hold a few. This is the decision that determines whether anything actually
+      gets simpler.
+    </p>
+
+    <div class="pair">
+      <div class="frame">
+        <div class="frame-cap cap--same"><span>Option A — leave them readable</span><span>smaller change</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="tbl">
+              <tr class="item"><td class="ind1"><span class="chev">▾</span>Entry Fee</td><td class="when"></td><td class="amt">$1,500.00</td><td></td></tr>
+              <tr class="sub"><td class="ind2">Regional qualifier</td><td class="when">Nov</td><td class="amt">$600.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="sub"><td class="ind2">Mar</td><td class="when"></td><td class="amt">$900.00</td><td><span class="pencil">✎</span></td></tr>
+            </table>
+            <p class="f-hint" style="margin-top:9px">Old plans keep their sub-lines; new saves cannot make
+            more. Every screen, the file and the importer must still know how to nest.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-cap cap--after"><span>Option B — one tidy, once</span><span>recommended</span></div>
+        <div class="frame-body">
+          <div class="app">
+            <table class="tbl">
+              <tr class="line"><td class="ind1"><span class="chev">▾</span>Entry Fee</td><td class="when">Nov · Mar</td><td class="amt">$1,500.00</td><td><span class="pencil">✎</span></td></tr>
+              <tr class="per"><td class="ind2">Nov 15</td><td class="when"></td><td class="amt">$600.00</td><td></td></tr>
+              <tr class="per"><td class="ind2">Mar 1</td><td class="when"></td><td class="amt">$900.00</td><td></td></tr>
+            </table>
+            <p class="f-hint" style="margin-top:9px">Twins are joined into one line: amounts summed, dates
+            kept, notes joined — <span class="strike">two notes</span> "Regional qualifier; Provincials".
+            Nesting comes out of every screen, the file and the importer.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <p><strong>Option A changes the form and nothing else.</strong> The nesting stays in the product
+      forever, because some plan somewhere still needs it — so the coach learns one less concept, but
+      no screen, file or importer gets simpler.</p>
+      <p><strong>Option B is the version that was worth asking about</strong>, and there will never be a
+      cheaper moment to take it: no live customers are keeping a real budget on production. It is a
+      one-way tidy — a coach cannot un-join the pieces afterwards.</p>
+      <p><strong>Before either is built, we count what is actually out there</strong> on both databases:
+      how many plans hold twins, and how many of those twins carry words worth keeping. If the answer
+      is "a handful, mostly on our own test and demo teams", Option B is close to free.</p>
+    </div>
+  </section>
+
+  <!-- ═══ 9 — DECISION SHEET ═════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="sec-num">Decision sheet</span>
+      <h2>Five rulings this needs before any code</h2>
+    </div>
+
+    <div class="qs">
+      <div class="q">
+        <span class="q-id">Q1 · the change itself</span>
+        <h3>One word, one line on a plan?</h3>
+        <p>A budget word can be used once per season plan. Picking it again adds to what is there.
+        Categories and payment dates are untouched; the plan goes from four levels to three.</p>
+        <span class="q-rec"><b>Recommend</b> Yes. Nothing below the word is ever totalled or matched to
+        real money, and the level has been visibly broken on our own fixture without anyone noticing.</span>
+      </div>
+
+      <div class="q">
+        <span class="q-id">Q2 · the form</span>
+        <h3>"Add to it", or "go open the line"?</h3>
+        <p>When the coach picks a word already on the plan, the form can add the new amount to the
+        existing line (Specimen 1), or refuse and send them to that line to edit it themselves.</p>
+        <span class="q-rec"><b>Recommend</b> Add to it, with "Open that line instead" as the door out.
+        Adding is what the coach came to do; being told to go somewhere else to do it is a worse form.</span>
+      </div>
+
+      <div class="q">
+        <span class="q-id">Q3 · the existing plans</span>
+        <h3>Leave the twins, or join them once?</h3>
+        <p>Option A keeps old sub-lines readable and leaves the nesting in the product permanently.
+        Option B joins them in a single pass — summing amounts, keeping every date, joining the notes —
+        and lets the nesting come out of the screens, the file and the importer.</p>
+        <span class="q-rec"><b>Recommend</b> Option B, and now. It is one-way, and the window where no
+        customer has a real budget on production is the cheapest it will ever be. First we count what
+        is out there, and report the number before touching anything.</span>
+      </div>
+
+      <div class="q">
+        <span class="q-id">Q4 · schedules that do not line up</span>
+        <h3>May one line's money be partly undated?</h3>
+        <p>Add $900.00 for March to a $600.00 line that never got a date, and the line is now $1,500.00
+        with only $900.00 scheduled. Today the form insists a split adds up to the total.</p>
+        <span class="q-rec"><b>Recommend</b> Allow it — the months view already has a "No date yet"
+        column and shows the gap honestly. The alternative is forcing a coach to invent a date for money
+        they deliberately left undated.</span>
+      </div>
+
+      <div class="q">
+        <span class="q-id">Q5 · the report's panel</span>
+        <h3>Does the Budget figure still open a panel?</h3>
+        <p>With one line per word, the panel behind the planned figure has one record to show. It could
+        become a straight link to the plan line instead.</p>
+        <span class="q-rec"><b>Recommend</b> Keep the panel, showing the schedule (Specimen 4). It is the
+        only door from the report back to the plan, and "what is this figure made of" is still a real
+        question — the answer is just the dates now.</span>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">
+    Plan: <code>docs/projects/active/COACH_BUDGET_ONE_WORD_ONE_LINE_PLAN.md</code> ·
+    PM brief: <code>…_PM_BRIEF.md</code> · Mockup source: <code>…_MOCKUP.html</code><br>
+    Specimens are drawn with the coaches portal's own tokens. Figures are from the UAT test team and are
+    examples, not production data.
+  </p>
+
+</div>

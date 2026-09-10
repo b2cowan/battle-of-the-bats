@@ -78,6 +78,13 @@ export async function carryBudgetPlan(args: {
     .eq('team_id', args.teamId)
     .order('sort_order');
 
+  /* ⚠ NO ONE-WORD-ONE-LINE GUARD HERE, AND THAT IS A FACT ABOUT THE CALLERS (owner ruling
+     2026-09-09, migration 286). Both of them copy into an EMPTY plan: the rollover mints the
+     program year first, and "bring last season's plan" 409s unless the target has no lines. The
+     source cannot hold twins either — the unique index covers every season, not just the current
+     one. If a third caller ever copies into a plan that already has words, it must skip the words
+     already there; until then a guard here would be code no path can reach. A collision would
+     still be caught, as a `failed` line rather than a silent twin. */
   for (const line of (oldLines ?? []) as BudgetLineRow[]) {
     try {
       const { data: newLine, error: lineErr } = await supabaseAdmin

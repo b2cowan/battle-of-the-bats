@@ -984,7 +984,7 @@ if (!existingLines?.length) {
        the SUM ruling had no fixture coverage anywhere, for two months. Corrected rather than deleted,
        because the claim was the useful part. The two-line item it describes is seeded below. */
     { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    ...taxonomyFor('Diamond permits'), sort_order: 2 },
-    { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
+    { description: 'Spring classic entry', total_amount: 2500, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
     { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', ...taxonomyFor('Chocolate sale'), sort_order: 4 },
     /* ⚠ NO NOTE, DELIBERATELY — this is the sub-line that must render as its schedule ("Oct")
        rather than echoing "Chocolate sale" one row above it. A note here would silently remove the
@@ -1268,41 +1268,54 @@ if (!existingMoneyTag?.length) {
 }
 
 /**
- * ⚠⚠ TWO BUDGET LINES ON ONE ITEM — the owner's SUM ruling, which nothing rendered had ever shown.
+ * ⚠⚠ ONE WORD, ONE LINE — AND THE FIXTURE THAT USED TO PROVE THE OPPOSITE.
  *
- * The line block above carried a comment claiming it seeded this shape. It did not: every description
- * maps to its own item, so **the ruling had no fixture coverage at all** — not on the plan page (where
- * two lines on one item become a group header that opens), not on the report (where the row captions
- * itself "2 lines"), and not on the Months grid.
+ * This block seeded a deliberate SECOND line on "Entry Fees" so the plan, the report and the
+ * Months grid all had the summed-and-openable row to render. That shape is gone (owner ruling
+ * 2026-09-09, migration 286): a word carries one line and the database refuses a second, so the
+ * insert would now fail and leave the fixture a row short of the totals every walk reads.
  *
- * It matters most for the grid. A month cell on a two-line row cannot know whose payment dates a coach
- * means, so it opens a chooser (owner-approved 2026-08-17) — and **that chooser was reachable on no
- * fixture in the repo**, which means the rendered layout sweep could not see it and owner QA could not
- * walk it. A screen swept in its emptiest state is the trap this file exists to end.
+ * ⚠ ITS MONEY MOVED, IT DID NOT VANISH. "Spring classic entry" is seeded at $2,500 — the old
+ * $1,600 plus this row's $900 — and the repair below folds the twin into it on any fixture
+ * seeded before the ruling. A fixture whose season total quietly dropped is exactly the kind of
+ * silent drift this file exists to end.
  *
- * ⚠ NO PERIODS ON THIS ONE, on purpose. Its sibling "Spring classic entry" is also undated, so the
- * item's row exercises the chooser from the **"No date yet"** cell — the affordance that was dead and
- * matters more, being the grid's only route out of undated budget. The dated path is covered by
- * "Winter dome block", which has three periods.
- *
- * Guarded on its own so fixtures seeded before this block gain the row on a re-run.
+ * ⚠ NOTHING ELSE NEEDED REPLACING. The Months grid's panel stopped being a "which line?" chooser
+ * on 2026-09-04 (QA §132) — every plan figure opens it now, and the multi-line case is simply a
+ * longer list — so no affordance goes dark with the twin. The partly-dated shape the twin also
+ * covered is carried by the "Jersey order" NAMES split below: one chunk dated, one not.
  */
-const SECOND_LINE_DESC = 'Regional qualifier entry';
-const { data: existingSecondLine } = await db.from('rep_budget_lines')
-  .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
-  .eq('description', SECOND_LINE_DESC).limit(1);
-if (!existingSecondLine?.length) {
-  const secondLineTaxonomy = taxonomyFor(SECOND_LINE_DESC);
-  const sl = await db.from('rep_budget_lines').insert({
-    org_id: org.id, team_id: team.id, program_year_id: py.id,
-    description: SECOND_LINE_DESC, total_amount: 900, notes: 'Second line on the same item',
-    line_kind: await seededKind(SECOND_LINE_DESC, secondLineTaxonomy.item_id, 'cost'),
-    ...secondLineTaxonomy, sort_order: 5,
-  });
-  if (sl.error) console.log(`  ! second line on one item skipped (${sl.error.message})`);
-  else ok('a SECOND budget line on the "Entry Fees" item — the SUM ruling, and the grid\'s line chooser');
+const RETIRED_TWIN_DESC = 'Regional qualifier entry';
+const { data: retiredTwin } = await db.from('rep_budget_lines')
+  .select('id, total_amount, item_id').eq('team_id', team.id).eq('program_year_id', py.id)
+  .eq('description', RETIRED_TWIN_DESC).limit(1);
+if (retiredTwin?.length) {
+  /* Fold it into the word's surviving line exactly as migration 286 does, then remove it. A
+     fixture seeded before the ruling would otherwise keep a row the database now refuses to
+     create — and the layout sweep would go on reading a shape no coach can reach. */
+  const twin = retiredTwin[0];
+  const { data: keeper } = await db.from('rep_budget_lines')
+    .select('id, total_amount').eq('team_id', team.id).eq('program_year_id', py.id)
+    .eq('item_id', twin.item_id).neq('id', twin.id)
+    .order('created_at').limit(1);
+  if (keeper?.length) {
+    /* ⚠ RE-POINT BOTH REFERENCES BEFORE THE DELETE, exactly as migration 286 does — the periods
+       CASCADE, and a dues schedule's link SET NULLs in silence. The dues half is inert on this
+       fixture today (nothing here writes `budget_line_id` on a schedule), and it is here anyway:
+       an omission that is only safe because of a fact somewhere else is the one that goes wrong
+       the day that fact changes, with nothing to catch it. */
+    await db.from('rep_budget_periods').update({ budget_line_id: keeper[0].id })
+      .eq('budget_line_id', twin.id);
+    await db.from('rep_player_dues_schedules').update({ budget_line_id: keeper[0].id })
+      .eq('budget_line_id', twin.id);
+    await db.from('rep_budget_lines')
+      .update({ total_amount: Number(keeper[0].total_amount) + Number(twin.total_amount) })
+      .eq('id', keeper[0].id);
+  }
+  await db.from('rep_budget_lines').delete().eq('id', twin.id);
+  ok('folded the retired second line on "Entry Fees" into its word (one word, one line — mig 286)');
 } else {
-  ok('two-line item already present');
+  ok('one line per word on this plan');
 }
 
 /**

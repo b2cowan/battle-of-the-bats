@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-09 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-10 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-09
+# DB Schema Reference — 2026-09-10
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -129,7 +129,7 @@ id (uuid), allocation_id (uuid) → rep_cost_allocations.id NOT NULL, team_id (u
 
 ### rep_budget_lines
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at, line_kind, split_mode
-- Indexes: rep_budget_lines_category_id_idx, rep_budget_lines_item_id_idx, rep_budget_lines_org_id_idx, rep_budget_lines_program_year_id_idx, rep_budget_lines_team_year_idx
+- Indexes: rep_budget_lines_category_id_idx, rep_budget_lines_item_id_idx, rep_budget_lines_one_line_per_item, rep_budget_lines_org_id_idx, rep_budget_lines_program_year_id_idx, rep_budget_lines_team_year_idx
 
 ### rep_budget_periods
 id (uuid), budget_line_id (uuid) → rep_budget_lines.id NOT NULL, period_label NOT NULL, period_date, amount (numeric) NOT NULL, sort_order (integer), created_at

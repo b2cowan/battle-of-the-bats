@@ -21,9 +21,7 @@
     "grandfatheredThrough: migrations at or below this number predate the gate and are not audited.",
     "Raising it is a deliberate act; lowering it means auditing more history."
   ],
-
   "grandfatheredThrough": 262,
-
   "migrations": {
     "263_a_tryout_remembers_the_reveal.sql": {
       "prod": "applied",
@@ -72,6 +70,10 @@
     "285_a_shelf_says_who_fills_it_in.sql": {
       "prod": "unverified",
       "note": "Data-only. Status against live prod not checked — confirm before the next promote."
+    },
+    "286_one_word_one_line_on_a_plan.sql": {
+      "prod": "pending",
+      "note": "Part 1 JOINS duplicate budget lines on one word (data-only, invisible to every drift check); part 2 adds the partial unique index that keeps them joined (visible). Applied to dev 2026-09-09 and verified there by query: 0 twin groups left, every split still sums to its total, no orphaned periods. PROD STILL HOLDS ONE TWIN PAIR (measured 2026-09-09: 1 group, 2 lines, neither carrying a note, on 1 of 4 plans) — the join must run on prod BEFORE the index, which this file does in order. Apply before promoting the code that reads one line per word."
     }
   }
 }

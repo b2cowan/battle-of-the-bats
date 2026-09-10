@@ -7,7 +7,9 @@ import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { budgetLineKindForItem } from '@/lib/coach-budget-totals';
 import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { readPeriodsPayload, type PeriodPayloadRow } from '@/lib/coach-budget-periods-payload';
-import { resolveBudgetItem } from '@/lib/coach-budget-items';
+import {
+  resolveBudgetItem, findLineHoldingItem, isDuplicateItemLineError, duplicateItemLineResponse,
+} from '@/lib/coach-budget-items';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -140,6 +142,20 @@ export const POST = withObservability(async (req: Request,
     .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
     .single();
 
+  /* ⚠⚠ ONE WORD, ONE LINE ON A PLAN (owner ruling 2026-09-09, migration 286). Adding to a word
+     already on the plan is a supported move — it adds to that line, and the form PATCHes it — so
+     nothing legitimate reaches this insert twice. What does is a stale tab, a replayed request, or a
+     client that never learned the rule, and each of those used to mint a twin: two rows the report
+     could never tell apart, because money is matched to the WORD and never to the line.
+     ⚠ THE REFUSAL IS THE INDEX'S; this only turns it into a sentence, naming the line in the way so
+     the coach's next move is one click. Read AFTER the failure rather than checked before it — a
+     pre-check costs a round trip on every ordinary save and still loses the race it exists for. */
+  if (isDuplicateItemLineError(error)) {
+    const existingLineId = await findLineHoldingItem({
+      orgId: ctx!.org.id, teamId: team.id, programYearId: programYear.id, itemId,
+    });
+    return NextResponse.json(duplicateItemLineResponse(itemName!, existingLineId), { status: 409 });
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (periodRows && periodRows.length > 0) {

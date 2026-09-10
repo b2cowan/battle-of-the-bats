@@ -682,17 +682,27 @@ export async function buildDocuments() {
       groups: [
         {
           categoryName: 'Facilities', total: 10700, items: [
-            { itemName: 'Dome Time', total: 5200, lines: [{ description: 'Dome Time', notes: '16 sessions, Jan–Mar', totalAmount: 5200, periods: [{ periodDate: '2026-01-01' }, { periodDate: '2026-02-01' }, { periodDate: '2026-03-01' }] }] },
-            { itemName: 'Diamond Permits', total: 3200, lines: [{ description: 'Diamond Permits', notes: null, totalAmount: 3200, periods: [] }] },
-            { itemName: 'Batting Cages', total: 2300, lines: [{ description: 'Batting Cages', notes: null, totalAmount: 2300, periods: [{ periodDate: '2026-01-01' }, { periodDate: '2026-04-01' }] }] },
+            { itemId: 'it-dome', itemName: 'Dome Time', total: 5200, lines: [{ description: 'Dome Time', notes: '16 sessions, Jan–Mar', totalAmount: 5200, periods: [{ periodDate: '2026-01-01' }, { periodDate: '2026-02-01' }, { periodDate: '2026-03-01' }] }] },
+            { itemId: 'it-permits', itemName: 'Diamond Permits', total: 3200, lines: [{ description: 'Diamond Permits', notes: null, totalAmount: 3200, periods: [] }] },
+            { itemId: 'it-cages', itemName: 'Batting Cages', total: 2300, lines: [{ description: 'Batting Cages', notes: null, totalAmount: 2300, periods: [{ periodDate: '2026-01-01' }, { periodDate: '2026-04-01' }] }] },
           ],
         },
         {
           categoryName: 'Tournaments', total: 2500, items: [
+            /* ⚠ ONE LINE ON ONE WORD (migration 286, 2026-09-09). This carried TWO lines on Entry
+               Fees to exercise the indented sub-rows the file used to print; that shape no longer
+               exists and neither do those rows, so the two are joined here exactly as the migration
+               joins them in the database — amounts summed, both notes kept, both dates on the one
+               schedule. `itemId` is required now and its absence is invisible to tsc in this
+               untyped fixture: without it the row reads as the word-LESS bucket and prints a blank
+               Schedule and Notes. */
             {
-              itemName: 'Entry Fees', total: 2500, lines: [
-                { description: 'Entry Fees', notes: 'Spring classic', totalAmount: 1600, periods: [{ periodDate: '2026-04-01' }] },
-                { description: 'Entry Fees', notes: 'Regional qualifier', totalAmount: 900, periods: [{ periodDate: '2026-05-01' }] },
+              itemId: 'it-entry', itemName: 'Entry Fees', total: 2500, lines: [
+                {
+                  description: 'Entry Fees', notes: 'Spring classic; Regional qualifier',
+                  totalAmount: 2500,
+                  periods: [{ periodDate: '2026-04-01' }, { periodDate: '2026-05-01' }],
+                },
               ],
             },
           ],
@@ -713,7 +723,7 @@ export async function buildDocuments() {
       // `expectedFunding` for the Planned funding row and this fixture, still three fields, printed
       // an em-dash for it (/review). Keep every field the builder reads.
       totals: {
-        totalPlanned: 13200, fundedByPlayers: 9900, fundingLineCount: 2,
+        totalPlanned: 13200, fundedByPlayers: 9900, costsLessFunding: 9900, fundingLineCount: 2,
         itemized: 13200, expectedFunding: 3300,
         estimatedTotal: null, difference: 0, hasDifference: false, overPlanned: false,
       },

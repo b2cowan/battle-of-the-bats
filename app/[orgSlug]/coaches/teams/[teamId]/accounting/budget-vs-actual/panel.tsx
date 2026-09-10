@@ -32,6 +32,7 @@ import {
 // themselves all evening, and this basis is entirely a question about which side of today money
 // falls on.
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
+import { NO_DATE_LABEL } from '@/lib/coach-budget-periods-view';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
 import { useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
@@ -613,6 +614,8 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
   onClose: () => void;
 }) {
   const moved = item.direction === 'in' ? 'received' : 'paid';
+  // The one budget line behind a planned figure — a word carries one line since migration 286.
+  const planLine = (item.lines ?? [])[0] ?? null;
   return (
     <QuestionShell
       open
@@ -626,6 +629,8 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
       scroll
     >
       <>
+        {/* One word carries one line (migration 286), so the plan side has at most one record behind
+            its figure: read it once here rather than re-defaulting `item.lines` at every use. */}
         {/* ⚠⚠ THE SCROLLING CHILD `scroll` WAS ALWAYS PROMISING. `.modalScrollBody` is
             `display:flex; overflow:hidden` and expects exactly ONE child that scrolls; this panel
             rendered a bare fragment, so the list was a shrinking flex item inside a clipped box and
@@ -635,44 +640,51 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
         <div className={shared.scrollPane}>
         {side === 'plan' ? (
           <>
-            {/* The figure is the answer; the lines are listed directly underneath it. Counting
-                them here was the same over-explaining the row caption was removed for (owner,
-                2026-09-04, QA §133) — a sentence telling you the length of the list you are
-                looking at. */}
+            {/* ⚠⚠ WHAT THIS FIGURE IS MADE OF IS ITS SCHEDULE NOW (owner ruling 2026-09-09,
+                migration 286 — one word carries one line on a plan). This listed the budget LINES
+                behind the figure, which was the honest answer while a word could hold several; it
+                cannot any more, so the list would have been one row restating the heading. The
+                dates are the real answer to "what is behind this number", and they are the half a
+                coach cannot see anywhere else on this screen.
+                ⚠ AND THE SENTENCE EXPLAINING THE MERGE IS GONE WITH IT. "These are shown as one row
+                because they name the same item" described a merge that no longer happens. */}
             <p className={styles.linesBehindSub}>
               <strong>{fmt(item.budgeted)}</strong> planned
             </p>
             <ul className={styles.linesBehindList}>
-              {(item.lines ?? []).map(l => (
-                <li key={l.id}>
-                  {canWrite ? (
-                    <Link
-                      href={moneySectionHref(base, 'budget', { line: l.id })}
-                      className={styles.linesBehindRow}
-                      onClick={onClose}
-                      title={`Open ${l.description}`}
-                    >
-                      <span className={styles.linesBehindWho}>
-                        {l.description}
-                        {l.notes && <span className={styles.linesBehindNote}>{l.notes}</span>}
-                      </span>
-                      <span className={styles.linesBehindAmt}>{fmt(l.totalAmount)}</span>
-                    </Link>
-                  ) : (
-                    <span className={styles.linesBehindRow}>
-                      <span className={styles.linesBehindWho}>
-                        {l.description}
-                        {l.notes && <span className={styles.linesBehindNote}>{l.notes}</span>}
-                      </span>
-                      <span className={styles.linesBehindAmt}>{fmt(l.totalAmount)}</span>
-                    </span>
-                  )}
+              {item.periods.length > 0 ? item.periods.map((p, i) => (
+                <li key={`${p.label}-${i}`}>
+                  <span className={styles.linesBehindRow}>
+                    <span className={styles.linesBehindWho}>{p.label}</span>
+                    <span className={styles.linesBehindAmt}>{fmt(p.amount)}</span>
+                  </span>
                 </li>
-              ))}
+              )) : (
+                <li>
+                  <span className={styles.linesBehindRow}>
+                    <span className={styles.linesBehindWho}>{NO_DATE_LABEL}</span>
+                    <span className={styles.linesBehindAmt}>{fmt(item.budgeted)}</span>
+                  </span>
+                </li>
+              )}
             </ul>
+            {/* The word's own note, when it has one — the only per-line words left, and the reason
+                a coach wrote them was to be read somewhere like this. One word carries one line, so
+                there is one note; `planLine` is read once above and used by the footer door too. */}
+            {planLine?.notes && <p className={styles.linesBehindNote}>{planLine.notes}</p>}
+            {/* ⚠ THE FOOTER IS THE ONLY DOOR BACK TO THE PLAN now the rows are dates rather than
+                records. It must stay clickable for a write coach — this panel dead-ended for
+                everybody until 2026-09-09, and that is the regression to guard against. */}
             <p className={styles.linesBehindFoot}>
-              These are shown as one row because they name the same item.
-              {canWrite ? ' Open one to edit it.' : ''}
+              {canWrite && planLine ? (
+                <Link
+                  href={moneySectionHref(base, 'budget', { line: planLine.id })}
+                  onClick={onClose}
+                  title={`Open ${item.itemName}`}
+                >
+                  Open this line on your plan to change it.
+                </Link>
+              ) : 'This is what your plan expects for this item.'}
             </p>
           </>
         ) : (

@@ -1,0 +1,651 @@
+<title>One Word One Line Walk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:40px 20px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:.1em .35em;border-radius:4px}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(36px,6vw,56px);line-height:.97;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:15px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.signin{margin-top:22px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r);padding:14px 17px;display:flex;flex-direction:column;gap:7px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:19px;margin:0}
+.signin dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.signin dt{color:var(--dim)}
+.signin dd{margin:0;font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.signin .do{margin-top:4px}
+.parthead{margin-top:42px;border-top:2px solid var(--ink);padding-top:12px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:28px;line-height:1.06;margin:3px 0 0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:5px}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--dim);min-width:3.2ch;padding-top:3px}
+.step.done .num{color:var(--olive)}
+.step-head h3{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.15;margin:0;text-wrap:balance;flex:1}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.do{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.do b{color:var(--ink)}
+.expect{border-left:3px solid var(--olive);background:var(--olive-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.expect b,.warn b,.ask b{color:var(--ink)}
+.verdict{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.verdict label{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;border:1px solid var(--rule-strong);border-radius:99px;padding:5px 12px;cursor:pointer;background:var(--card);min-height:34px}
+.verdict input{accent-color:var(--olive);cursor:pointer;margin:0}
+.verdict label.pick{border-color:var(--olive);background:var(--olive-soft);color:var(--olive);font-weight:600}
+.verdict label.pickbad{border-color:var(--brick);background:var(--brick-soft);color:var(--brick);font-weight:600}
+.verdict.ruling label{border-color:var(--gold);color:var(--gold)}
+.verdict.ruling label.pick{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+textarea{width:100%;min-height:0;height:34px;resize:vertical;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--sunk);color:var(--ink)}
+textarea:focus{outline:2px solid var(--olive);outline-offset:1px}
+.spec{border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--card);padding:9px 12px;max-width:540px;overflow-x:auto}
+.specrow{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:14px;padding:6px 0}
+.specrow+.specrow{border-top:1px solid var(--rule)}
+.specwho{display:flex;flex-direction:column;min-width:0}
+.specnote{font-size:12px;color:var(--dim)}
+.specamt{font-variant-numeric:tabular-nums;flex:none;font-family:var(--mono);font-size:13px}
+.specrow.sub .specwho{padding-left:18px;color:var(--dim)}
+.toastwrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA §162 · one word, one line · migration 286 · 2026-09-09</p>
+  <h1>One word, one line</h1>
+  <p class="lede">Twenty steps in five parts. A budget word now carries exactly one line on a plan;
+    picking a word already there <b>adds to</b> it. Part A reads what the one-time join left behind,
+    Part B is the new form, and Part E is four calls that are yours. Nothing here should have moved a
+    total — if one has, that is the defect worth finding.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> judged</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl>
+    <dt>Where</dt><dd>http://localhost:3000</dd>
+    <dt>Account</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Go to</dt><dd>uat-test-org → UAT Test Team → Money → Budget</dd>
+  </dl>
+  <p class="do">Dev credentials only — keep this page private.</p>
+  <p class="do"><b>Restart the dev server before you start.</b> Three shared modules moved and a
+    migration ran; a half-warm cache is the one thing that would make this walk lie to you.</p>
+  <p class="do"><b>Do NOT re-seed the fixture first.</b> Part A reads what migration 286 actually did
+    to the live dev data. A re-seed writes a clean plan and Part A stops testing anything.</p>
+</div>
+
+<div class="warn" style="margin-top:14px"><b>⚠ What may drift, and what may not.</b> Every figure below is a
+  <b>whole-season</b> plan figure, so the calendar cannot move it. But <b>four other sessions have been
+  in this working copy today</b> and the fixture is live data — if a row reads differently from what is
+  printed here, that is worth a note rather than an automatic defect. <b>The pass conditions are the
+  relationships</b>: a word appears once, a row's schedule adds to its own total, and no total changed.</div>
+
+<!-- ═══════════════════ PART A ═══════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>What the one-time join left behind</h2>
+  <p>Before today this plan carried two lines on <b>Entry Fees</b> and two on <b>Fundraising drive</b>.
+    The migration joined each pair. These three steps read the result — on dev it rewrote six lines,
+    and on production it will rewrite one pair.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><h3>Two lines became one — and the half with no date did not vanish</h3></div>
+  <div class="step-body">
+    <p class="do">Budget → <b>List</b>. Open the <b>Tournaments</b> category and find <b>Entry Fees</b>.
+      Open the row.</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho">Entry Fees<span class="specnote">May · $1,600.00 no date</span></span><span class="specamt">$2,500.00</span></div>
+      <div class="specrow sub"><span class="specwho">May 1</span><span class="specamt">$900.00</span></div>
+      <div class="specrow sub"><span class="specwho">No date yet</span><span class="specamt">$1,600.00</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> <b>ONE</b> Entry Fees row at <b>$2,500.00</b>, with a pencil of its
+      own, opening onto its <b>payment dates</b> — not onto two sub-lines. The two amounts under it
+      <b>add to the row's own total</b>; that is the pass condition, not the individual figures.</div>
+    <div class="warn"><b>Why the "No date yet" row is the interesting one.</b> The line this word used to
+      carry as <i>Spring classic entry</i> had no dates at all; its twin had May. Joining them left money
+      that is genuinely unscheduled — and every save on this screen insists a split adds up to its total,
+      so leaving that gap implicit would have made your <b>next</b> edit of this line impossible to save,
+      with an error about money you never mis-entered. It is a real period now, wearing the same words the
+      months view uses.</div>
+    <div class="verdict" data-v="a1"></div>
+    <textarea data-n="a1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><h3>Two notes became one, joined rather than dropped</h3></div>
+  <div class="step-body">
+    <p class="do">Open the <b>Fundraising</b> section and find <b>Fundraising drive</b>. Open its edit
+      form (the pencil) and read the <b>Notes</b> field.</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho">Fundraising drive<span class="specnote">Notes: Expected team share; test drive</span></span><span class="specamt">$1,810.00</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> both notes survive, joined with a semicolon, in the order they were
+      written. The alternative was keeping one and silently losing the other — words a coach typed are the
+      one thing a join cannot reconstruct.</div>
+    <div class="do">If the joined note reads badly on your own plan, <b>edit it here</b> — it is an ordinary
+      note now. Say in the box whether the join is acceptable or whether it needed a different rule.</div>
+    <div class="verdict" data-v="a2"></div>
+    <textarea data-n="a2" placeholder="Does the joined note read acceptably?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><h3>Run your eye down the table and tell me what kind of thing each row is</h3></div>
+  <div class="step-body">
+    <p class="do">Open every category on the List. <b>Do not read the figures</b> — read the <i>rows</i>.
+      Say out loud what each one is.</p>
+    <div class="expect"><b>Expected:</b> every row is <b>the same kind of thing</b> — a line, wearing its
+      word, with a When answer, an amount and a pencil. Before today some rows at the same indent were
+      summaries with no edit door and others were real lines, and nothing on screen said which was which.
+      <b>There should be no row you cannot edit</b>, and no row that opens onto other rows rather than onto
+      dates.</div>
+    <div class="warn"><b>The one legitimate exception</b> is a <b>Not itemized</b> row, if this plan has one:
+      lines written before a budget word was required have no word to be joined on, so that bucket can still
+      hold several. If you see one, it should be the only one.</div>
+    <div class="verdict" data-v="a3"></div>
+    <textarea data-n="a3" placeholder="Any row that is not a line?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════ PART B ═══════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Adding to a word that is already there</h2>
+  <p>The whole point of the change. Seven steps, all in one pass of the Add Line form — and the last one
+    is the way out if you meant to correct rather than add.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><h3>The form tells you before you type, not on the way out</h3></div>
+  <div class="step-body">
+    <p class="do">Budget → <b>Add Line</b>. Leave the first question on <b>Money the team spends</b>. In
+      Category &amp; Item pick <b>Tournaments → Entry Fees</b>. <b>Stop there and look.</b></p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho"><b>Entry Fees is already on this plan</b><span class="specnote">$2,500.00 planned · May</span></span></div>
+      <div class="specrow sub"><span class="specwho">Open that line instead</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> the panel appears <b>the moment the word is picked</b> — before you
+      have typed an amount. This is the step the whole design turns on: the same fact delivered at save time
+      is a surprise.</div>
+    <div class="verdict" data-v="b1"></div>
+    <textarea data-n="b1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><h3>The amount field changes its question</h3></div>
+  <div class="step-body">
+    <p class="do">Read the label above the amount box, then type <b>250</b>.</p>
+    <div class="expect"><b>Expected:</b> it reads <b>Amount to add</b>, not <b>Amount</b>. The figure you are
+      typing is no longer the line's total — it joins one — and a label still saying "Amount" beside a panel
+      reading "$2,500.00 planned" is the ambiguity that makes a coach type 2750.</div>
+    <div class="verdict" data-v="b2"></div>
+    <textarea data-n="b2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span><h3>The date question names the money it is about</h3></div>
+  <div class="step-body">
+    <p class="do">Read the next question, then answer it: <b>One month</b> → <b>May</b>. Pick May
+      deliberately — the line already has a May payment, and Part E asks you about what that produces.</p>
+    <div class="expect"><b>Expected:</b> the question reads <b>"When does this $250.00 happen?"</b> — the
+      dates you are giving belong to the money being added, not to the joined total. Before an amount is
+      typed it falls back to the plain <b>"When does this money move?"</b>.</div>
+    <div class="verdict" data-v="b3"></div>
+    <textarea data-n="b3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B4">
+  <div class="step-head"><span class="num">B4</span><h3>Notes is Notes again — and the old question is nowhere</h3></div>
+  <div class="step-body">
+    <p class="do">Scroll to the Notes field.</p>
+    <div class="expect"><b>Expected:</b> the label reads <b>Notes</b>, and the field is <b>pre-filled</b>
+      with the word's existing note (the joined one from A2). One word carries one note, so a join that
+      blanked it would lose words you wrote from a control that only says "pick a category".</div>
+    <div class="warn"><b>What must NOT be there:</b> <i>"What makes this line different?"</i>, its
+      placeholder, or a sentence explaining the pre-filled note. The question is retired; and a caption
+      explaining something you can plainly see is the over-explaining your own §133 ruling banned.</div>
+    <div class="verdict" data-v="b4"></div>
+    <textarea data-n="b4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B5">
+  <div class="step-head"><span class="num">B5</span><h3>The arithmetic, where you are about to commit it</h3></div>
+  <div class="step-body">
+    <p class="do">Look at the two quiet lines just above the buttons, then read the button itself.</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho">$2,500.00 planned&nbsp; +&nbsp; $250.00</span><span class="specamt"><b>$2,750.00</b></span></div>
+      <div class="specrow"><span class="specwho">Scheduled</span><span class="specamt">May</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> the running total, the joined schedule, and a button reading
+      <b>Add to Entry Fees</b>. The button matters — a save that creates no line must not say "Add Line".</div>
+    <div class="verdict" data-v="b5"></div>
+    <textarea data-n="b5" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B6">
+  <div class="step-head"><span class="num">B6</span><h3>Save — and count the Entry Fees rows</h3></div>
+  <div class="step-body">
+    <p class="do">Save. Then look at the Tournaments category and <b>open the Entry Fees row</b>.</p>
+    <div class="expect"><b>Expected:</b> still <b>ONE</b> Entry Fees row, now <b>$2,750.00</b>. No second
+      row anywhere on the plan. Open it and the schedule carries the new money alongside the old:
+      <b>two May amounts</b> ($900.00 and $250.00) and the undated $1,600.00, adding to $2,750.00.</div>
+    <div class="ask"><b>The two May rows are deliberate and Part E3 asks you to rule on them.</b> Your
+      $250.00 kept its own date rather than being folded into the existing May payment — folding would have
+      destroyed whichever label the two chunks carried. Look at it now while it is in front of you.</div>
+    <div class="verdict" data-v="b6"></div>
+    <textarea data-n="b6" placeholder="One row? Does the schedule add to the total?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B7">
+  <div class="step-head"><span class="num">B7</span><h3>The way out, for when you meant to correct it</h3></div>
+  <div class="step-body">
+    <p class="do">Open <b>Add Line</b> again, pick <b>Tournaments → Entry Fees</b>, and this time click
+      <b>Open that line instead</b>.</p>
+    <div class="expect"><b>Expected:</b> the form becomes the <b>edit</b> form for that line — its title
+      changes, the amount shows the line's <b>full</b> total rather than an amount to add, and
+      <b>Delete line</b> appears at the foot.</div>
+    <div class="warn"><b>This door is the undo story for the whole change.</b> Before today, a coach who
+      added a second line by mistake deleted it in one click. There is no second line to delete now, so
+      the mistake has to be preventable instead — which is what this is.</div>
+    <div class="verdict" data-v="b7"></div>
+    <textarea data-n="b7" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════ PART C ═══════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The doors that are not the Add form</h2>
+  <p>Three more ways a duplicate could have got in, and the file the plan leaves by.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><h3>Re-filing a line onto a word that is taken</h3></div>
+  <div class="step-body">
+    <p class="do">Open a <b>different</b> line for editing — <b>Facilities → Diamond Permits</b> is a good
+      one. Change its Category &amp; Item to <b>Tournaments → Entry Fees</b> and press Save.</p>
+    <div class="expect"><b>Expected:</b> refused, and the line in the way is <b>named</b>: <i>"Entry Fees is
+      already on this plan. Open that line to change it, or pick a different word."</i> The category picker
+      is flagged and the counter at the foot says there is something to fix.</div>
+    <div class="do"><b>Then put it back</b> — set the word to Facilities → Diamond Permits again, or cancel
+      the form.</div>
+    <div class="warn"><b>Why refused rather than joined.</b> Merging two lines you had already saved would
+      destroy one of them — its schedule, and anything pointing at it — from a control that only says
+      "change the word". The database refuses it too, so this message is the polite half of a rule that
+      holds either way.</div>
+    <div class="verdict" data-v="c1"></div>
+    <textarea data-n="c1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><h3>The exported plan has nothing underneath a word</h3></div>
+  <div class="step-body">
+    <p class="do">Export the budget plan (the hub header's export door) and open the file.</p>
+    <div class="expect"><b>Expected:</b> under each category, <b>one row per word</b> — and <b>no indented
+      rows beneath any of them</b>. The bands (COSTS / FUNDING), the category rows, <b>Planned costs</b>,
+      <b>Planned funding</b> and the closing ladder are all still there, exactly as §156 built them.</div>
+    <div class="ask"><b>This is a deliberate difference from the mockup you approved</b>, and Part E2 asks
+      you to confirm it. The mockup's "after" file drew a bare flat table with Category and Item columns and
+      no subtotals — which would have deleted the ladder you asked for. Only the nesting came out.</div>
+    <div class="verdict" data-v="c2"></div>
+    <textarea data-n="c2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><h3>The by-period grid, which was right all along</h3></div>
+  <div class="step-body">
+    <p class="do">Switch the Budget tab from <b>List</b> to <b>By period</b>.</p>
+    <div class="expect"><b>Expected:</b> nothing has changed here, and that is the point — this view has
+      always shown one row per word, and it is the view the rest of the plan has now been brought up to.
+      <b>Entry Fees</b> should show its money in <b>May</b> and in the <b>No date yet</b> column, totalling
+      the same figure the List shows.</div>
+    <div class="verdict" data-v="c3"></div>
+    <textarea data-n="c3" placeholder="Do the two views agree?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════ PART D ═══════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The report, and the phone</h2>
+  <p>Where the change shows up away from the Budget tab — and the one measurement no automated check made.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><h3>What the planned figure opens onto</h3></div>
+  <div class="step-body">
+    <p class="do">Money → <b>Budget vs. Actual</b> → <b>Statement</b>. Find the <b>Entry Fees</b> row and
+      click its <b>Budget</b> figure.</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho"><b>Entry Fees</b><span class="specnote">$2,750.00 planned</span></span></div>
+      <div class="specrow sub"><span class="specwho">May 1</span><span class="specamt">$900.00</span></div>
+      <div class="specrow sub"><span class="specwho">May</span><span class="specamt">$250.00</span></div>
+      <div class="specrow sub"><span class="specwho">No date yet</span><span class="specamt">$1,600.00</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> the panel lists the <b>schedule</b> — what this figure is made of —
+      with the word's note beneath it, and a footer that is a <b>working link</b> back to the line on your
+      plan. It used to list the budget lines behind the figure and explain why they were shown as one row;
+      there is nothing left to explain.</div>
+    <div class="warn"><b>The footer must be clickable.</b> This panel dead-ended for everybody until
+      yesterday — that is the regression to watch for, and it is why the door moved into the footer when the
+      rows stopped being links.</div>
+    <div class="verdict" data-v="d1"></div>
+    <textarea data-n="d1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><h3>No total moved</h3></div>
+  <div class="step-body">
+    <p class="do">Still on Budget vs. Actual. Look at the <b>Tournaments</b> category total, the season's
+      <b>Total expenses</b> and <b>Season net</b>. Then go back to the Budget tab and read <b>Planned
+      costs</b>, <b>Planned funding</b> and <b>Player installments</b>.</p>
+    <div class="expect"><b>Expected:</b> the only figure anywhere that changed is the <b>$250.00 you added
+      in Part B</b>. Everything else reads exactly as it did before this release. The join summed what it
+      merged; it never dropped or invented a dollar.</div>
+    <div class="warn"><b>This is the step that matters most.</b> Twenty rows can look right while a total is
+      quietly wrong — and a migration that rewrites money is exactly where that happens. If any figure other
+      than Entry Fees has moved, stop and say so.</div>
+    <div class="verdict" data-v="d2"></div>
+    <textarea data-n="d2" placeholder="Any figure that moved other than the $250 you added?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><h3>On a phone — and this is the only measurement it gets</h3></div>
+  <div class="step-body">
+    <p class="do">Open the Budget tab on a <b>real phone</b>, or at <b>390px</b> wide. Read the plan list,
+      then open <b>Add Line</b> and pick a word already on the plan.</p>
+    <div class="expect"><b>Expected:</b> the plan rows keep their When answer under the name; the "already on
+      this plan" panel, its <b>Open that line instead</b> link and the two preview rows are all readable and
+      comfortably tappable; nothing scrolls sideways.</div>
+    <div class="warn"><b>⚠ <code>check:layout</code> was NOT run for this change</b> — the dev server is
+      shared with other sessions today. And it cannot open a modal in any case, so the new panel, the new
+      labels and the preview rows are measured by <b>this step and nothing else</b>. Do not let the skip read
+      as a pass.</div>
+    <div class="verdict" data-v="d3"></div>
+    <textarea data-n="d3" placeholder="Anything cramped, clipped or too small to hit?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════ PART E ═══════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>Four calls, and one thing to know before the release</h2>
+  <p>Tick the option you want — the tick <b>is</b> the answer, so it travels in the paste-back. The notes
+    box is for why.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><h3>The spreadsheet import skips a duplicate word rather than adding to it</h3></div>
+  <div class="step-body">
+    <p class="do">A sheet holding <b>two rows that name one word</b> — after the importer snaps them to your
+      library's spelling — now imports the first and <b>skips the second</b>, naming the word in the skipped
+      list. The Add form adds; the import does not.</p>
+    <div class="ask"><b>Why they differ:</b> the form adds because you are watching it and can see the running
+      total. A file is not watched. Summing two rows would invent an amount nobody typed; overwriting is what
+      used to happen when two rows shared a match, and it lost one of them in silence. Skipping puts the
+      question back to the person who can answer it.</div>
+    <div class="verdict ruling" data-v="e1" data-opts="Keep the skip|Make it add, like the form|Something else — see notes"></div>
+    <textarea data-n="e1" placeholder="Why"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><h3>The exported plan kept its bands and subtotals</h3></div>
+  <div class="step-body">
+    <p class="do">You saw the file in C2. The approved mockup drew the "after" as a <b>bare flat table</b> —
+      Category and Item as columns, no bands, no category rows, no subtotals. What shipped removes only the
+      <b>indented rows beneath a word</b> and leaves everything else.</p>
+    <div class="ask"><b>Why I deviated:</b> the drawn file would have deleted the closing ladder §156 added
+      on your own instruction — <i>"with no grouping or subtotals it doesn't read like x + y = plan"</i>. The
+      nesting was the part of that specimen that carried the argument; the column redesign was over-drawn.
+      <b>Flagged here rather than left for you to find.</b></div>
+    <div class="verdict ruling" data-v="e2" data-opts="Keep the bands and subtotals|Go flat as drawn|Something else — see notes"></div>
+    <textarea data-n="e2" placeholder="Why"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E3">
+  <div class="step-head"><span class="num">E3</span><h3>Two payments in one month, after a join</h3></div>
+  <div class="step-body">
+    <p class="do">In B6 your $250.00 landed as its <b>own</b> May row beside the existing $900.00, rather
+      than being folded into it. The months view adds them; the plan list shows them separately.</p>
+    <div class="ask"><b>Built this way because a fold destroys words.</b> Two chunks in one month can carry
+      two different labels a coach typed — a deposit and a balance, say — and merging them has to throw one
+      away. But a plan with several same-month rows reads busier than one that adds them up.</div>
+    <div class="verdict ruling" data-v="e3" data-opts="Leave them as separate payments|Fold same-month chunks into one|Something else — see notes"></div>
+    <textarea data-n="e3" placeholder="Why"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E4">
+  <div class="step-head"><span class="num">E4</span><h3>The thing a coach can no longer do</h3></div>
+  <div class="step-body">
+    <p class="do">A coach can no longer delete <b>one piece</b> of a word's money. Two tournaments under
+      Entry Fees is one line of $2,750.00 with dates; dropping the March one means editing the total and the
+      dates rather than deleting a row. Per-event words like "Regional qualifier" are a <b>note</b> now, not
+      a row.</p>
+    <div class="ask"><b>You accepted this at Q1 on paper.</b> This step asks whether it still reads as an
+      acceptable trade <b>having used the screen</b> — that is the only place the answer is worth anything.
+      The escape hatch, if you want one, is the schedule: two entry fees at different times are one line
+      with two dated payments, which is what the months view wanted anyway.</div>
+    <div class="verdict ruling" data-v="e4" data-opts="Accept it — the trade holds|This needs another answer — see notes"></div>
+    <textarea data-n="e4" placeholder="Why"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E5">
+  <div class="step-head"><span class="num">E5</span><h3>⚠ Before this reaches production — read, then tick</h3></div>
+  <div class="step-body">
+    <div class="warn"><b>Migration 286 must NOT be applied to production ahead of the code.</b> Its first
+      half — joining the duplicates — is harmless against what is deployed today. Its second half is the rule
+      that <b>stops</b> duplicates, and the currently deployed form still tries to create them: applied
+      early, a visitor adding a second line on the <b>public coach demo</b> would meet a raw database error.
+      It rides the same promote as the code, in the file's own order.</div>
+    <div class="do">Production holds <b>one</b> duplicate pair today — two lines on one word, on one of four
+      plans, neither carrying a note — so the join rewrites one pair there. It is <b>one-way</b>: the pieces
+      cannot be un-joined afterwards.</div>
+    <div class="do">One build check reads red until then: the schema-parity gate sees the new rule on dev and
+      not on production. It was <b>deliberately not silenced</b> — that ratchet reached zero last week and
+      this is owed, not accepted.</div>
+    <div class="verdict ruling" data-v="e5" data-opts="Understood — ship it with the release|Hold it — see notes"></div>
+    <textarea data-n="e5" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<footer>
+  <span>FieldLogicHQ</span>
+  <span>Owner QA §162 · migration 286 · as of 2026-09-09</span>
+  <span>Verdicts and notes save in this browser</span>
+</footer>
+</div>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast">Copied</span></div>
+
+<script>
+(function(){
+  var KEY='one-word-one-line-walk-v1';
+  var DEFAULT=[['pass','Pass'],['fail','Defect'],['na','N/A']];
+  document.querySelectorAll('.verdict').forEach(function(v){
+    var id=v.getAttribute('data-v');
+    var custom=v.getAttribute('data-opts');
+    var opts=custom
+      ? custom.split('|').map(function(t,i){return ['o'+i,t]})
+      : DEFAULT;
+    opts.forEach(function(o){
+      var l=document.createElement('label');
+      var i=document.createElement('input');
+      i.type='radio';i.name='v-'+id;i.value=o[0];i.setAttribute('data-label',o[1]);
+      l.appendChild(i);l.appendChild(document.createTextNode(o[1]));
+      v.appendChild(l);
+    });
+  });
+  var radios=Array.prototype.slice.call(document.querySelectorAll('.verdict input'));
+  var notes=Array.prototype.slice.call(document.querySelectorAll('textarea[data-n]'));
+  var steps=Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var done=document.getElementById('cdone'),total=document.getElementById('ctotal'),fill=document.getElementById('fillbar');
+  var toastwrap=document.getElementById('toastwrap'),toast=document.getElementById('toast'),timer=0;
+  total.textContent=String(steps.length);
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+  function write(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+  function say(m){toast.textContent=m;toastwrap.hidden=false;clearTimeout(timer);timer=setTimeout(function(){toastwrap.hidden=true},1600)}
+  function paint(){
+    var n=0;
+    document.querySelectorAll('.verdict').forEach(function(v){
+      var picked=v.querySelector('input:checked');
+      v.querySelectorAll('label').forEach(function(l){
+        var i=l.querySelector('input');
+        l.classList.toggle('pick',i.checked&&i.value!=='fail');
+        l.classList.toggle('pickbad',i.checked&&i.value==='fail');
+      });
+      if(picked)n++;
+    });
+    steps.forEach(function(s){
+      var i=s.querySelector('.verdict input:checked');
+      s.classList.toggle('done',!!i);
+    });
+    done.textContent=String(n);
+    fill.style.width=(steps.length?Math.round(n/steps.length*100):0)+'%';
+  }
+  var st=read();
+  radios.forEach(function(r){
+    var k='v:'+r.name+':'+r.value;
+    if(st[k])r.checked=true;
+    r.addEventListener('change',function(){
+      var s=read();
+      document.querySelectorAll('input[name="'+r.name+'"]').forEach(function(o){delete s['v:'+r.name+':'+o.value]});
+      s['v:'+r.name+':'+r.value]=1;write(s);paint();
+    });
+  });
+  notes.forEach(function(t){
+    var k='n:'+t.getAttribute('data-n');
+    if(st[k])t.value=st[k];
+    t.addEventListener('input',function(){var s=read();if(t.value.trim())s[k]=t.value;else delete s[k];write(s)});
+  });
+  paint();
+  function fallback(t,ok){
+    var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');say(ok)}catch(e){say('Select and copy manually')}
+    document.body.removeChild(ta);
+  }
+  function copyText(t,ok){
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){say(ok)},function(){fallback(t,ok)})}
+    else fallback(t,ok);
+  }
+  document.getElementById('copyfind').addEventListener('click',function(){
+    var lines=['Owner QA §162 — One word, one line (migration 286) — '+new Date().toISOString().slice(0,10)];
+    var pass=0,fail=0,na=0,ruled=0,none=0;
+    steps.forEach(function(s){
+      var id=s.getAttribute('data-step');
+      var h=s.querySelector('h3');
+      var picked=s.querySelector('.verdict input:checked');
+      var isRuling=!!s.querySelector('.verdict.ruling');
+      var note=s.querySelector('textarea[data-n]');
+      var label='—';
+      if(picked){
+        if(isRuling){label='RULED: '+picked.getAttribute('data-label');ruled++}
+        else if(picked.value==='pass'){label='PASS';pass++}
+        else if(picked.value==='fail'){label='DEFECT';fail++}
+        else {label='N/A';na++}
+      } else none++;
+      lines.push('');
+      lines.push('['+label+'] '+id+'  '+(h?h.textContent.replace(/^⚠\s*/,''):''));
+      if(note&&note.value.trim())lines.push('   '+note.value.trim().replace(/\n/g,'\n   '));
+    });
+    lines.splice(1,0,'','Pass '+pass+' · Defect '+fail+' · N/A '+na+' · Ruled '+ruled+' · not judged '+none+' of '+steps.length);
+    copyText(lines.join('\n'),'Findings copied');
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    radios.forEach(function(r){r.checked=false});
+    notes.forEach(function(t){t.value=''});
+    write({});paint();say('Reset');
+  });
+})();
+</script>

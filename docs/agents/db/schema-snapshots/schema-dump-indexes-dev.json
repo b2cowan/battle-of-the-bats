@@ -1736,6 +1736,11 @@
   },
   {
     "tablename": "rep_budget_lines",
+    "indexname": "rep_budget_lines_one_line_per_item",
+    "indexdef": "CREATE UNIQUE INDEX rep_budget_lines_one_line_per_item ON public.rep_budget_lines USING btree (program_year_id, team_id, item_id) WHERE (item_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_budget_lines",
     "indexname": "rep_budget_lines_org_id_idx",
     "indexdef": "CREATE INDEX rep_budget_lines_org_id_idx ON public.rep_budget_lines USING btree (org_id)"
   },

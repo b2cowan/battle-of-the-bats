@@ -20446,3 +20446,97 @@ report's plan figure and its footnote; and a season with **nothing** written off
 not appear at all.
 
 Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md`.
+
+---
+
+## §162 · One word, one line — a budget word carries exactly one line on a plan, picking one that is already there ADDS to it, and "What makes this line different?" is retired — built on dev 2026-09-09, **migration 286 applied to dev and PROD-PENDING**, awaiting QA · **walk artifact `444d13c4`** · mockup artifact `a6a3b078` ("One Word, One Line") · run order step **B20**
+
+**The ruling (owner, 2026-09-09, Q1–Q5 all taken as recommended).** The season plan was four levels
+deep — category → budget word → *line* → payment dates — and the third never reached a figure. Real
+spending is matched to the plan by **word**, never by line, so two lines on one word were one thing
+wearing two labels: no variance, no match and no total could tell them apart. The by-period grid has
+never been able to show the level, and a note-less second line ended up named after its own month,
+which the When column beside it already printed.
+
+**What a coach sees.** Pick a word already on the plan and the form says so the moment it is picked —
+*"Entry Fees is already on this plan · $600.00 planned · Nov"* — asks for the **amount to add**, and
+shows the new total and the joined schedule before saving. The button reads **Add to Entry Fees**.
+**Open that line instead** is the way out for a coach who meant to correct the original. Every row on
+the plan is now the same kind of thing: a line, wearing its word, opening onto its payment dates.
+
+**Not one total moved.** Planned costs, Planned funding, Player installments and every variance are
+identical before and after — the change is what the plan is made of, never what it adds up to.
+
+### The count is what made the one-time join cheap, and it was queried live on both databases
+
+| | lines | twin groups | lines in them | carrying a note | plans affected |
+|---|---|---|---|---|---|
+| **dev** | 60 | 5 | 10 | 4 | 3 of 11 |
+| **prod** | 21 | 1 | 2 | **0** | 1 of 4 |
+
+Six lines rewritten on dev, one pair on prod. **This is the cheapest this will ever be** and it is
+one-way: a coach cannot un-join the pieces.
+
+### ⚠⚠ Two foreign keys are the whole risk of the join, and they point opposite ways
+
+`rep_budget_periods.budget_line_id` is **ON DELETE CASCADE** — delete a loser first and its payment
+periods go with it, the exact schedule this change exists to preserve. `rep_player_dues_schedules.budget_line_id`
+is **ON DELETE SET NULL** — a plain delete silently unlinks a dues schedule and **nothing on any screen
+would ever say so**. Migration 286 re-points both at the keeper before deleting. **Do not reorder those
+statements.**
+
+### Q4, and why a partly-dated line had to become legal
+
+Add dated money to an undated line and the result is legitimately part-scheduled — but every write door
+enforces *the split sums to the total*. Left implicit, the coach's **next** edit of that line would be
+refused with a 409 about money they never mis-entered. So the unscheduled remainder becomes a real
+undated period labelled "No date yet" — a shape the product already has, and the honest answer rather
+than a date nobody chose. The rule is `joinPeriodSplits`, deliberately housed beside the checker it has
+to satisfy, and unit-tested **through that checker**.
+
+### Verification
+
+**3,345 unit tests · typecheck clean · lint 0 errors on every touched file · spelling, dictionary,
+snapshot-freshness, index coverage, export catalog, CSS purity/selectors, date-correctness and
+`check:demos` all green.** Migration 286 verified on dev **by querying the database, not by a gate**:
+0 twin groups left, 0 splits that fail to sum, 0 orphaned periods, and exactly 1 undated period created
+(the Q4 rule firing once, as expected).
+
+⚠⚠ **`check:schema-parity` READS RED, DELIBERATELY** — one divergence, the dev-only unique index.
+**Not re-baselined:** it is *owed*, not *accepted*, and that ratchet reached zero on 2026-09-08.
+
+⚠⚠ **286 MUST NOT REACH PROD AHEAD OF THE CODE.** Part 1 (the join) is safe against the deployed
+build; part 2 (the index) is not — it would make the **currently deployed** form 500 when a visitor
+adds a second line on the public coach demo. Apply at promote time, in the file's own order.
+
+⚠ **`check:layout` WAS NOT RUN** — the dev server is shared with other sessions. Not a pass.
+
+### Deviations from the approved mockup, flagged here rather than discovered in QA
+
+1. **The exported plan keeps its bands, category rows and subtotals.** The mockup's "after" file drew
+   a flat table with Category and Item columns and nothing else — which would have deleted the closing
+   ladder §156 added on the owner's own instruction (*"with no grouping or subtotals it doesn't read
+   like x + y = plan"*). What shipped removes **only the indented sub-rows**, which is the part that
+   carried the argument: nesting is what keeps breaking the round trip.
+2. **The spreadsheet import SKIPS a duplicate word rather than adding to it**, naming the word in the
+   skipped list. The form adds because the coach is watching; a file is not, and a sheet holding one
+   word twice is a mistake only the coach can resolve. Summing would invent an amount nobody typed.
+
+### What went with it
+
+`mergedSubLineName`, `subLineLabel` and `BudgetLineRow`'s `hideWhen` are deleted, each with a headstone
+carrying the defect it was born for — including the one worth remembering: a sub-row named after its
+schedule re-imported as a **budget word literally called "May"**, permanently, in the coach's picker.
+The rule that outlives all of it: **never print a name into the export that the library could not match
+back.**
+
+⚠ **The demo and the UAT fixture both seeded a deliberate twin** to demonstrate the summed row. Both are
+removed — the insert would now fail the unique index — **with their money folded into the word** rather
+than dropped, so neither world's season total quietly falls. The UAT block became a fold-and-remove
+repair, so an older fixture heals on its next run.
+
+### Owed
+
+`check:layout`; the owner walk (instrument published as artifact `444d13c4` — twenty steps in five parts, four of them rulings); migration 286 on prod at promote.
+
+Plan pair: `docs/projects/active/COACH_BUDGET_ONE_WORD_ONE_LINE_{PLAN,PM_BRIEF}.md`.

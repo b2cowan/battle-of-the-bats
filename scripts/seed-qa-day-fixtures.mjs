@@ -1058,8 +1058,13 @@ async function seedMoneyLab() {
   // ledger is about. It moved OFF the Admin category on 2026-08-16: Admin is ORG-scoped, so a
   // coach's own planner never offers it and no coach could have created that line.
   const LINES = [
-    { cat: 'Tournaments', item: 'Entry Fees',          desc: 'Tournament entry fees',        total: 2400, kind: 'cost', periods: [[-4, 600], [-3, 600], [-2, 600], [-1, 600]] },
-    { cat: 'Tournaments', item: 'Entry Fees',          desc: 'Provincials entry — deposit',  total: 400,  kind: 'cost', periods: [[-1, 400]] },
+    /* ⚠ ONE LINE ON ONE WORD (migration 286, 2026-09-09). These were TWO rows on Entry Fees —
+       $2,400 and a $400 provincials deposit — seeded to exercise the summed row the plan used to
+       open. The database now REFUSES a second line on one word, so the second insert would fail
+       23505 and `die()` would abort this whole script on its first run against a fresh plan,
+       taking `--practice` (which needs `--money` to have run) with it. Joined here exactly as the
+       migration joins them: $2,800, both schedules on the one line. */
+    { cat: 'Tournaments', item: 'Entry Fees',          desc: 'Tournament entry fees',        total: 2800, kind: 'cost', periods: [[-4, 600], [-3, 600], [-2, 600], [-1, 1000]] },
     { cat: 'Team Gear',   item: 'Jerseys',             desc: 'Uniform order',                total: 1800, kind: 'cost', periods: [[-5, 1800]] },
     { cat: 'Facilities',  item: 'Diamond Permits',     desc: 'Diamond permits',              total: 1200, kind: 'cost', periods: [[-4, 300], [-3, 300], [-2, 300], [-1, 300]] },
     { cat: 'Officials',   item: 'Umpire Fees',         desc: 'Umpires',                      total: 900,  kind: 'cost', periods: [[-3, 300], [-2, 300], [-1, 300]] },

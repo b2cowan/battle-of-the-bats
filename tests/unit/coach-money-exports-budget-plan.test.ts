@@ -45,11 +45,14 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
     total: 2500,
     items: [
       {
+        itemId: 'item-entry',
         itemName: 'Entry Fees',
         total: 2500,
         lines: [
-          { description: 'Entry Fees', notes: 'Spring classic', totalAmount: 1600, periods: [{ periodDate: '2027-04-01' }] },
-          { description: 'Entry Fees', notes: 'Regional qualifier', totalAmount: 900, periods: [{ periodDate: '2027-05-01' }] },
+          {
+            description: 'Entry Fees', notes: 'Spring classic', totalAmount: 2500,
+            periods: [{ periodDate: '2027-04-01' }, { periodDate: '2027-05-01' }],
+          },
         ],
       },
     ],
@@ -66,19 +69,19 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
 };
 
 describe('the statement file (List view, and every PDF)', () => {
-  it('reads band for band: COSTS → category → summed item → per-line sub-rows → Planned costs; FUNDING → category → Planned funding; the estimated close', () => {
+  it('reads band for band: COSTS → category → one row per word → Planned costs; FUNDING → category → Planned funding; the estimated close', () => {
     const { rows, kinds } = budgetPlanStatementRows(STATEMENT_SOURCE);
     assert.deepEqual(rows.map(r => r.item), [
       // ⚠ UPPERCASE in the file — the statement export's own band convention (REVENUE / EXPENSES),
       // and the only heading signal a PDF has, since that path never reads row kinds.
       'COSTS',
       'Tournaments',
-      // ⚠ NO "(2 lines)" SUFFIX. The count came off every screen and every export label in one
-      // ruling (owner 2026-09-04, QA §133) — and this file is where it read emptiest, since the two
-      // lines it counted are the very next rows. The SUM ruling still holds; only the label went.
+      /* ⚠⚠ NOTHING BENEATH THE WORD (owner ruling 2026-09-09, migration 286). This printed the word
+         and then an indented row per line under it; a word carries ONE line now, so the word's row
+         IS that line — its schedule, its amount, its note. The nesting is what kept breaking the
+         round trip: a spreadsheet can hide an indented row and the importer reads it back as a line
+         the coach never wrote. */
       'Entry Fees',
-      '  — Spring classic',
-      '  — Regional qualifier',
       'Planned costs',
       'FUNDING',
       // The CATEGORY the line was filed in (owner ruling 2026-09-09) — never its stored kind. Bare
@@ -89,25 +92,24 @@ describe('the statement file (List view, and every PDF)', () => {
       'Player installments (estimated)',
     ]);
     assert.deepEqual(kinds, [
-      'section', 'category', 'item', 'item', 'item', 'total',
+      'section', 'category', 'item', 'total',
       'section', 'category', 'item', 'total',
       'total',
     ]);
     // A band heading carries no figure at all.
     assert.equal(rows[0].planned, '');
-    assert.equal(rows[6].planned, '');
-    // The summed item row carries the sum; its lines carry their own money and their own answer to
-    // "when does this money move?" — WHEN, not a chunk count (owner ruling 2026-09-04).
+    assert.equal(rows[4].planned, '');
+    // The word's row carries its own money, its own note and its own answer to "when does this
+    // money move?" — WHEN, not a chunk count (owner ruling 2026-09-04).
     assert.equal(rows[2].planned, 2500);
-    assert.equal(rows[3].planned, 1600);
-    assert.equal(rows[3].schedule, 'Apr');
-    assert.equal(rows[4].notes, 'Regional qualifier');
+    assert.equal(rows[2].schedule, 'Apr · May');
+    assert.equal(rows[2].notes, 'Spring classic');
     // The two subtotals wear the tiles' names and the tiles' figures.
-    assert.equal(rows[5].planned, 2500);
-    assert.equal(rows[9].planned, 1800);
+    assert.equal(rows[3].planned, 2500);
+    assert.equal(rows[7].planned, 1800);
     // The closing row is the screen's: players' side of a funded plan, saying where it came from.
-    assert.equal(rows[10].planned, 700);
-    assert.equal(rows[10].notes, 'Costs less funding, until dues are set');
+    assert.equal(rows[8].planned, 700);
+    assert.equal(rows[8].notes, 'Costs less funding, until dues are set');
   });
 
   it('a single-line item is one row, named by the item, with its schedule and note — and with no money in, Planned costs closes on the estimate row', () => {
@@ -117,6 +119,7 @@ describe('the statement file (List view, and every PDF)', () => {
         categoryName: 'Facilities',
         total: 5200,
         items: [{
+          itemId: 'item-dome',
           itemName: 'Dome Time',
           total: 5200,
           lines: [{
@@ -199,130 +202,113 @@ describe('the statement file (List view, and every PDF)', () => {
 });
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════
-   TWO MONEY-IN LINES ON ONE WORD (owner ruling 2026-09-09)
+   ONE WORD, ONE LINE — AND NOTHING BENEATH IT (owner ruling 2026-09-09, migration 286)
    ══════════════════════════════════════════════════════════════════════════════════════════ */
 
-describe('the statement file — a sub-line is named by its note, never by its schedule', () => {
-  /* ⚠⚠ THE DEFECT THIS PINS SHIPPED FOR ONE AFTERNOON, AND TWO REVIEW LENSES FOUND IT SEPARATELY.
-     Decision B2 names a note-less merged sub-line by its SCHEDULE on screen, because the screen
-     drops that row's When cell. The same rule was applied to the EXPORT — where nothing is dropped
-     and every row still carries its own schedule column — and the consequence was not cosmetic:
+describe('the statement file — a word is one row, on both sides of the plan', () => {
+  /* ⚠⚠ WHAT THESE TESTS REPLACED IS THE ARGUMENT FOR THE CHANGE, so it is written down rather than
+     deleted. Until this ruling a word could carry several lines, and the file printed them as
+     INDENTED SUB-ROWS. Naming those rows was a defect factory in its own right:
 
-       · the importer cannot tell a parent row from an indented child (its indent match accepts any
-         leading whitespace), so a merged item exports as THREE importable rows;
-       · it MINTS a team budget item from any row name the library does not know;
-       · and — the sharp edge — its duplicate-name guard had been the thing saving this shape. While
-         every note-less child echoed the item's name, that guard blocked them and a re-import was a
-         harmless no-op. Giving each child a DISTINCT schedule name DISARMED the guard, so the rows
-         sailed through and created budget items literally called "May" and "No date yet", on the
-         EXPENSE side, in the coach's picker, permanently.
+       · named by their WORD, two note-less lines exported as two identical rows;
+       · named by their SCHEDULE (the screen's own rule, for four days), they became importable rows
+         called "May" and "No date yet" — and because the importer MINTS a team budget word from any
+         name the library does not know, re-importing a plan a coach had just exported created
+         budget words literally called "May", on the expense side, permanently, in their picker;
+       · and the indent itself is invisible to the importer's parser, which accepts any leading
+         whitespace, so a merged word exported as THREE rows it would happily read back as three
+         lines.
 
-     ⚠ So the file's rule is: the note, else the WORD. `check:export-catalog` cannot see this — it
-     proves only that the round-trip module named in the catalog EXISTS, never that a round trip
-     works — which is why the assertion lives here rather than in a gate. */
+     None of that can happen to a file with no rows beneath an item, which is what these pin. The
+     rule that survives all of it: **never print a name into this file that the library could not
+     match back.** */
 
-  const twoNoteless = (): BudgetPlanExportSource => ({
+  const oneWord = (): BudgetPlanExportSource => ({
     groups: [{
       categoryName: 'Tournaments',
       total: 2500,
       items: [{
+        itemId: 'item-entry',
         itemName: 'Entry Fees',
         total: 2500,
-        lines: [
-          { description: 'Entry Fees', notes: null, totalAmount: 1600, periods: [] },
-          { description: 'Entry Fees', notes: null, totalAmount: 900, periods: [{ periodDate: '2026-05-01' }] },
-        ],
+        lines: [{
+          description: 'Entry Fees', notes: 'Spring classic', totalAmount: 2500,
+          periods: [{ periodDate: '2026-05-01' }],
+        }],
       }],
     }],
     lines: [],
-    totals: totalsOf({ totalPlanned: 2500, itemized: 2500 }),
+    totals: totalsOf({ totalPlanned: 2500, itemized: 2500, expectedFunding: 0, fundingLineCount: 0 }),
     duesAssessed: 0,
     leftToFund: 2500,
   } as never);
 
-  it('names note-less sub-lines by their WORD, so the importer can still match them', () => {
-    const { rows } = budgetPlanStatementRows(twoNoteless());
-    const leaves = rows.map(r => String(r.item)).filter(i => i.startsWith('  — '));
-    assert.deepEqual(leaves, ['  — Entry Fees', '  — Entry Fees'],
-      'a schedule ("May", "No date yet") here becomes a phantom budget item on re-import');
+  it('prints no row beneath a word — the word IS the line', () => {
+    const { rows } = budgetPlanStatementRows(oneWord());
+    const nested = rows.map(r => String(r.item)).filter(i => i.startsWith('    '));
+    assert.deepEqual(nested, [], 'a nested row is one the spreadsheet can hide and the importer can invent');
+    const word = rows.find(r => r.item === 'Entry Fees');
+    assert.equal(word?.planned, 2500);
+    assert.equal(word?.schedule, 'May', 'the file drops nothing — the schedule stays in its own column');
+    assert.equal(word?.notes, 'Spring classic');
   });
 
-  it('still lets a NOTE name the sub-line — that half was never the problem', () => {
-    const src = twoNoteless();
-    (src.groups[0].items[0].lines[0] as { notes: string | null }).notes = 'Spring classic';
+  it('keeps the word-LESS bucket summing, because those lines have no word to be joined on', () => {
+    /* The one item row that can still hold several lines: pre-mig-243 rows with no word at all. Its
+       sum is the answer and its When column stays empty, exactly as the screen's bucket row does. */
+    const src = oneWord();
+    src.groups[0].items = [{
+      itemId: null,
+      itemName: 'Not itemized',
+      total: 2500,
+      lines: [
+        { description: 'Old line A', notes: null, totalAmount: 1600, periods: [] },
+        { description: 'Old line B', notes: null, totalAmount: 900, periods: [{ periodDate: '2026-05-01' }] },
+      ],
+    }];
     const { rows } = budgetPlanStatementRows(src);
-    const leaves = rows.map(r => String(r.item)).filter(i => i.startsWith('  — '));
-    assert.deepEqual(leaves, ['  — Spring classic', '  — Entry Fees']);
+    const bucket = rows.find(r => r.item === 'Not itemized');
+    assert.equal(bucket?.planned, 2500, 'the bucket carries its own sum, never one line’s figure');
+    assert.equal(bucket?.schedule, '', 'no single line speaks for the bucket, so it claims no schedule');
   });
 
-  it('keeps the schedule in its OWN column, which is why the name never needs it', () => {
-    const { rows } = budgetPlanStatementRows(twoNoteless());
-    const dated = rows.find(r => r.planned === 900);
-    assert.equal(dated?.schedule, 'May', 'the file drops nothing; only the screen does');
-  });
-});
-
-describe('the statement file — money in merges by word', () => {
-  /* ⚠⚠ THE DEFECT THIS PINS WAS LIVE AND SILENT. The money-in loop printed one row per LINE while
-     naming each by its ITEM, so two lines filed against one word exported as two rows with the SAME
-     name and the same schedule — nothing in the file told them apart. The cost half of this builder
-     has summed them into one openable row since 2026-08-15; the two halves now share `groupByItem`.
-     No gate caught it because the file still added up, which is exactly why the assertion below is
-     on the row LABELS and not only on the totals. */
-
-  const twoOnOneWord = (): BudgetPlanExportSource => ({
-    groups: [],
-    lines: [
-      planLine({
-        id: 'f1', description: 'Chocolate sale', totalAmount: 1800, lineKind: 'funding',
-        itemId: 'item-drive', itemName: 'Fundraising drive',
-        categoryId: 'cat-fundraising', categoryName: 'Fundraising',
-        notes: 'Expected team share',
-        periods: [{ periodDate: '2026-03-01', amount: 900 }, { periodDate: '2026-04-01', amount: 900 }],
-      }),
-      planLine({
-        id: 'f2', description: 'Bottle drive', totalAmount: 600, lineKind: 'funding',
-        itemId: 'item-drive', itemName: 'Fundraising drive',
-        categoryId: 'cat-fundraising', categoryName: 'Fundraising',
-        periods: [{ periodDate: '2026-10-01', amount: 600 }],
-      }),
-    ],
-    totals: totalsOf({ expectedFunding: 2400, totalPlanned: 0, itemized: 0 }),
-    duesAssessed: 0,
-    leftToFund: 0,
-  } as never);
-
-  it('sums two lines on one word into ONE row, with the lines beneath it', () => {
-    const { rows } = budgetPlanStatementRows(twoOnOneWord());
-    const items = rows.map(r => r.item);
-    assert.deepEqual(items, [
+  it('money in reads the same way — one row per word, named by the word', () => {
+    const src: BudgetPlanExportSource = {
+      groups: [],
+      lines: [
+        planLine({
+          id: 'f1', description: 'Chocolate sale', totalAmount: 2400, lineKind: 'funding',
+          itemId: 'item-drive', itemName: 'Fundraising drive',
+          categoryId: 'cat-fundraising', categoryName: 'Fundraising',
+          notes: 'Expected team share',
+          periods: [{ periodDate: '2026-03-01', amount: 1200 }, { periodDate: '2026-04-01', amount: 1200 }],
+        }),
+      ],
+      totals: totalsOf({ expectedFunding: 2400, totalPlanned: 0, itemized: 0 }),
+      duesAssessed: 0,
+      leftToFund: 0,
+    } as never;
+    const { rows } = budgetPlanStatementRows(src);
+    assert.deepEqual(rows.map(r => r.item), [
       'FUNDING',
+      // The CATEGORY the line was filed in (owner ruling 2026-09-09) — never its stored kind.
       'Fundraising',
       '  — Fundraising drive',
-      // ⚠ THE NOTE NAMES THE FIRST SUB-LINE, and the SCHEDULE names the second, which has none
-      //   (decision B2). Before this the note-less line printed "Fundraising drive" again — the
-      //   parent's word, one row below the parent.
-      '    — Expected team share',
-      '    — Fundraising drive',
       'Planned funding',
-      // The builder always closes on the players' side; not part of this rule, asserted so the
-      // shape above is the WHOLE file rather than a prefix of it.
+      // The builder always closes on the players' side; asserted so the shape above is the WHOLE
+      // file rather than a prefix of it.
       'Player installments (estimated)',
     ]);
+    const word = rows.find(r => r.item === '  — Fundraising drive');
+    assert.equal(word?.planned, 2400);
+    assert.equal(word?.schedule, 'Mar · Apr');
+    assert.equal(word?.notes, 'Expected team share');
   });
 
   it('never prints two rows a coach cannot tell apart — the twin defect, pinned', () => {
-    const { rows } = budgetPlanStatementRows(twoOnOneWord());
+    const { rows } = budgetPlanStatementRows(STATEMENT_SOURCE);
     const leaves = rows.map(r => String(r.item)).filter(i => i.trimStart().startsWith('—'));
-    assert.equal(new Set(leaves).size, leaves.length, 'every money-in row label must be distinct');
-  });
-
-  it('keeps the summed figure on the word, and the parts on its lines', () => {
-    const { rows } = budgetPlanStatementRows(twoOnOneWord());
-    const by = (label: string) => rows.find(r => r.item === label);
-    assert.equal(by('  — Fundraising drive')?.planned, 2400);
-    assert.equal(by('    — Expected team share')?.planned, 1800);
-    assert.equal(by('    — Fundraising drive')?.planned, 600);
+    assert.equal(new Set(leaves).size, leaves.length, 'every row label under a category must be distinct');
   });
 });
 

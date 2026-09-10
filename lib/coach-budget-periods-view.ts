@@ -45,6 +45,15 @@ export const GRANULARITY_LABEL: Record<PeriodGranularity, string> = {
  *  the real columns or be mistaken for one. */
 export const UNSCHEDULED = 'unscheduled';
 
+/**
+ * ⚠ ONE SPELLING OF UNDATED MONEY, AND NOW ONE HOME FOR IT. "No date yet" is this grid's column
+ * heading, the line form's third answer, the plan list's When chip, the export's own word and —
+ * since one word carries one line (2026-09-09) — the LABEL on the real period that carries a
+ * joined line's unscheduled remainder. Five surfaces, and the fifth one is stored in the database,
+ * which is exactly when a hand-typed copy stops being a wording risk and starts being data.
+ */
+export const NO_DATE_LABEL = 'No date yet';
+
 /** The same readability ceiling the Budget-vs-Actual month grid uses — imported, not restated, so
  *  tuning it once tunes both. Quarters inherit the same window, so switching granularity never
  *  changes WHICH money is on screen. */
@@ -233,50 +242,37 @@ export function whenSummary(
  *  ⚠ ONE SPELLING: "No date yet" is the month grid's column heading and the line form's own
  *  answer, so this is the third surface saying the same word rather than a fourth wording. */
 export function whenSummaryText(s: WhenSummary, fmtMoney: (n: number) => string): string {
-  if (s.months.length === 0) return 'No date yet';
+  if (s.months.length === 0) return NO_DATE_LABEL;
   const dated = s.months.join(' · ');
   return s.undated > 0.005 ? `${dated} · ${fmtMoney(s.undated)} no date` : dated;
 }
 
 /**
- * WHAT A MERGED SUB-LINE IS CALLED — the rule for the rows that appear only when two or more budget
- * lines share one word (owner ruling 2026-09-09, decision B2).
+ * THE MONTHS ALONE — a schedule read as a phrase, with no figure in it.
  *
- * ⚠⚠ THE DEFECT IT REPLACES: a sub-line with no note fell back to its ITEM's name, so it echoed the
- * row directly above it. On the UAT fixture the *Entry Fees* row printed that word THREE times in one
- * column — the parent and both of its note-less lines — and the only thing telling the two lines
- * apart was the When cell and the amount. It shipped on the cost side and nobody reported it, because
- * the rows still added up.
+ * ⚠ NEVER `whenSummaryText` FOR THIS JOB, and the reason outlived the function that first wrote it
+ * down. That one appends the undated money as a FIGURE ("Mar · $400.00 no date"), which goes stale
+ * against the amount in the very next cell — so anywhere a schedule is being used as a *phrase*
+ * rather than as a cell (the add form's "already on this plan" panel, and its preview of what the
+ * joined schedule becomes) wants the months and nothing else.
  *
- * ⚠ SO THE FALLBACK IS THE SCHEDULE, NOT THE WORD. A note-less line's schedule is the one thing that
- * is both true of it and different from its siblings.
- *
- * ⚠⚠ AND THE `When` CELL GOES WITH IT — this half is the whole reason the rule needs a function
- * rather than a ternary. Every line row already renders its schedule TWICE: once in the When column
- * and once as a chip under the name below 640. Naming the row by its schedule as originally drawn
- * would have printed "Oct" THREE times on one row. When the schedule becomes the name, the answer has
- * MOVED there — so `showWhen` is false and the caller renders neither. A noted sub-line keeps both.
- *
- * ⚠ BOTH SIDES OF THE TABLE, deliberately (owner, same ruling, widened on 2026-09-09). The fallback
- * is shared, so fixing only the money-in half would leave the identical echo on the cost side — the
- * very surface money-in was being aligned TO. Half a fix reads worse than none.
- *
- * ⚠ NOT FOR A ROW THAT STANDS ALONE. One line on one word IS the row, and it is named by the word;
- * this only decides the sub-rows a merged row opens to reveal.
+ * ⚠ ONE SPELLING for the empty case: "No date yet", the same words the grid's column, the form's
+ * third answer and the plan list's chip all print.
  */
-export function mergedSubLineName(line: {
-  notes: string | null;
-  totalAmount: number;
-  periods: Array<{ periodDate: string | null; amount?: number | string | null }>;
-}): { name: string; showWhen: boolean } {
-  const note = (line.notes ?? '').trim();
-  if (note) return { name: note, showWhen: true };
-  const s = whenSummary(line.periods, Number(line.totalAmount) || 0);
-  // ⚠ The MONTHS only — never `whenSummaryText`, whose undated-money tail ("Mar · $400.00 no date")
-  // is a figure, and a figure has no business being a row's name: it would go stale against the
-  // amount in the very next cell. "No date yet" is the same spelling every other surface uses.
-  return { name: s.months.length === 0 ? 'No date yet' : s.months.join(' · '), showWhen: false };
+export function whenMonthsText(s: WhenSummary): string {
+  return s.months.length === 0 ? NO_DATE_LABEL : s.months.join(' · ');
 }
+
+/* ⚰ `mergedSubLineName` IS DELETED, AND SO IS THE ROW IT NAMED (owner ruling 2026-09-09,
+   migration 286 — one word carries one line on a plan).
+
+   It existed for four days. It named the sub-rows a merged word opened to reveal — first by their
+   word, which echoed the row above them, then by their SCHEDULE, which meant suppressing the row's
+   When cell so the same answer did not print three times across one row. Both halves are moot:
+   there are no sub-rows. **The defect it was born for is migration 286's own header — read it
+   there rather than here**; the lesson worth keeping is that a level of detail which can be
+   visibly wrong for weeks without anyone noticing is not being read, which is the argument this
+   file's grid was already making by never showing the level at all. */
 
 /** `2027-04` → `2027-Q2`. */
 export function quarterKeyOf(month: MonthKey): string {
@@ -527,7 +523,7 @@ export function buildPeriodView(
      ⚠ The word is also SPOKEN FOR elsewhere: "Unscheduled" is what the schedule tools call a game
      with no date. One product, one meaning per word. */
   const columns: PeriodColumn[] = hasUnscheduled
-    ? [{ key: UNSCHEDULED, label: 'No date yet', unscheduled: true }, ...dateColumns]
+    ? [{ key: UNSCHEDULED, label: NO_DATE_LABEL, unscheduled: true }, ...dateColumns]
     : [...dateColumns];
 
   return {

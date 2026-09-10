@@ -627,3 +627,63 @@ export async function resolveOrgBudgetCategory(
 
   return { ok: true, categoryId: data.id as string };
 }
+
+/**
+ * ONE WORD, ONE LINE — the server's half, in one place (owner ruling 2026-09-09, migration 286).
+ *
+ * A budget word may be used once per season plan. The rule's ground truth is the partial unique
+ * index `rep_budget_lines_one_line_per_item`; this is what turns its refusal into a sentence a coach
+ * can act on, by naming the line that is in the way.
+ *
+ * ⚠⚠ CALLED **AFTER** THE WRITE FAILS, NEVER BEFORE IT — and that is the whole reason it is shaped
+ * this way rather than as a pre-check. A pre-check is check-then-act: it costs a round trip on every
+ * ordinary save, and it still loses the race it exists to prevent, handing the loser a raw
+ * constraint error instead of this sentence. Attempting the write and reading the clash out of a
+ * `23505` covers the common case and the race with one path — the same shape the budget importer
+ * already uses when two tabs mint one word.
+ *
+ * ⚠ EVERY SCOPE IS SESSION-DERIVED AT BOTH CALL SITES: `orgId` from the auth context, `teamId` from
+ * the path param already checked to belong to it, `programYearId` from the team's own active year.
+ * The only caller-supplied value that reaches here is `itemId`, and `resolveBudgetItem` has already
+ * authorised it. This client is the SERVICE-ROLE one, so that is load-bearing rather than incidental.
+ *
+ * `excludeLineId` is the line being edited: re-filing a line onto its own word is not a clash.
+ */
+export async function findLineHoldingItem(args: {
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  itemId: string;
+  excludeLineId?: string;
+}): Promise<string | null> {
+  let q = supabaseAdmin
+    .from('rep_budget_lines')
+    .select('id')
+    .eq('program_year_id', args.programYearId)
+    .eq('team_id', args.teamId)
+    .eq('org_id', args.orgId)
+    .eq('item_id', args.itemId);
+  if (args.excludeLineId) q = q.neq('id', args.excludeLineId);
+  const { data } = await q.limit(1);
+  return ((data ?? [])[0]?.id as string | undefined) ?? null;
+}
+
+/** Is this the database refusing a second line on one word? */
+export function isDuplicateItemLineError(error: { code?: string } | null | undefined): boolean {
+  return error?.code === '23505';
+}
+
+/**
+ * The 409 every write door answers a duplicate word with — one wording, named after the word.
+ *
+ * ⚠ `existingLineId` IS NOT DECORATION: the budget panel opens that line when a save comes back this
+ * way, so the sentence's "open that line" is a thing the coach can actually do rather than an
+ * instruction to go hunting. A door that returns the id without a client that uses it is a promise
+ * the product does not keep.
+ */
+export function duplicateItemLineResponse(itemName: string, existingLineId: string | null) {
+  return {
+    error: `${itemName} is already on this plan. Open that line to add to it, or pick a different word.`,
+    existingLineId,
+  };
+}
