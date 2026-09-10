@@ -106,7 +106,26 @@ variable + rebuild (job 250, code unchanged at `201ec1bd`). Prod code moved to `
 roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and the coach demo's
 marketing doors: "See it live" verified rendering live post-251 on the homepage hero (both demos),
 both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both door routes 307
-into their worlds. **Prod HEAD is now `2e7ef905` (2026-09-08, Amplify master job 262 SUCCEED first time — 119
+into their worlds. **Prod HEAD is now `ebcb2d52` (2026-09-10, Amplify master job 264 SUCCEED — 30
+commits, tag `release/2026-09-10`: the categories & items door, one word one line, the By-period
+grid's doors, a player handing in more than once, the Escape/accessibility floor, and lime-as-TEXT
+darkening on paper. **Migrations 286 + 287 applied to prod that day and the manual queue is now
+EMPTY — 14 applied, 0 held, 0 outstanding, DRIFT 0, parity 0 accepted.**
+⚠⚠ **JOB 263 FAILED FIRST, AND THE REASON IS A STANDING RULE: `check-schema-parity` runs ONLY on
+master, so it is the master build that ENFORCES migration order.** It failed on mig 286's index
+being on dev and not prod. "Apply the migration after the build goes green" therefore cannot ever
+complete — the build is not green until it is applied. This holds for every rule-ADDING migration.
+The price is one rebuild's worth of window where prod serves OLD code against the new rule, and it
+is unavoidable in the other direction.
+⚠⚠ **THE MANUAL REGISTER WAS STALE IN THE SAFE-LOOKING DIRECTION: 12 entries read "outstanding or
+unverified" and TEN WERE ALREADY ON PROD** (verified by querying production directly, incl. 264
+yet again). Bookkeeping drift is not database drift — an alarming register is no more trustworthy
+than a green gate. Ask the database.
+⚠ **STILL OWED FROM THAT RELEASE: the prod COACH demo re-seed.** `check:demos:prod` is RED with 4
+failures, one of which is that **no player hands in twice** — this release's own headline moment,
+absent from the public shop window. Preconditions were verified (working copy 0 ahead of
+`origin/master`, demo files clean); the run itself was left to the owner.
+The preceding prod HEAD was `2e7ef905` (2026-09-08, Amplify master job 262 SUCCEED first time — 119
 commits, tag `release/2026-09-08`: the coach money quarter (the dues ladder, the budget plan’s
 subtotals, credits and paybacks, fundraising’s one way in), Founding Season 2027 Phases 0–2, the
 notifications redraw, one table standard + its exception register, and the pricing comparison table’s
@@ -137,8 +156,12 @@ and be credited for it, one bill can hold both a team payment and a family-front
 schedule-edit / delete now REFUSE rather than strand a repayment. The dock lines and tour steps were
 already written against the old six-doors-to-record world and were only partly trued up in the 08-25
 release; nothing was adjusted for P4. **Re-read the whole coach-money narration before the next demo
-change** — this surface has now gone stale across three consecutive releases, which is the strongest
-evidence yet for the rule that says it does. ⚠ `check:demos` self-heals on dev only and never
+change** — this surface has now gone stale across FIVE consecutive releases (09-08 and 09-10 both
+added to the pile), which is the strongest evidence yet for the rule that says it does. ⚠⚠ **AND
+09-10 MADE IT WORSE IN A NEW WAY: the demo world is now missing a MOMENT, not just a sentence.** A
+player can hand money in to a drive more than once, and the live demo has nobody doing it — so the
+release's headline feature is invisible on the page a prospect reads. `check:demos:prod` names it
+outright. **The prod re-seed that fixes it is OWED.** ⚠ `check:demos` self-heals on dev only and never
 writes to prod — production freshness rides the cron alone, so a green local run is NOT evidence about
 the live demos. The preceding prod HEAD was `5ae39f10` (2026-08-17, Amplify job 257 SUCCEED — 72 commits: the Money
 redesign P1–P4, budget item integrity, membership + history-in-place, tryout scorecard weights and
