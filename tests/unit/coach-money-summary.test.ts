@@ -14,7 +14,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { spendAgainstPlan, moneyBackAgainstSpending } from '../../lib/coach-money-summary.ts';
+import { spendAgainstPlan, moneyBackAgainstSpending, fmt, fmtCompact } from '../../lib/coach-money-summary.ts';
 
 const base = {
   expensesPaid: 0,
@@ -132,5 +132,42 @@ describe('moneyBackAgainstSpending — the closed divergent case (P6 "one headro
       new Set(['revenue-only']),
     );
     assert.equal(total, 0.3);
+  });
+});
+
+/**
+ * ONE NOTATION FOR A NEGATIVE, EVERYWHERE A COACH READS MONEY (owner ruling 2026-09-09).
+ *
+ * ⚠ The two money grids — Budget vs. Actual's months and the Budget plan's periods — were the only
+ * surfaces in the coach portal printing a bare minus, and the budget grid had gone one further and
+ * swapped in a typographic minus by hand, so the product showed THREE notations for one fact. Both
+ * grids read `fmtCompact`; every other money string reads `fmt`. Pinned together here so the next
+ * change to one is a failure rather than a drift.
+ */
+describe('a negative wears brackets', () => {
+  it('formats the same way full and compact', () => {
+    assert.equal(fmt(-1234.5), '($1,234.50)');
+    assert.equal(fmt(1234.5), '$1,234.50');
+    assert.equal(fmtCompact(-1234.5), '(1,235)');
+    assert.equal(fmtCompact(1234.5), '1,235');
+  });
+
+  it('never emits a minus sign, of either kind', () => {
+    for (const n of [-1, -0.99, -1000000, -63]) {
+      const compact = fmtCompact(n)!;
+      assert.equal(compact.includes('-'), false, `hyphen-minus in ${compact}`);
+      assert.equal(compact.includes('\u2212'), false, `typographic minus in ${compact}`);
+      assert.equal(compact.startsWith('('), true, `${compact} is not bracketed`);
+      assert.equal(fmt(n).startsWith('($'), true);
+    }
+  });
+
+  it('keeps "nothing here" distinct from zero', () => {
+    // A grid cell draws its own em dash for null; a zero is a fact and would print as "0".
+    assert.equal(fmtCompact(null), null);
+    assert.equal(fmtCompact(undefined), null);
+    assert.equal(fmtCompact(0), null);
+    // Half a cent either side of zero is nothing, so a rounding tail never renders "(0)".
+    assert.equal(fmtCompact(-0.004), null);
   });
 });

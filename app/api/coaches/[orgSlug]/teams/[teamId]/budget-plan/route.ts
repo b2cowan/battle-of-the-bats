@@ -87,13 +87,43 @@ export const GET = withObservability(async (_req: Request,
 
   // Check whether any budget-generated installments already exist for this year
   let installmentCount = 0;
+  /**
+   * The dated instalments, for the By-period grid's Player installments row (owner ruling
+   * 2026-09-09). Every source, not just `budget_generated`: a coach who set a schedule by hand is
+   * still owed the spread.
+   *
+   * ⚠⚠ THIS IS NOT WHAT `duesAssessed` IS SUMMED FROM, deliberately, and the difference is the
+   * whole reason the grid keeps a No-date-yet column for dues. `duesAssessed` is Σ schedule
+   * totals so credits and partial payments never move the plan; a schedule's total is only
+   * checked against its instalments on the manual POST path, so the two can genuinely differ.
+   * The grid puts the difference in No date yet rather than letting the row disagree with the
+   * figure the List prints — see `duesTotals` in lib/coach-budget-periods-view.ts.
+   *
+   * ⚠ AMOUNTS AND DUE DATES ONLY. Nothing here says whether an instalment was PAID: this row is
+   * the plan, and what has actually arrived is Budget vs. Actual's question.
+   */
+  let duesInstallments: Array<{ date: string | null; amount: number }> = [];
   if (schedules.length > 0) {
-    const { count } = await supabaseAdmin
+    /* ⚠ ONE ROUND TRIP ANSWERS BOTH QUESTIONS. This was written as two reads of the same table for
+       the same schedule ids — a `head: true` count filtered to `budget_generated`, then a second
+       select for the spread — awaited back to back on a page a coach opens routinely. The rows are
+       small and the source column is already on them, so the count is a filter over what we have
+       rather than a second query for it.
+       ⚠ NOT `getRepDuesInstallmentsBySchedules` (lib/db.ts), and this is a deliberate skip rather
+       than an oversight: its mapped type carries no `source`, so it cannot answer the count half,
+       and it types `dueDate` as a plain string when the column is nullable — the exact field this
+       grid has to read as "no date yet". A helper that forces a second query and mis-types the one
+       column that matters is the wrong reuse. */
+    const { data: instData } = await supabaseAdmin
       .from('rep_player_dues_installments')
-      .select('id', { count: 'exact', head: true })
-      .eq('source', 'budget_generated')
+      .select('due_date, amount, source')
       .in('schedule_id', schedules.map(s => s.id));
-    installmentCount = count ?? 0;
+    const rows = (instData ?? []) as Array<{ due_date: string | null; amount: number; source: string | null }>;
+    installmentCount = rows.filter(r => r.source === 'budget_generated').length;
+    duesInstallments = rows
+      // Number() belt, matching every other numeric read in lib/db.ts — a numeric column must
+      // never reach arithmetic as a string, whatever the driver does.
+      .map(r => ({ date: r.due_date ?? null, amount: Number(r.amount ?? 0) }));
   }
 
   // Active roster count
@@ -141,6 +171,7 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({
     plan,
     duesAssessed,
+    duesInstallments,
     seasonBudgetAmount: programYear.budgetAmount ?? null,
     seasonYear: programYear.year,
     priorPlan,

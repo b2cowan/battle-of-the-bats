@@ -534,11 +534,18 @@ export default function MoneyMonthGrid({
     value: number | null,
     opts: { onClick?: () => void; href?: string; title?: string; emphasis?: Emphasis } = {},
   ) {
-    // ⚠ ONE MINUS SIGN. `fmtCell` already carries the sign; this also prepended a typographic
-    // minus, so every negative rendered as "−-2,000" — two dashes. Only the running balance ever
-    // goes negative, which is why it survived until the layout fixture gained budget data
-    // (2026-08-13). The swap to the typographic minus stays, applied to the ONE sign there is.
-    const text = value === null ? null : fmtCell(value)?.replace('-', '−');
+    /* ⚰ THE MINUS-SIGN SWAP IS GONE (owner ruling 2026-09-09). `fmtCell` brackets a negative now,
+       the way `fmt` and therefore every other money string in the portal always has; this grid and
+       the budget plan's were the last two printing a bare sign, and this one had gone further and
+       swapped in a typographic minus, so the product showed three notations for one fact. The old
+       hazard here — a prepended minus on an already-signed string rendering "−-2,000" — cannot
+       recur, because there is no sign left to double.
+       ⚠ A BRACKET ON THIS GRID IS THE WARNING, and that is the opposite of what it means on the
+       budget plan. Here the rows that go negative are balances, so a bracket is the account below
+       zero and `emphasis: 'negative'` paints it red; there it is money landing ahead of the bills
+       and it is painted green. Same notation, opposite meaning — which is exactly why the colour
+       rule lives in each grid and never in the formatter. */
+    const text = value === null ? null : fmtCell(value);
     // Null = "nothing to say here" (a future month under Difference, a lens this row can't
     // answer); zero = "nothing happened". Both read as an em dash — a grid full of $0 is noise.
     if (text == null) return <span className={styles.nil}>—</span>;

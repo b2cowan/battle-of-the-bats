@@ -26,7 +26,7 @@ import { duesLadderTotals, type DuesLadder } from './dues-payments';
 import { PLAN_LADDER_LABEL, isFundingKind, type BudgetTotals } from './coach-budget-totals';
 import { categoryGroupOf, groupByCategory, groupByItem } from './coach-budget-rollup';
 import {
-  whenSummary, whenSummaryText, type PeriodView,
+  whenSummary, whenSummaryText, type PeriodView, type PeriodTotals,
 } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
 import { planColumnLabel, netRowLabel, type CompareBasis } from './coach-budget-basis';
@@ -157,7 +157,7 @@ export interface BudgetPlanExportSource {
   /** The screen's closing figures, from `computeBudgetTotals` — never re-derived here. The ladder
    *  reads more of them than the old close did: both subtotals and the estimate rows (2026-09-08). */
   totals: Pick<BudgetTotals,
-    'totalPlanned' | 'fundedByPlayers' | 'fundingLineCount' | 'itemized' | 'expectedFunding'
+    'totalPlanned' | 'fundedByPlayers' | 'costsLessFunding' | 'fundingLineCount' | 'itemized' | 'expectedFunding'
     | 'estimatedTotal' | 'difference' | 'hasDifference' | 'overPlanned'>;
   /** The Dues tab's assessed total, echoed on the plan as the players' side. */
   duesAssessed: number;
@@ -292,14 +292,15 @@ export function budgetPlanStatementRows(
   // ── THE CLOSE: the ladder once dues exist, one estimated row before ──────────────────────────
   if (src.duesAssessed > 0) {
     if (hasFunding) {
-      // ⚠ `fundedByPlayers`, not a fresh subtraction: it is the same figure floored at zero that the
-      // tile prints as the Estimated installments, so an over-funded plan reads $0.00 here and on
-      // screen alike rather than a signed figure in one place and its absolute in the other
-      // (/review, 2026-09-08).
+      // ⚠ THE SIGNED FIGURE, following the screen (owner ruling 2026-09-09). This printed
+      // `fundedByPlayers` — floored at zero — which matched the screen while the screen was also
+      // flooring, and both were wrong for a row that states a subtraction: an over-funded plan read
+      // $0.00 in the file and a bracketed negative on the By-period grid. The floor stays on the
+      // estimated-installments row below, where it belongs.
       push({
         item: L.costsLessFunding,
         schedule: '',
-        planned: totals.fundedByPlayers,
+        planned: totals.costsLessFunding,
         notes: L.costsLessFundingNote,
       }, 'total');
     }
@@ -389,7 +390,7 @@ export function budgetPeriodGridRows(
     push(row, 'section');
   };
   /** A subtotal or the close, from a per-column total the view built in the same pass. */
-  const totalRow = (label: string, funding: boolean, t: { cells: Record<string, number>; total: number }) => {
+  const totalRow = (label: string, funding: boolean, t: PeriodTotals) => {
     const row: ExportRow = { item: label };
     for (const col of view.columns) row[periodColumnKey(col)] = cell(funding, t.cells[col.key]);
     row.total = cell(funding, t.total);
@@ -424,13 +425,38 @@ export function budgetPeriodGridRows(
   if (costGroups.length > 0) {
     band(L.costsBand.toUpperCase());
     costGroups.forEach(groupRows);
-    totalRow(view.estimateDiffers ? L.linesSoFar : L.plannedCosts, false, view.costTotals);
+    /* ⚠ The estimate's un-itemized remainder is a REAL ROW now, in the No-date-yet column, so this
+       subtotal is the estimate and keeps its own name in every state (owner ruling 2026-09-09).
+       It used to read "Lines so far" whenever an estimate differed — see the note on the view's
+       `costTotals`. The two rows are the List's own, verbatim; the file prints them indented the
+       way it indents a line under its category. */
+    if (view.estimateRows) {
+      totalRow(`  — ${L.linesSoFar}`, false, view.estimateRows.linesSoFar);
+      totalRow(
+        `  — ${view.estimateRows.remainder.total < 0 ? L.overEstimate : L.stillToItemize}`,
+        false, view.estimateRows.remainder,
+      );
+    }
+    totalRow(L.plannedCosts, false, view.costTotals);
   }
   if (view.fundingTotals && fundingGroups.length > 0) {
     band(L.fundingBand.toUpperCase());
     fundingGroups.forEach(groupRows);
     totalRow(L.plannedFunding, true, view.fundingTotals);
     totalRow(L.costsLessFunding, false, view.totals);
+  }
+  /* The ladder finishes in the file exactly as it finishes on screen (owner ruling 2026-09-09) —
+     an export's shape is its screen's shape, and a file that stopped at Costs less funding would
+     leave a treasurer doing by hand the subtraction the grid now prints. Installments read
+     POSITIVE like every money-in row; the close keeps its sign. */
+  if (view.close) {
+    /* ⚠ `false` = do not absolute-value this row, and that is deliberate rather than a
+       mis-typed flag (/review, 2026-09-10). Its undated cell holds what the dated instalments do
+       not cover, which is negative whenever a schedule was lowered after its instalments existed;
+       abs()ing it printed an overshoot as a positive and the row stopped summing to its own Total.
+       Ordinary values here are already positive, so the file is unchanged in every normal case. */
+    totalRow(L.installments, false, view.close.installments);
+    totalRow(L.shortfallBuffer, false, view.close.shortfall);
   }
 
   return { rows, kinds };

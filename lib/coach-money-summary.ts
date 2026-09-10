@@ -285,10 +285,23 @@ export function fmt(n: number) {
  * Returns null for "nothing here" rather than "0", because a zero and a nothing are different
  * facts and only the caller knows how it wants to draw the second one. Both money grids (Budget
  * vs. Actual's month grid and the budget plan's period view) use this; they had a copy each.
+ *
+ * ⚠⚠ A NEGATIVE WEARS BRACKETS, exactly as `fmt` above has always drawn one (owner ruling
+ * 2026-09-09). The two money grids were the ONLY surfaces in the coach portal printing a bare
+ * minus — every other money string a coach reads comes through `fmt`, which brackets — and the
+ * budget grid had gone one further and swapped in a typographic minus by hand, so the product
+ * showed three notations for one fact. Brackets are the portal's convention; these two callers
+ * are the exception being retired, which is why this changed HERE rather than in each grid.
+ *
+ * ⚠ The brackets say "negative", never "bad". What a bracket MEANS differs by row and belongs to
+ * the grid drawing it: on the plan's closing rows it is money landing ahead of the bills (drawn in
+ * the funding green), on a running balance it is the account below zero (drawn red). Do not push
+ * either colour rule in here.
  */
 export function fmtCompact(n: number | undefined | null): string | null {
   if (n == null || Math.abs(n) < 0.005) return null;
-  return n.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const abs = Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return n < 0 ? `(${abs})` : abs;
 }
 
 /* ⚠ There is deliberately NO "does this team have anything falling due?" helper here.

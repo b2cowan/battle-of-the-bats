@@ -20540,3 +20540,90 @@ repair, so an older fixture heals on its next run.
 `check:layout`; the owner walk (instrument published as artifact `444d13c4` — twenty steps in five parts, four of them rulings); migration 286 on prod at promote.
 
 Plan pair: `docs/projects/active/COACH_BUDGET_ONE_WORD_ONE_LINE_{PLAN,PM_BRIEF}.md`.
+
+## §164 · The By-period close — player installments join the Budget plan's period grid, and every negative on both money grids wears brackets — built on dev 2026-09-10, **no migration**, awaiting QA · walk artifact `c84c2f34` · mockup artifact `4a8f3335` (rounds 1–3 on one link) · run order step **B21**
+
+**What the owner asked, and where it went.** Two questions off one screenshot of the By-period grid:
+why the player-installments figure the List shows is absent, and why a period that raises more than
+it spends prints a minus. Three mockup rounds settled five decisions and turned up **two live
+figure-disagreement defects** that neither question was about.
+
+**Rulings (mockup rounds 1–3, 2026-09-09/10):** A the subtraction keeps its direction — *Funding
+less costs* was drawn and rejected, because it makes the season total negative for every team that
+charges dues · B negatives in **brackets**, portal-wide convention, on **both** money grids; green
+on a plan close, red on a balance · C the estimate case is fixed by **showing the missing money**,
+not renaming — owner explicitly refused a "Lines less funding" close (*"I don't like lines, keep it
+costs"*) · D the List's *Costs less funding* row shows the signed figure; the zero-floor stays on
+the figures that derive dues · E **installments are spread onto the grid**, overruling the round-1
+recommendation to signpost at Budget vs. Actual (*"the monthly view in budget seems like a partial
+report that makes me need to look elsewhere"*); balances deferred · F/G the closing row takes the
+owner's **paired header**, worded **Shortfall (Buffer)** — *Surplus* was refused because *Surplus to
+share* on the Player Dues tab is spendable season-end cash · H before dues are set the two rows stay
+away and a note offers *Set dues for all players*.
+
+**The two defects, both live before this change.** With a season estimate set, the List read
+*Costs less funding* from the estimate and the grid from the lines — **$11,377.00 against $10,313.00
+on the same plan, same day, same name**. With funding covering the whole season, the List floored to
+**$0.00** while the grid showed a bracketed negative. Both are closed: the estimate's un-itemized
+remainder is now a real row in the No-date-yet column (the two rows copied verbatim from the List),
+and the floor moved off the row that states a subtraction onto the figures that derive dues.
+
+**`/simplify` — five cleanups applied, three declined with reasons.** One query now answers both the
+installment count and the spread (it was two round trips to one table); the exporter took the shared
+totals type; `estimateDiffers` was deleted rather than left as a flag nothing asked; the two closing
+rows became one field so the "both or neither" invariant is in the type; and the legend's condition
+moved into the view beside `hasUnscheduled`, where the deadband is already spelled. Declined: the two
+cell renderers stay two (they differ in whether money-in is absolute), the estimate and dues blocks
+stay separate (they share a sentence, not logic), and `fundedByPlayers` stays (every one of its seven
+callers wants the floor).
+
+**⚠⚠ `/review` found FOUR real defects, and the worst one was introduced by the fix for D.** High
+risk tier, four lenses, deterministic gate first.
+
+1. **CRITICAL, self-caught mid-review.** Unflooring the List's *Costs less funding* row exposed a
+   trap one level down: **this panel has its own money formatter and it is `Math.abs()`**. Every
+   other figure on that ladder is right to use it — *Planned buffer*, *Over your estimate* — because
+   their LABELS carry the direction. This row's label does not. An over-funded plan would have read
+   **"Costs less funding $2,000.00"**, stating the exact opposite of the truth — strictly worse than
+   the $0.00 it replaced. ⚠ The `/review` of 2026-09-08 had flagged this same spot, in a comment,
+   and the comment did not survive the next edit; it is now a build-enforced guard
+   (`tests/unit/budget-ladder-sign-guard.test.ts`).
+2. **MEDIUM.** The installments row was rendered through the money-in path that absolute-values every
+   cell. Its undated cell carries whatever the dated instalments do not cover — which goes **negative
+   whenever a schedule is lowered after its instalments exist**, a state the adjustment work makes
+   routine — so an overshoot printed as a positive and the row stopped summing to its own Total, on
+   screen and in the exported file alike. Both now render signed.
+3. **MEDIUM.** The grid copied the List's two estimate rows' WORDING but not their STATE: *Over your
+   estimate* is the one figure on this plan drawn in danger ink, and the grid was rendering it
+   silently. Painted.
+4. **LOW/MEDIUM.** The *Scheduled* tag borrowed a phone rule scoped to an ancestor this table does
+   not have, so instead of dropping to its own line it widened a nowrap sticky column and pushed
+   period columns off the initial view. It now hides below 640px — **which is what the approved
+   mockup drew**, and the divergence had gone unflagged at build time.
+
+**Refuted / clean:** the import round trip was the biggest worry and is **sound** — the importer
+builds its skip-set dynamically from the ladder labels, and strips the indent before testing, so
+none of the four new rows can mint a phantom budget line. Multi-tenant scoping is unchanged (the
+diff does not touch the scoping predicate) and the money-capability gate already governed the whole
+response. Both `buildPeriodView` call sites — screen and export — pass the dues, so the file cannot
+disagree with the screen it came from.
+
+**Gates.** typecheck clean · 3,371 unit tests green · `check:spelling` · `check:dictionary` ·
+`check:demos` green. **Rendered layout gate: the three budget screens pass at 361/390/768/1440**
+after recording six accepted entries — the shared month pager now renders on the period grid,
+because dues due-dates widen the column range past twelve months, and its 36px icon-only buttons are
+the deviation already accepted on its twin screen with a written reason. ⚠ **One layout finding is
+left red on purpose**: a 33px control at 768 belonging to the concurrent Categories & Items door
+work (§163), uncommitted in this shared tree. Not laundered into the baseline.
+
+**⚠ Two states the fixture cannot show** — no dues set, and funding above the whole plan. Neither is
+reachable on UAT Test Team without wrecking the dues walks, and the org's only other team has no live
+season. Both are pinned by unit tests, and **the walk says so in its own part rather than skipping
+them quietly**.
+
+**Help + demo.** The coach money guide learned the three closing rows, the bracket notation and the
+estimate row, with search terms; the bracket paragraph was tightened after a first draft claimed
+brackets appear "everywhere money appears", which is not true of the rows whose wording carries the
+direction. The demo narration was **checked, not assumed**: no sentence in the tour or dock quotes a
+signed figure, and no step stops on the Budget plan tab, so nothing went stale — recorded next to the
+existing re-read notes.

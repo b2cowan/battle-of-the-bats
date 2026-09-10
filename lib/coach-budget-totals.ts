@@ -265,6 +265,22 @@ export const PLAN_LADDER_LABEL = {
   installmentsEstimated: 'Player installments (estimated)',
   shortOfPlan:           'Short of covering the plan',
   buffer:                'Planned buffer',
+  /**
+   * The By-period grid's closing row — a PAIRED header naming both directions at once, because
+   * across time this row's sign genuinely flips column to column and a row label cannot rename
+   * itself per column the way the List's close renames itself per season (owner's proposal,
+   * 2026-09-09; standard accounting line form, cf. "Net income (loss)").
+   *
+   * ⚠⚠ "(Buffer)", NEVER "(Surplus)" — and this is a product-wide word, not a preference. *Surplus
+   * to share* on the Player Dues tab is the season-end settlement: real cash left over, divided
+   * among families, with hold-backs and payouts a coach can actually pay. A bracketed figure on
+   * THIS row is a timing artifact of a plan — money arriving in one period for bills falling in
+   * another — and nobody can spend it. One product, one meaning per word.
+   *
+   * ⚠ The two long names above are the same two states said in full, and the List keeps them: it
+   * only ever shows the season, where exactly one of them is true.
+   */
+  shortfallBuffer:       'Shortfall (Buffer)',
   linesSoFar:            'Lines so far',
   stillToItemize:        'Still to itemize',
   overEstimate:          'Over your estimate',
@@ -306,8 +322,23 @@ export interface BudgetTotals {
   /** THE headline: the estimate when one is set, else the itemized sum. */
   totalPlanned: number;
   /** What dues have to cover. Never below zero — funding above the whole plan would otherwise
-   *  produce a negative per player, and "we owe the players money" is not a dues schedule. */
+   *  produce a negative per player, and "we owe the players money" is not a dues schedule.
+   *  ⚠ THIS IS NOT WHAT THE LADDER'S "Costs less funding" ROW PRINTS ANY MORE — see
+   *  `costsLessFunding` below. The floor belongs to the figures that DERIVE dues (this one, the
+   *  tile's estimated installments, per player), not to a row stating a subtraction. */
   fundedByPlayers: number;
+  /**
+   * The same subtraction, SIGNED — what the List's *Costs less funding* row prints (owner ruling
+   * 2026-09-09).
+   *
+   * ⚠⚠ IT EXISTS BECAUSE THE FLOOR WAS BEING READ AS AN ANSWER. A plan whose funding covers the
+   * whole season showed **$0.00** here and a bracketed negative on the By-period grid — one name,
+   * two numbers, on two views of one screen. The floored figure is the right answer to "what do
+   * the players have to cover"; it is the wrong answer to "costs less funding", which is what the
+   * row is called. The screen's `fmt` already brackets a negative, so the row needs no new
+   * treatment — only the unfloored number.
+   */
+  costsLessFunding: number;
   rosterCount: number;
   /**
    * fundedByPlayers ÷ roster — or null when there is nothing to state: no roster to divide by, or
@@ -359,7 +390,8 @@ export function computeBudgetTotals({
   const hasDifference = hasEstimate && Math.abs(difference) >= 0.005;
 
   const totalPlanned = hasEstimate ? r2(estimatedTotal) : itemized;
-  const fundedByPlayers = r2(Math.max(0, totalPlanned - expectedFunding));
+  const costsLessFunding = r2(totalPlanned - expectedFunding);
+  const fundedByPlayers = r2(Math.max(0, costsLessFunding));
 
   return {
     itemized,
@@ -371,6 +403,7 @@ export function computeBudgetTotals({
     hasDifference,
     overPlanned: hasDifference && difference < 0,
     totalPlanned,
+    costsLessFunding,
     fundedByPlayers,
     rosterCount,
     perPlayer: rosterCount > 0 && totalPlanned > 0 ? r2(fundedByPlayers / rosterCount) : null,

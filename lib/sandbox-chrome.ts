@@ -597,6 +597,18 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              the off-season books moment lands a prospect one tab from the revamped plan — and
              the `ea8ddd14` cap (a hook plus ONE proof point per step) says no clause is added
              for it. If the owner wants the plan's one-grain story narrated, swap a clause. */
+      /* ⚠ RE-READ FOR THE BY-PERIOD CLOSE (2026-09-09 — player installments joined the Budget
+         plan's period grid, and every negative on BOTH money grids now wears brackets instead of
+         a minus), per CLAUDE.md's two questions:
+           · *Still true?* Yes, and the notation is the half worth stating: no sentence in this
+             file quotes a signed figure, a minus sign or a bracketed one — checked, not assumed —
+             so the swap stales nothing even though this tour DOES stop on Budget vs. Actual, where
+             a negative closing balance is now "(380)". The Budget-plan reasoning one note up still
+             holds: no step stops on that tab.
+           · *Should a moment show it?* Not on its own. The new rows answer "is the plan covered,
+             month by month", which is the same question step 5's variance moment already asks in
+             the language a prospect arrives with. Adding a clause would spend the per-step cap on
+             a second telling. Revisit if the plan grid ever grows balances. */
       /* ⚠ RE-READ FOR THE MONEY BANNER STANDARD (2026-09-03 — every Money tab's summary rebuilt as
          one shared band; on Player Dues both table footers retired and the Collection schedule
          became a foldable timeline in the header), per CLAUDE.md's two questions:

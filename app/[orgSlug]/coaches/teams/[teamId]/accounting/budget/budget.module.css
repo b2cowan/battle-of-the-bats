@@ -611,6 +611,29 @@
    ⚠ Expected fundraising is money coming IN — shown positive AND green (owner, 2026-08-13):
    the colour says the direction, while a negative running balance stays red. */
 .periodGrid tbody tr.periodGridFunding.periodGridFunding td { color: var(--success-light); }
+/* A BRACKETED FIGURE ON A CLOSING ROW — money landing ahead of the bills (owner ruling
+   2026-09-09). Same green as the funding rows above, for the same reason: the colour says the
+   direction. ⚠ NOT the warning colour, and the distinction is load-bearing — Budget vs. Actual's
+   balance rows paint their brackets RED, because there a bracket is the account below zero. Same
+   notation, opposite meaning, decided by the row, never by the formatter.
+   ⚠ Doubled for the same reason the rule above it is: it has to beat the shared `.moneyGrid`
+   total-row colour across stylesheets, where equal specificity leaves bundling order to decide. */
+.periodGrid tbody td.periodGridAhead.periodGridAhead { color: var(--success-light); }
+/* LINES ABOVE THE ESTIMATE — the one state on this plan drawn in danger ink, and the List has
+   painted it since the ladder landed (`.planTable .estimateRow.estimateOver`, further down). The
+   grid copied that row's WORDING and not its state, so the same fact shouted on one view and was
+   silent on the other. Doubled for the same reason its neighbours are: it must beat the shared
+   `.moneyGrid` row colour across stylesheets. */
+.periodGrid tbody tr.periodGridOver.periodGridOver th,
+.periodGrid tbody tr.periodGridOver.periodGridOver td { color: var(--danger-light); }
+/* The Scheduled tag on the Player installments row. ⚠ It is NOT `.ladderBadge`: that rule is
+   scoped to `.planTable`, an ancestor this table does not have, so the badge it was borrowed for
+   never dropped to its own line here — it stayed inline in a nowrap sticky column and widened it,
+   costing period columns at the initial scroll position. The approved mockup drops the tag on a
+   phone instead; the tile above the table already says Scheduled. */
+@media (max-width: 640px) {
+  .periodGrid .periodGridBadge { display: none; }
+}
 .periodGridNote {
   margin: 0;
   font-size: var(--type-support);

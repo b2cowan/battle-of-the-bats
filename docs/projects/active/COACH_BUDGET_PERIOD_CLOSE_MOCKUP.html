@@ -1,0 +1,582 @@
+<title>The By-Period Close</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+  /* ── Document chrome: a cool slate ground so the warm product frames read as specimens ── */
+  :root {
+    --doc-bg: #E3E7ED;
+    --doc-ink: #1C2230;
+    --doc-ink-2: #3E4757;
+    --doc-mute: #5B6474;
+    --doc-line: rgba(28, 34, 48, 0.16);
+    --doc-line-strong: rgba(28, 34, 48, 0.32);
+    --doc-callout: #2456C9;
+    --doc-callout-bg: rgba(36, 86, 201, 0.10);
+    --tag-new: #2456C9;
+    --tag-new-bg: rgba(36, 86, 201, 0.12);
+    --tag-restyle: #9A5B00;
+    --tag-restyle-bg: rgba(154, 91, 0, 0.12);
+    --tag-same: #5B6474;
+    --tag-same-bg: rgba(91, 100, 116, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-bg: #151A22;
+      --doc-ink: #E4E8EF;
+      --doc-ink-2: #B9C2CF;
+      --doc-mute: #96A0B0;
+      --doc-line: rgba(228, 232, 239, 0.14);
+      --doc-line-strong: rgba(228, 232, 239, 0.30);
+      --doc-callout: #8FB0F7;
+      --doc-callout-bg: rgba(143, 176, 247, 0.12);
+      --tag-new: #8FB0F7;
+      --tag-new-bg: rgba(143, 176, 247, 0.16);
+      --tag-restyle: #E0A64B;
+      --tag-restyle-bg: rgba(224, 166, 75, 0.16);
+      --tag-same: #A6AFBE;
+      --tag-same-bg: rgba(166, 175, 190, 0.16);
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg: #151A22;
+    --doc-ink: #E4E8EF;
+    --doc-ink-2: #B9C2CF;
+    --doc-mute: #96A0B0;
+    --doc-line: rgba(228, 232, 239, 0.14);
+    --doc-line-strong: rgba(228, 232, 239, 0.30);
+    --doc-callout: #8FB0F7;
+    --doc-callout-bg: rgba(143, 176, 247, 0.12);
+    --tag-new: #8FB0F7;
+    --tag-new-bg: rgba(143, 176, 247, 0.16);
+    --tag-restyle: #E0A64B;
+    --tag-restyle-bg: rgba(224, 166, 75, 0.16);
+    --tag-same: #A6AFBE;
+    --tag-same-bg: rgba(166, 175, 190, 0.16);
+  }
+
+  body {
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .doc { max-width: 1280px; margin: 0 auto; padding: 40px 28px 96px; }
+  .doc h1 { font-size: 30px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 6px; text-wrap: balance; }
+  .doc .sub { color: var(--doc-mute); margin: 0 0 28px; max-width: 68ch; }
+  .doc h2 { font-size: 20px; font-weight: 700; margin: 56px 0 6px; letter-spacing: -0.005em; padding-top: 22px; border-top: 1px solid var(--doc-line-strong); }
+  .doc h2 .k { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--doc-mute); letter-spacing: 0.08em; margin-right: 10px; vertical-align: 2px; }
+  .doc p { max-width: 68ch; margin: 0 0 12px; }
+  .doc ul { max-width: 72ch; padding-left: 20px; margin: 0 0 14px; }
+  .doc li { margin: 0 0 6px; }
+  .doc strong { font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0 22px; font-size: 13px; color: var(--doc-ink-2); }
+  .legend .fill { flex: 1 1 100%; }
+  .tag { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; padding: 1px 6px; border-radius: 3px; vertical-align: 2px; margin-left: 8px; line-height: 1.5; }
+  .tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+  .tag.re  { color: var(--tag-restyle); background: var(--tag-restyle-bg); }
+  .tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+  .legend .tag { margin-left: 0; }
+
+  .spec { margin: 18px 0 8px; }
+  .spec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin: 0 0 10px; }
+  .spec-head .t { font-weight: 600; font-size: 15px; }
+  .spec-head .m { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--doc-mute); }
+  .scroll { overflow-x: auto; padding-bottom: 6px; }
+  .cap { font-size: 13px; color: var(--doc-ink-2); max-width: 78ch; margin: 10px 0 0; }
+  .cap b { font-weight: 600; color: var(--doc-ink); }
+  .callout { border-left: 3px solid var(--doc-callout); background: var(--doc-callout-bg); padding: 10px 14px; margin: 16px 0 20px; max-width: 76ch; border-radius: 0 6px 6px 0; font-size: 14px; }
+  .callout p { margin: 0 0 6px; max-width: none; }
+  .callout p:last-child { margin: 0; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 22px; align-items: start; }
+
+  .math { border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 13px; margin: 8px 0 12px; }
+  .math td { padding: 4px 14px 4px 0; border-bottom: 1px solid var(--doc-line); }
+  .math td:last-child { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
+  .math tr.sum td { border-top: 2px solid var(--doc-line-strong); border-bottom: none; font-weight: 600; }
+  .math td.op { color: var(--doc-mute); }
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     PRODUCT FRAME — the coach portal's warm skin, drawn with its real tokens.
+     Single-theme on purpose: the frames are specimens of the product, not of this page.
+     Type: Inter (portal body), Barlow Condensed (column headings). Sizes are real pixels.
+     ════════════════════════════════════════════════════════════════════════════ */
+  .pf {
+    --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+    --line: rgba(70, 55, 30, 0.12); --line-strong: rgba(70, 55, 30, 0.20); --fill: rgba(70, 55, 30, 0.08);
+    --olive: #57651E; --olive-soft: rgba(87, 101, 30, 0.10); --win: #34662A; --amber: #835006; --live: #A3231B; --lime: #D9F99D;
+    --cat-size: 14.72px; --cat-weight: 800; --catnum-size: 13.76px; --line-size: 13.44px; --line-weight: 600;
+    background: var(--paper);
+    background-image: linear-gradient(rgba(70,55,30,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(70,55,30,0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px; line-height: 1.45;
+    border: 1px solid var(--doc-line-strong); border-radius: 6px;
+    padding: 18px 22px 22px; box-sizing: border-box; flex: 0 0 auto;
+  }
+  .pf.w1180 { width: 1180px; }
+  .pf.w390 { width: 390px; padding: 12px 12px 16px; }
+  .pf *, .pf *::before, .pf *::after { box-sizing: border-box; }
+
+  .pf-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0 0 14px; }
+  .pf-tile { display: flex; flex-direction: column; gap: 3.5px; padding: 13.6px 16px; background: var(--card); min-width: 0; }
+  .pf-tile .l { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--dim); }
+  .pf-tile .f { font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .pf-tile .f.good { color: var(--win); }
+  .pf-tile .c { font-size: 12px; line-height: 1.45; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .pf-tile .c.warn { color: var(--amber); }
+  .pf-tile .c u, .pf .lnk { text-decoration: underline; text-underline-offset: 2px; color: var(--ink-soft); cursor: pointer; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; border-radius: 4px; padding: 1px 5.6px; margin-left: 6.4px; vertical-align: 3px; line-height: 1.4; }
+  .badge.est { color: var(--amber); border: 1px dashed var(--amber); }
+  .badge.sch { color: var(--win); border: 1px solid var(--win); }
+
+  .pf-tb { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+  .pf-tb .sp { flex: 1; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); font-size: 14px; color: var(--ink); }
+  .chip.on { background: var(--olive-soft); border-color: rgba(87,101,30,0.35); }
+  .chip .k { color: var(--ink-soft); font-weight: 400; }
+  .chip b { font-weight: 600; }
+  .chip svg { color: var(--dim); }
+  .pf-tb .plain { color: var(--ink-soft); font-size: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; border-radius: 9px; font-weight: 600; font-size: 15px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); }
+  .btn.pri { background: var(--lime); border-color: rgba(87,101,30,0.25); color: var(--ink); }
+  .pf .note { font-size: 14px; color: var(--ink-soft); margin: 0 0 12px; }
+  .pf .note b { color: var(--ink); font-weight: 600; }
+  .pf .foot { font-size: 12px; color: var(--dim); margin: 10px 0 0; }
+  .pf .foot b { color: var(--ink-soft); font-weight: 600; }
+  .pf .ask { font-size: 14px; color: var(--ink-soft); margin: 14px 0 0; }
+  .pf .ask u { text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 600; color: var(--ink); }
+
+  .pf-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+  .mg { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+  .mg th, .mg td { padding: 6.72px 10.4px; box-shadow: inset 0 -1px 0 var(--line); white-space: nowrap; font-weight: 400; text-align: right; vertical-align: middle; height: 42px; background: var(--card); }
+  .mg th:first-child, .mg td:first-child { text-align: left; }
+  .mg thead th { height: 40px; font-family: 'Barlow Condensed', 'Inter', sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); box-shadow: inset 0 -1px 0 var(--line-strong); }
+  .mg thead th.lead, .mg tbody th.lead { padding-left: 14.4px; text-align: left; }
+  .mg tbody th { text-transform: none; letter-spacing: 0; font-family: inherit; font-size: var(--line-size); font-weight: var(--line-weight); color: var(--ink); }
+  .mg .act { width: 48px; }
+  .mg .when { width: 200px; }
+  .mg .plan { width: 150px; }
+  .mg tr.cat th, .mg tr.cat td { background-image: linear-gradient(var(--fill), var(--fill)); font-size: var(--cat-size); font-weight: var(--cat-weight); color: var(--ink); }
+  .mg tr.cat td { font-size: var(--catnum-size); }
+  .mg .tog { display: inline-flex; align-items: center; gap: 6.4px; }
+  .mg .tog svg { color: var(--dim); flex: 0 0 auto; }
+  .mg .spacer { display: inline-block; width: 13px; }
+  .mg .good { color: var(--win) !important; }
+  .mg .warn { color: var(--amber) !important; }
+  .mg .red { color: var(--live) !important; }
+  .mg tr.band th, .mg tr.band td { background-image: linear-gradient(var(--olive-soft), var(--olive-soft)); box-shadow: inset 0 -1px 0 var(--line); padding-top: 16.8px; height: 44px; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--olive); font-family: 'Inter', sans-serif; }
+  .mg tr.total th, .mg tr.total td { box-shadow: inset 0 2px 0 var(--line-strong); font-size: var(--cat-size); font-weight: var(--cat-weight); color: var(--ink); }
+  .mg tr.close th, .mg tr.close td { box-shadow: inset 0 2px 0 var(--line-strong); font-size: var(--cat-size); font-weight: var(--cat-weight); color: var(--ink); padding-top: 11.2px; padding-bottom: 11.2px; height: 46px; }
+  .mg tr.fact th, .mg tr.fact td { background-image: linear-gradient(var(--fill), var(--fill)); font-size: var(--cat-size); font-weight: var(--cat-weight); }
+  .mg tr.fact td { font-size: var(--catnum-size); }
+  .mg tr.ladder th, .mg tr.ladder td { font-size: var(--cat-size); font-weight: var(--cat-weight); color: var(--ink); }
+  .mg tr.ladder td { font-size: var(--catnum-size); }
+  .mg tr.ladder.gap th, .mg tr.ladder.gap td { box-shadow: inset 0 2px 0 var(--line-strong); padding-top: 11.2px; }
+  .mg tr.sub th, .mg tr.sub td { font-size: var(--line-size); font-weight: var(--line-weight); }
+  .mg .subl { display: block; font-size: 12px; font-weight: 400; color: var(--dim); line-height: 1.35; margin-top: 2px; white-space: normal; }
+  .mg .subl u { text-decoration: underline; text-underline-offset: 2px; color: var(--ink-soft); }
+  .mg tr.lo th, .mg tr.lo td { height: 52px; }
+  .pg th, .pg td { padding: 6.72px 9px; }
+  .pg td { color: var(--ink-soft); }
+  .pg thead .yr th { height: 26px; box-shadow: inset 0 -1px 0 var(--line); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.14em; color: var(--dim); text-align: center; text-transform: uppercase; }
+  .pg thead .yr th.blank { box-shadow: none; }
+  .pg th.lead { min-width: 168px; }
+  .pg tr.cat td, .pg tr.total td, .pg tr.close td { color: var(--ink); }
+  .pg tr.fund td { color: var(--win); }
+  .pf.w390 .mg th, .pf.w390 .mg td { height: 46px; }
+  .pf.w390 .mg .plan { width: 118px; }
+  .pf.w390 .mg .act { width: 40px; }
+  .pf.w390 .mg thead th.lead, .pf.w390 .mg tbody th.lead { padding-left: 11px; }
+  .pf.w390 .mg .subl { white-space: normal; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+  /* Tokens this round adds — declared for all three theme states before use. */
+  :root { --win-tag: #2E6B33; --win-tag-bg: rgba(46,107,51,0.13); --opt-bg: rgba(28,34,48,0.035); --bug: #A03330; --bug-bg: rgba(160,51,48,0.09); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --win-tag: #86C68B; --win-tag-bg: rgba(134,198,139,0.16); --opt-bg: rgba(228,232,239,0.04); --bug: #F09A96; --bug-bg: rgba(240,154,150,0.12); }
+  }
+  :root[data-theme="dark"] { --win-tag: #86C68B; --win-tag-bg: rgba(134,198,139,0.16); --opt-bg: rgba(228,232,239,0.04); --bug: #F09A96; --bug-bg: rgba(240,154,150,0.12); }
+  /* ── This round's additions ───────────────────────────────────────────────── */
+  .tag.rec { color: var(--win-tag); background: var(--win-tag-bg); }
+  .opts { display: grid; gap: 16px; margin: 4px 0 0; }
+  .opt { border: 1px solid var(--doc-line); border-radius: 8px; padding: 14px 16px 16px; background: var(--opt-bg); }
+  .opt.pick { border-color: var(--win-tag); box-shadow: inset 3px 0 0 var(--win-tag); }
+  .opt .oh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 4px; }
+  .opt .oh .n { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--doc-mute); letter-spacing: 0.06em; }
+  .opt .oh .t { font-weight: 600; font-size: 15px; }
+  .opt p.why { margin: 0 0 12px; font-size: 13.5px; color: var(--doc-ink-2); max-width: 74ch; }
+  .opt p.why:last-child { margin: 12px 0 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; align-items: start; }
+  .pair .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--doc-mute); margin: 0 0 7px; }
+  .pf.wfit { width: fit-content; min-width: 100%; }
+  .pf.w520 { width: 520px; }
+  .pg tr.close td.surplus { color: var(--win); }
+  .pg tr.close td.flip { color: var(--live); }
+  .mg tr.dues th, .mg tr.dues td { color: var(--win); }
+  .decide { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 10px 0 0; }
+  .decide th, .decide td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+  .decide thead th { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-mute); border-bottom: 1px solid var(--doc-line-strong); }
+  .decide td:first-child, .decide th:first-child { white-space: nowrap; font-weight: 600; }
+  .decide td:last-child, .decide th:last-child { padding-right: 0; }
+  .bug { border-left: 3px solid var(--bug); background: var(--bug-bg); padding: 10px 14px; margin: 14px 0 18px; max-width: 76ch; border-radius: 0 6px 6px 0; font-size: 14px; }
+  .bug p { margin: 0 0 6px; max-width: none; }
+  .bug p:last-child { margin: 0; }
+  .bug .h { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--bug); display: block; margin: 0 0 3px; }
+  /* ── Round 2 ──────────────────────────────────────────────────────────────── */
+  :root { --tag-ask: #6B3FA0; --tag-ask-bg: rgba(107,63,160,0.13); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --tag-ask: #C3A6E8; --tag-ask-bg: rgba(195,166,232,0.16); } }
+  :root[data-theme="dark"] { --tag-ask: #C3A6E8; --tag-ask-bg: rgba(195,166,232,0.16); }
+  .tag.ask { color: var(--tag-ask); background: var(--tag-ask-bg); }
+  .doc code { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; background: var(--opt-bg); padding: 1px 5px; border-radius: 3px; }
+  .pg tr.close td.dues { color: var(--win); }
+  .pg tr.total td.bad, .pg tr.close td.bad { color: var(--live); }
+  .opt .oh .t { flex: 0 1 auto; }
+</style>
+
+<div class="doc">
+  <h1>The By-Period Close</h1>
+  <p class="sub">The Budget plan&rsquo;s By-period grid, finished. Round 1 asked five questions about its closing row and all five are now answered. Player installments are on the grid, negatives are in brackets, and the last row carries a paired header naming both directions &mdash; the one place a word still has to be chosen.</p>
+
+  <div class="callout">
+    <p><strong>Round 3.</strong> Your rulings from rounds 1 and 2, applied. Keep <em>Costs less funding</em> and its direction. Negatives in <strong>brackets</strong>, not minus signs &mdash; verified against the code, and you were right: the shared money formatter already prints <code>($1,234.00)</code> everywhere on the portal, and the two money grids are the only surfaces that print a bare minus. No <em>Lines</em> wording &mdash; so C is solved a different way here. And <strong>player installments now belong on this grid</strong>, so the plan&rsquo;s two views close on the same ladder.</p>
+    <p><strong>The last row now carries your paired header</strong> &mdash; a single label naming both directions, which is better than what round 2 drew and is the standard accounting line form. Section 06 takes it apart: the pattern holds, one of the two words does not, and the reason is a word this product already spends elsewhere. Two smaller calls remain, marked <span class="tag ask">TO SETTLE</span> where they arise.</p>
+  </div>
+
+  <div class="legend">
+    <span class="tag new">NEW</span> added rows, wording or notes
+    <span class="tag re">RESTYLED</span> existing row, new treatment
+    <span class="tag same">UNCHANGED</span> exactly as it renders today
+    <span class="tag ask">TO SETTLE</span> needs your call
+    <span class="tag rec">RECOMMENDED</span> what I would build
+    <span class="fill">Frames are the coach portal&rsquo;s warm skin at real pixel sizes, 1180px wide except where marked. Figures are the UAT team&rsquo;s real plan, read as quarters.</span>
+  </div>
+
+  <h2><span class="k">01</span>Where we started</h2>
+  <p>The grid as it renders today: it stops three rungs short of the List, and the last quarter &mdash; $63 of fundraising, no bills &mdash; prints a bare minus.</p>
+  <div class="spec">
+    <div class="spec-head"><span class="t">By period, Quarters &mdash; today</span><span class="m">close row ends at Costs less funding</span></div>
+    <div class="scroll">
+      <div class="pf w1180">
+        <div class="pf-card">
+          <table class="mg pg">
+            <thead>
+              <tr class="yr"><th class="blank"></th><th class="blank"></th><th colspan="4">2026</th><th colspan="1">2027</th><th class="blank"></th></tr>
+              <tr><th class="lead">Category / line</th><th>No date yet</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <tr class="band"><th class="lead">Costs</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Facilities</span></th><td>&mdash;</td><td>5,200</td><td>3,200</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>8,400</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Officials</span></th><td>&mdash;</td><td>300</td><td>300</td><td>315</td><td>300</td><td>&mdash;</td><td>1,215</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Team Gear</span></th><td>321</td><td>500</td><td>&mdash;</td><td>&mdash;</td><td>1,000</td><td>&mdash;</td><td>1,821</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Tournaments</span></th><td>1,600</td><td>&mdash;</td><td>900</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>2,500</td></tr>
+              <tr class="total"><th class="lead">Planned costs</th><td>1,921</td><td>6,000</td><td>4,400</td><td>315</td><td>1,300</td><td>&mdash;</td><td>13,936</td></tr>
+              <tr class="band"><th class="lead">Funding</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr class="cat fund"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Tournaments</span></th><td>600</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>600</td></tr>
+              <tr class="cat fund"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Fundraising</span></th><td>1,000</td><td>900</td><td>900</td><td>&mdash;</td><td>10</td><td>63</td><td>2,873</td></tr>
+              <tr class="cat fund"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Other Income</span></th><td>150</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>150</td></tr>
+              <tr class="total fund"><th class="lead">Planned funding</th><td>1,750</td><td>900</td><td>900</td><td>&mdash;</td><td>10</td><td>63</td><td>3,623</td></tr>
+              <tr class="close"><th class="lead">Costs less funding <span class="tag same">UNCHANGED</span></th><td>171</td><td>5,100</td><td>3,500</td><td>315</td><td>1,290</td><td>&minus;63</td><td>10,313</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="k">02</span>Brackets, and the green</h2>
+  <p>Settled. The direction stays. The bare minus goes, replaced by the brackets the rest of the portal already uses, and a bracketed figure on a closing row is painted the funding green so it reads as money leaning in rather than a hole.</p>
+  <div class="spec">
+    <div class="pair">
+      <div>
+        <p class="lbl">Today</p>
+        <div class="pf w520"><div class="pf-card"><table class="mg pg">
+          <thead><tr><th class="lead">Category / line</th><th>Q4</th><th>Q1</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="total fund"><th class="lead">Planned funding</th><td>10</td><td>63</td><td>3,623</td></tr>
+            <tr class="close"><th class="lead">Costs less funding</th><td>1,290</td><td>&minus;63</td><td>10,313</td></tr>
+          </tbody></table></div></div>
+      </div>
+      <div>
+        <p class="lbl">Proposed</p>
+        <div class="pf w520"><div class="pf-card"><table class="mg pg">
+          <thead><tr><th class="lead">Category / line</th><th>Q4</th><th>Q1</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="total fund"><th class="lead">Planned funding</th><td>10</td><td>63</td><td>3,623</td></tr>
+            <tr class="close"><th class="lead">Costs less funding <span class="tag re">RESTYLED</span></th><td>1,290</td><td class="surplus">(63)</td><td>10,313</td></tr>
+          </tbody></table></div></div>
+      </div>
+    </div>
+    <p class="cap">One note joins the &ldquo;No date yet&rdquo; line under the table: <b>A figure in brackets on a closing row is a period where the money lands ahead of the bills &mdash; it goes toward the rest of the season.</b></p>
+  </div>
+
+  <h2><span class="k">03</span>The estimate case, without the word &ldquo;lines&rdquo;</h2>
+  <div class="bug">
+    <p><span class="h">The bug this has to fix</span>A coach who sets a season estimate of $15,000 and has itemized $13,936 of it gets <b>Costs less funding $11,377.00</b> on the List and <b>10,313</b> here &mdash; same name, same plan, same day, $1,064 apart. The grid can only spread lines, and an estimate has no dates.</p>
+  </div>
+  <p>Round 1 proposed renaming the row. You ruled that out, and the better answer was underneath it anyway: don&rsquo;t rename the row, <strong>show the missing money</strong>. The un-itemized part of the estimate is exactly what the <em>No date yet</em> column is for &mdash; and the List already draws these rows in its own Costs band. The grid is the only view that omits them, which is why it had to hedge the subtotal&rsquo;s name.</p>
+  <div class="spec">
+    <div class="spec-head"><span class="t">Costs band, with an estimate set</span><span class="m">+2 rows &middot; both views now read $11,377</span></div>
+    <div class="scroll">
+      <div class="pf w1180">
+        <div class="pf-card">
+          <table class="mg pg">
+            <thead><tr><th class="lead">Category / line</th><th>No date yet</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Facilities</span></th><td>&mdash;</td><td>5,200</td><td>3,200</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>8,400</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Officials</span></th><td>&mdash;</td><td>300</td><td>300</td><td>315</td><td>300</td><td>&mdash;</td><td>1,215</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Team Gear</span></th><td>321</td><td>500</td><td>&mdash;</td><td>&mdash;</td><td>1,000</td><td>&mdash;</td><td>1,821</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Tournaments</span></th><td>1,600</td><td>&mdash;</td><td>900</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>2,500</td></tr>
+              <tr class="sub"><th class="lead"><span class="tog"><span class="spacer"></span>Lines so far <span class="tag new">NEW</span></span></th><td>1,921</td><td>6,000</td><td>4,400</td><td>315</td><td>1,300</td><td>&mdash;</td><td>13,936</td></tr>
+              <tr class="sub"><th class="lead"><span class="tog"><span class="spacer"></span>Still to itemize <span class="tag new">NEW</span></span></th><td>1,064</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>1,064</td></tr>
+              <tr class="total"><th class="lead">Planned costs <span class="tag re">RESTYLED</span></th><td>2,985</td><td>6,000</td><td>4,400</td><td>315</td><td>1,300</td><td>&mdash;</td><td>15,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Three things fall out of two rows. <b>Planned costs</b> gets its own name back &mdash; today the subtotal has to read <em>Lines so far</em> instead, precisely because it was showing a number it couldn&rsquo;t justify. The closing row matches the List again with no rename. And the apologetic note under the table (&ldquo;Your season estimate has no dates, so this grid spreads the lines you have entered&hellip;&rdquo;) is deleted, because it stops being true.</p>
+    <p class="cap" style="margin-top:8px"><b>One flag, since you said you don&rsquo;t like &ldquo;lines&rdquo;:</b> these two rows are copied from the List, which prints them in exactly these words today. Matching it is the whole point &mdash; if the two views word this differently they are back to disagreeing. If you want <em>Lines so far</em> retired, that is a separate change to both views and I would take it on its own rather than let this grid invent a third vocabulary.</p>
+  </div>
+
+  <h2><span class="k">04</span>The over-funded season</h2>
+  <p>A team carried by sponsorship: $6,000 of costs, $8,000 of funding. The grid subtracts and shows the surplus. The List floors the row at zero &mdash; deliberately, because a negative there would drive a negative figure per player, and &ldquo;we owe the players money&rdquo; is not a dues schedule.</p>
+  <p>You asked for that <b>(2,000)</b> in brackets. Doing that on the grid alone still leaves the two screens disagreeing under one name &mdash; but the fix is now trivial, because <strong>the List&rsquo;s own formatter already prints brackets</strong>. Take the floor off the row and leave it on the figures that derive dues, and both screens say the same thing in the same notation.</p>
+  <div class="spec">
+    <div class="pair">
+      <div>
+        <p class="lbl">List &mdash; today</p>
+        <div class="pf w520"><div class="pf-card"><table class="mg pg">
+          <thead><tr><th class="lead">Category / line</th><th>Planned</th></tr></thead>
+          <tbody>
+            <tr class="total"><th class="lead">Planned costs</th><td>$6,000.00</td></tr>
+            <tr class="total fund"><th class="lead">Planned funding</th><td>$8,000.00</td></tr>
+            <tr class="close"><th class="lead">Costs less funding</th><td>$0.00</td></tr>
+          </tbody></table></div></div>
+      </div>
+      <div>
+        <p class="lbl">List &mdash; proposed</p>
+        <div class="pf w520"><div class="pf-card"><table class="mg pg">
+          <thead><tr><th class="lead">Category / line</th><th>Planned</th></tr></thead>
+          <tbody>
+            <tr class="total"><th class="lead">Planned costs</th><td>$6,000.00</td></tr>
+            <tr class="total fund"><th class="lead">Planned funding</th><td>$8,000.00</td></tr>
+            <tr class="close"><th class="lead">Costs less funding <span class="tag re">RESTYLED</span></th><td class="surplus">($2,000.00)</td></tr>
+          </tbody></table></div></div>
+      </div>
+    </div>
+    <p class="cap">The tile above still reads <b>Player installments $0.00 Estimated</b> and per player still reads $0.00 &mdash; the floor stays exactly where it earns its place. What changes is that the row showing an arithmetic result stops hiding one.</p>
+  </div>
+
+  <h2><span class="k">05</span>Player installments, on the grid</h2>
+  <p>Approved. The plan&rsquo;s two views now close on the same ladder: <b>Costs less funding &rarr; Player installments &rarr; what&rsquo;s left</b>. No new band and no new section &mdash; three closing rows, the same three the List already prints, spread across the periods the dues actually fall due in.</p>
+  <div class="spec">
+    <div class="spec-head"><span class="t">By period, Quarters &mdash; dues scheduled</span><span class="m">+2 rows &middot; season closes on the same $995.30 the List calls a buffer</span></div>
+    <div class="scroll">
+      <div class="pf w1180">
+        <div class="pf-card">
+          <table class="mg pg">
+            <thead>
+              <tr class="yr"><th class="blank"></th><th class="blank"></th><th colspan="4">2026</th><th colspan="1">2027</th><th class="blank"></th></tr>
+              <tr><th class="lead">Category / line</th><th>No date yet</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <tr class="total"><th class="lead">Planned costs</th><td>1,921</td><td>6,000</td><td>4,400</td><td>315</td><td>1,300</td><td>&mdash;</td><td>13,936</td></tr>
+              <tr class="total fund"><th class="lead">Planned funding</th><td>1,750</td><td>900</td><td>900</td><td>&mdash;</td><td>10</td><td>63</td><td>3,623</td></tr>
+              <tr class="close"><th class="lead">Costs less funding</th><td>171</td><td>5,100</td><td>3,500</td><td>315</td><td>1,290</td><td class="surplus">(63)</td><td>10,313</td></tr>
+              <tr class="close"><th class="lead">Player installments <span class="badge sch">SCHEDULED</span> <span class="tag new">NEW</span></th><td class="dues">&mdash;</td><td class="dues">3,769</td><td class="dues">3,770</td><td class="dues">3,769</td><td class="dues">&mdash;</td><td class="dues">&mdash;</td><td class="dues">11,308</td></tr>
+              <tr class="close"><th class="lead">Shortfall (Buffer) <span class="tag new">NEW</span> <span class="tag ask">G2</span></th><td>171</td><td>1,331</td><td class="surplus">(270)</td><td class="surplus">(3,454)</td><td>1,290</td><td class="surplus">(63)</td><td class="surplus">(995)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="foot"><b>No date yet</b> holds anything without payment dates &mdash; costs, funding and any dues not yet on a schedule. Split a line by period to move it into a month.</p>
+        <p class="foot">A figure in <b>brackets</b> on a closing row is a period where the money lands ahead of the bills &mdash; it goes toward the rest of the season.</p>
+      </div>
+    </div>
+    <p class="cap">The season closes on <b>(995)</b> &mdash; the same $995.30 the List calls your <b>Planned buffer</b>, reached the same way. The four cost categories and three funding rows are folded here for space; they render exactly as in specimen 01.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Read Q3 before you sign this off, because it is the honest cost of the decision.</strong> It shows <b>(3,454)</b>: dues arrive that quarter and almost no bills fall due. Nothing is wrong &mdash; that money carries into Q4 &mdash; but this grid has no running balance, so it cannot say &ldquo;carries forward&rdquo;. Five of six columns will read as a swing rather than a state.</p>
+    <p>Your call was that a partial report sending a coach elsewhere is worse than an imperfect complete one, and that balances can follow later. Agreed on the direction &mdash; and if the grid does grow balances later, these three rows are exactly what an opening/closing balance would sit under, so nothing here is thrown away.</p>
+  </div>
+
+  <h2><span class="k">06</span>The last row&rsquo;s name</h2>
+  <p>Your proposal &mdash; a paired header naming both directions, <b>Shortfall (Surplus)</b> &mdash; is the right shape and I&rsquo;d take it over what round 2 drew. It is the standard accounting line label (<em>Net income (loss)</em>), it teaches the notation in the header instead of in a footnote, and it is honest about a row whose sign genuinely flips column to column.</p>
+  <p><strong>One of the two words has a problem, and it is not a style preference.</strong></p>
+
+  <div class="bug">
+    <p><span class="h">&ldquo;Surplus&rdquo; is already taken, by real money</span>On the Player Dues tab, <b>Surplus to share</b> is the season-end settlement: cash actually left over, divided among families, with hold-backs and payouts. A coach can pay it out.</p>
+    <p>A bracketed figure on this row is nothing of the kind &mdash; it is a <em>timing</em> artifact of a plan, money that arrives in Q3 for bills that fall in Q4. Nobody can share it. Using one word for both means the same coach reads &ldquo;surplus&rdquo; on two screens meaning two different things, one of which they can spend.</p>
+  </div>
+
+  <p>&ldquo;Shortfall&rdquo; is milder but not free: the two states already have names on the List &mdash; <b>Short of covering the plan</b> and <b>Planned buffer</b> &mdash; and a help article draws the contrast in those exact words, saying collecting above plan reads as <em>a buffer rather than a negative shortfall</em>. Three candidates, drawn together in one grid so you can see what each does to the width of the pinned first column.</p>
+
+  <div class="spec">
+    <div class="spec-head"><span class="t">Three candidates, same grid, true size</span><span class="m">comparison &mdash; only one of these rows ships</span></div>
+    <div class="scroll">
+      <div class="pf w1180">
+        <div class="pf-card">
+          <table class="mg pg">
+            <thead><tr><th class="lead">Category / line</th><th>No date yet</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr class="close"><th class="lead">Costs less funding</th><td>171</td><td>5,100</td><td>3,500</td><td>315</td><td>1,290</td><td class="surplus">(63)</td><td>10,313</td></tr>
+              <tr class="close"><th class="lead">Player installments <span class="badge sch">SCHEDULED</span></th><td class="dues">&mdash;</td><td class="dues">3,769</td><td class="dues">3,770</td><td class="dues">3,769</td><td class="dues">&mdash;</td><td class="dues">&mdash;</td><td class="dues">11,308</td></tr>
+              <tr class="close"><th class="lead">Shortfall (Surplus) <span class="tag ask">G1</span></th><td>171</td><td>1,331</td><td class="surplus">(270)</td><td class="surplus">(3,454)</td><td>1,290</td><td class="surplus">(63)</td><td class="surplus">(995)</td></tr>
+              <tr class="close"><th class="lead">Shortfall (Buffer) <span class="tag ask">G2</span></th><td>171</td><td>1,331</td><td class="surplus">(270)</td><td class="surplus">(3,454)</td><td>1,290</td><td class="surplus">(63)</td><td class="surplus">(995)</td></tr>
+              <tr class="close"><th class="lead">Short of plan (Buffer) <span class="tag ask">G3</span></th><td>171</td><td>1,331</td><td class="surplus">(270)</td><td class="surplus">(3,454)</td><td>1,290</td><td class="surplus">(63)</td><td class="surplus">(995)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="cap">All three fit inside the width the pinned column already needs for <b>Player installments</b>, so none of them costs a period column. Width is not the deciding factor here; vocabulary is.</p>
+  </div>
+
+  <div class="opts">
+    <div class="opt">
+      <div class="oh"><span class="n">G1</span><span class="t">Shortfall (Surplus)</span></div>
+      <p class="why">Your wording, and the cleanest read of the three in isolation. It collides with <em>Surplus to share</em> on the Dues tab, which is spendable cash. If you want this one anyway, the honest way to take it is to rule that &ldquo;surplus&rdquo; means <em>money over plan</em> everywhere and let the settlement screen keep its longer name to disambiguate &mdash; a call worth making deliberately rather than by accident.</p>
+    </div>
+    <div class="opt pick">
+      <div class="oh"><span class="n">G2</span><span class="t">Shortfall (Buffer)</span><span class="tag rec">RECOMMENDED</span></div>
+      <p class="why">Your pattern, with the half that collides swapped for the word the product already uses for exactly this state. <em>Buffer</em> is what the List calls it, what the tile calls it, and what the help article calls it. The cost is that &ldquo;Shortfall&rdquo; is a slightly different word from the List&rsquo;s &ldquo;Short of covering the plan&rdquo; &mdash; a shortened noun for the same state, which I think a header can carry.</p>
+    </div>
+    <div class="opt">
+      <div class="oh"><span class="n">G3</span><span class="t">Short of plan (Buffer)</span></div>
+      <p class="why">Introduces no new word at all &mdash; both halves are trims of labels already on the List. Strictly the most consistent, and the least comfortable to read: &ldquo;Short of plan&rdquo; reads as a phrase where the column wants a noun. Pick this if you would rather the plan never invent a word.</p>
+    </div>
+  </div>
+
+  <p class="cap" style="margin-top:16px">Whichever you pick, the paired header earns its keep twice: it says what a bracket means on the row where the sign flips most, and the <em>Costs less funding</em> row above keeps its own bracket note, because that row&rsquo;s brackets mean something different &mdash; funding ahead of bills, not dues ahead of the plan.</p>
+
+  <h2><span class="k">07</span>Before dues are set</h2>
+  <p>Most coaches build the plan first and set dues from it &mdash; so the common state early in a season is a plan with no dues schedule at all. An estimated installments figure is derived from the plan itself and has no dates, so there is nothing to spread.</p>
+  <div class="spec">
+    <div class="spec-head"><span class="t">By period, Quarters &mdash; no dues scheduled yet</span><span class="m">the two new rows stay away</span></div>
+    <div class="scroll">
+      <div class="pf w1180">
+        <div class="pf-card">
+          <table class="mg pg">
+            <thead><tr><th class="lead">Category / line</th><th>No date yet</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr class="total"><th class="lead">Planned costs</th><td>1,921</td><td>6,000</td><td>4,400</td><td>315</td><td>1,300</td><td>&mdash;</td><td>13,936</td></tr>
+              <tr class="total fund"><th class="lead">Planned funding</th><td>1,750</td><td>900</td><td>900</td><td>&mdash;</td><td>10</td><td>63</td><td>3,623</td></tr>
+              <tr class="close"><th class="lead">Costs less funding</th><td>171</td><td>5,100</td><td>3,500</td><td>315</td><td>1,290</td><td class="surplus">(63)</td><td>10,313</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="foot">Set dues and they appear here, spread across the periods they fall due in. <span class="lnk">Set dues for all players</span> <span class="tag new">NEW</span></p>
+      </div>
+    </div>
+    <p class="cap"><span class="tag ask">TO SETTLE</span> The alternative is drawing the two rows anyway, with the estimated figure sitting entirely in <em>No date yet</em> and a final row that repeats <b>Costs less funding</b> in every column. That is a row of noise plus a duplicate, so I have drawn the version that stays away and offers the door instead &mdash; which is also the one moment a coach genuinely wants that button.</p>
+  </div>
+
+  <h2><span class="k">08</span>The whole screen, proposed</h2>
+  <p>Everything above on one screen, dues scheduled, no estimate set. Two rows and one note longer than today.</p>
+  <div class="spec">
+    <div class="spec-head"><span class="t">By period, Quarters &mdash; after</span><span class="m">15 rows &middot; +2 rows, +1 note</span></div>
+    <div class="scroll">
+      <div class="pf w1180">
+        <div class="pf-tb">
+          <span class="chip on"><span class="k">View</span> <b>By period</b> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="chip"><span class="k">Columns</span> <b>Quarters</b> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="plain">Expand all</span>
+          <span class="sp"></span>
+          <span class="btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export</span>
+          <span class="btn pri"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Add Line</span>
+        </div>
+        <div class="pf-card">
+          <table class="mg pg">
+            <thead>
+              <tr class="yr"><th class="blank"></th><th class="blank"></th><th colspan="4">2026</th><th colspan="1">2027</th><th class="blank"></th></tr>
+              <tr><th class="lead">Category / line</th><th>No date yet</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q1</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <tr class="band"><th class="lead">Costs <span class="tag same">UNCHANGED</span></th><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Facilities</span></th><td>&mdash;</td><td>5,200</td><td>3,200</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>8,400</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Officials</span></th><td>&mdash;</td><td>300</td><td>300</td><td>315</td><td>300</td><td>&mdash;</td><td>1,215</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Team Gear</span></th><td>321</td><td>500</td><td>&mdash;</td><td>&mdash;</td><td>1,000</td><td>&mdash;</td><td>1,821</td></tr>
+              <tr class="cat"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Tournaments</span></th><td>1,600</td><td>&mdash;</td><td>900</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>2,500</td></tr>
+              <tr class="total"><th class="lead">Planned costs</th><td>1,921</td><td>6,000</td><td>4,400</td><td>315</td><td>1,300</td><td>&mdash;</td><td>13,936</td></tr>
+              <tr class="band"><th class="lead">Funding <span class="tag same">UNCHANGED</span></th><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr class="cat fund"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Tournaments</span></th><td>600</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>600</td></tr>
+              <tr class="cat fund"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Fundraising</span></th><td>1,000</td><td>900</td><td>900</td><td>&mdash;</td><td>10</td><td>63</td><td>2,873</td></tr>
+              <tr class="cat fund"><th class="lead"><span class="tog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>Other Income</span></th><td>150</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>150</td></tr>
+              <tr class="total fund"><th class="lead">Planned funding</th><td>1,750</td><td>900</td><td>900</td><td>&mdash;</td><td>10</td><td>63</td><td>3,623</td></tr>
+              <tr class="close"><th class="lead">Costs less funding <span class="tag re">RESTYLED</span></th><td>171</td><td>5,100</td><td>3,500</td><td>315</td><td>1,290</td><td class="surplus">(63)</td><td>10,313</td></tr>
+              <tr class="close"><th class="lead">Player installments <span class="badge sch">SCHEDULED</span> <span class="tag new">NEW</span></th><td class="dues">&mdash;</td><td class="dues">3,769</td><td class="dues">3,770</td><td class="dues">3,769</td><td class="dues">&mdash;</td><td class="dues">&mdash;</td><td class="dues">11,308</td></tr>
+              <tr class="close"><th class="lead">Shortfall (Buffer) <span class="tag new">NEW</span></th><td>171</td><td>1,331</td><td class="surplus">(270)</td><td class="surplus">(3,454)</td><td>1,290</td><td class="surplus">(63)</td><td class="surplus">(995)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="foot"><b>No date yet</b> holds anything without payment dates &mdash; costs, funding and any dues not yet on a schedule. Split a line by period to move it into a month.</p>
+        <p class="foot">A figure in <b>brackets</b> on a closing row is a period where the money lands ahead of the bills &mdash; it goes toward the rest of the season. <span class="tag new">NEW</span></p>
+      </div>
+    </div>
+    <p class="cap">Two rows and one note, roughly 80px, all of it below a table that already ran the height of the screen. Nothing the coach came for moves. The signpost to Budget vs. Actual from round 1 is gone: the grid answers the question itself now.</p>
+  </div>
+
+  <h2><span class="k">09</span>On a phone</h2>
+  <p>The grid scrolls sideways with the line name pinned. Frame is 390px &mdash; open this page on your phone to judge it properly, since brackets on a 13px figure is exactly the kind of thing that reads fine on a laptop.</p>
+  <div class="spec">
+    <div class="spec-head"><span class="t">390px, swiped to Q3</span><span class="m">3 closing rows &middot; 2 notes</span></div>
+    <div class="pf w390">
+      <div class="pf-card"><table class="mg pg">
+        <thead><tr><th class="lead">Category / line</th><th>Q3</th><th>Q4</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr class="total"><th class="lead">Planned costs</th><td>315</td><td>1,300</td><td>13,936</td></tr>
+          <tr class="total fund"><th class="lead">Planned funding</th><td>&mdash;</td><td>10</td><td>3,623</td></tr>
+          <tr class="close"><th class="lead">Costs less funding</th><td>315</td><td>1,290</td><td>10,313</td></tr>
+          <tr class="close"><th class="lead">Player installments</th><td class="dues">3,769</td><td class="dues">&mdash;</td><td class="dues">11,308</td></tr>
+          <tr class="close"><th class="lead">Shortfall (Buffer)</th><td class="surplus">(3,454)</td><td>1,290</td><td class="surplus">(995)</td></tr>
+        </tbody></table></div>
+      <p class="foot"><b>No date yet</b> holds anything without payment dates. Split a line by period to move it into a month.</p>
+      <p class="foot">A figure in <b>brackets</b> on a closing row is a period where the money lands ahead of the bills.</p>
+    </div>
+    <p class="cap">The Scheduled tag is dropped on the narrow frame &mdash; the row name and the figure are what a coach is swiping for, and the tag is already on the tile above.</p>
+  </div>
+
+  <h2><span class="k">10</span>The twin grid <span class="tag ask">TO SETTLE</span></h2>
+  <p>Brackets are the portal&rsquo;s convention, but the two money grids are the only surfaces that print a bare minus &mdash; and there are two of them. Budget vs. Actual&rsquo;s Months view shows a negative <em>Net for the month</em> and a negative <em>Closing balance</em> the same way this grid shows a negative close.</p>
+  <div class="spec">
+    <div class="pair">
+      <div>
+        <p class="lbl">Budget vs. Actual &rarr; Months, today</p>
+        <div class="pf w520"><div class="pf-card"><table class="mg pg">
+          <thead><tr><th class="lead">&nbsp;</th><th>Feb</th><th>Mar</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="total"><th class="lead">Net for the month</th><td>&minus;1,240</td><td>860</td><td>995</td></tr>
+            <tr class="total"><th class="lead">Closing balance</th><td>&minus;380</td><td>480</td><td>995</td></tr>
+          </tbody></table></div></div>
+      </div>
+      <div>
+        <p class="lbl">If it follows this change</p>
+        <div class="pf w520"><div class="pf-card"><table class="mg pg">
+          <thead><tr><th class="lead">&nbsp;</th><th>Feb</th><th>Mar</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr class="total"><th class="lead">Net for the month</th><td class="bad">(1,240)</td><td>860</td><td>995</td></tr>
+            <tr class="total"><th class="lead">Closing balance</th><td class="bad">(380)</td><td>480</td><td>995</td></tr>
+          </tbody></table></div></div>
+      </div>
+    </div>
+    <p class="cap">Note the colour differs, and deliberately. On the plan a bracketed close is money arriving early, so it is green. On a <b>balance</b> a bracketed figure is the account below zero, which is the one real warning on that screen &mdash; it stays red. Same notation, opposite meaning, because one row is a subtraction and the other is a bank balance. Doing only one of these two grids leaves the product with a minus in one place and a bracket in the other, which is the state this change exists to end.</p>
+  </div>
+
+  <h2><span class="k">11</span>What needs settling</h2>
+  <table class="decide">
+    <thead><tr><th>Item</th><th>Where</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Direction</td><td>02</td><td><b>Settled</b> &mdash; Costs less funding stays as it is.</td></tr>
+      <tr><td>Brackets, green</td><td>02</td><td><b>Settled</b> &mdash; brackets replace the minus; a bracketed close is green.</td></tr>
+      <tr><td>Estimate case</td><td>03</td><td><b>Proposed</b> &mdash; a <em>Still to itemize</em> row instead of a rename, so the word &ldquo;lines&rdquo; leaves the screen entirely.</td></tr>
+      <tr><td>Over-funded case</td><td>04</td><td><b>Proposed</b> &mdash; the List&rsquo;s row shows the bracketed surplus; the floor stays on the dues figures.</td></tr>
+      <tr><td>Installments on the grid</td><td>05</td><td><b>Settled</b> &mdash; built, with the Q3 swing accepted as its cost.</td></tr>
+      <tr><td>Name of the last row</td><td>06</td><td><b>Needs your call</b> &mdash; your paired header, with <em>Shortfall (Buffer)</em> recommended over <em>Shortfall (Surplus)</em>.</td></tr>
+      <tr><td>Before dues are set</td><td>07</td><td><b>Needs your call</b> &mdash; rows stay away and offer the door (recommended), or draw them empty.</td></tr>
+      <tr><td>The twin grid</td><td>10</td><td><b>Needs your call</b> &mdash; brackets on Budget vs. Actual&rsquo;s Months view too, red on the balance rows.</td></tr>
+    </tbody>
+  </table>
+  <p class="cap" style="margin-top:14px">Once these calls are made this is one plan: two closing rows and one costs row added, one notation swapped on two grids, one floor moved, and two notes rewritten under the table.</p>
+</div>

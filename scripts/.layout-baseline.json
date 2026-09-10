@@ -4004,6 +4004,30 @@
     "coach-accounting|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-budget-period|361|control-width|button·Show the previous month": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
+      "detail": "36px wide (floor 44) — icon-only control"
+    },
+    "coach-budget-period|361|control-width|button·Show the next month": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
+      "detail": "36px wide (floor 44) — icon-only control"
+    },
+    "coach-budget-period|390|control-width|button·Show the previous month": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
+      "detail": "36px wide (floor 44) — icon-only control"
+    },
+    "coach-budget-period|390|control-width|button·Show the next month": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
+      "detail": "36px wide (floor 44) — icon-only control"
+    },
+    "coach-budget-period|768|control-width|button·Show the previous month": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
+      "detail": "36px wide (floor 44) — icon-only control"
+    },
+    "coach-budget-period|768|control-width|button·Show the next month": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
+      "detail": "36px wide (floor 44) — icon-only control"
     }
   }
 }

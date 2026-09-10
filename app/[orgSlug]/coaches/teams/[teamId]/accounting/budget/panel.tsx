@@ -27,7 +27,7 @@ import {
 } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
-import { fmtCompact } from '@/lib/coach-money-summary';
+import { fmtCompact, fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { toggleKey } from '@/lib/toggle-key';
 import {
   computeBudgetTotals, PLAN_LADDER_LABEL, budgetLineKindForItem,
@@ -37,7 +37,7 @@ import {
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
 import {
   buildPeriodView, whenSummary, whenMonthsText, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
-  type PeriodGranularity,
+  type PeriodGranularity, type PeriodTotals,
 } from '@/lib/coach-budget-periods-view';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import {
@@ -300,9 +300,14 @@ interface FormProblem {
 }
 
 /** A cell's money. The shared compact formatter draws the number; a cell with nothing in it gets
- *  a dash, never $0.00 — a zero and a nothing are different facts. */
+ *  a dash, never $0.00 — a zero and a nothing are different facts.
+ *
+ *  ⚰ THE HAND-ROLLED TYPOGRAPHIC MINUS IS GONE (owner ruling 2026-09-09). This used to
+ *  `.replace('-', '−')` on the way out, which made this grid the only surface in the portal
+ *  printing a third notation for a negative. The shared formatter brackets now, like every other
+ *  money string a coach reads. Do not reintroduce a sign swap here. */
 function fmtCell(n: number | undefined): string {
-  return fmtCompact(n)?.replace('-', '−') ?? '—';
+  return fmtCompact(n) ?? '—';
 }
 
 /** Money-in cells read POSITIVE (owner 2026-08-13): the green row and its section name say the
@@ -529,7 +534,11 @@ function BudgetLineRow({
  * already enter. Read-only by design: this is a way to SEE the plan, and every edit still happens
  * in the list's own form, so there is exactly one place a budget line can be changed.
  */
-function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle }: {
+function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onSetDues }: {
+  /** Opens the Set-dues sheet, offered under the table only while no dues are scheduled. Absent
+   *  for a coach who cannot write money, which is why the note tests for it rather than for a
+   *  separate permission flag. */
+  onSetDues?: () => void;
   view: ReturnType<typeof buildPeriodView>;
   /** Months page; quarters never do — eight columns always fit. Passed rather than inferred from
    *  a column key's shape, so the reason is stated where the decision is made. */
@@ -592,7 +601,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
   const fundingTotals = view.fundingTotals;
   /** A subtotal or closing row's cells, from a per-column total the view built in the same pass as
    *  the close — money-in read POSITIVE, the way every other cell in that band is painted. */
-  const totalCells = (t: { cells: Record<string, number>; total: number }, funding: boolean) => {
+  const totalCells = (t: PeriodTotals, funding: boolean) => {
     const kind: BudgetLineKind = funding ? 'funding' : 'cost';
     return (
       <>
@@ -600,6 +609,26 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
         <td>{fmtCell(fundingCell(kind, t.total))}</td>
       </>
     );
+  /**
+   * A CLOSING row's cells — the two rows that subtract, drawn signed.
+   *
+   * ⚠ A BRACKETED FIGURE HERE IS GREEN, and this is the whole reason closing rows have their own
+   * renderer (owner ruling 2026-09-09). The shared formatter brackets a negative; what a bracket
+   * MEANS is the row's business. On the plan it is money landing ahead of the bills — funding that
+   * outruns a period's costs, or dues that arrive before them — so it wears the same green every
+   * money-in row on this grid already wears. It is emphatically NOT the warning colour: Budget vs.
+   * Actual's balance rows paint their brackets red, because there a bracket is the account below
+   * zero. Same notation, opposite meaning, and neither rule belongs in the formatter.
+   */
+  const closeCells = (t: PeriodTotals) => (
+    <>
+      {cols.map(col => {
+        const n = t.cells[col.key];
+        return <td key={col.key} className={n != null && n < -0.005 ? styles.periodGridAhead : undefined}>{fmtCell(n)}</td>;
+      })}
+      <td className={t.total < -0.005 ? styles.periodGridAhead : undefined}>{fmtCell(t.total)}</td>
+    </>
+  );
   };
   /** One group — a cost category or a money-in kind — with its fold. ONE renderer for both bands. */
   const renderGroup = (group: ReturnType<typeof buildPeriodView>['groups'][number]) => {
@@ -714,13 +743,38 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
                   <td />
                 </tr>
                 {costGroups.map(renderGroup)}
-                {/* ⚠ ONE NAME, ONE NUMBER (the rule this grid's close has carried since 2026-08-13,
-                    and which /review caught the subtotal breaking). This grid spreads LINES; an
-                    estimate has no dates. When one is set and differs, this row is the lines' sum and
-                    reads "Lines so far" — what the List calls the same figure — never "Planned costs",
-                    which is the estimate there. */}
+                {/* ⚠ ONE NAME, ONE NUMBER, AND THE GRID NOW EARNS IT BY SHOWING THE MONEY (owner
+                    ruling 2026-09-09). This subtotal used to read "Lines so far" whenever an
+                    estimate differed, because the estimate has no dates and the grid left its
+                    un-itemized remainder out — which meant the closing row underneath printed the
+                    List's name over a figure short by exactly that remainder. The remainder is a
+                    real row now, in the column built to hold undated money, so the subtotal is the
+                    estimate and wears its own name in every state. These two rows are copied from
+                    the List verbatim; if that wording ever changes it changes on BOTH views, never
+                    by this grid inventing a third vocabulary. */}
+                {view.estimateRows && (
+                  <>
+                    <tr>
+                      <th scope="row" className={shared.moneyGridLead}>{PLAN_LADDER_LABEL.linesSoFar}</th>
+                      {totalCells(view.estimateRows.linesSoFar, false)}
+                    </tr>
+                    {/* ⚠ AND THE RED COMES WITH THE WORDING (/review, 2026-09-10). Copying the
+                        List's two rows meant copying the STATE, not just the label: lines above the
+                        estimate is the one thing on this plan drawn in danger ink, and the grid was
+                        rendering it in ordinary ink — the same fact shouting on one view and silent
+                        on the other, which is the disagreement this whole change exists to end. */}
+                    <tr className={view.estimateRows.remainder.total < 0 ? styles.periodGridOver : undefined}>
+                      <th scope="row" className={shared.moneyGridLead}>
+                        {view.estimateRows.remainder.total < 0
+                          ? PLAN_LADDER_LABEL.overEstimate
+                          : PLAN_LADDER_LABEL.stillToItemize}
+                      </th>
+                      {totalCells(view.estimateRows.remainder, false)}
+                    </tr>
+                  </>
+                )}
                 <tr className={shared.moneyGridTotal}>
-                  <th scope="row">{view.estimateDiffers ? PLAN_LADDER_LABEL.linesSoFar : PLAN_LADDER_LABEL.plannedCosts}</th>
+                  <th scope="row">{PLAN_LADDER_LABEL.plannedCosts}</th>
                   {totalCells(view.costTotals, false)}
                 </tr>
               </>
@@ -737,31 +791,99 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
                   <th scope="row">{PLAN_LADDER_LABEL.plannedFunding}</th>
                   {totalCells(fundingTotals, true)}
                 </tr>
-                {/* The close is a real subtraction and keeps the view's SIGNED totals. NOT "Player
-                    installments" (review finding, kept): this grid spreads the PLAN, estimate-blind,
-                    and borrowing the tile's label would put one name on two different numbers.
-                    "Funding", not "fundraising": the row aggregates every money-in kind. */}
+                {/* A real subtraction, drawn signed. "Funding", not "fundraising": the row
+                    aggregates every money-in kind. */}
                 <tr className={shared.moneyGridTotal}>
                   <th scope="row">{PLAN_LADDER_LABEL.costsLessFunding}</th>
-                  {totalCells(view.totals, false)}
+                  {closeCells(view.totals)}
+                </tr>
+              </>
+            )}
+            {/* ── THE LADDER FINISHES HERE (owner ruling 2026-09-09, mockup 4a8f3335 round 3) ──
+                The plan's two views close the same way: Costs less funding → Player installments →
+                Shortfall (Buffer). This grid used to stop three rungs early and the coach had to go
+                back to the List to find out whether the plan was covered — *"the monthly view in
+                budget seems like a partial report that makes me need to look elsewhere"*.
+
+                ⚠ NO BAND HEADING. These are ladder rows, exactly as the List draws them; a third
+                band would make the dues schedule look like a section of the plan a coach could open
+                and edit here, and every edit still happens on the Player Dues tab.
+
+                ⚠ BOTH ROWS OR NEITHER, and only once dues are SCHEDULED. Before that the
+                installments figure is estimated FROM this plan and has no dates — it would sit
+                wholly in No date yet under a close that repeats the row above it. The note under
+                the table offers the door instead.
+
+                ⚠ THE ROW SURVIVES A PLAN WITH NO FUNDING BAND. Costs less funding is drawn only
+                when there are money-in lines; with none, Planned costs IS the row above these two,
+                and the subtraction still reads correctly. */}
+            {view.close && (
+              <>
+                <tr className={`${shared.moneyGridTotal} ${styles.periodGridFunding}`}>
+                  <th scope="row">
+                    {PLAN_LADDER_LABEL.installments}
+                    {/* ⚠ `periodGridBadge`, NOT the List's `ladderBadge` (/review, 2026-09-10).
+                        That class only does anything under a `.planTable` ancestor, which this
+                        table does not have — so the badge stayed inline inside a nowrap sticky
+                        column and widened it, pushing period columns off the initial view on a
+                        phone. The approved mockup (artifact 4a8f3335, specimen 08) drops the tag on
+                        the narrow frame instead: the tile above already says Scheduled, and the row
+                        name and its figure are what a coach is swiping for. */}
+                    <span className={`${styles.planBadgeOff} ${styles.periodGridBadge}`}>Scheduled</span>
+                  </th>
+                  {/* ⚠ SIGNED, not abs()'d like an ordinary money-in row (/review, 2026-09-10).
+                      The undated cell carries whatever the dated instalments do NOT cover, and that
+                      goes NEGATIVE in a real state: lower a dues schedule after its instalments were
+                      generated — which the adjustment work now makes routine — and the chunks sum to
+                      more than the schedule's own total. Rendered through the money-in path that
+                      absolute-values every cell, an overshoot printed as a POSITIVE figure and the
+                      row's visible cells stopped summing to its own Total. Every value here is
+                      positive in the ordinary case, so nothing else changes. */}
+                  {closeCells(view.close.installments)}
+                </tr>
+                {/* ⚠ "Shortfall (Buffer)", NOT "Shortfall (Surplus)" — the owner's paired header
+                    with the colliding half swapped out. "Surplus to share" on the Player Dues tab
+                    is real season-end cash a coach can pay out; this row is a timing artifact of a
+                    plan and nobody can spend it. "Buffer" is what the List, the tile and the help
+                    article already call this state. */}
+                <tr className={shared.moneyGridTotal}>
+                  <th scope="row">{PLAN_LADDER_LABEL.shortfallBuffer}</th>
+                  {closeCells(view.close.shortfall)}
                 </tr>
               </>
             )}
           </tbody>
         </table>
       </CoachScrollX>
-      {view.hasUnscheduled && (
+        /* ⚠ The wording widened with the column's contents (2026-09-09): it now also holds the
+           un-itemized part of a season estimate and any dues not yet on a dated schedule. A note
+           that still said "split a line by period" over a column holding two other things would
+           send a coach looking for a line to fix that does not exist. */
         <p className={styles.periodGridNote}>
-          <strong>No date yet</strong> holds anything without payment dates. Split a line by period
-          to move it into a month.
+          <strong>No date yet</strong> holds anything without payment dates — costs, funding, and
+          any dues not yet on a schedule. Split a line by period to move it into a month.
         </p>
       )}
-      {view.estimateDiffers && (
-        /* The one thing this grid cannot draw, said once: an estimate has no dates. The cost
-           subtotal above reads "Lines so far" for the same reason (one name, one number). */
+      {view.hasNegative && (
+        /* ⚠ ONLY WHEN A BRACKET IS ON SCREEN. A legend explaining a notation the coach cannot see
+           is furniture, and this table already carries two other notes. */
+      {view.hasUnscheduled && (
         <p className={styles.periodGridNote}>
-          Your season estimate has no dates, so this grid spreads the lines you have entered. The
-          List shows the estimate as Planned costs.
+          A figure in <strong>brackets</strong> on a closing row is a period where the money lands
+          ahead of the bills — it goes toward the rest of the season.
+        </p>
+      )}
+      {/* ⚰ THE ESTIMATE NOTE IS GONE (owner ruling 2026-09-09). It apologised for the one thing
+          this grid could not draw — "your season estimate has no dates, so this grid spreads the
+          lines you have entered" — and the grid draws it now, in the No-date-yet column. */}
+      {!view.close && onSetDues && (
+        /* The one moment a coach genuinely wants this button: they are reading the plan across
+           time and the row that would say whether it is covered is the one thing missing. */
+        <p className={styles.periodGridNote}>
+          Set dues and they appear here, spread across the periods they fall due in.{' '}
+          <button type="button" className={styles.ladderLink} onClick={onSetDues}>
+            Set dues for all players
+          </button>
         </p>
       )}
       {view.truncated && (
@@ -968,6 +1090,11 @@ export function BudgetPlanPanel({
   // can show players' side of the funding and read as a complete budget. Display-only: it is never
   // a budget line and never enters computeBudgetTotals (dues are DERIVED from the plan — feeding
   // them back in as funding would be circular).
+  /** The dated instalments behind that figure, for the By-period grid's Player installments row.
+   *  Kept separate from `duesAssessed` deliberately: that is the schedules' total and the plan's
+   *  number, these are the dates to spread it over, and the two can genuinely differ — see the
+   *  route, which explains why the difference lands in No date yet rather than being dropped. */
+  const [duesInstallments, setDuesInstallments] = useState<Array<{ date: string | null; amount: number }>>([]);
   const [duesAssessed, setDuesAssessed] = useState(0);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -1355,6 +1482,7 @@ export function BudgetPlanPanel({
       setError(''); // a winning load that succeeded means there is no error any more — see the convention
       setPlan(planData.plan);
       setPriorPlan(planData.priorPlan ?? null);
+      setDuesInstallments(planData.duesInstallments ?? []);
       setDuesAssessed(planData.duesAssessed ?? 0);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
@@ -2300,7 +2428,20 @@ export function BudgetPlanPanel({
      different shapes — and the button was rendered for the List alone, so a coach in the grid could
      only fold one category at a time. Null here IS "not in the grid": the view builds only where it
      is drawn, and the branch below reads that rather than re-testing the mode. */
-  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal, categoryOrder }) : null;
+  /**
+   * The dues the By-period grid closes on — the schedules' assessed total, with the dates to
+   * spread it over (owner ruling 2026-09-09). Null before dues exist, which is what makes the two
+   * closing rows stay away and the "Set dues" note appear instead.
+   *
+   * ⚠ THE TEST IS `duesAssessed`, NOT the instalment list. A schedule totalling more than its
+   * dated instalments is a real state, and so is one with a total and no instalments at all; both
+   * must still draw the row, with the difference in No date yet. Testing the list would hide the
+   * plan's own figure exactly when it least matches what is dated.
+   */
+  const duesView = duesAssessed > 0
+    ? { assessed: duesAssessed, installments: duesInstallments }
+    : null;
+  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal, categoryOrder, dues: duesView }) : null;
   const gridKeys = periodView ? periodView.groups.map(g => g.key) : [];
   const allGridClosed = gridKeys.length > 0 && gridKeys.every(k => gridClosed.has(k));
   const foldAll = periodView
@@ -2393,7 +2534,7 @@ export function BudgetPlanPanel({
       emptyMessage: 'There are no budget lines to export yet — build the plan first.',
     };
     if (viewMode === 'period' && format !== 'pdf') {
-      const view = buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal, categoryOrder });
+      const view = buildPeriodView(allLines, granularity, { estimatedTotal: seasonTotal, categoryOrder, dues: duesView });
       const columns = budgetPeriodGridColumns(view);
       const built = budgetPeriodGridRows(view);
       return {
@@ -2773,6 +2914,7 @@ export function BudgetPlanPanel({
               monthStart={gridMonthStart}
               onMonthStart={setGridMonthStart}
               closed={gridClosed}
+              onSetDues={moneyCanWrite ? () => setGenOpen(true) : undefined}
               onToggle={toggleGridGroup}
             />
           ) : (
@@ -3128,11 +3270,24 @@ export function BudgetPlanPanel({
                           <span className={styles.rowNote}>{PLAN_LADDER_LABEL.costsLessFundingNote}</span>
                         </th>
                         <td className={styles.schedCell} />
-                        {/* `fundedByPlayers`, not a fresh subtraction: the same figure the tile prints
-                            as the Estimated installments, floored at zero — so an over-funded plan
-                            reads $0.00 here and in the file alike, never a sign the screen's absolute
-                            formatter would have hidden (/review, 2026-09-08). */}
-                        <td>{fmt(totals.fundedByPlayers)}</td>
+                        {/* ⚠ THE SIGNED FIGURE, NOT THE FLOORED ONE (owner ruling 2026-09-09). This
+                            printed `fundedByPlayers` — floored at zero — so a plan whose funding
+                            covered the whole season read "$0.00" here while the By-period grid read
+                            a bracketed negative: one name, two numbers, on two views of one screen.
+                            The floor is right for the figures that DERIVE dues and wrong for a row
+                            that states a subtraction. `fmt` already brackets a negative, which is
+                            the portal's convention, so nothing else had to change. */}
+                        {/* ⚠⚠ THE BRACKET FORMATTER, NOT THIS FILE'S `fmt`. The local one is ABSOLUTE
+                            (`Math.abs`), which is right for every other figure on this ladder because
+                            their LABELS carry the direction — "Planned buffer", "Over your estimate".
+                            This row's label does not. An over-funded plan rendered through the local
+                            formatter would read "Costs less funding $2,000.00", stating the exact
+                            opposite of the truth — strictly worse than the $0.00 floor it replaced,
+                            and the hazard the /review of 2026-09-08 had already flagged in this
+                            exact spot. So this row takes the portal's shared money formatter, which
+                            brackets a negative the way every other money string does.
+                            ⚠ Do not "tidy" this back to the local `fmt`. */}
+                        <td>{fmtSigned(totals.costsLessFunding)}</td>
                         <td />
                       </tr>
                     )}

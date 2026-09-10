@@ -32,7 +32,7 @@ function planLine(over: Partial<PeriodViewLine> & {
 /** The screen's own totals shape, with no estimate set: Planned costs = the lines. */
 function totalsOf(over: Partial<BudgetPlanExportSource['totals']>): BudgetPlanExportSource['totals'] {
   return {
-    totalPlanned: 2500, fundedByPlayers: 700, fundingLineCount: 1,
+    totalPlanned: 2500, fundedByPlayers: 700, costsLessFunding: 700, fundingLineCount: 1,
     itemized: 2500, expectedFunding: 1800,
     estimatedTotal: null, difference: 0, hasDifference: false, overPlanned: false,
     ...over,
@@ -148,16 +148,17 @@ describe('the statement file (List view, and every PDF)', () => {
     const short = budgetPlanStatementRows({ ...STATEMENT_SOURCE, duesAssessed: 500, leftToFund: 200 });
     const shortTail = short.rows.slice(-4);
     assert.deepEqual(shortTail.map(r => r.item), ['Planned funding', 'Costs less funding', 'Player installments', 'Short of covering the plan']);
-    // Costs less funding is the two subtotals' difference FLOORED AT ZERO — the same figure the tile
-    // prints as the Estimated installments — so an over-funded plan reads $0.00 in the file exactly
-    // as it does on screen, never a signed figure the screen's absolute formatter would hide.
+    // ⚠ SIGNED, NOT FLOORED (owner ruling 2026-09-09). The zero-floor belongs to the figures that
+    // DERIVE dues — the estimated-installments row below still carries it — and never to a row
+    // stating a subtraction. An over-funded plan used to read $0.00 in the file and on the List
+    // while the By-period grid read a bracketed negative: one name, two numbers.
     assert.equal(shortTail[1].planned, 700);
     const overFunded = budgetPlanStatementRows({
       ...STATEMENT_SOURCE,
-      totals: totalsOf({ totalPlanned: 1500, fundedByPlayers: 0, itemized: 1500 }),
+      totals: totalsOf({ totalPlanned: 1500, fundedByPlayers: 0, costsLessFunding: -300, itemized: 1500 }),
       duesAssessed: 500, leftToFund: -800,
     });
-    assert.equal(overFunded.rows.find(r => r.item === 'Costs less funding')?.planned, 0);
+    assert.equal(overFunded.rows.find(r => r.item === 'Costs less funding')?.planned, -300);
     assert.equal(shortTail[1].notes, 'What player installments need to cover');
     assert.equal(shortTail[2].planned, 500);
     assert.equal(shortTail[3].planned, 200);
@@ -402,18 +403,56 @@ describe('the period-grid file (By-period view)', () => {
     assert.equal(rows[3].total, 2500);
   });
 
-  it('with a season estimate that differs from the lines, the cost subtotal reads "Lines so far" — one name, one number', () => {
-    // The grid spreads LINES; an estimate has no dates. The List calls this same figure "Lines so
-    // far" and reserves "Planned costs" for the estimate, so the grid may not borrow that name here
-    // (the rule its closing row has carried since 2026-08-13; /review 2026-09-08).
+  it('a season estimate that differs gets its remainder as rows in the file, and Planned costs keeps its name', () => {
+    // ⚠ The subtotal used to read "Lines so far" here, because the grid left the un-itemized
+    // remainder out and could not honestly call its figure Planned costs. The remainder is a real
+    // row now — in the No-date-yet column, which is what that column is for — so the subtotal IS
+    // the estimate and the file matches the List in every state (owner ruling 2026-09-09).
     const view = buildPeriodView(LINES, 'months', { estimatedTotal: 4000 });
-    assert.equal(view.estimateDiffers, true);
+    assert.notEqual(view.estimateRows, null);
     const { rows } = budgetPeriodGridRows(view);
-    assert.equal(rows[3].item, 'Lines so far');
+    assert.deepEqual(rows.slice(3, 6).map(r => r.item),
+      ['  — Lines so far', '  — Still to itemize', 'Planned costs']);
     assert.equal(rows[3].total, 2500);
-    // An estimate equal to the lines is not a difference — the ordinary name comes back.
+    assert.equal(rows[4].total, 1500);
+    assert.equal(rows[5].total, 4000);
+    // Lines ABOVE the estimate is the other branch and must not be forgotten: the remainder goes
+    // negative and wears the List's other name.
+    const over = budgetPeriodGridRows(buildPeriodView(LINES, 'months', { estimatedTotal: 2000 }));
+    assert.equal(over.rows[4].item, '  — Over your estimate');
+    assert.equal(over.rows[4].total, -500);
+    assert.equal(over.rows[5].total, 2000);
+    // An estimate equal to the lines is not a difference — no extra rows at all.
     const same = buildPeriodView(LINES, 'months', { estimatedTotal: 2500 });
-    assert.equal(same.estimateDiffers, false);
+    assert.equal(same.estimateRows, null);
     assert.equal(budgetPeriodGridRows(same).rows[3].item, 'Planned costs');
+  });
+
+  it('the file closes on the same ladder the grid draws — installments, then Shortfall (Buffer)', () => {
+    // An export's shape is its screen's shape: a file that stopped at Costs less funding would
+    // leave a treasurer doing the subtraction the grid now prints (owner ruling 2026-09-09).
+    const view = buildPeriodView(LINES, 'months', {
+      dues: { assessed: 900, installments: [{ date: '2026-01-15', amount: 900 }] },
+    });
+    const { rows, kinds } = budgetPeriodGridRows(view);
+    const tail = rows.slice(-2);
+    assert.deepEqual(tail.map(r => r.item), ['Player installments', 'Shortfall (Buffer)']);
+    // 2,500 of costs less 1,000 of funding = 1,500 to cover; 900 scheduled leaves 600 short.
+    // Installments read POSITIVE like every money-in row; the close keeps its sign.
+    assert.equal(tail[0].total, 900);
+    assert.equal(tail[1].total, 600);
+    assert.deepEqual(kinds.slice(-2), ['total', 'total']);
+
+    // Over-schedule it and the same row goes negative — the buffer half of its paired header,
+    // which the screen draws in brackets and in the funding green.
+    const buffered = budgetPeriodGridRows(buildPeriodView(LINES, 'months', {
+      dues: { assessed: 2000, installments: [{ date: '2027-04-01', amount: 2000 }] },
+    }));
+    assert.equal(buffered.rows[buffered.rows.length - 1].total, -500);
+
+    // No dues schedule, no rows: before dues are set there is nothing dated to spread, and the
+    // estimated figure is derived from this very plan.
+    const none = budgetPeriodGridRows(buildPeriodView(LINES, 'months'));
+    assert.equal(none.rows.some(r => r.item === 'Shortfall (Buffer)'), false);
   });
 });

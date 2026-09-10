@@ -1,0 +1,639 @@
+<title>The By-Period Close Walk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:40px 20px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:.1em .35em;border-radius:4px}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(36px,6vw,56px);line-height:.97;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:15px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.signin{margin-top:22px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r);padding:14px 17px;display:flex;flex-direction:column;gap:7px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:19px;margin:0}
+.signin dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.signin dt{color:var(--dim)}
+.signin dd{margin:0;font-family:var(--mono);font-size:12.5px}
+.parthead{margin-top:42px;border-top:2px solid var(--ink);padding-top:12px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:28px;line-height:1.06;margin:3px 0 0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:5px}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--dim);min-width:3.2ch;padding-top:3px}
+.step.done .num{color:var(--olive)}
+.step-head h3{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.15;margin:0;text-wrap:balance;flex:1}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.do{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.do b{color:var(--ink)}
+.expect{border-left:3px solid var(--olive);background:var(--olive-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.expect b,.warn b,.ask b{color:var(--ink)}
+.verdict{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.verdict label{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;border:1px solid var(--rule-strong);border-radius:99px;padding:5px 12px;cursor:pointer;background:var(--card);min-height:34px}
+.verdict input{accent-color:var(--olive);cursor:pointer;margin:0}
+.verdict label.pick{border-color:var(--olive);background:var(--olive-soft);color:var(--olive);font-weight:600}
+.verdict label.pickbad{border-color:var(--brick);background:var(--brick-soft);color:var(--brick);font-weight:600}
+textarea{width:100%;min-height:0;height:34px;resize:vertical;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--sunk);color:var(--ink)}
+textarea:focus{outline:2px solid var(--olive);outline-offset:1px}
+.spec{border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--card);padding:9px 12px;font-family:Inter,sans-serif;max-width:520px}
+.specrow{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:14px;padding:6px 0}
+.specrow+.specrow{border-top:1px solid var(--rule)}
+.specwho{display:flex;flex-direction:column;min-width:0}
+.specnote{font-size:12px;color:var(--dim)}
+.specamt{font-variant-numeric:tabular-nums;flex:none}
+.toastwrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+/* Ruling steps: one checkbox per option, so the tick IS the answer (owner, 2026-09-08). Same
+   treatment the run order uses, so the two instruments feel like one family. */
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on{background:var(--olive-soft)}
+.chk.on label{color:var(--olive);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA §164 · the By-period close · 2026-09-10</p>
+  <h1>The By-period close</h1>
+  <p class="lede">Fifteen checks and three calls, in six parts. The Budget plan's <b>By period</b> view
+    now finishes the ladder the List already prints, and every negative on <b>both</b> money grids
+    wears brackets instead of a minus. Verdicts and notes save in this browser; <b>Copy findings</b>
+    at the top puts everything you have written into one block to paste back.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> judged</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Before you start</h2>
+  <dl>
+    <dt>Head coach</dt><dd>uat-coach@uat-test-org.local / UATPassword2026!</dd>
+    <dt>Where</dt><dd>localhost:3000 → uat-test-org → UAT Test Team → Money → Budget</dd>
+    <dt>Season</dt><dd>2026 — the only live season in this org</dd>
+  </dl>
+  <p class="do"><b>Do not reseed.</b> This walk needs the plan exactly as it stands, and a reseed
+    would move the dues dates other walks depend on. Part C asks you to set a season estimate and
+    then clear it again — that is the only change this walk makes, and step C5 puts it back.</p>
+  <p class="do"><b>Restart the dev server first.</b> Shared modules moved, and a half-warm cache is
+    the one thing that would make this walk lie to you.</p>
+  <p class="do"><b>Keep this page private</b> — it carries a dev password.</p>
+</div>
+
+<div class="warn" style="margin-top:16px">
+  <b>⚠ Which figures are promises and which are not.</b> The season totals below are pinned to the
+  cent and must match: <b>$13,936.00</b> planned costs, <b>$3,623.00</b> planned funding,
+  <b>$10,313.00</b> costs less funding, <b>$11,308.30</b> of player installments, and a
+  <b>$995.30</b> buffer. <b>The per-column split of the Player installments row is NOT pinned</b> —
+  the fixture dates dues relative to today, so which quarter they land in moves with the calendar.
+  Every per-column step below asks you to check a <i>relationship</i>, which survives the date
+  changing and still fails loudly on bad arithmetic.
+</div>
+
+<!-- ══════════ PART A ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The plan finishes its sentence</h2>
+  <p>The grid used to stop at <i>Costs less funding</i>, three rungs short of the List. Four checks
+    that it now closes the same way — and that the two views agree.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><h3>Three closing rows, in this order</h3></div>
+  <div class="step-body">
+    <p class="do">Money → <b>Budget</b>. Set <b>View</b> to <b>By period</b> and <b>Columns</b> to
+      <b>Quarters</b>. Scroll to the foot of the table.</p>
+    <div class="expect"><b>Expect</b> the table to end on three rows, in this order:
+      <b>Costs less funding</b> → <b>Player installments</b> (with a <i>Scheduled</i> tag) →
+      <b>Shortfall (Buffer)</b>. The installments row is green, like every money-in row above it.
+      No new section heading — these are ladder rows, not a fourth band.</div>
+    <div class="verdict" data-v="a1"></div>
+    <textarea data-n="a1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><h3>The installments row agrees with the tile above it</h3></div>
+  <div class="step-body">
+    <p class="do">Read the <b>Total</b> column of <b>Player installments</b>, then look up at the
+      <b>Player installments</b> tile at the top of the screen.</p>
+    <div class="expect"><b>Expect the same money.</b> The tile reads <b>$11,308.30 Scheduled</b>;
+      the grid's Total reads <b>11,308</b> — the grid rounds to whole dollars in every cell, which
+      is what it has always done. <b>The pass condition is that they are the same figure</b>, not
+      that they are that figure: if a later change moves the dues, both must move together.</div>
+    <div class="verdict" data-v="a2"></div>
+    <textarea data-n="a2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><h3>⚠ The close is the same number the List calls a buffer</h3></div>
+  <div class="step-body">
+    <p class="do">Read <b>Shortfall (Buffer)</b> in the <b>Total</b> column. Now switch <b>View</b>
+      to <b>List</b> and read the very last row of that table.</p>
+    <div class="expect"><b>Expect one number said two ways.</b> The List's last row reads
+      <b>Planned buffer $995.30</b>. The grid's Total reads <b>(995)</b> — in brackets, because
+      across time the row's sign flips column to column and a row label cannot rename itself per
+      column the way the List's can. <b>Same magnitude, opposite presentation, and that is the
+      whole design.</b></div>
+    <div class="ask"><b>This is the step I most want your eye on.</b> If the bracket here reads as
+      bad news rather than as a buffer, the paired header has failed and I would rather know now
+      than after it ships.</div>
+    <div class="verdict" data-v="a3"></div>
+    <textarea data-n="a3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><h3>⚠ Any column you like still adds up</h3></div>
+  <div class="step-body">
+    <p class="do">Back to <b>By period</b>. Pick <b>any one column</b> — including <b>No date yet</b>
+      — and do two subtractions with your eye: <b>Planned costs</b> minus <b>Planned funding</b>
+      should be <b>Costs less funding</b>; that minus <b>Player installments</b> should be
+      <b>Shortfall (Buffer)</b>. Then do the same down the <b>Total</b> column.</p>
+    <div class="expect"><b>Expect both to hold in every column.</b> On today's fixture the Total
+      column reads 13,936 − 3,623 = 10,313, then 10,313 − 11,308 = (995) —
+      <i>illustration, not the pass condition</i>. What must be true is the relationship, in
+      whichever column you chose.</div>
+    <div class="warn"><b>A dash is not a zero.</b> A column with nothing in a row shows an em dash;
+      treat it as nothing when you subtract. A row that shows <b>0</b> would be a defect worth
+      noting.</div>
+    <div class="verdict" data-v="a4"></div>
+    <textarea data-n="a4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART B ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Brackets, on both grids, meaning opposite things</h2>
+  <p>Every other money figure in the portal has always shown a negative in brackets. These two grids
+    were the exception. They are not any more — but what a bracket <i>means</i> differs by grid, and
+    that is deliberate.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><h3>A bracket on the plan is green</h3></div>
+  <div class="step-body">
+    <p class="do">On <b>By period</b>, find any bracketed figure on <b>Costs less funding</b> or
+      <b>Shortfall (Buffer)</b>. (Quarters usually shows at least one; if not, switch
+      <b>Columns</b> to <b>Months</b> and page through.)</p>
+    <div class="expect"><b>Expect brackets, not a minus sign</b> — no <code>-63</code> and no
+      <code>−63</code> anywhere on the table — and the bracketed figure drawn in the same green the
+      funding rows use, because it is money landing ahead of the bills.</div>
+    <div class="verdict" data-v="b1"></div>
+    <textarea data-n="b1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><h3>The legend appears only when there is something to explain</h3></div>
+  <div class="step-body">
+    <p class="do">Read the notes under the table.</p>
+    <div class="expect"><b>Expect</b> a line saying a figure in <b>brackets</b> on a closing row is a
+      period where the money lands ahead of the bills. It should sit beside the <b>No date yet</b>
+      note, which now also mentions dues not yet on a schedule. <b>The old apology is gone</b> —
+      nothing should say "your season estimate has no dates, so this grid spreads the lines you have
+      entered".</div>
+    <div class="verdict" data-v="b2"></div>
+    <textarea data-n="b2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span><h3>⚠ The twin grid — same brackets, red</h3></div>
+  <div class="step-body">
+    <p class="do">Go to <b>Budget vs. Actual</b> → <b>View: Months</b>. Look at the
+      <b>Net for the month</b> and <b>Closing balance</b> rows and find a negative one (try
+      <b>Showing: Cash</b>).</p>
+    <div class="expect"><b>Expect brackets there too</b> — this is the other half of the change —
+      but drawn in <b>red</b>, not green. On a balance a bracket means the account is below zero,
+      which is the one real warning on that screen. Same notation, opposite meaning.</div>
+    <div class="warn">If you find a bare minus sign anywhere on either grid, that is a defect: the
+      whole point was that the product stops showing three notations for one fact.</div>
+    <div class="verdict" data-v="b3"></div>
+    <textarea data-n="b3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART C ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The season estimate — a figure the two views used to disagree on</h2>
+  <p>This is the live defect the change fixes, and the fixture has no estimate set, so you have to
+    make one. <b>Step C5 puts it back</b> — please run the whole part in one sitting.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><h3>Set an estimate above the lines</h3></div>
+  <div class="step-body">
+    <p class="do">On <b>List</b>, under the <b>Planned costs</b> tile, click
+      <b>set an estimated total</b>. Enter <b>15000</b> and save.</p>
+    <div class="expect"><b>Expect</b> the tile to read <b>$15,000.00</b> with a caption saying
+      $13,936.00 is itemized, and the List's cost band to grow <b>Lines so far</b> and
+      <b>Still to itemize</b> rows. That is the List behaving as it always has.</div>
+    <div class="verdict" data-v="c1"></div>
+    <textarea data-n="c1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><h3>⚠ The grid now shows the money it used to hide</h3></div>
+  <div class="step-body">
+    <p class="do">Switch to <b>By period</b> and read the <b>Costs</b> band.</p>
+    <div class="expect"><b>Expect two new rows under the categories</b> — <b>Lines so far</b>
+      (13,936) and <b>Still to itemize</b> (1,064, sitting in the <b>No date yet</b> column, because
+      an estimate has no dates) — and the subtotal beneath them reading <b>Planned costs 15,000</b>.
+      <b>Before this change that subtotal was called "Lines so far" and read 13,936</b>, because the
+      grid could not show the missing $1,064 and so could not honestly claim the name.</div>
+    <div class="verdict" data-v="c2"></div>
+    <textarea data-n="c2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><h3>⚠⚠ The two views now agree — this is the defect</h3></div>
+  <div class="step-body">
+    <p class="do">Read <b>Costs less funding</b> in the grid's <b>Total</b> column. Switch to
+      <b>List</b> and read the row of the same name.</p>
+    <div class="expect"><b>Expect the same number on both</b> — <b>$11,377.00</b> (15,000 − 3,623).
+      <b>Before this change the List said $11,377.00 and the grid said 10,313 under the identical
+      name</b>, on the same plan, on the same day.</div>
+    <div class="ask"><b>Worth a moment:</b> $1,064 apart is not a rounding difference. This is the
+      kind of thing a coach reads off one screen and quotes from another.</div>
+    <div class="verdict" data-v="c3"></div>
+    <textarea data-n="c3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C4">
+  <div class="step-head"><span class="num">C4</span><h3>The other branch — an estimate BELOW the lines</h3></div>
+  <div class="step-body">
+    <p class="do">Edit the estimate to <b>12000</b> and look at the <b>By period</b> Costs band
+      again.</p>
+    <div class="expect"><b>Expect</b> the second row to rename itself to <b>Over your estimate</b>
+      and show <b>(1,936)</b> in brackets, with <b>Planned costs</b> reading <b>12,000</b>. The
+      List should say the same thing in its own band. This branch is easy to forget when building —
+      it is the reason it is here.</div>
+    <div class="verdict" data-v="c4"></div>
+    <textarea data-n="c4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C5">
+  <div class="step-head"><span class="num">C5</span><h3>Put the fixture back</h3></div>
+  <div class="step-body">
+    <p class="do">Edit the estimate once more and <b>clear it</b> (empty the field and save).</p>
+    <div class="expect"><b>Expect</b> the tile to go back to <b>Planned costs $13,936.00</b> with
+      the <b>set an estimated total</b> link, and both extra rows to disappear from both views.
+      <b>Leaving an estimate set here would quietly change what every later budget walk sees.</b></div>
+    <div class="verdict" data-v="c5"></div>
+    <textarea data-n="c5" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART D ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>What this fixture cannot show you</h2>
+  <p>Two states ship in this change and <b>cannot be walked here</b>. Saying so is the point of this
+    part — a walk that quietly skipped them would report coverage it does not have.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><h3>Before dues are set, and an over-funded season</h3></div>
+  <div class="step-body">
+    <p class="do">Nothing to click. Read this and judge whether you are content to accept it.</p>
+    <div class="warn"><b>Neither state exists in the fixture, and manufacturing them would damage
+      it.</b>
+      <br><br>
+      <b>1 · No dues set.</b> The two closing rows should stay away and a note should offer
+      <i>Set dues for all players</i> instead. UAT Test Team's dues are set, and its only other team
+      has no live season at all — so the only way to see this live is to delete the team's dues,
+      which would wreck every dues walk in the ledger.
+      <br><br>
+      <b>2 · Funding above the whole plan.</b> The List's <i>Costs less funding</i> row should show
+      a bracketed surplus instead of the $0.00 it used to floor to. Reaching it means adding a
+      money-in line of more than $10,313 and deleting it again.</div>
+    <div class="expect"><b>Both are pinned by unit tests</b> that run on every build — the rows
+      staying away, the bracketed surplus, and the arithmetic behind them. That is the coverage;
+      your eye is not the coverage here, and this step exists so nobody records otherwise.</div>
+    <div class="ask"><b>If you would rather see either one for yourself</b>, say so in the notes and
+      I will build a throwaway team for it rather than touching this one.</div>
+    <div class="verdict" data-v="d1"></div>
+    <textarea data-n="d1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART E ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>The file says what the screen says</h2>
+  <p>An export's shape is its screen's shape. A file that stopped where the grid used to stop would
+    leave a treasurer doing the subtraction by hand.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><h3>Export the By-period view</h3></div>
+  <div class="step-body">
+    <p class="do">On <b>By period</b>, use <b>Export</b> → <b>Excel</b> (or CSV). Open the file.</p>
+    <div class="expect"><b>Expect the same three closing rows</b> — Costs less funding, Player
+      installments, Shortfall (Buffer) — with the same figures as the screen you exported from, and
+      the same columns. Installments read positive in the file, as every money-in row does.</div>
+    <div class="warn"><b>The PDF is a different document</b> and is not part of this check: the
+      period grid ships in Excel and CSV only, and the PDF is the whole-season statement.</div>
+    <div class="verdict" data-v="e1"></div>
+    <textarea data-n="e1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><h3>Read one row out loud</h3></div>
+  <div class="step-body">
+    <p class="do">Pick the <b>Shortfall (Buffer)</b> row on screen and say, in your own words, what
+      it is telling you about the season. Write what you said in the notes.</p>
+    <div class="ask"><b>This step is not a check, it is the check.</b> A previous report went 42 for
+      42 and still shipped three defects, all of them inside a row nobody had read as a sentence.
+      If what you say does not match what the row means, the row is wrong — however well it
+      adds up.</div>
+    <div class="verdict" data-v="e2"></div>
+    <textarea data-n="e2" placeholder="What the row says to you"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════ PART F ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>Three calls for you</h2>
+  <p>Not checks. Tick the option you want — the tick <i>is</i> the answer, and the notes box is for
+    the why.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><h3>The swing this design accepts</h3></div>
+  <div class="step-body">
+    <p class="do">Switch <b>Columns</b> to <b>Months</b> and look at a month where dues land and few
+      bills fall due. <b>Shortfall (Buffer)</b> will show a large bracketed figure there.</p>
+    <div class="expect">It is arithmetically right and it reads like a swing rather than a state,
+      because this grid has no running balance to say "that money carries into next month". You
+      accepted this over sending coaches to another tab, and deferred balances. This is your chance
+      to look at it in the product rather than in a mockup.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" data-c="f1a" id="f1a"><label for="f1a">Fine as built — ship it</label></div>
+      <div class="chk"><input type="checkbox" data-c="f1b" id="f1b">
+        <label for="f1b">Worse than expected — bring balances forward</label></div>
+      <div class="chk"><input type="checkbox" data-c="f1c" id="f1c">
+        <label for="f1c">Something else — say what in the notes</label></div>
+    </div>
+    <textarea data-n="f1" placeholder="Why"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><h3>Is the bracket note clutter?</h3></div>
+  <div class="step-body">
+    <p class="do">Look at the stack of notes under the table on a phone, or at a narrow window.</p>
+    <div class="expect">There are now up to three: <b>No date yet</b>, the <b>brackets</b> legend,
+      and — before dues are set — the <b>Set dues</b> offer. The brackets legend only renders when a
+      bracket is actually on screen.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" data-c="f2a" id="f2a"><label for="f2a">Keep the brackets legend</label></div>
+      <div class="chk"><input type="checkbox" data-c="f2b" id="f2b">
+        <label for="f2b">Drop it — the green is doing the work</label></div>
+    </div>
+    <textarea data-n="f2" placeholder="Why"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F3">
+  <div class="step-head"><span class="num">F3</span><h3>&ldquo;Lines so far&rdquo; — settle it or leave it</h3></div>
+  <div class="step-body">
+    <p class="do">You said you did not like the word <i>lines</i>. It was kept in Part C's two rows
+      <b>because the List already prints those exact words today</b> — matching it is what stops the
+      two views disagreeing again.</p>
+    <div class="ask">If you want it retired, it changes on <b>both</b> views in its own unit of work.
+      Doing it on one view only would re-open the defect this whole change closed.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" data-c="f3a" id="f3a"><label for="f3a">Leave it — both views match, that is what matters</label></div>
+      <div class="chk"><input type="checkbox" data-c="f3b" id="f3b">
+        <label for="f3b">Retire &ldquo;Lines so far&rdquo; on both views — new piece of work</label></div>
+    </div>
+    <textarea data-n="f3" placeholder="If retiring it, what should the two rows be called?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<footer>
+  <span>Owner QA §164</span>
+  <span>Fixture verified against dev 2026-09-10</span>
+  <span>Run order step B21</span>
+</footer>
+</div>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast">Copied</span></div>
+
+<script>
+(function(){
+  var KEY='by-period-close-walk-v1';
+  var OPTS=[['pass','Pass'],['fail','Defect'],['na','N/A']];
+  document.querySelectorAll('.verdict').forEach(function(v){
+    var id=v.getAttribute('data-v');
+    OPTS.forEach(function(o){
+      var l=document.createElement('label');
+      var i=document.createElement('input');
+      i.type='radio';i.name='v-'+id;i.value=o[0];
+      l.appendChild(i);l.appendChild(document.createTextNode(o[1]));
+      v.appendChild(l);
+    });
+  });
+  var radios=Array.prototype.slice.call(document.querySelectorAll('.verdict input'));
+  var notes=Array.prototype.slice.call(document.querySelectorAll('textarea[data-n]'));
+  /* ⚠ A RULING STEP IS ONE CHECKBOX PER OPTION (owner, 2026-09-08, out of §151). A "your call"
+     step written as a single verdict came back ticked with no note and the ruling never travelled:
+     the tick said "I decided", not WHAT. These boxes ARE the answer, and the builder prints which
+     one was ticked. */
+  var calls=Array.prototype.slice.call(document.querySelectorAll('input[data-c]'));
+  var steps=Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var done=document.getElementById('cdone'),total=document.getElementById('ctotal'),fill=document.getElementById('fillbar');
+  var toastwrap=document.getElementById('toastwrap'),toast=document.getElementById('toast'),timer=0;
+  total.textContent=String(steps.length);
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+  function write(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+  function say(m){toast.textContent=m;toastwrap.hidden=false;clearTimeout(timer);timer=setTimeout(function(){toastwrap.hidden=true},1600)}
+  function paint(){
+    var n=0;
+    document.querySelectorAll('.verdict').forEach(function(v){
+      var picked=v.querySelector('input:checked');
+      v.querySelectorAll('label').forEach(function(l){
+        var i=l.querySelector('input');
+        l.classList.toggle('pick',i.checked&&i.value!=='fail');
+        l.classList.toggle('pickbad',i.checked&&i.value==='fail');
+      });
+      if(picked)n++;
+    });
+    calls.forEach(function(c){
+      var row=c.closest('.chk');
+      if(row)row.classList.toggle('on',c.checked);
+    });
+    steps.forEach(function(s){
+      var judged=!!s.querySelector('.verdict input:checked')||!!s.querySelector('input[data-c]:checked');
+      s.classList.toggle('done',judged);
+    });
+    /* A ruling step has no verdict, so it counts as judged once any of its options is ticked —
+       otherwise the progress bar could never reach the end of the walk. */
+    n=steps.filter(function(s){
+      return !!s.querySelector('.verdict input:checked')||!!s.querySelector('input[data-c]:checked');
+    }).length;
+    done.textContent=String(n);
+    fill.style.width=(steps.length?Math.round(n/steps.length*100):0)+'%';
+  }
+  var st=read();
+  radios.forEach(function(r){
+    var k='v:'+r.name+':'+r.value;
+    if(st[k])r.checked=true;
+    r.addEventListener('change',function(){
+      var s=read();
+      OPTS.forEach(function(o){delete s['v:'+r.name+':'+o[0]]});
+      s['v:'+r.name+':'+r.value]=1;write(s);paint();
+    });
+  });
+  calls.forEach(function(c){
+    var k='c:'+c.getAttribute('data-c');
+    if(st[k])c.checked=true;
+    c.addEventListener('change',function(){
+      var s=read();
+      if(c.checked)s[k]=1;else delete s[k];
+      write(s);paint();
+    });
+  });
+  notes.forEach(function(t){
+    var k='n:'+t.getAttribute('data-n');
+    if(st[k])t.value=st[k];
+    t.addEventListener('input',function(){var s=read();if(t.value.trim())s[k]=t.value;else delete s[k];write(s)});
+  });
+  paint();
+  function fallback(t,ok){
+    var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');say(ok)}catch(e){say('Select and copy manually')}
+    document.body.removeChild(ta);
+  }
+  function copyText(t,ok){
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){say(ok)},function(){fallback(t,ok)})}
+    else fallback(t,ok);
+  }
+  document.getElementById('copyfind').addEventListener('click',function(){
+    var lines=['Owner QA §164 — The By-period close — '+new Date().toISOString().slice(0,10)];
+    var pass=0,fail=0,na=0,none=0,ruled=0;
+    steps.forEach(function(s){
+      var id=s.getAttribute('data-step');
+      var h=s.querySelector('h3');
+      var picked=s.querySelector('.verdict input:checked');
+      var note=s.querySelector('textarea[data-n]');
+      var opts=Array.prototype.slice.call(s.querySelectorAll('input[data-c]'));
+      var title=h?h.textContent.replace(/^⚠+\s*/,''):'';
+      if(opts.length){
+        var chosen=opts.filter(function(o){return o.checked}).map(function(o){
+          var l=s.querySelector('label[for="'+o.id+'"]');
+          return l?l.textContent.trim():o.getAttribute('data-c');
+        });
+        if(chosen.length)ruled++;else none++;
+        lines.push('');
+        lines.push('['+(chosen.length?'RULED':'—')+'] '+id+'  '+title);
+        chosen.forEach(function(c){lines.push('   → '+c)});
+      }else{
+        var v=picked?picked.value:'';
+        if(v==='pass')pass++;else if(v==='fail')fail++;else if(v==='na')na++;else none++;
+        var label=v==='pass'?'PASS':v==='fail'?'DEFECT':v==='na'?'N/A':'—';
+        lines.push('');
+        lines.push('['+label+'] '+id+'  '+title);
+      }
+      if(note&&note.value.trim())lines.push('   '+note.value.trim().replace(/\n/g,'\n   '));
+    });
+    lines.splice(1,0,'','Pass '+pass+' · Defect '+fail+' · N/A '+na+' · ruled '+ruled+' · not judged '+none+' of '+steps.length);
+    copyText(lines.join('\n'),'Findings copied');
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    radios.forEach(function(r){r.checked=false});
+    calls.forEach(function(c){c.checked=false});
+    notes.forEach(function(t){t.value=''});
+    write({});paint();say('Reset');
+  });
+})();
+</script>
