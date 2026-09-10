@@ -43,6 +43,11 @@ const SCAN_DIRS = [
   join(ROOT, 'app', '[orgSlug]', 'coaches'),
   join(ROOT, 'components', 'coaches'),
   join(ROOT, 'components', 'accounting'),
+  /* Widened 2026-09-09, exactly as the note above says to: the dues drawer took the floor, and the
+     first thing inside a floored dialog that dismisses itself on Escape turned out to be a help
+     tooltip — which lives here, not under `coaches/`. Nothing here renders a listbox today; it is
+     scanned so the conditional-marker rule below covers the marker `HelpTooltip` now carries. */
+  join(ROOT, 'components', 'help'),
 ];
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -79,6 +84,29 @@ describe('escape ownership — a menu inside a dialog closes itself, not the rec
     assert.ok(
       branch.includes('escapeClaimed') && branch.includes('data-escape-owner'),
       'both ownership checks must sit in the Escape branch of useDialogFloor',
+    );
+  });
+
+  /* ⚠ THE SHARED POPOVER HOOK IS THE THIRD PARTY TO THIS CONTRACT (2026-09-09). The two rules
+     above are about a menu a component hand-rolls; `useDismissable` is the hook every ANCHORED
+     popover dismisses through — a help tooltip, a toolbar menu, the status legend. None of them
+     mattered while no floored dialog contained one, and the dues drawer's schedule editor is the
+     first that does: its "What is an installment?" tooltip closes on Escape, and without the
+     claim the drawer closes with it. The rule is stated here rather than in the hook because a
+     hook cannot fail a build by forgetting something. */
+  it('the shared dismissable hook claims Escape for the popovers it closes', () => {
+    const src = readFileSync(join(ROOT, 'lib', 'overlay-hooks.ts'), 'utf8');
+    const branch = src.slice(src.indexOf("e.key !== 'Escape'"));
+    assert.ok(
+      branch.includes('claimEscape('),
+      'useDismissable no longer claims Escape. Every popover it closes lives inside something — '
+      + 'and when that something is a dialog with a floor, the floor answers the same document '
+      + 'event and tears the record down behind the popover. See components/coaches/escapeOwnership.ts.',
+    );
+    assert.ok(
+      branch.indexOf('claimEscape(') < branch.indexOf('onEscapeRef.current'),
+      'claimEscape() must run BEFORE the onEscape branch returns — a caller with custom Escape '
+      + 'handling has still answered the key, and the floor beneath must still stand down.',
     );
   });
 

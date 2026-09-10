@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { X } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -161,6 +162,19 @@ export default function GenerateInstallmentsModal({
 
   const dirty = !result && installments.some(i => i.date || i.amount);
   const close = useDiscardGuard({ dirty, close: onClose, noun: 'installment schedule' });
+
+  /* The accessibility floor (D7): Escape closes, Tab stays inside, focus returns to the door that
+     opened this. It rides WITH the modal for the same reason its route guard does — one door,
+     two callers (the Budget Plan tab and the dues list), and a floor added at one call site is a
+     floor the other silently lacks.
+     ⚠ Escape goes through `close`, the DISCARD guard, never `onClose`: this window can hold a
+     typed hardship plan, the most expensive typing in the hub.
+     ⚠ Gated on `tabActive` for the same reason the click interception below is — the hub keeps a
+     hidden tab MOUNTED, and a floor armed there would answer a key meant for the tab on screen.
+     ⚠ Busy-gated on `generating`: a write in flight must not have its window torn out from under
+     it, and a second Escape during "Working…" is exactly the impatient press that would. */
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(tabActive, panelRef, { onClose: () => { void close(); }, busy: generating });
 
   /* The failures that get the GENERIC could-not-save sentence — payout-floor refusals are
      excluded because they carry their own sentence (and their old schedule still stands).
@@ -663,7 +677,17 @@ export default function GenerateInstallmentsModal({
         interceptClicks={dirty && tabActive}
         message="You haven't saved what you entered on this form. Leave without saving it?"
       />
-      <div className={`${shared.modal} ${shared.modalFlushFooter}`} style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Set dues for all players"
+        aria-busy={generating || undefined}
+        className={`${shared.modal} ${shared.modalFlushFooter}`}
+        style={{ maxWidth: 620 }}
+        onClick={e => e.stopPropagation()}
+      >
         <CoachModalHeader
           /* Stable title. Whether this run replaces anything is the SERVER's answer, not a guess
              from the plan flag — and when it is a replace, that step carries its own heading.

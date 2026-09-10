@@ -38,6 +38,7 @@ import budgetStyles from '../budget/budget.module.css';
    in the hub, and a stray backdrop click used to throw it away silently. */
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import QuestionShell from '@/components/coaches/QuestionShell';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 /* The schedule editor's sentences — the team comparison and the paid-money consequence — are
@@ -1534,6 +1535,53 @@ export function PlayerDuesPanel({
     noun: 'credit',
   });
 
+  /* ── THE ACCESSIBILITY FLOOR, for four overlays that never had one (2026-09-09) ───────────────
+     Escape closes, Tab stays inside the panel, focus lands on the panel when it opens and returns
+     to the door that opened it. This is the D7 floor (List · Room · Question, 2026-09-02) that
+     shipped INSIDE `RoomShell` / `QuestionShell` and so reached every money surface except this
+     one: the drawer, the settlement, the Set-refund sheet and the reminder confirmation are all
+     hand-rolled overlays that predate the shells, and the plan carried them into a Phase D that
+     has not been re-planned. The floor is not the shell — wearing it costs four hook calls and
+     changes nothing a coach can see, so it is not worth waiting for that re-plan.
+
+     ⚠ ESCAPE CLOSES THROUGH THE SAME GUARDED CLOSER THE ✕ AND THE BACKDROP USE. A key that threw
+     away a half-typed schedule silently would be worse than no key at all — `closeDrawerGuarded`
+     asks first, exactly as it does for every other way out.
+
+     ⚠ GATED ON `tabActive`, like the credit Question beside them: the hub keeps this panel
+     MOUNTED under another tab, and a floor left armed there answers a bare Escape meant for
+     whatever the coach is actually looking at.
+
+     ⚠ The Set-refund sheet stacks over the settlement window and both are armed at once. They are
+     siblings in the DOM, not nested, so a key with focus inside one never reaches the other, and a
+     key with nothing focused is answered by the last floor opened (`openFloors`). */
+  /** Writes this drawer OWNS — while one is in flight the floor refuses to dismiss, so a surface
+   *  is never torn down under its own request. The credit form's save is `creditSaving`, which
+   *  the Question it lives in gates for itself. */
+  const drawerBusy = saving || paySaving || !!deletingPaymentId || !!deletingCreditId
+    || !!deletingPayoutId || !!remindingId || Object.values(marking).some(Boolean);
+  const drawerPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(!!selected && tabActive, drawerPanelRef, {
+    onClose: () => { void closeDrawerGuarded(); },
+    busy: drawerBusy,
+    focusKey: selected?.player.id ?? null,
+  });
+  const settlementPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(refundOpen && tabActive, settlementPanelRef, {
+    onClose: () => setRefundOpen(false),
+    busy: payAllBusy,
+  });
+  const choicePanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(!!choiceFor && tabActive, choicePanelRef, {
+    onClose: () => setChoiceFor(null),
+    busy: choiceSaving,
+  });
+  const confirmRemindersPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(confirmRemindersOpen && tabActive, confirmRemindersPanelRef, {
+    onClose: () => setConfirmRemindersOpen(false),
+    busy: sendingReminders,
+  });
+
   /** Open the payment sheet on an existing receipt, prefilled. */
   function openEditPayment(pm: RepDuesPayment) {
     closeMoneySheets();
@@ -2960,10 +3008,13 @@ export function PlayerDuesPanel({
               onPointerDown={e => { if (e.target === e.currentTarget && !payAllBusy) setRefundOpen(false); }}
             >
               <div
+                ref={settlementPanelRef}
+                tabIndex={-1}
                 className={`${styles.modal} ${styles.modalSettlement} ${styles.modalScrollBody} ${styles.modalFlushFooter}`}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Season settlement"
+                aria-busy={payAllBusy || undefined}
               >
                 <div className={styles.modalHeader}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -3427,7 +3478,20 @@ export function PlayerDuesPanel({
             interceptClicks={drawerFormDirty && tabActive}
             message="You haven't saved what you entered on this form. Leave without saving it?"
           />
-          <div className={`${styles.slideOver} ${styles.slideOverLedger}`} onClick={e => e.stopPropagation()}>
+          {/* ⚠ THE LABEL NAMES THE FAMILY, not the surface. A screen reader announces this the
+              moment it opens, and "Dues" would be the third thing in a row to say so — the tab,
+              the page heading and then the panel — while the one fact the coach needs is WHOSE
+              record they just opened. The title bar below says the same thing in ink. */}
+          <div
+            ref={drawerPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${playerName(selected.player) || 'This player'} — dues record`}
+            aria-busy={drawerBusy || undefined}
+            className={`${styles.slideOver} ${styles.slideOverLedger}`}
+            onClick={e => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { void closeDrawerGuarded(); }}>
                 <ArrowLeft size={20} />
@@ -4646,7 +4710,17 @@ export function PlayerDuesPanel({
         const evenTakers = settlement.rows.filter(r => r.choice === 'even').length;
         return (
           <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setChoiceFor(null))?.(); }}>
-            <div className={styles.modal} style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div
+              ref={choicePanelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Set refund — ${name}`}
+              aria-busy={choiceSaving || undefined}
+              className={styles.modal}
+              style={{ maxWidth: 480 }}
+              onClick={e => e.stopPropagation()}
+            >
               <div className={styles.modalHeader}>
                 <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Set refund — {name}</span>
                 <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setChoiceFor(null)}>
@@ -4770,7 +4844,17 @@ export function PlayerDuesPanel({
 
       {confirmRemindersOpen && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setConfirmRemindersOpen(false); }}>
-          <div className={styles.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+          <div
+            ref={confirmRemindersPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Send due reminders?"
+            aria-busy={sendingReminders || undefined}
+            className={styles.modal}
+            style={{ maxWidth: 460 }}
+            onClick={e => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Send due reminders?</span>
               <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setConfirmRemindersOpen(false)}>

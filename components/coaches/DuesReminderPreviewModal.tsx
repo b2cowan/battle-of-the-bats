@@ -1,5 +1,7 @@
 'use client';
+import { useRef } from 'react';
 import { X } from 'lucide-react';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { duesReminderEmail } from '@/lib/dues-reminder-email';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -34,6 +36,13 @@ export default function DuesReminderPreviewModal({
   variant?: 'wave' | 'onDemand';
   onClose: () => void;
 }) {
+  /* The accessibility floor (D7): Escape closes, Tab stays inside, focus returns to the "See an
+     example" link that opened this. Both callers mount this only while it is open, so the floor
+     is armed for its whole life. No busy gate and no discard guard — nothing here is typed and
+     nothing here is saved. */
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(true, panelRef, { onClose });
+
   const today = tournamentToday();
   const onDemand = variant === 'onDemand';
   // One call to the one template; only the window and the two sample rows differ by variant.
@@ -58,7 +67,16 @@ export default function DuesReminderPreviewModal({
 
   return (
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={styles.modal} style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={onDemand ? 'What families will receive' : 'Dues reminder emails'}
+        className={styles.modal}
+        style={{ maxWidth: 600 }}
+        onClick={e => e.stopPropagation()}
+      >
         <div className={styles.modalHeader}>
           <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
             {onDemand ? 'What families will receive' : 'Dues reminder emails'}

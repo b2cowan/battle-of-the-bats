@@ -42,6 +42,15 @@ export default function HelpTooltip({ title, body, content, size = 'sm' }: HelpT
   return (
     <span
       ref={wrapRef}
+      /* ⚠ THIS SUBTREE OWNS ESCAPE WHILE THE POPOVER IS OPEN. These sit inside dialogs that have
+         an accessibility floor (the dues drawer's schedule editor is the first), and a floor
+         closes on any Escape that comes from inside its panel — so without this, dismissing a
+         help popover from the keyboard would close the record behind it. The marker is the half
+         of the contract that works when the FLOOR's listener runs first, which is the ordering
+         here: the dialog opened before the popover, so it registered its listener first, and
+         nothing has re-rendered by the time it reads the DOM. `useDismissable` carries the other
+         half (`claimEscape`) for the opposite ordering. See `escapeOwnership.ts`. */
+      data-escape-owner={open ? '' : undefined}
       className={`${styles.tooltip} ${SIZE_CLASS[size]} ${placement === 'bottom' ? styles.tooltipBottom : ''}`}
       onMouseEnter={show}
       onMouseLeave={() => setOpen(false)}

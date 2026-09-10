@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { claimEscape } from '@/components/coaches/escapeOwnership';
 
 /**
  * Shared behaviour for transient overlays — panels that open, dismiss, and need to fit on screen.
@@ -136,6 +137,20 @@ export function useDismissable(
       // (Costs an IME user one extra Escape: the first ends the composition, the second closes.)
       if (e.isComposing) return;
       if (e.key !== 'Escape') return;
+
+      /* ⚠ THIS PANEL HAS ANSWERED THE KEY — say so, so a dialog floor underneath does not answer
+         it too. A popover opened INSIDE an open dialog (a help tooltip in the dues drawer, the
+         first of these) closes on Escape; without the claim, `useDialogFloor` sees the same
+         document event from inside its panel and closes the whole dialog behind it. That is the
+         §134 defect the ownership contract was written for, arriving through a shared hook
+         instead of a hand-rolled combobox — so the claim belongs here rather than in each
+         consumer. Claimed before the `onEscape` branch, which is the same answer by another
+         route. See `escapeOwnership.ts` for why a flag on the EVENT and not the DOM.
+         ⚠ Half the contract only: the claim covers the ordering where this listener runs FIRST.
+         A panel that opened AFTER the dialog registers its listener SECOND, so the floor reads
+         the flag before it is set — that ordering is covered by the consumer marking its own
+         subtree `data-escape-owner`, which `HelpTooltip` now does. Neither half is redundant. */
+      claimEscape(e);
 
       // A caller that supplied `onEscape` owns focus itself — don't fight it.
       const custom = onEscapeRef.current;
