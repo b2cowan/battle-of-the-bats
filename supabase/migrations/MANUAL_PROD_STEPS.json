@@ -28,56 +28,56 @@
       "note": "Data-only. Applied to prod 2026-08-27 alongside 262/265/266/267 (recorded in CLAUDE.md's release history for Amplify job 260)."
     },
     "264_the_offer_letter_is_the_coachs_to_write.sql": {
-      "prod": "held",
-      "note": "Data-only DELETE of three retired tryout email templates. DELIBERATELY held back from prod 2026-08-27 pending owner approval — the original example of this whole blind spot: check:migrations reported 'in sync' the entire time it was outstanding."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: 0 of its three template keys remain on prod. (Was recorded here as \"held\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only DELETE of three retired tryout email templates. DELIBERATELY held back from prod 2026-08-27 pending owner approval — the original example of this whole blind spot: check:migrations reported 'in sync' the entire time it was outstanding."
     },
     "268_an_entry_is_an_arrival.sql": {
-      "prod": "unverified",
-      "note": "Data-only, sponsorship lifecycle. Project notes from 2026-08-28 describe 268-270 as applied to dev and prod-owed before promote, but that has not been confirmed against live prod — check before the next promote."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: both added columns present on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only, sponsorship lifecycle. Project notes from 2026-08-28 describe 268-270 as applied to dev and prod-owed before promote, but that has not been confirmed against live prod — check before the next promote."
     },
     "270_the_two_halves_are_let_go.sql": {
-      "prod": "unverified",
-      "note": "Drops columns (prod having MORE than dev never fails a 'prod is missing' check, so this is invisible in the opposite direction). Same sponsorship batch as 268 — confirm against live prod."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: 0 of the nine dropped columns remain on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Drops columns (prod having MORE than dev never fails a 'prod is missing' check, so this is invisible in the opposite direction). Same sponsorship batch as 268 — confirm against live prod."
     },
     "273_demo_sandbox_tick_goes_nightly.sql": {
       "prod": "applied",
       "note": "Reschedules the tournament demo's refresh job from every 2 minutes to nightly. Applied to dev 2026-09-02; applied to prod 2026-09-08 immediately AFTER the deploy carrying its code (ordering was mandatory — applying it while prod still ran the old live-cycling code would have frozen the public demo mid-game). Preconditions verified before applying: 14e7a5e4 an ancestor of origin/master, and the deleted /api/sandbox/live-beat route returning 404 on www.fieldlogichq.ca, proving the new code was actually serving. Verified after: prod cron.job reads '10 8 * * *' and check:demos:prod passes."
     },
     "275_a_club_payment_can_be_taken_back.sql": {
-      "prod": "unverified",
-      "note": "Data-only plus a function. Status against live prod not checked — confirm before the next promote."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: prod function definition carries linked_entry_id. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only plus a function. Status against live prod not checked — confirm before the next promote."
     },
     "276_other_income_gets_a_home_in_the_library.sql": {
-      "prod": "unverified",
-      "note": "Data-only, budget-item library. Found by this gate on its first run — it was missed by a hand-written scan of the same migrations, which is the argument for deriving the candidate list from the files rather than from memory. Confirm against live prod."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: the Other Income category and all four of its items present on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only, budget-item library. Found by this gate on its first run — it was missed by a hand-written scan of the same migrations, which is the argument for deriving the candidate list from the files rather than from memory. Confirm against live prod."
     },
     "279_the_founding_season_runs_through_september_2027.sql": {
-      "prod": "unverified",
-      "note": "Data-only, founding-season campaign dates. Project notes describe 279 and 284 as prod-owed, but that has not been confirmed against live prod — check before the next promote."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: 0 comp_period overrides remain at the old 2027-01-01 date on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only, founding-season campaign dates. Project notes describe 279 and 284 as prod-owed, but that has not been confirmed against live prod — check before the next promote."
     },
     "280_a_word_says_who_reports_its_money.sql": {
-      "prod": "unverified",
-      "note": "Data-only. Status against live prod not checked — confirm before the next promote."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: budget_items.actual_source present on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only. Status against live prod not checked — confirm before the next promote."
     },
     "282_a_grant_moves_to_the_sponsorship_shelf.sql": {
-      "prod": "unverified",
-      "note": "Data-only. Status against live prod not checked — confirm before the next promote."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: the platform Grant item sits under Sponsorship on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only. Status against live prod not checked — confirm before the next promote."
     },
     "284_the_campaigns_learn_the_summer_calendar.sql": {
-      "prod": "unverified",
-      "note": "Data-only, founding-season campaign calendar. Paired with 279 in the project notes as prod-owed — confirm against live prod."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: the founding_nudge template present on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only, founding-season campaign calendar. Paired with 279 in the project notes as prod-owed — confirm against live prod."
     },
     "285_a_shelf_says_who_fills_it_in.sql": {
-      "prod": "unverified",
-      "note": "Data-only. Status against live prod not checked — confirm before the next promote."
+      "prod": "applied",
+      "note": "Verified APPLIED on prod 2026-09-10 by querying production directly: budget_categories.income_source present on prod. (Was recorded here as \"unverified\" — bookkeeping drift, not database drift. A data-only or drop-shaped migration is knowable only by asking the database for the rows.) Prior note: Data-only. Status against live prod not checked — confirm before the next promote."
     },
     "286_one_word_one_line_on_a_plan.sql": {
       "prod": "pending",
       "note": "Part 1 JOINS duplicate budget lines on one word (data-only, invisible to every drift check); part 2 adds the partial unique index that keeps them joined (visible). Applied to dev 2026-09-09 and verified there by query: 0 twin groups left, every split still sums to its total, no orphaned periods. PROD STILL HOLDS ONE TWIN PAIR (measured 2026-09-09: 1 group, 2 lines, neither carrying a note, on 1 of 4 plans) — the join must run on prod BEFORE the index, which this file does in order. Apply before promoting the code that reads one line per word."
     },
     "287_a_player_hands_in_more_than_once.sql": {
-      "prod": "pending",
-      "note": "Drops UNIQUE (fundraiser_id, player_id) so a player can hand money in to a drive more than once. Applied to dev 2026-09-10; PROD STILL HOLDS THE CONSTRAINT. ⚠ THIS IS THE FIRST 'drop-constraint' ENTRY AND THE GATE COULD NOT SEE IT UNTIL THIS MIGRATION ADDED THE PATTERN: check:migrations compares tables, columns and CHECK constraints that admit LESS in prod, so a dropped UNIQUE adds no table, adds no column and loosens no CHECK — it reported 'in sync' with the rule still standing. Promote the code without this and prod's own database refuses the second entry with the 409 the code no longer writes, on a form that has just told the coach what their total would become. Nothing to back-fill: every existing row is already valid under the looser rule."
+      "prod": "applied",
+      "note": "Applied to prod 2026-09-10 and verified by querying production directly: the UNIQUE (fundraiser_id, player_id) rule is gone and all 8 entries are intact. Safe ahead of its code because the deployed route has no ON CONFLICT naming those columns (checked against origin/master before applying) — dropping the rule cannot break a writer that never relied on it. Original note: Drops UNIQUE (fundraiser_id, player_id) so a player can hand money in to a drive more than once. Applied to dev 2026-09-10; PROD STILL HOLDS THE CONSTRAINT. ⚠ THIS IS THE FIRST 'drop-constraint' ENTRY AND THE GATE COULD NOT SEE IT UNTIL THIS MIGRATION ADDED THE PATTERN: check:migrations compares tables, columns and CHECK constraints that admit LESS in prod, so a dropped UNIQUE adds no table, adds no column and loosens no CHECK — it reported 'in sync' with the rule still standing. Promote the code without this and prod's own database refuses the second entry with the 409 the code no longer writes, on a form that has just told the coach what their total would become. Nothing to back-fill: every existing row is already valid under the looser rule."
     }
   }
 }

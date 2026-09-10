@@ -1,24 +1,16 @@
 {
   "generated": "2026-09-10",
-  "total": 3,
+  "total": 1,
   "counts": {
     "tables": 0,
     "columns": 0,
-    "indexes": 2,
-    "constraints": 1,
+    "indexes": 1,
+    "constraints": 0,
     "rls": 0
   },
   "items": [
     {
-      "key": "constraint:only-prod:rep_fundraiser_entries.rep_fundraiser_entries_fundraiser_id_player_id_key",
-      "sig": ""
-    },
-    {
       "key": "index:only-dev:rep_budget_lines_one_line_per_item",
-      "sig": ""
-    },
-    {
-      "key": "index:only-prod:rep_fundraiser_entries_fundraiser_id_player_id_key",
       "sig": ""
     }
   ]
