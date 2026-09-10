@@ -134,10 +134,10 @@ describe('by activity gets the shape it is named for', () => {
     assert.ok(!rows.includes('TOURNAMENTS'), 'no shouted band over the block');
     assert.ok(!rows.some(r => /netted|Tournaments cost/.test(r)), 'no closing subtotal row');
 
-    assert.ok(rows.includes('REVENUE') && rows.includes('COSTS'));
+    assert.ok(rows.includes('REVENUE') && rows.includes('EXPENSES'));
     assert.ok(rows.some(r => r.includes('Concession revenue')));
     assert.ok(rows.indexOf('Tournaments') < rows.indexOf('REVENUE'));
-    assert.ok(rows.indexOf('REVENUE') < rows.indexOf('COSTS'));
+    assert.ok(rows.indexOf('REVENUE') < rows.indexOf('EXPENSES'));
   });
 
   test('the inner labels ride INSIDE the block, at the level of the lines they introduce', () => {
@@ -150,7 +150,10 @@ describe('by activity gets the shape it is named for', () => {
        As `category` rows they were bold, level-0, and split one activity into two Excel groups. */
     assert.equal(at('Tournaments'), 'category', 'the activity is the group parent');
     assert.equal(at('REVENUE'), 'item');
-    assert.equal(at('COSTS'), 'item');
+    /* ⚠ The word is the SCREEN's: the inner sub-labels read Revenue / Expenses (2026-09-10), and
+       this assertion is what makes the file follow a screen that moves. It pinned 'COSTS' while the
+       screen already said Expenses, and passed — a pin on the old word is silence, not coverage. */
+    assert.equal(at('EXPENSES'), 'item');
   });
 
   test('a one-sided block loses the inner labels, and still nets negative', () => {
@@ -160,11 +163,11 @@ describe('by activity gets the shape it is named for', () => {
     }, 'season', () => false);
     const rows = label(out.rows);
 
-    /* On a category with one half, "Revenue" and "Costs" are headings distinguishing nothing from
+    /* On a category with one half, "Revenue" and "Expenses" are headings distinguishing nothing from
        nothing — the screen's rule, kept. And a cost-only block nets negative and says so, rather
        than being hidden or flipped: the FIGURE carries that now, not a "cost" suffix on the label.
        The screen prints it in brackets and the spreadsheet's own number format does the same. */
-    assert.ok(!rows.includes('REVENUE') && !rows.includes('COSTS'));
+    assert.ok(!rows.includes('REVENUE') && !rows.includes('EXPENSES'));
     assert.equal(rows[0], 'Tournaments', 'the name alone is the label — no "cost" suffix');
     assert.ok(!rows.some(r => /netted|Tournaments cost/.test(r)));
     assert.equal(out.rows[0].budgeted, -900, 'the negative net is stated, not hidden or flipped');
