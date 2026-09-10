@@ -1,0 +1,551 @@
+<title>Behind the Figure Walk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:40px 20px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:.1em .35em;border-radius:4px}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(36px,6vw,56px);line-height:.97;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:15px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.signin{margin-top:22px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r);padding:14px 17px;display:flex;flex-direction:column;gap:7px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:19px;margin:0}
+.signin dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.signin dt{color:var(--dim)}
+.signin dd{margin:0;font-family:var(--mono);font-size:12.5px}
+.parthead{margin-top:42px;border-top:2px solid var(--ink);padding-top:12px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:28px;line-height:1.06;margin:3px 0 0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:5px}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--dim);min-width:3.2ch;padding-top:3px}
+.step.done .num{color:var(--olive)}
+.step-head h3{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.15;margin:0;text-wrap:balance;flex:1}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.do{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.do b{color:var(--ink)}
+.expect{border-left:3px solid var(--olive);background:var(--olive-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:9px 13px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.expect b,.warn b,.ask b{color:var(--ink)}
+.verdict{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.verdict label{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;border:1px solid var(--rule-strong);border-radius:99px;padding:5px 12px;cursor:pointer;background:var(--card);min-height:34px}
+.verdict input{accent-color:var(--olive);cursor:pointer;margin:0}
+.verdict label.pick{border-color:var(--olive);background:var(--olive-soft);color:var(--olive);font-weight:600}
+.verdict label.pickbad{border-color:var(--brick);background:var(--brick-soft);color:var(--brick);font-weight:600}
+textarea{width:100%;min-height:0;height:34px;resize:vertical;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--sunk);color:var(--ink)}
+textarea:focus{outline:2px solid var(--olive);outline-offset:1px}
+.spec{border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--card);padding:9px 12px;font-family:Inter,sans-serif;max-width:520px}
+.specrow{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:14px;padding:6px 0}
+.specrow+.specrow{border-top:1px solid var(--rule)}
+.specwho{display:flex;flex-direction:column;min-width:0}
+.specnote{font-size:12px;color:var(--dim)}
+.specamt{font-variant-numeric:tabular-nums;flex:none}
+.toastwrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA §159 · commit b66d9257 · 2026-09-09</p>
+  <h1>Behind the figure</h1>
+  <p class="lede">Nineteen checks and two questions, in five parts. The panels this walks are
+    <b>the only thing on this screen no automated check can see</b> — the rendered gate never opens
+    a dialog, so your eye is the whole of the coverage. Verdicts and notes save in this browser;
+    <b>Copy findings</b> at the top puts everything you have written into one block to paste back.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> judged</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Before you start</h2>
+  <dl>
+    <dt>Seed the fixture</dt><dd>node scripts/seed-uat-coach-fixture.mjs</dd>
+    <dt>Head coach</dt><dd>uat-coach@uat-test-org.local / UATPassword2026!</dd>
+    <dt>Read-only coach</dt><dd>uat-asst-money-read@uat-test-org.local / UATPassword2026!</dd>
+    <dt>Where</dt><dd>localhost:3000 → uat-test-org → UAT Test Team → Money → Budget vs. Actual</dd>
+  </dl>
+  <p class="do"><b>Restart the dev server first.</b> A shared stylesheet moved, and a half-warm cache
+    is the one thing that would make this walk lie to you.</p>
+  <p class="do"><b>The dates below are today's fixture, not a promise.</b> What is being checked is the
+    <i>shape</i> of the line — a count and a span, or a bare date. If a reseed has moved a day, the
+    check still passes as long as the shape is right; only flag a line whose shape is wrong.</p>
+</div>
+
+<!-- ══════════ PART A ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The dates that were never missing</h2>
+  <p>Open the <b>Statement</b> view. In the revenue band, find the rows under <b>Sponsorship</b> and
+    <b>Fundraising</b> and tap their <b>Actual</b> figures. This is where five rows read
+    "no date recorded" on money that was fully dated.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><h3>A sponsor with two cheques says so</h3></div>
+  <div class="step-body">
+    <p class="do">Open the actual figure on the row holding <b>Northside Physio</b>. Read its line.</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho">Northside Physio — $375.75 of $501, $125.25 to families<span class="specnote">2 payments · May 10 – Jun 14</span></span><span class="specamt">$375.75</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> a payment <b>count</b> and a <b>span</b> — not "no date recorded",
+      and not a single day. The count is the only thing telling you this row is an <i>addition</i>
+      rather than one cheque.</div>
+    <div class="verdict" data-v="a1"></div>
+    <textarea data-n="a1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><h3>⚠ A DRIVE says it too — and this wording has never had your eye on it</h3></div>
+  <div class="step-body">
+    <p class="do">Now the <b>Fundraising</b> side. Open the actual figure on the row holding
+      <b>Chocolate sale</b> — a drive with <b>three</b> family entries across three days.</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho">Chocolate sale — $778.60 of $916, $137.40 to families<span class="specnote">3 payments · Aug 20 – Aug 31</span></span><span class="specamt">$778.60</span></div>
+    </div>
+    <div class="warn"><b>This is the one call I most want overturned if it reads wrong.</b> A drive's
+      arrivals are <i>families logging what they raised</i>, not cheques — but the panel's own closing
+      sentence already calls every record on it a <b>payment</b>, and inventing a second word for one
+      thing on one screen is the drift the one-spelling rule exists to stop. So drives say "payments"
+      too. <b>Read it as a coach would and say whether that lands.</b></div>
+    <div class="verdict" data-v="a2"></div>
+    <textarea data-n="a2" placeholder="Does “3 payments” read right for a drive? If not, what word?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><h3>One arrival is just its date</h3></div>
+  <div class="step-body">
+    <p class="do">In the same sponsor panel, find <b>ZZ QA Maple Hardware</b> (one cheque) and
+      <b>ZZ QA Twin Oaks</b> (one cheque).</p>
+    <div class="spec">
+      <div class="specrow"><span class="specwho">ZZ QA Maple Hardware — $360 of $400, $40 to families<span class="specnote">Sep 4</span></span><span class="specamt">$360.00</span></div>
+      <div class="specrow"><span class="specwho">ZZ QA Twin Oaks — $250 of $500, $250 to families<span class="specnote">Aug 29</span></span><span class="specamt">$250.00</span></div>
+    </div>
+    <div class="expect"><b>Expected:</b> the date alone. <b>No "1 payment ·" prefix</b> — that was drawn
+      in the mockup and rejected as two words heavier on every single-cheque row.</div>
+    <div class="verdict" data-v="a3"></div>
+    <textarea data-n="a3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><h3>The two views agree about one cheque</h3></div>
+  <div class="step-body">
+    <p class="do"><b>This is the defect, stated exactly.</b> Note the date you just read for
+      <b>ZZ QA Maple Hardware</b>. Switch <b>View</b> to <b>Months</b>, find the
+      <b>Sponsorship</b> row in September, and tap that figure.</p>
+    <div class="expect"><b>Expected:</b> the Months panel names the same sponsor on the same day.
+      Before this change the Statement said that cheque had no date while Months printed
+      <code>Sep 4 · received</code> — one report, two answers.</div>
+    <div class="verdict" data-v="a4"></div>
+    <textarea data-n="a4" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A5">
+  <div class="step-head"><span class="num">A5</span><h3>Read one row aloud and say what it tells you</h3></div>
+  <div class="step-body">
+    <p class="do">Back on the Statement. Take the <b>Northside Physio</b> line and say, in your own
+      words, what it is telling you — the amount, the description and the date line together.</p>
+    <div class="warn"><b>The instrument, not a formality.</b> §132 went 42 for 42 and still shipped
+      three defects, all inside a row. The specific thing worth catching here: the row's figure is what
+      the team <b>KEPT</b> ($375.75) while the cheques are <b>gross</b> ($301 + $200 = $501). If the
+      line makes you expect to find a $375.75 cheque in the Ledger, the count is not doing its job.</div>
+    <div class="verdict" data-v="a5"></div>
+    <textarea data-n="a5" placeholder="What does the row tell you? Did anything mislead?"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════ PART B ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The panel stops dead-ending</h2>
+  <p>This half closed on the sentence <i>"Edit them on Transactions."</i> — naming a destination and
+    refusing to go there, with nothing clickable on it for anybody.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><h3>A sponsor row opens that sponsor</h3></div>
+  <div class="step-body">
+    <p class="do">In the sponsor panel, <b>tap the Northside Physio row itself</b> (not the figure).</p>
+    <div class="expect"><b>Expected:</b> Fundraising opens with <b>Northside Physio's own room</b> in
+      front of you — the sponsor you tapped, not a hub you then have to search.</div>
+    <div class="verdict" data-v="b1"></div>
+    <textarea data-n="b1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><h3>A drive row opens that drive</h3></div>
+  <div class="step-body">
+    <p class="do">Same again on the fundraising panel: tap the <b>Chocolate sale</b> row.</p>
+    <div class="expect"><b>Expected:</b> that drive's room. Both kinds of record open; nothing else on
+      the list does, and that asymmetry is deliberate — a payable instalment and club money have no
+      "thing itself" to open.</div>
+    <div class="verdict" data-v="b2"></div>
+    <textarea data-n="b2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span><h3>An ordinary expense panel has one door, and no row links</h3></div>
+  <div class="step-body">
+    <p class="do">Scroll to <b>Expenses</b> and open the <b>Actual</b> figure on any row with a figure
+      (Umpire Fees, Facilities — whatever your fixture holds). Try tapping a row, then use the footer.</p>
+    <div class="expect"><b>Expected:</b> rows are plain text — <b>nothing happens</b> when you tap one —
+      and a single <b>Open the Ledger</b> button sits at the foot. This is the majority case and the one
+      that dead-ended hardest. The closing sentence should <b>no longer</b> say "Edit them on
+      Transactions"; the button says it and goes there.</div>
+    <div class="verdict" data-v="b3"></div>
+    <textarea data-n="b3" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B4">
+  <div class="step-head"><span class="num">B4</span><h3>A long list scrolls, and the button stays put</h3></div>
+  <div class="step-body">
+    <p class="do">Find the panel with the <b>most records</b> behind it and open it. Scroll inside.</p>
+    <div class="warn"><b>This is the silent bug that was fixed on the way.</b> Both panels asked for a
+      scrolling dialog and named nothing that scrolls, so a long enough list simply <b>lost its
+      tail</b> — no error, the list just ended early. Confirm the list scrolls, the title stays at the
+      top and the button stays at the bottom.</div>
+    <div class="verdict" data-v="b4"></div>
+    <textarea data-n="b4" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════ PART C ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The other two panels on the same screen</h2>
+  <p>The dues panel had the identical dead end. The plan panel was already right and must stay right —
+    the rule is that its door appears <i>exactly</i> when its lines are not links.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><h3>"What families contributed" gains two doors</h3></div>
+  <div class="step-body">
+    <p class="do">On the Statement, open the <b>Player dues</b> row's <b>Actual</b> figure.</p>
+    <div class="expect"><b>Expected:</b> the three contribution lines as before, and now a footer with
+      <b>Open Player Dues</b> and <b>Open the Ledger</b> — the same two doors its twin on the Months
+      view has had since August. Walk through both.</div>
+    <div class="warn"><b>Do not check the figures against a number I have written down.</b> Another
+      session changed how this total is computed earlier today; the three lines must still add up to
+      the figure that opened them, but the figure itself may have moved. <b>Add them up on screen</b>
+      — that is the check.</div>
+    <div class="verdict" data-v="c1"></div>
+    <textarea data-n="c1" placeholder="Do the three lines add up to the figure above them?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><h3>The Cash sentence keeps its words and gets no button</h3></div>
+  <div class="step-body">
+    <p class="do">In that same panel, read the closing sentence about money handed back.</p>
+    <div class="expect"><b>Expected:</b> it still points you at <b>Cash</b> in words, with no button.
+      Cash is a <i>reading of this same report</i>, not another screen — a door for it would land you
+      back where you already are. Say if you would rather it took you there anyway.</div>
+    <div class="verdict" data-v="c2"></div>
+    <textarea data-n="c2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><h3>The plan panel is unchanged — and still has no button</h3></div>
+  <div class="step-body">
+    <p class="do">Open a <b>Budget</b> figure on any row with plan lines behind it.</p>
+    <div class="expect"><b>Expected:</b> every line is a <b>link</b> that opens that budget line, and
+      there is <b>no footer button</b>. That is the rule working: your lines already land closer to the
+      work than a button would, so a button beside them is a second, worse door.</div>
+    <div class="verdict" data-v="c3"></div>
+    <textarea data-n="c3" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════ PART D ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The read-only coach — the role this hurt most</h2>
+  <p>Sign out and back in as <code>uat-asst-money-read@uat-test-org.local</code>. An assistant opening
+    these panels previously had <b>nothing clickable at all</b>.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><h3>An assistant can reach the sponsor and the Ledger</h3></div>
+  <div class="step-body">
+    <p class="do">Open the sponsor panel again as the read-only coach. Tap a sponsor row, come back,
+      then use <b>Open the Ledger</b>.</p>
+    <div class="expect"><b>Expected:</b> both work. Reading what a figure is made of is not an edit, so
+      these doors are open to every role — the same call the Months view took in QA §132.</div>
+    <div class="verdict" data-v="d1"></div>
+    <textarea data-n="d1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><h3>The plan panel gives the assistant its own door</h3></div>
+  <div class="step-body">
+    <p class="do">Still as the assistant, open a <b>Budget</b> figure.</p>
+    <div class="expect"><b>Expected:</b> the lines are <b>not</b> links this time — and an
+      <b>Open Budget Plan</b> button appears in the footer that a head coach never sees. The door
+      exists exactly when the links do not.</div>
+    <div class="verdict" data-v="d2"></div>
+    <textarea data-n="d2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><h3>Nothing offers an edit the server would refuse</h3></div>
+  <div class="step-body">
+    <p class="do">Walk through each door as the assistant and confirm where you land is readable and
+      offers no write control you cannot use.</p>
+    <div class="expect"><b>Expected:</b> a door a read-only coach cannot walk through is a dead end
+      wearing a link's clothes. Flag anything that looks like an invitation to act.</div>
+    <div class="verdict" data-v="d3"></div>
+    <textarea data-n="d3" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════ PART E ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>On a phone</h2>
+  <p>These panels go full-screen below 640px, and the date line adds a <b>second line to every sponsor
+    row</b>. No automated check can measure any of it.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><h3>The date line does not crowd the row</h3></div>
+  <div class="step-body">
+    <p class="do">On a real phone, open the sponsor panel. Each row now carries a long description
+      <i>and</i> a date line under it.</p>
+    <div class="expect"><b>Expected:</b> the description wraps, the date line reads underneath it, the
+      amount stays on the right and nothing scrolls sideways.</div>
+    <div class="verdict" data-v="e1"></div>
+    <textarea data-n="e1" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><h3>The footer button is reachable with a thumb</h3></div>
+  <div class="step-body">
+    <p class="do">Scroll the list to the bottom and press <b>Open the Ledger</b> with your thumb.</p>
+    <div class="expect"><b>Expected:</b> the button stays pinned at the foot while the list scrolls
+      behind it, and it is comfortably tappable — not a 34px target you have to aim at.</div>
+    <div class="verdict" data-v="e2"></div>
+    <textarea data-n="e2" placeholder="Notes"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E3">
+  <div class="step-head"><span class="num">E3</span><h3>Two doors fit side by side on the dues panel</h3></div>
+  <div class="step-body">
+    <p class="do">Open <b>Player dues</b> → its actual figure, on the phone.</p>
+    <div class="expect"><b>Expected:</b> <b>Open Player Dues</b> and <b>Open the Ledger</b> both fit
+      without wrapping oddly or pushing each other off the edge.</div>
+    <div class="verdict" data-v="e3"></div>
+    <textarea data-n="e3" placeholder="Notes"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════ PART F ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>Two questions, not checks</h2>
+  <p>Neither is a defect. Both are calls the build made that want your word on the built screen.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><h3>Should a sponsor panel also have an "Open Sponsors" button?</h3></div>
+  <div class="step-body">
+    <div class="ask"><b>Built: no.</b> Every row in that panel is already a door to the sponsor it
+      names, so a hub button beside them is a second door that lands <i>further</i> from the work —
+      the same reasoning that keeps the writer's plan panel button-free. But the house rule for these
+      panels is "at most two doors: the Ledger, and the thing itself", and a reader who does not
+      realise the rows are tappable would find a button faster. <b>Your call.</b></div>
+    <div class="verdict" data-v="f1"></div>
+    <textarea data-n="f1" placeholder="Keep one door, or add Open Sponsors?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><h3>Is the count worth it on a row with only two payments?</h3></div>
+  <div class="step-body">
+    <div class="ask"><b>Built: yes, always when there is more than one.</b> The count is the only thing
+      distinguishing a summed row from a single payment, and the case it protects against is a coach
+      hunting the Ledger for one cheque of a size that never existed. The alternative is showing the
+      span alone ("May 10 – Jun 14") and letting the range imply it. <b>Read A1 again and say which you
+      would rather have.</b></div>
+    <div class="verdict" data-v="f2"></div>
+    <textarea data-n="f2" placeholder="Count + span, or span alone?"></textarea>
+  </div>
+</article>
+</div>
+
+<footer>
+  <span>FieldLogicHQ</span>
+  <span>Owner QA §159 · b66d9257</span>
+  <span>Verdicts and notes save in this browser</span>
+</footer>
+</div>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast">Copied</span></div>
+
+<script>
+(function(){
+  var KEY='bva-records-behind-walk-v1';
+  var OPTS=[['pass','Pass'],['fail','Defect'],['na','N/A']];
+  document.querySelectorAll('.verdict').forEach(function(v){
+    var id=v.getAttribute('data-v');
+    OPTS.forEach(function(o){
+      var l=document.createElement('label');
+      var i=document.createElement('input');
+      i.type='radio';i.name='v-'+id;i.value=o[0];
+      l.appendChild(i);l.appendChild(document.createTextNode(o[1]));
+      v.appendChild(l);
+    });
+  });
+  var radios=Array.prototype.slice.call(document.querySelectorAll('.verdict input'));
+  var notes=Array.prototype.slice.call(document.querySelectorAll('textarea[data-n]'));
+  var steps=Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var done=document.getElementById('cdone'),total=document.getElementById('ctotal'),fill=document.getElementById('fillbar');
+  var toastwrap=document.getElementById('toastwrap'),toast=document.getElementById('toast'),timer=0;
+  total.textContent=String(steps.length);
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+  function write(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+  function say(m){toast.textContent=m;toastwrap.hidden=false;clearTimeout(timer);timer=setTimeout(function(){toastwrap.hidden=true},1600)}
+  function paint(){
+    var n=0;
+    document.querySelectorAll('.verdict').forEach(function(v){
+      var picked=v.querySelector('input:checked');
+      v.querySelectorAll('label').forEach(function(l){
+        var i=l.querySelector('input');
+        l.classList.toggle('pick',i.checked&&i.value!=='fail');
+        l.classList.toggle('pickbad',i.checked&&i.value==='fail');
+      });
+      if(picked)n++;
+    });
+    steps.forEach(function(s){
+      var i=s.querySelector('.verdict input:checked');
+      s.classList.toggle('done',!!i);
+    });
+    done.textContent=String(n);
+    fill.style.width=(steps.length?Math.round(n/steps.length*100):0)+'%';
+  }
+  var st=read();
+  radios.forEach(function(r){
+    var k='v:'+r.name+':'+r.value;
+    if(st[k])r.checked=true;
+    r.addEventListener('change',function(){
+      var s=read();
+      OPTS.forEach(function(o){delete s['v:'+r.name+':'+o[0]]});
+      s['v:'+r.name+':'+r.value]=1;write(s);paint();
+    });
+  });
+  notes.forEach(function(t){
+    var k='n:'+t.getAttribute('data-n');
+    if(st[k])t.value=st[k];
+    t.addEventListener('input',function(){var s=read();if(t.value.trim())s[k]=t.value;else delete s[k];write(s)});
+  });
+  paint();
+  function fallback(t,ok){
+    var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');say(ok)}catch(e){say('Select and copy manually')}
+    document.body.removeChild(ta);
+  }
+  function copyText(t,ok){
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){say(ok)},function(){fallback(t,ok)})}
+    else fallback(t,ok);
+  }
+  document.getElementById('copyfind').addEventListener('click',function(){
+    var lines=['Owner QA §159 — Behind the figure (b66d9257) — '+new Date().toISOString().slice(0,10)];
+    var pass=0,fail=0,na=0,none=0;
+    steps.forEach(function(s){
+      var id=s.getAttribute('data-step');
+      var h=s.querySelector('h3');
+      var picked=s.querySelector('.verdict input:checked');
+      var note=s.querySelector('textarea[data-n]');
+      var v=picked?picked.value:'';
+      if(v==='pass')pass++;else if(v==='fail')fail++;else if(v==='na')na++;else none++;
+      var label=v==='pass'?'PASS':v==='fail'?'DEFECT':v==='na'?'N/A':'—';
+      lines.push('');
+      lines.push('['+label+'] '+id+'  '+(h?h.textContent.replace(/^⚠\s*/,''):''));
+      if(note&&note.value.trim())lines.push('   '+note.value.trim().replace(/\n/g,'\n   '));
+    });
+    lines.splice(1,0,'','Pass '+pass+' · Defect '+fail+' · N/A '+na+' · not judged '+none+' of '+steps.length);
+    copyText(lines.join('\n'),'Findings copied');
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    radios.forEach(function(r){r.checked=false});
+    notes.forEach(function(t){t.value=''});
+    write({});paint();say('Reset');
+  });
+})();
+</script>

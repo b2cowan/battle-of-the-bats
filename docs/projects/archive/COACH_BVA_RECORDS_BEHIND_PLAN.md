@@ -1,6 +1,8 @@
 # Behind-the-figure panel — dates and doors
 
-**Status:** approved 2026-09-09 (owner, from mockup artifact `7af46200`).
+**Status:** ✅ **COMPLETE** — built and committed `b66d9257` on `dev` 2026-09-09; **Owner QA §159 PASSED 20/20 on
+2026-09-10, zero defects, nothing flagged**, and both open asks (F1 the sponsor panel's single door, F2 the
+payment count) **ruled as built**. Approved 2026-09-09 (owner, from mockup artifact `7af46200`).
 **Surface:** Budget vs. Actual → statement → the panel behind a spent/received figure.
 **PM brief:** `COACH_BVA_RECORDS_BEHIND_PM_BRIEF.md` · **Mockup:** `COACH_BVA_RECORDS_BEHIND_MOCKUP.html`
 

@@ -1,6 +1,6 @@
 # PM brief — Fundraising money gets exactly one way in
 
-**Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` · **Mockup:** https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3 · **Rulings:** owner, 2026-09-08 · **Status:** **committed `1b06f9e7` 2026-09-08 on `dev`** (migration 285, on prod 2026-09-08 (job 262)) · Owner QA **§157**, walk artifact `f8e843e3` · one confirmation still open (F4)
+**Plan:** `COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md` · **Mockup:** https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3 · **Rulings:** owner, 2026-09-08 · **Status:** **committed `1b06f9e7` 2026-09-08 on `dev`** (migration 285, on prod 2026-09-08 (job 262)) · Owner QA **§157 ✅ PASSED 2026-09-10 — 74/74 walked, zero defects** · **F4 answered: the whole-team entry stands as built** · H1 (demo world) owner-waived, not walked · walk artifact `f8e843e3` · **complete**
 
 ## The problem, in one sentence
 
@@ -95,13 +95,14 @@ and it is cheapest today. Sits after the Budget Plan ladder (§156) in the QA qu
 - The budget picker shows no note on any row.
 - The coach demo tells the hoodie story through a drive, and `check:demos` is green.
 
-## One confirmation open
+## The one confirmation — answered 2026-09-10
 
-Whole-team entries on a drive that **also** has a family-share percentage set: recommended **allowed**,
-drawn in the mockup (the team row shows a dash, the facts line counts it separately). The owner has
-not said the word — **it is step F4 of the §157 walk**, the only item on that walk that asks for a
-ruling rather than a tick. Built allowed; the alternatives are to refuse a team entry above 0%, or to
-ask at save time, and both cost a step the current design does not.
+Whole-team entries on a drive that **also** has a family-share percentage set: **allowed, as built**
+(owner ruling at step F4 of the §157 walk). The team row shows a dash where a family share would be,
+and the facts line counts team entries separately from the players-logged fraction — and the ruling
+is that those two things are enough on their own. **The alternatives are refused, not deferred:**
+refusing a team entry above 0%, or asking at save time, both cost a step, and a team running one
+drive with both a bake table and per-player selling would have nowhere to put the table's takings.
 
 ## What actually shipped, against this brief
 

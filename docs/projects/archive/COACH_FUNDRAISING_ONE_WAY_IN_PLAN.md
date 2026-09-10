@@ -2,10 +2,14 @@
 
 **Status:** **committed `1b06f9e7` 2026-09-08 on `dev`**, migration **285**
 (`285_a_shelf_says_who_fills_it_in.sql`) — on prod 2026-09-08 (job 262), promoted in order behind 274/276/277/280–284.
-Owner QA **§157** written, walk artifact
+Owner QA **§157 ✅ PASSED 2026-09-10 — 74/74 walked, zero defects, nothing flagged**, walk artifact
 [`f8e843e3`](https://claude.ai/code/artifact/f8e843e3-8be2-48d6-bb55-4f93cee0abec) (78 checks, eight
-parts) — **awaiting the owner's walk, and one ruling: F4, whether a whole-team entry is allowed on a
-drive that pays a family share (built ALLOWED).** Model owner-approved 2026-09-08 on mockup artifact
+parts). **F4 RULED: a whole-team entry IS allowed on a drive that pays a family share — as built.**
+The dash in the Credit cell and the separately-counted team entries are enough; refusing above 0% and
+asking at save time are both refused, not deferred. **⚠ H1 (the demo world) was not walked —
+owner-waived, not owed** ("I don't need to check the demo"); `check:demos` covers its data half (the
+drive, its line, its one whole-team entry, crediting nobody) and its three screen reads are
+unverified by anyone. **Project complete.** Model owner-approved 2026-09-08 on mockup artifact
 https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3 (source copy:
 `COACH_FUNDRAISING_ONE_WAY_IN_MOCKUP.html`, final version "Sponsorship words symmetric"). Build
 prompt: `COACH_FUNDRAISING_ONE_WAY_IN_BUILD_PROMPT.md`. PM brief:

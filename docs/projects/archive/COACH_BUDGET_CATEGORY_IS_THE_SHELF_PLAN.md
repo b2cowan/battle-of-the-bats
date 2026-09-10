@@ -1,14 +1,33 @@
 # The category is the shelf — one grouping rule for money in, and the forgetting list indexed by category
 
 **Owner-ruled 2026-09-09** on mockup artifact `728dcb1e` ("The Category Goes Missing", round 1).
-**Status: BUILT on dev 2026-09-09, `/simplify` (§7b) and `/review` (§7c) run the same day** —
+**Status: ✅ COMPLETE — Owner QA §158 PASSED 69/69 walked 2026-09-10**, zero defects, no steps
+flagged, and **all three asks RULED AS BUILT** (reasons below and in `OWNER_QA_LEDGER.md` §158).
+Committed `8921d864` on `dev` 2026-09-09; archived 2026-09-10. ⚠ **Two follow-ons outlived this
+plan and are tracked separately:** the importer's direction gap (§7c HIGH — money-in lines re-import
+as cost lines) now has its own plan and its own walk —
+`COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md`, owner QA §165, the file's two bands as the switch and no new
+column; and the standard vocabulary review (§7) keeps its own TODO line.
+**Built on dev 2026-09-09, `/simplify` (§7b) and `/review` (§7c) run the same day** —
 `npm run typecheck` clean · unit suite 3,268/3,268 ·
 `npm run check:money-report` green on the UAT fixture (after the §4.4 change its new claim forced) ·
-`npm run verify:changed` green end to end. **Owner QA §158 owed** — walk artifact
+`npm run verify:changed` green end to end. **Owner QA §158 ✅ PASSED 69/69, 2026-09-10** — walk artifact
 https://claude.ai/code/artifact/c8659d30-dc1e-414e-91b8-39c5a548ea9d (source
 `COACH_BUDGET_CATEGORY_IS_THE_SHELF_WALK.html`), with three asks on it: **E1** (the Statement's
 unclaimed sponsor pool reads *Sponsorship (not budgeted) → Sponsor money*), **F3** (the open category's
 chips sit below the button row), **F5** (the open category is not remembered across a reload).
+**All three RULED AS BUILT, 2026-09-10.** *E1* — the old heading is the thing that put Months and the
+Statement into disagreement about one cheque (claim 5b caught it on its first run), and the 09-07
+reason survives untouched in the item row beneath it, so the wording stopped being a free choice
+during the build. *F3* — attaching the panel to its button means splitting the wrapping button row at
+the tapped button and pushing every later button below the chips, so the row rearranges under the
+coach's finger and rearranges differently at every width, to win nothing on the phone where this list
+is used; colour carries the link instead (one lime outline, one olive fill, no other button tinted).
+*F5* — the working loop already survives everything that matters (adding a line, dismissing a word and
+saving all leave the strip open, the category open and the counts ticking down); only a full reload
+forgets, and the strip itself starts collapsed on every load, so remembering its insides would surface
+last week's category. The memory that must persist is what the coach TOLD it — the ✕ dismissals — and
+that does, per device, permanently.
 **Direct probe 2026-09-09 (signed in as the UAT coach):** Budget page + strip render as drawn (40 items in 10
 categories · money in 5 / spends 35); Budget vs. Actual 200 with Months rows *Player dues · Tournaments ·
 Fundraising · Sponsorship · Other Income · Money back* and the Statement's *Sponsorship (not budgeted)*; zero
@@ -293,7 +312,7 @@ Built to the approved mockup, section §04 Option A, with these tags:
 - **A club category named like a platform one** — two rows, same name, by the Statement's standing
   rule. Acceptable; the vocabulary review (§7) is where a merge would be decided.
 - **The re-importer** — the parser round-trips (unit test); the import ROUTE does not (§7c). Held by:
-  the walk's C2 says so in the owner's words, and the fix is queued in a peer session.
+  the walk's C2 says so in the owner's words, and the fix has its own plan (COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md, owner QA §165).
 
 ---
 
@@ -375,8 +394,10 @@ with it. Owner rulings that dues is a schedule and money back is unroutable are 
   because money-in lines now sit under *Tournaments* and *Other Income*, beside real cost lines, so the
   phantom no longer looks out of place. Two finders disagreed; adjudicated in the main loop from the
   route's own comment and filter. Fix is the importer learning the plan file's two bands (a direction
-  per row, or the band heading as the switch) — queued in peer session 7a's work, which owns that
-  importer; walk step C2 now tells the owner what the preview will show.
+  per row, or the band heading as the switch) — and it took its own plan on 2026-09-10:
+  `COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md`, owner QA §165, which chose the band heading over a new
+  column, so every file a coach already holds still reads back. Walk step C2 told the owner what the
+  preview would show meanwhile, and is rewritten in that plan's instrument from a known gap into a check.
 
 **Accepted:**
 - *Medium, self-healing* — plan-list section keys changed from kind (`funding`…) to category
@@ -394,7 +415,7 @@ dropped (test fixture wording).
   Statement keys by id~~ — **closed by `/simplify` (§7b item 5)**: both bands key by identity now.
 - The prod coach demo's 20 "Not itemized" budget rows (QA ledger §132 F7) — unrelated, still pending
   reseed approval.
-- **Money-in lines re-import as cost lines** (§7c HIGH) — the importer's fix, queued in peer session
+- **Money-in lines re-import as cost lines** (§7c HIGH) — the importer fix, now its own plan (COACH_BUDGET_IMPORT_TWO_BANDS_PLAN.md, owner QA §165); queued no longer in peer session
   7a; until it lands, Import's preview shows every money-in line as an add.
 - **Two icon-only money-hub buttons under the 44px floor** — *Scroll tabs right* (390) and *Help:
   Money* (768), seen in a peer's rendered sweep; unattributed. Someone should look before any baseline

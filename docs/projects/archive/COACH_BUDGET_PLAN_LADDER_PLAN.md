@@ -3,6 +3,12 @@
 **Status:** owner-approved on mockup round 2, 2026-09-08 (artifact
 `e94d05d9-2f07-455d-8cd9-93ea7b1c3f48`, source `COACH_BUDGET_PLAN_LADDER_MOCKUP.html`). Built and
 committed `e1aa4b6e` on `dev` 2026-09-08 after `/review` (§6). No migration.
+**✅ OWNER QA §156 PASSED 2026-09-09 — 40 of 43 walked, zero defects, nothing flagged.** Both
+build-time calls accepted as built (the subtotals always render; under the When filter the close
+steps aside and the subtotals read *Costs shown / Funding shown*). ⚠ **Part I's three states were
+NOT walked** — the pre-dues close and the two season-estimate cases need a team with no dues and an
+estimate that differs from its lines, which the UAT fixture is not; they stand on the export unit
+tests alone, so no human has read either on a screen. Archived 2026-09-09.
 **PM brief:** `COACH_BUDGET_PLAN_LADDER_PM_BRIEF.md`.
 **Decision record:** `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-08 ("expected" leaves the
 plan) · `memory/design_decisions.md` 2026-09-08 (bands, subtotals and the ladder).

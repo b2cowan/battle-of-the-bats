@@ -1,0 +1,525 @@
+<title>The Word Names the Row</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,60px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:28px 0 0;padding:11px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.track{flex:1 1 200px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:140px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.signin{margin-top:26px;background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--olive);border-radius:0 var(--r) var(--r) 0;padding:15px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;word-break:break-all}
+.trackhead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.trackhead .eyebrow{color:var(--olive)}
+.trackhead h2{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+.trackhead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:16px;margin-top:20px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:13px;padding:14px 17px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1;color:var(--dim);min-width:3.2ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:23px;line-height:1.1;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.read{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.ask{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.step-body{padding:14px 17px 16px;display:flex;flex-direction:column;gap:12px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.verdict{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.verdict button{padding:5px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft);font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase}
+.verdict button[aria-pressed="true"][data-v="pass"]{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.verdict button[aria-pressed="true"][data-v="fail"]{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+textarea{width:100%;min-height:62px;resize:vertical;font:inherit;font-size:13.5px;padding:9px 11px;border-radius:var(--r-sm);border:1px solid var(--rule-strong);background:var(--sunk);color:var(--ink)}
+textarea::placeholder{color:var(--dim)}
+.prompt{border:1px solid var(--rule-strong);border-radius:var(--r-sm);overflow:hidden;background:var(--sunk)}
+.prompt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.prompt-head span{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.prompt pre{margin:0;padding:13px 14px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word;max-height:260px}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §161 · coach money · 2026-09-09</p>
+  <h1>The word names the row</h1>
+  <p class="lede">A money-in budget row used to be named by a word you could not see, edit or delete.
+    It is now named by the budget <b>word</b> it is filed against — and two lines filed against one
+    word are a single row that opens. Eighteen checks in five parts. Two of them are questions
+    rather than ticks; those are the ones I actually need your eye on.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> done</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Before you start</h2>
+  <dl class="kv">
+    <dt>Sign in</dt><dd>uat-coach@uat-test-org.local &nbsp;·&nbsp; UATPassword2026!</dd>
+    <dt>Where</dt><dd>localhost:3000 → org <code>uat-test-org</code> → UAT Test Team → Money</dd>
+    <dt>Commits</dt><dd>879209d6 (the change) · 31d9d7b1 (review fixes)</dd>
+  </dl>
+  <div class="warn"><b>⚠ RE-SEED FIRST, or you will walk the OLD screen and pass it.</b> This change
+    added a team-owned budget word and a second money-in line to the fixture, and seeds are
+    find-or-create — <b>nothing in the database has them yet</b>. Run
+    <code>node scripts/seed-uat-coach-fixture.mjs</code>, then restart the dev server. If the
+    Fundraising section shows one row called <b>Chocolate sale</b> and no expandable row, the
+    re-seed did not happen and every check below is meaningless.</div>
+  <div class="warn"><b>⚠⚠ READ THIS BEFORE YOU SPEND AN HOUR HERE — A PENDING DECISION OF YOURS
+    WOULD DELETE HALF THIS WALK.</b> Another session has a plan in front of you called
+    <b>One Word, One Line</b> (mockup artifact <code>a6a3b078</code>, blocked on your approval). It
+    proposes that a budget word may carry <b>exactly one line</b> — picking a word already on the plan
+    would <b>add to</b> the line that is there instead of starting a second. Its own task list retires
+    the sub-line render and the naming rule this walk exercises, by name.
+    <br><br>
+    <b>So: if you are minded to approve that, rule on it FIRST and skip A2, A3 and E2 here</b> — they
+    inspect a shape that would cease to exist. A1, B1, B2, C1, C2 and D1 hold either way.
+    <br><br>
+    <b>And E2 below is the same question, asked smaller.</b> It asks what to do about two note-less
+    lines on one word sharing a schedule. One Word, One Line answers it by making two lines on one
+    word impossible. <b>Do not rule twice</b> — decide the big one and E2 dissolves.</div>
+  <div class="tip"><b>Figures are deliberately not pinned in this walk.</b> Two other sessions moved
+    this team's money today, and a walk that tells you to expect a number teaches you to tick when
+    the number matches and miss the thing beside it. Every check below names a <b>row, a word or a
+    shape</b> instead. Where a total matters, the check asks you to confirm it against the rows
+    above it — which is the only version that stays true.</div>
+</div>
+
+<!-- ═══════════════════════ PART A ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Part A</p>
+  <h2>The row wears a word you can reach</h2>
+  <p>The complaint that started this: you opened a fundraising line called “Chocolate sale”, found no
+    field naming it, and asked where the name came from. It came from a column no form had offered
+    since August.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span>
+    <div class="step-t"><h3>Open the plan and read the Funding band</h3>
+      <div class="tags"><span class="tag read">read it aloud</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Money → <b>Budget Plan</b>, List view. Look at the money-in half only.</p>
+    <div class="tip"><b>What changed:</b> rows are named by their budget word now, and they sort
+      alphabetically where they used to sit in the order you created them.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">Every money-in row is named by a word you could pick in the item picker<span class="hintline">Not a sentence, not a note — a word from Category &amp; Item</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">The Fundraising section shows a row called <b>Chocolate sale</b><span class="hintline">It is now a real team-owned WORD, not typed text. That is the whole point.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">That row has a chevron and opens<span class="hintline">Two lines are filed against it</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1d"><label for="a1d">The section total equals the rows under it<span class="hintline">Add them yourself — do not trust a figure I pinned</span></label></div>
+    </div>
+    <div class="verdict" data-for="A1"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="A1" placeholder="What did you see?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span>
+    <div class="step-t"><h3>Read ONE opened row and tell me what it says</h3>
+      <div class="tags"><span class="tag read">read it aloud</span><span class="tag ask">the one that matters</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Open <b>Chocolate sale</b>. Two lines appear beneath it. <b>Say out loud what each
+      line is telling you</b>, then tick.</p>
+    <div class="warn"><b>This is the instrument, not a formality.</b> A previous walk on this screen
+      went 42 for 42 and still shipped three defects — all of them inside a single row. Ticking boxes
+      catches missing things; reading a row aloud catches things that are present and wrong.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">One line is named by its note<span class="hintline">Whatever you typed in “What makes this line different?”</span></label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">The other has no note and is named by <b>when its money moves</b><span class="hintline">A month, or “No date yet”</span></label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">Neither sub-line repeats the word in the row above it<span class="hintline">That echo is the defect this replaced</span></label></div>
+      <div class="chk"><input type="checkbox" id="a2d"><label for="a2d">The row above them carries the sum of both</label></div>
+    </div>
+    <div class="ask"><b>Question, not a tick — I need your judgement.</b> A line named <b>“Oct”</b>
+      (or “Mar · Apr”): does that read as <b>information</b>, or does it read as a <b>glitch</b> —
+      like the product failed to find a name and printed a date instead? I think it is honest.
+      I am not confident it looks it. Answer in the box.</div>
+    <div class="verdict" data-for="A2"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="A2" placeholder="Read the row aloud. Then: information, or glitch?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span>
+    <div class="step-t"><h3>The same treatment on the spending side</h3>
+      <div class="tags"><span class="tag ask">you widened this</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Open the <b>Tournaments</b> category and its <b>Entry Fees</b> row. You asked for
+      this half — it was not in the original scope.</p>
+    <div class="tip"><b>Before today</b> this row printed “Entry Fees” three times in one column: the
+      parent, and both lines beneath it echoing their parent.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">Neither sub-line says “Entry Fees”</label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">Each is named by its note, or by when its money moves</label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">A schedule-named row shows nothing in the <b>When</b> column<span class="hintline">The answer moved into the name; printing it twice was the point of dropping it</span></label></div>
+    </div>
+    <div class="verdict" data-for="A3"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="A3" placeholder="Anything odd about the spending side?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ PART B ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Part B</p>
+  <h2>The editor stops lying</h2>
+  <p>One sentence on the form was false for money coming in, and it was the only thing on screen that
+    said anything about naming.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span>
+    <div class="step-t"><h3>Open a money-in line and read the hint</h3></div></div>
+  <div class="step-body">
+    <p class="why">Tap any Fundraising row to open <b>Edit Budget Line</b>. Read the sentence under
+      <b>Category &amp; Item</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">It says this names the line on your plan, your report and your exports<span class="hintline">It used to claim “these name this line everywhere” — false for money in</span></label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">It tells you how to get your own wording<span class="hintline">Add your own word from the picker</span></label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">There is still no Description field, and you no longer expect one</label></div>
+    </div>
+    <div class="verdict" data-for="B1"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="B1" placeholder="Does the form now tell the truth?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span>
+    <div class="step-t"><h3>Make your own word, and watch the row take it</h3></div></div>
+  <div class="step-body">
+    <p class="why">In that form's picker, create a new Fundraising word — anything, e.g.
+      <b>Bottle drive</b> — and file the line against it. Save.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">The picker let you create it without leaving the form</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">The plan row immediately reads your new word</label></div>
+      <div class="chk"><input type="checkbox" id="b2c"><label for="b2c">It reports under <b>Fundraising</b>, not Other income<span class="hintline">A word filed under Fundraising is a fundraising word from birth</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2d"><label for="b2d">Set up a new fundraiser — your word is offered in <b>Raising for</b></label></div>
+    </div>
+    <div class="verdict" data-for="B2"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="B2" placeholder="Did creating a word feel like the obvious move?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ PART C ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Part C</p>
+  <h2>Four surfaces, one answer</h2>
+  <p>The whole reason for the change: the plan, the grid, the report and the files used to give three
+    different names for the same money.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span>
+    <div class="step-t"><h3>Walk the same money across every screen</h3></div></div>
+  <div class="step-body">
+    <p class="why">Pick one money-in row. Find it on <b>Budget Plan → By period</b>, then on
+      <b>Budget vs. Actual</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">The by-period grid calls it the same thing as the List</label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Budget vs. Actual calls it the same thing<span class="hintline">This is where it used to say something else entirely</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">Its figure is the same on all three</label></div>
+    </div>
+    <div class="verdict" data-for="C1"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="C1" placeholder="Any surface still disagreeing?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span>
+    <div class="step-t"><h3>Export the plan and open the file</h3>
+      <div class="tags"><span class="tag ask">a defect lived here</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Export the Budget Plan (Excel or CSV). Find the merged row and its two lines.</p>
+    <div class="warn"><b>This is where a real defect was caught after the build.</b> For one
+      afternoon the file named a note-less line after its dates — and re-importing that file would
+      have created budget items literally called <b>“Oct”</b> and <b>“No date yet”</b> in your
+      picker, permanently. Fixed: a <b>file</b> names a line by its note, else by its word. Only the
+      <b>screen</b> uses the date, because only the screen drops the date column.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">No row in the file is named after a month or “No date yet”</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">The merged row appears once, with its lines indented beneath it</label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">Each row still has its own schedule column filled in</label></div>
+      <div class="chk"><input type="checkbox" id="c2d"><label for="c2d">Two money-in lines on one word are NOT two identical rows<span class="hintline">They used to export as indistinguishable twins</span></label></div>
+    </div>
+    <div class="verdict" data-for="C2"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="C2" placeholder="Anything in the file you would not want a board to read?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ PART D ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Part D</p>
+  <h2>On a phone</h2>
+  <p>The one place a check could not settle from a desk. Below 640px the <b>When</b> column does not
+    exist, so a row named by its schedule is carrying the only copy of that answer.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span>
+    <div class="step-t"><h3>Open the plan on a real phone</h3>
+      <div class="tags"><span class="tag phone">real device</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Not a narrow browser window — an actual phone. Open the merged row.</p>
+    <div class="warn"><b>The gate that renders pages was NOT run for this change</b> — it needs a dev
+      server and one was not up. A static read of the markup and stylesheet found nothing, but that
+      is a substitute, not the gate. This part is the real test.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">A schedule-named sub-line still shows its schedule<span class="hintline">As the row's NAME. If a row shows only an amount, that is the defect</span></label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">The chevron that opens a merged row is comfortable with a thumb</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Tapping the row's name opens the editor; tapping the chevron only folds</label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d">Nothing runs off the right edge, and the page does not slide sideways</label></div>
+    </div>
+    <div class="verdict" data-for="D1"><span>Verdict</span><button data-v="pass">Pass</button><button data-v="fail">Problem</button></div>
+    <textarea data-note="D1" placeholder="Phone model, and what you saw"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ PART E ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Part E</p>
+  <h2>Two things I want ruled, not ticked</h2>
+  <p>Neither is a defect. Both are choices this change made on your behalf, and either could be
+    reversed cheaply now and expensively later.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span>
+    <div class="step-t"><h3>Alphabetical order</h3>
+      <div class="tags"><span class="tag ask">ruling</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Your money-in rows used to appear in the order you created them. They now sort
+      alphabetically, because that is how the spending side has always worked and one rule beat a
+      special case for half the table.</p>
+    <div class="ask"><b>Is that an improvement, or just a change?</b> A coach who built their plan in
+      a deliberate order has lost it. Keeping creation order for money-in only is a one-line
+      difference — but it puts a special case back into a table whose whole theme is one rule.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">Ruled — noted in the box below</label></div>
+    </div>
+    <textarea data-note="E1" placeholder="Alphabetical everywhere, or creation order for money in?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span>
+    <div class="step-t"><h3>Two lines, one schedule</h3>
+      <div class="tags"><span class="tag ask">ruling</span></div></div></div>
+  <div class="step-body">
+    <p class="why">If two lines share a word, share a month <b>and</b> neither has a note, they render
+      as two rows with the same name — told apart only by their amounts.</p>
+    <div class="ask"><b>Narrower than what it replaced, but not gone.</b> The old echo fired for
+      every pair; this fires only for same-schedule pairs. Options: leave it; make a note required
+      when a second line lands on a word already in use; or number them. The middle one puts a
+      blocking question in front of a coach mid-save, which I do not like.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Ruled — noted in the box below</label></div>
+    </div>
+    <textarea data-note="E2" placeholder="Leave it, require a note, or something else?"></textarea>
+  </div>
+</article>
+
+</div>
+
+<footer>
+  <span>§161 · 2026-09-09</span>
+  <span>879209d6 · 31d9d7b1</span>
+  <span>Plan: COACH_MONEY_IN_ITEM_NAMES_THE_ROW_PLAN.md</span>
+  <span>Mockups: artifact 151bc861</span>
+  <span>check:layout still owed</span>
+</footer>
+
+</div>
+
+<div class="toastwrap" id="toastwrap"></div>
+
+<script>
+(function () {
+  var KEY = 'qa161-word-names-the-row';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.chk input[type=checkbox]'));
+  var notes = Array.prototype.slice.call(document.querySelectorAll('textarea[data-note]'));
+  var verdicts = Array.prototype.slice.call(document.querySelectorAll('.verdict'));
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function paint() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      if (b.checked) done++;
+      b.closest('.chk').classList.toggle('on', b.checked);
+    });
+    document.getElementById('cdone').textContent = String(done);
+    document.getElementById('ctotal').textContent = String(boxes.length);
+    document.getElementById('fillbar').style.width =
+      (boxes.length ? Math.round((done / boxes.length) * 100) : 0) + '%';
+  }
+
+  boxes.forEach(function (b) {
+    // ⚠ A `checked` written into the HTML by a chat wins on load and is never turned off here —
+    //   the same one-way rule the run order uses, so a claim in the file sticks.
+    if (b.checked) state[b.id] = true;
+    if (state[b.id]) b.checked = true;
+    b.addEventListener('change', function () {
+      if (b.checked) state[b.id] = true; else delete state[b.id];
+      save(); paint();
+    });
+  });
+
+  notes.forEach(function (t) {
+    var k = 'note:' + t.getAttribute('data-note');
+    if (state[k]) t.value = state[k];
+    t.addEventListener('input', function () {
+      if (t.value.trim()) state[k] = t.value; else delete state[k];
+      save();
+    });
+  });
+
+  verdicts.forEach(function (v) {
+    var k = 'verdict:' + v.getAttribute('data-for');
+    var btns = Array.prototype.slice.call(v.querySelectorAll('button'));
+    function draw() {
+      btns.forEach(function (b) {
+        b.setAttribute('aria-pressed', state[k] === b.getAttribute('data-v') ? 'true' : 'false');
+      });
+    }
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var val = b.getAttribute('data-v');
+        if (state[k] === val) delete state[k]; else state[k] = val;
+        save(); draw();
+      });
+    });
+    draw();
+  });
+
+  function toast(msg) {
+    var w = document.getElementById('toastwrap');
+    w.innerHTML = '<div class="toast">' + msg + '</div>';
+    setTimeout(function () { w.innerHTML = ''; }, 1900);
+  }
+
+  document.getElementById('copyfind').addEventListener('click', function () {
+    var out = ['§161 — the word names the row — walk findings', ''];
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    out.push(done + ' of ' + boxes.length + ' checks ticked'); out.push('');
+    document.querySelectorAll('.step').forEach(function (step) {
+      var id = step.getAttribute('data-step');
+      var title = step.querySelector('h3').textContent.trim();
+      var v = state['verdict:' + id];
+      var n = state['note:' + id];
+      var missed = Array.prototype.slice.call(step.querySelectorAll('.chk input'))
+        .filter(function (b) { return !b.checked; })
+        .map(function (b) { return step.querySelector('label[for="' + b.id + '"]').textContent.trim().split('\n')[0]; });
+      if (!v && !n && !missed.length) return;
+      out.push(id + ' — ' + title + (v ? '  [' + v.toUpperCase() + ']' : ''));
+      missed.forEach(function (m) { out.push('   unticked: ' + m); });
+      if (n) out.push('   note: ' + n);
+      out.push('');
+    });
+    var text = out.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Findings copied'); },
+        function () { toast('Copy failed — select the page'); });
+    } else { toast('Copy unavailable'); }
+  });
+
+  document.getElementById('resetall').addEventListener('click', function () {
+    state = {}; save();
+    boxes.forEach(function (b) { b.checked = false; });
+    notes.forEach(function (t) { t.value = ''; });
+    verdicts.forEach(function (v) {
+      v.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

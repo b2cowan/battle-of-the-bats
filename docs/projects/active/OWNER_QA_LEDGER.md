@@ -20490,7 +20490,7 @@ it protects against — hunting the Ledger for a single payment of a size that n
 confusion the panel exists to end. This closes the third of the three mockup decisions: the row is a sum
 (not a list of cheques), `1 payment · Sep 4` stays rejected, and the count earns its place above one.
 
-Plan pair: `docs/projects/active/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md`.
+Plan pair: `docs/projects/archive/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md` (archived on the pass; the walk and mockup sources stay in `active/`).
 
 ## §160 · A bill lowered is not a collection — an adjustment or a forgiven bill comes off **Dues**, `Collected` becomes money and nothing else, and the Collections card becomes **Bills settled** — built on dev 2026-09-09 after `/review` (five defects found and fixed) and `/docs`, **no migration**, awaiting QA · walk artifact `b16c4350` · decision mockups `b529dd67` (the band) and `cc99aca4` (the report's plan side)
 
@@ -20978,15 +20978,26 @@ every page still rendering perfectly. The tour and dock were re-read for the fif
 dock line describes the drive's board**, so nothing went stale, and the "should a moment show it?"
 half was answered in the WORLD rather than in a sentence, per the one-proof-point cap.
 
-⚠⚠ **RELEASE ORDER — migration 287 must reach production before this code does, and NO GATE WILL TELL
-YOU.** `check:migrations` compares tables, columns and CHECK constraints that admit *less* in prod; a
-**dropped UNIQUE constraint** adds no table, adds no column and loosens no CHECK, so it reports "in
-sync" with the rule still standing on production. Ship the code without it and prod's own database
-refuses the second entry — on a form that has just told the coach what their total would become. It
-is registered `pending` in `MANUAL_PROD_STEPS.json`, and **the classifier that builds that register
-was widened in this same change to recognise `drop constraint`**: mig 287 is the first of its kind,
-and the hole was real until it was found. Nothing to back-fill — every existing row is already valid
-under the looser rule.
+⚠⚠ **RELEASE ORDER — migration 287 must reach production before this code does, and the gate that
+would normally stop you is blind to it.** `check:migrations` compares tables, columns and CHECK
+constraints that admit *less* in prod; a **dropped UNIQUE constraint** adds no table, adds no column
+and loosens no CHECK, so it reports "in sync" with the rule still standing on production. Ship the
+code without it and prod's own database refuses the second entry — on a form that has just told the
+coach what their total would become. Nothing to back-fill: every existing row is already valid under
+the looser rule.
+
+⚠ **BUT IT IS NOT INVISIBLE EVERYWHERE, AND AN EARLIER DRAFT OF THIS PARAGRAPH SAID IT WAS**
+(corrected by `/simplify`'s altitude lens, 2026-09-10, which read the gates rather than trusting the
+claim — the same discipline this ledger keeps recording). **`check:schema-parity` sees it**: it diffs
+constraints in both directions off the committed snapshots and is red right now, naming
+`constraint:only-prod:rep_fundraiser_entries.…_player_id_key`. So the honest statement of what the
+manual register adds over it is narrower and worth keeping: **the parity ratchet can be silenced with
+`--init`**, which accepts a divergence into the baseline and is indistinguishable afterwards from
+having actually applied the migration; `MANUAL_PROD_STEPS.json`'s `pending` status **blocks a
+promote** and cannot be quieted that way. That is why the entry earns its place — not because nothing
+else can see the drop. **The classifier that builds that register was widened in this same change to
+recognise `drop constraint`** (it previously knew only cron, data, drop-column and function), because
+287 is the first of its kind.
 
 **Verified before hand-off:** `npx tsc --noEmit` clean on every file this touches; **3,405 unit tests
 pass**, including 19 new ones over the participant grouping (sums, most-recent date, oldest-first
@@ -21197,3 +21208,70 @@ read-only coach meeting no dead end; both Compare bases agreeing that the catego
 rows; and the exported file naming no family while matching the screen's dues figure.
 
 Plan pair: `docs/projects/active/COACH_BVA_THINGS_NOT_DATES_{PLAN,PM_BRIEF}.md`.
+
+### §166 · `/simplify` + `/review`, 2026-09-10 — nine cleanups, one confirmed defect, and two silent doubles that are a RULING
+
+**`/simplify` (four lenses).** Nine applied. The one worth naming: the facts line's headcount was
+routed through the whole participant-grouping engine — a Map, a per-participant sort and a sort of
+the participants — to print one number, **beside the board body doing the identical grouping on the
+same render**. It counts distinct players in one pass now, and the grouping happens once, where the
+rows are actually drawn. Also: the hand-rolled open/closed-Set toggle became the shared helper that
+exists to stop exactly that (six copies had already drifted into two spellings before it was
+written); the Credit cell stopped being hand-copied into three rows and the Edit/Remove pair into
+two; the per-player total is rounded once at the read rather than on every addition; and
+`.moneyGridLead`'s indent and the drive board's became one token on the portal shell, where a
+comment saying "these must match" had been holding the agreement.
+
+**Two declined, with reasons.** Reusing `arrivalOrder` for the fold's sort — **refused on contract**:
+its documented job is sponsor *arithmetic* (re-dating one cheque past another changes which reaches
+the pledge and takes the remainder), while a drive's hand-ins carry independently stamped credits and
+the sort is purely how the fold reads. Same shape, different meaning; binding them means a change
+made for sponsor credits silently reorders this board. And a shared fold-by-player primitive across
+the two routes — the list route folds across MANY drives in one pass and would need a pre-grouping
+pass to use it, which is more code, not less.
+
+**`/review` — high-risk tier, five lenses.** Correctness and security both came back **clean**, and
+the security lens verified what mattered most after a refusal was deleted: the team-and-season
+scoping, the capability gate and the player-belongs-to-this-program-year check are all intact, so no
+cross-org path opened. Three real findings:
+
+1. **[High — CONFIRMED, fixed]** A UAT spec still read the retired `players[].entry` field. It did
+   not merely fail: **its second assertion would have passed for the wrong reason**, filtering to
+   zero because the field no longer exists rather than because the row is absent — the
+   inactive-player regression guard reporting green while proving nothing. ⚠ The build prompt told me
+   to run any UAT spec I rely on rather than trust that it runs, **and I did not**; this is what that
+   instruction was for.
+2. **[High — CONFIRMED, fixed]** ⚠⚠ **MY OWN CLEANUP BROKE THE BYTE-FOR-BYTE PROMISE.** Routing the
+   name cell through one component wrapped the name and the "no longer on roster" mark in a shared
+   span — and the phone's card mode blockifies only DIRECT children, so a mark that used to sit on
+   its own line started rendering inline. On a board with no fold anywhere, which is the exact case
+   the ruling protects. **No gate could see it**: the UAT fixture has no inactive player with an
+   entry, so that state is never drawn. Found by reading the two markups side by side. The no-fold
+   case now returns the original flat markup with no wrapper at all.
+3. **[High — CONFIRMED, fixed]** The `drop-constraint` classifier I added fired on **every**
+   `DROP CONSTRAINT`, including the drop-then-re-ADD that widens a CHECK — which migs 266 and 274
+   both do, and which the drift gate already sees by comparing CHECK definitions. Two unrelated
+   migrations were dragged in front of an authoring gate they never needed. ⚠ And the first fix for
+   it was **inert**: the re-add test was built with `\b` and `\s` inside a **template literal**,
+   where they mean backspace and a literal `s`, so it matched nothing and every drop still read as a
+   bare drop. Narrowed to *a drop whose constraint is never re-added*, matched as flat text.
+
+⚖⚖ **AND ONE THING THAT IS NOT MINE TO FIX — it is a ruling, and it is on the walk as I3.** The
+concurrency lens found **two doubles the consequence sentence cannot catch, both of which the dropped
+database rule used to catch**: (a) two tabs or two devices open Record before either saves, both read
+"nothing logged yet", both save — and **neither shows the resulting-total clause**, because each
+snapshot predates the other's write; (b) a lost response on a phone, where the retry that used to
+meet "an entry already exists" now writes a second income row and a second family credit silently.
+Same-window double-clicking is genuinely safe — verified the in-flight guard fires synchronously
+before anything is sent. **Nothing was built for this**: the owner explicitly rejected one guard, so
+a different one needs his word. Walk step I3 now carries both cases and a fourth option — a
+one-per-submission key that ignores the SAME save landing twice while leaving two DELIBERATE hand-ins
+completely legal, which is not the refusal that was rejected.
+
+**Gates after every fix:** typecheck clean on every file this touches · **3,436 unit tests, 0
+failures** · `check:layout` on both fundraising screens at 361/390/768/1440, **no new findings** ·
+CSS purity · dead selectors · spelling · both demo worlds presentable · the migration register back
+to its pre-existing state with no undeclared migrations. ⚠ `verify:changed` is red on the token
+ratchet — **two hardcoded colours in another session's Categories & Items stylesheet**, confirmed
+foreign and pre-existing. ⚠ I reported that gate as green earlier in the session; it was not, and I
+had tailed past the failure. The gate was right.

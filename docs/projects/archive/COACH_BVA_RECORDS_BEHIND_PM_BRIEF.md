@@ -2,6 +2,7 @@
 
 **Plan:** `COACH_BVA_RECORDS_BEHIND_PLAN.md` · **Mockup:** artifact `7af46200` ·
 **Approved:** owner, 2026-09-09 · **Priority:** high (a visible untruth on the reconciling screen)
+**Status:** ✅ **COMPLETE** — Owner QA §159 **PASSED 20/20** on 2026-09-10, zero defects; both asks ruled as built.
 
 ## What a coach sees change
 

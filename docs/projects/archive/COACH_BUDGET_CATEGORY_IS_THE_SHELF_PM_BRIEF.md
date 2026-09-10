@@ -2,7 +2,7 @@
 
 **Owner-ruled 2026-09-09** · plan: `COACH_BUDGET_CATEGORY_IS_THE_SHELF_PLAN.md` · mockup artifact `728dcb1e` (Option A · Option 2 taken).
 **Priority:** high — it is a consistency defect on the money screens a treasurer reads most, and half of it is a ruling from 8 September that was recorded and never built.
-**Status:** built on dev 2026-09-09; every automated gate green; **Owner QA §158 owed** (walk artifact `c8659d30`), with three calls for the owner to confirm on the built screen — see the plan's status line.
+**Status:** ✅ **COMPLETE** — built on dev 2026-09-09 (committed `8921d864`), every automated gate green, **Owner QA §158 PASSED 69/69 walked on 2026-09-10** with zero defects and nothing flagged (walk artifact `c8659d30`). The three calls the walk put to the owner — the Statement's *Sponsorship (not budgeted)* shelf, the forgetting list's chips sitting below the button row, and the open category not surviving a reload — were all **ruled as built** on 2026-09-10; reasons in `OWNER_QA_LEDGER.md` §158. Archived 2026-09-10. Two follow-ons carry their own TODO lines: the importer's direction gap and the standard vocabulary review.
 
 ## What changes for a coach
 

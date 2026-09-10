@@ -314,6 +314,25 @@ open the bill behind it" got *more* true, no new stop) · the header-actions gua
   the lime **Record** stays the one door for money arriving.
 - Payments · payouts · credits collapse into **History**; the schedule is the one open view.
 - Room shell adoption: ARIA floor + named Prev/Next across families.
+  - ✅ **The ARIA floor landed on its own, 2026-09-09, ahead of the re-plan** (owner: "escape button
+    does not close this modal — was that intentional?"). It was not: D7 shipped *inside*
+    `RoomShell`/`QuestionShell`, so every dues overlay that predates the shells was left without
+    it — the family drawer, the season settlement, the Set-refund sheet, the reminder
+    confirmation, the shared installment generator and the reminder preview. Six surfaces, no
+    Escape, no Tab trap, no focus return, and only one of the six announcing itself as a dialog.
+    **The floor is not the shell**, which is the whole reason this could go first: it costs a hook
+    call and a ref per overlay and changes nothing a coach can see, while the shell adoption below
+    is a rebuild that still needs the re-plan §5 asks for. Escape routes through the SAME guarded
+    closers the ✕ and backdrop use, so no keystroke can discard typed work silently.
+  - ⚠ **It exposed a hole in the shared popover hook, and that is the durable lesson.** The first
+    thing found inside a newly-floored dialog was a `HelpTooltip` in the schedule editor —
+    dismissing it on Escape would have closed the drawer behind it, the exact §134 defect, this
+    time arriving through `useDismissable` rather than a hand-rolled combobox. Both halves of the
+    ownership contract now sit in shared code (`claimEscape` in the hook, `data-escape-owner` on
+    the tooltip) and `escape-owner-guard.test.ts` states the hook's half as a rule and scans
+    `components/help`. **Adopting the floor somewhere new means auditing what that surface
+    CONTAINS**, not just the surface.
+  - Still owed here: named Prev/Next across families (the walk), and the shell itself.
 - The migrated-payment note text stays (logged debt; data-only fix if ever requested).
 
 ## 6. Same-unit-of-work obligations (every phase)

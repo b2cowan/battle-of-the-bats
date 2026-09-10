@@ -7,7 +7,7 @@ its conclusions so the build does not re-derive them.
 
 ```
 Build "Coach fundraising — one way in": the category a budget word sits in decides who fills its
-number in and where it reports. Plan: docs/projects/active/COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md
+number in and where it reports. Plan: docs/projects/archive/COACH_FUNDRAISING_ONE_WAY_IN_PLAN.md
 (read it in full first — §1 is the ruling, §2 the verified facts, §3 the build in order). PM brief
 beside it. Mockup, OWNER-APPROVED 2026-09-08, final version "Sponsorship words symmetric":
 https://claude.ai/code/artifact/8aa1e633-af41-47af-b312-d852aae462a3 (source copy:
