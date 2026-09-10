@@ -165,18 +165,21 @@
   letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--logic-lime);
+  /* Lime as TEXT, so it reads --lime-strong, not raw lime: identical on the dark strip,
+     deepened by the public light theme (where raw lime measured ~1.1:1 on the near-white
+     bar and this door was effectively invisible). */
+  color: var(--lime-strong);
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
   min-height: var(--nav-pill-h);
   padding: 0 0.9rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  border: 1px solid rgba(var(--lime-strong-rgb), 0.4);
   border-radius: 999px;
   transition: border-color 0.2s ease;
 }
 .utilCoach:hover {
-  border-color: var(--logic-lime);
+  border-color: var(--lime-strong);
 }
 @media (max-width: 900px) {
   .topUtil { display: none; }

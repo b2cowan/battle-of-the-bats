@@ -107,5 +107,11 @@ export function buildPublicLightModeCssVars(): string {
     // Accent text uses the (dark) org primary on light surfaces — the pale
     // dark-mode tint would be unreadable on white.
     '--primary-light:   var(--primary)',
+    // Lime as TEXT/GLYPH darkens on paper (E3). Raw --logic-lime is ~1.1:1 on this
+    // ground — the operator door in the desktop nav strip was unreadable on every
+    // light-themed event. #4D7C0F is 5.0:1 on white and 4.7:1 on --bg. Lime as a
+    // FILL (the follow pills/stars: ink text on lime) keeps --logic-lime unchanged.
+    '--lime-strong:     #4D7C0F',
+    '--lime-strong-rgb: 77, 124, 15',
   ].join('; ');
 }

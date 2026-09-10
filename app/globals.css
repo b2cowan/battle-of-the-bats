@@ -523,6 +523,17 @@ body:has([data-chat-fullbleed]) {
   --blueprint-light:     #859BD5;
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
+  /* Lime as TEXT/GLYPH (the --gold-strong precedent): the same lime on dark, deepened on
+     light surfaces where raw lime measures ~1.1:1 on the near-white bar. Lime as a FILL
+     keeps --logic-lime and is untouched (E3: lime-as-TEXT darkens on paper, lime-as-FILL
+     never does).
+       ⚠ The public light theme deepens this in buildPublicLightModeCssVars()
+     (lib/public-tournament-theme.ts) rather than in the [data-color-mode="light"] block
+     below, ON PURPOSE: that block sits on the tournament shell DIV, and the desktop nav
+     strip is mounted ABOVE it — so a deepening declared there can never reach the strip.
+     The light block lands on :root, which does. */
+  --lime-strong:         var(--logic-lime);
+  --lime-strong-rgb:     var(--logic-lime-rgb);
   /* THE SAME lime, declared as a token no theme gate is allowed to remap — the single
      source for lime-as-FILL that must survive a warm/olive remap (E3: lime-as-TEXT
      darkens to olive on paper; lime-as-FILL never does).
@@ -938,6 +949,8 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   /* ── Accent + structural blue → olive; pale lime accent → olive ── */
   --logic-lime:         var(--home-olive);
   --logic-lime-rgb:     var(--home-olive-rgb);
+  --lime-strong:        var(--home-olive);
+  --lime-strong-rgb:    var(--home-olive-rgb);
   --blueprint-blue:     var(--home-olive);
   --blueprint-blue-rgb: var(--home-olive-rgb);
   /* ⚠⚠ REQUIRED, and it closes a latent warm bug (2026-08-18). --blueprint-light is the
