@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { getAssistantInviteByToken, acceptAssistantInvite } from '@/lib/assistant-invites';
+import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
 import { getRepTeamCoaches, getActiveRepProgramYear } from '@/lib/db';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
@@ -14,6 +15,29 @@ export const GET = withObservability(async (req: Request) => {
   if (!invite) return NextResponse.json({ error: 'This invite link is not valid.' }, { status: 404 });
 
   const user = await getAuthenticatedUser();
+
+  // Does the INVITED email already have an account? Without this the accept page has only two
+  // states — signed in, or "set up your account" — so a returning assistant who is merely signed
+  // OUT is shown a create-account form and discovers the truth only after filling it in (the
+  // signup call 409s and bounces them to sign-in). Answering here lets the page offer sign-in up
+  // front, which is what it should have done from the start.
+  //
+  // ⚠ NOT an email-enumeration oracle, and stricter than the /coaches/join precedent it follows:
+  // the email is read off the INVITE ROW, never from the query string, so a caller cannot probe
+  // an address — they must already hold an unguessable, unexpired, single-use invite token, and
+  // the page displays that email back to them anyway.
+  //
+  // Only asked when it can change the screen (signed out, invite still claimable), and it FAILS
+  // OPEN: any error degrades to today's create-account form rather than 500ing an invite accept.
+  let accountExists = false;
+  if (!user && invite.status === 'pending' && !invite.expired) {
+    try {
+      accountExists = await authAccountExistsForEmail(invite.invitedEmail);
+    } catch {
+      accountExists = false;
+    }
+  }
+
   return NextResponse.json({
     invite: {
       status: invite.status,
@@ -25,6 +49,7 @@ export const GET = withObservability(async (req: Request) => {
     },
     signedIn: !!user,
     signedInEmail: user?.email ?? null,
+    accountExists,
   });
 }, { route: '/api/auth/accept-assistant-invite' });
 

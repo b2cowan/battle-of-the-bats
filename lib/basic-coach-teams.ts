@@ -7,6 +7,7 @@ import { excludeActivePremiumUpgrades } from './coach-team-page';
 import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
 import { getLinkedRegistrationIdsForRepTeam } from './rep-team-tournament-links';
+import { authAccountExistsForEmail } from './auth-account-lookup';
 
 export type BasicCoachTeam = {
   id: string;
@@ -246,20 +247,6 @@ async function getAuthUserEmail(userId: string): Promise<string | null> {
   const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
   if (error) throw error;
   return data.user?.email ?? null;
-}
-
-/**
- * Whether a confirmed auth account already exists for the given (already-normalized) email.
- * Internal — callers MUST scope the email to something the caller already proved they hold
- * (e.g. a tournament registration id) so this never becomes a public email-enumeration oracle.
- */
-async function authAccountExistsForEmail(email: string): Promise<boolean> {
-  const target = normalizeEmail(email);
-  if (!target) return false;
-  // No admin getUserByEmail in this SDK version — list + filter (same pattern as team-org-links).
-  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-  if (error) throw error;
-  return (data.users ?? []).some(u => normalizeEmail(u.email) === target);
 }
 
 /**

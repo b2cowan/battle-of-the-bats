@@ -23,6 +23,8 @@ function AcceptForm() {
   const [loading, setLoading] = useState(true);
   const [invite, setInvite] = useState<InviteInfo | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
+  const [accountExists, setAccountExists] = useState(false);
   const [fatal, setFatal] = useState('');
 
   const [firstName, setFirstName] = useState('');
@@ -43,6 +45,8 @@ function AcceptForm() {
         if (!res.ok) { setFatal(json.error ?? 'This invite link is not valid.'); setLoading(false); return; }
         setInvite(json.invite);
         setSignedIn(!!json.signedIn);
+        setSignedInEmail(json.signedInEmail ?? null);
+        setAccountExists(!!json.accountExists);
       } catch {
         if (!cancelled) setFatal('Something went wrong loading your invite.');
       } finally {
@@ -93,6 +97,15 @@ function AcceptForm() {
     await acceptForSignedInUser();
   }
 
+  /** Wrong-account escape: drop this session and re-run the same invite URL signed OUT, so the
+   *  signed-out branches decide again for the INVITED email (sign-in if it has an account,
+   *  create-account if it doesn't) rather than guessing here. Mirrors /coaches/join. */
+  async function switchAccount() {
+    const { signOut } = await import('@/lib/auth');
+    await signOut();
+    window.location.reload();
+  }
+
   if (loading) return <div className={styles.card}><HudSkeleton message="LOADING YOUR INVITE..." rows={3} /></div>;
 
   if (fatal || !invite) {
@@ -124,7 +137,39 @@ function AcceptForm() {
   const teamLabel = invite.teamName ?? 'the team';
   const byLabel = invite.invitedByName ? `${invite.invitedByName} invited you` : 'You’ve been invited';
 
-  // Signed in → one-tap accept.
+  const loginHref = `/auth/login?next=${encodeURIComponent(`/auth/accept-assistant-invite?token=${token}`)}&email=${encodeURIComponent(invite.invitedEmail)}`;
+
+  // An invite is addressed to ONE email and the server enforces that on accept. Detect the
+  // mismatch here so a coach signed in as somebody else (a shared laptop, a personal account on a
+  // club address) is told BEFORE tapping a confident green "Accept & join team" that turns out to
+  // be a 403. The old page ignored signedInEmail entirely and let them find out the hard way.
+  const signedInMismatch =
+    signedIn &&
+    Boolean(signedInEmail) &&
+    signedInEmail!.trim().toLowerCase() !== invite.invitedEmail.trim().toLowerCase();
+
+  if (signedInMismatch) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.iconWrap}><UserPlus size={20} /></div>
+          <h1 className={styles.title}>You&apos;re signed in as a different account</h1>
+          <p className={styles.sub}>
+            This invite was sent to <strong>{invite.invitedEmail}</strong>, but you&apos;re signed in as{' '}
+            <strong>{signedInEmail}</strong>. Sign out and continue with the invited email to join{' '}
+            <strong>{teamLabel}</strong>.
+          </p>
+        </div>
+        <div className={styles.form}>
+          <button type="button" className="btn btn-lime" style={{ width: '100%' }} onClick={switchAccount}>
+            Sign out &amp; continue as {invite.invitedEmail}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed in as the invited coach → one-tap accept.
   if (signedIn) {
     return (
       <div className={styles.card}>
@@ -143,7 +188,43 @@ function AcceptForm() {
     );
   }
 
-  // Not signed in → create an account under the invited email, then accept.
+  // Signed OUT, but the invited email ALREADY has an account — the common case for an assistant
+  // who coaches elsewhere on the platform, or is simply on a new device. Offer sign-in as the
+  // primary action instead of a create-account form they cannot complete: the old page put this
+  // behind a footnote link, so the whole form had to be filled in before the 409 revealed it.
+  if (accountExists) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.iconWrap} style={{ background: 'rgba(var(--success-rgb), 0.12)', border: '1px solid rgba(var(--success-rgb), 0.25)' }}>
+            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
+          </div>
+          <h1 className={styles.title}>Welcome back</h1>
+          <p className={styles.sub}>
+            {byLabel} to help coach <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as an
+            assistant coach. You already have a FieldLogicHQ account for <strong>{invite.invitedEmail}</strong> —
+            sign in to join the team.
+          </p>
+        </div>
+        <div className={styles.form}>
+          <Link href={loginHref} className="btn btn-lime" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
+            Sign in to join {teamLabel}
+          </Link>
+        </div>
+        <div className={styles.footer}>
+          {/* NOT "create a new account instead": the create form below is hard-locked to the
+              invited email, so for an address that already has an account it can only 409 and
+              bounce back here. The real dead end on this screen is a forgotten password. */}
+          <p className={styles.footerText}>
+            Can&apos;t remember your password?{' '}
+            <Link href="/auth/forgot-password" className={styles.footerLink}>Reset it</Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not signed in, no account yet → create one under the invited email, then accept.
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -185,7 +266,7 @@ function AcceptForm() {
       <div className={styles.footer}>
         <p className={styles.footerText}>
           Already have an account?{' '}
-          <Link href={`/auth/login?next=${encodeURIComponent(`/auth/accept-assistant-invite?token=${token}`)}&email=${encodeURIComponent(invite.invitedEmail)}`} className={styles.footerLink}>Sign in instead</Link>
+          <Link href={loginHref} className={styles.footerLink}>Sign in instead</Link>
         </p>
       </div>
     </div>

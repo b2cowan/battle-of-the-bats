@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
 import { FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL, isFoundingSeasonSignupOpen } from '@/lib/plan-config';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
@@ -65,25 +66,9 @@ async function rollbackAuthUser(id: string) {
 // generateLink({type:'signup'}) would overwrite that pending account's password + rotate
 // its confirmation token (account-state tampering / DoS on an invited member).
 //
-// Because this guard protects existing credentials, it PAGINATES rather than trusting a
-// single 1000-row page (a false negative past row 1000 would silently reopen the clobber
-// hole) and fails CLOSED — a listUsers error throws to the route's 500 handler rather than
-// being read as "no such user". (supabase-js v2.x has no admin.getUserByEmail; the exhaustive
-// scan is the correct-at-any-scale form of the platform's listUsers pattern.)
-async function authUserExistsForEmail(email: string): Promise<boolean> {
-  const target = email.trim().toLowerCase();
-  const perPage = 1000;
-  // Hard page ceiling so a pathological account count can't spin forever: 50 × 1000 = 50k
-  // auth users, far beyond current scale, and the loop exits on the first partial page anyway.
-  for (let page = 1; page <= 50; page++) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-    const users = data?.users ?? [];
-    if (users.some(u => u.email?.toLowerCase() === target)) return true;
-    if (users.length < perPage) return false; // last page reached — no match
-  }
-  return false;
-}
+// The paginating, fail-CLOSED implementation now lives in lib/auth-account-lookup.ts (shared
+// with the coach-registration and assistant-invite "you already have an account" screens) —
+// a listUsers error throws to this route's 500 handler rather than reading as "no such user".
 
 export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
@@ -178,7 +163,7 @@ export const POST = withObservability(async (req: Request) => {
       // confirmed-vs-unconfirmed distinction) avoids both account-state tampering on an
       // invited/pending user and email enumeration. An existing user who was invited
       // should sign in (login → reconciliation + pending-invite card), not re-sign-up.
-      if (await authUserExistsForEmail(normalizedEmail)) {
+      if (await authAccountExistsForEmail(normalizedEmail)) {
         return NextResponse.json(
           { error: 'An account already exists for this email. Please sign in instead.' },
           { status: 409 },
@@ -258,7 +243,7 @@ export const POST = withObservability(async (req: Request) => {
     }
     // Existing account (no pending invite): never proceed — generateLink({type:'signup'}) on an
     // existing auth user rotates its credentials. Mirror the account-only branch's neutral guard.
-    if (await authUserExistsForEmail(normalizedEmail)) {
+    if (await authAccountExistsForEmail(normalizedEmail)) {
       return NextResponse.json({ inviteBranch: 'account_exists' });
     }
 
