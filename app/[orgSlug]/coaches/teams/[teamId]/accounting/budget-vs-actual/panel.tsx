@@ -599,6 +599,30 @@ function activityKeyOf(block: ActivityBlock): string {
   return `activity|${block.categoryId ?? `name:${block.categoryName}`}`;
 }
 
+/**
+ * DOES THIS HEADING HAVE ANYTHING TO FOLD TO? — one rule, four readers (`/simplify`, 2026-09-10).
+ *
+ * ⚠⚠ IT IS NAMED BECAUSE IT HAS **TWO** READERS PER SHAPE, AND THEY MUST NOT PART. Each row asks it
+ * to decide whether to draw a chevron at all (`CatFoldRow.foldable`), and **Expand all / Collapse
+ * all** asks it again to decide which keys that control can reach. Written out twice per shape — as
+ * it was on the first pass — a future exception lands on one and not the other, and the failure is
+ * silent in both directions: a control stuck on one word because it counts a row that draws no
+ * chevron, or a fold a coach can open that "Expand all" refuses to touch.
+ *
+ * ⚠ THIS IS THE RULE THAT REPLACED A SENTINEL. Both readers used to exclude the dues row by its id,
+ * because it was the one heading with nothing underneath it. Dues folds to families now, so the
+ * honest question is cardinality rather than identity — and the only row still answering "nothing"
+ * is a team that has not set dues up, which is exactly the row that should not offer a fold.
+ */
+function catFoldable(cat: CategoryResult): boolean {
+  return cat.items.length > 0;
+}
+
+/** The same question of an activity block, which carries its rows on two halves rather than one. */
+function blockFoldable(block: ActivityBlock): boolean {
+  return (block.revenue?.items.length ?? 0) + (block.costs?.items.length ?? 0) > 0;
+}
+
 /** Which side of the row a coach asked about: the plan, or what actually moved. */
 type BehindSide = 'plan' | 'actual';
 
@@ -1184,7 +1208,7 @@ function CategoryGroup({
         /* ⚠ A CATEGORY WITH NOTHING IN IT DOES NOT OFFER A FOLD — see `CatFoldRow.foldable`. Only
            the not-set Player dues row reaches this; every other category owes its existence to
            having at least one line or payment in it. */
-        foldable={cat.items.length > 0}
+        foldable={catFoldable(cat)}
         caption={caption}
       >
         {/* ⚠⚠ A CATEGORY'S FIGURES ARE PLAIN CELLS, AND SINCE 2026-09-10 THERE ARE NO EXCEPTIONS
@@ -1248,7 +1272,7 @@ function ActivityGroup({
   const open = expandedCats.has(key);
   /* ⚠ A BLOCK WITH NO ROWS ON EITHER HALF DOES NOT FOLD — the not-set Player dues block, and
      nothing else. The same rule as the statement's, because it is the same row component. */
-  const foldable = (block.revenue?.items.length ?? 0) + (block.costs?.items.length ?? 0) > 0;
+  const foldable = blockFoldable(block);
   return (
     <>
       <CatFoldRow
@@ -2441,7 +2465,6 @@ export function BudgetVsActualPanel({
      ⚠ The dues row is excluded because it is not a foldable group — counting it would make "all
      open" unreachable and leave the button stuck on one word. */
 
-
   /* ⚠ THESE READ `report`, THE RE-CUT ONE — the rule stated over the memo above, which the first
      version of this list broke and the fold's version then copied (/review, correctness lens).
      It is currently harmless ONLY because `rebaseReport` is 1:1: it maps every section and block
@@ -2460,11 +2483,11 @@ export function BudgetVsActualPanel({
      cannot reach its own target. */
   const statementCatKeys = report
     ? [...report.revenue.categories, ...report.expenses.categories]
-        .filter(c => c.items.length > 0).map(catKeyOf)
+        .filter(catFoldable).map(catKeyOf)
     : [];
   const activityCatKeys = report
     ? report.activities
-        .filter(b => (b.revenue?.items.length ?? 0) + (b.costs?.items.length ?? 0) > 0)
+        .filter(blockFoldable)
         .map(activityKeyOf)
     : [];
   /** The folds this control can actually reach — whichever shape is on screen. */

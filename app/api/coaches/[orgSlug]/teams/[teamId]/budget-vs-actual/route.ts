@@ -922,6 +922,22 @@ export const GET = withObservability(async (req: Request,
      remainder derivation groups by player, so an instalment with no owner would be dropped. */
   const scheduleOwner = new Map(
     ((schedules ?? []) as Array<{ id: string; player_id: string }>).map(s => [s.id, s.player_id]));
+  /**
+   * WHOSE INSTALLMENT IS THIS — the one home of the fallback (`/simplify`, 2026-09-10).
+   *
+   * ⚠⚠ IT WAS WRITTEN OUT FOUR TIMES IN THIS FILE, IN TWO SPELLINGS. Every reader agreed on the
+   * rule — the denormalised column, else the schedule's owner, else unknown — but two of them ended
+   * `?? ''` and two `?? null`, so "the same fallback" was a claim a comment made rather than
+   * something the code guaranteed. An installment resolved two ways is money in two rows or in
+   * none, and on the report that is a category that stops equalling the rows underneath it.
+   *
+   * ⚠ UNKNOWN IS `null` HERE and each caller says how it spells unknown, because they genuinely
+   * differ: the position walk and the family rows collect unowned money under the empty key so it
+   * still reaches a row, while the family COUNT and the Scheduled lens drop it. Those are real
+   * differences in intent; the resolution is not.
+   */
+  const installmentOwner = (i: { player_id: string | null; schedule_id: string }): string | null =>
+    i.player_id ?? scheduleOwner.get(i.schedule_id) ?? null;
 
   /* ══ 7. EVERY ACTUAL MOVEMENT ON THIS REPORT, FLATTENED ONCE ═══════════════════════════════════
      ⚠⚠ THE ACTUALS ARE READ OFF THE STATEMENT, NOT OFF THE RAW ROWS
@@ -1538,7 +1554,7 @@ export const GET = withObservability(async (req: Request,
   const duesPosition = duesPositionByInstallment({
     installments: duesInstallments.map(i => ({
       id: i.id,
-      playerId: i.player_id ?? scheduleOwner.get(i.schedule_id) ?? '',
+      playerId: installmentOwner(i) ?? '',
       installmentNumber: i.installment_number,
       amount: i.amount ?? 0,
       dueDate: i.due_date,
@@ -1711,7 +1727,7 @@ export const GET = withObservability(async (req: Request,
     planNeeds: budgetTotals.fundedByPlayers,
     planNeedsFloored: planNeedsRaw < -0.005,
     familyCount: new Set(duesInstallments
-      .map(i => i.player_id ?? scheduleOwner.get(i.schedule_id) ?? null)
+      .map(installmentOwner)
       .filter((id): id is string => id !== null)).size,
     /* The Budget plan page's own source for the same question, carried so the guard can hold the
        two equal. It is compared, never shown — see the field's note. */
@@ -1747,9 +1763,12 @@ export const GET = withObservability(async (req: Request,
   const duesItems = dues.billed === null ? [] : buildDuesFamilyRows({
     installments: duesInstallments.map(i => ({
       id: i.id,
-      /* ⚠ THE SAME OWNER FALLBACK THE POSITION WALK USES, and it must stay the same one: an
-         installment resolved two ways is money in two rows or in none. */
-      playerId: i.player_id ?? scheduleOwner.get(i.schedule_id) ?? '',
+      /* ⚠ THE SAME RESOLUTION EVERY OTHER READER USES — and since 2026-09-10 that is enforced by
+         there being only one of it (`installmentOwner`) rather than asserted by this comment. The
+         empty key is this caller's own spelling of "unknown": unowned money still reaches a row,
+         because rows that quietly fail to add up to their heading is the one thing a fold may not
+         do. */
+      playerId: installmentOwner(i) ?? '',
       number: i.installment_number,
       amount: i.amount ?? 0,
       dueDate: i.due_date,
@@ -1801,7 +1820,7 @@ export const GET = withObservability(async (req: Request,
       if (i.paid_at) continue;
       const owed = remaining.get(i.id) ?? (i.amount ?? 0);
       if (owed <= 0.005) continue;
-      const playerId = i.player_id ?? scheduleOwner.get(i.schedule_id) ?? null;
+      const playerId = installmentOwner(i);
       const subject = { id: playerId, name: familyName(playerId) };
       revenueRow('dues', subject);
       /* ⚠⚠ THE REMAINDER, AND THE PANEL SAYS SO OUT LOUD (owner ruling 2026-08-24). A family $100

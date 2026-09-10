@@ -35,40 +35,28 @@
  * Deleting it would silently turn every to-date reading into a whole-season one, with nothing on
  * screen saying so. What was deleted is the *placement of actuals onto those dates*, at source.
  *
- * ⚠ IT SCANS CODE, NOT PROSE — same `codeOnly` shape and same reason as
- * `bva-figure-doors-guard.test.ts`: these files explain themselves at length, and the explanations
- * contain the very strings this guard forbids.
+ * ⚠ IT SCANS CODE, NOT PROSE, and it uses the REPO'S OWN helper to do it (`/simplify`, 2026-09-10).
+ * These files explain themselves at length and the explanations contain the very strings this guard
+ * forbids, so a guard that read raw text would fail on a comment describing the design it removed —
+ * and, far worse, would PASS if someone deleted the code and left the paragraph explaining it. The
+ * first pass here rolled its own stripper, which made a FOURTH copy of a rule `tests/unit/_source-code.ts`
+ * already owns and had already hardened: that one is string-aware, so a `//` inside a literal cannot
+ * silently eat the rest of a line and WEAKEN an assertion. A guard that fails quiet is the thing
+ * these files exist to stop, so this one borrows the careful version rather than keeping a naive twin.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readCode } from './_source-code.ts';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PANEL = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx';
 const ROLLUP = 'lib/coach-budget-rollup.ts';
 const EXPORTS = 'lib/coach-money-exports.ts';
 const DUES = 'lib/coach-dues-revenue.ts';
 
-/**
- * Comments stripped, because this guard is about CODE. Block comments go wholesale; line comments
- * only when the line is nothing but a comment, so a `//` inside a string literal is never mistaken
- * for one.
- */
-function codeOnly(src: string): string {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
-    .filter(l => !/^\s*\/\//.test(l))
-    .join('\n');
-}
-
-const read = (p: string) => codeOnly(readFileSync(join(ROOT, p), 'utf8'));
-const panel = read(PANEL);
-const rollup = read(ROLLUP);
-const exportsSrc = read(EXPORTS);
-const dues = read(DUES);
+const panel = readCode(PANEL);
+const rollup = readCode(ROLLUP);
+const exportsSrc = readCode(EXPORTS);
+const dues = readCode(DUES);
 
 /**
  * The body of one top-level function, so an assertion can be about ONE component rather than about
@@ -180,11 +168,24 @@ test('the dues category folds to families, and the to-date basis rides on their 
     + 'its own installment dates, so the ordinary rule (plan dated on or before today) already '
     + 'lands on that figure. Two derivations of one number is how this report has twice drifted.',
   );
-  assert.ok(
-    /periods: schedule\.get\(owner\)/.test(dues),
+  /* ⚠ PINNED ON THE BEHAVIOUR, NOT ON A VARIABLE NAME. The first cut asserted the literal
+     `periods: schedule.get(owner)`, and a `/simplify` pass that merged two maps into one — changing
+     nothing a coach can see — broke it the same day. A guard that fires on a rename teaches people
+     to edit the guard, which is how a guard stops being believed. What must stay true is that a
+     family row's periods are built FROM THAT FAMILY'S INSTALLMENT DUE DATES. */
+  const familyRows = bodyOf(dues, 'export function buildDuesFamilyRows(');
+  assert.match(
+    familyRows,
+    /date: i\.dueDate/,
     'The family rows have stopped carrying their installment due dates. Without them the ordinary '
     + 'to-date rule contributes NOTHING for dues, and the whole revenue band reads $0.00 under '
     + '"To date" on a team billing perfectly on schedule — with nothing on screen saying so.',
+  );
+  assert.match(
+    familyRows,
+    /periods: /,
+    'A dues family row no longer carries a `periods` array at all — see above; this is the field '
+    + 'the to-date basis reads.',
   );
 });
 

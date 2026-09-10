@@ -41,7 +41,7 @@
    relative specifier literally, so an extensionless one that the bundler is happy with fails the
    guard at startup. `allowImportingTsExtensions` is on for exactly this, and
    `coach-budget-months.ts` imports its own dependency the same way for the same reason. */
-import type { CategoryRow, ItemRow } from './coach-budget-rollup.ts';
+import { varianceFor, type CategoryRow, type ItemRow } from './coach-budget-rollup.ts';
 import type { FamilyDuesActual } from './coach-dues-actual.ts';
 import { revenueCategoryId, revenueGroupLabel } from './coach-budget-months.ts';
 
@@ -284,31 +284,44 @@ export function buildDuesFamilyRows(input: {
   nameOf: (playerId: string) => string;
 }): ItemRow[] {
   const { installments, writtenOffBy, byFamily, nameOf } = input;
-  /** Σ this family's installments, in cents, BEFORE anything was written off. */
-  const billedC = new Map<string, number>();
-  /** This family's schedule, one period per installment — what the To date basis reads. */
-  const schedule = new Map<string, Array<{ label: string; date: string | null; amount: number }>>();
+  /**
+   * What this family's installments add up to, and the schedule they arrived on.
+   *
+   * ⚠ ONE MAP, NOT TWO (`/simplify`, 2026-09-10). The running total and the period list were two
+   * maps filled in the same loop, so their key sets were identical BY CONSTRUCTION — an invariant a
+   * reader had to reconstruct rather than one the shape stated. One entry per family says it
+   * outright, and there is one `get`/`set` per installment instead of two.
+   *
+   * ⚠ THE TOTAL IS IN CENTS BECAUSE IT ACCUMULATES across several installments, where a float tail
+   * would drift. A period's own amount is a single value, so it is rounded once and kept in dollars
+   * — the form every other row on this report carries.
+   */
+  const perFamily = new Map<string, {
+    billedC: number;
+    periods: Array<{ label: string; date: string | null; amount: number }>;
+  }>();
   for (const i of installments) {
-    billedC.set(i.playerId, (billedC.get(i.playerId) ?? 0) + Math.round(i.amount * 100));
+    const entry = perFamily.get(i.playerId) ?? { billedC: 0, periods: [] };
+    entry.billedC += Math.round(i.amount * 100);
     const off = writtenOffBy.get(i.id) ?? 0;
-    const rows = schedule.get(i.playerId) ?? [];
     /* ⚠ NET OF WHAT WAS WRITTEN OFF **THIS** INSTALLMENT, matching the month feed to the cent —
        a bill lowered is not still planned, in its own month (owner ruling 2026-09-09). */
-    rows.push({
+    entry.periods.push({
       label: `Installment #${i.number}`,
       date: i.dueDate,
       amount: Math.round((i.amount - off) * 100) / 100,
     });
-    schedule.set(i.playerId, rows);
+    perFamily.set(i.playerId, entry);
   }
 
   /* Every family with a schedule gets a row, including one billed nothing — a family the coach has
      not charged is a fact about the season, not a row to hide. */
-  const owners = new Set<string>([...byFamily.keys(), ...billedC.keys()]);
+  const owners = new Set<string>([...byFamily.keys(), ...perFamily.keys()]);
   const rows: ItemRow[] = [];
   for (const owner of owners) {
     const family = byFamily.get(owner);
-    const budgeted = ((billedC.get(owner) ?? 0) - Math.round((family?.billLowered.total ?? 0) * 100)) / 100;
+    const mine = perFamily.get(owner);
+    const budgeted = ((mine?.billedC ?? 0) - Math.round((family?.billLowered.total ?? 0) * 100)) / 100;
     const actual = family?.actual ?? 0;
     rows.push({
       /* ⚠ NAMESPACED, NEVER THE BARE PLAYER ID. The screen keys a row `<category>|<itemId>` and the
@@ -323,15 +336,18 @@ export function buildDuesFamilyRows(input: {
          the three parts that make `actual`, never a fourth line to subtract. */
       grossActual: actual,
       refundTotal: 0,
-      // Good-news-positive on the income side (rollup rule 6): more in than billed is the good news.
-      variance: r2(actual - budgeted),
+      /* ⚠ THE ROLLUP'S OWN RULE, CALLED RATHER THAN RESTATED (rollup rule 6: good-news-positive per
+         direction — on the income side, more in than billed is the good news). This was written out
+         here as `r2(actual - budgeted)` with the rule cited in a comment, which is how a formula
+         ends up named in three files and defined in one. */
+      variance: varianceFor('in', budgeted, actual),
       lineCount: 0,
       costCount: 0,
       /* ⚠ A FAMILY'S BILL **IS** THE PLAN HERE. `inPlan: false` renders an em-dash and a hidden
          "not planned" sentence, which would be false of a family who has a schedule — and these
          rows are only built when a schedule exists at all. */
       inPlan: true,
-      periods: schedule.get(owner) ?? [],
+      periods: mine?.periods ?? [],
       /* ⚠⚠ NO LINES AND NO COSTS, AND BOTH ABSENCES ARE THE RULING RATHER THAN AN OVERSIGHT.
          · `lines` empty ⇒ the screen's existing predicate gives a family's BUDGETED no door. A
            family's bill is one assessed figure, not a pile of records, and the report's standing

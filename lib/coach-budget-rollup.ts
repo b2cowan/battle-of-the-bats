@@ -760,7 +760,15 @@ function sectionOf(direction: MoneyDirection, categories: CategoryRow[]): Report
  * screen has one colour rule and changes only its wording — revenue varies up and down, costs run
  * over and under. Written twice, this is the defect the report shape was redesigned to remove.
  */
-function varianceFor(direction: MoneyDirection, budgeted: number, actual: number): number {
+/**
+ * ⚠ EXPORTED SINCE 2026-09-10 (`/simplify`), and the reason is worth keeping: the synthetic
+ * Player-dues rows are assembled OUTSIDE this module (`lib/coach-dues-revenue.ts`) and were
+ * hand-deriving the income branch of this formula — `r2(actual - budgeted)` — with rule 6 cited by
+ * name in a comment beside it. Rule 6 was then named in three places and codified in one, which is
+ * the "two derivations that happen to agree" shape this report has twice been consolidated to
+ * remove. Anything building a row for this report calls this rather than restating it.
+ */
+export function varianceFor(direction: MoneyDirection, budgeted: number, actual: number): number {
   return direction === 'in' ? r2(actual - budgeted) : r2(budgeted - actual);
 }
 
