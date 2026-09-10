@@ -3448,6 +3448,18 @@ a.oneChip:hover { border-color: currentColor; }
    of it, so the shell is the nearest ancestor they all share. `scripts/check-css-module-purity.mjs`
    now catches the next one locally. */
 .coachesShell {
+  /* ⚠ THE ONE STEP EVERY FOLDED MONEY ROW TAKES (`/simplify`, 2026-09-10). `.moneyGridLead` (the
+     reports' lines under a category) and `.driveHandInLead` (a drive's hand-ins under their
+     participant) both indent by this, so a coach meets ONE depth of nesting across the hub. The
+     agreement used to be held by a comment saying the two must match — retune one and nothing
+     fails, the two screens just quietly stop lining up.
+     ⚠ Their PHONE overrides stay divergent on purpose and are not tokenised: the reports' grid
+     tightens to 1.1rem inside a pinned column, while a hand-in card drops the indent to zero and
+     says "nested" with an inset and an accent edge instead. Only the shared base is shared.
+     ⚠ ON THE SHELL, NOT `:root` — see the note below: a rule with no local class passes the dev
+     server and FAILS the production webpack build as "not pure". Both consumers render inside the
+     shell and neither is portalled out of it. */
+  --money-fold-indent: 1.55rem;
   --money-cat-size:    0.92rem;
   --money-cat-weight:  800;
   --money-line-size:   0.84rem;
@@ -3740,8 +3752,9 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .moneyGrid tbody tr.moneyGridCat td { font-size: var(--money-catnum-size); }
 
-/* A line sits under its category, indented and at reading size. */
-.moneyGridLead { padding-left: 1.55rem !important; }
+/* A line sits under its category, indented and at reading size. ⚠ The value is
+   `--money-fold-indent`, declared on `.coachesShell` — see the note there. */
+.moneyGridLead { padding-left: var(--money-fold-indent) !important; }
 /* ⚠ The phone indent came across from the month grid, whose own `@media` override was left behind
    when its base rule moved here — so line names were sitting ~7px deeper on the narrowest table in
    the portal, with the phone-specific tightening silently gone. Found in review 2026-08-13. */
@@ -3906,6 +3919,55 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 .playerName { font-weight: 600; font-size: var(--type-body); }
+
+/* ══ A DRIVE'S BOARD: THE PARTICIPANT ROW AND THE HAND-INS UNDER IT ══════════════════════════════
+   (mig 287, owner ruling 2026-09-10 on mockup `94c27428`.) A board row became a PARTICIPANT — a
+   player or the whole team, carrying their total — that folds open onto each dated hand-in.
+
+   ⚠⚠ THESE RULES MUST NOT REACH A ONE-ENTRY ROW. That row is byte-for-byte what shipped before the
+   fold existed and the design depends on it staying so; `.driveHandIn` is only ever on a sub-row,
+   and `.driveWho` draws nothing of its own except holding the chevron beside the name. The board
+   of a drive where nobody handed in twice matches none of these selectors but `.driveWho`. */
+
+/* The chevron (or its spacer) and the name, kept on ONE line at EVERY width.
+   ⚠ THE REASON IS THE PHONE, not the desktop. This sits inside `.cardStackCell`, which below 640
+   becomes `flex-direction: column` — two bare siblings would stack, putting a 44px empty box above
+   the name on every folding row. One inline-flex child is what the column stacks instead.
+   ⚠ NOT the `.moneyGrid th.moneyGridLead > .moneyGridExpand + *` adjacent-sibling recipe the
+   reports use: that one deliberately drops the name BELOW the chevron at 640, because over there
+   the name sits in a ~138px pinned column of a scrolling grid. A card is full-width and has no
+   such problem, so the two screens want opposite things and share only the chevron itself. */
+.driveWho {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* A hand-in under its participant: the same row, quieted and stepped in. */
+.driveHandIn td {
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
+  color: var(--text-secondary);
+}
+/* The date leads the row where the participant's name leads theirs — indented to sit under it.
+   ⚠ THE SHARED TOKEN, not a repeat of the number: this is the same visual step every folded money
+   row on the portal takes, and picking a different one here would make a coach meet two depths of
+   nesting for no reason they could name. See `--money-fold-indent` where it is declared. */
+.driveHandInLead { padding-left: var(--money-fold-indent) !important; }
+
+@media (max-width: 640px) {
+  /* In card mode the indent has nothing to line up with — every card is full width — so the
+     nesting is said with an inset and an accent edge instead. Without this a hand-in card is
+     indistinguishable from the participant card above it: `.tableAsCards tr` already paints them
+     the same tint, so the desktop treatment says nothing here. */
+  .tableAsCards tr.driveHandIn {
+    margin-left: 1.1rem;
+    border-left-width: 3px;
+    border-left-color: var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  }
+  .driveHandInLead { padding-left: 0 !important; }
+}
 
 /* ── Roster: meta line, merged cells, mobile cards ──────────────────────── */
 .rosterMeta {
@@ -13060,3 +13122,52 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    Type as a bare 16px word in the Type slot. A field whose kind question has exactly one answer is
    STATED in `.convLockBand` at the top of the form, the way Record money states an answered door —
    do not rebuild a read-only value style for the next one-answer field. */
+
+/* ═══ Categories & items — the coach's vocabulary dialog, read by side (2026-09-09) ═══════════════
+   Mockup 43698c62 round 4b. Two bands in the Add Line form's words; the team's own rows by default;
+   one "+ Item" per band. Warm-theme tokens with dark fallbacks, like every row style above it. */
+.managerSearch { position: relative; }
+.managerSearch > svg { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.managerSearch > input { padding-left: 2.1rem; }
+.managerFilters { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.managerChip {
+  font-size: var(--type-support); font-weight: 600; padding: 0.3rem 0.65rem; border-radius: 999px;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); background: var(--home-card, transparent);
+  color: var(--text-secondary); cursor: pointer;
+}
+.managerChip b { font-weight: 500; opacity: 0.75; margin-left: 0.3rem; font-variant-numeric: tabular-nums; }
+.managerChip:hover { color: var(--text-primary); }
+.managerChipOn { background: var(--logic-lime); border-color: var(--logic-lime); color: var(--on-lime); }
+.managerChipOn:hover { color: var(--on-lime); }
+/* The band — the side, said once above its shelves, on the paper ground so it reads as a heading
+   of headings rather than one more row. Bleeds through the pane's padding like the pane does. */
+.managerBand {
+  display: flex; align-items: center; gap: 0.6rem; margin: 0.25rem -1.5rem 0; padding: 0.6rem 1.5rem;
+  background: var(--home-paper, var(--surface-2)); border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
+}
+.managerBandTitle { font-family: var(--font-display, sans-serif); font-weight: 700; font-size: var(--type-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-primary); }
+.managerBandCount { flex: 1; font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.managerAdd {
+  display: inline-flex; align-items: center; gap: 0.2rem; font-size: var(--type-support); font-weight: 600;
+  padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid transparent; background: none;
+  color: var(--logic-lime); cursor: pointer; min-height: 28px;
+}
+.managerAdd:hover { background: var(--home-olive-soft, rgba(255,255,255,0.08)); }
+.managerAdd:disabled { opacity: 0.45; cursor: default; }
+.managerShelf { display: flex; flex-direction: column; }
+.managerHead { border-bottom: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); padding-top: 0.7rem; }
+.managerHead .tagManagerName { font-weight: 600; font-size: var(--type-body); }
+.managerItem { padding-left: 1rem; }
+.managerSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.05rem; }
+.managerEmpty { padding: 0.5rem 0 0.25rem; }
+/* The inline add form under a band: paper ground, one box, the same fields the picker's create
+   panel asks in the same words. */
+.managerAddForm {
+  display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; padding: 0.85rem;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); border-radius: 10px;
+  background: var(--home-paper, var(--surface-2));
+}
+.managerAddTitle { margin: 0 0 0.15rem; font-weight: 600; font-size: var(--type-body); color: var(--text-primary); }
+.managerAddUnfold { display: flex; flex-direction: column; gap: 0.35rem; padding-left: 0.75rem; border-left: 2px solid var(--home-olive-soft, rgba(255,255,255,0.12)); }
+.managerAddActions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }

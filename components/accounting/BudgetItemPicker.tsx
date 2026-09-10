@@ -2,8 +2,13 @@
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
+/* The two side words, read from their one home — never a local pair (see SIDE_FLOW_LABEL). */
+import { SIDE_FLOW_LABEL } from '@/lib/coach-budget-manager-view';
 import styles from './BudgetItemPicker.module.css';
 import { claimEscape } from '@/components/coaches/escapeOwnership';
+import { Settings2 } from 'lucide-react';
+/* The dialog this control can host, and the door's words — one spelling, read from the dialog. */
+import BudgetItemManagerModal, { MANAGE_DOOR_LABEL } from '@/components/coaches/BudgetItemManagerModal';
 
 /**
  * The menu's height budget. `MENU_MAX` matches `.dropdown`'s own `max-height` — stated here too
@@ -182,11 +187,26 @@ interface Props {
   /** Draw the control as at fault — the picker is a required field since mig 240. */
   invalid?: boolean;
   disabled?: boolean;
-  /** Where a coach goes to rename or remove a word afterwards. Named in the create panel, so the
-   *  answer to "what if I get this wrong?" is on screen at the moment the choice is made — and
-   *  since 2026-08-17 that answer includes the fact that the SIDE is not one of the things that can
-   *  be changed later, which is exactly when a coach needs to know it. */
-  manageHint?: string;
+  /**
+   * The door + dialog this picker carries (owner ruling Q5, 2026-09-09): "Manage categories &
+   * items…" as the dropdown's LAST row, opening the coach's vocabulary dialog from right here. Coach
+   * mode only, and `teamId` must be set. The host passes its own refresh as `onChanged` — the dialog
+   * renames, removes and folds, and every money surface in the hub re-reads on that.
+   *
+   * ⚠ IT ALSO WRITES THE CREATE PANEL'S "rename it later" SENTENCE (/simplify, 2026-09-09). That
+   * line used to be a `manageHint` string each of four hosts hand-typed, and it had drifted once
+   * already — one host dropped the clause saying the SIDE is not among the things that can change
+   * later, which is exactly when a coach needs to know it. A door and its hint are one fact; the
+   * control that carries the door says the sentence, once.
+   *
+   * ⚠⚠ `categories` HERE IS THE WHOLE LIBRARY, NOT THIS PICKER'S LIST (/review, data lens
+   * 2026-09-09). Two hosts hand this control a SLICE to pick from — the fundraising form its
+   * Fundraising/Sponsorship shelf, the money form its other-money-in words — and the dialog derives
+   * everything it shows from the list it is given. Opened from those pickers on the picker's own
+   * list, it showed one or two shelves and called that the team's vocabulary; every spending heading
+   * was unreachable from that door. The host names the full library it read from the list route.
+   */
+  manage?: { orgSlug: string; categories: BudgetCategoryWithItems[]; onChanged: () => void };
   /**
    * ⚠⚠ A GROUP THAT IS NOT MADE OF BUDGET ITEMS, RENDERED FIRST (money centralization P2, owner
    * ruling C2, 2026-08-23).
@@ -241,8 +261,6 @@ interface Props {
 /** An item with its category carried along — what the flat, searchable list is made of. */
 interface Row { item: BudgetItem; categoryId: string; categoryName: string }
 
-const SIDE_WORD = { out: 'an expense', in: 'money coming in' } as const;
-
 export default function BudgetItemPicker({
   categories,
   value,
@@ -256,7 +274,7 @@ export default function BudgetItemPicker({
   selectId,
   invalid = false,
   disabled = false,
-  manageHint,
+  manage,
   leadGroup,
   placeholder,
   emptyNote,
@@ -286,6 +304,8 @@ export default function BudgetItemPicker({
   const [newCatName, setNewCatName] = useState('');
   const [catSaving, setCatSaving] = useState(false);
   const [catError, setCatError] = useState('');
+  /** The hosted categories-and-items dialog (see `manage`). */
+  const [managerOpen, setManagerOpen] = useState(false);
 
   // Local categories list that can be extended after a custom item is created
   const [localCategories, setLocalCategories] = useState<BudgetCategoryWithItems[]>(categories);
@@ -331,7 +351,15 @@ export default function BudgetItemPicker({
   const canCreate = q.length > 0 && !exact && !disabled;
   /* ⚠ KEYBOARD ORDER IS RENDER ORDER: lead options, then items, then "+ Add". A cursor index that
      did not account for the lead group would move the highlight and select a DIFFERENT row. */
-  const optionCount = leadMatches.length + matches.length + (canCreate ? 1 : 0);
+  const optionCount = leadMatches.length + matches.length + (canCreate ? 1 : 0) + (manage ? 1 : 0);
+  /** The door's cursor index — always the last row, after "+ Add" when that is shown. */
+  const manageIdx = manage ? optionCount - 1 : -1;
+
+  function openManager() {
+    setOpen(false);
+    setActiveIdx(-1);
+    setManagerOpen(true);
+  }
 
   /**
    * ⚠⚠ WHICH NAMES APPEAR MORE THAN ONCE ON THIS SIDE — the whole reason the tier tags exist.
@@ -364,9 +392,15 @@ export default function BudgetItemPicker({
   const selectedLabel = (() => {
     if (selectedLead) return selectedLead.name;
     if (!value?.itemId) return '';
-    const base = `${value.categoryName} · ${value.itemName}`;
-    if (!ambiguousNames.has(value.itemName.trim().toLowerCase())) return base;
+    /* ⚠ THE LIVE NAME WINS OVER THE SNAPSHOT (/review, concurrency lens 2026-09-09). `value` carries
+       the names as they were at selection time; the dialog this control now hosts can rename the
+       very item that is selected, and the host re-reads — so the list knows the new name while the
+       field would have kept showing the old one on a form about to be saved. The snapshot is only
+       the fallback for an item the list no longer offers. */
     const chosen = offered.find(r => r.item.id === value.itemId);
+    const itemName = chosen?.item.name ?? value.itemName;
+    const base = `${chosen?.categoryName ?? value.categoryName} · ${itemName}`;
+    if (!ambiguousNames.has(itemName.trim().toLowerCase())) return base;
     return chosen
       ? `${base} (${ITEM_TIER_LABEL[budgetItemTier({ org_id: chosen.item.orgId, team_id: chosen.item.teamId })]})`
       : base;
@@ -474,6 +508,7 @@ export default function BudgetItemPicker({
       if (activeIdx >= 0 && activeIdx < lead) chooseLead(leadMatches[activeIdx].id);
       else if (activeIdx >= lead && activeIdx < lead + matches.length) choose(matches[activeIdx - lead]);
       else if (activeIdx === lead + matches.length && canCreate) startCreate();
+      else if (manage && activeIdx === manageIdx) openManager();
       else {
         const m = offered.find(r => r.item.name.toLowerCase() === q);
         if (m) choose(m);
@@ -568,7 +603,14 @@ export default function BudgetItemPicker({
       const res = await fetch(createItemEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newCategoryName: name }),
+        /* ⚠⚠ `teamId` TRAVELS WITH THE NAME (fixed 2026-09-09). Since mig 277 a category belongs to
+           the team that made it, and the coach route checks money-write on THAT team — with no team
+           named it answered 400 "teamId is required and must be a team you coach" to every coach
+           who tried, from every money form, for five days. Nothing reported it: the sentence was
+           shown in the create panel's error slot and read as the coach's own mistake. */
+        body: JSON.stringify(createItemMode === 'coach'
+          ? { newCategoryName: name, teamId }
+          : { newCategoryName: name }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create category');
@@ -721,7 +763,7 @@ export default function BudgetItemPicker({
                 <div className={styles.dropEmpty}>
                   {q
                     ? <>Nothing on this side matches “{query.trim()}”.</>
-                    : <>Your list has no words for {SIDE_WORD[direction]} yet.</>}
+                    : <>Your list has no words under {SIDE_FLOW_LABEL[direction]} yet.</>}
                   {emptyNote && <span className={styles.dropEmptyNote}>{emptyNote}</span>}
                 </div>
               )}
@@ -733,6 +775,21 @@ export default function BudgetItemPicker({
                   onClick={startCreate}
                 >
                   + Add “{query.trim()}” to your list
+                </button>
+              )}
+              {manage && (
+                /* ⚠ THE ONE CONTEXTUAL DOOR (owner ruling Q5, 2026-09-09) — the dropdown's last row,
+                   where "Manage tags…" already sits in the tags combobox: findable exactly where a
+                   coach is thinking about the word, costing the form nothing. Shown even over an
+                   empty list, because the dialog's own empty state teaches. `onMouseDown`
+                   preventDefault keeps the input's focus so the blur timer never races the click. */
+                <button
+                  type="button"
+                  className={`${styles.opt} ${styles.optDoor} ${activeIdx === manageIdx ? styles.optActive : ''}`}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={openManager}
+                >
+                  <Settings2 size={13} aria-hidden /> {MANAGE_DOOR_LABEL}…
                 </button>
               )}
             </div>
@@ -847,11 +904,11 @@ export default function BudgetItemPicker({
             </select>
           </div>
           {/* ⚠⚠ THE SIDE IS STATED, NOT ASKED (mig 246). It comes from the control this was opened
-              from — the coach was already recording an expense, or already on an income line — so
+              from — the coach was already on a money-out line, or already on a money-in one — so
               asking again would be asking them to answer a question they have just answered, and
               getting a different answer is how a word ends up somewhere they cannot find it. */}
           <p className={styles.sideNote}>
-            Saved as <strong>{SIDE_WORD[direction]}</strong> — because that is what you are recording.
+            Saved under <strong>{SIDE_FLOW_LABEL[direction]}</strong> — because that is what you are recording.
             {/* ⚠⚠ WHERE THE WORD WILL REPORT, STATED AT THE MOMENT IT IS CREATED AND NEVER ASKED
                 (owner ruling 2026-09-08). The shelf decides who fills a money-in word in, and the
                 two derived shelves are self-explanatory — a word on Fundraising is filled in from a
@@ -873,7 +930,9 @@ export default function BudgetItemPicker({
               const note = chosen ? newItemNote?.(chosen, direction) : null;
               return note ? ` ${note}` : null;
             })()}
-            {manageHint ? ` ${manageHint}` : ''}
+            {/* The door's own sentence — see `manage`. The side clause is the part that matters:
+                it is the one thing the dialog cannot change later. */}
+            {manage ? ` Rename or remove it later from ${MANAGE_DOOR_LABEL} — but it stays on this side.` : ''}
           </p>
           {saveError && <p className={styles.error}>{saveError}</p>}
           <div className={styles.addFormActions}>
@@ -904,6 +963,20 @@ export default function BudgetItemPicker({
               : 'This item will be saved to your org’s library and become selectable for all coaches.'}
           </p>
         </div>
+      )}
+
+      {/* ⚠ THE PICKER HOSTS THE DIALOG ITSELF when given `manage`, so a call site adopts the door and
+          the dialog with ONE prop and can never wire one without the other — the shape the tags
+          combobox set (2026-09-01). The host's refresh rides `manage.onChanged`: the dialog renames,
+          removes and folds, the host re-reads, and this control's local copy follows the prop. */}
+      {manage && teamId && managerOpen && (
+        <BudgetItemManagerModal
+          orgSlug={manage.orgSlug}
+          teamId={teamId}
+          categories={manage.categories}
+          onClose={() => setManagerOpen(false)}
+          onChanged={manage.onChanged}
+        />
       )}
     </div>
   );

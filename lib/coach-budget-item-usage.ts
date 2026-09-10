@@ -170,7 +170,11 @@ export function sumBudgetItemUsage(usages: Array<BudgetItemUsage | undefined>): 
 /** "2 budget lines, 6 recorded costs and 1 money in" — the phrase every refusal and confirmation
  *  builds its sentence around, so the four kinds are never named four different ways. */
 export function describeBudgetItemUsage(usage: BudgetItemUsage): string {
-  const parts = usage.byKind.map(k => `${k.count} ${k.label}`);
+  /* ⚠ SINGULAR AT ONE (2026-09-09, /simplify). The reference labels are written plural ("budget
+     lines"), so a count of one read "1 budget lines" on every row, tooltip and refusal built here —
+     and the vocabulary dialog had grown its own singularising copy. Fixed once, where the sentence
+     lives. "money in" has no plural form and is untouched by the rule. */
+  const parts = usage.byKind.map(k => `${k.count} ${k.count === 1 ? k.label.replace(/s$/, '') : k.label}`);
   if (parts.length === 0) return 'nothing';
   if (parts.length === 1) return parts[0];
   return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;

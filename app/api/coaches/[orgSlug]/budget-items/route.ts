@@ -188,11 +188,34 @@ export const POST = withObservability(async (req: Request,
 
   const body = await req.json();
 
+  /* ⚠ A HEADING BORN WITH ITS FIRST ITEM (owner ruling Q10, 2026-09-09). The categories-and-items
+     dialog sends `newCategoryName` AND `name` together: the category is created and the item is
+     filed under it in one request, so a heading never exists without the item that gives it a side.
+     The category-only shape (`newCategoryName` alone) keeps working for the picker's own two-step.
+     When both arrive, the category branch falls through into the item branch below with the new
+     row's id; if the item then fails to insert, the heading is removed again (`undoCreated`), so the
+     coach is never left with an empty heading they did not ask for. */
+  let createdCategory: BudgetCategoryWithItems | null = null;
+  /** The raw row the category insert returned — the item branch reads its visibility columns from
+   *  here rather than fetching back the row it wrote a moment ago (/simplify, 2026-09-09). */
+  let createdRow: Record<string, unknown> | null = null;
+  const bornWithItem = typeof body.name === 'string' && body.name.trim() !== '';
+
   // ── Create a new category ────────────────────────────────────────────────
   const newCategoryName: string = typeof body.newCategoryName === 'string' ? body.newCategoryName.trim() : '';
   if (newCategoryName) {
     if (newCategoryName.length > 80) {
       return NextResponse.json({ error: 'Category name must be 80 characters or fewer' }, { status: 400 });
+    }
+    /* Validated BEFORE anything is written: a combined request with no side, or an item name the
+       item branch would refuse, would otherwise create the heading and then refuse the item —
+       leaving exactly the orphan this shape exists to avoid (the length case was found by
+       `/review`, 2026-09-09: the item branch's own check sat AFTER the insert). */
+    if (bornWithItem && !parseBudgetItemDirection(body.direction)) {
+      return NextResponse.json({ error: BUDGET_ITEM_DIRECTION_REQUIRED }, { status: 400 });
+    }
+    if (bornWithItem && String(body.name).trim().length > 80) {
+      return NextResponse.json({ error: 'name is required and must be 80 characters or fewer' }, { status: 400 });
     }
     /* ⚠ A CATEGORY NEEDS ITS TEAM NOW (mig 277), and money-write is checked on THAT team — the same
        two rules the item branch below has carried since 2026-08-16. The handler's opening gate only
@@ -247,11 +270,23 @@ export const POST = withObservability(async (req: Request,
       createdAt: cat.created_at as string,
       items:     [],
     };
-    return NextResponse.json({ category }, { status: 201 });
+    if (!bornWithItem) return NextResponse.json({ category }, { status: 201 });
+    createdCategory = category;
+    createdRow = cat as Record<string, unknown>;
   }
 
-  // ── Create a new item in an existing category ────────────────────────────
-  const catId: string = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';
+  /** Take the just-made heading back if its first item cannot be filed — never leave an empty
+   *  heading the coach did not ask for. Best effort: a failure here is logged by the outer
+   *  observability wrapper and the coach still gets the item's own refusal. */
+  async function undoCreated() {
+    if (!createdCategory) return;
+    await supabaseAdmin.from('budget_categories').delete()
+      .eq('id', createdCategory.id).eq('org_id', ctx.org.id).eq('team_id', createdCategory.teamId ?? '');
+  }
+
+  // ── Create a new item in an existing category (or the one just made) ─────
+  const catId: string = createdCategory?.id
+    ?? (typeof body.categoryId === 'string' ? body.categoryId.trim() : '');
   const name: string  = typeof body.name === 'string' ? body.name.trim() : '';
   const teamId: string = typeof body.teamId === 'string' ? body.teamId.trim() : '';
   const suggestedAmount: number | null =
@@ -297,15 +332,20 @@ export const POST = withObservability(async (req: Request,
      render that item nowhere, on a heading nobody in their team can open, while showing up in the
      OTHER team's list as a word they never wrote. Same predicate as the list two functions up, which
      is the point: what a list offers and what a save accepts must be one rule. */
-  const { data: cat, error: catErr } = await supabaseAdmin
-    .from('budget_categories')
-    // ⚠ `income_source` (mig 285) — the shelf decides who fills this word's number in, and the row
-    // is already being fetched for the visibility check, so the answer costs nothing extra.
-    .select('id, scope, org_id, team_id, income_source')
-    .eq('id', catId)
-    .or(`org_id.is.null,org_id.eq.${ctx.org.id}`)
-    .in('scope', ['team', 'both'])
-    .single();
+  /* ⚠ A HEADING MADE A MOMENT AGO IS NOT FETCHED BACK (/simplify, 2026-09-09). Its insert returned
+     every column this check reads, and the predicate below passes it by construction — this org's,
+     this team's, scope 'team'. The read stays for the ordinary path, where the id came from the client. */
+  const { data: cat, error: catErr } = createdRow
+    ? { data: createdRow, error: null }
+    : await supabaseAdmin
+      .from('budget_categories')
+      // ⚠ `income_source` (mig 285) — the shelf decides who fills this word's number in, and the row
+      // is already being fetched for the visibility check, so the answer costs nothing extra.
+      .select('id, scope, org_id, team_id, income_source')
+      .eq('id', catId)
+      .or(`org_id.is.null,org_id.eq.${ctx.org.id}`)
+      .in('scope', ['team', 'both'])
+      .single();
 
   if (catErr || !cat || !categoryVisibleToTeam(cat as OwnedBudgetCategory, ctx.org.id, teamId)) {
     return NextResponse.json({ error: 'Category not found' }, { status: 404 });
@@ -379,13 +419,17 @@ export const POST = withObservability(async (req: Request,
       if (winner) return NextResponse.json({ item: mapItem(winner) }, { status: 200 });
       /* Since migration 248 the index includes the side, so a 23505 with no same-side winner means
          the race genuinely lost to something this read cannot see. Rare, and honest about it. */
+      await undoCreated();
       return NextResponse.json({
         error: `“${name}” could not be added just now — something else created a word by that name at `
           + `the same moment. Try again.`,
       }, { status: 409 });
     }
+    await undoCreated();
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ item: mapItem(data) }, { status: 201 });
+  return NextResponse.json(
+    createdCategory ? { item: mapItem(data), category: createdCategory } : { item: mapItem(data) },
+    { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/budget-items' });

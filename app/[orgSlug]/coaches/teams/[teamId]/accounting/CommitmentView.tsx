@@ -13,6 +13,7 @@ import type { BudgetCategoryWithItems, RepTeamExpense, RepTeamTag } from '@/lib/
 import type { CommitmentStanding } from '@/lib/payable-standing';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import styles from '../../../coaches.module.css';
+import { useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -210,6 +211,8 @@ export default function CommitmentView({
   const [payee, setPayee] = useState<PayeeSelection | null>(() => seedPayee(expense));
   const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
   const [filing, setFiling] = useState<Filing>(() => seedFiling(expense, categories));
+  /* The vocabulary dialog the picker can open from here re-reads every money tab through the hub. */
+  const bumpMoneyRevision = useBumpMoneyRevision();
 
   const [state, setState] = useState<SaveState>('clean');
   const [saveError, setSaveError] = useState('');
@@ -677,7 +680,7 @@ export default function CommitmentView({
                  opted in there; the record view was simply never given the same prop, so one
                  picker wore two sets of clothes on two screens for the same bill. */
               paperGround
-              manageHint="Rename or remove it later from Budget Plan → Manage our words — but it stays on this side."
+              manage={{ orgSlug, categories, onChanged: bumpMoneyRevision }}
               onChange={v => touch(setFiling)({
                 categoryId: v.categoryId, categoryName: v.categoryName,
                 itemId: v.itemId, itemName: v.itemName,

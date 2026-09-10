@@ -1,0 +1,194 @@
+<title>QA §163 · Categories & Items Door</title>
+<style>
+  :root { --pg:#EEF0F4; --card:#fff; --ink:#1B1F26; --mute:#5B6470; --rule:#D3D8E0; --acc:#2457C5; --acc-soft:rgba(36,87,197,.10); --ok:#1E6B3A; --ok-soft:rgba(30,107,58,.12); --flag:#B42318; --flag-soft:rgba(180,35,24,.10); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pg:#15181D; --card:#1E2229; --ink:#E8EAEE; --mute:#98A1AD; --rule:#2E343D; --acc:#8AB0FF; --acc-soft:rgba(138,176,255,.14); --ok:#7FD39A; --ok-soft:rgba(127,211,154,.14); --flag:#F08A80; --flag-soft:rgba(240,138,128,.14); } }
+  :root[data-theme="dark"] { --pg:#15181D; --card:#1E2229; --ink:#E8EAEE; --mute:#98A1AD; --rule:#2E343D; --acc:#8AB0FF; --acc-soft:rgba(138,176,255,.14); --ok:#7FD39A; --ok-soft:rgba(127,211,154,.14); --flag:#F08A80; --flag-soft:rgba(240,138,128,.14); }
+  body { margin:0; background:var(--pg); color:var(--ink); font:16px/1.5 'Segoe UI', system-ui, sans-serif; }
+  .doc { max-width:880px; margin:0 auto; padding:32px 20px 120px; }
+  h1 { font-size:28px; margin:0 0 6px; } h2 { font-size:20px; margin:40px 0 8px; } h3 { font-size:17px; margin:0; }
+  p { margin:8px 0; max-width:72ch; } .mute { color:var(--mute); font-size:14px; }
+  .bar { position:sticky; top:0; background:var(--pg); padding:10px 0; border-bottom:1px solid var(--rule); z-index:2; display:flex; align-items:center; gap:12px; font-size:14px; }
+  .track { flex:1; height:8px; background:var(--rule); border-radius:4px; overflow:hidden; } .fillbar { display:block; height:100%; width:0; background:var(--ok); transition:width .2s; }
+  .step { background:var(--card); border:1px solid var(--rule); border-radius:8px; padding:14px 18px; margin:14px 0; }
+  .step.done { border-color:var(--ok); }
+  .step .where { color:var(--mute); font-size:13px; margin:2px 0 8px; }
+  .chk { display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--rule); }
+  .chk input { margin-top:5px; width:18px; height:18px; flex:none; } .chk label { cursor:pointer; }
+  .chk.on label { color:var(--mute); text-decoration:line-through; }
+  .hintline { display:block; color:var(--mute); font-size:13px; text-decoration:none !important; }
+  .verdict { margin-top:10px; font-size:13px; color:var(--mute); display:flex; gap:6px; align-items:center; }
+  .vbtn { font:600 12px inherit; padding:4px 10px; border-radius:999px; border:1px solid var(--rule); background:none; color:var(--ink); cursor:pointer; }
+  .vbtn[data-v="pass"][aria-pressed="true"] { background:var(--ok-soft); border-color:var(--ok); color:var(--ok); }
+  .vbtn[data-v="flag"][aria-pressed="true"] { background:var(--flag-soft); border-color:var(--flag); color:var(--flag); }
+  textarea { width:100%; box-sizing:border-box; margin-top:8px; min-height:56px; font:14px inherit; padding:8px; border:1px solid var(--rule); border-radius:6px; background:var(--pg); color:var(--ink); }
+  #out { min-height:220px; font:13px ui-monospace, Menlo, monospace; }
+  .btn { font:600 14px inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--rule); background:var(--card); color:var(--ink); cursor:pointer; }
+  .btn.pri { background:var(--acc); border-color:var(--acc); color:#fff; }
+  #toastwrap { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--pg); padding:8px 14px; border-radius:999px; font-size:14px; }
+  kbd { font:600 13px inherit; padding:1px 6px; border:1px solid var(--rule); border-radius:4px; background:var(--pg); }
+</style>
+<div class="doc">
+  <p class="mute">Owner QA · Coach portal · Money · Budget Plan · built on dev 2026-09-09</p>
+  <h1>§163 · Categories &amp; Items Door</h1>
+  <p>The dialog behind the Budget Plan's vocabulary button, redrawn by side. Walk it on the <b>UAT Test Team</b> (dev). Plan: <code>COACH_BUDGET_CATEGORIES_AND_ITEMS_DOOR_PLAN.md</code> · mockup <code>43698c62</code>. Ticks, verdicts and notes save on this device; <b>Copy results</b> at the bottom pastes the whole walk back into chat.</p>
+  <p class="mute">⚠ Pinned to IDENTITIES, not figures: your own team's headings and items are whatever you have; the walk names what must be true of them, never how many.</p>
+  <div class="bar"><span><b id="cdone">0</b>/<span id="ctotal">0</span> checked</span><span class="track"><span class="fillbar" id="fillbar"></span></span><button class="btn" id="resetall">Reset</button></div>
+
+  <div class="step" data-step="A"><h3>A · The door, and the clip is gone</h3><p class="where">Budget Plan → toolbar</p>
+    <div class="chk"><input type="checkbox" id="a1"><label for="a1">The toolbar's third button reads <b>Manage categories &amp; items</b>, and it is there even on a team that owns no item yet<span class="hintline">It used to hide until the team owned one</span></label></div>
+    <div class="chk"><input type="checkbox" id="a2"><label for="a2">It opens a dialog titled <b>Categories &amp; items</b> with two bands, in this order: <b>MONEY COMING IN</b>, then <b>MONEY THE TEAM SPENDS</b></label></div>
+    <div class="chk"><input type="checkbox" id="a3"><label for="a3">Tap <b>Everything</b>, then scroll with the wheel or a finger: the list moves and reaches its last row — nothing is cut off at the box's bottom edge<span class="hintline">This is the defect you hit: 64 rows in a box that could not scroll</span></label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="B"><h3>B · Yours by default</h3><p class="where">Dialog, chip <b>Our own</b> (selected on open)</p>
+    <div class="chk"><input type="checkbox" id="b1"><label for="b1">Only your own headings and items are listed; a Standard or Club heading appears only when one of <i>your</i> items lives under it, showing that item alone</label></div>
+    <div class="chk"><input type="checkbox" id="b2"><label for="b2">Every item of yours carries a line under its name saying what is filed against it ("1 budget line and 2 recorded costs" or "Nothing filed yet") — the same sentence the bin's refusal uses — and the bin is grey exactly when something is</label></div>
+    <div class="chk"><input type="checkbox" id="b3"><label for="b3">No row anywhere says "Money in" or "Expense" — the band above it says the side</label></div>
+    <div class="chk"><input type="checkbox" id="b4"><label for="b4">The four chips read <b>Our own · Club · Standard · Everything</b> with counts on the first three; the counts do not change while you type in the search box</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="C"><h3>C · Add an item under a heading that already takes money in</h3><p class="where">Dialog → <b>+ Item</b> on MONEY COMING IN</p>
+    <div class="chk"><input type="checkbox" id="c1"><label for="c1">The form asks <b>Category</b> and <b>Item name</b> — nothing about the side</label></div>
+    <div class="chk"><input type="checkbox" id="c2"><label for="c2">The Category list has two groups — <b>Already take money in</b>, then <b>Not taking money in yet — pick one and it will</b> — and <b>+ New category…</b> is its last row; your own headings say "· yours"</label></div>
+    <div class="chk"><input type="checkbox" id="c3"><label for="c3">Pick <b>Fundraising</b>: the line under the form says a <b>drive</b> fills in its money. Pick <b>Sponsorship</b>: a <b>sponsor</b>. Pick any other money-in heading: "Will report under …" with that heading's name</label></div>
+    <div class="chk"><input type="checkbox" id="c4"><label for="c4">Add one under Fundraising called <b>QA walk drive</b>: it appears under MONEY COMING IN, under Fundraising, reading "Nothing filed yet", with its pencil and bin live; the notice above says it was added</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="D"><h3>D · A heading born with its first item</h3><p class="where">Dialog → <b>+ Item</b> on MONEY THE TEAM SPENDS → Category: <b>+ New category…</b></p>
+    <div class="chk"><input type="checkbox" id="d1"><label for="d1">Choosing New category unfolds one field, <b>New category name</b>, above Item name; there is no separate "add a category" button anywhere in the dialog</label></div>
+    <div class="chk"><input type="checkbox" id="d2"><label for="d2">Name the heading <b>QA walk trip</b> and the item <b>QA walk bus</b>, add: the heading appears under MONEY THE TEAM SPENDS wearing <b>OUR OWN</b>, with the item under it, and the <b>Our own</b> chip's count rose by two</label></div>
+    <div class="chk"><input type="checkbox" id="d3"><label for="d3">The heading's own bin is grey while it holds the item (hover it: "can't be removed while it holds 1 item")</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="E"><h3>E · A mixed shelf of your own, with no setting</h3><p class="where">Dialog → <b>+ Item</b> on MONEY COMING IN → Category: <b>QA walk trip · yours</b> (in the second group)</p>
+    <div class="chk"><input type="checkbox" id="e1"><label for="e1">Your cost-only heading is offered under "Not taking money in yet — pick one and it will", not hidden</label></div>
+    <div class="chk"><input type="checkbox" id="e2"><label for="e2">Add <b>QA walk raffle</b> under it: <b>QA walk trip</b> now appears under BOTH bands — the bus under spending, the raffle under money coming in — exactly as Tournaments does under Everything</label></div>
+    <div class="chk"><input type="checkbox" id="e3"><label for="e3">Remove the raffle (bin): the heading leaves the money-coming-in band again and stays under spending</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="F"><h3>F · Rename, remove, and the empty heading</h3><p class="where">Dialog, your own rows</p>
+    <div class="chk"><input type="checkbox" id="f1"><label for="f1">Rename <b>QA walk bus</b> inline (pencil, <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels) and rename the <b>QA walk trip</b> heading: both change on the row and on the plan behind the dialog after Done</label></div>
+    <div class="chk"><input type="checkbox" id="f2"><label for="f2">On an item of yours that has something filed against it, the bin is grey and its hover sentence names the records; on <b>QA walk bus</b> (nothing filed) the bin removes it</label></div>
+    <div class="chk"><input type="checkbox" id="f3"><label for="f3">With the bus gone, the trip heading moves to a small <b>Nothing under it yet</b> group at the foot of the list, its bin now live; remove it there</label></div>
+    <div class="chk"><input type="checkbox" id="f4"><label for="f4">A Standard heading has no pencil and no bin, in every chip view</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="G"><h3>G · Search and Everything</h3><p class="where">Dialog</p>
+    <div class="chk"><input type="checkbox" id="g1"><label for="g1">Under <b>Our own</b>, type the name of a Standard item (e.g. <b>jerseys</b>): "Nothing in Our own matches" with a <b>Show N under Everything</b> button that switches the chip and shows it</label></div>
+    <div class="chk"><input type="checkbox" id="g2"><label for="g2">Under <b>Everything</b>: <b>Tournaments</b> appears under both bands with only that side's items; item rows wear their tier chip (Standard / Club / Our own) and headings always do</label></div>
+    <div class="chk"><input type="checkbox" id="g3"><label for="g3">Type part of a heading's name: the whole heading shows with all its items on that side; type part of an item's name: only that item shows under its heading</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="H"><h3>H · The picker's own door, and the door that was broken</h3><p class="where">Budget Plan → <b>Add Line</b> → the Category &amp; Item box</p>
+    <div class="chk"><input type="checkbox" id="h1"><label for="h1">Open the item list: its last row reads <b>Manage categories &amp; items…</b> and opens the same dialog on top of the Add Line form; Done returns you to the form with your typing intact</label></div>
+    <div class="chk"><input type="checkbox" id="h2"><label for="h2">Type a word that does not exist → <b>+ Add … to your list</b> → in the create panel choose <b>+ Add custom category…</b> → name it <b>QA walk picker</b> → Add Category: it is created and the form moves on to the item name<span class="hintline">This has been refused with "teamId is required…" since 2026-09-04 — the defect found on the way</span></label></div>
+    <div class="chk"><input type="checkbox" id="h3"><label for="h3">The create panel's sentence under the item still ends by naming <b>Manage categories &amp; items</b> as the place to rename or remove it later — and not "Manage our words" anywhere</label></div>
+    <div class="chk"><input type="checkbox" id="h4"><label for="h4">Record a cost (Money → Record) and the fundraising form's "Raising for" box: the same last-row door is there too</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="I"><h3>I · The fold keeps working, with the new noun</h3><p class="where">Dialog footer → <b>Use a shared item instead</b></p>
+    <div class="chk"><input type="checkbox" id="i1"><label for="i1">The screen is titled <b>Use a shared item instead</b>; tick <b>QA walk drive</b>, choose the standard <b>Fundraising drive</b>: the confirmation says nothing is filed so no records move, and the button reads <b>Remove 1 item</b></label></div>
+    <div class="chk"><input type="checkbox" id="i2"><label for="i2">Confirm: back on the list, the notice says it was removed, and it is gone from under Fundraising</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="J"><h3>J · The phone</h3><p class="where">A real phone, or 390 wide</p>
+    <div class="chk"><input type="checkbox" id="j1"><label for="j1">The dialog is a sheet; under <b>Everything</b> it scrolls to its last row with a finger</label></div>
+    <div class="chk"><input type="checkbox" id="j2"><label for="j2"><b>+ Item</b> sits beside both band titles on one line; the add form's Category list opens as the phone's native picker with the two group labels</label></div>
+    <div class="chk"><input type="checkbox" id="j3"><label for="j3">A grey bin's reason is readable on the row (the usage line) — no hover needed</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <div class="step" data-step="K"><h3>K · Help, and the fixture put back</h3><p class="where">Help → Money guide; then the dialog</p>
+    <div class="chk"><input type="checkbox" id="k1"><label for="k1">Searching help for <b>categories &amp; items</b> finds the Budget article and the manage article; both describe the two bands, the chips and "+ Item", and neither says "Manage our words"</label></div>
+    <div class="chk"><input type="checkbox" id="k2"><label for="k2">Remove <b>QA walk picker</b> (and any item you made under it) from the dialog so the fixture is as you found it; <b>Our own</b>'s count is back where it started</label></div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div><textarea placeholder="Notes"></textarea></div>
+
+  <h2>Results</h2>
+  <p class="mute">Copy and paste this back into the chat.</p>
+  <textarea id="out" readonly></textarea>
+  <p><button class="btn pri" id="copyout">Copy results</button></p>
+  <div id="toastwrap" hidden><span id="toast"></span></div>
+</div>
+<script>
+(function(){
+  var KEY='fl-qa-163-categories-items-door';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('.step textarea'));
+  var out=document.getElementById('out');
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v){ st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); }); }
+  });
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+  function build(){
+    var lines=['OWNER QA §163 — Categories & Items Door','Fixture: UAT Test Team · built on dev 2026-09-09',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var hint=lab.querySelector('.hintline');
+        var txt=lab.textContent;
+        if(hint) txt=txt.replace(hint.textContent,'');
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt.replace(/\s+/g,' ').trim());
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+  function toast(msg){ var w=document.getElementById('toastwrap'); document.getElementById('toast').textContent=msg; w.hidden=false; setTimeout(function(){ w.hidden=true; },1600); }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); }); }
+    else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; }); areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+  paint();
+})();
+</script>

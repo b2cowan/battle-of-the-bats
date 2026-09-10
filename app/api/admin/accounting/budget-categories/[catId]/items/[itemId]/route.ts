@@ -144,7 +144,7 @@ export const DELETE = withObservability(async (req: Request,
   const usage = await countBudgetItemUsage([itemId]);
   if (usage.total > 0) {
     return NextResponse.json({
-      error: `“${existing.name}” is in use — ${describeBudgetItemUsage(usage)} are filed against it. `
+      error: `“${existing.name}” is in use — ${describeBudgetItemUsage(usage)} ${usage.total === 1 ? 'is' : 'are'} filed against it. `
         + `Deleting it would leave every one of them unclassified. Rename it instead, which reaches `
         + `them all and loses nothing.`,
     }, { status: 409 });

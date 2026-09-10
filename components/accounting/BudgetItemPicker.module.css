@@ -288,3 +288,16 @@
   background: rgba(var(--home-olive-rgb), 0.05);
   border-color: rgba(var(--home-olive-rgb), 0.18);
 }
+
+/* The one contextual door — the dropdown's last row, opening the categories-and-items dialog
+   (owner ruling Q5, 2026-09-09). Paper ground and support ink like the tags combobox's
+   "Manage tags…" row: a door OUT of the list, not one more thing to pick. */
+.optDoor {
+  border-top: 1px solid var(--border-2);
+  background: var(--home-paper, var(--surface-2));
+  color: var(--text-secondary);
+  font-size: var(--type-support);
+  font-weight: 500;
+  gap: 0.4rem;
+}
+.optDoor:hover, .optDoor.optActive { color: var(--text-primary); }

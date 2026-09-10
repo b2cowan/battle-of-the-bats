@@ -61,7 +61,8 @@ export {
   type BudgetItemReference, type BudgetItemUsage,
 } from './coach-budget-item-usage';
 import {
-  BUDGET_ITEM_REFERENCES, NO_BUDGET_ITEM_USAGE, sumBudgetItemUsage, type BudgetItemUsage,
+  BUDGET_ITEM_REFERENCES, NO_BUDGET_ITEM_USAGE, sumBudgetItemUsage,
+  type BudgetItemReference, type BudgetItemUsage,
 } from './coach-budget-item-usage';
 
 /**
@@ -70,21 +71,39 @@ import {
  * ⚠ COUNTS EVERY TABLE IN THE LIST, ALWAYS. A guard that counts all but one of them is the original
  * bug wearing a newer comment — which is why this takes no "which tables" parameter.
  */
-export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetItemUsage> {
-  if (itemIds.length === 0) return NO_BUDGET_ITEM_USAGE;
-
+/** The one counting loop behind both counters below: every reference table, one head-count
+ *  each, keyed by whichever column the caller names — the item's or the category's. */
+async function countReferences(
+  keyOf: (ref: BudgetItemReference) => string,
+  ids: string[],
+): Promise<BudgetItemUsage> {
+  if (ids.length === 0) return NO_BUDGET_ITEM_USAGE;
   const counts = await Promise.all(BUDGET_ITEM_REFERENCES.map(async ref => {
     const { count } = await supabaseAdmin
       .from(ref.table)
       .select('id', { count: 'exact', head: true })
-      .in(ref.column, itemIds);
+      .in(keyOf(ref), ids);
     return { label: ref.label, count: count ?? 0 };
   }));
-
   return {
     total:  counts.reduce((n, c) => n + c.count, 0),
     byKind: counts.filter(c => c.count > 0),
   };
+}
+
+export async function countBudgetItemUsage(itemIds: string[]): Promise<BudgetItemUsage> {
+  return countReferences(ref => ref.column, itemIds);
+}
+
+/**
+ * How many records still name a CATEGORY directly — the guard on removing a heading (owner ruling
+ * Q3, 2026-09-09). The same seven tables, read through `categoryColumn`: every one of them is
+ * ON DELETE SET NULL, so a delete would not fail on a live reference — it would silently blank that
+ * record's filing. Same shape as the item counter so the refusal is spoken by the same
+ * `describeBudgetItemUsage`, in one grammar with the item's.
+ */
+export async function countBudgetCategoryUsage(categoryId: string): Promise<BudgetItemUsage> {
+  return countReferences(ref => ref.categoryColumn, [categoryId]);
 }
 
 /**

@@ -145,3 +145,12 @@ describe('itemOfferedToClub — a club plan uses shared words, never a team’s'
     assert.equal(itemOfferedToClub(teamWord, OURS), false);
   });
 });
+
+describe('describeBudgetItemUsage — singular at one', () => {
+  test('reads "1 budget line", never "1 budget lines"', () => {
+    const one = { total: 1, byKind: [{ label: 'budget lines', count: 1 }] };
+    assert.equal(describeBudgetItemUsage(one), '1 budget line');
+    const mixed = { total: 4, byKind: [{ label: 'budget lines', count: 1 }, { label: 'recorded costs', count: 2 }, { label: 'money in', count: 1 }] };
+    assert.equal(describeBudgetItemUsage(mixed), '1 budget line, 2 recorded costs and 1 money in');
+  });
+});

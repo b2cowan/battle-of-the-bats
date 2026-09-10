@@ -167,18 +167,29 @@ describe('the coach create path scopes its uniqueness check', () => {
 });
 
 describe('renaming a category', () => {
-  it('has a club door and a coach door, and no delete on either', () => {
+  it('has a club door and a coach door; delete exists only for a coach, only on an EMPTY heading of their own', () => {
     const club  = read('app/api/admin/accounting/budget-categories/[catId]/route.ts');
     const coach = read('app/api/coaches/[orgSlug]/budget-categories/[catId]/route.ts');
 
     assert.ok(club.includes('export const PATCH'), 'the club needs a rename door');
     assert.ok(coach.includes('export const PATCH'), 'a coach needs a rename door for their own');
 
-    /* ⚠ DELETE STAYS ABSENT ON BOTH TIERS, and it is a data-integrity rule rather than a missing
-       feature: budget_items.category_id is ON DELETE CASCADE, so dropping a heading takes its items
-       with it and blanks the filing on every record filed against them, across every team. */
+    /* ⚠ DELETE STAYS ABSENT ON THE CLUB SIDE. The data-integrity rule is unchanged: budget_items.category_id
+       is ON DELETE CASCADE, so dropping a heading that holds anything takes its items with it and blanks
+       the filing on every record filed against them, across every team. */
     assert.ok(!club.includes('export const DELETE'), 'category DELETE must not exist (club side)');
-    assert.ok(!coach.includes('export const DELETE'), 'category DELETE must not exist (coach side)');
+
+    /* ⚠ THE COACH SIDE GAINED ONE (owner ruling Q3, 2026-09-09) — for a heading of the team's own that
+       holds NOTHING, which is the only case the rule above does not reach. What keeps it safe is that
+       "nothing" is asked of every table that can name a category, not just the items: seven of them
+       point at budget_categories ON DELETE SET NULL, so a naive delete would not fail — it would silently
+       blank a filing. The route must count the items AND walk BUDGET_ITEM_REFERENCES before deleting. */
+    assert.ok(coach.includes('export const DELETE'), 'the coach door must offer DELETE for an empty own heading (Q3)');
+    const del = coach.slice(coach.indexOf('export const DELETE'));
+    assert.ok(/from\('budget_items'\)[\s\S]{0,200}count/.test(del), 'DELETE must count the items under the heading first');
+    assert.ok(/countBudgetCategoryUsage\(/.test(del), 'DELETE must walk every table that can name a category — through countBudgetCategoryUsage, the item counter\'s twin over BUDGET_ITEM_REFERENCES');
+    assert.ok(del.indexOf('countBudgetCategoryUsage(') < del.indexOf('.delete()'), 'the reference walk must come BEFORE the delete');
+    assert.ok(/\.delete\(\)[\s\S]{0,120}\.eq\('team_id', teamId\)/.test(del), 'the delete must re-assert the team on the write (check-then-act)');
   });
 
   it('the club’s door refuses a team’s own heading', () => {

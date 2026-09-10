@@ -1,0 +1,431 @@
+<title>Categories & Items Door</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Source+Sans+3:wght@400;600&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* ── Document chrome (cool slate, so the warm product frames read as specimens) ───────── */
+  :root {
+    --pg: #EEF0F4; --pg-2: #FFFFFF; --ink: #1B1F26; --mute: #5B6470; --rule: #D3D8E0;
+    --acc: #2457C5; --acc-soft: rgba(36,87,197,.10);
+    --amber: #8F5B00; --amber-soft: rgba(143,91,0,.10);
+    --grey: #6B7280; --grey-soft: rgba(107,114,128,.12);
+    --danger: #B42318; --danger-soft: rgba(180,35,24,.10);
+    /* Product frame tokens — FieldLogicHQ warm coach portal, fixed in both document themes */
+    --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54;
+    --p-line: rgba(70,55,30,.12); --p-line-strong: rgba(70,55,30,.20);
+    --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,.10); --p-lime: #D6E4A8; --p-live: #B03A22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --pg: #15181D; --pg-2: #1E2229; --ink: #E8EAEE; --mute: #98A1AD; --rule: #2E343D;
+      --acc: #8AB0FF; --acc-soft: rgba(138,176,255,.14);
+      --amber: #E0A94A; --amber-soft: rgba(224,169,74,.14);
+      --grey: #9CA3AF; --grey-soft: rgba(156,163,175,.14);
+      --danger: #F08A80; --danger-soft: rgba(240,138,128,.14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --pg: #15181D; --pg-2: #1E2229; --ink: #E8EAEE; --mute: #98A1AD; --rule: #2E343D;
+    --acc: #8AB0FF; --acc-soft: rgba(138,176,255,.14);
+    --amber: #E0A94A; --amber-soft: rgba(224,169,74,.14);
+    --grey: #9CA3AF; --grey-soft: rgba(156,163,175,.14);
+    --danger: #F08A80; --danger-soft: rgba(240,138,128,.14);
+  }
+  body { background: var(--pg); color: var(--ink); font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.5; margin: 0; }
+  .doc { max-width: 1120px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1, h2, h3 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; text-wrap: balance; margin: 0; }
+  h1 { font-size: 34px; line-height: 1.15; }
+  h2 { font-size: 24px; margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  p { max-width: 68ch; margin: 10px 0; }
+  .lede { font-size: 18px; color: var(--mute); max-width: 70ch; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); font-weight: 600; }
+  .round { background: var(--pg-2); border: 1px solid var(--rule); border-left: 4px solid var(--acc); border-radius: 6px; padding: 14px 18px; margin-top: 22px; max-width: 900px; }
+  .round p { margin: 4px 0; }
+  .meas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 8px; max-width: 900px; }
+  .meas div { background: var(--pg-2); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; }
+  .meas b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .meas span { font-size: 13px; color: var(--mute); }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
+  .tag { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+  .tag.new { color: var(--acc); background: var(--acc-soft); }
+  .tag.re { color: var(--amber); background: var(--amber-soft); }
+  .tag.un { color: var(--grey); background: var(--grey-soft); }
+  .tag.bug { color: var(--danger); background: var(--danger-soft); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--mute); margin-top: 14px; align-items: center; }
+  .spec { display: flex; gap: 32px; align-items: flex-start; margin-top: 22px; overflow-x: auto; padding-bottom: 8px; }
+  .spec.wrap { flex-wrap: wrap; }
+  .spec > .notes { flex: 1 1 280px; min-width: 260px; }
+  .notes ol { padding-left: 0; list-style: none; margin: 0; display: grid; gap: 12px; }
+  .notes li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; font-size: 15px; }
+  .notes li .n { width: 22px; height: 22px; border-radius: 50%; background: var(--acc); color: #fff; font: 600 12px/22px 'Source Sans 3', sans-serif; text-align: center; }
+  .cap { font-size: 13px; color: var(--mute); margin: 8px 0 0; max-width: 520px; }
+  table.opt { border-collapse: collapse; width: 100%; margin-top: 16px; font-size: 15px; }
+  table.opt th, table.opt td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+  table.opt th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); font-weight: 600; }
+  table.opt td.name { font-weight: 600; white-space: nowrap; }
+  table.opt tr.rec td { background: var(--acc-soft); }
+  .tablewrap { overflow-x: auto; }
+  .ask { display: grid; gap: 12px; margin-top: 16px; max-width: 900px; }
+  .ask > div { background: var(--pg-2); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; display: grid; grid-template-columns: 44px 1fr; gap: 12px; }
+  .ask b.q { font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: var(--acc); }
+  .ask p { margin: 0 0 4px; max-width: none; }
+  .ask .rec { font-weight: 600; }
+
+  /* ── Product frames ───────────────────────────────────────────────────────────────────── */
+  .frame-col { position: relative; flex: none; max-width: 520px; }
+  .fr { box-sizing: border-box; width: 520px; background: var(--p-card); color: var(--p-ink); border: 1px solid rgba(87,101,30,.30); border-radius: 12px; padding: 24px; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.45; display: flex; flex-direction: column; }
+  .fr.fixed { height: 810px; overflow: hidden; }
+  .fr.sheet { width: 390px; height: 844px; border-radius: 0; padding: 20px 16px; }
+  .fr * { box-sizing: border-box; }
+  .fh { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex: none; }
+  .ft { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: .01em; margin: 0; line-height: 1.1; }
+  .fs { font-size: 12px; color: var(--p-dim); margin: 3px 0 0; max-width: 44ch; line-height: 1.4; }
+  .fx { color: var(--p-dim); background: none; border: 0; padding: 4px; margin: -4px -4px 0 0; }
+  .body { display: flex; flex-direction: column; gap: 14px; }
+  .body.scroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; margin-inline: -24px; padding-inline: 24px; padding-bottom: 12px; }
+  .sheet .body.scroll { margin-inline: -16px; padding-inline: 16px; }
+  .sec { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--p-ink-soft); margin: 6px 0 0; }
+  .hint { font-size: 12px; color: var(--p-dim); line-height: 1.4; margin: 0; }
+  /* the side band — the two words the Add Line form uses, one per side */
+  .band { display: flex; align-items: center; gap: 10px; margin: 4px -24px 0; padding: 10px 24px; background: var(--p-paper); border-top: 1px solid var(--p-line-strong); border-bottom: 1px solid var(--p-line); }
+  .sheet .band { margin-inline: -16px; padding-inline: 16px; }
+  .band .t { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .09em; text-transform: uppercase; color: var(--p-ink); }
+  .band .c { font-size: 12px; color: var(--p-dim); flex: 1; white-space: nowrap; }
+  .band .acts { gap: 6px; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--p-line); min-height: 44px; }
+  .row:last-child { border-bottom: 0; }
+  .row .nm { flex: 1; min-width: 0; font-size: 16px; }
+  .row .nm.dim { color: var(--p-dim); }
+  .row.item { padding-left: 16px; }
+  .row.item .nm { font-size: 15px; }
+  .sub { display: block; font-size: 12px; color: var(--p-dim); margin-top: 1px; }
+  .row.head { border-bottom: 1px solid var(--p-line-strong); padding-top: 12px; }
+  .row.head .nm { font-weight: 600; font-size: 14px; letter-spacing: .01em; }
+  .grp { display: flex; flex-direction: column; }
+  .chip { flex: none; display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--p-line-strong); color: var(--p-dim); background: var(--p-card); white-space: nowrap; }
+  .chip.own { color: var(--p-olive); border-color: rgba(87,101,30,.45); background: var(--p-olive-soft); }
+  .acts { display: flex; gap: 4px; flex: none; }
+  .ib { width: 28px; height: 28px; border: 0; background: none; border-radius: 4px; color: var(--p-dim); display: inline-grid; place-items: center; padding: 0; }
+  .ib[disabled] { opacity: .35; }
+  .ib svg, .btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .search svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; font: 600 13px Inter, sans-serif; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--p-line-strong); background: var(--p-card); color: var(--p-ink); white-space: nowrap; }
+  .btn.pri { background: var(--p-lime); border-color: rgba(87,101,30,.35); }
+  .btn.ghost { border-color: transparent; background: none; }
+  .btn.sm { font-size: 12px; padding: 5px 10px; }
+  .btn.add { font-size: 12px; padding: 4px 8px; color: var(--p-olive); border-color: transparent; background: none; gap: 3px; }
+  .btn.add svg { width: 13px; height: 13px; }
+  .foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; flex: none; padding-top: 12px; border-top: 1px solid var(--p-line); }
+  .foot .r { display: flex; gap: 8px; margin-left: auto; }
+  .search { position: relative; }
+  .search input { width: 100%; font: 400 15px Inter, sans-serif; padding: 9px 12px 9px 34px; border: 1px solid var(--p-line-strong); border-radius: 8px; background: var(--p-card); color: var(--p-ink); }
+  .search svg { position: absolute; left: 11px; top: 11px; color: var(--p-dim); }
+  .filt { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filt button { font: 600 12px Inter, sans-serif; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--p-line-strong); background: var(--p-card); color: var(--p-ink-soft); }
+  .filt button.on { background: var(--p-olive); border-color: var(--p-olive); color: #fff; }
+  .filt button b { font-weight: 500; opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .inp { width: 100%; font: 400 15px Inter, sans-serif; padding: 8px 10px; border: 1px solid var(--p-olive); border-radius: 8px; background: var(--p-card); color: var(--p-ink); outline: 2px solid rgba(87,101,30,.18); }
+  .sel { display: flex; align-items: center; justify-content: space-between; width: 100%; font: 500 15px Inter, sans-serif; padding: 9px 12px; border: 1px solid var(--p-line-strong); border-radius: 8px; background: var(--p-card); color: var(--p-ink); }
+  .sel svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .lbl { font: 600 13px Inter, sans-serif; margin: 0 0 5px; }
+  .panel { border: 1px solid var(--p-line-strong); border-radius: 10px; padding: 14px; background: var(--p-paper); display: grid; gap: 12px; margin: 10px 0 4px; }
+  .panel .pt { font: 600 14px Inter, sans-serif; margin: 0; }
+  .mk { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: var(--acc); color: #fff; font: 600 12px/22px 'Source Sans 3', sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--pg); }
+  .bar { display: flex; gap: 8px; justify-content: flex-end; width: 520px; padding: 12px; background: var(--p-paper); border: 1px solid var(--p-line); border-radius: 12px; font-family: Inter, sans-serif; }
+  .drop { width: 520px; background: var(--p-card); border: 1px solid var(--p-line-strong); border-radius: 10px; box-shadow: 0 10px 30px rgba(36,30,21,.12); font-family: Inter, sans-serif; color: var(--p-ink); overflow: hidden; }
+  .drop .g { font: 600 11px Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--p-dim); padding: 12px 16px 4px; }
+  .drop .o { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; font-size: 16px; }
+  .drop .o.door { border-top: 1px solid var(--p-line-strong); background: var(--p-paper); font-size: 14px; font-weight: 600; color: var(--p-olive); justify-content: flex-start; gap: 8px; }
+  .drop .o.door svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="doc">
+  <p class="eyebrow">Coach portal · Money · Budget Plan · design sheet, 2026-09-09 · round 4</p>
+  <h1>Categories &amp; Items Door</h1>
+  <p class="lede">The dialog behind “Manage our words”, redrawn so a coach can find, rename, add and remove their own categories and items — read the way the budget is read, one side of the books at a time.</p>
+  <div class="round">
+    <p><strong>Round 3 — the side lives on the item, and the shelf earns its side.</strong> Your questions on round 2 land on the model the product already runs: every item carries exactly one side (it has since the picker began filtering by side), and a category is a shelf that shows under a side only when items on that side sit on it. “Uniform hats” cannot appear under Money coming in, because it is a cost item and Team Gear holds no money-in items. Tournaments appears under both because it holds both. <strong>Round 2’s Q6 — giving your own category a fixed side — is withdrawn</strong>: it would have taken away the very flexibility Tournaments has, and nothing needs it once “Add a category” is born with its first item (§4).</p>
+    <p><strong>Round 4 — one door on each band, and the category is chosen or made inside it.</strong> Round 3’s “+ Category” button on each band invited the trap you named: a coach whose heading shows under Money the team spends, wanting to put money in against it, reads the band and makes a second heading. Gone. Each band carries <em>+ Item</em> only; the item form’s Category list shows every heading — the ones already on this side first, then the ones not taking this side yet, plainly labelled — and “New category” sits after all of them. A heading can only be born with an item, from inside that form, which is the picker’s own flow.</p>
+    <p><strong>Still standing:</strong> two bands in the Add Line form’s words, no side chip on any row, the side answered by where you tapped, the shelf earning its side from its items (§5), and where this meets the two plans running beside it (§9).</p>
+  </div>
+  <div class="legend">
+    <span class="tag new">New</span><span class="tag re">Restyled</span><span class="tag un">Unchanged</span><span class="tag bug">Defect</span>
+    <span>Product frames at real size (520px dialog, 390px phone sheet), warm portal tokens. Rows are your team’s from the screenshot plus two invented items under Provincials Trip; chip counts are illustrative.</span>
+  </div>
+
+  <!-- ══ 1. Defect ═════════════════════════════════════════════════════════════════════════ -->
+  <h2>1 · What you hit, for the record</h2>
+  <p><span class="tag bug">Defect</span> Chocolate sale is editable; it sits below a line the dialog cannot scroll past. The body is not one of the shapes the scrolling-body recipe scrolls, so the frame clips at its bottom edge and the wheel does nothing. Measured on the live demo world at desktop 1440×900:</p>
+  <div class="meas">
+    <div><b>810 px</b><span>the dialog box</span></div>
+    <div><b>4,296 px</b><span>the content inside it</span></div>
+    <div><b>64 rows</b><span>11 headings · 1 own item · 52 shared words</span></div>
+    <div><b>+81 px</b><span>“Our items” heading below the edge</span></div>
+    <div><b>0 px</b><span>scroll after a 2,500 px wheel; same on the phone</span></div>
+  </div>
+  <p>This ships as its own fix whatever is decided below, with the unit guard widened to every dialog on that recipe. Two smaller drifts on the same door: its tooltip still offers to “move it to the other side”, retracted 2026-08-17, and the button only appears once the team owns an item.</p>
+
+  <!-- ══ 2. Name ═══════════════════════════════════════════════════════════════════════════ -->
+  <h2>2 · The name, still open (Q1)</h2>
+  <p>The form calls it <strong>Category &amp; Item</strong>, the picker says “add to <strong>your list</strong>”, the chip says <strong>Our own</strong>, the dialog says <strong>Our items</strong>; “words” is a fifth name that appears nowhere else. The other manage doors settled the grammar: a door is named after what its field holds.</p>
+  <div class="tablewrap">
+  <table class="opt">
+    <tr><th>Candidate</th><th>Completes which sentence</th><th>For</th><th>Against</th></tr>
+    <tr><td class="name">Manage our words</td><td>none on the screen</td><td>Short, warm.</td><td>A fifth name; never what the coach typed or read on the form.</td></tr>
+    <tr class="rec"><td class="name">Manage categories &amp; items <span class="tag new" style="margin-left:6px">Recommended</span></td><td>the form’s label</td><td>Names both lists; one grammar with “Manage tags…”; the help article already speaks in these nouns.</td><td>Longest. Fits the desktop toolbar; the phone bar shows the icon.</td></tr>
+    <tr><td class="name">Manage your list</td><td>the picker’s “add … to your list”</td><td>Shortest.</td><td>Says nothing about categories; away from the picker, “list” could mean the plan.</td></tr>
+  </table>
+  </div>
+
+  <!-- ══ 3. The redraw ═════════════════════════════════════════════════════════════════════ -->
+  <h2>3 · The redraw, by side</h2>
+  <p>Money coming in first: the shorter side, and the one a coach has most often not thought about — the same order the “What am I forgetting?” index uses. Under each band, your headings with your items nested under them, and any shared heading that one of your items lives under. The body scrolls; drag it.</p>
+  <div class="spec">
+    <div class="frame-col">
+      <div class="fr fixed">
+        <div class="fh"><div><h3 class="ft">Categories &amp; items</h3><p class="fs">What your budget lines are filed under. Yours to change; the rest shown on request.</p></div><button class="fx" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+        <div class="body scroll">
+          <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Find a category or item" aria-label="Find a category or item"></div>
+          <div class="filt"><button class="on">Our own<b>4</b></button><button>Club<b>2</b></button><button>Standard<b>61</b></button><button>Everything</button></div>
+
+          <div class="band"><span class="t">Money coming in</span><span class="c">1 of yours</span><div class="acts"><span class="btn add"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+          <div class="grp">
+            <div class="row head"><span class="nm dim">Fundraising</span><span class="chip">Standard</span></div>
+            <div class="row item"><span class="nm">Chocolate sale<span class="sub">1 budget line · 3 money in</span></span><div class="acts"><button class="ib" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+          </div>
+
+          <div class="band"><span class="t">Money the team spends</span><span class="c">3 of yours</span><div class="acts"><span class="btn add"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+          <div class="grp">
+            <div class="row head"><span class="nm">Provincials Trip</span><span class="chip own">Our own</span><div class="acts"><button class="ib" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+            <div class="row item"><span class="nm">Hotel block<span class="sub">2 budget lines · 1 recorded cost</span></span><div class="acts"><button class="ib" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+            <div class="row item"><span class="nm">Charter bus<span class="sub">Nothing filed yet</span></span><div class="acts"><button class="ib" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+          </div>
+
+          <p class="hint">Renaming changes the name <strong>everywhere</strong>, including on everything already filed against it. An item is removed only while nothing is filed against it — once something is, rename it or fold it into a shared one. A category of yours is removed only while it holds nothing.</p>
+          <p class="hint" style="color:var(--p-ink-soft)">Standard and club headings and items are read-only here. Switch to <strong>Club</strong>, <strong>Standard</strong> or <strong>Everything</strong> to see them; your club renames its own from its Org Budget.</p>
+        </div>
+        <div class="foot"><span class="btn">Use a shared item instead</span><div class="r"><span class="btn ghost">Done</span></div></div>
+      </div>
+      <span class="mk" style="right:-30px; top:94px">1</span>
+      <span class="mk" style="right:-30px; top:146px">2</span>
+      <span class="mk" style="right:-30px; top:196px">3</span>
+      <span class="mk" style="right:-30px; top:258px">4</span>
+      <span class="mk" style="right:-30px; top:400px">5</span>
+      <span class="mk" style="right:-30px; top:470px">6</span>
+      <span class="mk" style="right:-30px; top:762px">7</span>
+      <div class="tags"><span class="tag re">Title, subtitle</span><span class="tag new">Search</span><span class="tag new">Filter chips</span><span class="tag new">Side bands with add</span><span class="tag re">Rows nested under their heading</span><span class="tag new">Usage sub-line</span><span class="tag un">Pencil, bin, fold, Done</span></div>
+      <p class="cap">Recommended. “Hotel block” and “Charter bus” are invented to show a used and an unused item of yours; the side chip that sat on every row in round 1 is gone.</p>
+    </div>
+    <div class="notes">
+      <ol>
+        <li><span class="n">1</span><span><strong>Search</strong>, the same box the picker is. It searches both sides.</span></li>
+        <li><span class="n">2</span><span><strong>Filter chips carry the chip words</strong>, with counts. <em>Our own</em> is the default; the shared library is behind the other three, not on the page.</span></li>
+        <li><span class="n">3</span><span><strong>The band is the side.</strong> The two words are the Add Line form’s own answers, in the order the “What am I forgetting?” index already uses. “1 of yours” tells you the band is not empty before you scroll.</span></li>
+        <li><span class="n">4</span><span><strong>One door on the band: <em>+ Item</em></strong>, quiet and olive like a link. It opens a short form under that band (§4); the side is already answered, and the heading is chosen or made inside the form, so a coach never creates a heading because they could not see it on this side.</span></li>
+        <li><span class="n">5</span><span><strong>Your heading, under the side its items are on</strong>, with its items nested and its own bin, grey while it holds anything (Q3). Put a money-in item on it and it appears under the other band too, exactly as Tournaments does.</span></li>
+        <li><span class="n">6</span><span><strong>No side chip on any row.</strong> With two options and a band above, a chip on every row was labelling the obvious. The usage sub-line stays, because that is why a bin is grey.</span></li>
+        <li><span class="n">7</span><span><strong>The fold stays</strong>, with the new noun. Its own screen is unchanged.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ══ 4. Adding ═════════════════════════════════════════════════════════════════════════ -->
+  <h2>4 · Adding, under the band you tapped</h2>
+  <p>One form, opened inline under the band, so the side never has to be asked — it is stated, the way the picker’s own create panel states it (“Saved as money coming in — because that is what you are recording”). The form asks two things, Category and Item name — the words the form label and the picker’s own create panel already use. Category lists every heading, and “New category” comes after all of them, so a heading is only ever born with an item and only after the coach has seen the ones they already have. The form closes with one quiet line saying where the money will report, because that is the only consequence a coach cannot see from here.</p>
+  <div class="spec wrap">
+    <div class="frame-col">
+      <div class="fr" style="width:480px">
+        <div class="band" style="margin-top:0"><span class="t">Money coming in</span><span class="c">1 of yours</span><div class="acts"><span class="btn add" style="color:var(--p-ink); background:var(--p-olive-soft)"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+        <div class="panel">
+          <p class="pt">New item, money coming in</p>
+          <div><p class="lbl">Category</p><span class="sel">Fundraising <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+            <div style="border:1px solid var(--p-line-strong); border-top:0; border-radius:0 0 8px 8px; background:var(--p-card); font-size:14px; padding:4px 0">
+              <div style="padding:6px 12px 2px; font:600 11px Inter,sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--p-dim)">Already take money in</div>
+              <div style="padding:7px 12px; background:var(--p-olive-soft); font-weight:600">Fundraising</div>
+              <div style="padding:7px 12px">Sponsorship</div>
+              <div style="padding:7px 12px">Tournaments</div>
+              <div style="padding:7px 12px">Other Income</div>
+              <div style="padding:6px 12px 2px; margin-top:4px; border-top:1px solid var(--p-line); font:600 11px Inter,sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--p-dim)">Not taking money in yet — pick one and it will</div>
+              <div style="padding:7px 12px">Provincials Trip <span style="font-size:11px; color:var(--p-dim)">· yours</span></div>
+              <div style="padding:7px 12px; color:var(--p-dim)">Events, Facilities, League &amp; Fees, Officials, Team Gear, Training, Travel</div>
+              <div style="padding:7px 12px; margin-top:4px; border-top:1px solid var(--p-line); color:var(--p-olive); font-weight:600">+ New category…</div>
+            </div>
+          </div>
+          <div><p class="lbl">Item name</p><input class="inp" value="Bottle drive" aria-label="Item name" style="border-color:var(--p-line-strong); outline:none"></div>
+          <p class="hint">Saved to this team’s list only. Under Fundraising, a <strong>drive</strong> fills in its money.</p>
+          <div style="display:flex; justify-content:flex-end; gap:8px"><span class="btn ghost">Cancel</span><span class="btn pri">Add item</span></div>
+        </div>
+        <div class="tags"><span class="tag new">New</span></div>
+        <p class="cap" style="font-family:'Source Sans 3',sans-serif">The Category list, drawn open. Headings already taking money in come first. The second group is labelled with the exact thing the coach was unsure about — a heading currently on the other side can take this side too — so nobody makes a twin of Provincials Trip. “New category” is the last row, after every heading they already have. Categories are never filtered, only grouped: the picker’s rule, and the Tournaments flexibility for a heading of your own (Q9).</p>
+      </div>
+    </div>
+    <div class="frame-col">
+      <div class="fr" style="width:480px">
+        <div class="band" style="margin-top:0"><span class="t">Money coming in</span><span class="c">1 of yours</span><div class="acts"><span class="btn add" style="color:var(--p-ink); background:var(--p-olive-soft)"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+        <div class="panel">
+          <p class="pt">New item, money coming in</p>
+          <div><p class="lbl">Category</p><span class="sel" style="color:var(--p-olive); font-weight:600">+ New category… <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
+          <div style="padding-left:12px; border-left:2px solid var(--p-olive-soft); display:grid; gap:10px">
+            <div><p class="lbl">New category name</p><input class="inp" value="Bake sales" aria-label="Category name"></div>
+            <p class="hint">A heading of your own — no other team sees it. Will report under <strong>Bake sales</strong>. You record each arrival yourself — only Fundraising and Sponsorship have a drive or a sponsor filling the number in.</p>
+          </div>
+          <div><p class="lbl">Item name</p><input class="inp" value="Cookie dough" aria-label="Item name" style="border-color:var(--p-line-strong); outline:none"></div>
+          <p class="hint">Saved to this team’s list only.</p>
+          <div style="display:flex; justify-content:flex-end; gap:8px"><span class="btn ghost">Cancel</span><span class="btn pri">Add item</span></div>
+        </div>
+        <div class="tags"><span class="tag new">New</span></div>
+        <p class="cap" style="font-family:'Source Sans 3',sans-serif">The same form after choosing “New category”: one more field unfolds above the item’s name. The heading and its first item are saved together, which is what gives the heading a band to appear under without storing a side on it. The product already refuses a heading whose name your team can already see, so even a determined twin is turned back with “pick it above” (Q10).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 5. How a shelf gets its side ══════════════════════════════════════════════════════ -->
+  <h2>5 · How a shelf gets its side</h2>
+  <p>Nothing is stored on the category. Each item carries one side, chosen by the form it was made in, and a shelf appears under a band when it holds at least one item on that side. This is the rule the picker, the plan’s two sections and the “What am I forgetting?” index already run; the dialog adopts it rather than inventing a second one. Three shelves from your own library:</p>
+  <div class="spec wrap">
+    <div class="frame-col">
+      <div class="fr" style="width:340px; padding:18px">
+        <div class="row head" style="padding-top:0"><span class="nm dim">Team Gear</span><span class="chip">Standard</span></div>
+        <p class="hint" style="margin:8px 0 6px">Under <strong>Money the team spends</strong> only.</p>
+        <div class="row item"><span class="nm dim">Jerseys</span></div>
+        <div class="row item"><span class="nm dim">Hats</span></div>
+        <div class="row item"><span class="nm dim">Balls <span class="sub">… and 6 more, all costs</span></span></div>
+        <p class="hint" style="margin-top:10px">Nine cost items, no money-in item. It never appears under Money coming in, so “Hats” cannot either.</p>
+      </div>
+    </div>
+    <div class="frame-col">
+      <div class="fr" style="width:340px; padding:18px">
+        <div class="row head" style="padding-top:0"><span class="nm dim">Tournaments</span><span class="chip">Standard</span></div>
+        <p class="hint" style="margin:8px 0 6px">Under <strong>both</strong> bands, half each.</p>
+        <div class="row item"><span class="nm dim">Registration revenue <span class="sub">money coming in</span></span></div>
+        <div class="row item"><span class="nm dim">Gate / admission <span class="sub">money coming in</span></span></div>
+        <div class="row item"><span class="nm dim">Entry Fees <span class="sub">money the team spends</span></span></div>
+        <p class="hint" style="margin-top:10px">Three money-in items, two cost items. The heading is one shelf; each band shows only its own half.</p>
+      </div>
+    </div>
+    <div class="frame-col">
+      <div class="fr" style="width:340px; padding:18px">
+        <div class="row head" style="padding-top:0"><span class="nm">Provincials Trip</span><span class="chip own">Our own</span></div>
+        <p class="hint" style="margin:8px 0 6px">Spends only — <strong>until</strong> you add a money-in item to it.</p>
+        <div class="row item"><span class="nm">Hotel block</span></div>
+        <div class="row item"><span class="nm">Charter bus</span></div>
+        <div class="row item" style="background:var(--p-olive-soft); margin:0 -18px; padding-inline:34px 18px"><span class="nm">Trip fundraiser <span class="sub">added under Money coming in → the shelf now shows there too</span></span></div>
+        <p class="hint" style="margin-top:10px">The Tournaments flexibility, for a heading of your own, with no setting to find. Remove the money-in item and the shelf leaves that band again.</p>
+      </div>
+    </div>
+  </div>
+  <p><strong>The one edge, and its answer.</strong> A heading of yours with nothing under it has no side to appear under. It can only arise by abandoning the picker’s two-step after the first step, or by removing a heading’s last item. It is listed once, at the foot of <em>Our own</em>, under “Nothing under it yet”, where it can be renamed, removed, or given an item. It is not a state the new forms can create (§4).</p>
+  <p><strong>What was considered and set aside.</strong> A side on the item is already the rule; asking “in, out or both” per item would break it — a report reads a row’s side from what was filed, and “both” would leave it nothing to read. A side on the category was round 2’s Q6, now withdrawn; it would have removed the mixed shelf. Filtering the Category list to this side’s shelves only would forbid a mixed shelf of your own, so the list is ordered instead. A “+ Category” button on each band was round 3; set aside because a coach whose heading shows under the other band would read the band and make a twin — the heading is now chosen or made only inside the item form.</p>
+
+  <!-- ══ 5. Everything ═════════════════════════════════════════════════════════════════════ -->
+  <h2>6 · “Everything”, and the shelf that holds both kinds</h2>
+  <div class="spec">
+    <div class="frame-col">
+      <div class="fr" style="width:520px">
+        <div class="filt" style="margin-bottom:6px"><button>Our own<b>4</b></button><button>Club<b>2</b></button><button>Standard<b>61</b></button><button class="on">Everything</button></div>
+        <div class="band"><span class="t">Money coming in</span><span class="c">11 · 1 of yours</span><div class="acts"><span class="btn add"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+        <div class="grp">
+          <div class="row head"><span class="nm dim">Fundraising</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm">Chocolate sale<span class="sub">1 budget line · 3 money in</span></span><span class="chip own">Our own</span><div class="acts"><button class="ib"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+          <div class="row item"><span class="nm dim">Fundraising drive</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Merchandise sales</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Raffle</span><span class="chip">Club</span></div>
+          <div class="row head"><span class="nm dim">Tournaments</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Registration revenue</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Concession revenue</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Gate / admission</span><span class="chip">Standard</span></div>
+        </div>
+        <div class="band"><span class="t">Money the team spends</span><span class="c">52 · 3 of yours</span><div class="acts"><span class="btn add"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+        <div class="grp">
+          <div class="row head"><span class="nm dim">Tournaments</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Entry Fees</span><span class="chip">Standard</span></div>
+          <div class="row item"><span class="nm dim">Officials</span><span class="chip">Standard</span></div>
+          <p class="hint" style="padding:10px 0 2px">… Facilities, League &amp; Fees, Provincials Trip and the rest, each with its items</p>
+        </div>
+      </div>
+      <p class="cap">The picker’s view, read-only. Tier chips return on item rows here because the three tiers mix; “Raffle” is an invented club item.</p>
+    </div>
+    <div class="notes">
+      <p><strong>Tournaments appears twice, and that is the honest shape.</strong> It is one shelf holding registration revenue and entry fees. The plan already lists it under Costs and under Money coming in; the picker already shows one half at a time. The dialog does the same: under each band, the shelf with only that side’s items. Nothing on the row has to say “money in”, because the band did.</p>
+      <p><strong>Where the side chip came from.</strong> Round 1 put “Money in / Expense” on every row because the flat list had no other way to say it. The bands replace it. Keeping the chip as well would be the same thing said twice on every row.</p>
+      <p><strong>Your own heading shows twice only if you make it so.</strong> Put a money-in item and a cost item on Provincials Trip and it reads exactly like Tournaments; keep it to costs and it stays under one band. No setting, no second rule.</p>
+    </div>
+  </div>
+
+  <!-- ══ 6. Phone ══════════════════════════════════════════════════════════════════════════ -->
+  <h2>7 · The phone sheet, 390 wide</h2>
+  <p>Same dialog as a sheet. With one door per band, “+ Item” fits beside either word at 390 with no icon-only fallback needed. Open this page on your phone to judge the targets.</p>
+  <div class="spec">
+    <div class="frame-col">
+      <div class="fr fixed sheet">
+        <div class="fh"><div><h3 class="ft">Categories &amp; items</h3><p class="fs">What your budget lines are filed under.</p></div><button class="fx" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+        <div class="body scroll">
+          <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Find a category or item" aria-label="Find a category or item"></div>
+          <div class="filt"><button class="on">Our own<b>4</b></button><button>Club<b>2</b></button><button>Standard<b>61</b></button><button>Everything</button></div>
+          <div class="band"><span class="t">Money coming in</span><span class="c">1 of yours</span><div class="acts"><span class="btn add"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+          <div class="grp">
+            <div class="row head"><span class="nm dim">Fundraising</span><span class="chip">Standard</span></div>
+            <div class="row item"><span class="nm">Chocolate sale<span class="sub">1 line · 3 money in</span></span><div class="acts"><button class="ib"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+          </div>
+          <div class="band"><span class="t">Money the team spends</span><span class="c">3 of yours</span><div class="acts"><span class="btn add"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Item</span></div></div>
+          <div class="grp">
+            <div class="row head"><span class="nm">Provincials Trip</span><span class="chip own">Our own</span><div class="acts"><button class="ib"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+            <div class="row item"><span class="nm">Hotel block<span class="sub">2 lines · 1 cost</span></span><div class="acts"><button class="ib"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib" disabled><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+            <div class="row item"><span class="nm">Charter bus<span class="sub">Nothing filed yet</span></span><div class="acts"><button class="ib"><svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button class="ib"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>
+          </div>
+          <p class="hint">Renaming changes the name everywhere. An item is removed only while nothing is filed against it; a category of yours only while it holds nothing.</p>
+        </div>
+        <div class="foot"><span class="btn sm">Use a shared item instead</span><div class="r"><span class="btn sm ghost">Done</span></div></div>
+      </div>
+      <p class="cap">Phone sheet, true width. Same rows, same order, one door per band.</p>
+    </div>
+    <div class="notes">
+      <p><strong>What the phone changes:</strong> only the add buttons’ width. The current sheet has the same clip (content 4,978px in an 844px sheet, no scroll), so the fix is the same one class.</p>
+      <p><strong>What it does not do:</strong> no swipe-to-delete, no long-press. The bin is the bin, and a grey one explains itself on the row.</p>
+    </div>
+  </div>
+
+  <!-- ══ 7. Doors ══════════════════════════════════════════════════════════════════════════ -->
+  <h2>8 · Two doors, one name <span class="tag un" style="vertical-align:middle; margin-left:8px">As round 1</span></h2>
+  <div class="spec">
+    <div class="frame-col">
+      <div class="bar"><span class="btn"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>Export</span><span class="btn pri"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add Line</span><span class="btn"><svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Manage categories &amp; items</span></div>
+      <p class="cap">Budget Plan toolbar: renamed, no longer hidden until you own an item.</p>
+    </div>
+    <div class="frame-col">
+      <div class="drop">
+        <div class="g">Fundraising</div>
+        <div class="o"><span>Chocolate sale</span><span class="chip own">Our own</span></div>
+        <div class="o"><span>Fundraising drive</span><span class="chip">Standard</span></div>
+        <div class="o door"><svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Manage categories &amp; items…</div>
+      </div>
+      <p class="cap">The picker’s last row, where “Manage tags…” already is. Its inline “add a category” keeps working and takes the side from the line’s own form, silently.</p>
+    </div>
+  </div>
+
+  <!-- ══ 8. Rulings ════════════════════════════════════════════════════════════════════════ -->
+  <h2>9 · Where this meets the two plans running beside it</h2>
+  <p><strong>“The category is the shelf” (built 2026-09-09, walk owed).</strong> Its first ruling — the category is the group on both sides, on every surface, items beneath, no shelf above the category — is what the bands and the shelf-under-each-band are. Its second — the forgetting index reads under the two direction headings in the form’s own words, money coming in first — is the same device this dialog uses, in the same order. Consistent by construction: a coach who has read the index reads this dialog the same way.</p>
+  <p><strong>“One word, one line” (planning, mockup round 1).</strong> It collapses the plan to one line per item per season, on the premise that items are the shared vocabulary and the join between plan and real money — so one-off event words must not be minted as items. Four places the two touch:</p>
+  <ol style="max-width:72ch; padding-left:20px; display:grid; gap:8px">
+    <li><strong>That premise is this dialog’s reason to exist.</strong> A vocabulary that carries every roll-up needs a place to be tidied — rename, fold into a shared item, remove — and needs adding to be deliberate. The add forms here say “saved to this team’s list only” and land under a side, which is the opposite of a generator of one-off words.</li>
+    <li><strong>The same fact from two sides.</strong> Their form says “already on this plan — add to it”; this dialog’s row says “1 budget line”. Once their change ships, an item can carry at most one line per season, and the sub-line can simply read “on this season’s plan”.</li>
+    <li><strong>Their open question, answered by the vocabulary.</strong> Their Phase 3 asks whether the join key needs a direction because “one item may appear as two rows”. An item carries exactly one side and has since the picker began filtering by it, so (season, team, item) already implies the side. Only lines filed before that rule could disagree; they should be counted in the same query as the twins.</li>
+    <li><strong>Sequence the nouns once.</strong> Their last phase rewrites the same help articles Q1 renames. Rule Q1 before that phase runs, so the help is rewritten once, in the final words.</li>
+  </ol>
+  <p>Their plan also queues the standard vocabulary review (Insurance twice, Certification twice, and so on). That review is what makes this dialog’s “Everything” wall shorter, and the fold here is the coach-side of the same mechanism.</p>
+
+  <h2>10 · What needs a ruling</h2>
+  <div class="ask">
+    <div><b class="q">Q1</b><div><p>The door’s name.</p><p class="rec">Recommend “Manage categories &amp; items”; dialog “Categories &amp; items”; groups Our own · Club · Standard. Help, its keywords and the three forms’ hints move with it.</p></div></div>
+    <div><b class="q">Q2</b><div><p>Add from the dialog, and un-gate the door.</p><p class="rec">Recommend yes — as one “+ Item” on each band.</p></div></div>
+    <div><b class="q">Q3</b><div><p>Remove a category of your own while it holds nothing.</p><p class="rec">Recommend yes; the same “only while nothing is filed” rule items live by. Standard and club headings stay undeletable.</p></div></div>
+    <div><b class="q">Q4</b><div><p>Default to Our own; the shared library behind the chips.</p><p class="rec">Recommend yes.</p></div></div>
+    <div><b class="q">Q5</b><div><p>A second door as the picker’s last row.</p><p class="rec">Recommend yes.</p></div></div>
+    <div><b class="q" style="color:var(--mute); text-decoration:line-through">Q6</b><div><p style="color:var(--mute)"><span class="tag un">Withdrawn</span> A category of your own belongs to one side, stored at birth.</p><p class="rec" style="color:var(--mute)">Withdrawn in round 3. The side lives on the item and the shelf earns its side from its items (§5); storing one on the category would take the mixed shelf away from your own headings. Nothing needs it once “Add a category” is born with its first item.</p></div></div>
+    <div><b class="q">Q7</b><div><p>The add form ends with one quiet line saying where the money reports. <span class="tag re">Corrected at build</span> Rounds 2–4 said a heading of your own reports as <em>Other income</em>; the category-is-the-shelf ruling built the same morning makes a money-in line report under <strong>its own heading's name</strong>, so “Bake sales” reports as Bake sales. The half that stays true: only Fundraising and Sponsorship have a drive or a sponsor filling the number in — everywhere else you record each arrival yourself.</p><p class="rec">Built as: “Will report under Bake sales. You record each arrival yourself — only Fundraising and Sponsorship have a drive or a sponsor filling the number in.” One line, never a “who reports this?” question.</p></div></div>
+    <div><b class="q">Q8</b><div><p>Side order: Money coming in first (the shorter side; the forgetting index’s order) or Money the team spends first (the Add Line form’s default; the plan’s reading order).</p><p class="rec">Recommend money coming in first, as drawn. Either is defensible; it should match one sibling, not neither.</p></div></div>
+    <div><b class="q">Q9</b><div><p><span class="tag new">Round 3</span> The Category list when adding an item: ordered (this side’s shelves first, then every heading not taking this side yet, labelled as such) or filtered to this side’s shelves only.</p><p class="rec">Recommend ordered, as drawn. Filtering forbids a mixed shelf of your own, which is the Tournaments flexibility you asked to keep, and the second group’s label is what stops a coach making a twin of a heading that is showing under the other band.</p></div></div>
+    <div><b class="q">Q10</b><div><p><span class="tag new">Round 4</span> Categories are created only from inside the item form — “New category” is the last row of the Category list, after every heading the team already has. No “+ Category” button anywhere in the dialog.</p><p class="rec">Recommend yes, as you proposed. It is the picker’s own flow, a heading is always born with the item that gives it a side, and the product’s existing refusal of a same-name heading backs it up. An own heading left with nothing under it (only by removing its last item) is listed once under “Nothing under it yet”.</p></div></div>
+    <div><b class="q">Now</b><div><p>The clip is a defect regardless of the rulings.</p><p class="rec">Fix it on its own, widen the guard, correct the tooltip.</p></div></div>
+  </div>
+</div>

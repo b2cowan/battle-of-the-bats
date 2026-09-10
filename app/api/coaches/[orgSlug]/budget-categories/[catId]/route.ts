@@ -4,7 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnlessTeamMoneyWrite } from '@/lib/coach-capabilities';
-import { listVisibleBudgetCategories } from '@/lib/coach-budget-items';
+import { listVisibleBudgetCategories, countBudgetCategoryUsage } from '@/lib/coach-budget-items';
+import { describeBudgetItemUsage } from '@/lib/coach-budget-item-usage';
 
 /**
  * A TEAM'S OWN HEADINGS — rename (migration 277; owner rulings Q3 + Q5, 2026-09-04).
@@ -97,4 +98,86 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   return NextResponse.json({ category: data });
+}, { route: '/api/coaches/[orgSlug]/budget-categories/[catId]' });
+
+/**
+ * REMOVE ONE OF THIS TEAM'S OWN HEADINGS — only while nothing sits under it (owner ruling Q3,
+ * 2026-09-09; plan `COACH_BUDGET_CATEGORIES_AND_ITEMS_DOOR_PLAN.md`).
+ *
+ * ⚠ THIS REVERSES THE "DELETE IS ABSENT" NOTE ABOVE, deliberately and narrowly. That note's reason
+ * was that removing a heading cascades its items and blanks the filing on everything under them.
+ * An EMPTY heading has nothing under it, so the same rule items live by ("only while nothing is
+ * filed against it") applies one level up, and the coach gets the same remedy: rename it, or empty
+ * it first. Standard and club headings stay undeletable here — a coach cannot rename them either.
+ *
+ * ⚠⚠ "NOTHING UNDER IT" IS ASKED OF EVERY TABLE THAT CAN NAME A CATEGORY, NOT JUST THE ITEMS.
+ * Seven tables carry a `…category_id` onto this row, all `ON DELETE SET NULL` (dev snapshot,
+ * 2026-09-09): a pre-mig-240 budget line filed under the heading with no item, a cost, a money-in
+ * record, a club line, a request, a split or a drive. A delete would not fail on any of them — it
+ * would silently blank that record's filing, which is the exact harm the old refusal existed to
+ * prevent. `BUDGET_ITEM_REFERENCES` already lists each with its category column; it is walked by
+ * `countBudgetCategoryUsage` — the item counter's twin, one loop, one sentence — so the list and the
+ * refusal's grammar have one home (`tests/unit/budget-item-references-guard.test.ts` fails the build
+ * if a new reference is added without joining it).
+ *
+ * ⚠ THE TEAM IS NAMED AND CHECKED (query string, like the item delete beside it), never inferred
+ * from the row; the delete re-asserts `org_id` + `team_id` on the write — check-then-act.
+ */
+// DELETE /api/coaches/[orgSlug]/budget-categories/[catId]?teamId=…
+export const DELETE = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; catId: string }> },) => {
+  const { orgSlug, catId } = await params;
+
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return unauthorized();
+  if (ctx.org.slug !== orgSlug) return forbidden();
+
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  if (!assignments.length) return forbidden();
+
+  const teamId = (new URL(req.url).searchParams.get('teamId') ?? '').trim();
+  const denied = denyUnlessTeamMoneyWrite(assignments, teamId);
+  if (denied) return denied;
+
+  const { data: category } = await supabaseAdmin
+    .from('budget_categories')
+    .select('id, org_id, team_id, name')
+    .eq('id', catId)
+    .maybeSingle();
+
+  if (!category || category.org_id !== ctx.org.id || category.team_id !== teamId) {
+    return NextResponse.json({
+      error: 'You can only remove categories your own team created. Standard categories and the ones '
+        + 'your club shares belong to everybody, so they are read-only here.',
+    }, { status: 403 });
+  }
+
+  const { count: itemCount } = await supabaseAdmin
+    .from('budget_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('category_id', catId);
+  if ((itemCount ?? 0) > 0) {
+    return NextResponse.json({
+      error: `“${category.name}” can’t be removed while it holds ${itemCount} item${itemCount === 1 ? '' : 's'}. `
+        + 'Remove or fold its items first, or rename the category instead.',
+    }, { status: 409 });
+  }
+
+  const filed = await countBudgetCategoryUsage(catId);
+  if (filed.total > 0) {
+    return NextResponse.json({
+      error: `“${category.name}” can’t be removed — ${describeBudgetItemUsage(filed)} ${filed.total === 1 ? 'is' : 'are'} still filed under it. `
+        + 'Rename it instead, or move those records first.',
+    }, { status: 409 });
+  }
+
+  const { error } = await supabaseAdmin
+    .from('budget_categories')
+    .delete()
+    .eq('id', catId)
+    .eq('org_id', ctx.org.id)
+    .eq('team_id', teamId);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/budget-categories/[catId]' });
