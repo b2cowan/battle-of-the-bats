@@ -21700,7 +21700,7 @@ loop, not the controls); no demo sentence names this form.
 
 ---
 
-## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11 (uncommitted), **no migration**, awaiting QA · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
+## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11, committed `340dca2a` the same day, **no migration**, awaiting QA · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
 
 **Why this phase comes first (plan §10):** the four phases that follow draw conclusions from these
 records — charts, headlines, a handout — and a chart drawn over a series that quietly joins mph to
@@ -21758,5 +21758,5 @@ at the 44px floor. Rendered probe over the populated fixture: all three screens 
 
 Phase 1 (three tabs, Metrics editor, goal tag, exact addresses) after this walk. The **Development
 grant** (ruling 9) waits for staff-access pass 2 (§169) to commit — it is being built in the same
-files right now. Commit of Phase 0 on your OK, in a private index (the shared index carries another
-session's staged deletions).
+files right now. Phase 0 committed `340dca2a` (2026-09-11, private index — my hunks only in the four shared
+files). `/simplify`, `/review` and `/docs` still owed after the walk.
