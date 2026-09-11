@@ -1,0 +1,533 @@
+<title>Editable Awards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted)}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px;margin:0 0 12px}.docpage li{margin-bottom:6px}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}.docpage th{background:var(--soft);white-space:nowrap}
+.docpage .phase{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:14px}.docpage .phase h3{margin-top:0}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+@container(max-width:700px){main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.head{flex-wrap:wrap;gap:12px}h1{font-size:23px}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+
+/* ═══════════ Mockup specimens — document chrome (inside the frame) ═══════════ */
+.legend{display:flex;flex-wrap:wrap;gap:1.1rem;align-items:center;margin:0 0 1.2rem;font-size:.82rem;color:var(--muted)}
+.lg-tag{display:inline-flex;align-items:center;gap:.4rem}
+.swatch{width:.65rem;height:.65rem;border-radius:3px;flex:none}.swatch.before{background:#A8452E}.swatch.new{background:#3452F5}.swatch.unchanged{background:#c6cebc}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start}
+.pair.one{grid-template-columns:1fr;max-width:600px}
+@container(max-width:780px){.pair,.pair.one{grid-template-columns:1fr}}
+.col-label{display:inline-flex;align-items:center;gap:.45rem;font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem;color:var(--muted)}
+.col-label.after{color:#3452F5}.col-label .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.podium{background:#e3e6ea;border:1px solid #cfd4da;border-radius:14px;padding:1.4rem;display:flex;justify-content:center;overflow:hidden}
+.screen p.lede{color:var(--muted);font-size:.95rem;max-width:64ch;margin:0 0 1.2rem}
+
+/* ═══════════ Fixed reproduction of the coach portal's warm-theme tokens ═══════════ */
+.spec{--fr-paper:#F8F4ED;--fr-card:#FFFFFF;--fr-ink:#241E15;--fr-ink-soft:#4A4235;--fr-dim:#615A54;--fr-line:rgba(70,55,30,.12);--fr-line-strong:rgba(70,55,30,.20);--fr-olive:#57651E;--fr-olive-soft:rgba(87,101,30,.10);--fr-danger:#B03A22;--fr-danger-soft:rgba(176,58,34,.10);--fr-radius:14px;--fr-radius-sm:9px;font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--fr-ink);font-size:15px;line-height:1.5}
+.spec p{margin:0}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.1rem .85rem;border-bottom:1px solid var(--fr-line)}
+.drawer-head h4{margin:0;font-size:.98rem;font-weight:700;font-family:inherit}.drawer-head .sub2{font-size:.74rem;color:var(--fr-dim);margin-top:.15rem}
+.drawer-close{color:var(--fr-dim);font-size:1rem;line-height:1}
+.drawer-body{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.95rem}
+.fr-chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.fr-chip{font-size:.72rem;background:rgba(70,55,30,.05);border:1px solid var(--fr-line-strong);border-radius:999px;padding:.22rem .62rem;color:var(--fr-ink-soft)}
+.fr-section-title{margin:0;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fr-dim)}
+.fr-award-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.84rem;padding:.15rem 0}
+.fr-award-row .who{min-width:0}
+.fr-award-actions{display:flex;gap:.1rem;flex-shrink:0}
+.fr-icon-btn{background:none;border:none;padding:.3rem;border-radius:4px;color:var(--fr-dim);width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem}
+.fr-icon-btn.hot{background:var(--fr-olive-soft);color:var(--fr-olive)}
+.fr-btn-primary{display:inline-flex;align-items:center;gap:.35rem;background:var(--fr-olive);color:#FBFBF3;border:none;border-radius:6px;padding:.45rem .9rem;font-size:.85rem;font-weight:700}
+.fr-btn-secondary{display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,.6);color:var(--fr-ink-soft);border:1px solid var(--fr-line-strong);border-radius:6px;padding:.45rem .9rem;font-size:.85rem;font-weight:600}
+.fr-btn-ghost{background:none;border:none;color:var(--fr-dim);font-size:.85rem;padding:.3rem .5rem}
+.fr-btn-danger{display:inline-flex;align-items:center;background:var(--fr-danger-soft);color:var(--fr-danger);border:1px solid rgba(176,58,34,.25);border-radius:6px;padding:.45rem .9rem;font-size:.82rem;font-weight:700}
+.fr-note{font-size:.76rem;color:var(--fr-dim)}
+.crop{background:var(--fr-card);border:1px solid var(--fr-line);border-radius:var(--fr-radius-sm);padding:.85rem 1rem;width:300px;max-width:100%;box-shadow:0 1px 2px rgba(36,30,21,.05),0 8px 20px rgba(36,30,21,.08)}
+.modal-frame{width:380px;max-width:100%;background:var(--fr-card);border:1px solid rgba(87,101,30,.3);border-radius:var(--fr-radius);box-shadow:0 1px 2px rgba(36,30,21,.06),0 20px 48px rgba(36,30,21,.18);padding:1.4rem}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}.modal-head h4{margin:0;font-size:1.02rem;font-weight:700;font-family:inherit}
+.modal-body{display:flex;flex-direction:column;gap:.75rem}
+.fr-field{background:rgba(255,255,255,.02);border:1px solid var(--fr-line-strong);border-radius:8px;padding:.75rem .8rem;display:flex;flex-direction:column;gap:.55rem}
+.fr-field.bare{border:none;padding:0;background:none}
+.fr-field-label{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fr-dim)}
+.fr-select,.fr-textarea{background:rgba(70,55,30,.03);border:1px solid var(--fr-line-strong);border-radius:6px;padding:.45rem .65rem;font-size:.82rem;color:var(--fr-ink)}
+.fr-textarea{min-height:48px}
+.fr-award-chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.fr-award-chip{font-size:.75rem;border-radius:999px;padding:.24rem .65rem;border:1px solid var(--fr-line-strong);color:var(--fr-ink-soft);background:rgba(70,55,30,.03)}
+.fr-award-chip.active{background:rgba(87,101,30,.16);border-color:var(--fr-olive);color:var(--fr-olive);font-weight:600}
+.fr-award-chip.new{background:transparent;border-style:dashed;color:var(--fr-dim)}
+.fr-door{background:none;border:none;padding:.26rem .2rem;font-size:.75rem;font-weight:600;color:var(--fr-olive);align-self:flex-start}
+.modal-foot{display:flex;align-items:center;justify-content:flex-end;gap:.4rem;margin-top:1.2rem;padding-top:.9rem;border-top:1px solid var(--fr-line)}
+.table-frame{background:var(--fr-card);border:1px solid var(--fr-line);border-radius:var(--fr-radius-sm);overflow:auto;width:100%}
+.fr-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.fr-table th{text-align:left;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--fr-ink-soft);background:rgba(70,55,30,.035);padding:.55rem .7rem;border-bottom:1px solid var(--fr-line);white-space:nowrap}
+.fr-table td{padding:.6rem .7rem;border-bottom:1px solid var(--fr-line);vertical-align:middle;white-space:nowrap}.fr-table tr:last-child td{border-bottom:none}
+.fr-muted{color:var(--fr-dim)}.fr-actions-cell{display:flex;gap:.05rem}
+.app-shell{width:100%;max-width:640px;background:var(--fr-paper);border-radius:16px;border:1px solid var(--fr-line);display:flex;overflow:hidden;box-shadow:0 1px 2px rgba(36,30,21,.05),0 18px 40px rgba(36,30,21,.1)}
+.app-shell-list{flex:1;min-width:0;padding:1.1rem;opacity:.55;filter:saturate(.7);display:flex;flex-direction:column;gap:.5rem}
+.app-shell-list .row{background:var(--fr-card);border:1px solid var(--fr-line);border-radius:8px;padding:.6rem .7rem;font-size:.76rem;color:var(--fr-ink-soft)}
+.app-shell-drawer{width:300px;flex:none;background:var(--fr-card);border-left:1px solid var(--fr-line)}
+@container(max-width:700px){.app-shell{flex-direction:column}.app-shell-list{display:none}.app-shell-drawer{width:100%;border-left:none}}
+.drawer-scene{position:relative;width:100%;max-width:560px;height:470px;background:var(--fr-paper);border:1px solid var(--fr-line);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(36,30,21,.05),0 18px 40px rgba(36,30,21,.1)}
+.drawer-scene .behind{position:absolute;inset:0;padding:1.4rem;opacity:.38;filter:saturate(.6)}.drawer-scene .behind .modal-frame{width:300px;box-shadow:none}
+.drawer-scene .scrim{position:absolute;inset:0;background:rgba(36,30,21,.18)}
+.side{position:absolute;top:0;right:0;bottom:0;width:min(300px,100%);background:var(--fr-card);border-left:1px solid var(--fr-line-strong);box-shadow:-12px 0 32px rgba(36,30,21,.16);display:flex;flex-direction:column}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem .7rem;border-bottom:1px solid var(--fr-line)}.side-head h4{margin:0;font-size:.95rem;font-weight:700;font-family:inherit}
+.side-who{font-size:.7rem;color:var(--fr-dim);padding:.6rem 1rem .2rem}
+.side-rows{padding:.2rem 1rem;display:flex;flex-direction:column}
+.side-row{display:flex;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid var(--fr-line);font-size:.8rem}.side-row:last-child{border-bottom:none}
+.side-row .nm{flex:1;min-width:0;display:flex;align-items:center;gap:.4rem;font-weight:600}
+.dot-own{width:7px;height:7px;border-radius:50%;background:var(--fr-olive);flex:none}.dot-club{width:7px;height:7px;border-radius:50%;background:#134FD3;flex:none}
+.side-row .use{font-size:.68rem;color:var(--fr-dim);white-space:nowrap}.side-row .use.zero{color:rgba(97,90,84,.6);font-style:italic}
+.side-row .acts{display:flex;gap:.05rem}
+.side-shared{margin:.6rem 1rem 0;padding-top:.5rem;border-top:1px dashed var(--fr-line-strong)}
+.side-shared-lbl{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#134FD3;margin-bottom:.2rem}
+.side-note{font-size:.68rem;color:var(--fr-dim);margin:.4rem 1rem 0;line-height:1.4}
+.side-foot{margin-top:auto;padding:.7rem 1rem;border-top:1px solid var(--fr-line);font-size:.72rem;color:var(--fr-olive);font-weight:600}
+.dlg{width:340px;max-width:100%;background:var(--fr-card);border:1px solid var(--fr-line-strong);border-radius:var(--fr-radius-sm);padding:1.1rem 1.2rem;box-shadow:0 1px 2px rgba(36,30,21,.06),0 20px 48px rgba(36,30,21,.18)}
+.dlg h5{margin:0 0 .5rem;font-size:.95rem;font-weight:700;font-family:inherit}.dlg p{margin:0 0 .5rem;font-size:.8rem;color:var(--fr-ink-soft);line-height:1.45}.dlg p:last-of-type{margin-bottom:.9rem}
+.dlg-acts{display:flex;justify-content:flex-end;gap:.4rem;flex-wrap:wrap}
+.shelf{width:100%;max-width:520px;background:var(--fr-card);border:1px solid var(--fr-line);border-radius:var(--fr-radius-sm);overflow:hidden}
+.shelf-head{padding:.8rem 1rem;border-bottom:1px solid var(--fr-line)}.shelf-head h4{margin:0;font-size:.92rem;font-weight:700;font-family:inherit}.shelf-head p{margin:.15rem 0 0;font-size:.72rem;color:var(--fr-dim)}
+.shelf-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.7rem 1rem;border-bottom:1px solid var(--fr-line);font-size:.82rem}.shelf-row:last-child{border-bottom:none}
+.shelf-row b{font-weight:600}.shelf-row .cnt{font-size:.72rem;color:var(--fr-dim)}.shelf-row .chev{color:var(--fr-dim);font-size:.8rem}.shelf-row.is-new{background:rgba(87,101,30,.05)}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Editable Awards — project hub</strong><br><small>Mockup rounds 1–2 ruled (R0–R5) · plan + brief written 2026-09-11 · nothing built</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup rounds 1–2 on this artifact, owner rulings R0–R5, 2026-09-11">Design</li>
+    <li class="stage current" title="COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md + _PM_BRIEF.md written 2026-09-11">Plan</li>
+    <li class="stage" title="—">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Mockup walkthrough" id="walkNav">
+    <a href="#s1">1 · Game screen</a>
+    <a href="#s2">2 · Award row</a>
+    <a href="#s3">3 · Edit form</a>
+    <a href="#s4">4 · Season report</a>
+    <a href="#s5">5 · The door</a>
+    <a href="#s6">6 · The drawer</a>
+    <a href="#s7">7 · Remove, honestly</a>
+    <a href="#s8">8 · The shelf</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">UAT Test Team · 2026 season<br><span class="meta">Sample head-coach view · example names</span></div>
+    </header>
+    <main class="hubsection">
+      <div class="legend">
+        <span class="lg-tag"><span class="swatch before"></span>Missing / before</span>
+        <span class="lg-tag"><span class="swatch new"></span>New control</span>
+        <span class="lg-tag"><span class="swatch unchanged"></span>Unchanged</span>
+      </div>
+
+      <!-- 1 -->
+      <section class="screen" id="s1">
+        <div class="head"><div><div class="eyebrow">Part A — an award you've given</div><h1 tabindex="-1">The game screen, in full</h1><p class="sub">Shown whole so it's clear the fix doesn't crowd anything else in the drawer — score, tags and notes stay as they are.</p></div></div>
+        <div class="pair">
+          <div><span class="col-label"><span class="dot"></span>Before</span>
+            <div class="podium"><div class="app-shell spec">
+              <div class="app-shell-list"><div class="row">Sat Apr 9 · vs Ridgemont · W 6–2</div><div class="row">Wed Apr 13 · Practice</div><div class="row" style="outline:1px solid var(--fr-olive);outline-offset:-1px">Sun Apr 16 · vs Northgate · W 8–5</div></div>
+              <div class="app-shell-drawer">
+                <div class="drawer-head"><div><h4>vs Northgate</h4><div class="sub2">Sun, Apr 16 · Final 8–5 (W)</div></div><span class="drawer-close">✕</span></div>
+                <div class="drawer-body">
+                  <div class="fr-chips"><span class="fr-chip">Home Game</span><span class="fr-chip">Division Play</span></div>
+                  <div><p class="fr-section-title">Awards given</p>
+                    <div style="display:flex;flex-direction:column;gap:.3rem;margin:.5rem 0 .7rem">
+                      <div class="fr-award-row"><span class="who">🎉 big bat — #2 Blake Test</span></div>
+                      <div class="fr-award-row"><span class="who">🏅 MVP — #7 Jordan Reyes</span></div>
+                    </div>
+                    <button class="fr-btn-secondary">🏆 Give an award</button></div>
+                  <p class="fr-note">Game notes and resources unchanged…</p>
+                </div>
+              </div>
+            </div></div>
+          </div>
+          <div><span class="col-label after"><span class="dot"></span>After</span>
+            <div class="podium"><div class="app-shell spec">
+              <div class="app-shell-list"><div class="row">Sat Apr 9 · vs Ridgemont · W 6–2</div><div class="row">Wed Apr 13 · Practice</div><div class="row" style="outline:1px solid var(--fr-olive);outline-offset:-1px">Sun Apr 16 · vs Northgate · W 8–5</div></div>
+              <div class="app-shell-drawer">
+                <div class="drawer-head"><div><h4>vs Northgate</h4><div class="sub2">Sun, Apr 16 · Final 8–5 (W)</div></div><span class="drawer-close">✕</span></div>
+                <div class="drawer-body">
+                  <div class="fr-chips"><span class="fr-chip">Home Game</span><span class="fr-chip">Division Play</span></div>
+                  <div><p class="fr-section-title">Awards given</p>
+                    <div style="display:flex;flex-direction:column;gap:.3rem;margin:.5rem 0 .7rem">
+                      <div class="fr-award-row"><span class="who">🎉 big bat — #2 Blake Test</span><div class="fr-award-actions"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">🗑</button></div></div>
+                      <div class="fr-award-row"><span class="who">🏅 MVP — #7 Jordan Reyes</span><div class="fr-award-actions"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">🗑</button></div></div>
+                    </div>
+                    <button class="fr-btn-secondary">🏆 Give an award</button></div>
+                  <p class="fr-note">Game notes and resources unchanged…</p>
+                </div>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="screen" id="s2" hidden>
+        <div class="head"><div><div class="eyebrow">Part A — an award you've given</div><h1 tabindex="-1">Each award row, up close</h1><p class="sub">The same pencil-and-trash pair Manage Award Types already uses to edit or retire a chip — finally applied to the award itself.</p></div></div>
+        <div class="pair">
+          <div><span class="col-label"><span class="dot"></span>Before — plain text, no controls</span>
+            <div class="podium"><div class="crop spec">
+              <div class="fr-award-row"><span class="who">🎉 big bat — #2 Blake Test</span></div>
+              <div class="fr-award-row"><span class="who">🏅 MVP — #7 Jordan Reyes</span></div>
+            </div></div></div>
+          <div><span class="col-label after"><span class="dot"></span>After — edit + remove</span>
+            <div class="podium"><div class="crop spec">
+              <div class="fr-award-row"><span class="who">🎉 big bat — #2 Blake Test</span><div class="fr-award-actions"><button class="fr-icon-btn hot">✎</button><button class="fr-icon-btn">🗑</button></div></div>
+              <div class="fr-award-row"><span class="who">🏅 MVP — #7 Jordan Reyes</span><div class="fr-award-actions"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">🗑</button></div></div>
+            </div></div></div>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="screen" id="s3" hidden>
+        <div class="head"><div><div class="eyebrow">Part A — an award you've given</div><h1 tabindex="-1">Tapping ✎ opens the familiar form, pre-filled</h1><p class="sub">The same Give window, opened with player, award and note already set and titled <em>Edit award</em>. Removing stays the row's trash icon — one job per control (ruling R0).</p></div></div>
+        <div class="pair one">
+          <div><span class="col-label after"><span class="dot"></span>New — edit mode</span>
+            <div class="podium"><div class="modal-frame spec">
+              <div class="modal-head"><h4>Edit award</h4><span class="drawer-close">✕</span></div>
+              <p class="fr-note" style="margin:-.4rem 0 .6rem">For: <b style="color:var(--fr-ink)">vs Northgate — Apr 16</b></p>
+              <div class="modal-body">
+                <div class="fr-field"><span class="fr-field-label">Player</span><div class="fr-select">#2 Blake Test</div></div>
+                <div class="fr-field"><span class="fr-field-label">Award</span><div class="fr-award-chips"><span class="fr-award-chip">🏅 MVP</span><span class="fr-award-chip">💪 Best Hitter</span><span class="fr-award-chip">🔥 Hustle Award</span><span class="fr-award-chip active">🎉 big bat</span></div></div>
+                <div class="fr-field"><span class="fr-field-label">Note (optional)</span><div class="fr-textarea">Ball left the yard in the 4th.</div></div>
+              </div>
+              <div class="modal-foot"><button class="fr-btn-ghost">Close</button><button class="fr-btn-primary">Save changes</button></div>
+            </div></div></div>
+        </div>
+      </section>
+
+      <!-- 4 -->
+      <section class="screen" id="s4" hidden>
+        <div class="head"><div><div class="eyebrow">Part A — an award you've given</div><h1 tabindex="-1">Same fix, reaching the season report</h1><p class="sub">Insights → Reports → Awards already has Remove — it gains the matching Edit, so a mis-given award from any game can be fixed, not just deleted and redone.</p></div></div>
+        <div class="pair">
+          <div><span class="col-label"><span class="dot"></span>Before — remove only</span>
+            <div class="podium"><div class="table-frame spec"><table class="fr-table"><thead><tr><th>Player</th><th>Award</th><th>For</th><th>Date</th><th></th></tr></thead><tbody>
+              <tr><td>Blake Test</td><td>🎉 big bat</td><td class="fr-muted">vs Northgate</td><td class="fr-muted">Apr 16</td><td><div class="fr-actions-cell"><button class="fr-icon-btn">🖶</button><button class="fr-icon-btn">🗑</button></div></td></tr>
+              <tr><td>Jordan Reyes</td><td>🏅 MVP</td><td class="fr-muted">vs Northgate</td><td class="fr-muted">Apr 16</td><td><div class="fr-actions-cell"><button class="fr-icon-btn">🖶</button><button class="fr-icon-btn">🗑</button></div></td></tr>
+            </tbody></table></div></div></div>
+          <div><span class="col-label after"><span class="dot"></span>After — edit added</span>
+            <div class="podium"><div class="table-frame spec"><table class="fr-table"><thead><tr><th>Player</th><th>Award</th><th>For</th><th>Date</th><th></th></tr></thead><tbody>
+              <tr><td>Blake Test</td><td>🎉 big bat</td><td class="fr-muted">vs Northgate</td><td class="fr-muted">Apr 16</td><td><div class="fr-actions-cell"><button class="fr-icon-btn">🖶</button><button class="fr-icon-btn hot">✎</button><button class="fr-icon-btn">🗑</button></div></td></tr>
+              <tr><td>Jordan Reyes</td><td>🏅 MVP</td><td class="fr-muted">vs Northgate</td><td class="fr-muted">Apr 16</td><td><div class="fr-actions-cell"><button class="fr-icon-btn">🖶</button><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">🗑</button></div></td></tr>
+            </tbody></table></div></div></div>
+        </div>
+      </section>
+
+      <!-- 5 -->
+      <section class="screen" id="s5" hidden>
+        <div class="head"><div><div class="eyebrow">Part B — the award chips themselves</div><h1 tabindex="-1">The door, where minting already happens</h1><p class="sub">Today the Award field has "+ New" and nothing else — a mis-typed chip is stuck. After: the idiom's door, worded the way the ruling says ("Manage <em>what the field holds</em>…"). The report page's text link retires; one way in.</p></div></div>
+        <div class="pair">
+          <div><span class="col-label"><span class="dot"></span>Before — mint only</span>
+            <div class="podium"><div class="crop spec" style="width:340px"><div class="fr-field bare"><span class="fr-field-label">Award</span>
+              <div class="fr-award-chips"><span class="fr-award-chip">🏅 MVP</span><span class="fr-award-chip">🏅 MVP (2)</span><span class="fr-award-chip">💪 Best Hitter</span><span class="fr-award-chip">🔥 Hustle Award</span><span class="fr-award-chip active">🎉 big bat</span><span class="fr-award-chip new">+ New</span></div>
+            </div></div></div></div>
+          <div><span class="col-label after"><span class="dot"></span>After — mint, then manage</span>
+            <div class="podium"><div class="crop spec" style="width:340px"><div class="fr-field bare"><span class="fr-field-label">Award</span>
+              <div class="fr-award-chips"><span class="fr-award-chip">🏅 MVP</span><span class="fr-award-chip">🏅 MVP (2)</span><span class="fr-award-chip">💪 Best Hitter</span><span class="fr-award-chip">🔥 Hustle Award</span><span class="fr-award-chip active">🎉 big bat</span><span class="fr-award-chip new">+ New</span></div>
+              <button class="fr-door">Manage awards…</button>
+            </div></div></div></div>
+        </div>
+      </section>
+
+      <!-- 6 -->
+      <section class="screen" id="s6" hidden>
+        <div class="head"><div><div class="eyebrow">Part B — the award chips themselves</div><h1 tabindex="-1">The drawer you already ratified, holding awards</h1><p class="sub">Opens over the Give window (which dims and waits, typing kept). Every row shows how many times it's been given, and carries rename (name + icon), merge and remove. Club-shared awards list read-only below.</p></div></div>
+        <div class="pair one">
+          <div><span class="col-label after"><span class="dot"></span>New — the Awards drawer</span>
+            <div class="podium"><div class="drawer-scene spec">
+              <div class="behind"><div class="modal-frame"><div class="modal-head"><h4>Give an award</h4><span class="drawer-close">✕</span></div><div class="modal-body"><div class="fr-field"><span class="fr-field-label">Player</span><div class="fr-select">#2 Blake Test</div></div><div class="fr-field"><span class="fr-field-label">Award</span><div class="fr-award-chips"><span class="fr-award-chip">🏅 MVP</span><span class="fr-award-chip">🏅 MVP (2)</span><span class="fr-award-chip active">🎉 big bat</span></div></div></div></div></div>
+              <div class="scrim"></div>
+              <div class="side">
+                <div class="side-head"><h4>Awards</h4><span class="drawer-close">✕</span></div>
+                <p class="side-who">5 yours · 1 shared by your club</p>
+                <div class="side-rows">
+                  <div class="side-row"><span class="nm"><span class="dot-own"></span>🎉 big bat</span><span class="use">given 3 times</span><span class="acts"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">⇄</button><button class="fr-icon-btn">🗑</button></span></div>
+                  <div class="side-row"><span class="nm"><span class="dot-own"></span>💪 Best Hitter</span><span class="use">given 2 times</span><span class="acts"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">⇄</button><button class="fr-icon-btn">🗑</button></span></div>
+                  <div class="side-row"><span class="nm"><span class="dot-own"></span>🔥 Hustle Award</span><span class="use zero">not given yet</span><span class="acts"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">⇄</button><button class="fr-icon-btn">🗑</button></span></div>
+                  <div class="side-row"><span class="nm"><span class="dot-own"></span>🏅 MVP</span><span class="use">given 4 times</span><span class="acts"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn">⇄</button><button class="fr-icon-btn">🗑</button></span></div>
+                  <div class="side-row"><span class="nm"><span class="dot-own"></span>🏅 MVP (2)</span><span class="use">given once</span><span class="acts"><button class="fr-icon-btn">✎</button><button class="fr-icon-btn hot">⇄</button><button class="fr-icon-btn">🗑</button></span></div>
+                </div>
+                <div class="side-shared"><div class="side-shared-lbl">Shared by your club</div><div class="side-row"><span class="nm"><span class="dot-club"></span>🥇 Club Player of the Week</span><span class="use">given once</span></div></div>
+                <p class="side-note">Shared awards belong to every team — ask your club admin to rename or retire one.</p>
+                <div class="side-foot">All tag libraries → Team settings</div>
+              </div>
+            </div></div></div>
+        </div>
+      </section>
+
+      <!-- 7 -->
+      <section class="screen" id="s7" hidden>
+        <div class="head"><div><div class="eyebrow">Part B — the award chips themselves</div><h1 tabindex="-1">"Remove" tells the truth about what it can do</h1><p class="sub">A game can lose a label and still be a game; "Blake got ___" isn't an award. So removing a used award can't orphan the records — the dialog says how many it's on and offers the two honest exits. Never given: it just deletes. And a merge says what it will collapse <em>before</em> the tap (R5).</p></div></div>
+        <div class="pair">
+          <div><span class="col-label after"><span class="dot"></span>New — used award</span>
+            <div class="podium"><div class="dlg spec"><h5>Remove "MVP (2)"?</h5><p>It's been given once, and an award can't be taken off a player without a name.</p><p><b>Merge</b> it into another award and that player keeps their award under the other name. Or <b>retire</b> it — it leaves the picker but stays on the record.</p><div class="dlg-acts"><button class="fr-btn-ghost">Cancel</button><button class="fr-btn-secondary">Retire</button><button class="fr-btn-primary">Merge instead</button></div></div></div></div>
+          <div><span class="col-label after"><span class="dot"></span>New — never given</span>
+            <div class="podium"><div class="dlg spec"><h5>Delete "Hustle Award"?</h5><p>It hasn't been given yet, so nothing else changes.</p><div class="dlg-acts"><button class="fr-btn-ghost">Cancel</button><button class="fr-btn-danger">Delete</button></div></div></div></div>
+        </div>
+        <div class="pair" style="margin-top:1.4rem">
+          <div><span class="col-label after"><span class="dot"></span>New — the merge confirm, with a collision (R5)</span>
+            <div class="podium"><div class="dlg spec"><h5>Merge "MVP (2)" into "MVP"?</h5><p><b>4 awards become MVP.</b></p><p><b>1 is dropped</b> — Blake Test would hold MVP twice for the Apr 16 game. His earlier one stays.</p><p style="font-size:.74rem">"MVP (2)" is removed. This can't be undone.</p><div class="dlg-acts"><button class="fr-btn-ghost">Cancel</button><button class="fr-btn-primary">Merge</button></div></div></div></div>
+          <div><span class="col-label after"><span class="dot"></span>New — Give refuses the double (R5)</span>
+            <div class="podium"><div class="modal-frame spec" style="width:340px;padding:1.1rem">
+              <div class="modal-head"><h4>Give an award</h4><span class="drawer-close">✕</span></div>
+              <div class="modal-body">
+                <div class="fr-field"><span class="fr-field-label">Player</span><div class="fr-select">#2 Blake Test</div></div>
+                <div class="fr-field"><span class="fr-field-label">Award</span><div class="fr-award-chips"><span class="fr-award-chip active">🏅 MVP</span><span class="fr-award-chip">💪 Best Hitter</span><span class="fr-award-chip">🎉 big bat</span></div></div>
+                <p style="font-size:.8rem;color:var(--fr-danger);font-weight:600">Blake Test already has MVP for this game.</p>
+              </div>
+              <div class="modal-foot"><button class="fr-btn-ghost">Close</button><button class="fr-btn-primary">Save</button></div>
+            </div></div></div>
+        </div>
+      </section>
+
+      <!-- 8 -->
+      <section class="screen" id="s8" hidden>
+        <div class="head"><div><div class="eyebrow">Part B — the award chips themselves</div><h1 tabindex="-1">One more row on the shelf that already exists</h1><p class="sub">Team settings → Tags lists every library the coach can read. Awards becomes a row like the rest, expanding in place into the same list — a home that isn't a link buried on a report.</p></div></div>
+        <div class="pair one">
+          <div><span class="col-label after"><span class="dot"></span>After — Awards row added</span>
+            <div class="podium"><div class="shelf spec">
+              <div class="shelf-head"><h4>Tags</h4><p>Every word your team files things under, in one place.</p></div>
+              <div class="shelf-row"><b>Game tags</b><span class="cnt">4 yours · 2 shared</span><span class="chev">▸</span></div>
+              <div class="shelf-row"><b>Money tags</b><span class="cnt">6 yours · 1 shared</span><span class="chev">▸</span></div>
+              <div class="shelf-row"><b>Focus tags</b><span class="cnt">9 yours</span><span class="chev">▸</span></div>
+              <div class="shelf-row"><b>Staff</b><span class="cnt">3 yours</span><span class="chev">▸</span></div>
+              <div class="shelf-row"><b>Equipment</b><span class="cnt">7 yours</span><span class="chev">▸</span></div>
+              <div class="shelf-row is-new"><b>Awards</b><span class="cnt">5 yours · 1 shared</span><span class="chev">▸</span></div>
+            </div></div></div>
+        </div>
+      </section>
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Awards join the One Tag Idiom</h1>
+  <p class="sub">Owner rulings 2026-09-11 · plan and brief in <code>docs/projects/active/COACH_AWARDS_ONE_TAG_IDIOM_*.md</code></p>
+  <h2>What it does</h2>
+  <p>A coach can fix or take back an award right where they gave it, and the award chips themselves (MVP, Best Hitter, the ones the coach invents) get the same manage door, drawer and shelf every other tag in the portal already has — including merging duplicates.</p>
+  <h2>Why it matters</h2>
+  <p>Two dead ends today. An award given from a game can't be edited anywhere and can only be removed from a different page. And a mis-typed or duplicate award chip can be created inside the Give window but never fixed there — the only manager is a link buried on the season report, and it can only rename or hide, never delete or merge. When tags were settled on 2026-09-01 ("applies to every tag surface"), awards were the one vocabulary the review never inventoried. This closes that gap with the pattern coaches already know rather than a third way of managing words.</p>
+  <h2>Who benefits</h2>
+  <p>Every coach with the awards capability (head coaches, and any staff role granted awards). Club-shared award chips stay the club admin's to manage, listed read-only for the team — unchanged. No plan gating changes.</p>
+  <h2>What changes for the coach</h2>
+  <ul>
+    <li><strong>On a scored game</strong> — each award in "Awards given" gains Edit and Remove. Edit opens the same Give window, pre-filled, titled <em>Edit award</em>: change the player, the award, the note; Save. Remove asks once. Which game the award is for doesn't change (remove and re-give for that, same as a tag on the wrong event).</li>
+    <li><strong>In the Give window</strong> — beside "+ New" the Award field gains <strong>Manage awards…</strong>. It opens the side drawer over the form: every award with how many times it's been given, rename (name and icon together), merge one into another, remove. Shared club awards list below, read-only.</li>
+    <li><strong>Removing a used award is honest</strong> — the dialog says how many times it's been given and offers <em>Merge instead</em> (those players keep an award under the other name) or <em>Retire</em> (leaves the picker, stays on their record). An award never given just deletes. Nothing a player received is silently erased; nothing is stuck forever either.</li>
+    <li><strong>A player holds an award once per occasion.</strong> Giving Blake MVP for a game he already has MVP for is refused with a plain sentence — same on Edit. Today nothing stops that double; it was possible all along, and merging would only have made it visible. When a merge would leave someone with the same award twice for one game, it keeps the one given first and says so before you confirm: <em>"4 awards become MVP. 1 is dropped — Blake would hold MVP twice for the Apr 16 game."</em> The same award on a <em>different</em> game is still fine — "2× MVP this season" stays real.</li>
+    <li><strong>Team settings → Tags</strong> gains an <strong>Awards</strong> row. The report page's old "Manage award types" link goes — one way in.</li>
+    <li><strong>The season report</strong> gains Edit beside its existing Print and Remove on every history row.</li>
+    <li>Everything that <em>reads</em> awards — a player's profile, Season Wrapped, certificates, the family recap — picks up a rename or merge automatically. A closed season stays a record; none of these tools reach it.</li>
+  </ul>
+  <h2>Expected impact</h2>
+  <p>Duplicates ("MVP" and "MVP (2)") become a ten-second merge instead of a permanent picker; a mis-given award is a two-tap fix at the game instead of a trip to the report to delete and re-give; a new coach learns nothing new — it's the tag drawer, holding awards.</p>
+  <h2>Trade-offs made</h2>
+  <ul>
+    <li>The award picker stays a chip row (tap one of five), not the searchable dropdown tags use — the list is short and carries icons; budget items and test types kept their own shape under the same ruling.</li>
+    <li>An award can't be moved between games in place.</li>
+    <li>The three starter awards a new team gets will stop re-appearing after a coach deletes them (today's seed re-runs whenever a team has none); whether a new team still gets a starter set at all is the one open call.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium-high. Small in scope — two contained phases on a pattern that already exists — and it removes a genuine "the product won't let me fix my mistake" moment on a feature that sits in the demo's shop window and the marketing shots. Part A is a half-day contained fix; Part B needs one migration (a merge function) and rides the next release's migration order.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach can edit and remove an award from the game drawer and the report page; the schedule's trophy count updates the moment they do.</li>
+    <li>Two same-meaning award chips can be merged from the Give window, and every award already given under the loser reads under the winner on the game, the report, the player profile and Season Wrapped — nothing lost.</li>
+    <li>Removing a used award never orphans or cascades; the dialog states the count and offers merge or retire; an unused one deletes.</li>
+    <li>The Tags shelf lists Awards; the report page has no "Manage award types" link; help and the marketing shot say what the screen does.</li>
+    <li>Owner QA walk passes on this hub's QA tab; the demo check stays green on both worlds.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full plan — readable version</div>
+  <h1>Awards join the One Tag Idiom — implementation plan</h1>
+  <p class="sub">File-level detail (paths, route shapes, test names) lives in <code>docs/projects/active/COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md</code>. This tab is the same plan in plain words.</p>
+  <h2>Problem / context</h2>
+  <p>Two things are called "awards." A <strong>given award</strong> is the record — <em>Blake got MVP for Apr 16</em>. An <strong>award chip</strong> is the type — <em>MVP</em> itself, with its icon. Today a given award can be created from the game drawer and removed only from the season report page, and edited nowhere. An award chip can be minted inline with "+ New" but managed only from a separate modal reached by a text link on the report page, and that modal can rename or retire — never delete, never merge, and it shows no usage counts. The 2026-09-01 tagging ruling settled how every tag vocabulary works (one door where minting lives, one drawer manager with counts and rename / merge / delete, a Tags shelf under Team settings) and says it applies to every tag surface — but award chips were never in that review's inventory.</p>
+  <h2>Scope</h2>
+  <p><strong>Part A</strong> — Edit and Remove on a given award, on the game drawer's award rows and the report's history rows; the Give window reused in an edit mode; the schedule's trophy badge kept true after a write. <strong>Part B</strong> — the award-chip library joins the idiom: usage counts, delete (unused) and merge on the server; the "Manage awards…" door beside "+ New"; the ratified drawer holding awards (name + icon rename, merge, remove with the merge-or-retire dialog, a Retired group with Restore); an Awards row on the Tags shelf; the report page's "Manage award types" link and its modal retired; the read-time starter seed replaced or removed. <strong>Then</strong> help, the marketing shot, the demo check, and the owner walk.</p>
+  <div class="note"><strong>Out of scope</strong><p>The club admin's Shared Library (its own manager for shared awards); the closed-season page and every read surface (profile, Season Wrapped, recaps, certificates) — records, untouched, and they resolve names through the chip so rename/merge propagate for free; moving a given award to a different game; adopting the search dropdown as the award picker; an edit history on a given award.</p></div>
+  <h2>Approach</h2>
+  <ul>
+    <li><strong>One list, a declared policy — not a sibling manager.</strong> The tag manager is one component rendered in two frames (drawer and shelf), and the parent ruling's load-bearing sentence is that its behaviour must never fork. Awards differ in exactly three declarable ways — an icon, "given N times" as the count noun, and merge-or-retire instead of orphan on remove — so those become a per-library policy rather than a fourth hand-copied manager.</li>
+    <li><strong>Remove on a used award = merge or retire; never orphan, never cascade.</strong> A tag is a label; a game with one label fewer is still a game. An award is a record key — the database itself refuses to leave an award without a type — and "Blake got ___" is not an award. Cascade would erase recognition players received. Retire already exists and is the honest "stop using it."</li>
+    <li><strong>Counts are all-time, not this-season.</strong> The dialog's claim is "does anything depend on this chip" — a chip retired last year with ten records must still refuse delete.</li>
+    <li><strong>Once per occasion is a database rule, not only a form rule (R5).</strong> The refusal on Give/Edit could live in the form alone, but the merge's collapse has to be able to rely on the data actually being that way, and a form check can't promise it (two tabs, a retry, an import). "Occasion" for a general award is its date plus its label — the only identity a general award carries. A collapse keeps the award given <em>first</em>; a dropped note is carried only into an empty slot, so nothing a coach wrote is lost or overwritten silently.</li>
+    <li><strong>The chip row stays as the picker.</strong> The search dropdown exists because a 50-item vocabulary is searched; a ≤30-item curated list with icons is tapped. The door adopts the idiom's grammar in chip form.</li>
+    <li><strong>The game an award is for is not editable.</strong> Player, award, note and (for a general award) the occasion are what a mis-tap gets wrong; a wrong game is remove-and-re-give, like a tag on the wrong event.</li>
+    <li><strong>The read-time starter seed goes.</strong> It re-runs whenever a team has zero chips — harmless today, a trap once delete exists (remove all three, they come back). Either a one-time seed at team creation replaces it or the seed goes entirely (open question).</li>
+  </ul>
+  <h2>Phases</h2>
+  <div class="phase"><h3>Phase 1 — Part A: fix or take back a given award where it was given <span class="meta">(no migration · ships alone · builds first)</span></h3>
+    <ul>
+      <li>An update path for a given award: player, award, note, and the occasion label for a general award; the game stays fixed; the record's "last changed" stamp is written.</li>
+      <li>Give and Edit refuse a second copy of the same award for the same player on the same occasion, with one sentence (the database rule that makes it airtight arrives in Phase 2 — the hole exists today, so the form refusal doesn't wait).</li>
+      <li>The three hand-copied auth guards on the award routes collapse onto the shared live-season guard.</li>
+      <li>The Give window gains an edit mode — pre-filled, titled Edit award, primary reads Save changes, no remove link inside the form.</li>
+      <li>The game drawer's award rows gain Edit and Remove; the report's history rows gain Edit beside Print and Remove; the schedule's trophy badge is derived from the awards so it's true the moment one is given, edited or removed.</li>
+      <li>Unit tests on the update rules; help gains one sentence per article; rendered check on the drawer at phone widths; simplify, review, owner walk.</li>
+    </ul></div>
+  <div class="phase"><h3>Phase 2 — Part B, step 1: counts, delete and merge on the server <span class="meta">(migration 289 first)</span></h3>
+    <ul>
+      <li>Before anything is written: ask both databases whether any award is already doubled; the migration collapses each double to the earlier award, and the count it touched is recorded — a data step no schema gate can see.</li>
+      <li>The once-per-occasion rule itself (a player, an award, a game — or a date and label for a general award), so the form's refusal is a fact about the data and the merge can rely on it.</li>
+      <li>A merge function that first collapses collisions (keeping the first-given, carrying a note only into an empty slot), then re-points every remaining award from the losing chip to the winner and removes the loser, in one transaction, scoped to the team — and reports how many moved and how many dropped. A preview of the same numbers feeds the confirm dialog before the tap. A delete policy for parity with tags. The database's existing refusal to leave an award without a type stays as the backstop.</li>
+      <li>Data dictionary updated and snapshots refreshed in the same unit of work.</li>
+      <li>Usage counts per chip (all-time, team-scoped) returned with the library; delete for an unused chip; a used chip's delete answers with the count and the two exits so the client never guesses; merge.</li>
+      <li>The read-time starter seed is removed (or moved to team creation, per the open question), pinned by a test that a team with a deleted starter reads an empty library.</li>
+    </ul></div>
+  <div class="phase"><h3>Phase 3 — Part B, step 2: the door, the drawer, the dialog, the shelf <span class="meta">(no migration)</span></h3>
+    <ul>
+      <li>The shared manager list takes a per-library policy: icon on the row and in rename; "given N times"; the merge-or-retire remove dialog; a Retired group with Restore.</li>
+      <li>"Manage awards…" beside "+ New" opens the drawer over the Give window (form dims and waits, selections kept; full-screen sheet on a phone).</li>
+      <li>An Awards row on the Team settings Tags shelf, shown only when the coach can read the library.</li>
+      <li>The report page's "Manage award types" link and its modal are deleted; the stylesheet's shared classes are checked for other consumers before anything is removed.</li>
+      <li>Tests on the policy switch and the door; spelling gate; rendered sweep at four widths including the shelf opened; simplify, review.</li>
+    </ul></div>
+  <div class="phase"><h3>Phase 4 — Words, help, demo, marketing, walk</h3>
+    <ul>
+      <li>Help: the "rename or retire an award" FAQ becomes the drawer story (rename, merge duplicates, remove or retire with the rule stated plainly, the Tags shelf as the second home); the give-award and Who's-earning-it answers stop naming "Manage award types"; keywords keep the old phrase for search.</li>
+      <li>Demo: no narration names an award door (verified) — the demo check proves both worlds still present. A merge leaves no trace, so no new demo moment.</li>
+      <li>The marketing shot of the awards report is re-photographed (Edit now sits in its last column).</li>
+      <li>Owner QA walk on this hub's QA tab, pinned to identities (the fixture's duplicate chip; Blake's award on the Northgate game), never figures; ledger section; TODO trued to anchored facts; stage strip advanced.</li>
+    </ul></div>
+  <h2>Open questions</h2>
+  <ul>
+    <li><strong>Keep a starter set of three awards for a new team?</strong> Recommendation: keep it, seeded once at team creation — a new coach opening Give an award to an empty chip row is a colder first moment than tags' "type a word." If every award should be one the coach made, the seed goes entirely and the help line naming the three is swept.</li>
+    <li>Count noun in the drawer: "given 4 times" vs "on 4 awards" — decide on the built screen.</li>
+    <li>Should the club admin's Shared Library get merge/remove for shared chips? Not here — a different screen and actor; noted for that stream.</li>
+  </ul>
+  <h2>Rollout</h2>
+  <p>Phase 1 ships alone (no migration). Phase 2's migration is rule-adding, so it must be applied to production before the master build that carries Phase 3 can go green — the standing order from the 2026-09-10 release. It also carries a data step (collapsing any already-doubled award) that no gate can see: production is queried for doubles first and the count recorded, never assumed zero because dev had none. No seeded demo change; the demo check runs after each phase. Help and the marketing shot land with the door, in the same unit of work.</p>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">Editable Awards — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: from .env.local · Org/Team: uat-test-org / UAT Test Team</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));window.scrollTo({top:0})}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+const intents={
+ 's1':'The whole drawer, so the two new icons per row can be judged against everything else it holds — nothing moves, nothing is pushed down.',
+ 's2':'Edit and Remove per row, using the icon-button recipe Manage Award Types already ships in a sheet — a pattern the app has, applied where it was missing.',
+ 's3':'Edit is the Give window pre-filled, so a coach learns nothing new. No remove link inside the form (R0): delete is the row\'s trash icon with its own confirm, one job per control.',
+ 's4':'The report page already had Remove; Edit arrives beside it so a mis-given award from any game is fixed, not deleted and redone.',
+ 's5':'The door sits where minting happens — beside "+ New" — worded "Manage awards…" by the "Manage what the field holds…" grammar. The report page\'s text link retires.',
+ 's6':'The ratified drawer, unchanged in shape, holding awards: counts on every row, olive dot = yours, blue dot = the club\'s, shared rows read-only with the standing sentence.',
+ 's7':'Remove on a used award offers merge or retire and never orphans or cascades (R2) — an award is a record key, not a label. Unused: plain delete. A merge states what it will collapse before the tap, and Give refuses a second copy of the same award for the same game (R5) — the double was possible all along; the merge only made it visible.',
+ 's8':'Awards becomes one more row on the Tags shelf under Team settings, expanding into the same list — a home that isn\'t a link on a report.'
+};
+function showScreen(){const id=location.hash.slice(1)||'s1';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+esc(intents[id]):'';document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+const DECISIONS=[
+ {date:'2026-09-11',ask:'R0 — Does the edit form carry a "Remove this award" link as well as the row\'s trash icon?',ruling:'rejected',label:'Rejected — one control',why:'Two paths to the same destructive click depending on which button was tapped first. The app\'s own convention (Manage Award Types\' separate Edit/Retire icons; the tag drawer\'s Rename/Merge/Delete) is one job per control. Delete stays the row\'s trash icon with its own confirm.'},
+ {date:'2026-09-11',ask:'R1 — Direction for the award chips: join the One Tag Idiom, a smaller fix to today\'s modal, or Part A only?',ruling:'accepted',label:'Accepted — join the idiom',why:'The 2026-09-01 ruling says "every tag surface"; awards were the one vocabulary its inventory missed. Door beside "+ New", the drawer with counts + rename/merge/remove, an Awards row on the Tags shelf, the report page\'s link retires. Same treatment as every other tag, nothing new to learn.'},
+ {date:'2026-09-11',ask:'R2 — What does Remove do on an award chip that has already been given?',ruling:'accepted',label:'Accepted — merge or retire',why:'A tag is a label and a game survives losing one; an award is a record key (the database refuses to leave an award without a type) and "Blake got ___" is not an award. So no orphaning, and no cascade that erases recognition players received. The dialog states the count and offers Merge instead or Retire; an unused chip deletes outright.'},
+ {date:'2026-09-11',ask:'R3 — Picker shape in the Give window: keep the chip row, or switch to the search dropdown like other tags?',ruling:'accepted',label:'Accepted — chip row stays',why:'The dropdown\'s grammar exists because a 50-item vocabulary is searched; a ≤30-item curated list with icons is tapped. Budget items and test types kept their own shape under the same ruling. The door adopts the idiom\'s grammar in chip form.'},
+ {date:'2026-09-11',ask:'R4 — Sequence: one plan for both parts with Part A first, Part A as a quick fix and plan B later, or plan everything before building?',ruling:'accepted',label:'Accepted — one plan, A first',why:'Part A is contained (no migration) and ships alone; Part B carries a migration and rides release order. One plan keeps the two halves telling one story.'},
+ {date:'2026-09-11',ask:'R5 — Should a player ever hold the same award twice for one game? (Owner, reading the remove dialog: "if a player was given 2 awards and you merge, we don\'t want them to have the same award twice.")',ruling:'accepted',label:'Accepted — once per occasion',why:'Give and Edit refuse a second copy with one sentence ("Blake already has MVP for this game"); a merge collapses collisions to the award given first (a dropped note is carried only into an empty slot) and says how many it will drop before the tap. The same award on a different game stays legitimate. The question exposed a hole that exists today — nothing stops saving MVP for the same player on the same game twice — so it becomes a database rule, not only a form check, because the merge has to be able to rely on it. The two softer options (collapse only on merge; warn but allow) were refused.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+const QA_PARTS=[];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-awards-idiom')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-awards-idiom',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

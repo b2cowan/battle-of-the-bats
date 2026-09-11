@@ -16,6 +16,11 @@ export interface ComboTag {
   name: string;
   teamId?: string | null;
   count?: number;
+  /** Awards only — undefined for every other library (rename edits name + icon together). */
+  emoji?: string | null;
+  /** Awards only — undefined for every other library. false = retired (TagManagerList's
+   *  merge-or-retire policy groups it below the active rows with a Restore control). */
+  isActive?: boolean;
 }
 
 /**
@@ -56,6 +61,12 @@ export const GAME_TAG_MANAGE = { title: 'Game tags', itemNoun: 'game' } as const
 export const FOCUS_TAG_MANAGE = { title: 'Focus tags', itemNoun: 'drill, template or focus area' } as const;
 export const STAFF_TAG_MANAGE = { title: 'Staff', itemNoun: 'plan', door: 'Manage staff…' } as const;
 export const EQUIPMENT_TAG_MANAGE = { title: 'Equipment', itemNoun: 'plan or drill', door: 'Manage equipment…' } as const;
+/** Awards join the idiom (Part B) — not through this combobox (R3: the chip row stays the
+ *  picker), but through the same door/drawer words every other library uses. */
+export const AWARD_TAG_MANAGE = {
+  title: 'Awards', itemNoun: 'award', door: 'Manage awards…',
+  countNoun: (n: number) => `given ${n} time${n === 1 ? '' : 's'}`,
+} as const;
 
 /**
  * THE tag picker (One Tag Idiom P2–P3 — money, game, focus, staff, equipment: one component, one

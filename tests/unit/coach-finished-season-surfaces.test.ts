@@ -127,8 +127,12 @@ describe('the keepsakes a finished season is opened for', () => {
    * times, found by `/review` 2026-08-16.
    *
    * The awards page's `load()` took an `isStale` predicate with a NO-OP DEFAULT, so only callers
-   * that remembered to pass one were protected. The mount effect remembered; the three
-   * write-triggered reloads (remove an award, and both modals' `onChanged`) did not.
+   * that remembered to pass one were protected. The mount effect remembered; the write-triggered
+   * reloads (remove an award, and GiveAwardModal's `onChanged`) did not.
+   *
+   * ⚠ Was THREE write-triggered reloads at write time — dropped to two when Awards Join the One
+   * Tag Idiom Part B retired the standalone award-type manager modal (its own `onChanged` reload
+   * went with it, not because the guard stopped mattering for the callers that remain).
    *
    * ⚠ The season switcher was the TRIGGER that made this reachable, and the switcher is gone — but
    * the guard stays, and deliberately. The property it pins is not "a season change can strand the
@@ -148,7 +152,7 @@ describe('the keepsakes a finished season is opened for', () => {
     );
     const bareCalls = (code(awards).match(/void load\(\);/g) ?? []).length;
     assert.ok(
-      bareCalls >= 3,
+      bareCalls >= 2,
       `expected the write-triggered reloads to still call load() bare (found ${bareCalls}). If they `
       + 'now thread a predicate by hand, this guard is testing a shape that no longer carries risk '
       + '— but the generation counter must stay, because the NEXT caller will forget again.',

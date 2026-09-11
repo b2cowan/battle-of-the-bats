@@ -1,11 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
-import { Award, Check, Printer, Trash2 } from 'lucide-react';
+import { Award, Check, Printer, Trash2, Pencil } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
-import AwardTypeManagerModal from '@/components/coaches/AwardTypeManagerModal';
 import { canManageAwards } from '@/lib/coach-capabilities';
 import styles from '../../../../coaches.module.css';
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
@@ -35,7 +34,7 @@ export function AwardsPanel({
   const page = useCoachSeasonPage(orgSlug, teamId);
   const caps = page.capabilities;
   /**
-   * ⚠ `isRecord` is GONE (2026-08-18). It hid "Give an award", "Manage award types" and the
+   * ⚠ `isRecord` is GONE (2026-08-18). It hid "Give an award", the old award-type manager link and the
    * per-row Remove control, and swapped four sentences into the past tense — all to describe a
    * finished season, which this page is no longer rendered for. The keepsake half (printing a
    * certificate) never depended on it and is untouched.
@@ -52,7 +51,9 @@ export function AwardsPanel({
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [activeTypeId, setActiveTypeId] = useState<string | null>(null);
   const [giveOpen, setGiveOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
+  // Editing an already-given award (Awards One Tag Idiom Part A) reuses the give form — null
+  // when the modal is giving a NEW award instead.
+  const [editingAward, setEditingAward] = useState<RepPlayerAward | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [noSeason, setNoSeason] = useState(false);
@@ -110,7 +111,7 @@ export function AwardsPanel({
       const data = await awardsRes.json();
       if (isStale()) return;
       setNoSeason(false);
-      setAwardTypes(types.awardTypes ?? []);
+      setAwardTypes(types.tags ?? []);
       setAwards(data.awards ?? []);
       setPlayers(data.players ?? []);
     } catch {
@@ -205,10 +206,12 @@ export function AwardsPanel({
   return (
     /* ⚠ NO WRAPPER, NO BACK LINK, NO HEADER — this is a PANEL (reports portal P1, 2026-08-18).
        The hub owns `styles.page`, the <h1> and the help "?", and its tab row is what tells a coach
-       they are on Awards. The two instruments below (Give an award, Manage award types) stay in
-       the panel's own toolbar rather than moving to the hub header — the page-level action ruling
-       (2026-08-13) puts a tab-scoped action beside the thing it names, and a hub header above the
-       tab row cannot see which tab is open. */
+       they are on Awards. "Give an award" stays in the panel's own toolbar rather than moving to
+       the hub header — the page-level action ruling (2026-08-13) puts a tab-scoped action beside
+       the thing it names, and a hub header above the tab row cannot see which tab is open.
+       ⚠ The old separate award-type manager link retired from here (Awards Join the One Tag
+       Idiom Part B) — the door lives inside the Give window now, where every other tag
+       library's door lives too. */
     <>
       {loading || loadedFor !== loadKey ? (
         <div className={styles.loadingState}>Loading report…</div>
@@ -233,9 +236,8 @@ export function AwardsPanel({
             {players.length === 0 ? (
               <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
             ) : (
-              <button className={styles.btnPrimary} onClick={() => setGiveOpen(true)}>🏆 Give an award</button>
+              <button className={styles.btnPrimary} onClick={() => { setEditingAward(null); setGiveOpen(true); }}>🏆 Give an award</button>
             )}
-            <button className={styles.tagManageLink} onClick={() => setManageOpen(true)}>Manage award types</button>
             {/* Chunk D 3.4 — awards night, printed. Offered only for a chosen award TYPE:
                 "print every award this season" is a stack of mismatched certificates, not a
                 thing a coach wants. ⚠ Carries the year: the certificate names the season it was
@@ -339,6 +341,16 @@ export function AwardsPanel({
                             >
                               <Printer size={13} aria-hidden />
                             </Link>
+                            {/* Fix a mis-given award without a delete-and-redo (Awards One Tag
+                                Idiom Part A) — same live-instrument posture as Remove below. */}
+                            <button
+                              title="Edit"
+                              disabled={busyId === a.id}
+                              onClick={() => { setEditingAward(a); setGiveOpen(true); }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
+                            >
+                              <Pencil size={13} />
+                            </button>
                             {/* ⚠ Removing an award UNDOES a night that has happened. It is a live
                                 instrument, and the DELETE route resolves the ACTIVE year — so it
                                 cannot reach a closed season whatever this screen renders. */}
@@ -368,20 +380,18 @@ export function AwardsPanel({
           teamId={teamId}
           players={players}
           awardTypes={awardTypes}
-          eventContext={null}
-          onClose={() => setGiveOpen(false)}
-          onChanged={() => { void load(); }}
-        />
-      )}
-      {manageOpen && (
-        <AwardTypeManagerModal
-          orgSlug={orgSlug}
-          teamId={teamId}
-          /* Team's OWN types only — org-shared types (teamId null, Phase 3) are managed by the
-             org admin in the Shared Library, not editable/retirable from a team. The give-award
-             picker above still offers shared types; only management is team-scoped. */
-          awardTypes={awardTypes.filter(t => t.teamId !== null)}
-          onClose={() => setManageOpen(false)}
+          // An event-linked award being edited shows its own game as a fixed "For:" line, same
+          // as giving one from that game's own drawer; a general award (or a fresh give) leaves
+          // this null so the tournament-label input shows instead. Which game an award is FOR is
+          // never editable, so this is read-only context, not a field the form writes back.
+          eventContext={editingAward?.eventId
+            ? {
+                id: editingAward.eventId,
+                label: `vs ${editingAward.eventOpponent ?? 'opponent'} — ${new Date(`${editingAward.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}`,
+              }
+            : null}
+          editing={editingAward}
+          onClose={() => { setGiveOpen(false); setEditingAward(null); }}
           onChanged={() => { void load(); }}
         />
       )}

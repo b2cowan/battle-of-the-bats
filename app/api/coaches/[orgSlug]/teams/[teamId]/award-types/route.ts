@@ -4,9 +4,9 @@ import {
   getActiveRepProgramYear,
   getCoachingAssignmentsForUser,
   getRepTeam,
-  ensureRepTeamAwardTypesSeeded,
   getRepTeamAwardTypes,
   getRepTeamAwardTypeLibrary,
+  getRepTeamAwardTypeUsageCounts,
   createRepTeamAwardType,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
@@ -47,15 +47,18 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canManageAwards(capabilities), 'You do not have access to awards.');
   if (denied) return denied;
 
-  // Seeds MVP / Best Hitter / Hustle Award on a team's very first read (editable starting
-  // point, not a fixed default — see ensureRepTeamAwardTypesSeeded), as a side effect only —
-  // the response always returns the full list (active + retired) so one fetch serves both the
-  // give-award picker (active only, filtered client-side) and the manager modal (both).
-  await ensureRepTeamAwardTypesSeeded(ctx.org.id, teamId);
-  // Team's own types (incl. retired, for the manager modal) + the org's shared active types
-  // (Phase 3) — the give-award picker offers both; the manager only edits the team's own.
+  // Team's own types (incl. retired, for the manager drawer) + the org's shared active types —
+  // the give-award picker offers both; the manager only edits/removes the team's own. The
+  // starter library (MVP / Best Hitter / Hustle Award) is seeded ONCE at team creation
+  // (`createRepTeam`) — no read-time re-seed, which would silently un-delete a starter a coach
+  // removed on purpose the moment delete became real.
   const awardTypes = await getRepTeamAwardTypeLibrary(teamId, ctx.org.id, { includeRetired: true });
-  return NextResponse.json({ awardTypes });
+  // Same wire shape as every other tag library (`{ tags }`) — TagManagerList/TeamTagShelf
+  // self-fetch this basePath and hard-expect that key; `count` is all-time and team-scoped
+  // (the remove dialog's honesty is "does anything depend on this", not "this season").
+  const counts = await getRepTeamAwardTypeUsageCounts(teamId, awardTypes.map(t => t.id));
+  const tags = awardTypes.map(t => ({ ...t, count: counts[t.id] ?? 0 }));
+  return NextResponse.json({ tags });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/award-types' });
 
 export const POST = withObservability(async (req: Request,

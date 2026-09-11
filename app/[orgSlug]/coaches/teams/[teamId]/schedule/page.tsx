@@ -23,7 +23,7 @@ import {
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
+import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
@@ -664,8 +664,12 @@ export default function CoachesSchedulePage({
   const [awardTypes, setAwardTypes] = useState<RepTeamAwardType[]>([]);
   const [teamAwards, setTeamAwards] = useState<RepPlayerAward[]>([]);
   const [awardPlayers, setAwardPlayers] = useState<{ id: string; name: string; number: string | null }[]>([]);
-  const [awardCountByEventId, setAwardCountByEventId] = useState<Record<string, number>>({});
   const [giveAwardOpen, setGiveAwardOpen] = useState(false);
+  // Editing an already-given award (Awards One Tag Idiom Part A) reuses the give form — null
+  // when the modal is giving a NEW award instead.
+  const [editingAward, setEditingAward] = useState<RepPlayerAward | null>(null);
+  const [awardBusyId, setAwardBusyId] = useState<string | null>(null);
+  const [awardActionError, setAwardActionError] = useState('');
   const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
 
@@ -805,7 +809,6 @@ export default function CoachesSchedulePage({
       setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
-      setAwardCountByEventId(data.awardCountByEventId ?? {});
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       // Tryout markers + real tournament games are both optional read-only overlays keyed only on
@@ -836,7 +839,7 @@ export default function CoachesSchedulePage({
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
       ]);
-      if (typesRes.ok) setAwardTypes((await typesRes.json()).awardTypes ?? []);
+      if (typesRes.ok) setAwardTypes((await typesRes.json()).tags ?? []);
       if (awardsRes.ok) {
         const awardsData = await awardsRes.json();
         setTeamAwards(awardsData.awards ?? []);
@@ -849,6 +852,34 @@ export default function CoachesSchedulePage({
     void Promise.resolve().then(fetchEvents);
     void Promise.resolve().then(fetchAwardData);
   }, [fetchEvents, fetchAwardData]);
+
+  // Removing an already-given award (Awards One Tag Idiom Part A) — the same undo-a-mis-click
+  // confirm the season report page already offers, now reachable from the game it was given on.
+  async function handleRemoveAward(award: RepPlayerAward) {
+    const ok = await confirm({
+      title: 'Remove this award?',
+      message: `Undo ${award.awardType?.name ?? 'this award'} for ${award.playerName}? This can’t be undone.`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setAwardActionError('');
+    setAwardBusyId(award.id);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards/${award.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        void fetchAwardData();
+      } else {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        setAwardActionError(d.error ?? 'Could not remove this award');
+      }
+    } catch {
+      setAwardActionError('Could not remove this award — check your connection and try again.');
+    } finally {
+      setAwardBusyId(null);
+    }
+  }
 
   // Tag ids on the open form that still exist in the library — recomputed on every render (not
   // synced into state) so a Tag Manager delete/merge while the form is open can never leave a
@@ -877,6 +908,18 @@ export default function CoachesSchedulePage({
   // `events` rather than mirrored into state, so the two can never fall out of step. "Keep both"
   // is remembered, and a pair drops out the moment either side stops existing.
   const duplicatePairs = useMemo(() => findDuplicateSelfEntries(events), [events]);
+  // The schedule chip's 🏆 badge — derived from `teamAwards` (already refetched by
+  // `fetchAwardData` after every give/edit/remove) rather than the events fetch's own snapshot,
+  // which only refreshes on a full reload. Two sources of the same count could disagree the
+  // moment either fetch lands first; deriving from one keeps the badge honest right away.
+  const awardCountByEventId = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const a of teamAwards) {
+      if (!a.eventId) continue;
+      counts[a.eventId] = (counts[a.eventId] ?? 0) + 1;
+    }
+    return counts;
+  }, [teamAwards]);
   const liveDuplicates = useMemo(
     () => duplicatePairs.filter(p => !dismissedDupes.has(p.key)),
     [duplicatePairs, dismissedDupes],
@@ -1364,6 +1407,7 @@ export default function CoachesSchedulePage({
     // event, uninvited (not reachable via normal clicks today since the modal blocks
     // interaction with the slide-over underneath it, but cheap to guard against directly).
     setGiveAwardOpen(false);
+    setEditingAward(null);
   }
 
   // "+N more" in a month cell (and any future day tap): a single event opens its detail
@@ -1594,6 +1638,7 @@ export default function CoachesSchedulePage({
     setLineupRows([]);
     setLineupEntryIds(new Set());
     setGiveAwardOpen(false);
+    setEditingAward(null);
   }
 
   // Auto-save means closing should FLUSH any pending edits, not prompt to discard. Only if a
@@ -2541,19 +2586,42 @@ export default function CoachesSchedulePage({
                     {teamAwards.filter(a => a.eventId === selectedEvent.id).length === 0 ? (
                       <p className={styles.formHint}>No awards given for this game yet.</p>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginBottom: '0.6rem' }}>
                         {teamAwards.filter(a => a.eventId === selectedEvent.id).map(a => (
-                          <div key={a.id} style={{ fontSize: '0.85rem', color: 'var(--white-90)' }}>
-                            {a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? 'Award'} — {a.playerName}
+                          <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--white-90)' }}>
+                              {a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? 'Award'} — {a.playerName}
+                            </span>
+                            <span className={styles.tagManagerActions}>
+                              <button
+                                type="button"
+                                title="Edit"
+                                aria-label={`Edit ${a.awardType?.name ?? 'award'} for ${a.playerName}`}
+                                disabled={!!awardBusyId}
+                                onClick={() => { setEditingAward(a); setGiveAwardOpen(true); }}
+                              >
+                                <Pencil size={14} aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                title="Remove"
+                                aria-label={`Remove ${a.awardType?.name ?? 'award'} for ${a.playerName}`}
+                                disabled={awardBusyId === a.id}
+                                onClick={() => handleRemoveAward(a)}
+                              >
+                                <Trash2 size={14} aria-hidden />
+                              </button>
+                            </span>
                           </div>
                         ))}
                       </div>
                     )}
+                    {awardActionError && <p className={styles.errorText}>{awardActionError}</p>}
                     {/* A rosterless team gets a reason, not a blank player picker (Chunk E WI-7). */}
                     {awardPlayers.length === 0 ? (
                       <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--white-55)' }}>🏆 Add players to your roster first — then you can give awards.</p>
                     ) : (
-                      <button className={styles.btnSecondary} onClick={() => setGiveAwardOpen(true)}>🏆 Give an award</button>
+                      <button className={styles.btnSecondary} onClick={() => { setEditingAward(null); setGiveAwardOpen(true); }}>🏆 Give an award</button>
                     )}
                   </>
                 )}
@@ -3510,7 +3578,8 @@ export default function CoachesSchedulePage({
           players={awardPlayers}
           awardTypes={awardTypes}
           eventContext={{ id: selectedEvent.id, label: `vs ${selectedEvent.opponent ?? 'opponent'} — ${shortDate(selectedEvent.startsAt.slice(0, 10))}` }}
-          onClose={() => setGiveAwardOpen(false)}
+          editing={editingAward}
+          onClose={() => { setGiveAwardOpen(false); setEditingAward(null); }}
           onChanged={() => { void fetchAwardData(); }}
         />
       )}

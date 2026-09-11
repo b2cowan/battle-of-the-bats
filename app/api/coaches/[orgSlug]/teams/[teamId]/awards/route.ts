@@ -1,43 +1,26 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
-  getActiveRepProgramYear,
-  getCoachingAssignmentsForUser,
-  getRepTeam,
   getRepTeamPlayerAwardsHydrated,
   scopeAwardsToSeasonRoster,
   getRepRosterPlayers,
   getRepTeamAwardTypeLibrary,
   getRepTeamEventById,
+  findRepPlayerAwardCollision,
   createRepPlayerAward,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
+import { describeAwardOccasion } from '@/lib/rep-award-occasion';
 
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
-
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) {
-    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  }
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-  const denied = denyUnless(canManageAwards(assignment.capabilities), 'You do not have access to awards.');
+  const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved;
+  const denied = denyUnless(canManageAwards(resolved.assignment.capabilities), 'You do not have access to awards.');
   if (denied) return { error: denied };
-
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  }
-
-  return { ctx, team, assignment, programYear };
+  return resolved;
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -139,6 +122,18 @@ export const POST = withObservability(async (req: Request,
   }
 
   const note = typeof body.note === 'string' ? body.note.trim().slice(0, 200) || null : null;
+
+  // R5 (owner, 2026-09-11): a player holds a given award once per occasion. App-level here —
+  // migration 289 adds the DB-level partial unique indexes that close the race; this sentence is
+  // what a coach sees in the meantime and after.
+  const collision = await findRepPlayerAwardCollision(teamId, playerId, awardTypeId, { eventId, tournamentLabel, awardedAt });
+  if (collision) {
+    const playerName = [player.playerFirstName, player.playerLastName].filter(Boolean).join(' ') || 'That player';
+    return NextResponse.json(
+      { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt })}.` },
+      { status: 409 },
+    );
+  }
 
   const award = await createRepPlayerAward({
     orgId: ctx.org.id,

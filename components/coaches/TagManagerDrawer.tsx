@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import Link from 'next/link';
-import TagManagerList, { type TagManagerListHandle } from '@/components/coaches/TagManagerList';
+import TagManagerList, { type TagManagerListHandle, type TagManagerPolicy } from '@/components/coaches/TagManagerList';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { ComboTag } from '@/components/coaches/TagSearchCombobox';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -34,6 +34,7 @@ export default function TagManagerDrawer({
   itemNoun,
   basePath,
   countNoun,
+  policy,
   onClose,
   onChanged,
 }: {
@@ -47,6 +48,8 @@ export default function TagManagerDrawer({
   basePath: string;
   /** Formats a nonzero usage count — defaults to "on N records". */
   countNoun?: (n: number) => string;
+  /** Per-library behaviour knobs (icon, merge-or-retire) — omit for the tag default. */
+  policy?: TagManagerPolicy;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -142,6 +145,7 @@ export default function TagManagerDrawer({
           itemNoun={itemNoun}
           basePath={basePath}
           countNoun={countNoun}
+          policy={policy}
           onChanged={onChanged}
           onFullyDismiss={close}
         />

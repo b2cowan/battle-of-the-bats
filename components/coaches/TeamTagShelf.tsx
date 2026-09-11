@@ -5,8 +5,9 @@ import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import TagManagerList from '@/components/coaches/TagManagerList';
 import {
   MONEY_TAG_MANAGE, GAME_TAG_MANAGE, FOCUS_TAG_MANAGE, STAFF_TAG_MANAGE, EQUIPMENT_TAG_MANAGE,
-  type ComboTag,
+  AWARD_TAG_MANAGE, type ComboTag,
 } from '@/components/coaches/TagSearchCombobox';
+import type { TagManagerPolicy } from '@/components/coaches/TagManagerList';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -33,26 +34,37 @@ const LIBRARIES = [
     key: 'money', seg: 'expense-tags', words: MONEY_TAG_MANAGE,
     where: 'Bills, expenses, drives and sponsors — and the Ledger’s Tags filter',
     countNoun: undefined as ((n: number) => string) | undefined,
+    policy: undefined as TagManagerPolicy | undefined,
   },
   {
     key: 'game', seg: 'tags', words: GAME_TAG_MANAGE,
     where: 'Games on the schedule; the Insights results filter',
     countNoun: (n: number) => `on ${n} game${n === 1 ? '' : 's'}`,
+    policy: undefined,
   },
   {
     key: 'focus', seg: 'focus-tags', words: FOCUS_TAG_MANAGE,
     where: 'Drills, plan templates, practice plans and each player’s focus area',
     countNoun: undefined,
+    policy: undefined,
   },
   {
     key: 'staff', seg: 'staff-tags', words: STAFF_TAG_MANAGE,
     where: 'Who runs a practice, a block or a station',
     countNoun: (n: number) => `on ${n} plan${n === 1 ? '' : 's'}`,
+    policy: undefined,
   },
   {
     key: 'equipment', seg: 'equipment-tags', words: EQUIPMENT_TAG_MANAGE,
     where: 'Practice plans, stations and drills',
     countNoun: undefined,
+    policy: undefined,
+  },
+  {
+    key: 'awards', seg: 'award-types', words: AWARD_TAG_MANAGE,
+    where: 'The Give-an-award chip row and the season report',
+    countNoun: AWARD_TAG_MANAGE.countNoun,
+    policy: { icon: true, inUseRemove: 'merge-or-retire' } as TagManagerPolicy,
   },
 ] as const;
 
@@ -133,6 +145,7 @@ export default function TeamTagShelf({ orgSlug, teamId }: { orgSlug: string; tea
                     itemNoun={lib.words.itemNoun}
                     basePath={`/api/coaches/${orgSlug}/teams/${teamId}/${lib.seg}`}
                     countNoun={lib.countNoun}
+                    policy={lib.policy}
                     showSummary={false}
                     onChanged={() => { void reloadLib(lib.key, lib.seg); }}
                   />

@@ -7,6 +7,7 @@ import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
+import { resolveAwardTypeMergeCollisions } from './rep-award-occasion';
 import {
   DERIVED_INCOME_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
 } from './coach-budget-totals';
@@ -23,7 +24,7 @@ import { DEFAULT_SPORT } from './sports';
 import { SELF_TOKEN_HASH_PREFIX } from './tryout-evaluator-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
-import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc } from './timezone';
+import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, formatStoredDate } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
@@ -3421,6 +3422,16 @@ export async function createRepTeam(orgId: string, fields: {
     .select('*, rep_team_groups(name)')
     .single();
   if (error) throw error;
+  // Starter award types, ONCE, at team creation — not on first read (the trap that opened once
+  // delete became real: a coach who removed all three unused starters got them back on the next
+  // read). Best-effort: a seeding failure here must not fail team creation itself.
+  try {
+    await supabaseAdmin.from('rep_team_award_types').insert(
+      STARTER_AWARD_TYPES.map((t, i) => ({
+        org_id: orgId, team_id: data.id, name: t.name, emoji: t.emoji, sort_order: i,
+      })),
+    );
+  } catch { /* the team exists either way; a coach can add award types by hand */ }
   return mapRepTeam(data);
 }
 
@@ -7045,23 +7056,6 @@ export async function getRepTeamAwardTypes(
   return (data ?? []).map(mapRepTeamAwardType);
 }
 
-/** Seeds the starter library (MVP / Best Hitter / Hustle Award) the first time a team's award
- *  types are read with zero rows — an editable starting point, not a fixed default, so it's
- *  seeded on first touch rather than backfilled at migration time (which can't reach future
- *  teams). Returns the active types either way. */
-export async function ensureRepTeamAwardTypesSeeded(orgId: string, teamId: string): Promise<RepTeamAwardType[]> {
-  const existing = await getRepTeamAwardTypes(teamId, { includeRetired: true });
-  if (existing.length > 0) return existing.filter(t => t.isActive);
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_award_types')
-    .insert(STARTER_AWARD_TYPES.map((t, i) => ({
-      org_id: orgId, team_id: teamId, name: t.name, emoji: t.emoji, sort_order: i,
-    })))
-    .select();
-  if (error) throw error;
-  return (data ?? []).map(mapRepTeamAwardType);
-}
-
 export async function createRepTeamAwardType(fields: {
   orgId: string; teamId: string; name: string; emoji?: string | null; createdBy?: string | null;
 }): Promise<RepTeamAwardType> {
@@ -7166,6 +7160,125 @@ export async function updateOrgSharedAwardType(
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamAwardType(data) : null;
+}
+
+/** Team-scoped, ALL-TIME usage count per award type (own or shared) — the honesty prerequisite
+ *  for the remove dialog: "does ANY record depend on this chip", not "this season". Unlike the
+ *  game/money/focus tag counter, `rep_player_awards` already carries its own `team_id` column
+ *  (a first-class record, not a join table), so a shared type's count is re-asserted to THIS
+ *  team's awards with a plain filter rather than an inner join through a parent table. */
+export async function getRepTeamAwardTypeUsageCounts(
+  teamId: string, typeIds: string[],
+): Promise<Record<string, number>> {
+  if (typeIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .select('award_type_id')
+    .eq('team_id', teamId)
+    .in('award_type_id', typeIds);
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const r of data ?? []) counts[r.award_type_id] = (counts[r.award_type_id] ?? 0) + 1;
+  return counts;
+}
+
+/** Scoped hard delete — only ever called once the route has confirmed zero usage; the FK
+ *  RESTRICT on rep_player_awards.award_type_id (migration 182) is the backstop that turns an
+ *  in-use attempt into a 23503 rather than a silent no-op. Returns false on a no-op (wrong id,
+ *  or a cross-team id scoped out by the team_id match). */
+export async function deleteRepTeamAwardType(id: string, teamId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+/** Proves BOTH ids belong to the caller's team (check-then-act — a shared, org-authored type is
+ *  never merged from a team route) before calling `merge_rep_team_award_types` (migration 289),
+ *  which collapses R5 collisions, re-points the rest, and deletes the loser type. */
+export async function mergeRepTeamAwardTypes(
+  winnerId: string, loserId: string, teamId: string,
+): Promise<{ moved: number; dropped: number }> {
+  const { data: owned, error: ownedErr } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .select('id')
+    .eq('team_id', teamId)
+    .in('id', [winnerId, loserId]);
+  if (ownedErr) throw ownedErr;
+  if ((owned ?? []).length !== 2) {
+    throw new Error('Both award types must belong to your team');
+  }
+  const { data, error } = await supabaseAdmin
+    .rpc('merge_rep_team_award_types', { p_winner: winnerId, p_loser: loserId, p_team: teamId })
+    .single();
+  if (error) throw error;
+  const row = data as { moved: number; dropped: number };
+  return { moved: row.moved, dropped: row.dropped };
+}
+
+export interface AwardTypeMergePreview {
+  moved: number;
+  dropped: number;
+  collisions: { playerName: string; occasionLabel: string }[];
+}
+
+/** The merge confirm's preview — same `{ moved, dropped }` shape and the SAME collision rule
+ *  (`sameAwardOccasion`, R5) the `merge_rep_team_award_types` RPC applies, computed here in JS
+ *  rather than a second hand-written SQL derivation, so a dialog can state the consequence
+ *  BEFORE the coach taps Merge. Read-only — never call before the ownership proof the route's
+ *  caller (mergeRepTeamAwardTypes) already does for the real merge. */
+export async function previewMergeRepTeamAwardTypes(
+  winnerId: string, loserId: string, teamId: string,
+): Promise<AwardTypeMergePreview> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .select('id, player_id, award_type_id, event_id, tournament_label, awarded_at, created_at')
+    .eq('team_id', teamId)
+    .in('award_type_id', [winnerId, loserId]);
+  if (error) throw error;
+  const rows = (data ?? []) as {
+    id: string; player_id: string; award_type_id: string;
+    event_id: string | null; tournament_label: string | null; awarded_at: string; created_at: string;
+  }[];
+  const loserAwards = rows.filter(r => r.award_type_id === loserId);
+  const winnerAwards = rows.filter(r => r.award_type_id === winnerId);
+  const toMergeAward = (r: typeof rows[number]) => ({
+    id: r.id, playerId: r.player_id, eventId: r.event_id,
+    tournamentLabel: r.tournament_label, awardedAt: r.awarded_at,
+  });
+  const pairedCollisions = resolveAwardTypeMergeCollisions(
+    loserAwards.map(toMergeAward), winnerAwards.map(toMergeAward),
+  );
+  const loserById = new Map(loserAwards.map(l => [l.id, l]));
+
+  const collisions: { playerName: string; occasionLabel: string; awardedAt: string }[] = [];
+  for (const pair of pairedCollisions) {
+    const l = loserById.get(pair.loserAwardId);
+    if (!l) continue;
+    const shortDate = formatStoredDate(l.awarded_at, { withYear: false });
+    collisions.push({
+      playerName: l.player_id,
+      occasionLabel: l.event_id ? `for the ${shortDate} game` : l.tournament_label ? `for ${l.tournament_label}` : `for ${shortDate}`,
+      awardedAt: l.awarded_at,
+    });
+  }
+
+  const playerIds = [...new Set(collisions.map(c => c.playerName))];
+  const players = playerIds.length > 0 ? await getRepRosterPlayersByIds(playerIds, teamId) : [];
+  const nameById = new Map(players.map(p => [p.id, [p.playerFirstName, p.playerLastName].filter(Boolean).join(' ') || 'A player']));
+
+  return {
+    moved: loserAwards.length,
+    dropped: collisions.length,
+    collisions: collisions.map(c => ({
+      playerName: nameById.get(c.playerName) ?? 'A player',
+      occasionLabel: c.occasionLabel,
+    })),
+  };
 }
 
 function mapRepPlayerAward(r: any): RepPlayerAward {
@@ -7307,6 +7420,89 @@ export async function createRepPlayerAward(fields: {
     .single();
   if (error) throw error;
   return mapRepPlayerAward(data);
+}
+
+/**
+ * R5 (owner, 2026-09-11): a player holds a given award ONCE PER OCCASION — the game for a
+ * game-linked award, or the date + label for a general one (the rule stated as a pure predicate
+ * in `lib/rep-award-occasion.ts:sameAwardOccasion` — this is that same rule as a SQL filter,
+ * since a DB query can't call a JS function; keep the two in sync by hand if either changes).
+ * This is the APP-LEVEL half of the rule (migration 289 adds the two partial unique indexes that
+ * make it airtight against a race); Give and Edit both call this before writing.
+ * `excludeAwardId` lets Edit check without tripping over the very row it is updating.
+ */
+export async function findRepPlayerAwardCollision(
+  teamId: string,
+  playerId: string,
+  awardTypeId: string,
+  occasion: { eventId: string | null; tournamentLabel: string | null; awardedAt: string },
+  excludeAwardId?: string,
+): Promise<boolean> {
+  let query = supabaseAdmin
+    .from('rep_player_awards')
+    .select('id', { count: 'exact', head: true })
+    .eq('team_id', teamId)
+    .eq('player_id', playerId)
+    .eq('award_type_id', awardTypeId);
+
+  if (occasion.eventId) {
+    query = query.eq('event_id', occasion.eventId);
+  } else {
+    // NULL-correct: two general awards with no label collide with each other, not with a
+    // labelled one — `.eq('tournament_label', null)` would never match (PostgREST needs `.is()`
+    // for NULL), which is exactly the branch that matters most here.
+    query = query.is('event_id', null).eq('awarded_at', occasion.awardedAt);
+    query = occasion.tournamentLabel
+      ? query.eq('tournament_label', occasion.tournamentLabel)
+      : query.is('tournament_label', null);
+  }
+
+  if (excludeAwardId) query = query.neq('id', excludeAwardId);
+
+  const { count, error } = await query;
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Scoped read — the PATCH route's "what does this award currently say" step, kept separate
+ *  from `updateRepPlayerAward` so checking never itself writes `updated_at`. */
+export async function getRepPlayerAwardById(id: string, teamId: string): Promise<RepPlayerAward | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .select('*')
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerAward(data) : null;
+}
+
+/**
+ * Fix a mis-given award without a delete-and-redo. Scoped by `team_id`; `eventId` is never in
+ * `fields` — which game an award is FOR is not editable (see the plan's architectural decisions;
+ * a wrong game is remove-and-re-give, the same as a tag on the wrong event). Caller has already
+ * run `findRepPlayerAwardCollision` (R5) before calling this.
+ */
+export async function updateRepPlayerAward(
+  id: string,
+  teamId: string,
+  fields: { playerId?: string; awardTypeId?: string; tournamentLabel?: string | null; note?: string | null },
+): Promise<RepPlayerAward | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.playerId !== undefined) patch.player_id = fields.playerId;
+  if (fields.awardTypeId !== undefined) patch.award_type_id = fields.awardTypeId;
+  if (fields.tournamentLabel !== undefined) patch.tournament_label = fields.tournamentLabel?.trim() || null;
+  if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .update(patch)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerAward(data) : null;
 }
 
 /** Scoped delete — undoes a mis-click. Returns true if a row was actually deleted, false on a
