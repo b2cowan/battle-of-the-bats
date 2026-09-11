@@ -2086,6 +2086,16 @@
   },
   {
     "tablename": "rep_player_awards",
+    "indexname": "rep_player_awards_once_per_game_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_awards_once_per_game_uniq ON public.rep_player_awards USING btree (player_id, award_type_id, event_id) WHERE (event_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_player_awards",
+    "indexname": "rep_player_awards_once_per_general_occasion_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_awards_once_per_general_occasion_uniq ON public.rep_player_awards USING btree (player_id, award_type_id, awarded_at, COALESCE(tournament_label, ''::text)) WHERE (event_id IS NULL)"
+  },
+  {
+    "tablename": "rep_player_awards",
     "indexname": "rep_player_awards_org_idx",
     "indexdef": "CREATE INDEX rep_player_awards_org_idx ON public.rep_player_awards USING btree (org_id)"
   },

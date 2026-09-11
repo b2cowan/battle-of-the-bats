@@ -28753,6 +28753,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "assistant_invite_tokens",
+        "pos": 15,
+        "column_name": "staff_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "basic_coach_team_announcements",
         "pos": 1,
         "column_name": "id",
@@ -43261,6 +43270,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 11,
+        "column_name": "staff_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_tags",
         "pos": 1,
         "column_name": "id",
@@ -52299,6 +52317,16 @@
       },
       {
         "tablename": "rep_player_awards",
+        "indexname": "rep_player_awards_once_per_game_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_awards_once_per_game_uniq ON public.rep_player_awards USING btree (player_id, award_type_id, event_id) WHERE (event_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_player_awards",
+        "indexname": "rep_player_awards_once_per_general_occasion_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_awards_once_per_general_occasion_uniq ON public.rep_player_awards USING btree (player_id, award_type_id, awarded_at, COALESCE(tournament_label, ''::text)) WHERE (event_id IS NULL)"
+      },
+      {
+        "tablename": "rep_player_awards",
         "indexname": "rep_player_awards_org_idx",
         "indexdef": "CREATE INDEX rep_player_awards_org_idx ON public.rep_player_awards USING btree (org_id)"
       },
@@ -53990,6 +54018,12 @@
         "table_name": "announcements",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "assistant_invite_tokens",
+        "detail": "assistant_invite_tokens_staff_kind_check",
+        "check_clause": "(staff_kind = ANY (ARRAY['assistant'::text, 'manager'::text, 'treasurer'::text, 'helper'::text]))"
       },
       {
         "kind": "CHECK",
@@ -56048,6 +56082,18 @@
         "table_name": "rep_team_staff_memberships",
         "detail": "rep_team_staff_memberships_coach_role_check",
         "check_clause": "(coach_role = ANY (ARRAY['head_coach'::text, 'assistant_coach'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_head_coach_has_no_kind",
+        "check_clause": "((coach_role <> 'head_coach'::text) OR (staff_kind IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_staff_kind_check",
+        "check_clause": "(staff_kind = ANY (ARRAY['assistant'::text, 'manager'::text, 'treasurer'::text, 'helper'::text]))"
       },
       {
         "kind": "CHECK",

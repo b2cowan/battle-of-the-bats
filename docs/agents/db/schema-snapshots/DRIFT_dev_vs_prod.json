@@ -1,41 +1,12 @@
 {
   "generated": "2026-09-11",
-  "total": 7,
+  "total": 0,
   "counts": {
     "tables": 0,
-    "columns": 2,
-    "indexes": 2,
+    "columns": 0,
+    "indexes": 0,
     "constraints": 0,
-    "rls": 3
+    "rls": 0
   },
-  "items": [
-    {
-      "key": "check:only-dev:assistant_invite_tokens.assistant_invite_tokens_staff_kind_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_head_coach_has_no_kind",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_staff_kind_check",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:assistant_invite_tokens.staff_kind",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:rep_team_staff_memberships.staff_kind",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:rep_player_awards_once_per_game_uniq",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:rep_player_awards_once_per_general_occasion_uniq",
-      "sig": ""
-    }
-  ]
+  "items": []
 }
