@@ -45,6 +45,11 @@ function dues(over: Partial<DuesRevenue> = {}): DuesRevenue {
        Months band shows; these two are meant to differ now. */
     actual: 5007.63,
     actualParts: { cashKept: 2775, familyPaidCosts: 1379.98, fundraisingCredited: 852.65 },
+    /* ⚠ $300.00, not zero: this team handed a family back their own overpayment, which is what makes
+       the Months band's $3,075.00 of cash and the $5,007.63 above reconcile rather than merely
+       differ. Zero here would make the bridge's own arithmetic untestable on the one fixture that
+       carries every other shape. */
+    cashHandedBack: 300,
     planNeeds: 11650,
     planNeedsFloored: false,
     familyCount: 12,
@@ -242,7 +247,13 @@ describe('Player dues folds to families, and the fold adds up', () => {
     const o = { actual: 0, cashKept: 0, familyPaid: 0, raised: 0, lowered: 0, ...over };
     return {
       actual: o.actual,
-      parts: { cashKept: o.cashKept, familyPaidCosts: o.familyPaid, fundraisingCredited: o.raised },
+      /* `cashHandedBack` is zero on every family here on purpose: it is no part of `actual`, and
+         these cases exist to prove the fold's rows reach their category. The bridge it feeds has
+         its own cases in coach-dues-actual.test.ts. */
+      parts: {
+        cashKept: o.cashKept, familyPaidCosts: o.familyPaid, fundraisingCredited: o.raised,
+        cashHandedBack: 0,
+      },
       billLowered: { forgiven: 0, adjustment: o.lowered, total: o.lowered },
     };
   }

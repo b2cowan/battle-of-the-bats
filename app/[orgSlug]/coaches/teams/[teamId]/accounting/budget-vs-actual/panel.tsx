@@ -452,6 +452,20 @@ function fmtVariance(v: number): string {
   return `${signPrefix(v)}${fmt(Math.abs(v))}`;
 }
 
+/**
+ * An adjustment line inside a BRIDGE — sign always shown, magnitude after it.
+ *
+ * ⚠⚠ NOT `fmtVariance`, AND THE DIFFERENCE IS THE GLYPH. A bridge line's minus is U+2212, the typographic
+ * one that lines up with the digits; a variance uses ASCII and a half-cent deadband that can render no
+ * sign at all — correct there, wrong here, where every line is an adjustment and a signless one reads as
+ * a total. Three bridges now draw these rows, and this is the third time this file has had to record a
+ * hand-copied sign ternary drifting (see `signPrefix`: "five hand-written copies… one epsilon edit away
+ * from disagreeing"). One home, so the three cannot end up with two different minus signs on one screen.
+ */
+function fmtBridgeAmount(n: number): string {
+  return n < 0 ? `−${fmt(Math.abs(n))}` : `+${fmt(n)}`;
+}
+
 /** "2026-03" → "Mar" — the bare name the chart's middle labels carry (G3: only the edges keep
  *  their year). Derived from `fmtMonth` rather than a fourth copy of the month-name array. */
 function fmtMonthBare(yyyyMm: string): string {
@@ -1421,6 +1435,63 @@ function cashBridgeLines(data: BvaData): Array<{ label: string; amount: number; 
 }
 
 /**
+ * THE REVENUE SIDE'S GAP, WALKED — the dues twin of `cashBridgeLines` (owner ruling 2026-09-10).
+ *
+ * ⚠⚠ THE SAME "TWO BASES, ONE GAP" MECHANISM AS ITS TWO SIBLINGS, and it lives beside them for the
+ * reason `cashAdjustments`' header already gives: written out somewhere else it would be one edit
+ * away from disagreeing with them in front of a board. The Months view totals GROSS dues cash — what
+ * arrived in the account; the Statement totals what families CONTRIBUTED. Until this existed nothing
+ * on either screen crossed the gap, and the footnote that claimed to explain it named the two
+ * ADDITIONS and not the subtraction, landing a reader $300.00 above the Statement on the UAT team.
+ *
+ * ⚠⚠ EVERY FIGURE IS READ, NOT RE-DERIVED — the standing rule for all three bridges. `cash` is the
+ * Months band's own dues total, so where that row is on the table the first line of the walk is the
+ * same number, and the three adjustments are the report's own dues figures.
+ *
+ * ⚠ THE FIRST LINE CAN BE $0.00 FOR A ROW THE TABLE HIDES (review, 2026-09-10), and that is the walk
+ * doing its job rather than a defect. The Cash lens hides a dues row with no cash in it
+ * (`categoryHasFigure`), so a season whose dues were settled entirely by credits shows NO dues row
+ * here and a real dues figure on the Statement — which is exactly the reader who needs
+ * "cash $0.00, plus $900.00 credited". The line states a fact about the account, not a row.
+ *
+ * ⚠ "FAMILIES' OWN cash" ON THE SUBTRACTION LINE — the same scoping the two footnotes carry. This
+ * screen's Money returned band holds every cheque back ($600.00 on the UAT team); this line is only
+ * the part that was a family's own money ($300.00), because a payback drawn against a credit is
+ * already absent from the credited figure two lines down. Read against the band, an unscoped label
+ * lands $300.00 short — the failure this bridge exists to end.
+ *
+ * ⚠⚠ `cashHandedBack` IS THE ONE FIGURE THIS MAY NOT COMPUTE. The lookalike — `cash − cashKept` —
+ * gives the same answer on every ordinary season and is a different fact: it also swallows a dues
+ * payment from a family with no schedule, and an overshoot never written up as an overpayment
+ * credit. A middle line carrying a specific label over a residual is worse than no bridge, because
+ * it looks like a proof. It is derived in the definition module and shipped.
+ *
+ * ⚠ NULL IS A REFUSAL, NOT AN EMPTY STATE. A walk that does not close to the cent is not drawn at
+ * all — same rule, for the same reason.
+ */
+function duesBridgeLines(data: BvaData): {
+  cash: number; contributed: number; lines: Array<{ label: string; amount: number }>;
+} | null {
+  const { cashHandedBack, actual: contributed, actualParts } = data.dues;
+  const cash = r2(data.revenueGrid.categories
+    .find(c => revenueGroupOf(c.categoryKey) === 'dues')?.total.actual ?? 0);
+  const { familyPaidCosts, fundraisingCredited } = actualParts;
+  if (Math.round((cash - cashHandedBack + familyPaidCosts + fundraisingCredited) * 100)
+      !== Math.round(contributed * 100)) return null;
+  return {
+    cash,
+    contributed,
+    /* ⚠ THE ROW'S OWN PRESENCE IS THE CLAIM — the rule both expense bridges follow. A season with no
+       family-fronted bill has no line saying it had none. */
+    lines: [
+      { label: 'families’ own cash handed back', amount: r2(-cashHandedBack) },
+      { label: 'team bills families paid the vendor', amount: familyPaidCosts },
+      { label: 'fundraising still credited to dues', amount: fundraisingCredited },
+    ].filter(l => Math.abs(l.amount) > 0.005),
+  };
+}
+
+/**
  * ⚠ PROMOTED FROM A COLLAPSED QUESTION TO A VISIBLE SENTENCE (owner D5.3, 2026-09-02). The old
  * `<details>` summary asked "why the difference?" — which only helps a reader who had already
  * noticed one. The cash figure and its causes are now stated out loud; the walk-through stays
@@ -1470,7 +1541,7 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
               <Fragment key={l.label}>
                 <div className={styles.bridgeRow}>
                   <dt>{l.label}</dt>
-                  <dd>{l.amount < 0 ? `−${fmt(Math.abs(l.amount))}` : `+${fmt(l.amount)}`}</dd>
+                  <dd>{fmtBridgeAmount(l.amount)}</dd>
                 </div>
                 {l.subs?.map(s => (
                   <div className={`${styles.bridgeRow} ${styles.bridgeSub}`} key={s.id}>
@@ -1552,7 +1623,7 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
             <Fragment key={l.key}>
               <div className={styles.bridgeRow}>
                 <dt>{l.amount < 0 ? 'Less ' : 'Plus '}{l.label}</dt>
-                <dd>{l.amount < 0 ? `−${fmt(Math.abs(l.amount))}` : `+${fmt(l.amount)}`}</dd>
+                <dd>{fmtBridgeAmount(l.amount)}</dd>
               </div>
               {l.subs.map(s => (
                 <div className={`${styles.bridgeRow} ${styles.bridgeSub}`} key={s.id}>
@@ -1565,6 +1636,78 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
             <dt>What this season spent</dt><dd>{fmt(data.totalActual)}</dd>
           </div>
         </dl>
+      </div>
+    </details>
+  );
+}
+
+/**
+ * THE MONTHS VIEW'S TIE-OUT ON PLAYER DUES (owner ruling 2026-09-10).
+ *
+ * ⚠⚠ THE REVENUE TWIN OF `HeadroomBridge`, AND IT EXISTS FOR THE SAME REASON ONE ROW DOWN. The two
+ * views have differed on dues actual by design since R2–R4 (2026-09-07) — Cash counts what arrived
+ * in the account, the Statement counts what each family contributed — and for three days the only
+ * thing on either screen saying so was a footnote that named the two ADDITIONS and not the
+ * SUBTRACTION. A treasurer following it landed $300.00 above the Statement on the UAT team, inside a
+ * gap of $1,982.63, with nothing to look at next. The sentence is fixed; this is the arithmetic.
+ *
+ * ⚠ IT IS NOT A DOOR ON A FIGURE, and that was the owner's call among three (2026-09-10). Hanging it
+ * on the Statement's Player dues number would reverse the ruling five days earlier that dissolved
+ * exactly that door — category numbers on this report are plain cells — and hanging it on the Months
+ * Total column would make the only openable cell in a column where nothing opens. A bridge under the
+ * notes breaks neither rule, and the coach has already met its twin three inches below.
+ *
+ * ⚠ EVERY FIGURE IS READ, NOT RE-DERIVED — the standing rule for all three bridges. The walk itself
+ * is `duesBridgeLines`, beside `cashBridgeLines` where the expense pair already live; it returns null
+ * when the arithmetic does not close, and this draws nothing. That is the honest failure.
+ */
+function DuesBridge({
+  data, lens, onSeeStatement,
+}: { data: BvaData; lens: MoneyLens; onSeeStatement: () => void }) {
+  /* ⚠ CASH ONLY, exactly like its twin. Budget and Scheduled have no actual in them; Season
+     spending is expenses-only and draws no revenue band at all, so there is no dues figure on
+     screen for a sentence to be about. */
+  if (lens !== 'actual') return null;
+  const b = duesBridgeLines(data);
+  /* ⚠ NULL IS THE WALK REFUSING (see the builder), not an empty season. */
+  if (!b) return null;
+  /* ⚠ THE BRIDGE'S OWN PRESENCE IS THE CLAIM. A season where every dues dollar arrived as cash has
+     two identical figures, and a reconciliation announcing "no difference" is furniture. Checked on
+     the GAP rather than on the line list: offsetting adjustments (a payback exactly matching a
+     family-fronted bill) leave real lines to draw and nothing to explain. */
+  if (Math.abs(b.contributed - b.cash) < 0.005) return null;
+  const { lines } = b;
+
+  return (
+    <details className={styles.bridge}>
+      <summary className={styles.bridgeSummary}>
+        <ChevronRight size={13} className={styles.bridgeChev} aria-hidden />
+        <span>
+          The Statement counts <strong>{fmt(b.contributed)}</strong> of dues contributed — why the difference?
+        </span>
+      </summary>
+      <div className={styles.bridgeBody}>
+        <dl className={styles.bridgeList}>
+          <div className={styles.bridgeRow}>
+            <dt>Player dues — cash families sent</dt><dd>{fmt(b.cash)}</dd>
+          </div>
+          {lines.map(l => (
+            <div className={styles.bridgeRow} key={l.label}>
+              <dt>{l.amount < 0 ? 'Less ' : 'Plus '}{l.label}</dt>
+              <dd>{fmtBridgeAmount(l.amount)}</dd>
+            </div>
+          ))}
+          <div className={`${styles.bridgeRow} ${styles.bridgeOut}`}>
+            <dt>What families contributed</dt><dd>{fmt(b.contributed)}</dd>
+          </div>
+        </dl>
+        {/* ⚠ A VIEW FLIP, AND IT HAS PRECEDENT RATHER THAN BEING A NEW IDEA — the Statement's own
+            bridge ends on "See it by month", which is this link walked the other way. The figure it
+            lands on is the one this walk arrives at, so the reader who wants the family-by-family
+            breakdown is one press from the rows that carry it. */}
+        <button type="button" className={styles.bridgeLink} onClick={onSeeStatement}>
+          See it on the Statement
+        </button>
       </div>
     </details>
   );
@@ -2266,6 +2409,15 @@ export function BudgetVsActualPanel({
    * (D6.1, 2026-09-02) — the same walk, from the same `cashAdjustments`, never re-derived, with
    * the family-paid lines dated (`familyPaidSub`). A board reads the file where nobody can ask a
    * follow-up, which is exactly where the question "why doesn't this match the bank?" gets asked.
+   *
+   * ⚠ THE DUES WALK IS DELIBERATELY NOT HERE YET, AND THE SILENCE WAS THE RISK (noted 2026-09-10).
+   * The corrected two-truths footnote travels into every file — so the exported Cash reading now
+   * names three adjustments on player dues with no arithmetic behind them, which is the same gap
+   * D6.1 closed on the expense side for the reason directly above. `duesBridgeLines` is the builder
+   * it would take. It is OUT OF SCOPE by decision, not oversight: the Statement file suppresses the
+   * per-family dues rows by ruling, so what the file should show behind that figure is its own
+   * question and its own owner call. Written here rather than nowhere, because an omission this
+   * shaped reads as a miss.
    */
   function reconciliationRows(): { rows: Array<Record<string, string | number>>; kinds: Array<MoneyRowKind | undefined> } {
     const rows: Array<Record<string, string | number>> = [];
@@ -2821,6 +2973,9 @@ export function BudgetVsActualPanel({
                   MEANS; this states why two figures on the screen differ. Basis first, then the
                   arithmetic that follows from it. */}
               <HeadroomBridge data={data} lens={lens} />
+              {/* ⚠ EXPENSES FIRST, THEN REVENUE — the order of the table above, so a coach reading
+                  down the page meets the two tie-outs in the order they met the bands. */}
+              <DuesBridge data={data} lens={lens} onSeeStatement={() => setView('statement')} />
             </>
           ) : (
           <>

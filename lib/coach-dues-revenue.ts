@@ -179,6 +179,22 @@ export interface DuesRevenue {
   writtenOff: number;
   /** Which kinds are behind `writtenOff`, so the footnote can name them (R5). */
   writtenOffKinds: { forgiven: boolean; adjustment: boolean };
+  /**
+   * THE FAMILY'S OWN CASH, HANDED BACK — the one figure that bridges this reading to the Cash one
+   * (owner ruling 2026-09-10). See `FamilyDuesActual.parts.cashHandedBack` for how it is derived and
+   * why it may not be the residual `cash − cashKept`.
+   *
+   * ⚠⚠ IT IS DELIBERATELY NOT IN `actualParts`, and the placement is the ruling rather than a
+   * preference. Those three sum to `actual` and a coach can see that they do — that is the whole
+   * contract of the panel behind the figure. A fourth field inside that bag would be a number
+   * sitting in "the parts" that is no part of the total, which is exactly the shape a later reader
+   * adds to a subtotal by accident.
+   *
+   * ⚠ THE WALK IT FEEDS IS BUILT AT THE SCREEN, like both expense bridges (`duesBridgeLines`, beside
+   * `cashBridgeLines`). The payload ships FIGURES and the report walks them — the division of labour
+   * this screen already had. What must never be built at the screen is this number itself.
+   */
+  cashHandedBack: number;
 }
 
 /**

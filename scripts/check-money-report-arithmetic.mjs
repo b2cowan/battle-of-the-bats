@@ -15,6 +15,14 @@
  *     ("the $X gap is the budgeted Season net") is a proof printed on screen and is checked as
  *     one, including the single state where it must stay SILENT. (Claims 8–10.)
  *
+ *   · ⚠⚠ **AND SINCE 2026-09-10 THE DUES ACTUALS ARE HELD TO A RECONCILIATION — which is the
+ *     deleted claim returning in its honest form, NOT a re-run of the mistake above.** They still
+ *     legitimately differ; what changed is that the difference became ENUMERABLE when
+ *     `cashHandedBack` was derived, so the claim is no longer "equal" but "the gap is exactly the
+ *     three adjustments". Do not delete this one on the strength of the paragraph above it: it
+ *     asserts the identity the Months view's own dues bridge is drawn from, and it is the only
+ *     gate that can see a dues dollar reaching one reading and not the other. (Claim 11.)
+ *
  *   · the **MONTHS GRID** — two bands now, REVENUE and EXPENSES — is the season's **CASH**: gross
  *     both directions, team-cash only, and it must agree with the **REGISTER**, which is the book
  *     `check:register` already proves IS Cash on hand. (Claims 3–6.)
@@ -739,6 +747,55 @@ async function main() {
       + ' plan page). One family\'s instalments no longer add up to their own schedule.');
   }
 
+  /* ══ 11. THE TWO DUES ACTUALS RECONCILE ═══════════════════════════════════════════════════════
+     ⚠⚠ THIS IS THE CLAIM THE HEADER'S THIRD BULLET SAYS WAS DELETED, RETURNING IN ITS HONEST FORM.
+     "statement = grid" was dropped because the two ACTUAL columns are two BASES and legitimately
+     differ. They still do — but since `cashHandedBack` exists (2026-09-10) the difference is
+     enumerable, so the right claim is not that they are equal, it is that the gap between them is
+     exactly the three adjustments and nothing else:
+
+         Months dues cash − cash handed back + family-paid bills + fundraising credited
+           = the Statement's Player dues actual
+
+     ⚠ ASSERTED UNCONDITIONALLY, from the figures the SCREEN walks. The report draws this bridge by
+     reading the Months dues row and `dues.actualParts`; if the identity holds here it holds there,
+     which is the point of checking it rather than checking that the route agreed with itself. A
+     season with nothing to reconcile passes trivially — every adjustment is zero and both sides are
+     the same number.
+
+     ⚠⚠ THE FAILURE THIS ACTUALLY CATCHES is a dues dollar that reaches one reading and not the
+     other. The known way in: `buildFamilyDuesInputs` keys families by SCHEDULE, so a family with
+     payments and no schedule counts in the Months band and in no part of the contribution — their
+     cash is in neither `cashKept` nor any adjustment, and the identity breaks by exactly what they
+     sent. That is a real defect in the Statement's figure, not merely an unexplainable gap, and this
+     is the only gate that can see it. */
+  if (dues && dues.cashHandedBack === undefined) {
+    /* ⚠ NAMED, NOT ZEROED (review, 2026-09-10). `cents()` reads a missing field as $0.00, which
+       would let the identity below pass or fail on an assumption and never say "the field is not
+       there" — the one cause a reader of the failure message would not think to check. */
+    problems.push('THE DUES BLOCK CARRIES NO `cashHandedBack` — the reconciliation below cannot be'
+      + ' asserted, and the Months view will draw no bridge. The route stopped shipping it.');
+  } else if (dues) {
+    const duesBandActual = cents(monthsDues?.total?.actual);
+    const parts = dues.actualParts ?? {};
+    const walked = duesBandActual
+      - cents(dues.cashHandedBack)
+      + cents(parts.familyPaidCosts)
+      + cents(parts.fundraisingCredited);
+    if (walked !== cents(dues.actual)) {
+      problems.push(
+        `THE TWO DUES ACTUALS DO NOT RECONCILE — Months cash ${money(duesBandActual)}`
+        + ` − ${money(cents(dues.cashHandedBack))} handed back`
+        + ` + ${money(cents(parts.familyPaidCosts))} family-paid`
+        + ` + ${money(cents(parts.fundraisingCredited))} credited = ${money(walked)},`
+        + ` but the Statement reads ${money(cents(dues.actual))} — out by`
+        + ` ${money(Math.abs(walked - cents(dues.actual)))}. A dues dollar is reaching one reading and`
+        + ' not the other; the likeliest cause is a family with payments and no dues schedule, who is'
+        + ' counted in the Months band and in no part of the contribution. The Months view draws its'
+        + ' bridge off these same figures and will refuse to render it while this holds.');
+    }
+  }
+
   if (problems.length > 0) {
     console.error('\n✗ The report tells more than one story about one season:\n');
     for (const p of problems) console.error(`  · ${p}`);
@@ -783,6 +840,16 @@ async function main() {
       + ` added back: instalments ${money(cents(dues.billed))} → schedule totals ${money(cents(dues.assessed))}  ✓`);
   } else {
     console.log(`  and both "what dues bill" sources agree: instalments = schedule totals = ${money(cents(dues?.billed ?? 0))}  ✓`);
+  }
+
+  /* The dues gap, and the walk that crosses it — printed only where there IS a gap, for the same
+     reason the bridge itself only renders there: a green line announcing "no difference" on a
+     season whose dues all arrived as cash is furniture. */
+  if (dues && cents(dues.actual) !== cents(monthsDues?.total?.actual)) {
+    const parts = dues.actualParts ?? {};
+    console.log(`  the two dues actuals reconcile: cash ${money(cents(monthsDues?.total?.actual))}`
+      + ` − ${money(cents(dues.cashHandedBack))} handed back + ${money(cents(parts.familyPaidCosts))} family-paid`
+      + ` + ${money(cents(parts.fundraisingCredited))} credited = ${money(cents(dues.actual))} contributed  ✓`);
   }
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════

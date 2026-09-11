@@ -45,6 +45,24 @@ const credit = (
 });
 
 /**
+ * THE UAT FIXTURE, CONDENSED TO THE FAMILIES THAT CARRY EACH KIND — the figures a coach actually
+ * reads behind the Player dues row on the Statement.
+ *
+ * ⚠ ONE COPY, AND THAT IS THE POINT. It was typed out three times before `/simplify` looked
+ * (2026-09-10), each copy asserting the same $3,665.65 total. This fixture tracks REAL records on the
+ * UAT team, so it moves when they do — and a corrected copy sitting beside two stale ones leaves two
+ * tests proving a season that no longer exists, failing later as a puzzle rather than a statement.
+ */
+const UAT_CONDENSED: FamilyDuesActualInput[] = [
+  // Avery: sent $1,250.00 on a $700.00 bill, $380.00 owed back, $198.15 raised.
+  { dues: 700, cappedPaid: 700, credits: [credit('overpayment', 550), credit('reimbursement', 380), credit('fundraiser', 198.15)] },
+  // Casey: sent $1,200.00 on $900.00 and had the $300.00 excess returned.
+  { dues: 900, cappedPaid: 900, credits: [credit('overpayment', 300, { handedBack: 300 }), credit('fundraiser', 37.5)] },
+  // Kai: paid a $700.00 team bill, $200.00 from a drive, no cash.
+  { dues: 970.83, cappedPaid: 0, credits: [credit('reimbursement', 700), credit('fundraiser', 200)] },
+];
+
+/**
  * The identity that makes this module trustworthy, asserted on EVERY case rather than in one test
  * of its own — a gate that only one case has to pass is a gate one edit away from being useless.
  */
@@ -63,7 +81,11 @@ function assertTiesToBalance(input: FamilyDuesActualInput, label: string) {
   assert.equal(
     Math.round((r.parts.cashKept + r.parts.familyPaidCosts + r.parts.fundraisingCredited) * 100),
     Math.round(r.actual * 100),
-    `${label}: the three parts must sum to actual`,
+    /* ⚠ THREE, AND STILL THREE SINCE `cashHandedBack` JOINED `parts` (2026-09-10). That fourth field
+       is a reader for the Months view's bridge, not a part of this figure — money handed back is
+       absent from the total rather than subtracted from it, which is what lets three lines reach it
+       instead of four nearly reaching it. Adding it here would assert the opposite of the ruling. */
+    `${label}: the three parts must sum to actual (cashHandedBack is a fourth reader, not a fourth part)`,
   );
 
   /* ⚠⚠ THE PLAYER DUES BAND'S OWN IDENTITY (owner R1/R2, 2026-09-09 — "a bill lowered is not a
@@ -389,13 +411,8 @@ describe('review findings, 2026-09-07 — the two ways the door stopped adding u
 
 describe('the season total', () => {
   it('is the sum of the families, never a second derivation', () => {
-    const families: FamilyDuesActualInput[] = [
-      { dues: 970.83, cappedPaid: 0, credits: [credit('fundraiser', 200), credit('reimbursement', 700)] },
-      { dues: 700, cappedPaid: 700, credits: [credit('fundraiser', 198.15), credit('reimbursement', 380), credit('overpayment', 550)] },
-      { dues: 900, cappedPaid: 900, credits: [credit('fundraiser', 37.5), credit('overpayment', 300, { handedBack: 300 })] },
-    ];
-    // 900.00 + 1,828.15 + 937.50
-    assert.equal(seasonDuesActual(families), 3665.65);
+    // Avery 1,828.15 + Casey 937.50 + Kai 900.00
+    assert.equal(seasonDuesActual(UAT_CONDENSED), 3665.65);
   });
 
   it('adds in cents, so a season of awkward thirds does not drift', () => {
@@ -404,17 +421,7 @@ describe('the season total', () => {
   });
 
   it('breaks into the three lines the door shows, and they reach the figure', () => {
-    /* The UAT fixture's own shape, condensed to the families that carry each kind — the figures a
-       coach will actually read behind $5,007.63 on the Statement. */
-    const families: FamilyDuesActualInput[] = [
-      // Avery: sent $1,250.00 on a $700.00 bill, $380.00 owed back, $198.15 raised.
-      { dues: 700, cappedPaid: 700, credits: [credit('overpayment', 550), credit('reimbursement', 380), credit('fundraiser', 198.15)] },
-      // Casey: sent $1,200.00 on $900.00 and had the $300.00 excess returned.
-      { dues: 900, cappedPaid: 900, credits: [credit('overpayment', 300, { handedBack: 300 }), credit('fundraiser', 37.5)] },
-      // Kai: paid a $700.00 team bill, $200.00 from a drive, no cash.
-      { dues: 970.83, cappedPaid: 0, credits: [credit('reimbursement', 700), credit('fundraiser', 200)] },
-    ];
-    const p = seasonDuesParts(families);
+    const p = seasonDuesParts(UAT_CONDENSED);
     assert.equal(p.cashKept, 2150);            // $700 + $900 capped, plus Avery's $550 still held
     assert.equal(p.familyPaidCosts, 1080);     // $380 + $700
     assert.equal(p.fundraisingCredited, 435.65); // $198.15 + $37.50 + $200
@@ -699,5 +706,71 @@ describe('a write-off cannot absorb a payback while a real credit has room', () 
     assert.deepEqual(f.credits.map(c => c.handedBack), [50, 50], 'the write-off took what was left');
     const r = assertTiesToBalance(f, 'tail');
     assert.equal(r.balance, 950, 'and it equals the balance the dues screen renders');
+  });
+});
+
+/**
+ * THE BRIDGE FROM THE MONTHS VIEW'S CASH TO THE STATEMENT'S CONTRIBUTION (owner ruling 2026-09-10).
+ *
+ * ⚠⚠ THE PART THIS PROVES IS THE MIDDLE LINE, and it exists because the obvious way to get it is
+ * wrong. `cash − cashKept` produces the same number on every ordinary season and is NOT the same
+ * fact: it also swallows a payment from a family with no dues schedule and an overshoot never
+ * written up as an overpayment credit, and a bridge whose middle line carries a specific label over
+ * a residual is worse than no bridge — it looks like a proof.
+ *
+ * ⚠ ONLY THE FAMILY'S OWN MONEY. A payback drawn against a fundraiser or reimbursement credit has
+ * already reduced that credit's standing amount, so counting it here too would take the same dollars
+ * off twice — the double-count this module's header exists to warn about.
+ */
+describe('the dues cash bridge', () => {
+  it('counts a payback against the family\'s OWN money, and no other kind', () => {
+    const own = duesActual({
+      dues: 900, cappedPaid: 900,
+      credits: [credit('overpayment', 300, { handedBack: 300 })],
+    });
+    assert.equal(own.parts.cashHandedBack, 300, 'their own $300 went back to them');
+
+    const raised = duesActual({
+      dues: 900, cappedPaid: 900,
+      credits: [credit('fundraiser', 300, { handedBack: 300 })],
+    });
+    assert.equal(raised.parts.cashHandedBack, 0,
+      'a drive share handed back is already off `fundraisingCredited` — counting it here pays it twice');
+    assert.equal(raised.parts.fundraisingCredited, 0);
+  });
+
+  it('never reports more of a family\'s own cash returned than the credit ever held', () => {
+    /* The module's own contract: every exclusion tolerates a payback recorded larger than its
+       credit (see the fundraiser case at "a credit is revenue only while it is standing"). This is
+       the same tolerance on the one figure the bridge subtracts — unclamped, a $175 payback on a $100
+       overpayment credit would report $175 of own cash returned, and the walk would miss by $75. */
+    const r = duesActual({
+      dues: 500, cappedPaid: 0,
+      credits: [credit('overpayment', 100, { handedBack: 175 })],
+    });
+    assert.equal(r.parts.cashKept, 0, 'nothing of their own is still held');
+    assert.equal(r.parts.cashHandedBack, 100, 'capped at the $100 that was ever their own money');
+    assertTiesToBalance({ dues: 500, cappedPaid: 0, credits: [credit('overpayment', 100, { handedBack: 175 })] }, 'over-refunded own money');
+  });
+
+  /* ⚠ "cashHandedBack is no part of `actual`" HAS NO CASE OF ITS OWN, on purpose. `assertTiesToBalance`
+     asserts the three-parts identity on EVERY input this file gives it, so a case here would re-prove
+     on one family what is already held on fifteen — and the weaker gate is the one that would be
+     believed if the two ever disagreed. The claim lives in that helper's assertion message. */
+
+  it('walks the UAT shape from gross cash to what families contributed', () => {
+    /* GROSS dues cash — what the Months view totals. It is the capped payments plus every overshoot,
+       which is exactly what an overpayment credit records. */
+    const grossCash = 700 + 900 + 0 + 550 + 300;
+    assert.equal(grossCash, 2450);
+
+    const p = seasonDuesParts(UAT_CONDENSED);
+    assert.equal(p.cashHandedBack, 300, 'only Casey had their own money back');
+    assert.equal(
+      grossCash - p.cashHandedBack + p.familyPaidCosts + p.fundraisingCredited,
+      p.actual,
+      'the bridge must close to the cent, or the screen refuses to draw it',
+    );
+    assert.equal(p.actual, 3665.65);
   });
 });

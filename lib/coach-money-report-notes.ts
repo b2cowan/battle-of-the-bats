@@ -303,7 +303,30 @@ export function monthGridNotes(input: MonthGridNoteInput): ReportNote[] {
      ⚠ THE SENTENCE HAD TO GROW WITH THE CHANGE OR BECOME THE DEFECT ABOVE. It named the expense
      gap only; after R2–R4 a coach can see a dues gap it does not mention, and a footnote that
      explains half of what is on screen sends a treasurer looking for an adjustment that is not
-     there — which is exactly how the 2026-09-02 failure happened. */
+     there — which is exactly how the 2026-09-02 failure happened.
+
+     ⚠⚠ AND IT GREW ONE CLAUSE SHORT, WHICH IS THE SAME FAILURE IN MINIATURE (owner-found
+     2026-09-10). The dues half named the two things the Statement ADDS and not the one it SUBTRACTS,
+     so a treasurer following it landed above the Statement's figure by exactly the cash handed back
+     — $300.00 on the UAT team, against a $1,982.63 gap the sentence claimed to explain. The
+     Statement's own `dues-actual` note has said “less money handed back” since the day it was
+     written, so for three days one report explained one gap two different ways and only the half
+     facing the coach who notices the gap was incomplete.
+
+     ⚠ "adds … and leaves out", NOT "also includes". A list of additions has no grammatical room for
+     a subtraction, which is how the clause came to be missing rather than wrong; the pair of verbs
+     is what keeps the next editor from dropping it again.
+
+     ⚠⚠ "THEIR OWN cash" AND "STILL credited" — BOTH WORDS ARE LOAD-BEARING (review, 2026-09-10).
+     The first draft of the clause said "leaves out cash you have handed back", full stop, and it was
+     wrong by exactly the failure it was fixing. This same screen shows a "Money returned to families"
+     band holding EVERY cheque back — $600.00 on the UAT team — while the Statement's figure only
+     subtracts the $300.00 that was a family's own money; the other $300.00 came back out of a
+     fundraising credit and is already absent from "fundraising credited", because that figure counts
+     what is STILL standing. A treasurer reading the unscoped sentence against the visible band and
+     the visible credited figure lands $300.00 short. "Still credited" says the credit figure is net of
+     paybacks; "their own cash" says which paybacks the subtraction is. Both halves — this note and the
+     Statement's `dues-actual` — carry the same two words for the same reason. */
   if (lens === 'actual') {
     out.push(note('two-truths', [
       { text: 'These totals can differ from the ' },
@@ -314,7 +337,7 @@ export function monthGridNotes(input: MonthGridNoteInput): ReportNote[] {
       { text: 'expenses', bold: true },
       { text: ', this view leaves out costs a family paid a vendor directly, and shows money back as revenue instead of subtracting it from the cost it repaid. Money you return to families is in its own band — counted in your balance, never in Total expenses. On ' },
       { text: 'player dues', bold: true },
-      { text: ', this view counts the cash families sent; the Statement counts what they contributed, which also includes a team bill a family paid themselves and fundraising credited against their dues.' },
+      { text: ', this view counts the cash families sent; the Statement counts what they contributed — which adds a team bill a family paid themselves and fundraising still credited against their dues, and leaves out their own cash you have handed back.' },
     ]));
   }
 
@@ -520,12 +543,18 @@ export function statementNotes(input: StatementNoteInput): ReportNote[] {
    *
    * ⚠ IT NAMES THE COLUMN, not just the row. The Budgeted side is the instalment schedule and this
    * says nothing about it; "the Player dues actual" is the whole of what the sentence covers.
+   *
+   * ⚠⚠ "STILL credited" AND "THEIR OWN cash" — the same two scoping words the Months view's
+   * `two-truths` note carries, for the reason argued there (review, 2026-09-10). "Less money handed
+   * back" on its own reads as every cheque in the Money returned band, and only the family's own
+   * money is subtracted here; the rest is already absent from a credit figure that counts what is
+   * still standing. Two halves of one explanation, one vocabulary.
    */
   if (input.duesNonCash) {
     out.push(note('dues-actual', [
       { text: 'The ' },
       { text: 'Player dues', bold: true },
-      { text: ' actual includes team bills families paid and fundraising credited to dues, less money handed back.' },
+      { text: ' actual includes team bills families paid and fundraising still credited to dues, less their own cash handed back.' },
     ]));
   }
 

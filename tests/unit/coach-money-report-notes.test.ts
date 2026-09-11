@@ -118,7 +118,7 @@ describe('a gesture never reaches a file, and a fact always does', () => {
 
     assert.equal(
       file,
-      'The Player dues actual includes team bills families paid and fundraising credited to dues, less money handed back.',
+      'The Player dues actual includes team bills families paid and fundraising still credited to dues, less their own cash handed back.',
       'no clause of this note is a gesture, so a file keeps all of it');
 
     /* ⚠ THE DUES PAIR STAYS TOGETHER. Two answers about one row; an unrelated sentence between
@@ -190,6 +190,50 @@ describe('each lens states its own basis and nobody else’s', () => {
       const bases = idsFor(lens).filter(id => id.startsWith('basis-'));
       assert.equal(bases.length, 1, `${lens} stated ${bases.length} bases`);
     }
+  });
+
+  /**
+   * ⚠⚠ THE DUES HALF NAMES ALL THREE ADJUSTMENTS, NOT THE TWO THAT ARE ADDITIONS.
+   *
+   * Owner-found 2026-09-10. The sentence listed what the Statement ADDS — a family-paid team bill,
+   * fundraising credited to dues — and stopped, so a treasurer walking from the Cash total landed
+   * ABOVE the Statement by exactly the cash handed back ($300.00 on the UAT team, inside a gap of
+   * $1,982.63). The Statement's own `dues-actual` note has said "less money handed back" since it
+   * was written, so one report explained one gap two different ways.
+   *
+   * This pins the CLAUSE rather than the whole sentence: re-wording is a copy decision, dropping the
+   * subtraction is the defect. Asserted on the FILE text, because the exported spreadsheet a board
+   * reads is the copy nobody re-checks.
+   */
+  test('the dues half of the two-truths note says what the Statement leaves out, not only what it adds', () => {
+    const note = monthGridNotes({ ...NO_MONTH_INPUT, lens: 'actual' }).find(n => n.id === 'two-truths');
+    assert.ok(note, 'Cash has no two-truths note at all');
+    const text = noteTextForFile(note);
+    assert.ok(text.includes('a team bill a family paid themselves'), 'the first addition went missing');
+    assert.ok(text.includes('fundraising still credited against their dues'),
+      'the second addition went missing, or lost "still" — the word that says the credit figure is net of paybacks');
+    assert.ok(
+      /leaves out their own cash you have handed back/.test(text),
+      'the SUBTRACTION is missing or unscoped — "their own" is what stops a reader subtracting the whole'
+      + ' Money returned band, half of which is already absent from "still credited"',
+    );
+  });
+
+  /**
+   * ⚠ THE STATEMENT'S HALF CARRIES THE SAME TWO SCOPING WORDS (review, 2026-09-10). One explanation,
+   * two footnotes, one vocabulary — the Months half was found $300.00 out for want of them, and the
+   * Statement half had been ambiguous the same way since it was written.
+   */
+  test('the Statement\'s dues-actual note scopes the subtraction to the family\'s own money', () => {
+    const notes = statementNotes({
+      basis: 'season', dues: null, canWriteDues: true, duesNonCash: true,
+      duesPlanWrittenOff: null, undatedPlan: null,
+    });
+    const note = notes.find(n => n.id === 'dues-actual');
+    assert.ok(note, 'a non-cash dues actual carries its footnote');
+    const text = noteTextForFile(note);
+    assert.ok(text.includes('fundraising still credited to dues'), 'lost "still"');
+    assert.ok(/less their own cash handed back/.test(text), 'the subtraction is unscoped');
   });
 
   test('the opening balance says which of its two facts is true, and never both', () => {

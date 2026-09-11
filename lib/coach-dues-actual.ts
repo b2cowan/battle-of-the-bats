@@ -16,6 +16,14 @@
  * family-paid cost moved no team money and a payout really did leave the account. Cash is already
  * right, and the register's identity depends on it staying that way.
  *
+ * ⚠ ONE FIGURE HERE IS READ BY THE CASH VIEW, AND THE EXCEPTION IS NARROW (2026-09-10).
+ * `parts.cashHandedBack` exists so the Months view can WALK its gross cash figure to this reading's
+ * — it is the subtraction in the middle of that bridge and nothing else. It is not a Cash figure, no
+ * Cash total is built from it, and the sentence above still holds for every other export of this
+ * module. It lives here rather than at the report because deriving handed-back cash anywhere else
+ * would be a hand-rolled credit sum, which `tests/unit/dues-definition-guard.test.ts` refuses on
+ * sight and is right to.
+ *
  * ⚠ AND NOTHING HERE TOUCHES THE BUDGET (R1). A family paying a bill directly does not change their
  * dues plan and does not change the item they paid for. Every figure below is an ACTUAL.
  *
@@ -156,6 +164,27 @@ export interface FamilyDuesActual {
     familyPaidCosts: number;
     /** Fundraising and sponsor money credited against this family's dues, still standing. */
     fundraisingCredited: number;
+    /**
+     * THE FAMILY'S OWN CASH, HANDED BACK — the one figure that bridges this reading to the Cash one
+     * (owner ruling 2026-09-10).
+     *
+     * ⚠⚠ IT IS NOT A FOURTH PART AND MUST NEVER BE ADDED TO THE OTHER THREE. Those three sum to
+     * `actual` and the note above says why money handed back is absent from them; this sits beside
+     * them for a different reader. The Months view totals GROSS dues cash, so the only honest walk
+     * from that figure to this one is `cash − cashHandedBack + familyPaidCosts + fundraisingCredited`,
+     * and this is the subtraction in the middle.
+     *
+     * ⚠ ONLY THE OVERPAYMENT KIND. A payout drawn against a fundraiser or reimbursement credit has
+     * already reduced `fundraisingCredited` / `familyPaidCosts` by standing amount, so counting it
+     * here as well would take the same dollars off twice. Measured on the UAT team: $600.00 of
+     * payouts, of which $300.00 came out of a family's own money and $300.00 out of their credits.
+     *
+     * ⚠ IT IS DERIVED HERE RATHER THAN AT THE REPORT BECAUSE A RESIDUAL WOULD LIE. `cash − cashKept`
+     * looks like the same number and is not: it also swallows a payment from a family with no
+     * schedule, and an overshoot never written up as an overpayment credit. A bridge whose middle
+     * line is a residual wearing a specific label is worse than no bridge — it looks like a proof.
+     */
+    cashHandedBack: number;
   };
   /** Standing credits that are adjustments — a forgiven balance, an `other` write-off. Before the clamp. */
   writeOffs: number;
@@ -252,6 +281,9 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
   let ownStandingC = 0;
   let familyPaidC = 0;
   let fundraisingC = 0;
+  /* The bridge's middle line — see `parts.cashHandedBack`. Overpayment credits only, taken from the
+     same per-credit `handedBack` the standing amounts are computed from, so the two cannot part. */
+  let ownHandedBackC = 0;
 
   for (const c of input.credits) {
     const amountC = toCents(c.amount);
@@ -260,13 +292,21 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
        the same dollars off twice — the double-count this module's own header warns about, rebuilt
        inside the fix. Clamped at zero: a payout larger than its credit is a data state the ladder
        already tolerates and it must not turn into a negative exclusion. */
-    const standingC = Math.max(0, amountC - toCents(c.handedBack));
+    const backC = toCents(c.handedBack);
+    const standingC = Math.max(0, amountC - backC);
     issuedC += amountC;
-    handedBackC += toCents(c.handedBack);
+    handedBackC += backC;
 
     if (c.kind === 'overpayment') {
       // The family's own money — see the header. It rejoins the cash they sent, not the credits.
       ownStandingC += standingC;
+      /* ⚠ CLAMPED TO THE CREDIT, exactly as `standingC` is (review, 2026-09-10). Every other figure
+         in this loop tolerates a payback recorded larger than its own credit — `allocatePayouts`
+         makes that impossible for both live callers, but this function is exported, called directly
+         by its tests, and its own header says it must not lean on the caller for that. Unclamped,
+         a $175 payback on a $100 overpayment credit reports $175 of own cash returned against $100
+         that ever existed, and the bridge misses by the $75 that was never a family's own money. */
+      ownHandedBackC += Math.min(backC, amountC);
       continue;
     }
     if (!KIND_CLAIMS_MONEY[c.kind]) {
@@ -305,6 +345,7 @@ export function duesActual(input: FamilyDuesActualInput): FamilyDuesActual {
       cashKept: toDollars(cappedC + ownStandingC),
       familyPaidCosts: toDollars(familyPaidC),
       fundraisingCredited: toDollars(fundraisingC),
+      cashHandedBack: toDollars(ownHandedBackC),
     },
     writeOffs: toDollars(writeOffsC),
     untraced: toDollars(untracedC),
@@ -397,6 +438,13 @@ export interface SeasonDuesParts {
   familyPaidCosts: number;
   fundraisingCredited: number;
   /**
+   * The season's own-cash paybacks — see `FamilyDuesActual.parts.cashHandedBack`.
+   *
+   * ⚠ IT IS NOT PART OF `actual` AND NEVER JOINS THE OTHER THREE. It rides here so the Months view
+   * can walk from its gross cash figure to this one; every other reader ignores it.
+   */
+  cashHandedBack: number;
+  /**
    * WHAT CAME OFF THE BILLS THIS SEASON, split by kind (owner R1/R5, 2026-09-09).
    *
    * ⚠⚠ THIS IS THE AUTHORITATIVE TOTAL FOR THE REPORT'S PLAN SIDE, and it rides along here rather
@@ -435,12 +483,14 @@ export function seasonDuesParts(families: FamilyDuesActualInput[]): SeasonDuesPa
  */
 export function sumDuesParts(families: FamilyDuesActual[]): SeasonDuesParts {
   let actual = 0, cashKept = 0, familyPaidCosts = 0, fundraisingCredited = 0;
+  let cashHandedBack = 0;
   let forgiven = 0, adjustment = 0;
   for (const r of families) {
     actual += toCents(r.actual);
     cashKept += toCents(r.parts.cashKept);
     familyPaidCosts += toCents(r.parts.familyPaidCosts);
     fundraisingCredited += toCents(r.parts.fundraisingCredited);
+    cashHandedBack += toCents(r.parts.cashHandedBack);
     forgiven += toCents(r.billLowered.forgiven);
     adjustment += toCents(r.billLowered.adjustment);
   }
@@ -449,6 +499,7 @@ export function sumDuesParts(families: FamilyDuesActual[]): SeasonDuesParts {
     cashKept: toDollars(cashKept),
     familyPaidCosts: toDollars(familyPaidCosts),
     fundraisingCredited: toDollars(fundraisingCredited),
+    cashHandedBack: toDollars(cashHandedBack),
     billLowered: {
       forgiven: toDollars(forgiven),
       adjustment: toDollars(adjustment),

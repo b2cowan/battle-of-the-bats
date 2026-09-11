@@ -1740,6 +1740,9 @@ export const GET = withObservability(async (req: Request,
       forgiven: duesContributed.billLowered.forgiven > 0.005,
       adjustment: duesContributed.billLowered.adjustment > 0.005,
     },
+    /* The Months view's bridge to this reading — see the field's note for why it sits out here
+       rather than inside `actualParts`, which those three own. */
+    cashHandedBack: duesContributed.cashHandedBack,
   };
 
   /* ⚠⚠ INJECTED INTO THE ASSEMBLED REPORT, AND NOTHING IS WRITTEN TO THE PLANNER. A fabricated
@@ -2016,6 +2019,7 @@ export const GET = withObservability(async (req: Request,
         ? c
         : { ...c, incomeSource: incomeSourceOf(categoryIdOfKey(c.categoryKey)) })),
   };
+
 
 
   /* ⚠⚠ CASH ON HAND, COMPUTED THE GRID'S OWN WAY. The Scheduled lens's running balance starts from
