@@ -1,5 +1,6 @@
 import {
-  hasRecordAccess, hasNonMoneyRecordAccess, canConfigureTeam, canWriteMoney, type CoachCapabilities,
+  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canWriteMoney,
+  type CoachCapabilities,
 } from './coach-capabilities';
 
 /**
@@ -197,8 +198,13 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * ⚠ A helper still loses it, for the original reason — they hold no duty at all — and every
      * real assistant keeps it, because attendance and lineups are on the assistant defaults.
      * Pinned by `tests/unit/coach-insights-portal.test.ts`.
+     *
+     * ⚠ Widened 2026-09-11 to also admit `canViewScoutingBook`, matching the page's own front-door
+     * gate: a schedule-holder with the pooled scouting grant now has a real tab waiting inside
+     * (Scouting Book), so the nav entry that opens the hub must not stay hidden from exactly the
+     * person the deep link from the schedule already lets in.
      */
-    case 'Insights':      return hasNonMoneyRecordAccess(caps);
+    case 'Insights':      return hasNonMoneyRecordAccess(caps) || canViewScoutingBook(caps);
     // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables, and both
     // ride record access since A1; all writes stay head-coach-only server-side (D1).
     /**

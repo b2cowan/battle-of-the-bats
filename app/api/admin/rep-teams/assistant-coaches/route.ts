@@ -5,17 +5,14 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
   getOrgAssistantCoaches, getRepTeam, getRepTeamCoachById,
 } from '@/lib/db';
-import { removeStaffMember, getActiveTeamMembership } from '@/lib/coach-membership';
+import { removeStaffMember, getActiveTeamMembership, listActiveStaffKindsForOrg } from '@/lib/coach-membership';
 import {
   listOpenAssistantInvitesForOrg, getAssistantInviteById, approveAssistantInvite, revokeAssistantInvite,
-  orgRequiresAssistantApproval,
+  orgRequiresAssistantApproval, sendAssistantInviteEmail,
 } from '@/lib/assistant-invites';
-import { resolveCoachCapabilities } from '@/lib/coach-capabilities';
+import { resolveCoachCapabilities, sanitizeStaffKind } from '@/lib/coach-capabilities';
 import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
-import { sendEmail, assistantCoachInviteHtml } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -38,10 +35,14 @@ export const GET = withObservability(async (req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
-  const [assistantsRaw, invitesRaw, requireApproval] = await Promise.all([
+  // The oversight list names people by their live-season row; the KIND (mig 288) lives on the
+  // team membership, which the season row does not carry (it records head/assistant only). One
+  // org-wide read of the memberships supplies the word per (team, user).
+  const [assistantsRaw, invitesRaw, requireApproval, kinds] = await Promise.all([
     getOrgAssistantCoaches(ctx!.org.id),
     listOpenAssistantInvitesForOrg(ctx!.org.id),
     orgRequiresAssistantApproval(ctx!.org.id),
+    listActiveStaffKindsForOrg(ctx!.org.id),
   ]);
 
   const assistants = assistantsRaw
@@ -54,11 +55,12 @@ export const GET = withObservability(async (req: Request) => {
       displayName: a.displayName,
       email: a.email,
       capabilities: resolveCoachCapabilities('assistant_coach', a.capabilities),
+      staffKind: kinds.get(`${a.teamId}:${a.userId}`) ?? null,
     }));
 
   const pendingInvites = invitesRaw
     .filter(i => inScope(ctx!.repGroupIds, i.teamGroupId))
-    .map(i => ({ id: i.id, teamId: i.teamId, teamName: i.teamName, invitedEmail: i.invitedEmail, status: i.status, expiresAt: i.expiresAt }));
+    .map(i => ({ id: i.id, teamId: i.teamId, teamName: i.teamName, invitedEmail: i.invitedEmail, status: i.status, staffKind: i.staffKind, expiresAt: i.expiresAt }));
 
   return NextResponse.json({
     assistants,
@@ -102,15 +104,20 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
     }
 
     if (action === 'decline') {
-      await revokeAssistantInvite(inviteId);
+      await revokeAssistantInvite(inviteId, invite.teamId);
       return NextResponse.json({ ok: true });
     }
     // approve → mint a fresh token, flip to pending, email the assistant.
     const approved = await approveAssistantInvite(inviteId);
     if (!approved) return NextResponse.json({ error: 'This invite is no longer awaiting approval.' }, { status: 409 });
-    const inviteUrl = `${APP_URL}/auth/accept-assistant-invite?token=${approved.rawToken}`;
-    await sendEmail(invite.invitedEmail, `You're invited to help coach ${approved.invite.team_name ?? 'a team'}`,
-      assistantCoachInviteHtml({ teamName: approved.invite.team_name ?? 'the team', invitedByName: approved.invite.invited_by_name, inviteUrl }));
+    // The same email the head coach's own send uses — subject and promise from the invite's kind.
+    await sendAssistantInviteEmail({
+      email: invite.invitedEmail,
+      teamName: approved.invite.team_name ?? 'the team',
+      invitedByName: approved.invite.invited_by_name,
+      rawToken: approved.rawToken,
+      staffKind: sanitizeStaffKind(approved.invite.staff_kind),
+    });
     return NextResponse.json({ ok: true });
   }
 
@@ -133,7 +140,7 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
     // M1 (2026-08-16): oversight removal revokes the TEAM membership — every screen, every
     // season, in one action. The live season's record row is dropped and the guest org
     // membership cleaned up inside.
-    const removed = await removeStaffMember(ctx!.org.id, target.teamId, target.userId, ctx!.user.id);
+    const removed = (await removeStaffMember(ctx!.org.id, target.teamId, target.userId, ctx!.user.id)) === 'removed';
     if (!removed) {
       console.warn('[assistant-coaches remove] no active membership to revoke', { coachId });
     }

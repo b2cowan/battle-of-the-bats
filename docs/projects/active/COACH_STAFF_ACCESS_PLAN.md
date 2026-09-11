@@ -4,7 +4,7 @@
 recommendations"), on the review `COACH_STAFF_ACCESS_REVIEW.md` and mockup artifact
 `https://claude.ai/code/artifact/c8982bc5-6d0c-4063-bc82-400850600b1d` (round 2).
 **Pass 1 BUILT on dev 2026-09-10, `/review`ed the same day, and ✅ OWNER QA §168 PASSED
-2026-09-11 (28/28, four parts PASS)** — uncommitted at time of writing; walk
+2026-09-11 (28/28, four parts PASS)** — **committed `b0914edb` 2026-09-11**; walk
 `COACH_STAFF_ACCESS_PASS1_WALK.html`, artifact `50b0efa1`. ⚠ A separate session (2026-09-11, §171)
 has since added a `scoutingBook` grant and widened the helper's Insights door for the Scouting Book
 tab; the schedule doors helper and the helper-preset test were updated by that session, not this one. typecheck
@@ -16,7 +16,24 @@ fixed: Settings' organization-link row is head-coach-only; the Overview org-invi
 head-coach-only; the link page reads closed assignments too; the practice-plan read gates
 evaluation sessions on `canViewMeasurables`; the schedule panel's Edit / family-email doors read
 from the doors object. Refuted: the events read's practice plans + recap (both within the helper's
-grant by ruling). **Pass 2 not started.**
+grant by ruling).
+**Pass 2 BUILT on dev 2026-09-11 (uncommitted) — §2 to §5 in full: the list + the sheet, the four
+kinds and their presets, the stored label (mig 288, applied to dev, PROD-PENDING; its backfill is
+DATA-ONLY), invite with access first, pending rows with resend/cancel, schedule as one three-way
+control, plan/drill/template writes on `canWritePracticePlans`, Make head coach with the
+last-head rule, the four emails from `STAFF_KIND_COPY`, the accept page, the admin oversight page,
+the help article and the Overview step. **`/simplify` (8 applied) and `/review` (5 lenses; 13 confirmed
+incl. one Critical — the remove path's last-head race — and the migration backfill's narrow predicate,
+all fixed) run the same day; `check:layout` green on the staff screen.** Owner QA §169 owed (walk `490bc3e3`).** Four departures
+from the round-2 mockup were drawn as **round 3** on `c8982bc5` BEFORE building: a Scouting book
+switch in Everyday (the 09-11 grant had no screen), the treasurer starting with it OFF (else the
+09-11 Insights door opened for them — §2.2's treasurer bundle gains `scoutingBook: false`), the
+pending row's sentence as a door, and the own-row "Hand over" note. Two things this plan got wrong
+about the code, resolved on the code: the past-season library imports gate on BOTH the write and
+`canReadPastPracticePlans` (§2.3 said "/"); the admin oversight page reads kinds from the
+membership, not the season row (§2.5). Not built, by design: the drills RLS policy stays head-only
+(stricter than the app, never met by it); the masthead's role word still reads "Assistant Coach" for
+the three non-coach kinds (the season record carries no kind — §2.4's own rule).
 ⚠ Two corrections to the review found while building pass 1: (a) the tournament RECORD page and
 its registration routes already refuse anyone who does not own the linked coach team, so the
 "full tournament record" leak was the LIST and the history read only — the record page still

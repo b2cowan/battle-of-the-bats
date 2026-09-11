@@ -1,22 +1,23 @@
 /**
- * Practice Plans Phase 4 — the Staff page's helper controls, layout probes.
+ * Staff access pass 2 — the Staff LIST and the one SHEET, layout probes (rewritten 2026-09-11; the
+ * Phase 4 version probed the radio pair and the "what a helper gets" card, both retired with the
+ * list-and-sheet rebuild — owner-approved 2026-09-10, mockup `c8982bc5` round 3).
  *
  * BINDING METHOD: read COMPUTED STYLES and real geometry, never eyeball a screenshot (a screenshot
  * pass has produced the wrong fix twice in this portal).
  *
- * What this screen gained, and what these probes hold:
- *   · a preset CHOICE above the email field — two option rows that must stack, clear the 44px tap
- *     floor, and keep their description line intact at 361px
- *   · an access card that states what the chosen preset grants, IN THE PAGE rather than in the rail
- *     (design decision 2026-08-03: a reference rail does not exist below the wide breakpoint, and a
- *     head coach on a phone is the one who most needs to read what a stranger will be able to see)
- *   · the page never scrolls sideways at 361px
+ * What this screen is now, and what these probes hold:
+ *   · the page is a LIST of people — the head coach's own row first, one "Edit access" door per
+ *     other person — with nothing under the page title and one "Invite someone" in the header
+ *   · "Invite someone" opens a SHEET: an email field, the sub-lined Role dropdown opening on
+ *     "Choose who they are" with NOTHING preselected, and a quiet note where the grid will be
+ *   · the dropdown's four options each clear the 44px tap floor and keep their sentence at 361px
+ *   · choosing a role reveals the grid, prefilled from that role
+ *   · the page never scrolls sideways at 361px, with or without the sheet open
  *
- * ⚠ WHAT THIS FILE DOES **NOT** COVER, deliberately: the helper's OWN screens (their landing, the
- * quiet states, and the run screen's "who moves everyone on" line). Those render only for a signed-in
- * HELPER, and the UAT harness has one coach fixture who is a HEAD coach — probing them needs a second
- * seeded account with its own storage state, which would change shared UAT infrastructure while other
- * sessions are using it. Those frames rest on owner QA and are listed as such in the QA ledger.
+ * ⚠ WHAT THIS FILE DOES **NOT** COVER, deliberately: any other person's sign-in (a helper's, a
+ * treasurer's) — the UAT harness has one coach fixture who is a HEAD coach. Those frames rest on
+ * owner QA §169.
  *
  * Seed the fixture first (idempotent):
  *   node scripts/seed-uat-coach-fixture.mjs
@@ -45,96 +46,106 @@ const WIDTHS = [
   { name: 'desktop', width: 1440, height: 900 },
 ];
 
-/** The portal's standing tap floor. The preset rows are whole-card targets, not their 16px radios. */
+/** The portal's standing tap floor. */
 const TAP_MIN = 44;
 
 async function openStaff(page: Page) {
   await page.goto(staffUrl());
-  // The preset legend is the first thing rendered by the new block, so it is the honest ready
-  // signal — waiting on the email field would pass even if the choice above it failed to render.
-  await expect(page.getByText('Who are you inviting?')).toBeVisible({ timeout: 30_000 });
+  // The head coach's own row is the first thing the list renders, so it is the honest ready signal.
+  await expect(page.getByText('(you)')).toBeVisible({ timeout: 30_000 });
+}
+
+async function openInviteSheet(page: Page) {
+  await page.getByRole('button', { name: /Invite someone/ }).first().click();
+  await expect(page.getByRole('dialog', { name: /Invite someone to/ })).toBeVisible({ timeout: 10_000 });
+}
+
+async function noSidewaysScroll(page: Page) {
+  const overflow = await page.evaluate(() => {
+    const d = document.documentElement;
+    return { scrollWidth: d.scrollWidth, clientWidth: d.clientWidth };
+  });
+  // 1px of tolerance for sub-pixel rounding; anything more is a real horizontal scrollbar.
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
 }
 
 for (const vp of WIDTHS) {
-  test.describe(`Staff page · helper controls · ${vp.name}`, () => {
+  test.describe(`Staff page · the list and the sheet · ${vp.name}`, () => {
     test.beforeEach(async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await openStaff(page);
     });
 
-    test('offers both presets, with Helper preselected as the smaller grant', async ({ page }) => {
-      const helper = page.getByRole('radio', { name: /Helper/ });
-      const assistant = page.getByRole('radio', { name: /Assistant coach/ });
-      await expect(helper).toBeVisible();
-      await expect(assistant).toBeVisible();
-      // Defaulting to the SMALLER grant is deliberate: a head coach who picks without reading gives
-      // away less than they meant to, not more.
-      await expect(helper).toBeChecked();
+    test('the list is the page: your row first, a door on every other row, one invite button, no lede', async ({ page }) => {
+      // The head coach's own row: "(you)" and no "Edit access" door, but the hand-over link.
+      await expect(page.getByRole('button', { name: /Hand over to someone else/ })).toBeVisible();
+      // Every other person has a door.
+      const doors = page.getByRole('button', { name: /^Edit access for / });
+      expect(await doors.count()).toBeGreaterThanOrEqual(1);
+      // Inviting is the page-level action, and it is the only one.
+      await expect(page.getByRole('button', { name: /Invite someone/ }).first()).toBeVisible();
+      // The retired lede must not have come back under the title (page-header rule).
+      await expect(page.getByText('Invite assistants and choose exactly what each one can do.')).toHaveCount(0);
     });
 
-    test('every preset row clears the tap floor and keeps its description', async ({ page }) => {
-      const rows = page.locator('label:has(input[type="radio"])');
-      const count = await rows.count();
-      expect(count).toBeGreaterThanOrEqual(2);
-      for (let i = 0; i < count; i++) {
-        const box = await rows.nth(i).boundingBox();
-        expect(box, `preset row ${i} has no box`).not.toBeNull();
-        expect(box!.height, `preset row ${i} is under the ${TAP_MIN}px tap floor`).toBeGreaterThanOrEqual(TAP_MIN);
+    test('the invite sheet opens with nothing preselected and the grid held back', async ({ page }) => {
+      await openInviteSheet(page);
+      const dialog = page.getByRole('dialog', { name: /Invite someone to/ });
+      await expect(dialog.getByLabel('Their email')).toBeVisible();
+      // The Role field opens on its placeholder — nothing is chosen for the head coach.
+      const role = dialog.getByRole('button', { name: 'Who are they?' });
+      await expect(role).toBeVisible();
+      await expect(role).toHaveText(/Choose who they are/);
+      // And the access section is a quiet note until a role is picked.
+      await expect(dialog.getByText('Choose who they are, and their starting access appears here for you to adjust.')).toBeVisible();
+      await expect(dialog.getByText('Sensitive — asks before granting')).toHaveCount(0);
+      await noSidewaysScroll(page);
+    });
+
+    test('the four role options clear the tap floor and keep their sentences', async ({ page }) => {
+      await openInviteSheet(page);
+      const dialog = page.getByRole('dialog', { name: /Invite someone to/ });
+      await dialog.getByRole('button', { name: 'Who are they?' }).click();
+      const list = page.getByRole('listbox', { name: 'Who are they?' });
+      await expect(list).toBeVisible();
+      const options = list.getByRole('option');
+      await expect(options).toHaveCount(4);
+      for (const name of ['Assistant coach', 'Team manager', 'Team treasurer', 'Helper']) {
+        await expect(list.getByText(name, { exact: true })).toBeVisible();
       }
-      // The description line is the whole reason these are cards and not a <select>. If it were
-      // clipped to zero height the control would still "work" and would still be a guess.
-      const desc = page.getByText('Runs a station. Sees the practice, nothing else.');
-      await expect(desc).toBeVisible();
-      const descBox = await desc.boundingBox();
-      expect(descBox!.height).toBeGreaterThan(0);
+      // The sentence is the whole reason this is the sub-lined dropdown and not a <select>.
+      const sentence = list.getByText('Runs a station at practice. Sees the plan and the players in front of them.');
+      await expect(sentence).toBeVisible();
+      expect((await sentence.boundingBox())!.height).toBeGreaterThan(0);
+      for (let i = 0; i < 4; i++) {
+        const box = await options.nth(i).boundingBox();
+        expect(box, `option ${i} has no box`).not.toBeNull();
+        expect(box!.height, `option ${i} is under the ${TAP_MIN}px tap floor`).toBeGreaterThanOrEqual(TAP_MIN);
+      }
+      // The list sits over the sheet — it must not have pushed the page sideways.
+      await noSidewaysScroll(page);
     });
 
-    test('the preset rows STACK — never side by side', async ({ page }) => {
-      const rows = page.locator('label:has(input[type="radio"])');
-      const first = await rows.nth(0).boundingBox();
-      const second = await rows.nth(1).boundingBox();
-      // Vertical stacking means the second row starts at or below the first row's bottom edge.
-      expect(second!.y).toBeGreaterThanOrEqual(first!.y + first!.height - 2);
-    });
-
-    test('states what the preset grants IN THE PAGE, including the chat exclusion', async ({ page }) => {
-      await expect(page.getByText('What a helper gets')).toBeVisible();
-      // The one exclusion a head coach would otherwise assume wrong, and the loudest line on the
-      // card. If a later tidy-up drops it, this fails rather than shipping a quieter promise.
-      await expect(page.getByText(/helpers are never in it/i)).toBeVisible();
-    });
-
-    test('switching to Assistant coach re-states the access card for that preset', async ({ page }) => {
-      /**
-       * ⚠ RETRIED ON PURPOSE — this is a hydration race in the PROBE, not in the product.
-       *
-       * The panel is server-rendered, so the radio is visible and clickable before React has
-       * attached to it. A click landing in that window sets the DOM's `checked` and is then thrown
-       * away when React hydrates and re-renders from its own state, which still says "helper" — so
-       * the card never changes and the assertion times out. Running this spec alone always passed
-       * (the page was already compiled and hydration beat the click); running it in sequence failed
-       * at two widths out of three. That asymmetry is the tell.
-       *
-       * Polling the click + assertion together waits for the first click that actually reaches
-       * React, which is what the test means by "switching the preset". Asserting the click landed
-       * would be testing the browser; asserting the card followed is testing the product.
-       */
-      await expect(async () => {
-        await page.getByRole('radio', { name: /Assistant coach/ }).check();
-        await expect(page.getByText('What an assistant gets')).toBeVisible({ timeout: 1_000 });
-      }).toPass({ timeout: 15_000 });
-      await expect(page.getByText('On from the start')).toBeVisible();
-      // The label on the email field follows the choice — the two presets are not the same ask.
-      await expect(page.getByText(/Assistant’s email/)).toBeVisible();
+    test('choosing a role reveals the grid, prefilled from that role', async ({ page }) => {
+      await openInviteSheet(page);
+      const dialog = page.getByRole('dialog', { name: /Invite someone to/ });
+      await dialog.getByRole('button', { name: 'Who are they?' }).click();
+      await page.getByRole('listbox', { name: 'Who are they?' }).getByRole('option', { name: /Team treasurer/ }).click();
+      // The role's sentence sits under the field; the grid appears with the treasurer's shape.
+      await expect(dialog.getByText('Keeps the books — budget, dues, expenses and payments. Nothing else.')).toBeVisible();
+      await expect(dialog.getByText('Sensitive — asks before granting')).toBeVisible();
+      // Schedule is one three-way control, on "View" for a treasurer; Team money on "View + edit".
+      const schedule = dialog.getByRole('group', { name: 'Schedule' });
+      await expect(schedule.getByRole('button', { name: 'View', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      const money = dialog.getByRole('group', { name: /Team money/ });
+      await expect(money.getByRole('button', { name: 'View + edit' })).toHaveAttribute('aria-pressed', 'true');
+      // The footer counts the sensitive grants the send will confirm.
+      await expect(dialog.getByText(/1 sensitive grant — you’ll confirm it next\./)).toBeVisible();
+      await noSidewaysScroll(page);
     });
 
     test('never scrolls sideways', async ({ page }) => {
-      const overflow = await page.evaluate(() => {
-        const d = document.documentElement;
-        return { scrollWidth: d.scrollWidth, clientWidth: d.clientWidth };
-      });
-      // 1px of tolerance for sub-pixel rounding; anything more is a real horizontal scrollbar.
-      expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+      await noSidewaysScroll(page);
     });
   });
 }

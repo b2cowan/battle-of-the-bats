@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { getAssistantInviteByToken, acceptAssistantInvite } from '@/lib/assistant-invites';
 import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
 import { getRepTeamCoaches, getActiveRepProgramYear } from '@/lib/db';
+import { STAFF_KIND_COPY } from '@/lib/coach-capabilities';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 
@@ -46,6 +47,9 @@ export const GET = withObservability(async (req: Request) => {
       invitedByName: invite.invitedByName,
       invitedEmail: invite.invitedEmail,
       expired: invite.expired,
+      // Which of the four kinds this invite offers (mig 288) — the page says "join as {kind}".
+      // NULL on an invite minted before the column existed; the page reads that as an assistant.
+      staffKind: invite.staffKind,
     },
     signedIn: !!user,
     signedInEmail: user?.email ?? null,
@@ -72,11 +76,12 @@ export const POST = withObservability(async (req: Request) => {
       const coaches = await getRepTeamCoaches(year.id);
       const headUserIds = coaches.filter(c => c.coachRole === 'head_coach').map(c => c.userId);
       if (headUserIds.length > 0) {
+        const copy = STAFF_KIND_COPY[result.staffKind ?? 'assistant'];
         await notify({
           orgId: coaches[0]?.orgId ?? '',
           eventType: 'assistant_coach_joined',
-          title: 'Assistant coach joined',
-          body: `${user.email ?? 'An assistant coach'} accepted your invite.`,
+          title: `${copy.name} joined`,
+          body: `${user.email ?? 'Someone'} accepted your invite and joined as ${copy.asA}.`,
           userIds: headUserIds,
           link: `/${result.orgSlug}/coaches/teams/${result.teamId}/settings`,
         });

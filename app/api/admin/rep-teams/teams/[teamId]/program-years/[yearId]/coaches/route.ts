@@ -213,7 +213,7 @@ export const DELETE = withObservability(async (req: Request,
 
   // Revokes the TEAM membership (record kept) + deletes the live season's row + cleans up the
   // guest org membership — removal means removed, everywhere, in one action.
-  const removed = await removeStaffMember(ctx!.org.id, teamId, row.user_id as string, ctx!.user.id);
+  const removed = (await removeStaffMember(ctx!.org.id, teamId, row.user_id as string, ctx!.user.id)) === 'removed';
   if (!removed) {
     console.warn('[program-year coaches DELETE] no active membership to revoke', { coachId });
   }

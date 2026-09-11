@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, updateRepTeamDrill } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWritePracticePlans } from '@/lib/coach-capabilities';
 import { validateDrillInput } from '@/lib/rep-drills';
 
 /**
@@ -29,7 +29,7 @@ export const PATCH = withObservability(async (req: Request,
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
 
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage drills.');
+  const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Managing drills needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;
 
   let body: Record<string, unknown>;

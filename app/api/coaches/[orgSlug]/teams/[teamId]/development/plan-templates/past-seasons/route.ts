@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { resolveCoachTeamAssignment } from '@/lib/coach-route-context';
 import { getPastSeasonPracticePlans, getRepTeamPlanTemplates } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWritePracticePlans, canReadPastPracticePlans } from '@/lib/coach-capabilities';
 import { planToTemplateShape, templateShapeLabel } from '@/lib/rep-plan-templates';
 
 /**
@@ -20,7 +20,9 @@ import { planToTemplateShape, templateShapeLabel } from '@/lib/rep-plan-template
  * narrow detector (`CROSS_SEASON_PLAN_READERS`) keyed on the named reads that reach outside the
  * working season — `getPastSeasonPracticePlans`, which this route calls, among them.
  *
- * ⚠ Head-coach-only — everything this list can do is feed a library write.
+ * ⚠ Needs BOTH the library write (`canWritePracticePlans`, R7) and the look-back read
+ * (`canReadPastPracticePlans`) — everything this list can do is feed a library write, and what it
+ * reads is a finished season's plans.
  *
  * ⚠ It offers PLANS, deduplicated by name. A team is PERMANENT, so its template library already
  * survives a rollover untouched; what was genuinely season-locked is the plans, which is exactly
@@ -38,7 +40,10 @@ export const GET = withObservability(async (_req: Request,
   if ('error' in resolved) return resolved.error!;
   const { assignment } = resolved;
 
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage plan templates.');
+  const denied = denyUnless(
+    canWritePracticePlans(assignment.capabilities) && canReadPastPracticePlans(assignment.capabilities),
+    'Managing plan templates needs Schedule: View + edit. Ask your head coach.',
+  );
   if (denied) return denied;
 
   const [pastPlans, templates] = await Promise.all([

@@ -1,6 +1,6 @@
 'use client';
-import { use } from 'react';
-import { Users, ShieldCheck } from 'lucide-react';
+import { use, useState } from 'react';
+import { Users, ShieldCheck, UserPlus } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -22,8 +22,11 @@ export default function CoachStaffPage({
   // stale archived `?year=` URL, would answer with a bygone season's role: a demoted former head
   // coach would watch the live panel try to render and fail, and a newly-promoted one would be
   // told only the head coach manages staff (adversarial review 2026-08-16).
-  const isHeadCoach =
-    (assignments.find(a => a.teamId === teamId)?.capabilities ?? page.capabilities)?.isHeadCoach ?? false;
+  const assignment = assignments.find(a => a.teamId === teamId);
+  const isHeadCoach = (assignment?.capabilities ?? page.capabilities)?.isHeadCoach ?? false;
+  // Inviting is the page-level action, so the header owns the button and the panel owns the sheet
+  // it opens (pass 2 of the staff access plan, 2026-09-11).
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   if (loading) return <CoachLoading label="Loading staff…" />;
 
@@ -39,12 +42,18 @@ export default function CoachStaffPage({
   return (
     <div className={styles.page}>
       {/* Page-header ruling 2026-08-11: breadcrumb and team-name line both retire into the
-          masthead that already says both; the icon joins the portal's 22px convention. */}
+          masthead that already says both; the icon joins the portal's 22px convention. No lede
+          under the title — the list is the page. */}
       <CoachPageHeader
         icon={Users}
         title="Coaching staff"
         helpLabel="Coaching staff"
         help={{ module: 'coaches', sectionIds: ['premium-staff'], fullGuideHref: `/${orgSlug}/coaches/help#premium-staff` }}
+        actions={isHeadCoach ? (
+          <button type="button" className={styles.btnPrimary} onClick={() => setInviteOpen(true)}>
+            <UserPlus size={15} aria-hidden /> Invite someone
+          </button>
+        ) : undefined}
       />
 
       {/*
@@ -55,14 +64,20 @@ export default function CoachStaffPage({
       */}
 
       {isHeadCoach ? (
-        <CoachStaffPanel orgSlug={orgSlug} teamId={teamId} />
+        <CoachStaffPanel
+          orgSlug={orgSlug}
+          teamId={teamId}
+          teamName={assignment?.teamName ?? 'the team'}
+          inviteOpen={inviteOpen}
+          onInviteOpenChange={setInviteOpen}
+        />
       ) : (
         <CoachEmptyState
           quiet
           icon={<ShieldCheck size={20} aria-hidden />}
           headline="Only the head coach manages staff"
-          description="This is where a team's assistant coaches are invited and their access is set, one area at a time."
-          payoff="It's what gives each assistant their own sign-in rather than a shared password — which is why your own access is set here too."
+          description="This is where a team's staff are invited and their access is set, one area at a time."
+          payoff="It's what gives each person their own sign-in rather than a shared password — which is why your own access is set here too."
           blocker="Ask your head coach if you need more areas turned on for you."
         />
       )}

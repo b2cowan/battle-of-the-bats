@@ -1,7 +1,7 @@
 import {
   canManageAwards,
   canManageSchedule,
-  canViewScoutingBook,
+  canLogScoutingObservation,
   hasNonMoneyRecordAccess,
   type CoachCapabilities,
 } from './coach-capabilities';
@@ -25,7 +25,7 @@ import {
  * ⚠ Each field mirrors the `denyUnless` gate on the route it opens — change one, change both:
  *   attendanceTab        ↔ `events/[eventId]/attendance` GET/PATCH   (`capabilities.attendance`)
  *   lineupTab            ↔ `events/[eventId]/lineup` GET/PUT         (`capabilities.lineups`)
- *   scoutingTab          ↔ `opponents/*`                             (`canViewScoutingBook`)
+ *   scoutingTab          ↔ `opponents/*`                             (`canLogScoutingObservation`)
  *   scoreForm, editEvent ↔ `events/[eventId]` PATCH                  (`canManageSchedule`)
  *   awards               ↔ `awards` POST                             (`canManageAwards`)
  *   seasonAttendanceLink ↔ the Insights portal's own page gate       (`hasNonMoneyRecordAccess`)
@@ -72,7 +72,11 @@ export function scheduleDrawerDoors(
   return {
     attendanceTab: caps.attendance,
     lineupTab: ev.isLineupEvent && caps.lineups,
-    scoutingTab: ev.isGame && ev.hasOpponent && ev.scoutingAvailable && canViewScoutingBook(caps),
+    // Opens on the WEAKER grant (`schedule` alone) — a person without the pooled-book read
+    // still gets this tab, just a downgraded one (record + their own notes + the log form).
+    // The panel/route decide the downgrade from `scoutingBookAccess` in the payload; this
+    // door only decides whether the tab exists at all (owner ruling 2026-09-11).
+    scoutingTab: ev.isGame && ev.hasOpponent && ev.scoutingAvailable && canLogScoutingObservation(caps),
     scoreForm: ev.isGame && canManageSchedule(caps),
     awards: ev.isGame && canManageAwards(caps),
     seasonAttendanceLink: hasNonMoneyRecordAccess(caps),

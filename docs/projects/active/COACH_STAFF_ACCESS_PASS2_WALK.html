@@ -1,0 +1,467 @@
+<title>The Staff List · §169</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,60px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.signin{margin-top:22px;background:var(--card);border:1px solid var(--rule-strong);border-radius:var(--r);box-shadow:var(--shadow);padding:15px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);word-break:break-all}
+.priv{font-size:12.5px;color:var(--brick)}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.track{flex:1 1 200px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:140px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:72ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden;margin-top:18px}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:11px 14px;background:var(--card);font-size:14.5px;line-height:1.5}
+.chk input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:3px;text-decoration:none}
+.chk .pin{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--olive-soft);color:var(--olive);border:1px solid rgba(79,93,27,.3);border-radius:5px;padding:0 5px}
+.chk .url{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--fill);border:1px solid var(--rule);border-radius:5px;padding:0 5px;word-break:break-all}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.verdict{margin-top:15px;display:flex;flex-direction:column;gap:9px}
+.vrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vlabel{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.vbtn{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;padding:5px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--dim)}
+.vbtn[aria-pressed="true"][data-v="pass"]{border-color:var(--olive);background:var(--olive-soft);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="issue"]{border-color:var(--brick);background:var(--brick-soft);color:var(--brick)}
+.vbtn[aria-pressed="true"][data-v="call"]{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+textarea{width:100%;min-height:62px;resize:vertical;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--card);color:var(--ink)}
+textarea::placeholder{color:var(--dim)}
+.out{margin-top:52px;border-top:2px solid var(--ink);padding-top:16px}
+.out h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0 0 10px}
+pre.summary{margin:12px 0 0;padding:14px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r-sm);font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow:auto}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:50px;border-top:1px solid var(--rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §169 · built 2026-09-11 · migration 288 on dev · staff access pass 2 of 2</p>
+  <h1>The Staff list</h1>
+  <p class="lede">The Staff page is now a list of people — you, everyone on staff, and anyone you have
+    invited who hasn't accepted — with a role chip and one line of what each can open. Inviting is
+    one sheet: email, who they are (four roles), what they'll be able to open, set before the email
+    goes out. Seven parts. You need four inbox addresses you can read for Part B; Gmail
+    <b>+aliases</b> work (<span class="pin">b2cowan+manager@gmail.com</span> lands in your inbox and is a
+    separate account here).</p>
+</header>
+
+<section class="signin">
+  <h2>Sign-ins and identities</h2>
+  <dl class="kv">
+    <dt>org / team</dt><dd>uat-test-org · UAT Test Team (2026 Season)</dd>
+    <dt>you</dt><dd>your own head-coach account</dd>
+    <dt>on staff already</dt><dd>uat-helper (a helper, backfilled) · uat-asst-nomoney · uat-asst-money · uat-asst-treasurer (money only)</dd>
+    <dt>the four you invite</dt><dd>one address per role — an assistant coach, a team manager, a team treasurer, a helper (aliases of your own)</dd>
+    <dt>the second head coach</dt><dd>uat-asst-nomoney, in Part E</dd>
+  </dl>
+  <p class="priv">Part B sends four real emails to addresses you choose. Part E changes who is head
+    coach on the UAT team and puts it back. Nothing touches the demo team or any real club.</p>
+</section>
+
+<div class="bar">
+  <div class="track"><div class="fillbar" id="fillbar"></div></div>
+  <span class="count"><b id="cdone">0</b> / <span id="ctotal">0</span> steps</span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="reset">Reset</button>
+</div>
+
+<!-- ═══════════════════════════ PART A ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A · you, on a laptop</p>
+  <h2>A list of people, above the fold</h2>
+  <p>Open <b>Team → Staff</b>. The invite card, the "what a helper gets" card, the stacked control
+    grids and the right-hand rail are all gone.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="a1"><label for="a1">The page is the title, one lime <b>Invite someone</b> button in the header, and a list. <b>No sentence under the title.</b></label></div>
+  <div class="chk"><input type="checkbox" id="a2"><label for="a2"><b>Your own row is first</b>: your name with "(you)", a dark <b>Head coach</b> chip, "Everything — including this page." and a quiet <b>Hand over to someone else ›</b> link instead of Edit access.</label></div>
+  <div class="chk"><input type="checkbox" id="a3"><label for="a3">Tap <b>Hand over to someone else</b>. A two-line note opens under your row (open the other person's access → Make head coach → they can then make you an assistant or remove you). Tap it again and it closes.</label></div>
+  <div class="chk"><input type="checkbox" id="a4"><label for="a4"><span class="pin">uat-helper</span>'s row shows the chip <b>Helper</b> (dashed border) and the chips <b>Schedule · view</b>, <b>Scouting book</b>, then "Nothing else, not the staff chat."
+    <span class="hintline">The word was backfilled from the helper's bundle. Nobody else on the team was relabelled.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a5"><label for="a5"><span class="pin">uat-asst-money</span>'s row: chip <b>Assistant coach</b>; neutral chips for the everyday areas and an <b>amber</b> chip with a lock for <b>Money · edit</b>. <span class="pin">uat-asst-nomoney</span> has no amber chip at all.</label></div>
+  <div class="chk"><input type="checkbox" id="a6"><label for="a6"><span class="pin">uat-asst-treasurer</span>'s row reads <b>Assistant coach</b> today — nobody has chosen a word for them yet — with one amber <b>Money · edit</b> chip and no everyday chips.</label></div>
+  <div class="chk"><input type="checkbox" id="a7"><label for="a7">Every row's "Can open" line is <b>one line</b> (it may wrap once on a narrow window), and the whole list — five people — is on screen without scrolling on your laptop.</label></div>
+  <div class="chk"><input type="checkbox" id="a8"><label for="a8">Under the list: "Everyone signs in as themselves. Removing someone ends their access to every screen and every season at once." and a <b>How staff access works</b> link that opens the help article on staff.</label></div>
+</div>
+<div class="verdict" data-part="A">
+  <div class="vrow"><span class="vlabel">Part A</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART B ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B · you · invite one of each</p>
+  <h2>Email, who they are, what they can open — then send</h2>
+  <p>Four invites from the same sheet, one per role. Use four addresses you can read.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="b1"><label for="b1">Tap <b>Invite someone</b>. A sheet titled "Invite someone to UAT Test Team" opens with the line about the seven-day link. It holds <b>Their email</b>, then <b>Who are they?</b> showing <b>"Choose who they are"</b> — nothing preselected — and under "What they'll be able to open" only the italic note "Choose who they are, and their starting access appears here for you to adjust."</label></div>
+  <div class="chk"><input type="checkbox" id="b2"><label for="b2">Open the dropdown. Four options, each a name over one sentence: <b>Assistant coach · Team manager · Team treasurer · Helper</b>. It is the same dropdown the money screens use.</label></div>
+  <div class="chk"><input type="checkbox" id="b3"><label for="b3">Type your <b>manager</b> address and pick <b>Team manager</b>. The grid appears prefilled: Schedule <b>View + edit</b>, Attendance off, Lineups off, Staff chat on, Scouting book on, Documents <b>Manage</b>; Sensitive: Team money <b>View + edit</b>, Contacts &amp; birthdates on, Internal notes off, Email families on, Tryouts off. The footer says <b>"3 sensitive grants — you'll confirm them next."</b></label></div>
+  <div class="chk"><input type="checkbox" id="b4"><label for="b4">Every control has <b>one sentence</b> under it. Schedule's says edit "…writes practice plans." Documents' says signed forms also need Contacts &amp; birthdates.</label></div>
+  <div class="chk"><input type="checkbox" id="b5"><label for="b5">Tap <b>Send invite</b>. <b>One</b> dialog: "Give &lt;address&gt; access to team money, family contacts and emailing families?" listing what they'll see, with <b>Back</b> and <b>Send with this access</b>. Confirm. The sheet closes, a note says the invite was sent, and an <b>Invited</b> row appears at the bottom of the list: the address, "Invited &lt;today&gt; · link works 7 more days", the amber <b>Invited</b> chip, "Will start as the team manager with 3 sensitive grants.", <b>Change that before they accept ›</b>, and <b>Resend</b> / <b>Cancel</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="b6"><label for="b6">Invite your <b>treasurer</b> address as <b>Team treasurer</b>. Prefilled: Schedule <b>View</b>, everything else off, Scouting book <b>off</b>, Team money <b>View + edit</b>. One sensitive grant — one dialog naming only team money.</label></div>
+  <div class="chk"><input type="checkbox" id="b7"><label for="b7">Invite your <b>helper</b> address as <b>Helper</b>. Prefilled: Schedule <b>View</b>, Scouting book on, everything else off. The footer says "Nothing sensitive in this invite." and Send invite sends with <b>no dialog</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="b8"><label for="b8">Invite your <b>assistant</b> address as <b>Assistant coach</b> — but first tap <b>Team money → View</b> on the grid. The footer count goes to 1; Send asks about team money only; the pending row says "with 1 sensitive grant".
+    <span class="hintline">The grid is editable before sending — the preset is where access starts, not where it must stay.</span></label></div>
+  <div class="chk"><input type="checkbox" id="b9"><label for="b9">Open the <b>four emails</b>. Subjects: "You're invited to help run UAT Test Team" (manager), "…to keep the books for…" (treasurer), "…to help out at…" (helper), "…to help coach…" (assistant). Each body promises only what that role opens — the treasurer's says nothing about chat, lineups or attendance.</label></div>
+  <div class="chk"><input type="checkbox" id="b10"><label for="b10">Start an invite, type an email, then tap <b>Cancel</b> (or the X). It asks before throwing the unsent invite away. Open the sheet and close it with nothing typed: no question.</label></div>
+</div>
+<div class="verdict" data-part="B">
+  <div class="vrow"><span class="vlabel">Part B</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART C ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C · you · the pending rows</p>
+  <h2>Editable until they accept; resend; cancel</h2>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="c1"><label for="c1">On the <b>helper</b>'s pending row tap <b>Change that before they accept</b>. The same sheet opens on the invite: the address as its title, "Invited … · link works 7 more days" under it, Role showing <b>Helper</b>, the grid as sent. Footer: <b>Cancel invite</b> and <b>Resend</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="c2"><label for="c2">Tick <b>Attendance</b>. The sheet says <b>✓ Saved</b> in its header within a moment; the sentence under Attendance carried "<b>Turning this on also opens the roster page for them.</b>" before you ticked it, and no longer does after.</label></div>
+  <div class="chk"><input type="checkbox" id="c3"><label for="c3">Change Role to <b>Team treasurer</b>. A dialog: "Make &lt;address&gt; the team treasurer?" naming team money. Confirm → the grid becomes the treasurer bundle, Saved. Change it back to <b>Helper</b>: <b>no dialog</b> (a narrowing never asks), the grid is the helper bundle again. Close the sheet; the row now reads "Will start as a helper with the everyday tools."</label></div>
+  <div class="chk"><input type="checkbox" id="c4"><label for="c4">Tap <b>Resend</b> on the helper's row. A note: "Invite sent again to &lt;address&gt;." A second email arrives; the row still reads <b>7 more days</b>. The <b>first</b> email's link now shows "Invite expired · no longer available" if opened.</label></div>
+  <div class="chk"><input type="checkbox" id="c5"><label for="c5">Tap <b>Cancel</b> on the <b>assistant</b>'s row. A dialog "Cancel the invite to …?" with <b>Cancel invite</b> / <b>Keep it</b>. Confirm: the row disappears. Its email link, opened, says the invite is no longer available.</label></div>
+  <div class="chk"><input type="checkbox" id="c6"><label for="c6">Invite the assistant address again as <b>Assistant coach</b> with the default grid (Part F needs it). The pending row is back.</label></div>
+</div>
+<div class="verdict" data-part="C">
+  <div class="vrow"><span class="vlabel">Part C</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART D ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D · you · a person's sheet, both directions</p>
+  <h2>The word is yours; the switches are the switches</h2>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="d1"><label for="d1">Tap <b>Edit access</b> on <span class="pin">uat-helper</span>. The sheet: their name, "email · joined &lt;date&gt;", Role <b>Helper</b> with its sentence, Everyday (Schedule at <b>View</b>, Scouting book on, the rest off), the standing note about names, and <b>Sensitive — asks before granting · none granted</b> as a visible group, not a fold. Footer: <b>Remove from team</b> · <b>Make head coach</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="d2"><label for="d2">Tick <b>Attendance</b>. Saved. Close the sheet: the row <b>still says Helper</b>, now with an Attendance chip and without "Nothing else…".
+    <span class="hintline">Yesterday this exact change relabelled them "Assistant".</span></label></div>
+  <div class="chk"><input type="checkbox" id="d3"><label for="d3">Reopen. Untick Attendance. Change Role to <b>Assistant coach</b>. <b>No dialog</b> — the assistant bundle adds nothing sensitive. The grid becomes: Schedule <b>View + edit</b>, Attendance on, Lineups on, Staff chat on, Scouting book on, Documents <b>View</b>. Row chip: <b>Assistant coach</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="d4"><label for="d4">Change Role to <b>Team manager</b>. A dialog naming <b>team money, family contacts and emailing families</b>. Confirm. Three amber chips on the row.</label></div>
+  <div class="chk"><input type="checkbox" id="d5"><label for="d5">Change Role back to <b>Helper</b>. No dialog. The grid is the helper bundle; the amber chips are gone; the row says Helper with "Nothing else, not the staff chat." again.</label></div>
+  <div class="chk"><input type="checkbox" id="d6"><label for="d6">Open <span class="pin">uat-asst-treasurer</span>. Change Role to <b>Team treasurer</b> — no dialog (they already hold money). Row chip becomes <b>Team treasurer</b> (olive), chips Schedule · view and Money · edit, and the line "Names beside the dues; no family contacts unless you add them."</label></div>
+  <div class="chk"><input type="checkbox" id="d7"><label for="d7">Open <span class="pin">uat-asst-money</span>. Set <b>Schedule</b> to <b>Hidden</b>, then <b>View</b>, then <b>View + edit</b> — it is one three-way control, saving on each tap, and the row's chip follows (no chip · Schedule · view · Schedule · edit). Leave it at View + edit.</label></div>
+  <div class="chk"><input type="checkbox" id="d8"><label for="d8">Still on uat-asst-money: with Contacts &amp; birthdates off, set Documents to <b>Manage</b> — no dialog. Tick <b>Contacts &amp; birthdates</b>: the dialog mentions signed forms <b>because Documents is on</b>. Confirm, then turn Documents to <b>Hidden</b>, then back to <b>View</b>: <b>now</b> the Documents change asks about signed player forms. Set it back to View, untick Contacts.
+    <span class="hintline">The compound rule from the old grid, unchanged: whichever half completes the pair asks.</span></label></div>
+  <div class="chk"><input type="checkbox" id="d9"><label for="d9">Tap <b>Remove from team</b> on uat-asst-money and choose <b>Keep them</b>. Nothing changes. (Do not remove anyone in this walk.)</label></div>
+</div>
+<div class="verdict" data-part="D">
+  <div class="vrow"><span class="vlabel">Part D</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART E ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E · you, then uat-asst-nomoney</p>
+  <h2>Make head coach, and the one thing a team never loses</h2>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="e1"><label for="e1">Open <span class="pin">uat-asst-nomoney</span> and tap <b>Make head coach</b>. The dialog says they'll be able to do everything, including manage staff, and that you'll both be head coaches. Confirm. The sheet closes; their row moves up beside yours with a dark <b>Head coach</b> chip and "Everything — including this page."; its link reads <b>Edit access</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="e2"><label for="e2">Open their row. The sheet says a head coach has every area and there is nothing to switch — no Role, no grid. Footer: <b>Remove from team</b> · <b>Make assistant coach</b>. Close it without changing anything.</label></div>
+  <div class="chk"><input type="checkbox" id="e3"><label for="e3">Sign in as <span class="pin">uat-asst-nomoney</span>. <b>Staff</b> is in their nav now, and Settings shows every group. Open Staff: <b>their</b> row is first with "(you)" and "Hand over to someone else"; <b>your</b> row has Edit access.</label></div>
+  <div class="chk"><input type="checkbox" id="e4"><label for="e4">As uat-asst-nomoney, open <b>your</b> row and tap <b>Make assistant coach</b>. Confirm. Your row drops below theirs with an <b>Assistant coach</b> chip and your old chips.</label></div>
+  <div class="chk"><input type="checkbox" id="e5"><label for="e5">Still as uat-asst-nomoney — now the <b>only</b> head coach — their own row has no Edit access and no Remove. There is no way on this page for them to remove or demote the last head coach; the note under "Hand over" says so.</label></div>
+  <div class="chk"><input type="checkbox" id="e6"><label for="e6">As uat-asst-nomoney, open your row and tap <b>Make head coach</b>. Confirm. Sign back in as <b>yourself</b>: you are a head coach again, Staff is in your nav.</label></div>
+  <div class="chk"><input type="checkbox" id="e7"><label for="e7">As yourself, open uat-asst-nomoney's row and tap <b>Make assistant coach</b>. Confirm. They are back to an assistant coach with the access they had before Part E — same chips as in A5.</label></div>
+</div>
+<div class="tip"><b>Why there is no "refused" dialog to see here.</b> A head coach can never target their own row,
+  and to be on this page at all you must be a head coach — so from the portal the last head coach is
+  never removable by anyone who can reach the button. The refusal you cannot reach by hand exists for
+  two head coaches demoting each other at the same instant; it is pinned by unit tests, not walked.</div>
+<div class="verdict" data-part="E">
+  <div class="vrow"><span class="vlabel">Part E</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART F ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F · the four invited addresses</p>
+  <h2>Each kind lands with the right doors, first sign-in</h2>
+  <p>Open each invite email in a private window, create the account, and look at the nav on arrival.
+    No follow-up grant from you is needed.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="f1"><label for="f1"><b>The accept page</b> says "&lt;you&gt; invited you to help run UAT Test Team as the team manager" (manager), "…to keep the books for … as the team treasurer", "…to help out at … as a helper", "…to help coach … as an assistant coach". Not "as an assistant coach" on all four.</label></div>
+  <div class="chk"><input type="checkbox" id="f2"><label for="f2"><b>Manager</b> arrives with: Schedule, Money, Documents, Chat, Email families, Tournaments, Settings, Roster and Insights in the nav — <b>no</b> Lineups, Attendance or Tryouts. The Practice plans hub lets them plan a practice.</label></div>
+  <div class="chk"><input type="checkbox" id="f3"><label for="f3"><b>Treasurer</b> arrives with: Schedule, Money, Settings (Money group only) and Roster (names beside the dues) — <b>no</b> Insights, Chat, Documents, Tournaments or Email families. Opening a game from the schedule shows the details and <b>no Scouting tab</b> (the book is off for them).</label></div>
+  <div class="chk"><input type="checkbox" id="f4"><label for="f4"><b>Helper</b> arrives on the helper's own home ("Open my station" when a practice is today) — unchanged from before.</label></div>
+  <div class="chk"><input type="checkbox" id="f5"><label for="f5"><b>Assistant coach</b> arrives with the everyday doors, and — new — can <b>write a practice plan</b>: open a practice with no plan and the builder is offered, not "Only the head coach can write the plan."</label></div>
+  <div class="chk"><input type="checkbox" id="f6"><label for="f6">Back as yourself: the four rows now show their names and the chips they were sent with; the <b>Invited</b> rows are gone. Your bell shows "&lt;Kind&gt; joined" notifications naming the kind.</label></div>
+  <div class="chk"><input type="checkbox" id="f7"><label for="f7">On the <b>Overview</b>, the setup step reads <b>Invite your staff</b> with "N on staff", not "Invite assistant coaches".</label></div>
+</div>
+<div class="ask"><b>Practice plans widened for existing assistants (assumption 3).</b> Sign in as <span class="pin">uat-asst-nomoney</span>
+  (Schedule: View + edit) and open a practice: they can write the plan and open the drill library's
+  Add. Sign in as <span class="pin">uat-asst-treasurer</span>: they cannot. That is the widening the plan
+  flagged — say if it is not what you want.</div>
+<div class="verdict" data-part="F">
+  <div class="vrow"><span class="vlabel">Part F</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART G ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G · you · your phone (or the window at 390px)</p>
+  <h2>The whole staff on one screen; the sheet full-screen</h2>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="g1"><label for="g1">Staff at phone width: title, a lime <b>Invite someone</b> button on its own row beneath, then the list. Each row is the name, the role chip and <b>one line of words</b> (sensitive ones amber) with a chevron on the right. All nine rows fit on one screen with the foot line.</label></div>
+  <div class="chk"><input type="checkbox" id="g2"><label for="g2">Tap a chevron. The sheet is <b>full-screen</b> with a back arrow; the Role dropdown opens and the four options are 44px tall and tappable; the three-way controls are tappable without zooming.</label></div>
+  <div class="chk"><input type="checkbox" id="g3"><label for="g3">The footer buttons (Remove from team · Make head coach) are reachable with the sheet scrolled to the bottom, with no dead band under them.</label></div>
+  <div class="chk"><input type="checkbox" id="g4"><label for="g4">A pending row at phone width shows the address, the Invited chip and "Will start as …"; the chevron opens the sheet where <b>Cancel invite</b> and <b>Resend</b> live.</label></div>
+</div>
+<div class="verdict" data-part="G">
+  <div class="vrow"><span class="vlabel">Part G</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<div class="warn"><b>Tidy up.</b> Remove the four invited aliases from the team when you are done (Edit access →
+  Remove from team) so the UAT fixture is what §168 left it — five people, four of them the pinned
+  identities.</div>
+
+<div class="out">
+  <h2>Send it back</h2>
+  <p style="font-size:14.5px;color:var(--ink-soft)">Press <b>Copy findings</b> at the top (or the
+    button below) and paste the result back into chat.</p>
+  <button class="btn" id="build" style="margin-top:12px">Build summary</button>
+  <pre class="summary" id="summary">Nothing yet — tick some boxes, then press Build summary.</pre>
+</div>
+
+<footer>
+  <span>§169 · staff access pass 2 · 2026-09-11</span>
+  <span>plan: COACH_STAFF_ACCESS_PLAN.md</span>
+  <span>mockup: c8982bc5 (round 3)</span>
+</footer>
+
+</div>
+<div class="toastwrap" id="toastwrap"></div>
+
+<script>
+(function () {
+  var KEY = 'qa169.v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.chk input[type=checkbox]'));
+  var verdicts = Array.prototype.slice.call(document.querySelectorAll('.verdict'));
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private window */ }
+  }
+  var state = load();
+  if (!state.checks) state.checks = {};
+  if (!state.verdicts) state.verdicts = {};
+  if (!state.notes) state.notes = {};
+
+  function paint() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      if (b.checked) done++;
+      var row = b.closest('.chk');
+      if (row) row.classList.toggle('on', b.checked);
+    });
+    document.getElementById('cdone').textContent = String(done);
+    document.getElementById('ctotal').textContent = String(boxes.length);
+    var pctv = boxes.length ? Math.round((done / boxes.length) * 100) : 0;
+    document.getElementById('fillbar').style.width = pctv + '%';
+  }
+
+  boxes.forEach(function (b) {
+    if (!b.checked && state.checks[b.id]) b.checked = true;
+    b.addEventListener('change', function () {
+      state.checks[b.id] = b.checked;
+      save(state); paint();
+    });
+  });
+
+  verdicts.forEach(function (v) {
+    var part = v.getAttribute('data-part');
+    var btns = Array.prototype.slice.call(v.querySelectorAll('.vbtn'));
+    var note = v.querySelector('textarea');
+    if (state.verdicts[part]) {
+      btns.forEach(function (btn) {
+        btn.setAttribute('aria-pressed', String(btn.getAttribute('data-v') === state.verdicts[part]));
+      });
+    }
+    if (state.notes[part]) note.value = state.notes[part];
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mine = btn.getAttribute('data-v');
+        var already = btn.getAttribute('aria-pressed') === 'true';
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+        if (already) { delete state.verdicts[part]; }
+        else { btn.setAttribute('aria-pressed', 'true'); state.verdicts[part] = mine; }
+        save(state);
+      });
+    });
+    note.addEventListener('input', function () {
+      state.notes[part] = note.value;
+      save(state);
+    });
+  });
+
+  var VERDICT_WORD = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+
+  function summary() {
+    var lines = [];
+    lines.push('Owner QA §169 — the Staff list (staff access pass 2)');
+    lines.push('built 2026-09-11 · migration 288 on dev');
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    lines.push(done + ' of ' + boxes.length + ' steps checked');
+    lines.push('');
+    verdicts.forEach(function (v) {
+      var part = v.getAttribute('data-part');
+      var vd = state.verdicts[part];
+      lines.push('PART ' + part + ' — ' + (vd ? VERDICT_WORD[vd] : 'no verdict'));
+      var group = [];
+      var node = v.previousElementSibling;
+      while (node && !node.classList.contains('parthead')) {
+        if (node.classList && node.classList.contains('steps')) group.unshift(node);
+        node = node.previousElementSibling;
+      }
+      group.forEach(function (g) {
+        Array.prototype.slice.call(g.querySelectorAll('input[type=checkbox]')).forEach(function (b) {
+          var lab = g.querySelector('label[for="' + b.id + '"]');
+          var txt = lab ? lab.textContent.replace(/\s+/g, ' ').trim() : b.id;
+          if (txt.length > 150) txt = txt.slice(0, 147) + '…';
+          lines.push('  [' + (b.checked ? 'x' : ' ') + '] ' + txt);
+        });
+      });
+      var n = (state.notes[part] || '').trim();
+      if (n) { lines.push('  notes: ' + n); }
+      lines.push('');
+    });
+    var unchecked = boxes.filter(function (b) { return !b.checked; });
+    if (unchecked.length) {
+      lines.push('Not checked: ' + unchecked.length + ' step(s) — see the [ ] rows above.');
+    } else {
+      lines.push('Every step checked.');
+    }
+    return lines.join('\n');
+  }
+
+  function toast(msg) {
+    var wrap = document.getElementById('toastwrap');
+    wrap.innerHTML = '<div class="toast">' + msg + '</div>';
+    setTimeout(function () { wrap.innerHTML = ''; }, 1900);
+  }
+
+  document.getElementById('build').addEventListener('click', function () {
+    document.getElementById('summary').textContent = summary();
+    toast('Summary built');
+  });
+
+  function copyOut() {
+    var text = summary();
+    document.getElementById('summary').textContent = text;
+    var done = function () { toast('Copied — paste it into chat'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { toast('Select the summary and copy it'); });
+    } else {
+      toast('Select the summary and copy it');
+    }
+  }
+  document.getElementById('copyfind').addEventListener('click', copyOut);
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!window.confirm('Clear every tick, verdict and note on this page?')) return;
+    state = { checks: {}, verdicts: {}, notes: {} };
+    save(state);
+    boxes.forEach(function (b) { b.checked = false; });
+    verdicts.forEach(function (v) {
+      Array.prototype.slice.call(v.querySelectorAll('.vbtn')).forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+      v.querySelector('textarea').value = '';
+    });
+    document.getElementById('summary').textContent = 'Nothing yet — tick some boxes, then press Build summary.';
+    paint();
+    toast('Reset');
+  });
+
+  paint();
+})();
+</script>

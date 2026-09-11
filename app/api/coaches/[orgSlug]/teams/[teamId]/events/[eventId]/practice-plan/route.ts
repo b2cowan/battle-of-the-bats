@@ -24,8 +24,8 @@ import {
 import { withObservability } from '@/lib/observability';
 import { getScoutingBridgeForPractice } from '@/lib/coach-opponent-nudge';
 import {
-  denyUnless, canManageSchedule, canViewSchedule, canWriteDevelopment, canViewDevelopmentGoals,
-  canViewMeasurables, redactRoster,
+  denyUnless, canManageSchedule, canViewSchedule, canWritePracticePlans, canReadPastPracticePlans,
+  canViewDevelopmentGoals, canViewMeasurables, redactRoster,
 } from '@/lib/coach-capabilities';
 import {
   MAX_RECAP_LEN, sanitizePracticePlan,
@@ -44,7 +44,11 @@ import { MAX_TAGS_PER_ITEM, uniqueIds } from '@/lib/rep-drills';
  *                              and the names, never the focus text — the field is never sent, so
  *                              it cannot leak through a client that forgets to hide it.
  *   ATTENDANCE               → `attendance`. Mirrors the existing gate.
- *   WRITE                    → HEAD COACH ONLY (`canWriteDevelopment`), per the binding constraint.
+ *   WRITE                    → `canWritePracticePlans` = "Schedule: View + edit" (R7, owner-approved
+ *                              2026-09-10). Was HEAD COACH ONLY via `canWriteDevelopment`, a gate
+ *                              borrowed from Skills & Goals; a drill sheet is not coach-judgment
+ *                              content about a minor. Every assistant holding schedule editing
+ *                              gained this on deploy (the plan's assumption 3).
  *
  * ⚠ D7 — a plan belongs to ONE practice. This route is the ONLY write path, and it writes exactly
  * one event id. It accepts no `scope` parameter and touches no recurrence machinery, so a
@@ -184,7 +188,9 @@ export const GET = withObservability(async (_req: Request,
      * fetching or parsing a single past plan; the rows themselves come from a separate route the
      * dialog calls only when that tab is opened.
      *
-     * ⚠ HEAD-COACH-ONLY, so nobody else pays the query — the tab it gates is head-coach-only too.
+     * ⚠ Gated on BOTH halves the tab needs — writing tonight's plan AND reading a finished
+     * season's — so nobody who cannot use the tab pays the query, and a helper (who can do
+     * neither) never learns whether past plans exist.
      *
      * ⚠ This route is therefore on `CROSS_SEASON_PLAN_READERS` in the history-endpoint guard, and
      * that is the point of listing it: a boolean is still a read that reaches outside the working
@@ -192,7 +198,7 @@ export const GET = withObservability(async (_req: Request,
      * NOT is a route that can be HANDED a season — the decided-absence test above it still holds,
      * and must: this file also owns the PUT and the PATCH.
      */
-    canWriteDevelopment(caps)
+    canWritePracticePlans(caps) && canReadPastPracticePlans(caps)
       ? hasRepTeamPastSeasonPracticePlans(teamId, programYear.id).catch(() => false)
       : Promise.resolve(false),
   ]);
@@ -274,7 +280,7 @@ export const GET = withObservability(async (_req: Request,
     // is no PII here to gate — unlike focus areas, which stay behind `notes` above.
     drills,
     viewerName,
-    canWrite: canWriteDevelopment(caps),
+    canWrite: canWritePracticePlans(caps),
     canViewFocus: showFocus,
     canViewAttendance: showAttendance,
     /**
@@ -304,9 +310,10 @@ export const PUT = withObservability(async (req: Request,
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment, programYear } = resolved;
 
-  // Head coach only (D3). Deliberately NOT `schedule`: an assistant who can create the practice
-  // still can't write its plan in 1a. Widening this is a one-line change if coaches ask for it.
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can edit the practice plan.');
+  // R7: the grant that already says "edit". The 1a note here ("widening this is a one-line
+  // change if coaches ask for it") was cashed on 2026-09-10 — the assistant who runs Tuesday
+  // practice writes Tuesday's plan.
+  const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Writing the plan needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;
 
   let body: { plan?: unknown };
@@ -366,8 +373,8 @@ export const PATCH = withObservability(async (req: Request,
   const { ctx, assignment } = resolved;
 
   const denied = denyUnless(
-    canWriteDevelopment(assignment.capabilities),
-    'Only the head coach can write up a practice.',
+    canWritePracticePlans(assignment.capabilities),
+    'Writing up a practice needs Schedule: View + edit. Ask your head coach.',
   );
   if (denied) return denied;
 

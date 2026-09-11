@@ -107,14 +107,14 @@ describe('the helper preset grants exactly what was authorised', () => {
   });
 });
 
-describe('a helper meets exactly one door in the portal', () => {
+describe('a helper meets exactly two doors in the portal', () => {
   const DOORS = [
     'Roster', 'Attendance', 'Lineups', 'Tryouts', 'Money', 'Documents',
-    'Development', 'Insights', 'Chat', 'Settings', 'Tournaments', 'Staff',
+    'Development', 'Chat', 'Settings', 'Tournaments', 'Staff',
     'Email families',
   ];
 
-  it('hides every door but the schedule', () => {
+  it('hides every door but the schedule and Insights', () => {
     const caps = helper();
     assert.equal(isCoachNavItemVisible(caps, 'Schedule'), true);
     for (const door of DOORS) {
@@ -123,6 +123,21 @@ describe('a helper meets exactly one door in the portal', () => {
         `${door} must be hidden from a helper — a door a persona can see but not use is a bug`,
       );
     }
+  });
+
+  /**
+   * ⚠ ADDED 2026-09-11 — the `scoutingBook` grant (narrowed from bare `schedule`) gave a head
+   * coach a way to turn OFF the pooled scouting read for a helper without touching `schedule`
+   * itself. The preset default keeps it ON (nothing changes until a head coach flips it), and a
+   * helper who can read the pooled book has a real reason to open Insights (the Scouting Book
+   * tab) — hiding that nav entry from someone who could already reach the same data by deep link
+   * was exactly the "a door a persona can see but not use" bug this file otherwise guards
+   * against, just pointed the other way. `Insights` therefore left the DOORS list above on
+   * purpose; it is asserted OPEN here instead.
+   */
+  it('opens Insights too, for the Scouting Book tab waiting inside', () => {
+    const caps = helper();
+    assert.equal(isCoachNavItemVisible(caps, 'Insights'), true);
   });
 
   it('leaves an ordinary assistant’s doors exactly as they were', () => {
@@ -296,6 +311,7 @@ describe('staffKindLabel is a WORD, never a gate', () => {
     assert.equal(hasNoTeamRecordAccess(caps), true);
   });
 });
+
 /**
  * ⚠ THE API PREDICATES A HELPER MUST FAIL (staff access review, 2026-09-10). The nav was correct
  * on every label; what leaked was five READS whose only gate was team membership. Each now gates

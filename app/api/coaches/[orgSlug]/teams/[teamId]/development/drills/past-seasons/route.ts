@@ -6,7 +6,7 @@ import {
   getPastSeasonPracticePlans,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWritePracticePlans, canReadPastPracticePlans } from '@/lib/coach-capabilities';
 import { collectImportableDrills } from '@/lib/rep-drill-usage';
 
 /**
@@ -22,7 +22,8 @@ import { collectImportableDrills } from '@/lib/rep-drill-usage';
  *     is no edit path here at all — saving happens through the ordinary live-season POST.
  *   · It feeds a live-season instrument. The archive test asks "record or instrument?"; the records
  *     stay records, and only their words are copied forward.
- *   · It is HEAD-COACH-ONLY, because everything it exists to do is a write to the library.
+ *   · It needs BOTH the library write (`canWritePracticePlans`, R7) and the look-back read
+ *     (`canReadPastPracticePlans`) — a helper holds neither; a default assistant holds both.
  *
  * It therefore deliberately does NOT use `resolveCoachTeamRead`: that resolver answers with ONE
  * season — the team's working one — and this route deliberately reads across all of them, into the
@@ -55,8 +56,12 @@ export const GET = withObservability(async (_req: Request,
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
 
-  // Head-coach-only: the only thing this list can do is feed a library write.
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage drills.');
+  // Both halves: the only thing this list can do is feed a library write, and what it reads is a
+  // finished season's plans.
+  const denied = denyUnless(
+    canWritePracticePlans(assignment.capabilities) && canReadPastPracticePlans(assignment.capabilities),
+    'Managing drills needs Schedule: View + edit. Ask your head coach.',
+  );
   if (denied) return denied;
 
   const [pastPlans, drills] = await Promise.all([

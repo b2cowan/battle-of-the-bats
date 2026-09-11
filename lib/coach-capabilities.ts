@@ -38,6 +38,7 @@ export interface AssistantCapabilityGrants {
   announcementsSend?: boolean;   // send guardian announcements (else draft-only)
   tryouts?: boolean;             // tryout candidates + decisions (guardian PII, roster-building)
   staffChat?: boolean;           // a seat in the team's staff chat room (see the note below)
+  scoutingBook?: boolean;        // read the POOLED scouting book (everyone's notes + the book line)
 }
 
 /**
@@ -79,6 +80,16 @@ export interface CoachCapabilities {
   announcementsSend: boolean;    // else draft-only (Phase 2 surfaces the draft flow)
   tryouts: boolean;              // head only in V1
   staffChat: boolean;            // a seat in the team's staff chat room
+  /**
+   * Read the POOLED scouting book — everyone's observations, the book line, the Club Shared
+   * Book layer, and the full "Everything we know" page. Logging your OWN observation and
+   * seeing your OWN past ones back stays on `schedule` alone (owner-ratified 2026-08-04,
+   * unchanged) — this narrows only the shared/pooled read, so a head coach who wants notes
+   * kept to "add, don't browse" for a given person can do that (owner ruling, 2026-09-11).
+   * Defaults TRUE everywhere below: every schedule-holder already has this today, and nothing
+   * may change until a head coach explicitly turns it off for someone.
+   */
+  scoutingBook: boolean;
 }
 
 /** The least-privilege bundle a freshly-invited assistant gets before any grant. */
@@ -100,6 +111,9 @@ export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   // TRUE by default for the same reason — an assistant coach is staff, and staff chat has never been
   // something a head coach had to switch on.
   staffChat: true,
+  // TRUE by default — the pooled scouting book has always come bundled with `schedule`. Only an
+  // explicit grant turns it off for someone.
+  scoutingBook: true,
 };
 
 /** A head coach's full-access bundle. */
@@ -117,66 +131,202 @@ const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   announcementsSend: true,
   tryouts: true,
   staffChat: true,
+  scoutingBook: true,
 };
 
 /**
- * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
+ * ═══ THE FOUR KINDS OF STAFF (pass 2 of the staff access plan, owner-approved 2026-09-10) ═══
  *
- * What it hands over: the schedule, read-only · a practice plan · the names, numbers and positions
- * of the players at their station. What it withholds: every write, the staff chat room, coaching
- * notes, guardian contacts, attendance, lineups, documents, money, tryouts, and — because the preset
- * holds NO record grant at all (`hasRecordAccess` is false) — the roster page, the development board
- * and Insights.
+ * A kind is a STORED LABEL (`rep_team_staff_memberships.staff_kind`, mig 288) that chooses three
+ * things: the starting bundle at invite time, the word on the staff row, and the invite email's
+ * wording. **It gates nothing.** Every nav door and every route keeps deciding on the individual
+ * grant, exactly as before — that is the property the 2026-08-03 "a helper is a preset, never a
+ * third role" ruling existed to protect, and storing the word does not touch it. What it fixes is
+ * the word LYING: a helper granted attendance used to be relabelled "Assistant" on the next render,
+ * because the label was re-derived from the switches; and a manager or a treasurer had no word at
+ * all and was invited as a coach.
  *
- * ⚠ **A1 (2026-08-03) removed two keys from this preset, and it still means the same thing.** It used
- * to carry `roster: 'off'` + `planPlayerNames: true` — "no roster access, but show names on the
- * plan". Names are baseline now, so the exception is unnecessary and the grant it evaded is gone.
- * What keeps the roster page shut for a helper is no longer a switch set to off; it is that they
- * hold none of the duties a record surface is for.
- *
- * ⚠ Stored as ordinary per-assistant grants on an `assistant_coach` row. There is no helper column,
- * no helper role, and no migration. If a future change needs one, the preset has become a role and
- * the ruling that authorised this phase no longer covers it.
+ * ⚠ NULL is legal and means "no label stored" — every row written before mig 288 except the
+ * backfilled helpers. `staffKindLabel` falls back to the old derivation for those.
  */
-export const HELPER_PRESET: Readonly<AssistantCapabilityGrants> = {
-  schedule: true,
-  scheduleManage: false,
-  attendance: false,
-  lineups: false,
-  rosterPii: false,
-  notes: false,
-  money: 'off',
-  documents: 'off',
-  announcementsSend: false,
-  tryouts: false,
-  staffChat: false,
-};
+export type StaffKind = 'assistant' | 'manager' | 'treasurer' | 'helper';
+export const STAFF_KINDS: ReadonlyArray<StaffKind> = ['assistant', 'manager', 'treasurer', 'helper'];
+
+/** Validate a raw kind from a client or a row; anything else is "no kind". */
+export function sanitizeStaffKind(input: unknown): StaffKind | null {
+  return typeof input === 'string' && (STAFF_KINDS as readonly string[]).includes(input)
+    ? (input as StaffKind)
+    : null;
+}
 
 /**
- * DISPLAY ONLY — which word describes this bundle on a staff list ("Helper" vs "Assistant").
+ * THE FOUR STARTING BUNDLES — a preset is where a kind's access STARTS, never where it must stay.
+ * The head coach adjusts any switch afterwards and the word does not move.
  *
- * ⚠ **NEVER gate anything on this.** It reads a bundle and returns a label; it does not decide
- * access, and no route may call it. Access decisions go through the predicates below, one grant at a
- * time, which is the whole reason a Helper is a preset instead of a role. A head coach who hand-edits
- * a helper's grants simply stops seeing the "Helper" word — nothing about their access changes,
- * because the word was never what governed it.
+ * ⚠ `assistant` is the explicit form of `ASSISTANT_DEFAULTS` (written out so a PATCH from the
+ * sheet round-trips every key — an omitted key is dropped, not left alone). `helper` is the
+ * Phase 4 preset unchanged. The two new ones are the plan's §2.2, with one addition it could not
+ * have known about: the `scoutingBook` grant (2026-09-11).
+ *
+ * ⚠ THE TREASURER TURNS THE SCOUTING BOOK OFF, and that is what keeps the approved plan true.
+ * Since 2026-09-11 the Insights door opens for anyone who can read the pooled book, so a
+ * treasurer bundle that inherited it ON would have held Insights — the one door the plan and the
+ * "no money in Insights" ruling (2026-08-18) say they do not. Off keeps "Keeps the books. Nothing
+ * else." literally true, and it is one tap to add. The helper keeps it ON per that same ruling
+ * (every existing helper reads the book today; nothing changes until a head coach flips it).
  */
-export function staffKindLabel(c: CoachCapabilities): 'head' | 'assistant' | 'helper' {
-  if (c.isHeadCoach) return 'head';
+export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<AssistantCapabilityGrants>>>> = {
+  assistant: {
+    schedule: true, scheduleManage: true, attendance: true, lineups: true, staffChat: true,
+    documents: 'view', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
+    tryouts: false, scoutingBook: true,
+  },
+  manager: {
+    schedule: true, scheduleManage: true, attendance: false, lineups: false, staffChat: true,
+    documents: 'manage', money: 'write', rosterPii: true, notes: false, announcementsSend: true,
+    tryouts: false, scoutingBook: true,
+  },
+  treasurer: {
+    schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
+    documents: 'off', money: 'write', rosterPii: false, notes: false, announcementsSend: false,
+    tryouts: false, scoutingBook: false,
+  },
   /**
-   * ⚠ RE-DERIVED for A1 (2026-08-03). This used to require `roster === 'off'` and
-   * `planPlayerNames` — the two keys A1 retires. Left alone, every helper would have been
-   * relabelled "Assistant" on the head coach's staff card the day A1 shipped: no access change,
-   * but the coach loses the only place the product names what they invited.
+   * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
    *
-   * The surviving shape still identifies a helper uniquely. An assistant carries `scheduleManage`,
-   * `staffChat` and `attendance` from the defaults; a helper is the only bundle that holds
-   * `schedule` while holding none of them and no record grant at all.
+   * What it hands over: the schedule, read-only · a practice plan · the names, numbers and
+   * positions of the players at their station. What it withholds: every write, the staff chat
+   * room, coaching notes, guardian contacts, attendance, lineups, documents, money, tryouts, and —
+   * because the preset holds NO record grant at all (`hasRecordAccess` is false) — the roster page,
+   * the development board and Insights' record tabs.
+   *
+   * ⚠ A1 (2026-08-03) removed `roster: 'off'` + `planPlayerNames: true` from this preset and it
+   * still means the same thing: names are baseline now, so the exception is unnecessary. What keeps
+   * the roster page shut for a helper is that they hold none of the duties a record surface is for.
+   *
+   * `scoutingBook` stays TRUE — matches every existing helper's actual access today. A head coach
+   * narrows it per person from the sheet (owner ruling 2026-09-11); the preset does not, or every
+   * existing Helper would silently lose read access on ship.
+   */
+  helper: {
+    schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
+    documents: 'off', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
+    tryouts: false, scoutingBook: true,
+  },
+};
+
+/** The Phase 4 name, kept so the tests and the routes that pinned it keep reading. */
+export const HELPER_PRESET: Readonly<AssistantCapabilityGrants> = STAFF_PRESETS.helper;
+
+/**
+ * ONE TABLE OF WORDS PER KIND — the dropdown's name and sub-line, the row chip, the invite email's
+ * subject and promise, the accept page's phrase, the admin's approval notification. Every surface
+ * that names a kind reads from here, so the four cannot drift apart (the way the helper's email
+ * once promised "the team's chat, attendance and lineups" it did not grant).
+ *
+ * ⚠ `emailWhat` PROMISES WHAT THE PRESET GRANTS, nothing more. Widen a preset and re-read its
+ * sentence — copy describing a permission bundle drifts silently.
+ */
+export const STAFF_KIND_COPY: Readonly<Record<StaffKind, {
+  /** The chip and the dropdown option. */
+  name: string;
+  /** The dropdown's sub-line — one sentence for the person deciding. */
+  sentence: string;
+  /** "join as {asA}" on the accept page and in the notifications. */
+  asA: string;
+  /** "{inviter} invited you {inviteVerb} {team} as {asA}" — the email's line and the accept page's. */
+  inviteVerb: string;
+  /** The invite email's subject, given the team. */
+  emailSubject: (teamName: string) => string;
+  /** The invite email's heading. */
+  emailHeading: string;
+  /** What the email promises they will be able to open once they accept. */
+  emailWhat: string;
+}>> = {
+  assistant: {
+    name: 'Assistant coach',
+    sentence: 'Coaches the team. Starts with the everyday tools; you choose the rest.',
+    asA: 'an assistant coach',
+    inviteVerb: 'to help coach',
+    emailSubject: team => `You're invited to help coach ${team}`,
+    emailHeading: 'You’re invited to help coach',
+    emailWhat: 'Accept below to set up your account. You’ll get the team’s chat, schedule, attendance and lineups; the head coach chooses anything more.',
+  },
+  manager: {
+    name: 'Team manager',
+    sentence: 'Runs the team off the field — money, forms, family emails. Not the lineup.',
+    asA: 'the team manager',
+    inviteVerb: 'to help run',
+    emailSubject: team => `You're invited to help run ${team}`,
+    emailHeading: 'You’re invited to help run the team',
+    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails and the staff chat — the head coach can change any of it.',
+  },
+  treasurer: {
+    name: 'Team treasurer',
+    sentence: 'Keeps the books — budget, dues, expenses and payments. Nothing else.',
+    asA: 'the team treasurer',
+    inviteVerb: 'to keep the books for',
+    emailSubject: team => `You're invited to keep the books for ${team}`,
+    emailHeading: 'You’re invited to keep the books',
+    emailWhat: 'Accept below to set up your account. You’ll see the schedule and run the team’s money — budget, dues, expenses and every payment. That’s all it opens unless the head coach adds more.',
+  },
+  helper: {
+    name: 'Helper',
+    sentence: 'Runs a station at practice. Sees the plan and the players in front of them.',
+    asA: 'a helper',
+    inviteVerb: 'to help out at',
+    emailSubject: team => `You're invited to help out at ${team}`,
+    emailHeading: 'You’re invited to help out',
+    emailWhat: 'Accept below to set up your account. On a practice day you’ll see the plan, the station you’re running and the players with you — on your own phone, at the field. That’s all it does.',
+  },
+};
+
+/**
+ * DISPLAY ONLY — which word describes this person on a staff list.
+ *
+ * Prefers the STORED kind (mig 288) and falls back to the Phase 4 derivation for a NULL, so a row
+ * written before the column existed reads exactly as it did yesterday.
+ *
+ * ⚠ **NEVER gate anything on this.** It returns a label; it does not decide access, and no route
+ * may call it. Access decisions go through the predicates below, one grant at a time — which is
+ * the whole reason the kind is a label and not a role.
+ */
+export function staffKindLabel(c: CoachCapabilities, storedKind?: StaffKind | null): 'head' | StaffKind {
+  if (c.isHeadCoach) return 'head';
+  if (storedKind) return storedKind;
+  /**
+   * The fallback shape (A1, 2026-08-03): an assistant carries `scheduleManage`, `staffChat` and
+   * `attendance` from the defaults; a helper is the only bundle that holds `schedule` while
+   * holding none of them and no record grant at all.
    */
   const looksLikeHelper =
     c.schedule && !c.scheduleManage && !c.staffChat && !c.announcementsSend
     && !c.rosterPii && !hasRecordAccess(c);
   return looksLikeHelper ? 'helper' : 'assistant';
+}
+
+/** The word on the row — "Head coach", or the kind's name from the one copy table. Display only. */
+export function staffKindWord(c: CoachCapabilities, storedKind?: StaffKind | null): string {
+  const kind = staffKindLabel(c, storedKind);
+  return kind === 'head' ? 'Head coach' : STAFF_KIND_COPY[kind].name;
+}
+
+/**
+ * ═══ SCHEDULE AS ONE THREE-WAY CONTROL (R6) ═══
+ * Hidden / View / View + edit over the SAME two stored keys — a UI mapping, not a new grant. The
+ * two-checkbox shape admitted a state that meant nothing ("change the schedule" ticked with
+ * "schedule" unticked resolved to a coach who could configure the team but not open its
+ * schedule). The mapping is a bijection over the three states the product means; the resolver's
+ * legacy fallback (`scheduleManage ?? schedule`) is untouched.
+ */
+export type ScheduleAccess = 'off' | 'view' | 'manage';
+export const SCHEDULE_VALUES: ReadonlyArray<ScheduleAccess> = ['off', 'view', 'manage'];
+export function scheduleAccessOf(c: Pick<CoachCapabilities, 'schedule' | 'scheduleManage'>): ScheduleAccess {
+  if (!c.schedule) return 'off';
+  return c.scheduleManage ? 'manage' : 'view';
+}
+export function scheduleGrantsFor(level: ScheduleAccess): Pick<Required<AssistantCapabilityGrants>, 'schedule' | 'scheduleManage'> {
+  return { schedule: level !== 'off', scheduleManage: level === 'manage' };
 }
 
 /**
@@ -212,6 +362,7 @@ export function resolveCoachCapabilities(
     announcementsSend: g.announcementsSend ?? ASSISTANT_DEFAULTS.announcementsSend,
     tryouts: g.tryouts ?? ASSISTANT_DEFAULTS.tryouts,
     staffChat: g.staffChat ?? ASSISTANT_DEFAULTS.staffChat,
+    scoutingBook: g.scoutingBook ?? ASSISTANT_DEFAULTS.scoutingBook,
   };
 }
 
@@ -302,6 +453,21 @@ export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach;
  */
 export const canManageSchedule = (c: CoachCapabilities) => c.scheduleManage;
 /**
+ * Write a practice plan, a drill, a plan template (R7, owner-approved 2026-09-10).
+ *
+ * ⚠ FOLLOWS "Schedule: View + edit", deliberately, and NOT `canWriteDevelopment`. Plan writes were
+ * gated on the head-only Development predicate because Practice Plans 1a borrowed it — D1's reason
+ * (coach-judgment content about a minor) describes goals and notes, not a drill sheet. The
+ * assistant who runs Tuesday practice can now write Tuesday's plan. This WIDENS every existing
+ * assistant who holds schedule editing (the plan's stated assumption 3); the sheet's Schedule
+ * sentence says so. Skills & Goals writes (goals, measurables, sessions, continuity, carry) stay
+ * on `canWriteDevelopment` — this predicate is the seam between the two.
+ *
+ * ⚠ Its own NAME rather than callers reading `canManageSchedule` directly, so the day a coach asks
+ * for "plans but not the calendar" it is a one-line change instead of a grep.
+ */
+export const canWritePracticePlans = (c: CoachCapabilities) => canManageSchedule(c);
+/**
  * Configure the TEAM itself — its division, its season, its lineup rules, its book sharing, its
  * link to a club. The five original Team settings groups.
  *
@@ -316,18 +482,23 @@ export const canConfigureTeam = (c: CoachCapabilities) => c.isHeadCoach || c.sch
 /** See the schedule and open a practice plan. The sidebar's Schedule door keys on this. */
 export const canViewSchedule = (c: CoachCapabilities) => c.schedule;
 /**
- * Opponent Scouting Book (owner-ratified 2026-08-04): reading the book AND logging
- * observations are OPEN to every schedule-holder — assistants and Helpers included —
- * because the best observations come from the bench, entries are always attributed, and
- * the head coach curates (delete-any). Deliberately looser than hasRecordAccess: the book
- * is about opposing teams, never roster records or PII. The curated "book line" summary
- * stays on the `notes` grant (canWriteScoutingSummary); observation deletion is
- * head-coach-any / author-own, enforced in the route (needs the row's author, not just
- * capabilities).
+ * Opponent Scouting Book (owner-ratified 2026-08-04, narrowed 2026-09-11): LOGGING an
+ * observation — and seeing your OWN past ones back — is OPEN to every schedule-holder,
+ * assistants and Helpers included, because the best observations come from the bench and
+ * entries are always attributed. Reading the POOLED book (everyone else's notes, the book
+ * line, the Club Shared Book layer, the full "Everything we know" page) is the separate
+ * `scoutingBook` grant — a head coach who wants a person adding to the book without
+ * browsing it turns this off while leaving `schedule` alone. The route/panel layer is
+ * responsible for downgrading rather than refusing when only the weaker grant holds: the
+ * schedule drawer's Scouting tab still opens, showing the record, the log form, and that
+ * person's own entries — never a wall. The curated "book line" summary is gated on BOTH
+ * `notes` and `scoutingBook` (canWriteScoutingSummary) — writing into a shared summary you
+ * cannot read back would be a standing contradiction. Observation deletion is head-coach-any
+ * / author-own, enforced in the route (needs the row's author, not just capabilities).
  */
-export const canViewScoutingBook = (c: CoachCapabilities) => c.schedule;
+export const canViewScoutingBook = (c: CoachCapabilities) => c.schedule && c.scoutingBook;
 export const canLogScoutingObservation = (c: CoachCapabilities) => c.schedule;
-export const canWriteScoutingSummary = (c: CoachCapabilities) => c.notes;
+export const canWriteScoutingSummary = (c: CoachCapabilities) => c.notes && c.scoutingBook;
 /**
  * Game-Day Mode P2 — who may capture a moment at the bench (owner ruling 2026-08-05, the P2
  * mockup sign-off's Q1; the plan was silent).
@@ -450,6 +621,21 @@ export const canReadPastPracticePlans = (c: CoachCapabilities) =>
 /** Run tryout day (sessions, scorecard, decisions). Head-coach-only in V1 — candidate PII. */
 export const canManageTryouts = (c: CoachCapabilities) => c.tryouts;
 
+/**
+ * **THE LAST-HEAD-COACH RULE** (R8, owner-approved 2026-09-10; assumption 2: two head coaches are
+ * allowed, and removing or demoting the last one is refused). Pure, and here rather than in the
+ * membership module so it can be unit-tested without a database, and so both write paths — the
+ * role change and the removal in `lib/coach-membership.ts` — decide from one sentence.
+ *
+ * `activeHeadCount` is the team's count INCLUDING the target; `targetIsHead` says whether the
+ * row about to change is one of them. A change that would leave zero is refused.
+ */
+export function wouldLeaveNoHeadCoach(activeHeadCount: number, targetIsHead: boolean): boolean {
+  return targetIsHead && activeHeadCount <= 1;
+}
+/** The one wording for that refusal — the route's 409 and the sheet's own check say the same thing. */
+export const LAST_HEAD_COACH_MESSAGE = 'A team needs at least one head coach.';
+
 const MONEY_VALUES: MoneyAccess[] = ['off', 'read', 'write'];
 const DOCS_VALUES: DocsAccess[] = ['off', 'view', 'manage'];
 
@@ -475,6 +661,7 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
   const n = bool(src.notes); if (n !== undefined) out.notes = n;
   const s = bool(src.announcementsSend); if (s !== undefined) out.announcementsSend = s;
   const t = bool(src.tryouts); if (t !== undefined) out.tryouts = t;
+  const sb = bool(src.scoutingBook); if (sb !== undefined) out.scoutingBook = sb;
   if (typeof src.money === 'string' && MONEY_VALUES.includes(src.money as MoneyAccess)) out.money = src.money as MoneyAccess;
   if (typeof src.documents === 'string' && DOCS_VALUES.includes(src.documents as DocsAccess)) out.documents = src.documents as DocsAccess;
   return out;

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { UserCog, ChevronLeft, Trash2, Check, X, ShieldCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import type { CoachCapabilities } from '@/lib/coach-capabilities';
+import { STAFF_KIND_COPY, staffKindWord, type CoachCapabilities, type StaffKind } from '@/lib/coach-capabilities';
 import styles from '../rep-teams.module.css';
 
 /**
@@ -17,11 +17,17 @@ type Caps = CoachCapabilities;
 interface Assistant {
   coachId: string; teamId: string; teamName: string; programYearName: string;
   displayName: string | null; email: string | null; capabilities: Caps;
+  /** The kind the head coach chose (mig 288) — a label; null on rows written before it. */
+  staffKind: StaffKind | null;
 }
 interface PendingInvite {
   id: string; teamId: string; teamName: string | null; invitedEmail: string;
-  status: 'pending' | 'pending_approval'; expiresAt: string;
+  status: 'pending' | 'pending_approval'; staffKind: StaffKind | null; expiresAt: string;
 }
+
+/** "Team treasurer" / "Helper" / … — the word the head coach chose, or the derived one for older rows. */
+const kindWord = (a: Assistant) => staffKindWord(a.capabilities, a.staffKind);
+const inviteKindWord = (p: PendingInvite) => STAFF_KIND_COPY[p.staffKind ?? 'assistant'].name;
 
 // Additive: an assistant always has the coaching basics; show what's granted BEYOND them and
 // anything turned OFF, so the summary never hides the base access.
@@ -135,7 +141,7 @@ export default function AdminAssistantCoachesPage() {
           <UserCog size={22} />
           <div>
             <h1 className={styles.pageTitle}>Assistant coaches</h1>
-            <p className={styles.pageSub}>Oversight across your teams. Head coaches invite and set their own assistants — this is your view + override.</p>
+            <p className={styles.pageSub}>Oversight across your teams. Head coaches invite and set their own staff — assistant coaches, team managers, treasurers and helpers — and this is your view + override.</p>
           </div>
         </div>
       </div>
@@ -173,7 +179,9 @@ export default function AdminAssistantCoachesPage() {
             <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-2)', flexWrap: 'wrap' }}>
               <div>
                 <span style={{ fontWeight: 600 }}>{p.invitedEmail}</span>
-                <span style={{ color: 'var(--white-45)', fontSize: '0.85rem' }}> — {p.teamName ?? 'a team'}</span>
+                {/* Which KIND is being approved — an admin approving a helper is answering a different
+                    question from one approving a team treasurer with the books. */}
+                <span style={{ color: 'var(--white-45)', fontSize: '0.85rem' }}> — {p.teamName ?? 'a team'} · as {inviteKindWord(p).toLowerCase()}</span>
               </div>
               {canWrite && (
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -200,7 +208,7 @@ export default function AdminAssistantCoachesPage() {
             <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-2)', flexWrap: 'wrap' }}>
               <div>
                 <span style={{ fontWeight: 600 }}>{p.invitedEmail}</span>
-                <span style={{ color: 'var(--white-45)', fontSize: '0.85rem' }}> — {p.teamName ?? 'a team'}</span>
+                <span style={{ color: 'var(--white-45)', fontSize: '0.85rem' }}> — {p.teamName ?? 'a team'} · as {inviteKindWord(p).toLowerCase()}</span>
               </div>
               {canWrite && (
                 <button className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.3rem 0.7rem' }}
@@ -215,16 +223,16 @@ export default function AdminAssistantCoachesPage() {
 
       {/* Active assistants */}
       <section style={{ padding: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
-        <h2 style={{ margin: '0 0 0.6rem', fontSize: '1rem' }}>Active assistant coaches ({assistants.length})</h2>
+        <h2 style={{ margin: '0 0 0.6rem', fontSize: '1rem' }}>Active staff ({assistants.length})</h2>
         {!loading && assistants.length === 0 && (
-          <p className={styles.muted}>No assistant coaches yet. Head coaches add their own from a team&apos;s Staff tab.</p>
+          <p className={styles.muted}>No staff yet. Head coaches add their own from a team&apos;s Staff page.</p>
         )}
         {assistants.map(a => (
           <div key={a.coachId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.6rem 0', borderTop: '1px solid var(--border-2)', flexWrap: 'wrap' }}>
             <div>
-              <p style={{ margin: 0, fontWeight: 600 }}>{a.displayName || a.email || 'Assistant coach'}</p>
+              <p style={{ margin: 0, fontWeight: 600 }}>{a.displayName || a.email || kindWord(a)}</p>
               <p style={{ margin: '0.1rem 0 0', fontSize: '0.82rem', color: 'var(--white-45)' }}>
-                {a.teamName}{a.programYearName ? ` · ${a.programYearName}` : ''}{a.email && a.displayName ? ` · ${a.email}` : ''}
+                {kindWord(a)} · {a.teamName}{a.programYearName ? ` · ${a.programYearName}` : ''}{a.email && a.displayName ? ` · ${a.email}` : ''}
               </p>
               <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--white-55)' }}>{grantSummary(a.capabilities)}</p>
             </div>

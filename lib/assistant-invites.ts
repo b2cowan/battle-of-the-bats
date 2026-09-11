@@ -1,7 +1,67 @@
 import { supabaseAdmin } from './supabase-admin';
 import { generateAssistantInviteToken, hashAssistantInviteToken } from './assistant-invite-token';
 import { addStaffMember, getActiveTeamMembership } from './coach-membership';
-import { sanitizeAssistantGrants, type AssistantCapabilityGrants } from './coach-capabilities';
+import {
+  sanitizeAssistantGrants, sanitizeStaffKind, STAFF_KIND_COPY,
+  type AssistantCapabilityGrants, type StaffKind,
+} from './coach-capabilities';
+import { sendEmail, assistantCoachInviteHtml } from './email';
+import { notify } from './notify';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+
+/**
+ * THE ONE INVITE EMAIL — subject, heading and promise from `STAFF_KIND_COPY` for the kind the
+ * invite carries. Three senders share it (the head coach's invite, a resend, the club admin's
+ * approval) so a kind's wording cannot differ by which door the email left through. A NULL kind
+ * (an invite minted before mig 288) reads as an assistant coach, which is what it offered.
+ */
+export async function sendAssistantInviteEmail(p: {
+  email: string;
+  teamName: string;
+  invitedByName: string | null;
+  rawToken: string;
+  staffKind: StaffKind | null;
+}): Promise<void> {
+  const kind: StaffKind = p.staffKind ?? 'assistant';
+  const inviteUrl = `${APP_URL}/auth/accept-assistant-invite?token=${p.rawToken}`;
+  await sendEmail(
+    p.email,
+    STAFF_KIND_COPY[kind].emailSubject(p.teamName),
+    assistantCoachInviteHtml({ teamName: p.teamName, invitedByName: p.invitedByName, inviteUrl, staffKind: kind }),
+  );
+}
+
+/**
+ * THE ONE ADMIN NOTIFICATION for an invite that is waiting on the club's approval — sent when a
+ * head coach sends one, resends one under an approval policy, or CHANGES what a still-unapproved
+ * one will hand over (/review, 2026-09-11: an admin approving "a helper" must not be approving a
+ * treasurer the head coach rewrote it into after the bell rang). ⚠ It names WHICH kind: an admin
+ * approving a parent who runs a station is answering a different question from one approving the
+ * team's books.
+ */
+export async function notifyAdminOfPendingInvite(p: {
+  orgId: string;
+  orgSlug: string;
+  inviteId: string;
+  email: string;
+  teamName: string;
+  invitedByName: string | null;
+  staffKind: StaffKind | null;
+  changed?: boolean;
+}): Promise<void> {
+  const copy = STAFF_KIND_COPY[p.staffKind ?? 'assistant'];
+  await notify({
+    orgId: p.orgId,
+    eventType: 'assistant_coach_approval_requested',
+    title: p.changed ? `${copy.name} invite changed — still awaiting approval` : `${copy.name} invite awaiting approval`,
+    body: p.changed
+      ? `${p.invitedByName ?? 'A head coach'} changed what ${p.email} will get on ${p.teamName}: now ${copy.asA} — ${copy.sentence}`
+      : `${p.invitedByName ?? 'A head coach'} invited ${p.email} to ${p.teamName} as ${copy.asA} — ${copy.sentence}`,
+    link: `/${p.orgSlug}/admin/rep-teams`,
+    metadata: { inviteId: p.inviteId },
+  }).catch(() => {});
+}
 
 // ── Org-level coach settings (organizations.coach_settings jsonb, mig 174) ────
 export interface OrgCoachSettings {
@@ -31,6 +91,8 @@ interface AssistantInviteRow {
   invited_email: string;
   status: 'pending_approval' | 'pending' | 'accepted' | 'expired' | 'revoked';
   initial_capabilities: AssistantCapabilityGrants | null;
+  /** The kind this invite offers (mig 288). NULL on invites minted before it — accepts as an assistant. */
+  staff_kind: StaffKind | null;
   invited_by_name: string | null;
   team_name: string | null;
   expires_at: string;
@@ -47,7 +109,34 @@ export interface CreateAssistantInviteInput {
   invitedEmail: string;
   teamName: string | null;
   initialCapabilities?: AssistantCapabilityGrants | null;
+  /** The kind the head coach chose — copied onto the membership on accept. */
+  staffKind: StaffKind | null;
   requireApproval: boolean;
+}
+
+/** One pending invite as the head coach's staff list and the admin's oversight page show it. */
+export interface OpenAssistantInvite {
+  id: string;
+  teamId: string;
+  invitedEmail: string;
+  status: 'pending' | 'pending_approval';
+  staffKind: StaffKind | null;
+  initialCapabilities: AssistantCapabilityGrants | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
+function mapOpenInvite(r: AssistantInviteRow): OpenAssistantInvite {
+  return {
+    id: r.id,
+    teamId: r.team_id,
+    invitedEmail: r.invited_email,
+    status: r.status as 'pending' | 'pending_approval',
+    staffKind: sanitizeStaffKind(r.staff_kind),
+    initialCapabilities: r.initial_capabilities,
+    expiresAt: r.expires_at,
+    createdAt: r.created_at,
+  };
 }
 
 /** Mint an invite. When approval is NOT required we return the raw token so the caller can email it.
@@ -55,7 +144,7 @@ export interface CreateAssistantInviteInput {
  *  no token — a fresh token is minted at approval time (so the raw token never lives anywhere early). */
 export async function createAssistantInvite(
   input: CreateAssistantInviteInput,
-): Promise<{ inviteId: string; rawToken: string | null; status: 'pending' | 'pending_approval' }> {
+): Promise<{ inviteId: string; rawToken: string | null; status: 'pending' | 'pending_approval'; invite: OpenAssistantInvite }> {
   const status: 'pending' | 'pending_approval' = input.requireApproval ? 'pending_approval' : 'pending';
   const rawToken = input.requireApproval ? null : generateAssistantInviteToken();
   // pending_approval rows still need a unique non-null token_hash (schema NOT NULL); use a throwaway
@@ -84,13 +173,122 @@ export async function createAssistantInvite(
       token_hash: tokenHash,
       status,
       initial_capabilities: input.initialCapabilities ?? null,
+      staff_kind: input.staffKind,
       invited_by_name: input.invitedByName,
       team_name: input.teamName,
     })
-    .select('id')
-    .single();
+    .select('*')
+    .single<AssistantInviteRow>();
   if (error) throw error;
-  return { inviteId: data.id as string, rawToken, status };
+
+  // Post-insert compensation (/review, 2026-09-11): two resends of the same invite at the same
+  // instant each revoke what exists, then each insert — leaving two live links. The revoke above
+  // is the ordinary path; this one runs after the insert and retires any OLDER open invite for
+  // the same person that landed between the two, so the newest link is the only valid one in
+  // every interleaving (the same post-write convergence `syncLiveSeasonProjection` uses).
+  await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .update({ status: 'revoked' })
+    .eq('team_id', input.teamId)
+    .eq('invited_email', input.invitedEmail.trim().toLowerCase())
+    .in('status', ['pending', 'pending_approval'])
+    .neq('id', data.id)
+    .lt('created_at', data.created_at);
+
+  return { inviteId: data.id, rawToken, status, invite: mapOpenInvite(data) };
+}
+
+/** The team's outstanding invites, newest first — the head coach's pending rows (R3). */
+export async function listOpenAssistantInvitesForTeam(teamId: string): Promise<OpenAssistantInvite[]> {
+  const { data, error } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('*')
+    .eq('team_id', teamId)
+    .in('status', ['pending', 'pending_approval'])
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => mapOpenInvite(r as AssistantInviteRow));
+}
+
+/** One outstanding invite, TEAM-SCOPED: an id from another team is null, never a row. */
+export async function getOpenAssistantInviteForTeam(inviteId: string, teamId: string): Promise<OpenAssistantInvite | null> {
+  const { data, error } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('*')
+    .eq('id', inviteId)
+    .eq('team_id', teamId)
+    .in('status', ['pending', 'pending_approval'])
+    .maybeSingle<AssistantInviteRow>();
+  if (error) throw error;
+  return data ? mapOpenInvite(data) : null;
+}
+
+/**
+ * Change what a pending invite will hand over when it is accepted (R3 — "editable until
+ * acceptance"). The WHERE re-asserts team + still-open, so an invite accepted between the head
+ * coach's screen loading and their tap comes back null instead of being rewritten under the
+ * person who just joined (the membership, not the invite, is their access truth by then).
+ */
+export async function updateAssistantInviteAccess(
+  inviteId: string,
+  teamId: string,
+  patch: { staffKind?: StaffKind; initialCapabilities?: AssistantCapabilityGrants },
+): Promise<OpenAssistantInvite | null> {
+  const update: Record<string, unknown> = {};
+  if (patch.staffKind) update.staff_kind = patch.staffKind;
+  if (patch.initialCapabilities) update.initial_capabilities = patch.initialCapabilities;
+  if (Object.keys(update).length === 0) return getOpenAssistantInviteForTeam(inviteId, teamId);
+  const { data, error } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .update(update)
+    .eq('id', inviteId)
+    .eq('team_id', teamId)
+    .in('status', ['pending', 'pending_approval'])
+    .select('*')
+    .maybeSingle<AssistantInviteRow>();
+  if (error) throw error;
+  return data ? mapOpenInvite(data) : null;
+}
+
+/**
+ * Resend = a FRESH invite for the same person carrying the same kind and grants, minted through
+ * `createAssistantInvite` so the old link is superseded the way a re-typed invite always was, and
+ * the seven days start again. Only a `pending` invite can be resent — one awaiting the club
+ * admin's approval has no link yet (the approval mints it), so there is nothing to send.
+ *
+ * ⚠ `requireApproval` is the org's CURRENT policy, decided by the caller the way the invite route
+ * decides it (/review, 2026-09-11): a club that turned approval on after this invite went out
+ * must not be bypassed by "Resend" minting fresh links forever. Under approval the fresh row is
+ * `pending_approval` with no token, and the caller notifies the admin instead of emailing.
+ * Returns null when the source is not resendable.
+ */
+export async function resendAssistantInvite(
+  inviteId: string,
+  teamId: string,
+  opts: { requireApproval: boolean },
+): Promise<{ invite: OpenAssistantInvite; rawToken: string | null; invitedByName: string | null; teamName: string | null } | null> {
+  const { data: row, error } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('*')
+    .eq('id', inviteId)
+    .eq('team_id', teamId)
+    .eq('status', 'pending')
+    .maybeSingle<AssistantInviteRow>();
+  if (error) throw error;
+  if (!row) return null;
+  const minted = await createAssistantInvite({
+    orgId: row.org_id,
+    teamId: row.team_id,
+    programYearId: row.program_year_id,
+    invitedByUserId: row.invited_by_user_id,
+    invitedByName: row.invited_by_name,
+    invitedEmail: row.invited_email,
+    teamName: row.team_name,
+    initialCapabilities: row.initial_capabilities,
+    staffKind: sanitizeStaffKind(row.staff_kind),
+    requireApproval: opts.requireApproval,
+  });
+  return { invite: minted.invite, rawToken: minted.rawToken, invitedByName: row.invited_by_name, teamName: row.team_name };
 }
 
 /** Approve a pending_approval invite: mint a fresh token, flip to pending, return the raw token to email. */
@@ -116,27 +314,31 @@ export async function approveAssistantInvite(
   return { rawToken, invite: updated };
 }
 
-export async function revokeAssistantInvite(inviteId: string): Promise<void> {
-  await supabaseAdmin
+/** Cancel an open invite. Pass `teamId` wherever the caller resolved one — the WHERE then re-asserts it. */
+export async function revokeAssistantInvite(inviteId: string, teamId?: string): Promise<void> {
+  let q = supabaseAdmin
     .from('assistant_invite_tokens')
     .update({ status: 'revoked' })
     .eq('id', inviteId)
     .in('status', ['pending', 'pending_approval']);
+  if (teamId) q = q.eq('team_id', teamId);
+  await q;
 }
 
 /** Outstanding invites across a whole org (admin oversight), joined to team name + group for scoping. */
 export async function listOpenAssistantInvitesForOrg(
   orgId: string,
-): Promise<{ id: string; teamId: string; teamName: string | null; teamGroupId: string | null; invitedEmail: string; status: string; expiresAt: string; createdAt: string }[]> {
+): Promise<{ id: string; teamId: string; teamName: string | null; teamGroupId: string | null; invitedEmail: string; status: string; staffKind: StaffKind | null; expiresAt: string; createdAt: string }[]> {
   const { data } = await supabaseAdmin
     .from('assistant_invite_tokens')
-    .select('id, team_id, invited_email, status, expires_at, created_at, rep_teams!team_id ( name, group_id )')
+    .select('id, team_id, invited_email, status, staff_kind, expires_at, created_at, rep_teams!team_id ( name, group_id )')
     .eq('org_id', orgId)
     .in('status', ['pending', 'pending_approval'])
     .order('created_at', { ascending: false });
   return (data ?? []).map((r: any) => ({
     id: r.id, teamId: r.team_id, teamName: r.rep_teams?.name ?? null, teamGroupId: r.rep_teams?.group_id ?? null,
-    invitedEmail: r.invited_email, status: r.status, expiresAt: r.expires_at, createdAt: r.created_at,
+    invitedEmail: r.invited_email, status: r.status, staffKind: sanitizeStaffKind(r.staff_kind),
+    expiresAt: r.expires_at, createdAt: r.created_at,
   }));
 }
 
@@ -156,7 +358,7 @@ export async function getAssistantInviteById(
 /** Read the invite behind a raw token (for the accept page prefill). Returns null when missing. */
 export async function getAssistantInviteByToken(rawToken: string): Promise<{
   status: string; teamName: string | null; orgName: string | null; invitedByName: string | null;
-  invitedEmail: string; expired: boolean;
+  invitedEmail: string; expired: boolean; staffKind: StaffKind | null;
 } | null> {
   const { data: row } = await supabaseAdmin
     .from('assistant_invite_tokens')
@@ -176,6 +378,7 @@ export async function getAssistantInviteByToken(rawToken: string): Promise<{
     // terminal (accepted/revoked/expired) invite must not leak the invitee's email as PII.
     invitedEmail: isPending ? row.invited_email : '',
     expired: new Date(row.expires_at).getTime() < Date.now(),
+    staffKind: sanitizeStaffKind(row.staff_kind),
   };
 }
 
@@ -185,7 +388,7 @@ export async function acceptAssistantInvite(
   rawToken: string,
   userId: string,
   userEmail: string,
-): Promise<{ ok: true; orgSlug: string; teamId: string } | { ok: false; error: string; status: number }> {
+): Promise<{ ok: true; orgSlug: string; teamId: string; staffKind: StaffKind | null } | { ok: false; error: string; status: number }> {
   const tokenHash = hashAssistantInviteToken(rawToken);
   const { data: row } = await supabaseAdmin
     .from('assistant_invite_tokens')
@@ -263,6 +466,10 @@ export async function acceptAssistantInvite(
   //    invite carries none, but the ROLE is always the invite's. (Flagged by /simplify's
   //    altitude pass 2026-08-16; recorded as intended behavior, not an oversight.)
   const existing = await getActiveTeamMembership(row.org_id, row.team_id, userId);
+  // The word that actually applies: an existing member keeps theirs (the invite changed nothing —
+  // the invite route refuses to re-invite active staff, so this is the head coach accepting their
+  // own invite, or a race); everyone else lands with the invite's.
+  const staffKind = existing ? existing.staffKind : sanitizeStaffKind(row.staff_kind);
   if (!existing) {
     const grants = row.initial_capabilities ? sanitizeAssistantGrants(row.initial_capabilities) : null;
     await addStaffMember({
@@ -271,8 +478,10 @@ export async function acceptAssistantInvite(
       userId,
       coachRole: 'assistant_coach',
       capabilities: grants && Object.keys(grants).length > 0 ? grants : null,
+      // The word the head coach chose lands with the grants it chose (mig 288).
+      staffKind,
     });
   }
 
-  return { ok: true, orgSlug: org.data.slug, teamId: row.team_id };
+  return { ok: true, orgSlug: org.data.slug, teamId: row.team_id, staffKind };
 }

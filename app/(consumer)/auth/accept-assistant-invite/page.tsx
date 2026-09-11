@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, CheckCircle, UserPlus } from 'lucide-react';
 import { HudSkeleton } from '@/components/ui/HudSkeleton';
+import { STAFF_KIND_COPY, type StaffKind } from '@/lib/coach-capabilities';
 import styles from '../auth.module.css';
 
 interface InviteInfo {
@@ -13,6 +14,8 @@ interface InviteInfo {
   invitedByName: string | null;
   invitedEmail: string;
   expired: boolean;
+  /** The kind the invite offers (mig 288); null on an older invite, which offered an assistant seat. */
+  staffKind: StaffKind | null;
 }
 
 function AcceptForm() {
@@ -136,6 +139,10 @@ function AcceptForm() {
 
   const teamLabel = invite.teamName ?? 'the team';
   const byLabel = invite.invitedByName ? `${invite.invitedByName} invited you` : 'You’ve been invited';
+  // "to help coach … as an assistant coach" was the one sentence for every invite; a treasurer or
+  // a helper reading it would go looking for the lineup. The verb and the seat follow the kind.
+  const kind = STAFF_KIND_COPY[invite.staffKind ?? 'assistant'];
+  const verb = kind.inviteVerb;
 
   const loginHref = `/auth/login?next=${encodeURIComponent(`/auth/accept-assistant-invite?token=${token}`)}&email=${encodeURIComponent(invite.invitedEmail)}`;
 
@@ -176,7 +183,7 @@ function AcceptForm() {
         <div className={styles.header}>
           <div className={styles.iconWrap}><UserPlus size={20} /></div>
           <h1 className={styles.title}>Join {teamLabel}</h1>
-          <p className={styles.sub}>{byLabel} to help coach <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as an assistant coach.</p>
+          <p className={styles.sub}>{byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as {kind.asA}.</p>
         </div>
         <div className={styles.form}>
           {error && <div className={styles.error}>{error}</div>}
@@ -201,8 +208,8 @@ function AcceptForm() {
           </div>
           <h1 className={styles.title}>Welcome back</h1>
           <p className={styles.sub}>
-            {byLabel} to help coach <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as an
-            assistant coach. You already have a FieldLogicHQ account for <strong>{invite.invitedEmail}</strong> —
+            {byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as{' '}
+            {kind.asA}. You already have a FieldLogicHQ account for <strong>{invite.invitedEmail}</strong> —
             sign in to join the team.
           </p>
         </div>
@@ -230,7 +237,7 @@ function AcceptForm() {
       <div className={styles.header}>
         <div className={styles.iconWrap}><UserPlus size={20} /></div>
         <h1 className={styles.title}>Set up your account</h1>
-        <p className={styles.sub}>{byLabel} to help coach <strong>{teamLabel}</strong> as an assistant coach. Create your account to accept.</p>
+        <p className={styles.sub}>{byLabel} {verb} <strong>{teamLabel}</strong> as {kind.asA}. Create your account to accept.</p>
       </div>
       <form onSubmit={createAccountAndAccept} className={styles.form}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

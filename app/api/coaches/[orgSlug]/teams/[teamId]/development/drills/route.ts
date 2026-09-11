@@ -7,7 +7,7 @@ import {
   getRepTeamPracticePlansAcrossSeasons,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabilities';
 import { MAX_DRILLS_PER_TEAM, validateDrillInput } from '@/lib/rep-drills';
 import { countDrillUses } from '@/lib/rep-drill-usage';
 
@@ -18,9 +18,13 @@ import { countDrillUses } from '@/lib/rep-drill-usage';
  *   READ  → `schedule`. A drill is practice content, and an assistant who can open Tuesday's
  *           practice can already read every word a picked drill put on it. Withholding the library
  *           from them would hide nothing and break the preview.
- *   WRITE → HEAD COACH ONLY (`canWriteDevelopment`). Managing the library IS a write.
- * ⚠ RLS mirrors both (mig 218), so a direct PostgREST call from an assistant's session can't
- * bypass this — the mig-141 chat-engine lesson.
+ *   WRITE → `canWritePracticePlans` = "Schedule: View + edit" (R7, 2026-09-10). Was head-coach-only;
+ *           the library is practice content, gated with the plans it feeds.
+ * ⚠ RLS (mig 218) still admits HEAD COACHES ONLY to writes — STRICTER than this gate, not a mirror
+ * of it any more. Every write here goes through the service role, so the app never meets that
+ * rule; a direct PostgREST call from an assistant's session is refused, which is the safe
+ * direction. Left as is on purpose: widening a policy on prod is a rule-changing migration this
+ * pass did not need (the mig-141 chat-engine lesson still stands — RLS is defence in depth).
  *
  * ⚠ **THE ARCHIVE DOOR — decided, not discovered.** This route deliberately does NOT use
  * `resolveCoachTeamRead`, so it resolves the team's live context and cannot serve a past season.
@@ -69,7 +73,7 @@ export const GET = withObservability(async (req: Request,
   const uses = countDrillUses(plans.map(p => p.plan));
   return NextResponse.json({
     drills: drills.map(d => ({ ...d, planCount: uses.get(d.id) ?? 0 })),
-    canWrite: canWriteDevelopment(assignment.capabilities),
+    canWrite: canWritePracticePlans(assignment.capabilities),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/drills' });
 
@@ -79,7 +83,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage drills.');
+  const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Managing drills needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;
 
   let body: unknown;

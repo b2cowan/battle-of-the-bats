@@ -1,4 +1,5 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { STAFF_KIND_COPY, type StaffKind } from '@/lib/coach-capabilities';
 import {
   FOUNDING_SEASON_END_LABEL,
   FOUNDING_SEASON_FIRST_CHARGE_LABEL,
@@ -1067,22 +1068,20 @@ export function assistantCoachInviteHtml(p: {
   teamName: string;
   invitedByName: string | null;
   inviteUrl: string;
-  /** Phase 4: the HELPER preset — a parent volunteer or outside instructor running one station. */
-  asHelper?: boolean;
+  /**
+   * Which of the four kinds the invite offers (pass 2 of the staff access plan, 2026-09-11). The
+   * heading, the line and the promise all come from `STAFF_KIND_COPY`, so the email says what
+   * that kind's preset actually grants — the helper's used to be the only one that did, and it
+   * existed because telling a parent volunteer they were getting "the team's chat, attendance and
+   * lineups" would have been false on all three counts.
+   */
+  staffKind: StaffKind;
 }) {
   const by = p.invitedByName ? `<strong>${p.invitedByName}</strong>` : 'The head coach';
-  /**
-   * ⚠ The helper's email promises what the HELPER PRESET actually grants, not what an assistant
-   * gets. Telling a parent volunteer they are getting "the team's chat, attendance and lineups"
-   * would be false on all three counts, and the first thing they'd do is go looking for them.
-   */
-  const heading = p.asHelper ? 'You’re invited to help out' : 'You’re invited to help coach';
-  const line = p.asHelper
-    ? `${by} invited you to help out at <strong>${p.teamName}</strong> on <strong>FieldLogicHQ</strong>.`
-    : `${by} invited you to join <strong>${p.teamName}</strong> as an <strong>assistant coach</strong> on <strong>FieldLogicHQ</strong>.`;
-  const what = p.asHelper
-    ? 'Accept below to set up your account. On a practice day you’ll see the plan, the station you’re running and the players with you — on your own phone, at the field. That’s all it does.'
-    : 'Accept below to set up your account. You’ll get the team’s chat, schedule, attendance and lineups; the head coach chooses anything more.';
+  const copy = STAFF_KIND_COPY[p.staffKind];
+  const heading = copy.emailHeading;
+  const line = `${by} invited you ${copy.inviteVerb} <strong>${p.teamName}</strong> as <strong>${copy.asA}</strong> on <strong>FieldLogicHQ</strong>.`;
+  const what = copy.emailWhat;
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
     <p>${line}</p>

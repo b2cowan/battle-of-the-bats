@@ -1,4 +1,12 @@
 {
   "_comment": "ACCEPTED dev↔prod divergences (scripts/check-schema-parity.mjs). Every entry is debt, not a decision — the target is an empty object. A NEW divergence, or an accepted one whose signature changes, fails the gate. Lower this as items are reconciled; re-init only after refreshing the snapshots.",
-  "accepted": {}
+  "accepted": {
+    "check:only-dev:assistant_invite_tokens.assistant_invite_tokens_staff_kind_check": "",
+    "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_head_coach_has_no_kind": "",
+    "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_staff_kind_check": "",
+    "column:only-dev:assistant_invite_tokens.staff_kind": "",
+    "column:only-dev:rep_team_staff_memberships.staff_kind": "",
+    "index:only-dev:rep_player_awards_once_per_game_uniq": "",
+    "index:only-dev:rep_player_awards_once_per_general_occasion_uniq": ""
+  }
 }

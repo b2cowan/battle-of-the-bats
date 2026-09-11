@@ -1,22 +1,18 @@
-/* CoachStaffPanel — the head coach's staff + access screen.
-   Layout study 2026-07-31: this screen used to wrap one message in three containers
-   (page header → tinted section panel repeating the page header → a centred card
-   floating inside it). The panel header is gone (on a single-section page the page
-   header IS the section header), the olive tint is gone (a lime CTA on an olive
-   ground reads muddy — 2026-07-30 ink/lime ruling), and everything now shares one
-   left edge.
-
-   Replaces the file's previous inline-style layout wholesale. */
+/* CoachStaffPanel + CoachStaffSheet — the head coach's staff LIST and the one SHEET it opens.
+   Pass 2 of the staff access plan (owner-approved 2026-09-10, round-2 mockup; round 3 drew the
+   build deviations 2026-09-11). Replaces the stacked-card layout wholesale: the invite card, the
+   access card, the per-person grid, the helper card and the reference rail are gone; what is
+   left is one list of rows and one sheet. Tokens only, no colour literals (the six colour-token
+   baselines stay at zero). Warm-gate safe: --home-* with the portal's dark fallbacks. Two
+   breakpoints only (900 / 640), per the primitives header in coaches.module.css. */
 
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.9rem;
 }
 
-/* The section heading exists for the accessibility tree only — the design decision retires the
-   VISIBLE second header, not the document outline. Not `display: none`, which would remove it
-   from that tree too and defeat the point. */
+/* The section heading exists for the accessibility tree only — the page h1 names this screen. */
 .srOnly {
   position: absolute;
   width: 1px;
@@ -28,220 +24,261 @@
   border: 0;
 }
 
-/* One sentence, capped at a readable measure. The "nothing sensitive until you
-   grant it" half of the old intro now lives in the access rail, where it can be
-   specific — it used to be said twice on one screen. */
-.lede {
-  margin: 0;
-  max-width: 68ch;
-  font-size: var(--type-heading);
-  line-height: 1.55;
-  color: var(--text-secondary);
-}
+.notice { margin: 0; font-size: var(--type-body); color: var(--logic-lime); }
 
-/* Working column + a persistent access rail.
-   Desktop: rail sits right, spanning both rows of the working column.
-   ≤1023px: single column, rail LAST — a coach reaches their staff first, and on an
-   empty team the list row is only the short teaching block, so the rail is still
-   right there. */
-.cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 288px;
-  grid-template-areas:
-    "invite rail"
-    "access rail"
-    "list   rail";
-  gap: 1rem 1.5rem;
-  align-items: start;
-}
-
-.inviteArea { grid-area: invite; min-width: 0; }
-/* What the chosen preset grants, in sentences. Sits directly under the control it describes and
-   ABOVE the staff list, because it answers a question asked while inviting, not while reviewing.
-   Deliberately in the working column and not in the rail — the rail disappears on a phone. */
-.accessArea { grid-area: access; min-width: 0; max-width: 520px; }
-.listArea   { grid-area: list;   min-width: 0; display: flex; flex-direction: column; gap: 0.9rem; }
-.railArea   { grid-area: rail;   min-width: 0; }
-
-@media (max-width: 1023px) {
-  .cols {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "invite"
-      "access"
-      "list"
-      "rail";
-  }
-}
-
-/* ── Shared card shell ────────────────────────────────────────────────────── */
-.card {
+/* ── The list ─────────────────────────────────────────────────────────────── */
+.list {
   background: var(--home-card, rgba(255,255,255,0.04));
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem 1.1rem;
+  overflow: hidden;
 }
 
-/* The invite is a control, not a stray row — capped so it reads as an object. */
-.inviteCard { max-width: 520px; }
+/* Two lines per person: identity + role + door on the first, access on the second. A column
+   per area was tried in the mockup and every row wrapped to three lines of chips at 1180px;
+   the access line gets the row's full width instead. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "who  role act"
+    "caps caps caps"
+    "note note note";
+  gap: 0.3rem 0.9rem;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border-top: 1px solid var(--border-2);
+}
+.row:first-child { border-top: 0; }
+.pending { background: rgba(var(--warning-rgb), 0.04); }
 
-.inviteForm {
+.who {
+  grid-area: who;
   display: flex;
-  gap: 0.6rem;
-  align-items: flex-end;
   flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  min-width: 0;
 }
+.name { font-weight: 600; color: var(--text-primary); }
+.you { font-size: var(--type-support); font-weight: 500; color: var(--text-tertiary); }
+/* A long unbroken club/school address would otherwise set the min-content width and push past
+   the card edge — wrapping is never worse than overflowing. */
+.email { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+/* ⚠ A LABEL, not a control (owner ruling 2026-08-03 — the two records stay separate). */
+.fam { font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
 
-/* Two controls on one row share one height. The portal's shared input and button
-   classes derive their heights from different padding + line-height (≈35px vs
-   ≈37px), so side by side they always read as misaligned. Pin both here rather
-   than retuning either shared class — that would ripple through every form in the
-   portal. 38px matches the portal's existing compact control height; ≤640px both
-   rise to the 44px touch floor the portal already uses for standalone controls. */
-.inviteForm input,
-.inviteForm button {
-  height: 38px;
-}
+.role { grid-area: role; }
 
-/* The shared field class sets no line-height, so a single-line text input inherits the body's 1.6
-   — a ~23px line box inside a 20px content box at this height. Harmless in practice (the excess is
-   half-leading, not glyphs) but it means the height budget above doesn't reconcile, so pin the
-   control default. Scoped to this row — the shared class is used by every form in the portal. */
-.inviteForm input { line-height: normal; }
-
-@media (max-width: 640px) {
-  .inviteForm input,
-  .inviteForm button { height: 44px; }
-}
-
-/* ── The preset choice (Phase 4) ──────────────────────────────────────────────
-   Takes the full width of the invite row and sits above the email field, so the
-   decision that changes every label below it is made first. A fieldset because
-   these are radios answering one question, and the legend is that question. */
-.presetSet {
-  flex-basis: 100%;
-  border: 0;
-  margin: 0;
-  padding: 0;
+.caps {
+  grid-area: caps;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.capsPending { gap: 0.35rem 0.8rem; }
+.capNote { font-size: var(--type-support); color: var(--text-tertiary); }
+.capNote strong { color: var(--text-secondary); font-weight: 600; }
+
+/* The phone's one line of words (mockup §06) — hidden until the chips are. */
+.capsLine { display: none; margin: 0; grid-area: caps; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+.capsLineSens { color: var(--badge-warning-ink); font-weight: 500; }
+
+.act {
+  grid-area: act;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 0.4rem;
 }
 
-.presetSet legend { padding: 0; margin-bottom: 0.15rem; }
+/* The door on every row — a button that reads as a link, with the chevron the mockup drew. */
+.rowLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0.35rem 0.2rem;
+  min-height: 36px;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rowLink:hover .rowLinkLabel { text-decoration: underline; }
+.rowLink:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+.rowLink > span:last-child { font-size: 1.1rem; line-height: 1; color: var(--text-tertiary); }
+/* The pending row's chevron exists for the phone only; on a laptop Resend and Cancel are the row. */
+.rowLinkPhone { display: none; }
 
-/* Each option carries a sentence, so they stack rather than sitting side by side —
-   two-up inside a 520px card leaves ~240px each, which cannot hold the description,
-   and a role choice stripped of its description is a guess. */
-.presetOpt {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  padding: 0.6rem 0.7rem;
+.quietLink {
+  background: none;
+  border: none;
+  padding: 0.35rem 0.2rem;
+  min-height: 36px;
+  font: inherit;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.quietLink:hover { color: var(--text-secondary); }
+.quietLink:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+
+/* Two small buttons on the pending row — compacted like the old Remove button was. */
+.list .rowBtn { font-size: var(--type-support); padding: 0.25rem 0.6rem; min-height: 32px; }
+
+/* The two-line note the head coach's own "Hand over" link opens (round 3). */
+.handOver {
+  grid-area: note;
+  margin: 0.2rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-left: 2px solid var(--logic-lime);
+  border-radius: 0 4px 4px 0;
+  background: var(--white-05);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.handOver strong { color: var(--text-primary); }
+
+/* ── Chips ────────────────────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: var(--type-support);
+  font-weight: 500;
+  background: var(--white-05);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+/* Amber = sensitive. Ink from the badge-scoped warm token, not the raw hue — the warm portal
+   measured the raw ink at 4.56:1 on a tinted chip (2026-08-16), three hundredths from failing. */
+.chipSens {
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--badge-warning-ink);
+  border: 1px solid rgba(var(--warning-rgb), 0.25);
+}
+
+.roleChip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 0.5rem;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  /* The whole card is the tap target, not the 16px radio inside it. */
-  min-height: 44px;
+  font-size: var(--type-token);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: transparent;
+  white-space: nowrap;
 }
+.roleHead { background: var(--text-primary); color: var(--card-bg); border-color: transparent; }
+.role_manager { background: rgba(var(--info-rgb), 0.12); color: var(--info); border-color: rgba(var(--info-rgb), 0.3); }
+.role_treasurer { background: rgba(var(--success-rgb), 0.10); color: var(--badge-success-ink); border-color: rgba(var(--success-rgb), 0.3); }
+/* Told apart from an assistant at a glance without a legend and without colour alone. */
+.role_helper { border-style: dashed; }
+.roleInvited { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border-color: rgba(var(--warning-rgb), 0.3); }
 
-.presetOpt input { margin-top: 3px; flex-shrink: 0; }
-
-.presetOptOn { border-color: var(--primary); background: var(--primary-faint); }
-
-.presetName { display: block; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-.presetDesc { display: block; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
-
-/* The height pins on .inviteForm apply to `input` and `button` descendants, which would
-   otherwise squash the radios' own boxes and, worse, force the option rows to 38px and clip
-   the description line. Radios are exempt and keep their intrinsic size. */
-.inviteForm .presetOpt input[type="radio"] { height: auto; }
-
-.field {
+/* ── The foot line ────────────────────────────────────────────────────────── */
+.foot {
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  width: 260px;
-  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.1rem;
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-tertiary);
 }
+.foot a { display: inline-flex; align-items: center; color: var(--text-secondary); text-decoration: underline; }
 
-/* A real label — the field used to carry a placeholder only, which disappears the
-   moment a coach starts typing. */
-.label {
+/* ── The sheet ────────────────────────────────────────────────────────────── */
+.sheet { max-width: 520px; }
+
+.saveState { margin-left: auto; margin-right: 0.6rem; font-size: var(--type-support); color: var(--logic-lime); white-space: nowrap; }
+
+.headNote { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+
+.group { display: flex; flex-direction: column; gap: 0.55rem; }
+.groupHead { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.groupTitle {
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
+.groupMeta { font-size: var(--type-support); color: var(--text-tertiary); }
+.kindHint { margin: -0.2rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 
-.inviteNote { margin: 0.6rem 0 0; font-size: var(--type-body); color: var(--logic-lime); }
+/* One control: label + control on the first line, the sentence under both. */
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.9rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border-2);
+}
+.item:first-of-type { border-top: 0; }
+.itemLabel { font-size: var(--type-body); color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.5rem; }
+.itemControl { justify-self: end; display: inline-flex; align-items: center; }
+.itemHint { grid-column: 1 / -1; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); max-width: 46ch; }
+/* Consequences are said on the control, in the accent — the one rule the old grid never stated. */
+.itemHint strong { color: var(--home-olive, var(--logic-lime)); font-weight: 600; }
 
-/* Scoped by the card rather than left bare: this overrides `.errorText`'s `margin: 0`, and two
-   single-class rules would be settled only by which module the bundler emits last. The descendant
-   form outranks it deterministically. */
-.card .inviteError { margin: 0.6rem 0 0; }
-
-/* ── Staff list ───────────────────────────────────────────────────────────── */
-.count {
-  margin: 0;
-  font-size: var(--type-label);
+.asksFirst {
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--badge-warning-ink);
 }
 
-.person {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+.switch { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--logic-lime); }
+
+.segControl {
+  display: inline-flex;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.segBtn {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--type-support);
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  min-height: 32px;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.segBtn:disabled { cursor: default; }
+/* The group clips its corners with overflow:hidden, which swallows the global focus ring drawn
+   2px OUTSIDE the button. Draw it inside instead — these hand out money and guardian contacts. */
+.segBtn:focus-visible { outline-offset: -2px; }
+.segBtnOn { background: var(--logic-lime); color: var(--pitch-black); font-weight: 700; }
+/* Warm portal: a lime FILL must stay TRUE lime with dark ink (E3 / the --logic-lime-fixed ruling). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnOn {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
 }
 
-.personName { margin: 0; font-weight: 600; color: var(--text-primary); }
-/* A long unbroken club/school address would otherwise set the flex item's min-content width and
-   push past the card edge — wrapping is never worse than overflowing. */
-.personEmail { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
-/* ⚠ A LABEL, not a control (owner ruling 2026-08-03 — the two records stay separate). Quiet on
-   purpose: it tells a head coach the same person also follows the team, and offers nothing to
-   click, because acting on it belongs on the Roster page where family followers are managed. */
-.alsoFollows { margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
-
-.personActions { display: flex; align-items: center; gap: 0.6rem; }
-.saveState { font-size: var(--type-support); color: var(--text-tertiary); }
-.saveStateDone { font-size: var(--type-support); color: var(--logic-lime); }
-/* Card-scoped for the same reason as `.card .inviteError` — this compacts `.btnSecondary`'s own
-   padding/font-size, and equal-specificity rules would be decided by bundler emission order. */
-.card .removeBtn { font-size: var(--type-support); padding: 0.25rem 0.55rem; }
-
-.groupLabel {
-  margin: 1rem 0 0.55rem;
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-/* A fixed two-column rhythm. The old auto-fill grid re-flowed the access controls
-   at every width, so the same team's grid never looked the same twice. */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem 1.4rem;
-}
-
-@media (max-width: 560px) {
-  .grid { grid-template-columns: 1fr; }
-}
-
-/* A1 (2026-08-03): stands where the Roster Hidden/View control used to. A head coach who set that
-   switch will look for it, so the grid says what is true now and points at the one below that does
-   the protecting. Spans the grid so it reads as a statement about the group, not a control in it. */
+/* A1 (2026-08-03): stands where the Roster Hidden/View control used to. */
 .standingNote {
-  grid-column: 1 / -1;
   margin: 0.15rem 0 0;
   padding: 0.5rem 0.65rem;
   border-left: 2px solid var(--logic-lime);
@@ -252,172 +289,42 @@
   color: var(--text-secondary);
 }
 
-.check {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-.check input { margin-top: 3px; flex-shrink: 0; }
-.checkLabel { font-size: var(--type-body); color: var(--text-primary); }
-.checkHint { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.sheetFoot { align-items: center; flex-wrap: wrap; }
+.footSpacer { flex: 1; }
+.footNote { font-size: var(--type-support); color: var(--text-tertiary); }
 
-.seg { display: flex; flex-direction: column; gap: 0.22rem; }
-.segLabel { font-size: var(--type-body); color: var(--text-primary); }
-.segHint { font-size: var(--type-support); color: var(--text-tertiary); }
-
-.segControl {
-  display: inline-flex;
-  align-self: flex-start;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+/* ── Touch widths: the 44px floor on every door (the rendered sweep, 2026-09-11) ─── */
+@media (max-width: 768px) {
+  .rowLink, .quietLink, .foot a { min-height: var(--tap-min, 44px); }
+  .list .rowBtn { min-height: var(--tap-min, 44px); }
 }
 
-.segBtn {
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--type-support);
-  font-weight: 500;
-  padding: 0.3rem 0.65rem;
-  background: transparent;
-  color: var(--text-secondary);
-}
+/* ── Phone ────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "who  act"
+      "role act"
+      "caps act"
+      "note note";
+    gap: 0.2rem 0.6rem;
+    padding: 0.7rem 0.9rem;
+  }
+  .caps { display: none; }
+  .capsLine { display: block; }
+  .capNote { display: none; }
+  .act { align-self: center; }
+  /* The door is the chevron alone at this width — the row's words are the name and the line. */
+  .rowLinkLabel { display: none; }
+  .rowLink { min-width: var(--tap-min, 44px); justify-content: center; }
+  .rowLinkPhone { display: inline-flex; }
+  .list .rowBtn { display: none; }
+  .quietLink { white-space: normal; text-align: right; }
 
-/* The group clips its rounded corners with overflow:hidden, which swallows the global focus ring
-   drawn 2px OUTSIDE the button. Draw it inside instead — keeping the global colour and width, only
-   moving it. These are the controls that hand out team money and guardian contact details; their
-   keyboard focus state has to be visible. (/review 2026-07-31) */
-.segBtn:focus-visible { outline-offset: -2px; }
-
-.segBtnOn {
-  background: var(--logic-lime);
-  color: var(--pitch-black);
-  font-weight: 700;
-}
-
-/* Warm portal: a lime FILL must stay TRUE lime with dark ink (E3 / the 2026-07-27
-   --logic-lime-fixed ruling). Without this the accent remap turns the selected
-   segment olive, which is the drab-CTA bug the ruling exists to prevent. Mirrors
-   the .btnPrimary rule in coaches.module.css. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnOn {
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-}
-
-.disclosureWrap { margin-top: 0.9rem; }
-
-/* ── Access rail ──────────────────────────────────────────────────────────── */
-/* Standing reference, not a first-run message. This is the only place on the
-   platform that says what an assistant can actually see; it used to be an empty
-   state, so it vanished the moment the first invite landed — exactly when a head
-   coach starts making access decisions. */
-.rail {
-  background: var(--home-card, rgba(255,255,255,0.04));
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.1rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.railTitle {
-  margin: 0;
-  font-size: var(--type-label);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.railGroup { display: flex; flex-direction: column; gap: 0.4rem; }
-
-/* A real heading, styled to the same weight it had as a span — the outline is for assistive tech,
-   not a visual change. */
-.railGroupLabel { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-
-.railList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
-
-.railItem {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-}
-
-/* Lime as an ICON, not a fill — the accent remap correctly darkens it to olive on
-   paper, which is what E3 asks for. */
-.railIconOn { display: grid; place-items: center; flex-shrink: 0; color: var(--logic-lime); }
-.railIconOff { display: grid; place-items: center; flex-shrink: 0; color: var(--text-tertiary); }
-
-.railFoot {
-  margin: 0;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--border-2);
-  font-size: var(--type-support);
-  line-height: 1.5;
-  color: var(--text-tertiary);
-}
-
-/* The rail's two explainer paragraphs (it no longer lists grants — that moved into the page). */
-.railProse { margin: 0; font-size: var(--type-support); line-height: 1.5; color: var(--text-secondary); }
-
-/* ── The one exclusion a head coach would otherwise assume wrong ──────────────
-   Until this release everyone on a team's staff list was in the staff chat room
-   automatically, so "not in your staff chat" is the single line on the access card
-   that contradicts prior behaviour. It gets the only warning-coloured mark on the
-   screen; every other "never" is a lock glyph, because every other "never" is what
-   a head coach already expects. */
-.railItemNever { align-items: flex-start; color: var(--text-secondary); }
-
-.railIconNever {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 13px;
-  font-size: var(--type-support);
-  font-weight: 800;
-  line-height: 1.4;
-  color: var(--danger);
-}
-
-/* Warm portal: --danger is not part of the white→ink remap, and reads hot on paper.
-   Mirrors the .segBtnOn treatment above — same gate, same reason. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .railIconNever {
-  color: var(--home-live);
-}
-
-/* ── Helper cards ─────────────────────────────────────────────────────────────
-   A helper card has NO capability grid — see the component for why. What it needs
-   instead is to be tellable-apart from an assistant card at a glance, without a
-   legend and without relying on colour alone: hence a worded chip. */
-.helperCard { border-style: dashed; }
-
-.helperChip {
-  font-size: var(--type-token);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
-
-.helperSummary {
-  margin: 0.7rem 0 0;
-  font-size: var(--type-body);
-  line-height: 1.5;
-  color: var(--text-secondary);
-}
-
-.helperActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.85rem;
+  .sheetFoot button { min-height: 44px; }
+  .item { grid-template-columns: minmax(0, 1fr) auto; }
+  .itemHint { max-width: none; }
+  .switch { width: 22px; height: 22px; }
+  .segBtn { min-height: 40px; padding: 0.35rem 0.6rem; }
 }

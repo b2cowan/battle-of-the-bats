@@ -15,6 +15,8 @@ import {
   denyUnless,
   type AssistantCapabilityGrants,
   type CoachCapabilities,
+  type StaffKind,
+  wouldLeaveNoHeadCoach,
 } from './coach-capabilities';
 import { isTeamWorkspaceOrg, getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import type { Organization, RepProgramYear } from './types';
@@ -53,6 +55,12 @@ export interface TeamStaffMembership {
   userId: string;
   coachRole: 'head_coach' | 'assistant_coach';
   capabilities: AssistantCapabilityGrants | null;
+  /**
+   * The kind the head coach chose (mig 288) — a LABEL that picks the row's word and the invite
+   * email, never an access decision. NULL on rows written before the column existed (the display
+   * layer derives one) and always NULL on a head-coach row. NOT projected onto the season record.
+   */
+  staffKind: StaffKind | null;
   status: 'active' | 'revoked';
   createdAt: string;
   revokedAt: string | null;
@@ -65,6 +73,7 @@ interface MembershipRow {
   user_id: string;
   coach_role: 'head_coach' | 'assistant_coach';
   capabilities: AssistantCapabilityGrants | null;
+  staff_kind: StaffKind | null;
   status: 'active' | 'revoked';
   created_at: string;
   revoked_at: string | null;
@@ -78,6 +87,7 @@ function mapMembership(r: MembershipRow): TeamStaffMembership {
     userId: r.user_id,
     coachRole: r.coach_role,
     capabilities: r.capabilities,
+    staffKind: r.staff_kind ?? null,
     status: r.status,
     createdAt: r.created_at,
     revokedAt: r.revoked_at,
@@ -222,6 +232,23 @@ export async function getTeamStaffMembershipById(id: string): Promise<TeamStaffM
   return data ? mapMembership(data) : null;
 }
 
+/**
+ * The stored kind of every ACTIVE assistant in an org, keyed `${teamId}:${userId}` — for the
+ * club admin's oversight page, which names people by their season row (no kind there) and needs
+ * the word from the membership. One read for the whole org rather than one per row.
+ */
+export async function listActiveStaffKindsForOrg(orgId: string): Promise<Map<string, StaffKind | null>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('team_id, user_id, staff_kind')
+    .eq('org_id', orgId)
+    .eq('status', 'active')
+    .eq('coach_role', 'assistant_coach');
+  if (error) throw error;
+  return new Map((data ?? []).map((r: { team_id: string; user_id: string; staff_kind: StaffKind | null }) =>
+    [`${r.team_id}:${r.user_id}`, r.staff_kind ?? null]));
+}
+
 /** Every ACTIVE member of a team's staff (head coach first, then assistants oldest-first). */
 async function getTeamStaffMembershipList(teamId: string): Promise<TeamStaffMembership[]> {
   const { data, error } = await supabaseAdmin
@@ -304,6 +331,11 @@ export interface AddStaffMemberInput {
   coachRole: 'head_coach' | 'assistant_coach';
   /** Initial grants. Omit/null on a REACTIVATION to restore the stored ones ("nothing was destroyed"). */
   capabilities?: AssistantCapabilityGrants | null;
+  /**
+   * The kind the invite offered. Written whenever the caller knows it (every invite since mig 288);
+   * omitted on a reactivation with no invite so the stored word survives. Ignored for a head coach.
+   */
+  staffKind?: StaffKind | null;
 }
 
 /**
@@ -331,6 +363,10 @@ export async function addStaffMember(input: AddStaffMemberInput): Promise<TeamSt
   if (input.capabilities && Object.keys(input.capabilities).length > 0) {
     payload.capabilities = input.capabilities;
   }
+  // A head coach never carries a kind; an assistant carries the one the caller knows, else the
+  // stored one (unsent column = left as it was, the same rule as `capabilities` above).
+  if (input.coachRole === 'head_coach') payload.staff_kind = null;
+  else if (input.staffKind) payload.staff_kind = input.staffKind;
   const { data, error } = await supabaseAdmin
     .from('rep_team_staff_memberships')
     .upsert(payload, { onConflict: 'team_id,user_id' })
@@ -343,6 +379,83 @@ export async function addStaffMember(input: AddStaffMemberInput): Promise<TeamSt
   return membership;
 }
 
+/** Active head coaches on the team — the number the last-head-coach guard reads. */
+export async function countActiveHeadCoaches(teamId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('id', { count: 'exact', head: true })
+    .eq('team_id', teamId)
+    .eq('status', 'active')
+    .eq('coach_role', 'head_coach');
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export type SetStaffRoleResult =
+  | { ok: true; membership: TeamStaffMembership }
+  | { ok: false; reason: 'gone' | 'last_head' };
+
+/**
+ * Make an assistant the head coach, or a head coach an assistant (R8). Head-coach-only at the
+ * route; this is the write. The projection row mirrors the new role (the write routes gate on it),
+ * and the staff chat room re-derives moderator/member standing on its next reconcile.
+ *
+ * ⚠ THE GUARD IS CHECKED TWICE, and the second check is the one that holds. A count-then-update
+ * has the check-then-act gap this module keeps meeting: two head coaches demoting each other at
+ * the same instant each read "2" and each proceed. So after a demotion lands, the count is read
+ * AGAIN, and if it has reached zero the row is restored and the call reports `last_head` — the
+ * convergence pattern `syncLiveSeasonProjection` already uses for the add/remove race. Worst case
+ * is a brief window in which the team has no head coach and nothing but a staff-page read could
+ * notice; the alternative (a serialised SQL guard) needs a function, which is a rule-changing
+ * migration this pass does not need.
+ *
+ * A promotion NULLs the kind (a head coach has no kind); a demotion writes `'assistant'` so the
+ * row has a word again. Grants are left exactly as stored: ignored while head, back in force when
+ * assistant — "nothing was destroyed".
+ */
+export async function setStaffMemberRole(
+  membershipId: string,
+  teamId: string,
+  coachRole: 'head_coach' | 'assistant_coach',
+): Promise<SetStaffRoleResult> {
+  const current = await getTeamStaffMembershipById(membershipId);
+  if (!current || current.teamId !== teamId || current.status !== 'active') return { ok: false, reason: 'gone' };
+  if (current.coachRole === coachRole) return { ok: true, membership: current };
+
+  const demoting = coachRole === 'assistant_coach';
+  if (demoting && wouldLeaveNoHeadCoach(await countActiveHeadCoaches(teamId), true)) {
+    return { ok: false, reason: 'last_head' };
+  }
+
+  const patch: Record<string, unknown> = { coach_role: coachRole };
+  patch.staff_kind = demoting ? 'assistant' : null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .update(patch)
+    .eq('id', membershipId)
+    .eq('team_id', teamId)
+    .eq('status', 'active')
+    .eq('coach_role', current.coachRole) // still the role we read — a concurrent change lands as "gone"
+    .select('*')
+    .maybeSingle<MembershipRow>();
+  if (error) throw error;
+  if (!data) return { ok: false, reason: 'gone' };
+
+  if (demoting && (await countActiveHeadCoaches(teamId)) === 0) {
+    // Lost the race with another demotion — put this row back and refuse.
+    const { error: restoreError } = await supabaseAdmin
+      .from('rep_team_staff_memberships')
+      .update({ coach_role: 'head_coach', staff_kind: null })
+      .eq('id', membershipId);
+    if (restoreError) throw restoreError;
+    return { ok: false, reason: 'last_head' };
+  }
+
+  const membership = mapMembership(data);
+  await syncLiveSeasonProjection(membership);
+  return { ok: true, membership };
+}
+
 /**
  * Remove someone from the team — everywhere, at once.
  *
@@ -350,15 +463,36 @@ export async function addStaffMember(input: AddStaffMemberInput): Promise<TeamSt
  * routes' key — then (2) flip the membership to revoked (the read gate), then (3) best-effort
  * guest-org-membership cleanup. Every prefix of that sequence is safe, and re-running heals a
  * half-done removal because step 1 runs UNCONDITIONALLY — it never asks the membership first.
- * Returns whether an active membership was actually revoked (false = there was nothing active;
- * the row cleanup still ran, which is what makes a second click a repair rather than a no-op).
+ * Returns `'removed'` when an active membership was revoked, `'nothing'` when there was nothing
+ * active (the row cleanup still ran, which is what makes a second click a repair rather than a
+ * no-op), and `'last_head'` when the guard below refused before touching anything.
+ *
+ * ⚠ `refuseLastHeadCoach` is the PORTAL's rule (R8): a head coach may remove another head coach,
+ * but never the last one. The club admin's routes do not pass it — an admin re-assigning a team's
+ * head coach from the season page is the path that existed before this one, and narrowing it was
+ * not decided. Checked BEFORE the projection delete so a refusal leaves no half-done removal —
+ * AND AGAIN AFTER THE REVOKE (/review, 2026-09-11): two head coaches removing each other at the
+ * same instant each read "2" and each proceed, the exact race `setStaffMemberRole` closes for a
+ * demotion. So when the target was a head coach, the count is re-read after the revoke, and at
+ * zero the membership is put back through `addStaffMember` (a reactivation — grants untouched,
+ * the projection row re-written) and the call reports `last_head`. Whichever of the two
+ * removals lands second is the one undone; the team keeps one head coach in every interleaving.
  */
 export async function removeStaffMember(
   orgId: string,
   teamId: string,
   userId: string,
   revokedBy: string,
-): Promise<boolean> {
+  opts?: { refuseLastHeadCoach?: boolean },
+): Promise<'removed' | 'nothing' | 'last_head'> {
+  let targetWasHead = false;
+  if (opts?.refuseLastHeadCoach) {
+    const target = await getActiveTeamMembership(orgId, teamId, userId);
+    targetWasHead = target?.coachRole === 'head_coach';
+    if (targetWasHead && wouldLeaveNoHeadCoach(await countActiveHeadCoaches(teamId), true)) {
+      return 'last_head';
+    }
+  }
   const liveYearId = await getLiveRepProgramYearIdStrict(teamId);
   if (liveYearId) await deleteProjectionRow(liveYearId, userId);
 
@@ -373,16 +507,23 @@ export async function removeStaffMember(
     .maybeSingle<{ id: string }>();
   if (error) throw error;
 
+  // The second check: lost the race with another head coach's removal — put this one back.
+  if (data && targetWasHead && (await countActiveHeadCoaches(teamId)) === 0) {
+    await addStaffMember({ orgId, teamId, userId, coachRole: 'head_coach' });
+    return 'last_head';
+  }
+
   // Best-effort: the removal itself is complete; a failed guest-row cleanup must not 500 an
   // action that succeeded (it only leaves a capability-less org membership to clean up later).
   await cleanupOrphanedGuestOrgMembership(orgId, userId).catch((e) => {
     console.error('[coach-membership] guest org-membership cleanup failed (removal succeeded):', e);
   });
-  return !!data;
+  return data ? 'removed' : 'nothing';
 }
 
 /**
- * Update an assistant's grants — on the membership AND its live-season projection row.
+ * Update an assistant's grants and/or their kind — on the membership AND (for grants) its
+ * live-season projection row. The kind is a label and is not projected.
  *
  * The WHERE re-asserts everything the caller believes about the target (house discipline —
  * check-then-act races land here): still this team's row, still ACTIVE, still an assistant.
@@ -390,14 +531,22 @@ export async function removeStaffMember(
  * caller's screen loaded — so the route can answer honestly instead of silently editing a
  * revoked record (whose stored grants a future reactivation would then resurrect).
  */
-export async function updateStaffMemberCapabilities(
+export async function updateStaffMemberAccess(
   membershipId: string,
   teamId: string,
-  grants: AssistantCapabilityGrants,
+  patch: { capabilities?: AssistantCapabilityGrants; staffKind?: StaffKind },
 ): Promise<TeamStaffMembership | null> {
+  const update: Record<string, unknown> = {};
+  if (patch.capabilities) update.capabilities = patch.capabilities;
+  if (patch.staffKind) update.staff_kind = patch.staffKind;
+  if (Object.keys(update).length === 0) {
+    // Nothing to write — answer the same question the WHERE below asks, without writing.
+    const m = await getTeamStaffMembershipById(membershipId);
+    return m && m.teamId === teamId && m.status === 'active' && m.coachRole === 'assistant_coach' ? m : null;
+  }
   const { data, error } = await supabaseAdmin
     .from('rep_team_staff_memberships')
-    .update({ capabilities: grants })
+    .update(update)
     .eq('id', membershipId)
     .eq('team_id', teamId)
     .eq('status', 'active')

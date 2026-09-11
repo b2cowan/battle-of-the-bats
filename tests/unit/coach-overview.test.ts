@@ -28,6 +28,7 @@ const HEAD_CAPS: CoachCapabilities = {
   documents: 'manage',
   announcementsSend: true,
   tryouts: true,
+  scoutingBook: true,
 };
 
 function caps(overrides: Partial<CoachCapabilities> = {}): CoachCapabilities {

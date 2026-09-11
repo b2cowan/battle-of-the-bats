@@ -9,7 +9,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachEventListRow from '@/components/coaches/CoachEventListRow';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
-import { canManageSchedule, canWriteDevelopment, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabilities';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -77,9 +77,9 @@ export default function CoachesPracticePlansPage({
   const caps = page.capabilities;
   // Fail-open while capabilities load — every practice route enforces server-side regardless.
   const canSeeSchedule = caps ? caps.schedule : true;
-  // Writing a plan is head-coach-only (the same gate the practice-plan PUT enforces), and a past
-  // season can never be written to.
-  const canPlan = (caps ? canWriteDevelopment(caps) : false);
+  // Writing a plan follows "Schedule: View + edit" (R7 — the same gate the practice-plan PUT
+  // enforces), and a past season can never be written to.
+  const canPlan = (caps ? canWritePracticePlans(caps) : false);
   // The templates door gates on what the templates route itself requires, so this page never
   // offers a link that 403s on arrival.
   const canSeeTemplates = caps ? canManageSchedule(caps) : false;

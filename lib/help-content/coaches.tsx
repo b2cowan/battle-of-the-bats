@@ -3216,7 +3216,7 @@ const coachesHelp: HelpPageContent = {
       // "rotation" / "stations" / "groups" are the terms a coach searches for, and none of them
       // appear in a heading — search never reads the prose, so they have to live here.
       keywords: ['practice plan', 'practice plans', 'plan a practice', 'practice', 'practice plans page', 'practice plans list', 'needs a plan', 'which practices need a plan', 'blocks', 'add a block', 'stations', 'rotation', 'rotations', 'carousel', 'rotate toggle', 'stop rotating', 'stations side by side', 'groups', 'random groups', 'draw groups', 'split into groups', 'pair up', 'coaching points', 'what to watch for', 'print practice', 'practice sheet', 'copy last practice', 'start this plan from', 'rest of practice', 'kit', 'equipment', 'who runs it', 'players moved', 'where did my players go', 'run practice', 'how it went', 'practice notes', 'write up a practice', 'after the practice', 'what this practice is about', 'kind of practice', 'practice tags', 'add staff', 'add equipment', 'staff list', 'equipment list', 'new staff name', 'new equipment item', 'press enter', 'duplicate staff name', 'staff picker', 'equipment picker'],
-      searchText: 'practice plan plans plan a practice tuesday night practice plans page list of practices needs a plan no plan plan set which practices still need a plan coming up recent practices blocks add a block timed blocks how long minutes rest of practice remaining time running clock start time stations station name how many equipment kit bring setup who runs it who is at it note for tonight rotation rotations carousel rotate toggle rotates by default turn off rotation stop rotating stations side by side separate stations two stations rotate every 15 minutes one turn each rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split people live in one place players moved where did my players go coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice start this plan from a past season start from last year reuse last october past season practices three ways in what happens to my plans when the season ends are my plans kept do i lose my practice plans finished season practice plans the practices you ran season’s end practices read a past plan called off cancelled practice does not appear notes only no plan written helper cannot read past plans print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done run practice at the field pick from your list add a new staff name add a new equipment item why cant i type and add press enter to add two spellings of the same name duplicate entries',
+      searchText: 'practice plan plans plan a practice tuesday night practice plans page list of practices needs a plan no plan plan set which practices still need a plan coming up recent practices blocks add a block timed blocks how long minutes rest of practice remaining time running clock start time stations station name how many equipment kit bring setup who runs it who is at it note for tonight rotation rotations carousel rotate toggle rotates by default turn off rotation stop rotating stations side by side separate stations two stations rotate every 15 minutes one turn each rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split people live in one place players moved where did my players go coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice start this plan from a past season start from last year reuse last october past season practices three ways in what happens to my plans when the season ends are my plans kept do i lose my practice plans finished season practice plans the practices you ran season’s end practices read a past plan called off cancelled practice does not appear notes only no plan written helper cannot read past plans print the sheet one page pdf assistant tee station head coach and assistants with schedule view plus edit write the plan schedule access reorder blocks up down arrows planned not done run practice at the field pick from your list add a new staff name add a new equipment item why cant i type and add press enter to add two spellings of the same name duplicate entries',
       content: (
         <p>A <strong>practice plan</strong> belongs to one practice: the blocks, stations and groups for that night. <strong>Practice plans</strong> in the sidebar lists your practices and shows which ones still need a plan — or open the practice on your <strong>Schedule</strong> and plan it from there.</p>
       ),
@@ -3329,7 +3329,7 @@ const coachesHelp: HelpPageContent = {
                 <p>Nothing here records what actually happened on the night — that&rsquo;s deliberate, so the plan never quietly turns into a claim about your players.</p>
               </HelpNote>
               <HelpDefs>
-                <HelpDef term="Writing the plan">Head coach only.</HelpDef>
+                <HelpDef term="Writing the plan">The head coach, and any assistant whose Schedule is set to <strong>View + edit</strong> — the same setting that lets them add and change events. A treasurer or a helper (Schedule: View) reads it, never writes it.</HelpDef>
                 <HelpDef term="Opening &amp; printing">Any coach with <strong>schedule</strong> access — which is what makes it useful to hand an assistant a station.</HelpDef>
                 <HelpDef term="Seeing focus areas">Needs <strong>player notes</strong> access.</HelpDef>
                 <HelpDef term="Attendance markers">The markers in the player list need <strong>attendance</strong> access.</HelpDef>
@@ -3348,7 +3348,7 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-practice-plan-where',
           question: 'Where do I write a practice plan?',
-          answerText: 'Two ways in, and they reach the same plan. Practice plans in the sidebar, under Season, lists your practices with a "Plan set" or "No plan" marker on each, and a "Needs a plan" filter that shows only the ones still waiting. Or open your Schedule, tap the practice, and use "Plan this practice" in the Practice plan section — it becomes "Open the plan" once one exists. Writing the plan is head-coach only; any coach with schedule access can open and print one. Practice plans are a live-season tool, so a completed season does not list them.',
+          answerText: 'Two ways in, and they reach the same plan. Practice plans in the sidebar, under Season, lists your practices with a "Plan set" or "No plan" marker on each, and a "Needs a plan" filter that shows only the ones still waiting. Or open your Schedule, tap the practice, and use "Plan this practice" in the Practice plan section — it becomes "Open the plan" once one exists. Writing the plan is the head coach and any assistant with Schedule: View + edit; any coach with schedule access can open and print one. Practice plans are a live-season tool, so a completed season does not list them.',
           keywords: ['where do i write a practice plan', 'where are practice plans', 'cannot find practice plans', 'practice plan page', 'practice plans page', 'practice plans list', 'plan this practice', 'no practice plan section', 'needs a plan', 'which practices need a plan', 'practices without a plan'],
           popular: true,
           answer: (
@@ -3356,7 +3356,7 @@ const coachesHelp: HelpPageContent = {
               <p>Two ways in, and they reach the same plan.</p>
               <p><strong>Practice plans</strong> in the sidebar, under <em>Season</em>, lists your practices with <strong>Plan set</strong> or <strong>No plan</strong> on each, and a <strong>Needs a plan</strong> filter that leaves only the ones still waiting. Start there when you&rsquo;re planning the week.</p>
               <p>Or go at it from the night itself: open your <strong>Schedule</strong>, tap the practice, and use <strong>Plan this practice</strong> in the <em>Practice plan</em> section — it reads <strong>Open the plan</strong> once one exists.</p>
-              <p>Writing the plan is <strong>head-coach only</strong>. Any coach with <strong>schedule</strong> access can open and print one. Plans are a live-season tool, so a completed season doesn&rsquo;t list them.</p>
+              <p>Writing the plan takes <strong>Schedule: View + edit</strong> — the head coach, and any assistant you&rsquo;ve given that. Any coach with <strong>schedule</strong> access can open and print one. Plans are a live-season tool, so a completed season doesn&rsquo;t list them.</p>
             </>
           ),
         },
@@ -3403,12 +3403,12 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-practice-plan-assistant',
           question: 'Can my assistant coach see the practice plan?',
-          answerText: 'Yes. Reading and printing a practice plan rides schedule access, so an assistant who can already open Tuesday\'s practice can open its plan and print the sheet — which is the point, since they are often the one running a station. Writing the plan is head-coach only. What players are working on is separate: those focus areas need player-notes access, so an assistant without it sees the blocks, the stations and the names, but never the notes about a child. The printed sheet follows the same rule — if you cannot see focus areas in the app, they are simply absent from the sheet you print.',
+          answerText: 'Yes. Reading and printing a practice plan rides schedule access, so an assistant who can already open Tuesday\'s practice can open its plan and print the sheet — which is the point, since they are often the one running a station. Writing the plan takes Schedule: View + edit on their row in Staff; an assistant with View only, a treasurer or a helper reads it. What players are working on is separate: those focus areas need player-notes access, so an assistant without it sees the blocks, the stations and the names, but never the notes about a child. The printed sheet follows the same rule — if you cannot see focus areas in the app, they are simply absent from the sheet you print.',
           keywords: ['assistant coach practice plan', 'can assistants see the plan', 'share plan with assistant', 'assistant print practice', 'who can edit the practice plan'],
           answer: (
             <>
               <p>Yes. Reading and printing a plan rides <strong>schedule</strong> access, so an assistant who can already open Tuesday&rsquo;s practice can open its plan and print the sheet — which is the point, since they&rsquo;re often the one running a station.</p>
-              <p><strong>Writing</strong> the plan is head-coach only.</p>
+              <p><strong>Writing</strong> the plan takes <strong>Schedule: View + edit</strong> on their row in Staff — an assistant who can add and change events can write the plan for Tuesday too. One with <em>View</em> only, a treasurer or a helper reads it.</p>
               <p><em>What players are working on</em> is separate: those focus areas need <strong>player notes</strong> access. An assistant without it sees the blocks, the stations and the names, but never the notes about a child — and the <strong>printed sheet follows the same rule</strong>, so if you can&rsquo;t see focus areas in the app they simply aren&rsquo;t on the sheet you print.</p>
             </>
           ),
@@ -3462,7 +3462,7 @@ const coachesHelp: HelpPageContent = {
       // "drill library" / "save a drill" / "read only" / "shared drills" are what a coach searches
       // for, and none appear in a heading — search never reads the prose, so they live here.
       keywords: ['drills', 'drill', 'drill library', 'my drills', 'your drills', 'save a drill', 'save to my drills', 'reuse a drill', 'pick a drill', 'drill picker', 'from your drills', 'write one', 'preview a drill', 'retire a drill', 'restore a drill', 'delete a drill', 'edit a drill', 'why can’t i edit', 'read only drill', 'greyed out', 'locked', 'edit just for this practice', 'swap drill', 'club drills', 'shared drills', 'org drills', 'category', 'categories', 'tags', 'tag a drill', 'rename a tag', 'merge tags', 'your tags', 'duplicate tags', 'add from a past season', 'import drills', 'last season', 'in 8 plans', 'used'],
-      searchText: 'drills drill library my drills your drills in development save a drill once write it once four taps reuse stop retyping the same warm up every tuesday pick from your drills write one preview before adding category categories coach typed not a fixed list hitting fielding your own words usual minutes how long it usually runs what you are doing what you are watching for coaching points setup equipment no people no players no coaches empty of people read only cannot edit why is it greyed out locked edit just for this practice detach make it a one off swap drill change the drill save to my drills promote a station retire a drill restore hide from the picker keeps old plans delete club shared drills organisation wide every team can use admin manages them add from a past season import last season bring forward old practices in 8 plans not in a plan yet head coach only schedule access rotation two stations',
+      searchText: 'drills drill library my drills your drills in development save a drill once write it once four taps reuse stop retyping the same warm up every tuesday pick from your drills write one preview before adding category categories coach typed not a fixed list hitting fielding your own words usual minutes how long it usually runs what you are doing what you are watching for coaching points setup equipment no people no players no coaches empty of people read only cannot edit why is it greyed out locked edit just for this practice detach make it a one off swap drill change the drill save to my drills promote a station retire a drill restore hide from the picker keeps old plans delete club shared drills organisation wide every team can use admin manages them add from a past season import last season bring forward old practices in 8 plans not in a plan yet head coach and assistants with schedule view plus edit manage drills schedule access rotation two stations',
       content: (
         <>
           <p>You run the same warm-up most Tuesdays. <strong>Your drills</strong> is where you write it down once — and after that, putting it in a practice is a few taps instead of retyping it. You&rsquo;ll find it in <strong>Development → Your drills</strong>.</p>
@@ -3538,7 +3538,7 @@ const coachesHelp: HelpPageContent = {
             <>
               <p><strong>&ldquo;In 8 plans&rdquo; counts plans, not practices.</strong> Nothing in the product records what actually got run on the night, so it tells you how many plans a drill appears in and nothing more.</p>
               <HelpDefs>
-                <HelpDef term="Managing drills">Writing, editing, retiring, importing — head coach only.</HelpDef>
+                <HelpDef term="Managing drills">Writing, editing, retiring, importing — the head coach, and any assistant whose Schedule is <strong>View + edit</strong>.</HelpDef>
                 <HelpDef term="Seeing &amp; picking">Any coach with <strong>schedule</strong> access, which is what lets an assistant build a practice from the drills you&rsquo;ve written.</HelpDef>
               </HelpDefs>
             </>
@@ -3627,7 +3627,7 @@ const coachesHelp: HelpPageContent = {
       // "template" / "save as template" / "start from" / "reuse a practice" are what a coach
       // searches for, and search never reads the prose — so they all have to live here.
       keywords: ['template', 'templates', 'plan template', 'plan templates', 'practice template', 'save as template', 'save a practice', 'reuse a practice', 'standard practice', 'standard tuesday', 'start this plan from', 'start from a template', 'use a template', 'copy a practice', 'rename a template', 'retire a template', 'restore a template', 'started 8 plans', 'add from a past season', 'import a practice', 'template tags', 'edit a template'],
-      searchText: 'plan templates template practice template save as template save a practice you would run again standard tuesday standard practice reuse start this plan from a template or a previous practice one picker two sources use it started 8 plans not started a plan yet never used how many times rename retire restore retired dims plans keep reading new template build one from scratch empty room blocks stations full editor no players no staff no just for tonight the practice supplies the people april twelve july nine tags several tags per template filter chips no tags flat list not groups add from a past season import old practices bring forward team not season rollover nothing to move head coach only schedule access assistant read only started from provenance edit anything changes will not change the template drill inside stays read only',
+      searchText: 'plan templates template practice template save as template save a practice you would run again standard tuesday standard practice reuse start this plan from a template or a previous practice one picker two sources use it started 8 plans not started a plan yet never used how many times rename retire restore retired dims plans keep reading new template build one from scratch empty room blocks stations full editor no players no staff no just for tonight the practice supplies the people april twelve july nine tags several tags per template filter chips no tags flat list not groups add from a past season import old practices bring forward team not season rollover nothing to move head coach and assistants with schedule view plus edit manage templates schedule access assistant read only started from provenance edit anything changes will not change the template drill inside stays read only',
       content: (
         <p>You have a Tuesday you&rsquo;d run again. <strong>Plan templates</strong> is where you keep it — and after that, next Tuesday starts from it instead of an empty page. You&rsquo;ll find it in <strong>Development → Plan templates</strong>.</p>
       ),
@@ -3679,7 +3679,7 @@ const coachesHelp: HelpPageContent = {
           id: 'premium-templates-access',
           title: 'Who can do what',
           content: (
-            <p><strong>Managing</strong> templates — creating, editing, renaming, retiring, importing — is head-coach only. Any coach with <strong>schedule</strong> access can see the room and start a plan from a template. An assistant sees no Rename, Retire or New buttons at all, rather than buttons that refuse.</p>
+            <p><strong>Managing</strong> templates — creating, editing, renaming, retiring, importing — is for the head coach and any assistant whose Schedule is <strong>View + edit</strong>. Any coach with <strong>schedule</strong> access can see the room and start a plan from a template. An assistant sees no Rename, Retire or New buttons at all, rather than buttons that refuse.</p>
           ),
         },
       ],
@@ -4222,9 +4222,16 @@ const coachesHelp: HelpPageContent = {
     {
       id: 'premium-staff',
       group: 'Premium Coaches Portal',
-      heading: 'Adding assistant coaches and helpers (Premium)',
-      summary: 'Give another coach their own sign-in with exactly the areas you choose — or invite a parent as a helper, who sees one practice and nothing else.',
+      heading: 'Your coaching staff: assistants, managers, treasurers and helpers (Premium)',
+      summary: 'Give each person on your staff their own sign-in with exactly the areas you choose — set before the invite goes out — and see everyone, including pending invites, on one list.',
       keywords: ['staff', 'assistant coach', 'invite coach', 'second coach', 'permissions', 'capabilities', 'duty grid', 'access', 'head coach',
+        // Pass 2 (2026-09-11) — four kinds, the dropdown, pending invites, the hand-over.
+        'team manager', 'manager', 'treasurer', 'team treasurer', 'bookkeeper', 'who are they', 'role', 'change role',
+        'four roles', 'kinds of staff', 'pending invite', 'invite not accepted', 'resend invite', 'cancel invite',
+        'invite expired', 'link expired', 'send the invite again', 'make head coach', 'hand over', 'hand over the team',
+        'second head coach', 'two head coaches', 'step down', 'change head coach', 'remove head coach',
+        'schedule view edit', 'view + edit', 'practice plans assistant', 'assistant write plan', 'scouting book switch',
+        'set access before invite', 'edit access', 'what they can open',
         // Chunk F — the archive's staff vocabulary; search reads keywords, not the prose above.
         'remove access', 'revoke access', 'past season staff', 'who can see last season',
         'former assistant', 'assistant left', 'archive access', 'take away access',
@@ -4243,26 +4250,28 @@ const coachesHelp: HelpPageContent = {
         'removed but still sees schedule', 'remove assistant still has access',
         'also connected as a family member', 'also follows this team', 'family access',
         'fully remove someone', 'revoke everything', 'two connections'],
-      searchText: 'coaching staff assistant coaches invite an assistant second coach their own login sign in permissions capabilities what each assistant can see duties grid schedule attendance lineups guardian contacts notes money documents announcements tryouts least privilege default head coach only remove an assistant no assistant coaches yet helper helpers invite a parent to help at practice parent volunteer outside instructor runs a station sees the practice plan and the players at their station and nothing else no staff chat cannot change anything read only schedule promote a helper to assistant coach make assistant coach two schedule switches see the schedule and change the schedule staff chat is a switch now where did the roster switch go roster hidden gone retired cannot hide the roster hide player names from an assistant hide names stop an assistant seeing names names are visible to all staff names numbers positions baseline everyone contacts and birthdates is the real switch guardian contacts still protected assistant sees names beside dues player #12 no longer sections follow the duties you grant removing someone from staff ends their coaching access only a family connection is separate and survives remove them under family access on the roster page also connected to this team as a family member note matches the email they signed in with absence is not proof hidden on a finished season removed but still sees our schedule',
+      searchText: 'coaching staff assistant coaches team manager team treasurer helper four kinds role dropdown who are they invite an assistant second coach their own login sign in permissions capabilities what each assistant can see duties grid edit access sheet pending invite invited not accepted resend cancel link works seven days change before they accept make head coach hand over the team two head coaches last head coach cannot be removed schedule hidden view view plus edit writes practice plans scouting book switch schedule attendance lineups guardian contacts notes money documents announcements tryouts least privilege default head coach only remove an assistant no assistant coaches yet helper helpers invite a parent to help at practice parent volunteer outside instructor runs a station sees the practice plan and the players at their station and nothing else no staff chat cannot change anything read only schedule promote a helper to assistant coach make assistant coach two schedule switches see the schedule and change the schedule staff chat is a switch now where did the roster switch go roster hidden gone retired cannot hide the roster hide player names from an assistant hide names stop an assistant seeing names names are visible to all staff names numbers positions baseline everyone contacts and birthdates is the real switch guardian contacts still protected assistant sees names beside dues player #12 no longer sections follow the duties you grant removing someone from staff ends their coaching access only a family connection is separate and survives remove them under family access on the roster page also connected to this team as a family member note matches the email they signed in with absence is not proof hidden on a finished season removed but still sees our schedule',
       content: (
         <>
-          <p><strong>Staff</strong> is where you give someone else their own sign-in to this team. They get their own account — you never share a password — and they see the team through whatever access you grant.</p>
-          <p><strong>You choose which kind before you type the email,</strong> because it changes everything underneath it.</p>
+          <p><strong>Staff</strong> is one list of people — you, everyone you&rsquo;ve added, and anyone you&rsquo;ve invited who hasn&rsquo;t accepted yet. Each row shows who they are and, in one line, what they can open; the sensitive areas (money, family contacts, emailing families, notes, tryouts) are marked so &ldquo;who can see the money?&rdquo; is one glance.</p>
+          <p>Everyone gets their own account — you never share a password — and sees the team through whatever access you grant. <strong>Invite someone</strong> in the page header opens one sheet: their email, who they are, and what they&rsquo;ll be able to open, set <em>before</em> the email goes out. <strong>Edit access</strong> on any row opens the same sheet on that person.</p>
         </>
       ),
       subtopics: [
         {
           id: 'premium-staff-kinds',
-          title: 'Assistant coach, or helper?',
+          title: 'Four kinds of staff',
           content: (
             <>
+              <p><strong>Who are they?</strong> is a dropdown with four answers, each with a sentence. The one you pick sets their <em>starting</em> access — every switch is still yours to change, before you send and any time after.</p>
               <HelpDefs>
-                <HelpDef term="An assistant coach">Staff. They start with the least access that is still useful — seeing and changing the schedule, attendance, lineups, and the blank team forms — and they&rsquo;re in your staff chat. Everything sensitive is off until you switch it on.</HelpDef>
-                <HelpDef term="A helper">The parent or outside instructor who turns up to run a station on a Tuesday. They see your practice schedule, the plan for each practice, and the names, numbers and positions of the players at their station. That is the whole list.</HelpDef>
+                <HelpDef term="Assistant coach">Coaches the team. Starts with the everyday tools — the schedule (view and edit), attendance, lineups, the staff chat, the scouting book and the blank team forms. Everything sensitive is off until you switch it on.</HelpDef>
+                <HelpDef term="Team manager">Runs the team off the field — money, forms, family emails. Not the lineup. Starts with the schedule (view and edit), the staff chat, documents (manage), team money (view and edit), contacts &amp; birthdates and emailing families; attendance and lineups off.</HelpDef>
+                <HelpDef term="Team treasurer">Keeps the books and nothing else. Starts with the schedule (view only) and team money (view and edit). Names show beside the dues; family contacts, the staff chat and the scouting book stay off unless you add them.</HelpDef>
+                <HelpDef term="Helper">The parent or outside instructor who runs a station on a Tuesday. Sees the practice schedule, the plan for each practice, and the names, numbers and positions of the players at their station. Can&rsquo;t change anything, and is never in your staff chat unless you put them there.</HelpDef>
               </HelpDefs>
-              <p>A helper <strong>can&rsquo;t change anything</strong> — not the plan, not the schedule, not one game — and they are <strong>never in your staff chat</strong>. No roster page, no notes, no contacts, no money, no tryouts, no attendance, no lineups.</p>
-              <p><strong>Why bother with either.</strong> An assistant with schedule access can add the games you&rsquo;re both chasing; one with lineup access can build the lineup while you run the practice. A helper saves you printing a sheet with ten children&rsquo;s names on it and handing it to someone who then takes it home — and you can take their access back the moment the season, or your mind, changes.</p>
-              <p><strong>Changed your mind about a helper?</strong> Their card has <strong>Make assistant coach</strong>. Same person, same sign-in, no new invitation — they simply get everything an assistant starts with, and you can grant more from there.</p>
+              <p><strong>The word is yours, not the switches&rsquo;.</strong> A helper you also let mark attendance is still called a helper; a treasurer you give the staff chat is still the treasurer. Only you rename someone, by picking a different answer in the Role dropdown on their sheet.</p>
+              <p><strong>Moving someone between roles</strong> is that same dropdown, in either direction. Picking a wider role applies its starting access and asks you once, listing what it hands over; picking a narrower one strips back to that role&rsquo;s bundle and doesn&rsquo;t ask — taking access back is never delayed.</p>
             </>
           ),
         },
@@ -4285,15 +4294,35 @@ const coachesHelp: HelpPageContent = {
             <>
               <p><strong>Which sections an assistant can open follows the duties you give them.</strong> Attendance, lineups, player notes, team money, documents or tryouts each open their own area, and holding any of them also opens the roster page, the development board and Insights. An assistant you leave on the defaults is unchanged.</p>
               <p>One practical upshot: an assistant you&rsquo;ve given <strong>team money</strong> now sees players&rsquo; <strong>names</strong> beside the amounts on the dues page, instead of &ldquo;Player #12&rdquo; and a phone call to you.</p>
-              <p><strong>Two things on the grid are worth knowing.</strong> <strong>Schedule</strong> is two switches: seeing the schedule and practice plans, and <em>changing</em> the schedule — adding, editing and cancelling events. Every assistant you invited before has both, exactly as they always did. And <strong>Staff chat</strong> is a switch too; it used to come automatically with being on the staff. It&rsquo;s still on for every assistant, and it&rsquo;s the one thing a helper can never be given without making them an assistant coach.</p>
+              <p><strong>Three controls are worth knowing.</strong> <strong>Schedule</strong> is one three-way control — Hidden, View, or View + edit — like Money and Documents. <em>View + edit</em> adds, changes and cancels events <strong>and writes practice plans</strong>, so the assistant who runs Tuesday practice can write Tuesday&rsquo;s plan, manage the drill library and save templates. Every assistant who could edit the schedule before has View + edit now, and gained plan writing with it. <strong>Staff chat</strong> is a switch; it used to come automatically with being on the staff. And <strong>Scouting book</strong> decides whether they can read everyone&rsquo;s notes on opponents — off, they can still add their own from the bench.</p>
+              <p>The sheet says the consequence on the control that trips it: turning on attendance, lineups or documents for someone who holds none of the record duties <strong>also opens the roster page</strong> for them.</p>
             </>
           ),
         },
         {
           id: 'premium-staff-head-coach',
-          title: 'What stays with the head coach',
+          title: 'The head coach, and handing the team over',
           content: (
-            <p><strong>Only the head coach</strong> can invite, adjust, or remove anyone. Assistants never receive roster editing in this version — adding and editing players stays with you.</p>
+            <>
+              <p><strong>Only a head coach</strong> can invite, adjust, or remove anyone. Adding and editing players, Skills &amp; Goals, and closing the season stay with the head coach too.</p>
+              <p><strong>Make head coach</strong> sits at the bottom of anyone&rsquo;s sheet. It confirms, and then they can do everything on the team — including this page. A team can have <strong>two head coaches</strong>; once the other person is one, they can make you an assistant coach or remove you, which is how a team changes hands without a club admin. <strong>The last head coach can never be removed or demoted</strong> — a team always keeps at least one.</p>
+              <p>Your own row on the list says <em>Hand over to someone else</em>, which spells out those two steps.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-staff-pending',
+          title: 'Invites you’ve sent',
+          content: (
+            <>
+              <p>An invite stays on your list as an <strong>Invited</strong> row until it&rsquo;s accepted — with the date you sent it, how many more days the link works (seven from sending), and what they&rsquo;ll start as.</p>
+              <ul>
+                <li><strong>Change that before they accept</strong> opens the sheet on the invite: change who they are or any switch, and that is what they land with.</li>
+                <li><strong>Resend</strong> sends a fresh link and restarts the seven days. The old link stops working.</li>
+                <li><strong>Cancel</strong> stops the link working. Nothing else changes — you can invite them again any time.</li>
+              </ul>
+              <p>If your club requires an admin to approve staff invites, the row says so and there&rsquo;s nothing to resend until they do — the approval sends the email.</p>
+            </>
           ),
         },
         {
@@ -4354,6 +4383,31 @@ const coachesHelp: HelpPageContent = {
           popular: true,
         },
         {
+          id: 'faq-staff-make-head-coach',
+          question: 'I’m stepping down. How do I hand the team to my assistant?',
+          answer: (
+            <>
+              <p>Open <strong>Staff</strong>, open their row with <strong>Edit access</strong>, and choose <strong>Make head coach</strong> at the bottom of the sheet. Confirm, and you are both head coaches.</p>
+              <p>Then <em>they</em> open your row and choose <strong>Make assistant coach</strong> (or <strong>Remove from team</strong>) — a head coach can&rsquo;t change their own role, and the team always keeps at least one head coach, so the last one can never be removed.</p>
+              <p>On a club team your club admin can also assign a head coach from the season page, as before.</p>
+            </>
+          ),
+          answerText: 'Stepping down hand the team to my assistant make head coach. Open Staff, open their row with Edit access, choose Make head coach at the bottom of the sheet, confirm, and you are both head coaches. Then they open your row and choose Make assistant coach or Remove from team — a head coach cannot change their own role, and the team always keeps at least one head coach so the last one can never be removed. On a club team the club admin can also assign a head coach from the season page. two head coaches hand over step down change head coach.',
+          keywords: ['make head coach', 'hand over', 'hand over the team', 'step down', 'stepping down', 'new head coach', 'change head coach', 'two head coaches', 'second head coach', 'remove head coach', 'demote', 'make assistant coach'],
+        },
+        {
+          id: 'faq-staff-invite-not-accepted',
+          question: 'I invited someone and they never got the email. What now?',
+          answer: (
+            <>
+              <p>Their invite is still on your <strong>Staff</strong> list as an <strong>Invited</strong> row, with how many days the link has left. Choose <strong>Resend</strong> — it sends a fresh link (check their spam folder too) and restarts the seven days. If you typed the wrong address, <strong>Cancel</strong> it and invite the right one.</p>
+              <p>Until they accept you can still open the row and change who they are or what they&rsquo;ll be able to open — that is what they&rsquo;ll land with.</p>
+            </>
+          ),
+          answerText: 'Invited someone and they never got the email. The invite is still on the Staff list as an Invited row with the days the link has left. Choose Resend for a fresh link, restarts the seven days, check spam. Wrong address: Cancel and invite the right one. Until they accept you can change who they are or what they can open. pending invite resend cancel expired link.',
+          keywords: ['resend invite', 'never got the email', 'invite email', 'invite expired', 'link expired', 'cancel invite', 'wrong email', 'pending invite', 'invited not accepted', 'send again'],
+        },
+        {
           id: 'faq-helper-no-link',
           question: 'Can I just send a helper a link to the practice plan?',
           answer: (
@@ -4370,8 +4424,8 @@ const coachesHelp: HelpPageContent = {
           question: 'An assistant left the club — can I stop them seeing last season?',
           answer: (
             <>
-              <p>Yes. Switch to that season, open <strong>Staff</strong>, and choose <strong>Remove access</strong> beside their name. They lose the ability to open that season&rsquo;s records immediately.</p>
-              <p>It affects that season only. It doesn&rsquo;t change anything about the season itself — they stay part of its record — and it doesn&rsquo;t touch your current team, which you manage from the live season.</p>
+              <p>Yes. Open <strong>Staff</strong>, open their row with <strong>Edit access</strong>, and choose <strong>Remove from team</strong>. They lose the ability to open the team — every screen, every season — immediately.</p>
+              <p>It doesn&rsquo;t change the seasons themselves: their name stays on the record of who coached each year. Adding them back later restores their access with their permissions where you left them.</p>
             </>
           ),
           answerText: 'assistant left the club stop them seeing last season past season remove access staff page remove beside their name lose access immediately every season at once not just one does not change the record of who coached that year re-adding restores revoke former assistant historical access',

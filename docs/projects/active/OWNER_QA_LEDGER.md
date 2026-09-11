@@ -21760,3 +21760,106 @@ Phase 1 (three tabs, Metrics editor, goal tag, exact addresses) after this walk.
 grant** (ruling 9) waits for staff-access pass 2 (§169) to commit — it is being built in the same
 files right now. Phase 0 committed `340dca2a` (2026-09-11, private index — my hunks only in the four shared
 files). `/simplify`, `/review` and `/docs` still owed after the walk.
+
+---
+
+## §169 · The Staff list — one list of people, one sheet, four kinds, access set before the invite, pending invites with resend and cancel, and Make head coach from the portal — built on dev 2026-09-11 (uncommitted), **migration 288 applied to dev and PROD-PENDING** (its backfill is DATA-ONLY — knowable on prod only by querying the rows), awaiting QA · walk artifact `490bc3e3` · mockup artifact `c8982bc5` (round 3 carries the four build deviations) · plan `COACH_STAFF_ACCESS_PLAN.md` · pass 2 of 2 (pass 1 = §168 ✅)
+
+**Approved 2026-09-10** ("looks good, I agree with your recommendations"), with the treasurer and the
+dropdown added at your request the same day. Built to the round-2 mockup, and to four things the
+round-3 republish drew before building because the code had moved: a **Scouting book** switch in the
+Everyday group (the 09-11 grant had no home on any screen), the treasurer starting with that switch
+**off** (or the 09-11 Insights door would have opened for the one persona the plan says it does not),
+the pending row's sentence being a door into the sheet, and your own row's "Hand over" link opening
+a two-line note.
+
+### What you will see
+
+| | |
+|---|---|
+| **The Staff page** | A list: you first (dark **Head coach** chip, "Everything — including this page.", *Hand over to someone else ›*), then everyone on staff, then anyone invited who hasn't accepted. Each row: name, email, a role chip (**Assistant coach · Team manager · Team treasurer · Helper**), one line of chips for what they can open — the sensitive ones **amber with a lock** — and **Edit access ›**. No sentence under the title; one lime **Invite someone** in the header. The whole staff above the fold on a laptop and a phone. |
+| **The sheet** | Opens on any row and on the invite button. **Role** at the top as the app's sub-lined dropdown (a name over one sentence, four options); **Everyday** — Schedule as **one three-way control** (Hidden / View / View + edit), Attendance, Lineups, Staff chat, Scouting book, Documents (three-way) — each with one sentence; **Sensitive — asks before granting** as a visible group, never a fold: Team money (three-way), Contacts & birthdates, Internal notes, Email families, Tryouts. Saves on every tap with a **✓ Saved** in the header. Footer: **Remove from team** · **Make head coach** (on another head coach: **Make assistant coach**). |
+| **Inviting** | Email → *Who are they?* opening on "Choose who they are" with **nothing preselected** → the grid appears prefilled from the role, editable → **Send invite**. Every sensitive grant in the invite is confirmed **once, together**, at send ("Give … access to team money, family contacts and emailing families?"). Success is a pending row. |
+| **A pending invite** | Its own row: the address, "Invited <date> · link works N more days", an amber **Invited** chip, "Will start as the team manager with 3 sensitive grants.", **Change that before they accept ›** (the same sheet, editable until acceptance), **Resend** (a fresh link, seven days restarted, the old link dead), **Cancel**. An invite waiting on a club admin says so and offers no Resend. |
+| **The word is yours** | A helper you give attendance to **stays a helper**. The Role dropdown moves anyone between the four in either direction: a wider role confirms once listing what widens; a narrower one never asks. |
+| **Make head coach** | Confirms; the team then has two head coaches; the other one can make you an assistant coach or remove you. **The last head coach is never removable from the portal** — nobody can target their own row, and only a head coach can reach the page. |
+| **What each kind lands with** | Manager: schedule edit, staff chat, documents manage, money edit, contacts, email families — no attendance, lineups, notes, tryouts. Treasurer: schedule view + money edit, everything else off (no Insights, no chat, no contacts, no scouting book). Helper: as Phase 4. Assistant: the defaults. The four invite emails say each of these in their own words; the accept page says "join as the team treasurer" rather than "as an assistant coach" for all four. |
+| **Practice plans (R7, assumption 3)** | Every assistant with **Schedule: View + edit** now writes practice plans, manages drills and saves templates — the Schedule sentence says so. A helper and a treasurer still cannot. Skills & Goals stays head-coach-only. |
+| **Elsewhere** | The Overview's setup step reads **Invite your staff** · the club admin's oversight page names each person's kind and each invite's · the help article is rewritten for four kinds, pending invites and the hand-over, with two new FAQs. |
+
+### Where the plan and the code disagreed, resolved on the code (reported before building)
+
+The treasurer would have gained Insights under the 09-11 scouting-book change (fixed by the preset,
+above). The sheet needed a twelfth control. Practice-plan writing moves the drill and template
+libraries and the "start from a past season" picker with it — the past-season imports need BOTH the
+library write and the look-back read, so a helper meets neither. The drill library's database-level
+rule stays head-coach-only (stricter than the app, never met by it — left as is, a rule-changing
+migration this pass did not need). The masthead still says "Assistant Coach" for a treasurer, manager
+or helper — it reads the season record, which by the plan's own rule carries no kind; flagged, not
+built. The club-admin page reads kinds from the membership, not the season row.
+
+### Gates
+
+typecheck clean on every file of this pass (the remaining errors are other sessions' in-flight
+awards, budget and development files) · **3,585 of 3,585 unit tests at close** (an earlier run caught
+another session's test file in the window before its modules landed — stale, not a failure) · 123 in
+the nine staff-related files, incl. two new: the kinds/presets/label/three-way/R7/last-head contract and a
+code-scanning guard for the four route promises · lint 0 errors · every static gate green except
+**schema parity**, red only on another session's migration 289 (288's five rows are accepted in the
+baseline until the promote, the house convention) · dictionary coverage green, snapshots refreshed ·
+`check:demos` green (the coach sandbox seeds no assistants — see the demo question) · **the rendered
+check `check:layout --only=coach-staff` green at 361/390/768/1440** after it caught three tap targets
+under the floor · the Playwright layout spec for this screen rewritten against the list and the sheet.
+
+### `/simplify` then `/review`, 2026-09-11 — one table of words, and three things the field would have hit
+
+**/simplify (four lenses, eight applied):** the row chips now derive from the sheet's own control
+table (one place for a grant's name, order and sensitive flag); one word-per-kind table feeds the
+row, the club admin's page, the accept page and the email (a fifth hand-rolled mapping of kind →
+wording was the tell); "a kind change applies its starting access" moved to the server on both edit
+paths; the resend stops re-reading the row it just wrote; the last-head-coach wording lives in one
+place. Skipped as negligible or house precedent: parallelising two rare reads, the amber chip recipe,
+a three-line days-left helper.
+
+**/review (five lenses, high-risk tier; 22 → 13 confirmed, 2 refuted):**
+- **Critical — two head coaches removing each other at the same instant could leave the team
+  headless.** The demote path re-counted after its write; the remove path did not. Now it does, and
+  the loser of the race is put back.
+- **High — the migration's backfill recognised a helper by four switches, not the whole shape**, so
+  a hand-built manager (schedule view + money + contacts, everything else off) would have been stamped
+  "Helper" for good. Widened to the whole shape before it reached prod; dev's two labelled helpers
+  re-verified against it (0 mismatches either way); the register's verification is now the two
+  mismatch counts, not a re-run of the predicate. The head-coach-has-no-kind rule became a CHECK.
+- **High — the sheet's X, back arrow and backdrop closed it during a save in flight**, so a confirmed
+  money grant whose save then failed would have vanished silently. Every way out now waits.
+- **Mediums, all fixed:** Resend ignored an approval policy the club switched on later (now it
+  re-queues for the admin and the list says so); an invite still awaiting the admin could be rewritten
+  helper → treasurer without the admin hearing again (the bell rings again with the change); two
+  simultaneous resends could leave two live links (the newest wins now); re-picking the role already
+  chosen on a new invite reset the coach's manual edits (a no-op now, client and server); inviting
+  someone already on the staff looked like it worked (refused: "They're already on your staff — change
+  their role or access from their row instead."); a comment claimed the templates' database rule was
+  looser than the app's (it is stricter, as the drills' is).
+- **Refuted:** a duplicated confirmation table (the finder read deleted lines); a stale-closure word
+  fallback (inert — the server always echoes the stored word).
+- **The rendered check added one:** the hand-over link, the row doors at tablet width and the foot's
+  help link sat under the 44px floor — boxed.
+- **Not covered:** no second-account browser session in the harness (the helper's, treasurer's and
+  manager's first sign-ins rest on Part F of the walk); the two-heads race is reasoned and
+  code-guarded, not reproduced live.
+
+**Help drift the `/docs` pass caught:** the practice-plans, drills and templates articles said in
+five places that writing is "head-coach only" — true until this pass. All five now say Schedule:
+View + edit.
+
+### Open with you
+
+1. **The demo.** The coach sandbox has no assistants and no pending invite, so the shop window
+   shows an empty Staff page. Recommended: seed one assistant coach and one pending invite on the
+   Riverdale Ridge team, with a dock line. **Not touched** — it has its own gate.
+2. **Awards and money** (review §10 4b): a money-only treasurer can still give an award. Flagged
+   again, not narrowed.
+3. **The masthead's role word** for the three non-coach kinds (above).
+
+
+---

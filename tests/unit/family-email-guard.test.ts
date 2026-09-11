@@ -105,10 +105,14 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
           'an owner decision. Do not "fix" this by deleting the line.' },
 ];
 
-/** Matches the drift heuristic but mails STAFF, not families — invitations to join an org. */
+/** Matches the drift heuristic but mails STAFF, not families — invitations to join an org or a team. */
 const NOT_FAMILY_MAIL = [
   'app/api/admin/members/invite/route.ts',
   'lib/invite-links.ts',
+  // The staff invite (assistant coach / team manager / team treasurer / helper) — one sender the
+  // head coach's invite, a resend and the club admin's approval all share (staff access pass 2,
+  // 2026-09-11). Mails the invited adult who will be STAFF; never a guardian as a guardian.
+  'lib/assistant-invites.ts',
   'lib/email.ts', // the transport itself
 ];
 

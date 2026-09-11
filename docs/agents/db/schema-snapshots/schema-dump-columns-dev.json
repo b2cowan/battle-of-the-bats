@@ -513,6 +513,15 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "staff_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "basic_coach_team_announcements",
     "column_name": "id",
     "data_type": "uuid",
@@ -15019,6 +15028,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_staff_memberships",
+    "column_name": "staff_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
   },
   {
     "table_name": "rep_team_tags",

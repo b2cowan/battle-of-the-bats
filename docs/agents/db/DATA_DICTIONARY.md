@@ -2209,6 +2209,9 @@ moment it lands.
 <!-- dict:col:rep_team_staff_memberships.capabilities -->
 **`capabilities`** (jsonb, nullable) — `AssistantCapabilityGrants` (`lib/coach-capabilities.ts`), NULL = assistant defaults, ignored for head coaches; sanitized on every write; mirrored onto the live season's projection row on every change.
 
+<!-- dict:col:rep_team_staff_memberships.staff_kind -->
+**`staff_kind`** (text, nullable, CHECK `assistant|manager|treasurer|helper`; mig 288, 2026-09-11) — **a LABEL, never a gate.** The kind the head coach chose when inviting (or later, from the sheet's Role dropdown): it picks the starting bundle, the word on the staff row, the invite email's wording and the admin's approval notification. ⚠ **No route and no nav door reads it** — every access decision stays on `capabilities`, one grant at a time (the 2026-08-03 "a helper is a preset, never a third role" property, unchanged). NULL = "no label stored": every row written before 288 except the backfilled helpers (288's DATA-ONLY backfill labelled any assistant holding `schedule` with `scheduleManage`/`staffChat`/`attendance`/`lineups` all explicitly `false` — the shape only the helper preset ever wrote); the display layer (`staffKindLabel`) derives a word for NULL. **Always NULL on a head_coach row — a CHECK** (`rep_team_staff_memberships_head_coach_has_no_kind`), not just the two write paths' discipline: promotion nulls it, demotion writes `'assistant'`. **Not projected** onto `rep_team_coaches` (a season records head/assistant only).
+
 <!-- dict:col:rep_team_staff_memberships.status -->
 **`status`** (text, NOT NULL, default `'active'`, CHECK `active|revoked`) — the access switch. Every reader filters `status='active'`.
 
@@ -2226,9 +2229,13 @@ moment it lands.
 2. **`status` lifecycle:** `pending_approval` (org requires admin approval before the email goes out) → `pending` (emailed, awaiting accept) → `accepted` (terminal); or `expired`/`revoked`. The accept path requires `status='pending'` + not past `expires_at` + single-use.
 3. **Accept SKIPS the one-org guard** — an assistant is a guest; `userBelongsToOtherRealOrg` is deliberately NOT called, so cross-club assistants work.
 4. **`token_hash` UNIQUE**; indexed also by `(team_id, status)` and `(lower(invited_email), status)`.
-5. **`initial_capabilities`** (jsonb, nullable) — optional duty grants chosen at invite time; null = least-privilege defaults, seeded into `rep_team_coaches.capabilities` on accept.
+5. **`initial_capabilities`** (jsonb, nullable) — the duty grants chosen at invite time. Since pass 2 of the staff access plan (2026-09-11) EVERY invite carries the full grid (the kind's preset, adjusted in the sheet before sending); null = least-privilege defaults. Sanitized on accept and written to the membership's `capabilities`. **Editable while the invite is open** (`updateAssistantInviteAccess`, team-scoped) — "set access first, then send" is safe to trust because it can be changed until acceptance.
+6. **Resend = a fresh row.** `resendAssistantInvite` mints a new invite for the same person (same kind + grants, seven days restarted) through `createAssistantInvite`, which revokes every older open invite for that `(team_id, invited_email)` — the newest link is the only valid one. A `pending_approval` invite cannot be resent (no link exists until the admin approves).
 
-**Fields:** `org_id`/`team_id`/`program_year_id` (FKs, CASCADE), `invited_by_user_id`, `invited_email`, `token_hash`, `status`, `initial_capabilities` (jsonb), `invited_by_name`/`team_name` (denormalized for the email/accept page), `expires_at` (default now()+7d), `accepted_at`, `created_at`.
+<!-- dict:col:assistant_invite_tokens.staff_kind -->
+**`staff_kind`** (text, nullable, CHECK `assistant|manager|treasurer|helper`; mig 288) — the kind this invite offers; copied onto `rep_team_staff_memberships.staff_kind` on accept and chooses the invite email's subject/promise (`STAFF_KIND_COPY`) and the admin's approval line. The head coach's invite route REQUIRES it (400 without — the sheet forces the choice; a default would reopen the "safer accident"). NULL only on invites minted before 288, which accept as an assistant.
+
+**Fields:** `org_id`/`team_id`/`program_year_id` (FKs, CASCADE), `invited_by_user_id`, `invited_email`, `token_hash`, `status`, `initial_capabilities` (jsonb), `staff_kind`, `invited_by_name`/`team_name` (denormalized for the email/accept page), `expires_at` (default now()+7d), `accepted_at`, `created_at`.
 
 ### `rep_team_events`
 <!-- dict:table:rep_team_events -->

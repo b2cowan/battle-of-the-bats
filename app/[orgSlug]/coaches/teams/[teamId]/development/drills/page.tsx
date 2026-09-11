@@ -451,7 +451,7 @@ export default function CoachDrillsPage({
           icon={<Library size={22} />}
           headline="No drills yet"
           description="Save a drill once — the setup, what you're watching for, the coaching points — and adding it to a practice becomes four taps."
-          blocker={canWrite ? undefined : 'Your head coach manages the team’s drills.'}
+          blocker={canWrite ? undefined : 'Managing drills comes with Schedule: View + edit — ask your head coach.'}
           secondaryAction={canWrite ? { label: 'Add from a past season', onClick: openImport } : undefined}
         >
           {canWrite && (

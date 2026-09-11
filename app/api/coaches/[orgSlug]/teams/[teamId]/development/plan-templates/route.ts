@@ -6,7 +6,7 @@ import {
   getRepTeamPracticePlansAcrossSeasons,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabilities';
 import {
   MAX_TEMPLATES_PER_TEAM, countTemplateUses, validatePlanTemplateInput,
 } from '@/lib/rep-plan-templates';
@@ -17,9 +17,13 @@ import {
  * ── Capabilities (§8, D3 — NO new capability key) ──
  *   READ  → `schedule`. A template is practice content, and an assistant who can open Tuesday's
  *           practice can already read every word a loaded template put on it.
- *   WRITE → HEAD COACH ONLY (`canWriteDevelopment`). Managing the library IS a write.
- * ⚠ RLS mirrors both (mig 221), so a direct PostgREST call from an assistant's session can't
- * bypass this — the mig-141 chat-engine lesson.
+ *   WRITE → `canWritePracticePlans` = "Schedule: View + edit" (R7, 2026-09-10). Was head-coach-only;
+ *           a template is the shape of a plan, gated with the plans it starts.
+ * ⚠ RLS (mig 222) still admits HEAD COACHES ONLY to writes — STRICTER than this gate, not a mirror
+ * of it any more. Every write here goes through the service role, so the app never meets that
+ * rule; a direct PostgREST call from an assistant's session is refused, which is the safe
+ * direction. Left as is on purpose, exactly as the drill library's (the mig-141 lesson: RLS is
+ * defence in depth, never the enforcement layer for the coach portal).
  *
  * ⚠ **THE ARCHIVE DOOR — decided, not discovered.** This route deliberately does NOT use
  * `resolveCoachTeamRead`, so it resolves the team's live context and cannot serve a past season.
@@ -70,7 +74,7 @@ export const GET = withObservability(async (req: Request,
       planCount: uses.get(t.id)?.planCount ?? 0,
       lastPlannedAt: uses.get(t.id)?.lastPlannedAt ?? null,
     })),
-    canWrite: canWriteDevelopment(assignment.capabilities),
+    canWrite: canWritePracticePlans(assignment.capabilities),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/plan-templates' });
 
@@ -80,7 +84,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage plan templates.');
+  const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Managing plan templates needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;
 
   let body: unknown;

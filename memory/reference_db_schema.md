@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-10 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-11 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-10
+# DB Schema Reference — 2026-09-11
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -181,7 +181,7 @@ id (uuid), expense_id (uuid) → rep_team_expenses.id NOT NULL, org_id (uuid) �
 
 ### rep_player_awards
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, award_type_id (uuid) → rep_team_award_types.id NOT NULL, event_id (uuid) → rep_team_events.id, tournament_label, awarded_at NOT NULL, note, created_by (uuid), created_at, updated_at
-- Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
+- Indexes: rep_player_awards_event_idx, rep_player_awards_once_per_game_uniq, rep_player_awards_once_per_general_occasion_uniq, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_tryout_registrations.id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
@@ -332,7 +332,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_team_plan_templates_name_uniq, rep_team_plan_templates_org_idx, rep_team_plan_templates_team_idx
 
 ### rep_team_staff_memberships
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, user_id (uuid) NOT NULL, coach_role NOT NULL, capabilities (jsonb), status, created_at, revoked_at, revoked_by (uuid)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, user_id (uuid) NOT NULL, coach_role NOT NULL, capabilities (jsonb), status, created_at, revoked_at, revoked_by (uuid), staff_kind
 - Indexes: rep_team_staff_memberships_org_user_idx, rep_team_staff_memberships_team_idx, rep_team_staff_memberships_team_user_key
 
 ### rep_team_tags
@@ -571,7 +571,7 @@ id (uuid), email_key NOT NULL, subject NOT NULL, recipient_org_id (uuid) → org
 ## Module: Other
 
 ### assistant_invite_tokens
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, invited_by_user_id (uuid) NOT NULL, invited_email NOT NULL, token_hash NOT NULL, status, initial_capabilities (jsonb), invited_by_name, team_name, expires_at, accepted_at, created_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, invited_by_user_id (uuid) NOT NULL, invited_email NOT NULL, token_hash NOT NULL, status, initial_capabilities (jsonb), invited_by_name, team_name, expires_at, accepted_at, created_at, staff_kind
 - Indexes: assistant_invite_tokens_email_idx, assistant_invite_tokens_org_id_idx, assistant_invite_tokens_program_year_id_idx, assistant_invite_tokens_team_idx, assistant_invite_tokens_token_hash_uq
 
 ### basic_coach_team_announcements

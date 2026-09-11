@@ -298,8 +298,17 @@ const SITES: Site[] = [
     screen: 'Team settings', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
+    // Staff access pass 2 (2026-09-11): the invite card left the page body and inviting became
+    // the page-level action — one lime create that opens the staff sheet, head coach only (the
+    // ternary hands `undefined` to everyone else, who meet the "only the head coach" block).
+    // Keeps its words on a phone (a primary you can't read isn't a primary) in the standard
+    // right-pinned row beneath the title.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/staff/page.tsx', occurrence: 0,
-    screen: 'Coaching staff', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'Coaching staff', variant: 'standard', helpHost: 'masthead',
+    actions: {
+      from: 'inline', slot: 'action', holds: 'Invite someone (the one create; opens the invite sheet)',
+      phoneHidden: null, phoneInTitleRow: null,
+    },
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/tournaments/page.tsx', occurrence: 0,

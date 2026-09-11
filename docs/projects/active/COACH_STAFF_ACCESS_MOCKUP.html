@@ -430,7 +430,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
 <div class="doc">
 
   <header class="head">
-    <div class="eyebrow">Coaches portal · Team → Staff · decision sheet · 2026-09-10</div>
+    <div class="eyebrow">Coaches portal · Team → Staff · decision sheet · 2026-09-10 · round 3 (build deviations) 2026-09-11</div>
     <h1>Coaching Staff Redesign</h1>
     <p class="lede">What the Staff screen looks like today, what it would look like if it were a list of people with a sheet for each one, and how inviting someone would change so their access is set before the email goes out. Every product frame is drawn at a fixed width — 1180px for a laptop, 390px for a phone — so the fold and the density are real.</p>
     <div class="legend">
@@ -439,6 +439,16 @@ table.decide td.q { font-weight: 600; width: 32%; }
       <span><span class="tag restyled">restyled</span> exists today, different shape or place</span>
       <span><span class="tag same">unchanged</span> kept as is</span>
       <span><span class="tag bad">defect</span> something the code does that it should not</span>
+      <span><span class="tag good">round 3</span> drawn at build time, 2026-09-11 — a departure from the approved round 2, tagged where it lands</span>
+    </div>
+    <div class="notes" style="margin-top:14px">
+      <span class="k">Round 3 — what the build had to depart from, and why (2026-09-11)</span>
+      <ul>
+        <li><b>One more Everyday control: “Scouting book”.</b> A separate session added a per-person <em>scouting book</em> grant on 2026-09-11 (owner ruling: a head coach may keep someone to “add, don’t browse”). It did not exist when round 2 was drawn, and the sheet is the only place a head coach can set it — so it joins the Everyday group in §03, §04 and the phone sheet in §06, with its sentence. Every other row is as approved. <span class="tag good">round 3</span></li>
+        <li><b>The treasurer starts with the scouting book OFF.</b> Since 09-11 the Insights door opens for anyone who can read the pooled book, so a treasurer with the round-2 bundle would have gained Insights (for the Scouting Book tab) — the exact door the approved plan says they do not hold. Off is what keeps “Keeps the books. Nothing else.” true; it is one tap to add. The helper keeps it ON, as that ruling requires. <span class="tag good">round 3</span></li>
+        <li><b>The pending row’s sentence is a door.</b> “Change that before they accept ›” opens the same sheet on the invite, which is what the phone frame’s chevron already implied. <span class="tag good">round 3</span></li>
+        <li><b>“Hand over to someone else ›” on your own row</b> opens a two-line note — open the other person’s access and choose <em>Make head coach</em>; once they are head coach they can make you an assistant or remove you — rather than a dialog. Round 2 drew the link without saying what it opened. <span class="tag good">round 3</span></li>
+      </ul>
     </div>
   </header>
 
@@ -682,7 +692,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
                   <div class="a-row">
                     <div class="who"><p class="n">Omar Haddad</p><p class="e">omar.h@gmail.com</p></div>
                     <div><span class="fl-rolechip treas">Team treasurer</span></div>
-                    <div class="caps"><span class="fl-chip">Schedule · view</span><span class="fl-chip sens">Money · edit</span><span class="none" style="align-self:center">Names beside the dues; no family contacts unless you add them.</span></div>
+                    <div class="caps"><span class="fl-chip">Schedule · view</span><span class="fl-chip sens">Money · edit</span><span class="none" style="align-self:center">Names beside the dues; no family contacts and no scouting book unless you add them.</span></div>
                     <div class="act"><a>Edit access</a></div>
                   </div>
 
@@ -696,7 +706,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
                   <div class="a-row pending">
                     <div class="who"><p class="n">jordan.p@gmail.com</p><p class="e">Invited Tue 8 Sep · link works 5 more days</p></div>
                     <div><span class="fl-rolechip invited">Invited</span></div>
-                    <div class="caps">Will start as an <b>assistant coach</b> with the everyday tools. You can change that before they accept.</div>
+                    <div class="caps">Will start as an <b>assistant coach</b> with the everyday tools. <a style="color:var(--ink);font-weight:600;text-decoration:none">Change that before they accept ›</a> <span class="tag good">round 3</span></div>
                     <div class="act"><span class="fl-btn sec sm">Resend</span><span class="fl-btn ghost sm">Cancel</span></div>
                   </div>
 
@@ -732,7 +742,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
     <div class="specimen">
       <div class="specimen-cap"><span class="t">Invite sheet · desktop</span><span class="m">1180px frame · sheet 520px · Team manager chosen</span><span class="tag new">new</span></div>
       <div class="viewport">
-        <div class="fl fl-desktop sheet-stage" style="height: 940px;">
+        <div class="fl fl-desktop sheet-stage" style="height: 1000px;">
           <div class="fl-top">
             <div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div>
             <span class="portal">COACHES PORTAL</span><span class="spacer"></span><span class="bell"></span>
@@ -787,6 +797,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
                 <div class="s-item"><span class="l">Attendance</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">Mark who came, at practices and games.</span></div>
                 <div class="s-item"><span class="l">Lineups</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">Build and change game lineups.</span></div>
                 <div class="s-item"><span class="l">Staff chat</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">A seat in the team’s private staff room.</span></div>
+                <div class="s-item" style="background:var(--d-good-soft);margin:0 -10px;padding:8px 10px;border-radius:6px"><span class="l">Scouting book <span class="tag good">round 3</span></span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Read everyone’s notes on opponents and the team’s book line. Off, they can still add their own.</span></div>
                 <div class="s-item"><span class="l">Documents</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">Manage</span></span><span class="h">Blank team forms. Signed player forms also need Contacts &amp; birthdates.</span></div>
                 <div class="s-item sens"><span class="l">Team money</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">View + edit</span></span><span class="h">Budget, dues, expenses and every payment.</span></div>
                 <div class="s-item sens"><span class="l">Contacts &amp; birthdates</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Guardian names, emails and phones; players’ birthdates, medical and emergency details.</span></div>
@@ -850,7 +861,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
     <div class="specimen">
       <div class="specimen-cap"><span class="t">Access sheet · Marcus Lee, a helper being given attendance</span><span class="m">1180px frame · sheet 520px</span><span class="tag restyled">restyled</span><span class="tag new">new: role control · make head coach</span></div>
       <div class="viewport">
-        <div class="fl fl-desktop sheet-stage" style="height: 980px;">
+        <div class="fl fl-desktop sheet-stage" style="height: 1040px;">
           <div class="fl-top">
             <div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div>
             <span class="portal">COACHES PORTAL</span><span class="spacer"></span><span class="bell"></span>
@@ -903,6 +914,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
                 <div class="s-item" style="background:var(--olive-soft);margin:0 -10px;padding:8px 10px;border-radius:6px"><span class="l">Attendance</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Mark who came, at practices and games. <b style="color:var(--olive)">Turning this on also opens the roster page for them.</b></span></div>
                 <div class="s-item"><span class="l">Lineups</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">Build and change game lineups.</span></div>
                 <div class="s-item"><span class="l">Staff chat</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">A seat in the team’s private staff room.</span></div>
+                <div class="s-item" style="background:var(--d-good-soft);margin:0 -10px;padding:8px 10px;border-radius:6px"><span class="l">Scouting book <span class="tag good">round 3</span></span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Read everyone’s notes on opponents and the team’s book line. Off, they can still add their own.</span></div>
                 <div class="s-item"><span class="l">Documents</span><span class="ctl fl-seg"><span class="on">Hidden</span><span>View</span><span>Manage</span></span><span class="h">Blank team forms. Signed player forms also need Contacts &amp; birthdates.</span></div>
                 <p class="s-standing">Players’ names, numbers and positions are visible to everyone on your staff. Their contact details and birthdates are below.</p>
               </div>
@@ -1027,6 +1039,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
                 <div class="s-item"><span class="l">Attendance</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Mark who came, at practices and games.</span></div>
                 <div class="s-item"><span class="l">Lineups</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Build and change game lineups.</span></div>
                 <div class="s-item"><span class="l">Staff chat</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">A seat in the team’s private staff room.</span></div>
+                <div class="s-item" style="background:var(--d-good-soft);margin:0 -8px;padding:8px 8px;border-radius:6px"><span class="l">Scouting book <span class="tag good">round 3</span></span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Read everyone’s notes on opponents and the team’s book line. Off, they can still add their own.</span></div>
                 <div class="s-item"><span class="l">Documents</span><span class="ctl fl-seg"><span>Hidden</span><span class="on">View</span><span>Manage</span></span><span class="h">Blank team forms.</span></div>
               </div>
               <div class="s-group">
@@ -1143,7 +1156,7 @@ table.decide td.q { font-weight: 600; width: 32%; }
       <tr><td class="q">2. Set access before sending the invite?</td><td>Yes — §03. Preset prefilled, editable, one confirmation at send, editable again while pending.</td><td>Keep invite-then-grant; add the pending row anyway.</td></tr>
       <tr><td class="q">3. Pending invites shown, with resend and cancel?</td><td>Yes. Today only a club admin can see them, and a standalone team has no admin.</td><td>—</td></tr>
       <tr><td class="q">4. Role stored as a label?</td><td>Yes. Chooses defaults, word and email; gates nothing.</td><td>Keep the derived label; accept that granting a helper anything renames them.</td></tr>
-      <tr><td class="q">5. Add “Team manager” and “Team treasurer”?</td><td>Yes, as two more starting points. Manager: schedule view + edit, staff chat, documents manage, money view + edit, contacts, email families. Treasurer: schedule view, money view + edit, nothing else — names show beside the dues, family contacts are one tap away if the coach wants them to have them.</td><td>Two starting points; managers and treasurers stay “Assistant coach”.</td></tr>
+      <tr><td class="q">5. Add “Team manager” and “Team treasurer”?</td><td>Yes, as two more starting points. Manager: schedule view + edit, staff chat, documents manage, money view + edit, contacts, email families. Treasurer: schedule view, money view + edit, nothing else — names show beside the dues, family contacts are one tap away if the coach wants them to have them. <span class="tag good">round 3</span> the scouting book starts off too, so Insights stays shut for them.</td><td>Two starting points; managers and treasurers stay “Assistant coach”.</td></tr>
       <tr><td class="q">6. Schedule as one three-way control?</td><td>Yes — Hidden / View / View + edit, matching Money and Documents.</td><td>Two checkboxes stay; the nonsense state stays with them.</td></tr>
       <tr><td class="q">7. Practice-plan writing follows “Schedule · View + edit”?</td><td>Yes. Today only the head coach can write a plan, because the gate was borrowed from player development. Every existing assistant gains it.</td><td>Head-coach-only stays; note it on the Schedule control so the coach is not surprised.</td></tr>
       <tr><td class="q">8. Head coach hand-over / second head coach from the portal?</td><td>Yes — “Make head coach” on an assistant’s sheet, refuse removing the last head coach.</td><td>Club admin only; standalone teams still cannot change hands.</td></tr>

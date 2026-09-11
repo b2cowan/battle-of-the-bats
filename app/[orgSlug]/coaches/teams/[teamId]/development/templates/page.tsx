@@ -413,7 +413,7 @@ export default function CoachPlanTemplatesPage({
           icon={<BookMarked size={22} />}
           headline="No templates yet"
           description="Build one here, or save a practice that went well as a template from the plan itself — then next Tuesday starts from it instead of an empty page."
-          blocker={canWrite ? undefined : 'Your head coach manages the team’s templates.'}
+          blocker={canWrite ? undefined : 'Managing templates comes with Schedule: View + edit — ask your head coach.'}
           secondaryAction={canWrite ? { label: 'Add from a past season', onClick: openImport } : undefined}
         >
           {canWrite && (

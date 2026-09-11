@@ -6,7 +6,7 @@ import {
   updateRepTeamPlanTemplate,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabilities';
 import { planToTemplateShape, validatePlanTemplateInput } from '@/lib/rep-plan-templates';
 import { MAX_TAGS_PER_ITEM, uniqueIds } from '@/lib/rep-drills';
 
@@ -48,7 +48,7 @@ export const GET = withObservability(async (_req: Request,
       planCount: use.planCount,
       lastPlannedAt: use.lastPlannedAt,
     },
-    canWrite: canWriteDevelopment(assignment.capabilities),
+    canWrite: canWritePracticePlans(assignment.capabilities),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/plan-templates/[templateId]' });
 
@@ -58,7 +58,7 @@ export const PATCH = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage plan templates.');
+  const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Managing plan templates needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;
 
   let body: Record<string, unknown>;

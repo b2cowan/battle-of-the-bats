@@ -875,7 +875,7 @@ export default function CoachPracticePlanPage({
               icon={<ClipboardList size={22} />}
               headline="No plan for this practice yet"
               description="A practice plan is the blocks of this practice — how long each runs, who's running it, and who's where."
-              blocker="Only the head coach can write the plan. You'll be able to read and print it once there is one."
+              blocker="Writing the plan comes with Schedule: View + edit — ask your head coach. You'll be able to read and print it once there is one."
             />
           )}
 
