@@ -151,12 +151,21 @@ type Site = {
 const SITES: Site[] = [
   // ── Outside the team layout: the page draws its own "?" ──────────────────────────────────────
   {
+    // Staff access review pass 1 (2026-09-10): a coach the link API refuses (anyone but the head
+    // coach) meets the shared "not turned on for you" block under this page's own header instead
+    // of a load error. Same shape on the seven team pages below — each is the page's own title
+    // over `CoachNotGranted`, never a header with actions.
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 0,
-    screen: 'Link Organization — the "already inside an org" early return',
+    screen: 'Link Organization — the "only the head coach" early return',
     variant: 'standard', helpHost: 'own', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 1,
+    screen: 'Link Organization — the "already inside an org" early return',
+    variant: 'standard', helpHost: 'own', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 2,
     screen: 'Link Organization',
     variant: 'standard', helpHost: 'own',
     actions: {
@@ -182,6 +191,10 @@ const SITES: Site[] = [
   // ── The Money hub and its seven panels ───────────────────────────────────────────────────────
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx', occurrence: 0,
+    screen: 'Money — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx', occurrence: 1,
     screen: 'Money (the hub)',
     variant: 'standard', helpHost: 'masthead',
     actions: {
@@ -234,6 +247,10 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx', occurrence: 0,
+    screen: 'Roster — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx', occurrence: 1,
     screen: 'Roster',
     variant: 'standard', helpHost: 'masthead',
     actions: {
@@ -262,10 +279,18 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/announcements/page.tsx', occurrence: 1,
+    screen: 'Email families — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/announcements/page.tsx', occurrence: 2,
     screen: 'Email families', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/documents/page.tsx', occurrence: 0,
+    screen: 'Documents — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/documents/page.tsx', occurrence: 1,
     screen: 'Documents', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
@@ -278,6 +303,10 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/tournaments/page.tsx', occurrence: 0,
+    screen: 'Tournaments — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/tournaments/page.tsx', occurrence: 1,
     screen: 'Tournaments', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
@@ -296,6 +325,10 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/board/page.tsx', occurrence: 0,
+    screen: 'Team board — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/board/page.tsx', occurrence: 1,
     screen: 'Team board', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
@@ -357,6 +390,10 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/history/page.tsx', occurrence: 0,
+    screen: 'Insights — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/history/page.tsx', occurrence: 1,
     screen: 'Insights', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {

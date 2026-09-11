@@ -19,7 +19,8 @@ import { insightsSectionHref, type CoachInsightsSection } from '@/lib/coach-insi
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
-import { canManageAwards, canViewMeasurables, type CoachCapabilities } from '@/lib/coach-capabilities';
+import { canManageAwards, canViewMeasurables, hasNonMoneyRecordAccess, type CoachCapabilities } from '@/lib/coach-capabilities';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { formatRecord } from '@/lib/coach-season-record';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -403,6 +404,33 @@ export default function CoachesInsightsPage({
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
         <p>You are not assigned to this team.</p>
+      </div>
+    );
+  }
+
+  /**
+   * ⚠ THE PORTAL'S OWN GATE, matching the nav door that opens it (staff access review,
+   * 2026-09-10). The tabs each gated themselves, but Dashboard and Results carried `gate: null`,
+   * so a coach the nav deliberately closes this portal for — a schedule-only helper — reached the
+   * season scoreboard and findings by URL, from the schedule's "Season attendance" link, and from
+   * the game console's review mode. Rendered after every hook above; the fetches skip with it.
+   */
+  if (caps && !hasNonMoneyRecordAccess(caps)) {
+    return (
+      <div className={`${styles.page} ${styles.pageWide}`}>
+        <CoachPageHeader
+          icon={BarChart3}
+          title="Insights"
+          helpLabel="Insights"
+          help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+        />
+        <CoachNotGranted
+          icon={<BarChart3 size={20} aria-hidden />}
+          section="Insights"
+          plural
+          what="The season’s reports — results, attendance, playing time, development and awards — read off the games and practices the team has recorded."
+          blocker="Insights opens for anyone with a player duty — attendance, lineups, notes, documents or tryouts. Ask your head coach to grant one."
+        />
       </div>
     );
   }

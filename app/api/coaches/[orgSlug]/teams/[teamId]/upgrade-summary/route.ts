@@ -41,6 +41,11 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
+  // The banner this feeds is a head-coach decision (the POST below says so); the read matches it,
+  // so an assistant never receives the workspace's migration record (staff access review, 2026-09-10).
+  // The banner swallows a non-OK response, so nothing renders for anyone else.
+  const readDenied = denyUnless(resolved.assignment.capabilities.isHeadCoach, 'Only the head coach can see this.');
+  if (readDenied) return readDenied;
 
   const row = await loadWorkspaceSummary(resolved.ctx.org.id, teamId);
   const summary = row?.migration_summary ?? null;

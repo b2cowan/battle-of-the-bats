@@ -22,6 +22,8 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
+import { hasRecordAccess } from '@/lib/coach-capabilities';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
 import FamilyAccessPanel from '@/components/coaches/FamilyAccessPanel';
@@ -498,6 +500,26 @@ export default function RosterPage({
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
         <p>You are not assigned to this team.</p>
+      </div>
+    );
+  }
+
+  /**
+   * ⚠ THE PAGE GATES ON THE SAME PREDICATE AS ITS NAV DOOR (staff access review, 2026-09-10).
+   * Without this, a coach the Roster door hides for — a schedule-only helper — reached the page
+   * by URL or by an old link, the read was refused, and the page reported "Your roster is empty"
+   * beside an Export button: a false statement about the team. Placed after every hook above.
+   */
+  if (page.capabilities && !hasRecordAccess(page.capabilities)) {
+    return (
+      <div className={`${styles.page} ${styles.pageWide}`}>
+        <CoachPageHeader icon={Users} title="Roster" helpLabel="Roster" help={{ module: 'coaches', sectionIds: ['recipe-add-player'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-add-player` }} />
+        <CoachNotGranted
+          icon={<Users size={20} aria-hidden />}
+          section="The roster"
+          what="Every player on the team, with their numbers and positions — and, for coaches with contact access, their families."
+          blocker="The roster opens for anyone with a team duty — attendance, lineups, notes, money, documents or tryouts. Ask your head coach to grant one."
+        />
       </div>
     );
   }

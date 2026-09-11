@@ -33,7 +33,7 @@ import {
   type PlayingTimeSummary,
   type TileKey,
 } from '@/lib/coach-overview';
-import { hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canConfigureTeam, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
@@ -658,8 +658,14 @@ export default function TeamOverviewPage({
   }, [nextEvent?.id, nextEvent?.eventType, nextEvent?.startsAt, nextEvent?.endsAt, nextEvent?.arrivalTime]);
 
   // Tournament registrations summary (count, next date, pending, live today) → Tournaments tile.
+  // Asked for only when this coach may open Tournaments — the read now refuses everyone else
+  // (staff access review, 2026-09-10), and a refused tile must never look like a broken one.
+  const canTournaments = (() => {
+    const a = assignments.find(x => x.teamId === teamId);
+    return !!a && canConfigureTeam(a.capabilities);
+  })();
   useEffect(() => {
-    if (loading || isClosedTeam) return;
+    if (loading || isClosedTeam || !canTournaments) return;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history`)
       .then(res => (res.ok ? res.json() : null))
@@ -688,7 +694,7 @@ export default function TeamOverviewPage({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, isClosedTeam, orgSlug, teamId]);
+  }, [loading, isClosedTeam, canTournaments, orgSlug, teamId]);
 
   // ── Has this team started using money AT ALL? ─────────────────────────────
   // Declared HERE, above the effects, because two things need the same answer and must not derive
@@ -801,8 +807,12 @@ export default function TeamOverviewPage({
   // Org-invite banner — show only when an organization has actually invited this team
   // to connect (org-initiated). Self-serve linking lives quietly in Settings otherwise.
   const isWorkspaceOrg = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
+  // Head coach only (`/review`, 2026-09-10): the link read now refuses everyone else, and the
+  // banner's "Review invite" opens a page only the head coach can act on — so an assistant is
+  // not shown a door to a decision that is not theirs. A deliberate narrowing, recorded here.
+  const isHeadCoachHere = assignments.find(x => x.teamId === teamId)?.capabilities.isHeadCoach ?? false;
   useEffect(() => {
-    if (loading || isClosedTeam || !isWorkspaceOrg) return;
+    if (loading || isClosedTeam || !isWorkspaceOrg || !isHeadCoachHere) return;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/team-links`, { cache: 'no-store' })
       .then(res => (res.ok ? res.json() : null))
@@ -813,7 +823,7 @@ export default function TeamOverviewPage({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, isClosedTeam, isWorkspaceOrg, orgSlug]);
+  }, [loading, isClosedTeam, isWorkspaceOrg, isHeadCoachHere, orgSlug]);
 
   useEffect(() => {
     if (isClosedTeam) router.replace(`${base}/season-end`);

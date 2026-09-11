@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { resolveCoachTeamAssignment } from '@/lib/coach-route-context';
 import { getPastSeasonPracticePlans, getRepProgramYears } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canReadPastPracticePlans } from '@/lib/coach-capabilities';
 
 /**
  * "A past season" — the THIRD source in `Start this plan from…` (P3 C2, owner-approved
@@ -23,8 +23,10 @@ import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
  * `CROSS_SEASON_PLAN_READERS` in `tests/unit/coach-history-endpoint-guard.test.ts`, so C2 is a net
  * increase in what the build enforces rather than a new unguarded door.
  *
- * ⚠ **Head-coach-only**, matching both existing imports and the picker's own `canWrite` gate:
- * everything this list can do is write tonight's plan.
+ * ⚠ **Gated on `canReadPastPracticePlans`** — the look-back layer's own predicate, whose JSDoc names
+ * itself as the single gate for reading a finished season's plans (staff access review,
+ * 2026-09-10; this was the one past-plan read still keyed on `canWriteDevelopment`). Writing the
+ * plan the picker feeds is gated by the plan route itself, not here.
  *
  * ⚠ **NOT under `development/`**, deliberately. The two "decided absence" tests scan every route
  * whose path contains `/development/drills` or `/development/plan-templates` and fail if one learns
@@ -42,7 +44,7 @@ export const GET = withObservability(async (_req: Request,
   if ('error' in resolved) return resolved.error!;
   const { assignment } = resolved;
 
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can write a practice plan.');
+  const denied = denyUnless(canReadPastPracticePlans(assignment.capabilities), 'Past practice plans aren’t available to you.');
   if (denied) return denied;
 
   const [pastPlans, years] = await Promise.all([

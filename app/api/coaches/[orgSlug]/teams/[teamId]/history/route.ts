@@ -10,7 +10,7 @@ import {
 import { resolveCoachTeamCapabilities } from '@/lib/coach-team-read';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
-import { canViewMoney } from '@/lib/coach-capabilities';
+import { canViewMoney, denyUnless, hasNonMoneyRecordAccess } from '@/lib/coach-capabilities';
 
 interface SeasonAccounting {
   duesCollected: number;
@@ -74,6 +74,16 @@ export const GET = withObservability(async (_req: Request,
    */
   const capabilities = await resolveCoachTeamCapabilities(ctx.org, ctx.user.id, teamId);
   if (!capabilities) return forbidden();
+  /**
+   * ⚠ "EVERY ASSISTANT" LANDED AS "EVERY MEMBER" (staff access review, 2026-09-10). The revert
+   * above widened this from the head coach to the team's assistants, and the Helper preset — a
+   * parent volunteer holding the schedule and nothing else — is also a member. The four sibling
+   * season reads (`season-results`, `season-roster`, `season-practices`, `wrapped`) all require a
+   * record duty; this one now requires the same, keyed on the Insights door's own predicate so the
+   * route and the nav item that opens it cannot disagree.
+   */
+  const denied = denyUnless(hasNonMoneyRecordAccess(capabilities), 'Season insights aren’t turned on for you. Ask the head coach to grant a team duty.');
+  if (denied) return denied;
   const mayViewMoney = canViewMoney(capabilities);
 
   const [history, current] = await Promise.all([

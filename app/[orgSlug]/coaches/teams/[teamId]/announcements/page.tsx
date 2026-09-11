@@ -6,6 +6,7 @@ import { Mail } from 'lucide-react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { DRAFT_SUBJECT_PARAM, DRAFT_BODY_PARAM } from '@/lib/postgame-draft';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
@@ -53,6 +54,26 @@ export default function TeamAnnouncementsPage({
   }
   if (!assignment) {
     return <div className={styles.page}><p className={styles.bodyNote}>You are not assigned to this team.</p></div>;
+  }
+  /**
+   * ⚠ THE PAGE GATES ON THE SEND GRANT, like its nav door and (now) the read behind it (staff
+   * access review, 2026-09-10). This editor rendered for every member — compose form, recipient
+   * counts and the log of every email sent to families — with only the Send refused. A draft-only
+   * flow, when it ships, widens this on purpose.
+   */
+  if (!assignment.capabilities.announcementsSend) {
+    return (
+      <div className={styles.page}>
+        <CoachPageHeader icon={Mail} title="Email families" helpLabel="Email families"
+          help={{ module: 'coaches', sectionIds: ['recipe-announcements'], fullGuideHref: `/${params.orgSlug}/coaches/help#recipe-announcements` }} />
+        <CoachNotGranted
+          icon={<Mail size={20} aria-hidden />}
+          section="Emailing families"
+          what="One email to every family at once — a rain-out, a time change, what to bring on Saturday — logged with who received it."
+          blocker="Ask your head coach to turn on sending announcements for you."
+        />
+      </div>
+    );
   }
 
   return (

@@ -819,7 +819,11 @@ export default function TeamSettingsPage({
         )}
 
         {/* ── Organization ─────────────────────────────────────────────────── */}
-        {showTeamGroups && scope.isStandalone && (
+        {/* Head coach only: linking to a club and transferring ownership are the head coach's
+            (the link page and its API both say so), so this door is not offered to an assistant
+            who holds schedule editing — a door onto a wall (`/review`, 2026-09-10). Fails open
+            while capabilities load, like `showTeamGroups`. */}
+        {showTeamGroups && scope.isStandalone && (!capabilities || capabilities.isHeadCoach) && (
           <CoachCollapseSection
             sectionId="organization"
             title="Organization"

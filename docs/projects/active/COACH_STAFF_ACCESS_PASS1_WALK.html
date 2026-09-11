@@ -1,0 +1,398 @@
+<title>Every Door Honest · §168</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,60px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.signin{margin-top:22px;background:var(--card);border:1px solid var(--rule-strong);border-radius:var(--r);box-shadow:var(--shadow);padding:15px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);word-break:break-all}
+.priv{font-size:12.5px;color:var(--brick)}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.track{flex:1 1 200px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:140px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:72ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden;margin-top:18px}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:11px 14px;background:var(--card);font-size:14.5px;line-height:1.5}
+.chk input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:3px;text-decoration:none}
+.chk .pin{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--olive-soft);color:var(--olive);border:1px solid rgba(79,93,27,.3);border-radius:5px;padding:0 5px}
+.chk .url{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--fill);border:1px solid var(--rule);border-radius:5px;padding:0 5px;word-break:break-all}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.verdict{margin-top:15px;display:flex;flex-direction:column;gap:9px}
+.vrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vlabel{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.vbtn{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;padding:5px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--dim)}
+.vbtn[aria-pressed="true"][data-v="pass"]{border-color:var(--olive);background:var(--olive-soft);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="issue"]{border-color:var(--brick);background:var(--brick-soft);color:var(--brick)}
+.vbtn[aria-pressed="true"][data-v="call"]{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+textarea{width:100%;min-height:62px;resize:vertical;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--card);color:var(--ink)}
+textarea::placeholder{color:var(--dim)}
+.out{margin-top:52px;border-top:2px solid var(--ink);padding-top:16px}
+.out h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0 0 10px}
+pre.summary{margin:12px 0 0;padding:14px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r-sm);font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow:auto;color:var(--ink-soft)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:50px;border-top:1px solid var(--rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §168 · built 2026-09-10 · no migration · staff access pass 1 of 2</p>
+  <h1>Every door honest</h1>
+  <p class="lede">The review found that every page which reasoned "the server will refuse it" showed a
+    helper a door, a false fact, or both — and two reads whose server did not refuse either. This pass
+    closes the reads, gates every door the schedule panel shows on the grant behind it, and replaces
+    five false empty states with one honest sentence. Nothing about the Staff screen changes yet; that
+    is pass 2. Four parts, three sign-ins.</p>
+</header>
+
+<section class="signin">
+  <h2>Sign-ins</h2>
+  <dl class="kv">
+    <dt>org / team</dt><dd>uat-test-org · UAT Test Team (2026 Season)</dd>
+    <dt>the helper</dt><dd>uat-helper@uat-test-org.local — schedule only</dd>
+    <dt>the assistant</dt><dd>uat-asst-nomoney@uat-test-org.local — attendance + lineups, money off</dd>
+    <dt>the treasurer</dt><dd>uat-asst-treasurer — money write, everything else off</dd>
+    <dt>you</dt><dd>your own head-coach account</dd>
+  </dl>
+  <p class="priv">The two leaks in Part B are checked by opening an address in the browser and reading the
+    response. Nothing you do in this walk sends an email or changes a record.</p>
+</section>
+
+<div class="bar">
+  <div class="track"><div class="fillbar" id="fillbar"></div></div>
+  <span class="count"><b id="cdone">0</b> / <span id="ctotal">0</span> steps</span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="reset">Reset</button>
+</div>
+
+<!-- ═══════════════════════════ PART A ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A · sign in as the helper</p>
+  <h2>The schedule panel shows a helper only what they hold</h2>
+  <p>Open <b>Schedule</b>. The panel that slides in when you tap an event used to show every tab, the
+    score controls and three "Build lineup" doors to anyone who could see the schedule.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="a1"><label for="a1">Tap a <b>game with a named opponent</b>. The panel shows the game details and <b>one tab: Scouting</b>. No Attendance tab, no Lineup tab.
+    <span class="hintline">Scouting stays open to every schedule-holder on purpose — the bench observes.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a2"><label for="a2">On that game there is <b>no "+ Add final score"</b>, no Edit score, and <b>no "Give an award"</b> section. If the game already has a score, it reads as a plain scoreline.</label></div>
+  <div class="chk"><input type="checkbox" id="a3"><label for="a3">Tap a game whose opponent is still <b>TBD</b> (a bracket slot). The panel shows the details and <b>no tabs at all</b> — nothing under them, no empty tab strip.</label></div>
+  <div class="chk"><input type="checkbox" id="a4"><label for="a4">Tap a <b>practice</b>. With a plan written: <b>Run practice</b> and <b>Open the plan</b>. Without one: the line <b>"No plan yet."</b> and <b>no "Plan this practice →"</b> door.</label></div>
+  <div class="chk"><input type="checkbox" id="a5"><label for="a5">Nowhere on any event panel is there an <b>Edit details</b>, <b>Cancel</b>, <b>Delete</b>, <b>Share game link</b> or <b>Season attendance</b> control.</label></div>
+  <div class="chk"><input type="checkbox" id="a6"><label for="a6">If a game is inside its game-day window, tap its <b>Game day</b> chip. The read-only console opens with the line naming who runs the bench — and <b>no "No lineup saved for this game yet" card</b> and no "Score and attendance still work tonight" line.
+    <span class="hintline">Both sentences were false for a helper: the lineup was withheld, not absent.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a7"><label for="a7">Open a <b>finished</b> game's console (review mode). There is <b>no "Playing time — season report ›"</b> link at the bottom.</label></div>
+</div>
+<div class="verdict" data-part="A">
+  <div class="vrow"><span class="vlabel">Part A</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="What you saw that the steps did not predict…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART B ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B · still the helper · type the address</p>
+  <h2>Every hidden door refuses, in the same words</h2>
+  <p>The nav hides these for a helper; the point is what happens when the door is <b>not</b> used.
+    Paste each address after <span class="url">/uat-test-org/coaches/teams/&lt;team id&gt;</span> (copy the team id
+    from the Schedule page's address bar). Every one should show the page's own title over a block that
+    says <b>"… isn't turned on for you"</b> and who to ask. None may show data, an empty-looking
+    screen, a load error or a Retry button.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="b1"><label for="b1"><span class="url">/roster</span> — "The roster isn't turned on for you". <b>Not</b> "Your roster is empty", and no Export button.</label></div>
+  <div class="chk"><input type="checkbox" id="b2"><label for="b2"><span class="url">/documents</span> — "Documents aren't turned on for you". <b>Not</b> "No document templates yet".</label></div>
+  <div class="chk"><input type="checkbox" id="b3"><label for="b3"><span class="url">/accounting</span> — "Money isn't turned on for you". <b>Not</b> a load error with Retry.</label></div>
+  <div class="chk"><input type="checkbox" id="b4"><label for="b4"><span class="url">/history</span> — "Insights aren't turned on for you". <b>Not</b> the season scoreboard.
+    <span class="hintline">Also try <span class="url">/history?section=attendance</span> and the old <span class="url">/attendance</span> — both land on the same block.</span></label></div>
+  <div class="chk"><input type="checkbox" id="b5"><label for="b5"><span class="url">/announcements</span> — "Emailing families isn't turned on for you". <b>Not</b> a compose form, and <b>no list of sent emails</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="b6"><label for="b6"><span class="url">/tournaments</span> — "Tournaments aren't turned on for you". <b>Not</b> the team's tournament list.</label></div>
+  <div class="chk"><input type="checkbox" id="b7"><label for="b7"><span class="url">/chat</span> — "Staff chat isn't turned on for you". <b>Not</b> an empty chat shell.</label></div>
+  <div class="chk"><input type="checkbox" id="b8"><label for="b8"><span class="url">/development/board</span> — "The team board isn't turned on for you". <b>Not</b> raw error text with "Try again".</label></div>
+</div>
+<div class="warn"><b>The two leaks, checked at the source.</b> Still signed in as the helper, open these two
+  addresses directly — they are the reads the pages call, and until this pass they answered anyone on the
+  staff. Each must show a short JSON message saying it isn't turned on for you (a 403), not a document.</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="b9"><label for="b9"><span class="url">/api/coaches/uat-test-org/teams/&lt;team id&gt;/announcements</span> — a refusal. <b>Not</b> a list of every email sent to families this season.
+    <span class="hintline">This was the severe one: the full text of every family email, plus the guardian-email counts, to a parent volunteer.</span></label></div>
+  <div class="chk"><input type="checkbox" id="b10"><label for="b10"><span class="url">/api/coaches/uat-test-org/teams/&lt;team id&gt;/tournament-history</span> — a refusal. <b>Not</b> the team's tournament record.</label></div>
+  <div class="chk"><input type="checkbox" id="b11"><label for="b11"><span class="url">/api/coaches/uat-test-org/teams/&lt;team id&gt;/history</span> — a refusal. <b>Not</b> every season the team has played.</label></div>
+</div>
+<div class="verdict" data-part="B">
+  <div class="vrow"><span class="vlabel">Part B</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Any door that showed data, an empty state, or an error instead of the block…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART C ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C · sign in as the assistant, then the treasurer</p>
+  <h2>Nothing is taken from anyone who had it</h2>
+  <p>The whole safety argument for this pass is that it moves nothing for a real assistant. Check it
+    from both sides: the assistant who holds the everyday tools, and the treasurer who holds only money.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="c1"><label for="c1"><b>As the assistant</b>, open Schedule and tap a game: <b>Attendance</b> and <b>Lineup</b> tabs are there, the attendance list fills in, and the Lineup tab still offers <b>Build lineup →</b> / <b>Edit in Lineups →</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="c2"><label for="c2">On that game, <b>+ Add final score</b> (or Edit score), the <b>Awards given</b> section and the <b>Season attendance</b> link are all present, as before.</label></div>
+  <div class="chk"><input type="checkbox" id="c3"><label for="c3">Roster, Documents, Insights and Chat all open normally. <b>Money</b> shows the "Money isn't turned on for you" block — this assistant has money off, and that block replaces the old load error.
+    <span class="hintline">This assistant has "Change the schedule" off, so <b>Tournaments</b> is not in their nav and — new — not on their Overview either: the tile follows the same door, and nothing sits on "…". If you tick "Change the schedule" for them on Staff, both come back.</span></label></div>
+  <div class="chk"><input type="checkbox" id="c4"><label for="c4"><b>As the treasurer</b>, open Schedule and tap a game: <b>only the Scouting tab</b> (if there is an opponent), no score controls, no Season attendance link — money is not a player duty.
+    <span class="hintline">One thing that IS still there for a treasurer: the <b>Awards given</b> section. That mirrors today's awards rule (any team duty, money included) and is flagged as a question for pass 2, not a defect here.</span></label></div>
+  <div class="chk"><input type="checkbox" id="c5"><label for="c5">The treasurer's <b>Money</b> hub opens in full, their <b>Roster</b> opens (names beside the dues), and <b>Insights</b> and <b>Tournaments</b> show the block rather than a broken screen.</label></div>
+  <div class="chk"><input type="checkbox" id="c6"><label for="c6">The treasurer's <b>Overview</b> loads cleanly — <b>no Tournaments tile at all</b> (it follows the Tournaments door), no tile stuck on "…", no error tile.</label></div>
+  <div class="chk"><input type="checkbox" id="c7"><label for="c7"><b>Settings</b>, as either assistant: no "Manage organization link" row (it is the head coach's; the page behind it says so). As the assistant with schedule editing, the rest of Settings is unchanged.
+    <span class="hintline">Only visible on a standalone team; UAT Test Org is club-run, so if the Organization section is absent for you too, tick this as not applicable.</span></label></div>
+</div>
+<div class="verdict" data-part="C">
+  <div class="vrow"><span class="vlabel">Part C</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Anything an assistant or treasurer lost that they had yesterday…"></textarea>
+</div>
+
+<!-- ═══════════════════════════ PART D ═══════════════════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D · sign in as yourself</p>
+  <h2>The head coach is untouched</h2>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="d1"><label for="d1">Schedule, a game: both tabs, the score form, awards, Edit details / Cancel / Delete, Share game link, Season attendance — everything, exactly as before.</label></div>
+  <div class="chk"><input type="checkbox" id="d2"><label for="d2">A practice with no plan still offers <b>Plan this practice →</b>.</label></div>
+  <div class="chk"><input type="checkbox" id="d3"><label for="d3">Overview's <b>Tournaments</b> tile, Insights, Money, Documents, Email families, Chat and the team board all open as they did yesterday.</label></div>
+</div>
+<div class="verdict" data-part="D">
+  <div class="vrow"><span class="vlabel">Part D</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="…"></textarea>
+</div>
+
+<div class="out">
+  <h2>Send it back</h2>
+  <p style="font-size:14.5px;color:var(--ink-soft)">Press <b>Copy findings</b> at the top (or the
+    button below) and paste the result back into chat.</p>
+  <button class="btn" id="build" style="margin-top:12px">Build summary</button>
+  <pre class="summary" id="summary">Nothing yet — tick some boxes, then press Build summary.</pre>
+</div>
+
+<footer>
+  <span>§168 · staff access pass 1 · 2026-09-10</span>
+  <span>plan: COACH_STAFF_ACCESS_PLAN.md</span>
+  <span>review: COACH_STAFF_ACCESS_REVIEW.md</span>
+</footer>
+
+</div>
+<div class="toastwrap" id="toastwrap"></div>
+
+<script>
+(function () {
+  var KEY = 'qa168.v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.chk input[type=checkbox]'));
+  var verdicts = Array.prototype.slice.call(document.querySelectorAll('.verdict'));
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private window */ }
+  }
+  var state = load();
+  if (!state.checks) state.checks = {};
+  if (!state.verdicts) state.verdicts = {};
+  if (!state.notes) state.notes = {};
+
+  function paint() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      if (b.checked) done++;
+      var row = b.closest('.chk');
+      if (row) row.classList.toggle('on', b.checked);
+    });
+    document.getElementById('cdone').textContent = String(done);
+    document.getElementById('ctotal').textContent = String(boxes.length);
+    var pctv = boxes.length ? Math.round((done / boxes.length) * 100) : 0;
+    document.getElementById('fillbar').style.width = pctv + '%';
+  }
+
+  boxes.forEach(function (b) {
+    if (!b.checked && state.checks[b.id]) b.checked = true;
+    b.addEventListener('change', function () {
+      state.checks[b.id] = b.checked;
+      save(state); paint();
+    });
+  });
+
+  verdicts.forEach(function (v) {
+    var part = v.getAttribute('data-part');
+    var btns = Array.prototype.slice.call(v.querySelectorAll('.vbtn'));
+    var note = v.querySelector('textarea');
+    if (state.verdicts[part]) {
+      btns.forEach(function (btn) {
+        btn.setAttribute('aria-pressed', String(btn.getAttribute('data-v') === state.verdicts[part]));
+      });
+    }
+    if (state.notes[part]) note.value = state.notes[part];
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mine = btn.getAttribute('data-v');
+        var already = btn.getAttribute('aria-pressed') === 'true';
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+        if (already) { delete state.verdicts[part]; }
+        else { btn.setAttribute('aria-pressed', 'true'); state.verdicts[part] = mine; }
+        save(state);
+      });
+    });
+    note.addEventListener('input', function () {
+      state.notes[part] = note.value;
+      save(state);
+    });
+  });
+
+  var VERDICT_WORD = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+
+  function summary() {
+    var lines = [];
+    lines.push('Owner QA §168 — every door honest (staff access pass 1)');
+    lines.push('built 2026-09-10 · no migration');
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    lines.push(done + ' of ' + boxes.length + ' steps checked');
+    lines.push('');
+    verdicts.forEach(function (v) {
+      var part = v.getAttribute('data-part');
+      var vd = state.verdicts[part];
+      lines.push('PART ' + part + ' — ' + (vd ? VERDICT_WORD[vd] : 'no verdict'));
+      var group = [];
+      var node = v.previousElementSibling;
+      while (node && !node.classList.contains('parthead')) {
+        if (node.classList && node.classList.contains('steps')) group.unshift(node);
+        node = node.previousElementSibling;
+      }
+      group.forEach(function (g) {
+        Array.prototype.slice.call(g.querySelectorAll('input[type=checkbox]')).forEach(function (b) {
+          var lab = g.querySelector('label[for="' + b.id + '"]');
+          var txt = lab ? lab.textContent.replace(/\s+/g, ' ').trim() : b.id;
+          if (txt.length > 150) txt = txt.slice(0, 147) + '…';
+          lines.push('  [' + (b.checked ? 'x' : ' ') + '] ' + txt);
+        });
+      });
+      var n = (state.notes[part] || '').trim();
+      if (n) { lines.push('  notes: ' + n); }
+      lines.push('');
+    });
+    var unchecked = boxes.filter(function (b) { return !b.checked; });
+    if (unchecked.length) {
+      lines.push('Not checked: ' + unchecked.length + ' step(s) — see the [ ] rows above.');
+    } else {
+      lines.push('Every step checked.');
+    }
+    return lines.join('\n');
+  }
+
+  function toast(msg) {
+    var wrap = document.getElementById('toastwrap');
+    wrap.innerHTML = '<div class="toast">' + msg + '</div>';
+    setTimeout(function () { wrap.innerHTML = ''; }, 1900);
+  }
+
+  document.getElementById('build').addEventListener('click', function () {
+    document.getElementById('summary').textContent = summary();
+    toast('Summary built');
+  });
+
+  function copyOut() {
+    var text = summary();
+    document.getElementById('summary').textContent = text;
+    var done = function () { toast('Copied — paste it into chat'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { toast('Select the summary and copy it'); });
+    } else {
+      toast('Select the summary and copy it');
+    }
+  }
+  document.getElementById('copyfind').addEventListener('click', copyOut);
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!window.confirm('Clear every tick, verdict and note on this page?')) return;
+    state = { checks: {}, verdicts: {}, notes: {} };
+    save(state);
+    boxes.forEach(function (b) { b.checked = false; });
+    verdicts.forEach(function (v) {
+      Array.prototype.slice.call(v.querySelectorAll('.vbtn')).forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+      v.querySelector('textarea').value = '';
+    });
+    document.getElementById('summary').textContent = 'Nothing yet — tick some boxes, then press Build summary.';
+    paint();
+    toast('Reset');
+  });
+
+  paint();
+})();
+</script>

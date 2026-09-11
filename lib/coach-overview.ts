@@ -453,7 +453,14 @@ export function resolveBoard(input: BoardInput): BoardDecision {
   // access the page and its nav item now use. Names on it were never the question.
   if (hasRecordAccess(caps)) selected.push('roster');
   if (canSchedule) selected.push('schedule');
-  selected.push('tournaments');
+  /**
+   * ⚠ WAS UNCONDITIONAL — the one tile on this board that ignored its own rule (`/review`,
+   * 2026-09-10). A tile is a DOOR, and the Tournaments door hides in the nav unless the coach may
+   * configure the team; the read behind the tile now refuses the same people, so an unconditional
+   * tile would have sat on "…" forever for every assistant without schedule editing — the first
+   * screen they land on. Same gate as the nav item, asked once.
+   */
+  if (isCoachNavItemVisible(caps, 'Tournaments')) selected.push('tournaments');
 
   // The season-health pair. A tile is a DOOR into a section, so its gate is the same one that
   // decides whether that section appears in the coach's navigation — asking the question a second

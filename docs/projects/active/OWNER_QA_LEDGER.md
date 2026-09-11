@@ -20565,7 +20565,25 @@ card and the Budget card's dues row agreeing; the dues table and its **exported 
 report's plan figure and its footnote; and a season with **nothing** written off, where the extra caption must
 not appear at all.
 
-Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md`.
+### ⚠ MID-WALK FINDING (owner, 2026-09-10, at step B4) — THE STEP WAS WRONG, NOT THE PRODUCT
+
+Step **B4** promised a **third** dues figure on the in-season Money Overview: *"the 'More in Money' rail's
+dues line reads the same pair too."* **That rail has no dues line, correctly.** In season it lists only the
+surfaces the three story cards do not already own, and dues is one of the cards — so the operating Overview
+states the pair **twice** (the Bills settled card, and the Budget card's dues row that B3 already checks),
+and there is no third figure there to go stale. The rail's **Player Dues** line — which does read the same
+pair — lives on the **setup-stage** index, where the rail is titled *Everything in Money* and no card exists
+to disagree with it. B4 now checks the absence, and names where the row really is.
+
+⚖ **This is the SAME walkthrough-writing mistake §119 caught at its step A3** (28 Aug, same rail, same
+cause). The durable lesson recorded there — *a step must be written against the STAGE the fixture is
+actually in* — did not survive into the next walk that touched this component. **When a walk step asserts a
+rail row, name the stage in the step itself**; the two rails share a name-shaped resemblance and nothing
+else. The walk artifact is corrected in place (`b16c4350`) and now has a source file in the repo, so the
+next correction does not have to be retyped from the published page.
+
+Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md` · walk source:
+`docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_WALK.html`.
 
 ## §161 · The WORD names a money-in budget row, and two lines on one word are one row — built on dev 2026-09-09 (`879209d6`), cleaned by `/simplify` and hardened by `/review` (`31d9d7b1`, two real defects), **no migration**, awaiting QA · walk artifact `5b6ebe17` · decision mockups `151bc861`
 
@@ -21370,3 +21388,311 @@ to its pre-existing state with no undeclared migrations. ⚠ `verify:changed` is
 ratchet — **two hardcoded colours in another session's Categories & Items stylesheet**, confirmed
 foreign and pre-existing. ⚠ I reported that gate as green earlier in the session; it was not, and I
 had tailed past the failure. The gate was right.
+
+## §168 · Every door honest — staff access pass 1: two reads closed, the schedule panel gated door by door, five false empty states replaced — built on dev 2026-09-10 (uncommitted), **no migration** · **✅ OWNER QA PASSED 2026-09-11 — 28/28 steps, all four parts PASS** (helper, no-money assistant, treasurer, head coach) · walk artifact `50b0efa1` · mockup artifact `c8982bc5` (the review's round 2) · plan `COACH_STAFF_ACCESS_PLAN.md`
+
+**You raised it on the Staff review:** *"as a helper I clicked the schedule, then a game, then was
+able to click into a lineups page."* Two sweeps (every coach route, every team page) found that was
+one instance of a pattern, and two places where the server did not refuse either.
+
+### What was wrong
+
+- **Two reads answered every member of the staff.** The Email families read returned the full text of
+  every email sent to families this season, with recipient counts, to a schedule-only helper — the
+  content the Send governs, without the grant. The tournament-history read returned the team's whole
+  tournament record. The cross-season Insights read returned every season the team has played. Two
+  smaller ones (the upgrade summary, the organization-link list) answered assistants while only the
+  head coach could act on them.
+- **The schedule's event panel showed every door to anyone who could see the schedule.** Attendance
+  and Lineup tabs, "+ Add final score", "Give an award", three "Build lineup" doors, "Season
+  attendance" — each refused one click later. The Attendance tab's refused read was swallowed and the
+  panel told the helper "Add active players to the roster before marking attendance", on a team with
+  thirteen.
+- **Five pages rendered a refused read as a fact about the team.** "Your roster is empty" beside an
+  Export button; "No document templates yet"; a Money load error with a Retry that could only fail
+  again; raw error text on the team board; a helper-reachable Insights scoreboard.
+
+### What you will see
+
+| | |
+|---|---|
+| **A helper on a game** | The details and, when there is a named opponent, the Scouting tab. Nothing else — no tabs, no score controls, no awards, no lineup doors. A TBD game shows no tab strip at all. |
+| **A helper on a practice** | "Run practice" / "Open the plan" when a plan exists; "No plan yet." and no builder door when not. |
+| **A helper by URL** | Roster, Documents, Money, Insights, Email families, Tournaments, Chat and the team board each show the page's own title over one shared block: *"… isn't turned on for you"*, and who to ask. Never data, never an empty-looking screen, never Retry. |
+| **A helper on the game-day console** | Read-only as before, minus two false lines ("No lineup saved for this game yet", "Score and attendance still work tonight") and minus the review-mode "Playing time" link into Insights. |
+| **An assistant** | Nothing moves. Both tabs, the score form, awards, editing, the Insights link — as yesterday. |
+| **A money-only treasurer** | The panel reads only; Money and Roster open; Insights and Tournaments show the block. ⚠ **Awards given still shows for a treasurer** — that mirrors the awards rule as it stands (any team duty, money included), pinned as a mirror, and flagged in the review's §10 as a question for pass 2, not narrowed on the way past. |
+| **You** | Untouched. The Overview's Tournaments tile still loads; it is simply not asked for by coaches the read would refuse. |
+
+### The rule this applies
+
+**Every read gate matches its nav door, and every door a page shows is one its server would open.**
+The Game-Day console already obeyed it with a server-derived "can" object; the schedule panel now
+derives its doors the same way from one helper that names, per door, the route it mirrors. A
+code-scanning guard pins the five read gates and the panel's tab construction, and a second guard now
+knows about the eight "not turned on for you" headers (each page's own title over the shared block).
+
+### Two corrections to the review, found while building
+
+1. The tournament **record** page and its registration routes already refuse anyone who does not own
+   the linked coach team — the record was never readable by a helper. The leak was the list and the
+   history read. The record page still gained a redirect to the list for the door-and-room rule.
+2. The awards door mirrors `canManageAwards` = any record duty, money included (above).
+
+### Gates
+
+typecheck clean · **3,462 unit tests, 0 failures** (40 in the three staff files; 12 in the page-header
+guard after the eight new headers were registered) · lint 0 errors on every touched file (44 warnings,
+all pre-existing patterns; the schedule page's four are at lines untouched by this pass) · `verify:changed`
+green on every check **except the last**: `check:root-files` fails on a stray file at the repo root left
+by another session (a mangled temp-path redirect named `CUsersb2cow…scratchpaddiff.txt`, untracked
+before this pass began). Left in place and reported rather than deleted — it is not this pass's file.
+
+---
+
+## §170 · The dues gap, explained and walked — the Cash note finishes its sentence, and the Months view gains the revenue twin of the Headroom bridge — built on dev 2026-09-10, committed `1103dc4d` (the build, the /simplify pass and the /review fixes in one), **no migration**, awaiting QA · mockup artifact `544ca7ce`
+
+**You raised it reading Budget vs. Actual:** *"there doesn't appear to be any report in the months
+view that reconciles to the statement for player dues actual, but that appears to be by design."*
+By design was right. The rest was not: the footnote that exists to explain the gap named the two
+things the Statement ADDS and not the one it LEAVES OUT, so following it landed a reader above the
+Statement's figure by exactly the cash handed back.
+
+### What was wrong
+
+- **The Cash view's two-truths note was one clause short.** It read *"the Statement counts what they
+  contributed, which also includes a team bill a family paid themselves and fundraising credited
+  against their dues"* — additions only. On the UAT team that walk gives **$5,424.63** against a
+  Statement reading **$5,124.63**: $300.00 out, with nothing on either screen to look at next.
+  The Statement's own `dues-actual` note has said *"less money handed back"* since it was written, so
+  for three days one report explained one gap two different ways, and the incomplete half was the one
+  facing the coach who notices the gap.
+- **Nothing anywhere walked the gap.** The expense side has had a tie-out since 2026-09-02 (the
+  Statement's `CashBridge`, and `HeadroomBridge` reading it backwards under the Months grid). Revenue
+  had none. A coach could decompose the Statement's dues figure only by opening twelve family panels
+  — and even then no panel carries the handed-back line or the cash figure, so the four-line walk
+  could not be assembled on screen at all.
+
+### What changed
+
+- **The sentence says all three adjustments** — *"which adds a team bill a family paid themselves and
+  fundraising credited against their dues, and leaves out cash you have handed back."* It travels
+  into the exported spreadsheet and PDF on the same line of code, so the board's copy is corrected
+  with the screen's.
+- **A bridge under the Months notes, on the Cash reading only** — the revenue twin of the Headroom
+  one, three inches below it and in the same shape: a summary reading *"The Statement counts
+  $5,124.63 of dues contributed — why the difference?"*, opening the five-line walk and ending on
+  **See it on the Statement**. It renders only where the two figures genuinely differ.
+- **The walk on this team:** cash $3,142.00 − $300.00 handed back + $1,379.98 of team bills families
+  paid the vendor + $902.65 of fundraising credited = $5,124.63 contributed.
+
+### The three calls, and how they were taken
+
+1. **Placement (owner-approved, option C of three).** A door on the Statement's Player dues figure
+   would reverse §167's ruling five days earlier that dissolved exactly that door; a door on the
+   Months Total column would make the only openable cell in a column where nothing opens. A bridge
+   under the notes breaks neither rule and has its twin already on the page. ⚠ The mockup showed this
+   as a link inside the sentence opening a modal; the built shape is the existing `<details>` bridge,
+   because the screen already had the pattern and a second visual language for one idea reads as a
+   second feature.
+2. **The middle line is DERIVED, NOT RESIDUAL, and that is the load-bearing decision.** `cash −
+   cashKept` produces $300.00 on this team and is not the same fact: it also swallows a dues payment
+   from a family with no schedule, and an overshoot never written up as an overpayment credit. Both
+   are reachable. So `cashHandedBack` is accumulated in the definition home from the overpayment
+   credits' own `handedBack`, and the route **refuses to ship the bridge at all** unless the walk
+   closes to the cent. A bridge whose middle line labels a residual is worse than none — it looks
+   like a proof.
+3. **The silent null is now a guarded claim.** Nothing on screen shows when the route declined, and
+   no other gate could tell that state from a season with nothing to reconcile — so
+   `check:money-report` fails when the two dues figures differ and no bridge was shipped.
+
+### What `/simplify` changed (2026-09-10, four agents)
+
+The first build put the whole walk on the payload as a five-figure bundle, proved at the route. Three
+of the four passes independently called that the wrong shape, and they were right:
+
+- **The bundle re-shipped four figures already on the wire** and gave the revenue bridge a different
+  architecture from its two siblings on the same screen. The payload ships FIGURES and the report
+  walks them — `cashAdjustments` / `cashBridgeLines` have done exactly that for both expense bridges
+  since 2026-09-02, with a header arguing that a second walk written elsewhere is one edit from
+  disagreeing in front of a board. The walk is now `duesBridgeLines`, beside them; the payload gained
+  one number (`dues.cashHandedBack`) and lost five.
+- ⚠ **`cashHandedBack` went on `dues`, NOT inside `actualParts`.** Those three sum to `actual` and a
+  coach can see that they do — that is the whole contract of the panel behind the figure. A fourth
+  field in that bag is a number sitting in "the parts" that is no part of the total.
+- ⚠⚠ **The guard claim was upgraded from a presence check to the identity.** It used to fire when the
+  figures differed and no bridge shipped — which was the route agreeing with itself, and silent where
+  offsetting adjustments hide a gap. It now asserts, unconditionally, that `Months dues cash − handed
+  back + family-paid + credited = the Statement's actual`, off the same figures the screen walks. The
+  header bullet that says the old "statement = grid" claim was deliberately deleted now says why this
+  is that claim returning in its honest form, so the next reader does not remove it as a repeat.
+- The `−`/`+` bridge-amount ternary had reached a third hand-written copy with a non-ASCII minus in
+  all three; one `fmtBridgeAmount` now serves all three, which is the lesson `signPrefix`'s own header
+  already records paying for once.
+- The condensed UAT fixture had been typed out three times, each asserting the same $3,665.65; one
+  `UAT_CONDENSED` now serves all three. A test re-proving the three-parts identity on one family was
+  deleted — the shared helper already asserts it on every case, and the weaker gate is the one that
+  would be believed if they ever disagreed.
+- One-word spelling fix: the new help paragraph said a family paid **a supplier**; the screen, the
+  footnote and the bridge row all say **vendor**.
+- An explicit deferral comment now sits on the exported reconciliation saying the dues walk is out of
+  scope by decision — the corrected footnote travels into the file, so the file names three
+  adjustments with no arithmetic behind them, which is the gap D6.1 closed on the expense side.
+
+**Kept against two agents' advice:** the middle line is still derived in the definition module and
+never the residual, and the walk still refuses rather than shipping best-effort. What moved is where
+the walk is assembled, not where the honest figure comes from.
+
+### ⚠ A REAL DEFECT THE CLEANUP SURFACED — separate unit of work, not fixed here
+
+`buildFamilyDuesInputs` keys families by SCHEDULE. **A family with dues payments and no schedule
+therefore has no contribution row at all** — their cash counts in the Months band and in no part of
+the Statement's figure, which means the Statement's Player dues actual is understated by exactly what
+they sent, and has been since 2026-09-07. The old presence-check guard could not see it; the identity
+claim above fires on it by name. Two questions before it can be fixed, and the first is the owner's:
+**what does "contributed" mean for a family with no bill?** — and should the state be made impossible
+at the write door instead. Recorded in TODO rather than left as prose inside a refusal branch.
+
+(The second documented cause of a non-closing walk — an overshoot never written up as an overpayment
+credit — is already prevented at source by the auto-credit at record time and the reconcile; the
+residual exposure is legacy rows. Not acted on.)
+
+### What `/review` found (2026-09-10, high-risk tier, four finders + main-loop adjudication)
+
+- ⚠⚠ **HIGH, CONFIRMED, FIXED — the corrected footnote was itself wrong by the failure it was
+  fixing.** "Leaves out cash you have handed back", read against this same screen's *Money returned
+  to families* band ($600.00 on UAT), subtracts every cheque — but the Statement subtracts only the
+  $300.00 that was a family's OWN money; the other $300.00 came back out of a fundraising credit and
+  is already absent from "fundraising credited", which counts what is STILL standing. A treasurer
+  reading the sentence against the two visible figures lands $300.00 short. **The Statement's own
+  footnote had carried the same ambiguity since it was written** ("less money handed back"). Both
+  footnotes, the bridge's row label and the help paragraph now carry the same two scoping words —
+  *still credited* and *their own cash* — and both footnotes are pinned in the FILE text.
+- **Medium, confirmed, fixed** — the new figure was the one number in the definition loop not clamped
+  to its own credit: a payback recorded larger than the overpayment credit it hit would report own
+  cash returned that never existed. Not reachable through either live caller (the allocator caps
+  every take), but the module's own contract is not to lean on the caller for that. Clamped, with a
+  case.
+- **Medium, confirmed, fixed** — the help paragraph said the bridge "walks all four figures"; it draws
+  one line per adjustment that applies, so on most seasons that sentence described a screen that
+  does not exist. Reworded.
+- **Low, confirmed, fixed** — the guard read a missing `cashHandedBack` as $0.00 and would have passed
+  or failed on that assumption without ever saying the field was gone. It now names the absence.
+- **Adjudicated as correct behaviour, comment corrected** — a season whose dues were settled
+  entirely by credits shows NO dues row on the Cash reading (a zero row is hidden) and a real figure
+  on the Statement; the bridge then opens on "cash $0.00". The finder called that a row-that-isn't;
+  it is the reader who most needs the walk. The builder's comment had overclaimed "the first line
+  cannot disagree with the table above it" and now says what is actually true.
+- **Refuted** — that the reconciliation claim is wrong on a truncated season: the band's TOTAL folds
+  off-window money in, so it holds; the neighbouring claim's own comment saying otherwise is a
+  pre-existing inconsistency, out of scope. — that the new gate might turn CI red on existing data:
+  it was run green on the live UAT fixture before and after.
+- **Noted, not acted on** — both bridges gate on the coach's raw lens preference while the grid
+  coerces it during a deploy-skew window (seconds; pre-existing on the Headroom twin, inherited
+  byte-for-byte). — two `<details>` now share the trailing phrase "why the difference?"; their
+  leading text differs, no test locates either by it. — the near-zero rule hides a walk whose
+  adjustments offset exactly; deliberate, there is nothing to explain when the figures agree.
+
+### Verification
+
+typecheck clean · **3,463 unit tests, 0 failures** (2 new from `/review`: the clamp, and the
+Statement footnote's scoping words pinned in the FILE text) · `check:layout` green on both BvA
+screens at 361/390/768/1440 (0 new findings) · `check:spelling` green ·
+`check:money-report` green against the live UAT payload, printing the reconciliation as its own claim
+· lint 0 errors on every touched file (4 warnings, all pre-existing, none at a touched line) ·
+`verify:changed` green on every check except `check:root-files`, which fails on the same stray
+repo-root file §168 reported and left in place — not this pass's file.
+
+### Not done, and deliberately
+
+- **The exported statement still shows the contributed figure with no breakdown.** Suppressing the
+  family rows in that file is a standing ruling; the corrected sentence is what travels. Putting the
+  walk into the export is a separate call.
+- **No demo change.** This adds an explanation to an existing screen rather than a moment a prospect
+  should find; the coach sandbox's money narration is still owed its re-read from the 09-08/09-10
+  releases, and that is its own unit of work.
+
+### §168 · `/review`, 2026-09-10 — four lenses, one Critical caught before it shipped
+
+**Critical, fixed — the Overview's Tournaments tile would have sat on "…" forever** for every
+assistant without schedule editing (both UAT assistants, and every treasurer). The tile was the one
+tile on the board pushed unconditionally, against the board's own rule that a tile is a door; the
+read behind it now (correctly) refuses those coaches, so the tile would never have received a value.
+It now follows the Tournaments nav door like every other tile — absent, not stuck.
+
+**High, fixed — Settings still offered "Manage organization link"** to an assistant with schedule
+editing, onto a page that now says only the head coach may. The row is head-coach-only, matching the
+page and the API. **Medium, fixed —** the Overview's org-invite banner is head-coach-only too (its
+"Review invite" opens a page only the head coach can act on); a deliberate narrowing, recorded in
+the code. **Medium, fixed —** the link page told a standalone head coach whose season had closed
+that they were not the head coach; it now reads closed assignments too and falls back to the API's
+answer. **Medium, fixed (pre-existing) —** a practice's "Recorded here" list handed a schedule-only
+helper an evaluation session's note and a link into a page they cannot open; the sessions read is
+now gated at source on the same predicate the session page uses. **Two Low/Advisory cleanups —** the
+schedule panel's Edit and family-email doors now read from the same doors object as its other six;
+a half-typed score is cleared when a different game opens; one stale comment fixed.
+
+**Refuted, no change —** "the events read hands a helper every practice's plan and recap": plans
+for each practice are exactly what a helper is granted, and the recap is ruled (D17) a note about the
+practice, never a child, riding the schedule grant. **Out of scope, reported —** the rendered
+layout sweep signs in only as the head coach, so none of the eight "not turned on for you" screens
+is ever swept; and five pre-existing layout findings on two unchanged screens (the Skills & Goals
+hub's seeded "Probe session" row, the Insights tab bar's scroll arrow) surfaced because the sweep
+maps the team-board edit onto the whole development area.
+
+**Gates after the fixes:** typecheck clean · **3,462 unit tests, 0 failures** · lint 0 errors ·
+`verify:changed` green before the fix pass on every check but the foreign root file (not re-run
+after; the fixes touch no token, stylesheet, dictionary or export surface) · `check:layout
+--changed` run once on 11 screens at 361/1440: no finding on any changed element.
+
+## §171 · Log an observation — the scouting capture form has a frame: a heading, a labelled tag, a line saying what a tag does, and a real Save — built on dev 2026-09-11 (uncommitted), **no migration**, awaiting QA · mockup artifact `1f0c69bb` · a §168 side-finding, not a staff-access fail
+
+**You raised it mid-§168, as a helper on a game:** *"it is not clear what this tag dropdown is
+supposed to mean … I open it and click different options (Pitching, Hitting, etc.) and I don't see
+anything change on the screen. I have no information on what this drop down is even supposed to do."*
+You asked whether "make observation" should be a button opening a dialog.
+
+### What was wrong
+
+The game card's Scouting tab ended in three controls that read as unrelated: a box whose only
+explanation was its placeholder (gone the moment you type), a dropdown with **no visible label** and
+"No tag" as its face, and a small "Save observation" text link parked in the footer beside
+"Everything we know ›". Picking a tag is *correct* to change nothing until you save — it is a form —
+but nothing said so, and nothing said what a tag was for. The dropdown was never empty: it carries
+the sport's fixed vocabulary (Pitching, Hitting, Defense, Baserunning, Coaching for a baseball team;
+Offense, Defense, Special situations, Coaching otherwise). The full opponent page had the same form.
+
+### What you will see (game card's Scouting tab AND the full opponent page — one form, shared)
+
+| | |
+|---|---|
+| **A heading** | **Log an observation from this game** (on the page: *Log an observation*), with *Numbers and positions, never opposing players' names.* beside it — visible while you type. The placeholder is now an example: *e.g. "their SS cheats up with runners on"*. |
+| **The tag** | A visible label — **Tag (optional)** — over the same dropdown, on one row with its own Save. Still a dropdown (form-selects ruling); "No tag" is still a complete answer. |
+| **What a tag does** | One quiet line under the row: *A tag files this under Pitching, Hitting, Defense, Baserunning or Coaching, so the book can be read one heading at a time.* — the sport's own words, read out. |
+| **Save** | A real lime button beside the fields, greyed until there is something to save. The footer keeps the card's own doors (Share to staff chat, Everything we know ›); Save no longer lives among them. |
+| **After saving** | Unchanged: *Saved — add another?*, cursor back in the box, the note appears with its author and tag chip, and the tag filter row appears once a tag is in use. The full page gains this same loop (it had none). |
+| **A helper** | Can still log — open contribution is a standing ruling. The form now tells them what it is. |
+
+### Ruled on the way
+
+**Not a dialog.** The game card already is one; a second on top hides the game being written about,
+and a dialog that closes on save breaks the several-in-a-row loop. If the card still feels busy, the
+fallback is an inline button that expands into this block — never a second window.
+
+### Walk (a helper on the demo or UAT team, then the head coach)
+
+- [ ] Schedule → a game with a named opponent → Scouting. The form reads as one thing: heading, rule, box, **Tag (optional)**, Save, the one-line explanation naming this team's sport words.
+- [ ] Type a note, pick **Pitching**, Save → *Saved — add another?*; the note lists with a **Pitching** chip and the filter row shows **All · Pitching**. Cursor is back in the box.
+- [ ] Save with **No tag** → the note lists with no chip.
+- [ ] Empty box → Save is greyed. Phone (≤640): Save goes full-width under the dropdown.
+- [ ] **Everything we know ›** → the full opponent page's form has the same heading shape, label, explanation and Save; logging there confirms in place the same way.
+- [ ] A hockey / non-baseball team: the explanation reads *Offense, Defense, Special situations or Coaching*.
+
+### Verification
+
+typecheck clean · lint 0 errors on the three touched files (2 warnings, both pre-existing load
+effects at untouched lines) · `verify:changed` green on every check except `check:root-files`,
+which fails on the same stray repo-root file §168 reported (a mangled temp-path redirect from a
+different session, left in place — not this pass's file). Help article unchanged (it describes the
+loop, not the controls); no demo sentence names this form.
+

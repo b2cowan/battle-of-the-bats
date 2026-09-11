@@ -54,6 +54,11 @@ export const GET = withObservability(async (_req: Request, { params }: RoutePara
   const { orgSlug } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
+  // The list is the head coach's too — `resolveTeamCoachContext` computed `isHeadCoach` and this
+  // read never consulted it, so any assistant could enumerate the workspace's organization links
+  // while only the head coach could act on them (staff access review, 2026-09-10).
+  const readDenied = denyUnless(resolved.isHeadCoach, 'Only the head coach can manage organization links.');
+  if (readDenied) return readDenied;
 
   const links = await listTeamOrgLinksForWorkspace(resolved.workspace.id);
   return NextResponse.json({ links });

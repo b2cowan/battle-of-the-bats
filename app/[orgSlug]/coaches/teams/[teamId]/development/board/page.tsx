@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { LayoutGrid } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
+import { useCoaches } from '@/lib/coaches-context';
+import { hasRecordAccess } from '@/lib/coach-capabilities';
 import { formatValue, formatShortDate } from '@/lib/measurable-format';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamMeasurableType } from '@/lib/types';
@@ -37,6 +40,12 @@ export default function DevelopmentBoardPage({
 
 function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  // The board gates on the same predicate as the Skills & Goals door (staff access review,
+  // 2026-09-10): a refused read used to print raw error text with a "Try again" that could only
+  // fail again. Fails open while assignments load; the route refuses regardless.
+  const { assignments, loading: coachesLoading } = useCoaches();
+  const assignment = assignments.find(a => a.teamId === teamId);
+  const notGranted = !!assignment && !hasRecordAccess(assignment.capabilities);
 
   const [data, setData] = useState<BoardData | null>(null);
   const [noSeason, setNoSeason] = useState(false);
@@ -61,7 +70,29 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
     }
   }, [orgSlug, teamId]);
 
-  useEffect(() => { load(); }, [load]);
+  // Waits for the assignments like every sibling page (defence in depth — the provider is seeded
+  // server-side), so the read is never fired before the gate can be evaluated.
+  useEffect(() => { if (!coachesLoading && !notGranted) load(); }, [load, notGranted, coachesLoading]);
+
+  if (notGranted) {
+    return (
+      <div className={styles.page}>
+        <CoachPageHeader
+          icon={LayoutGrid}
+          title="Team board"
+          backTo={{ href: `${base}/development`, label: 'Skills & Goals' }}
+          helpLabel="Team board"
+          help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
+        />
+        <CoachNotGranted
+          icon={<LayoutGrid size={20} aria-hidden />}
+          section="The team board"
+          what="Every player’s focus areas and latest measurables, in roster order."
+          blocker="The board opens for anyone with a team duty — attendance, lineups, notes, money, documents or tryouts. Ask your head coach to grant one."
+        />
+      </div>
+    );
+  }
 
   if (!data && !error) {
     return <div className={styles.page}><div className={styles.loadingState}>Loading the board…</div></div>;

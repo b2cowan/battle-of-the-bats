@@ -1,0 +1,1156 @@
+<title>Coaching Staff Redesign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────────
+   DOCUMENT CHROME — deliberately a cool, blue-biased ground so the warm paper
+   product frames read as specimens pinned to a board, never as the page itself.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --d-bg: #E4E8EF;
+  --d-surface: #F3F5F9;
+  --d-surface-2: #FFFFFF;
+  --d-ink: #1B2130;
+  --d-ink-2: #4B5468;
+  --d-ink-3: #7A8296;
+  --d-line: rgba(27, 33, 48, 0.14);
+  --d-line-2: rgba(27, 33, 48, 0.08);
+  --d-accent: #1E3A8A;
+  --d-accent-soft: rgba(30, 58, 138, 0.10);
+  --d-new: #134FD3;
+  --d-new-soft: rgba(19, 79, 211, 0.12);
+  --d-restyled: #835006;
+  --d-restyled-soft: rgba(131, 80, 6, 0.12);
+  --d-same: #5B6373;
+  --d-same-soft: rgba(91, 99, 115, 0.12);
+  --d-bad: #B03A22;
+  --d-bad-soft: rgba(176, 58, 34, 0.10);
+  --d-good: #34662A;
+  --d-good-soft: rgba(52, 102, 42, 0.12);
+  --d-fold: #B03A22;
+  --d-font-display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  --d-font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --d-font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --d-bg: #12151B;
+    --d-surface: #1A1E26;
+    --d-surface-2: #232833;
+    --d-ink: #E9ECF2;
+    --d-ink-2: #AEB5C4;
+    --d-ink-3: #7F889B;
+    --d-line: rgba(233, 236, 242, 0.16);
+    --d-line-2: rgba(233, 236, 242, 0.08);
+    --d-accent: #9DB4F5;
+    --d-accent-soft: rgba(157, 180, 245, 0.14);
+    --d-new: #8FB0FF;
+    --d-new-soft: rgba(143, 176, 255, 0.16);
+    --d-restyled: #E2A64B;
+    --d-restyled-soft: rgba(226, 166, 75, 0.16);
+    --d-same: #AEB5C4;
+    --d-same-soft: rgba(174, 181, 196, 0.14);
+    --d-bad: #F08A73;
+    --d-bad-soft: rgba(240, 138, 115, 0.14);
+    --d-good: #8FCB80;
+    --d-good-soft: rgba(143, 203, 128, 0.14);
+    --d-fold: #F08A73;
+  }
+}
+:root[data-theme="dark"] {
+  --d-bg: #12151B;
+  --d-surface: #1A1E26;
+  --d-surface-2: #232833;
+  --d-ink: #E9ECF2;
+  --d-ink-2: #AEB5C4;
+  --d-ink-3: #7F889B;
+  --d-line: rgba(233, 236, 242, 0.16);
+  --d-line-2: rgba(233, 236, 242, 0.08);
+  --d-accent: #9DB4F5;
+  --d-accent-soft: rgba(157, 180, 245, 0.14);
+  --d-new: #8FB0FF;
+  --d-new-soft: rgba(143, 176, 255, 0.16);
+  --d-restyled: #E2A64B;
+  --d-restyled-soft: rgba(226, 166, 75, 0.16);
+  --d-same: #AEB5C4;
+  --d-same-soft: rgba(174, 181, 196, 0.14);
+  --d-bad: #F08A73;
+  --d-bad-soft: rgba(240, 138, 115, 0.14);
+  --d-good: #8FCB80;
+  --d-good-soft: rgba(143, 203, 128, 0.14);
+  --d-fold: #F08A73;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--d-bg);
+  color: var(--d-ink);
+  font-family: var(--d-font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.doc { max-width: 1240px; margin: 0 auto; padding: 40px 28px 96px; }
+.doc h1, .doc h2, .doc h3 { font-family: var(--d-font-display); text-wrap: balance; margin: 0; line-height: 1.05; }
+.doc h1 { font-size: 46px; font-weight: 800; letter-spacing: -0.005em; }
+.doc h2 { font-size: 30px; font-weight: 700; margin-top: 8px; }
+.doc h3 { font-size: 21px; font-weight: 700; }
+.doc p { margin: 0; max-width: 72ch; }
+.doc p + p { margin-top: 10px; }
+.eyebrow { font-family: var(--d-font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--d-ink-3); }
+.lede { font-size: 18px; color: var(--d-ink-2); max-width: 66ch; margin-top: 14px; }
+.head { display: grid; gap: 10px; padding-bottom: 28px; border-bottom: 1px solid var(--d-line); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 18px; font-size: 13px; color: var(--d-ink-2); align-items: center; }
+.legend b { color: var(--d-ink); font-weight: 600; }
+
+.tag { display: inline-block; font-family: var(--d-font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; font-weight: 500; vertical-align: middle; white-space: nowrap; }
+.tag.new { color: var(--d-new); background: var(--d-new-soft); }
+.tag.restyled { color: var(--d-restyled); background: var(--d-restyled-soft); }
+.tag.same { color: var(--d-same); background: var(--d-same-soft); }
+.tag.bad { color: var(--d-bad); background: var(--d-bad-soft); }
+.tag.good { color: var(--d-good); background: var(--d-good-soft); }
+
+section.block { padding: 40px 0 8px; border-bottom: 1px solid var(--d-line-2); }
+section.block:last-of-type { border-bottom: 0; }
+.block-head { display: grid; gap: 8px; margin-bottom: 18px; }
+.block-head .n { font-family: var(--d-font-mono); font-size: 12px; color: var(--d-accent); letter-spacing: 0.1em; }
+.block-head p { color: var(--d-ink-2); }
+
+.specimen { margin: 22px 0 8px; }
+.specimen-cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin: 0 0 10px; }
+.specimen-cap .t { font-family: var(--d-font-display); font-size: 19px; font-weight: 700; }
+.specimen-cap .m { font-family: var(--d-font-mono); font-size: 12px; color: var(--d-ink-3); }
+.viewport { overflow-x: auto; overflow-y: hidden; padding: 4px 0 14px; }
+.notes { display: grid; gap: 8px; margin-top: 14px; padding: 14px 16px; border-left: 3px solid var(--d-accent); background: var(--d-surface); border-radius: 0 8px 8px 0; }
+.notes li { margin: 0; }
+.notes ul, .notes ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.notes .k { font-family: var(--d-font-mono); font-size: 12px; color: var(--d-accent); letter-spacing: 0.08em; text-transform: uppercase; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
+.callout { position: absolute; z-index: 5; font-family: var(--d-font-mono); font-size: 11.5px; line-height: 1.35; color: #fff; background: var(--d-bad); padding: 5px 8px; border-radius: 4px; max-width: 220px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.callout.good { background: var(--d-good); }
+.callout.info { background: var(--d-accent); }
+.callout::before { content: ""; position: absolute; left: -6px; top: 9px; border: 6px solid transparent; border-right-color: inherit; border-left: 0; }
+.callout.left::before { left: auto; right: -6px; border-right: 0; border-left: 6px solid; border-left-color: inherit; }
+.callout { border-color: var(--d-bad); }
+.callout.good { border-color: var(--d-good); }
+.callout.info { border-color: var(--d-accent); }
+
+table.decide { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 14px; }
+table.decide th, table.decide td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--d-line-2); vertical-align: top; }
+table.decide th { font-family: var(--d-font-mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-ink-3); font-weight: 500; }
+table.decide td.q { font-weight: 600; width: 32%; }
+.scroll-x { overflow-x: auto; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PRODUCT FRAMES — FieldLogicHQ coaches portal, warm theme (the default the
+   owner's screenshots show). Single-theme on purpose: a specimen shows the
+   product as it is, whatever theme the reader's document is in.
+   ───────────────────────────────────────────────────────────────────────────── */
+.fl {
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --dim: #615A54;
+  --line: rgba(70,55,30,.12); --line2: rgba(70,55,30,.20); --fill: rgba(70,55,30,.08);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10);
+  --lime: #D9F99D; --lime-ink: #241E15;
+  --live: #B03A22; --live-soft: rgba(176,58,34,.10);
+  --amber: #835006; --amber-soft: rgba(131,80,6,.10);
+  --blue: #134FD3; --blue-soft: rgba(19,79,211,.10);
+  --r: 14px; --rs: 9px;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.5; color: var(--ink);
+  background: var(--paper);
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.22);
+  overflow: hidden;
+  position: relative;
+  text-align: left;
+}
+.fl *, .fl *::before, .fl *::after { box-sizing: border-box; }
+.fl p, .fl h1, .fl h2, .fl h3, .fl h4, .fl ul { margin: 0; }
+.fl ul { padding: 0; list-style: none; }
+.fl .disp { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; }
+.fl .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.fl .cap { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+
+/* Desktop shell */
+.fl-desktop { width: 1180px; }
+.fl-top { height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 20px; background: var(--card); border-bottom: 1px solid var(--line); }
+.fl-logo { display: flex; align-items: center; gap: 8px; }
+.fl-logo .mark { width: 26px; height: 26px; background: var(--ink); border-radius: 4px; position: relative; }
+.fl-logo .mark::after { content: ""; position: absolute; left: 8px; top: 7px; border: 6px solid transparent; border-left: 8px solid var(--lime); }
+.fl-logo .word { font-family: "Barlow Condensed", sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.02em; }
+.fl-logo .word b { color: var(--olive); font-weight: 800; }
+.fl-top .portal { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--dim); padding-left: 14px; border-left: 1px solid var(--line2); }
+.fl-top .spacer { flex: 1; }
+.fl-top .bell { width: 18px; height: 18px; border: 2px solid var(--ink2); border-radius: 8px 8px 3px 3px; border-bottom-width: 3px; }
+.fl-body { display: grid; grid-template-columns: 264px 1fr; min-height: 640px; }
+.fl-side { background: var(--card); border-right: 1px solid var(--line); padding: 14px 0 0; display: flex; flex-direction: column; }
+.fl-teamsel { margin: 0 8px 12px; height: 40px; border: 1px solid var(--line2); border-radius: var(--rs); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 15px; font-weight: 500; }
+.fl-teamsel::after { content: "⌄"; color: var(--dim); font-size: 16px; }
+.fl-nav a { display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 16px; color: var(--ink2); text-decoration: none; font-size: 15px; }
+.fl-nav a .ico { width: 16px; height: 16px; border: 1.6px solid currentColor; border-radius: 4px; opacity: .75; flex-shrink: 0; }
+.fl-nav a.on { background: var(--fill); color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--olive); }
+.fl-nav .grp { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); }
+.fl-nav .grp .c { font-family: "IBM Plex Mono", monospace; font-weight: 500; color: var(--dim); }
+.fl-side .help { margin-top: auto; border-top: 1px solid var(--line); padding: 12px 16px 18px; display: flex; align-items: center; gap: 10px; color: var(--ink2); font-size: 15px; }
+.fl-side .help .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-left: 4px; }
+.fl-side .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; margin: 6px 16px 14px; }
+.fl-main { position: relative; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 52px 52px; background-position: -1px -1px; }
+.fl-mast { background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 36px 12px 40px; display: flex; align-items: flex-start; justify-content: space-between; }
+.fl-mast h1 { font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.fl-mast .role { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.12em; font-weight: 600; border: 1px solid var(--line2); border-radius: 6px; padding: 3px 8px; color: var(--ink2); }
+.fl-mast .sub { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--dim); margin-top: 3px; }
+.fl-mast .sub b { color: var(--ink); font-weight: 600; }
+.fl-mast .helpbtn { width: 36px; height: 36px; border-radius: 50%; background: var(--card); border: 1px solid var(--line2); display: grid; place-items: center; font-weight: 700; color: var(--ink2); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.fl-content { padding: 28px 40px 40px; }
+
+/* Page header (portal convention) */
+.fl-ph { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.fl-ph .medal { width: 42px; height: 42px; border-radius: 50%; background: var(--olive-soft); border: 1px solid var(--line); display: grid; place-items: center; }
+.fl-ph .medal i { width: 18px; height: 14px; border: 2px solid var(--olive); border-radius: 8px 8px 4px 4px; display: block; }
+.fl-ph h2 { font-family: "Barlow Condensed", sans-serif; font-size: 26px; font-weight: 700; }
+.fl-ph .act { margin-left: auto; }
+.fl-lede { font-size: 16px; color: var(--ink2); margin-bottom: 18px; max-width: 68ch; }
+
+/* Buttons, fields, chips */
+.fl-btn { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: var(--rs); font-weight: 700; font-size: 14px; border: 1px solid transparent; white-space: nowrap; }
+.fl-btn.lime { background: var(--lime); color: var(--lime-ink); }
+.fl-btn.sec { background: var(--card); border-color: var(--line2); color: var(--ink); font-weight: 600; }
+.fl-btn.sm { height: 30px; padding: 0 10px; font-size: 12px; }
+.fl-btn.danger { color: var(--live); border-color: rgba(176,58,34,.35); background: var(--card); font-weight: 600; }
+.fl-btn.ghost { background: transparent; color: var(--ink2); font-weight: 600; }
+.fl-field { height: 38px; border: 1px solid var(--line2); border-radius: var(--rs); background: var(--paper); padding: 0 12px; display: flex; align-items: center; color: var(--dim); font-size: 15px; }
+.fl-field.filled { color: var(--ink); background: var(--card); }
+.fl-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; display: block; }
+.fl-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; }
+.fl-chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; background: var(--fill); color: var(--ink2); white-space: nowrap; }
+.fl-chip.sens { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(131,80,6,.25); }
+.fl-chip.sens::before { content: ""; width: 8px; height: 9px; border: 1.5px solid currentColor; border-radius: 3px 3px 2px 2px; border-top-width: 0; box-shadow: inset 0 3px 0 -1.5px transparent; position: relative; top: 1px; }
+.fl-chip.sens::before { border-top: 0; border-radius: 0 0 2px 2px; height: 6px; margin-top: 3px; }
+.fl-rolechip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.12em; font-weight: 600; text-transform: uppercase; border: 1px solid var(--line2); color: var(--ink2); background: var(--card); white-space: nowrap; }
+.fl-rolechip.head { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fl-rolechip.mgr { background: var(--blue-soft); color: var(--blue); border-color: rgba(19,79,211,.3); }
+.fl-rolechip.helper { border-style: dashed; }
+.fl-rolechip.invited { background: var(--amber-soft); color: var(--amber); border-color: rgba(131,80,6,.3); }
+.fl-rolechip.treas { background: var(--olive-soft); color: var(--olive); border-color: rgba(87,101,30,.35); }
+
+/* The app's own sub-lined dropdown (a trigger and a list, each option a name over one sentence).
+   Drawn in-flow here; in the product the list floats over the sheet. */
+.fl-dd { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 8px 11px; border-radius: 7px; border: 1px solid var(--olive); background: rgba(87,101,30,.09); color: var(--ink); font-size: 14px; font-weight: 600; }
+.fl-dd.empty { border-color: rgba(30,58,138,.3); background: transparent; color: var(--dim); font-weight: 500; }
+.fl-dd .car { color: var(--olive); font-size: 15px; line-height: 1; }
+.fl-ddhint { font-size: 12.5px; color: var(--dim); line-height: 1.45; margin-top: -6px; }
+.fl-ddlist { margin-top: 4px; border: 1px solid var(--olive); border-radius: 9px; background: var(--card); box-shadow: 0 10px 28px rgba(0,0,0,.28); overflow: hidden; }
+.fl-ddopt { display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; min-height: 44px; border-top: 1px solid rgba(30,58,138,.12); }
+.fl-ddopt:first-child { border-top: 0; }
+.fl-ddopt .n { font-size: 14px; font-weight: 600; color: var(--ink); }
+.fl-ddopt .s { font-size: 12px; color: var(--dim); }
+.fl-ghost { font-size: 12.5px; color: var(--dim); font-style: italic; }
+
+/* Controls drawn as static shapes */
+.fl-check { display: flex; align-items: flex-start; gap: 9px; }
+.fl-check .box { width: 16px; height: 16px; border: 1.5px solid var(--line2); border-radius: 4px; background: var(--card); flex-shrink: 0; margin-top: 3px; position: relative; }
+.fl-check .box.on { background: var(--card); border-color: var(--ink2); }
+.fl-check .box.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid var(--ink); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.fl-check .l { font-size: 15px; color: var(--ink); }
+.fl-check .h { font-size: 12.5px; color: var(--dim); display: block; line-height: 1.4; }
+.fl-seg { display: inline-flex; border: 1px solid var(--line2); border-radius: var(--rs); overflow: hidden; background: var(--card); }
+.fl-seg span { padding: 5px 11px; font-size: 12.5px; font-weight: 500; color: var(--ink2); border-right: 1px solid var(--line); }
+.fl-seg span:last-child { border-right: 0; }
+.fl-seg span.on { background: var(--lime); color: var(--lime-ink); font-weight: 700; }
+.fl-segrow { display: flex; flex-direction: column; gap: 4px; }
+.fl-segrow .l { font-size: 15px; }
+.fl-segrow .h { font-size: 12.5px; color: var(--dim); line-height: 1.4; }
+.fl-radio { display: flex; gap: 9px; align-items: flex-start; border: 1px solid var(--line2); border-radius: var(--rs); padding: 10px 11px; min-height: 44px; }
+.fl-radio .dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--line2); margin-top: 3px; flex-shrink: 0; }
+.fl-radio.on { border-color: var(--blue); background: rgba(19,79,211,.06); }
+.fl-radio.on .dot { border-color: var(--blue); box-shadow: inset 0 0 0 4px #fff; background: var(--blue); }
+.fl-radio .n { font-weight: 700; font-size: 15px; }
+.fl-radio .d { font-size: 12.5px; color: var(--dim); display: block; line-height: 1.4; }
+
+/* Fold marker */
+.fold { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--d-fold); z-index: 4; pointer-events: none; }
+.fold::after { content: attr(data-label); position: absolute; right: 12px; top: -11px; font-family: var(--d-font-mono); font-size: 11px; color: #fff; background: var(--d-fold); padding: 2px 7px; border-radius: 3px; }
+.fade { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(to bottom, rgba(248,244,237,0), #F8F4ED 80%); z-index: 3; }
+.fade .more { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--dim); background: #fff; border: 1px solid var(--line2); border-radius: 999px; padding: 4px 12px; }
+
+/* BEFORE: current staff panel */
+.b-cols { display: grid; grid-template-columns: minmax(0,1fr) 288px; gap: 16px 24px; align-items: start; }
+.b-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.b-invite { max-width: 520px; }
+.b-access { max-width: 520px; }
+.b-list { display: flex; flex-direction: column; gap: 14px; }
+.b-rail { position: sticky; top: 0; }
+.b-rail h3 { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.b-rail h4 { font-size: 15px; font-weight: 700; margin-top: 12px; }
+.b-rail p { font-size: 12.5px; color: var(--ink2); line-height: 1.5; margin-top: 4px; }
+.b-rail .foot { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; color: var(--dim); }
+.b-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; }
+.b-standing { grid-column: 1 / -1; padding: 8px 10px; border-left: 2px solid var(--olive); background: var(--fill); border-radius: 0 4px 4px 0; font-size: 12.5px; color: var(--ink2); }
+.b-group { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 14px 0 8px; }
+.b-person { display: flex; justify-content: space-between; align-items: flex-start; }
+.b-person .n { font-weight: 600; font-size: 15px; }
+.b-person .e { font-size: 12.5px; color: var(--dim); }
+.b-sens { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--rs); background: var(--olive-soft); padding: 12px 14px; }
+.b-sens .h { display: flex; justify-content: space-between; align-items: center; }
+.b-sens .note { font-size: 13px; color: var(--ink2); margin: 6px 0 12px; }
+.b-rail-list li { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--ink2); padding: 2px 0; }
+.b-rail-list li::before { content: "✓"; color: var(--olive); font-weight: 700; font-size: 13px; }
+.b-rail-list.off li::before { content: "🔒"; font-size: 11px; filter: grayscale(1); opacity: .6; }
+.b-count { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+
+/* AFTER: people list — two-line rows: identity + role + action on line one, access on line two.
+   Column-per-area was tried first; at 1180px the access column had 280px and every row wrapped
+   to three lines of chips. The access line gets the row's full width instead. */
+.a-list { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.a-row { display: grid; grid-template-columns: minmax(0,1fr) auto auto; grid-template-areas: "who role act" "caps caps caps"; gap: 5px 14px; align-items: center; padding: 8px 18px; border-top: 1px solid var(--line); }
+.a-row:first-child { border-top: 0; }
+.a-row.hdr { display: none; }
+.a-row .who { grid-area: who; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.a-row .who .n { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.a-row .who .n .you { font-size: 11px; font-weight: 500; color: var(--dim); }
+.a-row .who .e { font-size: 12.5px; color: var(--dim); overflow-wrap: anywhere; }
+.a-row .who .e::before { content: "·"; margin-right: 8px; }
+.a-row .who .fam { font-size: 12px; color: var(--dim); font-style: italic; }
+.a-row .who .fam::before { content: "·"; margin-right: 8px; font-style: normal; }
+.a-row > div:nth-child(2) { grid-area: role; }
+.a-row .caps { grid-area: caps; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.a-row .caps .none { font-size: 13px; color: var(--dim); }
+.a-row .act { grid-area: act; display: flex; justify-content: flex-end; gap: 6px; align-items: center; }
+.a-row .act a { font-size: 13.5px; font-weight: 600; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.a-row .act a::after { content: "›"; font-size: 18px; line-height: 1; color: var(--dim); }
+.a-row .act .q { font-size: 12.5px; color: var(--dim); }
+.a-row.pending { background: rgba(131,80,6,.04); }
+.a-row.pending .caps { font-size: 13px; color: var(--ink2); }
+.fl-ph { margin-bottom: 8px; }
+.fl-lede { margin-bottom: 10px; }
+.fold.l::after { right: auto; left: 12px; }
+.a-foot { display: flex; gap: 18px; align-items: baseline; margin-top: 12px; font-size: 13px; color: var(--dim); }
+.a-foot a { color: var(--ink2); text-decoration: underline; }
+
+/* Sheets */
+.sheet-stage { position: relative; }
+.sheet-dim { position: absolute; inset: 0; background: rgba(36,30,21,.35); z-index: 6; }
+.fl-sheet { position: absolute; top: 0; right: 0; bottom: 0; width: 520px; background: var(--card); border-left: 1px solid var(--line2); z-index: 7; box-shadow: -14px 0 40px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+.fl-sheet .sh { padding: 18px 22px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.fl-sheet .sh h3 { font-family: "Barlow Condensed", sans-serif; font-size: 24px; font-weight: 700; }
+.fl-sheet .sh .e { font-size: 12.5px; color: var(--dim); }
+.fl-sheet .sh .x { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line2); display: grid; place-items: center; color: var(--ink2); font-size: 16px; flex-shrink: 0; }
+.fl-sheet .sb { padding: 14px 22px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; flex: 1; }
+.fl-sheet .sf { border-top: 1px solid var(--line); padding: 14px 22px; display: flex; align-items: center; gap: 10px; background: var(--card); }
+.fl-sheet .sf .sp { flex: 1; }
+.s-group { display: flex; flex-direction: column; gap: 12px; }
+.s-group .gh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.s-group .gh .t { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+.s-group .gh .m { font-size: 12px; color: var(--dim); }
+.s-item { display: grid; grid-template-columns: 1fr auto; gap: 3px 14px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+.s-item:first-of-type { border-top: 0; }
+.s-item .l { font-size: 15px; color: var(--ink); }
+.s-item .h { grid-column: 1 / -1; font-size: 12.5px; color: var(--dim); line-height: 1.45; max-width: 44ch; }
+.s-item .ctl { justify-self: end; }
+.s-item.sens .l::after { content: "asks first"; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--amber); margin-left: 8px; }
+.s-roles { display: flex; gap: 8px; }
+.s-role { flex: 1; border: 1px solid var(--line2); border-radius: var(--rs); padding: 10px 11px; }
+.s-role .n { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.s-role .d { font-size: 12px; color: var(--dim); line-height: 1.4; margin-top: 3px; }
+.s-role.on { border-color: var(--blue); background: rgba(19,79,211,.06); box-shadow: inset 0 0 0 1px var(--blue); }
+.s-standing { padding: 8px 10px; border-left: 2px solid var(--olive); background: var(--fill); border-radius: 0 4px 4px 0; font-size: 12.5px; color: var(--ink2); }
+.s-saved { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--olive); }
+.s-preview { border: 1px dashed var(--line2); border-radius: var(--rs); padding: 10px 12px; font-size: 13px; color: var(--ink2); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.s-preview b { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); width: 100%; }
+
+/* Confirm dialog */
+.fl-dialog { position: absolute; z-index: 9; width: 420px; background: var(--card); border: 1px solid var(--line2); border-radius: var(--r); box-shadow: 0 24px 60px rgba(0,0,0,.35); padding: 20px 22px; }
+.fl-dialog h4 { font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 700; }
+.fl-dialog p { font-size: 14px; color: var(--ink2); margin-top: 8px; }
+.fl-dialog .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* Phone frames */
+.fl-phone { width: 390px; }
+.fl-phone .fl-top { height: 48px; padding: 0 14px; }
+.fl-phone .ph-mast { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px; }
+.fl-phone .ph-mast h1 { font-family: "Barlow Condensed", sans-serif; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.fl-phone .ph-mast .sub { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--dim); }
+.fl-phone .ph-body { padding: 16px 16px 90px; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 52px 52px; position: relative; }
+.fl-phone .ph-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: var(--card); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5,1fr); align-items: center; z-index: 2; }
+.fl-phone .ph-bar span { font-size: 10px; text-align: center; color: var(--dim); display: grid; gap: 3px; justify-items: center; }
+.fl-phone .ph-bar span i { width: 20px; height: 20px; border: 1.6px solid currentColor; border-radius: 5px; display: block; opacity: .7; }
+.fl-phone .ph-bar span.on { color: var(--ink); font-weight: 600; }
+.p-row { display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "n chev" "r chev" "s chev"; gap: 3px 10px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); }
+.p-row:first-child { border-top: 0; }
+.p-row .n { grid-area: n; font-weight: 600; font-size: 15px; }
+.p-row .chev { grid-area: chev; align-self: center; color: var(--dim); font-size: 22px; }
+.p-row .s { grid-area: s; font-size: 12.5px; color: var(--dim); line-height: 1.4; }
+.p-row .s b { color: var(--amber); font-weight: 500; }
+.p-row .r { grid-area: r; display: flex; align-items: center; gap: 8px; }
+.ph-sheet { position: absolute; inset: 0; background: var(--card); z-index: 3; display: flex; flex-direction: column; }
+.ph-sheet .sh { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.ph-sheet .sh h3 { font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 700; }
+.ph-sheet .sb { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; flex: 1; overflow: hidden; }
+.ph-sheet .sf { border-top: 1px solid var(--line); padding: 12px 16px; display: flex; gap: 8px; }
+.ph-sheet .sf .fl-btn { flex: 1; justify-content: center; height: 44px; }
+.ph-sheet .s-item .l { font-size: 15px; }
+
+/* Matrix option */
+.mx { border-collapse: collapse; font-size: 13px; width: 100%; background: var(--card); }
+.mx th, .mx td { border: 1px solid var(--line); padding: 8px 10px; text-align: center; }
+.mx th { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--dim); background: var(--paper); }
+.mx td:first-child, .mx th:first-child { text-align: left; }
+.mx .on { color: var(--olive); font-weight: 700; }
+.mx .off { color: var(--line2); }
+.mx .half { color: var(--amber); font-weight: 700; }
+
+/* Role moves diagram */
+.moves { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: stretch; }
+.move { background: var(--d-surface); border: 1px solid var(--d-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; font-size: 14px; }
+.move .from { font-family: var(--d-font-mono); font-size: 12px; color: var(--d-ink-3); }
+.move .how { font-weight: 600; }
+.move .why { color: var(--d-ink-2); font-size: 13.5px; }
+@media (max-width: 900px) { .moves { grid-template-columns: 1fr 1fr; } }
+
+/* Small drawer specimen (schedule → game) */
+.dr { width: 440px; }
+.dr .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line2); }
+.dr .tabs span { padding: 8px 14px; font-size: 13.5px; color: var(--dim); }
+.dr .tabs span.on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--olive); }
+.dr .peek { padding: 14px; }
+.dr .peek .h { display: flex; justify-content: space-between; align-items: baseline; }
+.dr .peek h4 { font-size: 15px; }
+.dr .peek .sum { font-size: 13px; color: var(--dim); }
+.dr .peek .empty { margin-top: 12px; padding: 12px; border: 1px dashed var(--line2); border-radius: var(--rs); font-size: 13.5px; color: var(--ink2); display: grid; gap: 8px; justify-items: start; }
+.dr .ev { padding: 14px; display: grid; gap: 4px; }
+.dr .ev .t { font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 700; }
+.dr .ev .m { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--dim); }
+.dr .ev .err { margin-top: 8px; color: var(--live); font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="doc">
+
+  <header class="head">
+    <div class="eyebrow">Coaches portal · Team → Staff · decision sheet · 2026-09-10</div>
+    <h1>Coaching Staff Redesign</h1>
+    <p class="lede">What the Staff screen looks like today, what it would look like if it were a list of people with a sheet for each one, and how inviting someone would change so their access is set before the email goes out. Every product frame is drawn at a fixed width — 1180px for a laptop, 390px for a phone — so the fold and the density are real.</p>
+    <div class="legend">
+      <b>Tags:</b>
+      <span><span class="tag new">new</span> not on the screen today</span>
+      <span><span class="tag restyled">restyled</span> exists today, different shape or place</span>
+      <span><span class="tag same">unchanged</span> kept as is</span>
+      <span><span class="tag bad">defect</span> something the code does that it should not</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════ 1. TODAY ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">01 — TODAY, WHOLE SCREEN</span>
+      <h2>The screen is built around inviting, and the people are underneath it</h2>
+      <p>Drawn from the current code with a team of four assistants and one helper. The dashed line is where a 1366×768 laptop stops showing the page without scrolling. Nothing below it is visible on arrival.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="specimen-cap"><span class="t">Today · desktop</span><span class="m">1180px frame · true layout · 5 people on staff</span><span class="tag same">unchanged</span></div>
+      <div class="viewport">
+        <div class="fl fl-desktop" style="height: 1160px;">
+          <div class="fl-top">
+            <div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div>
+            <span class="portal">COACHES PORTAL</span>
+            <span class="spacer"></span><span class="bell"></span>
+          </div>
+          <div class="fl-body">
+            <aside class="fl-side">
+              <div class="fl-teamsel">UAT Test Team</div>
+              <nav class="fl-nav">
+                <a><span class="ico"></span>Overview</a>
+                <div class="grp"><span>Season</span><span class="c">4 ›</span></div>
+                <div class="grp"><span>Progress</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Money</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Money</a>
+                <div class="grp"><span>Communication</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Team</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Roster</a>
+                <a><span class="ico"></span>Tryouts</a>
+                <a class="on"><span class="ico"></span>Staff</a>
+                <a><span class="ico"></span>Documents</a>
+                <a><span class="ico"></span>Settings</a>
+              </nav>
+              <div class="help"><span class="ico" style="width:16px;height:16px;border:1.6px solid currentColor;border-radius:50%"></span>Help<span class="dot"></span></div>
+              <div class="avatar">N</div>
+            </aside>
+            <div class="fl-main">
+              <div class="fl-mast">
+                <div>
+                  <h1>UAT Test Team <span class="role">HEAD COACH</span></h1>
+                  <div class="sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+                </div>
+                <div class="helpbtn">?</div>
+              </div>
+              <div class="fl-content">
+                <div class="fl-ph"><div class="medal"><i></i></div><h2>Coaching staff</h2></div>
+                <p class="fl-lede">Invite assistants and choose exactly what each one can do.</p>
+
+                <div class="b-cols">
+                  <div class="b-left">
+                    <div class="fl-card b-invite" style="position:relative">
+                      <span class="fl-label">Who are you inviting?</span>
+                      <div style="display:grid;gap:6px">
+                        <div class="fl-radio"><span class="dot"></span><span><span class="n">Helper</span><span class="d">Runs a station. Sees the practice, nothing else.</span></span></div>
+                        <div class="fl-radio on"><span class="dot"></span><span><span class="n">Assistant coach</span><span class="d">Coaches the team. You choose what they can open.</span></span></div>
+                      </div>
+                      <div style="display:flex;gap:10px;align-items:flex-end;margin-top:14px">
+                        <div style="width:260px"><span class="fl-label">Assistant’s email</span><div class="fl-field">assistant@email.com</div></div>
+                        <span class="fl-btn lime">＋ Invite assistant</span>
+                      </div>
+                    </div>
+
+                    <div class="fl-card b-access" style="position:relative">
+                      <span class="fl-label" style="margin-bottom:10px">What an assistant gets</span>
+                      <p style="font-weight:700;font-size:14px;font-family:'Barlow Condensed',sans-serif">On from the start</p>
+                      <ul class="b-rail-list"><li>Schedule</li><li>Change the schedule</li><li>Attendance</li><li>Lineups</li><li>Staff chat</li><li>Documents</li></ul>
+                      <p style="font-weight:700;font-size:14px;font-family:'Barlow Condensed',sans-serif;margin-top:8px">Off until you turn it on</p>
+                      <ul class="b-rail-list off"><li>Team money</li><li>Contacts &amp; birthdates</li><li>Internal notes</li><li>Send announcements</li><li>Tryouts</li></ul>
+                      <p style="font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);margin-top:12px;padding-top:10px">Every assistant signs in as themselves — you never share a password — and you can take any of this back the moment you need to.</p>
+                    </div>
+
+                    <div class="b-list">
+                      <p class="b-count">4 assistants · 1 helper</p>
+                      <div class="fl-card" style="position:relative">
+                        <div class="b-person">
+                          <div><p class="n">UAT Assistant (money)</p><p class="e">uat-asst-money@uat-test-org.local</p></div>
+                          <span class="fl-btn sec sm">🗑 Remove</span>
+                        </div>
+                        <p class="b-group">Everyday coaching</p>
+                        <div class="b-grid">
+                          <div class="fl-check"><span class="box on"></span><span><span class="l">Schedule</span><span class="h">See the schedule + practice plans</span></span></div>
+                          <div class="fl-check"><span class="box"></span><span><span class="l">Change the schedule</span><span class="h">Add, edit and cancel events</span></span></div>
+                          <div class="fl-check"><span class="box on"></span><span><span class="l">Attendance</span><span class="h">Record attendance</span></span></div>
+                          <div class="fl-check"><span class="box on"></span><span><span class="l">Lineups</span><span class="h">Build game lineups</span></span></div>
+                          <div class="fl-check"><span class="box on"></span><span><span class="l">Staff chat</span><span class="h">In the team’s staff room</span></span></div>
+                          <div class="fl-segrow"><span class="l">Documents</span><span class="fl-seg"><span>Hidden</span><span class="on">View</span><span>Manage</span></span><span class="h">Blank team forms</span></div>
+                          <p class="b-standing">Players’ names, numbers and positions are visible to everyone on your staff. Their contact details and birthdates are not — that’s below.</p>
+                        </div>
+                        <div class="b-sens">
+                          <div class="h"><span class="cap">Sensitive access</span><span style="font-size:13px;color:var(--ink2)">Hide</span></div>
+                          <p class="note">Money, family contact details, and anything that emails your parents. You’ll be asked to confirm before granting these.</p>
+                          <div class="b-grid">
+                            <div class="fl-segrow"><span class="l">Team money</span><span class="fl-seg"><span>Hidden</span><span>View</span><span class="on">View + edit</span></span><span class="h">Budget, dues, expenses</span></div>
+                            <div class="fl-check"><span class="box on"></span><span><span class="l">Contacts &amp; birthdates</span><span class="h">Guardian contact + player DOB</span></span></div>
+                            <div class="fl-check"><span class="box"></span><span><span class="l">Internal notes</span><span class="h">Private staff notes</span></span></div>
+                            <div class="fl-check"><span class="box"></span><span><span class="l">Send announcements</span><span class="h">Email parents (off = draft only)</span></span></div>
+                            <div class="fl-check"><span class="box"></span><span><span class="l">Tryouts</span><span class="h">Candidates + decisions</span></span></div>
+                          </div>
+                        </div>
+                        <div class="callout" style="right:-238px;top:20px">One person = ~560px of controls. Four assistants is four of these, stacked. There is no way to see who has what without scrolling through all of them.</div>
+                      </div>
+                      <div class="fl-card">
+                        <div class="b-person">
+                          <div><p class="n">UAT Assistant (no money)</p><p class="e">uat-asst-nomoney@uat-test-org.local</p></div>
+                          <span class="fl-btn sec sm">🗑 Remove</span>
+                        </div>
+                        <p class="b-group">Everyday coaching</p>
+                        <div class="b-grid">
+                          <div class="fl-check"><span class="box on"></span><span><span class="l">Schedule</span><span class="h">See the schedule + practice plans</span></span></div>
+                          <div class="fl-check"><span class="box"></span><span><span class="l">Change the schedule</span><span class="h">Add, edit and cancel events</span></span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <aside class="fl-card b-rail" style="position:relative">
+                    <h3>Helper or assistant?</h3>
+                    <h4>A helper</h4>
+                    <p>A parent or an outside instructor who turns up to run a station. One screen, read-only, no staff chat. Perfect for the person doing the tee for an hour.</p>
+                    <h4>An assistant coach</h4>
+                    <p>Staff. They start with the schedule, attendance, lineups and the roster, they’re in your staff chat, and you can grant more from their card.</p>
+                    <p class="foot">Both sign in as themselves — you never share a password. You can promote a helper to an assistant coach later without inviting them again, and take any of it back at any time.</p>
+                    <div class="callout" style="left:0;top:calc(100% + 14px);max-width:288px">Third copy of one explanation — the radios say it, the card on the left says it, the rail says it. The grid’s own hints are three words each.</div>
+                    <div class="callout" style="left:0;top:calc(100% + 96px);max-width:288px">Inviting is permanent and first. It happens two or three times a season; the people sit under it every visit.</div>
+                  </aside>
+                </div>
+              </div>
+              <div class="fold" style="top:590px" data-label="1366×768 laptop — the page stops here on arrival"></div>
+              <div class="fade"><span class="more">continues ≈ 2,300px further — three more people, then the phone stacks the rail underneath</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="k">What the frame shows</span>
+        <ul>
+          <li><b>The people are below the fold.</b> Invite card + access card ≈ 640px before the first name. On the two screenshots you posted, the first staff card is the third screen down.</li>
+          <li><b>Every person is a full control panel.</b> Eleven controls each, so the list cannot be scanned — it can only be scrolled. A head coach with three assistants has no view that answers “who can see the money?” in one look.</li>
+          <li><b>The head coach is not in the list.</b> It is an assistants list with a helper section, not the team’s staff.</li>
+          <li><b>Invites vanish once sent.</b> There is no “invited, not yet accepted” state, no resend and no cancel. The only place a pending invite can be seen is the club admin’s oversight page — which a standalone Premium team does not have.</li>
+          <li><b>A helper’s card has no controls.</b> To give a helper attendance you must first “Make assistant coach” (which also hands them schedule editing, lineups, documents and the staff chat), then switch four things back off — and the card then relabels them “Assistant” because the word is worked out from the switches.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 2. AFTER — LIST ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">02 — PROPOSED, WHOLE SCREEN</span>
+      <h2>A list of people. One row each. Everything else opens from the row.</h2>
+      <p>The same team, plus a treasurer. The page becomes a staff list — head coach included, pending invites included — with each person’s access summarised as chips, sensitive grants marked so they stand out. Inviting moves to a button in the page header and opens a sheet; editing someone opens the same sheet on their row. Nothing sits under the page title, which is the portal’s page-header rule.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="specimen-cap"><span class="t">Proposed · desktop</span><span class="m">1180px frame (narrower than your 1920px screen) · 6 people on staff + 1 pending invite</span><span class="tag restyled">restyled</span><span class="tag new">new: head coach row · pending invite · role chips · access chips</span></div>
+      <div class="viewport">
+        <div class="fl fl-desktop" style="height: 800px;">
+          <div class="fl-top">
+            <div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div>
+            <span class="portal">COACHES PORTAL</span>
+            <span class="spacer"></span><span class="bell"></span>
+          </div>
+          <div class="fl-body">
+            <aside class="fl-side">
+              <div class="fl-teamsel">UAT Test Team</div>
+              <nav class="fl-nav">
+                <a><span class="ico"></span>Overview</a>
+                <div class="grp"><span>Season</span><span class="c">4 ›</span></div>
+                <div class="grp"><span>Progress</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Money</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Money</a>
+                <div class="grp"><span>Communication</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Team</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Roster</a>
+                <a><span class="ico"></span>Tryouts</a>
+                <a class="on"><span class="ico"></span>Staff</a>
+                <a><span class="ico"></span>Documents</a>
+                <a><span class="ico"></span>Settings</a>
+              </nav>
+              <div class="help"><span class="ico" style="width:16px;height:16px;border:1.6px solid currentColor;border-radius:50%"></span>Help<span class="dot"></span></div>
+              <div class="avatar">N</div>
+            </aside>
+            <div class="fl-main">
+              <div class="fl-mast">
+                <div>
+                  <h1>UAT Test Team <span class="role">HEAD COACH</span></h1>
+                  <div class="sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+                </div>
+                <div class="helpbtn">?</div>
+              </div>
+              <div class="fl-content">
+                <div class="fl-ph">
+                  <div class="medal"><i></i></div><h2>Coaching staff</h2>
+                  <span class="act fl-btn lime">＋ Invite someone</span>
+                </div>
+
+                <div class="a-list" style="position:relative">
+                  <div class="a-row hdr"><span>Person</span><span>Role</span><span>Can open</span><span></span></div>
+
+                  <div class="a-row">
+                    <div class="who"><p class="n">Nathan Cowan <span class="you">(you)</span></p><p class="e">b2cowan@gmail.com</p></div>
+                    <div><span class="fl-rolechip head">Head coach</span></div>
+                    <div class="caps"><span class="none">Everything — including this page.</span></div>
+                    <div class="act"><span class="q">Hand over to someone else ›</span></div>
+                  </div>
+
+                  <div class="a-row">
+                    <div class="who"><p class="n">Dana Whitlock</p><p class="e">dana.w@uat-test-org.local</p><p class="fam">Also follows the team as a family member</p></div>
+                    <div><span class="fl-rolechip">Assistant coach</span></div>
+                    <div class="caps">
+                      <span class="fl-chip">Schedule · edit</span><span class="fl-chip">Attendance</span><span class="fl-chip">Lineups</span><span class="fl-chip">Staff chat</span><span class="fl-chip">Documents · view</span>
+                      <span class="fl-chip sens">Money · edit</span><span class="fl-chip sens">Contacts &amp; birthdates</span>
+                    </div>
+                    <div class="act"><a>Edit access</a></div>
+                  </div>
+
+                  <div class="a-row">
+                    <div class="who"><p class="n">Sam Ferreira</p><p class="e">sam.f@uat-test-org.local</p></div>
+                    <div><span class="fl-rolechip">Assistant coach</span></div>
+                    <div class="caps">
+                      <span class="fl-chip">Schedule · edit</span><span class="fl-chip">Attendance</span><span class="fl-chip">Lineups</span><span class="fl-chip">Staff chat</span><span class="fl-chip">Documents · view</span>
+                    </div>
+                    <div class="act"><a>Edit access</a></div>
+                  </div>
+
+                  <div class="a-row">
+                    <div class="who"><p class="n">Priya Raman</p><p class="e">priya.r@uat-test-org.local</p></div>
+                    <div><span class="fl-rolechip mgr">Team manager</span></div>
+                    <div class="caps">
+                      <span class="fl-chip">Schedule · edit</span><span class="fl-chip">Staff chat</span><span class="fl-chip">Documents · manage</span>
+                      <span class="fl-chip sens">Money · edit</span><span class="fl-chip sens">Contacts &amp; birthdates</span><span class="fl-chip sens">Email families</span>
+                    </div>
+                    <div class="act"><a>Edit access</a></div>
+                  </div>
+
+                  <div class="a-row">
+                    <div class="who"><p class="n">Omar Haddad</p><p class="e">omar.h@gmail.com</p></div>
+                    <div><span class="fl-rolechip treas">Team treasurer</span></div>
+                    <div class="caps"><span class="fl-chip">Schedule · view</span><span class="fl-chip sens">Money · edit</span><span class="none" style="align-self:center">Names beside the dues; no family contacts unless you add them.</span></div>
+                    <div class="act"><a>Edit access</a></div>
+                  </div>
+
+                  <div class="a-row">
+                    <div class="who"><p class="n">Marcus Lee</p><p class="e">marcus.lee@gmail.com</p></div>
+                    <div><span class="fl-rolechip helper">Helper</span></div>
+                    <div class="caps"><span class="fl-chip">Schedule · view</span><span class="fl-chip">Practice plans</span><span class="none" style="align-self:center">Nothing else, not the staff chat.</span></div>
+                    <div class="act"><a>Edit access</a></div>
+                  </div>
+
+                  <div class="a-row pending">
+                    <div class="who"><p class="n">jordan.p@gmail.com</p><p class="e">Invited Tue 8 Sep · link works 5 more days</p></div>
+                    <div><span class="fl-rolechip invited">Invited</span></div>
+                    <div class="caps">Will start as an <b>assistant coach</b> with the everyday tools. You can change that before they accept.</div>
+                    <div class="act"><span class="fl-btn sec sm">Resend</span><span class="fl-btn ghost sm">Cancel</span></div>
+                  </div>
+
+                </div>
+                <div class="a-foot"><span>Everyone signs in as themselves. Removing someone ends their access to every screen and every season at once.</span><a>How staff access works</a></div>
+              </div>
+              <div class="fold l" style="top:590px" data-label="same laptop — everyone on staff is above the fold; the pending invite straddles it"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="k">What changed and why</span>
+        <ul>
+          <li><b>The people come first.</b> The list is the page. Inviting is one button in the header, where every other page in the portal puts its page-level action.</li>
+          <li><b>One row per person, one line of access.</b> Chips name the areas in the same words the sheet uses. Amber chips are the sensitive ones, so the scan you actually do — “who has money, who has contacts?” — takes one glance.</li>
+          <li><b>Role is a label you chose, not a word worked out from the switches.</b> A helper you also let mark attendance stays a helper. See §04.</li>
+          <li><b>The explanation lives in one place</b> — the sheet, beside the control it explains — instead of three. The page keeps one sentence and a link to the help article.</li>
+          <li><b>Pending invites exist.</b> Row, resend, cancel, and the starting access is editable before acceptance — which is what makes “set access first, then send” safe to trust.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 3. INVITE SHEET ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">03 — INVITING SOMEONE</span>
+      <h2>Email, who they are, what they can open — then send</h2>
+      <p>Today the head coach sends the invite, then has to remember to come back and grant things after the person accepts. The invite already carries a starting bundle for helpers; this extends that to every invite. The person lands with the right doors open on their first sign-in, and the sensitive confirmations happen once, at send time.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="specimen-cap"><span class="t">Invite sheet · desktop</span><span class="m">1180px frame · sheet 520px · Team manager chosen</span><span class="tag new">new</span></div>
+      <div class="viewport">
+        <div class="fl fl-desktop sheet-stage" style="height: 940px;">
+          <div class="fl-top">
+            <div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div>
+            <span class="portal">COACHES PORTAL</span><span class="spacer"></span><span class="bell"></span>
+          </div>
+          <div class="fl-body">
+            <aside class="fl-side">
+              <div class="fl-teamsel">UAT Test Team</div>
+              <nav class="fl-nav">
+                <a><span class="ico"></span>Overview</a>
+                <div class="grp"><span>Season</span><span class="c">4 ›</span></div>
+                <div class="grp"><span>Progress</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Money</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Money</a>
+                <div class="grp"><span>Communication</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Team</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Roster</a><a><span class="ico"></span>Tryouts</a><a class="on"><span class="ico"></span>Staff</a><a><span class="ico"></span>Documents</a><a><span class="ico"></span>Settings</a>
+              </nav>
+              <div class="help"><span class="ico" style="width:16px;height:16px;border:1.6px solid currentColor;border-radius:50%"></span>Help<span class="dot"></span></div>
+              <div class="avatar">N</div>
+            </aside>
+            <div class="fl-main">
+              <div class="fl-mast"><div><h1>UAT Test Team <span class="role">HEAD COACH</span></h1><div class="sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="helpbtn">?</div></div>
+              <div class="fl-content">
+                <div class="fl-ph"><div class="medal"><i></i></div><h2>Coaching staff</h2><span class="act fl-btn lime">＋ Invite someone</span></div>
+                <div class="a-list">
+                  <div class="a-row hdr"><span>Person</span><span>Role</span><span>Can open</span><span></span></div>
+                  <div class="a-row"><div class="who"><p class="n">Nathan Cowan <span class="you">(you)</span></p></div><div><span class="fl-rolechip head">Head coach</span></div><div class="caps"><span class="none">Everything</span></div><div class="act"></div></div>
+                  <div class="a-row"><div class="who"><p class="n">Dana Whitlock</p></div><div><span class="fl-rolechip">Assistant coach</span></div><div class="caps"><span class="fl-chip">Schedule · edit</span><span class="fl-chip">Attendance</span><span class="fl-chip">Lineups</span></div><div class="act"><a>Edit access</a></div></div>
+                  <div class="a-row"><div class="who"><p class="n">Sam Ferreira</p></div><div><span class="fl-rolechip">Assistant coach</span></div><div class="caps"><span class="fl-chip">Schedule · edit</span><span class="fl-chip">Attendance</span></div><div class="act"><a>Edit access</a></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sheet-dim"></div>
+          <div class="fl-sheet">
+            <div class="sh">
+              <div><h3>Invite someone to UAT Test Team</h3><p class="e">They get an email with a link that works for 7 days. Their access starts when they accept.</p></div>
+              <span class="x">×</span>
+            </div>
+            <div class="sb">
+              <div><span class="fl-label">Their email</span><div class="fl-field filled">priya.raman@gmail.com</div></div>
+
+              <div class="s-group">
+                <div class="gh"><span class="t">Who are they?</span></div>
+                <div class="fl-dd"><span>Team manager</span><span class="car">⌄</span></div>
+                <p class="fl-ddhint">Runs the team off the field — money, forms, family emails. Not the lineup.</p>
+              </div>
+
+              <div class="s-group">
+                <div class="gh"><span class="t">What they’ll be able to open</span><span class="m">Set from “Team manager” — change anything</span></div>
+                <div class="s-item"><span class="l">Schedule</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">View + edit</span></span><span class="h">See the schedule and practice plans. Edit adds, changes and cancels events.</span></div>
+                <div class="s-item"><span class="l">Attendance</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">Mark who came, at practices and games.</span></div>
+                <div class="s-item"><span class="l">Lineups</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">Build and change game lineups.</span></div>
+                <div class="s-item"><span class="l">Staff chat</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">A seat in the team’s private staff room.</span></div>
+                <div class="s-item"><span class="l">Documents</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">Manage</span></span><span class="h">Blank team forms. Signed player forms also need Contacts &amp; birthdates.</span></div>
+                <div class="s-item sens"><span class="l">Team money</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">View + edit</span></span><span class="h">Budget, dues, expenses and every payment.</span></div>
+                <div class="s-item sens"><span class="l">Contacts &amp; birthdates</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Guardian names, emails and phones; players’ birthdates, medical and emergency details.</span></div>
+                <div class="s-item sens"><span class="l">Email families</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Send announcements to every guardian. Off means they can draft, not send.</span></div>
+              </div>
+            </div>
+            <div class="sf">
+              <span style="font-size:12.5px;color:var(--dim)">3 sensitive grants — you’ll confirm them next.</span>
+              <span class="sp"></span>
+              <span class="fl-btn ghost">Cancel</span><span class="fl-btn lime">Send invite</span>
+            </div>
+          </div>
+          <div class="fl-dialog" style="left:200px;top:250px">
+            <h4>Give priya.raman@gmail.com access to team money, family contacts and emailing families?</h4>
+            <p>When they accept they’ll see the budget, dues and every payment; guardian names, emails, phones and player birthdates for the whole roster; and be able to email every family. You can take any of it back from their row.</p>
+            <div class="acts"><span class="fl-btn ghost">Back</span><span class="fl-btn lime">Send with this access</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="specimen">
+      <div class="specimen-cap"><span class="t">The role dropdown, open — before anything is chosen</span><span class="m">the app’s own sub-lined dropdown · 520px sheet width</span><span class="tag same">unchanged control</span><span class="tag new">new here</span></div>
+      <div class="fl" style="width:520px;padding:18px 22px;box-shadow:none">
+        <div class="s-group" style="gap:10px">
+          <div><span class="fl-label">Their email</span><div class="fl-field filled">omar.h@gmail.com</div></div>
+          <div class="gh"><span class="t">Who are they?</span></div>
+          <div class="fl-dd empty"><span>Choose who they are</span><span class="car">⌄</span></div>
+          <div class="fl-ddlist">
+            <div class="fl-ddopt"><span class="n">Assistant coach</span><span class="s">Coaches the team. Starts with the everyday tools; you choose the rest.</span></div>
+            <div class="fl-ddopt"><span class="n">Team manager</span><span class="s">Runs the team off the field — money, forms, family emails. Not the lineup.</span></div>
+            <div class="fl-ddopt"><span class="n">Team treasurer</span><span class="s">Keeps the books — budget, dues, expenses and payments. Nothing else.</span></div>
+            <div class="fl-ddopt"><span class="n">Helper</span><span class="s">Runs a station at practice. Sees the plan and the players in front of them.</span></div>
+          </div>
+          <div class="gh" style="margin-top:6px"><span class="t">What they’ll be able to open</span></div>
+          <p class="fl-ghost">Choose who they are, and their starting access appears here for you to adjust.</p>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="k">Decisions inside this frame</span>
+        <ul>
+          <li><b>Four starting points, not two.</b> “Team manager” is the parent who runs money, forms and family email and never touches a lineup; “Team treasurer” is the parent who keeps the books and nothing else. On a rep team both are more common than a second coach. Today both are invited as an “Assistant coach”, get an email saying they’ll help coach, and the head coach flips the sensitive switches through separate dialogs afterwards. <span class="tag new">new</span></li>
+          <li><b>The role is a dropdown</b>, and it is the app’s existing one: each option carries its sentence, so the choice is explained where it is made. The house rule says a one-value field is a dropdown, with radio cards reserved for choices that cannot be changed afterwards — and this one can, from the same sheet. <span class="tag same">unchanged control</span></li>
+          <li><b>Nothing is preselected.</b> The field opens on “Choose who they are”, and the access section beneath stays a quiet note until a role is picked — the same cold-open shape the money screens use. (Today Helper is preselected as the “safer accident”; with the access list visible before sending there is no accident to protect against.)</li>
+          <li><b>The starting access is the preset, editable in place.</b> Every control has a one-sentence explanation, written for the person deciding, not for a coach mid-edit. <span class="tag restyled">restyled</span></li>
+          <li><b>One confirmation, at send.</b> All sensitive grants in the invite are confirmed together, once, in one sentence that lists what is being handed over. Today each one is a separate dialog after acceptance.</li>
+          <li><b>Schedule is one three-way control</b> — Hidden / View / View + edit — like Money and Documents. The two-checkbox split goes. <span class="tag restyled">restyled</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 4. PERSON SHEET ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">04 — ONE PERSON’S ACCESS</span>
+      <h2>The same sheet, opened on a row</h2>
+      <p>Role at the top as a control, every grant beneath it with its sentence, saves on every tap exactly as today, and the two actions a head coach occasionally needs at the bottom. Changing the role applies that role’s starting bundle; the label stays whatever you set, however you then adjust the switches.</p>
+    </div>
+
+    <div class="specimen">
+      <div class="specimen-cap"><span class="t">Access sheet · Marcus Lee, a helper being given attendance</span><span class="m">1180px frame · sheet 520px</span><span class="tag restyled">restyled</span><span class="tag new">new: role control · make head coach</span></div>
+      <div class="viewport">
+        <div class="fl fl-desktop sheet-stage" style="height: 980px;">
+          <div class="fl-top">
+            <div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div>
+            <span class="portal">COACHES PORTAL</span><span class="spacer"></span><span class="bell"></span>
+          </div>
+          <div class="fl-body">
+            <aside class="fl-side">
+              <div class="fl-teamsel">UAT Test Team</div>
+              <nav class="fl-nav">
+                <a><span class="ico"></span>Overview</a>
+                <div class="grp"><span>Season</span><span class="c">4 ›</span></div>
+                <div class="grp"><span>Progress</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Money</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Money</a>
+                <div class="grp"><span>Communication</span><span class="c">2 ›</span></div>
+                <div class="grp"><span>Team</span><span class="c">⌄</span></div>
+                <a><span class="ico"></span>Roster</a><a><span class="ico"></span>Tryouts</a><a class="on"><span class="ico"></span>Staff</a><a><span class="ico"></span>Documents</a><a><span class="ico"></span>Settings</a>
+              </nav>
+              <div class="help"><span class="ico" style="width:16px;height:16px;border:1.6px solid currentColor;border-radius:50%"></span>Help<span class="dot"></span></div>
+              <div class="avatar">N</div>
+            </aside>
+            <div class="fl-main">
+              <div class="fl-mast"><div><h1>UAT Test Team <span class="role">HEAD COACH</span></h1><div class="sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="helpbtn">?</div></div>
+              <div class="fl-content">
+                <div class="fl-ph"><div class="medal"><i></i></div><h2>Coaching staff</h2><span class="act fl-btn lime">＋ Invite someone</span></div>
+                <div class="a-list">
+                  <div class="a-row hdr"><span>Person</span><span>Role</span><span>Can open</span><span></span></div>
+                  <div class="a-row"><div class="who"><p class="n">Nathan Cowan <span class="you">(you)</span></p></div><div><span class="fl-rolechip head">Head coach</span></div><div class="caps"><span class="none">Everything</span></div><div class="act"></div></div>
+                  <div class="a-row"><div class="who"><p class="n">Dana Whitlock</p></div><div><span class="fl-rolechip">Assistant coach</span></div><div class="caps"><span class="fl-chip">Schedule · edit</span><span class="fl-chip">Attendance</span><span class="fl-chip">Lineups</span></div><div class="act"><a>Edit access</a></div></div>
+                  <div class="a-row" style="background:var(--fill)"><div class="who"><p class="n">Marcus Lee</p></div><div><span class="fl-rolechip helper">Helper</span></div><div class="caps"><span class="fl-chip">Schedule · view</span><span class="fl-chip">Practice plans</span></div><div class="act"><a>Edit access</a></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sheet-dim"></div>
+          <div class="fl-sheet">
+            <div class="sh">
+              <div><h3>Marcus Lee</h3><p class="e">marcus.lee@gmail.com · joined 2 Sep</p></div>
+              <span class="s-saved">✓ Saved</span>
+            </div>
+            <div class="sb">
+              <div class="s-group">
+                <div class="gh"><span class="t">Role</span><span class="m">Changing it applies that role’s starting access</span></div>
+                <div class="fl-dd"><span>Helper</span><span class="car">⌄</span></div>
+                <p class="fl-ddhint">Runs a station at practice. Sees the plan and the players in front of them.</p>
+              </div>
+
+              <div class="s-group">
+                <div class="gh"><span class="t">Everyday</span></div>
+                <div class="s-item"><span class="l">Schedule</span><span class="ctl fl-seg"><span>Hidden</span><span class="on">View</span><span>View + edit</span></span><span class="h">See the schedule and practice plans. Edit adds, changes and cancels events.</span></div>
+                <div class="s-item" style="background:var(--olive-soft);margin:0 -10px;padding:8px 10px;border-radius:6px"><span class="l">Attendance</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Mark who came, at practices and games. <b style="color:var(--olive)">Turning this on also opens the roster page for them.</b></span></div>
+                <div class="s-item"><span class="l">Lineups</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">Build and change game lineups.</span></div>
+                <div class="s-item"><span class="l">Staff chat</span><span class="ctl fl-check"><span class="box"></span></span><span class="h">A seat in the team’s private staff room.</span></div>
+                <div class="s-item"><span class="l">Documents</span><span class="ctl fl-seg"><span class="on">Hidden</span><span>View</span><span>Manage</span></span><span class="h">Blank team forms. Signed player forms also need Contacts &amp; birthdates.</span></div>
+                <p class="s-standing">Players’ names, numbers and positions are visible to everyone on your staff. Their contact details and birthdates are below.</p>
+              </div>
+
+              <div class="s-group">
+                <div class="gh"><span class="t">Sensitive — asks before granting</span><span class="m">none granted</span></div>
+                <div class="s-item sens"><span class="l">Team money</span><span class="ctl fl-seg"><span class="on">Hidden</span><span>View</span><span>View + edit</span></span></div>
+                <div class="s-item sens"><span class="l">Contacts &amp; birthdates</span><span class="ctl fl-check"><span class="box"></span></span></div>
+                <div class="s-item sens"><span class="l">Internal notes</span><span class="ctl fl-check"><span class="box"></span></span></div>
+                <div class="s-item sens"><span class="l">Email families</span><span class="ctl fl-check"><span class="box"></span></span></div>
+                <div class="s-item sens"><span class="l">Tryouts</span><span class="ctl fl-check"><span class="box"></span></span></div>
+              </div>
+            </div>
+            <div class="sf">
+              <span class="fl-btn danger">Remove from team</span>
+              <span class="sp"></span>
+              <span class="fl-btn sec">Make head coach</span>
+            </div>
+          </div>
+          <div class="callout left" style="left:440px;top:330px;background:var(--d-good);border-color:var(--d-good)">A helper who can mark attendance is still called a helper. Today this exact change relabels them “Assistant” and needs five taps.</div>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="k">Decisions inside this frame</span>
+        <ul>
+          <li><b>Role is stored, never derived.</b> It chooses the starting bundle, the word on the row, and the email wording. It gates nothing — every door still opens on the individual grant, which is the safety property the original “preset, not a role” decision existed to protect. Keeping the label while the switches move is the one thing a derived label cannot do.</li>
+          <li><b>Moving between roles is one pick, any direction.</b> The Role dropdown applies that role’s bundle; a widening confirms, a narrowing does not (a head coach taking access back is always in a hurry — the current rule, kept).</li>
+          <li><b>Sensitive stays a visible group, not a fold.</b> In a sheet there is room; a collapsed group with a “2 granted” count was a fix for a card that was already too tall.</li>
+          <li><b>Consequences are said on the control.</b> “Turning this on also opens the roster page” is the one rule today’s grid never states, and the one a head coach cannot guess.</li>
+          <li><b>“Make head coach” exists here</b> — confirm, then this person can do everything, including manage staff. Today a standalone Premium team has no way to change its head coach at all; a club team needs the admin. <span class="tag new">new</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 5. ROLE MOVES ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">05 — MOVING PEOPLE BETWEEN ROLES</span>
+      <h2>Every move is one control on the person’s sheet</h2>
+    </div>
+    <div class="moves" style="grid-template-columns: repeat(3, 1fr)">
+      <div class="move"><span class="from">Any role → a wider one</span><span class="how">Pick it in the Role dropdown on their sheet</span><span class="why">Applies that role’s starting bundle and confirms once, listing what widens — a helper made an assistant coach gains schedule editing, lineups and the staff chat; anyone made a manager or treasurer gains money.</span><span class="tag restyled">today: “Make assistant coach” is the only move that exists</span></div>
+      <div class="move"><span class="from">Any role → a narrower one</span><span class="how">Pick it in the Role dropdown</span><span class="why">Strips to that role’s bundle. No confirmation — a head coach taking access back is always in a hurry (today’s rule, kept).</span><span class="tag new">today: untick switches by hand, and the card relabels itself</span></div>
+      <div class="move"><span class="from">Assistant, manager or treasurer → Head coach</span><span class="how">“Make head coach” in the sheet footer</span><span class="why">Confirms; the team then has two head coaches until one steps down. Removing the last head coach is refused.</span><span class="tag new">today: club admin only; impossible on a standalone team</span></div>
+    </div>
+    <p style="margin-top:14px;color:var(--d-ink-2)">The word on the row is whatever you picked. Adjusting a switch afterwards never changes it — a treasurer you also let mark attendance is still the treasurer.</p>
+  </section>
+
+  <!-- ═══════════════════════════════ 6. PHONE ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">06 — PHONE, TRUE SIZE</span>
+      <h2>390px, before and after</h2>
+      <p>Open this page on your phone to judge the tap targets. Both frames are drawn at the real width; the sheet on the right is what “Edit access” opens.</p>
+    </div>
+    <div class="pair" style="grid-template-columns: 390px 390px 390px; gap: 24px; overflow-x: auto; padding-bottom: 12px;">
+      <div>
+        <div class="specimen-cap"><span class="t">Today</span><span class="m">≈ 5 screens for 3 assistants</span></div>
+        <div class="fl fl-phone" style="height: 820px;">
+          <div class="fl-top"><div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div><span class="spacer"></span><span class="bell"></span></div>
+          <div class="ph-mast"><h1>UAT Test Team <span class="role" style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;border:1px solid var(--line2);border-radius:5px;padding:2px 6px">HEAD COACH</span></h1><div class="sub">2026 Season · 3-2-1</div></div>
+          <div class="ph-body" style="display:grid;gap:14px;align-content:start">
+            <div class="fl-ph" style="margin:0"><div class="medal"><i></i></div><h2 style="font-size:22px">Coaching staff</h2></div>
+            <p class="fl-lede" style="margin:0;font-size:15px">Invite assistants and choose exactly what each one can do.</p>
+            <div class="fl-card" style="padding:14px">
+              <span class="fl-label">Who are you inviting?</span>
+              <div style="display:grid;gap:6px">
+                <div class="fl-radio on"><span class="dot"></span><span><span class="n">Helper</span><span class="d">Runs a station. Sees the practice, nothing else.</span></span></div>
+                <div class="fl-radio"><span class="dot"></span><span><span class="n">Assistant coach</span><span class="d">Coaches the team. You choose what they can open.</span></span></div>
+              </div>
+              <span class="fl-label" style="margin-top:12px">Helper’s email</span>
+              <div class="fl-field" style="height:44px">helper@email.com</div>
+              <span class="fl-btn lime" style="margin-top:10px;height:44px">＋ Invite helper</span>
+            </div>
+            <div class="fl-card" style="padding:14px">
+              <span class="fl-label">What a helper gets</span>
+              <p style="font-weight:700;font-family:'Barlow Condensed',sans-serif">All they can see</p>
+              <ul class="b-rail-list"><li>The practice schedule, and the plan for each practice</li><li>Players’ names, numbers and positions at their station</li></ul>
+              <p style="font-weight:700;font-family:'Barlow Condensed',sans-serif;margin-top:8px">Never</p>
+              <ul class="b-rail-list off"><li>Adding, changing or cancelling anything on the schedule</li><li>Team documents</li><li>Team money — budget, dues and expenses</li></ul>
+            </div>
+          </div>
+          <div class="fade" style="height:160px"><span class="more">first person ≈ 1,100px down</span></div>
+          <div class="ph-bar" style="position:absolute"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Roster</span><span><i></i>Chat</span><span class="on"><i></i>More</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="specimen-cap"><span class="t">Proposed · list</span><span class="m">whole staff on one screen</span><span class="tag restyled">restyled</span></div>
+        <div class="fl fl-phone" style="height: 820px;">
+          <div class="fl-top"><div class="fl-logo"><span class="mark"></span><span class="word">FIELD<b>LOGIC</b>HQ</span></div><span class="spacer"></span><span class="bell"></span></div>
+          <div class="ph-mast"><h1>UAT Test Team</h1><div class="sub">2026 Season · 3-2-1</div></div>
+          <div class="ph-body" style="display:grid;gap:12px;align-content:start">
+            <div class="fl-ph" style="margin:0"><div class="medal"><i></i></div><h2 style="font-size:22px">Coaching staff</h2><span class="act fl-btn lime sm" style="height:36px">＋ Invite</span></div>
+            <div class="a-list">
+              <div class="p-row"><span class="n">Nathan Cowan <span style="font-size:11px;font-weight:500;color:var(--dim)">(you)</span></span><span class="chev">›</span><span class="r"><span class="fl-rolechip head">Head coach</span></span></div>
+              <div class="p-row"><span class="n">Dana Whitlock</span><span class="chev">›</span><span class="r"><span class="fl-rolechip">Assistant coach</span></span><span class="s">Schedule · attendance · lineups · chat · documents · <b>money · contacts</b></span></div>
+              <div class="p-row"><span class="n">Sam Ferreira</span><span class="chev">›</span><span class="r"><span class="fl-rolechip">Assistant coach</span></span><span class="s">Schedule · attendance · lineups · chat · documents</span></div>
+              <div class="p-row"><span class="n">Priya Raman</span><span class="chev">›</span><span class="r"><span class="fl-rolechip mgr">Team manager</span></span><span class="s">Schedule · chat · documents · <b>money · contacts · email families</b></span></div>
+              <div class="p-row"><span class="n">Omar Haddad</span><span class="chev">›</span><span class="r"><span class="fl-rolechip treas">Team treasurer</span></span><span class="s">Schedule (view) · <b>money</b></span></div>
+              <div class="p-row"><span class="n">Marcus Lee</span><span class="chev">›</span><span class="r"><span class="fl-rolechip helper">Helper</span></span><span class="s">Schedule (view) · practice plans</span></div>
+              <div class="p-row" style="background:rgba(131,80,6,.04)"><span class="n" style="font-weight:500">jordan.p@gmail.com</span><span class="chev">›</span><span class="r"><span class="fl-rolechip invited">Invited</span><span style="font-size:12px;color:var(--dim)">5 days left</span></span><span class="s">Will start as an assistant coach</span></div>
+            </div>
+            <p style="font-size:12.5px;color:var(--dim)">Everyone signs in as themselves. Removing someone ends their access everywhere at once.</p>
+          </div>
+          <div class="ph-bar" style="position:absolute"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Roster</span><span><i></i>Chat</span><span class="on"><i></i>More</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="specimen-cap"><span class="t">Proposed · sheet</span><span class="m">full screen on a phone</span><span class="tag new">new</span></div>
+        <div class="fl fl-phone" style="height: 820px;">
+          <div class="ph-sheet">
+            <div class="sh"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h3>Dana Whitlock</h3><p style="font-size:12px;color:var(--dim)">dana.w@uat-test-org.local</p></div><span class="s-saved">✓ Saved</span></div></div>
+            <div class="sb">
+              <div class="s-group">
+                <div class="gh"><span class="t">Role</span></div>
+                <div class="fl-dd"><span>Assistant coach</span><span class="car">⌄</span></div>
+              </div>
+              <div class="s-group">
+                <div class="gh"><span class="t">Everyday</span></div>
+                <div class="s-item"><span class="l">Schedule</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">View + edit</span></span><span class="h">See the schedule and practice plans. Edit adds, changes and cancels events.</span></div>
+                <div class="s-item"><span class="l">Attendance</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Mark who came, at practices and games.</span></div>
+                <div class="s-item"><span class="l">Lineups</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">Build and change game lineups.</span></div>
+                <div class="s-item"><span class="l">Staff chat</span><span class="ctl fl-check"><span class="box on"></span></span><span class="h">A seat in the team’s private staff room.</span></div>
+                <div class="s-item"><span class="l">Documents</span><span class="ctl fl-seg"><span>Hidden</span><span class="on">View</span><span>Manage</span></span><span class="h">Blank team forms.</span></div>
+              </div>
+              <div class="s-group">
+                <div class="gh"><span class="t">Sensitive — asks first</span><span class="m">2 granted</span></div>
+                <div class="s-item sens"><span class="l">Team money</span><span class="ctl fl-seg"><span>Hidden</span><span>View</span><span class="on">View + edit</span></span></div>
+                <div class="s-item sens"><span class="l">Contacts &amp; birthdates</span><span class="ctl fl-check"><span class="box on"></span></span></div>
+                <div class="s-item sens"><span class="l">Internal notes</span><span class="ctl fl-check"><span class="box"></span></span></div>
+              </div>
+            </div>
+            <div class="sf"><span class="fl-btn danger">Remove</span><span class="fl-btn sec">Done</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 7. OPTION B ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">07 — THE ALTERNATIVE CONSIDERED</span>
+      <h2>Option B: an access matrix</h2>
+      <p>People across, areas down, every cell a control. It answers “who has what?” better than anything — and it is the wrong primary screen for this product. Drawn so the choice is visible, not to be built.</p>
+    </div>
+    <div class="pair">
+      <div class="fl" style="padding:16px;width:100%;box-shadow:none">
+        <div class="scroll-x">
+        <table class="mx">
+          <tr><th>Area</th><th>Dana<br><small>Assistant</small></th><th>Sam<br><small>Assistant</small></th><th>Priya<br><small>Manager</small></th><th>Omar<br><small>Treasurer</small></th><th>Marcus<br><small>Helper</small></th></tr>
+          <tr><td>Schedule</td><td class="on">view + edit</td><td class="on">view + edit</td><td class="on">view + edit</td><td class="half">view</td><td class="half">view</td></tr>
+          <tr><td>Attendance</td><td class="on">●</td><td class="on">●</td><td class="off">○</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Lineups</td><td class="on">●</td><td class="on">●</td><td class="off">○</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Staff chat</td><td class="on">●</td><td class="on">●</td><td class="on">●</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Documents</td><td class="half">view</td><td class="half">view</td><td class="on">manage</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Team money</td><td class="on">view + edit</td><td class="off">○</td><td class="on">view + edit</td><td class="on">view + edit</td><td class="off">○</td></tr>
+          <tr><td>Contacts &amp; birthdates</td><td class="on">●</td><td class="off">○</td><td class="on">●</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Internal notes</td><td class="off">○</td><td class="off">○</td><td class="off">○</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Email families</td><td class="off">○</td><td class="off">○</td><td class="on">●</td><td class="off">○</td><td class="off">○</td></tr>
+          <tr><td>Tryouts</td><td class="off">○</td><td class="off">○</td><td class="off">○</td><td class="off">○</td><td class="off">○</td></tr>
+        </table>
+        </div>
+      </div>
+      <div class="notes" style="margin-top:0">
+        <span class="k">Why the list-and-sheet wins</span>
+        <ul>
+          <li><b>Most staffs are one to three people.</b> A matrix earns its density at six or more; below that it is a spreadsheet with mostly empty cells.</li>
+          <li><b>Fifty cells that each confirm.</b> Every sensitive cell needs its speed-bump dialog, and a mis-tap in a grid of forty is easier than in a sheet of ten.</li>
+          <li><b>No room for the sentence.</b> The matrix has nowhere to say what “Documents” means or that attendance opens the roster page — the explanations the owner asked for have no home here.</li>
+          <li><b>It does not survive a phone.</b> Head coaches manage staff from the field.</li>
+          <li><b>The chips give the matrix’s one benefit</b> — a per-person scan with the sensitive ones marked — without its cost. If a club ever runs a ten-person staff, a read-only “Compare” view of this shape can be added as a door from the list.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 8. THE HELPER’S PATH ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">08 — WHAT THE HELPER SAW</span>
+      <h2>Schedule → a game → “Build lineup”</h2>
+      <p>The path you reported, drawn as the helper meets it. The event panel on the schedule shows every tab, every score control and every door to everyone who can see the schedule; only the pages behind the doors check. A helper is refused on arrival, politely, which is still a door they were shown and could not use — and two of the panels they reach state things about the team that are not true.</p>
+    </div>
+    <div class="pair" style="grid-template-columns: 440px 440px; gap: 24px;">
+      <div>
+        <div class="specimen-cap"><span class="t">Today, as a helper</span><span class="tag bad">defect</span></div>
+        <div class="fl dr">
+          <div class="ev"><span class="t">vs Riverdale Ridge</span><span class="m">Sat 12 Sep · 10:00 a.m. · Lions Sports Field</span>
+            <div style="display:flex;gap:8px;margin-top:8px"><span class="fl-btn sec sm">＋ Add final score</span><span class="fl-btn sec sm">🏆 Give an award</span></div>
+          </div>
+          <div class="tabs"><span>Attendance</span><span class="on">Lineup</span><span>Scouting</span></div>
+          <div class="peek">
+            <div class="h"><h4>Lineup</h4><span class="fl-chip">⊘ Not set</span></div>
+            <p class="sum">No lineup set for this game yet.</p>
+            <div class="empty"><span>Build the batting order and field positions on the full Lineups page.</span><span class="fl-btn lime sm">Build lineup →</span></div>
+          </div>
+          <div class="ev" style="border-top:1px solid var(--line)"><span class="m">Attendance tab, for the same person:</span>
+            <div style="display:flex;gap:8px;margin-top:4px"><span class="fl-btn sec sm">All in</span><span class="fl-btn ghost sm">Reset</span><span class="fl-btn ghost sm" style="text-decoration:underline">Season attendance ›</span></div>
+            <span class="err" style="margin-top:6px">“Add active players to the roster before marking attendance.”</span>
+            <span class="m" style="margin-top:4px">— the roster has 13 players; the request was refused and the panel reports it as empty.</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="specimen-cap"><span class="t">Proposed, as a helper</span><span class="tag good">fixed</span></div>
+        <div class="fl dr">
+          <div class="ev"><span class="t">vs Riverdale Ridge</span><span class="m">Sat 12 Sep · 10:00 a.m. · Lions Sports Field</span></div>
+          <div class="tabs"><span class="on">Scouting</span></div>
+          <div class="peek">
+            <div class="h"><h4>Scouting book</h4><span class="fl-chip">3 observations</span></div>
+            <p class="sum">What the team has noticed about Riverdale Ridge. Anyone on the bench can add a note.</p>
+          </div>
+          <div class="ev" style="border-top:1px solid var(--line)"><span class="m">A practice, for the same person:</span><span class="fl-btn sec sm" style="justify-self:start">Open the practice plan →</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <span class="k">The rule this applies</span>
+      <ul>
+        <li>Every tab, button and link on a schedule event panel gates on the grant behind it: Attendance on attendance, Lineup and “Build lineup” on lineups, edit/cancel on schedule editing. Scouting stays open to every schedule-holder, as ruled — the bench observes.</li>
+        <li>The same sweep covers the Game-Day console’s “Open the full builder” door and the Overview’s “build the lineup” step. The full list of places a page shows a door its own server would refuse is in the written review.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ 9. DECISIONS ═══════════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="n">09 — WHAT THIS SHEET ASKS YOU TO DECIDE</span>
+      <h2>Ten calls, each independent</h2>
+    </div>
+    <div class="scroll-x">
+    <table class="decide">
+      <tr><th>Question</th><th>Recommendation</th><th>If you say no</th></tr>
+      <tr><td class="q">1. Page shape: list + sheet?</td><td>Yes — §02 and §04. Whole staff above the fold on a laptop and on a phone.</td><td>Keep stacked cards; the rest still applies.</td></tr>
+      <tr><td class="q">2. Set access before sending the invite?</td><td>Yes — §03. Preset prefilled, editable, one confirmation at send, editable again while pending.</td><td>Keep invite-then-grant; add the pending row anyway.</td></tr>
+      <tr><td class="q">3. Pending invites shown, with resend and cancel?</td><td>Yes. Today only a club admin can see them, and a standalone team has no admin.</td><td>—</td></tr>
+      <tr><td class="q">4. Role stored as a label?</td><td>Yes. Chooses defaults, word and email; gates nothing.</td><td>Keep the derived label; accept that granting a helper anything renames them.</td></tr>
+      <tr><td class="q">5. Add “Team manager” and “Team treasurer”?</td><td>Yes, as two more starting points. Manager: schedule view + edit, staff chat, documents manage, money view + edit, contacts, email families. Treasurer: schedule view, money view + edit, nothing else — names show beside the dues, family contacts are one tap away if the coach wants them to have them.</td><td>Two starting points; managers and treasurers stay “Assistant coach”.</td></tr>
+      <tr><td class="q">6. Schedule as one three-way control?</td><td>Yes — Hidden / View / View + edit, matching Money and Documents.</td><td>Two checkboxes stay; the nonsense state stays with them.</td></tr>
+      <tr><td class="q">7. Practice-plan writing follows “Schedule · View + edit”?</td><td>Yes. Today only the head coach can write a plan, because the gate was borrowed from player development. Every existing assistant gains it.</td><td>Head-coach-only stays; note it on the Schedule control so the coach is not surprised.</td></tr>
+      <tr><td class="q">8. Head coach hand-over / second head coach from the portal?</td><td>Yes — “Make head coach” on an assistant’s sheet, refuse removing the last head coach.</td><td>Club admin only; standalone teams still cannot change hands.</td></tr>
+      <tr><td class="q">9. Roster editing grantable?</td><td>Later. Real need for managers, but it touches the roster screens more than the staff screen. Flagged, not drawn.</td><td>—</td></tr>
+      <tr><td class="q">10. Role chosen from a dropdown?</td><td>Yes — the app’s own sub-lined dropdown (a name over one sentence per role), nothing chosen until the coach chooses. The house rule: a one-value field the coach can change later is a dropdown; radio cards are for choices that cannot be undone.</td><td>Four radio cards; the invite sheet grows by most of a screen on a phone.</td></tr>
+    </table>
+    </div>
+  </section>
+
+</div>

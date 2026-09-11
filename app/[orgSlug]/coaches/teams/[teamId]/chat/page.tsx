@@ -1,8 +1,10 @@
 'use client';
 import { use } from 'react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
+import { MessageSquare } from 'lucide-react';
 import CoachChatView from '@/components/chat/CoachChatView';
 import CoachLoading from '@/components/coaches/CoachLoading';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import styles from './chat.module.css';
 
 export default function TeamChatPage({
@@ -30,6 +32,19 @@ export default function TeamChatPage({
   }
   if (!assignment) {
     return <p style={{ padding: '1rem', color: 'var(--white-40)' }}>You are not assigned to this team.</p>;
+  }
+  // The page gates on the grant its nav door gates on (staff access review, 2026-09-10): the chat
+  // shell used to render for a coach with no seat and show an empty room list — a dead end.
+  if (!assignment.capabilities.staffChat) {
+    return (
+      <div style={{ padding: '1rem 1.25rem' }}>
+        <CoachNotGranted
+          icon={<MessageSquare size={20} aria-hidden />}
+          section="Staff chat"
+          what="The room where the coaching staff talks — all season, and with the organizer during a tournament."
+        />
+      </div>
+    );
   }
 
   // Full-screen chat — the conversation header carries the room name + room switcher, so the heavy

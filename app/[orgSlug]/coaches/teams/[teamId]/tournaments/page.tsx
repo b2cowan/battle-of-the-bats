@@ -5,9 +5,12 @@ import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
 import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { useOrg } from '@/lib/org-context';
+import { useCoaches } from '@/lib/coaches-context';
+import { canConfigureTeam } from '@/lib/coach-capabilities';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
@@ -36,6 +39,11 @@ export default function PremiumTeamTournamentsPage({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const { currentOrg } = useOrg();
   const { openHelp } = useHelpDrawer();
+  // The page gates on the same predicate as its nav door (staff access review, 2026-09-10) — the
+  // read behind it now refuses the same people, so nothing is fetched for a coach it would refuse.
+  const { assignments, loading: coachesLoading } = useCoaches();
+  const assignment = assignments.find(a => a.teamId === teamId);
+  const notGranted = !!assignment && !canConfigureTeam(assignment.capabilities);
   const [data, setData] = useState<TournamentHistoryData | null>(null);
   const [error, setError] = useState('');
 
@@ -67,7 +75,9 @@ export default function PremiumTeamTournamentsPage({
     }
   }, [orgSlug, teamId]);
 
-  useEffect(() => { void Promise.resolve().then(load); }, [load]);
+  // Waits for the assignments like every sibling page, so the read is never fired before the gate
+  // can be evaluated (the provider is seeded server-side, so this is defence in depth).
+  useEffect(() => { if (!coachesLoading && !notGranted) void Promise.resolve().then(load); }, [load, notGranted, coachesLoading]);
 
   const today = tournamentToday();
 
@@ -84,6 +94,21 @@ export default function PremiumTeamTournamentsPage({
       : [],
     [data, today],
   );
+
+  if (notGranted) {
+    return (
+      <div className={styles.page}>
+        <CoachPageHeader icon={Trophy} title="Tournaments" helpLabel="Tournaments" help={helpRequest} />
+        <CoachNotGranted
+          icon={<Trophy size={20} aria-hidden />}
+          section="Tournaments"
+          plural
+          what="The team’s tournament entries — registration, the live schedule, roster submission and organizer updates."
+          blocker="Tournaments open with schedule editing. Ask your head coach to grant it."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

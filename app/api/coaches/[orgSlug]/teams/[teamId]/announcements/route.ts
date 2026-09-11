@@ -58,7 +58,17 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
+  /**
+   * ⚠ GATED ON THE SAME GRANT AS THE SEND (staff access review, 2026-09-10). This read was
+   * membership-only while the POST below required `announcementsSend`, so a schedule-only helper
+   * could read the full text of every email the staff sent to families this season, plus the
+   * guardian-email recipient counts — the content the write produces, without the grant that
+   * governs it. The "Email families" nav door already hides on this grant; the room now refuses
+   * the same people the door does. (A draft-only flow, if one ships, widens this deliberately.)
+   */
+  const denied = denyUnless(assignment.capabilities.announcementsSend, 'Emailing families isn’t turned on for you. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const [announcements, recipientSummary] = await Promise.all([
     getRepTeamAnnouncements(programYear.id),

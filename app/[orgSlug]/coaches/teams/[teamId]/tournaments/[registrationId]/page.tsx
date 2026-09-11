@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { getCoachingAssignmentsForUser, getOrganizationBySlug } from '@/lib/db';
-import { isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
+import { canConfigureTeam, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
 
 export const metadata = { title: 'Tournament Record' };
@@ -29,6 +29,13 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
     ? await getCoachingAssignmentsForUser(org.id, user.id)
     : [];
   const moneyRedacted = isMoneyRedactedForTeam(assignments, teamId);
+  // The record follows the Tournaments door (staff access review, 2026-09-10): a coach the door
+  // hides for is sent to the list, which says so. (The shared record below additionally 404s
+  // anyone who does not own the linked coach team — this is the earlier, plainer answer.)
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment || !canConfigureTeam(assignment.capabilities)) {
+    redirect(`/${orgSlug}/coaches/teams/${teamId}/tournaments`);
+  }
 
   // The shared record re-checks the user's access to the registration and 404s if absent —
   // a paying coach sees the full record (live schedule/scores, status, roster, announcements)

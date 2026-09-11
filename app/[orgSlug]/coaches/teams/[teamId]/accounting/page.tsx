@@ -17,6 +17,7 @@ import { legacyMoneyAddress, type CoachMoneySection } from '@/lib/coach-money-li
 import OverviewDashboard from './OverviewDashboard';
 import SetupOverview from './SetupOverview';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 
@@ -364,6 +365,23 @@ export default function CoachesAccountingPage({
   // The hub's data doors are money-scoped: no money access, no menus at all. Export survives
   // for a read-only money assistant; Import (a write) does not — that split lives in the menus.
   const canViewMoney = !!page.capabilities && page.capabilities.money !== 'off';
+
+  // The page gates on the grant its nav door gates on (staff access review, 2026-09-10): the
+  // summary read used to be refused and rendered as a load error with a Retry that could only fail
+  // again. Placed after every hook above.
+  if (page.capabilities && !canViewMoney) {
+    return (
+      <div className={`${styles.page} ${styles.pageWide}`}>
+        <CoachPageHeader icon={DollarSign} title="Money" helpLabel="Money" help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }} />
+        <CoachNotGranted
+          icon={<DollarSign size={20} aria-hidden />}
+          section="Money"
+          what="The team’s budget, dues, expenses and every payment in and out."
+          blocker="Ask your head coach to turn on team money access for you."
+        />
+      </div>
+    );
+  }
 
   /* ⚠⚠ NO LONGER GATED ON A LIVE SEASON (owner ruling 5, money redesign P4, 2026-08-17). This read
      `!!summary?.orgLinked && !page.isReadOnly` — so both club tabs VANISHED the moment a season

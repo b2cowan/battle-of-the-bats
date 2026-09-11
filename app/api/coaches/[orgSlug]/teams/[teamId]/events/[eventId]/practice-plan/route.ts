@@ -25,7 +25,7 @@ import { withObservability } from '@/lib/observability';
 import { getScoutingBridgeForPractice } from '@/lib/coach-opponent-nudge';
 import {
   denyUnless, canManageSchedule, canViewSchedule, canWriteDevelopment, canViewDevelopmentGoals,
-  redactRoster,
+  canViewMeasurables, redactRoster,
 } from '@/lib/coach-capabilities';
 import {
   MAX_RECAP_LEN, sanitizePracticePlan,
@@ -142,7 +142,13 @@ export const GET = withObservability(async (_req: Request,
     // whole plan screen down with them. (The migration still has to precede the code to prod;
     // this is defence in depth, not a substitute for that.)
     getRepTeamEventsWithPracticePlans(programYear.id, { excludeEventId: eventId }).catch(() => []),
-    getRepTeamEvaluationSessionsForEvent(eventId, teamId, programYear.id),
+    // ⚠ Gated at the SOURCE on the same predicate the session page itself uses (`/review` of the
+    // staff access pass, 2026-09-10): an evaluation session is development content — its note is
+    // coach commentary — and the "Recorded here" list links into a page a schedule-only helper
+    // cannot open. `goals` and `attendance` above were already gated this way; this one was not.
+    canViewMeasurables(caps)
+      ? getRepTeamEvaluationSessionsForEvent(eventId, teamId, programYear.id)
+      : Promise.resolve([]),
     getRepTeamStaffForYear(programYear.id, ctx.org.id),
     // The picker's source: this team's own drills PLUS the club's shared set, active only — a
     // retired drill must never be offered while building a practice. Non-fatal for the same reason

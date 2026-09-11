@@ -4,8 +4,10 @@ import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Building2, RefreshCw } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
+import { useCoaches } from '@/lib/coaches-context';
 import styles from '../coaches.module.css';
 
 type LinkSummary = {
@@ -60,6 +62,15 @@ function formatDate(value: string) {
 export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
   const { currentOrg, loading: orgLoading } = useOrg();
+  // Linking and ownership transfer are the head coach's (the API refuses everyone else, reads
+  // included — staff access review, 2026-09-10); the page says so instead of showing the refusal
+  // as a load error. A standalone workspace has one team, so "any head-coach assignment" is it.
+  // ⚠ Live AND closed assignments: `assignments` holds live seasons only, so a standalone head
+  // coach whose season has just closed would otherwise be told they are not the head coach —
+  // false, and a worse sentence than the generic load error they met before (`/review`,
+  // 2026-09-10). The API still decides what they may do; this only decides which sentence.
+  const { assignments, closedAssignments, loading: coachesLoading } = useCoaches();
+  const isHeadCoach = [...assignments, ...closedAssignments].some(a => a.capabilities.isHeadCoach);
   const [links, setLinks] = useState<LinkSummary[]>([]);
   const [target, setTarget] = useState('');
   const [loading, setLoading] = useState(true);
@@ -92,11 +103,12 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      if (!orgLoading && isTeamWorkspace) void loadLinks();
-      if (!orgLoading && !isTeamWorkspace) setLoading(false);
+      if (orgLoading || coachesLoading) return;
+      if (isTeamWorkspace && isHeadCoach) void loadLinks();
+      else setLoading(false);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [orgLoading, isTeamWorkspace, loadLinks]);
+  }, [orgLoading, coachesLoading, isTeamWorkspace, isHeadCoach, loadLinks]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -181,8 +193,27 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
     }
   }
 
-  if (orgLoading || loading) {
+  if (orgLoading || coachesLoading || loading) {
     return <div className={styles.loadingState}>Loading organization links…</div>;
+  }
+
+  if (isTeamWorkspace && !isHeadCoach) {
+    return (
+      <div className={styles.page}>
+        <CoachPageHeader
+          icon={Building2}
+          title="Link Organization"
+          helpLabel="Link Organization"
+          help={linkOrgHelpRequest}
+        />
+        <CoachNotGranted
+          icon={<Building2 size={20} aria-hidden />}
+          section="Organization linking"
+          what="Connecting this team to a club, or transferring its ownership into one — a decision about the team itself."
+          blocker="Only the head coach can manage organization links."
+        />
+      </div>
+    );
   }
 
   if (!isTeamWorkspace) {

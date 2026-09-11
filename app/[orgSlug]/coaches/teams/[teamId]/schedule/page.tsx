@@ -14,7 +14,7 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
-import { canManageSchedule } from '@/lib/coach-capabilities';
+import { scheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
@@ -742,7 +742,21 @@ export default function CoachesSchedulePage({
   const assignment = assignments.find(a => a.teamId === teamId);
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
   // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
-  const canAddEvents = (page.capabilities ? canManageSchedule(page.capabilities) : false);
+  /**
+   * Which doors the event panel may show THIS coach on the selected event — the tabs, the score
+   * form, the award button, the lineup links, editing, the family email — computed once from the
+   * grants and read by both the fetch below and the panel's markup, so a tab and the read behind
+   * it can never disagree. Fails closed while capabilities load. See `lib/coach-schedule-doors.ts`.
+   */
+  const drawerDoors = scheduleDrawerDoors(page.capabilities, {
+    isGame: !!selectedEvent && ['league_game', 'tournament_game', 'scrimmage'].includes(selectedEvent.eventType),
+    isLineupEvent: isLineupEvent(selectedEvent),
+    hasOpponent: !!selectedEvent?.opponent,
+    scoutingAvailable,
+  });
+  // The page-level create + the panel's Edit / Cancel / Delete / Share — ONE rule, read from the
+  // doors object rather than computed a second time beside it (`/review`, 2026-09-10).
+  const canAddEvents = drawerDoors.editEvent;
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
   const scheduleHelpRequest = {
@@ -883,7 +897,8 @@ export default function CoachesSchedulePage({
       openEvent(ev);
       if (sp.get('tab') === 'lineup') setSlideTab('lineup');
       // ?tab=scouting deep-links (the Opponents card's meeting rows, shared links). If the
-      // event turns out to have no Scouting tab, activeSlideTab falls back to Attendance.
+      // event turns out to have no Scouting tab — or this coach holds no tab on it at all —
+      // activeSlideTab falls back to the first tab they do hold, or to none.
       if (sp.get('tab') === 'scouting') setSlideTab('scouting');
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
@@ -914,14 +929,29 @@ export default function CoachesSchedulePage({
 
     let cancelled = false;
     const eventId = selectedEvent.id;
+    // Ask only for what this coach's grants open (the same answer the panel's tabs read). A
+    // refused read used to be swallowed here and rendered as "add players to the roster first" —
+    // a false statement about the team, made to a helper who was never going to see the tab.
+    const wantLineup = drawerDoors.lineupTab;
+    const wantAttendance = drawerDoors.attendanceTab;
 
     async function fetchAttendance() {
+      if (!wantLineup && !wantAttendance) {
+        setAttendanceRows([]);
+        setLineupRows([]);
+        setLineupEntryIds(new Set());
+        setAttendanceError('');
+        setAttendanceDirty(false);
+        setAttendanceLoading(false);
+        setLineupLoading(false);
+        return;
+      }
       setAttendanceLoading(true);
-      setLineupLoading(isLineupEvent(selectedEvent));
+      setLineupLoading(wantLineup);
       setAttendanceError('');
       setAttendanceDirty(false);
       try {
-        const lineupCapable = isLineupEvent(selectedEvent);
+        const lineupCapable = wantLineup;
         const res = await fetch(
           lineupCapable
             ? `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/lineup`
@@ -973,7 +1003,7 @@ export default function CoachesSchedulePage({
 
     fetchAttendance();
     return () => { cancelled = true; };
-  }, [orgSlug, selectedEvent, teamId, sportPack.defaultPeriodCount]);
+  }, [orgSlug, selectedEvent, teamId, sportPack.defaultPeriodCount, drawerDoors.lineupTab, drawerDoors.attendanceTab]);
 
   // ── Add event ───────────────────────────────────────────────────────────────
 
@@ -1211,8 +1241,9 @@ export default function CoachesSchedulePage({
     if (selectedEvent.status === 'cancelled') return null;
     if (selectedEvent.teamScore == null || selectedEvent.opponentScore == null) return null;
     // ⚠ The read-only half of this condition is gone with the finished-season branches
-    // (2026-08-18); what is left is the grant that decides whether a draft can be sent at all.
-    if (!page.capabilities?.announcementsSend) return null;
+    // (2026-08-18); what is left is the grant that decides whether a draft can be sent at all —
+    // read from the doors object, like every other door on this panel.
+    if (!drawerDoors.emailFamilies) return null;
 
     // ⚠ A PLAYED game is still `status: 'scheduled'` — the platform has no 'completed' status,
     // it marks a game finished by giving it a result or a score. So "later on the clock" is
@@ -1244,19 +1275,29 @@ export default function CoachesSchedulePage({
         fieldNumber: next.fieldNumber,
       },
     }));
-  }, [selectedEvent, isGameEvent, page.capabilities, page.teamName, events, base]);
+  }, [selectedEvent, isGameEvent, drawerDoors.emailFamilies, page.teamName, events, base]);
 
-  const slideTabs: { key: 'attendance' | 'lineup' | 'scouting'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
-  if (isLineupEvent(selectedEvent)) slideTabs.push({ key: 'lineup', label: 'Lineup' });
+  /**
+   * ⚠ EVERY TAB RIDES A GRANT (staff access review, 2026-09-10). Attendance used to be seeded
+   * unconditionally and Lineup pushed on any game, so a schedule-only helper met both tabs, a
+   * refused read behind each, and three "Build lineup" doors onto a page that says lineups aren't
+   * turned on. The doors object is the single answer for the tab, the fetch and the markup.
+   */
+  const slideTabs: { key: 'attendance' | 'lineup' | 'scouting'; label: string }[] = [];
+  if (drawerDoors.attendanceTab) slideTabs.push({ key: 'attendance', label: 'Attendance' });
+  if (drawerDoors.lineupTab) slideTabs.push({ key: 'lineup', label: 'Lineup' });
   // Scouting Book glance (owner-approved 2026-08-04): games with a real opponent name only —
   // a TBD bracket slot gets no tab, never a dead end. Read gates on `schedule`, which is
-  // everyone who can open this page, so no extra capability check here. Archive absence
-  // rides `scoutingAvailable`, the same flag that gates the roll-up fetch.
-  const scoutingKey = selectedEvent && isGameEvent && selectedEvent.opponent && scoutingAvailable
+  // everyone who can open this page — helpers included, by ruling. Archive absence rides
+  // `scoutingAvailable`, the same flag that gates the roll-up fetch.
+  const scoutingKey = drawerDoors.scoutingTab && selectedEvent?.opponent
     ? normalizeOpponentName(selectedEvent.opponent)
     : '';
   if (scoutingKey) slideTabs.push({ key: 'scouting', label: 'Scouting' });
-  const activeSlideTab = slideTabs.some(t => t.key === slideTab) ? slideTab : 'attendance';
+  // The first tab this coach actually holds — or none, for a coach whose grants open no tab on
+  // this event (a helper on a game with no named opponent sees the details and nothing under them).
+  const activeSlideTab: 'attendance' | 'lineup' | 'scouting' | null =
+    slideTabs.some(t => t.key === slideTab) ? slideTab : (slideTabs[0]?.key ?? null);
 
   // Compact one-line summary for the slide-over header (replaces the tall label/value list).
   // Tournaments (multi-day containers) show a date range and no clock time; "@" = away.
@@ -1306,6 +1347,10 @@ export default function CoachesSchedulePage({
     setAttendanceFilter('all');
     setRsvpEditId(null);
     setDaySheet(null);
+    // A half-typed score belongs to the game it was typed on. Today every path here passes
+    // through a closed panel first, which clears it; a future "next game →" inside the panel
+    // would not (`/review`, 2026-09-10).
+    setScoreForm(null);
     setSelectedEvent(event);
     // Opening a moved game IS the acknowledgement — the coach has now seen the new time, so this
     // device stops flagging it. The row's "Moved" chip has to clear in the same breath: writing
@@ -2386,7 +2431,10 @@ export default function CoachesSchedulePage({
                 )}
               </div>
             )}
-            {isGameEvent && !mirroredGame && (
+            {/* The score is a schedule WRITE (the PATCH behind Save gates on schedule editing), so
+                the form and its "+ Add final score" door ride the same grant. A coach without it
+                still reads the score — the read-only line below. */}
+            {isGameEvent && !mirroredGame && drawerDoors.scoreForm && (
               <div className={styles.eventScoreLine}>
                 {scoreForm ? (
                   <div className={styles.scoreForm}>
@@ -2439,6 +2487,20 @@ export default function CoachesSchedulePage({
                 )}
               </div>
             )}
+            {isGameEvent && !mirroredGame && !drawerDoors.scoreForm && selectedEvent.teamScore != null && (
+              <div className={styles.eventScoreLine}>
+                <div className={styles.eventScore}>
+                  {scoreline(selectedEvent)}
+                  {/* The Scouting Book's capture door stays open to every schedule-holder — the
+                      bench observes, by ruling — even when the score itself is read-only. */}
+                  {scoutingKey && activeSlideTab !== 'scouting' && (
+                    <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
+                      Add to the book on {selectedEvent.opponent} ›
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Chunk D 3.1 — "score entered → family email written". The highest-frequency
                 moment in the chunk: the coach was already here. Shown for a mirrored game too
@@ -2467,7 +2529,7 @@ export default function CoachesSchedulePage({
 
             {/* Awards given — the "same visit" give-award moment (Coach Tags & Player Awards
                 Phase 2). Gated on a final score, same as the tags/score UI above it. */}
-            {isGameEvent && (
+            {isGameEvent && drawerDoors.awards && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Awards given</h4>
                 {selectedEvent.status === 'cancelled' ? (
@@ -2556,14 +2618,21 @@ export default function CoachesSchedulePage({
                     </div>
                   </>
                 ) : (
-                  <>
-                    <p className={styles.formHint}>
-                      No plan yet — set out the blocks, stations and groups for this practice.
-                    </p>
-                    <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
-                      Plan this practice →
-                    </Link>
-                  </>
+                  page.capabilities?.isHeadCoach ? (
+                    <>
+                      <p className={styles.formHint}>
+                        No plan yet — set out the blocks, stations and groups for this practice.
+                      </p>
+                      <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
+                        Plan this practice →
+                      </Link>
+                    </>
+                  ) : (
+                    // Writing a plan is the head coach's today (pass 2 of the staff access plan
+                    // moves it onto "Schedule: View + edit"); a door onto a builder that refuses
+                    // is not offered to anyone else.
+                    <p className={styles.formHint}>No plan yet.</p>
+                  )
                 )}
               </div>
             )}
@@ -2651,7 +2720,7 @@ export default function CoachesSchedulePage({
             </div>
             )}
 
-            {lineupMismatch && (
+            {lineupMismatch && drawerDoors.lineupTab && (
               <div className={styles.lineupPeekWarn} role="status">
                 {lineupMismatch.coming.length > 0 && (
                   <p>⚠ Marked in but not in the lineup: {lineupMismatch.coming.join(', ')}.</p>
@@ -2719,10 +2788,13 @@ export default function CoachesSchedulePage({
                     <CircleHelp size={14} /> Reset
                   </button>
                   {/* Batch 4 (f8-2): the season report and the place attendance is recorded had
-                      no link between them in either direction. This is the return trip. */}
-                  <Link href={insightsSectionHref(base, 'attendance')} className={styles.btnGhost}>
-                    Season attendance
-                  </Link>
+                      no link between them in either direction. This is the return trip — offered
+                      only to a coach the Insights portal itself admits. */}
+                  {drawerDoors.seasonAttendanceLink && (
+                    <Link href={insightsSectionHref(base, 'attendance')} className={styles.btnGhost}>
+                      Season attendance
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -2761,6 +2833,10 @@ export default function CoachesSchedulePage({
 
               {attendanceLoading ? (
                 <CoachLoading label="Loading attendance…" inline />
+              ) : attendanceError && attendanceRows.length === 0 ? (
+                // A read that FAILED is said as a failure. It used to fall through to the empty
+                // line below and claim the roster had no active players.
+                <div className={styles.attendanceEmpty}>{attendanceError}</div>
               ) : attendanceRows.length === 0 ? (
                 <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
               ) : filteredRows.length === 0 ? (

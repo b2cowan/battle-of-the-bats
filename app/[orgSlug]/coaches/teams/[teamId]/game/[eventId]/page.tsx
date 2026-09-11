@@ -42,6 +42,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Check, Circle, Undo2, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { hasNonMoneyRecordAccess } from '@/lib/coach-capabilities';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup, BENCH_POSITION } from '@/lib/lineup-analysis';
 import { generateBestLineup } from '@/lib/lineup-generator';
@@ -938,9 +939,13 @@ export default function CoachGameConsolePage({
             </div>
           )}
 
-          <Link href={insightsSectionHref(base, 'playing-time')} className={styles.gdDoorRow}>
-            <span>Playing time — season report</span><span aria-hidden>›</span>
-          </Link>
+          {/* The Insights portal's own door — offered only to a coach it admits (a helper's
+              review of a game must not end on a report they cannot open). */}
+          {assignment && hasNonMoneyRecordAccess(assignment.capabilities) && (
+            <Link href={insightsSectionHref(base, 'playing-time')} className={styles.gdDoorRow}>
+              <span>Playing time — season report</span><span aria-hidden>›</span>
+            </Link>
+          )}
 
           {bookSheet}
         </div>
@@ -1039,8 +1044,11 @@ export default function CoachGameConsolePage({
           </div>
         )}
 
-        {/* No-lineup fallback: three doors, never a dead end (plan §3.2). */}
-        {showFallback && (
+        {/* No-lineup fallback: three doors, never a dead end (plan §3.2).
+            ⚠ Not for a read-only viewer: the lineup was WITHHELD from them, not absent, so "No
+            lineup saved" and "Score and attendance still work tonight" were both false for a
+            helper (staff access review, 2026-09-10). */}
+        {showFallback && !readOnlyViewer && (
           <div className={styles.gdCard}>
             <p className={styles.gdFallbackLead}>No lineup saved for this game yet.</p>
             {can.subs ? (

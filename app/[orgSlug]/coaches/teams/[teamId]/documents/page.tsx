@@ -3,7 +3,9 @@ import { useState, useEffect, use } from 'react';
 import { Download, FileText } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import { canViewDocuments } from '@/lib/coach-capabilities';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
 
@@ -80,6 +82,22 @@ export default function TeamDocumentsPage({
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
         <p>You are not assigned to this team.</p>
+      </div>
+    );
+  }
+
+  // The page gates on the grant its nav door gates on (staff access review, 2026-09-10): a refused
+  // read used to render as "No document templates yet", which is a claim about the org's forms.
+  if (page.capabilities && !canViewDocuments(page.capabilities)) {
+    return (
+      <div className={`${styles.page} ${styles.pageWide}`}>
+        <CoachPageHeader icon={FileText} title="Documents" helpLabel="Documents" help={documentsHelpRequest} />
+        <CoachNotGranted
+          icon={<FileText size={20} aria-hidden />}
+          section="Documents"
+          plural
+          what="The blank forms your families sign — waivers, medical consent, codes of conduct — ready to download and hand out."
+        />
       </div>
     );
   }

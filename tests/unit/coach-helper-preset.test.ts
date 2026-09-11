@@ -11,6 +11,9 @@ import {
   canJoinStaffChat,
   hasRecordAccess,
   hasNoTeamRecordAccess,
+  hasNonMoneyRecordAccess,
+  canConfigureTeam,
+  canReadPastPracticePlans,
   type CoachCapabilities,
   type AssistantCapabilityGrants,
 } from '../../lib/coach-capabilities.ts';
@@ -291,5 +294,28 @@ describe('staffKindLabel is a WORD, never a gate', () => {
     const caps = helper();
     assert.equal(staffKindLabel(caps), 'helper');
     assert.equal(hasNoTeamRecordAccess(caps), true);
+  });
+});
+/**
+ * ⚠ THE API PREDICATES A HELPER MUST FAIL (staff access review, 2026-09-10). The nav was correct
+ * on every label; what leaked was five READS whose only gate was team membership. Each now gates
+ * on one of these, and a helper — the preset that made "member" and "coach" different words —
+ * must fail every one of them, while a default assistant keeps the doors they always had.
+ */
+describe('the reads that used to answer every member now refuse a helper', () => {
+  it('fails each predicate the five gated reads use', () => {
+    const caps = helper();
+    assert.equal(caps.announcementsSend, false, 'announcements GET');
+    assert.equal(canConfigureTeam(caps), false, 'tournament-history GET');
+    assert.equal(hasNonMoneyRecordAccess(caps), false, 'history GET / the Insights page');
+    assert.equal(caps.isHeadCoach, false, 'upgrade-summary + team-links GET');
+    assert.equal(canReadPastPracticePlans(caps), false, 'practice-plans/past-seasons GET');
+  });
+
+  it('leaves a default assistant’s reads exactly as they were', () => {
+    const caps = assistant();
+    assert.equal(canConfigureTeam(caps), true);
+    assert.equal(hasNonMoneyRecordAccess(caps), true);
+    assert.equal(canReadPastPracticePlans(caps), true);
   });
 });
