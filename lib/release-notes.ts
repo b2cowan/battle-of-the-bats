@@ -44,6 +44,36 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-11',
+    title: 'A staff list with access set before the invite',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Add coaching staff — assistants, managers, treasurers, or helpers — with their access already set before they ever open an invite. Resend or cancel a pending invite from the same list, and hand off head coach to someone else on your staff without leaving the team. Each role sees only what it’s given — a helper sees their schedule and station, nothing more.',
+      },
+      {
+        category: 'fixed',
+        text: 'The opponent scouting log now opens as a quick form next to your notes, instead of sitting open on the page the whole time.',
+      },
+      {
+        category: 'fixed',
+        text: 'Award types like "MVP" or "Hustle Award" can be renamed, merged, or removed without losing the history behind them, and a given award can be corrected after the fact.',
+      },
+      {
+        category: 'fixed',
+        text: "The season budget now shows exactly how much of a family's dues have already been adjusted or forgiven, matching what the money report already says.",
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed budget spreadsheets re-importing as new duplicate cost lines instead of matching up with what was already there.',
+      },
+      {
+        category: 'fixed',
+        text: "Cleared up a couple of confusing lines in the money report and a collapsed budget category's heading.",
+      },
+    ],
+  },
+  {
     date: '2026-09-10',
     title: 'Budget categories in one place, and a plan you can edit where you read it',
     highlights: [
