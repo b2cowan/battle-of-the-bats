@@ -1,0 +1,260 @@
+<!--
+PROJECT HUB TEMPLATE — read this block, then delete it before publishing.
+
+WHAT THIS IS: the one-artifact-per-project scaffold agreed 2026-09-11 (owner ruling; see
+memory/feedback_project_hub_single_artifact.md). One URL carries a project's whole life —
+Mockup, PM Brief, Full Plan, Decisions, QA Walk — as tabs, republished to the SAME artifact
+path across every phase so the Artifact's own version history becomes the project's build log.
+
+HOW TO USE:
+1. Copy this file to docs/projects/active/<PROJECT_NAME>_HUB.html. Keep that path for the
+   whole project's life — never rename it mid-project, or the version history splits.
+2. Fill every [bracket] placeholder. Delete this comment block.
+3. Publish with the Artifact tool. Give the resulting URL to the owner once, then re-publish
+   the SAME file_path every time you add a phase (brief, plan, decisions, QA) or revise the
+   mockup — each publish stacks a new version under the one URL.
+4. Stage strip (search STAGE STRIP below): lives inline in the top bar as six small chips to
+   keep the page from stacking four separate header rows. Each chip's `title` attribute holds
+   the ANCHORED FACT that made the stage true ("Built <hash> <date>", "§<n> <date>") — never a
+   live/dead status word like "pending" or "not built yet" (hover a chip to read it; an
+   anchored positive claim can't go stale, a status word can). Leave a stage's title as "—"
+   (an empty placeholder, not an assertion) until it is genuinely true, and move the "current"
+   class to whichever stage the project is actually in.
+5. QA Walk tab starts `hidden` on both its nav button and its section — remove `hidden` from
+   both, and fill QA_PARTS in the script, when the walk actually begins. Follow
+   memory/feedback_qa_walkthroughs_as_checkable_artifacts.md for what a step may pin.
+6. Decisions tab: append one row per ruling AS IT HAPPENS, not retroactively at project end —
+   that is the whole point of keeping it on the hub instead of buried in a memory file.
+7. Mockup tab keeps the existing screen-by-screen convention: one <section class="screen">
+   per screen, hash-routed off the walk sub-nav, with a one-line design-intent note per
+   screen in the #intent footer. Draw the DECISIONS, not every control, and always include
+   one whole-screen before/after per memory/feedback_build_to_approved_mockups.md.
+8. EVERY HIGHLIGHT IS CLICKABLE (owner, 2026-09-11). Anything that marks a problem or a
+   solution on a screen opens an explanation on click — never a hover-only title:
+   · a finding flag  <button class="fl" data-finding="F01" data-here="what this instance shows">F01</button>
+     (add class "fix" for the green "fixes F01" chip on the proposed screen that solves it);
+     fill FINDINGS below — title, what the code does today, what the proposal does — and the
+     dialog also offers "Read the full finding in the plan →", which jumps to the heading
+     that starts with "F01 —" on the Full Plan tab.
+   · a NEW / RESTYLED / UNCHANGED tag  <span class="mk" data-k="new|re|un" data-note="what
+     this element was, and why it changed">New</span> — the note is per element; a tag
+     without one falls back to the generic sentence for its kind.
+-->
+<title>Project Hub Template</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}.textbutton{border:0;background:transparent;min-height:44px;padding:8px 0;color:var(--blue);text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.back{display:inline-flex;align-items:center;min-height:44px;margin-bottom:9px;font-size:13px;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted)}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+/* clickable highlights — a finding flag (red), a fix chip (green), a NEW/RESTYLED/UNCHANGED tag */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.verdictstate{font-weight:700;margin-left:4px}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+@container(max-width:700px){main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.head{flex-wrap:wrap;gap:12px}h1{font-size:23px}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>[Project Name] — project hub</strong><br><small>[One-line status, e.g. "Mockup in review · plan drafted"]</small></div>
+  <!-- STAGE STRIP — hover a stage for the anchored fact that made it true; never a status word. Set the title="—" attribute to the real anchor once true, and move class "current" as the project advances. -->
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage current" title="—">Design</li>
+    <li class="stage" title="—">Plan</li>
+    <li class="stage" title="—">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#screen-one">1 · [Screen name]</a>
+    <!-- add one <a href="#screen-two">2 · [Screen name]</a> per screen -->
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">[Org name] · [season]<br><span class="meta">Sample [role] view</span></div>
+    </header>
+    <main>
+      <section class="screen" id="screen-one">
+        <div class="head">
+          <div><div class="eyebrow">[Section label]</div><h1 tabindex="-1">[Screen title]</h1><p class="sub">[One-line description of what this screen is for.]</p></div>
+        </div>
+        <p>[Screen content / specimen goes here.]</p>
+      </section>
+      <!-- add one <section class="screen" id="screen-two" hidden>…</section> per screen; toggle via the show() router below -->
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>[Project Name]</h1>
+  <h2>What changes for the coach</h2>
+  <p>[What the user sees and does differently after this ships — plain language, no implementation detail.]</p>
+  <h2>Why it matters</h2>
+  <p>[The problem this solves, or the opportunity it captures.]</p>
+  <h2>Customer impact</h2>
+  <p>[Who is affected, how often, and what happens if we do nothing.]</p>
+  <h2>Priority</h2>
+  <p>[Why now, relative to other work in flight.]</p>
+  <h2>Success criteria</h2>
+  <p>[How we'll know this worked — a behaviour or number, not "it shipped".]</p>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>[Project Name] — implementation plan</h1>
+  <h2>Problem / context</h2>
+  <p>[What's true today and why it needs to change.]</p>
+  <h2>Scope</h2>
+  <p>[What this project covers.]</p>
+  <div class="note"><strong>Out of scope</strong><p>[What it deliberately does not cover, and why.]</p></div>
+  <h2>Approach</h2>
+  <p>[The chosen approach and the alternative it beat.]</p>
+  <h2>Open questions</h2>
+  <p>[Anything still undecided — move each to Decisions once ruled on.]</p>
+  <h2>Rollout</h2>
+  <p>[Migrations, sequencing, demo-sandbox impact, anything that ships in stages.]</p>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens — not written up after the fact.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">[Project Name] — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: [http://localhost:3000] · Account: [uat-coach@uat-test-org.local] · Password: [from .env.local] · Org/Team: [uat-test-org / UAT Test Team]</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- hub-level tabs (Mockup / PM Brief / Full Plan / Decisions / QA Walk) ---- */
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* ---- phone / desktop toggle (affects the embedded product frame only) ---- */
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+/* ---- mockup screen router — one line per <section class="screen" id="..."> ---- */
+const intents={'screen-one':'[One sentence: what this screen is proving and why it looks this way.]'};
+function showScreen(){const id=location.hash.slice(1)||'screen-one';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+intents[id]:'';document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+/* ---- explanations behind every highlight (rule 8 in the header comment) ---- */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+  /* F01:{t:'[Short title]',now:'[What the code does today]',fix:'[What the proposal does]'} */
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ---- Decisions — one entry per ruling; append as they happen ---- */
+const DECISIONS=[
+  {date:'[2026-09-11]',ask:'[The question that was open]',ruling:'accepted',label:'Accepted',why:'[Why the owner ruled this way.]'}
+  /* {date:'[...]', ask:'[...]', ruling:'deferred'|'rejected', label:'Deferred'|'Rejected', why:'[...]'} */
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+/* ---- QA walk — one entry per part; fill in when the walk begins, then unhide the tab ---- */
+const QA_PARTS=[
+  {id:'A',title:'[Part name]',steps:['[Step 1 — what to check, pinned to an identity or relationship, never a figure the calendar moves]','[Step 2]']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-state')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-state',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

@@ -1,16 +1,16 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Check, Share2, Trophy, Library } from 'lucide-react';
+import { Share2, Trophy, Library } from 'lucide-react';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
-  recordChip, recordTone, resultLetter, normalizeOpponentName,
-  OPPONENT_OBSERVATION_MAX, type OpponentBookEntry,
+  recordChip, recordTone, resultLetter, normalizeOpponentName, type OpponentBookEntry,
 } from '@/lib/coach-opponents';
 import { ordinal } from '@/lib/playoff-bracket';
 import type { OpponentTournamentIntel, OpponentTournamentIntelGame } from '@/lib/coach-tournament-intel';
 import type { RepTeamOpponentObservation } from '@/lib/types';
 import ScoutTagFilter from './ScoutTagFilter';
+import ScoutObservationForm from './ScoutObservationForm';
 import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
 
 /** The intel payload as the route serves it — the pure shape, whose results additionally
@@ -56,21 +56,20 @@ export default function OpponentScoutingPanel({
      *  prose (plan §4.3), so it asks the card route for `?club=count` and the server skips
      *  assembling blocks it would only throw away. */
     clubObservationCount?: number;
+    /** False = this viewer may log and see their own past notes, but the pooled book (the
+     *  book line, everyone else's notes, the Club layer) came back redacted — never render
+     *  the book line or "Everything we know" in that case; there is nowhere honest to send
+     *  them (owner ruling 2026-09-11). */
+    scoutingBookAccess: boolean;
   } | null>(null);
   const [error, setError] = useState('');
-  const [obsBody, setObsBody] = useState('');
-  const [obsTag, setObsTag] = useState<string | null>(null);
-  const [logging, setLogging] = useState(false);
   /** Tag filter over the log (P2, mockup Stage 6) — mirrors the card page's filter. */
   const [filterTag, setFilterTag] = useState<string | null>(null);
-  /** How many observations went in THIS sitting (S5) — the saved-line + add-another cue. */
-  const [savedCount, setSavedCount] = useState(0);
   const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
-  const obsInputRef = useRef<HTMLTextAreaElement>(null);
-  // Synchronous re-entry guards: `disabled` reflects committed state, so a fast double-tap
-  // fires twice before the re-render — and neither POST is idempotent (two identical
-  // observations / two chat snapshots).
-  const busyRef = useRef({ log: false, share: false });
+  // Synchronous re-entry guard: `disabled` reflects committed state, so a fast double-tap
+  // fires twice before the re-render — and the share POST is not idempotent (two chat
+  // snapshots). The observation form carries its own guard.
+  const busyRef = useRef({ share: false });
 
   // The panel unmounts on every tab/event switch; a slow fetch resolving afterwards must
   // not call setState on the corpse. One ref covers both load() and logObservation().
@@ -122,32 +121,16 @@ export default function OpponentScoutingPanel({
     return () => { live = false; };
   }, [mirrored, orgSlug, teamId, eventId]);
 
-  async function logObservation() {
-    const body = obsBody.trim();
-    if (!body || busyRef.current.log) return;
-    busyRef.current.log = true;
-    setLogging(true);
-    try {
-      const res = await fetch(`${apiBase}/observations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body, tag: obsTag, eventId, opponentName }),
-      });
-      await throwIfNotOk(res, 'Could not save');
-      if (!mountedRef.current) return;
-      setObsBody('');
-      setObsTag(null);
-      // The one-sitting loop (S5, mockup 1b): confirm in place and hand the keyboard back —
-      // several observations in a row without re-finding the input.
-      setSavedCount(c => c + 1);
-      obsInputRef.current?.focus();
-      await load();
-    } catch (e: unknown) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : 'Could not save');
-    } finally {
-      busyRef.current.log = false;
-      if (mountedRef.current) setLogging(false);
-    }
+  /** Persists one observation against THIS game; the form owns the saved-line loop and the
+   *  error line, so this only throws when the server refuses. */
+  async function logObservation(body: string, tag: string | null) {
+    const res = await fetch(`${apiBase}/observations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body, tag, eventId, opponentName }),
+    });
+    await throwIfNotOk(res, 'Could not save');
+    if (mountedRef.current) await load();
   }
 
   async function shareToStaffChat() {
@@ -170,7 +153,7 @@ export default function OpponentScoutingPanel({
   if (error && !data) return <p className={styles.errorText}>{error}</p>;
   if (!data) return <div className={styles.loadingState}>Loading…</div>;
 
-  const { opponent, observations, tags } = data;
+  const { opponent, observations, tags, scoutingBookAccess } = data;
   // Tag chips filter the log (All + only tags in use), exactly as the card page does.
   const usedTags = tags.filter(t => observations.some(o => o.tag === t));
   const shownObs = filterTag ? observations.filter(o => o.tag === filterTag) : observations;
@@ -198,13 +181,19 @@ export default function OpponentScoutingPanel({
         </div>
       )}
 
-      {opponent.summary ? (
-        <div className={styles.scoutBookLine}>
-          <span className={styles.scoutBookLabel}>The book line</span>
-          <p className={styles.scoutBookRead}>{opponent.summary}</p>
-        </div>
+      {scoutingBookAccess ? (
+        opponent.summary ? (
+          <div className={styles.scoutBookLine}>
+            <span className={styles.scoutBookLabel}>The book line</span>
+            <p className={styles.scoutBookRead}>{opponent.summary}</p>
+          </div>
+        ) : (
+          <p className={styles.scoutFootnote}>Nothing in the book line yet — the full page has the editor.</p>
+        )
       ) : (
-        <p className={styles.scoutFootnote}>Nothing in the book line yet — the full page has the editor.</p>
+        <p className={styles.scoutFootnote}>
+          Showing your own notes only. Ask your head coach for Scouting Book access to see the team&rsquo;s shared book.
+        </p>
       )}
 
       {mirrored && intel && (
@@ -236,7 +225,15 @@ export default function OpponentScoutingPanel({
         </div>
       )}
 
-      <ScoutTagFilter tags={usedTags} value={filterTag} onChange={setFilterTag} />
+      {/* The capture door — on the RIGHT of the filter row, ABOVE the notes, so they can never push
+          it out of sight; shared with the full page, so the two can never drift. The sheet opens
+          above the row and a saved note lands directly beneath it. */}
+      <ScoutObservationForm
+        tags={tags}
+        heading="Log an observation from this game"
+        onSave={logObservation}
+        filter={<ScoutTagFilter tags={usedTags} value={filterTag} onChange={setFilterTag} />}
+      />
 
       {latest.map(o => (
         <div key={o.id} className={styles.scoutObs}>
@@ -248,7 +245,9 @@ export default function OpponentScoutingPanel({
         </div>
       ))}
       {shownObs.length > 2 && (
-        <p className={styles.scoutFootnote}>+ {shownObs.length - 2} more on the full page.</p>
+        <p className={styles.scoutFootnote}>
+          {scoutingBookAccess ? `+ ${shownObs.length - 2} more on the full page.` : `+ ${shownObs.length - 2} more of your own.`}
+        </p>
       )}
 
       {/* Club Shared Book (mockup 8c) — ONE quiet line, only when the club actually has
@@ -263,46 +262,19 @@ export default function OpponentScoutingPanel({
         </Link>
       )}
 
-      {savedCount > 0 && (
-        <p className={styles.scoutSavedLine} aria-live="polite">
-          <Check size={12} aria-hidden /> {savedCount === 1 ? 'Saved' : `${savedCount} saved this sitting`} — add another?
-        </p>
-      )}
-      <textarea
-        ref={obsInputRef}
-        className={styles.scoutLogInput}
-        value={obsBody}
-        maxLength={OPPONENT_OBSERVATION_MAX}
-        placeholder="Log an observation from this game — numbers and positions, never opposing players’ names"
-        onChange={e => setObsBody(e.target.value)}
-        rows={2}
-      />
-      {/* ⚖ A DROPDOWN, NOT A PILL ROW (owner, §129 walk F2, 2026-09-02 — the standing
-          form-selects-are-dropdowns ruling reaches the last pill-row select). The vocabulary is
-          the FIXED sport-pack list; a tag is optional, and "No tag" is a complete answer. */}
-      <select
-        className={styles.select}
-        value={obsTag ?? ''}
-        aria-label="Tag this observation"
-        onChange={e => setObsTag(e.target.value || null)}
-      >
-        <option value="">No tag</option>
-        {tags.map(t => <option key={t} value={t}>{t}</option>)}
-      </select>
       {error && data && <p className={styles.errorText}>{error}</p>}
       <div className={styles.scoutPanelLinks}>
-        <button type="button" className={styles.scoutPanelLink} disabled={logging || obsBody.trim().length === 0} onClick={logObservation}>
-          {logging ? 'Saving…' : 'Save observation'}
-        </button>
         {data.canShareToStaffChat && (
           <button type="button" className={styles.scoutPanelLink} disabled={shareStatus === 'sharing'} onClick={shareToStaffChat}>
             <Share2 size={12} aria-hidden />{' '}
             {shareStatus === 'sharing' ? 'Sharing…' : shareStatus === 'shared' ? 'Shared ✓' : 'Share to staff chat'}
           </button>
         )}
-        <Link href={`${base}/history/opponents/${key}`} className={styles.scoutPanelLink}>
-          Everything we know ›
-        </Link>
+        {scoutingBookAccess && (
+          <Link href={`${base}/history/opponents/${key}`} className={styles.scoutPanelLink}>
+            Everything we know ›
+          </Link>
+        )}
       </div>
     </div>
   );

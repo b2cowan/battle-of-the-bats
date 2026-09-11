@@ -1,0 +1,491 @@
+<title>A Bill Lowered · §160</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,60px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+
+.signin{margin-top:22px;background:var(--card);border:1px solid var(--rule-strong);border-radius:var(--r);box-shadow:var(--shadow);padding:15px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);word-break:break-all}
+.priv{font-size:12.5px;color:var(--brick)}
+
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.track{flex:1 1 200px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:140px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+
+.pinbox{margin-top:24px;border:1px solid var(--rule-strong);border-radius:var(--r);overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.pinbox h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0;padding:13px 17px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.pinbody{padding:14px 17px;display:flex;flex-direction:column;gap:11px}
+table.fig{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.fig th,table.fig td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--rule)}
+table.fig th:first-child,table.fig td:first-child{text-align:left;font-variant-numeric:normal}
+table.fig thead th{font-family:var(--disp);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:600}
+table.fig td.no{color:var(--dim)}
+
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:72ch;margin-top:4px}
+
+.steps{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden;margin-top:18px}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:11px 14px;background:var(--card);font-size:14.5px;line-height:1.5}
+.chk input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:3px;text-decoration:none}
+.chk .pin{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--olive-soft);color:var(--olive);border:1px solid rgba(79,93,27,.3);border-radius:5px;padding:0 5px}
+.chk .drift{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--gold-soft);color:var(--gold);border:1px solid rgba(131,80,6,.3);border-radius:5px;padding:0 5px}
+
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch;margin-top:14px}
+.warn b,.tip b,.ask b{color:var(--ink)}
+
+.verdict{margin-top:15px;display:flex;flex-direction:column;gap:9px}
+.vrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vlabel{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.vbtn{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;padding:5px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--dim)}
+.vbtn[aria-pressed="true"][data-v="pass"]{border-color:var(--olive);background:var(--olive-soft);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="issue"]{border-color:var(--brick);background:var(--brick-soft);color:var(--brick)}
+.vbtn[aria-pressed="true"][data-v="call"]{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+textarea{width:100%;min-height:62px;resize:vertical;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);background:var(--card);color:var(--ink)}
+textarea::placeholder{color:var(--dim)}
+
+.out{margin-top:52px;border-top:2px solid var(--ink);padding-top:16px}
+.out h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0 0 10px}
+pre.summary{margin:12px 0 0;padding:14px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:var(--r-sm);font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow:auto;color:var(--ink-soft)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:50px;border-top:1px solid var(--rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §160 · built 2026-09-09 · commit 5369162c · no migration</p>
+  <h1>A bill lowered is not a collection</h1>
+  <p class="lede">You spotted this reading the Player Dues band beside Budget vs. Actual and asking why
+    two reports about one season disagreed by $134.00. Lowering a bill now comes off <b>Dues</b>
+    instead of counting as money collected, <b>Collected</b> became money and nothing else, and the
+    Money Overview's Collections card became <b>Bills settled</b>. Six parts. The last one is two
+    calls I need from you.</p>
+</header>
+
+<section class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>Where</dt><dd>http://localhost:3000 &nbsp;(dev server up, fixture seeded)</dd>
+    <dt>Account</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Go to</dt><dd>org <b>uat-test-org</b> → <b>UAT Test Team</b> → Money</dd>
+    <dt>Part E</dt><dd>the public coach demo — no login, the &ldquo;See it live&rdquo; door</dd>
+  </dl>
+  <p class="priv"><b>Dev-only credentials — keep this page private.</b> If the password was ever
+    rotated, <code>.env.local</code> is the truth and this card is a stale copy.</p>
+</section>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyfind">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<section class="pinbox">
+  <h2>What may be pinned, and what moves</h2>
+  <div class="pinbody">
+    <p style="font-size:14.5px;color:var(--ink-soft)">Every figure below is a <b>whole-season</b>
+      figure, measured on this fixture on <b>2026-09-09</b>. A whole-season figure cannot move because
+      the date moved, so these are pass conditions. <b>Past due, the overdue count and &ldquo;to
+      come&rdquo; are as-of-today</b> — they drift by design, so they are illustration only and never
+      a reason to flag a step.</p>
+    <table class="fig">
+      <thead><tr><th>Figure</th><th>Pinned</th><th>Pass condition?</th></tr></thead>
+      <tbody>
+        <tr><td>Dues (after write-offs)</td><td>11,291.30</td><td class="no">yes</td></tr>
+        <tr><td>&nbsp;&nbsp;of which written off</td><td>17.00</td><td class="no">yes</td></tr>
+        <tr><td>Collected</td><td>5,124.63</td><td class="no">yes</td></tr>
+        <tr><td>&nbsp;&nbsp;beyond what those families were billed</td><td>1,182.65</td><td class="no">yes</td></tr>
+        <tr><td>Bills settled</td><td>3,941.98</td><td class="no">yes</td></tr>
+        <tr><td>Balance owing</td><td>7,349.32</td><td class="no">yes</td></tr>
+        <tr><td>Past due · overdue count · &ldquo;to come&rdquo;</td><td>—</td><td class="no"><b>no — moves with the calendar</b></td></tr>
+      </tbody>
+    </table>
+    <div class="tip"><b>Two relationships matter more than any single figure</b>, because they survive
+      the calendar and fail loudly on bad arithmetic:<br>
+      <span class="pin">Dues − (Collected − owed back) = Balance owing</span> &nbsp;and&nbsp;
+      <span class="pin">Bills settled + Balance owing = Dues</span></div>
+  </div>
+</section>
+
+<!-- ══════════ PART A ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The band adds up, and needs no small print</h2>
+  <p>Money → <b>Player Dues</b>. Before this, the four figures at the top did not reconcile and two
+    footnote clauses existed only to explain why.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="a1"><label for="a1"><b>Read the four figures left to right and subtract.</b> <span class="pin">11,291.30 − (5,124.63 − 1,182.65) = 7,349.32</span><span class="hintline">Both numbers you subtract are named in the captions — you should not need anything that isn't on screen.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a2"><label for="a2"><b>The Dues caption says what came off the bill</b> — &ldquo;12 players · after $17.00 of adjustments&rdquo;.<span class="hintline">The wording names the kinds actually present. With a forgiven balance it would say &ldquo;forgiven&rdquo;; with both, &ldquo;adjustments and forgiveness&rdquo;.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a3"><label for="a3"><b>The Collected caption is ONE clause</b> — &ldquo;$1,182.65 of it beyond what those families were billed&rdquo;.<span class="hintline">It used to carry two. The credits clause is gone because credits are now inside the figure, and naming them again would double-count them to you.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a4"><label for="a4"><b>Balance owing and Past due are untouched.</b> Balance owing reads <span class="pin">7,349.32</span>.<span class="hintline">Past due is as-of-today — read it, don't check it against anything.</span></label></div>
+  <div class="chk"><input type="checkbox" id="a5"><label for="a5">⚠ <b>Open Avery Test's row and tell me what it says out loud.</b><span class="hintline">This is the step I actually want your eye on. §132 went 42 for 42 and still shipped three defects, all inside one row. Avery is the family holding the $17.00. Expect: billed $700.00, $17.00 written off, so the bill is $683.00 — and the family is in credit by $1,145.15 because they sent $1,250.00 against it and hold fundraising besides.</span></label></div>
+</div>
+<div class="verdict" data-part="A">
+  <div class="vrow"><span class="vlabel">Part A</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Part A notes — what you saw, in your words"></textarea>
+</div>
+
+<!-- ══════════ PART B ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The card, and the twin that nearly disagreed with it</h2>
+  <p>Money → <b>Overview</b>. <b>Collections</b> is now <b>Bills settled</b> — it always measured how
+    much of the bill was done, and now it says so. It had to be renamed because <b>Collected</b> is no
+    longer capped: a team that fundraises hard can collect more than it billed, and a progress bar
+    reading that would sail past 100%.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="b1"><label for="b1"><b>The first card is titled &ldquo;Bills settled&rdquo;</b>, not Collections.</label></div>
+  <div class="chk"><input type="checkbox" id="b2"><label for="b2"><b>It reads</b> <span class="pin">$3,941.98 of $11,291.30</span> <b>· 35%</b>, and its &ldquo;of&rdquo; figure is the same Dues you just read on Player Dues.</label></div>
+  <div class="chk"><input type="checkbox" id="b3"><label for="b3">⚠ <b>Scroll to the Budget card and find its &ldquo;Player dues&rdquo; row. It must read the SAME pair.</b><span class="hintline">This is where the review caught me. I re-pointed the card and left its twin behind, so the screen would have shown $3,941.98 of $11,291.30 on one card and $2,225.00 of $11,308.30 four inches below it — two answers to one question. If those two disagree, flag it.</span></label></div>
+  <div class="chk"><input type="checkbox" id="b4"><label for="b4"><b>The &ldquo;More in Money&rdquo; rail carries NO dues line at all</b> — Fundraisers, Sponsorships, Club, Season Budget Plan, Budget vs. Actual, and nothing else.<span class="hintline">⚠ <b>Corrected mid-walk 2026-09-10 — the STEP was wrong, not the product.</b> It used to promise a third dues figure here. In season the rail deliberately lists only the surfaces the story cards above don't already own, and dues is one of the cards — so there is no third dues figure on this screen to go stale, which is the good outcome. The rail does carry a <b>Player Dues</b> line reading the same pair, but only on a team still in SETUP, where the rail is titled &ldquo;Everything in Money&rdquo; and there are no cards for it to disagree with. Same mistake §119 caught at its step A3: a step must be written against the stage the fixture is actually in.</span></label></div>
+  <div class="chk"><input type="checkbox" id="b5"><label for="b5"><b>The bar has not passed 100%</b>, and the segments add to the bill: settled + overdue + to come.<span class="hintline">The two right-hand segments are as-of-today — the arithmetic is the check, not their sizes.</span></label></div>
+</div>
+<div class="verdict" data-part="B">
+  <div class="vrow"><span class="vlabel">Part B</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Part B notes"></textarea>
+</div>
+
+<!-- ══════════ PART C ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The table adds up — and so does the file</h2>
+  <p>Back to <b>Player Dues</b>, the roster table. An adjustment used to sit in the credits column, so
+    a row read as though somebody had covered part of the bill. It is not a credit anyone paid; it is
+    a smaller bill.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="c1"><label for="c1"><b>Avery Test's Dues cell reads</b> <span class="pin">$683.00</span>, not $700.00.</label></div>
+  <div class="chk"><input type="checkbox" id="c2"><label for="c2"><b>Read Avery's row across:</b> Dues − Fundraising − Other credits − Paid + Handed back = Balance.<span class="hintline">$683.00 − $198.15 − $380.00 − $1,250.00 + — = ($1,145.15). The $17.00 left the credits column and the bill came down by it, so the balance did not move.</span></label></div>
+  <div class="chk"><input type="checkbox" id="c3"><label for="c3">⚠ <b>Add the Dues column up by eye and compare it to the Total row.</b> <span class="pin">11,291.30</span><span class="hintline">The second place the review caught me: the column printed the raw bill while the Total row summed the adjusted ones, so the column did not add up to its own total. Twelve rows — a rough eyeball is enough to catch a $17 gap if it were back.</span></label></div>
+  <div class="chk"><input type="checkbox" id="c4"><label for="c4">⚠⚠ <b>Export the dues sheet and open the file.</b> Its Dues column must add up to its own Total row.<span class="hintline">The same defect reached the download, which is the one that would actually have hurt — a treasurer sums that column with no screen there to explain the gap.</span></label></div>
+  <div class="chk"><input type="checkbox" id="c5"><label for="c5"><b>The Total row still sits below Balance owing</b> by the money owed back to families in credit.<span class="hintline">That gap is deliberate and is named in the caption at the top. Unchanged by this work.</span></label></div>
+</div>
+<div class="verdict" data-part="C">
+  <div class="vrow"><span class="vlabel">Part C</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Part C notes"></textarea>
+</div>
+
+<!-- ══════════ PART D ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The report — your $500 question, answered</h2>
+  <p>Money → <b>Budget vs. Actual</b>. You asked: <i>&ldquo;if we write off a future payment, wouldn't
+    that future payment be removed from the planned figure?&rdquo;</i> It is now — in the month holding
+    the bill that was cancelled.</p>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="d1"><label for="d1"><b>The Player dues PLAN reads</b> <span class="pin">11,291.30</span> — the same figure as the Dues tile on Player Dues.<span class="hintline">It used to read the gross bill, so the season reported a shortfall you had cancelled yourself.</span></label></div>
+  <div class="chk"><input type="checkbox" id="d2"><label for="d2">⚠⚠ <b>The Player dues ACTUAL reads</b> <span class="pin">5,124.63</span> — identical to <b>Collected</b> on Player Dues.<span class="hintline">This is the payoff. Two screens, one number, arrived at from opposite directions — not two sums kept in step by hand. If these two ever differ, that is the whole project failing.</span></label></div>
+  <div class="chk"><input type="checkbox" id="d3"><label for="d3"><b>The footnote stack under the table says the plan is net</b> — &ldquo;The <b>Player dues</b> plan is after <b>$17.00</b> of adjustments — bills lowered with no money behind them.&rdquo;</label></div>
+  <div class="chk"><input type="checkbox" id="d4"><label for="d4"><b>Download the report. The footnote is in the file.</b><span class="hintline">A caption that never reached a downloaded file has been a real defect here before — a board member reading the export is the person who most needs it.</span></label></div>
+  <div class="chk"><input type="checkbox" id="d5"><label for="d5"><b>Switch to the month-by-month view.</b> The dues total agrees with the row you just read.<span class="hintline">The season figure is a sum of the months, so a write-off comes out of the month holding the cancelled bill. On this team the $17.00 lands undated, because Avery had already paid every bill in cash and there was nothing left to cancel.</span></label></div>
+</div>
+<div class="verdict" data-part="D">
+  <div class="vrow"><span class="vlabel">Part D</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Part D notes"></textarea>
+</div>
+
+<!-- ══════════ PART E ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>The quiet season — where none of this shows at all</h2>
+  <p>Most teams never write a bill off, and on those the new wording must be <b>completely absent</b>.
+    A standing &ldquo;after $0.00 of adjustments&rdquo; on every team would be noise. The public coach
+    demo holds no write-off, so it is the honest test.</p>
+  <div class="tip"><b>No login.</b> Use the &ldquo;See it live&rdquo; door for the coach demo. ⚠ Leaving
+    the sandbox path ends the session, so do this part in one pass.</div>
+</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="e1"><label for="e1"><b>Player Dues on a demo team: the Dues caption shows the player count and nothing else.</b><span class="hintline">No &ldquo;after $0.00&rdquo;, no empty clause, no stray separator dot.</span></label></div>
+  <div class="chk"><input type="checkbox" id="e2"><label for="e2"><b>Budget vs. Actual on that team has no written-off footnote at all.</b></label></div>
+  <div class="chk"><input type="checkbox" id="e3"><label for="e3"><b>The band still closes there too</b> — Dues − (Collected − owed back) = Balance owing.<span class="hintline">With nothing written off, Dues is simply the whole bill. The relationship holds either way.</span></label></div>
+  <div class="chk"><input type="checkbox" id="e4"><label for="e4"><b>The card there is titled &ldquo;Bills settled&rdquo; too.</b><span class="hintline">The rename is not fixture-specific.</span></label></div>
+</div>
+<div class="verdict" data-part="E">
+  <div class="vrow"><span class="vlabel">Part E</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Needs a call</button></div>
+  <textarea placeholder="Part E notes"></textarea>
+</div>
+
+<!-- ══════════ PART F ══════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>Two calls I need from you</h2>
+  <p>Not checks — decisions. Tick the option you want; the summary prints which one you chose.</p>
+</div>
+
+<div class="ask"><b>F1 — the shop window cannot show what just shipped.</b> Neither demo world contains
+  a single write-off, so a prospect browsing the sandbox sees none of this: no caption, no footnote,
+  no adjusted bill. Adding one changes the demo's money story, which is why I have not done it
+  unasked.</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="f1a"><label for="f1a"><b>Seed a write-off into the coach demo</b> so the sandbox shows it — and re-read the demo's money narration in the same pass.</label></div>
+  <div class="chk"><input type="checkbox" id="f1b"><label for="f1b"><b>Leave the demo alone.</b> The sandbox does not need to show every capability, and a forgiven bill is not a flattering first impression.</label></div>
+  <div class="chk"><input type="checkbox" id="f1c"><label for="f1c"><b>Something else</b> — say what in the notes.</label></div>
+</div>
+
+<div class="ask"><b>F2 — the Budget plan page still shows the gross bill.</b> Budget vs. Actual now
+  reports the dues plan net of write-offs. The <b>Budget plan</b> page answers a slightly different
+  question — what dues bill — from the schedules, and still shows $11,308.30. Nothing sits the two
+  figures side by side today, so nobody sees a contradiction; but they are two answers to a question
+  a coach might reasonably think is one.</div>
+<div class="steps">
+  <div class="chk"><input type="checkbox" id="f2a"><label for="f2a"><b>Net it too</b>, so every screen saying &ldquo;what dues bill&rdquo; says the same number.</label></div>
+  <div class="chk"><input type="checkbox" id="f2b"><label for="f2b"><b>Leave it gross</b> — it is the schedule's own total and answers a different question.</label></div>
+  <div class="chk"><input type="checkbox" id="f2c"><label for="f2c"><b>Look at it properly first</b> — its own mockup and its own decision.</label></div>
+</div>
+<div class="verdict" data-part="F">
+  <div class="vrow"><span class="vlabel">Part F</span>
+    <button class="vbtn" data-v="pass" aria-pressed="false">Both ruled</button>
+    <button class="vbtn" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" data-v="call" aria-pressed="false">Still thinking</button></div>
+  <textarea placeholder="Part F — the why behind each ruling"></textarea>
+</div>
+
+<div class="warn" style="margin-top:34px"><b>The gate this whole change is held to, for your
+  reference:</b> twelve families, twelve unchanged balances, diffed against a reading taken before any
+  code was written. The only figure that moved anywhere is Avery's bill, $700.00 → $683.00. If you find
+  a balance that looks wrong on any family, that is the most serious thing this walk can turn up —
+  flag it immediately rather than finishing the walk.</div>
+
+<section class="out">
+  <h2>Findings</h2>
+  <p style="font-size:14.5px;color:var(--ink-soft)">Press <b>Copy findings</b> at the top (or the
+    button below) and paste the result back into chat.</p>
+  <button class="btn" id="build" style="margin-top:12px">Build summary</button>
+  <pre class="summary" id="summary">Nothing yet — tick some boxes, then press Build summary.</pre>
+</section>
+
+<footer>
+  <span>Owner QA §160</span><span>commit 5369162c</span><span>fixture measured 2026-09-09</span>
+  <span>no migration</span><span>step B4 corrected 2026-09-10</span><span>ticks save in this browser only</span>
+</footer>
+
+</div>
+<div class="toastwrap" id="toastwrap"></div>
+
+<script>
+(function () {
+  var KEY = 'qa160.v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.chk input[type=checkbox]'));
+  var verdicts = Array.prototype.slice.call(document.querySelectorAll('.verdict'));
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private window */ }
+  }
+  var state = load();
+  if (!state.checks) state.checks = {};
+  if (!state.verdicts) state.verdicts = {};
+  if (!state.notes) state.notes = {};
+
+  function paint() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      if (b.checked) done++;
+      var row = b.closest('.chk');
+      if (row) row.classList.toggle('on', b.checked);
+    });
+    document.getElementById('cdone').textContent = String(done);
+    document.getElementById('ctotal').textContent = String(boxes.length);
+    var pctv = boxes.length ? Math.round((done / boxes.length) * 100) : 0;
+    document.getElementById('fillbar').style.width = pctv + '%';
+  }
+
+  boxes.forEach(function (b) {
+    // A `checked` written into the HTML wins; otherwise restore what this browser saved.
+    if (!b.checked && state.checks[b.id]) b.checked = true;
+    b.addEventListener('change', function () {
+      state.checks[b.id] = b.checked;
+      save(state); paint();
+    });
+  });
+
+  verdicts.forEach(function (v) {
+    var part = v.getAttribute('data-part');
+    var btns = Array.prototype.slice.call(v.querySelectorAll('.vbtn'));
+    var note = v.querySelector('textarea');
+    if (state.verdicts[part]) {
+      btns.forEach(function (btn) {
+        btn.setAttribute('aria-pressed', String(btn.getAttribute('data-v') === state.verdicts[part]));
+      });
+    }
+    if (state.notes[part]) note.value = state.notes[part];
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mine = btn.getAttribute('data-v');
+        var already = btn.getAttribute('aria-pressed') === 'true';
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+        if (already) { delete state.verdicts[part]; }
+        else { btn.setAttribute('aria-pressed', 'true'); state.verdicts[part] = mine; }
+        save(state);
+      });
+    });
+    note.addEventListener('input', function () {
+      state.notes[part] = note.value;
+      save(state);
+    });
+  });
+
+  var VERDICT_WORD = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+
+  function summary() {
+    var lines = [];
+    lines.push('Owner QA §160 — a bill lowered is not a collection');
+    lines.push('commit 5369162c · fixture measured 2026-09-09 · step B4 corrected 2026-09-10');
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    lines.push(done + ' of ' + boxes.length + ' steps checked');
+    lines.push('');
+    verdicts.forEach(function (v) {
+      var part = v.getAttribute('data-part');
+      var vd = state.verdicts[part];
+      lines.push('PART ' + part + ' — ' + (vd ? (part === 'F' && vd === 'pass' ? 'BOTH RULED' : VERDICT_WORD[vd]) : 'no verdict'));
+      var head = v.previousElementSibling;
+      var group = [];
+      // Walk backwards collecting the checkbox rows that belong to this part.
+      var node = v.previousElementSibling;
+      while (node && !node.classList.contains('parthead')) {
+        if (node.classList && node.classList.contains('steps')) group.unshift(node);
+        node = node.previousElementSibling;
+      }
+      group.forEach(function (g) {
+        Array.prototype.slice.call(g.querySelectorAll('input[type=checkbox]')).forEach(function (b) {
+          var lab = g.querySelector('label[for="' + b.id + '"]');
+          var txt = lab ? lab.textContent.replace(/\s+/g, ' ').trim() : b.id;
+          if (txt.length > 150) txt = txt.slice(0, 147) + '…';
+          lines.push('  [' + (b.checked ? 'x' : ' ') + '] ' + txt);
+        });
+      });
+      var n = (state.notes[part] || '').trim();
+      if (n) { lines.push('  notes: ' + n); }
+      lines.push('');
+    });
+    var unchecked = boxes.filter(function (b) { return !b.checked; });
+    if (unchecked.length) {
+      lines.push('Not checked: ' + unchecked.length + ' step(s) — see the [ ] rows above.');
+    } else {
+      lines.push('Every step checked.');
+    }
+    return lines.join('\n');
+  }
+
+  function toast(msg) {
+    var wrap = document.getElementById('toastwrap');
+    wrap.innerHTML = '<div class="toast">' + msg + '</div>';
+    setTimeout(function () { wrap.innerHTML = ''; }, 1900);
+  }
+
+  document.getElementById('build').addEventListener('click', function () {
+    document.getElementById('summary').textContent = summary();
+    toast('Summary built');
+  });
+
+  function copyOut() {
+    var text = summary();
+    document.getElementById('summary').textContent = text;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Copied'); },
+        function () { toast('Select the text below'); });
+    } else {
+      toast('Select the text below');
+    }
+  }
+  document.getElementById('copyfind').addEventListener('click', copyOut);
+
+  document.getElementById('resetall').addEventListener('click', function () {
+    if (!window.confirm('Clear every tick, verdict and note on this page?')) return;
+    state = { checks: {}, verdicts: {}, notes: {} };
+    save(state);
+    boxes.forEach(function (b) { b.checked = false; });
+    verdicts.forEach(function (v) {
+      v.querySelectorAll('.vbtn').forEach(function (btn) { btn.setAttribute('aria-pressed', 'false'); });
+      v.querySelector('textarea').value = '';
+    });
+    document.getElementById('summary').textContent = 'Nothing yet — tick some boxes, then press Build summary.';
+    paint();
+    toast('Reset');
+  });
+
+  paint();
+})();
+</script>

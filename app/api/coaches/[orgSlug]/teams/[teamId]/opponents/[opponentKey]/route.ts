@@ -6,7 +6,9 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { denyUnless, canViewScoutingBook, canWriteScoutingSummary, canJoinStaffChat } from '@/lib/coach-capabilities';
+import {
+  denyUnless, canLogScoutingObservation, canViewScoutingBook, canWriteScoutingSummary, canJoinStaffChat,
+} from '@/lib/coach-capabilities';
 import {
   normalizeOpponentName, normalizeOpponentKeyParam,
   scoutingTagsForSport, OPPONENT_SUMMARY_MAX,
@@ -39,8 +41,13 @@ export const GET = withObservability(async (req: Request,
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, team, assignment, programYear } = resolved;
-  const denied = denyUnless(canViewScoutingBook(assignment.capabilities), 'You do not have access to the scouting book.');
+  // WEAKER gate than the pooled read: a person who may only log (and see their own past
+  // notes) still reaches this endpoint — `scoutingBookAccess` below tells them, and the
+  // client, which shape they got. Refusing outright here is what used to leave a helper's
+  // glance tab and the full page both 403ing on a grant they were never meant to need.
+  const denied = denyUnless(canLogScoutingObservation(assignment.capabilities), 'You do not have access to the scouting book.');
   if (denied) return denied;
+  const scoutingBookAccess = canViewScoutingBook(assignment.capabilities);
 
   const key = normalizeOpponentKeyParam(opponentKey);
   if (!key) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -63,21 +70,38 @@ export const GET = withObservability(async (req: Request,
    *
    * Resolved AFTER the card so the sibling lookup can use the viewer's whole key space
    * (`entry.key` plus every spelling merged into it) rather than the raw URL key alone.
+   *
+   * All gated on `scoutingBookAccess` too: the club layer is OTHER teams' pooled notes, which
+   * makes no sense to hand someone who cannot read this team's own.
    */
   const clubAccess = resolveClubBookAccessFor(ctx.org, team);
   const clubArgs = { orgId: ctx.org.id, viewerTeamId: teamId, matchKeys: [entry.key, ...entry.aliasKeys] };
-  const club = clubAccess.canSeeClubLayer && !clubCountOnly
+  const club = scoutingBookAccess && clubAccess.canSeeClubLayer && !clubCountOnly
     ? await assembleClubBookBlock(clubArgs)
     : null;
   // One number, however it was reached: derived from the blocks when we already have them,
   // read cheaply when the caller only wants the teaser. A non-sharing team gets 0.
-  const clubObservationCount = !clubAccess.canSeeClubLayer ? 0
+  const clubObservationCount = !scoutingBookAccess || !clubAccess.canSeeClubLayer ? 0
     : clubCountOnly ? await resolveClubObservationCount(clubArgs)
     : club?.observationCount ?? 0;
 
+  /**
+   * The downgrade for a person who can only LOG (no `scoutingBook` grant): the book line and
+   * everyone else's observations are the pooled content this person may not read, so they are
+   * redacted here rather than merely hidden client-side — the client boolean is presentation,
+   * this is the actual boundary. Record, streak, and last-meeting stay on `entry` untouched:
+   * they are the same facts already sitting on the Schedule page, not anyone's opinion.
+   */
+  const visibleObservations = scoutingBookAccess
+    ? observations
+    : observations.filter(o => o.createdBy === ctx.user.id);
+  const visibleEntry = scoutingBookAccess
+    ? entry
+    : { ...entry, summary: null, lastNoteUpdatedAt: null };
+
   return NextResponse.json({
-    opponent: { ...entry, observationCount: observations.length },
-    observations,
+    opponent: { ...visibleEntry, observationCount: visibleObservations.length },
+    observations: visibleObservations,
     insights,
     // This entry's merged-away spellings (un-merge list) — served from the assembly's own
     // alias read, never a second fetch of the table.
@@ -89,10 +113,14 @@ export const GET = withObservability(async (req: Request,
     clubObservationCount,
     canWriteSummary: canWriteScoutingSummary(assignment.capabilities),
     // The share door renders only where it can succeed: grant held AND the staff room
-    // exists (a team below the staff-chat plan gate, or not yet healed, shows no button).
-    canShareToStaffChat: staffRoom !== null,
+    // exists (a team below the staff-chat plan gate, or not yet healed, shows no button) AND
+    // the sharer can actually read what they'd be broadcasting.
+    canShareToStaffChat: scoutingBookAccess && staffRoom !== null,
     isHeadCoach: assignment.capabilities.isHeadCoach,
     viewerId: ctx.user.id,
+    // Whether this is the FULL book or the logging-only downgrade — the schedule drawer and
+    // the full "Everything we know" page both read this to decide what to render.
+    scoutingBookAccess,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/opponents/[opponentKey]' });
 

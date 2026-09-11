@@ -7,7 +7,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   recordChip, recordTone, resultLetter,
-  OPPONENT_SUMMARY_MAX, OPPONENT_OBSERVATION_MAX, type OpponentBookEntry,
+  OPPONENT_SUMMARY_MAX, type OpponentBookEntry,
 } from '@/lib/coach-opponents';
 import type { OpponentInsightLine } from '@/lib/coach-opponent-insights';
 import {
@@ -18,7 +18,9 @@ import type { RepTeamOpponentObservation } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import ScoutTagFilter from '@/components/coaches/ScoutTagFilter';
+import ScoutObservationForm from '@/components/coaches/ScoutObservationForm';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import styles from '../../../../../coaches.module.css';
 
 /** Seven fetch sites in this file share one error idiom — one copy of it, not seven. */
@@ -131,11 +133,18 @@ interface CardPayload {
   canShareToStaffChat: boolean;
   isHeadCoach: boolean;
   viewerId: string;
+  /** False = the server downgraded this response (logging-only viewer): observations are
+   *  filtered to this viewer's own, and the book line is withheld. This page is "Everything
+   *  we know" — the pooled book — so a downgraded response renders the blocked block instead
+   *  of a half-empty page; the schedule drawer is where a logging-only person belongs. */
+  scoutingBookAccess: boolean;
 }
 
 // One opponent's book: record + meetings across every season, the observation log, and
-// "the book line". Everything a schedule-holder can read; the book line is notes-gated;
-// observation deletion is head-coach-any / author-own (the eraser).
+// "the book line". Everything a schedule-holder can read the POOLED version of; a viewer
+// with only the logging grant is turned back here (owner ruling 2026-09-11) — the drawer's
+// glance tab is their surface. The book line is notes-AND-scoutingBook-gated; observation
+// deletion is head-coach-any / author-own (the eraser).
 export default function CoachOpponentCardPage({
   params: paramsPromise,
 }: {
@@ -155,10 +164,6 @@ export default function CoachOpponentCardPage({
   const [summaryDraft, setSummaryDraft] = useState<string | null>(null);
   const [summaryStatus, setSummaryStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  const [obsBody, setObsBody] = useState('');
-  const [obsTag, setObsTag] = useState<string | null>(null);
-  const [logging, setLogging] = useState(false);
-  const [logError, setLogError] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
 
   const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
@@ -169,8 +174,8 @@ export default function CoachOpponentCardPage({
 
   // Synchronous re-entry guards: `disabled={…}` reflects COMMITTED state, so a fast
   // double-tap fires the handler twice before the re-render lands — and none of these
-  // POSTs is idempotent (two identical observations / two chat snapshots).
-  const busyRef = useRef({ log: false, share: false, merge: false });
+  // POSTs is idempotent (two chat snapshots / two merges). The observation form guards itself.
+  const busyRef = useRef({ share: false, merge: false });
   // Response sequencing: only the NEWEST load()'s payload may win. An un-merge's reload
   // racing an earlier, slower load would otherwise repaint the just-deleted alias.
   const loadSeqRef = useRef(0);
@@ -232,8 +237,37 @@ export default function CoachOpponentCardPage({
         <p className={styles.errorText}>{error || 'Could not load this opponent'}</p>
         {/* ⚠ ONE OF THE THREE SURVIVING `CoachBackLink`s (back-in-header amendment, 2026-08-26) —
             same reason as the team board's: this is the failed-load branch, and it renders no
-            header for an arrow to sit in. The opponent's own header below carries the arrow. */}
-        <CoachBackLink href={insightsSectionHref(base, 'scouting')}>All opponents</CoachBackLink>
+            header for an arrow to sit in. The opponent's own header below carries the arrow.
+            Points at Schedule, not the Insights hub: a load failure means we don't know this
+            viewer's Insights access, and Schedule is the one place anyone who reached this URL
+            is guaranteed to reach (owner ruling 2026-09-11 — see the note below). */}
+        <CoachBackLink href={`${base}/schedule`}>Back to schedule</CoachBackLink>
+      </div>
+    );
+  }
+
+  /**
+   * This page is the POOLED book — "Everything we know" — so a viewer downgraded to
+   * logging-only gets turned back here rather than a half-empty page (owner ruling
+   * 2026-09-11). Their surface is the schedule drawer's Scouting tab, which never links here
+   * for them in the first place (`OpponentScoutingPanel` hides "Everything we know" without
+   * this grant) — reaching this URL at all means a typed/bookmarked link, and Schedule is the
+   * one place they are certainly still allowed, unlike the Insights hub this page's own header
+   * otherwise backs into.
+   */
+  if (!data.scoutingBookAccess) {
+    return (
+      <div className={styles.page}>
+        {/* No header here either, same reason as the failed-load branch above: this file draws
+            exactly one CoachPageHeader (the opponent's own, further down), so its arrow is the
+            only back-arrow this page ever offers. */}
+        <CoachBackLink href={`${base}/schedule`}>Back to schedule</CoachBackLink>
+        <CoachNotGranted
+          icon={<Telescope size={20} aria-hidden />}
+          section="Scouting Book"
+          what="The team's shared scouting book — everyone's observations on this opponent, plus the book line."
+          blocker="You can still log your own observations from the schedule. Ask your head coach for Scouting Book access to read the shared book."
+        />
       </div>
     );
   }
@@ -259,28 +293,15 @@ export default function CoachOpponentCardPage({
     }
   }
 
-  async function logObservation() {
-    const body = obsBody.trim();
-    if (!body || busyRef.current.log) return;
-    busyRef.current.log = true;
-    setLogging(true);
-    setLogError('');
-    try {
-      const res = await fetch(`${apiBase}/observations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body, tag: obsTag, opponentName: opponent.displayName }),
-      });
-      await throwIfNotOk(res, 'Could not save the observation');
-      setObsBody('');
-      setObsTag(null);
-      await load();
-    } catch (e: unknown) {
-      setLogError(e instanceof Error ? e.message : 'Could not save the observation');
-    } finally {
-      busyRef.current.log = false;
-      setLogging(false);
-    }
+  /** Persists one observation; the shared form owns its own busy guard, saved line and error. */
+  async function logObservation(body: string, tag: string | null) {
+    const res = await fetch(`${apiBase}/observations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body, tag, opponentName: opponent.displayName }),
+    });
+    await throwIfNotOk(res, 'Could not save the observation');
+    await load();
   }
 
   async function removeObservation(id: string) {
@@ -407,18 +428,43 @@ export default function CoachOpponentCardPage({
       )}
 
       {/* "The numbers vs them" (P2, mockup 5a) — derived lines, each with its provenance
-          chip. Below-floor lines are ABSENT server-side, never hedged (§4.6 honesty rule). */}
-      {data.insights.length > 0 && (
-        <div className={styles.scoutNumbers}>
-          <div className={styles.scoutNumbersLabel}>The numbers vs them</div>
-          {data.insights.map(line => (
-            <div key={line.id} className={styles.scoutNumbersLine}>
-              <span className={styles.scoutNumbersText}>{line.text}</span>
-              <span className={styles.scoutProvChip}>from {line.fromGames} games</span>
+          chip. Below-floor lines are ABSENT server-side, never hedged (§4.6 honesty rule).
+          Most lines share a sample size (the counted, or scored, meetings), so repeating
+          the same "from N games" chip on every line reads as a copy/paste bug rather than
+          provenance. When ≥2 lines agree on N, that N is stated once in the card caption
+          instead, and a line only keeps its own chip when its sample genuinely differs
+          (e.g. a lineup-join line drawing from wins only). */}
+      {data.insights.length > 0 && (() => {
+        const freq = new Map<number, number>();
+        for (const line of data.insights) freq.set(line.fromGames, (freq.get(line.fromGames) ?? 0) + 1);
+        let majorityGames: number | null = null;
+        let majorityCount = 0;
+        for (const [n, count] of freq) {
+          if (count > majorityCount || (count === majorityCount && n > (majorityGames ?? -1))) {
+            majorityCount = count;
+            majorityGames = n;
+          }
+        }
+        const sharedCaption = majorityCount >= 2 ? majorityGames : null;
+        return (
+          <div className={styles.scoutNumbers}>
+            <div className={styles.scoutNumbersLabel}>
+              The numbers vs them
+              {sharedCaption != null && (
+                <span className={styles.scoutNumbersCaption}> · based on {sharedCaption} counted meeting{sharedCaption === 1 ? '' : 's'}</span>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+            {data.insights.map(line => (
+              <div key={line.id} className={styles.scoutNumbersLine}>
+                <span className={styles.scoutNumbersText}>{line.text}</span>
+                {line.fromGames !== sharedCaption && (
+                  <span className={styles.scoutProvChip}>from {line.fromGames} games</span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* The book line — the coach's distilled read; what every glance surface shows first. */}
       <div className={styles.scoutBookLine}>
@@ -471,48 +517,20 @@ export default function CoachOpponentCardPage({
         </div>
       )}
 
-      {/* Log an observation — open to every schedule-holder, attributed (owner-ratified). */}
-      <div className={styles.scoutLog}>
-        <textarea
-          className={styles.scoutLogInput}
-          value={obsBody}
-          maxLength={OPPONENT_OBSERVATION_MAX}
-          placeholder="Log an observation — one line, e.g. “their SS cheats up with runners on”"
-          onChange={e => setObsBody(e.target.value)}
-          rows={2}
-        />
-        {/* ⚖ A DROPDOWN, NOT A PILL ROW (owner, §129 walk F2, 2026-09-02) — see the
-            schedule drawer's twin; the two entry forms must never drift. */}
-        <div className={styles.scoutLogRow}>
-          <select
-            className={styles.select}
-            value={obsTag ?? ''}
-            aria-label="Tag this observation"
-            onChange={e => setObsTag(e.target.value || null)}
-          >
-            <option value="">No tag</option>
-            {tags.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <button
-            type="button"
-            className={`btn btn-lime ${styles.scoutLogSave}`}
-            disabled={logging || obsBody.trim().length === 0}
-            onClick={logObservation}
-          >
-            {logging ? 'Saving…' : 'Save observation'}
-          </button>
-        </div>
-        <p className={styles.scoutFootnote}>
-          Refer to opposing players by jersey number or position, never by name — they’re someone else’s kids.
-        </p>
-        {logError && <p className={styles.errorText}>{logError}</p>}
-      </div>
-
-      {/* Filter + timeline */}
-      <ScoutTagFilter
-        tags={tags.filter(t => observations.some(o => o.tag === t))}
-        value={filterTag}
-        onChange={setFilterTag}
+      {/* Log an observation — open to every schedule-holder, attributed (owner-ratified). One
+          door ABOVE the timeline that opens the form in place; shared with the schedule game card,
+          so the two can never drift. */}
+      <ScoutObservationForm
+        tags={tags}
+        heading="Log an observation"
+        onSave={logObservation}
+        filter={(
+          <ScoutTagFilter
+            tags={tags.filter(t => observations.some(o => o.tag === t))}
+            value={filterTag}
+            onChange={setFilterTag}
+          />
+        )}
       />
 
       {opponent.meetings.length === 0 && observations.length === 0 && (

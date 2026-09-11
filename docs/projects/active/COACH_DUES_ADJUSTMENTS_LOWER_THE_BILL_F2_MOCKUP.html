@@ -1,0 +1,593 @@
+<title>The Schedule's Own Total</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* ============================================================
+     DOCUMENT CHROME — a blueprint field-memo, deliberately NOT the
+     warm coach-portal palette, so the embedded product frames below
+     read as specimens pinned to a page rather than as the page
+     itself. Ties back to the platform's own blueprint-blue identity
+     instead of borrowing the product's cream/ink.
+     ============================================================ */
+  :root {
+    --doc-bg:          #EEF1F7;
+    --doc-surface:     #FFFFFF;
+    --doc-surface-2:   #F5F7FC;
+    --doc-ink:         #131A2A;
+    --doc-ink-dim:     #4B5670;
+    --doc-ink-faint:   #8892A6;
+    --doc-line:        rgba(19,26,42,0.12);
+    --doc-line-strong: rgba(19,26,42,0.24);
+    --doc-accent:      #0F6E63;
+    --doc-accent-soft: rgba(15,110,99,0.10);
+    --doc-good:        #1C7C42;
+    --doc-good-soft:   rgba(28,124,66,0.10);
+    --doc-warn:        #9A5B00;
+    --doc-warn-soft:   rgba(154,91,0,0.10);
+    --doc-quiet:       #6B5FB8;
+    --doc-quiet-soft:  rgba(107,95,184,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-bg:          #0A0F1C;
+      --doc-surface:     #121A2C;
+      --doc-surface-2:   #16203A;
+      --doc-ink:         #E8ECF6;
+      --doc-ink-dim:     #97A3BD;
+      --doc-ink-faint:   #66718C;
+      --doc-line:        rgba(151,163,189,0.16);
+      --doc-line-strong: rgba(151,163,189,0.30);
+      --doc-accent:      #5EEAD4;
+      --doc-accent-soft: rgba(94,234,212,0.10);
+      --doc-good:        #4ADE80;
+      --doc-good-soft:   rgba(74,222,128,0.10);
+      --doc-warn:        #FBBF24;
+      --doc-warn-soft:   rgba(251,191,36,0.10);
+      --doc-quiet:       #A79CE8;
+      --doc-quiet-soft:  rgba(167,156,232,0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg:          #0A0F1C;
+    --doc-surface:     #121A2C;
+    --doc-surface-2:   #16203A;
+    --doc-ink:         #E8ECF6;
+    --doc-ink-dim:     #97A3BD;
+    --doc-ink-faint:   #66718C;
+    --doc-line:        rgba(151,163,189,0.16);
+    --doc-line-strong: rgba(151,163,189,0.30);
+    --doc-accent:      #5EEAD4;
+    --doc-accent-soft: rgba(94,234,212,0.10);
+    --doc-good:        #4ADE80;
+    --doc-good-soft:   rgba(74,222,128,0.10);
+    --doc-warn:        #FBBF24;
+    --doc-warn-soft:   rgba(251,191,36,0.10);
+    --doc-quiet:       #A79CE8;
+    --doc-quiet-soft:  rgba(167,156,232,0.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  .page { max-width: 900px; margin: 0 auto; padding: 3.2rem 1.5rem 5rem; }
+
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; margin: 0; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--doc-accent);
+    margin: 0 0 0.7rem;
+  }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.55rem); font-weight: 600; letter-spacing: -0.01em; color: var(--doc-ink); }
+  .dek {
+    font-size: 1.05rem;
+    color: var(--doc-ink-dim);
+    max-width: 46rem;
+    margin: 0.9rem 0 0;
+  }
+  .dek b { color: var(--doc-ink); font-weight: 600; }
+
+  .masthead { padding-bottom: 2.1rem; border-bottom: 1px solid var(--doc-line); margin-bottom: 2.4rem; }
+
+  .prose { max-width: 62ch; font-size: 0.98rem; color: var(--doc-ink-dim); }
+  .prose p { margin: 0 0 1rem; }
+  .prose b { color: var(--doc-ink); font-weight: 600; }
+  .prose code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.9em;
+    background: var(--doc-surface-2);
+    border: 1px solid var(--doc-line);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+  }
+
+  /* ── the three screens already agreed on this number ── */
+  .refstrip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1.6rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .refchip {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    background: var(--doc-good-soft);
+    border: 1px solid rgba(28,124,66,0.28);
+    border-radius: 9px;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
+  }
+  .refchip .screen { color: var(--doc-ink); font-weight: 600; }
+  .refchip .fig {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    color: var(--doc-good);
+    font-variant-numeric: tabular-nums;
+  }
+
+  section.block { margin-top: 3.6rem; }
+  .block-head { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .block-kicker {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--doc-ink-faint);
+  }
+  .block h2 { font-size: 1.5rem; font-weight: 600; color: var(--doc-ink); }
+  .block .sub { color: var(--doc-ink-dim); font-size: 0.94rem; max-width: 58ch; margin: 0.55rem 0 1.5rem; }
+
+  .stack { display: flex; flex-direction: column; gap: 1.3rem; }
+
+  /* ============================================================
+     THE SPECIMEN FRAME — a fixed-width pin of the real Budget Plan
+     screen. Warm-portal tokens are HARDCODED here (not theme-
+     reactive) because a specimen is a pinned rendering of the
+     product, not a themeable part of this document.
+     ============================================================ */
+  .frame {
+    --p-paper: #F8F4ED;
+    --p-card:  #FFFFFF;
+    --p-ink:   #241E15;
+    --p-soft:  #4A4235;
+    --p-dim:   #615A54;
+    --p-line:  rgba(70,55,30,0.12);
+    --p-line-strong: rgba(70,55,30,0.20);
+    --p-win:   #34662A;
+    --p-amber: #835006;
+    --p-blue:  #134FD3;
+
+    max-width: 620px;
+    background: var(--p-paper);
+    border: 1px solid var(--doc-line-strong);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(10,16,30,0.06);
+  }
+  .frame-chrome {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.9rem;
+    background: var(--doc-surface-2);
+    border-bottom: 1px solid var(--doc-line);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: var(--doc-ink-faint);
+    letter-spacing: 0.02em;
+  }
+  .frame-chrome .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--doc-line-strong); }
+  .frame-body { padding: 1.1rem; color: var(--p-ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+
+  /* — tile band, replicating MoneySummaryBand — */
+  .tileband {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--p-line);
+    border: 1px solid var(--p-line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .tile { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.85rem 0.9rem; background: var(--p-card); min-width: 0; }
+  .tile-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-dim); }
+  .tile-figure { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 1.32rem; font-weight: 600; letter-spacing: -0.01em; color: var(--p-ink); font-variant-numeric: tabular-nums; }
+  .tile-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--p-win);
+    color: var(--p-win);
+    vertical-align: middle;
+    margin-left: 0.35rem;
+  }
+  .tile-caption { font-size: 0.76rem; line-height: 1.4; color: var(--p-dim); }
+  .tile-caption.warn { color: var(--p-amber); }
+  .tile-caption .added { background: rgba(131,80,6,0.10); border-radius: 3px; padding: 0 0.15rem; }
+
+  /* — the by-period grid's closing rows — */
+  .miniplan { margin-top: 0.9rem; }
+  .miniplan-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-dim); margin-bottom: 0.4rem; }
+  table.ladder { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  table.ladder td, table.ladder th { padding: 0.5rem 0.15rem; text-align: left; font-weight: 500; }
+  table.ladder th { color: var(--p-ink); font-weight: 600; }
+  table.ladder td.num { text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; color: var(--p-ink); }
+  table.ladder tr.cap { box-shadow: inset 0 2px 0 var(--p-line-strong); }
+  table.ladder tr.close th, table.ladder tr.close td.num { color: var(--p-amber); font-weight: 600; }
+  .row-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--p-win);
+    color: var(--p-win);
+    margin-left: 0.4rem;
+  }
+  .footnote { margin: 0.7rem 0 0; padding-top: 0.7rem; border-top: 1px solid var(--p-line); font-size: 0.78rem; color: var(--p-soft); line-height: 1.5; }
+  .footnote .added { background: rgba(131,80,6,0.10); border-radius: 3px; padding: 0 0.15rem; }
+
+  /* — the caption plate, in DOC voice, annotating each frame — */
+  .plate {
+    max-width: 620px;
+    background: var(--doc-surface);
+    border: 1px solid var(--doc-line);
+    border-radius: 10px;
+    padding: 0.9rem 1.05rem;
+    font-size: 0.86rem;
+    color: var(--doc-ink-dim);
+  }
+  .plate .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.55rem; }
+  .tag {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.16rem 0.5rem;
+    border-radius: 5px;
+    font-weight: 600;
+  }
+  .tag.new       { background: var(--doc-quiet-soft); color: var(--doc-quiet); }
+  .tag.restyled  { background: var(--doc-warn-soft);  color: var(--doc-warn); }
+  .tag.unchanged { background: var(--doc-line);       color: var(--doc-ink-faint); }
+  .plate p { margin: 0 0 0.5rem; }
+  .plate p:last-child { margin-bottom: 0; }
+  .plate b { color: var(--doc-ink); }
+
+  /* — quick-compare ledger — */
+  .ledger { margin-top: 3.6rem; }
+  .ledger-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 1.1rem; }
+  .ledger-table th, .ledger-table td { padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--doc-line); text-align: left; vertical-align: top; }
+  .ledger-table thead th { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-ink-faint); font-weight: 600; border-bottom: 1px solid var(--doc-line-strong); }
+  .ledger-table td.num, .ledger-table th.num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .ledger-table tbody th { font-weight: 600; color: var(--doc-ink); white-space: nowrap; }
+  .ledger-table .delta { color: var(--doc-warn); font-size: 0.8rem; display: block; margin-top: 0.1rem; }
+  .ledger-note { font-size: 0.8rem; color: var(--doc-ink-faint); margin-top: 0.7rem; }
+  .scrollx { overflow-x: auto; }
+
+  /* — the tradeoff — */
+  .tradeoff { margin-top: 3.6rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+  .tocard { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 12px; padding: 1.3rem 1.4rem; }
+  .tocard h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .tocard p { font-size: 0.9rem; color: var(--doc-ink-dim); margin: 0 0 0.6rem; }
+  .tocard p:last-child { margin-bottom: 0; }
+  .tocard .lede { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-accent); margin-bottom: 0.6rem; display: block; }
+
+  .callout {
+    margin-top: 1.3rem;
+    background: var(--doc-warn-soft);
+    border: 1px solid rgba(154,91,0,0.28);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    font-size: 0.88rem;
+    color: var(--doc-ink);
+  }
+  .callout b { color: var(--doc-warn); }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--doc-line);
+    font-size: 0.78rem;
+    color: var(--doc-ink-faint);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  @media (max-width: 700px) {
+    .tradeoff { grid-template-columns: 1fr; }
+    .tileband { grid-template-columns: 1fr; }
+    .page { padding: 2.2rem 1.1rem 4rem; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <p class="eyebrow">Owner QA §160 · Part F2 — decision mockup</p>
+    <h1>The Schedule's Own Total</h1>
+    <p class="dek">Three screens already read the dues bill the same way — <b>$11,291.30</b>, net of what's been
+      written off it. The Budget Plan page still reads <b>$11,308.30</b>, in two places. Nothing puts the two
+      figures side by side today, so nobody's seen them disagree — but a coach reading both could.</p>
+  </div>
+
+  <div class="prose">
+    <p>When the "a bill lowered is not a collection" ruling shipped, it netted the dues figure everywhere it
+      could find it — the <code>Dues</code> tile, the dues table and its export, and the <code>Player dues</code>
+      row on Budget vs. Actual. The Budget Plan page was left alone on purpose: its <code>Player installments</code>
+      figure is summed straight from the dues <b>schedules</b>, not from what's owed today, and answers a
+      genuinely different question — <i>what did you schedule</i>, not <i>what will actually arrive</i>.</p>
+    <p>That's a real distinction. It's also one a coach has no way to notice from the screen — the figure just
+      reads $17.00 higher, with nothing beside it to say why. Below is today's screen as it stands, then two
+      ways it could go.</p>
+  </div>
+
+  <ul class="refstrip">
+    <li class="refchip"><span class="screen">Player Dues · Dues tile</span><span class="fig">$11,291.30</span></li>
+    <li class="refchip"><span class="screen">Player Dues · export Total row</span><span class="fig">$11,291.30</span></li>
+    <li class="refchip"><span class="screen">Budget vs. Actual · Player dues plan</span><span class="fig">$11,291.30</span></li>
+  </ul>
+
+  <!-- ══════════════════════════ TODAY ══════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-kicker">01</span>
+      <h2>Today</h2>
+    </div>
+    <p class="sub">Both places the Budget Plan page states the dues figure — the summary band at the top, and
+      the by-period grid's closing rows further down. Neither mentions the write-off.</p>
+
+    <div class="stack">
+      <div class="frame">
+        <div class="frame-chrome"><span class="dot"></span>Budget Plan — summary band</div>
+        <div class="frame-body">
+          <div class="tileband">
+            <div class="tile">
+              <span class="tile-label">Planned costs</span>
+              <span class="tile-figure">$9,850.00</span>
+              <span class="tile-caption">Your estimate · 14 lines</span>
+            </div>
+            <div class="tile">
+              <span class="tile-label">Expected funding</span>
+              <span class="tile-figure">$1,120.00</span>
+              <span class="tile-caption">3 lines</span>
+            </div>
+            <div class="tile">
+              <span class="tile-label">Player installments</span>
+              <span class="tile-figure">$11,308.30<span class="tile-badge">Scheduled</span></span>
+              <span class="tile-caption">Includes a $2,578.30 buffer above the plan</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-chrome"><span class="dot"></span>Budget Plan — by-period grid, closing rows</div>
+        <div class="frame-body">
+          <div class="miniplan">
+            <table class="ladder">
+              <tbody>
+                <tr class="cap"><th>Costs less funding</th><td class="num">$8,730.00</td></tr>
+                <tr><th>Player installments<span class="row-badge">Scheduled</span></th><td class="num">$11,308.30</td></tr>
+                <tr class="close"><th>Planned buffer</th><td class="num">$2,578.30</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plate" style="margin-top:1rem;">
+      <div class="tags"><span class="tag unchanged">Reference</span></div>
+      <p>Both figures are the raw sum of this season's dues schedules — <b>before</b> the $17.00 write-off comes
+        off. That's not wrong; it's a different question, unlabeled.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════ OPTION A ══════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-kicker">02</span>
+      <h2>Option A — Net it too</h2>
+    </div>
+    <p class="sub">The Player installments figure matches the other three screens exactly, and a footnote names
+      why — the same clause already approved on Budget vs. Actual's report.</p>
+
+    <div class="stack">
+      <div class="frame">
+        <div class="frame-chrome"><span class="dot"></span>Budget Plan — summary band</div>
+        <div class="frame-body">
+          <div class="tileband">
+            <div class="tile">
+              <span class="tile-label">Planned costs</span>
+              <span class="tile-figure">$9,850.00</span>
+              <span class="tile-caption">Your estimate · 14 lines</span>
+            </div>
+            <div class="tile">
+              <span class="tile-label">Expected funding</span>
+              <span class="tile-figure">$1,120.00</span>
+              <span class="tile-caption">3 lines</span>
+            </div>
+            <div class="tile">
+              <span class="tile-label">Player installments</span>
+              <span class="tile-figure">$11,291.30<span class="tile-badge">Scheduled</span></span>
+              <span class="tile-caption warn"><span class="added">after $17.00 of adjustments</span> · Includes a $2,561.30 buffer above the plan</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-chrome"><span class="dot"></span>Budget Plan — by-period grid, closing rows</div>
+        <div class="frame-body">
+          <div class="miniplan">
+            <table class="ladder">
+              <tbody>
+                <tr class="cap"><th>Costs less funding</th><td class="num">$8,730.00</td></tr>
+                <tr><th>Player installments<span class="row-badge">Scheduled</span></th><td class="num">$11,291.30</td></tr>
+                <tr class="close"><th>Planned buffer</th><td class="num">$2,561.30</td></tr>
+              </tbody>
+            </table>
+            <p class="footnote">The Player installments row is <span class="added">after $17.00 of adjustments —
+              bills lowered with no money behind them.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plate" style="margin-top:1rem;">
+      <div class="tags">
+        <span class="tag restyled">Figure — restyled</span>
+        <span class="tag new">Caption — new</span>
+        <span class="tag restyled">Buffer row — restyled</span>
+      </div>
+      <p><b>The buffer moves with it, $17.00 tighter</b> — a plan whose installments include a bill that will
+        never be collected was overstating how much room the season actually has. Netting the figure fixes that
+        the same way netting Budget vs. Actual's plan already did.</p>
+      <p>Copy shown is proposed, not final — it reuses the exact clause already shipped on the Dues tile and the
+        Budget vs. Actual footnote, for one voice across all four screens.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════ OPTION B ══════════════════════════ -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-kicker">03</span>
+      <h2>Option B — Leave it gross, name the gap</h2>
+    </div>
+    <p class="sub">The figure keeps answering "what did you schedule" — untouched — but stops being silent about
+      why it won't match what a coach reads elsewhere.</p>
+
+    <div class="stack">
+      <div class="frame">
+        <div class="frame-chrome"><span class="dot"></span>Budget Plan — summary band</div>
+        <div class="frame-body">
+          <div class="tileband">
+            <div class="tile">
+              <span class="tile-label">Planned costs</span>
+              <span class="tile-figure">$9,850.00</span>
+              <span class="tile-caption">Your estimate · 14 lines</span>
+            </div>
+            <div class="tile">
+              <span class="tile-label">Expected funding</span>
+              <span class="tile-figure">$1,120.00</span>
+              <span class="tile-caption">3 lines</span>
+            </div>
+            <div class="tile">
+              <span class="tile-label">Player installments</span>
+              <span class="tile-figure">$11,308.30<span class="tile-badge">Scheduled</span></span>
+              <span class="tile-caption warn"><span class="added">$17.00 of this has been written off</span> · $2,578.30 buffer above the plan</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-chrome"><span class="dot"></span>Budget Plan — by-period grid, closing rows</div>
+        <div class="frame-body">
+          <div class="miniplan">
+            <table class="ladder">
+              <tbody>
+                <tr class="cap"><th>Costs less funding</th><td class="num">$8,730.00</td></tr>
+                <tr><th>Player installments<span class="row-badge">Scheduled</span></th><td class="num">$11,308.30</td></tr>
+                <tr class="close"><th>Planned buffer</th><td class="num">$2,578.30</td></tr>
+              </tbody>
+            </table>
+            <p class="footnote"><span class="added">$17.00 of this row has been written off since it was
+              scheduled — see Player Dues for what's actually expected.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plate" style="margin-top:1rem;">
+      <div class="tags">
+        <span class="tag unchanged">Figure — unchanged</span>
+        <span class="tag new">Caption — new</span>
+        <span class="tag unchanged">Buffer row — unchanged</span>
+      </div>
+      <p><b>Nothing about the plan's arithmetic moves.</b> This keeps "what did you schedule" as its own honest
+        answer — a coach reconciling against a printed schedule still finds the number that matches it — and
+        only adds the sentence that stops the silent disagreement.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════ COMPARE ══════════════════════════ -->
+  <section class="ledger">
+    <div class="block-head">
+      <span class="block-kicker">04</span>
+      <h2>Side by side</h2>
+    </div>
+    <div class="scrollx">
+      <table class="ledger-table">
+        <thead>
+          <tr><th>&nbsp;</th><th>Today</th><th>Option A · Net it</th><th>Option B · Name the gap</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Player installments figure</th>
+            <td class="num">$11,308.30</td>
+            <td class="num">$11,291.30 <span class="delta">−$17.00</span></td>
+            <td class="num">$11,308.30</td>
+          </tr>
+          <tr>
+            <th scope="row">Matches Player Dues / BvA?</th>
+            <td class="num">No</td>
+            <td class="num">Yes</td>
+            <td class="num">No, but says why</td>
+          </tr>
+          <tr>
+            <th scope="row">Planned buffer</th>
+            <td class="num">$2,578.30</td>
+            <td class="num">$2,561.30 <span class="delta">−$17.00</span></td>
+            <td class="num">$2,578.30</td>
+          </tr>
+          <tr>
+            <th scope="row">Write-off named on screen?</th>
+            <td class="num">No</td>
+            <td class="num">Yes</td>
+            <td class="num">Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ledger-note">Planned costs ($9,850.00) and Expected funding ($1,120.00) are illustrative — a
+      plausible team's numbers to show how the buffer moves. The dues figures ($11,308.30 / $11,291.30 / $17.00)
+      are the real, walked fixture from §160.</p>
+  </section>
+
+  <!-- ══════════════════════════ TRADEOFF ══════════════════════════ -->
+  <div class="tradeoff">
+    <div class="tocard">
+      <span class="lede">For netting</span>
+      <p>One number for "what will this season's dues actually bring in," everywhere a coach reads it. A team
+        that writes off bills stops looking better-funded on this one screen than it actually is.</p>
+    </div>
+    <div class="tocard">
+      <span class="lede">For leaving it gross</span>
+      <p>The schedules are a coach's own record of what they billed — a write-off doesn't un-happen it. A
+        treasurer reconciling against a printed schedule wants the number that matches the schedule, not the
+        outcome.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Whichever way this goes, it has to move in both places.</b> The summary band and the by-period grid read
+    the same underlying figure today, and §160 itself was reopened by review three times for exactly this
+    mistake — a number re-pointed on one surface with its twin left reading the old way.
+  </div>
+
+  <footer>
+    Owner QA §160 · Part F2 — ruled "look at it properly first" at the walk, 2026-09-09/10. No option built yet.
+  </footer>
+
+</div>

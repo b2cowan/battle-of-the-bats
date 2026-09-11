@@ -1,0 +1,265 @@
+<title>Log an Observation</title>
+<style>
+  :root {
+    --doc-bg: #E9ECF1; --doc-ink: #1C2230; --doc-ink-soft: #4B5566; --doc-dim: #7A8494;
+    --doc-line: rgba(28, 34, 48, 0.14); --doc-card: #FFFFFF; --doc-accent: #2F4F8F;
+    --tag-new: #1F6B3A; --tag-new-bg: rgba(31,107,58,.12);
+    --tag-restyled: #8A4B08; --tag-restyled-bg: rgba(138,75,8,.12);
+    --tag-unchanged: #566070; --tag-unchanged-bg: rgba(86,96,112,.12);
+    --tag-removed: #9A2C1E; --tag-removed-bg: rgba(154,44,30,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-bg: #171B23; --doc-ink: #E8EBF0; --doc-ink-soft: #B4BBC7; --doc-dim: #8B94A3;
+      --doc-line: rgba(232,235,240,0.14); --doc-card: #20252F; --doc-accent: #8FAEE8;
+      --tag-new: #7FD39C; --tag-new-bg: rgba(127,211,156,.14);
+      --tag-restyled: #F0B36C; --tag-restyled-bg: rgba(240,179,108,.14);
+      --tag-unchanged: #AEB6C4; --tag-unchanged-bg: rgba(174,182,196,.14);
+      --tag-removed: #F09A8C; --tag-removed-bg: rgba(240,154,140,.14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg: #171B23; --doc-ink: #E8EBF0; --doc-ink-soft: #B4BBC7; --doc-dim: #8B94A3;
+    --doc-line: rgba(232,235,240,0.14); --doc-card: #20252F; --doc-accent: #8FAEE8;
+    --tag-new: #7FD39C; --tag-new-bg: rgba(127,211,156,.14);
+    --tag-restyled: #F0B36C; --tag-restyled-bg: rgba(240,179,108,.14);
+    --tag-unchanged: #AEB6C4; --tag-unchanged-bg: rgba(174,182,196,.14);
+    --tag-removed: #F09A8C; --tag-removed-bg: rgba(240,154,140,.14);
+  }
+
+  body { background: var(--doc-bg); color: var(--doc-ink); font-family: "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 15px; line-height: 1.5; }
+  .doc { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+  .doc h1 { font-size: 30px; line-height: 1.15; margin: 0 0 6px; letter-spacing: -0.01em; text-wrap: balance; }
+  .doc .lede { color: var(--doc-ink-soft); max-width: 66ch; margin: 0 0 8px; }
+  .doc .meta { color: var(--doc-dim); font-size: 13px; margin: 0 0 36px; }
+  .doc h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); margin: 48px 0 12px; }
+  .doc p { max-width: 68ch; }
+  .doc .note { color: var(--doc-ink-soft); font-size: 14px; }
+  .doc .note strong { color: var(--doc-ink); }
+  .key { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 13px; color: var(--doc-ink-soft); margin: 0 0 8px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; vertical-align: middle; }
+  .tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+  .tag.restyled { color: var(--tag-restyled); background: var(--tag-restyled-bg); }
+  .tag.unchanged { color: var(--tag-unchanged); background: var(--tag-unchanged-bg); }
+  .tag.removed { color: var(--tag-removed); background: var(--tag-removed-bg); }
+
+  .specimen { margin: 0 0 12px; }
+  .specimen-cap { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; font-size: 14px; }
+  .specimen-cap b { font-size: 16px; }
+  .specimen-cap .w { color: var(--doc-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .stage { overflow-x: auto; padding: 28px; background: repeating-linear-gradient(45deg, rgba(28,34,48,0.035) 0 6px, transparent 6px 12px); border: 1px solid var(--doc-line); border-radius: 6px; }
+  .callouts { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 22px; font-size: 14px; color: var(--doc-ink-soft); max-width: 900px; }
+  .callouts li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+  .n { width: 20px; height: 20px; border-radius: 50%; background: var(--doc-accent); color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .n.in { margin-right: 8px; vertical-align: -4px; }
+
+  /* ── The product frame: FieldLogicHQ coaches portal, warm paper, TRUE SIZE ───────── */
+  .frame {
+    --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+    --line: rgba(70,55,30,0.12); --line-strong: rgba(70,55,30,0.20);
+    --olive: #57651E; --olive-soft: rgba(87,101,30,0.10);
+    --lime: #D9F99D; --on-lime: #1E2A0A;
+    --live: #B03A22; --live-soft: rgba(176,58,34,0.10);
+    --success: #2D6A3E; --success-soft: rgba(45,106,62,0.12);
+    --field: #FBF9F5;
+    width: 900px; margin: 0; background: var(--card); color: var(--ink);
+    border-radius: 18px; box-shadow: 0 18px 60px rgba(30,20,5,0.22), 0 0 0 1px var(--line);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.45;
+    padding: 28px 30px 26px; position: relative; box-sizing: border-box;
+  }
+  .frame * { box-sizing: border-box; }
+  .frame .title { font-family: "Arial Narrow", "Roboto Condensed", Impact, sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -0.01em; margin: 0 0 10px; }
+  .frame .when { font-size: 17px; color: var(--ink-soft); margin: 0 0 14px; }
+  .frame .score { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
+  .frame .score b { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+  .frame .score i { font-style: normal; color: var(--success); font-weight: 700; font-size: 17px; letter-spacing: 0.02em; }
+  .frame .head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 12px; }
+  .frame .head b { font-size: 16px; }
+  .frame .rec { font-family: "Cascadia Code", Consolas, monospace; font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700; color: var(--success); background: var(--success-soft); padding: 5px 10px; border-radius: 6px; }
+  .frame .meet { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; font-size: 14px; }
+  .frame .meet .L { width: 22px; height: 22px; border-radius: 4px; background: var(--success-soft); color: var(--success); font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+  .frame .meet .sc { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .frame .meet .dt { margin-left: auto; color: var(--dim); font-size: 12px; }
+  .frame .foot { font-size: 12px; color: var(--dim); margin: 0 0 12px; line-height: 1.5; }
+
+  .frame textarea { width: 100%; padding: 9px 12px; background: var(--field); border: 1px solid var(--line-strong); border-radius: 10px; font: inherit; font-size: 15px; color: var(--ink); resize: vertical; line-height: 1.45; }
+  .frame textarea::placeholder { color: var(--dim); }
+  .frame .select { display: flex; align-items: center; justify-content: space-between; width: 220px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--ink); }
+  .frame .select::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); margin: -4px 4px 0 0; }
+  .frame .links { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+  .frame .lnk { font-size: 12px; font-weight: 700; color: var(--olive); }
+  .frame .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 16px; border-radius: 8px; background: var(--lime); color: var(--on-lime); font-weight: 700; font-size: 14px; }
+  .frame .btn.off { opacity: 0.45; }
+
+  /* the DOOR — one quiet secondary button, above the notes */
+  .frame .door { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); color: var(--ink); font-weight: 700; font-size: 13px; margin: 2px 0 12px; }
+  .frame .door .plus { width: 16px; height: 16px; border-radius: 50%; background: var(--olive-soft); color: var(--olive); display: inline-flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; }
+
+  /* the form, OPEN — a lifted sheet above the notes */
+  .frame .log { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 12px; margin: 2px 0 14px; display: flex; flex-direction: column; gap: 10px; }
+  .frame .log-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .frame .log-head b { font-size: 15px; }
+  .frame .log-head small { font-size: 12px; color: var(--dim); }
+  .frame .row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .frame .fld { display: flex; flex-direction: column; gap: 5px; }
+  .frame .fld label { font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+  .frame .fld label em { font-style: normal; font-weight: 500; color: var(--dim); }
+  .frame .actions { margin-left: auto; display: inline-flex; align-items: center; gap: 14px; }
+  .frame .cancel { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .frame .hint { font-size: 12px; color: var(--dim); margin: -2px 0 0; }
+  .frame .saved { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--success); }
+  .frame .obs { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; font-size: 14px; padding: 6px 0; }
+  .frame .obs .who { color: var(--dim); }
+  .frame .obs .t { flex-shrink: 0; font-family: "Cascadia Code", Consolas, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); background: rgba(70,55,30,0.08); padding: 3px 8px; border-radius: 4px; }
+  .frame .filters { display: flex; margin: 0 0 8px; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; width: max-content; }
+  .frame .filters span { font-size: 15px; font-weight: 600; padding: 7px 16px; color: var(--ink-soft); }
+  .frame .filters span.on { background: var(--paper); color: var(--ink); font-weight: 700; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+  .mini { width: 440px; padding: 18px 20px; border-radius: 12px; }
+  .page { width: 720px; padding: 22px 26px; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); }
+  .page .sec { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); margin: 14px 0 6px; }
+</style>
+
+<div class="doc">
+  <h1>Log an Observation</h1>
+  <p class="lede">Round 2, as built. The form no longer sits open under the notes: one quiet door on the right of the filter row opens it in place above that row, and the notes it produces land right beneath it. At rest, the card reads.</p>
+  <p class="meta">Coaches portal · schedule game card and the full opponent page (one shared form) · drawn at true size, 900px dialog · round 1 and the first draft of round 2 (door on its own row) are in this artifact's history · owner refinement on the build: the door moved onto the filter row's right edge — where this app's add buttons live — saving a row</p>
+
+  <div class="key">
+    <span><span class="tag new">New</span> added</span>
+    <span><span class="tag restyled">Restyled</span> same thing, new shape or place</span>
+    <span><span class="tag unchanged">Unchanged</span> exactly as today</span>
+    <span><span class="tag removed">Removed</span></span>
+  </div>
+
+  <h2>Round 1, as it built — what you didn't like</h2>
+  <div class="specimen">
+    <div class="specimen-cap"><b>The form always open, under the notes</b><span class="w">900 px · grows with every save, and sits below whatever the notes push it under</span></div>
+    <div class="stage">
+      <div class="frame">
+        <p class="title">vs Lakeside</p>
+        <p class="when">Fri, Apr 10, 2026 · 6:00 p.m. · @ Lakeside</p>
+        <div class="score"><b>4 – 3</b><i>WIN</i></div>
+        <div class="head"><b>All-time vs Lakeside</b><span class="rec">2-0</span></div>
+        <div class="meet"><span class="L">W</span><span class="sc">4–3</span><span>Last meeting</span><span class="dt">Apr 10, 2026</span></div>
+        <p class="foot">Nothing in the book line yet — the full page has the editor.</p>
+        <div class="filters"><span class="on">All</span><span>Pitching</span></div>
+        <div class="obs"><span>• test <span class="who">— UAT Helper</span></span><span class="t">Pitching</span></div>
+        <div class="log" style="background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding:14px 0 0;">
+          <div class="log-head"><b>Log an observation from this game</b><small>Numbers and positions, never opposing players’ names.</small></div>
+          <span class="saved">✓ Saved — add another?</span>
+          <textarea rows="2" placeholder="e.g. “their SS cheats up with runners on”"></textarea>
+          <div class="row">
+            <div class="fld"><label>Tag <em>(optional)</em></label><div class="select">No tag</div></div>
+            <span class="btn off" style="margin-left:auto">Save observation</span>
+          </div>
+          <p class="hint">A tag files this under Pitching, Hitting, Defense, Baserunning or Coaching, so the book can be read one heading at a time.</p>
+        </div>
+        <div class="links"><span></span><span class="lnk">Everything we know ›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>After — the card at rest</h2>
+  <div class="specimen">
+    <div class="specimen-cap"><b>Nobody is writing: one door, then the notes</b><span class="w">900 px · ~230 px shorter than round 1</span></div>
+    <div class="stage">
+      <div class="frame">
+        <p class="title">vs Lakeside</p>
+        <p class="when">Fri, Apr 10, 2026 · 6:00 p.m. · @ Lakeside</p>
+        <div class="score"><b>4 – 3</b><i>WIN</i></div>
+        <div class="head"><b>All-time vs Lakeside</b><span class="rec">2-0</span></div>
+        <div class="meet"><span class="L">W</span><span class="sc">4–3</span><span>Last meeting</span><span class="dt">Apr 10, 2026</span></div>
+        <p class="foot">Nothing in the book line yet — the full page has the editor.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px"><div class="filters" style="margin:0"><span class="on">All</span><span>Pitching</span></div><span class="door" style="margin:0"><span class="n in">1</span><span class="plus">+</span>Log an observation</span></div>
+        <div class="obs"><span><span class="n in">2</span>• #14 sits fastball first pitch every at-bat <span class="who">— UAT Helper</span></span><span class="t">Pitching</span></div>
+        <div class="obs"><span>• Their SS cheats up with runners on <span class="who">— Dana Whitfield</span></span><span class="t">Defense</span></div>
+        <p class="foot" style="margin-top:4px">+ 3 more on the full page.</p>
+        <div class="links"><span class="lnk">Share to staff chat</span><span class="lnk">Everything we know ›</span></div>
+      </div>
+    </div>
+    <ul class="callouts">
+      <li><span class="n">1</span><span><span class="tag new">New</span> <b>The door.</b> One quiet secondary button on the <em>right edge of the filter row</em> — where this app's add buttons live — <em>above</em> the notes, so it never gets pushed down by them, and costing no row of its own. When no tag is in use it keeps the right edge alone. Same row on the full opponent page (above its timeline). It is the only trace of the form when nobody is writing.</span></li>
+      <li><span class="n">2</span><span><span class="tag unchanged">Unchanged</span> Filter row, two newest notes with author and tag, "+ N more on the full page", the footer's doors. Nothing else on the card moves.</span></li>
+    </ul>
+  </div>
+
+  <h2>After — the door opened</h2>
+  <div class="specimen">
+    <div class="specimen-cap"><b>Writing: the form opens in place, above the notes</b><span class="w">900 px</span></div>
+    <div class="stage">
+      <div class="frame">
+        <p class="title">vs Lakeside</p>
+        <p class="when">Fri, Apr 10, 2026 · 6:00 p.m. · @ Lakeside</p>
+        <div class="score"><b>4 – 3</b><i>WIN</i></div>
+        <div class="head"><b>All-time vs Lakeside</b><span class="rec">2-0</span></div>
+        <div class="meet"><span class="L">W</span><span class="sc">4–3</span><span>Last meeting</span><span class="dt">Apr 10, 2026</span></div>
+        <p class="foot">Nothing in the book line yet — the full page has the editor.</p>
+        <div class="log">
+          <div class="log-head"><b><span class="n in">1</span>Log an observation from this game</b><small>Numbers and positions, never opposing players’ names.</small></div>
+          <textarea rows="2" style="border-color: var(--olive); box-shadow: 0 0 0 3px var(--olive-soft);">#9 bunts with a runner on first, every time</textarea>
+          <div class="row">
+            <div class="fld"><label>Tag <em>(optional)</em></label><div class="select">Hitting</div></div>
+            <span class="actions"><span class="n">2</span><span class="cancel">Cancel</span><span class="btn">Save observation</span></span>
+          </div>
+          <p class="hint">A tag files this under Pitching, Hitting, Defense, Baserunning or Coaching, so the book can be read one heading at a time.</p>
+        </div>
+        <div class="filters"><span class="on">All</span><span>Pitching</span><span>Defense</span></div>
+        <div class="obs"><span>• #14 sits fastball first pitch every at-bat <span class="who">— UAT Helper</span></span><span class="t">Pitching</span></div>
+        <div class="obs"><span>• Their SS cheats up with runners on <span class="who">— Dana Whitfield</span></span><span class="t">Defense</span></div>
+        <p class="foot" style="margin-top:4px">+ 3 more on the full page.</p>
+        <div class="links"><span class="lnk">Share to staff chat</span><span class="lnk">Everything we know ›</span></div>
+      </div>
+    </div>
+    <ul class="callouts">
+      <li><span class="n">1</span><span><span class="tag restyled">Restyled</span> The door leaves the filter row and the sheet opens <em>above</em> it — lightly lifted on the paper ground so it reads as "open", with the same heading, rule, labelled tag and hint as round 1. The cursor lands in the box; the filter row stays put beneath, without the door.</span></li>
+      <li><span class="n">2</span><span><span class="tag new">New</span> <b>Cancel</b> closes it (so does Escape, and switching tabs or games). Save keeps it open — see the next state.</span></li>
+    </ul>
+  </div>
+
+  <h2>After saving — the loop, and the note lands right under the form</h2>
+  <div class="two">
+    <div class="specimen">
+      <div class="specimen-cap"><b>Saved; still open for the next one</b><span class="w">detail</span></div>
+      <div class="stage">
+        <div class="frame mini">
+          <div class="log">
+            <div class="log-head"><b>Log an observation from this game</b></div>
+            <span class="saved">✓ Saved — add another?</span>
+            <textarea rows="2" placeholder="e.g. “their SS cheats up with runners on”"></textarea>
+            <div class="row">
+              <div class="fld"><label>Tag <em>(optional)</em></label><div class="select">No tag</div></div>
+              <span class="actions"><span class="cancel">Done</span><span class="btn off">Save observation</span></span>
+            </div>
+          </div>
+          <div class="filters"><span class="on">All</span><span>Pitching</span><span>Hitting</span></div>
+          <div class="obs"><span>• #9 bunts with a runner on first, every time <span class="who">— You</span></span><span class="t">Hitting</span></div>
+          <div class="obs"><span>• #14 sits fastball first pitch every at-bat <span class="who">— UAT Helper</span></span><span class="t">Pitching</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="specimen">
+      <div class="specimen-cap"><b>The full opponent page, at rest</b><span class="w">detail · the door above the timeline</span></div>
+      <div class="stage">
+        <div class="frame mini">
+          <div class="sec" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 6px">The book line</div>
+          <textarea rows="2" placeholder="Your one-sentence read on this team — what you'd tell an assistant five minutes before the game."></textarea>
+          <div style="margin:10px 0 12px"><span class="lnk">⇪ Share to staff chat</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px"><div class="filters" style="margin:0"><span class="on">All</span><span>Pitching</span><span>Defense</span></div><span class="door" style="margin:0"><span class="plus">+</span>Log an observation</span></div>
+          <div class="sec" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:6px 0">2026 season</div>
+          <div class="meet" style="margin-bottom:4px"><span class="L">W</span><span class="sc">4–3</span><span>vs Lakeside</span><span class="dt">Apr 10</span></div>
+          <div class="obs" style="padding-left:36px"><span>#14 sits fastball first pitch every at-bat <span class="who">— UAT Helper</span></span><span class="t">Pitching</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul class="callouts">
+    <li><span class="n">1</span><span><span class="tag unchanged">Unchanged</span> Save confirms in place and hands the keyboard back; the new note appears immediately beneath the sheet, so you see it land without scrolling. <b>Cancel reads "Done" once something has been saved</b> — closing is not discarding.</span></li>
+    <li><span class="n">2</span><span><span class="tag restyled">Restyled</span> The full page gets the same row — filter left, door right — below the book line and share row, above the timeline. Its permanent form block is gone; its timeline starts ~200 px higher.</span></li>
+  </ul>
+
+  <h2>Not proposed</h2>
+  <p class="note"><strong>A separate dialog.</strong> Same reason as round 1 — the game card already is one, and a window that closes on save breaks the several-in-a-row loop. The door-that-opens-in-place gives the calm card you asked for without a second window. <strong>The door in the footer</strong> (beside "Everything we know") was considered and rejected: it would sit under the notes again, which is the thing being fixed.</p>
+</div>

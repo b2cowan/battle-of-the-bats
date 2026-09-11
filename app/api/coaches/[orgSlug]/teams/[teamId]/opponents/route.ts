@@ -7,7 +7,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { denyUnless, canViewScoutingBook } from '@/lib/coach-capabilities';
+import { denyUnless, canLogScoutingObservation, canViewScoutingBook } from '@/lib/coach-capabilities';
 import { buildOpponentBook } from '@/lib/coach-opponents';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import { resolveClubContentKeys } from '@/lib/coach-club-book-server';
@@ -27,8 +27,16 @@ export const GET = withObservability(async (_req: Request,
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, team, assignment } = resolved;
-  const denied = denyUnless(canViewScoutingBook(assignment.capabilities), 'You do not have access to the scouting book.');
+  /**
+   * WEAKER gate than the pooled read: the schedule's per-row record chip (win/loss vs an
+   * opponent — the same fact already on that row) reads this list too, for any schedule
+   * holder. Only a viewer with the full `scoutingBook` grant gets the pooled fields below —
+   * the Insights hub's Scouting Book tab is the only OTHER caller, and its own tab gate
+   * already keeps a reduced viewer from reaching it.
+   */
+  const denied = denyUnless(canLogScoutingObservation(assignment.capabilities), 'You do not have access to the scouting book.');
   if (denied) return denied;
+  const scoutingBookAccess = canViewScoutingBook(assignment.capabilities);
 
   const bookPromise = Promise.all([
     getRepTeamGameEventsForOpponentBook(teamId),
@@ -51,7 +59,7 @@ export const GET = withObservability(async (_req: Request,
    * on a dependency that does not exist until the last step.
    */
   const clubAccess = resolveClubBookAccessFor(ctx.org, team);
-  const clubKeysPromise = clubAccess.canSeeClubLayer
+  const clubKeysPromise = scoutingBookAccess && clubAccess.canSeeClubLayer
     ? resolveClubContentKeys({
         orgId: ctx.org.id,
         viewerTeamId: teamId,
@@ -59,7 +67,14 @@ export const GET = withObservability(async (_req: Request,
       })
     : Promise.resolve<string[]>([]);
 
-  const [entries, clubKeys] = await Promise.all([bookPromise, clubKeysPromise]);
+  const [rawEntries, clubKeys] = await Promise.all([bookPromise, clubKeysPromise]);
+
+  // The pooled fields (book line, note timestamp, observation count) are the reduced viewer's
+  // wall — same redaction as the single-opponent card. Record, streak and meetings survive:
+  // they're the row chip's whole reason to fetch this at all.
+  const entries = scoutingBookAccess
+    ? rawEntries
+    : rawEntries.map(e => ({ ...e, summary: null, lastNoteUpdatedAt: null, observationCount: 0 }));
 
   // Deliberately just the entries (+ the club badge keys): tags + writer capabilities belong
   // to the card route, where they are actually consumed — nothing in the list reads them.

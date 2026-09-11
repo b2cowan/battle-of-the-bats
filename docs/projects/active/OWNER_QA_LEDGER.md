@@ -20492,7 +20492,7 @@ confusion the panel exists to end. This closes the third of the three mockup dec
 
 Plan pair: `docs/projects/archive/COACH_BVA_RECORDS_BEHIND_{PLAN,PM_BRIEF}.md` (archived on the pass; the walk and mockup sources stay in `active/`).
 
-## §160 · A bill lowered is not a collection — an adjustment or a forgiven bill comes off **Dues**, `Collected` becomes money and nothing else, and the Collections card becomes **Bills settled** — built on dev 2026-09-09 after `/review` (five defects found and fixed) and `/docs`, **no migration**, awaiting QA · walk artifact `b16c4350` · decision mockups `b529dd67` (the band) and `cc99aca4` (the report's plan side)
+## §160 · A bill lowered is not a collection — an adjustment or a forgiven bill comes off **Dues**, `Collected` becomes money and nothing else, and the Collections card becomes **Bills settled** — built on dev 2026-09-09 after `/review` (five defects found and fixed) and `/docs`, **no migration**, **Owner QA ✅ PASSED, 26/30, fixture measured 2026-09-09** (step B4 corrected 2026-09-10) · walk artifact `b16c4350` · decision mockups `b529dd67` (the band) and `cc99aca4` (the report's plan side)
 
 **You raised it reading the Player Dues band beside Budget vs. Actual and asking why two reports about one
 season disagreed by $134.00.** The band did not add up — `Dues` $11,308.30 − `Collected` $2,225.00 = $9,083.30,
@@ -20581,6 +20581,26 @@ actually in* — did not survive into the next walk that touched this component.
 rail row, name the stage in the step itself**; the two rails share a name-shaped resemblance and nothing
 else. The walk artifact is corrected in place (`b16c4350`) and now has a source file in the repo, so the
 next correction does not have to be retyped from the published page.
+
+### Verdict — Parts A–E all PASS, two calls ruled at Part F
+
+**Parts A through E passed clean, including both eyeball checks** (Avery Test's row read aloud in
+Part A; the dues column hand-added against the Total row in Part C) and both file checks (the
+export's dues column, and the report's footnote, both re-verified inside the downloaded file rather
+than trusted from the screen). Part F was not a check but two decisions, and both are ruled:
+
+- **F1 — should the demo show a write-off?** Ruled **leave the demo alone.** The sandbox does not
+  need to demonstrate every capability, and a forgiven bill is not a flattering first impression for
+  a prospect's first look. No demo change follows from this ship.
+- **F2 — the Budget plan page still reads the GROSS bill** ($11,308.30) while every other screen
+  this build touched now reads net ($11,291.30) — two answers to a question a coach could reasonably
+  think is one, though nothing today sits them side by side to expose it. Ruled **SEPARATE — its own
+  mockup and its own decision session**, not decided at this walk. Carries forward as an open item on
+  the TODO line until that session happens. **Mockup drawn 2026-09-11**, both affected spots (the
+  summary band and the by-period grid's closing rows) against two options — net it to match everywhere
+  else, or leave it gross with a caption naming the gap — plus the illustrative consequence to the
+  buffer figure either way: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_F2_MOCKUP.html`.
+  Awaiting the owner's ruling.
 
 Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md` · walk source:
 `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_WALK.html`.
@@ -21645,12 +21665,17 @@ maps the team-board edit onto the whole development area.
 after; the fixes touch no token, stylesheet, dictionary or export surface) · `check:layout
 --changed` run once on 11 screens at 361/1440: no finding on any changed element.
 
-## §171 · Log an observation — the scouting capture form has a frame: a heading, a labelled tag, a line saying what a tag does, and a real Save — built on dev 2026-09-11 (uncommitted), **no migration**, awaiting QA · mockup artifact `1f0c69bb` · a §168 side-finding, not a staff-access fail
+## §171 · Log an observation — a door on the filter row's right edge opens the framed form in place: a heading, a labelled tag, a line saying what a tag does, Cancel + a real Save — built on dev 2026-09-11 (uncommitted), **no migration**, awaiting QA · mockup artifact `1f0c69bb` (round 2; round 1 in its history) · a §168 side-finding, not a staff-access fail
 
 **You raised it mid-§168, as a helper on a game:** *"it is not clear what this tag dropdown is
 supposed to mean … I open it and click different options (Pitching, Hitting, etc.) and I don't see
 anything change on the screen. I have no information on what this drop down is even supposed to do."*
-You asked whether "make observation" should be a button opening a dialog.
+You asked whether "make observation" should be a button opening a dialog. **Round 1** framed the
+form but left it permanently open under the notes; your verdict on the build: *"this creates clutter
+and eventually will be dragged below visibility."* **Round 2** put a door above the notes on its own
+row; your refinement on the build: *"move the log observation button to the right in line with the
+filter pills — the right alignment is consistent with add buttons in other areas of the app and
+saves us a row."* **That is what shipped.**
 
 ### What was wrong
 
@@ -21660,106 +21685,46 @@ explanation was its placeholder (gone the moment you type), a dropdown with **no
 "Everything we know ›". Picking a tag is *correct* to change nothing until you save — it is a form —
 but nothing said so, and nothing said what a tag was for. The dropdown was never empty: it carries
 the sport's fixed vocabulary (Pitching, Hitting, Defense, Baserunning, Coaching for a baseball team;
-Offense, Defense, Special situations, Coaching otherwise). The full opponent page had the same form.
+Offense, Defense, Special situations, Coaching otherwise). The full opponent page had the same form
+as a permanent block above a season-long timeline.
 
 ### What you will see (game card's Scouting tab AND the full opponent page — one form, shared)
 
 | | |
 |---|---|
-| **A heading** | **Log an observation from this game** (on the page: *Log an observation*), with *Numbers and positions, never opposing players' names.* beside it — visible while you type. The placeholder is now an example: *e.g. "their SS cheats up with runners on"*. |
-| **The tag** | A visible label — **Tag (optional)** — over the same dropdown, on one row with its own Save. Still a dropdown (form-selects ruling); "No tag" is still a complete answer. |
-| **What a tag does** | One quiet line under the row: *A tag files this under Pitching, Hitting, Defense, Baserunning or Coaching, so the book can be read one heading at a time.* — the sport's own words, read out. |
-| **Save** | A real lime button beside the fields, greyed until there is something to save. The footer keeps the card's own doors (Share to staff chat, Everything we know ›); Save no longer lives among them. |
-| **After saving** | Unchanged: *Saved — add another?*, cursor back in the box, the note appears with its author and tag chip, and the tag filter row appears once a tag is in use. The full page gains this same loop (it had none). |
+| **At rest** | One quiet secondary button — **+ Log an observation** — on the **right edge of the tag-filter row**, **above** the notes (card: below the book line; page: below the book line and share row, above the timeline). The filter pills (All · Pitching …) keep the left; when no tag is in use the door keeps the right edge alone. It is the only trace of the form when nobody is writing. The notes can only push down what is under them, so the door is in the same place with zero notes or fifty. |
+| **Opened** | The door leaves the filter row and a lightly lifted sheet opens **above** it: **Log an observation from this game** (page: *Log an observation*) with *Numbers and positions, never opposing players' names.* beside it; the box (cursor already in it; placeholder is an example — *e.g. "their SS cheats up with runners on"*); **Tag (optional)** over the same dropdown; **Cancel** and a lime **Save observation** (greyed until there is text); one line — *A tag files this under Pitching, Hitting, Defense, Baserunning or Coaching, so the book can be read one heading at a time.* — in the sport's own words. |
+| **After saving** | *Saved — add another?*, the sheet stays open, the cursor returns to the box, and the new note lands **directly beneath the sheet** with its author and tag chip; the filter row appears once a tag is in use. **Cancel reads "Done"** once something has been saved — closing is not discarding. |
+| **Closing** | Cancel / Done, **Escape** (claimed by the sheet, so the game card beneath does NOT close with it), or switching games/tabs. The sheet collapses, the door returns to the filter row's right edge and takes focus. A reopened sheet starts clean — no stale "Saved" line. |
 | **A helper** | Can still log — open contribution is a standing ruling. The form now tells them what it is. |
+| **Not changed** | Filter row, two newest notes, "+ N more on the full page", the footer's doors (Share to staff chat, Everything we know ›). The full page's timeline, club section and identity block. |
 
 ### Ruled on the way
 
 **Not a dialog.** The game card already is one; a second on top hides the game being written about,
-and a dialog that closes on save breaks the several-in-a-row loop. If the card still feels busy, the
-fallback is an inline button that expands into this block — never a second window.
+and a dialog that closes on save breaks the several-in-a-row loop. **Not in the footer** beside
+"Everything we know" — that would sit under the notes again, which is the thing being fixed.
 
 ### Walk (a helper on the demo or UAT team, then the head coach)
 
-- [ ] Schedule → a game with a named opponent → Scouting. The form reads as one thing: heading, rule, box, **Tag (optional)**, Save, the one-line explanation naming this team's sport words.
-- [ ] Type a note, pick **Pitching**, Save → *Saved — add another?*; the note lists with a **Pitching** chip and the filter row shows **All · Pitching**. Cursor is back in the box.
-- [ ] Save with **No tag** → the note lists with no chip.
-- [ ] Empty box → Save is greyed. Phone (≤640): Save goes full-width under the dropdown.
-- [ ] **Everything we know ›** → the full opponent page's form has the same heading shape, label, explanation and Save; logging there confirms in place the same way.
+- [ ] Schedule → a game with a named opponent → Scouting. At rest: record, last meeting, book line, then ONE row — filter pills on the left (if any tag is in use), **+ Log an observation** on the right — then the two newest notes, footer. No form.
+- [ ] On an opponent with no tagged notes: the same row holds only the door, still on the right.
+- [ ] Tap the door → it leaves the row and the sheet opens above it, cursor in the box; heading, rule, **Tag (optional)**, Cancel, greyed Save, the one-line explanation naming this team's sport words.
+- [ ] Type a note, pick **Pitching**, Save → *Saved — add another?*; the note appears immediately under the sheet with a **Pitching** chip and the filter row shows **All · Pitching**. Cursor is back in the box. Cancel now reads **Done**.
+- [ ] Save a second with **No tag** → *2 saved this sitting — add another?*; the note lists with no chip.
+- [ ] **Done** → the sheet collapses, the door is back on the filter row's right edge (and has focus); the notes stay. Tap the door again → clean sheet, no "Saved" line, Cancel (not Done).
+- [ ] Open the sheet, press **Escape** → the sheet closes and **the game card stays open**. Press Escape again → whatever the card does today.
+- [ ] Phone (≤640): the door is a 44px target; in the sheet, Cancel and Save share a full-width row.
+- [ ] **Everything we know ›** → the full page has the same row (filter left, door right) below the book line and share row, above the timeline; opening and logging there behave identically, and the new note appears in the timeline under its game.
 - [ ] A hockey / non-baseball team: the explanation reads *Offense, Defense, Special situations or Coaching*.
 
 ### Verification
 
-typecheck clean · lint 0 errors on the three touched files (2 warnings, both pre-existing load
-effects at untouched lines) · `verify:changed` green on every check except `check:root-files`,
-which fails on the same stray repo-root file §168 reported (a mangled temp-path redirect from a
-different session, left in place — not this pass's file). Help article unchanged (it describes the
-loop, not the controls); no demo sentence names this form.
+typecheck clean · lint 0 errors on the touched files (1 warning, a pre-existing load effect at an
+untouched line) · **`verify:changed` fully green** (unit tests, spelling, contrast, CSS selectors,
+demos, root files — the stray root file §168 reported has since been removed). Help article
+unchanged (it describes the loop, not the controls); no demo sentence names this form.
 
-
-
----
-
-## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11, committed `340dca2a` the same day, **no migration**, awaiting QA · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
-
-**Why this phase comes first (plan §10):** the four phases that follow draw conclusions from these
-records — charts, headlines, a handout — and a chart drawn over a series that quietly joins mph to
-km/h, or a "not in a plan yet" flag computed from a database error, is a confident claim built on a
-defect. Phase 0 makes the existing records honest before anything is built on them, and adds the
-first unit tests this area has ever had (42, red before each fix).
-
-### What you will see
-
-| Where | Before | Now |
-|---|---|---|
-| **A player's Measurables row** (Roster → player → Development) | The small trend line plotted the numbers only. A test whose unit had been changed (mph → km/h) drew 48 → 51 → 84 as one rising line. | The line is drawn from the readings in the **current** unit only, and a sentence under the row says *Units changed — 2 earlier readings in mph are listed but not drawn on this line.* Every reading stays in the expanded list, each with its own unit. |
-| **An evaluation session** (Skills & Goals → a session) | Only tests active **now** and players active **now** were drawn. Retire a test and its saved results in that session vanished; a player who left the team took their row with them. | A retired test with saved rows appears as a chip — **Shuttle run · retired** — read-only; a departed player with a saved reading keeps their row after the roster, marked *no longer on the roster*, read-only. New entry still starts from today's active tests and roster; "N of M entered" still counts the active roster only, once per player. |
-| **Insights → Development, third section** | Headed **Practices you've run** and listed every practice with a plan or a recap — next week's plan included. | Headed **Practice review**. Each practice carries what its records support: **Upcoming plan** (*This practice has not happened yet.*), **Past plan · no recap** (*A plan was saved. Nothing was written afterwards.* / *The saved plan does not establish what happened.*), **Recap recorded**. Only a recap says what happened. |
-| **Insights → Development, when a read fails or is cut short** | A failed practice or tag read was swallowed into "nothing here", and "In a plan", the count-only finding and the uncovered-tag list were computed from the nothing that arrived. | The section says *couldn't be loaded* (with Try again) or *only the most recent 200 were read*, and **withholds** the column, the finding and the uncovered tags rather than reporting a gap from an input that did not load. |
-| **Editing a finished season's goal or reading** (API) | Creating one was refused with "This player belongs to a past season, which is read-only."; editing or deleting one was not. | All four writes refuse the same way, through one shared rule. |
-| **Help → Skills & Goals** | Promised a retired test's sessions "stay open" — true of the session, not of the retired rows in it. Named "Practices you've run". | Says the retired test's results stay listed in those sessions, marked retired; names Practice review and its three labels. The old phrase stays a search keyword. |
-
-### Not changed
-
-The session's Date, "Taken at" and note controls; the profile's three tabs; the Insights hub's seven
-tabs; the coverage table's columns; the closed-season page (no development shelf — out of scope by
-rule). No demo sentence names any of these labels, and `check:demos` is green on dev.
-
-### Walk — hub artifact `23bbc89a`, **QA Walk tab, Part A** (14 steps, one ruling)
-
-The UAT fixture gained its first development records for this walk (section 16 of the seeder):
-three tests (one retired), Devon Test's readings including a unit change, an inactive "Morgan Left"
-with a reading in the probe session, three practices in the three truth states, and a prior-season
-goal + reading on "Avery Prior" for the refusal probes. Identities are pinned by name on the walk.
-
-- [ ] Session: the retired chip, its read-only rows, the departed player's row, the count.
-- [ ] Player: the units-changed sentence, the line drawn from km/h only, all three readings listed.
-- [ ] Insights: Practice review, the three labels and their lines; the tag filter still works.
-- [ ] **Ruling step:** the read-back for a past plan with no recap — as built (two sentences), the first only, or other wording.
-- [ ] F05 failure states: covered by unit tests (state logic + the panel rendering each state); visible on screen only with a forced failure or a 200+-practice season — walk on request.
-- [ ] F04 refusals: an API check (ids on the fixture output); the 2025 records are untouched afterwards.
-- [ ] Help: the two corrected paragraphs; search "practices you've run" still finds the article.
-
-### Verification
-
-Unit: **42/42** new (`development-trust`, `development-routes`), full suite 3,585 with one failure
-that is the awards session's uncommitted guard (theirs, not this). typecheck clean on every touched
-file (the one error is the budget-import panel, another session's). `verify:changed` chain: every
-gate after `npm test` run individually and green — spelling, tokens, CSS purity/selectors, contrast,
-dates, observability, export catalog, root files, marketing shots (the "Log a measurable" button is
-untouched in Phase 0), demos. `check:layout --only=` the session, the player record and Insights
-Development at 361/390/768/1440: green after (a) the "Taken at" option labels went to the short
-date — the long weekday form spilled the 361px column — and (b) **63 pre-existing touch-target
-findings recorded as DEFERRED** with the reason: they are controls that existed before this build
-and measured green only because the fixture was empty (the §58 trap); Phase 2 rebuilds those rows
-at the 44px floor. Rendered probe over the populated fixture: all three screens show the new states.
-
-### Owed / next
-
-Phase 1 (three tabs, Metrics editor, goal tag, exact addresses) after this walk. The **Development
-grant** (ruling 9) waits for staff-access pass 2 (§169) to commit — it is being built in the same
-files right now. Phase 0 committed `340dca2a` (2026-09-11, private index — my hunks only in the four shared
-files). `/simplify`, `/review` and `/docs` still owed after the walk.
 
 ---
 
@@ -21863,3 +21828,64 @@ View + edit.
 
 
 ---
+
+## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11 (uncommitted), **no migration**, awaiting QA · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
+
+**Why this phase comes first (plan §10):** the four phases that follow draw conclusions from these
+records — charts, headlines, a handout — and a chart drawn over a series that quietly joins mph to
+km/h, or a "not in a plan yet" flag computed from a database error, is a confident claim built on a
+defect. Phase 0 makes the existing records honest before anything is built on them, and adds the
+first unit tests this area has ever had (42, red before each fix).
+
+### What you will see
+
+| Where | Before | Now |
+|---|---|---|
+| **A player's Measurables row** (Roster → player → Development) | The small trend line plotted the numbers only. A test whose unit had been changed (mph → km/h) drew 48 → 51 → 84 as one rising line. | The line is drawn from the readings in the **current** unit only, and a sentence under the row says *Units changed — 2 earlier readings in mph are listed but not drawn on this line.* Every reading stays in the expanded list, each with its own unit. |
+| **An evaluation session** (Skills & Goals → a session) | Only tests active **now** and players active **now** were drawn. Retire a test and its saved results in that session vanished; a player who left the team took their row with them. | A retired test with saved rows appears as a chip — **Shuttle run · retired** — read-only; a departed player with a saved reading keeps their row after the roster, marked *no longer on the roster*, read-only. New entry still starts from today's active tests and roster; "N of M entered" still counts the active roster only, once per player. |
+| **Insights → Development, third section** | Headed **Practices you've run** and listed every practice with a plan or a recap — next week's plan included. | Headed **Practice review**. Each practice carries what its records support: **Upcoming plan** (*This practice has not happened yet.*), **Past plan · no recap** (*A plan was saved. Nothing was written afterwards.* / *The saved plan does not establish what happened.*), **Recap recorded**. Only a recap says what happened. |
+| **Insights → Development, when a read fails or is cut short** | A failed practice or tag read was swallowed into "nothing here", and "In a plan", the count-only finding and the uncovered-tag list were computed from the nothing that arrived. | The section says *couldn't be loaded* (with Try again) or *only the most recent 200 were read*, and **withholds** the column, the finding and the uncovered tags rather than reporting a gap from an input that did not load. |
+| **Editing a finished season's goal or reading** (API) | Creating one was refused with "This player belongs to a past season, which is read-only."; editing or deleting one was not. | All four writes refuse the same way, through one shared rule. |
+| **Help → Skills & Goals** | Promised a retired test's sessions "stay open" — true of the session, not of the retired rows in it. Named "Practices you've run". | Says the retired test's results stay listed in those sessions, marked retired; names Practice review and its three labels. The old phrase stays a search keyword. |
+
+### Not changed
+
+The session's Date, "Taken at" and note controls; the profile's three tabs; the Insights hub's seven
+tabs; the coverage table's columns; the closed-season page (no development shelf — out of scope by
+rule). No demo sentence names any of these labels, and `check:demos` is green on dev.
+
+### Walk — hub artifact `23bbc89a`, **QA Walk tab, Part A** (14 steps, one ruling)
+
+The UAT fixture gained its first development records for this walk (section 16 of the seeder):
+three tests (one retired), Devon Test's readings including a unit change, an inactive "Morgan Left"
+with a reading in the probe session, three practices in the three truth states, and a prior-season
+goal + reading on "Avery Prior" for the refusal probes. Identities are pinned by name on the walk.
+
+- [ ] Session: the retired chip, its read-only rows, the departed player's row, the count.
+- [ ] Player: the units-changed sentence, the line drawn from km/h only, all three readings listed.
+- [ ] Insights: Practice review, the three labels and their lines; the tag filter still works.
+- [ ] **Ruling step:** the read-back for a past plan with no recap — as built (two sentences), the first only, or other wording.
+- [ ] F05 failure states: covered by unit tests (state logic + the panel rendering each state); visible on screen only with a forced failure or a 200+-practice season — walk on request.
+- [ ] F04 refusals: an API check (ids on the fixture output); the 2025 records are untouched afterwards.
+- [ ] Help: the two corrected paragraphs; search "practices you've run" still finds the article.
+
+### Verification
+
+Unit: **42/42** new (`development-trust`, `development-routes`), full suite 3,585 with one failure
+that is the awards session's uncommitted guard (theirs, not this). typecheck clean on every touched
+file (the one error is the budget-import panel, another session's). `verify:changed` chain: every
+gate after `npm test` run individually and green — spelling, tokens, CSS purity/selectors, contrast,
+dates, observability, export catalog, root files, marketing shots (the "Log a measurable" button is
+untouched in Phase 0), demos. `check:layout --only=` the session, the player record and Insights
+Development at 361/390/768/1440: green after (a) the "Taken at" option labels went to the short
+date — the long weekday form spilled the 361px column — and (b) **63 pre-existing touch-target
+findings recorded as DEFERRED** with the reason: they are controls that existed before this build
+and measured green only because the fixture was empty (the §58 trap); Phase 2 rebuilds those rows
+at the 44px floor. Rendered probe over the populated fixture: all three screens show the new states.
+
+### Owed / next
+
+Phase 1 (three tabs, Metrics editor, goal tag, exact addresses) after this walk. The **Development
+grant** (ruling 9) waits for staff-access pass 2 (§169) to commit — it is being built in the same
+files right now. Commit of Phase 0 on your OK, in a private index (the shared index carries another
+session's staged deletions).

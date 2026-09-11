@@ -7,6 +7,57 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-11 — AWARDS JOIN THE ONE TAG IDIOM, and REMOVE ON A USED AWARD OFFERS MERGE OR RETIRE (owner, from mockup artifact `630ebe17` rounds 1–2; plan `COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md`)
+
+**Decision (owner, four forks ruled as recommended + one from the mockup round).** (1) **The award-type
+library is a tag vocabulary and gets the idiom** — the door ("Manage awards…", the "Manage {what the field
+holds}…" grammar) beside "+ New" in the Give window; the ratified DRAWER holding awards with usage counts,
+rename (name AND icon together), merge and remove; an **Awards** row on the Team settings Tags shelf; the
+season report's "Manage award types" link retires (doors live where minting lives). (2) **Remove on a used
+award offers MERGE or RETIRE — never orphans, never cascades.** The dialog states how many times it has
+been given and offers *Merge instead* (records keep an award under the other name) and *Retire* (leaves the
+picker, stays on the record); an award never given deletes outright. (3) **The chip row STAYS as the
+picker** — "Manage awards…" adopts the door's grammar in chip form; the search combobox is not adopted.
+(4) One plan, both parts; **Part A** (edit + remove a GIVEN award where it was given, the Give form reused
+pre-filled as *Edit award*) builds first. (0, from round 1) **The edit form carries no "Remove this award"
+link** — delete is the row's trash icon with its own confirm; one job per control. **(5, owner reading the
+remove dialog — *"if a player was given 2 awards and you merge, we don't want them to have the same award
+twice"*) A PLAYER HOLDS A GIVEN AWARD ONCE PER OCCASION** — the game, or for a general award the date + its
+label. Give and Edit REFUSE a second copy with one sentence ("Blake already has MVP for this game"); a merge
+COLLAPSES collisions to the award given FIRST (a dropped note is carried only into an empty slot) and the
+confirm states the count before the tap ("4 awards become MVP. 1 is dropped — Blake would hold MVP twice
+for the Apr 16 game"). The same award on a different game stays legitimate. ⚠ The owner's question about
+the merge exposed a hole that exists TODAY: nothing stops saving MVP for the same player on the same game
+twice — the merge would only have been the most visible way to hit it. It becomes a DB rule (two partial
+unique indexes), not only a form check, because the merge's collapse must be able to rely on it being true
+of the data.
+
+**Rationale.** The 2026-09-01 ruling says "applies to every tag surface in the coaches portal," and the
+review that produced it never inventoried award types — GiveAwardModal surfaced only as a `.tagChip`
+CSS collision. So awards were still on the pre-idiom pattern: mint inline, manage from a link on a
+report, rename-or-retire only. For (2) the tag rule — delete-in-use orphans with the count — does NOT
+transfer: a tag is a LABEL (a game with one label fewer is still a game) but an award is a RECORD KEY
+(`award_type_id` NOT NULL + RESTRICT; "Blake got ___" is not an award), so orphaning is impossible by
+schema and cascade would erase recognition players received. Budget items keep their refusal under the
+parent ruling for the same reason; awards get the softer pair because retire already exists and is the
+honest "stop using it." For (3) the combobox's grammar exists because a 50-item vocabulary is SEARCHED; a
+≤30-item curated list with icons is TAPPED — budget items and test types kept their own shape under the
+same ruling. For (0) the app's own convention (Manage Award Types' separate Edit/Retire icons; the tag
+drawer's Rename/Merge/Delete) is one job per control; a delete link inside the edit form gives two paths
+to one destructive click depending on which button was tapped first. **Generalises:** a ruling that says
+"every X" is only as complete as the inventory it was made from — re-run the inventory before assuming
+a look-alike was decided; and when a look-alike's RECORD shape differs (key vs label), the delete rule
+must be re-derived from the schema, not inherited from the idiom. And for (5): **a merge is only as safe
+as the uniqueness the target already has** — tags collapse on merge BY CONSTRUCTION (the link table's
+PK); a row-shaped record has to be GIVEN that rule first, or the merge invents doubles the form never
+could have refused.
+
+**Applies to:** the coach portal's award-type library and the given-award record on the schedule drawer,
+the Give/Edit form, the Insights Awards report, the Tags shelf. The drawer stays the portal's only
+working-surface side sheet — awards adopt it as a LIBRARY under the existing ruling, not as a new idiom.
+The org admin Shared Library, the closed-season page and every read surface (profile, Wrapped, recaps,
+certificates) are untouched.
+
 ### 2026-09-10 — A DRILL-IN PANEL'S TWO-DOOR BUDGET IS A CEILING, NOT A TARGET — and a summed row always says how many payments it holds (owner, Owner QA §159, both asks ruled as built)
 
 **Decision (owner, ruling the two open asks on the §159 walk — 20/20, zero defects).** (1) **The sponsor

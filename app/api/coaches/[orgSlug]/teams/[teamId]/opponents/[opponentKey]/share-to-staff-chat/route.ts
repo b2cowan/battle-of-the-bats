@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { denyUnless, canJoinStaffChat } from '@/lib/coach-capabilities';
+import { denyUnless, canJoinStaffChat, canViewScoutingBook } from '@/lib/coach-capabilities';
 import { normalizeOpponentKeyParam, formatGamePlanSnapshot } from '@/lib/coach-opponents';
 import { assembleOpponentCard } from '@/lib/coach-opponent-card';
 import { getStaffChatRoom, postChatMessage, ChatError, MAX_MESSAGE_LENGTH } from '@/lib/chat-service';
@@ -14,7 +14,10 @@ import { getSportPack } from '@/lib/sports';
  * history. Assembly is the card GET's own (lib/coach-opponent-card), so the room reads
  * exactly what the coach was looking at.
  *
- * Caps `staffChat`; the room membership check inside postChatMessage is the second lock.
+ * Caps `staffChat` AND `canViewScoutingBook` — this broadcasts the POOLED card (book line +
+ * everyone's observations), so a viewer downgraded to logging-only may not trigger a share
+ * of content they cannot themselves read (owner ruling 2026-09-11); the room membership
+ * check inside postChatMessage is the third lock.
  * Live-season route off the working-season read — INSTRUMENT ruling (coach-history-endpoint-guard).
  */
 export const POST = withObservability(async (_req: Request,
@@ -23,7 +26,10 @@ export const POST = withObservability(async (_req: Request,
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, team, assignment, programYear } = resolved;
-  const denied = denyUnless(canJoinStaffChat(assignment.capabilities), 'You do not have access to staff chat.');
+  const denied = denyUnless(
+    canJoinStaffChat(assignment.capabilities) && canViewScoutingBook(assignment.capabilities),
+    'You do not have access to the scouting book.',
+  );
   if (denied) return denied;
 
   const key = normalizeOpponentKeyParam(opponentKey);

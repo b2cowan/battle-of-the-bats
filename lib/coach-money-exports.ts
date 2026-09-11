@@ -173,10 +173,16 @@ export interface BudgetPlanExportSource {
   totals: Pick<BudgetTotals,
     'totalPlanned' | 'fundedByPlayers' | 'costsLessFunding' | 'fundingLineCount' | 'itemized' | 'expectedFunding'
     | 'estimatedTotal' | 'difference' | 'hasDifference' | 'overPlanned'>;
-  /** The Dues tab's assessed total, echoed on the plan as the players' side. */
+  /** The Dues tab's assessed total, echoed on the plan as the players' side — net of anything
+   *  written off it (owner ruling §160 Part F2, 2026-09-11). */
   duesAssessed: number;
   /** plan − funding − dues, signed exactly as the screen computes it. */
   leftToFund: number;
+  /** "after $17.00 of adjustments" etc. — the same clause the screen's tile and closing row
+   *  already state beside this figure, so the downloaded file never shows the net number under a
+   *  note that reads as if it were still the gross schedule total. Absent/null on the ordinary
+   *  season that has never written anything off. */
+  writtenOffClause?: string | null;
   /** The picker's category → sort_order, so the funding groups print in the order the coach chose
    *  them from (owner ruling 2026-09-09). Absent = alphabetical. */
   categoryOrder?: ReadonlyMap<string, number>;
@@ -327,7 +333,14 @@ export function budgetPlanStatementRows(
         notes: L.costsLessFundingNote,
       }, 'total');
     }
-    push({ item: L.installments, schedule: '', planned: src.duesAssessed, notes: 'What players are scheduled to pay' }, 'total');
+    push({
+      item: L.installments,
+      schedule: '',
+      planned: src.duesAssessed,
+      notes: src.writtenOffClause
+        ? `What players are scheduled to pay, ${src.writtenOffClause}`
+        : 'What players are scheduled to pay',
+    }, 'total');
     // The screen's own residual row, absent when the schedules match the plan ($0.00 says
     // nothing). Absolute, as the screen prints it — the label carries the direction.
     if (Math.abs(src.leftToFund) >= 0.005) {

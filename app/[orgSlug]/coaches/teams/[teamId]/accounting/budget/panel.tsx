@@ -534,8 +534,12 @@ function BudgetLineRow({
  * already enter. Read-only by design: this is a way to SEE the plan, and every edit still happens
  * in the list's own form, so there is exactly one place a budget line can be changed.
  */
-function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onSetDues, onEditLine }: {
+function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onSetDues, onEditLine, writtenOffClause }: {
   view: ReturnType<typeof buildPeriodView>;
+  /** "after $17.00 of adjustments" etc. — the same clause the tile above states beside its figure
+   *  (owner ruling §160 Part F2). Computed in the panel, which already holds the write-off data;
+   *  passed down rather than re-derived so the two surfaces cannot read two different write-offs. */
+  writtenOffClause?: string | null;
   /**
    * Open a line's edit form (owner, 2026-09-10: *"should I be able to click a number in the report
    * and open up the edit modal? why am I only allowed to edit on the list view?"*).
@@ -953,6 +957,15 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
           </tbody>
         </table>
       </CoachScrollX>
+      {/* ⚠ THE SAME CLAUSE AS THE tile above and the List's own closing row, never a second wording
+          (owner ruling §160 Part F2). Gated on `view.close`, exactly like the rows it explains — an
+          estimated-installments row (before dues exist) has nothing written off yet. */}
+      {view.close && writtenOffClause && (
+        <p className={styles.periodGridNote}>
+          The Player installments row is {writtenOffClause} — bills lowered with no money behind
+          them.
+        </p>
+      )}
       {view.hasUnscheduled && (
         /* ⚠ The wording widened with the column's contents (2026-09-09): it now also holds the
            un-itemized part of a season estimate and any dues not yet on a dated schedule. A note
@@ -1189,6 +1202,11 @@ export function BudgetPlanPanel({
   // a budget line and never enters computeBudgetTotals (dues are DERIVED from the plan — feeding
   // them back in as funding would be circular).
   const [duesAssessed, setDuesAssessed] = useState(0);
+  /** What `duesAssessed` is already net of — an adjustment or a forgiven bill (owner ruling §160
+   *  Part F2, 2026-09-11: "net it too"). Named on the tile and the closing row's footnote with the
+   *  same clause the Dues tile and Budget vs. Actual already use — never a second wording. */
+  const [duesWrittenOff, setDuesWrittenOff] = useState(0);
+  const [duesWrittenOffKinds, setDuesWrittenOffKinds] = useState<{ forgiven: boolean; adjustment: boolean }>({ forgiven: false, adjustment: false });
   /** The dated instalments behind that figure, for the By-period grid's Player installments row.
    *  Kept separate from `duesAssessed` deliberately: that is the schedules' total and the plan's
    *  number, these are the dates to spread it over, and the two can genuinely differ — see the
@@ -1581,6 +1599,8 @@ export function BudgetPlanPanel({
       setPlan(planData.plan);
       setPriorPlan(planData.priorPlan ?? null);
       setDuesAssessed(planData.duesAssessed ?? 0);
+      setDuesWrittenOff(planData.duesWrittenOff ?? 0);
+      setDuesWrittenOffKinds(planData.duesWrittenOffKinds ?? { forgiven: false, adjustment: false });
       setDuesInstallments(planData.duesInstallments ?? []);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
@@ -2557,6 +2577,39 @@ export function BudgetPlanPanel({
   // The plan minus everything already answering for it — funding lines and scheduled dues.
   // Signed on purpose: negative means players are scheduled to pay more than the plan now needs.
   const leftToFund = r2(totals.totalPlanned - totals.expectedFunding - duesAssessed);
+  /** "after $17.00 of adjustments" / "…forgiven" / "…of adjustments and forgiveness" — the same
+   *  clause the Dues tile and Budget vs. Actual's footnote already use, so a coach reading three
+   *  screens for one write-off reads one sentence (owner ruling §160 Part F2). Null on the ordinary
+   *  season that has never written anything off. */
+  const writtenOffClause = duesWrittenOff > 0.005
+    ? (duesWrittenOffKinds.forgiven && duesWrittenOffKinds.adjustment
+        ? `after ${fmt(duesWrittenOff)} of adjustments and forgiveness`
+        : duesWrittenOffKinds.forgiven
+          ? `after ${fmt(duesWrittenOff)} forgiven`
+          : `after ${fmt(duesWrittenOff)} of adjustments`)
+    : null;
+  /* "Above the plan" needs a plan to be above — a dues-only team gets the bare Scheduled figure,
+     not a caption calling the whole schedule a buffer. ⚠ UNDEFINED, NOT AN EMPTY FRAGMENT, when
+     neither clause applies — MoneySummaryBand renders any non-null caption, empty or not, so a
+     tile with nothing to say must return undefined rather than `<></>`. */
+  const bufferOrShortfall = leftToFund < -0.005 && totals.totalPlanned > 0 ? (
+    <>Includes a {fmt(leftToFund)} buffer above the plan</>
+  ) : leftToFund > 0.005 ? (
+    <span className={styles.planCapWarn}>
+      {fmt(leftToFund)} short of covering the plan
+      {moneyCanWrite && (
+        <>
+          {' · '}
+          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+            set dues
+          </button>
+        </>
+      )}
+    </span>
+  ) : undefined;
+  const installmentsCaption = writtenOffClause && bufferOrShortfall ? (
+    <>{writtenOffClause} · {bufferOrShortfall}</>
+  ) : (writtenOffClause ?? bufferOrShortfall ?? undefined);
   /* THE SUBTOTALS THE TABLE PRINTS SUM THE LINES THE TABLE SHOWS (owner ruling 2026-09-08). Under
      the When filter a subtotal that kept the season's figure would sit over rows that do not add up
      to it — the exact mismatch the ladder exists to remove. The season's own close (Costs less
@@ -2649,6 +2702,7 @@ export function BudgetPlanPanel({
       totals,
       duesAssessed,
       leftToFund,
+      writtenOffClause,
       categoryOrder,
     });
     return {
@@ -2791,23 +2845,7 @@ export function BudgetPlanPanel({
                   </>
                 ),
                 caption: duesAssessed > 0 ? (
-                  // "Above the plan" needs a plan to be above — a dues-only team gets the bare
-                  // Scheduled figure, not a caption calling the whole schedule a buffer.
-                  leftToFund < -0.005 && totals.totalPlanned > 0 ? (
-                    <>Includes a {fmt(leftToFund)} buffer above the plan</>
-                  ) : leftToFund > 0.005 ? (
-                    <span className={styles.planCapWarn}>
-                      {fmt(leftToFund)} short of covering the plan
-                      {moneyCanWrite && (
-                        <>
-                          {' · '}
-                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
-                            set dues
-                          </button>
-                        </>
-                      )}
-                    </span>
-                  ) : undefined
+                  installmentsCaption
                 ) : (
                   (totals.perPlayer != null || (moneyCanWrite && allLines.length > 0)) ? (
                     <>
@@ -3015,6 +3053,7 @@ export function BudgetPlanPanel({
               onEditLine={moneyCanWrite
                 ? (lineId: string) => { const line = allLines.find(l => l.id === lineId); if (line) openEdit(line); }
                 : undefined}
+              writtenOffClause={writtenOffClause}
             />
           ) : (
             <>
@@ -3438,6 +3477,16 @@ export function BudgetPlanPanel({
               </tbody>
             </table>
             </CoachScrollX>
+            {/* ⚠ THE SAME CLAUSE AS THE TILE ABOVE, NEVER A SECOND WORDING (owner ruling §160 Part
+                F2). The tile states it beside the figure; the table's own closing row has no
+                caption cell to carry it, so it lands here instead — the exact spot the Estimated
+                branch already uses for a note about the row above it. */}
+            {whenFilter === 'all' && duesAssessed > 0 && writtenOffClause && (
+              <p className={styles.periodGridNote}>
+                The Player installments row is {writtenOffClause} — bills lowered with no money
+                behind them.
+              </p>
+            )}
             </>
           )}
 

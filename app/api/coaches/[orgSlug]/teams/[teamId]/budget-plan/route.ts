@@ -6,6 +6,14 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import {
+  getRepDuesPaymentsByProgramYear,
+  getRepDuesCreditsByProgramYear,
+  getRepDuesPayoutsByProgramYear,
+  getRepDuesPaidBackByCredit,
+} from '@/lib/db';
+import { seasonDuesBand, type DuesCreditKind } from '@/lib/coach-dues-actual';
+import { duesPositionByInstallment } from '@/lib/coach-dues-remaining';
 
 function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
   const periods = ((row.rep_budget_periods ?? []) as Record<string, unknown>[])
@@ -78,12 +86,12 @@ export const GET = withObservability(async (_req: Request,
   // credits and partial payments never move the plan.
   const { data: schedulesData } = await supabaseAdmin
     .from('rep_player_dues_schedules')
-    .select('id, total_amount')
+    .select('id, player_id, total_amount')
     .eq('program_year_id', programYear.id);
-  const schedules = (schedulesData ?? []) as Array<{ id: string; total_amount: number }>;
+  const schedules = (schedulesData ?? []) as Array<{ id: string; player_id: string; total_amount: number }>;
   // Number() belt, matching every other total_amount read in lib/db.ts — a numeric column
   // must never reach arithmetic as a string, whatever the driver does.
-  const duesAssessed = Math.round(schedules.reduce((s, r) => s + Number(r.total_amount ?? 0), 0) * 100) / 100;
+  const duesAssessedGross = Math.round(schedules.reduce((s, r) => s + Number(r.total_amount ?? 0), 0) * 100) / 100;
 
   // Check whether any budget-generated installments already exist for this year
   let installmentCount = 0;
@@ -92,17 +100,19 @@ export const GET = withObservability(async (_req: Request,
    * 2026-09-09). Every source, not just `budget_generated`: a coach who set a schedule by hand is
    * still owed the spread.
    *
-   * ⚠⚠ THIS IS NOT WHAT `duesAssessed` IS SUMMED FROM, deliberately, and the difference is the
-   * whole reason the grid keeps a No-date-yet column for dues. `duesAssessed` is Σ schedule
+   * ⚠⚠ THIS IS NOT WHAT `duesAssessedGross` IS SUMMED FROM, deliberately, and the difference is the
+   * whole reason the grid keeps a No-date-yet column for dues. `duesAssessedGross` is Σ schedule
    * totals so credits and partial payments never move the plan; a schedule's total is only
    * checked against its instalments on the manual POST path, so the two can genuinely differ.
    * The grid puts the difference in No date yet rather than letting the row disagree with the
    * figure the List prints — see `duesTotals` in lib/coach-budget-periods-view.ts.
    *
    * ⚠ AMOUNTS AND DUE DATES ONLY. Nothing here says whether an instalment was PAID: this row is
-   * the plan, and what has actually arrived is Budget vs. Actual's question.
+   * the plan, and what has actually arrived is Budget vs. Actual's question — except for the
+   * write-off netting below, which is not "what arrived" but "what was cancelled", and belongs
+   * here for the same reason it belongs in `duesAssessed` (owner ruling §160 Part F2).
    */
-  let duesInstallments: Array<{ date: string | null; amount: number }> = [];
+  let duesInstallmentRows: Array<{ id: string; schedule_id: string; player_id: string | null; installment_number: number; due_date: string | null; amount: number; paid_at: string | null }> = [];
   if (schedules.length > 0) {
     /* ⚠ ONE ROUND TRIP ANSWERS BOTH QUESTIONS. This was written as two reads of the same table for
        the same schedule ids — a `head: true` count filtered to `budget_generated`, then a second
@@ -116,15 +126,86 @@ export const GET = withObservability(async (_req: Request,
        column that matters is the wrong reuse. */
     const { data: instData } = await supabaseAdmin
       .from('rep_player_dues_installments')
-      .select('due_date, amount, source')
+      .select('id, schedule_id, player_id, installment_number, due_date, amount, paid_at, source')
       .in('schedule_id', schedules.map(s => s.id));
-    const rows = (instData ?? []) as Array<{ due_date: string | null; amount: number; source: string | null }>;
+    const rows = (instData ?? []) as Array<{ id: string; schedule_id: string; player_id: string | null; installment_number: number; due_date: string | null; amount: number; paid_at: string | null; source: string | null }>;
     installmentCount = rows.filter(r => r.source === 'budget_generated').length;
-    duesInstallments = rows
-      // Number() belt, matching every other numeric read in lib/db.ts — a numeric column must
-      // never reach arithmetic as a string, whatever the driver does.
-      .map(r => ({ date: r.due_date ?? null, amount: Number(r.amount ?? 0) }));
+    duesInstallmentRows = rows;
   }
+
+  /* ⚠⚠ A BILL LOWERED IS NOT A COLLECTION, ON THIS SCREEN TOO (owner ruling §160 Part F2,
+     2026-09-11 — "net it too"). `duesAssessedGross` and the raw installment amounts above answer
+     "what did you schedule"; a coach reading this page beside Player Dues or Budget vs. Actual has
+     no way to know those already net a written-off bill out and this page doesn't. The TOTAL comes
+     from `seasonDuesBand` — the same authoritative figure the Dues tile and the Statement read —
+     and PLACEMENT (which instalment, which month) comes from `duesPositionByInstallment`, exactly
+     the split Budget vs. Actual's month grid already uses and for the same reason: a family who has
+     already paid every bill in cash has no instalment left for a write-off to cancel, so the total
+     and the placement are two different questions answered by two different, purpose-built walks. */
+  /* Whose instalment is whose. ⚠ `rep_player_dues_installments.player_id` is denormalised and can
+     be null on older rows, so the SCHEDULE answers for them — the same fallback Budget vs. Actual
+     uses for the same reason (the position walk groups by player, so an unowned instalment would
+     otherwise be dropped rather than counted). */
+  const scheduleOwner = new Map(schedules.map(s => [s.id, s.player_id]));
+  const installmentOwner = (i: { player_id: string | null; schedule_id: string }): string | null =>
+    i.player_id ?? scheduleOwner.get(i.schedule_id) ?? null;
+  let duesAssessed = duesAssessedGross;
+  let duesWrittenOff = 0;
+  let duesWrittenOffKinds: { forgiven: boolean; adjustment: boolean } = { forgiven: false, adjustment: false };
+  let netInstallmentAmount = new Map<string, number>();
+  if (schedules.length > 0) {
+    const [duesPayments, duesCredits, duesPayouts, paidBackByCredit] = await Promise.all([
+      getRepDuesPaymentsByProgramYear(programYear.id),
+      getRepDuesCreditsByProgramYear(programYear.id),
+      getRepDuesPayoutsByProgramYear(programYear.id),
+      getRepDuesPaidBackByCredit(programYear.id),
+    ]);
+
+    const duesBand = seasonDuesBand({
+      schedules: schedules.map(s => ({ playerId: s.player_id, total: Number(s.total_amount ?? 0) })),
+      payments: duesPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
+      payouts: duesPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
+      credits: [...duesCredits]
+        .sort((a, b) => a.creditDate.localeCompare(b.creditDate)
+          || String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')))
+        .map(c => ({
+          playerId: c.playerId,
+          kind: c.creditType as DuesCreditKind,
+          amount: c.amount,
+          traced: c.fundraiserEntryId !== null || c.expenseId !== null,
+          paidBack: paidBackByCredit.has(c.id) ? paidBackByCredit.get(c.id) : undefined,
+        })),
+    });
+    duesAssessed = duesBand.duesNet;
+    duesWrittenOff = duesBand.billLowered.total;
+    duesWrittenOffKinds = {
+      forgiven: duesBand.billLowered.forgiven > 0.005,
+      adjustment: duesBand.billLowered.adjustment > 0.005,
+    };
+
+    const duesPosition = duesPositionByInstallment({
+      installments: duesInstallmentRows.map(i => ({
+        id: i.id,
+        playerId: installmentOwner(i) ?? '',
+        installmentNumber: i.installment_number,
+        amount: i.amount ?? 0,
+        dueDate: i.due_date,
+        paidAt: i.paid_at,
+      })),
+      payments: duesPayments.map(p => ({ id: p.id, playerId: p.playerId, amount: p.amount, receivedDate: p.receivedDate, createdAt: p.createdAt })),
+      credits: duesCredits,
+      payouts: duesPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
+      mode: programYear.creditApplication,
+    });
+    netInstallmentAmount = duesPosition.writtenOff;
+  }
+  const duesInstallments: Array<{ date: string | null; amount: number }> = duesInstallmentRows
+    // Number() belt, matching every other numeric read in lib/db.ts — a numeric column must
+    // never reach arithmetic as a string, whatever the driver does.
+    .map(r => ({
+      date: r.due_date ?? null,
+      amount: Math.round((Number(r.amount ?? 0) - (netInstallmentAmount.get(r.id) ?? 0)) * 100) / 100,
+    }));
 
   // Active roster count
   const { count: rosterCount } = await supabaseAdmin
@@ -171,6 +252,11 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({
     plan,
     duesAssessed,
+    // What `duesAssessed` was net OF — so the tile and the closing row can name it, the same
+    // clause the Dues tile and Budget vs. Actual's footnote already use (owner ruling §160 Part
+    // F2). Zero/both-false on the ordinary season that has never written anything off.
+    duesWrittenOff,
+    duesWrittenOffKinds,
     duesInstallments,
     seasonBudgetAmount: programYear.budgetAmount ?? null,
     seasonYear: programYear.year,

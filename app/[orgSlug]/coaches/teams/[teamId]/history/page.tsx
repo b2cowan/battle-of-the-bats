@@ -19,7 +19,9 @@ import { insightsSectionHref, type CoachInsightsSection } from '@/lib/coach-insi
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
-import { canManageAwards, canViewMeasurables, hasNonMoneyRecordAccess, type CoachCapabilities } from '@/lib/coach-capabilities';
+import {
+  canManageAwards, canViewMeasurables, canViewScoutingBook, hasNonMoneyRecordAccess, type CoachCapabilities,
+} from '@/lib/coach-capabilities';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { formatRecord } from '@/lib/coach-season-record';
 
@@ -125,9 +127,11 @@ const TABS: readonly TabDef[] = [
   { id: 'development', label: 'Development', gate: canViewMeasurables, helpLabel: 'Development', helpAnchor: 'premium-development' },
   { id: 'awards', label: 'Awards', gate: canManageAwards, helpLabel: 'Awards', helpAnchor: 'recipe-game-day-details' },
   /* ⚠ "Scouting Book", not "Opponents" — the owner picked the name for what it IS over the name for
-     what it lists (mockup session 2026-08-18). Gated on SCHEDULE, not record access: the book is
-     open-contribution and Helpers read it too (owner, 2026-08-04). */
-  { id: 'scouting', label: 'Scouting Book', gate: c => c.schedule, helpLabel: 'Scouting Book', helpAnchor: 'premium-scouting' },
+     what it lists (mockup session 2026-08-18). Gated on the `scoutingBook` grant (narrowed
+     2026-09-11), not record access: the book is open-contribution and Helpers read it too by
+     default (owner, 2026-08-04) — a head coach may since turn pooled reading off per person while
+     leaving logging alone, and this tab follows that same grant, not bare `schedule`. */
+  { id: 'scouting', label: 'Scouting Book', gate: canViewScoutingBook, helpLabel: 'Scouting Book', helpAnchor: 'premium-scouting' },
 ];
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
@@ -414,8 +418,14 @@ export default function CoachesInsightsPage({
    * so a coach the nav deliberately closes this portal for — a schedule-only helper — reached the
    * season scoreboard and findings by URL, from the schedule's "Season attendance" link, and from
    * the game console's review mode. Rendered after every hook above; the fetches skip with it.
+   *
+   * ⚠ Widened 2026-09-11 to also admit `canViewScoutingBook` — a schedule-holder with the pooled
+   * scouting grant now has a real reason to be here (the Scouting Book tab), so the front door
+   * must not be stricter than the one room behind it that already lets them in. Without this, the
+   * schedule drawer's "Everything we know" / "All opponents" links sent that person here only to
+   * be turned away (§168 walk finding, 2026-09-11) — a dead end wearing a back button.
    */
-  if (caps && !hasNonMoneyRecordAccess(caps)) {
+  if (caps && !hasNonMoneyRecordAccess(caps) && !canViewScoutingBook(caps)) {
     return (
       <div className={`${styles.page} ${styles.pageWide}`}>
         <CoachPageHeader
@@ -429,7 +439,7 @@ export default function CoachesInsightsPage({
           section="Insights"
           plural
           what="The season’s reports — results, attendance, playing time, development and awards — read off the games and practices the team has recorded."
-          blocker="Insights opens for anyone with a player duty — attendance, lineups, notes, documents or tryouts. Ask your head coach to grant one."
+          blocker="Insights opens for anyone with a player duty — attendance, lineups, notes, documents, tryouts or Scouting Book access. Ask your head coach to grant one."
         />
       </div>
     );
