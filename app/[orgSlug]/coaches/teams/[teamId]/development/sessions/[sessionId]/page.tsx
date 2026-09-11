@@ -5,7 +5,8 @@ import { ClipboardCheck, X } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { NewTypeFields } from '@/components/coaches/TestTypesManager';
-import { formatValue } from '@/lib/measurable-format';
+import { formatValue, formatShortDate } from '@/lib/measurable-format';
+import { sessionMetricChips, sessionRows, sessionEnteredCount } from '@/lib/development-session-view';
 import styles from '../../../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable } from '@/lib/types';
 
@@ -27,6 +28,8 @@ interface SessionEventOption {
 interface SessionWorld {
   session: RepTeamEvaluationSession;
   roster: SessionRosterRow[];
+  /** No longer on the active roster, but a reading was saved here (F02). Read-only rows. */
+  pastParticipants: SessionRosterRow[];
   types: RepTeamMeasurableType[];
   entries: RepPlayerMeasurable[];
   events: SessionEventOption[];
@@ -92,7 +95,8 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       if (seq !== loadSeqRef.current) return false;
       setData(json);
       setError('');
-      setSelectedTypeId(prev => prev || (json.types as RepTeamMeasurableType[]).find(t => t.isActive)?.id || '');
+      // First chip: an active test, else a retired one this session holds rows for (F02).
+      setSelectedTypeId(prev => prev || sessionMetricChips(json.types as RepTeamMeasurableType[], json.entries as RepPlayerMeasurable[])[0]?.type.id || '');
       return true;
     } catch (e) {
       if (seq !== loadSeqRef.current) return false;
@@ -120,22 +124,26 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     );
   }
 
-  const { session, roster, types, entries, events, canWrite } = data;
-  const activeTypes = types.filter(t => t.isActive);
-  const selectedType = activeTypes.find(t => t.id === selectedTypeId) ?? null;
+  const { session, roster, pastParticipants, types, entries, events, canWrite } = data;
+  /**
+   * F02 (2026-09-11): what this session SHOWS is drawn from what is SAVED in it. Every active test
+   * is a chip (new entry may go under any of them); a retired test is a chip only when this
+   * session holds a reading for it, labelled and read-only. The screen used to filter the tests
+   * to active ones and the players to the current roster before drawing anything, so retiring a
+   * test or a player leaving the team hid rows that were still in the record.
+   */
+  const metricChips = sessionMetricChips(types, entries);
+  const activeTypes = metricChips.filter(c => !c.retired).map(c => c.type);
+  const selectedChip = metricChips.find(c => c.type.id === selectedTypeId) ?? null;
+  const selectedType = selectedChip?.type ?? null;
+  const selectedRetired = selectedChip?.retired ?? false;
   const draftKey = (playerId: string) => `${playerId}:${selectedTypeId}`;
 
-  // One reading per (player, selected test) IN THIS SESSION drives the grid state
-  // (uniqueness is DB-enforced per the partial index; first-wins here is display order).
-  const entryByPlayer = new Map<string, RepPlayerMeasurable>();
-  if (selectedType) {
-    for (const e of entries) {
-      if (e.measurableTypeId === selectedType.id && !entryByPlayer.has(e.playerId)) entryByPlayer.set(e.playerId, e);
-    }
-  }
-  // Count only CURRENT roster members — a since-deactivated player's reading must not
-  // produce "15 of 14 entered".
-  const enteredCount = roster.filter(p => entryByPlayer.has(p.id)).length;
+  // Roster order, then any past participant with a reading under this test. The count is per
+  // CURRENT roster player, once each — never rows.
+  const rows = selectedType ? sessionRows(roster, pastParticipants, entries, selectedType.id) : [];
+  const enteredCount = selectedType ? sessionEnteredCount(roster, entries, selectedType.id) : 0;
+  const pastRows = rows.filter(r => r.pastParticipant).length;
 
   const linkedEvent = events.find(e => e.id === session.eventId) ?? null;
   /* Practices first, then everything else, each ordered by how close it sits to the session's
@@ -150,7 +158,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   });
 
   async function logDraft(player: SessionRosterRow) {
-    if (!selectedType || !canWrite) return;
+    if (!selectedType || !canWrite || selectedRetired) return;
     if (savingIds.has(player.id)) return;
     const key = draftKey(player.id);
     const raw = (drafts[key] ?? '').trim();
@@ -374,9 +382,11 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
             <select className={styles.input} value={session.eventId ?? ''} disabled={sessionBusy}
               onChange={e => saveSessionEvent(e.target.value)}>
               <option value="">Not linked to an event</option>
+              {/* Short date in the OPTIONS: a select is as wide as its longest option, and
+                  "Wednesday, September 9 — Throwing stations" spilled the 361px column. */}
               {sessionEventOptions.map(ev => (
                 <option key={ev.id} value={ev.id}>
-                  {formatSessionDate(ev.startsAt.slice(0, 10))} — {ev.name}
+                  {formatShortDate(ev.startsAt.slice(0, 10))} — {ev.name}
                 </option>
               ))}
             </select>
@@ -409,12 +419,13 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
 
       {/* Test picker — worded select-one chips (lime-tint active, never solid primary) */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center', margin: '0.2rem 0 0.6rem' }}>
-        {activeTypes.map(t => (
+        {metricChips.map(({ type: t, retired }) => (
           <button key={t.id} type="button"
             className={`${styles.badge} ${selectedTypeId === t.id ? styles.badgeActive : styles.badgeDraft}`}
             style={{ cursor: 'pointer', minHeight: 'var(--tap-min, 44px)' }}
+            title={retired ? 'Retired from new sessions — its saved results stay here' : undefined}
             onClick={() => { setSelectedTypeId(t.id); setRowErr(''); }}>
-            {t.name}
+            {t.name}{retired && <span className={styles.devRowDash}> · retired</span>}
           </button>
         ))}
         {canWrite && (
@@ -433,35 +444,42 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       )}
 
       {selectedType ? (
-        roster.length === 0 ? (
+        rows.length === 0 ? (
           <p className={styles.detailPlaceholder}>No active roster for this season — add players from the Roster page first.</p>
         ) : (
           <>
             <p className={styles.devCardNote} style={{ marginBottom: '0.4rem' }}>
               {enteredCount} of {roster.length} entered — {selectedType.name} ({selectedType.unit}).
-              Leave a player blank to skip them.
+              {selectedRetired
+                ? ' This test is retired — its saved results stay here, read-only.'
+                : ' Leave a player blank to skip them.'}
+              {pastRows > 0 && ` ${pastRows} reading${pastRows === 1 ? '' : 's'} from ${pastRows === 1 ? 'a player' : 'players'} no longer on the roster ${pastRows === 1 ? 'is' : 'are'} listed below.`}
             </p>
             {rowErr && <p className={styles.errorText} role="alert">{rowErr}</p>}
             <div className={styles.detailSection} style={{ padding: '0.25rem 0' }}>
-              {/* ROSTER ORDER ONLY — the grid never re-sorts by result (binding). */}
-              {roster.map(p => {
-                const entry = entryByPlayer.get(p.id);
+              {/* ROSTER ORDER ONLY — the grid never re-sorts by result (binding). Past participants
+                  with a saved reading follow the roster, labelled and read-only (F02). */}
+              {rows.map(({ player: p, entry, pastParticipant }) => {
                 const name = [p.playerFirstName, p.playerLastName].filter(Boolean).join(' ');
+                const readOnly = !canWrite || selectedRetired || pastParticipant;
                 return (
                   <div key={p.id} className={styles.devRow}>
                     {p.playerNumber && <span className={styles.devRowNum}>#{p.playerNumber}</span>}
-                    <span className={styles.devRowName}>{name}</span>
+                    <span className={styles.devRowName}>
+                      {name}
+                      {pastParticipant && <span className={styles.devRowDash}> · no longer on the roster</span>}
+                    </span>
                     {entry ? (
                       <>
                         <span className={styles.devRowVal}>{formatValue(entry.value)} {entry.unit} ✓</span>
-                        {canWrite && (
+                        {!readOnly && (
                           <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem' }}
                             aria-label={`Remove ${p.playerFirstName}'s reading`} onClick={() => removeEntry(p, entry)}>
                             <X size={11} />
                           </button>
                         )}
                       </>
-                    ) : canWrite ? (
+                    ) : !readOnly ? (
                       <input
                         className={`${styles.input} ${styles.devRowInput}`}
                         type="text"

@@ -6,6 +6,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
+import { splitSeriesByUnit, drawableSegment, unitSplitNote } from '@/lib/measurable-series';
 import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesManager';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
@@ -488,8 +489,19 @@ export default function PlayerDevelopmentSection({
     .filter(t => t.isActive || entriesByType.has(t.id))
     .map(t => {
       const entries = entriesByType.get(t.id) ?? []; // newest-first from the API
-      const chrono = [...entries].reverse();
-      return { type: t, entries, latest: entries[0] ?? null, chronoValues: chrono.map(e => e.value) };
+      /**
+       * F01 (2026-09-11): the line is drawn from the CURRENT unit's run only. Each reading carries
+       * the unit it was logged under; a later unit edit on the test starts a new run, and two units
+       * are never joined into one line. Every reading stays in the expanded list beneath, and the
+       * note says what the line leaves out.
+       */
+      const segments = splitSeriesByUnit(entries);
+      const drawable = drawableSegment(segments);
+      return {
+        type: t, entries, latest: entries[0] ?? null,
+        chronoDrawable: drawable ? drawable.readings.map(e => e.value) : [],
+        splitNote: unitSplitNote(segments),
+      };
     })
     .filter(r => r.type.isActive || r.entries.length > 0);
 
@@ -687,7 +699,7 @@ export default function PlayerDevelopmentSection({
           )}
           {typeRows.length > 0 && (
             <ul className={styles.miniList}>
-              {typeRows.map(({ type, entries, latest, chronoValues }) => (
+              {typeRows.map(({ type, entries, latest, chronoDrawable, splitNote }) => (
                 <li key={type.id} className={styles.miniRow} style={{ flexWrap: 'wrap' }}>
                   <span className={styles.miniRowMain}>
                     <button type="button"
@@ -702,10 +714,12 @@ export default function PlayerDevelopmentSection({
                       <span className={styles.miniRowMeta} style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {formatValue(latest.value)} {latest.unit}
                       </span>
-                      {chronoValues.length >= 2
-                        ? <Sparkline values={chronoValues.slice(-10)} />
+                      {chronoDrawable.length >= 2
+                        ? <Sparkline values={chronoDrawable.slice(-10)} />
                         : <span className={styles.miniRowMeta} style={{ fontStyle: 'italic' }}>trend shows after a second entry</span>}
                       <span className={styles.miniRowMeta}>{formatShortDate(latest.recordedOn)}</span>
+                      {/* F01 — what the line leaves out is SAID on the row, not discovered in the list. */}
+                      {splitNote && <span className={styles.devCardNote} style={{ flexBasis: '100%' }}>{splitNote}</span>}
                     </>
                   ) : (
                     <span className={styles.miniRowMeta}>no readings yet</span>

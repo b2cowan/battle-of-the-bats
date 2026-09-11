@@ -23,6 +23,16 @@ import {
   planCoverageFinding, summarizePlanCoverage, uncoveredFocusTags,
 } from '@/lib/rep-practice-coverage';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
+import { practiceTruth } from '@/lib/practice-truth';
+import { sectionState, sectionUsable, type SectionRead } from '@/lib/report-section-state';
+import type { RepTeamEvent } from '@/lib/types';
+
+/**
+ * The practice read's cap. The shared read defaults to 200 and applies it IN the query, so a
+ * season past it is silently short — the route asks for one more and reports the overflow (the
+ * season-practices route's idiom, F05).
+ */
+const PRACTICE_CAP = 200;
 
 /** The Team board: every active player's development at a glance — active focus areas,
  *  latest value per test, last-evaluated date. ROSTER ORDER ONLY (never sort-by-result;
@@ -37,7 +47,7 @@ import { summarizePracticePlan } from '@/lib/rep-practice-plan';
  *
  *  `?plans=1` adds the three practice-plan answers the Development report gained in Practice
  *  Plans Phase 3 — coverage ("In a plan"), the focus-area tags no plan was about, and the
- *  tag-filtered list of practices you've run. Opt-in for the same reason: it walks the season's
+ *  tag-filtered practice review, each practice labelled by what its records support. Opt-in for the same reason: it walks the season's
  *  practice plans, and the board page and the hub tile render none of it.
  *
  *  ⚠ All three come from ONE walk of the plans (`summarizePlanCoverage`) rather than three reads.
@@ -96,12 +106,19 @@ export const GET = withObservability(async (req: Request,
    * in series for no reason. Same idiom, same reason, as `typesPromise` above.
    */
   const showPlans = withPlans && canManageSchedule(caps);
-  const practicesPromise = showPlans
-    // Non-fatal: this read names `practice_plan`/`practice_recap` in a filter, so on a database
-    // without mig 213/221 it errors rather than returning nothing. The three new sections are
-    // additions to a report that already stands on its own — losing them must not take it down.
-    ? getRepTeamPracticesWithPlanOrRecap(programYear.id).catch(() => [])
-    : Promise.resolve([]);
+  /**
+   * F05 (2026-09-11): a failed or capped read is CARRIED AS A STATE, never swallowed into an
+   * empty list. Until now a swallowing catch here made a database error indistinguishable from a
+   * season with no plans — and the coverage column, the count-only finding and the uncovered-tags
+   * list were then computed from the nothing that arrived, so a failed read could name a child as
+   * "not in a plan yet". The read asks for one more row than the cap and says which it hit; the
+   * report withholds every conclusion from a read that is `failed` or `incomplete`.
+   */
+  const practicesPromise: Promise<{ rows: RepTeamEvent[]; failed: boolean; truncated: boolean }> = showPlans
+    ? getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: PRACTICE_CAP + 1 })
+      .then(all => ({ rows: all.slice(0, PRACTICE_CAP), failed: false, truncated: all.length > PRACTICE_CAP }))
+      .catch(() => ({ rows: [], failed: true, truncated: false }))
+    : Promise.resolve({ rows: [], failed: false, truncated: false });
 
   const players = (await getRepRosterPlayers(programYear.id)).filter(p => p.status === 'active');
   const playerIds = players.map(p => p.id);
@@ -109,7 +126,7 @@ export const GET = withObservability(async (req: Request,
   // season label. `years` is fetched once and shared with getPriorContinuityIdentities (which
   // otherwise fetches it internally) to avoid a duplicate round trip. No PII on the wire.
   const years = withHistory ? await getRepProgramYears(teamId) : [];
-  const [types, measurables, goals, links, priorIdentitiesResult, practices] = await Promise.all([
+  const [types, measurables, goals, links, priorIdentitiesResult, practiceResult] = await Promise.all([
     typesPromise,
     showMeasurables ? getRepTeamMeasurablesForPlayers(playerIds) : Promise.resolve([]),
     showGoals ? getRepTeamDevelopmentGoalsForPlayers(playerIds) : Promise.resolve([]),
@@ -118,18 +135,37 @@ export const GET = withObservability(async (req: Request,
     practicesPromise,
   ]);
   const priorIdentities = priorIdentitiesResult.identities;
+  const practices = practiceResult.rows;
+  const practiceRead: SectionRead = {
+    state: sectionState({ failed: practiceResult.failed, truncated: practiceResult.truncated, count: practices.length }),
+    truncated: practiceResult.truncated,
+  };
 
   // ⚠ This one genuinely DEPENDS on the practices above (it needs their resolved ids), so it stays
   // sequential. `getRepTeamEventTagsByKind` already no-ops on an empty id list, so there is no
-  // caller-side length guard to write.
-  const practiceTags = await getRepTeamEventTagsByKind(practices.map(e => e.id), 'focus')
-    .catch(() => ({} as Record<string, { id: string; name: string }[]>));
+  // caller-side length guard to write. A failed tag read is a STATE too (F05): the practices still
+  // list without their tags, and the tag-matched answers are withheld rather than computed on air.
+  const tagResult = await getRepTeamEventTagsByKind(practices.map(e => e.id), 'focus')
+    .then(tags => ({ tags, failed: false }))
+    .catch(() => ({ tags: {} as Record<string, { id: string; name: string }[]>, failed: true }));
+  const practiceTags = tagResult.tags;
+  const tagRead: SectionRead = {
+    state: sectionState({ failed: tagResult.failed, truncated: false, count: Object.keys(practiceTags).length }),
+    truncated: false,
+  };
 
   // ONE walk, three answers. `goals` is already filtered to what this caller may see, so an
   // assistant without `notes` gets an empty uncovered list rather than a leak.
-  const coverage = summarizePlanCoverage(
-    practices.map(e => ({ plan: e.practicePlan, tagNames: (practiceTags[e.id] ?? []).map(t => t.name) })),
-  );
+  //
+  // ⚠ Only from a read the report may draw on. A truncated list of plans cannot say who was NOT
+  // named in one, and a failed read cannot say anything — `answerable: false` keeps every
+  // downstream answer (column, finding, uncovered tags) silent, the way too few plans already does.
+  const coverage = sectionUsable(practiceRead)
+    ? summarizePlanCoverage(
+      practices.map(e => ({ plan: e.practicePlan, tagNames: (practiceTags[e.id] ?? []).map(t => t.name) })),
+    )
+    : { ...summarizePlanCoverage([]), answerable: false };
+  const now = new Date();
 
   // Latest reading per (player, type) — entries arrive newest-first, so first wins.
   const latestByPlayer = new Map<string, Map<string, { value: number; unit: string; recordedOn: string }>>();
@@ -202,12 +238,24 @@ export const GET = withObservability(async (req: Request,
      * a focus area is the coach's own words about one child, and an UNTAGGED one is never reported
      * at all, because absence of data must not read as absence of need.
      */
-    uncoveredFocus: showPlans && showGoals
+    // ⚠ Also withheld when the TAG read failed: with no tags loaded, every active focus tag would
+    // read as a gap — a confident wrong answer built out of an error.
+    uncoveredFocus: showPlans && showGoals && sectionUsable(tagRead)
       ? uncoveredFocusTags(goals.filter(g => g.status === 'working'), coverage)
       : [],
     /**
-     * "Practices you've run" — the one section allowed to describe what actually happened, and it
-     * earns that because a coach sat down afterwards and wrote it.
+     * F05 — how each read went, so the report can say "couldn't load" and "incomplete" instead of
+     * rendering either as "nothing here". `practiceRead.truncated` means the season holds more
+     * practices than the cap below; the list is the most recent ones and the report says so.
+     */
+    practiceRead,
+    practiceCap: PRACTICE_CAP,
+    tagRead,
+    /**
+     * Practice review — every practice with a plan or a recap, each STAMPED with what its records
+     * support (F03, 2026-09-11): an upcoming plan, a past plan with no recap, or a recap. Only the
+     * last may describe what happened, and it earns that because a coach sat down afterwards and
+     * wrote it. The old heading, "Practices you've run", claimed that of all three.
      *
      * ⚠ Kept apart from coverage on purpose (the §10.2 "Recorded here" precedent). A recap
      * existing here does NOT license the coverage column to claim the plan happened.
@@ -219,6 +267,8 @@ export const GET = withObservability(async (req: Request,
       tags: practiceTags[e.id] ?? [],
       recap: e.practiceRecap,
       hasPlan: !!e.practicePlan,
+      // ONE clock — the server's — for every row, so the labels cannot disagree with each other.
+      truth: practiceTruth(e, now),
       // "6 blocks · 90 min planned" — the vocabulary is "planned", never "done".
       planSummary: e.practicePlan ? summarizePracticePlan(e.practicePlan) : null,
     })),

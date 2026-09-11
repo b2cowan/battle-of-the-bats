@@ -2733,6 +2733,177 @@ for (const person of QA_PEOPLE) {
 ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0]).join(', ')}) — memberships AND season rows`);
 
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   ── 16. DEVELOPMENT RECORDS WITH A HISTORY, so Phase 0 of the development lifecycle can be walked ─
+
+   ⚠ Until this block the live team carried NO measurable types, NO readings and NO goals — the
+   profile's Development section, the evaluation session and the Insights Development report all
+   rendered EMPTY, and `check:layout` measured every one of them green. That is the "green check
+   over an empty fixture" trap (OWNER_QA_LEDGER §58) one more time, and it is the exact surface
+   Phase 0 changes: the trust findings F01–F05 are all about records that EXIST and are shown
+   wrongly. A fixture that cannot show the defect cannot show the fix.
+
+   What the shape below produces, each line load-bearing for one finding:
+     · F01 — Devon's "Throw speed" has two readings in mph and a later one in km/h, so the profile
+       row must DRAW only the km/h run and SAY the two mph readings are listed, not drawn.
+     · F02 — "Shuttle run" is RETIRED and holds a reading in the probe session; "Morgan Left" is
+       INACTIVE and holds a sprint reading in that session. Both must still show on the session,
+       labelled and read-only, while the "N of M entered" count keeps counting the active roster.
+     · F03 — three practices with a plan or a recap: the probe practice (20 minutes ago, plan, no
+       recap → "Past plan · no recap"), one a week from now with a plan ("Upcoming plan") and one
+       written up ("Recap recorded"). Under the old heading all three read as "run".
+     · F04 — a goal and a reading on a PRIOR-season roster row (Avery Prior), whose ids the walk
+       throws at the edit/delete routes expecting a 409.
+   Identities are pinned by NAME so the QA walk can say "open Devon Test" and "find Shuttle run".
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+{
+  const typeByName = new Map();
+  const TYPES = [
+    { name: '60-yd sprint', unit: 'seconds', sort_order: 0, is_active: true },
+    { name: 'Throw speed', unit: 'km/h', sort_order: 1, is_active: true },   // readings began in mph (F01)
+    { name: 'Shuttle run', unit: 'seconds', sort_order: 2, is_active: false }, // retired, with rows (F02)
+  ];
+  for (const t of TYPES) {
+    const found = await db.from('rep_team_measurable_types').select('id, unit, is_active')
+      .eq('team_id', team.id).ilike('name', t.name).limit(1).maybeSingle();
+    if (found.error) { console.error('✗ measurable type lookup', found.error.message); process.exit(1); }
+    let id = found.data?.id;
+    if (!id) {
+      const ins = await db.from('rep_team_measurable_types')
+        .insert({ org_id: org.id, team_id: team.id, name: t.name, unit: t.unit, sort_order: t.sort_order, is_active: t.is_active, created_by: user.id })
+        .select('id').single();
+      if (ins.error) { console.error(`✗ measurable type "${t.name}" insert`, ins.error.message); process.exit(1); }
+      id = ins.data.id;
+    } else if (found.data.unit !== t.unit || found.data.is_active !== t.is_active) {
+      // The unit and the retired flag ARE the fixture — a re-run restores them.
+      await db.from('rep_team_measurable_types').update({ unit: t.unit, is_active: t.is_active }).eq('id', id);
+    }
+    typeByName.set(t.name, id);
+  }
+  ok('measurable types present (60-yd sprint · Throw speed [km/h, was mph] · Shuttle run [retired])');
+
+  // The probe session (section 11) — readings taken at the seeded practice.
+  const { data: probeSession } = await db.from('rep_team_evaluation_sessions')
+    .select('id, session_date').eq('team_id', team.id).eq('event_id', eventId).limit(1).maybeSingle();
+  if (!probeSession) { console.error('✗ the probe evaluation session is missing — section 11 did not run'); process.exit(1); }
+
+  // An INACTIVE player with a saved reading in the probe session (F02). Not counted anywhere the
+  // active roster is — that is the point.
+  let { data: leftPlayer } = await db.from('rep_roster_players').select('id')
+    .eq('program_year_id', py.id).eq('player_first_name', 'Morgan').eq('player_last_name', 'Left').limit(1).maybeSingle();
+  if (!leftPlayer) {
+    const ins = await db.from('rep_roster_players').insert({
+      program_year_id: py.id, team_id: team.id, org_id: org.id,
+      player_first_name: 'Morgan', player_last_name: 'Left', player_number: '99',
+      status: 'inactive', source: 'admin_manual', display_order: 99,
+    }).select('id').single();
+    if (ins.error) { console.error('✗ inactive player insert', ins.error.message); process.exit(1); }
+    leftPlayer = ins.data;
+    ok('inactive player "Morgan Left" seeded (a past participant of the probe session)');
+  }
+
+  const devonId = ids[3]; // Devon Test — the player the layout sweep and the QA walk open
+  const { data: haveReadings } = await db.from('rep_player_measurables').select('id')
+    .eq('team_id', team.id).eq('player_id', devonId).limit(1);
+  if (!haveReadings?.length) {
+    const y = py.year;
+    const on = (m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const row = (playerId, typeName, value, unit, recordedOn, sessionId = null, note = null) => ({
+      org_id: org.id, team_id: team.id, player_id: playerId, measurable_type_id: typeByName.get(typeName),
+      value, unit, recorded_on: recordedOn, session_id: sessionId, note, created_by: user.id,
+    });
+    const rows = [
+      // Sprint: a clean three-reading series, the last one in the probe session.
+      row(devonId, '60-yd sprint', 8.62, 'seconds', on(5, 6)),
+      row(devonId, '60-yd sprint', 8.41, 'seconds', on(5, 20)),
+      row(devonId, '60-yd sprint', 8.28, 'seconds', probeSession.session_date, probeSession.id),
+      // Throw speed: two in mph, then the unit changed — the km/h reading must not join their line (F01).
+      row(devonId, 'Throw speed', 48, 'mph', on(5, 6)),
+      row(devonId, 'Throw speed', 51, 'mph', on(5, 20)),
+      row(devonId, 'Throw speed', 84, 'km/h', on(6, 3), null, 'unit changed to km/h'),
+      // Shuttle run: a reading in the probe session on a test since RETIRED (F02).
+      row(devonId, 'Shuttle run', 10.4, 'seconds', probeSession.session_date, probeSession.id),
+      row(ids[0], 'Shuttle run', 10.9, 'seconds', probeSession.session_date, probeSession.id),
+      // A departed player's sprint from the same session (F02).
+      row(leftPlayer.id, '60-yd sprint', 8.9, 'seconds', probeSession.session_date, probeSession.id),
+      // Two more active players in the probe session, so "N of M entered" has an N worth reading.
+      row(ids[0], '60-yd sprint', 8.75, 'seconds', probeSession.session_date, probeSession.id),
+      row(ids[1], '60-yd sprint', 8.33, 'seconds', probeSession.session_date, probeSession.id),
+    ];
+    const ins = await db.from('rep_player_measurables').insert(rows);
+    if (ins.error) { console.error('✗ readings insert', ins.error.message); process.exit(1); }
+    ok(`development readings seeded (${rows.length}: a unit change, a retired test, a departed player)`);
+  } else {
+    ok('development readings already present');
+  }
+
+  // A goal on Devon so the profile's Focus areas list is not empty either.
+  const { data: haveGoal } = await db.from('rep_player_development_goals').select('id')
+    .eq('team_id', team.id).eq('player_id', devonId).limit(1);
+  if (!haveGoal?.length) {
+    const ins = await db.from('rep_player_development_goals').insert({
+      org_id: org.id, team_id: team.id, player_id: devonId,
+      focus_area: 'First-step quickness off the bag', note: null, status: 'working', created_by: user.id,
+    });
+    if (ins.error) { console.error('✗ goal insert', ins.error.message); process.exit(1); }
+    ok('a working focus area seeded on Devon');
+  }
+
+  // F03 — an upcoming plan and a recorded recap beside the probe practice's past plan.
+  const reviewPlan = {
+    version: 1,
+    blocks: [{ id: 'uat-rev-1', title: 'Partner throwing', duration: { minutes: 20 }, description: 'Stable base, shorter distance.', goal: 'Repeat the setup.' }],
+  };
+  const practiceReview = [
+    { name: 'Practice review — next week', starts_at: new Date(Date.now() + 7 * 86_400_000).toISOString(), practice_plan: reviewPlan, practice_recap: null },
+    { name: 'Practice review — written up', starts_at: new Date(Date.UTC(py.year, 4, 12, 23, 0)).toISOString(), practice_plan: reviewPlan, practice_recap: 'The shorter distance helped players repeat the setup. Keep that for the next session.' },
+  ];
+  for (const p of practiceReview) {
+    const found = await db.from('rep_team_events').select('id').eq('program_year_id', py.id).eq('name', p.name).limit(1).maybeSingle();
+    if (found.data) {
+      // The upcoming one must STAY upcoming across re-runs — re-anchor its date.
+      if (!p.practice_recap) await db.from('rep_team_events').update({ starts_at: p.starts_at }).eq('id', found.data.id);
+      continue;
+    }
+    const ins = await db.from('rep_team_events').insert({
+      program_year_id: py.id, team_id: team.id, org_id: org.id, event_type: 'practice',
+      name: p.name, starts_at: p.starts_at, location: 'UAT Fields', status: 'scheduled',
+      practice_plan: p.practice_plan, practice_recap: p.practice_recap,
+    });
+    if (ins.error) { console.error(`✗ "${p.name}" insert`, ins.error.message); process.exit(1); }
+  }
+  ok('practice review states present (upcoming plan · past plan, no recap · recap recorded)');
+
+  // F04 — a prior-season goal and reading on "Avery Prior", for the edit/delete 409 probes.
+  const { data: averyPrior } = await db.from('rep_roster_players').select('id')
+    .eq('program_year_id', priorYear.id).eq('player_first_name', 'Avery').limit(1).maybeSingle();
+  if (averyPrior) {
+    const { data: priorGoal } = await db.from('rep_player_development_goals').select('id')
+      .eq('player_id', averyPrior.id).limit(1).maybeSingle();
+    let priorGoalId = priorGoal?.id;
+    if (!priorGoalId) {
+      const ins = await db.from('rep_player_development_goals').insert({
+        org_id: org.id, team_id: team.id, player_id: averyPrior.id,
+        focus_area: 'Prior season — glove-side footwork', status: 'achieved', created_by: user.id,
+      }).select('id').single();
+      if (ins.error) { console.error('✗ prior-season goal insert', ins.error.message); process.exit(1); }
+      priorGoalId = ins.data.id;
+    }
+    const { data: priorReading } = await db.from('rep_player_measurables').select('id')
+      .eq('player_id', averyPrior.id).limit(1).maybeSingle();
+    let priorReadingId = priorReading?.id;
+    if (!priorReadingId) {
+      const ins = await db.from('rep_player_measurables').insert({
+        org_id: org.id, team_id: team.id, player_id: averyPrior.id, measurable_type_id: typeByName.get('60-yd sprint'),
+        value: 8.7, unit: 'seconds', recorded_on: `${priorYear.year}-06-01`, created_by: user.id,
+      }).select('id').single();
+      if (ins.error) { console.error('✗ prior-season reading insert', ins.error.message); process.exit(1); }
+      priorReadingId = ins.data.id;
+    }
+    ok(`prior-season development records on Avery Prior — player ${averyPrior.id} · goal ${priorGoalId} · reading ${priorReadingId} (F04 probes)`);
+  }
+}
+
 /* ⚖ THE END-OF-RUN BACKFILL IS GONE (Payables Rebuild P2). It derived installments and payments
    from the legacy deposit/balance columns — a direction that became dangerous the moment payments
    were real records, because a re-derivation would overwrite them with a deposit-shaped fiction.

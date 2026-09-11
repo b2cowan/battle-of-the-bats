@@ -21696,3 +21696,67 @@ which fails on the same stray repo-root file §168 reported (a mangled temp-path
 different session, left in place — not this pass's file). Help article unchanged (it describes the
 loop, not the controls); no demo sentence names this form.
 
+
+
+---
+
+## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11 (uncommitted), **no migration**, awaiting QA · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
+
+**Why this phase comes first (plan §10):** the four phases that follow draw conclusions from these
+records — charts, headlines, a handout — and a chart drawn over a series that quietly joins mph to
+km/h, or a "not in a plan yet" flag computed from a database error, is a confident claim built on a
+defect. Phase 0 makes the existing records honest before anything is built on them, and adds the
+first unit tests this area has ever had (42, red before each fix).
+
+### What you will see
+
+| Where | Before | Now |
+|---|---|---|
+| **A player's Measurables row** (Roster → player → Development) | The small trend line plotted the numbers only. A test whose unit had been changed (mph → km/h) drew 48 → 51 → 84 as one rising line. | The line is drawn from the readings in the **current** unit only, and a sentence under the row says *Units changed — 2 earlier readings in mph are listed but not drawn on this line.* Every reading stays in the expanded list, each with its own unit. |
+| **An evaluation session** (Skills & Goals → a session) | Only tests active **now** and players active **now** were drawn. Retire a test and its saved results in that session vanished; a player who left the team took their row with them. | A retired test with saved rows appears as a chip — **Shuttle run · retired** — read-only; a departed player with a saved reading keeps their row after the roster, marked *no longer on the roster*, read-only. New entry still starts from today's active tests and roster; "N of M entered" still counts the active roster only, once per player. |
+| **Insights → Development, third section** | Headed **Practices you've run** and listed every practice with a plan or a recap — next week's plan included. | Headed **Practice review**. Each practice carries what its records support: **Upcoming plan** (*This practice has not happened yet.*), **Past plan · no recap** (*A plan was saved. Nothing was written afterwards.* / *The saved plan does not establish what happened.*), **Recap recorded**. Only a recap says what happened. |
+| **Insights → Development, when a read fails or is cut short** | A failed practice or tag read was swallowed into "nothing here", and "In a plan", the count-only finding and the uncovered-tag list were computed from the nothing that arrived. | The section says *couldn't be loaded* (with Try again) or *only the most recent 200 were read*, and **withholds** the column, the finding and the uncovered tags rather than reporting a gap from an input that did not load. |
+| **Editing a finished season's goal or reading** (API) | Creating one was refused with "This player belongs to a past season, which is read-only."; editing or deleting one was not. | All four writes refuse the same way, through one shared rule. |
+| **Help → Skills & Goals** | Promised a retired test's sessions "stay open" — true of the session, not of the retired rows in it. Named "Practices you've run". | Says the retired test's results stay listed in those sessions, marked retired; names Practice review and its three labels. The old phrase stays a search keyword. |
+
+### Not changed
+
+The session's Date, "Taken at" and note controls; the profile's three tabs; the Insights hub's seven
+tabs; the coverage table's columns; the closed-season page (no development shelf — out of scope by
+rule). No demo sentence names any of these labels, and `check:demos` is green on dev.
+
+### Walk — hub artifact `23bbc89a`, **QA Walk tab, Part A** (14 steps, one ruling)
+
+The UAT fixture gained its first development records for this walk (section 16 of the seeder):
+three tests (one retired), Devon Test's readings including a unit change, an inactive "Morgan Left"
+with a reading in the probe session, three practices in the three truth states, and a prior-season
+goal + reading on "Avery Prior" for the refusal probes. Identities are pinned by name on the walk.
+
+- [ ] Session: the retired chip, its read-only rows, the departed player's row, the count.
+- [ ] Player: the units-changed sentence, the line drawn from km/h only, all three readings listed.
+- [ ] Insights: Practice review, the three labels and their lines; the tag filter still works.
+- [ ] **Ruling step:** the read-back for a past plan with no recap — as built (two sentences), the first only, or other wording.
+- [ ] F05 failure states: covered by unit tests (state logic + the panel rendering each state); visible on screen only with a forced failure or a 200+-practice season — walk on request.
+- [ ] F04 refusals: an API check (ids on the fixture output); the 2025 records are untouched afterwards.
+- [ ] Help: the two corrected paragraphs; search "practices you've run" still finds the article.
+
+### Verification
+
+Unit: **42/42** new (`development-trust`, `development-routes`), full suite 3,585 with one failure
+that is the awards session's uncommitted guard (theirs, not this). typecheck clean on every touched
+file (the one error is the budget-import panel, another session's). `verify:changed` chain: every
+gate after `npm test` run individually and green — spelling, tokens, CSS purity/selectors, contrast,
+dates, observability, export catalog, root files, marketing shots (the "Log a measurable" button is
+untouched in Phase 0), demos. `check:layout --only=` the session, the player record and Insights
+Development at 361/390/768/1440: green after (a) the "Taken at" option labels went to the short
+date — the long weekday form spilled the 361px column — and (b) **63 pre-existing touch-target
+findings recorded as DEFERRED** with the reason: they are controls that existed before this build
+and measured green only because the fixture was empty (the §58 trap); Phase 2 rebuilds those rows
+at the 44px floor. Rendered probe over the populated fixture: all three screens show the new states.
+
+### Owed / next
+
+Phase 1 (three tabs, Metrics editor, goal tag, exact addresses) after this walk. The **Development
+grant** (ruling 9) waits for staff-access pass 2 (§169) to commit — it is being built in the same
+files right now. Commit of Phase 0 on your OK, in a private index (the shared index carries another
+session's staged deletions).

@@ -15,7 +15,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMeasurables, canWriteDevelopment, redactRoster } from '@/lib/coach-capabilities';
-import { isValidRecordDate } from '@/lib/measurable-format';
+import { readSessionPatchInput } from '@/lib/development-input';
 
 /**
  * ⚠ THE SEASON IS PART OF THE LOOKUP (2026-08-15). This resolver used to find the session by
@@ -78,19 +78,32 @@ export const GET = withObservability(async (_req: Request,
 
   // Roster order as-is; names only — the grid needs identity, not guardian PII (redaction
   // still applied for defense in depth against future field additions).
-  const roster = redactRoster(
-    players.filter(p => p.status === 'active').map(p => ({
-      id: p.id,
-      playerFirstName: p.playerFirstName,
-      playerLastName: p.playerLastName,
-      playerNumber: p.playerNumber,
-    })),
+  const identity = (p: (typeof players)[number]) => ({
+    id: p.id,
+    playerFirstName: p.playerFirstName,
+    playerLastName: p.playerLastName,
+    playerNumber: p.playerNumber,
+  });
+  const roster = redactRoster(players.filter(p => p.status === 'active').map(identity), caps);
+  /**
+   * F02 (2026-09-11): a player who is no longer active but has a reading SAVED in this session
+   * keeps their row — labelled, read-only. Until now the screen drew the current active roster and
+   * nothing else, so a player who left the team took their saved results with them. Same season
+   * (the session is resolved inside it, so its readings can only name this year's rows); new entry
+   * still starts from `roster`.
+   */
+  const withReadings = new Set(entries.map(e => e.playerId));
+  const pastParticipants = redactRoster(
+    players.filter(p => p.status !== 'active' && withReadings.has(p.id)).map(identity),
     caps,
   );
 
   return NextResponse.json({
     session,
     roster,
+    pastParticipants,
+    // Every type, retired included — the screen decides which may take NEW entry (active) and
+    // which are on this session only because they hold saved rows (F02).
     types,
     entries,
     // Identity + date only — the picker needs to name an event, not carry its whole record.
@@ -107,45 +120,25 @@ export const PATCH = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), 'Only the head coach can edit sessions.');
   if (denied) return denied;
 
-  let body: { sessionDate?: unknown; note?: unknown; eventId?: unknown };
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const fields: { sessionDate?: string; note?: string | null; eventId?: string | null } = {};
-  if (body.sessionDate !== undefined) {
-    const date = typeof body.sessionDate === 'string' ? body.sessionDate : '';
-    if (!isValidRecordDate(date)) {
-      return NextResponse.json({ error: 'sessionDate must be a valid YYYY-MM-DD date — check the year.' }, { status: 400 });
-    }
-    fields.sessionDate = date;
-  }
-  if (body.note !== undefined) {
-    const note = typeof body.note === 'string' ? body.note.trim() : '';
-    if (note.length > 200) {
-      return NextResponse.json({ error: 'Note is too long (max 200 characters).' }, { status: 400 });
-    }
-    fields.note = note || null;
-  }
+  const read = readSessionPatchInput(body);
+  if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
+  const { fields } = read;
   // D10 — link this session to the event its readings were taken at. Any event in THIS season
-  // qualifies (§10.2 ruling 2); `null` unlinks. The link never derives the date — see below.
-  if (body.eventId !== undefined) {
-    if (body.eventId === null) {
-      fields.eventId = null;
-    } else if (typeof body.eventId === 'string' && body.eventId) {
-      const event = await getRepTeamEventById(body.eventId);
-      if (!event || event.teamId !== teamId || event.programYearId !== resolved.session.programYearId) {
-        return NextResponse.json({ error: 'That event isn’t on this team’s schedule for this season.' }, { status: 400 });
-      }
-      fields.eventId = event.id;
-    } else {
-      return NextResponse.json({ error: 'eventId must be an event id or null' }, { status: 400 });
+  // qualifies (§10.2 ruling 2); `null` unlinks. The reader shaped the id; proving it sits on this
+  // team's season schedule is the route's job. The link never derives the date — see below.
+  if (fields.eventId) {
+    const event = await getRepTeamEventById(fields.eventId);
+    if (!event || event.teamId !== teamId || event.programYearId !== resolved.session.programYearId) {
+      return NextResponse.json({ error: 'That event isn’t on this team’s schedule for this season.' }, { status: 400 });
     }
-  }
-  if (Object.keys(fields).length === 0) {
-    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+    fields.eventId = event.id;
   }
 
   /**

@@ -7,6 +7,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; entryId: string }> },) => {
@@ -25,6 +26,11 @@ export const DELETE = withObservability(async (_req: Request,
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return NextResponse.json({ error: 'Player not found' }, { status: 404 });
   }
+
+  // F04 (2026-09-11): the create route refused a past-season row; the delete did not. A finished
+  // season's reading is a record, and "read-only" has to hold beyond navigation.
+  const past = pastSeasonRefusal(player, assignment);
+  if (past) return NextResponse.json({ error: past.error }, { status: past.status });
 
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can edit measurables.');
   if (denied) return denied;

@@ -9819,6 +9819,10 @@ a.oneChip:hover { border-color: currentColor; }
   margin: 0 0 0.8rem;
 }
 .devSessionWhen .field { min-width: 0; }
+/* The event picker takes its intrinsic width from its LONGEST option — a date plus an event name —
+   which at 361px spilled past the column. The option list is data, so the select must never be
+   wider than the field that holds it. */
+.devSessionWhen .field select { max-width: 100%; }
 /* An evaluation session's identity fields — what it is called, which event it belongs to, and the
    note that names the session. Scoped to this screen's own wrappers rather than to `.input` /
    `.select`, which are the portal's shared primitives (same reasoning as the lineup toolbar above).

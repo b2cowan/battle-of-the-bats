@@ -9,6 +9,7 @@ import type { RepDevelopmentGoalStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { readFocusArea, verifyFocusTag } from '@/lib/development-goal-input';
+import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 const VALID_STATUSES: RepDevelopmentGoalStatus[] = ['working', 'achieved', 'parked'];
 
@@ -27,14 +28,12 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }
 
-  // Year-scope guard (Batch 3 rider): a goal attaches to a roster ROW, which is season-
-  // scoped — only the ACTIVE season's rows may take new goals ("read-only past season"
-  // must hold per-row, not just per-team). The assignment already names the active year
-  // (draft|active-filtered lookup), so no extra query is needed. The carry flow reads
-  // prior-season rows via its own route.
-  if (player.programYearId !== assignment.programYearId) {
-    return { error: NextResponse.json({ error: 'This player belongs to a past season, which is read-only.' }, { status: 409 }) };
-  }
+  // Year-scope guard (Batch 3 rider): a goal attaches to a roster ROW, which is season-scoped —
+  // only the ACTIVE season's rows may take new goals. ONE shared rule since F04 (2026-09-11), so
+  // edit and delete refuse the same row the same way. The carry flow reads prior-season rows via
+  // its own route.
+  const past = pastSeasonRefusal(player, assignment);
+  if (past) return { error: NextResponse.json({ error: past.error }, { status: past.status }) };
 
   return { ctx, player, assignment };
 }

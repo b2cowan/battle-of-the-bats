@@ -5,6 +5,8 @@ import { Info } from 'lucide-react';
 import { formatShortDate } from '@/lib/measurable-format';
 import { formatInOrgZone } from '@/lib/timezone';
 import { UNTAGGED_FILTER, collectTags, filterTagged } from '@/lib/rep-drills';
+import { PRACTICE_TRUTH_LABELS, type PracticeTruth } from '@/lib/practice-truth';
+import type { SectionRead } from '@/lib/report-section-state';
 import styles from '../../../../coaches.module.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,10 +27,15 @@ import styles from '../../../../coaches.module.css';
 //   · The finding is COUNT-ONLY AND NAMELESS, and silent until real usage.
 //
 // ⚠ TWO TRUTH STATUSES ON ONE SCREEN, DELIBERATELY KEPT APART (the §10.2
-// "Recorded here" precedent). Coverage says PLANNED. "Practices you've run" is
-// the one section allowed to describe reality, and it earns that because a coach
-// sat down afterwards and wrote it — a recap existing there does NOT license the
-// coverage table to claim the plan happened.
+// "Recorded here" precedent). Coverage says PLANNED. Practice review labels each
+// practice by what its records support (F03, 2026-09-11): an upcoming plan, a
+// past plan with no recap, or a recap — and only the recap describes reality,
+// because a coach sat down afterwards and wrote it. A recap existing there does
+// NOT license the coverage table to claim the plan happened.
+//
+// ⚠ EACH READ CARRIES ITS STATE (F05). "Couldn't load" and "incomplete" are said
+// in the section, never rendered as "nothing here" — and no gap (the column, the
+// finding, the uncovered tags) is drawn from a read that did not fully arrive.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ReportRow {
@@ -51,6 +58,8 @@ interface PracticeRow {
   tags: { id: string; name: string }[];
   recap: string | null;
   hasPlan: boolean;
+  /** Stamped by the server — one clock for every row. */
+  truth: PracticeTruth;
   planSummary: string | null;
 }
 
@@ -62,6 +71,9 @@ interface ReportData {
   planFinding: string | null;
   uncoveredFocus: { id: string; name: string }[];
   practices: PracticeRow[];
+  practiceRead: SectionRead;
+  practiceCap: number;
+  tagRead: SectionRead;
 }
 
 export function DevelopmentPanel({
@@ -101,6 +113,8 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
         setData({
           showGoals: false, showMeasurables: false, rows: [],
           showPlans: false, planFinding: null, uncoveredFocus: [], practices: [],
+          practiceRead: { state: 'empty', truncated: false }, practiceCap: 0,
+          tagRead: { state: 'empty', truncated: false },
         });
         setError('');
         return;
@@ -133,9 +147,11 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
     );
   }
 
-  const { showGoals, rows, showPlans, planFinding, uncoveredFocus, practices } = data;
+  const { showGoals, rows, showPlans, planFinding, uncoveredFocus, practices, practiceRead, practiceCap, tagRead } = data;
+  // A failed read is something to SHOW, not an absence — it must not collapse into "nothing yet".
+  const practiceTrouble = showPlans && (practiceRead.state === 'failed' || practiceRead.state === 'incomplete');
   const anyData = rows.some(r => r.goals.length > 0 || Object.keys(r.latest).length > 0 || r.historyLinked)
-    || practices.length > 0;
+    || practices.length > 0 || practiceTrouble;
 
   /**
    * The coverage column appears only when the question is ANSWERABLE — the API sends `inPlan: null`
@@ -210,6 +226,20 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
               <span>{planFinding}</span>
             </p>
           )}
+          {/* F05 — the column and the finding are WITHHELD on a read that did not fully arrive, and
+              the reason is said here rather than left as a column that quietly isn't there. */}
+          {showPlans && practiceRead.state === 'failed' && (
+            <p className={styles.reportFinding}>
+              <Info size={15} aria-hidden />
+              <span>The practice plans couldn&apos;t be loaded, so &ldquo;In a plan&rdquo; isn&apos;t shown — nothing here is a finding about a player.</span>
+            </p>
+          )}
+          {showPlans && practiceRead.state === 'incomplete' && (
+            <p className={styles.reportFinding}>
+              <Info size={15} aria-hidden />
+              <span>This season has more than {practiceCap} practices with a plan or recap. Only the most recent {practiceCap} were read, so &ldquo;In a plan&rdquo; isn&apos;t shown — it can&apos;t be answered from part of the season.</span>
+            </p>
+          )}
 
           {/* .tableAsCards reflows the table into stacked cards @640 (the Roster idiom). */}
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
@@ -273,6 +303,12 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
               judgement about a named minor on a report page. An UNTAGGED area is never listed at
               all: the product cannot tell whether tonight covered it, and absence of data must not
               read as absence of need. */}
+          {showPlans && tagRead.state === 'failed' && (
+            <p className={styles.reportFinding}>
+              <Info size={15} aria-hidden />
+              <span>The practice tags couldn&apos;t be loaded, so focus areas can&apos;t be matched against plans right now and the practices below are shown without their tags.</span>
+            </p>
+          )}
           {showPlans && uncoveredFocus.length > 0 && (
             <>
               <p className={styles.reportSectionTitle}>Focus areas that haven&apos;t appeared in a plan</p>
@@ -288,18 +324,34 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
             </>
           )}
 
-          {/* ── Section 3 · Practices you've run ──
-              ⚠ The one section allowed to describe what actually HAPPENED, and it earns that
-              because a coach sat down afterwards and wrote it. Kept apart from coverage above on
-              purpose (the §10.2 "Recorded here" precedent).
+          {/* ── Section 3 · Practice review ──
+              ⚠ Each practice is labelled by what its records SUPPORT (F03): Upcoming plan · Past
+              plan · no recap · Recap recorded. Only a recap describes what happened, and it earns
+              that because a coach sat down afterwards and wrote it. Kept apart from coverage above
+              on purpose (the §10.2 "Recorded here" precedent).
 
               This is also the payoff for writing a recap at all: a coach about to plan a hitting
-              practice filters to Hitting and gets every hitting practice they have run, what was
-              in it, and what they said about it. */}
+              practice filters to Hitting and gets every hitting practice they planned, what was in
+              it, and what they said afterwards. */}
+          {showPlans && practiceRead.state === 'failed' && (
+            <>
+              <p className={styles.reportSectionTitle}>Practice review</p>
+              <p className={styles.detailPlaceholder}>
+                Couldn&apos;t load the practices — this is a loading problem, not an empty season.{' '}
+                <button type="button" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
+                  onClick={() => load()}>
+                  Try again
+                </button>
+              </p>
+            </>
+          )}
           {showPlans && practices.length > 0 && (
             <>
-              <p className={styles.reportSectionTitle}>Practices you&apos;ve run</p>
-              <p className={styles.reportSectionSub}>Filter by tag to see what you did last time — and how it went.</p>
+              <p className={styles.reportSectionTitle}>Practice review</p>
+              <p className={styles.reportSectionSub}>
+                What was planned, and what was written afterwards. Filter by tag to see what you did last time — and how it went.
+                {practiceRead.state === 'incomplete' && ` Showing the ${practiceCap} most recent — the season holds more.`}
+              </p>
 
               <div className={styles.ppSuggestWrap}>
                 <button type="button" className={styles.ppSuggestChip} data-on={practiceTag == null ? 'on' : undefined}
@@ -330,6 +382,8 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                       {formatInOrgZone(p.startsAt, { day: 'numeric', month: 'short' })}
                     </span>
                     <span className={styles.reportRecapTitle}>{p.name}</span>
+                    {/* F03 — the truth label, from the one shared table. */}
+                    <span className={styles.tagRead} data-truth={p.truth}>{PRACTICE_TRUTH_LABELS[p.truth].label}</span>
                     {p.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
                     {/* ⚠ THE NEW ARCHIVE DOOR, and the only route to it. A past plan is readable
                         read-only in any season, reached only from this list — the schedule's
@@ -343,8 +397,12 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                     )}
                   </div>
                   {/* ⚠ Silence is STATED, never rendered blank: a practice with nothing written
-                      must not read as a practice where nothing happened. */}
-                  <p>{p.recap ?? 'Nothing written down for this one.'}</p>
+                      must not read as a practice where nothing happened — and a plan alone does not
+                      establish that it did (F03). */}
+                  <p>{p.recap ?? (p.truth === 'upcoming' ? 'Nothing written yet — the practice is still to come.' : 'A plan was saved. Nothing was written afterwards.')}</p>
+                  {PRACTICE_TRUTH_LABELS[p.truth].meta && (
+                    <p className={styles.devCardNote}>{PRACTICE_TRUTH_LABELS[p.truth].meta}</p>
+                  )}
                 </div>
               ))}
             </>

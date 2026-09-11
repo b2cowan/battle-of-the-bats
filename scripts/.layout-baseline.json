@@ -1,6 +1,426 @@
 {
-  "generated": "2026-09-09T17:48:08.747Z",
+  "generated": "2026-09-11T17:59:21.883Z",
   "entries": {
+    "coach-player|361|tap-floor|button·Edit this focus area": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·Tap to change status": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·Show every reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·Print summary (PDF)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|button·Remove Avery's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|361|control-width|button·Remove Avery's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|361|tap-floor|button·Remove Blake's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|361|control-width|button·Remove Blake's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|361|tap-floor|input·Casey Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|button·Remove Devon's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|361|control-width|button·Remove Devon's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|361|tap-floor|input·Emerson Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Frankie Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Gray Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Harper Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Indigo Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Jules Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Kai Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|input·Logan Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-history-development|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development|361|tap-floor|a·#1 Avery Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#2 Blake Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#3 Casey Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#4 Devon Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#5 Emerson Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#6 Frankie Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#7 Gray Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#8 Harper Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#9 Indigo Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#10 Jules Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#11 Kai Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#12 Logan Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|button·All 4": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|button·No tags 4": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·Edit this focus area": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·Tap to change status": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·Show every reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·Print summary (PDF)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|button·Remove Avery's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|390|control-width|button·Remove Avery's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|390|tap-floor|button·Remove Blake's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|390|control-width|button·Remove Blake's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|390|tap-floor|input·Casey Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|button·Remove Devon's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|390|control-width|button·Remove Devon's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|390|tap-floor|input·Emerson Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Frankie Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Gray Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Harper Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Indigo Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Jules Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Kai Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|input·Logan Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-history-development|390|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development|390|tap-floor|a·#1 Avery Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#2 Blake Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#3 Casey Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#4 Devon Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#5 Emerson Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#6 Frankie Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#7 Gray Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#8 Harper Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#9 Indigo Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#10 Jules Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#11 Kai Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#12 Logan Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|button·All 4": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|button·No tags 4": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·Edit this focus area": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·Tap to change status": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·Show every reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·Print summary (PDF)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-session|768|control-width|button·Help: Skills & Goals": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|768|tap-floor|button·Remove Avery's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|768|control-width|button·Remove Avery's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|768|tap-floor|button·Remove Blake's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|768|control-width|button·Remove Blake's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|768|tap-floor|input·Casey Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|button·Remove Devon's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|768|control-width|button·Remove Devon's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|768|tap-floor|input·Emerson Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Frankie Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Gray Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Harper Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Indigo Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Jules Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Kai Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|input·Logan Test — 60-yd sprint (seconds)": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development|768|tap-floor|a·#1 Avery Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#2 Blake Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#3 Casey Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#4 Devon Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#5 Emerson Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#6 Frankie Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#7 Gray Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#8 Harper Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#9 Indigo Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#10 Jules Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#11 Kai Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|a·#12 Logan Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|button·All 4": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-development|768|tap-floor|button·No tags 4": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
     "coach-attendance|361|tap-floor|a·Take attendance": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "34px tall (floor 44)"
@@ -198,66 +618,6 @@
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-club|361|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development|361|tap-floor|a·#1 Avery Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#2 Blake Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#3 Casey Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#4 Devon Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#5 Emerson Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#6 Frankie Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#7 Gray Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#8 Harper Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#9 Indigo Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#10 Jules Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#11 Kai Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#12 Logan Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|button·All 2": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|button·No tags 2": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -462,66 +822,6 @@
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-club|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development|390|tap-floor|a·#1 Avery Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#2 Blake Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#3 Casey Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#4 Devon Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#5 Emerson Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#6 Frankie Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#7 Gray Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#8 Harper Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#9 Indigo Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#10 Jules Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#11 Kai Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#12 Logan Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|button·All 2": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|button·No tags 2": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -934,70 +1234,6 @@
       "detail": "34px tall (floor 44)"
     },
     "coach-documents|768|control-width|button·Help: Documents": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#1 Avery Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#2 Blake Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#3 Casey Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#4 Devon Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#5 Emerson Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#6 Frankie Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#7 Gray Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#8 Harper Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#9 Indigo Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#10 Jules Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#11 Kai Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|a·#12 Logan Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|button·All 2": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|button·No tags 2": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|768|control-width|button·Help: Development": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -3850,10 +4086,6 @@
       "detail": "34px tall (floor 44)"
     },
     "coach-development-template|768|tap-floor|button·Help: Plan templates": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session|768|tap-floor|button·Help: Skills & Goals": {
       "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
       "detail": "34px tall (floor 44)"
     },

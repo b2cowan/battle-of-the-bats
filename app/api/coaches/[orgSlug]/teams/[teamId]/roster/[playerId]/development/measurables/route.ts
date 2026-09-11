@@ -9,7 +9,8 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
-import { isValidRecordDate } from '@/lib/measurable-format';
+import { readMeasurableInput } from '@/lib/development-input';
+import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -27,12 +28,11 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
   }
 
   // Year-scope guard (Batch 3 rider): a measurable attaches to a roster ROW, which is
-  // season-scoped — only the ACTIVE season's rows may take new readings ("read-only past
-  // season" must hold per-row, not just per-team). The assignment already names the active
-  // year (draft|active-filtered lookup) — no extra query. Cross-season carry has its own route.
-  if (player.programYearId !== assignment.programYearId) {
-    return { error: NextResponse.json({ error: 'This player belongs to a past season, which is read-only.' }, { status: 409 }) };
-  }
+  // season-scoped — only the ACTIVE season's rows may take new readings. ONE shared rule since
+  // F04 (2026-09-11), so the delete refuses the same row the same way. Cross-season carry has
+  // its own route.
+  const past = pastSeasonRefusal(player, assignment);
+  if (past) return { error: NextResponse.json({ error: past.error }, { status: past.status }) };
 
   return { ctx, player, assignment };
 }
@@ -46,17 +46,17 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can log measurables.');
   if (denied) return denied;
 
-  let body: { measurableTypeId?: unknown; value?: unknown; recordedOn?: unknown; note?: unknown; sessionId?: unknown };
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const measurableTypeId = typeof body.measurableTypeId === 'string' ? body.measurableTypeId : '';
-  if (!measurableTypeId) {
-    return NextResponse.json({ error: 'measurableTypeId is required' }, { status: 400 });
-  }
+  const read = readMeasurableInput(body);
+  if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
+  const { measurableTypeId, value, recordedOn, note } = read.fields;
+
   // Must be this TEAM's type and ACTIVE — a retired type can't take new entries (it keeps
   // resolving for past ones), and another team's type id must not slip through.
   const types = await getRepTeamMeasurableTypes(teamId);
@@ -65,33 +65,15 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Pick an active measurable type for this team.' }, { status: 400 });
   }
 
-  const value = typeof body.value === 'number' ? body.value : NaN;
-  if (!Number.isFinite(value) || value < 0 || value > 99999) {
-    return NextResponse.json({ error: 'Value must be a number between 0 and 99,999.' }, { status: 400 });
-  }
-
-  const recordedOn = typeof body.recordedOn === 'string' ? body.recordedOn : '';
-  if (!isValidRecordDate(recordedOn)) {
-    return NextResponse.json({ error: 'recordedOn must be a valid YYYY-MM-DD date — check the year.' }, { status: 400 });
-  }
-
-  const note = typeof body.note === 'string' ? body.note.trim() : '';
-  if (note.length > 200) {
-    return NextResponse.json({ error: 'Note is too long (max 200 characters).' }, { status: 400 });
-  }
-
   // Optional evaluation-session tag (3B) — must be THIS team's session AND the same season
   // as the player row (a prior-season session id must not attach to a current reading; the
   // player row is season-scoped, so its program_year_id is the parity anchor).
   let sessionId: string | null = null;
-  if (body.sessionId != null) {
-    if (typeof body.sessionId !== 'string') {
-      return NextResponse.json({ error: 'Invalid sessionId' }, { status: 400 });
-    }
+  if (read.fields.sessionId) {
     // The season is now part of the LOOKUP rather than a check after it (2026-08-15) — the same
     // rule, moved to where it cannot be forgotten. The comparison below is kept as the belt: the
     // parity anchor is the PLAYER's season, and stating it twice costs nothing.
-    const session = await getRepTeamEvaluationSession(body.sessionId, teamId, resolved.player.programYearId);
+    const session = await getRepTeamEvaluationSession(read.fields.sessionId, teamId, resolved.player.programYearId);
     if (!session || session.programYearId !== resolved.player.programYearId) {
       return NextResponse.json({ error: 'Session not found for this team and season.' }, { status: 400 });
     }
@@ -109,7 +91,7 @@ export const POST = withObservability(async (req: Request,
       // unit edit can't rewrite what was logged today.
       unit: type.unit,
       recordedOn,
-      note: note || null,
+      note,
       sessionId,
       createdBy: ctx.user.id,
     });

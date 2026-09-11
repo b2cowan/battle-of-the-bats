@@ -7,6 +7,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { readMeasurableTypeInput } from '@/lib/development-input';
 
 async function resolveContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -42,21 +43,16 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage measurable types.');
   if (denied) return denied;
 
-  let body: { name?: unknown; unit?: unknown };
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
-  if (!name || name.length > 40) {
-    return NextResponse.json({ error: 'Name is required (max 40 characters).' }, { status: 400 });
-  }
-  const unit = typeof body.unit === 'string' ? body.unit.trim() : '';
-  if (!unit || unit.length > 20) {
-    return NextResponse.json({ error: 'Unit is required (max 20 characters) — e.g. "seconds" or "mph".' }, { status: 400 });
-  }
+  const read = readMeasurableTypeInput(body, 'create');
+  if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
+  const { name, unit } = read.fields as { name: string; unit: string };
 
   try {
     const type = await createRepTeamMeasurableType({

@@ -6,6 +6,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { readMeasurableTypeInput } from '@/lib/development-input';
 
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; typeId: string }> },) => {
@@ -22,37 +23,16 @@ export const PATCH = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage measurable types.');
   if (denied) return denied;
 
-  let body: { name?: unknown; unit?: unknown; isActive?: unknown };
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const fields: { name?: string; unit?: string; isActive?: boolean } = {};
-  if (body.name !== undefined) {
-    const name = typeof body.name === 'string' ? body.name.trim() : '';
-    if (!name || name.length > 40) {
-      return NextResponse.json({ error: 'Name is required (max 40 characters).' }, { status: 400 });
-    }
-    fields.name = name;
-  }
-  if (body.unit !== undefined) {
-    const unit = typeof body.unit === 'string' ? body.unit.trim() : '';
-    if (!unit || unit.length > 20) {
-      return NextResponse.json({ error: 'Unit is required (max 20 characters).' }, { status: 400 });
-    }
-    fields.unit = unit;
-  }
-  if (body.isActive !== undefined) {
-    if (typeof body.isActive !== 'boolean') {
-      return NextResponse.json({ error: 'isActive must be a boolean' }, { status: 400 });
-    }
-    fields.isActive = body.isActive;
-  }
-  if (Object.keys(fields).length === 0) {
-    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
-  }
+  const read = readMeasurableTypeInput(body, 'patch');
+  if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
+  const { fields } = read;
 
   try {
     const type = await updateRepTeamMeasurableType(typeId, teamId, fields);
