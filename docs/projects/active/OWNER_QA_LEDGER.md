@@ -21763,7 +21763,7 @@ files). `/simplify`, `/review` and `/docs` still owed after the walk.
 
 ---
 
-## §169 · The Staff list — one list of people, one sheet, four kinds, access set before the invite, pending invites with resend and cancel, and Make head coach from the portal — built on dev 2026-09-11 (uncommitted), **migration 288 applied to dev and PROD-PENDING** (its backfill is DATA-ONLY — knowable on prod only by querying the rows), awaiting QA · walk artifact `490bc3e3` · mockup artifact `c8982bc5` (round 3 carries the four build deviations) · plan `COACH_STAFF_ACCESS_PLAN.md` · pass 2 of 2 (pass 1 = §168 ✅)
+## §169 · The Staff list — one list of people, one sheet, four kinds, access set before the invite, pending invites with resend and cancel, and Make head coach from the portal — built on dev 2026-09-11, **committed `a312c7a2` 2026-09-11** (private index, mine-only blobs for the five shared files; the candidate tree typechecked and ran the whole suite in a throwaway worktree first), **migration 288 applied to dev and PROD-PENDING** (its backfill is DATA-ONLY — knowable on prod only by querying the rows), awaiting QA · walk artifact `490bc3e3` · mockup artifact `c8982bc5` (round 3 carries the four build deviations) · plan `COACH_STAFF_ACCESS_PLAN.md` · pass 2 of 2 (pass 1 = §168 ✅)
 
 **Approved 2026-09-10** ("looks good, I agree with your recommendations"), with the treasurer and the
 dropdown added at your request the same day. Built to the round-2 mockup, and to four things the

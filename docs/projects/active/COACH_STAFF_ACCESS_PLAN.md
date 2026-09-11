@@ -17,7 +17,7 @@ head-coach-only; the link page reads closed assignments too; the practice-plan r
 evaluation sessions on `canViewMeasurables`; the schedule panel's Edit / family-email doors read
 from the doors object. Refuted: the events read's practice plans + recap (both within the helper's
 grant by ruling).
-**Pass 2 BUILT on dev 2026-09-11 (uncommitted) — §2 to §5 in full: the list + the sheet, the four
+**Pass 2 BUILT on dev 2026-09-11 and COMMITTED `a312c7a2` the same day — §2 to §5 in full: the list + the sheet, the four
 kinds and their presets, the stored label (mig 288, applied to dev, PROD-PENDING; its backfill is
 DATA-ONLY), invite with access first, pending rows with resend/cancel, schedule as one three-way
 control, plan/drill/template writes on `canWritePracticePlans`, Make head coach with the
