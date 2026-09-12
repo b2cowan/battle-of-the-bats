@@ -52,7 +52,7 @@ export const POST = withObservability(async (req: Request,
 
   const read = readMeasurableTypeInput(body, 'create');
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
-  const { name, unit } = read.fields as { name: string; unit: string };
+  const { name, unit } = read.fields;
 
   try {
     const type = await createRepTeamMeasurableType({

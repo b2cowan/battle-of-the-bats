@@ -8222,11 +8222,15 @@ export async function getPastSeasonPracticePlans(
  * so a later writer on another event type can never leak into a page headed "Practices you've run".
  *
  * Season-scoped, and capped like its siblings: an unbounded read grows with every practice a team
- * has ever held.
+ * has ever held. ⚠ **The cap is never silent** — the read asks for one row more than it returns and
+ * says whether the season held more (`truncated`), so no caller can print a list headed "the
+ * practices you ran" that quietly stops short (/simplify 2026-09-12: two callers had each grown
+ * their own copy of the "+1 → slice → compare" dance).
  */
 export async function getRepTeamPracticesWithPlanOrRecap(
   programYearId: string, opts?: { limit?: number },
-): Promise<RepTeamEvent[]> {
+): Promise<{ rows: RepTeamEvent[]; truncated: boolean }> {
+  const limit = opts?.limit ?? 200;
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
     .select('*')
@@ -8245,9 +8249,10 @@ export async function getRepTeamPracticesWithPlanOrRecap(
     // No caller input reaches this filter string — see getDrillsForTeam for why that matters.
     .or('practice_plan.not.is.null,practice_recap.not.is.null')
     .order('starts_at', { ascending: false })
-    .limit(opts?.limit ?? 200);
+    .limit(limit + 1);
   if (error) throw error;
-  return (data ?? []).map(mapRepTeamEvent);
+  const all = (data ?? []).map(mapRepTeamEvent);
+  return { rows: all.slice(0, limit), truncated: all.length > limit };
 }
 
 // ── Plan templates (Practice Plans Phase 3 — migration 221) ──────────────────

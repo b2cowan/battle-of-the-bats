@@ -5,11 +5,11 @@ import {
   getRepRosterPlayer,
   updateRepPlayerDevelopmentGoal,
   deleteRepPlayerDevelopmentGoal,
-  isTeamFocusTag,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { readGoalPatchInput } from '@/lib/development-input';
+import { verifyFocusTag } from '@/lib/development-goal-input';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
@@ -55,10 +55,12 @@ export const PATCH = withObservability(async (req: Request,
   const read = readGoalPatchInput(body);
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
   const { fields } = read;
-  // The tag's OWNERSHIP is the route's check — the reader only shapes it (null clears it back to
-  // "the coach hasn't said", which the rail shows at full strength).
-  if (fields.tagId && !(await isTeamFocusTag(fields.tagId, resolved.ctx.org.id, teamId))) {
-    return NextResponse.json({ error: 'That tag is not one of this team’s.' }, { status: 400 });
+  // The tag's OWNERSHIP is proved by the same helper the create route uses — one rule, one error
+  // message. Null clears it back to "the coach hasn't said", which the rail shows at full strength.
+  if (fields.tagId !== undefined) {
+    const tag = await verifyFocusTag(body, { orgId: resolved.ctx.org.id, teamId });
+    if ('error' in tag) return tag.error;
+    fields.tagId = tag.tagId;
   }
 
   const goal = await updateRepPlayerDevelopmentGoal(goalId, teamId, playerId, fields);

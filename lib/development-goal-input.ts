@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { isTeamFocusTag } from './db';
+import { readFocusAreaText } from './development-input';
 
 /**
  * What makes a focus area valid — in ONE place, because two routes now write one.
@@ -20,8 +21,8 @@ import { isTeamFocusTag } from './db';
  * focus-tags route's own write gate (`schedule`); nothing here may invent one from free text.
  */
 
-/** The coach's own words for the focus area. Long enough for a sentence, short enough to scan. */
-export const MAX_FOCUS_AREA_LEN = 80;
+/** Re-exported from the pure reader module, where the rule now lives (/simplify 2026-09-12). */
+export { MAX_FOCUS_AREA_LEN } from './development-input';
 
 export type DevelopmentGoalInput = { focusArea: string; tagId: string | null };
 
@@ -31,17 +32,9 @@ export type DevelopmentGoalInput = { focusArea: string; tagId: string | null };
  * a silent contract change in an already-shipped route (/review, 2026-08-02).
  */
 export function readFocusArea(raw: unknown): { focusArea: string } | { error: NextResponse } {
-  const body = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const focusArea = typeof body.focusArea === 'string' ? body.focusArea.trim() : '';
-  if (!focusArea || focusArea.length > MAX_FOCUS_AREA_LEN) {
-    return {
-      error: NextResponse.json(
-        { error: `Focus area is required (max ${MAX_FOCUS_AREA_LEN} characters).` },
-        { status: 400 },
-      ),
-    };
-  }
-  return { focusArea };
+  const area = readFocusAreaText(raw);
+  if ('error' in area) return { error: NextResponse.json({ error: area.error }, { status: 400 }) };
+  return { focusArea: area.fields };
 }
 
 /**

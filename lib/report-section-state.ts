@@ -25,5 +25,11 @@ export function sectionState(input: { failed: boolean; truncated: boolean; count
   return input.count > 0 ? 'available' : 'empty';
 }
 
+/** The whole wire shape from one read's outcome — so no route builds it by hand twice. */
+export function toSectionRead(input: { failed: boolean; truncated?: boolean; count: number }): SectionRead {
+  const truncated = input.truncated ?? false;
+  return { state: sectionState({ failed: input.failed, truncated, count: input.count }), truncated };
+}
+
 /** A read the report may draw conclusions from. */
 export const sectionUsable = (read: SectionRead) => read.state === 'available' || read.state === 'empty';

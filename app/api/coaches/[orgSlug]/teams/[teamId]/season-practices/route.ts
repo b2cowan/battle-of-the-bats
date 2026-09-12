@@ -44,7 +44,8 @@ import { withObservability } from '@/lib/observability';
  * ⚠ **NO SILENT CAP** (plan §5 risk 1). `getRepTeamPracticesWithPlanOrRecap` caps its read, and a
  * list headed "the practices you ran" that truncates without saying so tells a coach they ran fewer
  * practices than they did. Season-scoping alone does not fix that — it only makes hitting the cap
- * unlikely. So the read asks for ONE MORE than it will show, and the answer says which it was.
+ * unlikely. So the shared read asks for ONE MORE than it returns and says whether it overflowed
+ * (`truncated`) — since 2026-09-12 that dance lives in the read, not in each caller.
  */
 const MAX_ROWS = 200;
 
@@ -76,7 +77,7 @@ export const GET = withObservability(async (req: Request,
    * wrote no plan but sat down afterwards and said how it went produced exactly the record this
    * section exists to show.
    */
-  const all = await getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: MAX_ROWS + 1 });
+  const { rows: all, truncated } = await getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: MAX_ROWS });
 
   /**
    * ⚠⚠ **A ROW MUST HAVE SOMETHING TO SHOW, and "the column is not null" is not the same question**
@@ -91,11 +92,10 @@ export const GET = withObservability(async (req: Request,
    * construction rather than by hope — after this filter, a row without a plan always has a recap.
    */
   /**
-   * ⚠ `truncated` is read off the RAW result, before the filter. Asking the filtered list whether
+   * ⚠ `truncated` comes from the RAW read, before the filter. Asking the filtered list whether
    * it overflowed would let a couple of dropped empty rows pull the count back under the cap and
    * silently retract a truncation notice the season had genuinely earned.
    */
-  const truncated = all.length > MAX_ROWS;
   const events = all.filter(e => (e.practicePlan?.blocks.length ?? 0) > 0 || !!e.practiceRecap);
   const shown = events.slice(0, MAX_ROWS);
 
@@ -111,7 +111,7 @@ export const GET = withObservability(async (req: Request,
    * the results route is not** (`/review`, 2026-08-18; an earlier version of this comment claimed
    * otherwise and was wrong). `getRepTeamPracticesWithPlanOrRecap` applies `.limit()` in the query
    * itself, so `all` — and therefore `events`, and therefore every figure in `summary` — stops at
-   * `MAX_ROWS + 1`. `season-results` calls `getRepTeamEvents`, which has no limit at all, so its
+   * `MAX_ROWS`. `season-results` calls `getRepTeamEvents`, which has no limit at all, so its
    * summary genuinely is the whole season.
    *
    * The consequence is carried honestly rather than papered over: `truncated` rides out beside the

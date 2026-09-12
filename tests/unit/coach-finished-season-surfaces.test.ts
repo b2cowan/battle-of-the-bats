@@ -319,11 +319,18 @@ describe('the look-back layer', () => {
       join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'season-practices', 'route.ts'),
       'utf8',
     );
+    // Since /simplify 2026-09-12 the "+1 → compare" dance lives in the SHARED read, so every caller
+    // (this shelf, the Development report) inherits it and none can get the off-by-one wrong.
+    const db = readFileSync(join(process.cwd(), 'lib', 'db.ts'), 'utf8');
     assert.match(
-      code(route), /limit: MAX_ROWS \+ 1[\s\S]{0,600}truncated = all\.length > MAX_ROWS/,
-      'the route must ask for one MORE row than it shows, so it can tell a full page from a '
-      + 'truncated one. Reading exactly the cap makes the two indistinguishable. ⚠ It is read off '
-      + 'the RAW result (`all`), before the empty-row filter — see the sibling assertion.',
+      db, /export async function getRepTeamPracticesWithPlanOrRecap[\s\S]{0,2200}\.limit\(limit \+ 1\)[\s\S]{0,300}truncated: all\.length > limit/,
+      'the shared read must ask for one MORE row than it returns, so a caller can tell a full page '
+      + 'from a truncated one. Reading exactly the cap makes the two indistinguishable.',
+    );
+    assert.match(
+      code(route), /const \{ rows: all, truncated \} = await getRepTeamPracticesWithPlanOrRecap\(programYear\.id, \{ limit: MAX_ROWS \}\)/,
+      'the route must take `truncated` from the shared read — never recompute it from a list it '
+      + 'has since filtered (see the sibling assertion).',
     );
     assert.match(
       seasonEnd, /practicesTruncated && \(/,
@@ -449,10 +456,10 @@ describe('the look-back layer', () => {
       + 'written the moment a coach types a GOAL — blockless — so "practice_plan IS NOT NULL" is '
       + 'not the same question as "there is something to read here".',
     );
-    assert.match(
-      code(route), /const truncated = all\.length > MAX_ROWS;/,
-      'truncation must be read off the RAW result. Asking the filtered list would let a couple of '
-      + 'dropped empty rows retract a truncation notice the season genuinely earned.',
+    assert.doesNotMatch(
+      code(route), /truncated = (events|shown)\.length/,
+      'truncation must come from the RAW read, never the filtered list. Asking the filtered list '
+      + 'would let a couple of dropped empty rows retract a truncation notice the season genuinely earned.',
     );
     assert.match(
       code(seasonEnd), /p\.hasRecap\s*\?\s*'No plan written — your note about how it went'\s*:\s*'No plan written'/,

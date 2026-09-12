@@ -24,14 +24,10 @@ import {
 } from '@/lib/rep-practice-coverage';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceTruth } from '@/lib/practice-truth';
-import { sectionState, sectionUsable, type SectionRead } from '@/lib/report-section-state';
+import { sectionUsable, toSectionRead } from '@/lib/report-section-state';
 import type { RepTeamEvent } from '@/lib/types';
 
-/**
- * The practice read's cap. The shared read defaults to 200 and applies it IN the query, so a
- * season past it is silently short — the route asks for one more and reports the overflow (the
- * season-practices route's idiom, F05).
- */
+/** The practice read's cap. The shared read says whether the season held more (F05). */
 const PRACTICE_CAP = 200;
 
 /** The Team board: every active player's development at a glance — active focus areas,
@@ -111,12 +107,12 @@ export const GET = withObservability(async (req: Request,
    * empty list. Until now a swallowing catch here made a database error indistinguishable from a
    * season with no plans — and the coverage column, the count-only finding and the uncovered-tags
    * list were then computed from the nothing that arrived, so a failed read could name a child as
-   * "not in a plan yet". The read asks for one more row than the cap and says which it hit; the
+   * "not in a plan yet". The shared read says whether the season held more than the cap; the
    * report withholds every conclusion from a read that is `failed` or `incomplete`.
    */
   const practicesPromise: Promise<{ rows: RepTeamEvent[]; failed: boolean; truncated: boolean }> = showPlans
-    ? getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: PRACTICE_CAP + 1 })
-      .then(all => ({ rows: all.slice(0, PRACTICE_CAP), failed: false, truncated: all.length > PRACTICE_CAP }))
+    ? getRepTeamPracticesWithPlanOrRecap(programYear.id, { limit: PRACTICE_CAP })
+      .then(r => ({ ...r, failed: false }))
       .catch(() => ({ rows: [], failed: true, truncated: false }))
     : Promise.resolve({ rows: [], failed: false, truncated: false });
 
@@ -136,10 +132,7 @@ export const GET = withObservability(async (req: Request,
   ]);
   const priorIdentities = priorIdentitiesResult.identities;
   const practices = practiceResult.rows;
-  const practiceRead: SectionRead = {
-    state: sectionState({ failed: practiceResult.failed, truncated: practiceResult.truncated, count: practices.length }),
-    truncated: practiceResult.truncated,
-  };
+  const practiceRead = toSectionRead({ failed: practiceResult.failed, truncated: practiceResult.truncated, count: practices.length });
 
   // ⚠ This one genuinely DEPENDS on the practices above (it needs their resolved ids), so it stays
   // sequential. `getRepTeamEventTagsByKind` already no-ops on an empty id list, so there is no
@@ -149,10 +142,7 @@ export const GET = withObservability(async (req: Request,
     .then(tags => ({ tags, failed: false }))
     .catch(() => ({ tags: {} as Record<string, { id: string; name: string }[]>, failed: true }));
   const practiceTags = tagResult.tags;
-  const tagRead: SectionRead = {
-    state: sectionState({ failed: tagResult.failed, truncated: false, count: Object.keys(practiceTags).length }),
-    truncated: false,
-  };
+  const tagRead = toSectionRead({ failed: tagResult.failed, count: Object.keys(practiceTags).length });
 
   // ONE walk, three answers. `goals` is already filtered to what this caller may see, so an
   // assistant without `notes` gets an empty uncovered list rather than a leak.

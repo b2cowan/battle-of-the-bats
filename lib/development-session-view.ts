@@ -38,10 +38,8 @@ export function sessionMetricChips<T extends TypeLike>(types: T[], entries: Entr
 
 export interface SessionRow<P extends PlayerLike, E extends EntryLike> {
   player: P;
-  /** The FIRST saved reading for this player under the selected test (attempt 1 until Phase 2). */
+  /** The saved reading for this player under the selected test (one per player until Phase 2's attempts). */
   entry: E | null;
-  /** Every saved reading for this player under the selected test, in save order. */
-  entries: E[];
   /** No longer on the active roster — kept because a reading was saved here. Read-only. */
   pastParticipant: boolean;
 }
@@ -54,17 +52,14 @@ export interface SessionRow<P extends PlayerLike, E extends EntryLike> {
 export function sessionRows<P extends PlayerLike, E extends EntryLike>(
   roster: P[], pastParticipants: P[], entries: E[], typeId: string,
 ): SessionRow<P, E>[] {
-  const byPlayer = new Map<string, E[]>();
+  // First saved reading wins (save order) — the partial unique index allows one per player per test
+  // per session today; Phase 2's attempts widen this row deliberately.
+  const byPlayer = new Map<string, E>();
   for (const e of entries) {
-    if (e.measurableTypeId !== typeId) continue;
-    const list = byPlayer.get(e.playerId) ?? [];
-    list.push(e);
-    byPlayer.set(e.playerId, list);
+    if (e.measurableTypeId === typeId && !byPlayer.has(e.playerId)) byPlayer.set(e.playerId, e);
   }
-  const row = (player: P, pastParticipant: boolean): SessionRow<P, E> => {
-    const list = byPlayer.get(player.id) ?? [];
-    return { player, entry: list[0] ?? null, entries: list, pastParticipant };
-  };
+  const row = (player: P, pastParticipant: boolean): SessionRow<P, E> =>
+    ({ player, entry: byPlayer.get(player.id) ?? null, pastParticipant });
   return [
     ...roster.map(p => row(p, false)),
     ...pastParticipants.filter(p => byPlayer.has(p.id)).map(p => row(p, true)),

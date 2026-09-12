@@ -18,6 +18,9 @@ import { isValidRecordDate } from './measurable-format';
 export type InputResult<F> = { fields: F } | { error: string };
 
 export const GOAL_STATUSES: ReadonlyArray<RepDevelopmentGoalStatus> = ['working', 'achieved', 'parked'];
+/** The coach's own words for the focus area. Long enough for a sentence, short enough to scan. */
+export const MAX_FOCUS_AREA_LEN = 80;
+export const FOCUS_AREA_ERROR = `Focus area is required (max ${MAX_FOCUS_AREA_LEN} characters).`;
 export const MAX_TYPE_NAME_LEN = 40;
 export const MAX_UNIT_LEN = 20;
 export const MAX_GOAL_NOTE_LEN = 280;
@@ -31,11 +34,15 @@ const obj = (raw: unknown): Record<string, unknown> =>
 // ── Measurable types ─────────────────────────────────────────────────────────────────────────────
 
 export interface MeasurableTypeFields { name?: string; unit?: string; isActive?: boolean }
+export interface MeasurableTypeCreateFields { name: string; unit: string }
 
 /**
  * `create` requires a name and a unit; `patch` takes any subset (but not none). A patch that names
- * a field still validates it — an empty unit cannot be patched in.
+ * a field still validates it — an empty unit cannot be patched in. Overloaded on the mode so the
+ * create caller gets non-optional fields without a cast.
  */
+export function readMeasurableTypeInput(raw: unknown, mode: 'create'): InputResult<MeasurableTypeCreateFields>;
+export function readMeasurableTypeInput(raw: unknown, mode: 'patch'): InputResult<MeasurableTypeFields>;
 export function readMeasurableTypeInput(raw: unknown, mode: 'create' | 'patch'): InputResult<MeasurableTypeFields> {
   const body = obj(raw);
   const fields: MeasurableTypeFields = {};
@@ -63,11 +70,23 @@ export function readMeasurableTypeInput(raw: unknown, mode: 'create' | 'patch'):
 
 // ── Goals ────────────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The focus text rule, ONE home. `readFocusArea` in `development-goal-input.ts` (the create
+ * route's server-only helper) wraps this in a response; the patch reader below calls it directly.
+ */
+export function readFocusAreaText(raw: unknown): InputResult<string> {
+  const body = obj(raw);
+  const focusArea = typeof body.focusArea === 'string' ? body.focusArea.trim() : '';
+  if (!focusArea || focusArea.length > MAX_FOCUS_AREA_LEN) return { error: FOCUS_AREA_ERROR };
+  return { fields: focusArea };
+}
+
 export interface GoalPatchFields {
   focusArea?: string;
   note?: string | null;
   status?: RepDevelopmentGoalStatus;
-  /** Present = set it (null clears back to "the coach hasn't said"). Ownership is the route's check. */
+  /** Present = set it (null clears back to "the coach hasn't said"). Ownership and the error message are
+   *  `verifyFocusTag`'s (development-goal-input.ts) — the route calls it whenever this is present. */
   tagId?: string | null;
 }
 
@@ -78,9 +97,9 @@ export function readGoalPatchInput(raw: unknown): InputResult<GoalPatchFields> {
     fields.tagId = typeof body.tagId === 'string' && body.tagId.trim() ? body.tagId.trim() : null;
   }
   if (body.focusArea !== undefined) {
-    const focusArea = typeof body.focusArea === 'string' ? body.focusArea.trim() : '';
-    if (!focusArea || focusArea.length > 80) return { error: 'Focus area is required (max 80 characters).' };
-    fields.focusArea = focusArea;
+    const area = readFocusAreaText(body);
+    if ('error' in area) return area;
+    fields.focusArea = area.fields;
   }
   if (body.note !== undefined) {
     const note = typeof body.note === 'string' ? body.note.trim() : '';

@@ -95,8 +95,6 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       if (seq !== loadSeqRef.current) return false;
       setData(json);
       setError('');
-      // First chip: an active test, else a retired one this session holds rows for (F02).
-      setSelectedTypeId(prev => prev || sessionMetricChips(json.types as RepTeamMeasurableType[], json.entries as RepPlayerMeasurable[])[0]?.type.id || '');
       return true;
     } catch (e) {
       if (seq !== loadSeqRef.current) return false;
@@ -134,10 +132,12 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
    */
   const metricChips = sessionMetricChips(types, entries);
   const activeTypes = metricChips.filter(c => !c.retired).map(c => c.type);
-  const selectedChip = metricChips.find(c => c.type.id === selectedTypeId) ?? null;
+  // The selection falls back to the FIRST chip (an active test, else a retired one this session
+  // holds rows for) — derived here, once, rather than seeded from the load and again on render.
+  const selectedChip = metricChips.find(c => c.type.id === selectedTypeId) ?? metricChips[0] ?? null;
   const selectedType = selectedChip?.type ?? null;
   const selectedRetired = selectedChip?.retired ?? false;
-  const draftKey = (playerId: string) => `${playerId}:${selectedTypeId}`;
+  const draftKey = (playerId: string) => `${playerId}:${selectedType?.id ?? ''}`;
 
   // Roster order, then any past participant with a reading under this test. The count is per
   // CURRENT roster player, once each — never rows.
@@ -421,7 +421,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center', margin: '0.2rem 0 0.6rem' }}>
         {metricChips.map(({ type: t, retired }) => (
           <button key={t.id} type="button"
-            className={`${styles.badge} ${selectedTypeId === t.id ? styles.badgeActive : styles.badgeDraft}`}
+            className={`${styles.badge} ${selectedType?.id === t.id ? styles.badgeActive : styles.badgeDraft}`}
             style={{ cursor: 'pointer', minHeight: 'var(--tap-min, 44px)' }}
             title={retired ? 'Retired from new sessions — its saved results stay here' : undefined}
             onClick={() => { setSelectedTypeId(t.id); setRowErr(''); }}>

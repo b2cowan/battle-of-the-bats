@@ -55,7 +55,7 @@ export const POST = withObservability(async (req: Request,
 
   const read = readMeasurableInput(body);
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
-  const { measurableTypeId, value, recordedOn, note } = read.fields;
+  const { measurableTypeId, value, recordedOn, note, sessionId: requestedSessionId } = read.fields;
 
   // Must be this TEAM's type and ACTIVE — a retired type can't take new entries (it keeps
   // resolving for past ones), and another team's type id must not slip through.
@@ -69,11 +69,11 @@ export const POST = withObservability(async (req: Request,
   // as the player row (a prior-season session id must not attach to a current reading; the
   // player row is season-scoped, so its program_year_id is the parity anchor).
   let sessionId: string | null = null;
-  if (read.fields.sessionId) {
+  if (requestedSessionId) {
     // The season is now part of the LOOKUP rather than a check after it (2026-08-15) — the same
     // rule, moved to where it cannot be forgotten. The comparison below is kept as the belt: the
     // parity anchor is the PLAYER's season, and stating it twice costs nothing.
-    const session = await getRepTeamEvaluationSession(read.fields.sessionId, teamId, resolved.player.programYearId);
+    const session = await getRepTeamEvaluationSession(requestedSessionId, teamId, resolved.player.programYearId);
     if (!session || session.programYearId !== resolved.player.programYearId) {
       return NextResponse.json({ error: 'Session not found for this team and season.' }, { status: 400 });
     }
