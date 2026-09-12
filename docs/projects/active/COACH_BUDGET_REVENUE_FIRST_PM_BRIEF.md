@@ -1,6 +1,6 @@
 # Build the budget from revenue to closing balance — PM brief
 
-**Status:** **built on dev 2026-09-12**, awaiting the owner's walk (Owner QA Ledger **§173**, the hub's QA Walk
+**Status:** **built on dev and committed `182c7192` 2026-09-12**, awaiting the owner's walk (Owner QA Ledger **§173**, the hub's QA Walk
 tab). Approved 2026-09-12 on the mockup round following Owner QA §164 F1 — decisions A–D below all made, and
 one more the same day: **the three tiles wear the table's own words** (Total revenue · Total expenses · Closing
 balance), because a tile is the table's subtotal and one name means one number on this screen.

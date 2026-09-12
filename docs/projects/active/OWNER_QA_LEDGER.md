@@ -21898,7 +21898,7 @@ opens on **60-yd sprint** (the first test it holds rows for). Owner walk still o
 
 ---
 
-## §173 · Revenue first, balances carried forward — the Budget plan reads Revenue → Expenses and closes on Opening / Net / Closing balance in both views and both files, a Required-player-dues helper sits under the table before dues exist, and two previews (an extra expense; the Set-dues sheet's draft) show before → after — built on dev 2026-09-12 (uncommitted), **no migration**, awaiting QA · hub artifact `88741405` (QA Walk tab, 8 parts) · plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md` · §164 F1's follow-up
+## §173 · Revenue first, balances carried forward — the Budget plan reads Revenue → Expenses and closes on Opening / Net / Closing balance in both views and both files, a Required-player-dues helper sits under the table before dues exist, and two previews (an extra expense; the Set-dues sheet's draft) show before → after — built on dev 2026-09-12, **committed `182c7192` 2026-09-12** (private index; `/simplify` + `/review` first), **no migration**, awaiting QA · hub artifact `88741405` (QA Walk tab, 8 parts) · plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md` · §164 F1's follow-up
 
 **What you asked for (§164 F1), and where it went.** Revenue above Expenses on every reading of the plan,
 a required/expected-installments helper before dues are set, installments inside Revenue once set, and
@@ -21991,7 +21991,9 @@ formatter the JSX reaches for; its header says why), and one that is YOURS to ru
 
 ### Owed / next
 
-The walk (hub QA Walk tab, Parts A–H). Then `/simplify` (the trial-on-the-view and draft-handed-up shapes are
-exactly its brief) and `/review` at the high-risk tier — both offered, neither run yet. Commit on your word, in a
-private index (the shared tree carries the awards, staff-access, Development and family-access sessions'
-edits). Restart the dev server before you walk it — hot reload carried the change, but shared modules moved.
+The walk (hub QA Walk tab, Parts A–H) — and ruling 0 above. `/simplify` and `/review` both ran before the commit
+(above). **Committed `182c7192`** in a private index; the candidate tree (HEAD + this commit alone) typechecked clean
+and ran the whole suite green before the ref moved. ⚠ Two of its files also carried other sessions' hunks: the
+Set-dues sheet and the help article were committed as mine-only blobs (their other hunks stay in the working
+copy); the budget panel shipped WITH the Categories & Items door (§163, owner QA ✅ 35/35 2026-09-11) by the
+owner's word. Restart the dev server before you walk it — hot reload carried the change, but shared modules moved.
