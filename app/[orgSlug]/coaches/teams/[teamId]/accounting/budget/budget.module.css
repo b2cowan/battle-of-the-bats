@@ -30,11 +30,13 @@
    the Estimated/Scheduled tag, the estimate-relationship caption, the buffer-as-confirmation
    reading and the amber short-of-plan state.
 
-   ⚠ WHAT THIS BLOCK KNEW, kept because both tones are still applied to captions below: a PLANNED
-   buffer reads as CONFIRMATION in ordinary ink, never a warning (owner ruling 2026-08-13), and
-   coming up SHORT is the one cautionary state -- amber for attention, not alarm. */
+   ⚠ WHAT THIS BLOCK KNEW: a PLANNED buffer read as CONFIRMATION in ordinary ink, never a warning
+   (owner ruling 2026-08-13), and coming up SHORT was the one cautionary state -- amber for
+   attention, not alarm. ⚰ `.planCapWarn` (that amber) IS GONE with the caption it painted
+   (revenue-first, 2026-09-12): the plan no longer closes on a buffer-or-shortfall subtraction, it
+   closes on a balance, and the one attention state under the tiles is the status line's own
+   `data-tone`. The red survives: the estimate caption still turns red when the lines outgrow it. */
 .planCapBad  { color: var(--danger-light); }
-.planCapWarn { color: var(--warning-light); }
 
 /* Estimated vs Scheduled — the third figure's state, worn as a tag. */
 .planBadgeEst,
@@ -241,37 +243,20 @@
   color: var(--text-tertiary);
 }
 
-/* The closing row — the loudest thing on the plan, a 2px cap over the category rows' hairline.
-   ⚠ THE TOKENS, NOT LITERALS: this is the same money-total treatment the report's own closing row
-   and the month grid's take, and hand-typing it is how the three drifted before. */
-/* ⚠ (0,2,3), because `.moneyGrid tbody th` (0,1,2) sets font-size and font-weight on the label:
-   a bare `.closeRow th` lost them, so the plan's closing row — the loudest thing on the screen by
-   design — rendered at ordinary line size. */
-.planTable tbody tr.closeRow th,
-.planTable tbody tr.closeRow td {
-  box-shadow: inset 0 2px 0 var(--home-line-strong, var(--border-2));
-  font-size: var(--money-cat-size);
-  font-weight: var(--money-cat-weight);
-  color: var(--text-primary);
-  padding-top: 0.7rem;
-  padding-bottom: 0.7rem;
-}
+/* ⚰ `.closeRow` AND `.closeRow.closeShort` ARE GONE (revenue-first, owner decisions A–D,
+   2026-09-12). They dressed the List's old close — "Short of covering the plan" in amber, "Planned
+   buffer" in plain ink, the 2px cap over the block — and the plan closes on Opening balance /
+   Season net / Closing balance now, drawn with the shared `moneyGridFlow` recipe the month grid's
+   balance rows use, with `.periodGridClosing` lifting the closing figure and `.periodGridBelow`
+   painting a negative red (a balance below zero is the warning, never amber "attention").
 
-/* SHORT OF COVERING THE PLAN — the one cautionary state on the close, amber for attention and
-   never alarm (owner ruling 2026-08-13, restated on the tile's caption above). A PLANNED BUFFER
-   takes no colour: it reads as confirmation, so only the shortfall wears the modifier.
-
-   ⚠⚠ (0,3,3) AND THE LABEL TOO, BOTH LEARNED FROM DEFECTS ONE TABLE APART:
-     · The amber lived on the FIGURE cell as a bare `.closeWarn` (0,1,0) and lost outright to the
-       `color: var(--text-primary)` three lines above it (0,2,3) — so from the day the close row
-       shipped, a shortfall rendered in plain ink and the state was invisible. The same cascade
-       collision this file already records twice; a modifier on the ROW is the shape that survives
-       it, and `.estimateRow.estimateOver` further down is the working precedent.
-     · It coloured the AMOUNT alone, so the one row on the plan a coach must not skim carried its
-       meaning in a colour attached to the number rather than to the sentence. `.estimateOver`
-       takes th AND td, and this is the same reading. */
-.planTable tbody tr.closeRow.closeShort th,
-.planTable tbody tr.closeRow.closeShort td { color: var(--warning-light); }
+   Two lessons from those rules outlive them, and both are load-bearing in this file still:
+     · (0,2,3) or better on any row treatment here, because `.moneyGrid tbody th` (0,1,2) sets size
+       and weight on every row heading and a bare `.someRow th` loses to it silently — the reason
+       `.ladderRow` and `.estimateRow` below are written the way they are.
+     · A state colour goes on the ROW (th AND td) or on a SPAN inside the cell, never on a bare
+       cell class: the amber once sat on the figure cell alone at (0,1,0), lost to the row's own
+       colour, and a shortfall shipped invisible. `.periodGridBelow` takes the span route. */
 
 /* ── P3: thirty lines on a screen ─────────────────────────────────────────────
    The Schedule cell — each line's phasing at a glance ("Jan–Mar · 3 chunks"), the idle middle
@@ -623,14 +608,32 @@
    ⚠ Expected fundraising is money coming IN — shown positive AND green (owner, 2026-08-13):
    the colour says the direction, while a negative running balance stays red. */
 .periodGrid tbody tr.periodGridFunding.periodGridFunding td { color: var(--success-light); }
-/* A BRACKETED FIGURE ON A CLOSING ROW — money landing ahead of the bills (owner ruling
-   2026-09-09). Same green as the funding rows above, for the same reason: the colour says the
-   direction. ⚠ NOT the warning colour, and the distinction is load-bearing — Budget vs. Actual's
-   balance rows paint their brackets RED, because there a bracket is the account below zero. Same
-   notation, opposite meaning, decided by the row, never by the formatter.
-   ⚠ Doubled for the same reason the rule above it is: it has to beat the shared `.moneyGrid`
-   total-row colour across stylesheets, where equal specificity leaves bundling order to decide. */
-.periodGrid tbody td.periodGridAhead.periodGridAhead { color: var(--success-light); }
+/* ⚰ `.periodGridAhead` IS RETIRED (owner decisions A–D, 2026-09-12). It painted a bracketed figure
+   on the plan's closing rows GREEN — money landing ahead of the bills — and those rows (Costs less
+   funding, Player installments, Shortfall (Buffer)) are gone. The plan closes on a BALANCE now,
+   and a bracket on a balance is the account below zero: the warning colour, exactly as Budget vs.
+   Actual's three balance rows paint it. Same notation, one meaning on both grids at last. Do not
+   reinstate a green bracket on a balance cell.
+
+   A NEGATIVE BALANCE FIGURE — Opening / Net / Closing, on the By-period grid and the List's close
+   alike. On a SPAN inside the cell rather than on the cell, so it needs no specificity fight with
+   the shared `.moneyGrid` row colours: an element's own colour rule always wins over what it would
+   inherit. `.periodGridNil` is the "None carried" word in an opening cell that was never set. */
+.periodGridBelow { color: var(--danger-light); }
+.periodGridNil { color: var(--text-tertiary); font-size: var(--type-support); font-weight: 400; }
+/* The Closing balance row — the loudest of the three balance rows, the figure a treasurer reads
+   first. The shared projection-row recipe (`moneyGridFlow`) sets the quiet weight; this lifts the
+   closing row's figures to the category weight the month grid's own `runningRow` uses. */
+.periodGrid tbody tr.periodGridClosing.periodGridClosing td,
+.planTable tbody tr.periodGridClosing.periodGridClosing td { font-weight: var(--money-cat-weight); color: var(--text-primary); }
+/* A band's empty state — a one-line prompt in the pinned first column, quiet ink, no figure. */
+.periodGridPrompt,
+.planTable td.planPrompt.planPrompt {
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  white-space: normal;
+}
 /* LINES ABOVE THE ESTIMATE — the one state on this plan drawn in danger ink, and the List has
    painted it since the ladder landed (`.planTable .estimateRow.estimateOver`, further down). The
    grid copied that row's WORDING and not its state, so the same fact shouted on one view and was
@@ -670,6 +673,81 @@
   margin: 0;
   font-size: var(--type-support);
   color: var(--text-tertiary);
+}
+
+/* ── The status line under the tiles (owner decisions A–D, 2026-09-12; the approved mockup's
+   one sentence — plan §3: "attach the active timing/coverage issue as one sentence below, not
+   another dashboard"). A left rule in the tone's colour, the sentence in body ink: the rule says
+   how urgent, the words say what. `ok` is the all-clear and takes the confirmation green; `warn`
+   is something to finish (dates, an estimate, dues); `bad` is a month below zero. */
+.planStatus {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.85rem;
+  border-left: 3px solid var(--success-light);
+  background: color-mix(in srgb, var(--success-light) 6%, transparent);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.planStatus[data-tone='warn'] {
+  border-left-color: var(--warning-light);
+  background: color-mix(in srgb, var(--warning-light) 7%, transparent);
+}
+.planStatus[data-tone='bad'] {
+  border-left-color: var(--danger-light);
+  background: color-mix(in srgb, var(--danger-light) 6%, transparent);
+}
+
+/* ── "Could we add another expense?" (decision D) — the extra-expense preview under the table.
+   A section with a hairline over it, its own small heading, the two fields and the two buttons in
+   a wrapping row, the result sentence beneath. Same field recipe as the line form's inputs. */
+.trialSection {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--home-line, var(--border));
+}
+.trialTitle {
+  margin: 0 0 0.2rem;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.trialSub {
+  margin: 0 0 0.75rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.trialControls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.trialField {
+  display: grid;
+  gap: 0.25rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.trialField .input { width: 9.5rem; }
+.trialField .select { min-width: 11rem; }
+.trialResult {
+  margin: 0.75rem 0 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+/* The touch floor through the ≤768 band — the two fields and the two buttons are finger targets
+   there, and the shared `.input`/`.select` recipe sits under 44px on its own (the rendered sweep
+   measured 37/39/33px at 361 before this rule). */
+@media (max-width: 768px) {
+  .trialField .input,
+  .trialField .select,
+  .trialControls button { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .trialControls { align-items: stretch; flex-direction: column; }
+  .trialField .input,
+  .trialField .select { width: 100%; }
 }
 
 /* ── Grand total row ─────────────────────────────────────────────────────── */
@@ -1946,15 +2024,14 @@
   }
 }
 
-/* ── The ladder (owner ruling 2026-09-08, mockup e94d05d9 round 2) ─────────────────────────────
-   The plan adds up on the page: a COSTS band closing on "Planned costs", a FUNDING band closing on
-   "Planned funding" — both the shared `.moneyGridBand` / `.moneyGridTotal` recipes, nothing new to
-   remember — then the close as a ladder: Costs less funding, Player installments, Short of covering
-   the plan. The two ladder INPUT rows take the category's weight on a plain ground: they are
-   neither a section (no tint, nothing to open) nor a total (no cap), and the first of them opens
-   the block with the same 2px cap a total wears so the close reads as its own group.
+/* ── The derived rows (owner ruling 2026-09-08, mockup e94d05d9 round 2; re-homed 2026-09-12) ──
+   The plan adds up on the page: a REVENUE band closing on "Total revenue", an EXPENSES band closing
+   on "Total expenses" — both the shared `.moneyGridBand` / `.moneyGridTotal` recipes, nothing new
+   to remember — and inside the bands two DERIVED rows that are neither a section (no tint, nothing
+   to open) nor a total (no cap): Player installments at the top of Revenue, and the Extra expense
+   trial at the foot of Expenses. They take the category's weight on a plain ground.
    ⚠ (0,2,3) on purpose — `.moneyGrid tbody th` (0,1,2) sets size and weight on every row heading,
-   and a bare `.ladderRow th` would lose them: the exact cascade collision `.closeRow` records. */
+   and a bare `.ladderRow th` would lose them: the cascade collision the retired `.closeRow` recorded. */
 .planTable tbody tr.ladderRow th,
 .planTable tbody tr.ladderRow td {
   font-size: var(--money-cat-size);
@@ -1962,11 +2039,10 @@
   color: var(--text-primary);
 }
 .planTable tbody tr.ladderRow td { font-size: var(--money-catnum-size); }
-.planTable tbody tr.ladderGap th,
-.planTable tbody tr.ladderGap td {
-  box-shadow: inset 0 2px 0 var(--home-line-strong, var(--border-2));
-  padding-top: 0.7rem;
-}
+/* ⚰ `.ladderGap` (the 2px cap that opened the old close block) went with the ladder (2026-09-12);
+   `.ladderRow` survives as the weight of the two derived rows still on the List — Player
+   installments at the top of Revenue and the Extra expense trial — which are neither a section
+   nor a total. */
 /* The two estimate rows under the last cost category — "Lines so far" and "Still to itemize" /
    "Over your estimate" — are LINES, not totals: reading size, no tint, no cap. The over state takes
    the tile's own red, the one state this screen draws in red. */

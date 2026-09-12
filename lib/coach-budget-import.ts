@@ -232,8 +232,12 @@ export function parseMonthHeader(header: string, carriedYear: number): { month: 
  * attaches. "Total planned budget" is the retired close, kept so a file exported before 2026-09-08
  * still reads back clean.
  */
+/* ⚠ THE FOUR BAND WORDS STAY OUT — the old pair and the new (revenue-first, 2026-09-12). A club
+   may own a category called "Revenue" or "Expenses" just as it may own "Costs" or "Funding"; the
+   bare-row clause in `bandOf` is what tells a band heading from that category, never this set. */
+const BAND_KEYS = new Set(['costsBand', 'fundingBand', 'revenueBand', 'expensesBand']);
 const PLAN_LADDER_DERIVED = Object.entries(PLAN_LADDER_LABEL)
-  .filter(([key]) => key !== 'costsBand' && key !== 'fundingBand' && key !== 'costsLessFundingNote')
+  .filter(([key]) => !BAND_KEYS.has(key) && key !== 'costsLessFundingNote')
   .map(([, label]) => label.toLowerCase());
 /* ⚠⚠ "NOT ITEMIZED" IS A DERIVED ROW, AND LEAVING IT OUT COST A CATEGORY ITS TOTAL (/review,
    2026-09-10). It is not a line — it is the ROLLUP of every line in a category that has no word,
@@ -285,9 +289,15 @@ function isDerivedRow(label: string): boolean {
  * a different class of defect from a misread that does not. Matching the exporter exactly (label
  * cell only, everything else empty) is both stricter and easier to state.
  */
+/* ⚠ BOTH PAIRS, FOREVER. The file has said REVENUE / EXPENSES since the revenue-first change
+   (2026-09-12); every file exported before it says COSTS / FUNDING, and a coach's spreadsheet on
+   disk does not re-export itself. Dropping the old pair would silently turn every fundraiser in
+   an older file into a cost — the exact defect this switch was built to end. */
 const BAND_LABELS: Array<{ label: string; direction: 'in' | 'out' }> = [
-  { label: PLAN_LADDER_LABEL.costsBand.toLowerCase(),   direction: 'out' },
-  { label: PLAN_LADDER_LABEL.fundingBand.toLowerCase(), direction: 'in' },
+  { label: PLAN_LADDER_LABEL.revenueBand.toLowerCase(),  direction: 'in' },
+  { label: PLAN_LADDER_LABEL.expensesBand.toLowerCase(), direction: 'out' },
+  { label: PLAN_LADDER_LABEL.costsBand.toLowerCase(),    direction: 'out' },
+  { label: PLAN_LADDER_LABEL.fundingBand.toLowerCase(),  direction: 'in' },
 ];
 
 /**

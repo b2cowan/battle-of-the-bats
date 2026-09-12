@@ -136,20 +136,19 @@ describe('the period grid keeps a sponsorship on the money-in side', () => {
       { ...line('sponsorship', 500), periods: [{ periodDate: '2027-03-01', amount: 500 }] },
     ], 'months');
 
-    const march = view.totals.cells['2027-03'];
-    assert.equal(
-      march, 700,
-      'March must read $1,200 of cost LESS $500 of sponsorship. A 1700 here means the '
-      + 'sponsorship was added instead of subtracted — the running balance would then be wrong '
-      + 'by twice its amount.',
-    );
+    // March's NET must read $500 of sponsorship LESS $1,200 of cost. A −1,700 here means the
+    // sponsorship was added to the costs instead of netted against them — the running balance
+    // would then be wrong by twice its amount.
+    assert.equal(view.balance.net['2027-03'], -700);
+    assert.equal(view.revenueTotals?.cells['2027-03'], 500);
+    assert.equal(view.expenseTotals.cells['2027-03'], 1200);
 
     const sponsorGroup = view.groups.find(g => g.lineKind === 'sponsorship');
     assert.ok(sponsorGroup, 'a sponsorship line must get its own group, not merge into a cost category');
     // ⚠ NAMED BY ITS CATEGORY, NOT ITS KIND (owner ruling 2026-09-09) — the same heading the
     // Statement gives the same line, so "Sponsorship" reads "Sponsorship" on both.
     assert.equal(sponsorGroup!.name, 'Sponsorship');
-    // Costs first, money-in after — the same order everywhere the two appear.
-    assert.equal(view.groups[0].lineKind, 'cost');
+    // Revenue first, costs after (owner decision 2026-09-12) — the same order everywhere the two appear.
+    assert.equal(view.groups[0].lineKind, 'sponsorship');
   });
 });

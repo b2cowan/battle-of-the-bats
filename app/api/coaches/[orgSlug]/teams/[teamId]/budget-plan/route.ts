@@ -258,8 +258,18 @@ export const GET = withObservability(async (_req: Request,
     duesWrittenOff,
     duesWrittenOffKinds,
     duesInstallments,
+    /* Does ANY schedule exist — the plan's presence test (revenue-first plan §2, 2026-09-12).
+       ⚠ Neither of the two figures above can answer it: `duesAssessed` is net of write-offs (a
+       fully forgiven schedule reads $0) and `plan.hasInstallments` counts budget-GENERATED
+       instalments only (a roster scheduled by hand reads false). The schedules table answers. */
+    duesScheduled: schedules.length > 0,
     seasonBudgetAmount: programYear.budgetAmount ?? null,
     seasonYear: programYear.year,
+    // The season's carried-forward cash (Start next season / Team settings → Money), for the
+    // By-period grid's Opening/Net/Closing balance rows (revenue-first project, decision A/§5).
+    // ⚠ NULL ≠ ZERO — the same rule Budget vs. Actual's own opening reader follows
+    // (lib/coach-money-report-notes.ts): null means nothing was carried, not "carried at zero".
+    openingBalance: programYear.openingBalance ?? null,
     priorPlan,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan' });

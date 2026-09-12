@@ -106,6 +106,7 @@ export async function buildDocuments() {
   const { checkinSheetHeadings, checkinTickColumn } = await import('../lib/export/tryout-checkin-columns.ts');
   const { buildFamilyDuesStatements } = await import('../lib/coach-dues-statement.ts');
   const money$ = await import('../lib/coach-money-exports.ts');
+  const { buildPeriodView } = await import('../lib/coach-budget-periods-view.ts');
   const dues$ = await import('../lib/dues-payments.ts');
   const { formatTime } = await import('../lib/utils.ts');
   const {
@@ -678,7 +679,25 @@ export async function buildDocuments() {
    * exhibit holds the shapes that matter: a summed two-line item with its note-named sub-lines
    * (the twins defect this build closes), a lump sum, the money-in sections, the closing row. */
   {
+    /* ⚠ THE FIGURES ARE THE VIEW'S (revenue-first, 2026-09-12): the statement's subtotals, its
+       estimate rows and its Opening / Season net / Closing balance all come from `buildPeriodView`
+       over the SAME lines the rows print — the screen's own one-calculation rule, and the reason
+       the hand-typed `totals` block that used to sit here (and once printed an em dash for a
+       field it had not been told about) is gone. The cost lines below are the ones the groups
+       describe; the money-in lines are the two under `lines`. */
+    const planLines = [
+      { id: 'pdf-cost-1', itemId: 'it-dome', itemName: 'Dome Time', description: 'Dome Time', categoryName: 'Facilities', lineKind: 'cost', totalAmount: 5200, periods: [{ periodDate: '2026-01-01', amount: 2000 }, { periodDate: '2026-02-01', amount: 2000 }, { periodDate: '2026-03-01', amount: 1200 }] },
+      { id: 'pdf-cost-2', itemId: 'it-permits', itemName: 'Diamond Permits', description: 'Diamond Permits', categoryName: 'Facilities', lineKind: 'cost', totalAmount: 3200, periods: [] },
+      { id: 'pdf-cost-3', itemId: 'it-cages', itemName: 'Batting Cages', description: 'Batting Cages', categoryName: 'Facilities', lineKind: 'cost', totalAmount: 2300, periods: [{ periodDate: '2026-01-01', amount: 1150 }, { periodDate: '2026-04-01', amount: 1150 }] },
+      { id: 'pdf-cost-4', itemId: 'it-entry', itemName: 'Entry Fees', description: 'Entry Fees', categoryName: 'Tournaments', lineKind: 'cost', totalAmount: 2500, periods: [{ periodDate: '2026-04-01', amount: 1500 }, { periodDate: '2026-05-01', amount: 1000 }] },
+      { id: 'pdf-fund-1', itemId: 'pdf-item-choc', itemName: 'Chocolate Sale', description: 'Chocolate Sale', categoryName: 'Fundraising', lineKind: 'funding', totalAmount: 1800, notes: null, periods: [] },
+      { id: 'pdf-fund-2', itemId: 'pdf-item-sponsor', itemName: 'Hometown Sports Shop', description: 'Hometown Sports Shop', categoryName: 'Sponsorship', lineKind: 'sponsorship', totalAmount: 1500, notes: null, periods: [] },
+    ];
     const built = money$.budgetPlanStatementRows({
+      view: buildPeriodView(planLines, 'months', {
+        openingBalance: 750,
+        dues: { assessed: 9900, installments: [{ date: '2026-01-15', amount: 4950 }, { date: '2026-03-15', amount: 4950 }] },
+      }),
       groups: [
         {
           categoryName: 'Facilities', total: 10700, items: [
@@ -708,27 +727,13 @@ export async function buildDocuments() {
           ],
         },
       ],
-      lines: [
-        /* ⚠⚠ THE `id` AND `itemId` ARE LOAD-BEARING, and this exhibit proved it the hard way
-           (`/review`, 2026-09-09). Money-in rows now group by their budget WORD, falling back to the
-           line's own id when it has none. With neither field, every funding line here keyed the same
-           and the two below SUMMED into one $3,300 row — the sponsorship vanished from the page whose
-           whole job is to demonstrate the money-in side. The type requires an id; this file is
-           untypechecked JS, so nothing said a word. An exhibit has to carry the real shape. */
-        { id: 'pdf-fund-1', itemId: 'pdf-item-choc', itemName: 'Chocolate Sale', description: 'Chocolate Sale', lineKind: 'funding', totalAmount: 1800, notes: null, periods: [] },
-        { id: 'pdf-fund-2', itemId: 'pdf-item-sponsor', itemName: 'Hometown Sports Shop', description: 'Hometown Sports Shop', lineKind: 'sponsorship', totalAmount: 1500, notes: null, periods: [] },
-      ],
-      // The screen's own totals shape (lib/coach-budget-totals BudgetTotals). ⚠ This file is not
-      // typechecked, so a widened contract is invisible here: the 2026-09-08 ladder read
-      // `expectedFunding` for the Planned funding row and this fixture, still three fields, printed
-      // an em-dash for it (/review). Keep every field the builder reads.
-      totals: {
-        totalPlanned: 13200, fundedByPlayers: 9900, costsLessFunding: 9900, fundingLineCount: 2,
-        itemized: 13200, expectedFunding: 3300,
-        estimatedTotal: null, difference: 0, hasDifference: false, overPlanned: false,
-      },
-      duesAssessed: 0,
-      leftToFund: 9900,
+      /* ⚠⚠ THE `id` AND `itemId` ARE LOAD-BEARING, and this exhibit proved it the hard way
+         (`/review`, 2026-09-09). Money-in rows group by their budget WORD, falling back to the
+         line's own id when it has none. With neither field, every funding line here keyed the same
+         and the two SUMMED into one $3,300 row — the sponsorship vanished from the page whose
+         whole job is to demonstrate the money-in side. The type requires an id; this file is
+         untypechecked JS, so nothing said a word. An exhibit has to carry the real shape. */
+      lines: planLines,
     });
     doc({
       id: 'coach-budget-plan',

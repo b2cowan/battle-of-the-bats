@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budget — revenue first, balances carried forward</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e5e9ee;color:#232a36;font:14px/1.5 system-ui,sans-serif}button,input,select{font:inherit}button,select{cursor:pointer}button,select,input{min-height:44px;border:1px solid #b3b6ad;border-radius:7px;padding:8px 12px;background:white;color:#241e15}button:hover{background:#edf2e2}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #426bcc;outline-offset:3px}button[aria-pressed=true]{background:#d9f99d;border-color:#687846;font-weight:700}a{color:#36558c;text-underline-offset:3px}.document{max-width:1280px;margin:36px auto;padding:0 24px}.eyebrow{font-size:11px;letter-spacing:.12em;font-weight:800;text-transform:uppercase;color:#596577}h1{font-size:30px;line-height:1.2;margin:8px 0 12px;letter-spacing:-.025em}.intro{max-width:830px;font-size:16px;color:#485365}.review-controls{display:flex;align-items:end;gap:20px;margin:24px 0 16px;flex-wrap:wrap}.review-controls label{display:grid;gap:5px;font-size:12px;font-weight:700}.review-controls select{min-width:270px}.scenario-caption{flex:1;min-width:240px;color:#485365;margin:0}.frame{background:#f8f4ed;border:1px solid #c5c4bb;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px #1c22300a;color:#241e15}.shell{background:#fff;border-bottom:1px solid #e5dfd4;padding:15px 24px;display:flex;justify-content:space-between;gap:12px;font-weight:700}.shell small{font-weight:500;color:#615a54}.page{padding:24px}.crumb{font-size:12px;color:#615a54}.page h2{font-size:26px;line-height:1.2;margin:8px 0 16px}.tabs{display:flex;gap:22px;border-bottom:1px solid #dcd5c9;margin-bottom:20px;color:#615a54}.tabs span{padding:8px 0}.tabs .active{color:#241e15;border-bottom:3px solid #657d30;font-weight:700}.summary{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #dcd5c9;border-radius:9px;overflow:hidden;background:#fff}.tile{padding:16px 20px;border-right:1px solid #e6e0d7}.tile:last-child{border:0}.tile label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#615a54;font-weight:700}.figure{font-size:26px;line-height:1.4;font-weight:700;font-variant-numeric:tabular-nums}.tile small{display:block;color:#615a54;font-size:12px}.status{margin:16px 0;padding:12px 15px;border-left:3px solid #7a874d;background:#edf1e4}.status.warn{background:#fff2dc;border-color:#b27623}.status.bad{background:#fbece8;border-color:#a3231b}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 12px}.toolbar-group{display:flex;gap:5px;flex-wrap:wrap}.basis{font-size:12px;color:#615a54}.table-wrap{overflow:auto;border:1px solid #d4cec2;border-radius:9px;background:white}table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:tabular-nums;font-size:14px}th,td{padding:11px 14px;border-bottom:1px solid #ebe6de;text-align:right;white-space:nowrap}thead th{background:#f1ede5;color:#615a54;font-size:12px;font-weight:600}th:first-child{text-align:left;min-width:215px;position:sticky;left:0;background:#fff;z-index:1}thead th:first-child{background:#f1ede5}th{font-weight:500}td:last-child,thead th:last-child{background:#f9f7f2;font-weight:700;border-left:1px solid #ddd6ca}.band th{background:#eeeee6!important;letter-spacing:.07em;font-size:11px;font-weight:800;color:#59613d}.band th:first-child{z-index:0}.subtotal th,.subtotal td{font-weight:700;border-bottom:2px solid #d6d0c4}.flow th,.flow td{background:#f6f4ee}.flow:first-of-type th,.flow:first-of-type td{border-top:1px solid #d6d0c4}.close th,.close td{background:#eaf0df;font-weight:800;border-top:1px solid #b8c69b;border-bottom:0}.row-note{display:block;font-size:11px;color:#72685b;font-weight:400;white-space:normal}.neg{color:#a3231b}.good{color:#34662a}.muted{color:#847b6c}.tag{font-size:10px;display:inline-block;border:1px solid #a7b995;color:#456435;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle}.footnotes{color:#615a54;font-size:12px;margin-top:12px;max-width:950px}.footnotes p{margin:5px 0}.helper{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;border:1px solid #d7ceb9;border-radius:8px;padding:16px 18px;margin-top:16px;background:#fffbf1}.helper strong{font-size:16px}.helper p{margin:3px 0;color:#615a54}.helper button{background:#d9f99d;font-weight:700}.preview{border-top:1px solid #dcd5c9;margin-top:24px;padding-top:18px}.preview h3{font-size:16px;margin:0 0 4px}.preview p{color:#615a54;margin:4px 0 12px}.preview-controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.preview label{display:grid;gap:4px;font-size:12px}.preview input{width:145px}.preview-result{font-size:14px;margin-top:12px!important}.review-notes{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0 48px}.review-notes section{border-top:2px solid #bcc5d1;padding-top:12px}.review-notes h2{font-size:16px;margin:0 0 8px}.review-notes p{color:#485365;margin:6px 0}.mockup-only{font-size:12px;color:#596577;margin-bottom:20px}.empty{padding:24px;white-space:normal;text-align:left!important;color:#615a54}.footnotes:empty{display:none}@media(max-width:650px){.document{padding:0 10px;margin-top:20px}h1{font-size:25px}.page{padding:14px 10px}.shell{padding:12px}.shell small{font-size:11px}.summary{grid-template-columns:1fr}.tile{border-right:0;border-bottom:1px solid #e6e0d7;padding:11px 14px}.figure{font-size:24px}.tile small{display:inline}.review-notes{grid-template-columns:1fr;gap:16px}.tabs{gap:14px;font-size:12px}.review-controls{gap:10px}.review-controls label,.review-controls select{width:100%}th,td{padding:10px}th:first-child{min-width:165px;max-width:165px;white-space:normal}.tag{display:none}.helper{gap:12px}.preview-controls{align-items:stretch}.toolbar-group button{padding:8px 10px}}
+@media print{body{background:white}.document{max-width:none;margin:0;padding:0}.review-controls,.preview,.toolbar button,.review-notes,.mockup-only{display:none}.frame{box-shadow:none}.table-wrap{overflow:visible}th:first-child{position:static}.page{padding:12px}table{font-size:11px}th,td{padding:7px}.summary{grid-template-columns:repeat(3,1fr)}.tile{border-bottom:0}.intro{font-size:12px}}
+</style>
+</head>
+<body>
+<main class="document">
+<div class="eyebrow">Owner QA §164 · Design proposal · 12 September 2026 · built the same day — tiles renamed to the table's words on the owner's ruling</div>
+<h1>Build the season. See what carries forward.</h1>
+<p class="intro">Revenue first, expenses next, then the balance you bring into the next period. The same budget stays in view as you estimate costs, set player installments and consider another purchase.</p>
+<div class="review-controls">
+<label for="scenario">Explore a stage of the budget
+<select id="scenario">
+<option value="set">3 · Dues set — September needs attention</option>
+<option value="revised">4 · Installments brought forward</option>
+<option value="unset">2 · Costs entered, dues not set</option>
+<option value="estimate">1 · Starting with an estimate</option>
+<option value="empty">0 · An empty budget</option>
+<option value="higher">5 · Estimate above the lines</option>
+<option value="lower">6 · Lines above the estimate</option>
+<option value="funded">7 · Other revenue covers the costs</option>
+</select></label>
+<p class="scenario-caption" id="caption"></p>
+</div>
+<p class="mockup-only">Interactive mockup · Illustrative figures · Nothing here changes team data. View buttons, scenario choices and the expense preview work.</p>
+<article class="frame" aria-label="Proposed Budget tab">
+<div class="shell"><span>FieldLogicHQ <small> / Coaches</small></span><small>U14 team · 2026 season</small></div>
+<div class="page">
+<div class="crumb">Team / Money</div><h2>Budget</h2>
+<div class="tabs" aria-label="Illustrated money navigation"><span class="active">Budget</span><span>Budget vs. Actual</span><span>Player dues</span></div>
+<div class="summary" id="summary" aria-live="polite"></div>
+<div class="status" id="status" role="status"></div>
+<div class="toolbar"><div class="toolbar-group" aria-label="Budget view">
+<button type="button" data-view="list" aria-pressed="false">List</button>
+<button type="button" data-view="months" aria-pressed="true">By period · Months</button>
+<button type="button" data-view="quarters" aria-pressed="false">Quarters</button>
+</div><span class="basis">Plan · Sep–Dec 2026 · 12 players</span></div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Budget table, scroll to see all periods"><table id="budget"></table></div>
+<div class="footnotes" id="notes"></div>
+<div id="helper"></div>
+<section class="preview" aria-labelledby="preview-title">
+<h3 id="preview-title">Could we add another expense?</h3>
+<p>Try a purchase and see the effect through the rest of the season.</p>
+<div class="preview-controls">
+<label for="amount">Extra expense ($)<input id="amount" type="number" min="0" max="1000000" step="50" value="600"></label>
+<label for="month">When<select id="month"><option value="0">September</option><option value="1" selected>October</option><option value="2">November</option><option value="3">December</option></select></label>
+<button type="button" id="try" aria-pressed="false">Preview expense</button><button type="button" id="clear">Clear preview</button>
+</div>
+<p class="preview-result" id="preview-result" role="status"></p>
+</section>
+</div></article>
+<div class="review-notes">
+<section><h2>What changes as you build</h2><p>Before dues are set, the amount players need to cover sits below the report. Once set, Player installments belongs in Revenue, linked to the existing dues editor. It is never entered twice.</p><p>The balances stay visible in every view. List gives the season result; months and quarters add the timing. A monthly shortage stays flagged even if the quarter ends above zero.</p></section>
+<section><h2>Positive this month does not mean available</h2><p>Choose “Installments brought forward.” October closes at $3,000, but later costs leave just $1,000 by December. Try a $600 October expense: December now closes at $400.</p><p>These are planned receipts and payments. A positive month-end balance cannot prove a bill due early in the month is covered by money arriving later.</p></section>
+<section><h2>The earlier ruling stays — confirmed, not revised</h2><p>Choose “Lines above the estimate.” Planned expenses still reads $12,000 — your estimate — not the $14,186 of real itemized costs above it. The $2,186 gap doesn’t disappear: it nets into <em>No date yet</em> the same way an estimate <em>below</em> the lines already reserves its remainder there, so one mechanism handles both directions and “Over your estimate” stays visible in red either way.</p><p>“Lines so far” stays, as ruled. So does the conditional brackets legend; its wording follows the new revenue-minus-expenses direction.</p></section>
+<section><h2>Included in the implementation proposal</h2><p>Existing add/edit, import and dues forms remain the editing doors. Exports follow the report; the importer must recognize the new bands and skip derived dues and balances. Read-only users retain their current access.</p><p><a href="COACH_BUDGET_REVENUE_FIRST_PLAN.md">Read the implementation proposal</a> · <a href="COACH_BUDGET_REVENUE_FIRST_PM_BRIEF.md">Read the PM brief</a></p></section>
+</div>
+<noscript><p>This interactive mockup needs JavaScript. The linked plan includes static figures for the main states.</p></noscript>
+</main>
+<script>
+'use strict';
+const months = ['Sep', 'Oct', 'Nov', 'Dec'];
+const fullMonths = ['September', 'October', 'November', 'December'];
+const sum = xs => xs.reduce((a, b) => a + b, 0);
+const cash = n => n < -0.005 ? `($${Math.abs(n).toLocaleString('en-CA', {maximumFractionDigits:2})})` : `$${Math.abs(n).toLocaleString('en-CA', {maximumFractionDigits:2})}`;
+const captions = {
+  empty: 'Start with itemized costs or a season estimate. An empty plan does not claim the season is funded.',
+  estimate: 'The full estimate stays visible in No date yet. There is no invented collection schedule.',
+  unset: 'The funding helper shows $12,000 required from players. That amount is not yet revenue.',
+  set: 'The season ends $1,000 above zero, but September ends $1,000 below zero. A season total alone misses it.',
+  revised: 'Bring some installments forward: same $12,000 from players, same season result, every month now above zero.',
+  higher: 'A $16,000 estimate reserves $2,000 beyond the lines. The dated balances cannot place those costs yet.',
+  lower: 'Confirmed policy: your $12,000 estimate still governs planned expenses. The $2,000 overrun nets into No date yet and stays flagged in red — it is not silently added.',
+  funded: 'Other revenue covers the plan. Required dues reaches $0; it does not turn into a negative bill.'
+};
+let state = 'set', view = 'months', preview = null;
+function model(key, trial = null) {
+  const hasLines = !['empty', 'estimate'].includes(key);
+  const hasDues = ['set', 'revised', 'higher', 'lower'].includes(key);
+  const dues = !hasDues ? [0,0,0,0] : key === 'set' ? [4000,4000,4000,0] : [6000,3000,3000,0];
+  const sponsor = key === 'funded' ? [15000,0,0,0] : hasLines ? [0,2000,0,0] : [0,0,0,0];
+  const costs = hasLines ? [6000,3000,4000,1000] : [0,0,0,0];
+  if (trial) costs[trial.month] += trial.amount;
+  const target = key === 'estimate' ? 14000 : key === 'higher' ? 16000 : key === 'lower' ? 12000 : null;
+  const lines = sum(costs);
+  const reserve = target === null ? 0 : target-lines;
+  const over = target === null ? 0 : Math.max(0,lines-target);
+  const revenue = dues.map((v,i)=>v+sponsor[i]);
+  const net = revenue.map((v,i)=>v-costs[i]);
+  let running=1000;
+  const opens=[], closes=[];
+  for (const v of net) { opens.push(running); running+=v; closes.push(running); }
+  return {key,hasLines,hasDues,dues,sponsor,costs,target,lines,reserve,over,revenue,net,opens,closes,
+    expenseTotal:lines+reserve,revenueTotal:sum(revenue),ending:running-reserve,
+    required:Math.max(0,lines+reserve-sum(sponsor)),firstNegative:closes.findIndex(v=>v<0)};
+}
+function buckets(values, mode, endpoints) {
+  if(mode==='list') return [];
+  if(mode==='months') return values;
+  if(endpoints==='opening') return [values[0],values[1]];
+  if(endpoints==='closing') return [values[0],values[3]];
+  return [values[0],sum(values.slice(1))];
+}
+function render() {
+  const m=model(state,preview), base=model(state);
+  document.getElementById('caption').textContent=captions[state];
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  document.getElementById('try').setAttribute('aria-pressed',String(!!preview));
+  const empty=state==='empty'&&!preview;
+  const tile=(label,value,note)=>`<div class="tile"><label>${label}</label><div class="figure ${value<0?'neg':''}">${value===null?'—':cash(value)}</div><small>${note}</small></div>`;
+  document.getElementById('summary').innerHTML=tile('Total revenue',empty?null:m.revenueTotal,m.hasDues?'Includes player installments':'Player dues not set')+tile('Total expenses',empty?null:m.expenseTotal,m.target!==null?`Season estimate ${cash(m.target)}`:'From your budget items')+tile('Closing balance',empty?null:m.ending,m.reserve?'Includes costs with no date':preview?'With your expense preview':'Includes $1,000 opening balance');
+  let status, tone='';
+  if(empty) status='Start your plan: add budget items, set a season estimate, or import a previous budget.';
+  else if(m.reserve>0.005) {status=`Timing incomplete · ${cash(m.reserve)} of planned expenses has no date. ${m.firstNegative>=0?`${fullMonths[m.firstNegative]} also closes below zero. `:''}Place the remaining costs before deciding when to add spending.`;tone='warn';}
+  else if(m.over) {status=`Over your estimate by ${cash(m.over)} · Total expenses still reflects your ${cash(m.target)} estimate — the extra is flagged, not added. ${m.firstNegative>=0?`${fullMonths[m.firstNegative]} closes ${cash(Math.abs(m.closes[m.firstNegative]))} below zero. `:''}Revise your estimate if the higher figure should count instead.`;tone='warn';}
+  else if(!m.hasDues&&m.required>0) {status=`Before player dues · ${cash(m.required)} still needs funding. Set dues to see whether they cover each month.`;tone='warn';}
+  else if(m.firstNegative>=0) {status=`${fullMonths[m.firstNegative]} closes ${cash(Math.abs(m.closes[m.firstNegative]))} below zero · Review when installments arrive or expenses fall due.`;tone='bad';}
+  else status=`Every month ends at or above zero · Lowest planned closing balance: ${cash(Math.min(...m.closes))}.`;
+  const statusEl=document.getElementById('status');statusEl.textContent=status;statusEl.className=`status ${tone}`;
+  const undated=m.reserve!==0&&view!=='list';
+  const cols=view==='months'?months.map(x=>`${x} 2026`):view==='quarters'?['Q3 2026','Q4 2026']:[];
+  const count=cols.length+2+(undated?1:0);
+  const cell=n=>`<td class="${n!==null&&n<0?'neg':''}">${n===null?'<span class="muted">—</span>':cash(n)}</td>`;
+  const row=(label,values,total,options={})=>`<tr class="${options.kind||''}"><th scope="row">${label}${options.note?`<span class="row-note">${options.note}</span>`:''}</th>${undated?cell(options.undated??null):''}${buckets(values,view,options.endpoint).map(cell).join('')}${cell(total)}</tr>`;
+  const band=label=>`<tr class="band"><th colspan="${count}" scope="colgroup">${label}</th></tr>`;
+  let html=`<caption style="text-align:left;padding:10px 14px;font-size:12px;color:#615a54">${preview?'Preview · ':''}Season budget · Planned money in and out</caption><thead><tr><th scope="col">Budget item</th>${undated?'<th scope="col">No date yet</th>':''}${cols.map(c=>`<th scope="col">${c}</th>`).join('')}<th scope="col">${view==='list'?'Planned':'Season total'}</th></tr></thead><tbody>`;
+  html+=band('REVENUE');
+  if(m.hasDues) html+=row('Player installments <span class="tag">Scheduled</span>',m.dues,sum(m.dues));
+  if(sum(m.sponsor)) html+=row(state==='funded'?'Sponsorship & fundraising':'Sponsorship',m.sponsor,sum(m.sponsor));
+  if(!m.hasDues&&!sum(m.sponsor)) html+=`<tr><td colspan="${count}" class="empty">Add the revenue you expect from sponsors, fundraising or other sources.</td></tr>`;
+  html+=row('Total revenue',m.revenue,m.revenueTotal,{kind:'subtotal'});
+  html+=band('EXPENSES');
+  if(m.hasLines) {html+=row('Ice rental',[4000,3000,2000,1000],10000);html+=row('Tournament entry fees',[0,0,2000,0],2000);html+=row('Uniforms',[2000,0,0,0],2000);}
+  if(preview) {const values=[0,0,0,0];values[preview.month]=preview.amount;html+=row('Extra expense <span class="tag">Preview</span>',values,preview.amount);}
+  if(m.target!==null) html+=row('Lines so far',m.costs,m.lines);
+  if(m.reserve) html+=row(m.reserve<0?'Over your estimate':'Still to itemize',[0,0,0,0],m.reserve,{undated:m.reserve});
+  if(empty) html+=`<tr><td colspan="${count}" class="empty">Add a budget item or start with a season estimate.</td></tr>`;
+  html+=row('Total expenses',m.costs,m.expenseTotal,{kind:'subtotal',undated:m.reserve||null});
+  html+=row('Opening balance',m.opens,1000,{kind:'flow',endpoint:'opening'});
+  html+=row(view==='list'?'Season net':view==='quarters'?'Net for the quarter':'Net for the month',m.net,m.revenueTotal-m.expenseTotal,{kind:'flow',undated:-m.reserve||null});
+  html+=row('Closing balance',m.closes,m.ending,{kind:'close',endpoint:'closing'});
+  document.getElementById('budget').innerHTML=html+'</tbody>';
+  let notes='<p>Opening balance: $1,000 from this season’s opening balance in Team settings → Money. Revenue and expenses are planned; receipts are assumed to arrive on their planned dates.</p>';
+  if(m.net.some(v=>v<0)||m.closes.some(v=>v<0)||m.reserve) notes+='<p><strong>Brackets mean a negative figure.</strong> On Net, more goes out than comes in. On Closing balance, the plan ends the period below zero.</p>';
+  if(m.reserve) notes+=`<p><strong>No date yet:</strong> ${cash(m.reserve)} is included in season expenses and season closing, but in no dated balance. The last dated closing is ${cash(m.closes[3])}; including the undated costs, the season closes at ${cash(m.ending)}.</p>`;
+  if(view!=='list') notes+='<p>The season’s opening and closing are endpoints, not sums of the period balances. Each dated column reads opening + net = closing.</p>';
+  if(view==='quarters') notes+='<p>Quarter balances use the first monthly opening and final monthly closing. The warning above still checks every month.</p>';
+  document.getElementById('notes').innerHTML=notes;
+  let helper='';
+  if(!m.hasDues&&!empty) helper=`<div class="helper"><div><strong>Required player dues · ${cash(m.required)}</strong><p>${m.required>0?`${cash(m.required/12)} per player across 12 players · Dates not set`:'Other planned revenue covers the expenses.'}</p><p>Expenses ${cash(m.expenseTotal)} less other revenue ${cash(sum(m.sponsor))}. Opening money stays separate.</p></div>${state==='unset'?'<button type="button" id="show-schedule">View installment example →</button>':''}</div>`;
+  document.getElementById('helper').innerHTML=helper;
+  const scheduleButton=document.getElementById('show-schedule');if(scheduleButton) scheduleButton.addEventListener('click',()=>{state='set';preview=null;document.getElementById('scenario').value=state;render();});
+  const selectedMonth=Number(document.getElementById('month').value);
+  let result='';
+  if(empty) result='Build the base plan first so a new expense can be compared with the rest of the season.';
+  else if(m.reserve||m.over) result='Spending room is unresolved. Complete the dates and reconcile the estimate before relying on a positive monthly balance.';
+  else if(!m.hasDues&&m.required>0) result='Set dues for all players first. Required dues have not been counted as money coming in.';
+  else if(m.firstNegative>=0) result=`${preview?'This preview':'This plan'} leaves ${fullMonths[m.firstNegative]} ${cash(Math.abs(m.closes[m.firstNegative]))} below zero. Resolve that shortage before adding spending.`;
+  else if(preview) result=`Preview: add ${cash(preview.amount)} in ${fullMonths[preview.month]}. Season closing changes from ${cash(base.ending)} to ${cash(m.ending)}; every month remains at or above zero. No purchase has been saved.`;
+  else result=`For an expense in ${fullMonths[selectedMonth]}, the lowest later closing balance leaves ${cash(Math.max(0,Math.min(...base.closes.slice(selectedMonth))))} above zero through season end, assuming all planned receipts arrive. No additional reserve has been set.`;
+  if(preview&&(m.reserve||m.over||m.firstNegative>=0||!m.hasDues&&m.required>0)) result+=` Preview season closing: ${cash(base.ending)} → ${cash(m.ending)}. No purchase has been saved.`;
+  if(preview&&base.reserve>0.005) result+=' The new item uses the unitemized estimate allowance first; only an amount above that allowance increases total planned expenses.';
+  document.getElementById('preview-result').textContent=result;
+}
+document.getElementById('scenario').addEventListener('change',e=>{state=e.target.value;preview=null;render();});
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view;render();}));
+document.getElementById('try').addEventListener('click',()=>{const input=document.getElementById('amount');if(!input.reportValidity()||input.value==='')return;preview={amount:Math.round(Number(input.value)*100)/100,month:Number(document.getElementById('month').value)};render();});
+document.getElementById('clear').addEventListener('click',()=>{preview=null;render();});
+document.getElementById('month').addEventListener('change',()=>{if(preview)preview.month=Number(document.getElementById('month').value);render();});
+render();
+</script>
+</body>
+</html>

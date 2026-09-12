@@ -6,29 +6,31 @@
  * plan payload the page has ALREADY fetched into month or quarter columns: no endpoint, no
  * refetch, and quarters are simply months grouped, so the two views can never disagree.
  *
- * Three rules the shape depends on:
+ * Four rules the shape depends on:
  *
  * 1. **The undated column is a real column** ("No date yet" since 2026-09-04, matching the
  *    statement — see the note where it is built). A line with no period split, or a period entered in
  *    "just names" mode with no date, has to go somewhere. Dropping it would make the columns
  *    quietly disagree with the plan's own total — the failure mode where a coach trusts a row of
  *    numbers that is missing $2,000. Naming it is honest, and doubles as the nudge to split it.
- * 2. **A funding line is stored positive; the KIND carries the sign** (migration 230). This
- *    view keeps funding cells SIGNED so the closing row (what players fund, per column) is a
- *    real subtraction — the plan page abs()es funding cells at render time, because on screen
- *    money-in reads positive in green (owner 2026-08-13).
+ * 2. **A funding line is stored positive; the KIND carries the sign** (migration 230). Inside
+ *    this view a money-in GROUP's cells stay SIGNED (negative) — the plan page abs()es them at
+ *    render time, because on screen money-in reads positive in green (owner 2026-08-13) — while
+ *    `revenueTotals` is already POSITIVE, the way the Revenue band's subtotal prints it. Two
+ *    signs, one rule each: never negate `revenueTotals` again in a renderer.
  * 3. **What has no dates goes in the undated column, and nothing is left out** (owner ruling
  *    2026-09-09 — this rule REPLACED "the estimated total's difference is not here… it belongs to
  *    the summary ladder"). Leaving the estimate's remainder out is what forced the cost subtotal
- *    to hedge its name and left the closing row disagreeing with the List by that exact figure.
- *    The same rule now carries the dues schedule: the plan closes here on **Costs less funding →
- *    Player installments → Shortfall (Buffer)**, the ladder the List already prints, and any
- *    schedule amount without dated instalments lands undated rather than vanishing.
- *
- *    ⚠ What this grid still does NOT have is a running balance, so a period where dues land and
- *    no bills fall due reads as a large bracketed figure. That is real and accepted (owner,
- *    2026-09-09); balances are deferred, and the three closing rows are shaped so an
- *    opening/closing pair could sit under them without rework.
+ *    to hedge its name and left the close disagreeing with the List by that exact figure. The
+ *    same rule carries the dues schedule: any schedule amount without dated instalments lands
+ *    undated rather than vanishing.
+ * 4. **Revenue first, then a running balance** (owner decisions A–D, 2026-09-12 —
+ *    COACH_BUDGET_REVENUE_FIRST_PLAN.md, replacing the Costs-less-funding → Player installments →
+ *    Shortfall (Buffer) ladder of 2026-09-09). Player installments are the Revenue band's first
+ *    row once scheduled (`installments`, its own field), and the plan closes on **Opening balance → Net → Closing balance**, walked by
+ *    Budget vs. Actual's own `buildCashFlow` at month resolution whatever the display shows. A
+ *    period where dues land and no bills fall due is simply a positive net now, and the thing a
+ *    coach actually needs — the first month the balance goes below zero — is `balance.shortfall`.
  *
  * Pure: no IO, no React, no Date — every date is `YYYY-MM-DD` string arithmetic, so a coach in
  * Toronto and a server in UTC bucket a period into the same month.
@@ -36,7 +38,7 @@
 
 // Relative, with the extension, so `node --test` can load this module directly — the unit suite's
 // resolver handles these but not the bundler's `@/` alias (see tests/ts-resolver.mjs).
-import { monthKeyOf, addMonths, monthSpan, formatMonthLabel, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
+import { monthKeyOf, addMonths, monthSpan, formatMonthLabel, MAX_MONTH_COLUMNS, buildCashFlow, type MonthKey } from './coach-budget-months.ts';
 import {
   NO_ITEM_LABEL, categoryGroupOf, compareCategoryGroups, type CategoryGroupRef,
 } from './coach-budget-rollup.ts';
@@ -59,6 +61,19 @@ export const UNSCHEDULED = 'unscheduled';
  *  more than one budget line, and therefore the one that never carries a `lineId`. Named because
  *  two places have to agree about it, and a bare `'noitem'` in the second was how they'd drift. */
 const NO_ITEM_ROW_KEY = 'noitem';
+
+/**
+ * The trial row's name — the extra-expense TRIAL (decision D), a cost the coach is only
+ * considering. ⚠ ONE SPELLING with the panel's preview control, which prints it too. ⚠ Deliberately
+ * NOT in `PLAN_LADDER_LABEL`: a trial never reaches a file (the export builds its view without one),
+ * so the importer must never learn to skip a coach's own line by this name.
+ */
+export const PREVIEW_GROUP_NAME = 'Extra expense';
+
+/** The two bands' empty states — the mockup's own sentences, printed by both views (`/simplify`
+ *  2026-09-12: one spelling, one home, like every other cross-view word in this file). */
+export const REVENUE_EMPTY_PROMPT = 'Add the revenue you expect from sponsors, fundraising or other sources.';
+export const EXPENSES_EMPTY_PROMPT = 'Add a budget item or start with a season estimate.';
 
 /**
  * ⚠ ONE SPELLING OF UNDATED MONEY, AND NOW ONE HOME FOR IT. "No date yet" is this grid's column
@@ -167,37 +182,118 @@ export interface PeriodTotals {
   total: number;
 }
 
+/**
+ * The Opening/Net/Closing balance the grid closes on (revenue-first project, owner decisions A–D,
+ * 2026-09-12 — replaces the Costs-less-funding → Player installments → Shortfall (Buffer) ladder).
+ *
+ * ⚠⚠ WALKED FROM `buildCashFlow` — the exact function Budget vs. Actual's Budget lens already
+ * trusts — not re-derived. Reusing it here is the whole point: a second, independently-written
+ * running-balance calculation is exactly the trap that produced two live figure-disagreement bugs
+ * on this same grid three weeks ago (Owner QA §164). `seasonClosing = seasonOpening + seasonNet`
+ * and `seasonNet === revenueTotals.total − expenseTotals.total` by construction (the undated
+ * terms cancel algebraically — see the build site) — this row can never disagree with the table's
+ * own subtotals above it.
+ *
+ * ⚠ ALWAYS WALKED AT REAL MONTH RESOLUTION, regardless of the grid's display granularity (§5:
+ * "Quarters: sum monthly flows; opening is the first month's opening; closing is the last month's
+ * closing"). A quarter's `opening`/`net`/`closing` cells are aggregated from the underlying
+ * months, never bucketed directly — the same reason `shortfall` below is computed from months
+ * even when the grid is displaying quarters or the List's single season column.
+ */
+export interface PeriodBalance {
+  /** Column key (month or quarter, never `unscheduled`) → what that period opened with. */
+  opening: Record<string, number>;
+  /** Column key → revenue − expenses for that period alone. */
+  net: Record<string, number>;
+  /** Column key → what that period closed on. */
+  closing: Record<string, number>;
+  seasonOpening: number;
+  /** The season's net, dated periods plus the undated bucket — the List's single "Season net". */
+  seasonNet: number;
+  /** seasonOpening + seasonNet. Can differ from the last dated period's `closing` by exactly the
+   *  undated remainder — expected, and explained in the same note the export prints (§5). */
+  seasonClosing: number;
+  /** The No-date-yet column's own net (undated revenue − undated expenses, the estimate remainder
+   *  and any undated dues included) — what the Net row prints in that column, where Opening and
+   *  Closing print a dash. Null when nothing is undated. ⚠ Past a truncated window this is NOT
+   *  the whole of what the walk could not place — see the build site. */
+  undatedNet: number | null;
+  /**
+   * The monthly series the balance was walked from — every real month from the first dated
+   * period to the last, whatever the display granularity. This is what a "room for an expense in
+   * month m" question reads (§5: at most max(0, min closing from m onward)), and what the last
+   * dated closing in the note comes from. Empty when nothing on the plan has a date.
+   */
+  months: Array<{ monthKey: MonthKey; opening: number; net: number; closing: number }>;
+  /** True when the season has never carried an opening balance (`null`, never set) rather than
+   *  carried at exactly zero — the same NULL-≠-ZERO distinction Budget vs. Actual's own opening
+   *  reader makes (lib/coach-money-report-notes.ts). Render "None carried" rather than $0.00. */
+  openingUnset: boolean;
+  /** The first REAL MONTH the running balance goes negative, and by how much — computed from
+   *  months so the alert is the same whether the coach is looking at List, Months or Quarters
+   *  (§5: "Keep the alert in List and Quarters too, computed from months"). Null on a season that
+   *  never dips below zero. */
+  shortfall: { monthKey: MonthKey; amount: number } | null;
+  /** The lowest any month closes — the all-clear sentence's figure, the sibling of `shortfall`
+   *  (the same reduce over the same months, so the two can never disagree). Null when nothing is
+   *  dated. */
+  lowestClosing: number | null;
+}
+
 export interface PeriodView {
   columns: PeriodColumn[];
   /** Year bands over the dated columns, in order. Empty when nothing is dated. */
   yearBands: PeriodYearBand[];
-  /** Cost categories, in the plan's own order, then the funding group last (it is subtracted, so
-   *  it reads at the foot of the column the way the ladder reads at the foot of the page). */
+  /** The CATEGORY groups only — money-in categories first (the picker's order), then the cost
+   *  categories alphabetical: the statement order (owner decision, 2026-09-12), what comes in,
+   *  what goes out. The two derived rows (`installments`, `trial`) are their own fields below, so
+   *  a renderer places them and never has to recognise them by key (`/simplify`, 2026-09-12 —
+   *  three call sites were finding them by a sentinel and the export carried a filter for a case
+   *  that could not occur). */
   groups: PeriodViewGroup[];
-  /** Costs − funding, per column: what players fund month by month. */
-  totals: PeriodTotals;
   /**
-   * Σ cost groups, per column — the "Planned costs" subtotal row (owner ruling 2026-09-08).
-   *
-   * ⚠⚠ THIS IS THE **EFFECTIVE** PLANNED COSTS, INCLUDING THE ESTIMATE (owner ruling 2026-09-09).
-   * It used to be Σ lines, which is why the subtotal had to hedge its name to "Lines so far" and
-   * why the closing row underneath disagreed with the List by the un-itemized remainder — same
-   * name, two numbers, on a plan with a season estimate set. The remainder is now a real row in
-   * the No-date-yet column (see `estimateRows`), so this subtotal IS the estimate, wears its own
-   * name again, and `totals` below is the List's figure exactly.
+   * PLAYER INSTALLMENTS — the first row of the Revenue band once dues are scheduled (owner
+   * decisions A–D): the schedules' assessed total (net of write-offs, the same figure the Dues
+   * tile prints) spread across the periods its instalments fall due in, with whatever the dated
+   * instalments do not cover in No date yet — so its total is always the plan's own figure.
+   * ⚠ STORED POSITIVE, and its undated cell can be NEGATIVE (a schedule lowered after its
+   * instalments existed — §164 finding #2); a renderer draws it SIGNED, never through a money-in
+   * abs(). Null before a schedule exists — the Required-player-dues helper carries that state.
    */
-  costTotals: PeriodTotals;
-  /** Σ money-in groups, per column, SIGNED like their cells — the "Planned funding" subtotal row.
-   *  Null when the plan has no money-in lines, so the grid knows not to draw that band at all. */
-  fundingTotals: PeriodTotals | null;
+  installments: PeriodTotals | null;
+  /** The extra-expense TRIAL (decision D), when one is being previewed — the last row of the
+   *  Expenses band, already folded into `expenseTotals` and the balance. Null when nothing is
+   *  being tried. Never reaches a file: the caller builds an export's view without one. */
+  trial: PeriodTotals | null;
+  /**
+   * Σ cost groups, per column — the "Total expenses" subtotal row.
+   *
+   * ⚠⚠ THIS IS THE **EFFECTIVE** PLANNED EXPENSES, INCLUDING THE ESTIMATE (owner ruling 2026-09-09,
+   * RECONFIRMED unchanged by decision A, 2026-09-12 — the reversal drafted for this project was
+   * withdrawn). It used to be Σ lines, which is why the subtotal had to hedge its name to "Lines so
+   * far" and why the closing row underneath disagreed with the List by the un-itemized remainder —
+   * same name, two numbers, on a plan with a season estimate set. The remainder is now a real row
+   * in the No-date-yet column (see `estimateRows`), so this subtotal IS the estimate, wears its own
+   * name again, and `totals` below is the List's figure exactly — in EITHER direction: when lines
+   * exceed the estimate the remainder nets NEGATIVE into the same column, never a special case.
+   */
+  expenseTotals: PeriodTotals;
+  /**
+   * Σ revenue groups, per column, POSITIVE — the "Total revenue" subtotal row. Includes Player
+   * installments once dues are scheduled (decision A/B in COACH_BUDGET_REVENUE_FIRST_PLAN.md §0):
+   * dues are no longer a separate closing ladder, they are a real revenue line like any other.
+   * Null when the plan has no revenue at all (no money-in lines and no dues scheduled), so the
+   * grid knows not to draw that band.
+   */
+  revenueTotals: PeriodTotals | null;
   /**
    * The two rows the Costs band grows when a season estimate differs from the lines — the SAME two
    * the List has always printed, in the same words: *Lines so far*, then either *Still to itemize*
-   * or *Over your estimate* (owner ruling 2026-09-09).
+   * or *Over your estimate* (owner ruling 2026-09-09; kept unchanged by decision A, 2026-09-12).
    *
    * ⚠ THE REMAINDER IS A REAL FIGURE IN THE No-date-yet COLUMN, not a decoration. An estimate has
    * no dates, and that column exists precisely to hold money without them — so putting it there is
-   * what lets `costTotals` be the estimate and the close match the List. `over` is the List's
+   * what lets `expenseTotals` be the estimate and the close match the List. `over` is the List's
    * `overPlanned`: the lines outgrew the estimate and the remainder is negative.
    *
    * Null when no estimate is set, or when it matches the lines to the half-cent.
@@ -208,45 +304,23 @@ export interface PeriodView {
    */
   estimateRows: { linesSoFar: PeriodTotals; remainder: PeriodTotals } | null;
   /**
-   * What players are scheduled to pay, per column — the dues INSTALMENT schedule spread across the
-   * periods it falls due in (owner ruling 2026-09-09, overruling the round-1 recommendation to
-   * point at Budget vs. Actual instead: *"the monthly view in budget seems like a partial report
-   * that makes me need to look elsewhere"*).
-   *
-   * ⚠⚠ THE TOTAL IS THE SCHEDULES' TOTAL, NOT Σ INSTALMENTS. `duesAssessed` is deliberately Σ
-   * schedule totals so credits and partial payments never move the plan, and the two can genuinely
-   * differ — a dues schedule's total is checked against its installments on the manual POST path
-   * only. Whatever the dated installments do not cover lands in **No date yet**, so this row's
-   * Total always equals the figure the List prints. Dropping the difference would make the grid
-   * quietly disagree with the tile above it, which is the whole defect class this work closes.
-   *
-   * Null when the team has no dues schedule at all — before dues are set there is nothing dated to
-   * spread, and an estimated installments figure is derived from this very plan.
-   *
-   * ⚠ ONE FIELD, TWO ROWS, and that is the point. These two always exist together or not at all —
-   * a shortfall row has nothing to close over without the installments above it — so the pairing
-   * is in the TYPE rather than in a comment that every reader has to re-check with `a && b`
-   * (`/simplify`, 2026-09-09). Both renderers destructure it once.
+   * The Opening/Net/Closing balance — always computed (decision B), even before dues exist (it
+   * reads deeply negative then, which is the honest answer: nothing has been asked of families
+   * yet). Never null; a plan with nothing in it still has a season opening.
    */
-  close: {
-    /** What players are scheduled to pay, per column — the "Player installments" row. */
-    installments: PeriodTotals;
-    /**
-     * Costs − funding − installments: the "Shortfall (Buffer)" row. A plain figure is what that
-     * period still needs; a negative one is that period covered with room to spare — drawn in
-     * brackets, and the season Total is the same buffer or shortfall the List closes on.
-     *
-     * ⚠ The paired header is the owner's, and the words are NOT "Shortfall (Surplus)": *Surplus
-     * to share* on the Player Dues tab is real season-end cash a coach can pay out, and this row
-     * is a timing artifact of a plan. One product, one meaning per word.
-     */
-    shortfall: PeriodTotals;
-  } | null;
+  balance: PeriodBalance;
   /* ⚰ `estimateDiffers` IS GONE (2026-09-09). It answered "is an estimate set that differs from
      the lines?", and its two readers both wanted something else: the grid renamed its cost
      subtotal to "Lines so far" with it, and printed a note apologising that the estimate could not
      be drawn. Showing the remainder retired both, and `estimateRows !== null` is the same question
-     asked of the thing that answers it. Do not reinstate a flag beside the rows it describes. */
+     asked of the thing that answers it. Do not reinstate a flag beside the rows it describes.
+
+     ⚰ THE OLD `close` LADDER (Costs less funding → Player installments → Shortfall (Buffer)) IS
+     ALSO GONE (2026-09-12, decisions A–D). Player installments is a revenue GROUP now (see
+     `groups`), and the close is `balance` above — Budget vs. Actual's own grammar, not a
+     plan-specific ladder. `PLAN_LADDER_LABEL.shortfallBuffer` / `.costsLessFunding` /
+     `.installmentsEstimated` stay defined (an old export must still read back — see
+     coach-budget-import.ts's `BAND_LABELS`) but nothing here prints them any more. */
   /** Did anything land in the undated column? Drives whether that column exists at all. */
   hasUnscheduled: boolean;
   /**
@@ -258,9 +332,11 @@ export interface PeriodView {
    * derived this itself for a day, which put the ±half-cent deadband — the rule for what counts
    * as negative — in a second place, free to drift from the one the closing rows use.
    *
-   * ⚠ Named for the FACT, not the drawing. Only the closing rows can go negative (every other
-   * cell is rendered absolute), and each grid decides for itself what a negative looks like —
-   * brackets in the funding green here, brackets in red on a Budget vs. Actual balance.
+   * ⚠ Named for the FACT, not the drawing — and since 2026-09-12 the fact is "any BALANCE cell
+   * (Net or Closing, any column or the season) is below zero". A bracket on this grid is now the
+   * same warning it is on Budget vs. Actual — the account below zero, painted red — where the old
+   * plan-close painted its brackets green for money landing ahead of the bills. The legend under
+   * the table describes the new rows, not the deleted one.
    */
   hasNegative: boolean;
   /** True when the plan's dated span was wider than the window and the far end was dropped. The
@@ -487,6 +563,22 @@ export function buildPeriodView(
     estimatedTotal?: number | null;
     categoryOrder?: ReadonlyMap<string, number>;
     dues?: { assessed: number; installments: ReadonlyArray<{ date: string | null; amount: number }> } | null;
+    /** The season's carried-forward cash (`rep_program_years.opening_balance`) — where the
+     *  Opening/Net/Closing balance walk starts. Null = never carried (see `PeriodBalance.openingUnset`),
+     *  never coerced to 0 before this reaches the caller — only the WALK treats a null as 0. */
+    openingBalance?: number | null;
+    /**
+     * An EXTRA EXPENSE the coach is only considering (decision D, "Could we add another expense?").
+     * Becomes the `preview` group — a cost like any other for every figure below it, so the trial
+     * and the real table can never disagree: it widens the columns if its date is new, it lands in
+     * No date yet with no date, it CONSUMES a "Still to itemize" allowance before it raises Total
+     * expenses (the remainder is taken after it is folded in), and it walks the balance.
+     * ⚠ Inside the view rather than a synthetic line in the caller's array, for three reasons a
+     * line could not give: the row needs a stable KEY a renderer can badge, it must sort LAST
+     * among the cost groups rather than alphabetically by an invented category name, and it must
+     * carry no `lineId` door (there is no record to open). Null/absent = nothing being tried.
+     */
+    trial?: { amount: number; date: string | null } | null;
   } = {},
 ): PeriodView {
   const dated: string[] = [];
@@ -505,6 +597,10 @@ export function buildPeriodView(
       if (i.date) dated.push(i.date);
     }
   }
+  /* A trial in a month the plan has never reached is still a month the balance has to walk
+     through — the same reason the dues dates above widen the domain. */
+  const trial = opts.trial && opts.trial.amount > 0.005 ? opts.trial : null;
+  if (trial?.date) dated.push(trial.date);
 
   const { columns: dateColumns, truncated } = deriveColumns(dated, granularity);
   const columnKeys = dateColumns.map(c => c.key);
@@ -512,11 +608,10 @@ export function buildPeriodView(
   const groupsByKey = new Map<string, PeriodViewGroup>();
   /** The category behind each group, for the ordering rule below. */
   const refs = new Map<string, CategoryGroupRef>();
-  const totals: Record<string, number> = {};
-  let grandTotal = 0;
-  /* The two subtotals, accumulated in the SAME pass as the closing row so they cannot disagree
-     with it: Planned costs + Planned funding = the close, column by column (owner ruling
-     2026-09-08 — the grid draws both bands with a subtotal each, exactly as the List does). */
+  /* The two subtotals, accumulated in the SAME pass so they cannot disagree with each other:
+     Total revenue and Total expenses, column by column (owner ruling 2026-09-08; band roles
+     confirmed unchanged by decision A/B, 2026-09-12 — only the reading order and the close
+     changed). */
   const costCells: Record<string, number> = {};
   let costTotal = 0;
   const fundingCells: Record<string, number> = {};
@@ -613,10 +708,8 @@ export function buildPeriodView(
     for (const [key, amount] of Object.entries(cells)) {
       add(row.cells, key, amount);
       add(group.cells, key, amount);
-      add(totals, key, amount);
       add(isCost ? costCells : fundingCells, key, amount);
     }
-    grandTotal = r2(grandTotal + rowTotal);
     if (isCost) costTotal = r2(costTotal + rowTotal);
     else { fundingTotal = r2(fundingTotal + rowTotal); hasFunding = true; }
   }
@@ -643,13 +736,27 @@ export function buildPeriodView(
   const byName = compareCategoryGroups();
   const byPicker = compareCategoryGroups(opts.categoryOrder);
   const groups = [...groupsByKey.values()]
-    // Costs first, then the money-in groups — the funding band.
+    // Revenue first, then the cost categories — the statement order (owner decision, 2026-09-12).
     .sort((a, b) => {
       const aIn = isFundingKind(a.lineKind);
       const bIn = isFundingKind(b.lineKind);
-      if (aIn !== bIn) return aIn ? 1 : -1;
+      if (aIn !== bIn) return aIn ? -1 : 1;
       return (aIn ? byPicker : byName)(refs.get(a.key)!, refs.get(b.key)!);
     });
+
+  /* ── THE TRIAL (decision D, 2026-09-12) ─────────────────────────────────────────────────────
+     Folded into the cost cells BEFORE the estimate's remainder is taken, which is what makes "a
+     trial inside the allowance changes timing, not the total" fall out of the arithmetic rather
+     than being a rule someone has to remember: the remainder below is estimate − (lines + trial). */
+  let trialTotals: PeriodTotals | null = null;
+  if (trial) {
+    const cells: Record<string, number> = {};
+    add(cells, columnFor(trial.date, granularity, columnKeys), trial.amount);
+    if (cells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
+    trialTotals = { cells, total: r2(trial.amount) };
+    for (const [key, amount] of Object.entries(cells)) add(costCells, key, amount);
+    costTotal = r2(costTotal + trial.amount);
+  }
 
   /* ── THE ESTIMATE'S REMAINDER (owner ruling 2026-09-09) ────────────────────────────────────
      An estimate has no dates, so this grid used to leave it out and rename the subtotal to "Lines
@@ -668,16 +775,23 @@ export function buildPeriodView(
       remainder: { cells: { [UNSCHEDULED]: difference }, total: difference },
     };
     add(costCells, UNSCHEDULED, difference);
-    add(totals, UNSCHEDULED, difference);
     costTotal = r2(opts.estimatedTotal!);
-    grandTotal = r2(grandTotal + difference);
     hasUnscheduled = true;
   }
 
-  /* ── THE DUES SCHEDULE, SPREAD (owner ruling 2026-09-09) ────────────────────────────────────
-     The plan's two views now close on the same ladder. See `close` on the interface for why the
-     undated remainder exists and must not be dropped, and why both rows are one field. */
-  let close: PeriodView['close'] = null;
+  /* ── PLAYER INSTALLMENTS JOIN REVENUE (owner decisions A–D, 2026-09-12) ─────────────────────
+     Dues are no longer a separate closing ladder below the table — they are the first row of the
+     Revenue band (owner-approved mockup, COACH_BUDGET_REVENUE_FIRST_HUB.html), and they count in
+     `revenueTotals` like any money-in line. `duesCells` carries the undated remainder rule
+     unchanged from the old `close` block: whatever the dated instalments do not cover lands in No
+     date yet, so the row's Total always equals the figure the List prints — dropping the
+     difference would make the grid quietly disagree with the tile above it, which is the whole
+     defect class this work closes. */
+  const revenueCells: Record<string, number> = {};
+  for (const [key, amount] of Object.entries(fundingCells)) add(revenueCells, key, -amount);
+  let revenueTotal = r2(-fundingTotal);
+  let hasRevenue = hasFunding;
+  let installments: PeriodTotals | null = null;
   if (dues) {
     const duesCells: Record<string, number> = {};
     let spreadTotal = 0;
@@ -688,28 +802,97 @@ export function buildPeriodView(
     const undated = r2(dues.assessed - spreadTotal);
     if (Math.abs(undated) >= 0.005) add(duesCells, UNSCHEDULED, undated);
     if (duesCells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
-
-    /* Every column the grid can draw, not just the ones dues landed in — a period with bills and
-       no instalment still has a shortfall, and leaving its cell absent would print a dash where
-       the coach needs a figure. */
-    const shortfallCells: Record<string, number> = {};
-    for (const key of [UNSCHEDULED, ...columnKeys]) {
-      const net = r2((totals[key] ?? 0) - (duesCells[key] ?? 0));
-      if (Math.abs(net) >= 0.005) shortfallCells[key] = net;
-    }
-    close = {
-      installments: { cells: duesCells, total: r2(dues.assessed) },
-      shortfall: { cells: shortfallCells, total: r2(grandTotal - r2(dues.assessed)) },
-    };
+    installments = { cells: duesCells, total: r2(dues.assessed) };
+    for (const [key, amount] of Object.entries(duesCells)) add(revenueCells, key, amount);
+    revenueTotal = r2(revenueTotal + dues.assessed);
+    hasRevenue = true;
   }
 
-  /* Only the closing rows can go negative — every other cell is drawn absolute — so this is the
-     whole of the question the legend under the table asks. Same deadband as the cells themselves,
-     stated once. */
-  const isNeg = (t: PeriodTotals) =>
-    t.total < -0.005 || Object.values(t.cells).some(n => n < -0.005);
-  const hasNegative = isNeg({ cells: totals, total: grandTotal })
-    || (close != null && isNeg(close.shortfall));
+  /* ── THE BALANCE (owner decisions A–D, 2026-09-12) ──────────────────────────────────────────
+     Opening + Net = Closing, walked by `buildCashFlow` — the exact function Budget vs. Actual's
+     Budget lens already trusts, not re-derived. Always walked at REAL MONTH resolution off the
+     same `dated` domain the display columns share, regardless of whether this view is displaying
+     months, quarters or (for the List) nothing at all — §5: "Quarters: sum monthly flows; opening
+     is the first month's opening; closing is the last month's closing", and the alert is computed
+     from months so it reads the same in every view. */
+  // The display's own columns ARE the month domain when it shows months; only Quarters needs the
+  // span re-derived at month resolution (`/simplify` 2026-09-12 — the same sort was run twice).
+  const monthColumns = granularity === 'months' ? dateColumns : deriveColumns(dated, 'months').columns;
+  const monthKeys = monthColumns.map(c => c.key as MonthKey);
+  const monthlyRevenue: Record<string, number> = {};
+  const monthlyExpense: Record<string, number> = {};
+  /* ⚠ MONEY PAST A TRUNCATED WINDOW IS UNPLACED, NOT EARLY (§5: "a cash forecast must not pretend
+     those amounts arrive earlier"). The display columns fold a far date into the last column so
+     every row still adds to its Total; the WALK will not — a bill two years out cannot be the
+     reason the last visible month closes below zero. It rides the undated flow instead, so the
+     season net still equals revenue − expenses and no month claims it. `truncated` is what tells
+     the reader the series is incomplete, and it is what suppresses any room-to-spend claim. */
+  const inWindow = new Set<string>(monthKeys);
+  let farRevenue = 0;
+  let farExpense = 0;
+  const place = (side: 'in' | 'out', date: string | null, amount: number) => {
+    const month = monthKeyOf(date);
+    if (!month) return;
+    if (inWindow.has(month)) add(side === 'out' ? monthlyExpense : monthlyRevenue, month, amount);
+    else if (side === 'out') farExpense = r2(farExpense + amount);
+    else farRevenue = r2(farRevenue + amount);
+  };
+  for (const line of lines) {
+    const side = isFundingKind(normalizeBudgetLineKind(line.lineKind)) ? 'in' : 'out';
+    for (const p of line.periods) place(side, p.periodDate, p.amount);
+  }
+  if (dues) for (const i of dues.installments) place('in', i.date, i.amount);
+  if (trial) place('out', trial.date, trial.amount);
+  const flow = buildCashFlow(
+    monthKeys, monthlyRevenue, monthlyExpense, opts.openingBalance ?? 0,
+    {
+      moneyIn: r2((revenueCells[UNSCHEDULED] ?? 0) + farRevenue),
+      moneyOut: r2((costCells[UNSCHEDULED] ?? 0) + farExpense),
+    },
+  );
+  const balanceOpening: Record<string, number> = {};
+  const balanceNet: Record<string, number> = {};
+  const balanceClosing: Record<string, number> = {};
+  if (granularity === 'months') {
+    for (const row of flow.rows) {
+      balanceOpening[row.month] = row.opening;
+      balanceNet[row.month] = row.net;
+      balanceClosing[row.month] = row.running;
+    }
+  } else {
+    const byQuarter = new Map<string, typeof flow.rows>();
+    for (const row of flow.rows) {
+      const qk = quarterKeyOf(row.month);
+      if (!byQuarter.has(qk)) byQuarter.set(qk, []);
+      byQuarter.get(qk)!.push(row);
+    }
+    for (const [qk, qRows] of byQuarter) {
+      balanceOpening[qk] = qRows[0].opening;
+      balanceClosing[qk] = qRows[qRows.length - 1].running;
+      balanceNet[qk] = r2(qRows.reduce((s, r) => s + r.net, 0));
+    }
+  }
+  const balance: PeriodBalance = {
+    opening: balanceOpening,
+    net: balanceNet,
+    closing: balanceClosing,
+    seasonOpening: flow.opening,
+    seasonNet: flow.net,
+    seasonClosing: flow.ending,
+    openingUnset: opts.openingBalance == null,
+    undatedNet: (revenueCells[UNSCHEDULED] !== undefined || costCells[UNSCHEDULED] !== undefined)
+      ? r2((revenueCells[UNSCHEDULED] ?? 0) - (costCells[UNSCHEDULED] ?? 0))
+      : null,
+    months: flow.rows.map(row => ({ monthKey: row.month, opening: row.opening, net: row.net, closing: row.running })),
+    shortfall: flow.shortfall ? { monthKey: flow.shortfall.month, amount: flow.shortfall.amount } : null,
+    lowestClosing: flow.rows.length > 0 ? flow.rows.reduce((m, r) => Math.min(m, r.running), Infinity) : null,
+  };
+
+  /* Every cell that can carry a figure the wrong side of zero — the whole of the question the
+     legend under the table asks. Same deadband the cells themselves use. */
+  const hasNegative =
+    Object.values(balanceNet).some(n => n < -0.005) || flow.net < -0.005
+    || Object.values(balanceClosing).some(n => n < -0.005) || flow.ending < -0.005;
 
   /* ⚠ "No date yet", AND IT LEADS (owner ruling 2026-09-04, QA §133). Both halves were drift, and
      the NAME half was losing money: this view's export wrote "Unscheduled" as a heading and the
@@ -727,11 +910,12 @@ export function buildPeriodView(
     columns,
     yearBands: deriveYearBands(dateColumns),
     groups,
-    totals: { cells: totals, total: grandTotal },
-    costTotals: { cells: costCells, total: costTotal },
-    fundingTotals: hasFunding ? { cells: fundingCells, total: fundingTotal } : null,
+    installments,
+    trial: trialTotals,
+    expenseTotals: { cells: costCells, total: costTotal },
+    revenueTotals: hasRevenue ? { cells: revenueCells, total: revenueTotal } : null,
     estimateRows,
-    close,
+    balance,
     hasUnscheduled,
     hasNegative,
     truncated,

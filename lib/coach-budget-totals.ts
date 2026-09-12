@@ -290,6 +290,33 @@ export const PLAN_LADDER_LABEL = {
   linesSoFar:            'Lines so far',
   stillToItemize:        'Still to itemize',
   overEstimate:          'Over your estimate',
+
+  /**
+   * ⚠⚠ REVENUE-FIRST WORDS (owner decisions A–D, 2026-09-12; COACH_BUDGET_REVENUE_FIRST_PLAN.md).
+   * These REPLACE the ladder above on screen and in new exports — Revenue leads Expenses, dues
+   * join Revenue as a real line once scheduled, and the close is Opening/Net/Closing balance
+   * (Budget vs. Actual's own grammar) instead of the Costs-less-funding → installments →
+   * Shortfall (Buffer) ladder. The words above are NOT deleted: a file exported before this date
+   * still reads back clean, and `costsBand`/`fundingBand` are kept in the importer's band
+   * recognition (see `BAND_LABELS` in coach-budget-import.ts) so an old COSTS/FUNDING file still
+   * imports. Do not remove an old key here without checking that file first.
+   */
+  revenueBand:           'Revenue',
+  expensesBand:          'Expenses',
+  totalRevenue:          'Total revenue',
+  totalExpenses:         'Total expenses',
+  /* The same slice rule as `costsShown` / `fundingShown` above, in the new words: under the When
+     filter the List's two subtotals sum the rows on screen and may not wear the season's name. */
+  revenueShown:          'Revenue shown',
+  expensesShown:         'Expenses shown',
+  /** The pre-dues helper (decision C) — "dues", never "installments": there is no schedule yet,
+   *  only a total. Lives OFF the table (decision B), never inside the Revenue band. */
+  requiredDues:          'Required player dues',
+  openingBalance:        'Opening balance',
+  netForMonth:           'Net for the month',
+  netForQuarter:         'Net for the quarter',
+  seasonNet:             'Season net',
+  closingBalance:        'Closing balance',
 } as const;
 
 /** Anything with an amount and a kind — the plan's line shape, narrowed to what the maths needs,

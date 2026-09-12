@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -69,6 +69,26 @@ interface GenerateResult {
 interface HandSetPlayer { id: string; name: string }
 
 /**
+ * THE SCHEDULE BEING PREVIEWED, as the Budget plan reads it (owner decision D, 2026-09-12): the
+ * roster-wide total and dated instalments this run would WRITE, handed up so the plan can stand it
+ * in for the saved schedule — the installments row reads Draft, the balance walks it, and the
+ * before → after sentence comes back down as `draftNote`. Null = no preview standing.
+ *
+ * ⚠ IT IS WHAT THE RUN WRITES, NOT WHAT THE SEASON WILL HOLD. Families the coach is keeping as
+ * they are, and families the payout floor refuses, keep their existing schedules — which this
+ * sheet cannot see per player — so they are NOT in the draft and `kept` says how many. The
+ * sentence the plan prints names that gap rather than pretending the draft is the whole roster.
+ */
+export interface DuesDraft {
+  assessed: number;
+  installments: Array<{ date: string | null; amount: number }>;
+  /** Players this run would write a schedule for — what the draft is summed over. */
+  players: number;
+  /** Players left as they are (hand-set schedules being kept, or refused by the floor). */
+  kept: number;
+}
+
+/**
  * What the confirm step needs from the ALREADY_HAS_DUES 409 — the two things it actually says out
  * loud. The response also carries `playersWithDues` / `playersWithPayments`, which the old
  * count-based copy used and this screen no longer does; they are deliberately NOT stored, because
@@ -100,7 +120,7 @@ interface ReplaceFacts {
  *     total becomes an overpayment credit — all said out loud in the success state.
  */
 export default function GenerateInstallmentsModal({
-  orgSlug, teamId, budgetHref, duesHref, tabActive = true, onClose, onGenerated,
+  orgSlug, teamId, budgetHref, duesHref, tabActive = true, onClose, onGenerated, onDraft, draftNote,
 }: {
   orgSlug: string;
   teamId: string;
@@ -119,6 +139,12 @@ export default function GenerateInstallmentsModal({
   tabActive?: boolean;
   onClose: () => void;
   onGenerated: () => void | Promise<void>;
+  /** Hands the previewed schedule up to the plan (decision D) — called with null whenever the
+   *  preview is dropped and on unmount, so Cancel restores the saved plan. Pass a STABLE function
+   *  (a state setter): it is an effect dependency. */
+  onDraft?: (draft: DuesDraft | null) => void;
+  /** The plan's before → after sentence for the draft, rendered under the preview. */
+  draftNote?: ReactNode;
 }) {
   const [loading,        setLoading]        = useState(true);
   const [plan,           setPlan]           = useState<RepBudgetPlan | null>(null);
@@ -557,6 +583,37 @@ export default function GenerateInstallmentsModal({
       previewTeamTotal: teamTotal(rows),
     };
   }, [preview]);
+
+  /* ── THE DRAFT, HANDED UP (decision D) — summed over the rows this run would actually write,
+     which is `preview` minus `untouched` (the floor's refusals and any hand-set schedules being
+     kept). Per due date, so the plan can spread it exactly as it spreads the saved schedule. Null
+     the moment the preview is dropped, and on unmount: the plan's Cancel is this sheet closing.
+     ⚠ `untouchedKey` rather than the Set itself in the deps — a Set is a fresh object every
+     render, and the effect would re-fire (and re-walk the plan's balance) on every keystroke. */
+  const untouchedKey = [...untouched].sort().join(',');
+  useEffect(() => {
+    if (!onDraft) return;
+    if (!preview || preview.length === 0) { onDraft(null); return; }
+    const skip = new Set(untouchedKey ? untouchedKey.split(',') : []);
+    const written = preview.filter(row => !skip.has(row.playerId));
+    const byDate = new Map<string | null, number>();
+    let assessed = 0;
+    for (const row of written) {
+      for (const inst of row.installments) {
+        const key = inst.dueDate || null;
+        byDate.set(key, (byDate.get(key) ?? 0) + inst.amount);
+        assessed += inst.amount;
+      }
+    }
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    onDraft({
+      assessed: r2(assessed),
+      installments: [...byDate].map(([date, amount]) => ({ date, amount: r2(amount) })),
+      players: written.length,
+      kept: preview.length - written.length,
+    });
+  }, [preview, untouchedKey, onDraft]);
+  useEffect(() => () => { onDraft?.(null); }, [onDraft]);
 
   /* The itemized consequences, each counted over the players the run will actually reach.
 
@@ -1067,6 +1124,10 @@ export default function GenerateInstallmentsModal({
                     to be left behind on the form, so the last thing read before charging ten
                     families said nothing about a shortfall. */}
                 {reconcileLine(true)}
+                {/* The plan's own answer to this schedule — where the season closes and the first
+                    month below zero, read off the Budget tab's balance rows with this draft standing
+                    in for the saved schedule (decision D). Absent when the caller has no plan view. */}
+                {draftNote && <p className={styles.runCommon}>{draftNote}</p>}
 
                 {/* ── The players this run treats differently ────────────────────────────────
                     Paid money re-applying, credits being created, hand-set plans at risk, and the

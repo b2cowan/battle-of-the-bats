@@ -82,13 +82,8 @@ const STATEMENT_SOURCE: BudgetPlanExportSource = {
     }],
   }],
   lines: LINES as never,
-  totals: {
-    totalPlanned: 2500, fundedByPlayers: 0, costsLessFunding: -500, fundingLineCount: 2,
-    itemized: 2500, expectedFunding: 3000,
-    estimatedTotal: null, difference: 0, hasDifference: false, overPlanned: false,
-  },
-  duesAssessed: 0,
-  leftToFund: -500,
+  // The figures are the VIEW's — one calculation for the screen and the file (decisions A–D).
+  view: buildPeriodView(LINES, 'months'),
 };
 
 /** The vocabulary the coach's own picker would offer, both sides, through the shared builder. */
@@ -199,11 +194,43 @@ describe('the season plan, exported and imported back', () => {
     }
   });
 
+  it('⚠ with dues, an estimate and an opening balance, the file still comes back as its two lines — Player installments is never a category, and no balance row is a line', () => {
+    /* The revenue-first file (2026-09-12) prints Player installments INSIDE the Revenue band as a
+       non-indented row with a figure — exactly the shape the reader takes for a CATEGORY NAME — plus
+       Lines so far / Still to itemize, and Opening balance / Season net / Closing balance. Every one
+       is skipped by construction (`PLAN_LADDER_LABEL` feeds the skip set), so the money-in
+       category that follows the installments row is still filed under its own name. Pinned here
+       over the SAME producers, with the installments row carrying a NEGATIVE undated overshoot. */
+    const view = buildPeriodView(LINES, 'months', {
+      estimatedTotal: 3000, openingBalance: 100,
+      dues: { assessed: 1200, installments: [{ date: '2027-04-15', amount: 1500 }] },
+    });
+    const st = budgetPlanStatementRows({ ...STATEMENT_SOURCE, view, writtenOffClause: 'after $17.00 of adjustments' });
+    assert.ok(st.rows.some(r => r.item === 'Player installments'), 'the fixture must exercise the installments row');
+    assert.ok(st.rows.some(r => r.item === 'Still to itemize'), 'and the estimate rows');
+    for (const file of [csvFile(BUDGET_PLAN_COLUMNS, st.rows), xlsxFile(BUDGET_PLAN_COLUMNS, st.rows, st.kinds)]) {
+      assert.deepEqual(verdicts(reviewBudgetRows(rowsFromList(file), CATEGORIES, EXISTING)), EXPECTED);
+    }
+    const columns = budgetPeriodGridColumns(view);
+    const grid = budgetPeriodGridRows(view);
+    assert.equal(grid.rows.find(r => r.item === 'Player installments')?.unscheduled, -300, 'the overshoot is in the file, signed');
+    for (const file of [csvFile(columns, grid.rows), xlsxFile(columns, grid.rows, grid.kinds)]) {
+      const rows = rowsFromMonthGrid(file, 2027);
+      assert.deepEqual(verdicts(reviewBudgetRows(rows, CATEGORIES, EXISTING)), EXPECTED);
+      assert.deepEqual(
+        rows.map(r => [r.lineName, r.periods.map(p => p.month)]).sort((x, y) => String(x[0]).localeCompare(String(y[0]))),
+        [['Chocolate Sale', ['2027-05']], ['Entry Fees', ['2027-04']], ['Gate Revenue', ['2027-04']]],
+      );
+    }
+  });
   it('not one derived row survives as a line — no band, no subtotal, no ladder rung', () => {
     const names = rowsFromList(csvFile(BUDGET_PLAN_COLUMNS, statement.rows)).map(r => r.lineName);
     for (const derived of [
+      'REVENUE', 'Revenue', 'EXPENSES', 'Expenses', 'Total revenue', 'Total expenses',
+      'Opening balance', 'Season net', 'Closing balance', 'Lines so far', 'Still to itemize',
+      // The words an OLDER file carries — still skipped, still never a line (2026-09-12).
       'COSTS', 'Costs', 'FUNDING', 'Funding', 'Planned costs', 'Planned funding',
-      'Costs less funding', 'Player installments (estimated)', 'Lines so far', 'Still to itemize',
+      'Costs less funding', 'Player installments (estimated)',
     ]) {
       assert.ok(!names.includes(derived), `“${derived}” came back as a budget line`);
     }
@@ -242,5 +269,48 @@ describe('the season plan, exported and imported back', () => {
       ['out', 'update', 'x1'],
       ['in', 'update', 'x2'],
     ]);
+    /* ⚠ THE SAME FILE IN THE NEW WORDS (revenue-first, 2026-09-12): REVENUE / EXPENSES are what the
+       product writes now, and the older COSTS / FUNDING pair above is what every file on a coach's
+       disk says. Both must read, each row on its own side — the bands are read as a switch, and a
+       reader that knew only one pair would silently turn the other's money in into costs. */
+    const newWords: ParsedImportFile = {
+      headers: BUDGET_PLAN_COLUMNS.map(c => c.label),
+      rows: [
+        ['REVENUE', '', '', ''],
+        ['Fundraising', '', '5000', ''],
+        ['  — Grant', '', '5000', 'the cheque'],
+        ['Total revenue', '', '5000', ''],
+        ['EXPENSES', '', '', ''],
+        ['Fundraising', '', '250', ''],
+        ['  — Grant', '', '250', 'the application fee'],
+        ['Total expenses', '', '250', ''],
+        ['Opening balance', '', '100', ''],
+        ['Season net', '', '4750', ''],
+        ['Closing balance', '', '4850', ''],
+      ].map((cells, i) => ({
+        rowNumber: i + 2,
+        values: Object.fromEntries(BUDGET_PLAN_COLUMNS.map((c, j) => [c.label, cells[j]])),
+      })),
+    };
+    const reviewedNew = reviewBudgetRows(rowsFromList(newWords), categories, existing);
+    assert.deepEqual(reviewedNew.map(r => [r.direction, r.outcome, r.matchedLineId]), [
+      ['in', 'update', 'x2'],
+      ['out', 'update', 'x1'],
+    ]);
+    // A club that OWNS a category called "Revenue" keeps it: a category row carries a figure, a
+    // band heading never does, and that is what tells them apart (the bare-row clause).
+    const ownRevenue: ParsedImportFile = {
+      headers: BUDGET_PLAN_COLUMNS.map(c => c.label),
+      rows: [
+        ['EXPENSES', '', '', ''],
+        ['Revenue', '', '80', ''],
+        ['  — Bank fees', '', '80', ''],
+      ].map((cells, i) => ({
+        rowNumber: i + 2,
+        values: Object.fromEntries(BUDGET_PLAN_COLUMNS.map((c, j) => [c.label, cells[j]])),
+      })),
+    };
+    const own = reviewBudgetRows(rowsFromList(ownRevenue), toKnownCategories([]), []);
+    assert.deepEqual(own.map(r => [r.categoryName, r.lineName, r.direction]), [['Revenue', 'Bank fees', 'out']]);
   });
 });

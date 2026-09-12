@@ -501,12 +501,16 @@ export default function BudgetImportSheet({
                               ⚠ THE WORD IS THE BAND'S OWN, from `PLAN_LADDER_LABEL` — the same
                               record the reader matches the band row against, and the same word the
                               plan screen and both plan files print above these lines. This chip
-                              answers "which band of your file did this row come from?", so the
+                              answers "which side of the plan does this row land on?", so the
                               band's name is the honest answer as well as the one that cannot drift.
-                              Costs are the ordinary case and say nothing, exactly as the file's own
-                              Costs band is the one a sheet falls back to. */}
+                              ⚠ REVENUE, the band's word since revenue-first (2026-09-12) — an older
+                              file says FUNDING and the reader still accepts it, but the chip names
+                              where the row is GOING, and that is the plan as it prints today
+                              (`/review`, 2026-09-12: this chip was the one surface left saying the
+                              retired word). Expenses are the ordinary case and say nothing, exactly
+                              as a sheet with no bands falls back to money out. */}
                           {row.direction === 'in' && (
-                            <span className={styles.cellMeta}>{PLAN_LADDER_LABEL.fundingBand}</span>
+                            <span className={styles.cellMeta}>{PLAN_LADDER_LABEL.revenueBand}</span>
                           )}
                         </td>
                         <td className={styles.numCol}>

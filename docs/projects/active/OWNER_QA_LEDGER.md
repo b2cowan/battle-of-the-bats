@@ -21110,7 +21110,7 @@ vocabulary is held apart one list per side (mig 248's rule, made structural), a 
 lines **only on its own side**, an invented money-in word is created with the **shelf's** income
 source (mig 285) and the line's kind is **derived** through `budgetLineKindForItem` rather than
 defaulted — the insert wrote no `line_kind` at all, which was harmless only while every row was a
-cost. The preview marks a money-in row **Funding** — the band's own name, read from
+cost. The preview marks a money-in row **Funding** (⚠ **Revenue** since 2026-09-12 — revenue-first renamed the band on the plan and in both files, and §173's `/review` found this chip still saying the retired word; the walk's three chip steps were re-worded the same day) — the band's own name, read from
 `PLAN_LADDER_LABEL`, which is the record the reader matches the band row against and the word the
 plan screen and both plan files print over those lines — and follows the row's side in its
 type-ahead. ⚠ It read **Money in** (`SIDE_FLOW_SHORT`) until the commit, and the reason it does not
@@ -21895,3 +21895,103 @@ link; a sequence guard on the report's Try again; the fixture's recap practice m
 `b5f37207` (/docs: units changed, what an old session shows, a past season is read-only, the three
 Practice review labels). ⚠ Walk notes: the recap practice is now **May 14**; the probe session
 opens on **60-yd sprint** (the first test it holds rows for). Owner walk still owed.
+
+---
+
+## §173 · Revenue first, balances carried forward — the Budget plan reads Revenue → Expenses and closes on Opening / Net / Closing balance in both views and both files, a Required-player-dues helper sits under the table before dues exist, and two previews (an extra expense; the Set-dues sheet's draft) show before → after — built on dev 2026-09-12 (uncommitted), **no migration**, awaiting QA · hub artifact `88741405` (QA Walk tab, 8 parts) · plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md` · §164 F1's follow-up
+
+**What you asked for (§164 F1), and where it went.** Revenue above Expenses on every reading of the plan,
+a required/expected-installments helper before dues are set, installments inside Revenue once set, and
+opening/running balances that reveal shortages and the timing of possible extra spending. All four are
+built, to the approved mockup (round of 2026-09-12, decisions A–D) with one deviation you ruled the same
+day: **the tiles wear the table's words** — *Total revenue · Total expenses · Closing balance* — not the
+mockup's *Planned revenue / Planned expenses / Projected season closing*, because a tile is the table's
+subtotal (2026-09-08) and one name means one number.
+
+### What you will see
+
+| Where | Before | Now |
+|---|---|---|
+| **The card** (both views) | Planned costs · Planned funding (hidden when none) · Player installments with an Estimated/Scheduled chip and a buffer-or-shortfall caption | **Total revenue** ("Includes player installments, after $… of adjustments" / "Player dues not set · set dues for all players") · **Total expenses** (the estimate, red caption when the lines outgrow it, the Edit door) · **Closing balance** (red below zero; caption names the opening and "includes the No date yet amounts"). |
+| **Under the card** | — | **One sentence**: *Timing incomplete* / *Over your estimate by …* / *Before player dues · $… still needs funding* / *<Month> closes ($…) below zero* / *Every month ends at or above zero · lowest closing $…* — the mockup's precedence, a rule in the tone's colour. |
+| **The List** | COSTS → Planned costs; FUNDING → Planned funding; Costs less funding → Player installments → Short of covering the plan / Planned buffer | **REVENUE** (Player installments first, tagged Scheduled, in green; the money-in categories) → **Total revenue**; **EXPENSES** (categories, Lines so far, Over your estimate in red) → **Total expenses**; **Opening balance / Season net / Closing balance**. Tap the Player installments row → the Set-dues sheet (the row is the door to the dues flow). |
+| **By period** | The same ladder, its brackets GREEN ("money landing ahead of the bills") | The same bands; **Opening balance / Net for the month (quarter) / Closing balance** per column — opening + net = closing in every dated column, each month opening on the last close, dashes under No date yet on Opening/Closing, the Total column the season's endpoints. A negative is **RED** in brackets; the green bracket is gone with the row it decorated. Quarters open on their first month and close on their last; the sentence still names the MONTH below zero. |
+| **Notes under the table** | The estimate note; the bracket legend (green reading); "Set dues and they appear here" | Where the opening balance comes from (or "No opening balance is set — the balance rows assume $0"); the write-off clause; the No date yet note naming the **last dated closing beside the season closing**; the legend rewritten for Net and Closing balance (only when a bracket is on screen); the endpoints note; the quarters note; the truncated-range note. |
+| **Before dues exist** | An estimated Player installments row in the ladder + a "Ready to assign dues?" band at the foot of the page | **Required player dues · $…** under the table on both views — expenses less other revenue, never below zero, "≈ $… per player ÷ roster · Dates not set", the Set-dues door (write coaches only). One figure, one door, one card; it never enters revenue and never reaches a file. |
+| **"Could we add another expense?"** | — | Under the plan on both views: amount + month (defaults to the current month when the plan reaches it; No date yet last) → an **Extra expense · Preview** row at the foot of Expenses, every later balance moves, the sentence states season closing before → after and the first month below zero. Consumes a *Still to itemize* allowance first (decision A: Total expenses stays the estimate). *Clear preview* removes it; a When filter clears it; a save through Add Line reloads and clears it. Declines to claim room while the estimate has an undated remainder, lines are over the estimate, dues are unset, or the range is truncated. |
+| **The Set-dues sheet** | Its own preview only | Under its preview sentence: **"On the plan: season closing $… → $…; <month> closes ($…)"**, naming schedules being kept as not in the draft. Behind the sheet the row reads **Draft**, the tiles say "(draft)" / "with the draft schedule". Cancel restores the saved plan. |
+| **Files** | COSTS/FUNDING bands, the ladder | REVENUE (Player installments first, its note carrying the write-off clause) → Total revenue; EXPENSES → Total expenses; Opening balance / Season net (Net for the month/quarter per column on the grid file) / Closing balance ("Includes the No date yet amounts"). An opening never set is blank with a note, never 0. A preview never reaches a file. |
+| **Import** | Read COSTS/FUNDING only | Reads REVENUE/EXPENSES **and** still COSTS/FUNDING; a club owning a category called "Revenue" keeps it (a category row carries a figure, a band heading is bare). Every new derived row is skipped by construction. |
+| **Help** | The §164 wording (three closing rows, the green bracket) | Money guide rewritten: the three tiles, Revenue → Expenses, the balance rows, the helper, both previews, the brackets rule; new search terms. |
+
+### Not changed
+
+The Add Line form still asks "Money coming in / Money the team spends" (two registers, never mixed). The
+estimate rule (decision A) — Lines so far / Over your estimate render exactly as they did. Category folds,
+the When filter, the month pager, the Manage categories & items door, the PDF-is-the-statement rule, the
+Player Dues tab, Budget vs. Actual. No demo sentence names the plan's rows and no tour step stops on the
+plan (re-read recorded, not assumed).
+
+### Verification
+
+typecheck clean on every touched file (the tree's other errors are the family-access and Development
+sessions'). **3,639 unit tests, 0 failures** — the view suite rewritten to the plan's §8 cases (both estimate
+branches, the negative line-less No date yet cell, a negative undated dues remainder, a quarter hiding a
+negative month, `seasonNet === revenue − expenses` to the cent with undated money, opening unset vs 0 vs
+negative, a truncated range, the trial inside and past an allowance, the $1,100 December shortage); the
+export tests rebuilt **from the real producer** over a view of the same lines; the round-trip test runs an
+old-band and a new-band file and a club's own "Revenue" category; the sign guard **revised, not deleted** —
+it now pins the balance rows to the bracket formatter and forbids the retired green class; the tile-roster
+guard updated to the ruled tiles. `verify:changed`'s gates green through spelling, contrast, purity,
+dictionary, export catalog, root files, marketing shots, demos (the chain's one red — schema parity — is
+the family-access session's columns on prod and not dev, not this project, which has no migration).
+`check:money-report`, `check:pdf` (the plan's exhibit now built from the view). `check:layout` on the three
+budget screens at 361/390/768/1440: green after the trial controls took the 44px floor; the one 768 finding
+is the concurrent Categories & Items door's button, already recorded in §164 as not laundered.
+**Rendered text probe on the UAT fixture** (not a visual check): both views, the dated and undated trial
+(Lines so far / Over your estimate moving, Total expenses held at the estimate), the Set-dues draft from the
+plan's own row and Cancel restoring it, and — by intercepting the plan response, since the fixture has
+dues — the pre-dues helper, "Before player dues", "None carried" and the no-room sentence.
+
+### `/simplify` — 2026-09-12, four lenses, nine cleanups applied, two declined
+
+Nothing on screen changed (re-probed rendered, both views, after). **Applied:** the two derived rows
+(Player installments, the trial) are now their own fields on the view rather than synthetic groups
+smuggled into the category list — three call sites were recognising them by a sentinel key and the
+export carried a filter for a case that could not occur; one sort instead of two; the balance walk
+reuses the month columns instead of re-deriving them; the lowest closing joins the balance beside the
+shortfall it is the sibling of; the two views' three shared notes (opening, write-off clause,
+brackets legend) are one renderer parameterised by the view's words; the "September closes ($…)"
+clause and the "every month stays at or above zero" fallback are one helper used by the status line,
+the trial sentence and the sheet's draft note; the Scheduled/Draft tag is one helper; the two empty-
+band prompts are constants; "first month at or after today" is one helper for the grid's opening
+window and the trial's default month; the export re-uses the view the page already holds instead of
+walking a fresh one; the two views are memoised so typing in the trial box no longer re-walks the plan.
+**Declined:** the source-text guard on the balance formatter (deliberate — the only way to pin which
+formatter the JSX reaches for; its header says why), and one that is YOURS to rule (below).
+
+### Three things worth your eye on the walk
+
+0. **Money past the two-year window (a plan longer than 24 months).** Today the table folds it into
+   the LAST visible column (the rule since §133) while the new balance rows leave it out of every
+   month and count it only in the season Total (plan §5: "a cash forecast must not pretend those
+   amounts arrive earlier") — so on a >24-month plan the same dollar reads as "in the last month" on
+   the row and "not in that month" on the balance beneath it. The general fix is to file it under
+   **No date yet** on the row too (it is money the grid cannot place), which changes the §133-era
+   display rule and the truncated note. A ruling, not a cleanup: say "No date yet" on Part C and it
+   is a one-line change in the view plus its test; say "leave it" and the note stays as written.
+
+
+1. **The tiles' captions carry what the mockup's labels said** — "includes the No date yet amounts",
+   "with your expense preview", "with the draft schedule". If a caption reads as clutter, that is the
+   place to trim; the labels are settled.
+2. **The Player installments row is now a door** (to the Set-dues sheet). It is the only place on the
+   Budget tab that reaches the dues flow once dues exist — the old "set dues" link on the shortfall
+   caption went with the caption. If you would rather it went to the Player Dues tab, say so on Part B.
+
+### Owed / next
+
+The walk (hub QA Walk tab, Parts A–H). Then `/simplify` (the trial-on-the-view and draft-handed-up shapes are
+exactly its brief) and `/review` at the high-risk tier — both offered, neither run yet. Commit on your word, in a
+private index (the shared tree carries the awards, staff-access, Development and family-access sessions'
+edits). Restart the dev server before you walk it — hot reload carried the change, but shared modules moved.

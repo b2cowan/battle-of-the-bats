@@ -640,6 +640,22 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              month by month", which is the same question step 5's variance moment already asks in
              the language a prospect arrives with. Adding a clause would spend the per-step cap on
              a second telling. Revisit if the plan grid ever grows balances. */
+      /* ⚠ RE-READ FOR REVENUE FIRST, BALANCES CARRIED FORWARD (2026-09-12 — the Budget plan now
+         reads Revenue above Expenses, Player installments is a revenue ROW, the plan closes on
+         Opening / Net / Closing balance in both views and both files, a Required-player-dues helper
+         sits under the table before dues exist, and two transient previews — an extra expense, and
+         the Set-dues sheet's draft — show before → after), per CLAUDE.md's two questions:
+           · *Still true?* Yes — grepped, not assumed: no dock line or tour step names Planned
+             costs, Planned funding, Costs less funding, Shortfall (Buffer) or the plan's tiles, and
+             no step stops on the Budget PLAN tab (the previous two notes' reasoning holds). The
+             sentence that DOES name a balance — step 5's "closing balance (380)" — is Budget vs.
+             Actual's, whose rows did not move.
+           · *Should a moment show it?* This is the one the last note said to revisit, and the
+             honest answer is still no clause: the seeded world renders the new close by itself one
+             tab from the off-season books moment, and step 5 already tells the "is the plan
+             covered, month by month" story in a prospect's words. The two previews are a coach's
+             own what-ifs, transient by design — a demo cannot seed one. If the owner wants the
+             plan's balance narrated, SWAP a clause on step 5; flagged at Owner QA §173. */
       /* ⚠ RE-READ FOR THE MONEY BANNER STANDARD (2026-09-03 — every Money tab's summary rebuilt as
          one shared band; on Player Dues both table footers retired and the Collection schedule
          became a foldable timeline in the header), per CLAUDE.md's two questions:

@@ -23,10 +23,11 @@ import {
 } from './export';
 import { duesStatusLabel } from './dues-status';
 import { duesLadderTotals, type DuesLadder } from './dues-payments';
-import { PLAN_LADDER_LABEL, isFundingKind, type BudgetTotals } from './coach-budget-totals';
+import { PLAN_LADDER_LABEL, isFundingKind } from './coach-budget-totals';
 import { categoryGroupOf, groupByCategory, groupByItem } from './coach-budget-rollup';
 import {
-  whenSummary, whenSummaryText, type PeriodView, type PeriodTotals,
+  whenSummary, whenSummaryText, NO_DATE_LABEL,
+  type PeriodView, type PeriodTotals,
 } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
 import { planColumnLabel, netRowLabel, type CompareBasis } from './coach-budget-basis';
@@ -168,17 +169,15 @@ export interface BudgetPlanExportSource {
   /** EVERY line — the money-in sections are derived here by kind, exactly as the list derives
    *  its own. Cost lines in it are ignored (they arrive via `groups`). */
   lines: RepBudgetLineWithPeriods[];
-  /** The screen's closing figures, from `computeBudgetTotals` — never re-derived here. The ladder
-   *  reads more of them than the old close did: both subtotals and the estimate rows (2026-09-08). */
-  totals: Pick<BudgetTotals,
-    'totalPlanned' | 'fundedByPlayers' | 'costsLessFunding' | 'fundingLineCount' | 'itemized' | 'expectedFunding'
-    | 'estimatedTotal' | 'difference' | 'hasDifference' | 'overPlanned'>;
-  /** The Dues tab's assessed total, echoed on the plan as the players' side — net of anything
-   *  written off it (owner ruling §160 Part F2, 2026-09-11). */
-  duesAssessed: number;
-  /** plan − funding − dues, signed exactly as the screen computes it. */
-  leftToFund: number;
-  /** "after $17.00 of adjustments" etc. — the same clause the screen's tile and closing row
+  /**
+   * The plan as ONE calculation (decisions A–D, 2026-09-12): the subtotals, the estimate rows, the
+   * installments group and the balance all come from here — the same object the screen's List
+   * reads. ⚠ Built from the SAVED plan by the caller (no trial, no draft schedule): a file is a
+   * record, and a preview is not one. Granularity is irrelevant to the season figures this file
+   * prints.
+   */
+  view: PeriodView;
+  /** "after $17.00 of adjustments" etc. — the same clause the screen's tile and installments row
    *  already state beside this figure, so the downloaded file never shows the net number under a
    *  note that reads as if it were still the gross schedule total. Absent/null on the ordinary
    *  season that has never written anything off. */
@@ -211,11 +210,17 @@ function whenText(
  * The plan's STATEMENT file — the List view, and every PDF (a period grid does not fit paper, the
  * same ruling that shapes Budget vs. Actual's PDF).
  *
- * The screen's shape, band for band (owner ruling 2026-09-08): COSTS → category rows → item rows
- * (same-item lines summed) → per-line sub-rows named by their notes → the estimate rows when one
- * is set and differs → Planned costs; FUNDING → one section per CATEGORY → Planned funding; then the
- * close as the screen prints it — Costs less funding, Player installments, Short/buffer — or the
- * single estimated-installments row before dues exist.
+ * The screen's shape, band for band (owner ruling 2026-09-08; the order and the close by decisions
+ * A–D, 2026-09-12): REVENUE → Player installments once scheduled → one section per money-in
+ * CATEGORY → Total revenue; EXPENSES → category rows → item rows (same-item lines summed) → the
+ * estimate rows when one is set and differs → Total expenses; then the balance the screen closes
+ * on — Opening balance, Season net, Closing balance.
+ *
+ * ⚠ THE FIGURES ARE THE VIEW'S, never re-derived here and never `computeBudgetTotals`'s: the
+ * screen's List reads its subtotals and its close off `buildPeriodView` (one calculation, two
+ * renderers), and a file that took them from anywhere else is the two-numbers-one-name defect
+ * §164 closed. The caller builds the view from the SAVED plan — a trial or a draft schedule is
+ * a thing the coach is only considering and never reaches a file.
  */
 export function budgetPlanStatementRows(
   src: BudgetPlanExportSource,
@@ -224,18 +229,57 @@ export function budgetPlanStatementRows(
   const kinds: (MoneyRowKind | undefined)[] = [];
   const push = (row: ExportRow, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
   const L = PLAN_LADDER_LABEL;
-  const { totals } = src;
-  const hasFunding = totals.fundingLineCount > 0;
+  const { view } = src;
+  const { balance } = view;
   const round2 = (n: number) => Math.round(n * 100) / 100;
+  const { installments } = view;
+  const fundingLines = src.lines.filter(l => isFundingKind(l.lineKind));
 
-  // ── COSTS: the band, its categories, the estimate rows, the subtotal ─────────────────────────
+  // ── REVENUE: the band, Player installments, one section per CATEGORY, the subtotal ────────────
   // A band heading carries no figures (the screen's own rule). The subtotal wears the tile's exact
-  // name — the tiles are the table's subtotals (owner ruling 2026-09-08). A funding-only plan has
-  // no costs to head, so the band waits for one, as it does on screen.
+  // name — the tiles are the table's subtotals (owner ruling 2026-09-08). The band always prints,
+  // as it always draws on screen: a costs-only plan's file says its revenue is $0 rather than
+  // starting at Expenses.
   // ⚠ Band labels are UPPERCASE in the file — the statement export's own convention (REVENUE /
   // EXPENSES), and the only signal a PDF has that a row is a heading: the PDF path never reads kinds.
-  const hasCosts = src.groups.length > 0 || totals.estimatedTotal != null;
-  if (hasCosts) push({ item: L.costsBand.toUpperCase(), schedule: '', planned: '', notes: '' }, 'section');
+  push({ item: L.revenueBand.toUpperCase(), schedule: '', planned: '', notes: '' }, 'section');
+  if (installments) {
+    /* The plan's own figure — net of write-offs, the same total the Dues tile prints — with the
+       clause that says so, so the downloaded file never shows the net number under a note that
+       reads as if it were still the gross schedule total (owner ruling §160 Part F2). */
+    push({
+      item: L.installments,
+      schedule: '',
+      planned: installments.total,
+      notes: src.writtenOffClause
+        ? `What players are scheduled to pay, ${src.writtenOffClause}`
+        : 'What players are scheduled to pay',
+    }, 'category');
+  }
+  // Positive figures under headings that say the direction, exactly as the list prints them.
+  // ⚠ Grouped by category, not by stored kind (owner ruling 2026-09-09) — the same identity the
+  // cost half of this file and the Statement already use, through the rollup's one helper.
+  for (const { ref, items: kindLines } of groupByCategory(fundingLines, categoryGroupOf, src.categoryOrder)) {
+    const sectionTotal = round2(kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0));
+    push({ item: ref.name, schedule: '', planned: sectionTotal, notes: '' }, 'category');
+    /* ⚠ ONE ROW PER WORD, AND NOTHING BENEATH IT (owner ruling 2026-09-09, migration 286). A
+       money-in word carries one line and a word-LESS money-in line is its own group, so every
+       group here holds exactly one line — `groupByItem` is still what ORDERS them and what keeps
+       this file and the plan list from ever saying different things. */
+    for (const item of groupByItem(kindLines)) {
+      const only = item.lines[0];
+      push({
+        item: `  — ${item.itemName}`,
+        schedule: whenText(only.periods ?? [], only.totalAmount),
+        planned: item.total,
+        notes: only.notes ?? '',
+      }, 'item');
+    }
+  }
+  push({ item: L.totalRevenue, schedule: '', planned: view.revenueTotals?.total ?? 0, notes: '' }, 'total');
+
+  // ── EXPENSES: the band, its categories, the estimate rows, the subtotal ──────────────────────
+  push({ item: L.expensesBand.toUpperCase(), schedule: '', planned: '', notes: '' }, 'section');
 
   for (const cat of src.groups) {
     push({ item: cat.categoryName, schedule: '', planned: cat.total, notes: '' }, 'category');
@@ -271,94 +315,39 @@ export function budgetPlanStatementRows(
   }
 
   // A season estimate that differs from the lines: the gap as two rows where the sum is, rather
-  // than only in a tile caption. "Planned costs" stays the estimate — the number the plan uses.
+  // than only in a tile caption. "Total expenses" stays the estimate — the number the plan uses.
   // ⚠ `plain`, never `item` — see ROW_KIND_STYLE. And the re-importer skips these labels outright
   // (lib/coach-budget-import.ts DERIVED_ROW_LABELS reads them from PLAN_LADDER_LABEL).
-  if (totals.hasDifference) {
-    push({ item: L.linesSoFar, schedule: '', planned: totals.itemized, notes: '' }, 'plain');
+  if (view.estimateRows) {
+    const over = view.estimateRows.remainder.total < 0;
+    push({ item: L.linesSoFar, schedule: '', planned: view.estimateRows.linesSoFar.total, notes: '' }, 'plain');
     push({
-      item: totals.overPlanned ? L.overEstimate : L.stillToItemize,
+      item: over ? L.overEstimate : L.stillToItemize,
       schedule: '',
-      planned: Math.abs(totals.difference),
-      notes: `Your estimate is ${money(totals.estimatedTotal ?? 0)}`,
+      planned: Math.abs(view.estimateRows.remainder.total),
+      notes: `Your estimate is ${money(view.expenseTotals.total)}`,
     }, 'plain');
   }
-  if (hasCosts) push({ item: L.plannedCosts, schedule: '', planned: totals.totalPlanned, notes: '' }, 'total');
+  push({ item: L.totalExpenses, schedule: '', planned: view.expenseTotals.total, notes: '' }, 'total');
 
-  // ── FUNDING: the band, one section per CATEGORY in the picker's order, the subtotal ──────────
-  // Positive figures under headings that say the direction, exactly as the list prints them.
-  // ⚠ Grouped by category, not by stored kind (owner ruling 2026-09-09) — the same identity the
-  // cost half of this file and the Statement already use, through the rollup's one helper.
-  if (hasFunding) {
-    push({ item: L.fundingBand.toUpperCase(), schedule: '', planned: '', notes: '' }, 'section');
-    const fundingLines = src.lines.filter(l => isFundingKind(l.lineKind));
-    for (const { ref, items: kindLines } of groupByCategory(fundingLines, categoryGroupOf, src.categoryOrder)) {
-      const sectionTotal = round2(kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0));
-      push({ item: ref.name, schedule: '', planned: sectionTotal, notes: '' }, 'category');
-      /* ⚠⚠ ONE ROW PER WORD, MERGED (owner ruling 2026-09-09) — and this loop carried a defect of
-         its own, not merely an inconsistency. It printed one row per LINE while naming each by its
-         ITEM, so two money-in lines filed against one word exported as two rows with the SAME name,
-         the same schedule column and nothing to tell them apart. The cost half of this file has
-         summed them into one openable row since the 2026-08-15 ruling; `groupByItem` is that rule,
-         shared with the plan list so the file and the screen cannot say different things. */
-      /* ⚠ ONE ROW PER WORD, AND NOTHING BENEATH IT (owner ruling 2026-09-09, migration 286). A
-         money-in word carries one line and a word-LESS money-in line is its own group, so every
-         group here holds exactly one line — `groupByItem` is still what ORDERS them and what keeps
-         this file and the plan list from ever saying different things. */
-      for (const item of groupByItem(kindLines)) {
-        const only = item.lines[0];
-        push({
-          item: `  — ${item.itemName}`,
-          schedule: whenText(only.periods ?? [], only.totalAmount),
-          planned: item.total,
-          notes: only.notes ?? '',
-        }, 'item');
-      }
-    }
-    push({ item: L.plannedFunding, schedule: '', planned: totals.expectedFunding, notes: '' }, 'total');
-  }
-
-  // ── THE CLOSE: the ladder once dues exist, one estimated row before ──────────────────────────
-  if (src.duesAssessed > 0) {
-    if (hasFunding) {
-      // ⚠ THE SIGNED FIGURE, following the screen (owner ruling 2026-09-09). This printed
-      // `fundedByPlayers` — floored at zero — which matched the screen while the screen was also
-      // flooring, and both were wrong for a row that states a subtraction: an over-funded plan read
-      // $0.00 in the file and a bracketed negative on the By-period grid. The floor stays on the
-      // estimated-installments row below, where it belongs.
-      push({
-        item: L.costsLessFunding,
-        schedule: '',
-        planned: totals.costsLessFunding,
-        notes: L.costsLessFundingNote,
-      }, 'total');
-    }
-    push({
-      item: L.installments,
-      schedule: '',
-      planned: src.duesAssessed,
-      notes: src.writtenOffClause
-        ? `What players are scheduled to pay, ${src.writtenOffClause}`
-        : 'What players are scheduled to pay',
-    }, 'total');
-    // The screen's own residual row, absent when the schedules match the plan ($0.00 says
-    // nothing). Absolute, as the screen prints it — the label carries the direction.
-    if (Math.abs(src.leftToFund) >= 0.005) {
-      push({
-        item: src.leftToFund < 0 ? L.buffer : L.shortOfPlan,
-        schedule: '',
-        planned: round2(Math.abs(src.leftToFund)),
-        notes: '',
-      }, 'total');
-    }
-  } else {
-    push({
-      item: L.installmentsEstimated,
-      schedule: '',
-      planned: totals.fundedByPlayers,
-      notes: `${hasFunding ? L.costsLessFunding : L.plannedCosts}, until dues are set`,
-    }, 'total');
-  }
+  // ── THE CLOSE: the balance, as the screen prints it ─────────────────────────────────────────
+  // Signed, exactly as the screen's rows are (a bracketed negative in the PDF, a negative number in
+  // the sheet). An opening never carried is stated in the notes rather than printed as $0.00 —
+  // NULL ≠ ZERO. The closing's note says the one thing a reader checking the arithmetic against a
+  // dated month will otherwise trip on (plan §5).
+  push({
+    item: L.openingBalance,
+    schedule: '',
+    planned: balance.openingUnset ? '' : balance.seasonOpening,
+    notes: balance.openingUnset ? 'No opening balance is set — the balance assumes $0' : '',
+  }, 'total');
+  push({ item: L.seasonNet, schedule: '', planned: balance.seasonNet, notes: '' }, 'total');
+  push({
+    item: L.closingBalance,
+    schedule: '',
+    planned: balance.seasonClosing,
+    notes: view.hasUnscheduled ? `Includes the ${NO_DATE_LABEL} amounts` : '',
+  }, 'total');
 
   return { rows, kinds };
 }
@@ -399,10 +388,12 @@ function periodColumnKey(col: PeriodView['columns'][number]): string {
 }
 
 /**
- * The By-period file's rows — the grid exactly as rendered (owner ruling 2026-09-08): the COSTS
- * band, its category rows and merged item rows, Planned costs; the FUNDING band, its kind rows
- * POSITIVE the way the screen paints them, Planned funding; and the screen's own closing
- * subtraction. With no money in, Planned costs IS the close.
+ * The By-period file's rows — the grid exactly as rendered (owner ruling 2026-09-08; the order and
+ * the close by decisions A–D, 2026-09-12): the REVENUE band, Player installments once scheduled,
+ * the money-in category rows POSITIVE the way the screen paints them, Total revenue; the EXPENSES
+ * band, its category rows and merged item rows, the estimate rows, Total expenses; then the three
+ * balance rows the screen closes on. The trial group never reaches this function — the caller
+ * builds the file's view from the saved plan.
  */
 export function budgetPeriodGridRows(
   view: PeriodView,
@@ -411,10 +402,11 @@ export function budgetPeriodGridRows(
   const kinds: (MoneyRowKind | undefined)[] = [];
   const push = (row: ExportRow, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
   const L = PLAN_LADDER_LABEL;
+  const { balance } = view;
 
-  /** Money-in cells read POSITIVE (owner 2026-08-13) — the section heading says the direction,
-   *  on screen and therefore in the file. The closing row keeps the signed view totals: it is a
-   *  real subtraction. */
+  /** Money-in GROUP cells read POSITIVE (owner 2026-08-13) — the section heading says the
+   *  direction, on screen and therefore in the file. `revenueTotals` is already positive in the
+   *  view and takes the `false` path; the balance rows keep their sign: they are balances. */
   const cell = (funding: boolean, n: number | undefined): number | string =>
     n == null ? '' : funding ? Math.abs(n) : n;
 
@@ -425,11 +417,23 @@ export function budgetPeriodGridRows(
     row.total = '';
     push(row, 'section');
   };
-  /** A subtotal or the close, from a per-column total the view built in the same pass. */
-  const totalRow = (label: string, funding: boolean, t: PeriodTotals) => {
+  /** A subtotal, from a per-column total the view built in the same pass. */
+  const totalRow = (label: string, t: PeriodTotals) => {
     const row: ExportRow = { item: label };
-    for (const col of view.columns) row[periodColumnKey(col)] = cell(funding, t.cells[col.key]);
-    row.total = cell(funding, t.total);
+    for (const col of view.columns) row[periodColumnKey(col)] = cell(false, t.cells[col.key]);
+    row.total = cell(false, t.total);
+    push(row, 'total');
+  };
+  /** A balance row: per dated column from the walk, a dash-equivalent blank in No date yet for
+   *  Opening and Closing (a balance is a moment), the undated net on Net; Total = the season's. */
+  const balanceRow = (label: string, byColumn: Record<string, number>, season: number | string, undated: number | null) => {
+    const row: ExportRow = { item: label };
+    for (const col of view.columns) {
+      row[periodColumnKey(col)] = col.unscheduled
+        ? (undated == null ? '' : undated)
+        : cell(false, byColumn[col.key]);
+    }
+    row.total = season;
     push(row, 'total');
   };
   const groupRows = (group: PeriodView['groups'][number]) => {
@@ -450,50 +454,53 @@ export function budgetPeriodGridRows(
     }
   };
 
-  // The grid's shape, band for band (owner ruling 2026-09-08): COSTS → categories → Planned costs;
-  // FUNDING → kinds → Planned funding → Costs less funding. With no money in, Planned costs IS the
-  // close, so the old "Total planned budget" footer has nothing left to say.
+  // The grid's shape, band for band. The Revenue band always prints, as it always draws on screen.
+  const revenueGroups = view.groups.filter(g => isFundingKind(g.lineKind));
   const costGroups = view.groups.filter(g => !isFundingKind(g.lineKind));
-  const fundingGroups = view.groups.filter(g => isFundingKind(g.lineKind));
-  // ⚠ ONE NAME, ONE NUMBER: this grid spreads LINES, and an estimate has no dates. When an estimate
-  // is set and differs, the cost subtotal is the lines' sum and reads "Lines so far" — exactly what
-  // the List calls that same figure — never "Planned costs", which is the estimate there.
-  if (costGroups.length > 0) {
-    band(L.costsBand.toUpperCase());
-    costGroups.forEach(groupRows);
-    /* ⚠ The estimate's un-itemized remainder is a REAL ROW now, in the No-date-yet column, so this
-       subtotal is the estimate and keeps its own name in every state (owner ruling 2026-09-09).
-       It used to read "Lines so far" whenever an estimate differed — see the note on the view's
-       `costTotals`. The two rows are the List's own, verbatim; the file prints them indented the
-       way it indents a line under its category. */
-    if (view.estimateRows) {
-      totalRow(`  — ${L.linesSoFar}`, false, view.estimateRows.linesSoFar);
-      totalRow(
-        `  — ${view.estimateRows.remainder.total < 0 ? L.overEstimate : L.stillToItemize}`,
-        false, view.estimateRows.remainder,
-      );
-    }
-    totalRow(L.plannedCosts, false, view.costTotals);
+  band(L.revenueBand.toUpperCase());
+  /* Player installments first, as on screen. ⚠ SIGNED, not abs()'d like an ordinary money-in row
+     (§164 /review finding #2): its undated cell holds what the dated instalments do not cover,
+     which is negative whenever a schedule was lowered after its instalments existed; abs()ing it
+     printed an overshoot as a positive and the row stopped summing to its own Total. Ordinary
+     values are already positive, so the file is unchanged in every normal case. `view.trial` is
+     deliberately NOT printed anywhere in this file — the caller builds an export's view without
+     one, and a file is the saved plan. */
+  if (view.installments) {
+    const row: ExportRow = { item: L.installments };
+    for (const col of view.columns) row[periodColumnKey(col)] = cell(false, view.installments.cells[col.key]);
+    row.total = cell(false, view.installments.total);
+    push(row, 'category');
   }
-  if (view.fundingTotals && fundingGroups.length > 0) {
-    band(L.fundingBand.toUpperCase());
-    fundingGroups.forEach(groupRows);
-    totalRow(L.plannedFunding, true, view.fundingTotals);
-    totalRow(L.costsLessFunding, false, view.totals);
+  revenueGroups.forEach(groupRows);
+  if (view.revenueTotals) totalRow(L.totalRevenue, view.revenueTotals);
+  else totalRow(L.totalRevenue, { cells: {}, total: 0 });
+
+  band(L.expensesBand.toUpperCase());
+  costGroups.forEach(groupRows);
+  /* ⚠ The estimate's un-itemized remainder is a REAL ROW, in the No-date-yet column, so this
+     subtotal is the estimate and keeps its own name in every state (owner ruling 2026-09-09;
+     reconfirmed by decision A). The two rows are the List's own, verbatim; the file prints them
+     indented the way it indents a line under its category. The remainder is SIGNED — a negative,
+     line-less No date yet cell is plan §4's edge case and it prints as a negative here. */
+  if (view.estimateRows) {
+    totalRow(`  — ${L.linesSoFar}`, view.estimateRows.linesSoFar);
+    totalRow(
+      `  — ${view.estimateRows.remainder.total < 0 ? L.overEstimate : L.stillToItemize}`,
+      view.estimateRows.remainder,
+    );
   }
-  /* The ladder finishes in the file exactly as it finishes on screen (owner ruling 2026-09-09) —
-     an export's shape is its screen's shape, and a file that stopped at Costs less funding would
-     leave a treasurer doing by hand the subtraction the grid now prints. Installments read
-     POSITIVE like every money-in row; the close keeps its sign. */
-  if (view.close) {
-    /* ⚠ `false` = do not absolute-value this row, and that is deliberate rather than a
-       mis-typed flag (/review, 2026-09-10). Its undated cell holds what the dated instalments do
-       not cover, which is negative whenever a schedule was lowered after its instalments existed;
-       abs()ing it printed an overshoot as a positive and the row stopped summing to its own Total.
-       Ordinary values here are already positive, so the file is unchanged in every normal case. */
-    totalRow(L.installments, false, view.close.installments);
-    totalRow(L.shortfallBuffer, false, view.close.shortfall);
-  }
+  totalRow(L.totalExpenses, view.expenseTotals);
+
+  /* The balance finishes in the file exactly as it finishes on screen — an export's shape is its
+     screen's shape. Month or quarter per column from the same walk; the Total column is the
+     season's opening / net / closing, endpoints and never sums. An opening never carried is blank
+     rather than 0 (NULL ≠ ZERO). */
+  balanceRow(L.openingBalance, balance.opening, balance.openingUnset ? '' : balance.seasonOpening, null);
+  balanceRow(
+    /^\d{4}-Q\d$/.test(view.columns.find(c => !c.unscheduled)?.key ?? '') ? L.netForQuarter : L.netForMonth,
+    balance.net, balance.seasonNet, balance.undatedNet,
+  );
+  balanceRow(L.closingBalance, balance.closing, balance.seasonClosing, null);
 
   return { rows, kinds };
 }

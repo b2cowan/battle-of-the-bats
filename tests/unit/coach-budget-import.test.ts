@@ -239,6 +239,40 @@ describe('rowsFromList', () => {
     ]);
   });
 
+  it('reads the NEW band words the file has said since 2026-09-12 — REVENUE / EXPENSES — exactly as the old pair', () => {
+    /* ⚠ BOTH PAIRS, FOREVER. The product writes REVENUE / EXPENSES now (revenue-first, decisions
+       A–D); every file exported before that says COSTS / FUNDING, and the one on a coach's disk
+       does not re-export itself. Either pair switches the side; neither becomes a category. */
+    const file = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['REVENUE', '', ''],
+      ['Fundraising', '1800', ''],
+      ['Chocolate Sale', '1800', ''],
+      ['Total revenue', '1800', ''],
+      ['EXPENSES', '', ''],
+      ['Tournaments', '2500', ''],
+      ['Entry Fees', '2500', ''],
+      ['Total expenses', '2500', ''],
+      ['Opening balance', '100', ''],
+      ['Season net', '-700', ''],
+      ['Closing balance', '-600', ''],
+    ], [2, 6]);
+    assert.deepEqual(rowsFromList(file).map(r => [r.categoryName, r.lineName, r.direction]), [
+      ['Fundraising', 'Chocolate Sale', 'in'],
+      ['Tournaments', 'Entry Fees', 'out'],
+    ]);
+    // A club that owns a category called "Revenue" or "Expenses" keeps it — a category row carries
+    // a figure, a band heading is bare in every other cell.
+    const own = sheet(['Category / line', 'Amount', 'Notes'], [
+      ['Revenue', '80', ''],
+      ['Bank fees', '80', ''],
+      ['Expenses', '40', 'the club calls its spending heading this'],
+      ['Stamps', '40', ''],
+    ], [1, 3]);
+    assert.deepEqual(rowsFromList(own).map(r => [r.categoryName, r.lineName, r.direction]), [
+      ['Revenue', 'Bank fees', 'out'],
+      ['Expenses', 'Stamps', 'out'],
+    ]);
+  });
   it('a line under a bare band heading is left categoryless, never filed under the other band', () => {
     // The band forgets the category it switched away from. Blocked at review with "No category" —
     // which the coach fixes in the preview — rather than filed under whatever came before it.

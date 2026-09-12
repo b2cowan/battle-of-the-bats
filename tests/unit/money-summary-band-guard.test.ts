@@ -72,8 +72,13 @@ const BAND_TABS: Record<string, { tiles: string[]; ruled: string }> = {
     ruled: 'D2 option A, 2026-09-03. `offplan` hides at zero — a well-run team sees three.',
   },
   budget: {
-    tiles: ['planned', 'funding', 'installments'],
-    ruled: 'D3, 2026-09-03. `funding` hides when the plan has no funding lines.',
+    tiles: ['revenue', 'expenses', 'closing'],
+    ruled:
+      'Revenue-first, owner decisions A–D 2026-09-12, tile wording ruled the same day: the tiles are '
+      + 'the table’s own subtotals, same names verbatim — Total revenue · Total expenses · Closing '
+      + 'balance. Nothing hides: a costs-only plan reads $0 revenue rather than a missing tile, and '
+      + 'the closing balance is the season’s verdict. (Replaced D3’s planned/funding/installments, '
+      + '2026-09-03.)',
   },
   club: {
     tiles: ['owed', 'waiting', 'settled'],

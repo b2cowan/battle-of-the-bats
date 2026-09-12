@@ -7,6 +7,52 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-12 — REVENUE FIRST, BALANCES CARRIED FORWARD: the Budget plan reads like a statement and closes on a balance, in both views and both files (owner, decisions A–E; Owner QA §164 F1 → plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md`, hub artifact `88741405`)
+
+**Decision (owner, five rulings).** (A) **The season-estimate rule is unchanged** — the estimate governs Total
+expenses in BOTH directions; lines over it net as a NEGATIVE "Over your estimate" into No date yet (a bracketed,
+line-less cell), never silently added. A drafted reversal was withdrawn. (B) **Quarters carry a running balance**:
+a quarter opens on its first month and closes on its last, and a month below zero is still named even inside a
+quarter that ends above it — the alert is computed from months whatever the display shows. (C) **Vocabulary
+split**: "Player installments" once a dated schedule exists; **"Required player dues"** before one — a total, not a
+schedule. (D) **Both previews ship in this delivery**: "Could we add another expense?" (amount + month → a
+transient Extra expense · Preview row, before → after closing, first month below zero) and the Set-dues sheet's
+preview standing in on the plan as a **Draft** row with the sheet printing the plan's before → after; Cancel
+restores the saved plan; neither ever reaches a file. (E) **The three tiles wear the table's own words** — Total
+revenue · Total expenses · Closing balance — over the approved mockup's Planned revenue / Planned expenses /
+Projected season closing, because the tiles ARE the table's subtotals (2026-09-08) and one name means one number;
+the mockup was corrected before the build.
+
+**Shape.** REVENUE band first (Player installments its first row, tagged Scheduled, net of write-offs, and the DOOR
+to the Set-dues sheet — "opening that row uses the dues flow"), then the money-in categories, Total revenue;
+EXPENSES (categories, Lines so far, Still to itemize / Over your estimate), Total expenses; then **Opening balance /
+Net for the month (quarter · Season net) / Closing balance** — Budget vs. Actual's own three rows, walked by the same
+function, a negative in RED brackets (the retired plan-close's GREEN bracket is gone with the row it decorated; the
+legend under the table describes the new rows and appears only when a bracket is on screen). Undated money reaches
+the season Total and no dated balance — Opening/Closing print dashes there, Net carries the undated net, and the
+note names the last dated closing beside the season closing. An opening never set prints **None carried**, never
+$0.00. ONE status sentence under the tiles (the mockup's precedence: undated remainder → over estimate → before
+player dues → first month below zero → all clear with the lowest closing). Before dues exist the **Required player
+dues** helper sits UNDER the table on both views (expenses less other revenue, floored at zero, ≈ per player ÷
+roster, the Set-dues door) and replaces both the old estimated-installments row and the "Ready to assign dues?"
+band — one figure, one door, one card. The importer reads REVENUE/EXPENSES and still reads COSTS/FUNDING (a
+coach's file on disk does not re-export itself). Presence of dues is the schedules table's answer
+(`duesScheduled`), not `duesAssessed > 0` (net of write-offs) nor `hasInstallments` (budget-generated only).
+
+**Why.** The cost-first ladder explained how dues were derived and left a coach reading a permanently partial
+result; once installments are revenue, revenue − expenses is a season result and the timing question ("which
+month goes below zero?") finally has an answer on the plan itself instead of one tab over. Two previews turn the
+plan into the place a coach decides, not just reads. The one-calculation rule (§164's two figure-disagreement
+defects) is now structural: the tiles, the status line, both tables, the helper, both previews and both files read
+one view object, built unconditionally.
+
+**Trade-offs, accepted.** A costs-only plan reads a Revenue band with a one-line prompt and a $0 subtotal rather
+than opening on Expenses (the mockup's empty state). Money past a truncated (>24-month) range is in the season
+Total and in no month — never folded into the last month as "arriving early" (§5) — and no spending room is claimed
+while the range is truncated, an estimate has an undated remainder, lines are over the estimate, or dues are not
+set. The Set-dues draft is what the run would WRITE: schedules being kept are not in it, and the sentence says so.
+Extra notes under the table (opening provenance, endpoints, quarters) are the mockup's own footnotes, each
+conditional.
 ### 2026-09-11 — AWARDS JOIN THE ONE TAG IDIOM, and REMOVE ON A USED AWARD OFFERS MERGE OR RETIRE (owner, from mockup artifact `630ebe17` rounds 1–2; plan `COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md`)
 
 **Decision (owner, four forks ruled as recommended + one from the mockup round).** (1) **The award-type
