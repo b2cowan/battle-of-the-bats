@@ -14,6 +14,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { describeAwardOccasion } from '@/lib/rep-award-occasion';
+import { formatPlayerFirstLast } from '@/lib/player-name';
 
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
@@ -128,7 +129,7 @@ export const POST = withObservability(async (req: Request,
   // what a coach sees in the meantime and after.
   const collision = await findRepPlayerAwardCollision(teamId, playerId, awardTypeId, { eventId, tournamentLabel, awardedAt });
   if (collision) {
-    const playerName = [player.playerFirstName, player.playerLastName].filter(Boolean).join(' ') || 'That player';
+    const playerName = formatPlayerFirstLast(player) || 'That player';
     return NextResponse.json(
       { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt })}.` },
       { status: 409 },

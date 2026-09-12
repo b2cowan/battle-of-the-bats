@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
 import { AWARD_TAG_MANAGE, type ComboTag } from '@/components/coaches/TagSearchCombobox';
@@ -50,17 +50,6 @@ export default function GiveAwardModal({
   // Parent conditionally mounts this component only while open — one unit for the whole mount.
   useOverlayOpen(true);
 
-  // The active library, PLUS the award's own current type even if it has since been retired —
-  // an edit must never refuse to show the award's own type just because it fell out of the
-  // picker for NEW awards (same "keep what it already has" rule the route enforces).
-  const [localTypes, setLocalTypes] = useState(() => {
-    const active = awardTypes.filter(t => t.isActive);
-    if (editing && !active.some(t => t.id === editing.awardTypeId)) {
-      const current = awardTypes.find(t => t.id === editing.awardTypeId) ?? editing.awardType;
-      if (current) return [...active, current];
-    }
-    return active;
-  });
   const [playerId, setPlayerId] = useState(editing?.playerId ?? '');
   const [typeId, setTypeId] = useState(editing?.awardTypeId ?? '');
   const [tournamentLabel, setTournamentLabel] = useState(editing?.tournamentLabel ?? '');
@@ -74,24 +63,27 @@ export default function GiveAwardModal({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
 
-  // Re-reads the library after a rename/merge/retire/delete in the drawer — the form's own chip
-  // row (localTypes) is a one-time snapshot from mount, not derived from the awardTypes prop each
-  // render, so it would otherwise go stale the instant the drawer changes anything while open.
-  async function refetchTypes() {
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`);
-      if (!res.ok) return;
-      const d = await res.json().catch(() => null);
-      if (!d || !Array.isArray(d.tags)) return;
-      const library = d.tags as RepTeamAwardType[];
-      const active = library.filter(t => t.isActive);
-      if (typeId && !active.some(t => t.id === typeId)) {
-        const current = library.find(t => t.id === typeId);
-        if (current) { setLocalTypes([...active, current]); return; }
-      }
-      setLocalTypes(active);
-    } catch { /* the form keeps whatever chips it already has */ }
+  // The active library, PLUS the currently selected type even if it has since been retired —
+  // an edit must never refuse to show the award's own type just because it fell out of the
+  // picker for NEW awards (same "keep what it already has" rule the route enforces).
+  function withCurrentType(library: RepTeamAwardType[]): RepTeamAwardType[] {
+    const active = library.filter(t => t.isActive);
+    if (typeId && !active.some(t => t.id === typeId)) {
+      const current = library.find(t => t.id === typeId) ?? (typeId === editing?.awardTypeId ? editing.awardType : undefined);
+      if (current) return [...active, current];
+    }
+    return active;
   }
+  const [localTypes, setLocalTypes] = useState(() => withCurrentType(awardTypes));
+
+  // Recomputes from the `awardTypes` PROP rather than its own fetch — a rename/merge/retire in
+  // the manager drawer calls the host's own onChanged, which re-fetches award-types and flows
+  // the fresh library back down here; deriving from that avoids a second, redundant GET this
+  // component would otherwise fire on every drawer action.
+  useEffect(() => {
+    setLocalTypes(withCurrentType(awardTypes));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awardTypes]);
 
   async function handleCreateType() {
     const name = newTypeName.trim();
@@ -266,7 +258,7 @@ export default function GiveAwardModal({
         basePath={`/api/coaches/${orgSlug}/teams/${teamId}/award-types`}
         policy={{ icon: true, inUseRemove: 'merge-or-retire' }}
         onClose={() => setManageOpen(false)}
-        onChanged={() => { void refetchTypes(); onChanged(); }}
+        onChanged={onChanged}
       />
     )}
     </>

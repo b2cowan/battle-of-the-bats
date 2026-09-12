@@ -8,6 +8,7 @@ import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
 import { resolveAwardTypeMergeCollisions } from './rep-award-occasion';
+import { formatPlayerFirstLast } from './player-name';
 import {
   DERIVED_INCOME_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
 } from './coach-budget-totals';
@@ -7255,27 +7256,26 @@ export async function previewMergeRepTeamAwardTypes(
   );
   const loserById = new Map(loserAwards.map(l => [l.id, l]));
 
-  const collisions: { playerName: string; occasionLabel: string; awardedAt: string }[] = [];
+  const collisions: { playerId: string; occasionLabel: string }[] = [];
   for (const pair of pairedCollisions) {
     const l = loserById.get(pair.loserAwardId);
     if (!l) continue;
     const shortDate = formatStoredDate(l.awarded_at, { withYear: false });
     collisions.push({
-      playerName: l.player_id,
+      playerId: l.player_id,
       occasionLabel: l.event_id ? `for the ${shortDate} game` : l.tournament_label ? `for ${l.tournament_label}` : `for ${shortDate}`,
-      awardedAt: l.awarded_at,
     });
   }
 
-  const playerIds = [...new Set(collisions.map(c => c.playerName))];
+  const playerIds = [...new Set(collisions.map(c => c.playerId))];
   const players = playerIds.length > 0 ? await getRepRosterPlayersByIds(playerIds, teamId) : [];
-  const nameById = new Map(players.map(p => [p.id, [p.playerFirstName, p.playerLastName].filter(Boolean).join(' ') || 'A player']));
+  const nameById = new Map(players.map(p => [p.id, formatPlayerFirstLast(p) || 'A player']));
 
   return {
     moved: loserAwards.length,
     dropped: collisions.length,
     collisions: collisions.map(c => ({
-      playerName: nameById.get(c.playerName) ?? 'A player',
+      playerName: nameById.get(c.playerId) ?? 'A player',
       occasionLabel: c.occasionLabel,
     })),
   };

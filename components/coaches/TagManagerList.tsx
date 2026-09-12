@@ -317,96 +317,79 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
   const confirmDialog = confirmState && (
     <div className={styles.tagDrawerConfirm} role="alertdialog" aria-modal="true">
       <div className={styles.tagDrawerDialog}>
-        {confirmState.kind === 'delete' ? (
-          inUseRemove === 'merge-or-retire' ? (
+        {confirmState.kind === 'delete' ? (() => {
+          // ONE render path for both delete policies (R2's altitude fix): the two policies differ
+          // only in the consequence copy and in which of Retire/Merge instead/Delete apply at each
+          // count state — declared here as small booleans/JSX rather than two full forked trees.
+          const tag = confirmState.tag;
+          const count = tag.count;
+          const merge = inUseRemove === 'merge-or-retire';
+          const unknownOrUsed = count == null || count > 0;
+          const showSoftActions = merge && unknownOrUsed; // Retire only ever applies to awards
+          const showMergeInstead = unknownOrUsed && own.length > 1; // same rule for both policies
+          const showDelete = !merge || count == null || count === 0;
+          const body = count == null ? (
+            merge ? (
+              <p>No claim can be made about how often it&rsquo;s been given right now. <strong>Merge it into another award</strong> or <strong>retire it</strong> instead.</p>
+            ) : (
+              /* Count unknown (the list's own read failed) — no claim beats a false one. */
+              <p>Anything tagged with it keeps everything but the label. If you&rsquo;d rather keep things grouped, <strong>merge it into another tag</strong> instead.</p>
+            )
+          ) : count > 0 ? (
+            merge ? (
+              <>
+                <p>It&rsquo;s {fmtCount(count)}, and an award can&rsquo;t be taken off a player without a name.</p>
+                <p><strong>Merge it into another award</strong> and that player keeps their award under the other name. Or <strong>retire it</strong> — it leaves the picker but stays on the record.</p>
+              </>
+            ) : (
+              <>
+                {/* R4/§122 grammar: the consequence, then the softer tool — offered live below. */}
+                <p>It&rsquo;s {fmtCount(count)} — they keep everything but the label.</p>
+                <p>If you&rsquo;d rather keep them grouped, <strong>merge it into another tag</strong> instead — nothing is lost that way.</p>
+              </>
+            )
+          ) : (
+            <p>{merge ? <>It hasn&rsquo;t been given yet, so nothing else changes.</> : <>It isn&rsquo;t used on anything yet.</>}</p>
+          );
+          return (
             <>
-              <h4>Remove &ldquo;{confirmState.tag.name}&rdquo;?</h4>
-              {confirmState.tag.count == null ? (
-                <p>No claim can be made about how often it&rsquo;s been given right now. <strong>Merge it into another award</strong> or <strong>retire it</strong> instead.</p>
-              ) : confirmState.tag.count > 0 ? (
-                <>
-                  <p>
-                    It&rsquo;s {fmtCount(confirmState.tag.count)}, and an award can&rsquo;t be taken off a
-                    player without a name.
-                  </p>
-                  <p><strong>Merge it into another award</strong> and that player keeps their award under the other name. Or <strong>retire it</strong> — it leaves the picker but stays on the record.</p>
-                </>
-              ) : (
-                <p>It hasn&rsquo;t been given yet, so nothing else changes.</p>
-              )}
+              <h4>{merge ? 'Remove' : 'Delete'} &ldquo;{tag.name}&rdquo;?</h4>
+              {body}
               <div className={styles.tagDrawerDialogActions}>
                 <button type="button" className={styles.btnGhost} onClick={() => setConfirmState(null)}>Cancel</button>
-                {(confirmState.tag.count == null || confirmState.tag.count > 0) && (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.btnSecondary}
-                      disabled={busyId === confirmState.tag.id}
-                      onClick={() => { const t = confirmState.tag; setConfirmState(null); void doRetire(t); }}
-                    >
-                      Retire
-                    </button>
-                    {own.length > 1 && (
-                      <button
-                        type="button"
-                        className={styles.btnSecondary}
-                        onClick={() => { const t = confirmState.tag; setConfirmState(null); startMerge(t); }}
-                      >
-                        Merge instead
-                      </button>
-                    )}
-                  </>
+                {showSoftActions && (
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    disabled={busyId === tag.id}
+                    onClick={() => { setConfirmState(null); void doRetire(tag); }}
+                  >
+                    Retire
+                  </button>
                 )}
-                {(confirmState.tag.count == null || confirmState.tag.count === 0) && (
+                {showMergeInstead && (
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => { setConfirmState(null); startMerge(tag); }}
+                  >
+                    Merge instead
+                  </button>
+                )}
+                {showDelete && (
                   <button
                     type="button"
                     className={styles.btnDanger}
-                    disabled={busyId === confirmState.tag.id}
-                    onClick={() => { const t = confirmState.tag; setConfirmState(null); void doDelete(t); }}
+                    disabled={busyId === tag.id}
+                    onClick={() => { setConfirmState(null); void doDelete(tag); }}
                   >
                     Delete
                   </button>
                 )}
               </div>
             </>
-          ) : (
-            <>
-              <h4>Delete &ldquo;{confirmState.tag.name}&rdquo;?</h4>
-              {confirmState.tag.count == null ? (
-                /* Count unknown (the list's own read failed) — no claim beats a false one. */
-                <p>Anything tagged with it keeps everything but the label. If you&rsquo;d rather keep things grouped, <strong>merge it into another tag</strong> instead.</p>
-              ) : confirmState.tag.count > 0 ? (
-                <>
-                  {/* R4/§122 grammar: the consequence, then the softer tool — offered live below. */}
-                  <p>It&rsquo;s {fmtCount(confirmState.tag.count)} — they keep everything but the label.</p>
-                  <p>If you&rsquo;d rather keep them grouped, <strong>merge it into another tag</strong> instead — nothing is lost that way.</p>
-                </>
-              ) : (
-                <p>It isn&rsquo;t used on anything yet.</p>
-              )}
-              <div className={styles.tagDrawerDialogActions}>
-                <button type="button" className={styles.btnGhost} onClick={() => setConfirmState(null)}>Cancel</button>
-                {(confirmState.tag.count == null || confirmState.tag.count > 0) && own.length > 1 && (
-                  <button
-                    type="button"
-                    className={styles.btnSecondary}
-                    onClick={() => { const t = confirmState.tag; setConfirmState(null); startMerge(t); }}
-                  >
-                    Merge instead
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={styles.btnDanger}
-                  disabled={busyId === confirmState.tag.id}
-                  onClick={() => { const t = confirmState.tag; setConfirmState(null); void doDelete(t); }}
-                >
-                  Delete
-                </button>
-              </div>
-            </>
-          )
-        ) : (
+          );
+        })() : (
           <>
             <h4>Merge {inUseRemove === 'merge-or-retire' ? 'awards' : 'tags'}?</h4>
             {confirmState.preview ? (

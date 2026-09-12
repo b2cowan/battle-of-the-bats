@@ -11,6 +11,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { describeAwardOccasion } from '@/lib/rep-award-occasion';
+import { formatPlayerFirstLast } from '@/lib/player-name';
 
 // Both verbs need the caller to actually manage awards AND a live season — an award is a live
 // instrument, and the DELETE route resolves the ACTIVE year regardless of what screen renders it.
@@ -118,7 +119,7 @@ export const PATCH = withObservability(async (req: Request,
   if (collision) {
     const type = awardTypes.find(t => t.id === awardTypeId);
     const player = roster.find(p => p.id === playerId);
-    const playerName = player ? [player.playerFirstName, player.playerLastName].filter(Boolean).join(' ') : 'That player';
+    const playerName = formatPlayerFirstLast(player) || 'That player';
     return NextResponse.json(
       { error: `${playerName} already has ${type?.name ?? 'that award'} ${describeAwardOccasion(current)}.` },
       { status: 409 },
