@@ -136,16 +136,29 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  const award = await createRepPlayerAward({
-    orgId: ctx.org.id,
-    teamId,
-    playerId,
-    awardTypeId,
-    eventId,
-    tournamentLabel,
-    awardedAt,
-    note,
-    createdBy: ctx.user.id,
-  });
-  return NextResponse.json({ award }, { status: 201 });
+  try {
+    const award = await createRepPlayerAward({
+      orgId: ctx.org.id,
+      teamId,
+      playerId,
+      awardTypeId,
+      eventId,
+      tournamentLabel,
+      awardedAt,
+      note,
+      createdBy: ctx.user.id,
+    });
+    return NextResponse.json({ award }, { status: 201 });
+  } catch (error: unknown) {
+    // R5 backstop: the check above is check-then-act; migration 289's partial unique indexes
+    // close the race, and a race that slips past the check still lands on the same sentence.
+    if ((error as { code?: string })?.code === '23505') {
+      const playerName = formatPlayerFirstLast(player) || 'That player';
+      return NextResponse.json(
+        { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt })}.` },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/awards' });

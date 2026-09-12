@@ -126,7 +126,22 @@ export const PATCH = withObservability(async (req: Request,
     );
   }
 
-  const updated = await updateRepPlayerAward(awardId, teamId, fields);
-  if (!updated) return NextResponse.json({ error: 'Award not found' }, { status: 404 });
-  return NextResponse.json({ award: updated });
+  try {
+    const updated = await updateRepPlayerAward(awardId, teamId, fields);
+    if (!updated) return NextResponse.json({ error: 'Award not found' }, { status: 404 });
+    return NextResponse.json({ award: updated });
+  } catch (error: unknown) {
+    // R5 backstop: the check above is check-then-act; migration 289's partial unique indexes
+    // close the race, and a race that slips past the check still lands on the same sentence.
+    if ((error as { code?: string })?.code === '23505') {
+      const type = awardTypes.find(t => t.id === awardTypeId);
+      const player = roster.find(p => p.id === playerId);
+      const playerName = formatPlayerFirstLast(player) || 'That player';
+      return NextResponse.json(
+        { error: `${playerName} already has ${type?.name ?? 'that award'} ${describeAwardOccasion(current)}.` },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/awards/[awardId]' });

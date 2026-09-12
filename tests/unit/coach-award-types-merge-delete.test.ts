@@ -138,6 +138,18 @@ describe('TagManagerList — the merge-or-retire policy (R2)', () => {
   it('the icon policy mounts AwardIconPicker in the rename row', () => {
     assert.match(list, /hasIcon && iconPickerOpen/);
   });
+
+  /** /review 2026-09-12: every other async mutator in this file (rename/retire/restore/merge/
+   *  delete) checks `inFlightRef.current` before firing — the R5 preview fetch that opens the
+   *  merge-or-retire confirm dialog was missing that guard, so a rapid double-click could fire
+   *  two overlapping preview requests. */
+  it('startMergeConfirm guards against a double-click the same way every other async action does', () => {
+    const start = list.indexOf('async function startMergeConfirm');
+    const body = list.slice(start, start + 700);
+    assert.match(body, /if \(inFlightRef\.current\) return;/);
+    assert.match(body, /inFlightRef\.current = true;/);
+    assert.match(body, /inFlightRef\.current = false;/);
+  });
 });
 
 describe('GiveAwardModal — the door', () => {

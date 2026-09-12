@@ -283,12 +283,15 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
       setConfirmState({ kind: 'merge', loser, winner });
       return;
     }
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setBusyId(loser.id);
     try {
       const res = await fetch(`${basePath}/merge?winner=${winner.id}&loser=${loser.id}`);
       const preview = res.ok ? await res.json().catch(() => null) : null;
       setConfirmState({ kind: 'merge', loser, winner, preview });
     } finally {
+      inFlightRef.current = false;
       setBusyId(null);
     }
   }

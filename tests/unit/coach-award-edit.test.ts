@@ -69,6 +69,17 @@ describe('the award PATCH route — R5 once per occasion, and no editable game',
     const collisionBlock = awardIdRoute.slice(awardIdRoute.indexOf('if (collision)'), awardIdRoute.indexOf('if (collision)') + 700);
     assert.match(collisionBlock, /status:\s*409/);
   });
+
+  /** /review 2026-09-12: the check above is check-then-act; migration 289's partial unique
+   *  indexes close the race, but a race that slips past the check must still land on the
+   *  friendly sentence, not a raw 500 from an unhandled 23505. */
+  it('maps a 23505 unique-violation from updateRepPlayerAward to the same 409 collision sentence', () => {
+    assert.match(awardIdRoute, /catch\s*\(error: unknown\)[\s\S]{0,300}23505/);
+    const catchIdx = awardIdRoute.search(/catch\s*\(error: unknown\)/);
+    const catchBlock = awardIdRoute.slice(catchIdx, catchIdx + 700);
+    assert.match(catchBlock, /already has/);
+    assert.match(catchBlock, /status:\s*409/);
+  });
 });
 
 describe('the award POST route — R5 applies to giving a new award too', () => {
@@ -78,6 +89,15 @@ describe('the award POST route — R5 applies to giving a new award too', () => 
     const createIdx = awardsRoute.indexOf('createRepPlayerAward(');
     assert.ok(collisionIdx > -1 && createIdx > -1 && collisionIdx < createIdx,
       'the collision check must run BEFORE the award is created, not after');
+  });
+
+  /** /review 2026-09-12: same race-safety gap as the PATCH route above. */
+  it('maps a 23505 unique-violation from createRepPlayerAward to the same 409 collision sentence', () => {
+    assert.match(awardsRoute, /catch\s*\(error: unknown\)[\s\S]{0,300}23505/);
+    const catchIdx = awardsRoute.search(/catch\s*\(error: unknown\)/);
+    const catchBlock = awardsRoute.slice(catchIdx, catchIdx + 700);
+    assert.match(catchBlock, /already has/);
+    assert.match(catchBlock, /status:\s*409/);
   });
 });
 
