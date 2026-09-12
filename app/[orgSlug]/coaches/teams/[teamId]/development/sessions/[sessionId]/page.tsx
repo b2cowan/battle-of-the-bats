@@ -6,7 +6,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { NewTypeFields } from '@/components/coaches/TestTypesManager';
 import { formatValue, formatShortDate } from '@/lib/measurable-format';
-import { sessionMetricChips, sessionRows, sessionEnteredCount } from '@/lib/development-session-view';
+import { sessionMetricChips, sessionRows, sessionEnteredCount, defaultSessionChip } from '@/lib/development-session-view';
 import styles from '../../../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable } from '@/lib/types';
 
@@ -132,9 +132,14 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
    */
   const metricChips = sessionMetricChips(types, entries);
   const activeTypes = metricChips.filter(c => !c.retired).map(c => c.type);
-  // The selection falls back to the FIRST chip (an active test, else a retired one this session
-  // holds rows for) — derived here, once, rather than seeded from the load and again on render.
-  const selectedChip = metricChips.find(c => c.type.id === selectedTypeId) ?? metricChips[0] ?? null;
+  // With nothing chosen yet, the session opens on the first test it already holds rows for, else
+  // the first active test (`defaultSessionChip`) — derived here, once. ⚠ A chosen chip that has since VANISHED (its
+  // last saved row removed elsewhere, then a reload) resolves to NOTHING, never to the first chip:
+  // the grid re-renders in the same place, and a silent jump would let a coach type into the wrong
+  // test (/review 2026-09-12).
+  const selectedChip = selectedTypeId
+    ? (metricChips.find(c => c.type.id === selectedTypeId) ?? null)
+    : defaultSessionChip(metricChips);
   const selectedType = selectedChip?.type ?? null;
   const selectedRetired = selectedChip?.retired ?? false;
   const draftKey = (playerId: string) => `${playerId}:${selectedType?.id ?? ''}`;
@@ -503,7 +508,9 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         )
       ) : (
         <p className={styles.detailPlaceholder}>
-          {canWrite ? 'Set up your first test above — then work down the roster.' : 'No tests set up yet.'}
+          {metricChips.length > 0
+            ? 'Pick a test above.'
+            : canWrite ? 'Set up your first test above — then work down the roster.' : 'No tests set up yet.'}
         </p>
       )}
     </div>

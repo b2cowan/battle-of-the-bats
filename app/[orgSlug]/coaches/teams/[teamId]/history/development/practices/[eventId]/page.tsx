@@ -24,7 +24,7 @@ import styles from '../../../../../../coaches.module.css';
  * enumerated in `HISTORY_PAGES` in `tests/unit/coach-history-endpoint-guard.test.ts` — the only
  * page besides Season's End that reads `?year=` off the URL.
  *
- * ⚠ **Reached from exactly TWO lists, and from nowhere else.** "Practices you've run" inside the
+ * ⚠ **Reached from exactly TWO lists, and from nowhere else.** "Practice review" (was "Practices you've run") inside the
  * Development report (the original caller, which passes no year because the report is always the
  * team's working season), and the practices section on a finished season's Season's End page
  * (which passes both the year and `from=season-end`, so the back link returns there). The
@@ -244,7 +244,7 @@ export default function CoachPastPracticePlanPage({
         href: `${base}/season-end${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`,
         label: "Season's End",
       }
-    : { href: insightsSectionHref(base, 'development'), label: "Practices you've run" };
+    : { href: insightsSectionHref(base, 'development'), label: 'Practice review' };
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>

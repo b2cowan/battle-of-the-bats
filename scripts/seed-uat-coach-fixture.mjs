@@ -2856,13 +2856,14 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
   };
   const practiceReview = [
     { name: 'Practice review — next week', starts_at: new Date(Date.now() + 7 * 86_400_000).toISOString(), practice_plan: reviewPlan, practice_recap: null },
-    { name: 'Practice review — written up', starts_at: new Date(Date.UTC(py.year, 4, 12, 23, 0)).toISOString(), practice_plan: reviewPlan, practice_recap: 'The shorter distance helped players repeat the setup. Keep that for the next session.' },
+    { name: 'Practice review — written up', starts_at: new Date(Date.UTC(py.year, 4, 14, 23, 0)).toISOString(), practice_plan: reviewPlan, practice_recap: 'The shorter distance helped players repeat the setup. Keep that for the next session.' },
   ];
   for (const p of practiceReview) {
     const found = await db.from('rep_team_events').select('id').eq('program_year_id', py.id).eq('name', p.name).limit(1).maybeSingle();
     if (found.data) {
-      // The upcoming one must STAY upcoming across re-runs — re-anchor its date.
-      if (!p.practice_recap) await db.from('rep_team_events').update({ starts_at: p.starts_at }).eq('id', found.data.id);
+      // The date IS the fixture: the upcoming one must stay upcoming across re-runs, and the recap one
+      // must sit on its own evening (it once collided with "Team practice 2" to the minute).
+      await db.from('rep_team_events').update({ starts_at: p.starts_at }).eq('id', found.data.id);
       continue;
     }
     const ins = await db.from('rep_team_events').insert({

@@ -1,5 +1,5 @@
 'use client';
-import { use, useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Info } from 'lucide-react';
 import { formatShortDate } from '@/lib/measurable-format';
@@ -99,7 +99,16 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   /** null = every practice. A tag id, or the "no tags" sentinel. */
   const [practiceTag, setPracticeTag] = useState<string | null>(null);
 
+  /**
+   * Sequence guard (the session screen's idiom): the failed-practices "Try again" can be pressed
+   * while an earlier load is still in flight, and a slow older response must never land over a
+   * newer one. `loading` also disables that button so a coach cannot queue several.
+   */
+  const loadSeqRef = useRef(0);
+  const [loading, setLoading] = useState(false);
   const load = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
+    setLoading(true);
     try {
       // ?history=1 → the History-linked column. ?plans=1 → the three Phase 3 sections. Both are
       // opt-in because each costs a scan the board page and the hub tile don't render.
@@ -107,6 +116,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
         `/api/coaches/${orgSlug}/teams/${teamId}/development/board?history=1&plans=1`,
       );
       const json = await res.json().catch(() => null);
+      if (seq !== loadSeqRef.current) return;
       // No active program year is a legitimate state, not a retryable failure (board parity).
       if (res.status === 404) {
         setNoSeason(true);
@@ -123,7 +133,10 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
       setData(json);
       setError('');
     } catch (e) {
+      if (seq !== loadSeqRef.current) return;
       setError(e instanceof Error ? e.message : 'Could not load the report — try again.');
+    } finally {
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
@@ -339,8 +352,8 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
               <p className={styles.detailPlaceholder}>
                 Couldn&apos;t load the practices — this is a loading problem, not an empty season.{' '}
                 <button type="button" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
-                  onClick={() => load()}>
-                  Try again
+                  disabled={loading} onClick={() => load()}>
+                  {loading ? 'Loading…' : 'Try again'}
                 </button>
               </p>
             </>

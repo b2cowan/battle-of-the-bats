@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { splitSeriesByUnit, drawableSegment, unitSplitNote } from '../../lib/measurable-series.ts';
-import { sessionMetricChips, sessionRows, sessionEnteredCount } from '../../lib/development-session-view.ts';
+import { sessionMetricChips, sessionRows, sessionEnteredCount, defaultSessionChip } from '../../lib/development-session-view.ts';
 import { practiceTruth, PRACTICE_TRUTH_LABELS } from '../../lib/practice-truth.ts';
 import { pastSeasonRefusal, PAST_SEASON_MESSAGE } from '../../lib/development-season-guard.ts';
 import { sectionState } from '../../lib/report-section-state.ts';
@@ -218,5 +218,20 @@ describe('F05 — sectionState: available · empty · incomplete · failed', () 
     assert.match(panel, /practiceRead\.state === 'failed'/);
     assert.match(panel, /practiceRead\.state === 'incomplete'/);
     assert.match(panel, /tagRead\.state === 'failed'/);
+  });
+});
+
+// ── /review 2026-09-12 follow-ups ────────────────────────────────────────────────────────────────
+describe('review follow-ups — where a session opens, and three earlier units', () => {
+  it('a session opens on the first test it holds rows for — a retired one included — else the first active test', () => {
+    const chips = sessionMetricChips([type('sprint', true, 1), type('throw', true, 2), type('shuttle', false)], [entry('p1', 'shuttle')]);
+    assert.equal(defaultSessionChip(chips)?.type.id, 'shuttle');
+    assert.equal(defaultSessionChip(sessionMetricChips([type('sprint', true, 1), type('throw', true, 2)], []))?.type.id, 'sprint');
+    assert.equal(defaultSessionChip(sessionMetricChips([type('sprint', true, 1), type('throw', true, 2)], [entry('p1', 'throw')]))?.type.id, 'throw');
+    assert.equal(defaultSessionChip([]), null);
+  });
+  it('three earlier units read as a list', () => {
+    const note = unitSplitNote(splitSeriesByUnit([reading(1, 'mph', '2026-01-01'), reading(2, 'km/h', '2026-01-02'), reading(3, 'm/s', '2026-01-03'), reading(4, 'kn', '2026-01-04')]));
+    assert.ok(note && /in mph, km\/h and m\/s/.test(note), note ?? '');
   });
 });

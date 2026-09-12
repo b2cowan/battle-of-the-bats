@@ -21,6 +21,8 @@ export interface SessionMetricChip<T extends TypeLike> {
   type: T;
   /** Retired from new sessions; on this one only because it holds saved rows. Read-only. */
   retired: boolean;
+  /** This session holds at least one saved reading under this test. */
+  hasRows: boolean;
 }
 
 /**
@@ -31,9 +33,21 @@ export interface SessionMetricChip<T extends TypeLike> {
 export function sessionMetricChips<T extends TypeLike>(types: T[], entries: EntryLike[]): SessionMetricChip<T>[] {
   const byOrder = (a: T, b: T) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
   const withRows = new Set(entries.map(e => e.measurableTypeId));
-  const active = types.filter(t => t.isActive).sort(byOrder).map(type => ({ type, retired: false }));
-  const retired = types.filter(t => !t.isActive && withRows.has(t.id)).sort(byOrder).map(type => ({ type, retired: true }));
+  const active = types.filter(t => t.isActive).sort(byOrder)
+    .map(type => ({ type, retired: false, hasRows: withRows.has(type.id) }));
+  const retired = types.filter(t => !t.isActive && withRows.has(t.id)).sort(byOrder)
+    .map(type => ({ type, retired: true, hasRows: true }));
   return [...active, ...retired];
+}
+
+/**
+ * Where a session OPENS when nothing is chosen yet: the first test this session already holds rows
+ * for (a resumed session lands on its own data — even when that test has since been retired), else
+ * the first active test (a fresh session starts from the current list). Never a chip that is not
+ * on the list.
+ */
+export function defaultSessionChip<T extends TypeLike>(chips: SessionMetricChip<T>[]): SessionMetricChip<T> | null {
+  return chips.find(c => c.hasRows) ?? chips[0] ?? null;
 }
 
 export interface SessionRow<P extends PlayerLike, E extends EntryLike> {

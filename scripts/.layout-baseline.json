@@ -1,6 +1,86 @@
 {
-  "generated": "2026-09-11T17:59:21.883Z",
+  "generated": "2026-09-12T16:29:03.730Z",
   "entries": {
+    "coach-schedule|768|tap-floor|button·Help: Schedule": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-schedule|768|control-width|button·Help: Schedule": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-schedule|768|tap-floor|button·List": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Month": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Export": {
+      "reason": "As coach-roster Export — one coach control in place of the admin split button's two.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 4 · 6:00 p.m.vs Ridgeview6–3WIN": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 10 · 6:00 p.m.vs Lakeside4–3WIN": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 16 · 6:00 p.m.vs Northgate🏆 22–5LOS": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 22 · 6:00 p.m.vs Fairhaven3–3TIE": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 28 · 6:00 p.m.vs Westbrook8–2WIN": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 4 · 6:00 p.m.vs Ridgeview1–2LOSS": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 5 · 7:00 p.m.Team practice 1": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 12 · 7:00 p.m.Team practice 2": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 14 · 7:00 p.m.Practice review — writ": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 19 · 7:00 p.m.Team practice 3": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 26 · 7:00 p.m.Team practice 4": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 29 · 7:00 p.m.Team practice 5": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Sep 12 · 12:06 p.m.UAT probe practice": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Sep 19 · 12:27 p.m.Practice review — nex": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once.",
+      "detail": "31px tall (floor 44)"
+    },
     "coach-player|361|tap-floor|button·Edit this focus area": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "22px tall (floor 44)"
@@ -1560,78 +1640,6 @@
     "coach-development-templates|768|tap-floor|a·New template 9": {
       "reason": null,
       "detail": "22px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Help: Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·List": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Month": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Export": {
-      "reason": "As coach-roster Export — one coach control in place of the admin split button's two.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Apr 4 · 6:00 p.m.vs Ridgeview6–3WIN": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Apr 10 · 6:00 p.m.vs Lakeside4–3WIN": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Apr 16 · 6:00 p.m.vs Northgate2–5LOSS": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Apr 22 · 6:00 p.m.vs Fairhaven3–3TIE": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Apr 28 · 6:00 p.m.vs Westbrook8–2WIN": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·May 4 · 6:00 p.m.vs Ridgeview1–2LOSS": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·May 5 · 7:00 p.m.Team practice 1": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·May 12 · 7:00 p.m.Team practice 2": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·May 19 · 7:00 p.m.Team practice 3": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·May 26 · 7:00 p.m.Team practice 4": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·May 29 · 7:00 p.m.Team practice 5": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Aug 23 · 9:34 p.m.UAT probe practice": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
     },
     "mkt-home|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
       "reason": "The \"HQ\" of the FieldLogicHQ wordmark. WCAG 1.4.3 exempts text that is part of a logo or brand name, and this segment is deliberately the quietest of the three so the mark reads FIELD-LOGIC-hq. Accepted 2026-08-21 (QA §68 follow-up triage).",
@@ -4073,10 +4081,6 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-schedule|768|tap-floor|button·Add Event": {
-      "reason": "As coach-roster Add player — grandfathered desktop height; clears 44 at <=640. Name follows the VISIBLE label again (\"Add Event\") since Phase 4b folded this into the shared menu, whose collapseOnPhone aria-label is the label itself — the two had drifted apart in case only.",
-      "detail": "31px tall (floor 44)"
-    },
     "coach-lineup-builder|768|tap-floor|button·Help: Lineup builder": {
       "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
       "detail": "34px tall (floor 44)"
@@ -4190,10 +4194,6 @@
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-notifications|768|control-width|button·Help: Notifications": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-schedule|768|control-width|button·Help: Schedule": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },

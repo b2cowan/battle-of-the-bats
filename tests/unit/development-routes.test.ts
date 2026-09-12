@@ -116,3 +116,33 @@ describe('session PATCH — the re-stamp moves the readings before the session, 
     assert.match(src, /getRepTeamEvaluationSession\(sessionId, teamId, programYear\.id\)/);
   });
 });
+
+/**
+ * /review 2026-09-12: the goal PATCH's error precedence is focus → note → status → tag, the same
+ * order the create route documents (its comment records that collapsing the checks once changed
+ * which error a doubly-invalid payload got back). Pinned here so the sibling cannot drift again.
+ */
+describe('goal PATCH — error precedence matches the create route', () => {
+  it('a bad focus area wins over a bad status, which wins over the (route-checked) tag', () => {
+    const both = readGoalPatchInput({ focusArea: '', status: 'done', tagId: 'not-a-tag' });
+    assert.ok('error' in both && /Focus area is required/.test(both.error));
+    const statusOnly = readGoalPatchInput({ status: 'done', tagId: 'not-a-tag' });
+    assert.ok('error' in statusOnly && statusOnly.error === 'Invalid status');
+    // The tag alone passes the reader — its ownership is the route's DB check, after the reader.
+    assert.deepEqual(readGoalPatchInput({ tagId: 'not-a-tag' }), { fields: { tagId: 'not-a-tag' } });
+  });
+  it('the route proves the tag AFTER the reader, through the create route’s helper', () => {
+    const src = api('roster', '[playerId]', 'development', 'goals', '[goalId]', 'route.ts');
+    const reader = src.indexOf('readGoalPatchInput(body)');
+    const tag = src.indexOf('verifyFocusTag(body');
+    assert.ok(reader > 0 && tag > reader, 'verifyFocusTag must run after the reader');
+  });
+});
+
+describe('readMeasurableInput — an empty session id is refused, never filed as "no session"', () => {
+  it('rejects the empty string; null and absent still mean a single reading', () => {
+    assert.ok('error' in readMeasurableInput({ measurableTypeId: 't1', value: 1, recordedOn: '2026-09-08', sessionId: '' }));
+    const single = readMeasurableInput({ measurableTypeId: 't1', value: 1, recordedOn: '2026-09-08', sessionId: null });
+    assert.ok('fields' in single && single.fields.sessionId === null);
+  });
+});

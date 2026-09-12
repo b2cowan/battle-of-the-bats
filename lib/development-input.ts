@@ -147,9 +147,12 @@ export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields>
   const note = typeof body.note === 'string' ? body.note.trim() : '';
   if (note.length > MAX_READING_NOTE_LEN) return { error: `Note is too long (max ${MAX_READING_NOTE_LEN} characters).` };
 
+  // Absent or null = a single reading. Present = a real id — an empty string is refused rather than
+  // quietly filed as "no session" (/review 2026-09-12; the inline code it replaced looked it up
+  // and answered 400).
   let sessionId: string | null = null;
   if (body.sessionId != null) {
-    if (typeof body.sessionId !== 'string') return { error: 'Invalid sessionId' };
+    if (typeof body.sessionId !== 'string' || !body.sessionId) return { error: 'Invalid sessionId' };
     sessionId = body.sessionId;
   }
   return { fields: { measurableTypeId, value, recordedOn, note: note || null, sessionId } };
