@@ -987,6 +987,8 @@ export async function buildDocuments() {
     label: 'Player development handout',
     entry: 'downloadDevelopmentSummary',
     screens: [
+      // The component draws the page and reaches the renderers; the route file only mounts it.
+      'components/coaches/DevelopmentHandoutPreview.tsx',
       'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/development/handout/page.tsx',
     ],
     render: (name, settings) => downloadDevelopmentSummary(name, { ...HANDOUT, settings }),
