@@ -1,6 +1,6 @@
 /**
  * ═══ THE CEILING — what a non-head holder of `manageStaff` may do on the Staff page ═══
- * (owner ruling 2026-09-13; plan `docs/projects/active/COACH_STAFF_DELEGATION_PLAN.md` §2, §4)
+ * (owner ruling 2026-09-13; plan `docs/projects/archive/COACH_STAFF_DELEGATION_PLAN.md` §2, §4)
  *
  * Staff management is a MASTER KEY: whoever can set other people's grants can reach anything on the
  * team one step removed — grant a friend money access, or invite a second account of their own with

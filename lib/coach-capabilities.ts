@@ -119,7 +119,7 @@ export interface CoachCapabilities {
    * ceiling rule in `lib/coach-staff-delegation.ts`: a Sensitive grant may be WIDENED only up to
    * what the actor holds themselves, a head-coach row is untouchable, roles are head-only, their
    * own row is read-only, and this switch itself is never in anything they write (no chain).
-   * Plan: `docs/projects/active/COACH_STAFF_DELEGATION_PLAN.md`.
+   * Plan: `docs/projects/archive/COACH_STAFF_DELEGATION_PLAN.md`.
    */
   manageStaff: boolean;
 }
