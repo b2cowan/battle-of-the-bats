@@ -1,0 +1,371 @@
+<title>Tournaments Empty State</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --chrome-bg: #f4f2ee;
+    --chrome-surface: #ffffff;
+    --chrome-text: #211f1a;
+    --chrome-muted: #6b6656;
+    --chrome-border: #e2ded3;
+    --chrome-accent: #b5691a;
+    --chrome-accent-soft: #f4e3cf;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --chrome-bg: #17150f;
+      --chrome-surface: #211f18;
+      --chrome-text: #f0ede3;
+      --chrome-muted: #a8a191;
+      --chrome-border: #35322a;
+      --chrome-accent: #e6a15a;
+      --chrome-accent-soft: #3a2c1a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --chrome-bg: #17150f;
+    --chrome-surface: #211f18;
+    --chrome-text: #f0ede3;
+    --chrome-muted: #a8a191;
+    --chrome-border: #35322a;
+    --chrome-accent: #e6a15a;
+    --chrome-accent-soft: #3a2c1a;
+  }
+
+  /* Fixed "specimen" tokens — the coach portal's own light/warm theme, held constant
+     regardless of the viewer's theme, because these frames are a picture of a real screen. */
+  :root {
+    --p-bg: #f6f1e4;
+    --p-dot: #e9e2cf;
+    --p-card: #fffdf8;
+    --p-ink: #2c2a1f;
+    --p-muted: #6f6b56;
+    --p-border: #e7e0cd;
+    --p-lime: #d9f4a0;
+    --p-lime-ink: #2c2a1f;
+    --p-ghost-bg: #eae5d7;
+    --p-medallion: #ece5d0;
+    --p-icon: #4c5a2c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--chrome-bg);
+    color: var(--chrome-text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  h1, h2, h3 { text-wrap: balance; font-family: 'Barlow Condensed', 'Inter', sans-serif; }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  .intro { max-width: 640px; margin-bottom: 40px; }
+  .intro .kicker {
+    font: 600 12px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--chrome-accent); margin-bottom: 10px;
+  }
+  .intro h1 { font-size: 34px; font-weight: 700; margin: 0 0 12px; line-height: 1.1; }
+  .intro p { color: var(--chrome-muted); font-size: 15px; line-height: 1.6; margin: 0 0 10px; }
+  .intro p strong { color: var(--chrome-text); }
+
+  .frame-block { margin-bottom: 56px; }
+  .frame-label {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .frame-tag {
+    font: 600 12px/1 'IBM Plex Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 5px; border: 1px solid var(--chrome-border);
+  }
+  .frame-tag.before { color: #a14a3f; border-color: #a14a3f; }
+  .frame-tag.after { color: #3f7a4a; border-color: #3f7a4a; }
+  .frame-label .fl-desc { font-size: 13px; color: var(--chrome-muted); }
+
+  /* --- the device frame holding the product specimen --- */
+  .device {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 18px 40px -20px rgba(0,0,0,0.35);
+    border: 1px solid var(--chrome-border);
+  }
+  .device-viewport {
+    height: 640px;
+    overflow: hidden;
+    position: relative;
+    background:
+      radial-gradient(var(--p-dot) 1px, transparent 1px) 0 0 / 22px 22px,
+      var(--p-bg);
+  }
+  .device-inner { padding: 40px 56px 48px; }
+
+  .browser-edge {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 34px;
+    background: #14140f;
+  }
+  .fold-fade {
+    position: absolute; left: 0; right: 0; bottom: 34px; height: 90px;
+    background: linear-gradient(to bottom, rgba(246,241,228,0), rgba(246,241,228,0.94));
+    pointer-events: none;
+  }
+  .fold-call {
+    position: absolute; left: 56px; bottom: 46px; z-index: 5;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--chrome-text); color: var(--chrome-bg);
+    font: 600 12px/1 'IBM Plex Mono', monospace; letter-spacing: 0.03em;
+    padding: 8px 12px; border-radius: 7px;
+  }
+
+  .rest-note {
+    display: flex; align-items: center; gap: 8px;
+    font: 500 12px/1 'IBM Plex Mono', monospace; letter-spacing: 0.03em;
+    color: #3f7a4a; margin-top: 12px;
+  }
+  .rest-note svg { flex: none; }
+
+  /* --- product chrome, matching the coach portal --- */
+  .p-header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .p-header .p-icon-box {
+    width: 40px; height: 40px; border-radius: 10px; background: var(--p-medallion);
+    display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .p-header h2 { color: var(--p-ink); font-size: 26px; font-weight: 700; margin: 0; }
+
+  .p-card {
+    background: var(--p-card); border: 1px solid var(--p-border); border-radius: 20px;
+    padding: 44px 40px; text-align: center;
+  }
+  .p-card.compact { padding: 26px 28px; text-align: left; }
+  .p-medallion {
+    width: 60px; height: 60px; border-radius: 14px; background: var(--p-medallion);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+  }
+  .p-card.compact .p-medallion { width: 40px; height: 40px; border-radius: 10px; margin: 0 0 12px; }
+  .p-headline { color: var(--p-ink); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 10px; }
+  .p-card.compact .p-headline { font-size: 18px; }
+  .p-desc { color: var(--p-muted); font-size: 15px; line-height: 1.55; margin: 0 auto 12px; max-width: 420px; }
+  .p-card.compact .p-desc { margin: 0 0 8px; max-width: none; }
+  .p-payoff { color: var(--p-muted); font-size: 13.5px; line-height: 1.55; margin: 0 auto 22px; max-width: 440px; }
+  .p-card.compact .p-payoff { margin: 0 0 16px; max-width: none; }
+  .p-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .p-card.compact .p-actions { justify-content: flex-start; }
+  .btn-lime, .btn-ghost {
+    font: 600 14px/1 'Inter', sans-serif; padding: 11px 18px; border-radius: 9px; border: none;
+    display: inline-flex; align-items: center; cursor: default;
+  }
+  .btn-lime { background: var(--p-lime); color: var(--p-lime-ink); }
+  .btn-ghost { background: var(--p-ghost-bg); color: var(--p-ink); }
+
+  .p-kicker {
+    font: 700 12px/1 'Inter', sans-serif; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--p-muted); margin: 30px 0 12px;
+  }
+
+  /* --- the merged AFTER card --- */
+  .p-merge-head { color: var(--p-ink); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 25px; margin: 0 0 8px; }
+  .p-merge-sub { color: var(--p-muted); font-size: 14.5px; margin: 0 0 26px; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .p-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left; }
+  .p-tile {
+    background: var(--p-bg); border: 1px solid var(--p-border); border-radius: 14px; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; position: relative;
+  }
+  .p-tile-kicker { font: 700 11px/1 'Inter', sans-serif; letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-muted); }
+  .p-tile-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 19px; color: var(--p-ink); }
+  .p-tile-body { font-size: 13.5px; line-height: 1.5; color: var(--p-muted); flex: 1; }
+  .p-tile-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .p-tile-link { font: 600 13px/1 'Inter', sans-serif; color: var(--p-ink); text-decoration: underline; text-underline-offset: 2px; }
+  .p-shared-payoff {
+    margin-top: 20px; font-size: 13.5px; color: var(--p-muted); text-align: center;
+  }
+
+  /* --- clickable annotations (native disclosure, no JS) --- */
+  .annot { position: relative; display: inline-block; }
+  .annot > summary {
+    list-style: none; cursor: pointer;
+    width: 22px; height: 22px; border-radius: 999px;
+    background: var(--chrome-accent); color: #fff;
+    font: 700 12px/22px 'IBM Plex Mono', monospace; text-align: center;
+    display: inline-block;
+  }
+  .annot > summary::-webkit-details-marker { display: none; }
+  .annot > summary:focus-visible { outline: 3px solid var(--chrome-accent-soft); outline-offset: 2px; }
+  .annot .note {
+    position: absolute; top: 30px; left: 0; z-index: 30; width: 240px;
+    background: var(--chrome-text); color: var(--chrome-bg);
+    font-size: 13px; line-height: 1.5; padding: 12px 14px; border-radius: 9px;
+    box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5);
+  }
+  .annot.right .note { left: auto; right: 0; }
+  .annot-inline-hd { display: inline-flex; align-items: center; gap: 8px; }
+  .annot-corner { position: absolute; top: 10px; right: 10px; }
+  .annot-under { display: flex; justify-content: center; margin-top: 10px; }
+
+  .principle {
+    margin-top: 8px; padding: 22px 24px; border-radius: 12px;
+    background: var(--chrome-surface); border: 1px solid var(--chrome-border);
+    max-width: 720px;
+  }
+  .principle h3 { font-size: 18px; margin: 0 0 8px; }
+  .principle p { color: var(--chrome-muted); font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
+  .principle p:last-child { margin-bottom: 0; }
+
+  @media (max-width: 720px) {
+    .p-tiles { grid-template-columns: 1fr; }
+    .device-inner { padding: 28px 22px 36px; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <div class="kicker">Design review · Coach Portal → Tournaments</div>
+    <h1>One page, two "start here" cards</h1>
+    <p>Right now a coach who can <strong>both join and host</strong> tournaments sees two full onboarding
+      blocks stacked on the same page — one to register, a second one below it to set up a tournament.
+      Each repeats the same medallion → headline → description → payoff → button shape, so the second
+      one is pushed below the fold every time. Click the numbered badges below for the reasoning.</p>
+  </div>
+
+  <div class="frame-block">
+    <div class="frame-label">
+      <span class="frame-tag before">Before</span>
+      <span class="fl-desc">what's live today — unscrolled</span>
+    </div>
+    <div class="device">
+      <div class="device-viewport">
+        <div class="device-inner">
+          <div class="p-header">
+            <div class="p-icon-box">🏆</div>
+            <h2>Tournaments</h2>
+          </div>
+
+          <div class="p-card">
+            <div class="p-medallion">🏆</div>
+            <h3 class="p-headline">Your tournament season lives here</h3>
+            <p class="p-desc">Register for any tournament on the organizer's public page using
+              <strong>this account's email</strong> — the entry appears here automatically with
+              schedule, scores, and status.</p>
+            <p class="p-payoff">From there its games appear on your Schedule ready for lineups, the
+              organizer's chat room opens under Chat, and results count toward your season record
+              in Insights.</p>
+            <div class="p-actions">
+              <span class="btn-lime">How registering works</span>
+              <span class="btn-ghost">Browse public tournaments</span>
+            </div>
+          </div>
+
+          <div class="p-kicker">
+            <details class="annot">
+              <summary>1</summary>
+              <div class="note">Second illustrated block starts here — same medallion, headline,
+                description, payoff and button shape as the one above it, just smaller. It's a
+                second onboarding screen, not a lightweight footnote.</div>
+            </details>
+            &nbsp;Tournaments you run
+          </div>
+          <div class="p-card compact">
+            <div class="p-medallion">🏆</div>
+            <h3 class="p-headline">Run your own tournament</h3>
+            <p class="p-desc">A quick round robin or exhibition weekend, set up from here.</p>
+            <p class="p-payoff">Registrations, the schedule, scores and what visiting teams see —
+              all on one page you run.</p>
+            <div class="p-actions"><span class="btn-lime">Set up a tournament</span></div>
+          </div>
+        </div>
+        <div class="fold-fade"></div>
+        <div class="fold-call">↓ requires scrolling to reach</div>
+        <div class="browser-edge"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame-block">
+    <div class="frame-label">
+      <span class="frame-tag after">After</span>
+      <span class="fl-desc">proposed — one card, two equal doors</span>
+    </div>
+    <div class="device">
+      <div class="device-viewport">
+        <div class="device-inner">
+          <div class="p-header">
+            <div class="p-icon-box">🏆</div>
+            <h2>Tournaments</h2>
+          </div>
+
+          <div class="p-card" style="position: relative;">
+            <div class="annot-corner">
+              <details class="annot right">
+                <summary>2</summary>
+                <div class="note">One medallion, one headline, one intro line — not two copies of
+                  each. Everything that's true regardless of which door a coach uses is said once,
+                  above both doors instead of inside each one.</div>
+              </details>
+            </div>
+            <div class="p-medallion">🏆</div>
+            <h3 class="p-merge-head">Your tournament season lives here</h3>
+            <p class="p-merge-sub">Join tournaments other organizers run, or host your own — either
+              way, it shows up here automatically.</p>
+
+            <div class="p-tiles">
+              <div class="p-tile">
+                <div class="annot-corner">
+                  <details class="annot right">
+                    <summary>3</summary>
+                    <div class="note">Both doors sit side by side at equal weight. Neither one
+                      implies the other is secondary or harder to find — a coach who can do both
+                      sees both in the same glance.</div>
+                  </details>
+                </div>
+                <div class="p-tile-kicker">Join one</div>
+                <div class="p-tile-title">Register with any organizer</div>
+                <div class="p-tile-body">Sign up on their public page using this account's email —
+                  the entry appears here with schedule, scores and status.</div>
+                <div class="p-tile-actions">
+                  <span class="btn-lime">Browse public tournaments</span>
+                  <span class="p-tile-link">How it works</span>
+                </div>
+              </div>
+              <div class="p-tile">
+                <div class="p-tile-kicker">Host your own</div>
+                <div class="p-tile-title">Run your own event</div>
+                <div class="p-tile-body">A quick round robin or exhibition weekend — schedule,
+                  scores and what visiting teams see, all on one page you run.</div>
+                <div class="p-tile-actions">
+                  <span class="btn-lime">Set up a tournament</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="p-shared-payoff">
+              <details class="annot" style="vertical-align: -4px; margin-right: 6px;">
+                <summary>4</summary>
+                <div class="note">This exact sentence was written three separate times in the
+                  current code — once per empty state. Because it's true no matter which door a
+                  coach takes, it only needs to be said once, under both.</div>
+              </details>
+              Either way: games land on your Schedule, the chat room opens, and results count
+              toward your season record in Insights.
+            </p>
+          </div>
+        </div>
+        <div class="browser-edge"></div>
+      </div>
+    </div>
+    <div class="rest-note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#3f7a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Both doors visible, nothing below the fold — same viewport, same scroll position as above
+    </div>
+  </div>
+
+  <div class="principle">
+    <h3>The general fix, not just this page</h3>
+    <p>This only bites when <strong>both</strong> halves of a page are simultaneously empty — a coach
+      with existing entries or existing hosted tournaments never sees this, because those sections
+      render actual content, not a second onboarding illustration. The trigger is specifically two
+      "nothing here yet, here's a big button" blocks landing on the same screen.</p>
+    <p>Going forward: when a page can offer more than one starting action, it gets <strong>one</strong>
+      empty state with equal-weight choices, not one action's empty state followed by another
+      section's empty state underneath it. The second one only earns its own illustrated card once
+      the page already has real content above it.</p>
+  </div>
+</div>

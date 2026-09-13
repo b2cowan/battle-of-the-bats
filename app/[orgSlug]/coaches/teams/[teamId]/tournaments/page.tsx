@@ -12,7 +12,10 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
-import CoachHostedTournamentsSection from '@/components/coaches/CoachHostedTournamentsSection';
+import CoachHostedTournamentsSection, { type HostedTournamentsState } from '@/components/coaches/CoachHostedTournamentsSection';
+import CoachTournamentChoiceCard from '@/components/coaches/CoachTournamentChoiceCard';
+import { trackTournamentAcquisition } from '@/components/marketing/tournament-acquisition';
+import type { HostedTournamentRow } from '@/app/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments/route';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -80,6 +83,25 @@ export default function PremiumTeamTournamentsPage({
   // can be evaluated (the provider is seeded server-side, so this is defence in depth).
   useEffect(() => { if (!coachesLoading && !notGranted) void Promise.resolve().then(load); }, [load, notGranted, coachesLoading]);
 
+  // Owned here (not inside CoachHostedTournamentsSection) so the page can tell, before either
+  // half of the season renders, whether BOTH are empty — the case CoachTournamentChoiceCard
+  // exists for (stacked-onboarding review, 2026-09-13). `null` means "not resolved yet", same as
+  // the section's own fetch used to mean, so the merge only activates once we actually know.
+  const [hosted, setHosted] = useState<HostedTournamentsState>(null);
+  useEffect(() => {
+    if (coachesLoading || notGranted) return;
+    let active = true;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/hosted-tournaments`)
+      .then(res => (res.ok ? res.json() as Promise<{ canRun: boolean; tournaments: HostedTournamentRow[] }> : null))
+      // Always lands on a definite value once the request settles — never leaves `hosted` stuck
+      // at `null` on a failed/non-ok response. `awaitingMergeDecision` below waits on this exact
+      // state for an empty top section, so a permanent `null` here would hang that page's loading
+      // state forever instead of just quietly not offering the hosting door (review 2026-09-13).
+      .then(json => { if (active) setHosted(json ? { canRun: !!json.canRun, tournaments: json.tournaments ?? [] } : { canRun: false, tournaments: [] }); })
+      .catch(() => { if (active) setHosted({ canRun: false, tournaments: [] }); });
+    return () => { active = false; };
+  }, [orgSlug, teamId, coachesLoading, notGranted]);
+
   const today = tournamentToday();
 
   const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
@@ -95,6 +117,33 @@ export default function PremiumTeamTournamentsPage({
       : [],
     [data, today],
   );
+
+  // The merge point: both halves of the season are genuinely empty (nothing entered, nothing
+  // hosted), so CoachTournamentChoiceCard replaces both illustrated blocks with one. State C
+  // (already linked, just nothing yet) stays outside this — it's a compact "check back" panel
+  // with no button, not a second full onboarding block, so stacking it with an empty hosted
+  // section never reproduced the below-the-fold problem this exists to fix.
+  const hostEmpty = hosted !== null && hosted.canRun && hosted.tournaments.length === 0;
+  const bothEmpty = data !== null && sorted.length === 0 && data.linkage === 'none' && hostEmpty;
+
+  // Only the "could this become the merged card?" shape needs to wait on the second fetch — a
+  // team with real entries, or already-linked (State C), renders immediately either way, exactly
+  // as before. Without this, the plain State A/B card could paint first and then get swapped out
+  // for CoachTournamentChoiceCard moments later once `hosted` resolves — a jarring content swap
+  // this whole change exists to avoid (review 2026-09-13). `hosted` always settles to a real value
+  // (see the fetch above), so this never waits forever.
+  const awaitingMergeDecision = data !== null && sorted.length === 0 && data.linkage === 'none' && hosted === null;
+
+  const hostSetupHref = `/${orgSlug}/admin/org/tournaments?create=1&source=coach_portal_tournaments`;
+  const trackHostCta = (eventType: 'tournament_plus_acquisition_cta_viewed' | 'tournament_plus_acquisition_cta_clicked') =>
+    trackTournamentAcquisition({
+      eventType,
+      acquisitionSource: 'coach_portal_tournaments',
+      surface: 'admin_upgrade_gate',
+      orgSlug,
+      currentPath: window.location.pathname,
+      ctaHref: hostSetupHref,
+    });
 
   if (notGranted) {
     return (
@@ -125,7 +174,7 @@ export default function PremiumTeamTournamentsPage({
 
       {error && <p className={styles.errorText}>{error}</p>}
 
-      {data === null ? (
+      {data === null || awaitingMergeDecision ? (
         <div className={styles.loadingState}>Loading tournaments…</div>
       ) : sorted.length > 0 ? (
         <>
@@ -164,6 +213,50 @@ export default function PremiumTeamTournamentsPage({
           headline="No tournaments yet this season"
           description="This season's tournament entries appear here the moment you're registered."
           payoff="Once one lands, its games drop straight into your Schedule, its chat room opens under Chat, and its results count toward your season record in Insights."
+        />
+      ) : bothEmpty ? (
+        // Merged state (stacked-onboarding review, 2026-09-13): nothing entered AND nothing
+        // hosted, so one card offers both doors instead of two full illustrated blocks stacked
+        // on the page. The join tile still branches on self-serve (A) vs link-required (B).
+        <CoachTournamentChoiceCard
+          headline="Your tournament season lives here"
+          intro="Join tournaments other organizers run, or host your own — either way, it shows up here automatically."
+          join={isTeamWorkspace ? {
+            kicker: 'Join one',
+            title: 'Register with any organizer',
+            body: (
+              <>
+                Register on the organizer&apos;s public page using{' '}
+                <strong>this account&apos;s email</strong> — the entry appears here automatically
+                with schedule, scores, and status.
+              </>
+            ),
+            primaryAction: { label: 'How registering works', onClick: () => openHelp(helpRequest) },
+            secondaryAction: { label: 'Browse public tournaments', href: '/discover' },
+          } : {
+            kicker: 'Link required',
+            title: 'No tournaments linked yet',
+            body: (
+              <>
+                When {currentOrg?.name ?? 'your organization'} registers this team for a
+                tournament, they link the entry to your team and it shows up here automatically —
+                with the live schedule and scores.
+              </>
+            ),
+            primaryAction: { label: 'How linking works', onClick: () => openHelp(helpRequest) },
+            blocker: "Only your organization can make that link — ask them if you're expecting one.",
+          }}
+          host={{
+            title: 'Run your own tournament',
+            body: 'A quick round robin or exhibition weekend, set up from here — registrations, schedule, scores and what visiting teams see, all on one page you run.',
+            action: {
+              label: 'Set up a tournament',
+              href: hostSetupHref,
+              onClick: () => trackHostCta('tournament_plus_acquisition_cta_clicked'),
+            },
+            onView: () => trackHostCta('tournament_plus_acquisition_cta_viewed'),
+          }}
+          payoff="Either way: games land on your Schedule ready for lineups, the chat room opens under Chat, and results count toward your season record in Insights."
         />
       ) : isTeamWorkspace ? (
         // State A — standalone/workspace team, never bridged: registration is self-serve by account email,
@@ -206,8 +299,9 @@ export default function PremiumTeamTournamentsPage({
       )}
 
       {/* The second half of the season — the tournament(s) this workspace RUNS — below the entries
-          (owner ruling 2026-09-13). Renders nothing for anyone who cannot run one. */}
-      {(data !== null || error) && <CoachHostedTournamentsSection orgSlug={orgSlug} teamId={teamId} />}
+          (owner ruling 2026-09-13). Renders nothing for anyone who cannot run one, and nothing
+          here when bothEmpty is true: CoachTournamentChoiceCard above already offers that door. */}
+      {(data !== null || error) && !bothEmpty && <CoachHostedTournamentsSection orgSlug={orgSlug} state={hosted} />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Trophy } from 'lucide-react';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -8,6 +8,8 @@ import { formatCardDateRange } from '@/components/coaches/CoachRegistrationCard'
 import type { HostedTournamentRow } from '@/app/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments/route';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import card from '@/components/coaches/CoachRegistrationCard.module.css';
+
+export type HostedTournamentsState = { canRun: boolean; tournaments: HostedTournamentRow[] } | null;
 
 /**
  * "TOURNAMENTS YOU RUN" — the second half of the team's tournament season, on the page that
@@ -23,21 +25,21 @@ import card from '@/components/coaches/CoachRegistrationCard.module.css';
  * Both doors skip the workspace-level "All tournaments" list (owner, on the first mockup):
  *   · Set up a tournament → the create wizard, directly; finishing lands on the new Dashboard.
  *   · Manage → that tournament's own Dashboard, the screen it is run from.
+ *
+ * The hosted-tournaments read lives one level up (the page fetches once and passes `state` down)
+ * so the page can also decide, before this section ever renders, whether the season's OTHER half
+ * is empty too — in which case the page renders CoachTournamentChoiceCard instead of mounting
+ * this section at all (stacked-onboarding review, 2026-09-13).
  */
 const STATUS_WORD: Record<string, string> = { draft: 'Draft', active: 'Active', completed: 'Completed' };
 
-export default function CoachHostedTournamentsSection({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
-  const [state, setState] = useState<{ canRun: boolean; tournaments: HostedTournamentRow[] } | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/hosted-tournaments`)
-      .then(res => (res.ok ? res.json() as Promise<{ canRun: boolean; tournaments: HostedTournamentRow[] }> : null))
-      .then(json => { if (active && json) setState({ canRun: !!json.canRun, tournaments: json.tournaments ?? [] }); })
-      .catch(() => {});
-    return () => { active = false; };
-  }, [orgSlug, teamId]);
-
+export default function CoachHostedTournamentsSection({
+  orgSlug,
+  state,
+}: {
+  orgSlug: string;
+  state: HostedTournamentsState;
+}) {
   if (!state?.canRun) return null;
 
   const setupHref = `/${orgSlug}/admin/org/tournaments?create=1&source=coach_portal_tournaments`;

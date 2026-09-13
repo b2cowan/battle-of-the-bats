@@ -1,0 +1,139 @@
+/* CoachTournamentChoiceCard — the merged "both halves of the season are empty" state for the
+   Tournaments page (owner ruling 2026-09-13, after the stacked-onboarding review): one card,
+   two equal-weight doors, instead of two full CoachEmptyState illustrations stacked on top of
+   each other. Wider than CoachEmptyState's 560px so the two tiles have room side by side. */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.75rem;
+  text-align: center;
+  background:
+    radial-gradient(110% 80% at 50% 0%, rgba(var(--logic-lime-rgb), 0.07), transparent 55%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+  overflow: hidden;
+}
+
+.medallion {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  box-shadow: 0 0 24px rgba(var(--logic-lime-rgb), 0.15);
+}
+
+.headline {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--type-heading);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.intro {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  line-height: 1.55;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  width: 100%;
+  margin-top: 0.4rem;
+  text-align: left;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem 1.15rem;
+  /* --bg (the page's own ground), not --surface — the card itself IS --surface, so a tile
+     needs the paper tone underneath it to read as a sunken panel rather than vanish flush. */
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.tileKicker {
+  color: var(--text-tertiary);
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tileTitle {
+  color: var(--text-primary);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.tileBody {
+  flex: 1;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  line-height: 1.5;
+}
+
+.tileBlocker {
+  margin: -0.15rem 0 0;
+  color: var(--text-tertiary);
+  font-size: var(--type-body);
+  line-height: 1.5;
+}
+
+.tileActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.payoff {
+  max-width: 52ch;
+  margin: 0.2rem 0 0;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .card {
+    align-items: flex-start;
+    text-align: left;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .intro,
+  .payoff {
+    max-width: none;
+  }
+
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .tileActions :global(.btn) {
+    min-height: var(--tap-min, 44px);
+  }
+}
