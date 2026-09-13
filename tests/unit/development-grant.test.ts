@@ -125,14 +125,29 @@ const DEVELOPMENT_WRITE_ROUTES = [
   `${TEAM_API}/roster/[playerId]/development/measurables/[entryId]/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/carry/route.ts`,
   `${TEAM_API}/tryout-baselines/route.ts`,
+  // Phase 2 (2026-09-13): not-assessed marks, observations, goal reviews.
+  `${TEAM_API}/development/sessions/[sessionId]/not-assessed/route.ts`,
+  `${TEAM_API}/roster/[playerId]/development/observations/route.ts`,
+  `${TEAM_API}/roster/[playerId]/development/observations/[observationId]/route.ts`,
+  `${TEAM_API}/roster/[playerId]/development/goals/[goalId]/reviews/route.ts`,
 ];
-/** The ones that write a GOAL — these need notes as well (see above). */
+/** The ones that write a coach's JUDGEMENT about a child — goals, observations, reviews — which
+ *  need notes as well (see above). */
 const GOAL_WRITE_ROUTES = new Set([
   `${TEAM_API}/roster/[playerId]/development/goals/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/goals/[goalId]/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/carry/route.ts`,
   `${TEAM_API}/tryout-baselines/route.ts`,
+  `${TEAM_API}/roster/[playerId]/development/observations/route.ts`,
+  `${TEAM_API}/roster/[playerId]/development/observations/[observationId]/route.ts`,
+  `${TEAM_API}/roster/[playerId]/development/goals/[goalId]/reviews/route.ts`,
 ]);
+/** The per-player routes may gate through the ONE shared resolver instead of inline — the gate
+ *  literal it is called with is the proof, and the resolver itself is checked below to hold the
+ *  real predicates, so the delegation is never a hollow claim. */
+const PLAYER_RESOLVER = 'lib/development-player-route.ts';
+const viaResolver = (src: string, gate: 'results' | 'goals') =>
+  new RegExp(String.raw`resolveDevelopmentPlayerContext\([^)]*'${gate}'\)`).test(src);
 
 describe('the development routes refuse with the grant’s own sentence, never "Only the head coach"', () => {
   it('no development write route still claims head-coach-only', () => {
@@ -142,17 +157,25 @@ describe('the development routes refuse with the grant’s own sentence, never "
       // sentence and out of this ruling's reach — so there the check is on the development half.
       const scope = route.endsWith('tryout-baselines/route.ts') ? src.replace(/Only the head coach manages tryouts./g, '') : src;
       assert.doesNotMatch(scope, /Only the head coach/, `${route} still says "Only the head coach" — the grant made that untrue`);
-      assert.match(src, /DEVELOPMENT_GRANT_MESSAGE/, `${route} must refuse with the shared sentence`);
+      if (!viaResolver(src, 'results') && !viaResolver(src, 'goals')) {
+        assert.match(src, /DEVELOPMENT_GRANT_MESSAGE/, `${route} must refuse with the shared sentence`);
+      }
     }
+    assert.match(read(PLAYER_RESOLVER), /DEVELOPMENT_GRANT_MESSAGE/, 'the shared resolver must refuse with the shared sentence');
   });
 
   it('every write gates through the grant predicate, and goal writes through the compound one', () => {
+    const resolver = read(PLAYER_RESOLVER);
+    assert.match(resolver, /gate === 'goals' \? canWriteDevelopmentGoals\(/, 'the resolver’s goals gate is the compound one');
+    assert.match(resolver, /: canWriteDevelopment\(/, 'the resolver’s results gate is the grant');
+    assert.match(resolver, /denyUnless\(allowed, DEVELOPMENT_GRANT_MESSAGE\)/);
     for (const route of DEVELOPMENT_WRITE_ROUTES) {
       const src = read(route);
       if (GOAL_WRITE_ROUTES.has(route)) {
-        assert.match(src, /denyUnless\(canWriteDevelopmentGoals\(/, `${route} writes a goal — it needs the grant AND notes`);
+        assert.ok(viaResolver(src, 'goals') || /denyUnless\(canWriteDevelopmentGoals\(/.test(src), `${route} writes a goal — it needs the grant AND notes`);
+        assert.ok(!viaResolver(src, 'results'), `${route} writes a goal and must not resolve on the results gate`);
       } else {
-        assert.match(src, /canWriteDevelopment\(/, route);
+        assert.ok(viaResolver(src, 'results') || /canWriteDevelopment\(/.test(src), route);
       }
     }
   });

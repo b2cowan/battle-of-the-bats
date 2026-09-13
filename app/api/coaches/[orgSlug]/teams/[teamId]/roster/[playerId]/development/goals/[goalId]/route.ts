@@ -5,7 +5,9 @@ import {
   getRepRosterPlayer,
   updateRepPlayerDevelopmentGoal,
   deleteRepPlayerDevelopmentGoal,
+  appendRepDevelopmentGoalReview,
 } from '@/lib/db';
+import { assertGoalBelongsToPlayer } from '@/lib/development-player-route';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readGoalPatchInput } from '@/lib/development-input';
@@ -63,6 +65,30 @@ export const PATCH = withObservability(async (req: Request,
     fields.tagId = tag.tagId;
   }
 
+  /**
+   * A STATUS change is a review (F08, Phase 2). The profile's status pill used to overwrite the
+   * status with nothing behind it; now the status rides an appended review event (status only —
+   * no note, the "Review goal" dialog is where prose goes), so the goal's history stays whole and
+   * the list and the timeline never disagree. Wording / note / tag / success / review-date edits
+   * are edits, not reviews.
+   */
+  if (fields.status !== undefined) {
+    const { status, reviewedOn, ...edits } = fields;
+    // The review is written FIRST (the event is the record), so the goal must be proved THIS
+    // player's before it — the update's player scope would refuse too late.
+    if (await assertGoalBelongsToPlayer(teamId, playerId, goalId)) {
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    }
+    if (Object.keys(edits).length > 0) {
+      const edited = await updateRepPlayerDevelopmentGoal(goalId, teamId, playerId, edits);
+      if (!edited) return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    }
+    const { goal } = await appendRepDevelopmentGoalReview({
+      orgId: resolved.ctx.org.id, teamId, playerId, goalId, reviewedOn: reviewedOn!, status, createdBy: resolved.ctx.user.id,
+    });
+    if (!goal) return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    return NextResponse.json({ goal });
+  }
   const goal = await updateRepPlayerDevelopmentGoal(goalId, teamId, playerId, fields);
   if (!goal) return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
   return NextResponse.json({ goal });

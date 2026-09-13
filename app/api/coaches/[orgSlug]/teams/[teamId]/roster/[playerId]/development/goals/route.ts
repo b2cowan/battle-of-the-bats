@@ -9,6 +9,7 @@ import type { RepDevelopmentGoalStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readFocusArea, verifyFocusTag } from '@/lib/development-goal-input';
+import { readGoalExtrasInput } from '@/lib/development-input';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 const VALID_STATUSES: RepDevelopmentGoalStatus[] = ['working', 'achieved', 'parked'];
@@ -75,6 +76,9 @@ export const POST = withObservability(async (req: Request,
   const tag = await verifyFocusTag(body, { orgId: ctx.org.id, teamId });
   if ('error' in tag) return tag.error;
   const { tagId } = tag;
+  // "More" — what success looks like and the review date (Phase 2, F08/F17). Both optional.
+  const extras = readGoalExtrasInput(body);
+  if ('error' in extras) return NextResponse.json({ error: extras.error }, { status: 400 });
 
   const goal = await createRepPlayerDevelopmentGoal({
     orgId: ctx.org.id,
@@ -84,6 +88,10 @@ export const POST = withObservability(async (req: Request,
     note: note || null,
     status,
     tagId,
+    success: extras.fields.success ?? null,
+    reviewOn: extras.fields.reviewOn ?? null,
+    // Set with the player — the profile form is the one door that means it (mig 295).
+    origin: 'coach',
     createdBy: ctx.user.id,
   });
   return NextResponse.json({ goal }, { status: 201 });

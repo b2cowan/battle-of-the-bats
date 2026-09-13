@@ -6,6 +6,7 @@ import {
   getRepTeamMeasurableTypes,
   getRepTeamEvaluationSession,
   createRepPlayerMeasurable,
+  unmarkRepSessionNotAssessed,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
@@ -56,7 +57,7 @@ export const POST = withObservability(async (req: Request,
 
   const read = readMeasurableInput(body);
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
-  const { measurableTypeId, value, recordedOn, note, sessionId: requestedSessionId } = read.fields;
+  const { measurableTypeId, value, recordedOn, note, sessionId: requestedSessionId, attemptNo } = read.fields;
 
   // Must be this TEAM's type and ACTIVE — a retired type can't take new entries (it keeps
   // resolving for past ones), and another team's type id must not slip through.
@@ -68,7 +69,12 @@ export const POST = withObservability(async (req: Request,
   // A number is a TEST's record. An observed skill is a definition in Phase 1; recording an
   // observation against it is Phase 2, and a value filed under a skill would be a fabricated score.
   if (!isMeasuredTest(type)) {
-    return NextResponse.json({ error: 'An observed skill takes an observation, not a number — recording observations comes in a later release.' }, { status: 400 });
+    return NextResponse.json({ error: 'An observed skill takes an observation, not a number — record one from the skill’s chip or the player’s Observations.' }, { status: 400 });
+  }
+  // The definition says how many attempts a session takes (owner ruling 2026-09-11); the reader
+  // bounded the number, the definition bounds it further. A single reading is always attempt 1.
+  if (attemptNo > type.attemptsPerSession) {
+    return NextResponse.json({ error: `${type.name} takes ${type.attemptsPerSession} attempt${type.attemptsPerSession === 1 ? '' : 's'} per session.` }, { status: 400 });
   }
 
   // Optional evaluation-session tag (3B) — must be THIS team's session AND the same season
@@ -99,13 +105,19 @@ export const POST = withObservability(async (req: Request,
       recordedOn,
       note,
       sessionId,
+      attemptNo,
       createdBy: ctx.user.id,
     });
+    // A value on the cell IS the assessment — a "not assessed" mark left beside it (marked on
+    // another device before this value landed) would contradict the record.
+    if (sessionId) await unmarkRepSessionNotAssessed(sessionId, teamId, playerId, measurableTypeId);
     return NextResponse.json({ entry }, { status: 201 });
   } catch (error: unknown) {
-    // Partial unique (session, player, test) — one reading per player per test per session.
+    // Partial unique (session, player, test, ATTEMPT) — one reading per attempt (mig 295). A
+    // duplicate is a retry that already landed, or two devices on one row: the screen reloads the
+    // row rather than writing a second copy.
     if (typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505') {
-      return NextResponse.json({ error: 'Already logged for this player in this session — remove the existing reading first.' }, { status: 409 });
+      return NextResponse.json({ error: 'That attempt is already saved for this player in this session — reload the row to see it.' }, { status: 409 });
     }
     throw error;
   }

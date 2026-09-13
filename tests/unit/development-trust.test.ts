@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { splitSeriesByUnit, drawableSegment, unitSplitNote } from '../../lib/measurable-series.ts';
-import { sessionMetricChips, sessionRows, sessionEnteredCount, defaultSessionChip } from '../../lib/development-session-view.ts';
+import { sessionMetricChips, sessionRows, sessionScopeCounts, defaultSessionChip } from '../../lib/development-session-view.ts';
 import { practiceTruth, PRACTICE_TRUTH_LABELS } from '../../lib/practice-truth.ts';
 import { pastSeasonRefusal, PAST_SEASON_MESSAGE } from '../../lib/development-season-guard.ts';
 import { sectionState } from '../../lib/report-section-state.ts';
@@ -83,7 +83,7 @@ describe('F01 — splitSeriesByUnit: a series breaks wherever the recorded unit 
 // ── F02 — a session shows everything saved in it ─────────────────────────────────────────────────
 const type = (id: string, isActive: boolean, sortOrder = 0) => ({ id, name: id, unit: 'u', isActive, sortOrder });
 const entry = (playerId: string, measurableTypeId: string, id = `${playerId}:${measurableTypeId}`) =>
-  ({ id, playerId, measurableTypeId });
+  ({ id, playerId, measurableTypeId, attemptNo: 1 });
 const player = (id: string) => ({ id, playerFirstName: id, playerLastName: null, playerNumber: null });
 
 describe('F02 — sessionMetricChips: retired tests with saved rows stay on the session', () => {
@@ -109,7 +109,7 @@ describe('F02 — sessionRows: an inactive participant keeps their row, read-onl
       [entry('b', 'sprint'), entry('gone', 'sprint')],
       'sprint',
     );
-    assert.deepEqual(rows.map(r => [r.player.id, !!r.entry, r.pastParticipant]), [
+    assert.deepEqual(rows.map(r => [r.player.id, r.entries.length > 0, r.pastParticipant]), [
       ['a', false, false], ['b', true, false], ['gone', true, true],
     ]);
   });
@@ -120,13 +120,14 @@ describe('F02 — sessionRows: an inactive participant keeps their row, read-onl
   });
 
   it('the entered count counts CURRENT roster players, once each, never rows', () => {
-    // Two rows for one player (attempts arrive in Phase 2) must still be ONE player.
-    const n = sessionEnteredCount(
-      [player('a'), player('b')],
+    // Two rows for one player (attempts, Phase 2) must still be ONE player; a departed player's
+    // reading is listed but never counted.
+    const rows = sessionRows(
+      [player('a'), player('b')], [player('gone')],
       [entry('a', 'sprint', 'e1'), entry('a', 'sprint', 'e2'), entry('gone', 'sprint')],
       'sprint',
     );
-    assert.equal(n, 1);
+    assert.deepEqual(sessionScopeCounts(rows, null), { scoped: false, recorded: 1, notAssessed: 0, notRecorded: 1, total: 2 });
   });
 
   it('the session API sends the past participants and the screen reads through the view module', () => {
@@ -185,10 +186,17 @@ describe('F04 — pastSeasonRefusal: one rule, every development write', () => {
     assert.equal(pastSeasonRefusal({ programYearId: 'y2026' }, { programYearId: 'y2026' }), null);
   });
   it('every goal and reading write route applies it — creates AND edit/delete', () => {
+    // Phase 2 (2026-09-13): the per-player routes may stand on the ONE shared resolver, which
+    // applies the guard once for all of them — so the resolver is checked, and a route proves
+    // itself either inline or by calling it.
+    const resolver = readFileSync(join(process.cwd(), 'lib', 'development-player-route.ts'), 'utf8');
+    assert.match(resolver, /pastSeasonRefusal\(player, assignment\)/, 'the shared resolver must refuse a past-season row');
     const dev = join(process.cwd(), 'app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'roster', '[playerId]', 'development');
-    for (const rel of ['goals/route.ts', 'goals/[goalId]/route.ts', 'measurables/route.ts', 'measurables/[entryId]/route.ts']) {
+    for (const rel of ['goals/route.ts', 'goals/[goalId]/route.ts', 'measurables/route.ts', 'measurables/[entryId]/route.ts',
+      'goals/[goalId]/reviews/route.ts', 'observations/route.ts', 'observations/[observationId]/route.ts']) {
       const src = readFileSync(join(dev, rel), 'utf8');
-      assert.match(src, /pastSeasonRefusal\(/, `${rel} must refuse a past-season row through the shared guard`);
+      assert.ok(/pastSeasonRefusal\(/.test(src) || /resolveDevelopmentPlayerContext\(/.test(src),
+        `${rel} must refuse a past-season row through the shared guard`);
     }
   });
 });

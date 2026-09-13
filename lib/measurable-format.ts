@@ -16,6 +16,13 @@ export function todayLocal(): string {
   return new Date().toLocaleDateString('en-CA');
 }
 
+/** "Tuesday, September 8" (long) · "Tue, Sep 8" (short) — a session's date, as the two Skills &
+ *  Goals screens and the review dialog show it. Plain DATE strings only; parsed as local midnight. */
+export function formatWeekdayDate(iso: string, style: 'long' | 'short' = 'long'): string {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { weekday: style, month: style, day: 'numeric' });
+}
+
 /** "Jul 17" — the short date label for plain DATE strings (recorded_on, session_date).
  *  NEVER pass a timestamptz here: slicing an instant's UTC date shifts evening times a day. */
 export function formatShortDate(iso: string): string {

@@ -14,6 +14,7 @@
  */
 import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepDevelopmentGoalStatus, RepTeamMeasurableType } from './types';
 import { isValidRecordDate } from './measurable-format';
+import { isRecordId as isId } from './development-address';
 import {
   MEASURABLE_AIMS, MEASURABLE_HEADLINES, MEASURABLE_KINDS, defaultHeadlineFor, definitionChange, headlineOptionsFor,
   type DefinitionChange,
@@ -32,9 +33,31 @@ export const MAX_DESCRIPTORS = 10;
 export const MAX_DESCRIPTOR_LEN = 60;
 export const MAX_ATTEMPTS = 5;
 export const MAX_GOAL_NOTE_LEN = 280;
+export const MAX_GOAL_SUCCESS_LEN = 280;
 export const MAX_READING_NOTE_LEN = 200;
 export const MAX_SESSION_NOTE_LEN = 200;
 export const MAX_READING_VALUE = 99999;
+export const MAX_NOT_ASSESSED_REASON_LEN = 120;
+export const MAX_OBSERVATION_NOTE_LEN = 600;
+export const MAX_REVIEW_NOTE_LEN = 600;
+
+/** A list of ids, deduped in order; null when the value is not a list of ids. */
+function readIdList(raw: unknown): string[] | null {
+  if (!Array.isArray(raw) || raw.some(v => !isId(v))) return null;
+  return [...new Set(raw as string[])];
+}
+/** A YYYY-MM-DD date or a refusal, with the field named. */
+function readDate(raw: unknown, field: string): InputResult<string> {
+  const v = typeof raw === 'string' ? raw : '';
+  if (!isValidRecordDate(v)) return { error: `${field} must be a valid YYYY-MM-DD date — check the year.` };
+  return { fields: v };
+}
+/** Trimmed text, null when blank, refused when too long. */
+function readText(raw: unknown, max: number, what: string): InputResult<string | null> {
+  const v = typeof raw === 'string' ? raw.trim() : '';
+  if (v.length > max) return { error: `${what} is too long (max ${max} characters).` };
+  return { fields: v || null };
+}
 
 const obj = (raw: unknown): Record<string, unknown> =>
   (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
@@ -251,10 +274,36 @@ export function readFocusAreaText(raw: unknown): InputResult<string> {
   return { fields: focusArea };
 }
 
-export interface GoalPatchFields {
+/**
+ * The goal's Phase 2 extras — "what success looks like" and the next review date — as the add
+ * form and the edit form both send them (mockup screen 4, under "More"). Both optional; null clears.
+ */
+export interface GoalExtrasFields { success?: string | null; reviewOn?: string | null }
+export function readGoalExtrasInput(raw: unknown): InputResult<GoalExtrasFields> {
+  const body = obj(raw);
+  const fields: GoalExtrasFields = {};
+  if (body.success !== undefined) {
+    const t = readText(body.success, MAX_GOAL_SUCCESS_LEN, 'What success looks like');
+    if ('error' in t) return t;
+    fields.success = t.fields;
+  }
+  if (body.reviewOn !== undefined) {
+    if (body.reviewOn === null || body.reviewOn === '') fields.reviewOn = null;
+    else {
+      const d = readDate(body.reviewOn, 'Review on');
+      if ('error' in d) return d;
+      fields.reviewOn = d.fields;
+    }
+  }
+  return { fields };
+}
+
+export interface GoalPatchFields extends GoalExtrasFields {
   focusArea?: string;
   note?: string | null;
   status?: RepDevelopmentGoalStatus;
+  /** Required WITH a status (Phase 2): a status change is a review, dated by the coach's own day. */
+  reviewedOn?: string;
   /** Present = set it (null clears back to "the coach hasn't said"). Ownership and the error message are
    *  `verifyFocusTag`'s (development-goal-input.ts) — the route calls it whenever this is present. */
   tagId?: string | null;
@@ -281,9 +330,130 @@ export function readGoalPatchInput(raw: unknown): InputResult<GoalPatchFields> {
       return { error: 'Invalid status' };
     }
     fields.status = body.status as RepDevelopmentGoalStatus;
+    // A status change is a REVIEW (F08) — dated by the client's own day, never the server's clock
+    // (a server "today" is UTC, and an evening tap would land on tomorrow).
+    const on = readDate(body.reviewedOn, 'Reviewed on');
+    if ('error' in on) return { error: 'A status change is a review — say which day it was reviewed on.' };
+    fields.reviewedOn = on.fields;
+  }
+  const extras = readGoalExtrasInput(body);
+  if ('error' in extras) return extras;
+  Object.assign(fields, extras.fields);
+  if (Object.keys(fields).length === 0) return { error: 'Nothing to update' };
+  return { fields };
+}
+
+// ── Goal reviews (append-only dated events — F08; status required, never prose — F19) ───────────
+
+export interface GoalReviewFields {
+  reviewedOn: string;
+  status: RepDevelopmentGoalStatus;
+  note: string | null;
+  nextReviewOn: string | null;
+  evidenceMeasurableIds: string[];
+  evidenceObservationIds: string[];
+}
+
+export function readGoalReviewInput(raw: unknown): InputResult<GoalReviewFields> {
+  const body = obj(raw);
+  if (typeof body.status !== 'string' || !GOAL_STATUSES.includes(body.status as RepDevelopmentGoalStatus)) {
+    return { error: 'Choose a status for the goal — Working on it, Achieved or Parked.' };
+  }
+  const on = readDate(body.reviewedOn, 'Reviewed on');
+  if ('error' in on) return on;
+  const note = readText(body.note, MAX_REVIEW_NOTE_LEN, 'The review note');
+  if ('error' in note) return note;
+  let nextReviewOn: string | null = null;
+  if (body.nextReviewOn != null && body.nextReviewOn !== '') {
+    const d = readDate(body.nextReviewOn, 'Next review');
+    if ('error' in d) return d;
+    nextReviewOn = d.fields;
+  }
+  const evidenceMeasurableIds = body.evidenceMeasurableIds === undefined ? [] : readIdList(body.evidenceMeasurableIds);
+  const evidenceObservationIds = body.evidenceObservationIds === undefined ? [] : readIdList(body.evidenceObservationIds);
+  if (!evidenceMeasurableIds || !evidenceObservationIds) return { error: 'Evidence must be a list of record ids.' };
+  return {
+    fields: {
+      reviewedOn: on.fields, status: body.status as RepDevelopmentGoalStatus, note: note.fields, nextReviewOn,
+      evidenceMeasurableIds, evidenceObservationIds,
+    },
+  };
+}
+
+// ── Observations (what was seen, in a stated setting — plan §7) ─────────────────────────────────
+
+export interface ObservationCreateFields {
+  /** Named, not verified — the route proves it is this team's SKILL (and the database refuses a test). */
+  measurableTypeId: string;
+  observedOn: string;
+  note: string | null;
+  descriptor: string | null;
+  goalId: string | null;
+  sessionId: string | null;
+}
+export type ObservationPatchFields = Partial<Omit<ObservationCreateFields, 'measurableTypeId' | 'sessionId'>>;
+
+/**
+ * A note OR a descriptor — at least one (the table's CHECK): "With a reminder" is itself what was
+ * seen. The descriptor is the skill's own word, verified against the definition by the route.
+ */
+export function readObservationInput(raw: unknown, mode: 'create'): InputResult<ObservationCreateFields>;
+export function readObservationInput(raw: unknown, mode: 'patch'): InputResult<ObservationPatchFields>;
+export function readObservationInput(raw: unknown, mode: 'create' | 'patch'): InputResult<ObservationCreateFields | ObservationPatchFields> {
+  const body = obj(raw);
+  const fields: ObservationPatchFields & { measurableTypeId?: string; sessionId?: string | null } = {};
+  if (body.measurableTypeId !== undefined) {
+    if (mode === 'patch') return { error: 'The skill an observation names cannot be changed — record a new one.' };
+    if (!isId(body.measurableTypeId)) return { error: 'measurableTypeId is required' };
+    fields.measurableTypeId = body.measurableTypeId;
+  } else if (mode === 'create') return { error: 'measurableTypeId is required' };
+  if (mode === 'create' || body.observedOn !== undefined) {
+    const d = readDate(body.observedOn, 'Observed on');
+    if ('error' in d) return d;
+    fields.observedOn = d.fields;
+  }
+  if (body.note !== undefined) {
+    const t = readText(body.note, MAX_OBSERVATION_NOTE_LEN, 'What you saw');
+    if ('error' in t) return t;
+    fields.note = t.fields;
+  }
+  if (body.descriptor !== undefined) {
+    const t = readText(body.descriptor, MAX_DESCRIPTOR_LEN, 'The descriptor');
+    if ('error' in t) return t;
+    fields.descriptor = t.fields;
+  }
+  if (body.goalId !== undefined) {
+    if (body.goalId === null || body.goalId === '') fields.goalId = null;
+    else if (isId(body.goalId)) fields.goalId = body.goalId;
+    else return { error: 'Invalid goalId' };
+  }
+  if (mode === 'create') {
+    if (body.sessionId != null) {
+      if (!isId(body.sessionId)) return { error: 'Invalid sessionId' };
+      fields.sessionId = body.sessionId;
+    } else fields.sessionId = null;
+    if (!fields.note && !fields.descriptor) return { error: 'Say what you saw, or choose a descriptor.' };
+    return {
+      fields: {
+        measurableTypeId: fields.measurableTypeId!, observedOn: fields.observedOn!,
+        note: fields.note ?? null, descriptor: fields.descriptor ?? null, goalId: fields.goalId ?? null, sessionId: fields.sessionId ?? null,
+      },
+    };
   }
   if (Object.keys(fields).length === 0) return { error: 'Nothing to update' };
   return { fields };
+}
+
+// ── Not assessed (a state with a neutral reason, never a value) ─────────────────────────────────
+
+export interface NotAssessedFields { playerId: string; measurableTypeId: string; reason: string | null }
+export function readNotAssessedInput(raw: unknown): InputResult<NotAssessedFields> {
+  const body = obj(raw);
+  if (!isId(body.playerId)) return { error: 'playerId is required' };
+  if (!isId(body.measurableTypeId)) return { error: 'measurableTypeId is required' };
+  const reason = readText(body.reason, MAX_NOT_ASSESSED_REASON_LEN, 'The reason');
+  if ('error' in reason) return reason;
+  return { fields: { playerId: body.playerId, measurableTypeId: body.measurableTypeId, reason: reason.fields } };
 }
 
 // ── Readings ─────────────────────────────────────────────────────────────────────────────────────
@@ -295,6 +465,25 @@ export interface MeasurableFields {
   note: string | null;
   /** Named, not verified — the route proves it is this team's session in this season. */
   sessionId: string | null;
+  /** 1–5 within its session (owner ruling: every attempt is recorded); a single reading is always 1. */
+  attemptNo: number;
+}
+
+/** A correction (plan §9): the value, and the note if it changed. Never the attempt, test, session or date. */
+export interface MeasurableCorrectionFields { value: number; note?: string | null }
+export function readMeasurableCorrectionInput(raw: unknown): InputResult<MeasurableCorrectionFields> {
+  const body = obj(raw);
+  const value = typeof body.value === 'number' ? body.value : NaN;
+  if (!Number.isFinite(value) || value < 0 || value > MAX_READING_VALUE) {
+    return { error: 'Value must be a number between 0 and 99,999.' };
+  }
+  const fields: MeasurableCorrectionFields = { value };
+  if (body.note !== undefined) {
+    const t = readText(body.note, MAX_READING_NOTE_LEN, 'Note');
+    if ('error' in t) return t;
+    fields.note = t.fields;
+  }
+  return { fields };
 }
 
 export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields> {
@@ -325,17 +514,76 @@ export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields>
     if (typeof body.sessionId !== 'string' || !body.sessionId) return { error: 'Invalid sessionId' };
     sessionId = body.sessionId;
   }
-  return { fields: { measurableTypeId, value, recordedOn, note: note || null, sessionId } };
+  // The attempt within its session — absent = 1. A second attempt needs a session to belong to:
+  // a single reading is one reading, and "attempt 2 of nothing" would be a row the screens cannot
+  // place. The definition's attempts-per-session ceiling is the route's check (it has the definition).
+  let attemptNo = 1;
+  if (body.attemptNo !== undefined) {
+    const a = body.attemptNo;
+    if (typeof a !== 'number' || !Number.isInteger(a) || a < 1 || a > MAX_ATTEMPTS) {
+      return { error: `Attempt must be a whole number from 1 to ${MAX_ATTEMPTS}.` };
+    }
+    if (a > 1 && !sessionId) return { error: 'A second attempt belongs to a session — a single reading is one attempt.' };
+    attemptNo = a;
+  }
+  return { fields: { measurableTypeId, value, recordedOn, note: note || null, sessionId, attemptNo } };
 }
 
 // ── Sessions ─────────────────────────────────────────────────────────────────────────────────────
 
-export interface SessionPatchFields { sessionDate?: string; note?: string | null; eventId?: string | null }
+/** The session's scope — both lists, each at least one id (the table's CHECK is both-or-neither). */
+export interface SessionScopeFields { metricIds: string[]; playerIds: string[] }
+function readScope(raw: unknown): InputResult<SessionScopeFields> {
+  const body = obj(raw);
+  const metricIds = readIdList(body.metricIds);
+  const playerIds = readIdList(body.playerIds);
+  if (!metricIds || !playerIds) return { error: 'A scope names the metrics and the players — both as lists of ids.' };
+  if (metricIds.length === 0) return { error: 'Choose at least one metric to record.' };
+  if (playerIds.length === 0) return { error: 'Choose at least one player who is here.' };
+  return { fields: { metricIds, playerIds } };
+}
+
+export interface SessionCreateFields {
+  sessionDate: string;
+  note: string | null;
+  /** Named, not verified — the route proves it sits on this team's season schedule. */
+  eventId: string | null;
+  /** Null = no scope stated (the pre-Phase-2 shape, still allowed). Ids named, not verified. */
+  scope: SessionScopeFields | null;
+}
+
+/** "Start session" — the date (required), the note, the event and the scope (mockup screen 3). */
+export function readSessionCreateInput(raw: unknown): InputResult<SessionCreateFields> {
+  const body = obj(raw);
+  const d = readDate(body.sessionDate, 'sessionDate');
+  if ('error' in d) return d;
+  const note = readText(body.note, MAX_SESSION_NOTE_LEN, 'Note');
+  if ('error' in note) return note;
+  let eventId: string | null = null;
+  if (body.eventId != null && body.eventId !== '') {
+    if (!isId(body.eventId)) return { error: 'eventId must be an event id or null' };
+    eventId = body.eventId;
+  }
+  let scope: SessionScopeFields | null = null;
+  if (body.scope != null) {
+    const sc = readScope(body.scope);
+    if ('error' in sc) return sc;
+    scope = sc.fields;
+  }
+  return { fields: { sessionDate: d.fields, note: note.fields, eventId, scope } };
+}
+
+export interface SessionPatchFields { sessionDate?: string; note?: string | null; eventId?: string | null; scope?: SessionScopeFields }
 
 /** The event id is named, not verified — the route proves it sits on this team's season schedule. */
 export function readSessionPatchInput(raw: unknown): InputResult<SessionPatchFields> {
   const body = obj(raw);
   const fields: SessionPatchFields = {};
+  if (body.scope !== undefined) {
+    const sc = readScope(body.scope);
+    if ('error' in sc) return sc;
+    fields.scope = sc.fields;
+  }
   if (body.sessionDate !== undefined) {
     const date = typeof body.sessionDate === 'string' ? body.sessionDate : '';
     if (!isValidRecordDate(date)) return { error: 'sessionDate must be a valid YYYY-MM-DD date — check the year.' };

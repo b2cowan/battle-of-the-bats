@@ -45,7 +45,9 @@ describe('readMeasurableTypeInput — a test needs a name and a unit', () => {
 
 describe('readGoalPatchInput — status, focus, note and tag, any subset', () => {
   it('validates each present field and refuses an empty patch', () => {
-    assert.deepEqual(readGoalPatchInput({ status: 'achieved' }), { fields: { status: 'achieved' } });
+    // Phase 2: a status change is a REVIEW, dated by the coach's own day — the date rides with it.
+    assert.deepEqual(readGoalPatchInput({ status: 'achieved', reviewedOn: '2026-09-11' }), { fields: { status: 'achieved', reviewedOn: '2026-09-11' } });
+    assert.ok('error' in readGoalPatchInput({ status: 'achieved' }), 'a status without its review date is refused');
     assert.ok('error' in readGoalPatchInput({ status: 'done' }));
     assert.ok('error' in readGoalPatchInput({ focusArea: 'x'.repeat(81) }));
     assert.deepEqual(readGoalPatchInput({ note: '  ' }), { fields: { note: null } });
@@ -60,7 +62,8 @@ describe('readGoalPatchInput — status, focus, note and tag, any subset', () =>
 describe('readMeasurableInput — a reading is a number, a date and optionally a note', () => {
   it('accepts a whole reading', () => {
     const r = readMeasurableInput({ measurableTypeId: 't1', value: 8.42, recordedOn: '2026-09-08', note: ' turf ' });
-    assert.deepEqual(r, { fields: { measurableTypeId: 't1', value: 8.42, recordedOn: '2026-09-08', note: 'turf', sessionId: null } });
+    // Phase 2: a single reading is always attempt 1.
+    assert.deepEqual(r, { fields: { measurableTypeId: 't1', value: 8.42, recordedOn: '2026-09-08', note: 'turf', sessionId: null, attemptNo: 1 } });
   });
   it('a value is a finite number between 0 and 99,999 — never a string, never NaN, never a fabricated zero', () => {
     assert.ok('error' in readMeasurableInput({ measurableTypeId: 't1', value: '8.4', recordedOn: '2026-09-08' }));

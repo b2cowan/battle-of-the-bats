@@ -6,12 +6,15 @@ import {
   getRepTeamEvaluationSessions,
   createRepTeamEvaluationSession,
   getRepTeamMeasurableTypes,
+  getRepRosterPlayers,
+  getRepTeamEvents,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
-import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
-import { isValidRecordDate } from '@/lib/measurable-format';
+import { denyUnless, canViewMeasurables, canWriteDevelopment, redactRoster, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { isMeasuredTest } from '@/lib/measurable-definition';
+import { readSessionCreateInput } from '@/lib/development-input';
+import { verifySessionScope } from '@/lib/development-session-scope';
 
 async function resolveContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -43,15 +46,28 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canViewMeasurables(capabilities), 'You do not have access to measurables.');
   if (denied) return denied;
 
-  const [sessions, types] = await Promise.all([
+  const canWrite = !isReadOnly && canWriteDevelopment(capabilities);
+  const [sessions, types, players, events] = await Promise.all([
     getRepTeamEvaluationSessions(programYear.id),
     getRepTeamMeasurableTypes(teamId, { includeRetired: true }),
+    // The scope step (Phase 2): who is here — the active roster, identity only — and the season's
+    // events for "Taken at". Only for a writer; a reader has no Start session to open.
+    canWrite ? getRepRosterPlayers(programYear.id) : Promise.resolve([]),
+    canWrite ? getRepTeamEvents(programYear.id) : Promise.resolve([]),
   ]);
+  const roster = redactRoster(
+    players.filter(p => p.status === 'active').map(p => ({
+      id: p.id, playerFirstName: p.playerFirstName, playerLastName: p.playerLastName, playerNumber: p.playerNumber,
+    })),
+    capabilities,
+  );
   // A finished season can never be written to, whatever the grant says — the client uses this
-  // flag to decide whether to draw "New session".
+  // flag to decide whether to draw "Start session".
   return NextResponse.json({
     sessions, types,
-    canWrite: !isReadOnly && canWriteDevelopment(capabilities),
+    roster,
+    events: events.map(e => ({ id: e.id, name: e.name, eventType: e.eventType, startsAt: e.startsAt })),
+    canWrite,
     isReadOnly,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/sessions' });
@@ -68,46 +84,50 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
-  let body: { sessionDate?: unknown; note?: unknown };
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const sessionDate = typeof body.sessionDate === 'string' ? body.sessionDate : '';
-  if (!isValidRecordDate(sessionDate)) {
-    return NextResponse.json({ error: 'sessionDate must be a valid YYYY-MM-DD date — check the year.' }, { status: 400 });
-  }
-  const note = typeof body.note === 'string' ? body.note.trim() : '';
-  if (note.length > 200) {
-    return NextResponse.json({ error: 'Note is too long (max 200 characters).' }, { status: 400 });
-  }
+  const read = readSessionCreateInput(body);
+  if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
+  const { sessionDate, note, eventId, scope } = read.fields;
 
   if (!programYear) {
     return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });
   }
 
-  // The dead-end guard (hub restructure D1, 2026-07-31): a session with nothing to measure
+  // The dead-end guard (hub restructure D1, 2026-07-31): a session with nothing to record
   // records nothing, so it must not be creatable. The hub already holds its button back in
   // this state, but the honest prerequisite belongs on the write path too — the old UI let
   // the click through and landed the coach on an empty session screen.
-  // ACTIVE TESTS only: an all-retired list leaves the session picker empty just the same, and a
-  // team whose only metric is an observed skill has nothing a session can record yet (Phase 2).
-  const activeTypes = (await getRepTeamMeasurableTypes(teamId, { includeRetired: false })).filter(isMeasuredTest);
-  if (activeTypes.length === 0) {
+  // ACTIVE metrics only: an all-retired list leaves the session picker empty just the same. A
+  // measured test is required (a skill alone has nothing a session's grid can take a number for;
+  // an observation can still be recorded beside the tests).
+  const activeTypes = await getRepTeamMeasurableTypes(teamId, { includeRetired: false });
+  if (activeTypes.filter(isMeasuredTest).length === 0) {
     return NextResponse.json(
       { error: 'Add at least one test to your list before running a session — a session with nothing to measure records nothing.' },
       { status: 400 },
     );
   }
 
+  // The scope's ids are NAMED by the client and PROVED here (/dba Finding #41 item 3): every metric
+  // is one of this team's active definitions, every player a row of this season's active roster.
+  // The event, likewise, must sit on this team's season schedule (the PATCH's rule, reused).
+  const verified = await verifySessionScope({ teamId, programYearId: programYear.id, scope, eventId, activeTypes });
+  if ('error' in verified) return NextResponse.json({ error: verified.error }, { status: 400 });
+
   const session = await createRepTeamEvaluationSession({
     orgId: ctx.org.id,
     teamId,
     programYearId: programYear.id,
     sessionDate,
-    note: note || null,
+    note,
+    eventId: verified.eventId,
+    scope: verified.scope,
     createdBy: ctx.user.id,
   });
   return NextResponse.json({ session }, { status: 201 });

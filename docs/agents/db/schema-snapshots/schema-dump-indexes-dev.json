@@ -1790,6 +1790,31 @@
     "indexdef": "CREATE INDEX rep_cost_allocations_source_entry_id_idx ON public.rep_cost_allocations USING btree (source_entry_id)"
   },
   {
+    "tablename": "rep_development_goal_reviews",
+    "indexname": "rep_development_goal_reviews_goal_idx",
+    "indexdef": "CREATE INDEX rep_development_goal_reviews_goal_idx ON public.rep_development_goal_reviews USING btree (goal_id, reviewed_on DESC, created_at DESC)"
+  },
+  {
+    "tablename": "rep_development_goal_reviews",
+    "indexname": "rep_development_goal_reviews_org_idx",
+    "indexdef": "CREATE INDEX rep_development_goal_reviews_org_idx ON public.rep_development_goal_reviews USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_development_goal_reviews",
+    "indexname": "rep_development_goal_reviews_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_development_goal_reviews_pkey ON public.rep_development_goal_reviews USING btree (id)"
+  },
+  {
+    "tablename": "rep_development_goal_reviews",
+    "indexname": "rep_development_goal_reviews_player_idx",
+    "indexdef": "CREATE INDEX rep_development_goal_reviews_player_idx ON public.rep_development_goal_reviews USING btree (player_id)"
+  },
+  {
+    "tablename": "rep_development_goal_reviews",
+    "indexname": "rep_development_goal_reviews_team_idx",
+    "indexdef": "CREATE INDEX rep_development_goal_reviews_team_idx ON public.rep_development_goal_reviews USING btree (team_id)"
+  },
+  {
     "tablename": "rep_document_templates",
     "indexname": "rep_document_templates_org_idx",
     "indexdef": "CREATE INDEX rep_document_templates_org_idx ON public.rep_document_templates USING btree (org_id, team_id)"
@@ -1923,6 +1948,36 @@
     "tablename": "rep_dues_payouts",
     "indexname": "rep_dues_payouts_team_id_idx",
     "indexdef": "CREATE INDEX rep_dues_payouts_team_id_idx ON public.rep_dues_payouts USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_evaluation_not_assessed",
+    "indexname": "rep_evaluation_not_assessed_org_idx",
+    "indexdef": "CREATE INDEX rep_evaluation_not_assessed_org_idx ON public.rep_evaluation_not_assessed USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_evaluation_not_assessed",
+    "indexname": "rep_evaluation_not_assessed_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_evaluation_not_assessed_pkey ON public.rep_evaluation_not_assessed USING btree (id)"
+  },
+  {
+    "tablename": "rep_evaluation_not_assessed",
+    "indexname": "rep_evaluation_not_assessed_player_idx",
+    "indexdef": "CREATE INDEX rep_evaluation_not_assessed_player_idx ON public.rep_evaluation_not_assessed USING btree (player_id)"
+  },
+  {
+    "tablename": "rep_evaluation_not_assessed",
+    "indexname": "rep_evaluation_not_assessed_team_idx",
+    "indexdef": "CREATE INDEX rep_evaluation_not_assessed_team_idx ON public.rep_evaluation_not_assessed USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_evaluation_not_assessed",
+    "indexname": "rep_evaluation_not_assessed_type_idx",
+    "indexdef": "CREATE INDEX rep_evaluation_not_assessed_type_idx ON public.rep_evaluation_not_assessed USING btree (measurable_type_id)"
+  },
+  {
+    "tablename": "rep_evaluation_not_assessed",
+    "indexname": "rep_evaluation_not_assessed_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_evaluation_not_assessed_uniq ON public.rep_evaluation_not_assessed USING btree (session_id, player_id, measurable_type_id)"
   },
   {
     "tablename": "rep_fundraiser_credit_plan",
@@ -2151,6 +2206,11 @@
   },
   {
     "tablename": "rep_player_development_goals",
+    "indexname": "rep_player_development_goals_id_team_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_development_goals_id_team_uniq ON public.rep_player_development_goals USING btree (id, team_id)"
+  },
+  {
+    "tablename": "rep_player_development_goals",
     "indexname": "rep_player_development_goals_org_idx",
     "indexdef": "CREATE INDEX rep_player_development_goals_org_idx ON public.rep_player_development_goals USING btree (org_id)"
   },
@@ -2281,8 +2341,8 @@
   },
   {
     "tablename": "rep_player_measurables",
-    "indexname": "rep_player_measurables_session_entry_uniq",
-    "indexdef": "CREATE UNIQUE INDEX rep_player_measurables_session_entry_uniq ON public.rep_player_measurables USING btree (session_id, player_id, measurable_type_id) WHERE (session_id IS NOT NULL)"
+    "indexname": "rep_player_measurables_session_attempt_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_measurables_session_attempt_uniq ON public.rep_player_measurables USING btree (session_id, player_id, measurable_type_id, attempt_no) WHERE (session_id IS NOT NULL)"
   },
   {
     "tablename": "rep_player_measurables",
@@ -2298,6 +2358,41 @@
     "tablename": "rep_player_measurables",
     "indexname": "rep_player_measurables_type_idx",
     "indexdef": "CREATE INDEX rep_player_measurables_type_idx ON public.rep_player_measurables USING btree (measurable_type_id)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_goal_idx",
+    "indexdef": "CREATE INDEX rep_player_observations_goal_idx ON public.rep_player_observations USING btree (goal_id) WHERE (goal_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_org_idx",
+    "indexdef": "CREATE INDEX rep_player_observations_org_idx ON public.rep_player_observations USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_observations_pkey ON public.rep_player_observations USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_player_idx",
+    "indexdef": "CREATE INDEX rep_player_observations_player_idx ON public.rep_player_observations USING btree (player_id, measurable_type_id, observed_on DESC)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_session_idx",
+    "indexdef": "CREATE INDEX rep_player_observations_session_idx ON public.rep_player_observations USING btree (session_id) WHERE (session_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_team_idx",
+    "indexdef": "CREATE INDEX rep_player_observations_team_idx ON public.rep_player_observations USING btree (team_id, observed_on DESC)"
+  },
+  {
+    "tablename": "rep_player_observations",
+    "indexname": "rep_player_observations_type_idx",
+    "indexdef": "CREATE INDEX rep_player_observations_type_idx ON public.rep_player_observations USING btree (measurable_type_id)"
   },
   {
     "tablename": "rep_player_tryout_baselines",
@@ -2868,6 +2963,16 @@
     "tablename": "rep_team_lineups",
     "indexname": "rep_team_lineups_team_idx",
     "indexdef": "CREATE INDEX rep_team_lineups_team_idx ON public.rep_team_lineups USING btree (team_id, program_year_id)"
+  },
+  {
+    "tablename": "rep_team_measurable_types",
+    "indexname": "rep_team_measurable_types_id_team_kind_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_measurable_types_id_team_kind_uniq ON public.rep_team_measurable_types USING btree (id, team_id, kind)"
+  },
+  {
+    "tablename": "rep_team_measurable_types",
+    "indexname": "rep_team_measurable_types_id_team_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_measurable_types_id_team_uniq ON public.rep_team_measurable_types USING btree (id, team_id)"
   },
   {
     "tablename": "rep_team_measurable_types",

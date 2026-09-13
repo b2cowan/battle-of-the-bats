@@ -224,6 +224,8 @@ export const POST = withObservability(async (req: Request,
     teamId,
     playerId: rosterPlayerId,
     focusArea: area.focusArea,
+    // Seeded from the tryout scorecard — the timeline names it (mig 295).
+    origin: 'tryout',
     // ⚠ NO note. A note is the coach's words about a player; inventing one from a score
     // ("scored 2.4 at tryouts") would put an evaluation number into a field that already
     // travels further than this table does.

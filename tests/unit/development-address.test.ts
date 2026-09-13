@@ -22,7 +22,9 @@ describe('the profile address', () => {
     assert.deepEqual(a, { view: 'results', metricId: 'M1', goalId: null, returnTo: `${base}/development?section=players&metric=M1` });
     const g = parseDevelopmentAddress(params('section=development&view=goals&goal=G9'), base);
     assert.deepEqual(g, { view: 'goals', metricId: null, goalId: 'G9', returnTo: null });
-    assert.deepEqual(parseDevelopmentAddress(params('view=observations'), base).view, null, 'a Phase 2 view is not a view yet');
+    assert.deepEqual(parseDevelopmentAddress(params('view=observations'), base).view, 'observations', 'Phase 2: the four views');
+    assert.deepEqual(parseDevelopmentAddress(params('view=archive'), base).view, 'archive');
+    assert.deepEqual(parseDevelopmentAddress(params('view=history'), base).view, null, 'an unknown view is not a view');
     assert.deepEqual(parseDevelopmentAddress(params(''), base), { view: null, metricId: null, goalId: null, returnTo: null });
   });
 

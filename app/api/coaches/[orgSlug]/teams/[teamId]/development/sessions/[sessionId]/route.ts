@@ -12,10 +12,17 @@ import {
   getRepTeamEvents,
   getRepTeamEventById,
   restampRepSessionMeasurables,
+  getRepSessionNotAssessed,
+  getRepSessionObservations,
+  getOrgMemberDisplayNames,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewMeasurables, canWriteDevelopment, redactRoster, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
+import {
+  denyUnless, canViewMeasurables, canViewDevelopmentGoals, canWriteDevelopment, canWriteDevelopmentGoals, redactRoster,
+  DEVELOPMENT_GRANT_MESSAGE,
+} from '@/lib/coach-capabilities';
 import { readSessionPatchInput } from '@/lib/development-input';
+import { verifySessionScope } from '@/lib/development-session-scope';
 
 /**
  * ⚠ THE SEASON IS PART OF THE LOOKUP (2026-08-15). This resolver used to find the session by
@@ -65,7 +72,10 @@ export const GET = withObservability(async (_req: Request,
   const caps = assignment.capabilities;
   const denied = denyUnless(canViewMeasurables(caps), 'You do not have access to measurables.');
   if (denied) return denied;
-  const [players, types, entries, events] = await Promise.all([
+  // Observations are a coach's written judgement about a child — READ on Internal notes, like goals.
+  // Without notes the skill chips render held back and the rows they would fill are simply absent.
+  const showObservations = canViewDevelopmentGoals(caps);
+  const [players, types, entries, events, notAssessed, observations] = await Promise.all([
     getRepRosterPlayers(programYear.id),
     getRepTeamMeasurableTypes(teamId, { includeRetired: true }),
     getRepSessionMeasurables(sessionId, teamId),
@@ -74,6 +84,12 @@ export const GET = withObservability(async (_req: Request,
     // scrimmage warm-up, and the link is descriptive, not structural. The client orders them
     // practices-first and by proximity to the session's current date.
     canWriteDevelopment(caps) ? getRepTeamEvents(programYear.id) : Promise.resolve([]),
+    getRepSessionNotAssessed(sessionId, teamId),
+    showObservations ? getRepSessionObservations(sessionId, teamId) : Promise.resolve([]),
+  ]);
+  // "Entered by" on every saved row (owner ruling 2026-09-11: every record names who wrote it).
+  const authors = await getOrgMemberDisplayNames(resolved.ctx.org.id, [
+    ...entries.map(e => e.createdBy ?? ''), ...observations.map(o => o.createdBy ?? ''), ...notAssessed.map(n => n.createdBy ?? ''),
   ]);
 
   // Roster order as-is; names only — the grid needs identity, not guardian PII (redaction
@@ -92,7 +108,9 @@ export const GET = withObservability(async (_req: Request,
    * (the session is resolved inside it, so its readings can only name this year's rows); new entry
    * still starts from `roster`.
    */
-  const withReadings = new Set(entries.map(e => e.playerId));
+  const withReadings = new Set([
+    ...entries.map(e => e.playerId), ...observations.map(o => o.playerId), ...notAssessed.map(n => n.playerId),
+  ]);
   const pastParticipants = redactRoster(
     players.filter(p => p.status !== 'active' && withReadings.has(p.id)).map(identity),
     caps,
@@ -108,7 +126,13 @@ export const GET = withObservability(async (_req: Request,
     entries,
     // Identity + date only — the picker needs to name an event, not carry its whole record.
     events: events.map(e => ({ id: e.id, name: e.name, eventType: e.eventType, startsAt: e.startsAt })),
+    notAssessed,
+    observations,
+    showObservations,
+    authors,
     canWrite: canWriteDevelopment(caps),
+    // The grant AND notes — an observation reached through a session is gated the way it is read.
+    canWriteObservations: canWriteDevelopmentGoals(caps),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/sessions/[sessionId]' });
 
@@ -130,6 +154,17 @@ export const PATCH = withObservability(async (req: Request,
   const read = readSessionPatchInput(body);
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
   const { fields } = read;
+  // "Change scope" — the ids are proved against this team's active definitions and this season's
+  // active roster, like the create. A retired definition or a departed player cannot be re-admitted
+  // to a scope (their saved rows stay, read-only, whatever the scope says).
+  if (fields.scope) {
+    const verified = await verifySessionScope({
+      teamId, programYearId: resolved.programYear.id, scope: fields.scope, eventId: null,
+      activeTypes: await getRepTeamMeasurableTypes(teamId, { includeRetired: false }),
+    });
+    if ('error' in verified) return NextResponse.json({ error: verified.error }, { status: 400 });
+    fields.scope = verified.scope!;
+  }
   // D10 — link this session to the event its readings were taken at. Any event in THIS season
   // qualifies (§10.2 ruling 2); `null` unlinks. The reader shaped the id; proving it sits on this
   // team's season schedule is the route's job. The link never derives the date — see below.

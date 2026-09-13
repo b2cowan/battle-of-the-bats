@@ -263,6 +263,18 @@ export async function resolveUatContext() {
     .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
     .order('session_date', { ascending: false }).limit(1).maybeSingle();
   if (evalSession.error) throw new FixtureError(`evaluation session lookup failed: ${evalSession.error.message}`);
+  // The SCOPED session (development lifecycle Phase 2, fixture §16): a scope, two attempts, a
+  // correction, a not-assessed mark, a player outside the scope — the grid's every state at once.
+  const scopedSession = await db.from('rep_team_evaluation_sessions')
+    .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
+    .eq('note', 'Phase 2 probe — scoped').maybeSingle();
+  if (scopedSession.error) throw new FixtureError(`scoped session lookup failed: ${scopedSession.error.message}`);
+  if (!scopedSession.data) {
+    throw new FixtureError(
+      'No scoped evaluation session on the probe team (fixture §16, Phase 2), so the record grid\'s states cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
   if (!evalSession.data) {
     throw new FixtureError(
       'No evaluation session on the probe team, so that drill-in cannot be swept.',
@@ -354,6 +366,8 @@ export async function resolveUatContext() {
     planTemplateId: planTemplate.data.id,
     lineupTemplateId: lineupTemplate.data.id,
     evalSessionId: evalSession.data.id,
+    /** The scoped session — every row state of the Phase 2 grid on one screen. */
+    scopedSessionId: scopedSession.data.id,
     /** The active "60-yd sprint" — a defined test WITH readings, so the editor's successor rule shows. */
     measurableTypeId: measurableType.data.id,
     /** One commitment, for the `?bill=` page — a `tournament_payable`, never a plain cost. */

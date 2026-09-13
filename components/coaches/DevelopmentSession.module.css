@@ -1,0 +1,145 @@
+/* ═══ The evaluation session's RECORD screen (development lifecycle Phase 2, mockup screen 3) ═══
+   One field per attempt, a state per row, a scope the counts are measured against. A new
+   component's 44px floor lives in its OWN module (the repo rule): every control here — an attempt
+   field, a descriptor select, a row link, a checkbox row in the scope dialog — clears
+   `--tap-min` on its own, which is what retires the layout baseline's DEFERRED rows for this grid
+   (the remove button at 16×24 and the 35px input, recorded 2026-09-11 "TOUCH DEBT ON CONTROLS THAT
+   PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD"). Tokens only. */
+
+/* ── the scope line ── */
+.scopeLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 0.2rem 0 0.6rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.scopeLine strong { color: var(--text-primary); }
+
+/* ── the method note under the chips ── */
+.method {
+  margin: 0 0 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--home-line-strong, var(--border-2));
+  background: var(--home-card, rgba(255, 255, 255, 0.04));
+  border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.method strong { display: block; color: var(--text-primary); margin-bottom: 0.15rem; }
+.method p { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── the grid ── */
+.grid { display: flex; flex-direction: column; }
+.labels {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  padding: 0.4rem 0.6rem;
+  border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+}
+.row:first-child { border-top: none; }
+.rowOutsideScope { opacity: 0.85; }
+.name { min-width: 0; }
+.name strong { display: block; font-size: var(--type-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.num { color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
+
+.attempts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+.attempt {
+  width: 5.2rem;
+  max-width: 100%;
+  min-height: var(--tap-min, 44px);
+  text-align: right;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+.attemptSaved { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: var(--type-body); }
+.headline { flex-basis: 100%; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.obs { display: flex; flex-wrap: wrap; gap: 0.35rem; min-width: 0; }
+.obs select { min-height: var(--tap-min, 44px); flex: 0 1 12rem; max-width: 100%; }
+.obs input { min-height: var(--tap-min, 44px); flex: 1 1 10rem; min-width: 0; }
+.obsSaved { font-size: var(--type-body); }
+.obsSaved em { color: var(--text-secondary); font-style: normal; }
+
+.state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.6rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.stateSaved { color: var(--badge-success-ink); }
+.stateError { color: var(--danger); }
+.stateQuiet { color: var(--text-tertiary); }
+/* Row links (Edit · Retry · Mark not assessed · Undo): inline-block with VERTICAL padding only —
+   a sideways negative margin overflows at 361px. */
+.rowLink {
+  display: inline-block;
+  min-height: var(--tap-min, 44px);
+  padding: 0.7rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.rowLink:disabled { opacity: 0.6; cursor: default; }
+.rowError { grid-column: 1 / -1; margin: 0; font-size: var(--type-support); color: var(--danger); }
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin-top: 0.8rem;
+}
+
+/* ── the scope dialog's lists ── */
+.pickList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.pickRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  font-size: var(--type-body);
+  cursor: pointer;
+}
+.pickRow:first-child { border-top: none; }
+.pickRow input { width: 1.15rem; height: 1.15rem; margin: 0; accent-color: var(--logic-lime); flex-shrink: 0; }
+.pickRow span { min-width: 0; }
+.pickRow small { color: var(--text-tertiary); font-size: var(--type-support); }
+.pickAll { display: flex; gap: 0.75rem; margin: 0 0 0.35rem; }
+
+/* ── the review dialog ── */
+.reviewCounts { margin: 0 0 0.6rem; font-size: var(--type-body); }
+.reviewList { margin: 0; padding: 0; list-style: none; font-size: var(--type-support); color: var(--text-secondary); }
+.reviewList li { padding: 0.25rem 0; border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1)); }
+.reviewList li:first-child { border-top: none; }
+
+@media (max-width: 640px) {
+  .labels { display: none; }
+  .row { grid-template-columns: 1fr; gap: 0.35rem; }
+  .state { grid-column: 1 / -1; }
+}

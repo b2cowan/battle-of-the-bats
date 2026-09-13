@@ -2962,6 +2962,88 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     }
     ok(`prior-season development records on Avery Prior — player ${averyPrior.id} · goal ${priorGoalId} · reading ${priorReadingId} (F04 probes)`);
   }
+
+  /* ── Phase 2 (2026-09-13): record and review both kinds — what the walk opens ─────────────────
+     · A SCOPED session ("Phase 2 probe — scoped"): every active metric, and the first five active
+       players in scope; Devon runs the sprint TWICE (the definition says two attempts) — one row,
+       two entries, never two players; Casey is marked NOT ASSESSED on the sprint; Blake is in the
+       scope with nothing recorded ("Not recorded"); Emerson is outside the scope with a reading
+       (listed, flagged, not counted). One correction on Devon's first attempt (the original kept).
+     · One OBSERVATION on Devon against "Sets feet before throwing", taken in that session, as
+       evidence for his goal.
+     · One REVIEW on Devon's goal (status kept at working, a note, a next review date) — and the
+       goal gains "what success looks like".
+     Everything re-asserted by name on a re-run; the walk leaves the fixture as it found it. */
+  {
+    const skillId = typeByName.get('Sets feet before throwing');
+    const sprintId = typeByName.get('60-yd sprint');
+    const scopeMetricIds = TYPES.filter(t => t.is_active).map(t => typeByName.get(t.name));
+    const inScope = [ids[0], ids[1], ids[2], ids[3], ids[5]]; // Avery · Blake · Casey · Devon · Frankie
+    const y = py.year;
+    const scopedDate = `${y}-06-10`;
+    let { data: scoped } = await db.from('rep_team_evaluation_sessions').select('id')
+      .eq('team_id', team.id).eq('note', 'Phase 2 probe — scoped').limit(1).maybeSingle();
+    if (!scoped) {
+      const ins = await db.from('rep_team_evaluation_sessions').insert({
+        org_id: org.id, team_id: team.id, program_year_id: py.id, session_date: scopedDate, note: 'Phase 2 probe — scoped',
+        scope_metric_ids: scopeMetricIds, scope_player_ids: inScope, created_by: user.id,
+      }).select('id').single();
+      if (ins.error) { console.error('✗ scoped session insert', ins.error.message); process.exit(1); }
+      scoped = ins.data;
+    } else {
+      await db.from('rep_team_evaluation_sessions').update({ session_date: scopedDate, scope_metric_ids: scopeMetricIds, scope_player_ids: inScope }).eq('id', scoped.id);
+    }
+    const { data: scopedRows } = await db.from('rep_player_measurables').select('id').eq('session_id', scoped.id).limit(1);
+    if (!scopedRows?.length) {
+      const row = (playerId, typeId, value, unit, attempt, extra = {}) => ({
+        org_id: org.id, team_id: team.id, player_id: playerId, measurable_type_id: typeId,
+        value, unit, recorded_on: scopedDate, session_id: scoped.id, attempt_no: attempt, created_by: user.id, ...extra,
+      });
+      const ins = await db.from('rep_player_measurables').insert([
+        // Devon: two attempts (the sprint is defined as two); the first was corrected from 8.51.
+        row(devonId, sprintId, 8.31, 'seconds', 1, { corrected_from: 8.51, corrected_at: new Date().toISOString(), corrected_by: user.id }),
+        row(devonId, sprintId, 8.24, 'seconds', 2),
+        // Avery: one attempt of two — recorded with fewer, nothing filled in.
+        row(ids[0], sprintId, 8.7, 'seconds', 1),
+        // Emerson: OUTSIDE the scope, with a reading — listed and flagged, never counted.
+        row(ids[4], sprintId, 8.55, 'seconds', 1),
+      ]);
+      if (ins.error) { console.error('✗ scoped readings insert', ins.error.message); process.exit(1); }
+    }
+    const { data: mark } = await db.from('rep_evaluation_not_assessed').select('id').eq('session_id', scoped.id).eq('player_id', ids[2]).limit(1).maybeSingle();
+    if (!mark) {
+      const ins = await db.from('rep_evaluation_not_assessed').insert({
+        org_id: org.id, team_id: team.id, session_id: scoped.id, player_id: ids[2], measurable_type_id: sprintId, reason: 'absent', created_by: user.id,
+      });
+      if (ins.error) { console.error('✗ not-assessed insert', ins.error.message); process.exit(1); }
+    }
+    // Devon's goal gains success + a review date; one observation as evidence; one review.
+    const { data: devonGoal } = await db.from('rep_player_development_goals').select('id')
+      .eq('team_id', team.id).eq('player_id', devonId).eq('focus_area', 'First-step quickness off the bag').limit(1).maybeSingle();
+    if (devonGoal) {
+      await db.from('rep_player_development_goals').update({ success: 'Leaves on the pitcher’s first move, three games running.', review_on: `${y}-06-24`, origin: 'coach' }).eq('id', devonGoal.id);
+      const { data: obs } = await db.from('rep_player_observations').select('id').eq('team_id', team.id).eq('player_id', devonId).limit(1).maybeSingle();
+      if (!obs) {
+        const ins = await db.from('rep_player_observations').insert({
+          org_id: org.id, team_id: team.id, player_id: devonId, measurable_type_id: skillId, metric_kind: 'skill',
+          observed_on: scopedDate, descriptor: 'With a reminder — one verbal cue', note: 'One cue was enough during partner work.',
+          goal_id: devonGoal.id, session_id: scoped.id, created_by: user.id,
+        });
+        if (ins.error) { console.error('✗ observation insert', ins.error.message); process.exit(1); }
+      }
+      const { data: review } = await db.from('rep_development_goal_reviews').select('id').eq('goal_id', devonGoal.id).limit(1).maybeSingle();
+      if (!review) {
+        const { data: obsRow } = await db.from('rep_player_observations').select('id').eq('team_id', team.id).eq('player_id', devonId).limit(1).maybeSingle();
+        const ins = await db.from('rep_development_goal_reviews').insert({
+          org_id: org.id, team_id: team.id, player_id: devonId, goal_id: devonGoal.id,
+          reviewed_on: scopedDate, status: 'working', note: 'Reads the pitcher now; the first step is honest. Keep going.',
+          next_review_on: `${y}-06-24`, evidence_observation_ids: obsRow ? [obsRow.id] : [], created_by: user.id,
+        });
+        if (ins.error) { console.error('✗ goal review insert', ins.error.message); process.exit(1); }
+      }
+    }
+    ok(`Phase 2 records present — scoped session ${scoped.id} (Devon two attempts incl. a correction · Avery one of two · Casey not assessed · Blake not recorded · Emerson outside the scope), one observation, one goal review`);
+  }
 }
 
 /* ⚖ THE END-OF-RUN BACKFILL IS GONE (Payables Rebuild P2). It derived installments and payments

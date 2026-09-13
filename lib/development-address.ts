@@ -4,7 +4,7 @@
  *
  * ⚠ ONE mechanism, extended — never a new one. The player record already answers
  * `?section=development` (`CoachCollapseSection` opens the section and scrolls to it); this module
- * adds the VIEW (goals | results — observations and previous seasons are Phase 2), the metric or
+ * adds the VIEW (goals | results | observations | archive — the four views of Phase 2), the metric or
  * the goal to focus, and a way back to the report that sent the coach, carrying that report's own
  * filters. The Insights hub keeps `?section=` and gains its filter state on the same convention.
  *
@@ -21,8 +21,9 @@
 import { insightsSectionHref } from './coach-insights-links.ts';
 import { UNTAGGED_FILTER } from './rep-drills.ts';
 
-export type DevelopmentView = 'goals' | 'results';
-export const DEVELOPMENT_VIEWS: ReadonlyArray<DevelopmentView> = ['goals', 'results'];
+/** The four views inside the Development section (mockup screen 4; Phase 2 added observations + archive). */
+export type DevelopmentView = 'goals' | 'results' | 'observations' | 'archive';
+export const DEVELOPMENT_VIEWS: ReadonlyArray<DevelopmentView> = ['goals', 'results', 'observations', 'archive'];
 
 export type SkillsAndGoalsSection = 'sessions' | 'players' | 'metrics';
 export const SKILLS_AND_GOALS_SECTIONS: ReadonlyArray<SkillsAndGoalsSection> = ['sessions', 'players', 'metrics'];
@@ -38,8 +39,9 @@ export interface DevelopmentAddress {
 /** `URLSearchParams` and Next's `ReadonlyURLSearchParams` both satisfy this. */
 interface ParamReader { get(name: string): string | null }
 
-const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
-const id = (v: string | null): string | null => (v && ID_RE.test(v) ? v : null);
+/** An id as the screens send one — never a year, never a path. ONE rule: the readers import it too. */
+export const isRecordId = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v);
+const id = (v: string | null): string | null => (isRecordId(v) ? v : null);
 
 /**
  * Only a path INSIDE this team's portal survives: it must start with the team root followed by

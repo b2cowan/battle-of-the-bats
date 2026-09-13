@@ -250,6 +250,8 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'requireHeadCoachMembership',  // lib/coach-membership.ts          → getAuthContext (requireOrgSlug: true)
       // Manage staff (2026-09-13): the staff routes' wider gate — same requireStaffGate, same chokepoint.
       'requireStaffManagerMembership', // lib/coach-membership.ts        → requireStaffGate → getAuthContext (requireOrgSlug: true)
+      // Development lifecycle Phase 2 (2026-09-13): the per-player development writes' shared gate.
+      'resolveDevelopmentPlayerContext', // lib/development-player-route.ts → getAuthContext (requireOrgSlug: true)
     ];
 
     // ⚠ SCOPE LIMIT, STATED SO IT IS NOT MISTAKEN FOR COVERAGE: only `[orgSlug]` routes. The FREE

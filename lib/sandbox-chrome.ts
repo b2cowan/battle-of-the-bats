@@ -526,7 +526,12 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // shows two, and it left out the thing the second one exists for. This is the demo-drift
       // case CLAUDE.md reserves for a person: not a broken sentence, a story that stopped keeping
       // up with the product. Numbers verified against `OFFSEASON_TESTING_SESSIONS`.
-      said: 'Two testing days, months apart — which is the whole reason the second set of numbers means anything. Eleven of thirteen were there each time; the ones who missed show a dash, not a zero, because nothing here is invented to fill a column. Four things this team is working on, one already reached.',
+      // ⚠ RE-NARRATED 2026-09-13 (development lifecycle Phase 2): a session now carries its scope —
+      // the eleven who were there — so the two who missed are outside it rather than blank rows;
+      // a row inside the scope reads "Not recorded" or "Not assessed", never a dash that could mean
+      // four things; and one player runs the dash three times a day, every attempt kept. Numbers
+      // verified against `OFFSEASON_TESTING_SESSIONS` and `offseasonShowcaseAttempts`.
+      said: 'Two testing days, months apart — which is the whole reason the second set of numbers means anything. Each session names who was there: eleven of thirteen, so the two who missed are outside its scope rather than a blank that could mean anything, and nothing here is invented to fill a column. Open one and one player has run the dash three times — every attempt kept, the best leading. Four things this team is working on, one already reached, one reviewed with a note.',
       nextLabel: 'Next: the season starts',
     },
     {

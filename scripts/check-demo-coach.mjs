@@ -35,7 +35,8 @@ import { normalizeOpponentName } from '../lib/opponent-name-key.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
   OFFSEASON_BUDGET_LINES, OFFSEASON_FUNDING_LINES, OFFSEASON_DUES, OFFSEASON_HOODIE_DRIVE,
-  OFFSEASON_TESTING_SESSIONS, OFFSEASON_MEASURABLE_TYPES,
+  OFFSEASON_TESTING_SESSIONS, OFFSEASON_MEASURABLE_TYPES, OFFSEASON_OBSERVED_SKILL, OFFSEASON_OBSERVATIONS, OFFSEASON_GOAL_REVIEW,
+  OFFSEASON_SHOWCASE_ROSTER_INDEX, offseasonShowcaseAttempts,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
   MIDSEASON_CLUB_MONEY,
@@ -442,32 +443,77 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     const { data: roster } = await db.from('rep_roster_players')
       .select('id, guardian_email, player_number').eq('program_year_id', py.id).eq('status', 'active');
     const { data: readings } = await db.from('rep_player_measurables')
-      .select('player_id, measurable_type_id, unit, session_id, value')
+      .select('player_id, measurable_type_id, unit, session_id, value, attempt_no')
       .in('session_id', sessionRows.map(r => r.id));
+    const { data: sessionScopes } = await db.from('rep_team_evaluation_sessions')
+      .select('id, scope_metric_ids, scope_player_ids').in('id', sessionRows.map(r => r.id));
     for (const declared of OFFSEASON_TESTING_SESSIONS) {
       const row = sessionRows.find(r => r.note === declared.note);
       const mine = (readings ?? []).filter(r => r.session_id === row?.id);
+      // ⚠ DISTINCT PLAYERS, never rows: one player runs the dash three times (Phase 2), and a check
+      // that counted rows would read three sprints as three people (the fundraising lesson).
       const tested = new Set(mine.map(r => r.player_id)).size;
       check(tested === (roster?.length ?? 0) - declared.absent.length,
         `${declared.note}: ${tested} of ${roster?.length} tested — the ${declared.absent.length} who missed have no row, not a zero`);
       check(new Set(mine.map(r => r.measurable_type_id)).size === OFFSEASON_MEASURABLE_TYPES.length,
         `${declared.note}: all ${OFFSEASON_MEASURABLE_TYPES.length} tests were run`);
+      // The session's SCOPE names who was there (Phase 2): the same eleven, and every metric.
+      const scope = (sessionScopes ?? []).find(s => s.id === row?.id);
+      check(!!scope?.scope_player_ids && scope.scope_player_ids.length === (roster?.length ?? 0) - declared.absent.length
+        && !!scope?.scope_metric_ids && scope.scope_metric_ids.length === OFFSEASON_MEASURABLE_TYPES.length + 1,
+        `${declared.note}: the scope names the ${(roster?.length ?? 0) - declared.absent.length} who were there and every metric (tests + the skill)`);
     }
-    /* The direction of travel. A demo that showed a roster getting SLOWER over a winter of
-       coaching would be arguing against the product on the product's own screen. */
+    /* THE HEADLINE MOMENT (Phase 2, 2026-09-13): the showcase player ran the dash THREE times on
+       each testing day — every attempt kept, and the best is the headline. A seeded moment can be
+       designed, documented and ABSENT (the 2026-09-10 lesson); this is the row the tour points at. */
     const sprintType = (await db.from('rep_team_measurable_types')
-      .select('id, name').eq('team_id', teamId)).data?.find(t => t.name === OFFSEASON_MEASURABLE_TYPES[0].name);
+      .select('id, name, attempts_per_session').eq('team_id', teamId)).data?.find(t => t.name === OFFSEASON_MEASURABLE_TYPES[0].name);
+    check(sprintType?.attempts_per_session === 3, `the ${OFFSEASON_MEASURABLE_TYPES[0].name} is defined as three attempts per session`);
+    const showcaseId = (await db.from('rep_roster_players').select('id, display_order').eq('program_year_id', py.id).eq('status', 'active')
+      .order('display_order', { ascending: true })).data?.[OFFSEASON_SHOWCASE_ROSTER_INDEX]?.id;
+    for (const [sessionIndex, declared] of OFFSEASON_TESTING_SESSIONS.entries()) {
+      const row = sessionRows.find(r => r.note === declared.note);
+      const attempts = (readings ?? []).filter(r => r.session_id === row?.id && r.measurable_type_id === sprintType?.id && r.player_id === showcaseId)
+        .sort((a, b) => a.attempt_no - b.attempt_no).map(r => Number(r.value));
+      const wanted = offseasonShowcaseAttempts(sessionIndex);
+      check(attempts.length === 3 && attempts.every((v, k) => Math.abs(v - wanted[k]) < 0.001),
+        `${declared.note}: the showcase player ran the dash three times — attempts ${wanted.join(' · ')}, every one kept`,
+        attempts.join(' · ') || 'no attempts');
+    }
+    /* The direction of travel, read the way the PRODUCT reads it: each player's HEADLINE (best) per
+       session, then the roster's average of those. A demo that showed a roster getting SLOWER over
+       a winter of coaching would be arguing against the product on the product's own screen. */
     const bySession = (note) => {
       const row = sessionRows.find(r => r.note === note);
-      const vals = (readings ?? []).filter(r => r.session_id === row?.id && r.measurable_type_id === sprintType?.id)
-        .map(r => Number(r.value));
+      const best = new Map();
+      for (const r of (readings ?? []).filter(r => r.session_id === row?.id && r.measurable_type_id === sprintType?.id)) {
+        const v = Number(r.value);
+        best.set(r.player_id, Math.min(best.get(r.player_id) ?? Infinity, v));
+      }
+      const vals = [...best.values()];
       return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
     };
     const before = bySession(OFFSEASON_TESTING_SESSIONS[0].note);
     const after = bySession(OFFSEASON_TESTING_SESSIONS.at(-1).note);
     check(before != null && after != null && after < before,
-      `the ${OFFSEASON_MEASURABLE_TYPES[0].name} got FASTER between the two — the winter's work shows`,
+      `the ${OFFSEASON_MEASURABLE_TYPES[0].name} got FASTER between the two, by the headline — the winter's work shows`,
       before != null && after != null ? `${before.toFixed(2)} → ${after.toFixed(2)}` : 'no readings');
+    /* The second kind of record (Phase 2): one observed skill, two observations on the showcase
+       player in the two sessions, and one goal review — all of it on the shop window. */
+    const { data: skill } = await db.from('rep_team_measurable_types').select('id, kind, descriptors')
+      .eq('team_id', teamId).eq('name', OFFSEASON_OBSERVED_SKILL.name).maybeSingle();
+    check(skill?.kind === 'skill' && (skill.descriptors ?? []).length === OFFSEASON_OBSERVED_SKILL.descriptors.length,
+      `"${OFFSEASON_OBSERVED_SKILL.name}" is defined as an observed skill with ${OFFSEASON_OBSERVED_SKILL.descriptors.length} descriptors`);
+    const { data: obs } = await db.from('rep_player_observations').select('player_id, session_id, observed_on, descriptor, goal_id').eq('team_id', teamId);
+    check((obs ?? []).length === OFFSEASON_OBSERVATIONS.length
+      && (obs ?? []).every(o => o.player_id === showcaseId && !!o.session_id && !!o.goal_id
+        && sessionRows.find(r => r.id === o.session_id)?.session_date === o.observed_on),
+      `${OFFSEASON_OBSERVATIONS.length} observations on the showcase player, each dated by its session and evidence for his goal`);
+    const { data: reviews } = await db.from('rep_development_goal_reviews').select('goal_id, reviewed_on, status, next_review_on').eq('team_id', teamId);
+    const reviewSession = sessionRows.find(r => r.note === OFFSEASON_GOAL_REVIEW.sessionNote);
+    check((reviews ?? []).length === 1 && reviews[0].reviewed_on === reviewSession?.session_date && reviews[0].status === OFFSEASON_GOAL_REVIEW.status
+      && !!reviews[0].next_review_on && reviews[0].next_review_on > reviews[0].reviewed_on,
+      `one goal review, dated by the ${OFFSEASON_GOAL_REVIEW.sessionNote} day, with a next review ahead of it`);
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 14U guardian address is unreachable example.com');
   }
 }

@@ -737,8 +737,6 @@ export default function PlayerDetailPage({
             orgSlug={orgSlug}
             teamId={teamId}
             playerId={playerId}
-            bestPositions={form?.positions.best ?? []}
-            attendancePct={attendance && attnKnown > 0 ? attnRate : null}
             playerName={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
             playerNumber={player.playerNumber ? clean(player.playerNumber) : null}
             teamName={assignment.teamName}

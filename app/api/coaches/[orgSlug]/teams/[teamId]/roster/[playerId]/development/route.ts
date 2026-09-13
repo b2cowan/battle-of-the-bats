@@ -13,13 +13,15 @@ import {
   getRepPlayerAttendanceSummary,
   getRepProgramYears,
   getRepPlayerTryoutBaseline,
+  getRepPlayerObservationsForPlayer,
+  getRepDevelopmentGoalReviewsForPlayer,
+  getOrgMemberDisplayNames,
 } from '@/lib/db';
 import type { RepPlayerContinuityLink, RepRosterPlayer, RepTeamMeasurableType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import {
   denyUnless, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment, canWriteDevelopmentGoals,
 } from '@/lib/coach-capabilities';
-import { computeTeamSeasonLineupAnalytics } from '@/lib/team-season-analytics';
 import { linkCurrentId } from '@/lib/continuity-match';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
@@ -38,22 +40,6 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
   }
 
   return { ctx, player, assignment };
-}
-
-/** This-season field/bench innings for ONE player, quoted from the SAME shared engine the
- *  Playing-time fairness report runs (never a parallel computation). Non-fatal by design —
- *  an analytics hiccup must not 500 the Development card — but a real defect must not be
- *  indistinguishable from "no data", hence the console.error. */
-async function playerInningsContext(teamId: string, playerId: string) {
-  try {
-    const result = await computeTeamSeasonLineupAnalytics(teamId);
-    const row = result?.analytics.fairPlay.find(r => r.playerId === playerId);
-    if (!row || (row.fieldInnings === 0 && row.benchInnings === 0)) return null;
-    return { fieldInnings: row.fieldInnings, benchInnings: row.benchInnings };
-  } catch (error) {
-    console.error('development innings context failed', error);
-    return null;
-  }
 }
 
 /** Walk the CONFIRMED-link chain backwards from one roster player (3D archive). Each hop
@@ -115,13 +101,16 @@ export const GET = withObservability(async (_req: Request,
   const canWrite = canWriteDevelopment(caps);
   const canWriteGoals = canWriteDevelopmentGoals(caps);
 
-  const [types, measurables, goals, innings, links, tryoutBaseline] = await Promise.all([
-    showMeasurables ? getRepTeamMeasurableTypes(teamId, { includeRetired: true }) : Promise.resolve([]),
+  // Observations and goal reviews are a coach's written judgement about a child — they ride the
+  // notes gate with goals (Phase 2). The Context lines (innings) left the section (F16) — the
+  // lineups-gated innings quote is no longer fetched here; playing time has its own home.
+  const [types, measurables, goals, observations, reviews, links, tryoutBaseline] = await Promise.all([
+    // The library is read for goals too now: the Observations view names its skill by definition.
+    (showMeasurables || showGoals) ? getRepTeamMeasurableTypes(teamId, { includeRetired: true }) : Promise.resolve([]),
     showMeasurables ? getRepPlayerMeasurablesForPlayer(playerId) : Promise.resolve([]),
     showGoals ? getRepPlayerDevelopmentGoalsForPlayer(playerId) : Promise.resolve([]),
-    // Innings quote the lineup engine → gate on the lineups capability so this GET can't
-    // become a side door around the Playing-time report's own gate.
-    caps.lineups ? playerInningsContext(teamId, playerId) : Promise.resolve(null),
+    showGoals ? getRepPlayerObservationsForPlayer(playerId) : Promise.resolve([]),
+    showGoals ? getRepDevelopmentGoalReviewsForPlayer(playerId) : Promise.resolve([]),
     getRepTeamContinuityLinks(teamId),
     // ⚠ Gated on TRYOUTS, not on the development capabilities above (Tryout Insights Phase 2).
     // The card carries tryout evaluation content, which is head-coach-only exactly as the rest of
@@ -216,6 +205,12 @@ export const GET = withObservability(async (_req: Request,
     }
   }
 
+  // "Entered by" / "written by" — every record names who wrote it (owner ruling 2026-09-11).
+  const authors = await getOrgMemberDisplayNames(resolved.ctx.org.id, [
+    ...measurables.map(m => m.createdBy ?? ''), ...goals.map(g => g.createdBy ?? ''),
+    ...observations.map(o => o.createdBy ?? ''), ...reviews.map(r => r.createdBy ?? ''),
+  ]);
+
   return NextResponse.json({
     canWrite,
     canWriteGoals,
@@ -224,7 +219,9 @@ export const GET = withObservability(async (_req: Request,
     types,
     measurables,
     goals,
-    context: innings,
+    observations,
+    reviews,
+    authors,
     archive,
     carry,
     // The stored snapshot ONLY — never recomputed here. A rubric edited in September must not

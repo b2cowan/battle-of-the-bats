@@ -1495,14 +1495,16 @@ export const OFFSEASON_DEVELOPMENT_GOALS = [
 /**
  * Each with its AIM and METHOD (development lifecycle Phase 1, 2026-09-12): a definition without
  * them reads "record only · method not recorded" on the Metrics tab, which is honest of a real
- * coach's legacy row and a poor first impression of a shop window. One attempt per session — the
- * showcase player's three sprints on each testing day are Phase 2's seed change.
+ * coach's legacy row and a poor first impression of a shop window. The dash takes THREE attempts
+ * per session (Phase 2, 2026-09-13 — every attempt is recorded, best is the headline); the
+ * showcase player is the one who runs all three on each testing day (`OFFSEASON_SHOWCASE_ATTEMPTS`).
  */
 export const OFFSEASON_MEASURABLE_TYPES = [
-  { name: '60-yard dash',  unit: 'seconds', aim: 'lower',  method: 'Standing start on the same marked 60-yard line, after warm-up. Hand-timed from first movement.' },
-  { name: 'Exit velocity', unit: 'mph',     aim: 'higher', method: 'Off the tee, radar gun behind the plate. Five swings; the coach records the best.' },
-  { name: 'Home to first', unit: 'seconds', aim: 'lower',  method: 'Full swing on a coach pitch, timed from contact to the bag.' },
+  { name: '60-yard dash',  unit: 'seconds', aim: 'lower',  attempts: 3, method: 'Standing start on the same marked 60-yard line, after warm-up. Hand-timed from first movement. Three runs; the best counts.' },
+  { name: 'Exit velocity', unit: 'mph',     aim: 'higher', attempts: 1, method: 'Off the tee, radar gun behind the plate. Five swings; the coach records the best.' },
+  { name: 'Home to first', unit: 'seconds', aim: 'lower',  attempts: 1, method: 'Full swing on a coach pitch, timed from contact to the bag.' },
 ] as const;
+
 
 /**
  * The 14U roster row the pitch deck's development slide is photographed on.
@@ -1574,6 +1576,69 @@ export function offseasonMeasurableValue(
   if (typeIndex === 0) return Math.round((8.6 - band * 0.22 - wobble * 0.05 - gain * 0.19) * 100) / 100; // seconds ↓
   if (typeIndex === 1) return 52 + band * 3 + wobble + gain * 2;                                          // mph ↑
   return Math.round((4.9 - band * 0.13 - wobble * 0.04 - gain * 0.11) * 100) / 100;                       // seconds ↓
+}
+
+/**
+ * The team's one OBSERVED SKILL (development lifecycle Phase 2, 2026-09-13) — a definition with
+ * descriptors and no unit, so the shop window shows the second kind of development record. The
+ * descriptors are the coach's words, in order, never a scale.
+ */
+export const OFFSEASON_OBSERVED_SKILL = {
+  name: 'Sets feet before throwing',
+  method: 'Feet settle toward the target before the throw begins, during the partner drill.',
+  descriptors: ['With support — coach guides the setup', 'With a reminder — one verbal cue', 'Independently — without a cue'],
+} as const;
+
+/**
+ * What the coach SAW — one observation on the showcase player at each testing day, linked to the
+ * session it was taken in (so the nightly re-anchor moves it with the session). Read down from the
+ * latest: the descriptor moves from "with a reminder" to "independently" over the winter — the
+ * same direction the dash goes, told in words rather than a number. The first is evidence for the
+ * showcase player's goal.
+ */
+export const OFFSEASON_OBSERVATIONS: ReadonlyArray<{
+  rosterIndex: number;
+  /** `OFFSEASON_TESTING_SESSIONS[i].note` — the session it was recorded in. */
+  sessionNote: string;
+  descriptor: string;
+  note: string;
+  /** Evidence for this goal (`OFFSEASON_DEVELOPMENT_GOALS[i]`), or null. */
+  goalIndex: number | null;
+}> = [
+  { rosterIndex: OFFSEASON_SHOWCASE_ROSTER_INDEX, sessionNote: 'Fall baseline', descriptor: OFFSEASON_OBSERVED_SKILL.descriptors[1],
+    note: 'One cue was enough during partner work; drifted when the drill sped up.', goalIndex: 0 },
+  { rosterIndex: OFFSEASON_SHOWCASE_ROSTER_INDEX, sessionNote: 'Post-holiday testing', descriptor: OFFSEASON_OBSERVED_SKILL.descriptors[2],
+    note: 'Settled feet on every throw after the drill restarted, without a cue.', goalIndex: 0 },
+];
+
+/**
+ * One GOAL REVIEW — a dated event on the showcase player's goal, written at the post-holiday
+ * testing day: the status chosen (still working), a note, and the next review a fortnight on.
+ * Appended, never overwriting; the goal's status is this review's.
+ */
+export const OFFSEASON_GOAL_REVIEW = {
+  goalIndex: 0,
+  sessionNote: 'Post-holiday testing',
+  status: 'working',
+  note: 'Closed landing held for eight of ten with the towel. Keep the count; add a hitter next block.',
+  /** Days after the review. */
+  nextReviewInDays: 14,
+} as const;
+
+/**
+ * The showcase player's THREE dash attempts on a testing day (Phase 2): the best matches what a
+ * one-attempt day would have recorded (`offseasonMeasurableValue`), the other two are a little
+ * slower, so the headline (best) tells the same winter-long story and the attempts show the spread
+ * without a score. Everyone else runs the dash once — a demo that showed all thirteen running
+ * three times would drown the one row the tour points at.
+ */
+export function offseasonShowcaseAttempts(sessionIndex: number): number[] {
+  const best = offseasonMeasurableValue(OFFSEASON_SHOWCASE_ROSTER_INDEX, 0, sessionIndex);
+  return [
+    Math.round((best + 0.07) * 100) / 100,
+    best,
+    Math.round((best + 0.15) * 100) / 100,
+  ];
 }
 
 /**

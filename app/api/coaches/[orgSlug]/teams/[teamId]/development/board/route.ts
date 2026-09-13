@@ -6,6 +6,7 @@ import {
   getRepRosterPlayers,
   getRepTeamMeasurableTypes,
   getRepTeamMeasurablesForPlayers,
+  getRepTeamObservationsForPlayers,
   getRepTeamDevelopmentGoalsForPlayers,
   getRepTeamContinuityLinks,
   getPriorContinuityIdentities,
@@ -25,7 +26,8 @@ import {
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceTruth } from '@/lib/practice-truth';
 import { sectionUsable, toSectionRead } from '@/lib/report-section-state';
-import type { RepTeamEvent } from '@/lib/types';
+import { groupBySession, latestSessionResult } from '@/lib/measurable-series';
+import type { RepTeamEvent, RepTeamMeasurableType } from '@/lib/types';
 
 /** The practice read's cap. The shared read says whether the season held more (F05). */
 const PRACTICE_CAP = 200;
@@ -122,10 +124,12 @@ export const GET = withObservability(async (req: Request,
   // season label. `years` is fetched once and shared with getPriorContinuityIdentities (which
   // otherwise fetches it internally) to avoid a duplicate round trip. No PII on the wire.
   const years = withHistory ? await getRepProgramYears(teamId) : [];
-  const [types, measurables, goals, links, priorIdentitiesResult, practiceResult] = await Promise.all([
+  const [types, measurables, goals, observations, links, priorIdentitiesResult, practiceResult] = await Promise.all([
     typesPromise,
     showMeasurables ? getRepTeamMeasurablesForPlayers(playerIds) : Promise.resolve([]),
     showGoals ? getRepTeamDevelopmentGoalsForPlayers(playerIds) : Promise.resolve([]),
+    // Observations ride the notes gate with goals (Phase 2) — the Players view's "latest observation".
+    showGoals ? getRepTeamObservationsForPlayers(playerIds) : Promise.resolve([]),
     withHistory ? getRepTeamContinuityLinks(teamId) : Promise.resolve([]),
     withHistory ? getPriorContinuityIdentities(teamId, programYear.id, years) : Promise.resolve({ priorProgramYearIds: [], identities: [] }),
     practicesPromise,
@@ -157,16 +161,48 @@ export const GET = withObservability(async (req: Request,
     : { ...summarizePlanCoverage([]), answerable: false };
   const now = new Date();
 
-  // Latest reading per (player, type) — entries arrive newest-first, so first wins.
-  const latestByPlayer = new Map<string, Map<string, { value: number; unit: string; recordedOn: string }>>();
-  const lastRecordedByPlayer = new Map<string, string>();
+  /**
+   * Latest RESULT per (player, type) — the HEADLINE of the latest session, never the last row typed
+   * (Phase 2: a player's three sprints are one result). Rows are grouped through the ONE home
+   * (`groupBySession`) so the board, the profile and the PDF agree on what "latest" is. A range
+   * test's latest is its attempts in range (`inRange` of `attempts`); the screen says so.
+   */
+  const typeById = new Map((types as RepTeamMeasurableType[]).map(t => [t.id, t]));
+  const readingsByPlayer = new Map<string, Map<string, typeof measurables>>();
   for (const e of measurables) {
-    let perType = latestByPlayer.get(e.playerId);
-    if (!perType) { perType = new Map(); latestByPlayer.set(e.playerId, perType); }
-    if (!perType.has(e.measurableTypeId)) {
-      perType.set(e.measurableTypeId, { value: e.value, unit: e.unit, recordedOn: e.recordedOn });
+    let perType = readingsByPlayer.get(e.playerId);
+    if (!perType) { perType = new Map(); readingsByPlayer.set(e.playerId, perType); }
+    const list = perType.get(e.measurableTypeId) ?? [];
+    list.push(e);
+    perType.set(e.measurableTypeId, list);
+  }
+  const latestByPlayer = new Map<string, Map<string, { value: number; unit: string; recordedOn: string; attempts: number; inRange: number | null }>>();
+  const lastRecordedByPlayer = new Map<string, string>();
+  for (const [playerId, perTypeReadings] of readingsByPlayer) {
+    for (const [typeId, list] of perTypeReadings) {
+      const def = typeById.get(typeId);
+      if (!def) continue;
+      const latest = latestSessionResult(groupBySession(list, def));
+      if (!latest || latest.headline == null) continue;
+      let perType = latestByPlayer.get(playerId);
+      if (!perType) { perType = new Map(); latestByPlayer.set(playerId, perType); }
+      const isRange = def.aim === 'range';
+      perType.set(typeId, {
+        // For a range test the cell is "k of N in range" — the numeric value is the average, for the line.
+        value: isRange ? (latest.average ?? latest.headline) : latest.headline,
+        unit: latest.unit, recordedOn: latest.recordedOn, attempts: latest.attempts.length,
+        inRange: isRange ? latest.headline : null,
+      });
+      const last = lastRecordedByPlayer.get(playerId);
+      if (!last || latest.recordedOn > last) lastRecordedByPlayer.set(playerId, latest.recordedOn);
     }
-    if (!lastRecordedByPlayer.has(e.playerId)) lastRecordedByPlayer.set(e.playerId, e.recordedOn);
+  }
+  // Latest OBSERVATION per (player, skill) — newest-first from the read, so first wins.
+  const latestObservationByPlayer = new Map<string, Map<string, { descriptor: string | null; note: string | null; observedOn: string }>>();
+  for (const o of observations) {
+    let perType = latestObservationByPlayer.get(o.playerId);
+    if (!perType) { perType = new Map(); latestObservationByPlayer.set(o.playerId, perType); }
+    if (!perType.has(o.measurableTypeId)) perType.set(o.measurableTypeId, { descriptor: o.descriptor, note: o.note, observedOn: o.observedOn });
   }
   const goalsByPlayer = new Map<string, { focusArea: string; status: string }[]>();
   for (const g of goals) {
@@ -202,6 +238,7 @@ export const GET = withObservability(async (req: Request,
       number: p.playerNumber,
       goals: goalsByPlayer.get(p.id) ?? [],
       latest: Object.fromEntries(latestByPlayer.get(p.id) ?? []),
+      latestObservation: Object.fromEntries(latestObservationByPlayer.get(p.id) ?? []),
       lastRecordedOn: lastRecordedByPlayer.get(p.id) ?? null,
       historyLinked: historyLabelFor(p),
       /**

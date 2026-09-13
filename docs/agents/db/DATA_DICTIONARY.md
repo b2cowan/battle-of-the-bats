@@ -2997,7 +2997,9 @@ moment it lands.
 4. **No `program_year_id` and none needed** — `player_id` is inherently season-scoped (season rollover mints a new `rep_roster_players` row; same as `rep_player_awards` gotcha 4). Cross-season history arrives via continuity links (slice 3C), not season columns here.
 5. **Hard-deletable** (undo a mis-entry) — a different concern from retiring a *type*.
 6. **UI honesty rules are app-side law:** a trend/sparkline renders only at ≥2 entries of the same type in-season; team-wide lists stay roster-ordered (never sort-by-result). No DB enforcement — flag any violation in review.
-7. **`session_id` (mig 190) is a nullable evaluation-session back-reference** — entries logged from an Evaluation Session carry it; singles logged from the player-profile card leave it NULL. Both doors write the SAME rows (one dataset, two doors). **The FK is COMPOSITE `(session_id, team_id) → rep_team_evaluation_sessions(id, team_id)`** so a reading can never reference another team's session even via direct PostgREST (3B review fix; MATCH SIMPLE skips NULL session_id; the SET NULL action is column-scoped to session_id — PG15+). **Partial unique `(session_id, player_id, measurable_type_id) WHERE session_id IS NOT NULL`** = one reading per player per test per session (duplicate → 409 app-side); singles are unconstrained. Deleting a session degrades its entries to singles, never erases readings. The app additionally requires the session's `program_year_id` to match the player row's (a prior-season session id can't be attached to a current reading).
+7. **`session_id` (mig 190) is a nullable evaluation-session back-reference** — entries logged from an Evaluation Session carry it; singles logged from the player-profile card leave it NULL. Both doors write the SAME rows (one dataset, two doors). **The FK is COMPOSITE `(session_id, team_id) → rep_team_evaluation_sessions(id, team_id)`** so a reading can never reference another team's session even via direct PostgREST (3B review fix; MATCH SIMPLE skips NULL session_id; the SET NULL action is column-scoped to session_id — PG15+). **Partial unique `(session_id, player_id, measurable_type_id, attempt_no) WHERE session_id IS NOT NULL`** (mig 295; was per (session, player, type) until 2026-09-13 — the owner ruled that EVERY attempt is recorded) = one reading per player per test per session **per attempt** (duplicate attempt → 409 app-side); singles are unconstrained. Deleting a session degrades its entries to singles, never erases readings. The app additionally requires the session's `program_year_id` to match the player row's (a prior-season session id can't be attached to a current reading).
+8. **⚠ ROWS ARE NEVER PEOPLE (mig 295, 2026-09-13).** A player with three attempts in a session has THREE rows here. Every count that reads "how many players" must be derived per `player_id` (the session's "N of M", the Players view's latest-per-test, the Insights coverage, the PDF, the demo check) — the 2026-09-10 fundraising lesson: when a uniqueness rule goes, find everything counting rows as people. **Best, average and spread are computed from the attempt rows (`lib/measurable-series.ts`, `sessionHeadline`), never stored.**
+9. **A correction keeps the original (plan §9).** Editing a saved reading's `value` sets `corrected_from` to the ORIGINAL value (only if not already set — a second edit keeps the first original) and stamps `corrected_at` / `corrected_by`. One active reading, its history on the row; no history table (the smallest honest shape — /dba Finding #41).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -3029,6 +3031,14 @@ moment it lands.
 <!-- dict:col:rep_player_measurables.session_id -->
 **`session_id`** (FK → `rep_team_evaluation_sessions.id` ON DELETE SET NULL, nullable; mig 190) — the evaluation session this reading was collected in (gotcha 7); NULL = logged as a single from the player profile.
 
+<!-- dict:col:rep_player_measurables.attempt_no -->
+**`attempt_no`** (smallint, NOT NULL, default 1; CHECK `1–5`; mig 295) — which attempt within its session (the definition's `attempts_per_session` says how many a session takes). **Every row written before 2026-09-13 is attempt 1**, which is the truth: one reading was taken. A single reading (`session_id` NULL) is always 1. Part of the per-attempt partial unique (gotcha 7).
+
+<!-- dict:col:rep_player_measurables.corrected_from -->
+<!-- dict:col:rep_player_measurables.corrected_at -->
+<!-- dict:col:rep_player_measurables.corrected_by -->
+**`corrected_from`** (numeric(8,3), nullable) / **`corrected_at`** (timestamptz, nullable) / **`corrected_by`** (FK → `auth.users.id` SET NULL, nullable) — the correction record (gotcha 9; mig 295). CHECK `rep_player_measurables_correction_whole_check`: `corrected_from` and `corrected_at` are both set or both NULL (`corrected_by` is outside the CHECK so a deleted user's SET NULL never violates it). NULL = never corrected.
+
 ### `rep_team_evaluation_sessions`
 <!-- dict:table:rep_team_evaluation_sessions -->
 
@@ -3039,6 +3049,7 @@ moment it lands.
 2. **Writes follow the Development grant at BOTH layers** (mig 292, 2026-09-12 — head-coach-only from birth under D1 until then): app routes gate on `canWriteDevelopment` (the head coach, or an assistant whose `capabilities` carry `development: true`), RLS write policies require `coach_role='head_coach' OR (capabilities->>'development')='true'` on the caller's `rep_team_coaches` row, no org-admin write policies. All policies DROP-guarded → re-runnable. See `rep_team_measurable_types` gotcha 6.
 3. **`program_year_id` IS stored here** (unlike the per-player Development tables, which season-scope via `player_id`) — a session belongs to a season directly, and the hub lists the active program year's sessions.
 4. **UI honesty rules (app-side law):** the session grid renders the roster in ROSTER ORDER only (never sort-by-result); skipped/absent players simply have no entry (an honest dash, never a fabricated 0).
+5. **A session may carry a SCOPE (mig 295, 2026-09-13)** — the metric definitions and the roster rows the coach chose at "Start session". **Both lists or neither** (CHECK `rep_team_evaluation_sessions_scope_whole_check`). NULL on every session created before 2026-09-13 — no scope was ever stated, and the screen counts "N of M entered" against the active roster and the recorded rows only, exactly as before. A scoped session counts against its scope ("4 recorded · 1 not assessed · 1 not recorded — of 6 in scope"). Stored as id LISTS, not join tables (/dba Finding #41 item 3): a scope is a snapshot of intent read only by its own session, never queried by member; the route proves every id is this team's before storing; the queryable half — "not assessed" — is the `rep_evaluation_not_assessed` table. A player who later leaves the team stays in the scope that named them. **No review state is stored** — "Review session" is a read-back and never marks a session complete (build call, hub Decisions).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -3064,7 +3075,11 @@ moment it lands.
 **`note`** (text, nullable; CHECK `≤ 200` chars) — optional session label ("post-break testing").
 
 <!-- dict:col:rep_team_evaluation_sessions.created_by -->
-**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the head coach who ran it.
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who ran it (a grant-holding assistant since mig 292).
+
+<!-- dict:col:rep_team_evaluation_sessions.scope_metric_ids -->
+<!-- dict:col:rep_team_evaluation_sessions.scope_player_ids -->
+**`scope_metric_ids`** / **`scope_player_ids`** (uuid[], nullable; mig 295) — the session's scope (gotcha 5): the definitions (tests AND observed skills) and the roster rows it was for. Whole-or-neither. NULL = no scope (every pre-2026-09-13 session).
 
 ### `rep_player_development_goals`
 <!-- dict:table:rep_player_development_goals -->
@@ -3076,6 +3091,7 @@ moment it lands.
 2. **`status` is the whole lifecycle:** `working` | `achieved` | `parked` (CHECK). "Archive" is `parked`; hard DELETE exists only to undo a mis-entry.
 3. **View gates on the `notes` capability; writes need the Development grant AND `notes`** (`canWriteDevelopmentGoals`, 2026-09-12 — head-coach-only under D1 until then) — goals are coach-judgment content about a minor, same sensitivity class as `admin_notes`, and a coach who could write one they cannot read back would be a standing contradiction. ⚠ The RLS policy (mig 292) encodes the grant ALONE: `notes` is a read grant and belongs to the route's compound, not to a write policy. Content must stay skill/goal-oriented (PIPEDA posture: no behavioral-profiling fields).
 4. **No `program_year_id`** — same season-scoping-via-player_id reasoning as measurables/awards.
+5. **`status` is the LATEST REVIEW's status (mig 295, 2026-09-13; F08).** A review is an appended dated event in `rep_development_goal_reviews`; the route writes the review AND moves `status` (and `review_on` when a next date is named) in one step. `updated_at` is NEVER read as "last reviewed" — the review row's `reviewed_on` is. A status change from the old cycle-the-pill path also appends a review (status only), so the goal's history is whole.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -3105,7 +3121,135 @@ moment it lands.
 ⚠ **Non-matching areas DIM, they never hide**, and a NULL tag renders at **full strength** — a player whose only focus areas are off-type must never vanish from a coverage list, because that is precisely the child most likely to be overlooked. ⚠ **Nothing is back-filled and nothing is inferred from the focus text**: free text does not cluster, and guessing would be the "confident lie" the no-ranking rule forbids. `ON DELETE SET NULL` so retiring a tag degrades the grouping, never the coach's words.
 
 <!-- dict:col:rep_player_development_goals.created_by -->
-**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who set it.
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who set it ("written by" on the screen since Phase 2).
+
+<!-- dict:col:rep_player_development_goals.success -->
+**`success`** (text, nullable; CHECK `≤ 280`; mig 295) — "what success looks like", in the coach's words. Optional — a goal can be one line of free text (F17).
+
+<!-- dict:col:rep_player_development_goals.review_on -->
+**`review_on`** (date, nullable; mig 295) — the next review date the coach chose. Moved by each review that names a next date; never derived.
+
+<!-- dict:col:rep_player_development_goals.origin -->
+**`origin`** (text, nullable; CHECK `coach|carried|tryout`; mig 295) — where the goal came from: `coach` = set with the player (the profile form), `carried` = copied from a prior season's record by the carry-forward answer, `tryout` = seeded from the tryout scorecard. **NULL on every goal written before 2026-09-13 — not recorded, so not claimed**; the screen shows no origin line for them (build call, hub Decisions; the "nothing back-filled as fact" rule).
+
+### `rep_evaluation_not_assessed`
+<!-- dict:table:rep_evaluation_not_assessed -->
+
+**Purpose:** a per-(session, player, metric) STATE — "the coach chose not to assess this player on this metric in this session" — with a neutral optional reason. Added by migration 295 (development lifecycle Phase 2, 2026-09-13). **Never a value, never a zero, never a rung**: "not assessed" (a test) and "not observed" (a skill) are the same row, and removing it returns the cell to "not recorded". **⚠ DEV-ONLY / PROD-PENDING at author time (order-critical after 293/294).**
+
+**Gotchas (read first):**
+1. **Short name on purpose** — `rep_team_evaluation_session_not_assessed` pushed its policy names past Postgres's 63-byte identifier limit, where they would have been stored TRUNCATED and matched by no verify query (/dba Finding #41 item 1).
+2. **Every reference carries the team** — composite FKs `(session_id, team_id)`, `(player_id, team_id)`, `(measurable_type_id, team_id)` onto the `(id, team_id)` uniques (mig 190's on sessions, mig 191's on roster rows, mig 295's on definitions): a well-formed id from another team can never attach here (the mig 190/191 lesson).
+3. **Unique per (session, player, metric)** — marking twice is an upsert; the route treats the second as "already marked".
+4. **RLS (schema-invisible; MANUAL_PROD_STEPS):** 2 SELECT (org members; assigned coaches — mig 189's shape) + INSERT + DELETE on mig 292's predicate (the head coach, or `capabilities->>'development' = 'true'`). No UPDATE: a mark is made or removed, never edited.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_evaluation_not_assessed.org_id -->
+<!-- dict:col:rep_evaluation_not_assessed.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_evaluation_not_assessed.session_id -->
+**`session_id`** (uuid, NOT NULL; composite FK with `team_id` → `rep_team_evaluation_sessions(id, team_id)` CASCADE) — the session the mark belongs to (gotcha 2).
+
+<!-- dict:col:rep_evaluation_not_assessed.player_id -->
+**`player_id`** (uuid, NOT NULL; composite FK with `team_id` → `rep_roster_players(id, team_id)` CASCADE) — who was not assessed.
+
+<!-- dict:col:rep_evaluation_not_assessed.measurable_type_id -->
+**`measurable_type_id`** (uuid, NOT NULL; composite FK with `team_id` → `rep_team_measurable_types(id, team_id)` RESTRICT) — on which metric (a test or a skill).
+
+<!-- dict:col:rep_evaluation_not_assessed.reason -->
+**`reason`** (text, nullable; CHECK `≤ 120`) — neutral and optional: "absent", "injured", "left early". Never a value.
+
+<!-- dict:col:rep_evaluation_not_assessed.created_by -->
+**`created_by`** (FK → `auth.users.id` SET NULL, nullable) — who made the mark.
+
+### `rep_player_observations`
+<!-- dict:table:rep_player_observations -->
+
+**Purpose:** the SECOND kind of development record (plan §7 Observation) — a dated note of what a coach SAW against an **observed skill** definition: the note and/or one of the skill's own descriptors, an optional goal it is evidence for, and the session it was taken in. Added by migration 295 (development lifecycle Phase 2, 2026-09-13). **Never averaged, never a score, never a rung** — descriptors are words, not a scale. **⚠ DEV-ONLY / PROD-PENDING at author time (order-critical after 293/294).**
+
+**Gotchas (read first):**
+1. **Only THIS TEAM's SKILL can be named, by the database** — composite FK `(measurable_type_id, team_id, metric_kind) → rep_team_measurable_types(id, team_id, kind)` with `metric_kind` CHECKed to `'skill'`. A measured test cannot take an observation by any path, and because the FK is `ON UPDATE NO ACTION` a referenced definition's `kind` can never be changed underneath it (the reader refuses a kind patch anyway). Preferred over a trigger: declarative and parity-visible (/dba Finding #41 item 4).
+2. **`descriptor` is SNAPSHOTTED TEXT**, one of the skill's descriptors as written at the time — never an index into the list, so a later edit to the definition's descriptors never rewrites what was seen.
+3. **`note` OR `descriptor`, at least one** (CHECK `rep_player_observations_has_content_check`) — "With a reminder" is itself what was seen; requiring prose beside every descriptor on a phone grid was too heavy (build call, hub Decisions).
+4. **READ on Internal notes; WRITE on the Development grant AND notes** (`canWriteDevelopmentGoals`, the goals predicate) — an observation is a coach's written judgement about a child, the same sensitivity class as a goal. ⚠ The RLS policies encode the grant ALONE (mig 292's reasoning: `notes` is a read grant and belongs to the route's compound); RLS is not the coach portal's enforcement layer. A recorder without notes sees the skill chip on a session held back with the reason.
+5. **`goal_id` and `session_id` carry the team** — composite FKs `(goal_id, team_id)` and `(session_id, team_id)`, both SET NULL: deleting the goal or the session leaves the observation standing as a dated record (the grouping artifact is not the record). `player_id` carries the team too (CASCADE).
+6. **RLS (schema-invisible; MANUAL_PROD_STEPS):** 2 SELECT + INSERT + UPDATE + DELETE on mig 292's predicate. `updated_at` is app-side (no trigger — the repo's convention): the update route sets it.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_player_observations.org_id -->
+<!-- dict:col:rep_player_observations.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_player_observations.player_id -->
+**`player_id`** (uuid, NOT NULL; composite FK with `team_id` → `rep_roster_players(id, team_id)` CASCADE) — the player observed. Season-scoped through the roster row, like every per-player development table.
+
+<!-- dict:col:rep_player_observations.measurable_type_id -->
+<!-- dict:col:rep_player_observations.metric_kind -->
+**`measurable_type_id`** (uuid, NOT NULL) / **`metric_kind`** (text, NOT NULL, default `'skill'`, CHECK `= 'skill'`) — the observed skill (gotcha 1). `metric_kind` exists ONLY to be the FK's second half; it carries no information of its own.
+
+<!-- dict:col:rep_player_observations.observed_on -->
+**`observed_on`** (date, NOT NULL) — when the coach saw it (the session's date when recorded from a session; coach-chosen from the profile).
+
+<!-- dict:col:rep_player_observations.note -->
+**`note`** (text, nullable; CHECK `≤ 600`) — what was seen, in the coach's words (gotcha 3).
+
+<!-- dict:col:rep_player_observations.descriptor -->
+**`descriptor`** (text, nullable; CHECK `≤ 60`) — one of the skill's descriptors, snapshotted (gotcha 2).
+
+<!-- dict:col:rep_player_observations.goal_id -->
+**`goal_id`** (uuid, nullable; composite FK with `team_id` → `rep_player_development_goals(id, team_id)` SET NULL) — the goal this observation is evidence for ("Evidence for: <goal>" on the timeline).
+
+<!-- dict:col:rep_player_observations.session_id -->
+**`session_id`** (uuid, nullable; composite FK with `team_id` → `rep_team_evaluation_sessions(id, team_id)` SET NULL) — the session it was recorded in; NULL = recorded from the player's record.
+
+<!-- dict:col:rep_player_observations.created_by -->
+**`created_by`** (FK → `auth.users.id` SET NULL, nullable) — who wrote it ("written by" on the screen).
+
+### `rep_development_goal_reviews`
+<!-- dict:table:rep_development_goal_reviews -->
+
+**Purpose:** APPEND-ONLY dated review events on a goal (plan §7 Goal review; F08 — "a goal is a current state, not a history"): the status chosen (required — F19), an optional note, the next review date and evidence references. A review NEVER overwrites the previous one; the goal's `status` is the latest review's, written in the same step by the route. Added by migration 295 (development lifecycle Phase 2, 2026-09-13). **⚠ DEV-ONLY / PROD-PENDING at author time (order-critical after 293/294).**
+
+**Gotchas (read first):**
+1. **Append-only is a POLICY fact, not a table fact** — RLS carries 2 SELECT + INSERT and NOTHING else (no UPDATE, no DELETE policy), and no route edits or deletes a review. A mistaken review is answered by another review. Deleting the GOAL cascades its reviews (the goal is the record; a review without its goal is meaningless).
+2. **Evidence ids are LISTS, deliberately not FKs** (`evidence_measurable_ids`, `evidence_observation_ids`): a cascade from a deleted reading would silently rewrite a past review; a dangling id the screen reports as "no longer on record" is the honest outcome (/dba Finding #41 item 6; on the Finding #37 orphan-check list).
+3. **`status` is the same vocabulary as the goal's** (CHECK `working|achieved|parked`) and the route copies it onto the goal in the same step (goals gotcha 5).
+4. **Every reference carries the team** — composite FKs `(goal_id, team_id)` and `(player_id, team_id)`.
+5. **Short name on purpose** — see `rep_evaluation_not_assessed` gotcha 1 (the 63-byte identifier limit).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_development_goal_reviews.org_id -->
+<!-- dict:col:rep_development_goal_reviews.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_development_goal_reviews.player_id -->
+**`player_id`** (uuid, NOT NULL; composite FK with `team_id` → `rep_roster_players(id, team_id)` CASCADE) — whose goal; denormalized from the goal so a player's whole review history is one read.
+
+<!-- dict:col:rep_development_goal_reviews.goal_id -->
+**`goal_id`** (uuid, NOT NULL; composite FK with `team_id` → `rep_player_development_goals(id, team_id)` CASCADE) — the goal reviewed.
+
+<!-- dict:col:rep_development_goal_reviews.reviewed_on -->
+**`reviewed_on`** (date, NOT NULL) — the review's date, coach-chosen (defaults to today in the UI). This — never the goal's `updated_at` — is "last reviewed".
+
+<!-- dict:col:rep_development_goal_reviews.status -->
+**`status`** (text, NOT NULL; CHECK `working|achieved|parked`) — the status chosen at this review (required; the note is not — F19).
+
+<!-- dict:col:rep_development_goal_reviews.note -->
+**`note`** (text, nullable; CHECK `≤ 600`) — what was observed / decided, optional.
+
+<!-- dict:col:rep_development_goal_reviews.next_review_on -->
+**`next_review_on`** (date, nullable) — the next review date named at this review; the route copies it onto the goal's `review_on`.
+
+<!-- dict:col:rep_development_goal_reviews.evidence_measurable_ids -->
+<!-- dict:col:rep_development_goal_reviews.evidence_observation_ids -->
+**`evidence_measurable_ids`** / **`evidence_observation_ids`** (uuid[], NOT NULL, default `{}`) — readings / observations the coach pointed at as evidence (gotcha 2).
+
+<!-- dict:col:rep_development_goal_reviews.created_by -->
+**`created_by`** (FK → `auth.users.id` SET NULL, nullable) — who wrote the review ("written by" on the timeline).
 
 ### `rep_player_continuity_links`
 <!-- dict:table:rep_player_continuity_links -->

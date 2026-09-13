@@ -458,20 +458,25 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // ⚠ `?section=development` is the PRODUCT's own deep link (`CoachCollapseSection`), which
     // opens the card and scrolls to it. Clicking the summary instead is what a first attempt did,
     // and it timed out — the card is one of eight collapsed sections on a 3,400px page.
-    path: `${COACH_TEAM('offSeason')}/roster/${DEMO_COACH_SHOWCASE.offSeasonPlayerId}?section=development`,
+    // ⚠ `&view=results` (development lifecycle Phase 2, 2026-09-13): the section is four views now
+    // and opens on Goals; the tests live on Results. The address module's own view parameter.
+    path: `${COACH_TEAM('offSeason')}/roster/${DEMO_COACH_SHOWCASE.offSeasonPlayerId}?section=development&view=results`,
     ready: '#development',
     // One click, and it is the one that matters: opening a test's full history is the "beside
-    // last month's" half of the claim. The closed row shows only the latest number and a spark.
+    // last month's" half of the claim. The closed row shows only the latest headline and a spark;
+    // opened, it lists every session with its three attempts (the showcase player sprints three
+    // times per testing day since Phase 2).
     prepare: ['button:has-text("60-yard dash")'],
-    readyAfterPrepare: 'button:has-text("Log a measurable")',
+    // F20 — "Log a measurable" became "Record a result" in Phase 2; this wait follows the label.
+    readyAfterPrepare: 'button:has-text("Record a result")',
     // The collapse section carries its own section id as the element id — a real hook, not a
     // class-substring guess.
     clip: '#development',
     width: 1280,
-    size: { w: 960, h: 727 },
-    takenAt: '2026-08-21',
-    alt: 'One player’s development card: a focus area the coach set with a note about what they are working on and a “working on it” badge, then a list of the coach’s own tests — a sprint, exit velocity and a run to first — each showing the latest reading, its date and a small line showing the direction of travel, with one test opened out to show both readings and the months between them.',
-    caption: 'Goals set, the same tests run again — so “he’s improved” becomes two numbers and the months between them.',
+    size: { w: 960, h: 715 },
+    takenAt: '2026-09-13',
+    alt: 'One player’s development record on its Results view: the coach’s own tests — a sprint, exit velocity and a run to first — each showing the latest result, its date and a small line showing the direction of travel, with the sprint opened out to show both testing days, the three attempts taken on each with the best and the average, and the months between them.',
+    caption: 'The same tests run again, every attempt kept — so “he’s improved” becomes two numbers and the months between them.',
   },
   {
     id: 'coach-playing-time',

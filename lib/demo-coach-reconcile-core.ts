@@ -26,6 +26,7 @@ import {
   resolveTryoutDayState, resolveMidSeasonState, resolveOffSeasonState, resolveSeasonStartState,
   demoExpensePlan, type OffSeasonState, type DemoExpense,
   orgDateWithOffset,
+  OFFSEASON_GOAL_REVIEW, OFFSEASON_DEVELOPMENT_GOALS,
 } from './demo-coach.ts';
 import { getDemoOrgByKind } from './demo-org.ts';
 import { recordSandboxArrival } from './demo-sandbox-heartbeat.ts';
@@ -523,6 +524,34 @@ async function restateOffSeasonBooks(
       .eq('session_id', session.id).neq('recorded_on', date);
     if (readingError) throw new Error(`rep_player_measurables: ${readingError.message}`);
     written += count ?? 0;
+    // Phase 2: an observation taken IN the session is dated by it, and moves with it the same way.
+    const { error: obsError, count: obsCount } = await db.from('rep_player_observations')
+      .update({ observed_on: date }, { count: 'exact' })
+      .eq('session_id', session.id).neq('observed_on', date);
+    if (obsError) throw new Error(`rep_player_observations: ${obsError.message}`);
+    written += obsCount ?? 0;
+    // The one goal review was written at the post-holiday testing day; its date and its next
+    // review (a fortnight on) ride the session too. Matched by the session the seed tied it to.
+    if (session.note === OFFSEASON_GOAL_REVIEW.sessionNote) {
+      const next = new Date(`${date}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + OFFSEASON_GOAL_REVIEW.nextReviewInDays);
+      const nextReviewOn = next.toISOString().slice(0, 10);
+      // Scoped to the ONE goal the seed reviewed (by its focus area, the world's stable identity
+      // for a goal) — a second seeded review on another goal must never ride this date.
+      const reviewed = OFFSEASON_DEVELOPMENT_GOALS[OFFSEASON_GOAL_REVIEW.goalIndex];
+      const { data: goalRow, error: goalLookupError } = await db.from('rep_player_development_goals')
+        .select('id').eq('team_id', teamId).eq('focus_area', reviewed.focusArea).limit(1).maybeSingle();
+      if (goalLookupError) throw new Error(`rep_player_development_goals: ${goalLookupError.message}`);
+      if (goalRow) {
+        const { error: reviewError, count: reviewCount } = await db.from('rep_development_goal_reviews')
+          .update({ reviewed_on: date, next_review_on: nextReviewOn }, { count: 'exact' })
+          .eq('goal_id', goalRow.id).neq('reviewed_on', date);
+        if (reviewError) throw new Error(`rep_development_goal_reviews: ${reviewError.message}`);
+        written += reviewCount ?? 0;
+        const { error: goalError } = await db.from('rep_player_development_goals')
+          .update({ review_on: nextReviewOn }).eq('id', goalRow.id).neq('review_on', nextReviewOn);
+        if (goalError) throw new Error(`rep_player_development_goals: ${goalError.message}`);
+      }
+    }
   }
 
   return written;

@@ -116,6 +116,27 @@ export function sessionHeadline(values: number[], def: HeadlineDefinition): numb
   }
 }
 
+/** "in" · "+2" · "−3" — how one attempt reads against a range test's band. */
+export function rangeSign(value: number, from: number, to: number): string {
+  const r = attemptAgainstRange(value, from, to);
+  return r.inRange ? 'in' : r.delta > 0 ? `+${format(r.delta)}` : `−${format(Math.abs(r.delta))}`;
+}
+
+/**
+ * The LIVE read-back under a session row's fields — `describeHeadline` with the definition's
+ * attempt count, so a row that has fewer attempts than the test asks for says so ("· 1 of 3 run")
+ * and a single attempt of several shows its value (with its range sign) rather than "One attempt".
+ */
+export function describeAttempts(values: number[], def: HeadlineDefinition, expected: number): string {
+  if (values.length === 1 && expected > 1) {
+    const v = values[0];
+    const sign = def.aim === 'range' && def.rangeFrom != null && def.rangeTo != null ? ` (${rangeSign(v, def.rangeFrom, def.rangeTo)})` : '';
+    return `${format(v)}${sign} · 1 of ${expected} run`;
+  }
+  const line = describeHeadline(values, def);
+  return values.length > 0 && values.length < expected ? `${line} · ${values.length} of ${expected} run` : line;
+}
+
 /**
  * The read-back line — "Best of 3 attempts · 8.12 · 8.05 · 8.2 · average 8.123", or for a range
  * test "1 of 3 in range · 61 (−1) · 64 (in) · 70 (+2)". One attempt says so and nothing more.
@@ -128,15 +149,102 @@ export function describeHeadline(values: number[], def: HeadlineDefinition): str
     if (def.rangeFrom == null || def.rangeTo == null) return `${n} attempts · set From and To to read them against the range`;
   }
   if (def.aim === 'range' && def.rangeFrom != null && def.rangeTo != null) {
-    const marks = values.map(v => {
-      const r = attemptAgainstRange(v, def.rangeFrom!, def.rangeTo!);
-      const sign = r.inRange ? 'in' : r.delta > 0 ? `+${format(r.delta)}` : `−${format(Math.abs(r.delta))}`;
-      return `${format(v)} (${sign})`;
-    });
+    const marks = values.map(v => `${format(v)} (${rangeSign(v, def.rangeFrom!, def.rangeTo!)})`);
     const inBand = sessionHeadline(values, { ...def, headline: 'in_range' });
     return `${inBand} of ${n} in range · ${marks.join(' · ')}`;
   }
   const lead = def.headline === 'average' ? 'Average of' : def.headline === 'last' ? 'Last of' : 'Best of';
   const avg = format(sessionHeadline(values, { ...def, headline: 'average' }) ?? 0);
   return `${lead} ${n} attempts · ${values.map(format).join(' · ')} · average ${avg}`;
+}
+
+// ── Rows per session (Phase 2: every attempt is recorded; rows are never people) ──────────────────
+/**
+ * A reading as the record holds it (`RepPlayerMeasurable` narrowed to what the series needs): its
+ * session — null for a single reading — and its attempt within it.
+ */
+export interface AttemptReading extends SeriesReading {
+  id: string;
+  sessionId: string | null;
+  attemptNo: number;
+}
+
+/**
+ * ONE session's (or one single reading's) result: every attempt in attempt order, the headline the
+ * definition asks for, the average, and the read-back line. Satisfies `SeriesReading` with
+ * `value` = what the LINE draws — the headline, except for a range test, whose "headline" is a
+ * count of attempts in the band (not a number in the unit), so the line follows its average
+ * (plan §8 rule 10: the chart dashes the average and shades the band).
+ */
+export interface SessionResult<R extends AttemptReading = AttemptReading> extends SeriesReading {
+  /** `session:<id>` or `single:<reading id>` — stable for React keys and evidence links. */
+  key: string;
+  sessionId: string | null;
+  attempts: R[];
+  values: number[];
+  headline: number | null;
+  average: number | null;
+  /** `describeHeadline` for these attempts. */
+  readBack: string;
+}
+
+/**
+ * Group a player's readings for ONE test into rows: one per session (all its attempts, in attempt
+ * order) and one per single reading. NEWEST FIRST — by the date the readings were taken, then by
+ * entry order. ⚠ This is the ONE home: the Results view, the Players view's latest, the session
+ * screen's read-back, the PDF's rows and (Phase 3) the chart all read rows from here. Three sprints
+ * are one row here, so they are one row everywhere.
+ */
+export function groupBySession<R extends AttemptReading>(readings: R[], def: HeadlineDefinition): SessionResult<R>[] {
+  const groups = new Map<string, R[]>();
+  for (const r of readings) {
+    const key = r.sessionId ? `session:${r.sessionId}` : `single:${r.id}`;
+    const list = groups.get(key) ?? [];
+    list.push(r);
+    groups.set(key, list);
+  }
+  const rows: SessionResult<R>[] = [];
+  for (const [key, list] of groups) {
+    const attempts = [...list].sort((a, b) => a.attemptNo - b.attemptNo || a.createdAt.localeCompare(b.createdAt));
+    const values = attempts.map(a => a.value);
+    const headline = sessionHeadline(values, def);
+    const average = sessionHeadline(values, { ...def, headline: 'average' });
+    const first = attempts[0];
+    const lineValue = def.aim === 'range' ? average : headline;
+    rows.push({
+      key, sessionId: first.sessionId, attempts, values, headline, average,
+      readBack: describeHeadline(values, def),
+      value: lineValue ?? first.value,
+      unit: first.unit,
+      recordedOn: first.recordedOn,
+      // The newest attempt's entry time, so same-day rows order by when they were entered.
+      createdAt: attempts[attempts.length - 1].createdAt,
+    });
+  }
+  return rows.sort((a, b) => b.recordedOn.localeCompare(a.recordedOn) || b.createdAt.localeCompare(a.createdAt));
+}
+
+/** The latest row — the HEADLINE of the latest session, never the last reading typed. */
+export function latestSessionResult<R extends AttemptReading>(rows: SessionResult<R>[]): SessionResult<R> | null {
+  return rows[0] ?? null;
+}
+
+/** "8.05 seconds" · "2 of 3 in range" — the one figure a row or a cell leads with. */
+export function headlineLabel(row: SessionResult, def: HeadlineDefinition): string {
+  if (row.headline == null) return '—';
+  if (def.aim === 'range' || def.headline === 'in_range') return `${row.headline} of ${row.values.length} in range`;
+  return `${formatValue(row.headline)} ${row.unit}`;
+}
+
+/**
+ * The HOW beside a session's headline — "best of 3 attempts · avg 7.553" — or null when there is
+ * nothing to add: one attempt, or a range test, whose headline ("2 of 3 in range") already says
+ * how it was read. Kept apart from the label so no screen glues the two halves together twice.
+ */
+export function headlineMethod(row: SessionResult, def: HeadlineDefinition): string | null {
+  if (row.headline == null || row.values.length < 2) return null;
+  if (def.aim === 'range' || def.headline === 'in_range') return null;
+  const lead = def.headline === 'average' ? 'average of' : def.headline === 'last' ? 'last of' : 'best of';
+  const avg = row.average != null && def.headline !== 'average' ? ` · avg ${formatValue(row.average)}` : '';
+  return `${lead} ${row.values.length} attempts${avg}`;
 }

@@ -47,6 +47,7 @@ import {
   OFFSEASON_HOODIE_DRIVE,
   OFFSEASON_DUES,
   OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES,
+  OFFSEASON_OBSERVED_SKILL, OFFSEASON_OBSERVATIONS, OFFSEASON_GOAL_REVIEW, offseasonShowcaseAttempts,
   OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue,
   SEASON_START_ROSTER, SEASON_START_BUDGET_LINES, SEASON_START_DUES,
   SEASON_START_LINEUP_GRID, SEASON_START_LINEUP_SETTINGS, SEASON_START_BATTING_ORDER,
@@ -346,6 +347,10 @@ async function wipeProgramYearChildren(teamId, pyId) {
   // Documents + development (team-scoped)
   await del('rep_player_documents', q => q.eq('team_id', teamId));
   await del('rep_document_templates', q => q.eq('team_id', teamId));
+  // Phase 2 records (mig 295) — reviews and observations before the goals they point at.
+  await del('rep_development_goal_reviews', q => q.eq('team_id', teamId));
+  await del('rep_player_observations', q => q.eq('team_id', teamId));
+  await del('rep_evaluation_not_assessed', q => q.eq('team_id', teamId));
   await del('rep_player_development_goals', q => q.eq('team_id', teamId));
 
   // Everything else a coach (or a QA session) can write under a team — the seed creates none of
@@ -1109,9 +1114,14 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     isPaid: (i, n) => n <= 1 && !(n === 1 && i === OFFSEASON_DUES.overdueRosterIndex),
   });
 
-  await insertAll('rep_player_development_goals', OFFSEASON_DEVELOPMENT_GOALS.map(goal => ({
+  const goalIds = OFFSEASON_DEVELOPMENT_GOALS.map(() => randomUUID());
+  await insertAll('rep_player_development_goals', OFFSEASON_DEVELOPMENT_GOALS.map((goal, i) => ({
+    id: goalIds[i],
     org_id: org.id, team_id: team.id, player_id: playerIds[goal.rosterIndex],
-    focus_area: goal.focusArea, note: goal.note, status: goal.status, created_by: coach.id,
+    focus_area: goal.focusArea, note: goal.note, status: goal.status,
+    // Set with the player (mig 295) — the world's goals are the coach's own.
+    origin: 'coach',
+    created_by: coach.id,
   })));
 
   // The winter's testing: the coach's own test library and TWO sessions — the fall baseline and
@@ -1127,10 +1137,18 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       name: OFFSEASON_MEASURABLE_TYPES[i].name, unit: OFFSEASON_MEASURABLE_TYPES[i].unit,
       // The definition (mig 293) — a defined test, not a legacy row, so the Metrics tab reads whole.
       kind: 'test', aim: OFFSEASON_MEASURABLE_TYPES[i].aim, method: OFFSEASON_MEASURABLE_TYPES[i].method,
-      attempts_per_session: 1, headline: 'best',
+      attempts_per_session: OFFSEASON_MEASURABLE_TYPES[i].attempts, headline: 'best',
       sort_order: i, is_active: true, created_by: coach.id,
     })).error);
   }
+  // The one observed skill (Phase 2): descriptors, no unit — the second kind of record.
+  const skillTypeId = randomUUID();
+  die('insert observed skill', (await db.from('rep_team_measurable_types').insert({
+    id: skillTypeId, org_id: org.id, team_id: team.id,
+    name: OFFSEASON_OBSERVED_SKILL.name, unit: null, kind: 'skill', aim: 'record', method: OFFSEASON_OBSERVED_SKILL.method,
+    attempts_per_session: 1, headline: 'last', descriptors: [...OFFSEASON_OBSERVED_SKILL.descriptors],
+    sort_order: OFFSEASON_MEASURABLE_TYPES.length, is_active: true, created_by: coach.id,
+  })).error);
   const sessionIds = state.testingSessions.map(() => randomUUID());
   await insertAll('rep_team_evaluation_sessions', state.testingSessions.map((testing, i) => ({
     id: sessionIds[i], org_id: org.id, team_id: team.id, program_year_id: pyId,
@@ -1139,18 +1157,60 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     // it, and a world that only ever shows the attached shape teaches that it does not.
     event_id: testing.practiceKey ? eventIdByKey.get(testing.practiceKey) ?? null : null,
     note: testing.note, created_by: coach.id,
+    // The SCOPE (Phase 2): every test and the skill, and the players who were there — so the
+    // session reads "N recorded · 0 not assessed · 0 not recorded — of M in scope" and the two who
+    // missed are outside it, exactly as a coach would have set it up.
+    scope_metric_ids: [...typeIds, skillTypeId],
+    scope_player_ids: playerIds.filter((_, i) => !testing.absent.includes(i)),
   })));
+  // Readings only for whoever was there. The showcase player runs the dash THREE times on each
+  // testing day (Phase 2: every attempt is recorded — best is the headline, and the attempts show
+  // the spread); everyone else runs it once. Three sprints are one player everywhere that counts.
   const readings = state.testingSessions.flatMap((testing, sessionIndex) =>
     playerIds.flatMap((pid, i) => testing.absent.includes(i) ? [] :
-      OFFSEASON_MEASURABLE_TYPES.map((type, t) => ({
-        org_id: org.id, team_id: team.id, player_id: pid,
-        measurable_type_id: typeIds[t], value: offseasonMeasurableValue(i, t, sessionIndex),
-        unit: type.unit, recorded_on: testing.date,
-        session_id: sessionIds[sessionIndex], created_by: coach.id,
-      }))));
+      OFFSEASON_MEASURABLE_TYPES.flatMap((type, t) => {
+        const values = t === 0 && i === OFFSEASON_SHOWCASE_ROSTER_INDEX
+          ? offseasonShowcaseAttempts(sessionIndex)
+          : [offseasonMeasurableValue(i, t, sessionIndex)];
+        return values.map((value, k) => ({
+          org_id: org.id, team_id: team.id, player_id: pid,
+          measurable_type_id: typeIds[t], value, attempt_no: k + 1,
+          unit: type.unit, recorded_on: testing.date,
+          session_id: sessionIds[sessionIndex], created_by: coach.id,
+        }));
+      })));
   await insertAll('rep_player_measurables', readings);
+  // What the coach SAW (Phase 2): one observation per testing day on the showcase player, in the
+  // session it was taken in, as evidence for his goal.
+  await insertAll('rep_player_observations', OFFSEASON_OBSERVATIONS.map(o => {
+    const sessionIndex = state.testingSessions.findIndex(s => s.note === o.sessionNote);
+    return {
+      org_id: org.id, team_id: team.id, player_id: playerIds[o.rosterIndex],
+      measurable_type_id: skillTypeId, metric_kind: 'skill',
+      observed_on: state.testingSessions[sessionIndex].date, note: o.note, descriptor: o.descriptor,
+      goal_id: o.goalIndex == null ? null : goalIds[o.goalIndex], session_id: sessionIds[sessionIndex], created_by: coach.id,
+    };
+  }));
+  // One GOAL REVIEW (Phase 2): a dated event at the post-holiday testing day; the goal's status is its.
+  {
+    const reviewSession = state.testingSessions.find(s => s.note === OFFSEASON_GOAL_REVIEW.sessionNote);
+    const reviewGoal = OFFSEASON_DEVELOPMENT_GOALS[OFFSEASON_GOAL_REVIEW.goalIndex];
+    const reviewedOn = reviewSession.date;
+    const next = new Date(`${reviewedOn}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + OFFSEASON_GOAL_REVIEW.nextReviewInDays);
+    const nextReviewOn = next.toISOString().slice(0, 10);
+    const linked = OFFSEASON_OBSERVATIONS.filter(o => o.goalIndex === OFFSEASON_GOAL_REVIEW.goalIndex && o.sessionNote === OFFSEASON_GOAL_REVIEW.sessionNote);
+    const { data: obsRows } = await db.from('rep_player_observations').select('id, note').eq('team_id', team.id);
+    const evidenceIds = (obsRows ?? []).filter(r => linked.some(l => l.note === r.note)).map(r => r.id);
+    die('insert goal review', (await db.from('rep_development_goal_reviews').insert({
+      org_id: org.id, team_id: team.id, player_id: playerIds[reviewGoal.rosterIndex], goal_id: goalIds[OFFSEASON_GOAL_REVIEW.goalIndex],
+      reviewed_on: reviewedOn, status: OFFSEASON_GOAL_REVIEW.status, note: OFFSEASON_GOAL_REVIEW.note, next_review_on: nextReviewOn,
+      evidence_observation_ids: evidenceIds, created_by: coach.id,
+    })).error);
+    die('goal review date', (await db.from('rep_player_development_goals')
+      .update({ status: OFFSEASON_GOAL_REVIEW.status, review_on: nextReviewOn }).eq('id', goalIds[OFFSEASON_GOAL_REVIEW.goalIndex])).error);
+  }
 
-  console.log(`✓ 14U off-season — budget ${OFFSEASON_BUDGET_LINES.length} lines, ${state.expenses.length} expenses logged, dues 2 of 4 in (one overdue), ${state.practices.length} sessions, 2 plans, ${state.testingSessions.length} testing sessions, ${readings.length} test readings`);
+  console.log(`✓ 14U off-season — budget ${OFFSEASON_BUDGET_LINES.length} lines, ${state.expenses.length} expenses logged, dues 2 of 4 in (one overdue), ${state.practices.length} sessions, 2 plans, ${state.testingSessions.length} testing sessions, ${readings.length} test readings (the showcase player three sprints a day), ${OFFSEASON_OBSERVATIONS.length} observations, 1 goal review`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────

@@ -10,7 +10,8 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
-import { todayLocal, formatValue, formatShortDate } from '@/lib/measurable-format';
+import { formatValue, formatShortDate, formatWeekdayDate } from '@/lib/measurable-format';
+import SessionScopeDialog, { type ScopeRosterRow, type ScopeEventOption } from '@/components/coaches/SessionScopeDialog';
 import { canManageSchedule, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { skillsAndGoalsHref, parseSkillsAndGoalsSection, playerDevelopmentHref, type SkillsAndGoalsSection } from '@/lib/development-address';
@@ -18,10 +19,7 @@ import { activeMeasuredTests, measuredTestsWithHistory, recordMeaning, KIND_LABE
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
 
-function formatSessionDate(iso: string): string {
-  const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
-  return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
+const formatSessionDate = (iso: string) => formatWeekdayDate(iso, 'short');
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** The quiet cell — a dash, "none yet", "not recorded". */
@@ -34,7 +32,9 @@ interface BoardRow {
   lastName: string | null;
   number: string | null;
   goals: { focusArea: string; status: string }[];
-  latest: Record<string, { value: number; unit: string; recordedOn: string }>;
+  /** The HEADLINE of the latest session per test (Phase 2) — never the last row typed. */
+  latest: Record<string, { value: number; unit: string; recordedOn: string; attempts: number; inRange: number | null }>;
+  latestObservation?: Record<string, { descriptor: string | null; note: string | null; observedOn: string }>;
 }
 interface BoardData { showGoals: boolean; showMeasurables: boolean; rows: BoardRow[] }
 
@@ -84,6 +84,10 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
   const [sessions, setSessions] = useState<RepTeamEvaluationSession[] | null>(null);
   const [types, setTypes] = useState<RepTeamMeasurableType[] | null>(null);
+  // The scope step's lists (Phase 2) — the active roster and the season's events, from the same fetch.
+  const [scopeRoster, setScopeRoster] = useState<ScopeRosterRow[]>([]);
+  const [scopeEvents, setScopeEvents] = useState<ScopeEventOption[]>([]);
+  const [scopeOpen, setScopeOpen] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   // ONE source for the write flag, resilient to the sessions GET 404'ing (no active program
@@ -115,6 +119,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       if (!res.ok || !json) throw new Error(json?.error ?? 'Could not load Development — try again.');
       setSessions(json.sessions);
       setTypes(json.types);
+      setScopeRoster(Array.isArray(json.roster) ? json.roster : []);
+      setScopeEvents(Array.isArray(json.events) ? json.events : []);
       setError('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load Development — try again.');
@@ -152,7 +158,12 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
     return () => { cancelled = true; };
   }, [apiBase, canSeeBoard]);
 
-  async function startSession() {
+  /**
+   * "+ Start session" asks for the SCOPE first (Phase 2, mockup screen 3): date, "Taken at", which
+   * metrics — tests AND skills — and who is here. The session is created with its scope and opens
+   * on the grid. (Phase 1 created a session instantly and landed the coach on an empty grid.)
+   */
+  async function startSession(v: { sessionDate: string; eventId: string | null; note: string; scope: { metricIds: string[]; playerIds: string[] } }) {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -160,10 +171,11 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       const res = await fetch(`${apiBase}/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionDate: todayLocal() }),
+        body: JSON.stringify({ sessionDate: v.sessionDate, eventId: v.eventId, note: v.note || null, scope: v.scope }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json) throw new Error(json?.error ?? 'Could not start a session — try again.');
+      setScopeOpen(false);
       router.push(`${base}/development/sessions/${json.session.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start a session — try again.');
@@ -238,16 +250,16 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const hasSessions = (sessions ?? []).length > 0;
   const metricsHref = skillsAndGoalsHref(base, 'metrics');
 
-  /* ── The header's one lime action: Start session (page-level actions rule, 2026-08-13).
-        Phase 1 keeps today's create-then-open behaviour; the scope step is Phase 2. aria-disabled,
-        NOT `disabled`, while held back: a disabled button leaves the tab order, so a keyboard or
-        screen-reader user never lands on it and never hears WHY it is off (/review a11y). */
+  /* ── The header's one lime action: Start session (page-level actions rule, 2026-08-13) — it
+        opens the scope step (Phase 2). aria-disabled, NOT `disabled`, while held back: a disabled
+        button leaves the tab order, so a keyboard or screen-reader user never lands on it and never
+        hears WHY it is off (/review a11y). */
   const startAction = !canWrite || loading ? undefined : firstRun ? (
     <button type="button" className={styles.devBtnHeld} aria-disabled="true" aria-describedby="dev-sessions-held">
       <Plus size={13} aria-hidden /> Start session
     </button>
   ) : (
-    <button type="button" className={styles.btnPrimary} disabled={busy} onClick={startSession}>
+    <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => { setError(''); setScopeOpen(true); }}>
       <Plus size={15} aria-hidden /> Start session
     </button>
   );
@@ -300,6 +312,18 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
             <MetricsView base={base} types={types ?? []} canWrite={canWrite} />
           )}
         </div>
+      )}
+      {scopeOpen && (
+        <SessionScopeDialog
+          mode="start"
+          types={(types ?? []).filter(t => t.isActive)}
+          roster={scopeRoster}
+          events={scopeEvents}
+          busy={busy}
+          error={error}
+          onSubmit={startSession}
+          onClose={() => { if (!busy) setScopeOpen(false); }}
+        />
       )}
     </div>
   );
@@ -493,18 +517,25 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
   metricParam: string | null;
 }) {
   const router = useRouter();
-  // Tests a coach can pick: active measured tests, plus a retired one that still carries a latest
-  // result for someone (its readings are records; hiding them would be F02 again).
+  // Metrics a coach can pick: active measured tests, plus a retired one that still carries a latest
+  // result for someone (its readings are records; hiding them would be F02 again) — and, with
+  // notes, the observed skills (Phase 2: "latest observation").
+  const showGoals = board?.showGoals ?? false;
   const pickable = useMemo(() => {
     const withLatest = new Set<string>();
-    for (const r of board?.rows ?? []) for (const id of Object.keys(r.latest)) withLatest.add(id);
-    return measuredTestsWithHistory(types, id => withLatest.has(id));
-  }, [board, types]);
-  const showGoals = board?.showGoals ?? false;
+    for (const r of board?.rows ?? []) {
+      for (const id of Object.keys(r.latest)) withLatest.add(id);
+      for (const id of Object.keys(r.latestObservation ?? {})) withLatest.add(id);
+    }
+    const tests = measuredTestsWithHistory(types, id => withLatest.has(id));
+    const skills = showGoals ? types.filter(t => t.kind === 'skill' && (t.isActive || withLatest.has(t.id))) : [];
+    return [...tests, ...skills];
+  }, [board, types, showGoals]);
   const chosen = metricParam && pickable.some(t => t.id === metricParam)
     ? metricParam
     : showGoals ? 'focus' : (pickable[0]?.id ?? 'focus');
   const chosenType = pickable.find(t => t.id === chosen) ?? null;
+  const chosenIsSkill = chosenType?.kind === 'skill';
   const here = skillsAndGoalsHref(base, 'players', { metric: chosenType ? chosenType.id : null });
 
   const choose = (value: string) => {
@@ -536,7 +567,7 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
             <select className={`${styles.select} ${styles.devToolbarControl}`} value={chosen} onChange={e => choose(e.target.value)}>
               {showGoals && <option value="focus">Current focus</option>}
               {pickable.map(t => (
-                <option key={t.id} value={t.id}>{t.name} · latest result{t.isActive ? '' : ' (retired)'}</option>
+                <option key={t.id} value={t.id}>{t.name} · {t.kind === 'skill' ? 'latest observation' : 'latest result'}{t.isActive ? '' : ' (retired)'}</option>
               ))}
             </select>
           </label>
@@ -557,16 +588,17 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
                 {/* ⚠ NO sort affordance on any column, ever. Roster order is the only order. */}
                 <th>Player</th>
                 <th>{chosenType ? chosenType.name : 'Current focus'}</th>
-                <th>{chosenType ? 'Recorded' : 'Status'}</th>
+                <th>{chosenType ? (chosenIsSkill ? 'Observed' : 'Recorded') : 'Status'}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map(r => {
                 const name = [r.firstName, r.lastName].filter(Boolean).join(' ');
                 const working = r.goals.filter(g => g.status === 'working').map(g => g.focusArea);
-                const latest = chosenType ? r.latest[chosenType.id] : undefined;
+                const latest = chosenType && !chosenIsSkill ? r.latest[chosenType.id] : undefined;
+                const latestObs = chosenType && chosenIsSkill ? r.latestObservation?.[chosenType.id] : undefined;
                 const href = playerDevelopmentHref(base, r.playerId, chosenType
-                  ? { view: 'results', metricId: chosenType.id, returnTo: here }
+                  ? { view: chosenIsSkill ? 'observations' : 'results', metricId: chosenType.id, returnTo: here }
                   : { view: 'goals', returnTo: here });
                 return (
                   <tr key={r.playerId}>
@@ -575,10 +607,24 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
                         {r.number ? <span className={styles.devRowNum}>#{r.number} </span> : null}{name}
                       </Link>
                     </td>
-                    {chosenType ? (
+                    {chosenType && chosenIsSkill ? (
+                      <>
+                        <td data-label={chosenType.name}>
+                          {latestObs ? [latestObs.descriptor, latestObs.note].filter(Boolean).join(' — ') : <Muted>—</Muted>}
+                        </td>
+                        <td data-label="Observed" className={styles.devBoardVal}>
+                          {latestObs ? formatShortDate(latestObs.observedOn) : <Muted>not observed</Muted>}
+                        </td>
+                      </>
+                    ) : chosenType ? (
                       <>
                         <td data-label={chosenType.name} className={styles.devBoardVal}>
-                          {latest ? `${formatValue(latest.value)} ${latest.unit}` : <Muted>—</Muted>}
+                          {/* The headline of the latest session: "8.05 seconds (best of 3)" · "2 of 3 in range" (Phase 2). */}
+                          {latest
+                            ? latest.inRange != null
+                              ? `${latest.inRange} of ${latest.attempts} in range`
+                              : `${formatValue(latest.value)} ${latest.unit}${latest.attempts > 1 ? ` (of ${latest.attempts})` : ''}`
+                            : <Muted>—</Muted>}
                         </td>
                         {/* The date belongs to the metric chosen — never one "last eval" for everything (F12). */}
                         <td data-label="Recorded" className={styles.devBoardVal}>

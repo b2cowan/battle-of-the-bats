@@ -132,6 +132,21 @@ export const SCREENS = [
     path: (c) => `${team(c)}/development/templates/${c.planTemplateId}` },
   { id: 'coach-development-session',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}` },
+  // Phase 2 (2026-09-13): the scoped session — one field per attempt, Saved / Not assessed /
+  // Not recorded rows, a player outside the scope, a corrected attempt — every state the grid has.
+  { id: 'coach-development-session-scoped', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/development/sessions/${c.scopedSessionId}` },
+  // The player record's Development section, opened on each of its four views by the address
+  // (the sweep cannot click; `?section=development&view=` is the product's own door). Devon holds
+  // goals with a review, results with attempts, an observation and a linked prior season.
+  { id: 'coach-player-development-goals', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=goals` },
+  { id: 'coach-player-development-results', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=results&metric=${c.measurableTypeId}` },
+  { id: 'coach-player-development-observations', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=observations` },
+  { id: 'coach-player-development-archive', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=archive` },
 
   // ── Practice plans (Phase 4 slice 1a/1b/2, QA pending) ──────────────────────
   // The hub (2026-08-15) — the list of practices and what still needs a plan. Added with the

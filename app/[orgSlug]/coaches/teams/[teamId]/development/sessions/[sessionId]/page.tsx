@@ -1,16 +1,27 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { ClipboardCheck, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ClipboardCheck } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { NewTypeFields } from '@/components/coaches/NewTypeFields';
-import { isMeasuredTest } from '@/lib/measurable-definition';
+import SessionScopeDialog from '@/components/coaches/SessionScopeDialog';
+import SessionRecordGrid, {
+  emptyDraft, emptyObservationDraft, type GridRow, type RowDraft, type ObservationDraft,
+} from '@/components/coaches/SessionRecordGrid';
+import { isMeasuredTest, recordMeaning } from '@/lib/measurable-definition';
 import { skillsAndGoalsHref } from '@/lib/development-address';
-import { formatValue, formatShortDate } from '@/lib/measurable-format';
-import { sessionMetricChips, sessionRows, sessionEnteredCount, defaultSessionChip } from '@/lib/development-session-view';
+import { formatShortDate, formatWeekdayDate } from '@/lib/measurable-format';
+import {
+  sessionMetricChips, sessionRows, sessionScopeCounts, scopeSentence, defaultSessionChip, orderEventsByAnchor,
+} from '@/lib/development-session-view';
 import styles from '../../../../../coaches.module.css';
-import type { RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable } from '@/lib/types';
+import css from '@/components/coaches/DevelopmentSession.module.css';
+import type {
+  RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerObservation, RepEvaluationNotAssessed,
+} from '@/lib/types';
 
 interface SessionRosterRow {
   id: string;
@@ -30,17 +41,17 @@ interface SessionEventOption {
 interface SessionWorld {
   session: RepTeamEvaluationSession;
   roster: SessionRosterRow[];
-  /** No longer on the active roster, but a reading was saved here (F02). Read-only rows. */
+  /** No longer on the active roster, but a record was saved here (F02). Read-only rows. */
   pastParticipants: SessionRosterRow[];
   types: RepTeamMeasurableType[];
   entries: RepPlayerMeasurable[];
   events: SessionEventOption[];
+  notAssessed: RepEvaluationNotAssessed[];
+  observations: RepPlayerObservation[];
+  showObservations: boolean;
+  authors: Record<string, string>;
   canWrite: boolean;
-}
-
-function formatSessionDate(iso: string): string {
-  const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
-  return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  canWriteObservations: boolean;
 }
 
 export default function EvaluationSessionPage({
@@ -54,20 +65,28 @@ export default function EvaluationSessionPage({
   return <SessionView key={sessionId} orgSlug={orgSlug} teamId={teamId} sessionId={sessionId} />;
 }
 
+/**
+ * ═══ THE RECORD SCREEN (development lifecycle Phase 2, mockup screen 3) ═══
+ * Date, "Taken at" and the note are UNCHANGED (Phase 0 / Practice Plans rulings: the re-stamp,
+ * the event pre-fill). New: the scope line, tests AND skills as chips, one field per attempt with
+ * a live headline, per-row states with Edit / Retry / Mark not assessed, an observation from a
+ * skill chip, and "Review session →" which reads the counts back against the scope and never
+ * invents a zero or marks anything complete.
+ */
 function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: string; sessionId: string }) {
   const confirm = useConfirm();
+  const router = useRouter();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}`;
 
   const [data, setData] = useState<SessionWorld | null>(null);
   const [error, setError] = useState('');
   const [selectedTypeId, setSelectedTypeId] = useState('');
-  // Drafts are keyed by player AND test — a value typed under one test must never
-  // pre-fill (or silently post against) another test's row (3B review fix).
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  // Drafts are keyed by player AND metric — a value typed under one test must never pre-fill (or
+  // silently post against) another test's row (3B review fix). Each holds every attempt.
+  const [drafts, setDrafts] = useState<Record<string, RowDraft>>({});
+  const [obsDrafts, setObsDrafts] = useState<Record<string, ObservationDraft>>({});
   const [rowErr, setRowErr] = useState('');
-  // Visible saving state doubles as the double-submit guard, shared by log + remove per player.
-  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
 
   const [newTypeOpen, setNewTypeOpen] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
@@ -77,6 +96,9 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const [dateDraft, setDateDraft] = useState<string | null>(null);
   // One session mutation in flight at a time — see patchSession.
   const [sessionBusy, setSessionBusy] = useState(false);
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [scopeErr, setScopeErr] = useState('');
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   /**
    * Sequence guard: a slow earlier response must never stomp a newer one.
@@ -124,105 +146,201 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     );
   }
 
-  const { session, roster, pastParticipants, types, entries, events, canWrite } = data;
+  const {
+    session, roster, pastParticipants, types, entries, events, notAssessed, observations, showObservations, authors,
+    canWrite, canWriteObservations,
+  } = data;
   /**
-   * F02 (2026-09-11): what this session SHOWS is drawn from what is SAVED in it. Every active test
-   * is a chip (new entry may go under any of them); a retired test is a chip only when this
-   * session holds a reading for it, labelled and read-only. The screen used to filter the tests
-   * to active ones and the players to the current roster before drawing anything, so retiring a
-   * test or a player leaving the team hid rows that were still in the record.
+   * F02 (2026-09-11): what this session SHOWS is drawn from what is SAVED in it. Every active
+   * metric is a chip (new entry may go under any of them); a retired one is a chip only when this
+   * session holds a record for it, labelled and read-only. Phase 2: an observed SKILL is a chip
+   * too — it records an observation (mockup screen 3).
    */
-  // ⚠ TESTS ONLY (Phase 1): an observed skill is a definition with no unit and nothing a session
-  // can record yet — recording an observation is Phase 2, when it joins these chips (mockup screen
-  // 3 draws it as one). A skill here now would be a chip whose grid could only take a fabricated number.
-  const metricChips = sessionMetricChips(types.filter(isMeasuredTest), entries);
-  const activeTypes = metricChips.filter(c => !c.retired).map(c => c.type);
-  // With nothing chosen yet, the session opens on the first test it already holds rows for, else
-  // the first active test (`defaultSessionChip`) — derived here, once. ⚠ A chosen chip that has since VANISHED (its
-  // last saved row removed elsewhere, then a reload) resolves to NOTHING, never to the first chip:
-  // the grid re-renders in the same place, and a silent jump would let a coach type into the wrong
-  // test (/review 2026-09-12).
+  const metricChips = sessionMetricChips(types, entries, [...observations.map(o => o.measurableTypeId), ...notAssessed.map(n => n.measurableTypeId)]);
+  const activeTests = metricChips.filter(c => !c.retired).map(c => c.type).filter(isMeasuredTest);
+  // With nothing chosen yet, the session opens on the first metric it already holds rows for, else
+  // the first active one (`defaultSessionChip`). ⚠ A chosen chip that has since VANISHED resolves
+  // to NOTHING, never to the first chip (/review 2026-09-12).
   const selectedChip = selectedTypeId
     ? (metricChips.find(c => c.type.id === selectedTypeId) ?? null)
     : defaultSessionChip(metricChips);
   const selectedType = selectedChip?.type ?? null;
   const selectedRetired = selectedChip?.retired ?? false;
+  const isSkill = selectedType?.kind === 'skill';
   const draftKey = (playerId: string) => `${playerId}:${selectedType?.id ?? ''}`;
 
-  // Roster order, then any past participant with a reading under this test. The count is per
-  // CURRENT roster player, once each — never rows.
-  const rows = selectedType ? sessionRows(roster, pastParticipants, entries, selectedType.id) : [];
-  const enteredCount = selectedType ? sessionEnteredCount(roster, entries, selectedType.id) : 0;
+  // Roster order, then any past participant with a record under this metric. Counts are per
+  // player, measured against the scope when one was stated (Phase 2), else the active roster.
+  const rows: GridRow[] = selectedType
+    ? sessionRows(roster, pastParticipants, entries, selectedType.id, { scopePlayerIds: session.scopePlayerIds, notAssessed })
+    : [];
+  const counts = sessionScopeCounts(rows, session.scopePlayerIds);
   const pastRows = rows.filter(r => r.pastParticipant).length;
+  const scopeSaysMetric = !session.scopeMetricIds || !selectedType || session.scopeMetricIds.includes(selectedType.id);
 
   const linkedEvent = events.find(e => e.id === session.eventId) ?? null;
-  /* Practices first, then everything else, each ordered by how close it sits to the session's
-     current date (§10.2 ruling 2). A coach who tested at a Saturday scrimmage warm-up must still
-     find it, so nothing is filtered out — practices simply lead. */
-  const sessionEventOptions = [...events].sort((a, b) => {
-    const aPractice = a.eventType === 'practice' ? 0 : 1;
-    const bPractice = b.eventType === 'practice' ? 0 : 1;
-    if (aPractice !== bPractice) return aPractice - bPractice;
-    const anchor = new Date(`${session.sessionDate}T12:00:00Z`).getTime();
-    return Math.abs(new Date(a.startsAt).getTime() - anchor) - Math.abs(new Date(b.startsAt).getTime() - anchor);
-  });
+  // §10.2 ruling 2 — practices first, then nearest the session's date; the ONE ordering rule.
+  const sessionEventOptions = orderEventsByAnchor(events, session.sessionDate);
+  // The grid hands back a player id; the row's player object is looked up ONCE here.
+  const rowPlayer = (pid: string) => rows.find(r => r.player.id === pid)?.player;
 
-  async function logDraft(player: SessionRosterRow) {
-    if (!selectedType || !canWrite || selectedRetired) return;
-    if (savingIds.has(player.id)) return;
-    const key = draftKey(player.id);
-    const raw = (drafts[key] ?? '').trim();
-    if (raw === '') return; // leaving a row empty = an honest skip, never a fabricated 0
-    const value = Number(raw);
-    if (!Number.isFinite(value) || value < 0 || value > 99999) {
-      setRowErr(`${player.playerFirstName}: the value needs to be a number between 0 and 99,999.`);
-      return;
+  // ── drafts (per player, per metric) ──
+  const rowDraft = (playerId: string) => drafts[draftKey(playerId)] ?? emptyDraft();
+  const setRowDraft = (playerId: string, patch: (d: RowDraft) => RowDraft) =>
+    setDrafts(dr => ({ ...dr, [draftKey(playerId)]: patch(dr[draftKey(playerId)] ?? emptyDraft()) }));
+  const obsDraft = (playerId: string) => obsDrafts[draftKey(playerId)] ?? emptyObservationDraft();
+  const setObsDraft = (playerId: string, patch: (d: ObservationDraft) => ObservationDraft) =>
+    setObsDrafts(dr => ({ ...dr, [draftKey(playerId)]: patch(dr[draftKey(playerId)] ?? emptyObservationDraft()) }));
+
+  /**
+   * Save ONE attempt: a new value POSTs (with its attempt number); a changed saved value PATCHes
+   * (a correction — the original stays on the row); a cleared saved value is removed (a blank
+   * attempt was not run). A failed value stays in the draft beside its error until Retry.
+   */
+  async function commitAttempt(player: SessionRosterRow, attemptNo: number) {
+    if (!selectedType || !canWrite || selectedRetired || isSkill) return;
+    const draft = rowDraft(player.id);
+    if (draft.saving.has(attemptNo)) return;
+    const raw = (draft.values[attemptNo - 1] ?? '').trim();
+    const saved = entries.find(e => e.playerId === player.id && e.measurableTypeId === selectedType.id && e.attemptNo === attemptNo) ?? null;
+    if (raw === '' && !saved) return; // never a zero
+    if (raw !== '') {
+      const value = Number(raw);
+      if (!Number.isFinite(value) || value < 0 || value > 99999) {
+        setRowDraft(player.id, d => ({ ...d, error: 'Enter a number between 0 and 99,999.' }));
+        return;
+      }
+      if (saved && saved.value === value) { setRowDraft(player.id, d => ({ ...d, error: null })); return; }
     }
-    setRowErr('');
-    setSavingIds(ids => new Set(ids).add(player.id));
+    setRowDraft(player.id, d => ({ ...d, saving: new Set(d.saving).add(attemptNo), error: null }));
+    // The record moved under this write (a retry whose first try landed, another device on the
+    // same row, a correction over a corrected value): the server says 409 (or 404 for a removal
+    // that already happened), and the answer is to READ the row again, never to re-send — a
+    // Retry that re-sent the same stale value would loop on the same refusal forever.
+    let recordMoved = false;
     try {
-      const res = await fetch(`${apiBase}/roster/${player.id}/development/measurables`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          measurableTypeId: selectedType.id,
-          value,
-          // Readings belong to the SESSION's date, not the moment of typing.
-          recordedOn: session.sessionDate,
-          sessionId: session.id,
-        }),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok || !json) throw new Error(json?.error ?? 'Could not log it — try again.');
-      setData(d => d ? { ...d, entries: [json.entry, ...d.entries] } : d);
-      setDrafts(dr => { const next = { ...dr }; delete next[key]; return next; });
+      if (raw === '' && saved) {
+        const res = await fetch(`${apiBase}/roster/${player.id}/development/measurables/${saved.id}`, { method: 'DELETE' });
+        if (!res.ok) { recordMoved = res.status === 404; throw new Error('Could not remove the attempt — try again.'); }
+        setData(d => d ? { ...d, entries: d.entries.filter(e => e.id !== saved.id) } : d);
+      } else if (saved) {
+        const res = await fetch(`${apiBase}/roster/${player.id}/development/measurables/${saved.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: Number(raw) }),
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json) { recordMoved = res.status === 409; throw new Error(json?.error ?? 'Could not save the correction — try again.'); }
+        setData(d => d ? { ...d, entries: d.entries.map(e => e.id === saved.id ? json.entry : e) } : d);
+      } else {
+        const res = await fetch(`${apiBase}/roster/${player.id}/development/measurables`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            measurableTypeId: selectedType.id, value: Number(raw),
+            // Readings belong to the SESSION's date, not the moment of typing.
+            recordedOn: session.sessionDate, sessionId: session.id, attemptNo,
+          }),
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json) { recordMoved = res.status === 409; throw new Error(json?.error ?? 'Could not save it — try again.'); }
+        setData(d => d ? { ...d, entries: [...d.entries, json.entry] } : d);
+      }
+      setRowDraft(player.id, d => { const saving = new Set(d.saving); saving.delete(attemptNo); return { ...d, saving, error: null }; });
     } catch (e) {
-      setRowErr(`${player.playerFirstName}: ${e instanceof Error ? e.message : 'could not log it — try again.'}`);
-    } finally {
-      setSavingIds(ids => { const next = new Set(ids); next.delete(player.id); return next; });
+      if (recordMoved && await load()) {
+        // The row now shows what is on the record; Edit is the door to change it.
+        setRowDraft(player.id, d => { const saving = new Set(d.saving); saving.delete(attemptNo); return { ...d, saving, editing: false, error: null }; });
+        return;
+      }
+      setRowDraft(player.id, d => {
+        const saving = new Set(d.saving); saving.delete(attemptNo);
+        return { ...d, saving, error: e instanceof Error ? e.message : 'Not saved — try again.' };
+      });
     }
   }
 
-  async function removeEntry(player: SessionRosterRow, entry: RepPlayerMeasurable) {
-    if (!canWrite || savingIds.has(player.id)) return;
-    const ok = await confirm({
-      title: 'Remove this reading?',
-      message: `${player.playerFirstName}'s ${selectedType?.name ?? 'reading'} from this session — for fixing a mis-entry.`,
-      confirmText: 'Remove',
-      cancelText: 'Cancel',
-      tone: 'danger',
+  /** Edit a saved row: open its fields pre-filled with the saved attempts. An attempt still on its
+   *  way to the server (a blur a moment before the tap) keeps what was typed — its save lands into
+   *  the record, not the draft, so refilling it from the record now would blank it. */
+  function editRow(player: SessionRosterRow) {
+    if (!selectedType) return;
+    const saved = entries.filter(e => e.playerId === player.id && e.measurableTypeId === selectedType.id);
+    setRowDraft(player.id, d => {
+      const values = [...d.values];
+      for (const e of saved) if (!d.saving.has(e.attemptNo)) values[e.attemptNo - 1] = String(e.value);
+      return { ...d, values, editing: true, error: null };
     });
-    if (!ok) return;
-    setSavingIds(ids => new Set(ids).add(player.id));
+  }
+
+  /** Retry every attempt the row holds a draft for — the typed values never left the screen. */
+  async function retryRow(player: SessionRosterRow) {
+    const draft = rowDraft(player.id);
+    setRowDraft(player.id, d => ({ ...d, error: null }));
+    for (let k = 1; k <= draft.values.length; k++) if ((draft.values[k - 1] ?? '').trim() !== '') await commitAttempt(player, k);
+  }
+
+  async function markNotAssessed(player: SessionRosterRow, mark: boolean) {
+    if (!selectedType || !canWrite) return;
     try {
-      const res = await fetch(`${apiBase}/roster/${player.id}/development/measurables/${entry.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error();
-      setData(d => d ? { ...d, entries: d.entries.filter(e => e.id !== entry.id) } : d);
-    } catch {
-      setRowErr(`Couldn't remove ${player.playerFirstName}'s reading — try again.`);
-    } finally {
-      setSavingIds(ids => { const next = new Set(ids); next.delete(player.id); return next; });
+      const res = await fetch(`${apiBase}/development/sessions/${session.id}/not-assessed`, {
+        method: mark ? 'POST' : 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: player.id, measurableTypeId: selectedType.id }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json) throw new Error(json?.error ?? 'Could not save that — try again.');
+      setData(d => {
+        if (!d) return d;
+        const rest = d.notAssessed.filter(n => !(n.playerId === player.id && n.measurableTypeId === selectedType.id));
+        return { ...d, notAssessed: mark ? [...rest, json.notAssessed] : rest };
+      });
+    } catch (e) {
+      setRowErr(`${player.playerFirstName}: ${e instanceof Error ? e.message : 'could not save that — try again.'}`);
     }
+  }
+
+  /** An observation from the skill chip: descriptor and/or what was seen, dated by the session. */
+  async function commitObservation(player: SessionRosterRow) {
+    if (!selectedType || !isSkill || !canWriteObservations || selectedRetired) return;
+    const draft = obsDraft(player.id);
+    if (draft.saving) return;
+    const existing = observations.find(o => o.playerId === player.id && o.measurableTypeId === selectedType.id) ?? null;
+    const descriptor = draft.descriptor.trim() || null;
+    const note = draft.note.trim() || null;
+    if (!descriptor && !note) {
+      if (existing) setObsDraft(player.id, d => ({ ...d, error: 'Say what you saw, or choose a descriptor.' }));
+      return;
+    }
+    if (existing && existing.descriptor === descriptor && existing.note === note) {
+      setObsDraft(player.id, d => ({ ...d, editing: false, error: null }));
+      return;
+    }
+    setObsDraft(player.id, d => ({ ...d, saving: true, error: null }));
+    try {
+      const url = existing
+        ? `${apiBase}/roster/${player.id}/development/observations/${existing.id}`
+        : `${apiBase}/roster/${player.id}/development/observations`;
+      const res = await fetch(url, {
+        method: existing ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(existing
+          ? { descriptor, note }
+          : { measurableTypeId: selectedType.id, observedOn: session.sessionDate, sessionId: session.id, descriptor, note }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json) throw new Error(json?.error ?? 'Could not save the observation — try again.');
+      setData(d => d ? {
+        ...d,
+        observations: existing ? d.observations.map(o => o.id === existing.id ? json.observation : o) : [...d.observations, json.observation],
+      } : d);
+      setObsDraft(player.id, d => ({ ...d, saving: false, editing: false, error: null }));
+    } catch (e) {
+      setObsDraft(player.id, d => ({ ...d, saving: false, error: e instanceof Error ? e.message : 'Not saved — try again.' }));
+    }
+  }
+  function editObservation(player: SessionRosterRow) {
+    if (!selectedType) return;
+    const existing = observations.find(o => o.playerId === player.id && o.measurableTypeId === selectedType.id);
+    setObsDraft(player.id, d => ({ ...d, descriptor: existing?.descriptor ?? '', note: existing?.note ?? '', editing: true, error: null }));
   }
 
   async function saveNote(raw: string) {
@@ -242,14 +360,6 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   }
 
   /**
-   * D10 — change the session's date.
-   *
-   * ⚠ Every reading already entered here moves with it. A reading is stamped with the session's
-   * date at the moment it is typed, so leaving them behind would make the session disagree with
-   * its own contents and plot every trend line on the wrong day. The coach is told the exact
-   * count BEFORE it happens; with nothing entered yet there is no dialog at all (§10.2 ruling 4).
-   */
-  /**
    * ONE session mutation at a time.
    *
    * Both controls here can fire from a single gesture — clicking the event `<select>` blurs the
@@ -260,7 +370,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
    * re-stamp exists to prevent, rebuilt one level up. Serialising the writes closes it.
    */
   async function patchSession(
-    body: { sessionDate?: string; eventId?: string | null },
+    body: { sessionDate?: string; eventId?: string | null; scope?: { metricIds: string[]; playerIds: string[] } },
     failure: string,
   ): Promise<boolean> {
     if (sessionBusy) return false;
@@ -274,7 +384,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       const json = await res.json().catch(() => null);
       if (!res.ok || !json) {
         setDateDraft(null);
-        setRowErr(json?.error ?? failure);
+        if (body.scope) setScopeErr(json?.error ?? failure); else setRowErr(json?.error ?? failure);
         return false;
       }
       // Reload so any moved readings' own dates are re-read rather than assumed. A failed
@@ -288,6 +398,11 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     }
   }
 
+  /**
+   * D10 — change the session's date. ⚠ Every reading already entered here moves with it (the
+   * re-stamp). The coach is told the exact count BEFORE it happens; with nothing entered yet
+   * there is no dialog at all (§10.2 ruling 4).
+   */
   async function saveSessionDate(nextDate: string) {
     if (!nextDate || nextDate === session.sessionDate) { setDateDraft(null); return; }
     const readingCount = entries.length;
@@ -295,7 +410,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       const moving = `${readingCount} reading${readingCount === 1 ? '' : 's'}`;
       const ok = await confirm({
         title: 'Move this session?',
-        message: `Move this session to ${formatSessionDate(nextDate)}? The ${moving} already entered here move with it.`,
+        message: `Move this session to ${formatWeekdayDate(nextDate)}? The ${moving} already entered here move with it.`,
         confirmText: 'Move the session',
         cancelText: 'Keep the date',
         tone: 'warning',
@@ -309,17 +424,9 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   }
 
   /**
-   * D10 — link the session to the event its readings were taken at.
-   *
-   * ⚠ Picking an event PRE-FILLS the date; it never derives it (§10.2 ruling 1). The two stay
-   * separate facts — which practice this belongs to, and when the readings were actually taken —
-   * so a practice that gets rescheduled later never drags the measurements with it. The pre-fill
-   * only applies to a session with NOTHING entered yet: once real numbers exist, the date they
-   * were taken on is the coach's to state, and moving it needs the confirm above.
-   *
-   * The link and the pre-filled date go in ONE request, deliberately. Sending them as two
-   * chained PATCHes raced with itself and could re-stamp readings logged in the gap without ever
-   * showing the coach the count.
+   * D10 — link the session to the event its readings were taken at. ⚠ Picking an event
+   * PRE-FILLS the date; it never derives it (§10.2 ruling 1). The pre-fill only applies to a
+   * session with NOTHING entered yet. The link and the pre-filled date go in ONE request.
    */
   async function saveSessionEvent(eventId: string) {
     const chosen = events.find(e => e.id === eventId) ?? null;
@@ -331,6 +438,12 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       { eventId: chosen ? chosen.id : null, ...(prefillDate ? { sessionDate: prefillDate } : {}) },
       "Couldn't link that event — try again.",
     );
+  }
+
+  async function saveScope(v: { scope: { metricIds: string[]; playerIds: string[] } }) {
+    setScopeErr('');
+    const ok = await patchSession({ scope: v.scope }, "Couldn't save the scope — try again.");
+    if (ok) setScopeOpen(false);
   }
 
   async function addType() {
@@ -356,6 +469,10 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     setSelectedTypeId(json.type.id);
   }
 
+  const scopeLine = session.scopePlayerIds && session.scopeMetricIds
+    ? `${session.scopePlayerIds.length} selected player${session.scopePlayerIds.length === 1 ? '' : 's'} · ${session.scopeMetricIds.length} metric${session.scopeMetricIds.length === 1 ? '' : 's'}`
+    : null;
+
   return (
     <div className={styles.page}>
       <CoachPageHeader
@@ -371,10 +488,10 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
           would be the same fact in two places — so the summary strip is the read-only viewer's
           only copy of it. */}
       {!canWrite && (
-        <p className={styles.pageSummaryStrip}>{formatSessionDate(session.sessionDate)}</p>
+        <p className={styles.pageSummaryStrip}>{formatWeekdayDate(session.sessionDate)}</p>
       )}
 
-      {/* ── When and where these readings were taken (D10) ──
+      {/* ── When and where these readings were taken (D10) — UNCHANGED ──
           Two SEPARATE facts, deliberately: which practice this belongs to, and when the
           readings were actually taken. Picking a practice pre-fills the date; it never owns it,
           so a practice that gets rescheduled later never drags the measurements with it. */}
@@ -414,7 +531,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         </p>
       )}
 
-      {/* Session note — a label like "post-break testing"; saves on blur/Enter. */}
+      {/* Session note — a label like "post-break testing"; saves on blur/Enter. UNCHANGED. */}
       {canWrite ? (
         <div className={`${styles.field} ${styles.devSessionNote}`} style={{ maxWidth: 420, margin: '0 0 0.7rem' }}>
           <label className={styles.label} htmlFor="dev-session-note">Session note (optional)</label>
@@ -427,13 +544,26 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         <p className={styles.devCardNote} style={{ marginBottom: '0.7rem' }}>{session.note}</p>
       ) : null}
 
-      {/* Test picker — worded select-one chips (lime-tint active, never solid primary) */}
+      {/* ── The scope (Phase 2) — what this session is for. A session with no scope claims only
+            what was recorded: the counts run against the roster, as Phase 0 made it. ── */}
+      <p className={css.scopeLine}>
+        <strong>Scope:</strong>{' '}
+        {scopeLine ?? 'not stated — counts run against the active roster'}
+        {canWrite && (
+          <button type="button" className={css.rowLink} onClick={() => { setScopeErr(''); setScopeOpen(true); }}>
+            {scopeLine ? 'Change scope' : 'Set the scope'}
+          </button>
+        )}
+      </p>
+
+      {/* Metric picker — worded select-one chips (lime-tint active, never solid primary). Tests
+          AND observed skills (Phase 2); a retired one only when it holds rows here (F02). */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center', margin: '0.2rem 0 0.6rem' }}>
         {metricChips.map(({ type: t, retired }) => (
           <button key={t.id} type="button"
             className={`${styles.badge} ${selectedType?.id === t.id ? styles.badgeActive : styles.badgeDraft}`}
             style={{ cursor: 'pointer', minHeight: 'var(--tap-min, 44px)' }}
-            title={retired ? 'Retired from new sessions — its saved results stay here' : undefined}
+            title={retired ? 'Retired from new sessions — its saved records stay here' : undefined}
             onClick={() => { setSelectedTypeId(t.id); setRowErr(''); }}>
             {t.name}{retired && <span className={styles.devRowDash}> · retired</span>}
           </button>
@@ -446,7 +576,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
           </button>
         )}
       </div>
-      {canWrite && (newTypeOpen || activeTypes.length === 0) && (
+      {canWrite && (newTypeOpen || activeTests.length === 0) && (
         <div style={{ margin: '0 0 0.8rem' }}>
           <NewTypeFields idPrefix="dev-session-newtype" name={newTypeName} unit={newTypeUnit}
             onName={setNewTypeName} onUnit={setNewTypeUnit} onAdd={addType}
@@ -459,66 +589,161 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
           <p className={styles.detailPlaceholder}>No active roster for this season — add players from the Roster page first.</p>
         ) : (
           <>
-            <p className={styles.devCardNote} style={{ marginBottom: '0.4rem' }}>
-              {enteredCount} of {roster.length} entered — {selectedType.name} ({selectedType.unit}).
-              {selectedRetired
-                ? ' This test is retired — its saved results stay here, read-only.'
-                : ' Leave a player blank to skip them.'}
-              {pastRows > 0 && ` ${pastRows} reading${pastRows === 1 ? '' : 's'} from ${pastRows === 1 ? 'a player' : 'players'} no longer on the roster ${pastRows === 1 ? 'is' : 'are'} listed below.`}
-            </p>
+            {/* The method — how the test is run — said where the numbers are typed, from the definition. */}
+            <div className={css.method}>
+              <strong>{selectedType.method ?? recordMeaning(selectedType)}</strong>
+              {isSkill ? (
+                showObservations ? (
+                  canWriteObservations
+                    ? <p>Choose a descriptor and/or say what you saw — saves when you leave a field. Enter moves to the next player.</p>
+                    : <p>Recording an observation needs the Development grant and Internal notes — the head coach can turn both on from Staff.</p>
+                ) : (
+                  <p>Observations are read with Internal notes — ask your head coach to turn it on to see or record them here.</p>
+                )
+              ) : selectedRetired ? (
+                <p>This test is retired — its saved results stay here, read-only.</p>
+              ) : (
+                <p>Saves when you leave a field. Enter moves to the next attempt, then the next player. A blank attempt was not run — never a zero, never a failed test.</p>
+              )}
+            </div>
+            {!scopeSaysMetric && (
+              <p className={styles.devCardNote} style={{ marginBottom: '0.4rem' }}>This metric is outside the session’s scope — anything recorded here is kept, and the counts below say so.</p>
+            )}
             {rowErr && <p className={styles.errorText} role="alert">{rowErr}</p>}
-            <div className={styles.detailSection} style={{ padding: '0.25rem 0' }}>
-              {/* ROSTER ORDER ONLY — the grid never re-sorts by result (binding). Past participants
-                  with a saved reading follow the roster, labelled and read-only (F02). */}
-              {rows.map(({ player: p, entry, pastParticipant }) => {
-                const name = [p.playerFirstName, p.playerLastName].filter(Boolean).join(' ');
-                const readOnly = !canWrite || selectedRetired || pastParticipant;
-                return (
-                  <div key={p.id} className={styles.devRow}>
-                    {p.playerNumber && <span className={styles.devRowNum}>#{p.playerNumber}</span>}
-                    <span className={styles.devRowName}>
-                      {name}
-                      {pastParticipant && <span className={styles.devRowDash}> · no longer on the roster</span>}
-                    </span>
-                    {entry ? (
-                      <>
-                        <span className={styles.devRowVal}>{formatValue(entry.value)} {entry.unit} ✓</span>
-                        {!readOnly && (
-                          <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem' }}
-                            aria-label={`Remove ${p.playerFirstName}'s reading`} onClick={() => removeEntry(p, entry)}>
-                            <X size={11} />
-                          </button>
-                        )}
-                      </>
-                    ) : !readOnly ? (
-                      <input
-                        className={`${styles.input} ${styles.devRowInput}`}
-                        type="text"
-                        inputMode="decimal"
-                        placeholder={savingIds.has(p.id) ? 'saving…' : selectedType.unit}
-                        disabled={savingIds.has(p.id)}
-                        aria-label={`${name} — ${selectedType.name} (${selectedType.unit})`}
-                        value={drafts[draftKey(p.id)] ?? ''}
-                        onChange={e => setDrafts(dr => ({ ...dr, [draftKey(p.id)]: e.target.value }))}
-                        onBlur={() => logDraft(p)}
-                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                      />
-                    ) : (
-                      <span className={`${styles.devRowVal} ${styles.devRowDash}`}>—</span>
-                    )}
-                  </div>
-                );
-              })}
+            {(!isSkill || showObservations) && (
+              <div className={styles.detailSection} style={{ padding: '0.25rem 0' }}>
+                <SessionRecordGrid
+                  type={selectedType}
+                  rows={rows}
+                  draftFor={rowDraft}
+                  observationDraftFor={obsDraft}
+                  observations={observations}
+                  authors={authors}
+                  canWrite={canWrite}
+                  canWriteObservations={canWriteObservations}
+                  retired={selectedRetired}
+                  onAttemptChange={(pid, k, v) => setRowDraft(pid, d => { const values = [...d.values]; values[k - 1] = v; return { ...d, values }; })}
+                  onAttemptCommit={(pid, k) => { const p = rowPlayer(pid); if (p) commitAttempt(p, k); }}
+                  onEdit={pid => { const p = rowPlayer(pid); if (p) editRow(p); }}
+                  onRetry={pid => { const p = rowPlayer(pid); if (p) retryRow(p); }}
+                  onMarkNotAssessed={pid => { const p = rowPlayer(pid); if (p) markNotAssessed(p, true); }}
+                  onUnmarkNotAssessed={pid => { const p = rowPlayer(pid); if (p) markNotAssessed(p, false); }}
+                  onObservationChange={(pid, patch) => setObsDraft(pid, d => ({ ...d, ...patch }))}
+                  onObservationCommit={pid => { const p = rowPlayer(pid); if (p) commitObservation(p); }}
+                  onObservationEdit={pid => { const p = rowPlayer(pid); if (p) editObservation(p); }}
+                />
+              </div>
+            )}
+            <div className={css.foot}>
+              <p className={styles.devCardNote} style={{ margin: 0 }}>
+                {scopeSentence(counts)} — {selectedType.name}{selectedType.unit ? ` (${selectedType.unit})` : ''}.
+                {pastRows > 0 && ` ${pastRows} record${pastRows === 1 ? '' : 's'} from ${pastRows === 1 ? 'a player' : 'players'} no longer on the roster ${pastRows === 1 ? 'is' : 'are'} listed above.`}
+              </p>
+              <button type="button" className={styles.btnPrimary} style={{ minHeight: 'var(--tap-min, 44px)' }} onClick={() => setReviewOpen(true)}>Review session →</button>
             </div>
           </>
         )
       ) : (
         <p className={styles.detailPlaceholder}>
           {metricChips.length > 0
-            ? 'Pick a test above.'
+            ? 'Pick a metric above.'
             : canWrite ? 'Set up your first test above — then work down the roster.' : 'No tests set up yet.'}
         </p>
       )}
+
+      {scopeOpen && (
+        <SessionScopeDialog
+          mode="change"
+          types={metricChips.filter(c => !c.retired).map(c => c.type)}
+          roster={roster}
+          events={[]}
+          initial={session.scopeMetricIds && session.scopePlayerIds ? { metricIds: session.scopeMetricIds, playerIds: session.scopePlayerIds } : null}
+          busy={sessionBusy}
+          error={scopeErr}
+          onSubmit={saveScope}
+          onClose={() => setScopeOpen(false)}
+        />
+      )}
+      {reviewOpen && selectedType && (
+        <SessionReviewDialog
+          session={session}
+          types={metricChips.map(c => c.type)}
+          roster={roster}
+          pastParticipants={pastParticipants}
+          entries={entries}
+          observations={observations}
+          notAssessed={notAssessed}
+          onClose={() => setReviewOpen(false)}
+          onBack={() => router.push(skillsAndGoalsHref(base, 'sessions'))}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * "Review session →" — counts what was recorded against the scope for EVERY metric the session
+ * touched, never invents a zero, never marks the session complete; offers "Back to Sessions".
+ * A legacy session (no scope) reviews against the roster.
+ */
+function SessionReviewDialog({
+  session, types, roster, pastParticipants, entries, observations, notAssessed, onClose, onBack,
+}: {
+  session: RepTeamEvaluationSession;
+  types: RepTeamMeasurableType[];
+  roster: SessionRosterRow[];
+  pastParticipants: SessionRosterRow[];
+  entries: RepPlayerMeasurable[];
+  observations: RepPlayerObservation[];
+  notAssessed: RepEvaluationNotAssessed[];
+  onClose: () => void;
+  onBack: () => void;
+}) {
+  const scoped = !!session.scopeMetricIds;
+  // The metrics in scope (or, with no scope, every metric that holds a record here).
+  const inScope = types.filter(t => scoped
+    ? session.scopeMetricIds!.includes(t.id) || entries.some(e => e.measurableTypeId === t.id) || observations.some(o => o.measurableTypeId === t.id)
+    : entries.some(e => e.measurableTypeId === t.id) || observations.some(o => o.measurableTypeId === t.id));
+  const lines = inScope.map(t => {
+    // An observation is a skill's "entry" for counting — one per player, never a value.
+    const asEntries = t.kind === 'skill'
+      ? observations.filter(o => o.measurableTypeId === t.id).map(o => ({ id: o.id, playerId: o.playerId, measurableTypeId: t.id, attemptNo: 1 }))
+      : entries.filter(e => e.measurableTypeId === t.id);
+    const rows = sessionRows(roster, pastParticipants, asEntries, t.id, { scopePlayerIds: session.scopePlayerIds, notAssessed });
+    const c = sessionScopeCounts(rows, session.scopePlayerIds);
+    const fewer = t.kind === 'test' && t.attemptsPerSession > 1
+      ? rows.filter(r => r.entries.length > 0 && r.entries.length < t.attemptsPerSession).length
+      : 0;
+    return { type: t, sentence: scopeSentence(c), fewer };
+  });
+  return (
+    <QuestionShell open onClose={onClose} ariaLabel="Review this session" title="Review this session">
+        <div className={styles.formBody}>
+          <p className={css.reviewCounts}>
+            {formatWeekdayDate(session.sessionDate)}{session.note ? ` — ${session.note}` : ''}
+          </p>
+          {lines.length === 0 ? (
+            <p className={styles.detailPlaceholder}>Nothing recorded yet.</p>
+          ) : (
+            <ul className={css.reviewList}>
+              {lines.map(l => (
+                <li key={l.type.id}>
+                  <strong>{l.type.name}</strong> — {l.sentence}
+                  {l.fewer > 0 && ` · ${l.fewer} player${l.fewer === 1 ? '' : 's'} with fewer than ${l.type.attemptsPerSession} attempts — recorded with fewer, nothing filled in`}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className={styles.formHint}>
+            {scoped
+              ? 'The scope is the players and metrics you chose. Unrecorded players stay unrecorded; a review never creates a zero and never marks the session “complete” on your behalf.'
+              : 'This session has no stated scope, so the counts run against the active roster. A review never creates a zero and never marks the session “complete” on your behalf.'}
+          </p>
+        </div>
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnSecondary} onClick={onBack}>Back to Sessions</button>
+          <button type="button" className={styles.btnPrimary} onClick={onClose}>Return to recording</button>
+        </div>
+    </QuestionShell>
   );
 }

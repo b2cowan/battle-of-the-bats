@@ -5426,6 +5426,15 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--text-tertiary);
   white-space: nowrap;
 }
+/* A main cell that carries a second line (a note under the name) in a WRAPPING row: a basis, so the
+   nowrap metas wrap beneath it instead of squeezing it to a sliver (development lifecycle Phase 2 —
+   the Results and Goals rows measured 8px wide at 361 with `flex: 1 1 0%`). */
+.miniRowMainWrap { flex: 1 1 14rem; white-space: normal; }
+/* The 44px floor as a CLASS for an inline control that has no module of its own (a row's Edit ×,
+   a status pill, a name button, a form's More toggle) — sixteen inline `minHeight` copies in the
+   Development section became this one rule (/simplify, 2026-09-13). */
+.tapFloor { min-height: var(--tap-min, 44px); }
+.tapFloorSquare { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 
 /* Save bar — pinned to the viewport bottom while editing, so the Save action is
    never hidden below the fold. Offset for the desktop sidebar; above the mobile
@@ -8545,17 +8554,9 @@ a.oneChip:hover { border-color: currentColor; }
    expectation; no longer claims a tool's worth of visual weight for something that isn't one. */
 .devTail { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.1rem 0 0; }
 
-/* Session run screen — roster rows are ≥44px tap targets, ROSTER ORDER ONLY. */
-.devRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: var(--tap-min, 44px);
-  padding: 0.35rem 0.6rem;
-  border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
-}
-.devRow:first-child { border-top: none; }
-.devRowName { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Session run screen — the grid moved to components/coaches/DevelopmentSession.module.css
+   (development lifecycle Phase 2, 2026-09-13: one field per attempt, a state per row). What stays
+   here is what the Players view and the profile still read: the number, the value, the dash. */
 .devRowNum { color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
 .devRowVal {
   font-family: var(--font-data);
@@ -8563,7 +8564,6 @@ a.oneChip:hover { border-color: currentColor; }
   font-size: var(--type-body);
 }
 .devRowDash { color: var(--text-tertiary); }
-.devRowInput { max-width: 130px; }
 
 /* Team board — desktop data-face table; phones reflow to per-player cards. */
 .devBoardTable { width: 100%; border-collapse: collapse; }

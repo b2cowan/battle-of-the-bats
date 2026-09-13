@@ -2041,6 +2041,21 @@ export interface RepPlayerMeasurable {
   // Evaluation-session back-reference (mig 190) — null = logged as a single from the
   // player profile. Both doors write the same rows.
   sessionId: string | null;
+  /**
+   * Which attempt within its session, 1–5 (mig 295; owner ruling 2026-09-11: every attempt is
+   * recorded). Every row written before 2026-09-13 is attempt 1 — the truth, one reading was taken.
+   * A single reading (no session) is always 1. ⚠ ROWS ARE NEVER PEOPLE: derive every "how many
+   * players" per `playerId`; best / average / spread come from `lib/measurable-series.ts`.
+   */
+  attemptNo: number;
+  /**
+   * The correction record (plan §9, mig 295): the ORIGINAL value when this reading was edited after
+   * saving (set once — a second edit keeps the first original), and who / when LAST corrected it.
+   * All null = never corrected. One active reading; its history on the row.
+   */
+  correctedFrom: number | null;
+  correctedAt: string | null;
+  correctedBy: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2063,6 +2078,15 @@ export interface RepTeamEvaluationSession {
    */
   eventId: string | null;
   note: string | null;
+  /**
+   * The session's SCOPE (mig 295, mockup screen 3): the metric definitions (tests AND observed
+   * skills) and the roster rows the coach chose at "Start session" — both or neither. Null on
+   * every session created before 2026-09-13: no scope was stated, and the screen counts "N of M
+   * entered" against the active roster and the recorded rows only. A scoped session counts against
+   * its scope. No review state is stored — "Review session" is a read-back, never a completion mark.
+   */
+  scopeMetricIds: string[] | null;
+  scopePlayerIds: string[] | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2070,6 +2094,66 @@ export interface RepTeamEvaluationSession {
   playerCount?: number;
   typeCount?: number;
   entryCount?: number;
+}
+
+/**
+ * A per-(session, player, metric) STATE (`rep_evaluation_not_assessed`, mig 295): the coach chose
+ * not to assess this player on this metric in this session, with a neutral optional reason. Never a
+ * value, never a zero; "not observed" for a skill is the same row.
+ */
+export interface RepEvaluationNotAssessed {
+  id: string;
+  sessionId: string;
+  playerId: string;
+  measurableTypeId: string;
+  reason: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/**
+ * An OBSERVATION (`rep_player_observations`, mig 295) — the second kind of development record: a
+ * dated note of what the coach SAW against an observed SKILL, the note and/or one of the skill's
+ * descriptors (snapshotted text), optionally as evidence for a goal, optionally in a session.
+ * Read on Internal notes; written on the Development grant AND notes. Never averaged, never scored.
+ */
+export interface RepPlayerObservation {
+  id: string;
+  orgId: string;
+  teamId: string;
+  playerId: string;
+  measurableTypeId: string;
+  observedOn: string;
+  note: string | null;
+  descriptor: string | null;
+  goalId: string | null;
+  sessionId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Where a goal came from (mig 295). Null on goals written before 2026-09-13 — not recorded, not claimed. */
+export type RepDevelopmentGoalOrigin = 'coach' | 'carried' | 'tryout';
+
+/**
+ * An APPEND-ONLY review event on a goal (`rep_development_goal_reviews`, mig 295; F08): the status
+ * chosen (required — F19), an optional note, the next review date and evidence references. Never
+ * overwrites the previous one; the goal's `status` is the latest review's.
+ */
+export interface RepDevelopmentGoalReview {
+  id: string;
+  goalId: string;
+  playerId: string;
+  reviewedOn: string;
+  status: RepDevelopmentGoalStatus;
+  note: string | null;
+  nextReviewOn: string | null;
+  /** Ids, deliberately not resolved here — a deleted record reads as "no longer on record". */
+  evidenceMeasurableIds: string[];
+  evidenceObservationIds: string[];
+  createdBy: string | null;
+  createdAt: string;
 }
 
 export type RepDevelopmentGoalStatus = 'working' | 'achieved' | 'parked';
@@ -2102,8 +2186,15 @@ export interface RepPlayerDevelopmentGoal {
   tagId: string | null;
   /** Denormalised for render — the tag's name, or null when `tagId` is null. */
   tagName: string | null;
+  /** "What success looks like", in the coach's words — optional (mig 295). */
+  success: string | null;
+  /** The next review date the coach chose; moved by each review that names one (mig 295). */
+  reviewOn: string | null;
+  /** Set with the player · carried from a prior season · seeded from the tryout. Null = not recorded. */
+  origin: RepDevelopmentGoalOrigin | null;
   createdBy: string | null;
   createdAt: string;
+  /** ⚠ Never read as "last reviewed" (F08) — the latest review's `reviewedOn` is. */
   updatedAt: string;
 }
 

@@ -103,6 +103,8 @@ export const POST = withObservability(async (req: Request,
         playerId,
         focusArea: g.focusArea,
         note: g.note,
+        // Carried from the prior season's record — the timeline names it (mig 295).
+        origin: 'carried',
         status: 'working',
         createdBy: ctx.user.id,
       }));

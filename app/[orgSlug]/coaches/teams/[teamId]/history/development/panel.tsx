@@ -46,7 +46,9 @@ interface ReportRow {
   lastName: string | null;
   number: string | null;
   goals: { focusArea: string; status: string }[];
-  latest: Record<string, { value: number; unit: string; recordedOn: string }>;
+  /** The headline of the player's latest SESSION per metric (Phase 2, 2026-09-13) — the value is
+   *  the average for a range test, with the attempt count and how many landed in range. */
+  latest: Record<string, { value: number; unit: string; recordedOn: string; attempts: number; inRange: number | null }>;
   lastRecordedOn: string | null;
   historyLinked: string | null;
   /** ⚠ ONE boolean, or null when the question can't be answered. Never a count. */
