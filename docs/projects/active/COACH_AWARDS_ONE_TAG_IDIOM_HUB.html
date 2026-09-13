@@ -141,14 +141,14 @@ main.hubsection{padding:28px 36px 36px;min-height:400px}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Editable Awards — project hub</strong><br><small>Mockup rounds 1–2 ruled (R0–R5) · plan + brief written 2026-09-11 · nothing built</small></div>
+  <div class="hubtitle"><strong>Editable Awards — project hub</strong><br><small>Built, simplified, reviewed and QA-walked on <code>dev</code> — commits <code>c27d1971</code> → <code>96d51e7d</code> → <code>b1c0b09c</code> → <code>47bccd4f</code>, 2026-09-11/12 · Owner QA §175 PASSED 17/17, zero defects · a full rendered sweep and the marketing shot still owed, both non-blocking</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Mockup rounds 1–2 on this artifact, owner rulings R0–R5, 2026-09-11">Design</li>
-    <li class="stage current" title="COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md + _PM_BRIEF.md written 2026-09-11">Plan</li>
-    <li class="stage" title="—">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
-    <li class="stage" title="—">Shipped</li>
+    <li class="stage done" title="COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md + _PM_BRIEF.md written 2026-09-11">Plan</li>
+    <li class="stage done" title="Part A+B built on dev: c27d1971 (2026-09-11); simplify pass 96d51e7d, review-fix pass b1c0b09c, and a live-found bug fix 47bccd4f (2026-09-12)">Build</li>
+    <li class="stage done" title="/simplify (4 lenses) then /review (5 lenses, high-risk tier) — two race-safety gaps found and fixed in b1c0b09c; everything else clean">Review</li>
+    <li class="stage done" title="Owner QA Ledger §175 — PASSED 17/17, zero defects, both parts, 2026-09-12">QA</li>
+    <li class="stage" title="Still on dev only — not yet promoted to master/production">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
 </div>
@@ -158,7 +158,7 @@ main.hubsection{padding:28px 36px 36px;min-height:400px}
   <button data-hub="brief" aria-pressed="false">PM Brief</button>
   <button data-hub="plan" aria-pressed="false">Full Plan</button>
   <button data-hub="decisions" aria-pressed="false">Decisions</button>
-  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
 </nav>
 
 <section id="hub-mockup" class="hubsection">
@@ -427,7 +427,7 @@ main.hubsection{padding:28px 36px 36px;min-height:400px}
     <li><strong>The read-time starter seed goes.</strong> It re-runs whenever a team has zero chips — harmless today, a trap once delete exists (remove all three, they come back). Either a one-time seed at team creation replaces it or the seed goes entirely (open question).</li>
   </ul>
   <h2>Phases</h2>
-  <div class="phase"><h3>Phase 1 — Part A: fix or take back a given award where it was given <span class="meta">(no migration · ships alone · builds first)</span></h3>
+  <div class="phase"><h3><span class="tag accepted">✓ Built</span> Phase 1 — Part A: fix or take back a given award where it was given <span class="meta">(no migration · ships alone · builds first)</span></h3>
     <ul>
       <li>An update path for a given award: player, award, note, and the occasion label for a general award; the game stays fixed; the record's "last changed" stamp is written.</li>
       <li>Give and Edit refuse a second copy of the same award for the same player on the same occasion, with one sentence (the database rule that makes it airtight arrives in Phase 2 — the hole exists today, so the form refusal doesn't wait).</li>
@@ -436,7 +436,7 @@ main.hubsection{padding:28px 36px 36px;min-height:400px}
       <li>The game drawer's award rows gain Edit and Remove; the report's history rows gain Edit beside Print and Remove; the schedule's trophy badge is derived from the awards so it's true the moment one is given, edited or removed.</li>
       <li>Unit tests on the update rules; help gains one sentence per article; rendered check on the drawer at phone widths; simplify, review, owner walk.</li>
     </ul></div>
-  <div class="phase"><h3>Phase 2 — Part B, step 1: counts, delete and merge on the server <span class="meta">(migration 289 first)</span></h3>
+  <div class="phase"><h3><span class="tag accepted">✓ Built</span> Phase 2 — Part B, step 1: counts, delete and merge on the server <span class="meta">(migration 289 — applied to prod 2026-09-11)</span></h3>
     <ul>
       <li>Before anything is written: ask both databases whether any award is already doubled; the migration collapses each double to the earlier award, and the count it touched is recorded — a data step no schema gate can see.</li>
       <li>The once-per-occasion rule itself (a player, an award, a game — or a date and label for a general award), so the form's refusal is a fact about the data and the merge can rely on it.</li>
@@ -445,7 +445,7 @@ main.hubsection{padding:28px 36px 36px;min-height:400px}
       <li>Usage counts per chip (all-time, team-scoped) returned with the library; delete for an unused chip; a used chip's delete answers with the count and the two exits so the client never guesses; merge.</li>
       <li>The read-time starter seed is removed (or moved to team creation, per the open question), pinned by a test that a team with a deleted starter reads an empty library.</li>
     </ul></div>
-  <div class="phase"><h3>Phase 3 — Part B, step 2: the door, the drawer, the dialog, the shelf <span class="meta">(no migration)</span></h3>
+  <div class="phase"><h3><span class="tag accepted">✓ Built</span> Phase 3 — Part B, step 2: the door, the drawer, the dialog, the shelf <span class="meta">(no migration)</span></h3>
     <ul>
       <li>The shared manager list takes a per-library policy: icon on the row and in rename; "given N times"; the merge-or-retire remove dialog; a Retired group with Restore.</li>
       <li>"Manage awards…" beside "+ New" opens the drawer over the Give window (form dims and waits, selections kept; full-screen sheet on a phone).</li>
@@ -453,16 +453,16 @@ main.hubsection{padding:28px 36px 36px;min-height:400px}
       <li>The report page's "Manage award types" link and its modal are deleted; the stylesheet's shared classes are checked for other consumers before anything is removed.</li>
       <li>Tests on the policy switch and the door; spelling gate; rendered sweep at four widths including the shelf opened; simplify, review.</li>
     </ul></div>
-  <div class="phase"><h3>Phase 4 — Words, help, demo, marketing, walk</h3>
+  <div class="phase"><h3><span class="tag deferred">Partly done</span> Phase 4 — Words, help, demo, marketing, walk</h3>
     <ul>
-      <li>Help: the "rename or retire an award" FAQ becomes the drawer story (rename, merge duplicates, remove or retire with the rule stated plainly, the Tags shelf as the second home); the give-award and Who's-earning-it answers stop naming "Manage award types"; keywords keep the old phrase for search.</li>
-      <li>Demo: no narration names an award door (verified) — the demo check proves both worlds still present. A merge leaves no trace, so no new demo moment.</li>
-      <li>The marketing shot of the awards report is re-photographed (Edit now sits in its last column).</li>
-      <li>Owner QA walk on this hub's QA tab, pinned to identities (the fixture's duplicate chip; Blake's award on the Northgate game), never figures; ledger section; TODO trued to anchored facts; stage strip advanced.</li>
+      <li><span class="tag accepted">✓ Done</span> Help: the "rename or retire an award" FAQ becomes the drawer story (rename, merge duplicates, remove or retire with the rule stated plainly, the Tags shelf as the second home); the give-award and Who's-earning-it answers stop naming "Manage award types"; keywords keep the old phrase for search.</li>
+      <li><span class="tag accepted">✓ Done</span> Demo: no narration names an award door (verified) — the demo check proves both worlds still present. A merge leaves no trace, so no new demo moment.</li>
+      <li><span class="tag deferred">Owed</span> The marketing shot of the awards report needs re-photographing (Edit now sits in its last column) — a real browser session, not done in this build.</li>
+      <li><span class="tag deferred">Owed</span> Owner QA walk on this hub's QA tab (now filled in, tab unhidden), pinned to identities (Blake Test, vs Northgate/Apr 16), never figures; a full rendered layout sweep at every width (the shared dev server didn't have the memory to complete one — only the three directly-touched screens were spot-checked); ledger section; TODO trued to anchored facts.</li>
     </ul></div>
   <h2>Open questions</h2>
   <ul>
-    <li><strong>Keep a starter set of three awards for a new team?</strong> Recommendation: keep it, seeded once at team creation — a new coach opening Give an award to an empty chip row is a colder first moment than tags' "type a word." If every award should be one the coach made, the seed goes entirely and the help line naming the three is swept.</li>
+    <li><strong>Keep a starter set of three awards for a new team?</strong> <span class="tag accepted">Resolved 2026-09-11 — see Decisions</span> Kept, seeded once at team creation.</li>
     <li>Count noun in the drawer: "given 4 times" vs "on 4 awards" — decide on the built screen.</li>
     <li>Should the club admin's Shared Library get merge/remove for shared chips? Not here — a different screen and actor; noted for that stream.</li>
   </ul>
@@ -515,10 +515,33 @@ const DECISIONS=[
  {date:'2026-09-11',ask:'R2 — What does Remove do on an award chip that has already been given?',ruling:'accepted',label:'Accepted — merge or retire',why:'A tag is a label and a game survives losing one; an award is a record key (the database refuses to leave an award without a type) and "Blake got ___" is not an award. So no orphaning, and no cascade that erases recognition players received. The dialog states the count and offers Merge instead or Retire; an unused chip deletes outright.'},
  {date:'2026-09-11',ask:'R3 — Picker shape in the Give window: keep the chip row, or switch to the search dropdown like other tags?',ruling:'accepted',label:'Accepted — chip row stays',why:'The dropdown\'s grammar exists because a 50-item vocabulary is searched; a ≤30-item curated list with icons is tapped. Budget items and test types kept their own shape under the same ruling. The door adopts the idiom\'s grammar in chip form.'},
  {date:'2026-09-11',ask:'R4 — Sequence: one plan for both parts with Part A first, Part A as a quick fix and plan B later, or plan everything before building?',ruling:'accepted',label:'Accepted — one plan, A first',why:'Part A is contained (no migration) and ships alone; Part B carries a migration and rides release order. One plan keeps the two halves telling one story.'},
- {date:'2026-09-11',ask:'R5 — Should a player ever hold the same award twice for one game? (Owner, reading the remove dialog: "if a player was given 2 awards and you merge, we don\'t want them to have the same award twice.")',ruling:'accepted',label:'Accepted — once per occasion',why:'Give and Edit refuse a second copy with one sentence ("Blake already has MVP for this game"); a merge collapses collisions to the award given first (a dropped note is carried only into an empty slot) and says how many it will drop before the tap. The same award on a different game stays legitimate. The question exposed a hole that exists today — nothing stops saving MVP for the same player on the same game twice — so it becomes a database rule, not only a form check, because the merge has to be able to rely on it. The two softer options (collapse only on merge; warn but allow) were refused.'}
+ {date:'2026-09-11',ask:'R5 — Should a player ever hold the same award twice for one game? (Owner, reading the remove dialog: "if a player was given 2 awards and you merge, we don\'t want them to have the same award twice.")',ruling:'accepted',label:'Accepted — once per occasion',why:'Give and Edit refuse a second copy with one sentence ("Blake already has MVP for this game"); a merge collapses collisions to the award given first (a dropped note is carried only into an empty slot) and says how many it will drop before the tap. The same award on a different game stays legitimate. The question exposed a hole that exists today — nothing stops saving MVP for the same player on the same game twice — so it becomes a database rule, not only a form check, because the merge has to be able to rely on it. The two softer options (collapse only on merge; warn but allow) were refused.'},
+ {date:'2026-09-11',ask:'Open question from the plan — does a brand-new team still get three starter awards (MVP / Best Hitter / Hustle Award)?',ruling:'accepted',label:'Accepted — keep it, seeded once at team creation',why:'A new coach opening an empty Give-an-award chip row is a colder first moment than tags’ "type a word" — a chip is tapped, not typed. The read-time re-seed that caused the trap (delete all three, they silently come back) is removed either way; the starter set now seeds exactly once, when the team itself is created, so a coach who deletes a starter keeps it deleted.'}
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
-const QA_PARTS=[];
+const QA_PARTS=[
+ {id:'A',title:'A given award — fixed or taken back where it was given',steps:[
+   "Open a scored game (give Blake Test an award first if none exist yet). Confirm each row under “Awards given” has its own edit (pencil) AND remove (trash) icon — not plain text.",
+   "Tap the edit icon on Blake Test’s award. Confirm the Give window opens titled “Edit award”, pre-filled with the same player/award/note — and there is NO “Remove this award” link anywhere in the form.",
+   "Change the note and tap Save changes. Confirm the row updates in place without reopening anything, and the schedule chip’s trophy count is still correct.",
+   "Try to give Blake Test the SAME award again for the SAME game. Confirm it’s refused with a plain sentence naming Blake and the game (“Blake Test already has … for this game”) — not a generic error.",
+   "Open the season report (Insights → Reports → Awards). Confirm that same award’s history row shows Edit beside the existing Print and Remove.",
+   "Remove the award from either the game drawer or the report. Confirm the trophy count on the schedule and the report both update immediately, and the removal only asks once."
+ ]},
+ {id:'B',title:'The award-type library — the door, the drawer, merge, an honest remove',steps:[
+   "Open Give an award. Confirm “Manage awards…” sits beside “+ New” in the Award field.",
+   "Tap Manage awards…. Confirm the drawer opens over the (dimmed) Give form, and every award type shows “given N times” or “not used yet” — not a blank.",
+   "Mint a duplicate on purpose (e.g. “Big Bat” meaning the same thing as an existing award) via + New, then give it to Blake Test for one game.",
+   "In the drawer, merge the duplicate into the original. BEFORE confirming, read the preview sentence — does it correctly state how many awards move, and (if Blake now holds both for the same occasion) how many are dropped?",
+   "Confirm the merge: the survivor of any dropped pair is the EARLIER-given award, and a note only carries onto the survivor when the survivor’s own note was empty.",
+   "On an award that’s never been given, tap remove — confirm it just deletes, no extra questions.",
+   "On an award that HAS been given, tap remove — confirm it refuses a bare delete and instead offers Retire and Merge instead, naming how many times it’s been given.",
+   "From inside that same dialog, tap “Merge instead” and complete a merge from there (not the row’s own merge icon).",
+   "Retire an award — confirm it drops off the Give picker but the awards it already carries are unchanged. Then Restore it from the drawer’s Retired group and confirm it’s back in the picker.",
+   "Open Team settings → Tags. Confirm there’s an Awards row with the right counts, and that the season report page no longer has a “Manage award types” link anywhere.",
+   "Repeat opening the drawer and doing one merge at a phone width (390px) — confirm nothing overlaps, clips, or falls below the tap floor."
+ ]}
+];
 let qa={};try{qa=JSON.parse(localStorage.getItem('qa-awards-idiom')||'{}')}catch(e){qa={}}
 function saveQA(){try{localStorage.setItem('qa-awards-idiom',JSON.stringify(qa))}catch(e){}}
 function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
