@@ -52,8 +52,12 @@ import { captureError } from './observability/capture';
  * Residual, accepted: a team whose SECOND season row was created months after that season began,
  * and whose coach entered no events of their own, can still miss already-played games. Rare, and
  * strictly better than the alternative of resurrecting the previous season into the new record.
+ *
+ * Exported for ONE other caller: the `tournament-games` route, which feeds the Schedule's
+ * read-only chips and must apply this exact boundary (see `onOrAfterSeasonFloor` in the pure
+ * half for why). Resolve it from the same program year the mirror was given.
  */
-async function resolveSeasonFloor(
+export async function resolveSeasonFloor(
   teamId: string,
   programYearId: string,
   programYearCreatedAt: string | null,

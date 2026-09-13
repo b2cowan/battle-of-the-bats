@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, forbidden, unauthorized } from '@/lib/api-auth';
-import { getMergedTournamentHistoryForRepTeam } from '@/lib/basic-coach-teams';
+import { getSeasonTournamentHistoryForRepTeam } from '@/lib/rep-tournament-season-scope';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { canConfigureTeam, denyUnless, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
@@ -40,10 +40,15 @@ export const GET = withObservability(async (_req: Request,
     );
     if (denied) return denied;
 
+    // THIS SEASON'S tournaments only (owner ruling 2026-09-12) — the Tournaments page and the
+    // Overview tile both read here, and after a roll-forward neither may carry last season's
+    // weekend into the new record. Same boundary as the Schedule's game chips; the reasoning and
+    // the accepted trade-off (a fee still owed on last season's tournament leaves with it) live on
+    // the helper.
     // WI-5 (security): a money='off' assistant coach must not receive fee amounts in the payload
     // (the Overview tile is already render-gated, but the JSON itself leaked `amountDue`). Resolve
     // the caller's capability on this rep team and FAIL CLOSED (redact when no assignment resolves).
-    const { history, basicCoachTeamId, linkage } = await getMergedTournamentHistoryForRepTeam(teamId);
+    const { history, basicCoachTeamId, linkage } = await getSeasonTournamentHistoryForRepTeam(teamId);
     const safeHistory = isMoneyRedactedForTeam(assignments, teamId)
       ? history.map(entry => ({ ...entry, amountDue: null }))
       : history;

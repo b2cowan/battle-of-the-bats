@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, forbidden, unauthorized } from '@/lib/api-auth';
-import {
-  getMergedTournamentHistoryForRepTeam,
-  getRegistrationGamesForTeam,
-} from '@/lib/basic-coach-teams';
+import { getRegistrationGamesForTeam } from '@/lib/basic-coach-teams';
 import {
   getTeamScopedRepTeamAccess,
   isTeamWorkspaceOrg,
 } from '@/lib/team-workspace-entitlements';
+import { getSeasonTournamentHistoryForRepTeam } from '@/lib/rep-tournament-season-scope';
+import { onOrAfterSeasonFloor } from '@/lib/tournament-game-mirror';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -25,6 +24,18 @@ import { withObservability } from '@/lib/observability';
  * registration (mig 196) saw its tournament on the Tournaments page but never its GAMES here. It
  * now shares `getMergedTournamentHistoryForRepTeam` with its tournament-history sibling — one
  * bridge-resolution rule for both.
+ *
+ * ⚠ SEASON-SCOPED, BY THE MIRROR'S OWN BOUNDARY (2026-09-12). This list used to be the team's
+ * ENTIRE tournament history, on the assumption that the Schedule would hide whatever it already
+ * held as a mirrored event. That assumption is exactly wrong for the one case the mirror's season
+ * floor exists for: after a roll-forward, last season's games are deliberately NOT mirrored into
+ * the new season — so nothing hid them, and a freshly rolled 2027 season rendered all of last
+ * July's tournament, scores and all (Milton Bats U13 Purple, prod, the day it rolled). The list is
+ * now read through `getSeasonTournamentHistoryForRepTeam` — the SAME season scope the Tournaments
+ * page and the Overview tile read through (owner ruling, same day) — so a tournament that finished
+ * before the season began contributes nothing (that covers the undated slots this route uniquely
+ * serves), and a dated game before the floor is dropped just as the mirror drops it. A team's
+ * first season has no floor, so nothing changes there.
  *
  * Returns an empty list (never an error) when the team has no linked tournament participation.
  */
@@ -45,12 +56,15 @@ export const GET = withObservability(async (_req: Request,
     });
     if (!access.allowed) return forbidden();
 
-    const { history } = await getMergedTournamentHistoryForRepTeam(teamId);
+    const { history, seasonFloor } = await getSeasonTournamentHistoryForRepTeam(teamId);
     if (history.length === 0) {
       return NextResponse.json({ games: [] });
     }
 
-    const games = await getRegistrationGamesForTeam(history);
+    // A tournament that straddles the season boundary is in the list; its games before the
+    // boundary still are not — the same per-game rule the mirror applies.
+    const games = (await getRegistrationGamesForTeam(history))
+      .filter(g => onOrAfterSeasonFloor(g.gameDate, seasonFloor));
     return NextResponse.json({ games });
   } catch (error) {
     console.error('[coaches tournament-games] load error:', error);

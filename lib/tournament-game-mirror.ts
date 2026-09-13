@@ -73,6 +73,41 @@ export const UNNAMED_TOURNAMENT = 'Tournament game';
 const isDated = (g: MirrorSourceGame) => Boolean(g.gameDate && g.startsAt);
 
 /**
+ * THE SEASON BOUNDARY, in one place. `floor` is the season's start marker (YYYY-MM-DD, or null
+ * for a team's first season — see `resolveSeasonFloor` in the IO half). A day on or after it is
+ * this season's; a day before it belongs to the season that closed.
+ *
+ * ⚠ TWO CONSUMERS, AND THEY MUST AGREE. The mirror uses it to decide which games become calendar
+ * events; the `tournament-games` route uses it to decide which games the Schedule's read-only
+ * chips may draw from. They disagreed once (2026-09-12, prod): the mirror correctly kept last
+ * season's tournament out of a freshly rolled 2027 season, but the chip feed had no season
+ * boundary at all and returned the team's entire tournament history — and the Schedule only hides
+ * a chip when it holds that game as an event THIS season, so all six of last July's games rendered,
+ * scores and all, on a season that had not played one. A rule the mirror applies has to be the
+ * same rule the fallback applies, or the fallback resurrects exactly what the mirror excluded.
+ *
+ * No floor, or no day, ⇒ in season. Fail open deliberately: a game is never hidden on the strength
+ * of a date it does not have.
+ */
+export function onOrAfterSeasonFloor(day: string | null | undefined, floor: string | null): boolean {
+  return !floor || !day || day >= floor;
+}
+
+/**
+ * Whether a tournament can contribute ANYTHING to this season — the per-tournament half of the
+ * boundary, for games that carry no date of their own. An unresolved bracket slot has no
+ * `game_date` to test, but it belongs to a tournament with an end date, and a tournament that
+ * finished before this season began cannot hold a game for it. A tournament with no dates at all
+ * passes (fail open, as above).
+ */
+export function tournamentReachesSeason(
+  tournament: { startDate: string | null; endDate: string | null } | null | undefined,
+  floor: string | null,
+): boolean {
+  return onOrAfterSeasonFloor(tournament?.endDate ?? tournament?.startDate ?? null, floor);
+}
+
+/**
  * An opponent too vague to identify a game by. A re-point that matched "TBD" against "TBD" would
  * be a coin flip with a coach's lineup riding on it.
  */
@@ -177,7 +212,7 @@ export function planTournamentGameMirror(
   opts: { seasonFloor: string | null },
 ): MirrorPlan {
   const eligible = sourceGames.filter(g =>
-    isDated(g) && (!opts.seasonFloor || g.gameDate! >= opts.seasonFloor),
+    isDated(g) && onOrAfterSeasonFloor(g.gameDate, opts.seasonFloor),
   );
 
   const bySourceId = new Map(existing.map(row => [row.source_tournament_game_id, row]));

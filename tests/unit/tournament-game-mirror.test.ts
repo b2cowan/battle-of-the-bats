@@ -6,6 +6,8 @@ import {
   changedOwnedFields,
   ownedFieldsFromGame,
   hasCoachOwnedFields,
+  onOrAfterSeasonFloor,
+  tournamentReachesSeason,
   type MirrorSourceGame,
   type ExistingMirrorRow,
 } from '../../lib/tournament-game-mirror.ts';
@@ -77,6 +79,35 @@ describe('tournament-game mirror — what lands on the calendar', () => {
     const plan = planTournamentGameMirror([lastSeason, thisSeason], [], { seasonFloor: '2026-01-15' });
     assert.equal(plan.inserts.length, 1);
     assert.equal(plan.inserts[0].source_tournament_game_id, 'new');
+  });
+
+  // The Schedule's read-only chip feed (`tournament-games` route) applies the SAME boundary the
+  // planner does — the 2026-09-12 prod defect was the two disagreeing (see `onOrAfterSeasonFloor`).
+  describe('the season boundary the chip feed shares with the planner', () => {
+    it('is the planner rule: a day before the floor is last season, on or after it is this season', () => {
+      assert.equal(onOrAfterSeasonFloor('2026-07-05', '2026-09-12'), false);
+      assert.equal(onOrAfterSeasonFloor('2026-09-12', '2026-09-12'), true);
+      assert.equal(onOrAfterSeasonFloor('2026-09-19', '2026-09-12'), true);
+    });
+
+    it('fails open — no floor (a first season) or no date (an unresolved slot) is never hidden', () => {
+      assert.equal(onOrAfterSeasonFloor('2025-08-02', null), true);
+      assert.equal(onOrAfterSeasonFloor(null, '2026-09-12'), true);
+      assert.equal(onOrAfterSeasonFloor(undefined, '2026-09-12'), true);
+    });
+
+    it('drops a whole tournament that finished before the season began — undated slots included', () => {
+      const lastJuly = { startDate: '2026-07-03', endDate: '2026-07-05' };
+      assert.equal(tournamentReachesSeason(lastJuly, '2026-09-12'), false);
+      // Spanning the boundary: the tournament stays; its pre-floor GAMES are dropped per game.
+      assert.equal(tournamentReachesSeason({ startDate: '2026-09-10', endDate: '2026-09-13' }, '2026-09-12'), true);
+      // Only a start date: it stands in for the end.
+      assert.equal(tournamentReachesSeason({ startDate: '2026-07-03', endDate: null }, '2026-09-12'), false);
+      // No dates at all, or no tournament row: fail open.
+      assert.equal(tournamentReachesSeason({ startDate: null, endDate: null }, '2026-09-12'), true);
+      assert.equal(tournamentReachesSeason(null, '2026-09-12'), true);
+      assert.equal(tournamentReachesSeason(lastJuly, null), true);
+    });
   });
 
   it('writes nothing when the organizer has changed nothing', () => {

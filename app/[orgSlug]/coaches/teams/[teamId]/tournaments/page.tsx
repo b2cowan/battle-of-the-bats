@@ -161,7 +161,7 @@ export default function PremiumTeamTournamentsPage({
           compact
           icon={<Trophy size={20} aria-hidden />}
           headline="No tournaments yet this season"
-          description="Your past and upcoming tournament entries appear here the moment you're registered."
+          description="This season's tournament entries appear here the moment you're registered."
           payoff="Once one lands, its games drop straight into your Schedule, its chat room opens under Chat, and its results count toward your season record in Insights."
         />
       ) : isTeamWorkspace ? (
