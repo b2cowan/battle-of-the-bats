@@ -215,8 +215,8 @@ export interface PeriodBalance {
   seasonClosing: number;
   /** The No-date-yet column's own net (undated revenue − undated expenses, the estimate remainder
    *  and any undated dues included) — what the Net row prints in that column, where Opening and
-   *  Closing print a dash. Null when nothing is undated. ⚠ Past a truncated window this is NOT
-   *  the whole of what the walk could not place — see the build site. */
+   *  Closing print a dash. Null when nothing is undated. Since ruling 0 (2026-09-13) this is the
+   *  whole of what the walk could not place — money dated past the window included. */
   undatedNet: number | null;
   /**
    * The monthly series the balance was walked from — every real month from the first dated
@@ -342,6 +342,13 @@ export interface PeriodView {
   /** True when the plan's dated span was wider than the window and the far end was dropped. The
    *  view SAYS so rather than showing a total that silently excludes it. */
   truncated: boolean;
+  /**
+   * What is dated PAST the window (owner ruling 0, 2026-09-13): the money-in and money-out dated
+   * after the last column, and the month that column is. On the grid it sits under No date yet —
+   * in the season Total, in no month — and the note under the table names it with this. Null
+   * unless `truncated`.
+   */
+  beyondWindow: { moneyIn: number; moneyOut: number; after: MonthKey } | null;
 }
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -536,17 +543,20 @@ function deriveYearBands(columns: PeriodColumn[]): PeriodYearBand[] {
 }
 
 /** Where one amount lands. A period with no date, or a line with no split at all, is unscheduled —
- *  and an amount outside the window is folded into the nearest end rather than vanishing. */
+ *  and so is an amount dated PAST THE WINDOW (owner ruling 0, 2026-09-13). The columns stop at two
+ *  years; money dated after the last one sits under No date yet rather than in a month it does not
+ *  belong to. ⚰ Until then the last column absorbed it (the §133-era rule, so every row still added
+ *  to its Total) — which it still does under No date yet — while the balance walk beneath had
+ *  always left it out of that month: the same dollar read "in the last month" on the row and "not
+ *  in that month" on the balance under it. Budget vs. Actual's own month grid files it the same
+ *  way ("never silently dropped, never smeared"). `beyondWindow` on the view names it. */
 function columnFor(
   date: string | null, granularity: PeriodGranularity, columnKeys: string[],
 ): string {
   const month = monthKeyOf(date);
   if (!month) return UNSCHEDULED;
   const key = granularity === 'months' ? month : quarterKeyOf(month);
-  if (columnKeys.includes(key)) return key;
-  // Only reachable past the truncation window; the last column absorbs it so the row total and
-  // the sum of its cells always agree. The view flags `truncated` so this is stated, not hidden.
-  return columnKeys[columnKeys.length - 1] ?? UNSCHEDULED;
+  return columnKeys.includes(key) ? key : UNSCHEDULED;
 }
 
 export function buildPeriodView(
@@ -822,11 +832,13 @@ export function buildPeriodView(
   const monthlyRevenue: Record<string, number> = {};
   const monthlyExpense: Record<string, number> = {};
   /* ⚠ MONEY PAST A TRUNCATED WINDOW IS UNPLACED, NOT EARLY (§5: "a cash forecast must not pretend
-     those amounts arrive earlier"). The display columns fold a far date into the last column so
-     every row still adds to its Total; the WALK will not — a bill two years out cannot be the
-     reason the last visible month closes below zero. It rides the undated flow instead, so the
-     season net still equals revenue − expenses and no month claims it. `truncated` is what tells
-     the reader the series is incomplete, and it is what suppresses any room-to-spend claim. */
+     those amounts arrive earlier") — a bill two years out cannot be the reason the last visible
+     month closes below zero. It rides the undated flow, so the season net still equals revenue −
+     expenses and no month claims it. Since ruling 0 (2026-09-13) the DISPLAY files it the same way
+     (`columnFor` → No date yet), so the undated cells below already hold it and the walk reads
+     them alone; the far tally kept here is for the note, which names the amount and the month it
+     is past. `truncated` is what tells the reader the series is incomplete, and it is what
+     suppresses any room-to-spend claim. */
   const inWindow = new Set<string>(monthKeys);
   let farRevenue = 0;
   let farExpense = 0;
@@ -845,11 +857,11 @@ export function buildPeriodView(
   if (trial) place('out', trial.date, trial.amount);
   const flow = buildCashFlow(
     monthKeys, monthlyRevenue, monthlyExpense, opts.openingBalance ?? 0,
-    {
-      moneyIn: r2((revenueCells[UNSCHEDULED] ?? 0) + farRevenue),
-      moneyOut: r2((costCells[UNSCHEDULED] ?? 0) + farExpense),
-    },
+    { moneyIn: r2(revenueCells[UNSCHEDULED] ?? 0), moneyOut: r2(costCells[UNSCHEDULED] ?? 0) },
   );
+  const beyondWindow: PeriodView['beyondWindow'] = truncated && monthKeys.length > 0
+    ? { moneyIn: farRevenue, moneyOut: farExpense, after: monthKeys[monthKeys.length - 1] }
+    : null;
   const balanceOpening: Record<string, number> = {};
   const balanceNet: Record<string, number> = {};
   const balanceClosing: Record<string, number> = {};
@@ -919,5 +931,6 @@ export function buildPeriodView(
     hasUnscheduled,
     hasNegative,
     truncated,
+    beyondWindow,
   };
 }

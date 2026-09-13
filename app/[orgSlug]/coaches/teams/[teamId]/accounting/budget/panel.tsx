@@ -352,6 +352,15 @@ function duesBadge(badgeClass: string, draft: boolean): React.ReactNode {
 
 /** The index of the first month at or after today, or 0 when today is past the plan — the month
  *  a coach is most likely asking about. Shared by the grid's opening window and the trial's default. */
+/** "the $1,200.00 of expenses and $300.00 of revenue" — what sits past the two-year window, for the
+ *  note under the grid. Both sides only when both carry money; one side reads alone. */
+function beyondWindowPhrase(b: NonNullable<PeriodView['beyondWindow']>): string {
+  const parts: string[] = [];
+  if (b.moneyOut > 0.005) parts.push(`${fmt(b.moneyOut)} of expenses`);
+  if (b.moneyIn > 0.005) parts.push(`${fmt(b.moneyIn)} of revenue`);
+  return parts.length > 0 ? ` the ${parts.join(' and ')}` : ' everything';
+}
+
 function monthAtOrAfterToday(monthKeys: readonly string[]): number {
   const todayKey = todayLocal().slice(0, 7);
   const here = monthKeys.findIndex(k => k >= todayKey);
@@ -1142,11 +1151,15 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
       {/* ⚰ THE ESTIMATE NOTE IS GONE (owner ruling 2026-09-09) — the grid draws the remainder in
           the No-date-yet column. ⚰ AND SO IS "Set dues and they appear here" (2026-09-12): the
           Required-player-dues helper under the table carries that door now, on both views. */}
-      {view.truncated && (
+      {/* ⚠ RULING 0 (owner, 2026-09-13): money dated past the two-year window sits under No date
+          yet — on the row AND in the balance, which used to disagree here (the row said "last
+          month", the balance said "no month"). The note names the amount and the month it is past,
+          so a coach reading a dated line under "No date yet" is told why. */}
+      {view.beyondWindow && (
         <p className={styles.periodGridNote}>
-          Your plan spans more than two years — the columns stop there and everything later is
-          counted in the last one, but the balance rows leave it out of every month: they cannot
-          say when it lands.
+          Your plan runs past the two years shown — the columns stop at {formatMonthLabel(view.beyondWindow.after)}, and
+          {beyondWindowPhrase(view.beyondWindow)} dated after that {view.beyondWindow.moneyIn > 0.005 && view.beyondWindow.moneyOut > 0.005 ? 'sit' : 'sits'} under {NO_DATE_LABEL}:
+          in the season Total, in no month.
         </p>
       )}
       {view.columns.length === 1 && view.columns[0].key === UNSCHEDULED && (

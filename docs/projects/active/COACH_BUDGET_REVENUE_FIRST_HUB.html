@@ -146,13 +146,13 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Revenue first, balances carried forward — project hub</strong><br><small>Committed 182c7192 2026-09-12 · walk in progress (§173) · ruling F built: the installments row opens Player Dues</small></div>
+  <div class="hubtitle"><strong>Revenue first, balances carried forward — project hub</strong><br><small>Committed 182c7192 2026-09-12 · <strong>Owner QA §173 passed 36/36, zero defects, 2026-09-13</strong> · walk rulings F (the installments row opens Player Dues), G (one spacing for report disclaimers) and 0 (money past two years sits under No date yet) built · nothing open</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Mockup rounds 2026-09-09 – 2026-09-12, Owner QA §164 F1">Design</li>
     <li class="stage done" title="Approved 2026-09-12, decisions A–D">Plan</li>
     <li class="stage done" title="Built on dev 2026-09-12, committed 182c7192 the same day (private index; the candidate tree typechecked and ran the whole suite first)">Build</li>
     <li class="stage done" title="/simplify (4 lenses, 9 cleanups) + /review (high-risk: 3 fixed, 3 advisory) 2026-09-12 — Owner QA §173">Review</li>
-    <li class="stage current" title="Walk drawn 2026-09-12 (QA Walk tab, 8 parts) — Owner QA Ledger §173, awaiting the owner">QA</li>
+    <li class="stage done" title="Walk passed 36/36, zero defects, all eight parts, 2026-09-13 — Owner QA Ledger §173 (recorded e34c38d1); walk findings built as 8d8d2bf9, c535575c (ruling F), 11033572 (ruling G)">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
@@ -386,7 +386,7 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:
 <section id="hub-decisions" class="hubsection docpage" hidden>
   <div class="eyebrow" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Rulings</div>
   <h1>Decisions</h1>
-  <p class="sub" style="margin-bottom:22px">Five decisions made 2026-09-12 (E at the start of the build), and F from the walk on 2026-09-13 — ruled on mockup round 2, built the same day. The rulings this project inherits from the By-period close (§164) that made revenue-first worth proposing in the first place follow, for context.</p>
+  <p class="sub" style="margin-bottom:22px">Five decisions made 2026-09-12 (E at the start of the build), and two from the walk on 2026-09-13 — F ruled on mockup round 2 and G on a rendered measurement, both built the same day. Ruling 0 (money dated past a two-year window) was made after the walk and built the same day. The rulings this project inherits from the By-period close (§164) that made revenue-first worth proposing in the first place follow, for context.</p>
   <h2>This round — 2026-09-12</h2>
   <div id="decisionRows"></div>
   <h2>Inherited from Owner QA §164 (2026-09-09/10)</h2>
@@ -684,6 +684,8 @@ $('briefBody').innerHTML=md($('md-brief').textContent);$('planBody').innerHTML=m
 
 /* ───────────── Decisions ───────────── */
 const DECISIONS=[
+  {date:'2026-09-13',ask:'0 — A plan longer than the two years the grid can show: money dated past the last column folded into that column on the row, while the balance rows beneath left it out of every month. Where should it sit?',ruling:'accepted',label:'No date yet, with a note',why:'Owner took the recommendation over folding it into the last column (a 2028 bill under a 2027 heading) and a "Later" column (the most build for the rarest case). The far money now sits under No date yet on its row — where the balance already had it, and where Budget vs. Actual’s Months view has always filed it — and the note under the table names the amount and the month the columns stop at. The Total column, the estimate rule, the shortfall sentence and the room-to-spend gate are unchanged.'},
+  {date:'2026-09-13',ask:'G — The disclaimers under a money table: the By-period view spaced its notes with air between them, the List printed the same sentences flush. Which is the standard?',ruling:'accepted',label:'By period’s air, everywhere',why:'Owner, on the walk: the By-period spacing is the standard for disclaimers on reports. Measured rendered before the fix: List 0px between sentences, By period 10px, Budget vs. Actual’s Months 5px between and 22px from its table, the Statement 10px — four report views, three spacings. One recipe now, worn by all four: 0.6rem between sentences and from the table. Ink, size and each report’s own note styling untouched; the next money report takes the recipe rather than a margin of its own. Built 11033572.'},
   {date:'2026-09-13',ask:'F — Once dues are scheduled, what does tapping the Player installments row do? (walk finding: as built it opened the whole-roster generator)',ruling:'accepted',label:'A — the row opens Player Dues',why:'Owner, on mockup round 2: a schedule that has gone out to families stays all year; changes overall and per family must stay possible without being encouraged. The row is a link to Player Dues — the schedule\'s own room, where both change doors already live with their guard-rails — for every coach who can read money. The plan keeps no re-run door once dues exist. The "On the plan: season closing X → Y" sentence moved INTO the Set-dues sheet, so it shows wherever the sheet is opened, Player Dues included (decision D kept whole). Built the same day.'},
   {date:'2026-09-12',ask:'E — Tile wording: the mockup drew "Planned revenue / Planned expenses / Projected season closing"; the table beneath closes on "Total revenue / Total expenses / Closing balance". Which do the tiles wear?',ruling:'accepted',label:'The table’s words',why:'The tiles ARE the table’s subtotals, same names verbatim (ruling of 2026-09-08) — one name, one number on this screen. The captions carry the qualifiers the mockup’s labels were trying to: "includes player installments", "your estimate", "includes the No date yet amounts". The mockup and this hub were corrected to match before the build.'},
   {date:'2026-09-12',ask:'A — The season-estimate rule: keep the 2026-08-12 ruling, or revert to "the bigger of estimate and lines"?',ruling:'accepted',label:'Kept as built',why:'The estimate keeps governing the total families are asked to cover, in both directions, symmetrically netted into "No date yet." The reversal originally drafted in §4 is withdrawn, not adopted. One follow-up carried forward: confirm every reader of this total already agrees, since they should share one calculation.'},

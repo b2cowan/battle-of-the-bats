@@ -7,6 +7,23 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-13 — MONEY THE GRID CANNOT PLACE GOES UNDER "NO DATE YET", DATED OR NOT: a By-period plan longer than two years files what is past its last column with the undated money, and says so (owner ruling 0, §173)
+
+**Decision (owner, on the recommendation).** The By-period grid shows at most two years of columns. Money
+dated after the last column now sits under **No date yet** on its row — it used to fold into the last column
+(the §133-era rule) while the balance rows beneath left it out of every month, so the same dollar read "in the
+last month" on the row and "not in that month" on the balance. The note under the table names the amount and
+the month the columns stop at. Budget vs. Actual's Months view has filed far money this way all along.
+
+**Why this over the alternatives.** Folding it into the last column and making the balance agree would put a
+2028 bill under a 2027 heading — a small lie about timing. A "Later" column is the most truthful and the most
+build for the rarest case (a season budget seldom reaches two years). "No date yet" already means "in the
+season Total, in no month shown", which is exactly what is true of a far date; the note is what keeps a dated
+line under that heading from reading as an error.
+
+**Shape rule worth keeping.** A column heading is a claim about WHEN. When the grid cannot honour the claim,
+the money goes to the column that makes none — with a sentence — rather than to the nearest column that does.
+
 ### 2026-09-13 — REPORT DISCLAIMERS, ONE SPACING: the quiet sentences under a money table sit 0.6rem apart and 0.6rem from the table, everywhere (owner, §173 walk)
 
 **Decision (owner).** The By-period view's air between its footnotes is the standard for disclaimers on every

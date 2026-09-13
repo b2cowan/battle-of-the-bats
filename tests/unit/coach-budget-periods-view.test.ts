@@ -106,11 +106,15 @@ describe('columns', () => {
     ], 'months');
     assert.equal(view.truncated, true);
     assert.equal(view.columns.filter(c => !c.unscheduled).length, MAX_PERIOD_MONTHS);
-    // The far amount folds into the last column rather than vanishing: a row's cells must
-    // always add up to its own total.
+    // The far amount sits under No date yet rather than vanishing (owner ruling 0, 2026-09-13 —
+    // it used to fold into the last column): a row's cells must always add up to its own total.
     const row = view.groups[0].rows[0];
     const summed = Object.values(row.cells).reduce((s, n) => s + n, 0);
     assert.equal(summed, row.total);
+    assert.equal(row.cells[UNSCHEDULED], 1000);
+    assert.equal(view.hasUnscheduled, true);
+    assert.equal(view.columns[0].key, UNSCHEDULED);
+    assert.deepEqual(view.beyondWindow, { moneyIn: 0, moneyOut: 1000, after: '2028-12' });
   });
 });
 
@@ -765,15 +769,40 @@ describe('the balance — Opening + Net = Closing, walked from months (decisions
       line('f', 'Sponsor', 2000, [['2027-01-01', 2000]], { funding: true, category: 'Sponsorship' }),
     ], 'months', { openingBalance: 0 });
     assert.equal(view.truncated, true);
-    // The DISPLAY folds the far 500 into the last column (every row adds to its Total)…
+    // The DISPLAY files the far 500 under No date yet (owner ruling 0, 2026-09-13 — it used to
+    // fold into the last column, where the balance beneath then disagreed with the row above it)…
     const last = view.columns[view.columns.length - 1].key;
-    assert.equal(view.expenseTotals.cells[last], 500);
-    // …but the WALK does not charge it to that month: the last month's closing carries January's
-    // 1,000 forward untouched, while the season net still counts it.
+    assert.equal(view.expenseTotals.cells[last], undefined);
+    assert.equal(view.expenseTotals.cells[UNSCHEDULED], 500);
+    assert.equal(view.balance.undatedNet, -500);
+    // …and the WALK agrees: the last month's closing carries January's 1,000 forward untouched,
+    // while the season net still counts it — once, not twice.
     assert.equal(view.balance.closing[last], 1000);
     assert.equal(view.balance.seasonNet, 2000 - 1500);
     assert.equal(view.balance.seasonClosing, 500);
     assert.equal(view.balance.shortfall, null);
+    assert.deepEqual(view.beyondWindow, { moneyIn: 0, moneyOut: 500, after: last });
+  });
+
+  it('ruling 0 — far-dated dues and a far-dated trial sit under No date yet too, and a plan inside the window has nothing beyond it', () => {
+    const inside = buildPeriodView([line('a', 'Near', 1000, [['2027-01-01', 1000]])], 'months');
+    assert.equal(inside.beyondWindow, null);
+    const view = buildPeriodView([
+      line('a', 'Near', 1000, [['2027-01-01', 1000]]),
+      line('b', 'Far', 500, [['2031-01-01', 500]], { itemId: 'item-far' }),
+    ], 'quarters', {
+      openingBalance: 0,
+      dues: { assessed: 900, installments: [{ date: '2027-02-01', amount: 600 }, { date: '2031-03-01', amount: 300 }] },
+      trial: { amount: 200, date: '2031-06-01' },
+    });
+    assert.equal(view.installments?.cells[UNSCHEDULED], 300);
+    assert.equal(view.trial?.cells[UNSCHEDULED], 200);
+    assert.equal(view.expenseTotals.cells[UNSCHEDULED], 700);
+    assert.equal(view.revenueTotals?.cells[UNSCHEDULED], 300);
+    // Counted once: the season net is revenue − expenses across dated and undated alike.
+    assert.equal(view.balance.seasonNet, 900 - 1700);
+    assert.equal(view.balance.undatedNet, 300 - 700);
+    assert.deepEqual(view.beyondWindow, { moneyIn: 300, moneyOut: 700, after: '2028-12' });
   });
 });
 

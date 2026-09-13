@@ -1,9 +1,12 @@
 # Build the budget from revenue to closing balance — PM brief
 
-**Status:** **built on dev and committed `182c7192` 2026-09-12**, awaiting the owner's walk (Owner QA Ledger **§173**, the hub's QA Walk
-tab). Approved 2026-09-12 on the mockup round following Owner QA §164 F1 — decisions A–D below all made, and
-one more the same day: **the three tiles wear the table's own words** (Total revenue · Total expenses · Closing
-balance), because a tile is the table's subtotal and one name means one number on this screen.
+**Status:** **built on dev and committed `182c7192` 2026-09-12; Owner QA §173 walk PASSED 36/36, zero defects, 2026-09-13**
+(Owner QA Ledger **§173**, the hub's QA Walk tab). Approved 2026-09-12 on the mockup round following Owner QA §164 F1 —
+decisions A–D below all made, and one more the same day: **the three tiles wear the table's own words** (Total revenue ·
+Total expenses · Closing balance), because a tile is the table's subtotal and one name means one number on this screen.
+Two walk rulings built 2026-09-13: **F** — once dues exist the Player installments row opens Player Dues, never the
+generator, and the Set-dues sheet says what a schedule does to the plan wherever it opens; **G** — one spacing for the
+disclaimers under every money report — and **ruling 0** (money dated past a two-year window sits under No date yet, with a note). Nothing open.
 **Project hub:** [Mockup, this brief, the full plan and decisions on one artifact](COACH_BUDGET_REVENUE_FIRST_HUB.html).
 **Plan:** [Implementation proposal](COACH_BUDGET_REVENUE_FIRST_PLAN.md).
 **Mockup:** [Interactive budget states](COACH_BUDGET_REVENUE_FIRST_MOCKUP.html).
