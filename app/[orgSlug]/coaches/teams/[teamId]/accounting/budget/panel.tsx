@@ -1105,7 +1105,10 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
           of, what the undated column holds and why the season closing differs from the last dated
           one, what a bracket means (only when one is on screen), how the endpoints work, then the
           two range caveats. Each renders only when its condition is true — a note explaining a
-          notation the coach cannot see is furniture. The mockup's own footnotes, one for one. */}
+          notation the coach cannot see is furniture. The mockup's own footnotes, one for one.
+          ⚠ In the shared `reportNotes` stack (owner ruling 2026-09-13): this view's spacing is the
+          standard every money report's disclaimers now take. */}
+      <div className={`${shared.reportNotes} ${styles.reportNotesInWrap}`}>
       {balanceNotes({
         balance,
         installmentsNetOf: view.installments && !duesDraft ? (writtenOffClause ?? null) : null,
@@ -1151,6 +1154,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
           None of your lines have payment dates yet, so there is nothing to spread across months.
         </p>
       )}
+      </div>
     </div>
   );
 }
@@ -3799,7 +3803,7 @@ export function BudgetPlanPanel({
                 reads one set of sentences. ⚠ THE SAME CLAUSE AS THE TILE ABOVE, NEVER A SECOND
                 WORDING (owner ruling §160 Part F2). */}
             {whenFilter === 'all' && (
-              <>
+              <div className={shared.reportNotes}>
                 {balanceNotes({
                   balance,
                   installmentsNetOf: periodView.installments && !duesDraft ? (writtenOffClause ?? null) : null,
@@ -3815,7 +3819,7 @@ export function BudgetPlanPanel({
                     By period to see the months.
                   </p>
                 )}
-              </>
+              </div>
             )}
             </>
           )}

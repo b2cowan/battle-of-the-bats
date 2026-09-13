@@ -7,6 +7,24 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-13 — REPORT DISCLAIMERS, ONE SPACING: the quiet sentences under a money table sit 0.6rem apart and 0.6rem from the table, everywhere (owner, §173 walk)
+
+**Decision (owner).** The By-period view's air between its footnotes is the standard for disclaimers on every
+money report. Before: four report views, three spacings — the Budget plan's List printed its notes flush (0px),
+By period at 10px, Budget vs. Actual's Months view at 5px between and 22px from the table, the Statement at 10px
+through per-note margins. **One recipe now:** `.reportNotes` in the shared coach stylesheet — a column with
+`gap: 0.6rem` and `margin-top: 0.6rem`, hidden when empty. A view whose own wrapper already spaces its
+children zeroes the top margin (`reportNotesInWrap` / `notesInWrap`) so the gap is not doubled.
+
+**Why.** A disclaimer is read after the figures, by a reader who went looking; sentences with no air between
+them read as one paragraph and get skipped as one. The Statement had the right figure and nobody copied it —
+each report declared its own margin, so the next report was always one more spacing. The class is the
+standard because a class is copied; a number in a design note is not.
+
+**What the ruling does NOT decide.** The sentences' ink, size and per-note classes stay each report's own
+(the Statement's `varianceKey` / `duesNote` / `undatedNote` carry rulings of their own on colour); the
+banded alert note and the cash bridge stand outside the stack and keep their own spacing.
+
 ### 2026-09-12 — REVENUE FIRST, BALANCES CARRIED FORWARD: the Budget plan reads like a statement and closes on a balance, in both views and both files (owner, decisions A–E; Owner QA §164 F1 → plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md`, hub artifact `88741405`)
 
 **Decision (owner, five rulings).** (A) **The season-estimate rule is unchanged** — the estimate governs Total

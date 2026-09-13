@@ -250,7 +250,12 @@
 
 /* ── notes + shortfall ───────────────────────────────────────────────────── */
 
-.notes { display: flex; flex-direction: column; gap: 0.3rem; }
+/* ⚰ `.notes` (a 0.3rem stack) is gone — the notes sit in the shared `.reportNotes` recipe
+   (coaches.module.css, 0.6rem, owner ruling 2026-09-13), the same stack the Budget plan's two
+   views use. `.note` below is still this grid's own ink for each sentence. `.wrap`'s own gap
+   already stands the stack off the table, so the shared top margin is zeroed here — the same
+   arrangement the Budget plan's period grid makes inside its wrapper. */
+.notesInWrap { margin-top: 0; }
 
 .note {
   margin: 0;

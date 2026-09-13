@@ -3800,6 +3800,21 @@ a.oneChip:hover { border-color: currentColor; }
 .moneyGridFlowFirst th,
 .moneyGridFlowFirst td { box-shadow: inset 0 1px 0 var(--home-line-strong, var(--border-2)) !important; padding-top: 0.55rem; }
 
+/* ── REPORT DISCLAIMERS — the notes under a money table, one recipe (owner ruling 2026-09-13, from
+   the Budget plan walk: the By-period view's spacing is the standard) ─────────────────────────
+   A stack of quiet sentences with AIR between them — 0.6rem, the gap that view happened to get
+   from its wrapper while the List beside it printed the same sentences flush, and Budget vs.
+   Actual's Months view printed its own at half the gap. Three spacings for one thing; this is the
+   one. The sentences' ink and size stay with each report's own note class (the Statement's carry
+   rulings of their own); this only decides how far apart they sit and how far from the table. */
+.reportNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+.reportNotes:empty { display: none; }
+
 /* ── A BAND HEADING — "Revenue" / "Expenses", or an activity's own name ──────────────────────
    Lifted here from MoneyMonthGrid's local `.bandRow` / `.bandLead` pair (one-surface pass,
    owner-approved 2026-09-05) so the month grid and the three list reports name the halves of a

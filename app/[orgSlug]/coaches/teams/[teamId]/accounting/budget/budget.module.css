@@ -557,6 +557,9 @@
   gap: 0.6rem;
   margin-bottom: 1.75rem;
 }
+/* The wrapper's own gap already stands the notes off the table — the shared stack's top margin
+   would double it here (the List, with no wrapper, is where that margin does the work). */
+.periodGridWrap > .reportNotesInWrap { margin-top: 0; }
 /* ⚠ Geometry, ink and the heading row now come from the shared `.moneyGrid` (coaches.module.css),
    which this table also carries. What is left here is only what is TRUE OF THIS GRID ALONE: the
    year band, the pinned column's width, the unscheduled column and the funding accent. */

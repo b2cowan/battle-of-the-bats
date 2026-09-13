@@ -22027,6 +22027,22 @@ January 2026 closes ($1,533.00). The 3 schedules being kept are not in the draft
 grid-doors guard (the row's two links; no control on the plan titled "Set dues for all players"
 again). Walk Parts B5 and E re-worded on the hub. Help article updated.
 
+### Two spacing findings on the walk, 2026-09-13 — both fixed the same day
+
+**The status line sat flush on the View / Add Line row.** Fixed `8d8d2bf9`: the sentence keeps 1rem of air
+below it (`.planStatus`), nothing else moved.
+
+**Ruling G — report disclaimers, one spacing.** You liked the air between the By-period view's notes and
+asked for it to be the standard for disclaimers on reports; the List printed the same sentences flush.
+Measured before the fix (rendered, 1440 and 361): List 0px between sentences, By period 10px, Budget vs.
+Actual's Months view 5px between and 22px from its table, the Statement 10px. Four report views, three
+spacings for one thing. **Now one recipe** — `.reportNotes` in the shared coach stylesheet: a stack with
+0.6rem between sentences and 0.6rem from the table — worn by the Budget plan's List and By period, and by
+Budget vs. Actual's Statement and Months. Re-measured after: every view 10px between sentences and 11–13px
+from its table at both widths (Months' 13 is its own wrapper's gap; the Statement was already at the figure
+through per-note margins and simply joined the class). The sentences' ink and size stay each report's own;
+the ruling decides only the air. The next money report takes the class rather than a margin of its own.
+
 ### Owed / next
 
 **The walk is done — 36/36, zero defects, all eight parts, 2026-09-13.** Every part named in the plan

@@ -1011,7 +1011,9 @@ export default function MoneyMonthGrid({
           authors drifts. Every ⚠ that used to sit in this block moved WITH the copy it argues
           about; that module is where a wording change is fought over. What is left here is the
           screen’s rendering of them and nothing else. */}
-      <div className={styles.notes}>
+      {/* The shared disclaimer stack (owner ruling 2026-09-13) — this grid used to space its notes
+          at half the Budget plan's gap; one recipe now. */}
+      <div className={`${shared.reportNotes} ${styles.notesInWrap}`}>
         <ReportNotes notes={quietNotes} noteClassName={() => styles.note} />
       </div>
       {/* ⚠ THE ONE BAND THAT IS A FINDING RATHER THAN AN EXPLANATION — its tense follows the lens

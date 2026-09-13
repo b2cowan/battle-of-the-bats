@@ -436,6 +436,13 @@
   line-height: 1.45;
   color: var(--text-tertiary);
 }
+/* The three notes of the Statement's stack sit in the shared `.reportNotes` recipe
+   (coaches.module.css — owner ruling 2026-09-13: one spacing for every money report's disclaimers),
+   whose gap is the 0.6rem their own margins used to carry; a margin here would double it. The
+   funding note and the bridge sentence stand outside that stack and keep theirs. */
+.varianceKey,
+.undatedNote,
+.duesNote { margin: 0; }
 .varianceKey b,
 .undatedNote strong,
 .duesNote strong,

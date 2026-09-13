@@ -3198,7 +3198,12 @@ export function BudgetVsActualPanel({
                  call site and the words come from the module. The two dues notes share one class:
                  they are two halves of one answer about one row, and giving the newer half its own
                  declaration would be the byte-identical duplication /simplify already cleared out
-                 of this file's stylesheet once. */}
+                 of this file's stylesheet once.
+
+                 ⚠ THE SPACING IS THE SHARED `reportNotes` STACK (owner ruling 2026-09-13): 0.6rem
+                 between sentences and from the table — the figure this view already had through
+                 each note's own margin, now declared once for every money report's disclaimers. */}
+             <div className={shared.reportNotes}>
              <ReportNotes
                notes={statementNoteStack}
                noteClassName={n => n.id === 'variance-key' ? styles.varianceKey
@@ -3220,6 +3225,7 @@ export function BudgetVsActualPanel({
                  ),
                }}
              />
+             </div>
              {/* ⚠ THE BRIDGE BELONGS AT THE FOOT, WITH THE NOTES (owner, 2026-08-24). It was first put
                  under Total expenses, which dropped a bordered panel into the middle of the
                  statement's own closing arithmetic — Total expenses → Season net → Funded by
