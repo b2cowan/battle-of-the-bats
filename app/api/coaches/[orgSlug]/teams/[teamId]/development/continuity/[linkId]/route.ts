@@ -7,7 +7,7 @@ import {
   decideContinuityLink,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 
 /** Decide a continuity pair: confirm, or reject ("Not the same player" — including the
  *  always-visible unlink on a confirmed link, which is a confirmed→rejected transition so
@@ -29,7 +29,7 @@ export const POST = withObservability(async (req: Request,
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can review returning players.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: { action?: unknown };

@@ -100,6 +100,14 @@ function invisibleOps(sql) {
   if (/(^|;|\bbegin\b|\bthen\b)\s*(insert\s+into\b|update\s+(?=[a-z_."])|delete\s+from\b)/m.test(body)) ops.push('data');
   if (/\bdrop\s+column\b/.test(body)) ops.push('drop-column');
   if (/\b(create\s+(or\s+replace\s+)?function|drop\s+function)\b/.test(body)) ops.push('function');
+  /* AN RLS POLICY — created, dropped or altered — is the fourth shape nothing else can see (found
+     2026-09-12 when mig 292 rewrote fourteen development write policies and this gate said
+     nothing). The drift and parity checks compare tables, columns, CHECKs, constraints and indexes;
+     a policy is none of those, and a policy left at head-coach-only on prod while the routes admit
+     a grant-holder is a database that lies about who may write. Its prod state is knowable only by
+     asking `pg_policies`. A policy created WITH a new table is flagged too (deliberately
+     conservative — one manifest line; every such migration to date already carries one). */
+  if (/\b(create|drop|alter)\s+policy\b/.test(body)) ops.push('policy');
   /* A DROPPED CONSTRAINT — the hole mig 287 fell through, and it is the same shape as `drop-column`:
      the drift check compares TABLES AND COLUMNS plus CHECK constraints that admit LESS in prod, so a
      UNIQUE or FK constraint that dev has dropped and prod still holds adds no table, adds no column

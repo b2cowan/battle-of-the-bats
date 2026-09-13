@@ -7,7 +7,7 @@ import {
   deleteRepPlayerDevelopmentGoal,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readGoalPatchInput } from '@/lib/development-input';
 import { verifyFocusTag } from '@/lib/development-goal-input';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
@@ -42,7 +42,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, playerId, goalId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), 'Only the head coach can edit development.');
+  const denied = denyUnless(canWriteDevelopmentGoals(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: unknown;
@@ -73,7 +73,7 @@ export const DELETE = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId, goalId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), 'Only the head coach can edit development.');
+  const denied = denyUnless(canWriteDevelopmentGoals(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   const deleted = await deleteRepPlayerDevelopmentGoal(goalId, teamId, playerId);

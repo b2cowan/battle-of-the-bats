@@ -28,6 +28,18 @@
 
 ---
 
+### [2026-09-12] — Finding #40: Migration 292 review — development write policies follow the Development grant (approved), and the `rep_*` coach policies have never been season-scoped
+**Severity:** Advisory (the migration) · Medium (the pre-existing gap it walked past)
+**Finding:** Migration 292 rewrites the 14 write policies on the five development tables (`rep_team_measurable_types`, `rep_player_measurables`, `rep_player_development_goals`, `rep_team_evaluation_sessions`, `rep_player_continuity_links`) from `coach_role = 'head_coach'` to `coach_role = 'head_coach' OR (capabilities->>'development') = 'true'`, reading `rep_team_coaches.capabilities`. Reviewed against live dev `pg_policies` before application: the 14 names it drops are exactly the 14 that exist (nothing else is on these tables besides the four SELECT pairs, which it leaves alone). The predicate is NULL-safe — a NULL bundle, a missing key or a non-boolean value all read as "not granted", and the `OR` carries the head coach whose bundle is NULL by construction. Reading the PROJECTION (`rep_team_coaches`) rather than the membership truth is correct: it is the row every write route gates on, `syncLiveSeasonProjection` mirrors capabilities onto it on every access change, and migs 189/190/191 read it. No index is needed for the `->>` comparison — it runs over the handful of rows one `user_id` holds.
+
+**What the review found on the way past, and did not change:** every coach write policy in the `rep_*` family (these five included, since mig 071) admits a caller through `team_id IN (SELECT team_id FROM rep_team_coaches WHERE user_id = auth.uid() …)` with **no program-year or season filter**. Since M1 (2026-08-16) a CLOSED season's `rep_team_coaches` row is kept as the immutable record of who coached and "grants nothing" — but the policy cannot tell it from a live row, so a coach removed from a team who once head-coached a finished season still satisfies the predicate for a direct PostgREST write with their own JWT. Dormant today: every coach route runs service-role and gates on `getCoachingAssignmentsForUser`, which filters to draft/active years and (for closed rows) an active membership. Two further pre-existing notes: the subquery filters on `user_id` alone while the only covering index is `(org_id, user_id)` — harmless at this table's size; and the goals' app-layer compound (the grant AND `notes`) is deliberately NOT in the policy, because `notes` is a read grant and folding it into a write policy would make the two layers disagree the moment the app's compound moved.
+
+**Tables affected:** rep_team_measurable_types, rep_player_measurables, rep_player_development_goals, rep_team_evaluation_sessions, rep_player_continuity_links (mig 292); every `rep_*` table whose coach policies read `rep_team_coaches` (the season gap).
+**Recommendation:** Apply 292 as written (approved). For the season gap, when the `rep_*` policies are next touched as a family: join `rep_program_years` and require `status IN ('draft','active')` in the coach-write subqueries, or point them at `rep_team_staff_memberships` with `status = 'active'` (the M1 truth) — one migration for the whole family, never one table at a time. Not in scope for the development lifecycle; recorded so it is a decision rather than a surprise.
+**Status:** Open (the season gap) · Addressed — mig 292 applied to dev 2026-09-12 (the migration itself)
+
+---
+
 ### [2026-08-17] — Finding #35: Identity is a STRING — guardian/coach identity travels as a normalized email across 30 tables; there is no person entity
 
 **Severity:** High (architectural debt; the single largest one in the schema)

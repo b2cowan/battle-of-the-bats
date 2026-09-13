@@ -12,7 +12,7 @@ import {
   getCurrentCycleContinuityIdentities,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { matchPriorIdentities, type ContinuityIdentity, type ContinuityRow } from '@/lib/continuity-match';
 
 /**
@@ -45,7 +45,7 @@ export const GET = withObservability(async (req: Request,
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can review returning players.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   const url = new URL(req.url);

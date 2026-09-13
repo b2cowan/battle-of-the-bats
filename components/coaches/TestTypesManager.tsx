@@ -126,7 +126,7 @@ export default function TestTypesManager({ apiBase, types, canWrite, onTypesChan
           headline="No tests on your list yet"
           description="Objective measurements you track over the season — not the tryout scorecard."
           payoff="Add your first test and an evaluation session can record it for the whole roster in one go."
-          blocker={canWrite ? undefined : 'Only the head coach edits the test list.'}
+          blocker={canWrite ? undefined : 'Editing the test list needs the Development grant — ask your head coach.'}
         />
       )}
       {types.map(t => (

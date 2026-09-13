@@ -2653,6 +2653,31 @@ const QA_PEOPLE = [
     },
   },
   {
+    email: 'uat-asst-development@uat-test-org.local',
+    name: 'UAT Assistant (development)',
+    role: 'assistant_coach',
+    /**
+     * ⚠⚠ **THE ONLY PERSONA THAT HOLDS THE DEVELOPMENT GRANT** (owner ruling 2026-09-11; built
+     * 2026-09-12) — added for the same reason the treasurer and the money-reader were: a walk of
+     * "an assistant with the switch ON can define a test, start a session and record a reading" had
+     * no account to sign in as, and signing in as the head coach would have read as a PASS while
+     * proving nothing about the grant.
+     *
+     * Otherwise an ordinary assistant (attendance + lineups, no money), plus `notes: true` so the
+     * goal form appears too — a goal is written only with the grant AND Internal notes
+     * (`canWriteDevelopmentGoals`). `uat-asst-nomoney` is the pair: identical duties, the grant
+     * OFF, so every difference between them on Skills & Goals is the switch and nothing else.
+     *
+     * ⚠ Every key spelled out (the treasurer's rule): an omitted key falls back to the assistant
+     * default, and `development` defaults OFF — which is the one thing this persona exists to hold.
+     */
+    caps: {
+      schedule: true, scheduleManage: false, attendance: true, lineups: true, rosterPii: false,
+      notes: true, money: 'off', documents: 'off', announcementsSend: false, tryouts: false,
+      staffChat: true, development: true,
+    },
+  },
+  {
     email: 'uat-helper@uat-test-org.local',
     name: 'UAT Helper',
     role: 'assistant_coach',

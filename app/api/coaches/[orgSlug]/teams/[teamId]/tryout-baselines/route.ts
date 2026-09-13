@@ -13,7 +13,7 @@ import {
   getRepPlayerDevelopmentGoalsForPlayer,
 } from '@/lib/db';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import { rankTryoutCandidates } from '@/lib/tryout-scoring';
 import {
@@ -36,8 +36,9 @@ import { ORG_TIME_ZONE } from '@/lib/timezone';
  *        explicitly confirmed.
  *
  * ⚠ **BOTH capabilities, and that is the honest gate.** This route reads tryout evaluation
- * content (`tryouts` — head-coach-only as today) AND writes development goals
- * (`canWriteDevelopment`). Gating on either alone would open a side door around the other's rule.
+ * content (`tryouts`) AND writes development goals (`canWriteDevelopmentGoals` — the Development
+ * grant with Internal notes, since 2026-09-12). Gating on either alone would open a side door
+ * around the other's rule.
  *
  * ⚠ **LIVE SEASON ONLY, by construction.** Built on `resolveLiveCoachTeamContext`, never the
  * working-season read: seeding a season's development plan is an INSTRUMENT, not a record, so a
@@ -54,7 +55,7 @@ async function resolveSeedingContext(orgSlug: string, teamId: string) {
   const caps = resolved.assignment.capabilities;
   const denied =
     denyUnless(caps.tryouts, 'Only the head coach manages tryouts.') ??
-    denyUnless(canWriteDevelopment(caps), 'Only the head coach can edit development.');
+    denyUnless(canWriteDevelopmentGoals(caps), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return { error: denied };
   return resolved;
 }

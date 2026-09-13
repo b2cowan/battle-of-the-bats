@@ -6,7 +6,7 @@ import {
   deleteRepPlayerMeasurable,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 export const DELETE = withObservability(async (_req: Request,
@@ -32,7 +32,7 @@ export const DELETE = withObservability(async (_req: Request,
   const past = pastSeasonRefusal(player, assignment);
   if (past) return NextResponse.json({ error: past.error }, { status: past.status });
 
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can edit measurables.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   // The URL names the player — an entry id from another player 404s via the player_id

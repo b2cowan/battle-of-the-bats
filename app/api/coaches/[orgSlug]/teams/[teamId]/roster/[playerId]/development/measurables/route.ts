@@ -8,7 +8,7 @@ import {
   createRepPlayerMeasurable,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableInput } from '@/lib/development-input';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
@@ -43,7 +43,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can log measurables.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: unknown;

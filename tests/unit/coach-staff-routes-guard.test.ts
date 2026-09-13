@@ -120,7 +120,7 @@ test('the past-season library imports need BOTH the library write and the look-b
   }
 });
 
-test('Skills & Goals writes stay head-coach-only — the seam R7 did not cross', () => {
+test('Skills & Goals writes gate on the Development grant predicate — the seam R7 did not cross', () => {
   for (const route of [
     `${TEAM_API}/roster/[playerId]/development/goals/route.ts`,
     `${TEAM_API}/roster/[playerId]/development/measurables/route.ts`,
@@ -128,6 +128,7 @@ test('Skills & Goals writes stay head-coach-only — the seam R7 did not cross',
     `${TEAM_API}/development/measurable-types/route.ts`,
   ]) {
     const post = handler(read(route), 'POST');
-    assert.match(post, /denyUnless\(canWriteDevelopment\(/, `${route} must still gate on the head-only Development predicate`);
+    // `canWriteDevelopmentGoals` on the goals route — the grant WITH notes (2026-09-12).
+    assert.match(post, /denyUnless\(canWriteDevelopment(?:Goals)?\(/, `${route} must still gate on the Development grant predicate`);
   }
 });

@@ -29,6 +29,7 @@ const HEAD_CAPS: CoachCapabilities = {
   announcementsSend: true,
   tryouts: true,
   scoutingBook: true,
+  development: true,
 };
 
 function caps(overrides: Partial<CoachCapabilities> = {}): CoachCapabilities {
@@ -451,9 +452,11 @@ describe('resolveBoard — the fixed set', () => {
       // ⚠ A1 (2026-08-03): must be an ASSISTANT holding nothing. This case used to reach a short
       // board via `roster: 'off'` on the head-coach baseline — but a head coach always has record
       // access, so the old override was proving less than it looked like it was.
+      // `development` too (2026-09-12): the Development grant is the eighth record duty, so an
+      // assistant "holding nothing" must not hold it either.
       caps: caps({
         isHeadCoach: false, money: 'off', documents: 'off',
-        lineups: false, attendance: false, notes: false, tryouts: false,
+        lineups: false, attendance: false, notes: false, tryouts: false, development: false,
       }),
     }));
     assert.ok(slots.length < BOARD_SLOT_COUNT);

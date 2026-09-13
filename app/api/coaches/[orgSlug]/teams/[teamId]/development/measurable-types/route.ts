@@ -6,7 +6,7 @@ import {
   createRepTeamMeasurableType,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableTypeInput } from '@/lib/development-input';
 
 async function resolveContext(orgSlug: string, teamId: string) {
@@ -40,7 +40,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage measurable types.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: unknown;

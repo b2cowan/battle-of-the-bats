@@ -39,6 +39,8 @@ interface ArchiveSeason {
 
 interface DevelopmentData {
   canWrite: boolean;
+  /** The grant WITH Internal notes — goals (and the carry offer) draw on this, results on `canWrite`. */
+  canWriteGoals: boolean;
   showGoals: boolean;
   showMeasurables: boolean;
   types: RepTeamMeasurableType[];
@@ -473,6 +475,7 @@ export default function PlayerDevelopmentSection({
   }
 
   const canWrite = data.canWrite;
+  const canWriteGoals = data.canWriteGoals;
   const activeTypes = data.types.filter(t => t.isActive);
   // The value/date fields only exist once a real, active test is selected — no dead "Log it".
   const selectedLogType = activeTypes.find(t => t.id === logTypeId) ?? null;
@@ -567,7 +570,7 @@ export default function PlayerDevelopmentSection({
 
       {/* ── Carry-forward offer (3D, M5) — one-time, never automatic; blueprint-blue is the
              offer voice (amber stays reserved for continuity-verify) ── */}
-      {canWrite && data.carry && (
+      {canWriteGoals && data.carry && (
         <div className={styles.devCarryBanner}>
           <p style={{ margin: 0, fontSize: '0.85rem' }}>
             <b>Returning player — bring forward the {data.carry.workingCount} focus area{data.carry.workingCount === 1 ? '' : 's'} they were working on in {data.carry.priorSeasonLabel}?</b>
@@ -604,7 +607,7 @@ export default function PlayerDevelopmentSection({
           <p className={styles.miniListLabel} style={{ marginTop: 0 }}>Focus areas</p>
           {data.goals.length === 0 && !goalFormOpen && (
             <p className={styles.detailPlaceholder}>
-              {canWrite ? 'No focus areas yet — add the first thing this player is working on.' : 'No focus areas yet.'}
+              {canWriteGoals ? 'No focus areas yet — add the first thing this player is working on.' : 'No focus areas yet.'}
             </p>
           )}
           {data.goals.length > 0 && (
@@ -612,7 +615,7 @@ export default function PlayerDevelopmentSection({
               {data.goals.map(g => (
                 <li key={g.id} className={styles.miniRow}>
                   <span className={styles.miniRowMain}>
-                    {canWrite ? (
+                    {canWriteGoals ? (
                       <button type="button"
                         style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', textAlign: 'left' }}
                         title="Edit this focus area"
@@ -627,7 +630,7 @@ export default function PlayerDevelopmentSection({
                     ) : g.focusArea}
                     {g.note && <span className={styles.devCardNote}>{g.note}</span>}
                   </span>
-                  {canWrite ? (
+                  {canWriteGoals ? (
                     <button type="button"
                       className={`${styles.badge} ${goalPill(g.status)}`}
                       style={{ cursor: 'pointer' }}
@@ -642,14 +645,14 @@ export default function PlayerDevelopmentSection({
               ))}
             </ul>
           )}
-          {canWrite && !goalFormOpen && (
+          {canWriteGoals && !goalFormOpen && (
             <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
               style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: '0.55rem 0 1rem' }}
               onClick={() => { setEditingGoalId(null); setGoalFocus(''); setGoalNote(''); setGoalErr(''); setGoalFormOpen(true); }}>
               <Plus size={13} /> Add focus area
             </button>
           )}
-          {canWrite && goalFormOpen && (
+          {canWriteGoals && goalFormOpen && (
             <div className={styles.formGrid} style={{ margin: '0.6rem 0 1.1rem' }}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="dev-goal-focus">Focus area</label>

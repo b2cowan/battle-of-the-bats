@@ -9,7 +9,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
-import { denyUnless, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { isValidRecordDate } from '@/lib/measurable-format';
 
 async function resolveContext(orgSlug: string, teamId: string) {
@@ -64,7 +64,7 @@ export const POST = withObservability(async (req: Request,
   ]);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can run evaluation sessions.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: { sessionDate?: unknown; note?: unknown };

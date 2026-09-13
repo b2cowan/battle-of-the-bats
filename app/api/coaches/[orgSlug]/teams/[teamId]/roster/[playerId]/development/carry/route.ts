@@ -9,7 +9,7 @@ import {
   setContinuityCarryDecision,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { findConfirmedLink } from '@/lib/continuity-match';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
@@ -44,7 +44,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, player, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can decide this.');
+  const denied = denyUnless(canWriteDevelopmentGoals(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: { action?: unknown };

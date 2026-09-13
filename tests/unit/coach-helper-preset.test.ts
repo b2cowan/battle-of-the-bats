@@ -72,6 +72,8 @@ describe('the helper preset grants exactly what was authorised', () => {
     assert.equal(caps.lineups, false);
     assert.equal(caps.rosterWrite, false);
     assert.equal(caps.isHeadCoach, false);
+    // The Development grant (2026-09-11) is a per-person delegation — never part of the preset.
+    assert.equal(caps.development, false);
   });
 
   it('survives a round trip through the client sanitiser', () => {

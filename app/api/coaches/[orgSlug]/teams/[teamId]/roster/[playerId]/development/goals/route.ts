@@ -7,7 +7,7 @@ import {
 } from '@/lib/db';
 import type { RepDevelopmentGoalStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readFocusArea, verifyFocusTag } from '@/lib/development-goal-input';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
@@ -44,7 +44,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment } = resolved;
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can edit development.');
+  const denied = denyUnless(canWriteDevelopmentGoals(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: { focusArea?: unknown; note?: unknown; status?: unknown; tagId?: unknown };

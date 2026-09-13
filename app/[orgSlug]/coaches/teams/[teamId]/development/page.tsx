@@ -282,7 +282,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
           headline={canWrite ? 'No sessions yet' : 'No sessions have been run yet'}
           description="An evaluation session runs your tests across the whole roster in one go, usually at a practice."
           payoff="A few a season is what turns single readings into a trend — and it's what fills the team board and the “Is everyone getting attention?” report in Insights."
-          blocker={canWrite ? undefined : 'Only the head coach can start a session and record readings.'}
+          blocker={canWrite ? undefined : 'Starting a session and recording results needs the Development grant — ask your head coach.'}
           secondaryAction={{ label: 'How development works', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
         />
       )}

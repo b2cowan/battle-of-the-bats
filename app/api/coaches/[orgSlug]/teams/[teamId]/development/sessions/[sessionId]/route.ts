@@ -14,7 +14,7 @@ import {
   restampRepSessionMeasurables,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewMeasurables, canWriteDevelopment, redactRoster } from '@/lib/coach-capabilities';
+import { denyUnless, canViewMeasurables, canWriteDevelopment, redactRoster, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readSessionPatchInput } from '@/lib/development-input';
 
 /**
@@ -117,7 +117,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, sessionId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, sessionId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), 'Only the head coach can edit sessions.');
+  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: unknown;
@@ -186,7 +186,7 @@ export const DELETE = withObservability(async (_req: Request,
   const { orgSlug, teamId, sessionId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, sessionId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), 'Only the head coach can delete sessions.');
+  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   // Entries survive (SET NULL → they become singles); only the grouping artifact goes.

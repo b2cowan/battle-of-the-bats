@@ -71,7 +71,7 @@ export type SheetTarget =
 // ── The controls, with their sentences ──────────────────────────────────────────────────────
 
 type SegKey = 'schedule' | 'documents' | 'money';
-type SwitchKey = 'attendance' | 'lineups' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts';
+type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts';
 /** A three-way option: its button label, and the one word the row chip uses ("Schedule · edit"). */
 type SegOption = { value: string; label: string; chip: string };
 export type StaffControl =
@@ -93,6 +93,14 @@ export const EVERYDAY: ReadonlyArray<StaffControl> = [
     options: [{ value: 'off', label: 'Hidden', chip: '' }, { value: 'view', label: 'View', chip: 'view' }, { value: 'manage', label: 'View + edit', chip: 'edit' }] },
   { kind: 'switch', key: 'attendance', label: 'Attendance', sentence: 'Mark who came, at practices and games.' },
   { kind: 'switch', key: 'lineups', label: 'Lineups', sentence: 'Build and change game lineups.' },
+  /**
+   * THE DEVELOPMENT GRANT (owner ruling 2026-09-11) — one switch for every development write.
+   * Everyday, not Sensitive: it hands over no new READ (goals still ride Internal notes, results
+   * ride the record duties) — it delegates the recording. The sentence names the compound the
+   * way Documents names Contacts: a goal is written only with Internal notes as well.
+   */
+  { kind: 'switch', key: 'development', label: 'Development',
+    sentence: 'Define tests, run sessions and record results. With Internal notes, write goals too.' },
   { kind: 'switch', key: 'staffChat', label: 'Staff chat', sentence: 'A seat in the team’s private staff room.' },
   { kind: 'switch', key: 'scoutingBook', label: 'Scouting book',
     sentence: 'Read everyone’s notes on opponents and the team’s book line. Off, they can still add their own.' },
@@ -125,7 +133,7 @@ const STANDING_ACCESS_NOTE =
 
 /** The one rule the old grid never stated, said on the control that trips it. */
 const OPENS_ROSTER = 'Turning this on also opens the roster page for them.';
-const RECORD_DUTIES: ReadonlySet<string> = new Set(['attendance', 'lineups', 'documents']);
+const RECORD_DUTIES: ReadonlySet<string> = new Set(['attendance', 'lineups', 'documents', 'development']);
 
 /** Any WIDENING counts as a grant, not just off→on — money read→write is the bigger of the two. */
 const RANK: Record<string, number> = { off: 0, view: 1, read: 1, manage: 2, write: 2 };
@@ -148,6 +156,7 @@ export function grantsFrom(c: Caps): Required<AssistantCapabilityGrants> {
     money: c.money, documents: c.documents,
     announcementsSend: c.announcementsSend, tryouts: c.tryouts,
     staffChat: c.staffChat, scoutingBook: c.scoutingBook,
+    development: c.development,
   };
 }
 

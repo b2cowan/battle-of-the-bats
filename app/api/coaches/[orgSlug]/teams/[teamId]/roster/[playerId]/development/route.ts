@@ -17,7 +17,7 @@ import {
 import type { RepPlayerContinuityLink, RepRosterPlayer, RepTeamMeasurableType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import {
-  denyUnless, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment,
+  denyUnless, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment, canWriteDevelopmentGoals,
 } from '@/lib/coach-capabilities';
 import { computeTeamSeasonLineupAnalytics } from '@/lib/team-season-analytics';
 import { linkCurrentId } from '@/lib/continuity-match';
@@ -109,7 +109,11 @@ export const GET = withObservability(async (_req: Request,
     const denied = denyUnless(false, 'You do not have access to player development.');
     return denied!;
   }
+  // Two write flags, because the grant covers results on its own and goals only WITH notes
+  // (`canWriteDevelopmentGoals`). The section draws the log form on the first and the goal form,
+  // the continuity decisions and the carry offer on the second.
   const canWrite = canWriteDevelopment(caps);
+  const canWriteGoals = canWriteDevelopmentGoals(caps);
 
   const [types, measurables, goals, innings, links, tryoutBaseline] = await Promise.all([
     showMeasurables ? getRepTeamMeasurableTypes(teamId, { includeRetired: true }) : Promise.resolve([]),
@@ -199,7 +203,7 @@ export const GET = withObservability(async (_req: Request,
   // archive season (goals + label) — no re-derivation. Count-honest; measurables are never
   // offered (copying readings across seasons would fabricate trend data). ──
   let carry: { linkId: string; priorRosterId: string; priorSeasonLabel: string; workingCount: number } | null = null;
-  if (canWrite && directLink && directLink.carryStatus === null && directLink.priorRosterId) {
+  if (canWriteGoals && directLink && directLink.carryStatus === null && directLink.priorRosterId) {
     const directArchive = archive.find(a => a.priorRosterId === directLink.priorRosterId);
     const workingCount = directArchive?.goals.filter(g => g.status === 'working').length ?? 0;
     if (directArchive && workingCount > 0) {
@@ -214,6 +218,7 @@ export const GET = withObservability(async (_req: Request,
 
   return NextResponse.json({
     canWrite,
+    canWriteGoals,
     showGoals,
     showMeasurables,
     types,

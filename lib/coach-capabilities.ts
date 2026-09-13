@@ -39,6 +39,7 @@ export interface AssistantCapabilityGrants {
   tryouts?: boolean;             // tryout candidates + decisions (guardian PII, roster-building)
   staffChat?: boolean;           // a seat in the team's staff chat room (see the note below)
   scoutingBook?: boolean;        // read the POOLED scouting book (everyone's notes + the book line)
+  development?: boolean;         // WRITE development — tests, sessions, results, goals (see below)
 }
 
 /**
@@ -90,6 +91,22 @@ export interface CoachCapabilities {
    * may change until a head coach explicitly turns it off for someone.
    */
   scoutingBook: boolean;
+  /**
+   * ═══ THE DEVELOPMENT GRANT (owner ruling 2026-09-11; development lifecycle ruling 9) ═══
+   * WRITE every development record — define and retire tests, start sessions, record results
+   * (and attempts), goals, observations, reviews. Development writes were head-coach-only from
+   * birth (Player Development D1, 2026-07-17); the owner replaced that rule with ONE delegable
+   * switch: *"make an access option to write to development and have that cover all of the
+   * writes … so that when this is released, if a head coach wants to delegate this they can.
+   * Read can stay with all coaches."*
+   *
+   * Always TRUE for the head coach (and not switchable for themselves — a head row ignores its
+   * stored grants entirely); FALSE by default for an assistant; every kind preset carries it
+   * false. Reading is unchanged: goals ride `notes`, results ride record access — except that
+   * this grant is itself one of the record DUTIES (`hasNonMoneyRecordDuty`), because a power to
+   * record results with no door to the screen that records them is a dead switch.
+   */
+  development: boolean;
 }
 
 /** The least-privilege bundle a freshly-invited assistant gets before any grant. */
@@ -114,6 +131,9 @@ export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   // TRUE by default — the pooled scouting book has always come bundled with `schedule`. Only an
   // explicit grant turns it off for someone.
   scoutingBook: true,
+  // OFF by default: development writes were head-only until 2026-09-11, and the ruling is that a
+  // head coach delegates them per person, deliberately — never by accident of a default.
+  development: false,
 };
 
 /** A head coach's full-access bundle. */
@@ -132,6 +152,7 @@ const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   tryouts: true,
   staffChat: true,
   scoutingBook: true,
+  development: true,
 };
 
 /**
@@ -166,7 +187,9 @@ export function sanitizeStaffKind(input: unknown): StaffKind | null {
  * ⚠ `assistant` is the explicit form of `ASSISTANT_DEFAULTS` (written out so a PATCH from the
  * sheet round-trips every key — an omitted key is dropped, not left alone). `helper` is the
  * Phase 4 preset unchanged. The two new ones are the plan's §2.2, with one addition it could not
- * have known about: the `scoutingBook` grant (2026-09-11).
+ * have known about: the `scoutingBook` grant (2026-09-11). ⚠ And a second one the same day: the
+ * `development` grant is FALSE on all four — delegating development writes is a per-person
+ * decision the head coach makes on the sheet, never something a kind hands over.
  *
  * ⚠ THE TREASURER TURNS THE SCOUTING BOOK OFF, and that is what keeps the approved plan true.
  * Since 2026-09-11 the Insights door opens for anyone who can read the pooled book, so a
@@ -179,17 +202,17 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
   assistant: {
     schedule: true, scheduleManage: true, attendance: true, lineups: true, staffChat: true,
     documents: 'view', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: true,
+    tryouts: false, scoutingBook: true, development: false,
   },
   manager: {
     schedule: true, scheduleManage: true, attendance: false, lineups: false, staffChat: true,
     documents: 'manage', money: 'write', rosterPii: true, notes: false, announcementsSend: true,
-    tryouts: false, scoutingBook: true,
+    tryouts: false, scoutingBook: true, development: false,
   },
   treasurer: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'write', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: false,
+    tryouts: false, scoutingBook: false, development: false,
   },
   /**
    * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
@@ -211,7 +234,7 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
   helper: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: true,
+    tryouts: false, scoutingBook: true, development: false,
   },
 };
 
@@ -363,6 +386,7 @@ export function resolveCoachCapabilities(
     tryouts: g.tryouts ?? ASSISTANT_DEFAULTS.tryouts,
     staffChat: g.staffChat ?? ASSISTANT_DEFAULTS.staffChat,
     scoutingBook: g.scoutingBook ?? ASSISTANT_DEFAULTS.scoutingBook,
+    development: g.development ?? ASSISTANT_DEFAULTS.development,
   };
 }
 
@@ -420,14 +444,42 @@ export const canManagePlayerDocuments = (c: CoachCapabilities) => canManageDocum
  */
 export const canManageAwards = (c: CoachCapabilities) => hasRecordAccess(c);
 // Player Development (Phase 3, D1): goals are coach-judgment content about a minor — same
-// sensitivity class as notes; measurables ride roster visibility; ALL Development writes
-// (goals, entries, the type library) are head-coach-only in V1. No new capability key.
+// sensitivity class as notes; measurables ride roster visibility.
 export const canViewDevelopmentGoals = (c: CoachCapabilities) => c.notes;
 // Distinct NAME kept as a semantic seam (measurable visibility could diverge later). It used to
 // alias roster visibility; A1 retired that grant, so it aliases record access — the same people,
 // since every assistant who held `roster: 'view'` also holds a record grant.
 export const canViewMeasurables = (c: CoachCapabilities) => hasRecordAccess(c);
-export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach;
+/**
+ * WRITE development — tests, sessions, results, continuity decisions, and (with notes) goals.
+ *
+ * ⚠ WAS `c.isHeadCoach` from 2026-07-17 to 2026-09-11 (D1: every development write head-only).
+ * The owner replaced that with the delegable `development` grant (ruling 9 of the development
+ * lifecycle; see the field's own note on `CoachCapabilities`). The head coach still always
+ * passes; an assistant passes only when the head coach switched it on for them.
+ *
+ * ⚠ THE RLS POLICIES SAY THE SAME THING (mig 292 rewrote the head-coach-only predicates from
+ * migs 189/190/191). Change one, change both — mig 141's lesson: the database must encode the
+ * real write rule, not a looser or a stricter one.
+ */
+export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach || c.development;
+/**
+ * WRITE a goal (add, edit, delete, carry forward, seed from a tryout) — the grant AND `notes`.
+ *
+ * Goals are READ through Internal notes (unchanged by the ruling). A coach who could write a goal
+ * they cannot read back would be the standing contradiction `canWriteScoutingSummary` already
+ * refuses one predicate up, so the compound is required here too. A head coach holds both.
+ */
+export const canWriteDevelopmentGoals = (c: CoachCapabilities) =>
+  canWriteDevelopment(c) && canViewDevelopmentGoals(c);
+/**
+ * ONE sentence for every development write the grant refuses — the routes' 403 and the screens'
+ * held-back notes both read it, so the same person meets the same words on every door.
+ * ⚠ Replaced fifteen hand-written "Only the head coach can…" strings (2026-09-12), all of which
+ * the grant made untrue. `tests/unit/development-grant.test.ts` refuses a new one.
+ */
+export const DEVELOPMENT_GRANT_MESSAGE =
+  'You don’t have the Development grant on this team. Ask the head coach to turn it on.';
 
 // ── "Can this coach COMPLETE the action?" ─────────────────────────────────────
 /**
@@ -559,8 +611,10 @@ export const canJoinStaffChat = (c: CoachCapabilities) => c.staffChat;
  * duty added to `CoachCapabilities` had to be remembered in two places, and forgetting one would
  * silently open or close a door with nothing to catch it.
  */
+// ⚠ `development` is the EIGHTH duty (2026-09-12): a person delegated the recording of results
+// holds a real claim on the team's record, and without it the grant would open no screen at all.
 const hasNonMoneyRecordDuty = (c: CoachCapabilities) =>
-  c.attendance || c.lineups || c.notes || c.documents !== 'off' || c.tryouts;
+  c.attendance || c.lineups || c.notes || c.documents !== 'off' || c.tryouts || c.development;
 
 export const hasRecordAccess = (c: CoachCapabilities) =>
   c.isHeadCoach || hasNonMoneyRecordDuty(c) || c.money !== 'off';
@@ -662,6 +716,7 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
   const s = bool(src.announcementsSend); if (s !== undefined) out.announcementsSend = s;
   const t = bool(src.tryouts); if (t !== undefined) out.tryouts = t;
   const sb = bool(src.scoutingBook); if (sb !== undefined) out.scoutingBook = sb;
+  const dv = bool(src.development); if (dv !== undefined) out.development = dv;
   if (typeof src.money === 'string' && MONEY_VALUES.includes(src.money as MoneyAccess)) out.money = src.money as MoneyAccess;
   if (typeof src.documents === 'string' && DOCS_VALUES.includes(src.documents as DocsAccess)) out.documents = src.documents as DocsAccess;
   return out;

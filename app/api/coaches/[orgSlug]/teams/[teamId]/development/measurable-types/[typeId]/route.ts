@@ -5,7 +5,7 @@ import {
   updateRepTeamMeasurableType,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableTypeInput } from '@/lib/development-input';
 
 export const PATCH = withObservability(async (req: Request,
@@ -20,7 +20,7 @@ export const PATCH = withObservability(async (req: Request,
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
 
-  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can manage measurable types.');
+  const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   let body: unknown;
