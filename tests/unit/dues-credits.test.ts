@@ -3,7 +3,7 @@
  *
  *  - cash always claims a bill before a credit does (the self-correcting rule);
  *  - last_first eats the schedule from the far end and cascades (mockup §3);
- *  - keep_separate applies nothing except forgiveness;
+ *  - keep_separate applies nothing except a write-off (forgiveness, and an Adjustment since F03);
  *  - forgiveness spends before the family's own money and is outside the identity;
  *  - paying out a credit puts the bills back up (mockup §5);
  *  - and the three-state identity — issued = applied + paidOut + owedBack — holds for every
@@ -151,6 +151,35 @@ describe('applyCreditsToBills — the mockup walkthroughs', () => {
     assert.equal(pos.applied, 0);
     assert.equal(pos.owedBack, 500);
     assert.equal(pos.perInstallment[3].toSend, 800);
+  });
+
+  /* Owner ruling F03 (i), 2026-09-12: an Adjustment is a WRITE-OFF, so on a hand-back team it
+     lowers the bill now, exactly as forgiveness does there — and unlike forgiveness it stays inside
+     the identity, so what finds no bill is genuinely owed back. Before this it sat in owedBack in
+     full and the Pay out sheet offered it to a family who might have paid nothing. */
+  it('keep_separate: an Adjustment lands on the bill NOW, like forgiveness — money credits still wait', () => {
+    const pos = applyCreditsToBills({
+      coverage: rileyCoverage(),
+      credits: [credit(300, { creditType: 'other' }), credit(500, { creditType: 'fundraiser' })],
+      mode: 'keep_separate',
+    });
+    assert.equal(pos.applied, 300, 'the write-off landed');
+    assert.equal(pos.owedBack, 500, 'the fundraiser share did not');
+    // Same next-first walk forgiveness takes in this mode: the most imminent open bill.
+    assert.equal(pos.perInstallment[2].toSend, 500);
+    assert.equal(pos.perInstallment[3].toSend, 800);
+    assert.equal(pos.applied + pos.paidOut + pos.owedBack, 800, 'the identity holds');
+  });
+
+  it('keep_separate: an Adjustment that finds no bill is owed back — the paid-in-full write-off', () => {
+    // All four bills paid in cash; the coach writes off $17 for photos never ordered.
+    const pos = applyCreditsToBills({
+      coverage: rileyCoverage([pay(800), pay(800), pay(800), pay(800)]),
+      credits: [credit(17, { creditType: 'other', description: 'Team photos not ordered' })],
+      mode: 'keep_separate',
+    });
+    assert.equal(pos.applied, 0);
+    assert.equal(pos.owedBack, 17, 'the credit that carries the reason IS the payable-back credit');
   });
 
   it('forgiveness lowers bills even under keep_separate, and is never owed back', () => {

@@ -22,10 +22,11 @@
  */
 import { computeFamilyDues, type FamilyDuesPlayer } from './coach-family-dues';
 import type { DuesLadder } from './dues-payments';
-import { formatMoneyCell as money } from './coach-money-exports';
+import { fmt as money } from './coach-money-summary';
 import { formatStoredDate } from './timezone';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
 import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
+import { buildDuesBreakdown, isDuesAdjustment } from './coach-dues-breakdown';
 
 // ── Input: the dues payload, structurally ────────────────────────────────────
 // These are the fields the coach dues GET already serves — the panel passes what it has.
@@ -54,7 +55,7 @@ export interface StatementPlayerInput {
   /** Per-installment CASH coverage — the "$200.00 of $300.00" figures. */
   coverage: { installmentId: string; allocated: number }[];
   payments: { amount: number; receivedDate: string; method: DuesPaymentMethod; note: string | null }[];
-  credits: { amount: number; creditDate: string; description: string; creditType?: string }[];
+  credits: { amount: number; creditDate: string; description: string; creditType?: string; paymentId?: string | null; createdAt?: string | null }[];
   payouts: { amount: number; paidDate: string; method: DuesPaymentMethod; note: string | null }[];
   /** What the family actually SENT — cappedPaid plus their own standing overpayment (D6). */
   paidAmount: number;
@@ -96,7 +97,12 @@ export interface FamilyDuesStatement {
   /** The headline band, pre-formatted. Credits read "—" when none. */
   /** `handedBack` reads "—" when nothing was, so a household that was never refunded keeps its
    *  four-tile band unchanged. */
-  stats: { billed: string; received: string; credits: string; handedBack: string; leftToSend: string };
+  stats: { billed: string; dues: string; fundraising: string; otherCredits: string; balance: string; received: string; credits: string; handedBack: string; leftToSend: string };
+  /** Original bill, adjustments and net dues; absent when there were no adjustments. */
+  billBreakdown: string[][];
+  adjustments: string[][];
+  fundraisingCredits: string[][];
+  otherCredits: string[][];
   /** "What's next" — sentences, in reading order. Never empty. */
   next: string[];
   /** One section per billed child: label + [Payment, Due date, Amount, Received, Credit,
@@ -165,12 +171,24 @@ export function buildFamilyDuesStatements(input: {
         : p.playerFirstName;
 
     const billed = members.reduce((s, p) => s + (p.schedule?.totalAmount ?? 0), 0);
+    const breakdowns = members.map(p => ({ player: p, breakdown: buildDuesBreakdown({
+      credits: p.credits,
+      grossDues: p.schedule?.totalAmount ?? 0,
+      netDues: p.ladder?.dues ?? Math.max(0, (p.schedule?.totalAmount ?? 0) - p.credits.filter(isDuesAdjustment).reduce((s, c) => s + c.amount, 0)),
+      ownMoney: p.ladder?.ownMoney ?? p.credits.filter(c => c.creditType === 'overpayment').reduce((s, c) => s + c.amount, 0),
+    }) }));
+    const sum = (values: number[]) => values.reduce((s, v) => s + Math.round(v * 100), 0) / 100;
+    const adjustmentTotal = sum(breakdowns.map(({ breakdown: b }) => b.adjustmentsTotal));
+    const returnedAdjustments = sum(breakdowns.map(({ breakdown: b }) => b.adjustmentsReturned));
+    const dues = sum(members.map(p => p.ladder?.dues ?? Math.max(0, (p.schedule?.totalAmount ?? 0) - p.credits.filter(isDuesAdjustment).reduce((s, c) => s + c.amount, 0))));
+    const fundraising = sum(breakdowns.map(({ player: p, breakdown: b }) => p.ladder?.fundraising ?? sum(b.fundraising.map(c => c.amount))));
+    const otherCredits = sum(breakdowns.map(({ player: p, breakdown: b }) => p.ladder?.otherCredits ?? p.totalCredits - sum(b.fundraising.map(c => c.amount)) - b.reduction));
     /* ⚠ GROSS, like the coach's table: what the family SENT and what others COVERED, with the money
        handed back stated on its own tile rather than silently netted out of both. A household with
        no payout reads exactly the figures it always did — gross and net are the same number there
        — so the only documents that change are the ones that were contradicting the screen. */
     const received = members.reduce((s, p) => s + (p.ladder ? p.ladder.paid : p.paidAmount), 0);
-    const credits = members.reduce((s, p) => s + (p.ladder ? p.ladder.fundraising + p.ladder.otherCredits : p.totalCredits), 0);
+    const credits = sum([fundraising, otherCredits]);
     const handedBack = members.reduce((s, p) => s + p.payouts.reduce((t, po) => t + po.amount, 0), 0);
     const creditApplied = members.reduce((s, p) => s + p.creditApplied, 0);
     const owedBack = members.reduce((s, p) => s + p.owedBack, 0);
@@ -267,13 +285,29 @@ export function buildFamilyDuesStatements(input: {
        says "earned" made the table disagree with the number printed above it, with a row literally
        labelled "Overpayment" doing the disagreeing. The money is not hidden: it is in Received, and
        every payment behind it is itemised in the payments table on the same page. */
-    const creditRows = members
-      .flatMap(p => p.credits.filter(c => c.creditType !== 'overpayment').map(c => ({ child: displayName(p), ...c })))
-      .sort((a, b) => a.creditDate.localeCompare(b.creditDate))
+    const creditRecords = breakdowns
+      .flatMap(({ player: p, breakdown: b }) => [
+        ...b.fundraising.map(c => ({ child: displayName(p), ...c })),
+        ...b.other.map(({ credit, amount }) => ({ child: displayName(p), ...credit, amount })),
+      ])
+      .sort((a, b) => a.creditDate.localeCompare(b.creditDate));
       // The engine's follows-the-schedule credit has no single day — its stored date moves to
       // the last schedule change, and printing THAT reads as when the money arose (review
       // 2026-09-01; same ruling that keeps the drawer's row dateless).
-      .map(c => [c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION ? '—' : formatStoredDate(c.creditDate), c.child, money(c.amount), c.description || '']);
+    const formatCredit = (c: typeof creditRecords[number]) => [c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION ? '—' : formatStoredDate(c.creditDate), c.child, money(c.amount), c.description || ''];
+    const fundraisingCreditRows = creditRecords.filter(c => c.creditType === 'fundraiser').map(formatCredit);
+    const otherCreditRows = creditRecords.filter(c => c.creditType !== 'fundraiser').map(formatCredit);
+    for (const { player: p, breakdown: b } of breakdowns) {
+      if (b.adjustmentsReturned > CENT) otherCreditRows.push(['—', displayName(p), money(b.adjustmentsReturned), 'Adjustments already returned — offset by Handed back']);
+    }
+    const adjustmentRows = breakdowns.flatMap(({ player: p, breakdown: b }) =>
+      b.adjustments.map(c => [formatStoredDate(c.creditDate), displayName(p), money(-c.amount), c.description]));
+    const billBreakdown = adjustmentTotal > CENT ? [
+      ['Original charges', money(billed)],
+      ['Adjustments & forgiveness', money(-adjustmentTotal)],
+      ...(returnedAdjustments > CENT ? [['Adjustments already returned', money(returnedAdjustments)]] : []),
+      ['Dues', money(dues)],
+    ] : [];
     const payoutRows = members
       .flatMap(p => p.payouts.map(po => ({ child: displayName(p), ...po })))
       .sort((a, b) => a.paidDate.localeCompare(b.paidDate))
@@ -289,6 +323,10 @@ export function buildFamilyDuesStatements(input: {
       paidUp: !(leftToSend > CENT),
       stats: {
         billed: money(billed),
+        dues: money(dues),
+        fundraising: money(fundraising),
+        otherCredits: money(otherCredits),
+        balance: money(sum([dues, -credits, -received, handedBack])),
         received: money(received),
         credits: credits > CENT ? money(credits) : '—',
         handedBack: handedBack > CENT ? money(handedBack) : '—',
@@ -297,7 +335,11 @@ export function buildFamilyDuesStatements(input: {
       next,
       schedules,
       payments: paymentRows,
-      credits: creditRows,
+      credits: [...fundraisingCreditRows, ...otherCreditRows],
+      fundraisingCredits: fundraisingCreditRows,
+      otherCredits: otherCreditRows,
+      adjustments: adjustmentRows,
+      billBreakdown,
       payouts: payoutRows,
     };
   });

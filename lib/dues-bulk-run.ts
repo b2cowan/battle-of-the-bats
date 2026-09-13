@@ -21,7 +21,7 @@
  * late one: the preview would name a set of players and the write would flatten a different set.
  */
 import { planOverpaymentReconcile } from './dues-payments';
-import { payoutFloorViolation, projectScheduleTotalChange } from './dues-credit-guards';
+import { payoutFloorViolation, projectScheduleTotalChange, writeOffCeilingViolation } from './dues-credit-guards';
 
 /** One existing installment row, as both the preview and the write read them. */
 export interface ExistingInstallmentRow {
@@ -160,7 +160,8 @@ export interface DuesRunException {
   /** Display only — names collide (twins, two "Unnamed player" rows). The id is the identity. */
   name: string;
   /**
-   * `blocked` — the payout floor refuses this family; the run completes without them.
+   * `blocked` — a guard refuses this family (the write-off ceiling or the payout floor — exactly
+   *             one of `writtenOff` / `paidOut` is set); the run completes without them.
    * `warn`     — a schedule set by hand that this run would flatten (the keep-checkbox's subject).
    * `plain`    — money already recorded, re-applying to the new plan.
    */
@@ -173,8 +174,12 @@ export interface DuesRunException {
   creditCreated: number;
   /** Their existing per-player arrangement, when `tone` is `warn`. */
   handSet: ExistingScheduleSummary | null;
-  /** Dollars already handed back in cash, when `tone` is `blocked`. Feeds `payoutFloorMessage`. */
+  /** Dollars already handed back in cash, when `tone` is `blocked` for the payout floor. Feeds
+   *  `payoutFloorMessage`. */
   paidOut: number | null;
+  /** Standing write-offs the new bill would fall beneath, when `tone` is `blocked` for the
+   *  write-off ceiling (F04, 2026-09-12). Feeds `writeOffCeilingMessage`. */
+  writtenOff: number | null;
 }
 
 /* ⚠ NO PER-ROW `dateChange` FLAG, DELIBERATELY. A team-wide date fix moves EVERYBODY's dates, so a
@@ -201,7 +206,10 @@ export interface DuesRunPlanInput {
 
 export interface DuesRunPlan {
   exceptions: DuesRunException[];
-  /** Players the payout floor would refuse — excluded from what the button promises. */
+  /** The one total this run gives every player — echoed so a blocked row's sentence can name
+   *  the bill it was refused against without the screen re-deriving it. */
+  newScheduleTotal: number;
+  /** Players a guard would refuse — excluded from what the button promises. */
   blockedPlayerIds: string[];
   /** Per-player arrangements this run would flatten — the keep-checkbox's subjects. */
   handSetPlayerIds: string[];
@@ -245,6 +253,20 @@ export function planRosterDuesRun(input: DuesRunPlanInput): DuesRunPlan {
        roster. Folding the two together would either drop override support silently or widen this
        module's contract for a caller that does not exist yet. The arithmetic underneath — the
        projection and the guard — is already shared, which is the part that could actually drift. */
+    /* The write-off ceiling from the schedule's side (F04, 2026-09-12) is asked FIRST, exactly as
+       the write route asks it: a bill may not drop beneath what has already been written off it.
+       No payout is needed to reach this one — a $0-paid family with a $600 Adjustment is its
+       canonical case. */
+    const writeOffs = writeOffCeilingViolation(newScheduleTotal, credits);
+    if (writeOffs) {
+      blockedPlayerIds.push(player.id);
+      exceptions.push({
+        playerId: player.id, name: player.name, tone: 'blocked',
+        paymentsTotal, creditCreated: 0, handSet, paidOut: null, writtenOff: writeOffs.writtenOff,
+      });
+      continue;
+    }
+
     let paidOut: number | null = null;
     if (payouts.length > 0) {
       const violation = payoutFloorViolation(
@@ -258,7 +280,7 @@ export function planRosterDuesRun(input: DuesRunPlanInput): DuesRunPlan {
       blockedPlayerIds.push(player.id);
       exceptions.push({
         playerId: player.id, name: player.name, tone: 'blocked',
-        paymentsTotal, creditCreated: 0, handSet, paidOut,
+        paymentsTotal, creditCreated: 0, handSet, paidOut, writtenOff: null,
       });
       continue;
     }
@@ -272,7 +294,7 @@ export function planRosterDuesRun(input: DuesRunPlanInput): DuesRunPlan {
     if (handSet) {
       exceptions.push({
         playerId: player.id, name: player.name, tone: 'warn',
-        paymentsTotal, creditCreated, handSet, paidOut: null,
+        paymentsTotal, creditCreated, handSet, paidOut: null, writtenOff: null,
       });
       continue;
     }
@@ -280,7 +302,7 @@ export function planRosterDuesRun(input: DuesRunPlanInput): DuesRunPlan {
     if (paymentsTotal > 0.005) {
       exceptions.push({
         playerId: player.id, name: player.name, tone: 'plain',
-        paymentsTotal, creditCreated, handSet: null, paidOut: null,
+        paymentsTotal, creditCreated, handSet: null, paidOut: null, writtenOff: null,
       });
     }
   }
@@ -291,6 +313,7 @@ export function planRosterDuesRun(input: DuesRunPlanInput): DuesRunPlan {
   const onRoster = new Set(players.map(p => p.id));
   return {
     exceptions,
+    newScheduleTotal,
     blockedPlayerIds,
     handSetPlayerIds: [...handSetPlayerIds].filter(id => onRoster.has(id)),
     dateChangePlayerIds: [...dateMoved].filter(id => onRoster.has(id)),

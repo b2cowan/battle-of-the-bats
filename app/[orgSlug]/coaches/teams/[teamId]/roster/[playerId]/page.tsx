@@ -93,7 +93,7 @@ function playerToForm(p: RepRosterPlayer, pitcherPos: string | null): EditForm {
     playerLastName:    clean(p.playerLastName),
     playerDateOfBirth: p.playerDateOfBirth ?? '',
     playerNumber:      clean(p.playerNumber),
-    positions:         (() => { const prefs = playerPositionPrefs(p, pitcherPos); return { best: prefs.preferred, okay: prefs.canPlay, never: prefs.never }; })(),
+    positions:         (() => { const prefs = playerPositionPrefs(p, pitcherPos); return { best: prefs.preferred, never: prefs.never }; })(),
     pitcher:           (() => { const pit = p.lineupProfile?.pitcher; return { isPitcher: !!pit, rank: pit?.rank ?? 1, maxInnings: pit?.maxInnings != null ? String(pit.maxInnings) : '' }; })(),
     aSquad:            p.lineupProfile?.aSquad ?? false,
     guardianFirstName: clean(p.guardianFirstName),
@@ -212,11 +212,10 @@ export default function PlayerDetailPage({
             playerLastName:     form.playerLastName.trim() || null,
             playerDateOfBirth:  form.playerDateOfBirth || null,
             playerNumber:       form.playerNumber.trim() || null,
-            // Best/Okay/Never picker + Pitching section: the server derives primary/secondary + the
+            // Best/Never picker + Pitching section: the server derives primary/secondary + the
             // stored profile. A-squad (P4) is carried through untouched until that phase ships.
             lineupProfile: {
               preferred: form.positions.best,
-              canPlay: form.positions.okay,
               never: form.positions.never,
               pitcher: pitcherPos && form.pitcher.isPitcher
                 ? { rank: form.pitcher.rank, maxInnings: form.pitcher.maxInnings.trim() === '' ? null : Number(form.pitcher.maxInnings) }
@@ -844,7 +843,15 @@ export default function PlayerDetailPage({
         ) : (
           <>
             <div className={styles.statBoxRow}>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Dues</span></div>
+              <div className={styles.statBox}>
+                <span className={styles.statBoxValue}>{money(dues.ladder.dues)}</span>
+                <span className={styles.statBoxLabel}>Dues</span>
+                {dues.totalAssessed - dues.ladder.dues > 0.005 && (
+                  <span className={styles.detailPlaceholder}>
+                    {money(dues.totalAssessed)} originally charged, after {money(dues.totalAssessed - dues.ladder.dues)} in adjustments &amp; forgiveness
+                  </span>
+                )}
+              </div>
               {/* ⚠⚠ THE LADDER'S FIGURES, IN THE LADDER'S ORDER, SO THIS PAGE AND THE DUES TABLE
                   CANNOT DISAGREE (dues ladder, 2026-09-07). `Credits` used to be one box holding
                   fundraising, costs the family fronted and anything else; `Paid` was net of any

@@ -528,6 +528,23 @@ function family(over: Partial<FamilyDuesStatementRender> & { receiptLabel: strin
 }
 
 describe('family dues statements: one household per page, page counts per FAMILY', () => {
+  it('prints the original-to-net breakdown and keeps adjustment rows out of Other credits', () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildFamilyDuesStatementsDoc(MockDoc, at, {
+      families: [family({ receiptLabel: 'Avery family',
+        stats: { billed: '$700.00', dues: '$683.00', received: '$700.00', credits: '$380.00', fundraising: '$0.00', otherCredits: '$380.00', balance: '($397.00)', handedBack: '—', leftToSend: '$0.00' },
+        billBreakdown: [['Original charges', '$700.00'], ['Adjustments & forgiveness', '($17.00)'], ['Dues', '$683.00']],
+        adjustments: [['Sep 8, 2026', 'Avery', '($17.00)', 'Photos not ordered']],
+        fundraisingCredits: [],
+        otherCredits: [['Aug 20, 2026', 'Avery', '$380.00', 'Reimbursements']],
+      })], teamName: 'UAT', preparedLabel: 'Sep 12, 2026', settings: settings(),
+    });
+    assert.ok(doc.texts.some(t => t.str.toLowerCase() === 'adjustments & forgiveness'));
+    assert.ok(doc.texts.some(t => t.str.toLowerCase() === 'other credits — $380.00'));
+    assert.ok(!doc.texts.some(t => t.str.toLowerCase() === 'credits earned'));
+    assert.ok(at.calls.some(c => c.body.some((r: string[]) => r.includes('Photos not ordered'))));
+    assert.ok(at.calls.some(c => c.body.some((r: string[]) => r[0] === 'Dues' && r[1] === '$683.00')));
+  });
   it('every family starts on its own page and is footed "Page 1 of 1", never "of N families"', () => {
     const doc: MockDoc = buildFamilyDuesStatementsDoc(MockDoc, makeAutoTable(), {
       families: [family({ receiptLabel: 'Chen family' }), family({ receiptLabel: 'Marchand family' })],

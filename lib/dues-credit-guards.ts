@@ -38,6 +38,102 @@ import { strandedExcess } from './dues-payments';
 /** The 409 code every payout-floor refusal carries — clients may branch on it. */
 export const CREDIT_HAS_PAYOUT = 'CREDIT_HAS_PAYOUT';
 
+/**
+ * ⚠⚠ THE WRITE-OFF INVARIANT: write-offs never exceed the bill, from EITHER door.
+ *
+ * An Adjustment (`credit_type 'other'`) is the one credit a coach may type by hand with NO record
+ * behind it (lib/dues-credits.ts header), so a hand-typed number must never become "the team owes
+ * this family cash nobody sent." That goal was set 2026-09-11 and it stands. The formula chosen for
+ * it that day — what the bills still OWED (`leftToSend`), and a hard $0 on `keep_separate` — was the
+ * wrong quantity, and the owner corrected it 2026-09-12: *"the adjustment is to the total dues, so
+ * we shouldn't be able to total adjustments more than the total dues … regardless of how much they
+ * have paid."* An Adjustment lowers the BILL (the Dues figure subtracts standing write-offs in every
+ * mode — `splitDuesLadder` / `duesActual` take no mode at all), so its ceiling is the bill:
+ *
+ *     ceiling = Σ installments − standing write-offs already on this bill (`other` + `forgiven`)
+ *
+ * Payments and money-backed credits (fundraiser, sponsor, reimbursement) do not enter into it. A
+ * $900 bill can be written down by $900 whether the family has paid $0, $500 or $900 — the write-off
+ * lands on what is still owed first (applyCreditsToBills) and only the leftover flows to `owedBack`,
+ * which is ≤ what the family sent BECAUSE the bill cannot go below zero. That is what closes the
+ * invented-money hole, not a payments bound.
+ *
+ * ⚠ THE SAME INVARIANT FROM THE OTHER SIDE (`writeOffCeilingViolation` below). The bill can move
+ * after a write-off is recorded — the per-player schedule editor and the roster-wide re-run both
+ * rewrite installments — and lowering it beneath its standing write-offs breaks the same rule: the
+ * drawer printed "Dues −$300.00" and the excess Adjustment became payable through the Pay out sheet.
+ * That was reachable under the 09-11 rule (record ≤ what's owed, then lower the schedule) and
+ * nothing asked. Both schedule doors now ask this file's sentence PRE-FLIGHT, exactly as they already
+ * ask the payout floor before a raise. Two guards, one inequality; every door that moves either
+ * side asks.
+ */
+
+/** The write-offs standing against a bill — the credits that lower it rather than pay it. */
+/* A NaN amount would sail through Math.max and make every `amount > ceiling` comparison false —
+   a guard that fails OPEN on one malformed row (/review 2026-09-12). Same defence the credit
+   engine gives `paidOut`. */
+const cents = (n: number) => (Number.isFinite(n) ? Math.round(n * 100) : 0);
+
+export function standingWriteOffs(credits: readonly { amount: number; creditType: string }[]): number {
+  return credits
+    .filter(c => c.creditType === 'other' || c.creditType === 'forgiven')
+    .reduce((s, c) => s + cents(c.amount), 0) / 100;
+}
+
+export function adjustmentCeiling(opts: {
+  installments: readonly { amount: number }[];
+  /** The player's OTHER credits — exclude the one being edited so it is judged against the room
+   *  it would have if it did not yet exist. */
+  credits: readonly { amount: number; creditType: string }[];
+}): number {
+  const billC = opts.installments.reduce((s, i) => s + cents(i.amount), 0);
+  const writtenOffC = Math.round(standingWriteOffs(opts.credits) * 100);
+  return Math.max(0, billC - writtenOffC) / 100;
+}
+
+/** The 400 code an Adjustment-ceiling refusal carries — clients may branch on it. */
+export const ADJUSTMENT_EXCEEDS_CEILING = 'ADJUSTMENT_EXCEEDS_CEILING';
+
+/** The one sentence, stated once — mirrors `payoutFloorMessage`'s house style. */
+export function adjustmentCeilingMessage(ceiling: number): string {
+  if (ceiling <= 0.005) return 'This bill has already been written off in full — there’s nothing left to lower.';
+  return `An Adjustment can’t lower this bill by more than what’s left of it — $${ceiling.toFixed(2)}.`;
+}
+
+/** @returns the ceiling when `amount` exceeds it, or null when the amount is safe. */
+export function adjustmentCeilingViolation(
+  amount: number,
+  ceilingInputs: {
+    installments: readonly { amount: number }[];
+    credits: readonly { amount: number; creditType: string }[];
+  },
+): { ceiling: number } | null {
+  const ceiling = adjustmentCeiling(ceilingInputs);
+  return amount > ceiling + 0.005 ? { ceiling } : null;
+}
+
+/** The 409 code a schedule-lowering refusal carries — clients may branch on it. */
+export const WRITE_OFFS_EXCEED_BILL = 'WRITE_OFFS_EXCEED_BILL';
+
+/**
+ * Would this new schedule total sit BELOW the write-offs already standing against the bill?
+ * Asked pre-flight by every door that rewrites a player's installments. A RAISE can never trip it.
+ *
+ * @returns `{ writtenOff }` when the schedule must be refused, or null when it is safe.
+ */
+export function writeOffCeilingViolation(
+  newScheduleTotal: number,
+  credits: readonly { amount: number; creditType: string }[],
+): { writtenOff: number } | null {
+  const writtenOff = standingWriteOffs(credits);
+  return writtenOff > newScheduleTotal + 0.005 ? { writtenOff } : null;
+}
+
+/** The one sentence, stated once. Names the figure and the door that fixes it. */
+export function writeOffCeilingMessage(writtenOff: number, newScheduleTotal: number): string {
+  return `This family has $${writtenOff.toFixed(2)} written off — a $${newScheduleTotal.toFixed(2)} bill would be less than that. Lower or remove the adjustment first.`;
+}
+
 /** The one sentence, stated once. `action` reads like "lowering this credit". */
 export function payoutFloorMessage(paidOut: number, action: string): string {
   /* Owner wording, 2026-09-01 (option A of four): "more than they were EVER OWED" states the

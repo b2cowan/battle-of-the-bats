@@ -241,9 +241,10 @@ export const PITCH_SLIDES = {
     //
     // ⚠ "or waits for season's end" is not hedging for its own sake. Credits meeting bills is
     // a per-team setting (rep_program_years.credit_application): two of its three modes reduce
-    // the bill, and `keep_separate` deliberately does not ("Credits don't reduce bills —
-    // settled at season's end"). Unqualified, this sentence would be false for any team on
-    // that mode. The demo world pins the default, so the PICTURE stays true either way.
+    // the bill, and `keep_separate` deliberately holds MONEY credits back ("Money credits don't
+    // reduce bills — settled at season's end"; a write-off lowers the bill on every setting since
+    // 2026-09-12). Unqualified, this sentence would be false for any team on that mode. The demo
+    // world pins the default, so the PICTURE stays true either way.
     pageAnswer:
       'Player Dues puts every family on one page — what they were charged, what they have paid, what is left, and who has fallen behind. Reminders go out on their own ahead of each installment’s due date, and one button chases whoever is still behind. Money a family raised fundraising comes off their own bill, or waits for season’s end — your call.',
     seoPhrase: 'every family’s dues on one page',

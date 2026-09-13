@@ -13,7 +13,7 @@ import {
   type InstallmentBasis,
 } from '@/lib/coach-budget-totals';
 import { tournamentToday, formatDayMonth } from '@/lib/timezone';
-import { payoutFloorMessage } from '@/lib/dues-credit-guards';
+import { payoutFloorMessage, writeOffCeilingMessage } from '@/lib/dues-credit-guards';
 import { formatPlayerLastFirst } from '@/lib/player-name';
 import { pluralize } from '@/lib/utils';
 import type { DuesRunException, DuesRunPlan } from '@/lib/dues-bulk-run';
@@ -61,6 +61,9 @@ interface GenerateResult {
    *  the generic could-not-save one. Their old schedules stand untouched. The id is the
    *  identity; the name is display only (names collide — see the route's note). */
   payoutFloorRefusals: { playerId: string; name: string; paidOut: number }[];
+  /** The write-off ceiling refusals (F04, 2026-09-12) — the bill would have dropped beneath what
+   *  is already written off it. Same shape and same treatment as the floor's list. */
+  writeOffRefusals: { playerId: string; name: string; writtenOff: number; newTotal: number }[];
   /** Hand-set schedules the coach chose to keep — left completely untouched by the run. */
   playersSkipped: number;
 }
@@ -209,7 +212,7 @@ export default function GenerateInstallmentsModal({
      occurrence of its name, so a same-named player's UNRELATED failure still gets reported
      instead of vanishing behind the refusal. */
   const refusalCounts = new Map<string, number>();
-  for (const r of result?.payoutFloorRefusals ?? []) {
+  for (const r of [...(result?.payoutFloorRefusals ?? []), ...(result?.writeOffRefusals ?? [])]) {
     refusalCounts.set(r.name, (refusalCounts.get(r.name) ?? 0) + 1);
   }
   const genericFailed = (result?.playersFailed ?? []).filter(n => {
@@ -513,6 +516,7 @@ export default function GenerateInstallmentsModal({
         overpaymentCreditsCreated: data.overpaymentCreditsCreated ?? 0,
         playersFailed:             Array.isArray(data.playersFailed) ? data.playersFailed : [],
         payoutFloorRefusals:       Array.isArray(data.payoutFloorRefusals) ? data.payoutFloorRefusals : [],
+        writeOffRefusals:          Array.isArray(data.writeOffRefusals) ? data.writeOffRefusals : [],
         playersSkipped:            data.playersSkipped ?? 0,
       });
       await onGenerated();
@@ -667,9 +671,14 @@ export default function GenerateInstallmentsModal({
    */
   function exceptionSentence(ex: DuesRunException) {
     if (ex.tone === 'blocked') {
+      // Exactly one guard refused this family (lib/dues-bulk-run.ts) — each speaks its own
+      // sentence from the guard file, never a paraphrase.
+      const sentence = ex.writtenOff != null
+        ? writeOffCeilingMessage(ex.writtenOff, runPlan?.newScheduleTotal ?? 0)
+        : payoutFloorMessage(ex.paidOut ?? 0, 'raising this player’s dues total');
       return (
         <>
-          <strong>Refused</strong> — {payoutFloorMessage(ex.paidOut ?? 0, 'raising this player’s dues total')}{' '}
+          <strong>Refused</strong> — {sentence}{' '}
           The run completes for everyone else.
         </>
       );
@@ -806,6 +815,23 @@ export default function GenerateInstallmentsModal({
                   {duesHref
                     ? <>Their payouts are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player Dues</Link> — open the player&apos;s record.</>
                     : <>Open the player&apos;s record on this list — their payouts are listed there.</>}
+                </p>
+              </div>
+            )}
+            {/* The write-off ceiling's refusals (F04, 2026-09-12) — the same treatment as the floor's:
+                these families' bills would have dropped beneath what is already written off them,
+                so their old schedule stands. The ONE sentence from the guard file, never a copy. */}
+            {result.writeOffRefusals.length > 0 && (
+              <div className={styles.errorText} style={{ marginTop: '0.6rem' }}>
+                {result.writeOffRefusals.map(r => (
+                  <p key={r.playerId} style={{ margin: '0 0 0.35rem' }}>
+                    <strong>{r.name}</strong> — {writeOffCeilingMessage(r.writtenOff, r.newTotal)}
+                  </p>
+                ))}
+                <p className={shared.formHint} style={{ margin: 0 }}>
+                  {duesHref
+                    ? <>Their adjustments are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player Dues</Link> — open the player&apos;s record.</>
+                    : <>Open the player&apos;s record on this list — their adjustments are listed there.</>}
                 </p>
               </div>
             )}

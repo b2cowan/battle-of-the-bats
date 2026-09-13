@@ -7,6 +7,7 @@ import {
   getActiveRepProgramYear,
   getRepRosterPlayers,
   getRepPlayerDuesSchedules,
+  getRepPlayerDuesSchedule,
   getRepDuesInstallmentsBySchedules,
   getRepDuesPaymentsByProgramYear,
   getRepDuesPayoutsByProgramYear,
@@ -18,7 +19,10 @@ import {
   reconcileOverpaymentCredits,
 } from '@/lib/db';
 import { getRepDuesPaidBackByCredit } from '@/lib/db';
-import { payoutFloorViolation, payoutFloorMessage, projectScheduleTotalChange, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
+import {
+  payoutFloorViolation, payoutFloorMessage, projectScheduleTotalChange, CREDIT_HAS_PAYOUT,
+  writeOffCeilingViolation, writeOffCeilingMessage, WRITE_OFFS_EXCEED_BILL,
+} from '@/lib/dues-credit-guards';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
@@ -444,13 +448,35 @@ export const POST = withObservability(async (req: Request,
      the reconcile below slips the floor — the same documented guard-to-write window doors 1–4
      accept (no route here gets a transaction), self-healing on the next write to this player's
      credits. What this check closes is every non-raced path, which before it was ALL of them. */
-  const [playerPayments, playerPayouts] = await Promise.all([
+  const [playerPayments, playerPayouts, familyCredits, existingSchedule] = await Promise.all([
     getRepDuesPaymentsForPlayer(programYear.id, playerId),
     getRepDuesPayoutsForPlayer(programYear.id, playerId),
+    getRepDuesCreditsForPlayer(programYear.id, playerId),
+    getRepPlayerDuesSchedule(playerId, programYear.id),
   ]);
   const paymentsTotal = amountsTotal(playerPayments);
+
+  /* ⚠⚠ THE WRITE-OFF CEILING FROM THE OTHER SIDE (owner ruling F04, 2026-09-12). An Adjustment may
+     not exceed the bill (the credit routes ask that); the bill may not be lowered beneath its
+     standing write-offs either — the same inequality, this door's side of it. Until this check
+     the edit went through: the drawer printed "Dues −$300.00", and the excess Adjustment became a
+     payable-back balance the Pay out sheet offered — money nobody sent. Same pre-flight idiom as
+     the payout floor directly below, and for the same P4 reason: refuse BEFORE the upsert.
+     ⚠ ASKED ONLY WHEN THE TOTAL GOES DOWN (or there was no schedule) — /review 2026-09-12, Medium.
+     A family already past the line from before this guard existed would otherwise be refused a
+     pure due-date edit on an untouched total, forever. Same tolerance the credit PATCH route keeps
+     for pre-guard rows ("only a raise is asked"); the roster-wide run has no prior total to keep
+     and asks unconditionally, which is the honest answer for a fresh common total. */
+  const lowering = !existingSchedule || totalAmount < existingSchedule.totalAmount - 0.005;
+  const writeOffs = lowering ? writeOffCeilingViolation(totalAmount, familyCredits) : null;
+  if (writeOffs) {
+    return NextResponse.json(
+      { error: writeOffCeilingMessage(writeOffs.writtenOff, totalAmount), code: WRITE_OFFS_EXCEED_BILL },
+      { status: 409 },
+    );
+  }
+
   if (playerPayouts.length > 0) {
-    const familyCredits = await getRepDuesCreditsForPlayer(programYear.id, playerId);
     const projected = projectScheduleTotalChange({ familyCredits, paymentsTotal, newScheduleTotal: totalAmount });
     const violation = payoutFloorViolation(projected, playerPayouts);
     if (violation) {

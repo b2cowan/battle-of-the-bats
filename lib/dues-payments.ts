@@ -256,13 +256,9 @@ export interface DuesLadder {
    * What this family is billed — **net of anything written off it** when the caller supplies
    * `billLowered` (owner R1, 2026-09-09).
    *
-   * ⚠⚠ AND THAT MAKES THIS FIELD MEAN TWO THINGS DEPENDING ON WHO BUILT IT (/review, 2026-09-09).
-   * The Player Dues route passes `billLowered`, so its ladders are NET; `getRepPlayerDuesSummary`
-   * in `lib/db.ts` does not, so the roster player page's ladders are GROSS. Nothing renders the
-   * difference today — that page shows its own `totalAssessed` and reads only the other four
-   * figures — which is precisely why this note exists rather than a fix: **wire this field into a
-   * new screen and you inherit whichever meaning your endpoint happens to carry.** Pass
-   * `billLowered` from any caller whose figure sits beside the dues band or its total row.
+   * The Player Dues route and roster summary both supply `billLowered` (QA §160, 2026-09-12).
+   * Callers omitting it retain a gross ladder; any figure beside the dues band must supply the
+   * same reduction. Original charges remain available from the schedule.
    */
   dues: number;
   fundraising: number;
@@ -330,10 +326,16 @@ export function splitDuesLadder(input: {
   );
   const fundraisingC = toCents(input.fundraiserIssued);
   /* Clamped to the credits actually there, so a caller passing a stale figure can never drive
-     `otherCredits` negative or lift `dues` above what was billed. */
+     `otherCredits` negative or lift `dues` above what was billed — AND to the bill itself, so
+     `dues` never reads below zero (F04, 2026-09-12: a schedule lowered beneath its write-offs
+     printed "Dues −$300.00"). Both doors now refuse that state, so the third bound only ever binds
+     on data written before they did; when it does, the excess write-off stays in `otherCredits`
+     as a credit the family holds that no longer lowers a bill. ONE figure, subtracted twice, so the
+     identity above holds whichever bound wins. */
   const loweredC = Math.min(
     Math.max(0, toCents(input.billLowered ?? 0)),
     Math.max(0, toCents(input.creditsIssued) - fundraisingC - ownC),
+    Math.max(0, toCents(input.dues)),
   );
   return {
     dues: toDollars(toCents(input.dues) - loweredC),

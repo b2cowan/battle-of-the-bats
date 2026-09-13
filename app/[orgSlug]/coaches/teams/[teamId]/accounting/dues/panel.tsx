@@ -45,48 +45,14 @@ import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
    derived here, never summed in the screen (owner, "installments only", 2026-09-01). */
 import { commonScheduleTotal, teamComparison, scheduleEditConsequence, installmentSumC } from '@/lib/dues-schedule-edit';
 import { duesLadderTotals, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
+import { buildDuesBreakdown, isDuesAdjustment } from '@/lib/coach-dues-breakdown';
+import { adjustmentCeiling, adjustmentCeilingMessage } from '@/lib/dues-credit-guards';
 
 /** The engine's ONE consolidated schedule-change credit (owner, 2026-09-01) — recognized by the
  *  description the executor writes, never by shape alone: a coach-typed overpayment credit is
  *  standalone too, and keeps its own date, pencil and story. */
 const isScheduleCredit = (c: { paymentId?: unknown; fundraiserEntryId?: unknown; expenseId?: unknown; description?: unknown }) =>
   !c.paymentId && !c.fundraiserEntryId && !c.expenseId && c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION;
-
-/** ⚠⚠ THE FAMILY'S OWN MONEY IS AN AMOUNT, NOT A ROW PREDICATE — and the first cut of this got it
-  * wrong. `ladder.ownMoney` is how many overpayment-credit dollars the family's own payments stand
-  * behind (the clamp in `splitDuesLadder`); those dollars are inside `Paid` and must not print
-  * under the credit sections, or one screen counts them twice. WHICH ROWS carry them is decided
-  * here, by walking the overpayment credits in the order the engine writes them — the schedule row,
-  * then receipt-linked rows, then anything else newest first — and hiding whole rows while the
-  * running total stays inside `ownMoney`.
-  *
-  * Umar is why this is an amount: a $50 overpayment credit with NO payment link (it predates
-  * linking) on a family who really did send $50 over. The predicate that stood here filed it as
-  * coach-typed and printed it under Other credits, while the tile above had folded the same $50
-  * into Paid — a section header that no longer equalled its rows, the one fault this drawer was
-  * rebuilt to remove. Any overpayment row the amount does NOT reach is a credit a coach asserted
-  * with no payment behind it; it shows under Other credits, counted, exactly as the tile counts it. */
-const hiddenOwnMoneyIds = (credits: readonly DuesCredit[], ownMoney: number): Set<string> => {
-  const rank = (c: DuesCredit) => (isScheduleCredit(c) ? 0 : c.paymentId ? 1 : 2);
-  const rows = credits
-    .filter(c => c.creditType === 'overpayment')
-    .sort((a, b) => rank(a) - rank(b) || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-  const hidden = new Set<string>();
-  let leftC = Math.round(ownMoney * 100);
-  for (const c of rows) {
-    const amtC = Math.round(c.amount * 100);
-    // A row the amount cannot swallow whole stays visible; a smaller one after it may still fit.
-    if (amtC > leftC) continue;
-    hidden.add(c.id);
-    leftC -= amtC;
-  }
-  return hidden;
-};
-
-/** Fundraising is a SECTION now, so the rows inside it drop the `Fundraiser ·` prefix the heading
-  * already states. Sponsorships are stored as this type and belong here — a sponsorship IS money
-  * raised for the team. */
-const isFundraisingCredit = (c: { creditType?: unknown }) => c.creditType === 'fundraiser';
 
 /** ⚠ ONE SHELL FOR ALL FOUR LADDER SECTIONS (owner, on the built screen 2026-09-07). The drawer
   * used to be two lists — receipts, then credits — and each carried its own spacing: the credits
@@ -116,7 +82,7 @@ import { playerName } from '@/lib/coach-roster-name';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage, type DuesLadder } from '@/lib/dues-payments';
 import {
-  creditsTotal, amountsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
+  creditsTotal, amountsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES,
   CREDIT_TYPE_LABELS, creditKindSentence,
   type CreditApplicationMode,
 } from '@/lib/dues-credits';
@@ -1056,7 +1022,7 @@ export function PlayerDuesPanel({
       /* ⚠ THE KIND RIDES ALONG (QA §148). The statement filters the family own overpayment out
          of its Credits-earned table, and without this field that filter matches nothing and fails
          SILENTLY — the exact shape of defect this pass exists to close. */
-      credits: p.credits.map(c => ({ amount: c.amount, creditDate: c.creditDate, description: c.description, creditType: c.creditType })),
+      credits: p.credits.map(c => ({ amount: c.amount, creditDate: c.creditDate, description: c.description, creditType: c.creditType, paymentId: c.paymentId, createdAt: c.createdAt })),
       payouts: p.payouts.map(po => ({
         amount: po.amount, paidDate: po.paidDate, method: po.method, note: po.note,
       })),
@@ -1384,6 +1350,14 @@ export function PlayerDuesPanel({
     setCreditForm(prefill);
     setCreditBaseline(prefill);
     setCreditError('');
+    setAddingCredit(true);
+  }
+
+  function openAddAdjustment() {
+    closeMoneySheets();
+    const fresh = blankCreditForm();
+    setCreditForm(fresh);
+    setCreditBaseline(fresh);
     setAddingCredit(true);
   }
 
@@ -1932,14 +1906,43 @@ export function PlayerDuesPanel({
      the `Fundraising` / `Other credits` tiles are the SAME partition of the same rows — that is what
      lets each section heading print its tile's figure and have it equal the rows underneath. The
      family's own money appears in neither: it is inside `Paid`, and the Payments heading names it. */
-  const fundraisingRows = selected ? selected.credits.filter(isFundraisingCredit) : [];
+  const creditBreakdown = buildDuesBreakdown({
+    credits: selected?.credits ?? [],
+    grossDues: selected?.schedule?.totalAmount ?? 0,
+    netDues: selected?.ladder.dues ?? 0,
+    ownMoney: selected?.ladder.ownMoney ?? 0,
+  });
+  /* The Add-adjustment form's foreseeable refusal (F01, 2026-09-12): the bill minus what is
+     already written off it — the SAME guard the server runs (lib/dues-credit-guards.ts), fed the
+     same rows, so the form's dead Save and the route's 400 can never disagree.
+     ⚠ JUDGED WITHOUT THE ROW BEING EDITED (/review 2026-09-12, High): the first cut counted an
+     edited Adjustment's own old amount against itself, so lowering $850 → $500 on a $900 bill read
+     a refusal the server would never issue. Same exclusion the PATCH route makes. And, like that
+     route, an edit is asked ONLY ON A RAISE — a coach fixing a date or description on a pre-guard
+     row is never refused. `other` only; a legacy money-backed kind is real money this rule does
+     not touch. ONE predicate drives the banner AND the dead button — two pieces of UI reading two
+     rules is exactly what the review caught. */
+  const adjustmentCeilingNow = selected
+    ? adjustmentCeiling({
+      installments: selected.installments,
+      credits: editingCreditId ? selected.credits.filter(c => c.id !== editingCreditId) : selected.credits,
+    })
+    : null;
+  const adjustmentOverCeiling = (() => {
+    if (adjustmentCeilingNow == null || creditForm.creditType !== 'other') return false;
+    const amt = parseFloat(creditForm.amount);
+    if (isNaN(amt) || amt <= adjustmentCeilingNow + 0.005) return false;
+    const editing = editingCreditId ? selected?.credits.find(c => c.id === editingCreditId) : undefined;
+    return !editing || amt > editing.amount + 0.005;
+  })();
+  const fundraisingRows = creditBreakdown.fundraising;
   /* ⚠ ONE ROW RENDERER FOR BOTH CREDIT SECTIONS (dues ladder, 2026-09-07). Fundraising and Other
      credits print the same record with the same affordances — a coach can hand-add a `fundraiser`
      credit, so even that section needs the pencil and the bin. Two copies of this markup is how
      the two sections start disagreeing about which credits may be edited. */
-  const creditRow = (c: PlayerWithDues['credits'][number], hideType: boolean) => (
+  const creditRow = (c: PlayerWithDues['credits'][number], hideType: boolean, displayAmount = c.amount) => (
       <div key={c.id} style={{
-        display: 'flex', alignItems: 'center', gap: '0.6rem',
+        display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem',
         padding: '0.5rem 0.65rem', borderRadius: 7,
         /* ⚠ THE SAME CARD AS A RECEIPT ROW (owner, 2026-09-07). Credits wore a faint green wash
            from the days this drawer was two lists and the tint was how you told a credit from a
@@ -1955,10 +1958,10 @@ export function PlayerDuesPanel({
             which was consistent until brackets arrived (2026-08-14) and left
             one credit line saying "-$50.00" two rows from another saying
             "($50.00)". */}
-        <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-          {fmt(-(c.amount as number))}
+        <span style={{ color: isDuesAdjustment(c) ? 'var(--text-primary)' : 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+          {fmt(-displayAmount)}
         </span>
-        <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ flex: '1 1 120px', color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflowWrap: 'anywhere' }}>
           {c.description}
         </span>
         {/* One meta format for every credit: "Type · date" (owner, QA §118
@@ -2001,13 +2004,13 @@ export function PlayerDuesPanel({
         {moneyCanWrite && !(c.fundraiserEntryId || c.expenseId) && !c.paymentId && !isScheduleCredit(c) && (
           <button
             className={styles.rowIconBtn}
-            style={{ flexShrink: 0 }}
+            style={{ flexShrink: 0, ...(c.creditType === 'other' ? { width: 'auto', paddingInline: '0.5rem' } : {}) }}
             disabled={creditSaving || deletingCreditId === c.id}
             onClick={() => openEditCredit(c)}
-            title={`Edit this ${fmt(c.amount as number)} credit`}
-            aria-label={`Edit the ${fmt(c.amount as number)} credit, ${c.description}`}
+            title={`Edit this ${fmt(c.amount)} ${isDuesAdjustment(c) ? 'adjustment' : 'credit'}`}
+            aria-label={`Edit the ${fmt(c.amount)} ${isDuesAdjustment(c) ? 'adjustment' : 'credit'}, ${c.description}`}
           >
-            <Pencil size={13} aria-hidden />
+            {c.creditType === 'other' ? 'Edit' : <Pencil size={13} aria-hidden />}
           </button>
         )}
         {/* An auto-created overpayment credit rides its payment (DB
@@ -2035,10 +2038,7 @@ export function PlayerDuesPanel({
         )}
       </div>
   );
-  const ownMoneyIds = selected ? hiddenOwnMoneyIds(selected.credits, selected.ladder.ownMoney) : new Set<string>();
-  const otherCreditRows = selected
-    ? selected.credits.filter(c => !isFundraisingCredit(c) && !ownMoneyIds.has(c.id))
-    : [];
+  const otherCreditRows = creditBreakdown.other;
 
   /**
    * THE WHOLE ROSTER'S LADDER — the band's own scope, from the same tested sum the footer uses.
@@ -3636,12 +3636,17 @@ export function PlayerDuesPanel({
                             them; Dues and Paid stay, because a receipt with no Paid line reads as
                             an unfinished receipt rather than as "nothing sent". */}
                         {[
+                          ...(creditBreakdown.adjustments.length > 0 ? [
+                            { label: 'Original charges', amount: selected.schedule?.totalAmount ?? 0, source: null },
+                            { label: 'Adjustments & forgiveness', amount: -creditBreakdown.adjustmentsTotal, source: creditBreakdown.adjustments.map(c => c.description).join(' · ') },
+                            ...(creditBreakdown.adjustmentsReturned > 0.005 ? [{ label: 'Adjustments already returned', amount: creditBreakdown.adjustmentsReturned, source: 'Added back to dues' }] : []),
+                          ] : []),
                           { label: 'Dues', amount: selected.ladder.dues, source: null as string | null },
                           ...(selected.ladder.fundraising > 0.005
                             ? [{ label: 'Fundraising', amount: selected.ladder.fundraising, source: fundraisingRows.map(c => c.description).join(' · ') || null }]
                             : []),
                           ...(selected.ladder.otherCredits > 0.005
-                            ? [{ label: 'Other credits', amount: selected.ladder.otherCredits, source: otherCreditRows.map(c => c.description).join(' · ') || null }]
+                            ? [{ label: 'Other credits', amount: selected.ladder.otherCredits, source: [...otherCreditRows.map(({ credit }) => credit.description), ...(creditBreakdown.adjustmentsReturned > 0.005 ? ['Includes ' + fmt(creditBreakdown.adjustmentsReturned) + ' of adjustments already returned'] : [])].join(' · ') || null }]
                             : []),
                           { label: 'Paid', amount: selected.ladder.paid, source: selected.payments.length ? `${pluralize(selected.payments.length, 'payment', 'payments')} received` : null },
                           ...(selected.ladder.handedBack > 0.005
@@ -4042,6 +4047,9 @@ export function PlayerDuesPanel({
                       </p>
                     )}
 
+                    <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
+                      Original charges — {fmt(selected.schedule?.totalAmount ?? 0)}
+                    </span>
                     {/* ── Installments: four figures per row, desktop ────────────────────────
                         The table carries NO totals row on purpose — the four tiles at the head
                         of the drawer ARE its totals, and printing both would be the same four
@@ -4229,20 +4237,40 @@ export function PlayerDuesPanel({
                       </div>
                     )}
 
-                    {/* ⚠⚠ SECTIONS NOW MIRROR THE TILES ABOVE THEM, IN THE SAME ORDER (dues
-                        ladder, owner ruling 2026-09-07): Fundraising, Other credits, Payments,
-                        Paid out. Each heading prints its tile's figure, so the tile row is this
-                        drawer's table of contents and nothing on the screen is unaccounted for.
-                        ⚠ Since the event tiles hide at zero (2026-09-07), the one section that
-                        outlives its tile is Other credits — it stays as the home of the "+ Add a
-                        credit" door, which is a door and not a figure.
-                        Payments moved BELOW the two credit sections to hold that order — cheap,
-                        because recording a payment runs off the buttons at the top of the drawer
-                        rather than this list.
+                    {(creditBreakdown.adjustments.length > 0 || moneyCanWrite) && (
+                      <section style={LADDER_SECTION}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.65rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
+                            Adjustments &amp; forgiveness{creditBreakdown.adjustments.length > 0 ? ` — ${fmt(creditBreakdown.adjustmentsTotal)}` : ''}
+                          </span>
+                          {moneyCanWrite && (
+                            <button className={styles.btnGhost} onClick={openAddAdjustment} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0, fontSize: '0.78rem' }}>
+                              <Plus size={12} aria-hidden /> Add adjustment
+                            </button>
+                          )}
+                        </div>
+                        {!addingCredit && creditError && <p className={styles.errorText} role="alert">{creditError}</p>}
+                        {creditBreakdown.adjustments.length > 0 ? (
+                          <>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                              {creditBreakdown.adjustments.map(c => creditRow(c, false))}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderTop: '1px solid var(--home-line)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
+                              <div>
+                                <strong>Dues</strong>
+                                <p className={styles.formHint}>
+                                  {fmt(selected.schedule?.totalAmount ?? 0)} originally charged − {fmt(creditBreakdown.adjustmentsTotal)} in adjustments &amp; forgiveness
+                                  {creditBreakdown.adjustmentsReturned > 0.005 ? ` + ${fmt(creditBreakdown.adjustmentsReturned)} already returned` : ''}
+                                </p>
+                              </div>
+                              <strong style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt(selected.ladder.dues)}</strong>
+                            </div>
+                          </>
+                        ) : <p className={styles.formHint}>No adjustments or forgiveness.</p>}
+                      </section>
+                    )}
 
-                        Fundraising is money raised FOR this family — a drive rebate or a
-                        sponsorship, which the product stores as the same kind because a
-                        sponsorship is money raised for the team. */}
+                    {/* Money-backed credits follow the bill breakdown; each section reconciles to its total. */}
                     {fundraisingRows.length > 0 && (
                       <div style={LADDER_SECTION}>
                         <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
@@ -4255,6 +4283,7 @@ export function PlayerDuesPanel({
                     )}
 
                     {/* Other credits — the second of the four sections, in tile order. */}
+                    {(otherCreditRows.length > 0 || creditBreakdown.adjustmentsReturned > 0.005) && (
                     <div style={LADDER_SECTION}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
                         {/* ⚠ EVERY SECTION IN THIS DRAWER CARRIES ITS TOTAL, and this was the last
@@ -4266,52 +4295,11 @@ export function PlayerDuesPanel({
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                           Other credits — {fmt(selected.ladder.otherCredits)}
                         </span>
-                        {/* moneyCanWrite, like every write control in this drawer (Phase B) —
-                            the whole credit cluster rendered for read-only assistants. */}
-                        {moneyCanWrite && (
-                          <button
-                            className={styles.btnGhost}
-                            style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                            onClick={() => {
-                              closeMoneySheets();
-                              setAddingCredit(true);
-                              const fresh = blankCreditForm();
-                              setCreditForm(fresh);
-                              setCreditBaseline(fresh);
-                            }}
-                          >
-                            <Plus size={12} /> Add a credit
-                          </button>
-                        )}
                       </div>
 
-                      {/* ⚰ THE ADD/EDIT FORM IS A MODAL NOW (owner ruling 2026-09-07, QA §151), and it
-                          stands at the foot of this panel beside the drawer rather than inside this
-                          section. It sat here as an inline block that pushed the credit list down —
-                          the only write form in this drawer that was not a modal, while Record money
-                          and Record a payout, which ask for the same handful of things, both open
-                          one. There was no reason for the divergence beyond age.
-                          ⚠ THE BUTTON ABOVE NO LONGER HIDES ITSELF while the form is open, and that
-                          is not tidying: an overlay returns focus to the control that opened it, and
-                          a control unmounted meanwhile has nowhere to hand it back to. */}
-
-                      {/* ⚠ A refused DELETE must be visible from the LIST (/review 2026-08-28).
-                          The first fix wrote the message into the add/edit form's own error slot
-                          (line above), which only renders while that form is open — a delete is
-                          clicked from the list with the form closed, so the refusal was still
-                          invisible: the exact silent click it claimed to fix. One message, both
-                          homes; hidden while the form is open so it never shows twice. */}
-                      {!addingCredit && creditError && (
-                        <p className={styles.errorText} role="alert" style={{ marginBottom: '0.4rem' }}>{creditError}</p>
-                      )}
-
-                      {/* Credits list — everything that is neither fundraising nor the family's own
-                          money. Mixed by nature (reimbursements, contributions, forgiven balances),
-                          which is why these rows KEEP their type prefix while the Fundraising ones
-                          drop theirs: there the heading says it, here it does not. */}
                       {otherCreditRows.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {otherCreditRows.map(c => creditRow(c, false))}
+                          {otherCreditRows.map(({ credit, amount }) => creditRow(credit, false, amount))}
                         </div>
                       ) : (
                         /* ⚠ IT NO LONGER STANDS ASIDE FOR THE FORM (QA §151). The add form was an
@@ -4321,7 +4309,13 @@ export function PlayerDuesPanel({
                           No other credits for this player.
                         </p>
                       )}
+                      {creditBreakdown.adjustmentsReturned > 0.005 && (
+                        <p className={styles.formHint} style={{ marginTop: '0.5rem' }}>
+                          {fmt(creditBreakdown.adjustmentsReturned)} of adjustments already returned — included here and offset by Handed back.
+                        </p>
+                      )}
                     </div>
+                    )}
 
                     {/* Payments — the receipt book (mig 232). Each row is a FACT with its own
                         date, method and ledger line; removing one voids that ledger entry and
@@ -4549,8 +4543,8 @@ export function PlayerDuesPanel({
         <QuestionShell
           open={addingCredit && tabActive}
           onClose={() => { void closeCreditFormGuarded(); }}
-          ariaLabel={`${editingCreditId ? 'Edit a credit' : 'Add a credit'} for ${playerName(selected.player) || 'this player'}`}
-          title={editingCreditId ? 'Edit this credit' : 'Add a credit'}
+          ariaLabel={`${editingCreditId ? `Edit ${creditForm.creditType === 'other' ? 'adjustment' : 'credit'}` : 'Add adjustment'} for ${playerName(selected.player) || 'this player'}`}
+          title={editingCreditId ? `Edit ${creditForm.creditType === 'other' ? 'adjustment' : 'credit'}` : 'Add adjustment'}
           subtitle={playerName(selected.player) || undefined}
           busy={creditSaving}
         >
@@ -4649,17 +4643,54 @@ export function PlayerDuesPanel({
             {(() => {
               const amt = parseFloat(creditForm.amount);
               if (isNaN(amt) || amt <= 0 || creditMode === null) return null;
+              /* ⚠⚠ THE CEILING IS THE BILL (owner ruling 2026-09-11, corrected 2026-09-12 — see
+                 lib/dues-credit-guards.ts): original charges minus what is already written off,
+                 in every mode. A NEW Adjustment past it is a foreseeable refusal, so it reads the
+                 guard's own sentence here and Save goes dead (the §118 ruling) rather than
+                 promising a bill reduction the server is about to refuse. Only NEW 'other' credits:
+                 editing an existing one is judged by the route against the room it would have
+                 without itself, and a legacy fundraiser/contribution row is real money this rule
+                 does not touch. */
+              if (adjustmentOverCeiling && adjustmentCeilingNow != null) {
+                return (
+                  <p className={styles.errorText} style={{ marginBottom: '0.6rem' }}>
+                    {adjustmentCeilingMessage(adjustmentCeilingNow)}
+                  </p>
+                );
+              }
               const first = selected.player.playerFirstName || 'This player';
+              /* ⚠ A WRITE-OFF LANDS ON THE BILL IN EVERY MODE NOW, a hand-back team included (owner
+                 ruling F03, 2026-09-12) — so the "settled at season's end, installments don't
+                 move" clause is kept only for the money-backed kinds a legacy row can still be.
+                 keep_separate walks the schedule next-first (lib/dues-credits.ts). */
+              const landsNow = creditForm.creditType === 'other' || creditMode !== 'keep_separate';
+              const clause = !landsNow
+                ? 'settled at season’s end — their installments don’t move'
+                : creditMode === 'last_first'
+                  ? 'taken off their last payment first'
+                  : 'taken off their next payment first';
+              /* ⚠ MORE THAN IS OWED (F01): the write-off clears what is still owed and the rest
+                 becomes a credit the team owes the family back — which is ≤ what they sent, because
+                 the ceiling above is the bill. Says so BEFORE Save, the way the schedule editor
+                 already states its overpayment credit. New Adjustments only — an edit's room is
+                 the route's to judge. */
+              const stillOwed = Math.round(selected.leftToSend * 100) / 100;
+              const excess = Math.round((amt - stillOwed) * 100) / 100;
+              if (!editingCreditId && creditForm.creditType === 'other' && excess > 0.005) {
+                return (
+                  <p className={`${styles.formHint} ${styles.formHintConsequence}`} style={{ marginBottom: '0.6rem' }}>
+                    <strong>When you save:</strong> nothing changes hands — this is more than is currently owed.{' '}
+                    {stillOwed > 0.005
+                      ? <>{fmt(stillOwed)} clears what {first}&apos;s family still owes, and <strong>{fmt(excess)} becomes a credit the team can hand back</strong> to them.</>
+                      : <>Nothing is left owing on this bill, so <strong>{fmt(excess)} becomes a credit the team can hand back</strong> to {first}&apos;s family.</>}
+                  </p>
+                );
+              }
               const subject = editingCreditId
                 ? <>this credit becomes {fmt(amt)}</>
-                : creditMode === 'keep_separate'
+                : !landsNow
                   ? <>the team owes {first}&apos;s family {fmt(amt)} more</>
                   : <>{first}&apos;s family owes {fmt(amt)} less</>;
-              const clause = creditMode === 'keep_separate'
-                ? 'settled at season’s end — their installments don’t move'
-                : creditMode === 'next_first'
-                  ? 'taken off their next payment first'
-                  : 'taken off their last payment first';
               return (
                 <p className={`${styles.formHint} ${styles.formHintConsequence}`} style={{ marginBottom: '0.6rem' }}>
                   <strong>When you save:</strong> nothing changes hands — {subject}, {clause}.
@@ -4670,9 +4701,11 @@ export function PlayerDuesPanel({
             <div className={styles.modalFooter}>
               <button type="button" className={styles.btnGhost} disabled={creditSaving} onClick={() => { void closeCreditFormGuarded(); }}>Cancel</button>
               {/* Sentence case beside its neighbours (Phase D) — the button used to change
-                  capitalization scheme with its own state. */}
-              <button type="submit" className={styles.btnPrimary} disabled={creditSaving}>
-                {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Save credit'}
+                  capitalization scheme with its own state. Dead while the typed amount is past
+                  the bill (the foreseeable refusal above) — never a live button the server will
+                  refuse. */}
+              <button type="submit" className={styles.btnPrimary} disabled={creditSaving || adjustmentOverCeiling}>
+                {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Add adjustment'}
               </button>
             </div>
           </form>

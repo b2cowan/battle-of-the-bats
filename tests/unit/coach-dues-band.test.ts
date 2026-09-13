@@ -193,6 +193,21 @@ describe('the dues table still closes on the row it always did', () => {
     assert.equal(L.otherCredits, 0);
     assert.equal(L.dues, 680);               // clamped to the credits actually there
   });
+
+  /* F04 (owner ruling 2026-09-12): a bill lowered beneath its write-offs — reachable before the
+     schedule doors learned to refuse it — printed "Dues −$300.00". The third bound floors `dues` at
+     zero, the SAME figure comes off `otherCredits`, and the row still closes on its balance. */
+  it('⚠ a bill already written off past itself reads Dues $0.00, never negative — and still closes', () => {
+    const base = {
+      dues: 300, grossPayments: 0, cappedPaid: 0,
+      creditsIssued: 600, fundraiserIssued: 0, overpaymentIssued: 0, paidOut: 0,
+    };
+    const before = splitDuesLadder(base);
+    const after = splitDuesLadder({ ...base, billLowered: 600 });
+    assert.equal(after.dues, 0, 'floored at the bill');
+    assert.equal(after.otherCredits, 300, 'the excess write-off stays as a credit the family holds');
+    assert.equal(close(after), close(before), 'the balance the row closes on must not move');
+  });
 });
 
 describe('the season closes — the identities the two screens are held to', () => {

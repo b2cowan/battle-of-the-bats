@@ -1,3 +1,4 @@
+import { seasonDuesBand, type DuesCreditKind } from './coach-dues-actual';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
@@ -5611,14 +5612,14 @@ export async function getRepPlayerDuesSummary(
   playerId: string, programYearId: string,
 ): Promise<RepPlayerDuesSummary> {
   const schedule = await getRepPlayerDuesSchedule(playerId, programYearId);
-  const [installments, payments, creditsRes, payoutsRes] = await Promise.all([
+  const [installments, payments, creditsRes, payoutsRes, paidBackByCredit] = await Promise.all([
     schedule ? getRepPlayerDuesInstallments(schedule.id) : Promise.resolve([]),
     getRepDuesPaymentsForPlayer(programYearId, playerId),
     supabaseAdmin
       .from('rep_dues_credits')
       /* ⚠ THE TYPE RIDES ALONG NOW (D6, 2026-09-06). A family's own overpayment is not a credit to
          them, so this reader has to be able to tell an overpayment from a sponsor's money. */
-      .select('amount, credit_type')
+      .select('id, amount, credit_type, credit_date, created_at, fundraiser_entry_id, expense_id')
       .eq('player_id', playerId)
       .eq('program_year_id', programYearId),
     /* ⚠ AND SO DO PAYOUTS. A credit handed back in cash has already stopped reducing what this
@@ -5628,6 +5629,7 @@ export async function getRepPlayerDuesSummary(
       .select('amount')
       .eq('player_id', playerId)
       .eq('program_year_id', programYearId),
+    getRepDuesPaidBackByCredit(programYearId),
   ]);
   if (creditsRes.error) throw creditsRes.error;
   if (payoutsRes.error) throw payoutsRes.error;
@@ -5656,6 +5658,17 @@ export async function getRepPlayerDuesSummary(
   });
   const totalPaid = own.paid;
   const totalCredits = own.credits;
+  const billLowered = seasonDuesBand({
+    schedules: schedule ? [{ playerId, total: totalAssessed }] : [],
+    payments: payments.map(p => ({ playerId, amount: p.amount })),
+    payouts: (payoutsRes.data ?? []).map(p => ({ playerId, amount: Number(p.amount) })),
+    credits: [...(creditRows ?? [])].sort((a, b) => a.credit_date.localeCompare(b.credit_date)
+      || String(a.created_at ?? '').localeCompare(String(b.created_at ?? ''))).map(c => ({
+        playerId, kind: c.credit_type as DuesCreditKind, amount: Number(c.amount),
+        traced: c.fundraiser_entry_id !== null || c.expense_id !== null,
+        paidBack: paidBackByCredit.has(c.id) ? paidBackByCredit.get(c.id) : undefined,
+      })),
+  }).billLowered.total;
   /* The ladder, from the same rows the split above used. `overpaymentIssued` is EVERY overpayment
      credit — the clamp inside decides how much of it is the family's own money (see the dues route
      and the Umar note on `splitDuesLadder`). One rule, both producers. */
@@ -5675,6 +5688,7 @@ export async function getRepPlayerDuesSummary(
         .map((c: any) => ({ amount: Number(c.amount) })),
     ),
     paidOut,
+    billLowered,
   });
   const today = tournamentToday();
   return {

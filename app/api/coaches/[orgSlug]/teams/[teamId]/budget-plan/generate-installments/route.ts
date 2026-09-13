@@ -3,7 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear, syncDuesPaidProjection, reconcileOverpaymentCredits } from '@/lib/db';
 import { paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { groupByPlayer } from '@/lib/dues-credits';
-import { payoutFloorViolation, projectScheduleTotalChange } from '@/lib/dues-credit-guards';
+import { payoutFloorViolation, projectScheduleTotalChange, writeOffCeilingViolation } from '@/lib/dues-credit-guards';
 import { describeExistingSchedules, playersWithDateChange, toExistingInstallmentRows, type StoredInstallmentRow } from '@/lib/dues-bulk-run';
 import { formatPlayerFirstLast } from '@/lib/player-name';
 import type { RepDuesPayment } from '@/lib/types';
@@ -267,22 +267,22 @@ export const POST = withObservability(async (req: Request,
      two season-wide reads, not a per-player N+1. Sits below the ask-first 409 so the
      replace question costs no extra reads. */
   const payoutsByPlayer = groupByPlayer(await getRepDuesPayoutsByProgramYear(programYear.id));
-  let creditsByPlayer = new Map<string, { playerId: string; amount: number; creditType: string }[]>();
-  if (payoutsByPlayer.size > 0) {
-    const { data: creditRows, error: credErr } = await supabaseAdmin
-      .from('rep_dues_credits')
-      .select('player_id, amount, credit_type')
-      .eq('program_year_id', programYear.id)
-      .in('player_id', [...payoutsByPlayer.keys()]);
-    if (credErr) {
-      return NextResponse.json({ error: 'Could not check family payouts — nothing was written. Try again.' }, { status: 500 });
-    }
-    // The SHARED grouping (lib/dues-credits.ts), like the payouts line above — not a hand loop.
-    creditsByPlayer = groupByPlayer(
-      ((creditRows ?? []) as Array<{ player_id: string; amount: number; credit_type: string }>)
-        .map(c => ({ playerId: c.player_id, amount: Number(c.amount), creditType: c.credit_type })),
-    );
+  /* ⚠ EVERY family's credits now, not only the paid-out ones (owner ruling F04, 2026-09-12): the
+     write-off ceiling below asks about families with NO payouts — a $0-paid family with a $600
+     Adjustment is exactly the one a lowered common total would leave reading "Dues −$300.00". One
+     season-wide read either way. */
+  const { data: creditRows, error: credErr } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('player_id, amount, credit_type')
+    .eq('program_year_id', programYear.id);
+  if (credErr) {
+    return NextResponse.json({ error: 'Could not check family credits — nothing was written. Try again.' }, { status: 500 });
   }
+  // The SHARED grouping (lib/dues-credits.ts), like the payouts line above — not a hand loop.
+  const creditsByPlayer = groupByPlayer(
+    ((creditRows ?? []) as Array<{ player_id: string; amount: number; credit_type: string }>)
+      .map(c => ({ playerId: c.player_id, amount: Number(c.amount), creditType: c.credit_type })),
+  );
 
   // Create all schedules and installments in sequence
   let totalCreated = 0;
@@ -300,6 +300,10 @@ export const POST = withObservability(async (req: Request,
    *  player" — and an id-less refusal made the client's name-keyed exclusion able to hide a
    *  same-named player's UNRELATED failure. */
   const payoutFloorRefusals: { playerId: string; name: string; paidOut: number }[] = [];
+  /** The write-off ceiling refusals (F04, 2026-09-12) — the same shape and the same reason as the
+   *  payout-floor list: a subset of `playersFailed`, named with their dollars so the client can
+   *  speak the guard's own sentence. */
+  const writeOffRefusals: { playerId: string; name: string; writtenOff: number; newTotal: number }[] = [];
   /** Players deliberately left alone (their hand-set schedule was kept). */
   let playersSkipped = 0;
 
@@ -310,6 +314,15 @@ export const POST = withObservability(async (req: Request,
 
     const playerInstallments = overrideMap.get(player.id) ?? defaultInstallments;
     const playerTotal = playerInstallments.reduce((s, i) => s + i.amount, 0);
+
+    // The write-off ceiling from the schedule's side (F04) — a bill may not drop beneath what
+    // has already been written off it. Refused ⇒ untouched, same as the floor below.
+    const writeOffs = writeOffCeilingViolation(playerTotal, creditsByPlayer.get(player.id) ?? []);
+    if (writeOffs) {
+      playersFailed.push(nameOf(player));
+      writeOffRefusals.push({ playerId: player.id, name: nameOf(player), writtenOff: writeOffs.writtenOff, newTotal: playerTotal });
+      continue;
+    }
 
     // The floor, before a single row of this player's moves — see the block above the loop.
     // Refused ⇒ their old schedule stands untouched, exactly like an upsert failure.
@@ -448,6 +461,9 @@ export const POST = withObservability(async (req: Request,
     /** Phase A2 — the subset of playersFailed the payout floor refused, with the dollars, so the
      *  screen can say why those families were protected rather than "could not be saved". */
     payoutFloorRefusals,
+    /** F04 — the subset the write-off ceiling refused: their bill would have dropped beneath what
+     *  is already written off it. Same shape as the floor's list, for the same reason. */
+    writeOffRefusals,
     installmentsCreated: totalCreated,
     totalPerPlayer,
   }, { status: 201 });

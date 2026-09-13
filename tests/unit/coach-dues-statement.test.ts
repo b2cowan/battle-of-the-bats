@@ -13,6 +13,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildFamilyDuesStatements, type StatementPlayerInput } from '../../lib/coach-dues-statement';
+import { splitDuesLadder } from '../../lib/dues-payments';
 
 const TODAY = '2026-08-23';
 
@@ -98,8 +99,67 @@ const chen = () => player({
   paidAmount: 1000, outstanding: 0, totalCredits: 0, leftToSend: 0,
 });
 
-const flat = (s: { schedules: { label: string; rows: string[][] }[]; payments: string[][]; credits: string[][]; payouts: string[][]; next: string[] }) =>
-  JSON.stringify([s.schedules, s.payments, s.credits, s.payouts, s.next]);
+const flat = (s: {
+  schedules: { label: string; rows: string[][] }[];
+  payments: string[][];
+  credits: string[][];
+  fundraisingCredits: string[][];
+  otherCredits: string[][];
+  adjustments: string[][];
+  billBreakdown: string[][];
+  payouts: string[][];
+  next: string[];
+}) => JSON.stringify([
+  s.schedules,
+  s.payments,
+  s.credits,
+  s.fundraisingCredits,
+  s.otherCredits,
+  s.adjustments,
+  s.billBreakdown,
+  s.payouts,
+  s.next,
+]);
+
+describe('adjustments explain the net bill on the family document', () => {
+  it('keeps two adjustments out of Other credits and reconciles the screenshot amounts', () => {
+    const credits = [
+      { amount: 17, creditType: 'other', creditDate: '2026-09-08', description: 'Photos not ordered' },
+      { amount: 30, creditType: 'other', creditDate: '2026-09-12', description: 'Training declined' },
+      { amount: 180, creditType: 'reimbursement', creditDate: '2026-08-20', description: 'Umpires' },
+      { amount: 200, creditType: 'reimbursement', creditDate: '2026-05-14', description: 'Entry fee' },
+      { amount: 198.15, creditType: 'fundraiser', creditDate: '2026-08-31', description: 'Raised' },
+    ];
+    const ladder = splitDuesLadder({ dues: 700, grossPayments: 700, cappedPaid: 700,
+      creditsIssued: 625.15, fundraiserIssued: 198.15, overpaymentIssued: 0, paidOut: 0, billLowered: 47 });
+    const p = player({ playerId: 'qa160', playerFirstName: 'QA', schedule: { totalAmount: 700 }, credits, ladder, payouts: [], paidAmount: 700,
+      installments: [{ id: 'paid-bill', amount: 700, dueDate: '2026-10-01', paidAt: '2026-08-13', remainingAmount: 0 }],
+      payments: [{ amount: 700, receivedDate: '2026-08-13', method: 'etransfer', note: null }] });
+    const out = buildFamilyDuesStatements({ players: [p], todayISO: TODAY })[0];
+    assert.equal(out.stats.dues, '$653.00');
+    assert.equal(out.stats.otherCredits, '$380.00');
+    assert.equal(out.stats.balance, '($625.15)');
+    assert.equal(out.adjustments.length, 2);
+    assert.deepEqual(out.billBreakdown.map(r => r[1]), ['$700.00', '($47.00)', '$653.00']);
+    assert.deepEqual(out.otherCredits.map(r => r[3]), ['Entry fee', 'Umpires']);
+    assert.equal(out.fundraisingCredits.length, 1);
+  });
+
+  it('adds siblings reductions in cents and leaves empty sections off unaffected statements', () => {
+    const members = ['A', 'B'].map((id, i) => player({ playerId: id, playerFirstName: id, familyKey: 'same-family',
+      installments: [{ id: `bill-${id}`, amount: 100, dueDate: '2026-10-01', paidAt: null, remainingAmount: i ? 99.8 : 99.9 }],
+      schedule: { totalAmount: 100 }, leftToSend: i ? 99.8 : 99.9, outstanding: 100, credits: [{ amount: i ? 0.2 : 0.1, creditType: i ? 'forgiven' : 'other', creditDate: '2026-08-01', description: id }],
+      ladder: splitDuesLadder({ dues: 100, grossPayments: 0, cappedPaid: 0, creditsIssued: i ? 0.2 : 0.1,
+        fundraiserIssued: 0, overpaymentIssued: 0, paidOut: 0, billLowered: i ? 0.2 : 0.1 }),
+    }));
+    const out = buildFamilyDuesStatements({ players: members, todayISO: TODAY })[0];
+    assert.equal(out.stats.dues, '$199.70');
+    assert.equal(out.adjustments.length, 2);
+    const empty = buildFamilyDuesStatements({ players: [chen()], todayISO: TODAY })[0];
+    assert.deepEqual(empty.adjustments, []);
+    assert.deepEqual(empty.billBreakdown, []);
+  });
+});
 
 describe('one household, and nobody else', () => {
   it('collapses siblings into ONE statement covering both children', () => {
@@ -166,6 +226,7 @@ describe('the figures are the dues screen’s own arithmetic', () => {
     const out = buildFamilyDuesStatements({ players: marchands(), todayISO: TODAY });
     assert.deepEqual(out[0].stats, {
       billed: '$2,900.00', received: '$1,700.00', credits: '$125.00', handedBack: '—', leftToSend: '$1,075.00',
+      dues: '$2,900.00', fundraising: '$0.00', otherCredits: '$125.00', balance: '$1,075.00',
     });
   });
 
@@ -236,10 +297,12 @@ describe('what’s next, in sentences', () => {
   });
 
   it('a household never refunded keeps the four-tile band it always had, ladder or not', () => {
-    const withLadder = { ...chen(), paidAmount: 500, totalCredits: 40,
-      ladder: { dues: 1450, fundraising: 40, otherCredits: 0, paid: 500, handedBack: 0, ownMoney: 0 } };
+    const base = { ...chen(), paidAmount: 500, totalCredits: 40,
+      credits: [{ amount: 40, creditType: 'fundraiser', creditDate: '2026-07-01', description: 'Raffle' }] };
+    const withLadder = { ...base,
+      ladder: { dues: 1000, fundraising: 40, otherCredits: 0, paid: 500, handedBack: 0, ownMoney: 0 } };
     const a = buildFamilyDuesStatements({ players: [withLadder], todayISO: TODAY })[0].stats;
-    const b = buildFamilyDuesStatements({ players: [{ ...chen(), paidAmount: 500, totalCredits: 40 }], todayISO: TODAY })[0].stats;
+    const b = buildFamilyDuesStatements({ players: [base], todayISO: TODAY })[0].stats;
     assert.deepEqual(a, b, 'gross and net are one figure where nothing was handed back');
     assert.equal(a.handedBack, '—');
   });

@@ -19,6 +19,19 @@
  * credits), in EVERY mode including keep_separate: consuming a family's earned rebate on a bill
  * that a forgiveness would have cancelled would silently cost them cash they were owed.
  *
+ * ⚠ AN ADJUSTMENT (`credit_type 'other'`) ALSO LANDS ON BILLS IN EVERY MODE (owner ruling F03,
+ * 2026-09-12). It is a write-off — a bill lowered, not money the family sent — so on a
+ * "settle at season's end" team it lowers the bill NOW, exactly as forgiveness does there, rather
+ * than waiting with the money-backed credits. Until this ruling it was excluded from that mode's
+ * spendable set, which meant its whole amount sat in owedBack and the Pay out sheet offered it in
+ * cash to a family who might have paid nothing — the hole the 09-11 Adjustment ceiling had been
+ * closing by refusing every Adjustment in that mode. It stays INSIDE the identity (it is issued,
+ * and whatever does not land is genuinely owed back — the family paid more than the lowered
+ * bill), and it is capped by the bill at both doors (lib/dues-credit-guards.ts), which is what
+ * keeps owedBack ≤ what the family actually sent. Ordering among the non-forgiven run is
+ * unchanged (by age) — an Adjustment that finds no bill is the payable-back credit that carries
+ * the coach's reason, which is the point of recording it as one.
+ *
  * ⚠ CASH ALWAYS CLAIMS A BILL BEFORE A CREDIT DOES. Payments allocate first
  * (lib/dues-payments.ts, oldest-first); credits work only over the remainders, from the OTHER end
  * of the schedule (last bill first, by default) so the two never contest a dollar. This is what
@@ -42,8 +55,9 @@ const toDollars = (c: number) => c / 100;
 
 /** How a team's credits meet its bills — rep_program_years.credit_application (owner Call 2).
  *  `last_first` (default): credits eat the schedule from the far end, protecting the season's
- *  cash rhythm. `next_first`: relief lands on the next bill due. `keep_separate`: credits never
- *  touch bills (except forgiveness — see header) and every dollar waits for season's end. */
+ *  cash rhythm. `next_first`: relief lands on the next bill due. `keep_separate`: money-backed
+ *  credits never touch bills and wait for season's end; a write-off (forgiveness, Adjustment)
+ *  lowers the bill in every mode — see header. */
 export type CreditApplicationMode = 'last_first' | 'next_first' | 'keep_separate';
 
 export const CREDIT_APPLICATION_MODES: readonly CreditApplicationMode[] =
@@ -186,7 +200,7 @@ export const CREDIT_MODE_LABELS: Record<CreditApplicationMode, string> = {
 export const CREDIT_MODE_HINTS: Record<CreditApplicationMode, string> = {
   last_first:    'Fundraising shrinks the far end of the schedule; near-term amounts keep their dates',
   next_first:    'Relief lands on the next bill due',
-  keep_separate: 'Bills never move — every credit waits for season’s end',
+  keep_separate: 'Money credits wait for season’s end — a bill the coach lowers is lower now',
 };
 
 /**
@@ -202,7 +216,13 @@ export const CREDIT_MODE_HINTS: Record<CreditApplicationMode, string> = {
 export const CREDIT_MODE_SENTENCES: Record<CreditApplicationMode, string> = {
   last_first:    'Credits reduce the last payment first',
   next_first:    'Credits reduce the next payment first',
-  keep_separate: 'Credits don’t reduce bills — settled at season’s end',
+  /* "Money credits", not "credits" (/review 2026-09-12): since owner ruling F03 a write-off —
+     an Adjustment, a forgiven balance — lowers the bill straight away on this setting too. This
+     sentence renders standalone under the Player Dues table and in the Money group's header,
+     on the very screen where an Adjustment has just lowered a bill. The picker LABEL above keeps
+     its settled wording ("They don't — settle at season's end") — it is the option's NAME, quoted
+     in help as a term, and its hint line carries the exception; renaming it is a vocabulary call. */
+  keep_separate: 'Money credits don’t reduce bills — settled at season’s end',
 };
 
 /** The DB column is free text to the compiler — normalize unknowns to the default. */
@@ -417,9 +437,11 @@ export function applyCreditsToBills(opts: {
     return { credit: c, leftC };
   }).filter(q => q.leftC > 0);
 
-  // keep_separate: only forgiveness may touch bills (header).
+  // keep_separate: only a WRITE-OFF may touch bills (header) — forgiveness, and since 2026-09-12
+  // an Adjustment too. Money-backed credits wait for season's end; a bill that has been lowered
+  // is lower now.
   const spendable = mode === 'keep_separate'
-    ? queue.filter(q => q.credit.creditType === 'forgiven')
+    ? queue.filter(q => q.credit.creditType === 'forgiven' || q.credit.creditType === 'other')
     : queue;
 
   // The direction the team chose. next_first walks the schedule the way cash does; last_first

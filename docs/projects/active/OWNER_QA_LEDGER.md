@@ -20605,6 +20605,22 @@ than trusted from the screen). Part F was not a check but two decisions, and bot
 Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_{PLAN,PM_BRIEF}.md` · walk source:
 `docs/projects/active/COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_WALK.html`.
 
+### Owner follow-up: adjustment presentation - OPEN, 2026-09-11
+
+**Implementation built 2026-09-12:** The approved adjustment-breakdown mockup is now in the application. Player Dues keeps the original installments, adds an **Adjustments & forgiveness** section with **Add adjustment** in the header and **Edit** on each manually entered adjustment, and leaves **Other credits** for the rows included in its total. The narrow receipt, family statement/PDF, roster dues summary, and help copy now use the same original-to-net explanation. Historical adjustments that have already been handed back are stated explicitly rather than hidden in the wrong section. No migration and no persisted money calculation change.
+
+**Verification 2026-09-12:** typecheck; full unit suite **3,603/3,603**; focused lint **0 errors** (existing warnings only); `check:money-report`; `check:pdf`; `check:css-purity`; `check:css-selectors`; `check:spelling`; dev-server restart; login health HTTP 200 with no `EACCES` in the logs. Owner browser verification remains: add two adjustments, edit one, remove one, confirm empty/read-only states, and compare drawer receipt to the family statement.
+
+**Mockup refined 2026-09-12:** At the owner's request, “+ Add adjustment” sits in the section header and each manually entered adjustment has an Edit action on its own row. Added a two-adjustment example and working preview add/edit controls. The empty coach section retains the add action; the family statement omits empty adjustment sections. Other credits has no Add credit action, consistent with the existing manual-credit restriction to adjustments. This is the design the implementation above follows.
+
+**Mockup built 2026-09-11:** [Adjustment breakdown preview](COACH_DUES_ADJUSTMENT_BREAKDOWN_MOCKUP.html). Drawer and family statement, current/proposed comparison, phone width, and adjustment/forgiveness/no-adjustment examples. JavaScript and CSS parse checks and scenario arithmetic/section checks passed. Owner visual and design review pending; no application behaviour changed by this mockup.
+
+The owner found a $17 adjustment listed beneath Other credits, whose $380 total correctly excludes it. Source review confirms the drawer still filters only fundraising and family-owned money from its credit rows; the same list supplies the printable receipt descriptions. The family statement combines gross schedule totals with net ladder credits, and its detailed credit list still includes adjustments. The roster player summary also uses a gross ladder because its producer does not supply billLowered. These are presentation inconsistencies requiring follow-up, not a reason to count adjustments as collected money.
+
+Owner requested comparison of keeping adjustments as bill reductions versus returning them to Other credits. Recommendation: retain net dues and give adjustments/forgiveness their own visible breakdown beside the original charges. The Budget Plan and Budget vs. Actual already net these amounts from planned player dues, including period placement; older plan text calling the Budget Plan gross is superseded by the current implementation. No product changes made during this review; direction and remediation remain open. The earlier owner pass records the original walk, not resolution of these new findings.
+
+---
+
 ## §161 · The WORD names a money-in budget row, and two lines on one word are one row — built on dev 2026-09-09 (`879209d6`), cleaned by `/simplify` and hardened by `/review` (`31d9d7b1`, two real defects), **no migration**, awaiting QA · walk artifact `5b6ebe17` · decision mockups `151bc861`
 
 ⚠⚠ **READ THE CONFLICT FIRST — THIS WALK MAY BE HALF OBSOLETE BEFORE IT IS RUN.** Another session has
@@ -21998,3 +22014,101 @@ and ran the whole suite green before the ref moved. ⚠ Two of its files also ca
 Set-dues sheet and the help article were committed as mine-only blobs (their other hunks stay in the working
 copy); the budget panel shipped WITH the Categories & Items door (§163, owner QA ✅ 35/35 2026-09-11) by the
 owner's word. Restart the dev server before you walk it — hot reload carried the change, but shared modules moved.
+
+---
+
+## §174 · The Adjustment ceiling is the bill, not the balance — an Adjustment can write a bill down to zero whatever the family has paid, a bill can never be lowered beneath what is already written off it, and a write-off lands on a hand-back team's bill straight away — owner-ruled and built on dev 2026-09-12, **✅ WALK PASSED 13/13 the same day, zero defects, all four parts**
+
+**What you asked for, and where it went.** Your opening question was the installment picker: let a coach
+choose which installment an Adjustment lowers, so a hand-back team could write off a bill that was
+already paid. On review the picker was set aside — a credit has never been tied to one installment (that
+landing is derived at read time, never stored) and choosing one would not have changed the question —
+and the question itself moved twice on the way to being ruled. The first draft bounded the ceiling by
+what the family had paid and scoped the change to hand-back teams; you corrected both in one sentence:
+*"the adjustment is to the total dues, so we shouldn't be able to total adjustments more than the total
+dues … regardless of how much they have paid."* That is the rule as built. Then you asked the question
+that found the hole from the other side — *what if the installments are lowered below the adjustments?*
+— and nothing was guarding it: the edit saved, the drawer printed **Dues −$300.00**, and the excess
+Adjustment became a credit the Pay out sheet offered in cash. Six rulings on the hub's Decisions tab
+(four accepted, two withdrawn); hub `4ce67727-c449-41ed-bb78-3da5da22d8c1`.
+
+### What you will see
+
+- **The limit is the bill.** A $900.00 bill can be written down by up to $900.00 whether the family has
+  paid $0.00, $500.00 or all of it. Past what is left of the bill (original charges − write-offs already
+  standing), the form reads *"An Adjustment can't lower this bill by more than what's left of it — $X"*
+  and Add adjustment is dead — never a live button the server will refuse.
+- **When it is more than is owed, the form says where the rest goes** before Save: *"$A clears what …
+  still owes, and $B becomes a credit the team can hand back."* The leftover is ≤ what they sent, because
+  the bill cannot go below zero — that, not a payments bound, is what closes the invented-money hole.
+- **A hand-back team's write-off lands now (F03, option i).** On "settle at season's end", an Adjustment
+  lowers the next installment exactly as a forgiven amount already did there; money credits still wait.
+  The setting's own hint says so: *"Money credits wait for season's end — a bill the coach lowers is lower
+  now."* The old "pay the family back directly instead" refusal is gone.
+- **The other direction is refused (F04).** Edit schedule and Set dues for all players both refuse to
+  lower a bill beneath its standing write-offs — by name, one sentence, the roster-wide run completing for
+  everyone else, its preview showing the blocked row and its result speaking the same words. This was a
+  live defect before today, independent of the ceiling change.
+- Help: *"The limit is the bill, not the balance"* under Adding an adjustment; the three "bills never
+  move" sentences trued up; the Set-dues refusal paragraph widened.
+
+### Walk — 2026-09-12, 13/13, four parts, all PASS
+
+- **Part A · The ceiling is the bill (5/5).** The seeded "Team photos not ordered" family (paid in full):
+  Dues reads original − $17.00; an amount equal to what is left of the bill is live and the sentence names
+  the whole amount as owed back; one cent more reads the refusal and Add adjustment is dead; a part-paid
+  family's larger write-off names both halves, saves, lands under Adjustments & forgiveness with the
+  reason, Dues drops by the full amount, every installment settled, the owed-back credit equals the
+  second half; removed afterwards.
+- **Part B · The schedule doors refuse (3/3).** Edit schedule retyped below $17.00 on the Team-photos
+  family → refused with the sentence, schedule untouched; Set dues for all below $17.00 → that family a
+  Refused row in the preview reading the same sentence, the button's count excluding them; cancelled.
+- **Part C · A hand-back team (3/3).** Credits reduce → "They don't — settle at season's end" shows the
+  new hint; a new Adjustment's sentence reads "taken off their next payment first", saves, the next
+  unsent installment drops by that amount and nothing shows as owed back; put back.
+- **Part D · Help (2/2).** Search "write off a paid bill" lands on the paragraph; the Set-dues article's
+  refusal paragraph names a family whose adjustments exceed the new total.
+
+### What did NOT change
+
+Forgiveness as a credit type; fundraiser, sponsor and reimbursement credits; no installment picker; no
+schema change, no migration. The credit engine's ordering among non-forgiven credits is unchanged — noted
+in the plan as considered and left for a later pass if a walk ever shows an Adjustment offered as a
+"debt" where the family's real money should be.
+
+### Verification
+
+176/176 across the ten dues suites (the guard suite rewritten: the four flipped cases, cents exactness,
+the exclude-yourself case kept; +2 engine cases proving an Adjustment lands next-first on keep_separate
+and that a paid-in-full write-off IS the owed-back credit carrying the reason; +2 planner cases; +1 ladder
+floor case that still closes). `check:money-report` green on the live fixture. Lint 0 errors on the
+touched files; `check:spelling` green; typecheck clean on every file this touched — the tree's remaining
+errors are other sessions' in-flight work. The full unit run's 37 failures were all the peer's budget
+periods/exports work, none in dues. Demos unmoved (neither world holds a write-off, §160 F1). `/review`
+run before commit — see the plan's build note for its findings.
+
+### Owed
+
+Nothing from the walk. Commit lands with the adjustment-breakdown work (§160's 2026-09-12 follow-up),
+whose ceiling this corrected before it was ever committed.
+
+Plan pair: `docs/projects/active/COACH_DUES_ADJUSTMENT_HANDBACK_{PLAN,PM_BRIEF}.md` · hub
+`COACH_DUES_ADJUSTMENT_HANDBACK_HUB.html` (mockup, brief, plan, six decisions and this walk on one URL).
+
+## §175 · Awards join the One Tag Idiom — a given award can be fixed or taken back where it was given, and the award-type library gets the door, the drawer, merge and an honest remove — built on dev 2026-09-11/12 across three commits (`c27d1971` the build, `96d51e7d` the `/simplify` pass, `b1c0b09c` two `/review`-found race-safety fixes) plus a fourth (`47bccd4f`) for a live-found bug the walk below surfaced the day of, **migration 289 applied to prod 2026-09-11**, **✅ WALK PASSED 17/17, zero defects, both parts** · hub artifact `630ebe17` (QA Walk tab)
+
+Two things called "awards" got unstuck. A **given award** (*Blake Test got MVP for the Apr 16 game*) could be created from the game drawer and removed only from the season report — never edited anywhere. An **award chip** (*MVP* itself) could be minted inline with "+ New" but managed only from a separate modal reached by a text link on the report page, and that modal could rename or retire — never delete, never merge, no usage counts. Both now carry the same door/drawer/rename/merge/remove pattern every other tag vocabulary in the coach portal already has.
+
+### What you saw
+
+- **A given award has Edit and Remove where it was given** — the game drawer's award rows and the season report's history rows both carry a pencil and a trash icon; Edit reopens the Give window pre-filled, titled "Edit award," with no remove link inside the form (one job per control).
+- **A player can't hold the same award twice for one game.** Give and Edit both refuse a second copy with a plain sentence naming the player and the game — a gap that existed before this build, on the give path alone.
+- **The award-type library got its door**: "Manage awards…" sits beside "+ New" in the Give window, opening the same rename/merge/remove drawer every other tag list already has, and an Awards row now lives on the Team settings Tags shelf. The report page's old "Manage award types" link is gone.
+- **Removing a used award never orphans or cascades.** The dialog states how many times it's been given and offers Merge (that player's award reads under the other name) or Retire (drops off the picker, stays on every record it's already on); an award never given just deletes. A merge that would leave a player holding the same award twice for one game collapses to whichever was given first and says so in the confirm sentence before the tap.
+
+### Walk — 2026-09-12, 17/17, two parts, both PASS
+
+- **Part A · A given award, fixed or taken back (6/6).** Edit and Remove render on the game drawer's award rows; Edit opens the Give window titled "Edit award," pre-filled, with no remove link in the form; a note edit updates in place and the schedule's trophy count stays true; giving Blake Test the same award for the same game again is refused by name; the season report's history row carries Edit beside Print and Remove; removing an award from either surface updates both immediately with one confirm.
+- **Part B · The award-type library — door, drawer, merge, an honest remove (11/11).** "Manage awards…" sits beside "+ New"; the drawer opens over the dimmed Give form with a usage count on every row; a duplicate minted on purpose and given to Blake Test merges into the original, the preview sentence read before confirming; the survivor is the earlier-given award, its note carried over only when it started empty; an unused award deletes outright with no extra question; a used award's remove dialog refuses a bare delete and offers Retire and Merge instead, both reachable and completed from inside that same dialog; Retire and Restore round-trip correctly; the Team settings Tags shelf carries the Awards row and the report page's old link is gone; the drawer holds up at 390px with one merge completed there too.
+
+No defects surfaced; no notes recorded against either part. Plan: `docs/projects/active/COACH_AWARDS_ONE_TAG_IDIOM_PLAN.md` + `_PM_BRIEF.md`. Still owed, unrelated to what this walk covered: a full rendered-layout sweep at every width (the shared dev server didn't have the memory for one; only the three directly-touched screens were spot-checked) and the `coach-awards` marketing screenshot re-photograph (an Edit icon now sits in its last column). Neither blocks a release; both are tracked on the hub.

@@ -1,5 +1,9 @@
 # PM brief — A bill lowered is not a collection
 
+**2026-09-12 mockup refinement:** The adjustments section header owns “+ Add adjustment”; each manually entered adjustment has its own Edit action, including when only one exists. The coach's empty section keeps the creation action, while the family statement omits that empty section. Other credits has no Add credit action: the existing manual-credit form creates only adjustments. Added a two-adjustment example and working preview add/edit controls; forgiveness retains its separate settlement origin. This updates the design preview only.
+
+**2026-09-11 presentation follow-up:** The bill-reduction calculation is implemented; owner QA subsequently found adjustments still listed inside Other credits despite being excluded from its total. The [interactive breakdown mockup](COACH_DUES_ADJUSTMENT_BREAKDOWN_MOCKUP.html) proposes Original charges → Adjustments & forgiveness → Dues, with separate money-backed credit sections. It includes a family-statement view, current/proposed comparison, phone width and three example states. Existing coach write access is unchanged; this preview does not save anything. Success means every section total equals its rows, families can reconcile original charges to net dues, and balances and collected amounts do not change. Presentation direction awaits owner review; older build-status prose below records the initial proposal.
+
 **Plan:** `COACH_DUES_ADJUSTMENTS_LOWER_THE_BILL_PLAN.md` · **Rulings:** owner, 2026-09-09 ·
 **Status:** not built · **Mockup:** https://claude.ai/code/artifact/b529dd67-a2e1-4f00-95ce-b246d6cc086c
 

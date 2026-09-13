@@ -1,0 +1,467 @@
+<title>Adjustment Ceiling Hand-Back Exception</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}.textbutton{border:0;background:transparent;min-height:44px;padding:8px 0;color:var(--blue);text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.back{display:inline-flex;align-items:center;min-height:44px;margin-bottom:9px;font-size:13px;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted)}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.verdictstate{font-weight:700;margin-left:4px}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+@container(max-width:700px){main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.head{flex-wrap:wrap;gap:12px}h1{font-size:23px}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+</style>
+
+<!-- Embedded specimens use the REAL coach-portal warm-theme tokens (not the hub chrome above) so
+     they read as the actual product, not a mockup skin. -->
+<style>
+:root{
+  --p-card:#FFFFFF;--p-ink:#241E15;--p-ink-soft:#4A4235;--p-dim:#615A54;
+  --p-line:rgba(70,55,30,.12);--p-line-strong:rgba(70,55,30,.20);
+  --p-lime:#D9F99D;--p-lime-ink:#241E15;--p-danger:#B03A22;--p-danger-soft:rgba(176,58,34,.08);
+  --p-warning:#835006;--p-warning-soft:rgba(131,80,6,.08);--p-success:#34662A;
+}
+.specrow{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:4px}
+@media(max-width:640px){.specrow{grid-template-columns:1fr}}
+.speclabel{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.stagepill{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:2px 7px}
+.stagepill.before{color:#8a3226;background:#f6e2dd}.stagepill.after{color:#2f5323;background:#e3f0d6}
+.pcard{background:var(--p-card);color:var(--p-ink);border:1px solid var(--p-line-strong);border-radius:9px;
+  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:14px 16px 16px;font-size:13px}
+.ptitle{font-size:13px;font-weight:700;margin-bottom:10px}
+.pfield{margin-bottom:9px}
+.plabel{display:block;font-size:11px;font-weight:600;color:var(--p-dim);margin-bottom:4px}
+.pinput{width:100%;border:1px solid var(--p-line-strong);border-radius:6px;padding:6px 9px;font-size:13px;
+  color:var(--p-ink);background:var(--p-card);font-family:inherit;font-variant-numeric:tabular-nums}
+.pbanner{border-radius:7px;padding:9px 11px;font-size:12.5px;line-height:1.5;margin:10px 0 12px}
+.pbanner.danger{background:var(--p-danger-soft);color:var(--p-danger);border:1px solid rgba(176,58,34,.22)}
+.pbanner.consequence{background:var(--p-warning-soft);color:var(--p-warning);border:1px solid rgba(131,80,6,.22)}
+.pactions{display:flex;justify-content:flex-end;gap:8px}
+.pbtn{font-family:inherit;font-size:12.5px;font-weight:600;border-radius:6px;cursor:default;padding:7px 14px;border:none}
+.pbtn-ghost{background:none;color:var(--p-dim);font-weight:400}
+.pbtn-save{background:var(--p-lime);color:var(--p-lime-ink)}
+.pbtn-save[data-off]{opacity:.4}
+.pdrawer{background:var(--p-card);color:var(--p-ink);border:1px solid var(--p-line-strong);border-radius:9px;
+  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:14px 16px;font-size:13px}
+.pband{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--p-dim);margin-bottom:8px}
+.ptotal{display:flex;justify-content:space-between;gap:12px;padding-top:9px;margin-top:9px;border-top:1px solid var(--p-line);font-weight:700}
+.pcreditrow{display:flex;justify-content:space-between;gap:10px;background:rgba(70,55,30,.035);border:1px solid var(--p-line);border-radius:7px;padding:8px 10px;font-size:12.5px;margin-top:8px}
+.pcreditamt{color:var(--p-success);font-weight:700}
+.pempty{font-size:12.5px;color:var(--p-dim);margin:6px 0 11px}
+.pnote{font-size:12px;color:var(--p-success);margin-top:8px;display:flex;gap:6px;align-items:flex-start}
+.pnote::before{content:"\2192";flex-shrink:0}
+.pdivider{border:none;border-top:1px solid var(--p-line);margin:14px 0}
+table.compare{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+table.compare th,table.compare td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.compare th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+table.compare tr:last-child td{border-bottom:none}
+.formula{background:#fafbf7;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;
+  padding:12px 15px;margin:14px 0;font-family:ui-monospace,monospace;font-size:13.5px}
+.formula .old{color:#9aa393;text-decoration:line-through;display:block;margin-bottom:6px}
+.formula .new{color:var(--warn);display:block;font-weight:600}
+.ballotrow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+@media(max-width:640px){.ballotrow{grid-template-columns:1fr}}
+.ballot{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;position:relative}
+.ballot.rec{border-color:var(--olive);background:var(--soft)}
+.ballotstamp{position:absolute;top:-10px;right:14px;background:var(--olive);color:#fff;font-size:10px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.ballot ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+.ballot li{margin-bottom:5px}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>The Adjustment Ceiling Is the Bill — project hub</strong><br><small>Ruled, built, walked (§174 ✅ 13/13) and reviewed 2026-09-12 · committed with the adjustment-breakdown work</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup drawn 2026-09-12, decision sheet published">Design</li>
+    <li class="stage done" title="Ruled 2026-09-12 — six rows on the Decisions tab">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-12 in the ruling session — guards, engine, both schedule doors, the form, help, tests">Build</li>
+    <li class="stage done" title="/review 2026-09-12 — high-risk tier, five lenses; seven findings fixed same day, one refuted, six advisory (plan build note)">Review</li>
+    <li class="stage done" title="Owner walk ✅ §174 PASSED 13/13, 2026-09-12 — four parts, zero defects">QA</li>
+    <li class="stage current" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#screen-wall">1 · The wall today</a>
+    <a href="#screen-workarounds">2 · Two workarounds</a>
+    <a href="#screen-proposal">3 · The proposal</a>
+    <a href="#screen-guardrail">4 · The ceiling</a>
+    <a href="#screen-scope">5 · The hand-back wrinkle</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">Coaches Portal · Player Dues<br><span class="meta">Sample head-coach view</span></div>
+    </header>
+    <main>
+
+      <section class="screen" id="screen-wall">
+        <div class="head"><div><div class="eyebrow">Coach money · guard ruling</div><h1 tabindex="-1">The wall a coach hits today</h1>
+          <p class="sub">A family's schedule reads $900.00 across three installments, all three paid. Writing off $17.00 for team photos never ordered should still work — it doesn't.</p></div></div>
+        <div class="specrow">
+          <div>
+            <div class="speclabel"><span class="stagepill before">Today</span>Roll-forward team, fully paid</div>
+            <div class="pcard">
+              <div class="ptitle">Add adjustment</div>
+              <div class="pfield"><span class="plabel">Amount</span><div class="pinput">$17.00</div></div>
+              <div class="pfield"><span class="plabel">Description</span><div class="pinput">Team photos not ordered</div></div>
+              <div class="pbanner danger">This player has nothing left owing for an Adjustment to write off.
+                <button class="fl" data-finding="F01" data-here="Roll-forward team — the ceiling is $0.00 once every installment is paid.">F01</button>
+              </div>
+              <div class="pactions"><span class="pbtn pbtn-ghost">Cancel</span><span class="pbtn pbtn-save" data-off>Add adjustment</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="speclabel"><span class="stagepill before">Today</span>Hand-back team, fully paid</div>
+            <div class="pcard">
+              <div class="ptitle">Add adjustment</div>
+              <div class="pfield"><span class="plabel">Amount</span><div class="pinput">$17.00</div></div>
+              <div class="pfield"><span class="plabel">Description</span><div class="pinput">Team photos not ordered</div></div>
+              <div class="pbanner danger">This team's "Credits reduce" setting is "They don't — settle at season's end," so an Adjustment has no bill to write off. Pay the family back directly, or change that setting in Team settings → Money.
+                <button class="fl" data-finding="F01" data-here="Hand-back team — the ceiling is $0.00 unconditionally in this mode, whether or not anything is still owed.">F01</button>
+              </div>
+              <div class="pactions"><span class="pbtn pbtn-ghost">Cancel</span><span class="pbtn pbtn-save" data-off>Add adjustment</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-workarounds" hidden>
+        <div class="head"><div><div class="eyebrow">Coach money · guard ruling</div><h1 tabindex="-1">Two ways around it, both incomplete</h1>
+          <p class="sub">The coach isn't stuck — but neither existing door gives what an Adjustment already gives on every bill that isn't fully paid yet.</p></div></div>
+        <table class="compare">
+          <thead><tr><th>Compared</th><th>Pay the family back directly</th><th>Edit the schedule down to $883</th></tr></thead>
+          <tbody>
+            <tr><td>Bill on record afterward</td><td><strong>$900.00</strong>, unchanged</td><td><strong>$883.00</strong></td></tr>
+            <tr><td>"Team photos not ordered" survives?</td><td>No — nowhere on the record</td>
+              <td>No — replaced by a fixed system line <button class="fl" data-finding="F02" data-here="The auto-created credit reads &ldquo;Overpayment (dues changed)&rdquo; — a coach cannot edit or explain it.">F02</button></td></tr>
+            <tr><td>Shows in Adjustments &amp; forgiveness?</td><td>No</td><td>No — reads as Overpayment instead</td></tr>
+            <tr><td>Season reports read the bill as</td><td>Always billed $900.00</td><td>Always billed $883.00, as if from day one</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="screen" id="screen-proposal" hidden>
+        <div class="head"><div><div class="eyebrow">Coach money · guard ruling</div><h1 tabindex="-1">What changes</h1>
+          <p class="sub">The same Adjustment goes through on any team — and when it's more than what's still owed, the form says plainly where the rest goes before the coach saves it.</p></div></div>
+        <div class="specrow">
+          <div>
+            <div class="speclabel"><span class="stagepill after">Proposed</span>Same dialog, same team</div>
+            <div class="pcard">
+              <div class="ptitle">Add adjustment</div>
+              <div class="pfield"><span class="plabel">Amount<span class="mk" data-k="un" data-note="The amount field itself doesn't change — same box, same validation.">Unchanged</span></span><div class="pinput">$17.00</div></div>
+              <div class="pfield"><span class="plabel">Description</span><div class="pinput">Team photos not ordered</div></div>
+              <div class="pbanner consequence">This is more than is currently owed — $17.00 becomes a credit this team can hand back to the family.
+                <span class="mk" data-k="new" data-note="Not in the product today. Appears only when the typed amount exceeds what's currently owed but clears the new ceiling (§4) — states the consequence before Save, the same idiom the schedule editor already uses.">New</span>
+                <button class="fl fix" data-finding="F01">fixes F01</button>
+              </div>
+              <div class="pactions"><span class="pbtn pbtn-ghost">Cancel</span><span class="pbtn pbtn-save">Add adjustment<span class="mk" data-k="re" data-note="Same button — re-enabled once the ceiling allows the amount through, instead of staying disabled forever past &ldquo;nothing owing.&rdquo;">Restyled</span></span></div>
+            </div>
+          </div>
+          <div>
+            <div class="speclabel"><span class="stagepill after">Proposed</span>The drawer, before → after</div>
+            <div class="pdrawer">
+              <span class="pband">Original charges — $900.00</span>
+              <div class="pempty">No adjustments or forgiveness.</div>
+              <div class="ptotal"><span>Dues</span><span>$900.00</span></div>
+              <hr class="pdivider">
+              <span class="pband">Adjustments &amp; forgiveness — $17.00 <span class="mk" data-k="un" data-note="This band and its layout already exist (built 2026-09-12, the adjustment-breakdown project) — nothing about how it's drawn changes here.">Unchanged</span></span>
+              <div class="pcreditrow"><span>Team photos not ordered</span><span class="pcreditamt">($17.00)</span></div>
+              <div class="ptotal"><span>Dues</span><span>$883.00</span></div>
+              <div class="pnote">$17.00 of this is now a credit owed back to this family
+                <span class="mk" data-k="new" data-note="Not in the product today. Only appears when an Adjustment's excess became a payable-back credit — silent otherwise, exactly like the existing &ldquo;more than billed&rdquo; note under Payments.">New</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-guardrail" hidden>
+        <div class="head"><div><div class="eyebrow">Coach money · guard ruling</div><h1 tabindex="-1">The ceiling is the bill</h1>
+          <p class="sub">An Adjustment lowers the dues. A bill can be lowered to zero and no further — what the family has paid so far has nothing to do with it.</p></div></div>
+        <div class="formula">
+          <span class="old">today &rarr; what's still owed (0 once paid up; 0 always on a hand-back team)</span>
+          <span class="new">proposed, every team &rarr; original charges &minus; write-offs already recorded</span>
+        </div>
+        <table class="compare">
+          <thead><tr><th>$900.00 bill, $900.00 written off</th><th>Clears what's owed</th><th>Owed back to the family</th></tr></thead>
+          <tbody>
+            <tr><td>Family has paid $0.00</td><td>$900.00 — nothing left to pay</td><td>$0.00</td></tr>
+            <tr><td>Family has paid $500.00</td><td>$400.00 — nothing left to pay</td><td>$500.00 — exactly what they sent</td></tr>
+            <tr><td>Family has paid $900.00</td><td>$0.00 — nothing was owed</td><td>$900.00 — exactly what they sent</td></tr>
+          </tbody>
+        </table>
+        <p class="sub" style="margin:10px 0 16px">The write-off lands on whatever is still owed first; only what's left over becomes a credit owed back — which by construction can never exceed what the family actually sent. That is the arithmetic the product already runs; only the ceiling refuses.</p>
+        <div class="specrow">
+          <div>
+            <div class="speclabel"><span class="stagepill before">Still refused</span>More than the bill</div>
+            <div class="pcard">
+              <div class="ptitle">Add adjustment</div>
+              <div class="pfield"><span class="plabel">Amount</span><div class="pinput">$2,000.00</div></div>
+              <div class="pbanner danger">An Adjustment can't lower this bill by more than what's left of it — $900.00.
+                <span class="mk" data-k="re" data-note="Today this sentence names what's still OWED. It now names what's left of the BILL — original charges minus write-offs already recorded — so a second Adjustment after a $17.00 one would read &ldquo;$883.00.&rdquo;">Restyled</span>
+              </div>
+              <div class="pactions"><span class="pbtn pbtn-ghost">Cancel</span><span class="pbtn pbtn-save" data-off>Add adjustment</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="speclabel"><span class="stagepill before">Now refused</span>The other direction — the bill below its write-offs</div>
+            <div class="pcard">
+              <div class="ptitle">Dues schedule <span style="font-weight:400;color:var(--p-dim)">· just this family</span></div>
+              <div class="pfield"><span class="plabel">Installment 1 · Oct 1, 2026</span><div class="pinput">$100.00</div></div>
+              <div class="pfield"><span class="plabel">Installment 2 · Dec 1, 2026</span><div class="pinput">$100.00</div></div>
+              <div class="pfield"><span class="plabel">Installment 3 · Mar 1, 2027</span><div class="pinput">$100.00</div></div>
+              <div class="pbanner danger">This family has $600.00 written off — a $300.00 bill would be less than that. Lower or remove the adjustment first.
+                <span class="mk" data-k="new" data-note="Not in the product today. Both schedule doors already refuse a RAISE that would break the payout floor, by name, before writing; this is the same pre-flight pointed the other way. Today this edit saves, the drawer prints Dues −$300.00, and the extra $300.00 of the Adjustment becomes a credit the Pay out sheet offers — money nobody sent.">New</span>
+                <button class="fl" data-finding="F04" data-here="$900.00 bill, $0.00 paid, $600.00 Adjustment recorded, then the coach retypes the three installments to $100.00 each.">F04</button>
+              </div>
+              <div class="pactions"><span class="pbtn pbtn-ghost">Cancel</span><span class="pbtn pbtn-save" data-off>Save schedule</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="sub" style="margin-top:12px">Same rule, both doors: write-offs can never exceed the bill, whichever side moves. "Set dues for all players" refuses only the affected families by name and lists them as blocked rows in its preview — the way it already handles the payout floor.</p>
+      </section>
+
+      <section class="screen" id="screen-scope" hidden>
+        <div class="head"><div><div class="eyebrow">Coach money · guard ruling</div><h1 tabindex="-1">The hand-back wrinkle</h1>
+          <p class="sub">The ceiling is one rule for every team. But on a "settle at season's end" team, credits don't touch the installments until then — so the whole write-off reads as "owed back" the moment it's saved, and the mid-season Pay out door is bounded only by credits held, not by what the family paid. A $900.00 write-off on a family who's paid nothing would let a coach hand them $900.00 in cash. That is the hole yesterday's zero-ceiling was closing.
+            <button class="fl" data-finding="F03" data-here="Hand-back team, family has paid $0.00, $900.00 written off: Pay out offers the full $900.00 today, because nothing landed on the bill.">F03</button></p></div></div>
+        <div class="ballotrow">
+          <div class="ballot rec"><div class="ballotstamp">Recommended</div>
+            <h3>(i) Let it lower the bill right away — like forgiveness already does there</h3>
+            <p class="sub">On a hand-back team, an Adjustment lands on what's owed immediately, exactly as a forgiven amount already does in that mode. Only the leftover is owed back.</p>
+            <ul>
+              <li>One rule everywhere, no second guardrail — the roll-forward arithmetic already does the right thing.</li>
+              <li>The product already groups "Adjustments &amp; forgiveness" as one kind of thing; this makes them behave as one.</li>
+              <li>A coach who says "the bill is $883.00" stops having the system chase $900.00.</li>
+              <li>Changes one thing on hand-back teams: a mid-season write-off lowers the next installment instead of being refunded at season's end.</li>
+            </ul>
+          </div>
+          <div class="ballot">
+            <h3>(ii) Keep it held until season's end, but cap the refund</h3>
+            <p class="sub">The write-off stays a credit until settlement, as the mode intends — and what's refundable from it is capped at what the family has actually paid in.</p>
+            <ul>
+              <li>Preserves the mode's philosophy: families pay the schedule, differences settle at the end.</li>
+              <li>Adds a rule on the payout side that only Adjustments need — every other credit is money-backed.</li>
+              <li>The Dues figure reads $883.00 while the installments still total $900.00 until settlement.</li>
+              <li>Two rules answering two questions, where (i) needs one.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="sub" style="margin-top:16px">This replaces the earlier "hand-back teams only vs. any family" question, which assumed the ceiling itself was mode-specific. It isn't — the bill is the bill.</p>
+      </section>
+
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>An Adjustment is limited by the bill, not the balance</h1>
+  <h2>What changes for the coach</h2>
+  <p>An Adjustment lowers a family's bill, and the only limit on it is the bill itself: a $900.00 bill can be written down by up to $900.00, whether the family has paid none of it, half of it, or all of it. Today the limit is what's still <em>owed</em>, so a family who has paid $500.00 can only have $400.00 written off, and a family who has paid in full can't have anything written off at all — even though the write-off is about the bill, not the balance. When a write-off is bigger than what's still owed, the form says so before the coach saves: <em>"This is more than is currently owed — $17.00 becomes a credit this team can hand back to the family."</em> Nothing else about adding an Adjustment changes — same form, same fields, same place it shows up afterward.</p>
+  <h2>Why it matters</h2>
+  <p>The coach hits the wall at exactly the moment a write-off is most needed — after money has come in and something turns out not to have cost what was billed. The two workarounds (paying back directly, or editing the schedule total) both move the same money, but one leaves no reason anywhere on the record and the other replaces the coach's reason with a fixed system sentence and quietly rewrites what the family was "always billed."</p>
+  <h2>Customer impact</h2>
+  <p>Every team, any time a bill is lowered after a payment has landed. Most visible on hand-back ("settle at season's end") teams, where today an Adjustment is refused outright — but a roll-forward team with a family half-paid hits the same ceiling.</p>
+  <h2>Priority</h2>
+  <p>Small and self-contained: one guard formula, one new sentence, no migration. One open question on hand-back teams (below) decides whether it's one change or two.</p>
+  <h2>Success criteria</h2>
+  <p>A coach can write off any part of a family's bill with a real reason, regardless of what's been paid, and it shows up in Adjustments &amp; forgiveness exactly where every other write-off lives. Write-offs never exceed the bill from either direction — an Adjustment can't push past it, and a schedule edit can't pull the bill beneath it; the Dues figure never reads negative. Nothing is ever handed back to a family that they didn't actually send — including on hand-back teams.</p>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>The Adjustment ceiling is the bill — implementation plan</h1>
+  <h2>Problem / context</h2>
+  <p>An Adjustment is the one credit a coach types by hand with no arrived money behind it. The ceiling in <code>lib/dues-credit-guards.ts</code> (<code>adjustmentCeiling</code>, owner ruling 2026-09-11) exists so a hand-typed number can never turn into "the team owes this family cash nobody sent." That goal is right. The formula chosen for it — what's still <em>owed</em> — is the wrong quantity: an Adjustment is a reduction of the <em>bill</em>, and it lowers the Dues figure in every mode, so its ceiling is the bill. Owner correction 2026-09-12: <em>"the adjustment is to the total dues, so we shouldn't be able to total adjustments more than the total dues … regardless of how much they have paid."</em> The invented-money goal survives that correction on roll-forward teams unchanged (the arithmetic already caps what's owed back at what was sent); on hand-back teams it needs one decision (F03).</p>
+  <h3>F01 — The ceiling measures the wrong thing</h3>
+  <p><strong>What the code does today:</strong> <code>adjustmentCeiling()</code> returns <code>leftToSend</code> — what's still <em>owed</em> after credits — floored at zero, and returns 0 outright on a <code>keep_separate</code> team. So a family who paid $500.00 of a $900.00 bill can have at most $400.00 written off; a family who paid all $900.00 can have nothing written off. Yet the Dues figure (<code>splitDuesLadder</code> → <code>duesActual</code>) subtracts standing <code>other</code> + <code>forgiven</code> credits in <strong>every</strong> mode — an Adjustment lowers the bill regardless. The ceiling is measuring the balance when the act is a reduction of the bill.</p>
+  <p><strong>What the proposal does:</strong> the ceiling becomes what's left of the <em>bill</em>: original charges − (standing <code>other</code> + <code>forgiven</code> credits), for every team, every mode. Payments and money-backed credits (fundraiser, sponsor, reimbursement) don't enter into it. Downstream, nothing new is needed on roll-forward teams: <code>applyCreditsToBills</code> lands the write-off on what's owed first and the leftover flows to <code>owedBack</code> — which by construction is ≤ what the family sent, because the bill can't go below zero. Note this is <em>not</em> the schedule editor's path (<code>strandedExcess</code> mints an overpayment credit against the gross schedule); the Adjustment credit itself carries the owed-back amount, which is why it keeps its own description.</p>
+  <h3>F02 — A reason that doesn't survive</h3>
+  <p><strong>What the code does today:</strong> lowering the bill through Edit schedule does create a payable-back credit, but it's labelled with a fixed system sentence ("Overpayment (dues changed)") no coach can edit, and it silently rewrites what the family was "always billed" on every season report that reads the schedule's total.</p>
+  <p><strong>What the proposal does:</strong> the Adjustment keeps the coach's own written reason, shown in Adjustments &amp; forgiveness exactly where every other write-off lives — the original $900.00 charge is never rewritten.</p>
+  <h3>F03 — The hand-back payout hole</h3>
+  <p><strong>What the code does today:</strong> on <code>keep_separate</code>, <code>applyCreditsToBills</code> filters the spendable queue to <code>forgiven</code> only (<code>lib/dues-credits.ts</code> ~420–423) — so an <code>other</code> credit never touches an installment there and its whole amount lands in <code>owedBack</code>. <code>payoutCeiling</code> counts every standing non-forgiven credit and knows nothing about unpaid installments. Under a bill-sized ceiling, a $900.00 Adjustment on a hand-back family who paid $0.00 is offered in full by the Pay out sheet. This — not the ceiling — is the "money nobody ever sent" hole the 2026-09-11 zero was closing.</p>
+  <p><strong>What the proposal does (recommended, (i)):</strong> include <code>other</code> alongside <code>forgiven</code> in <code>keep_separate</code>'s spendable set — an Adjustment is a bill reduction, not a held credit, and forgiveness already gets this treatment in that mode. Then the roll-forward arithmetic closes the hole with no extra rule. <strong>Alternative (ii):</strong> leave the spendable filter alone and cap an Adjustment's refundable portion at the family's payments in on hand-back teams — a second rule, on the payout side, that only this credit type needs.</p>
+  <h3>F04 — The bill can be lowered below its write-offs (today)</h3>
+  <p><strong>What the code does today:</strong> the per-player schedule POST (<code>dues/route.ts</code> ~452–465) and the roster re-run (<code>generate-installments/route.ts</code> ~271–329) read credits only inside <code>if (payouts.length &gt; 0)</code> and only to feed <code>projectScheduleTotalChange</code> → <code>payoutFloorViolation</code>, whose docstring says "a LOWER total only grows the credit, so only a rise can reach the floor" — true of <em>overpayment</em> credits, untrue of write-offs. Nothing compares the new total to standing <code>other</code> + <code>forgiven</code>. <code>splitDuesLadder</code> clamps <code>loweredC</code> against <em>credits</em>, not the bill, and has no floor on <code>dues</code> — $300.00 bill / $600.00 <code>other</code> prints <strong>Dues −$300.00</strong>. In <code>applyCreditsToBills</code> an <code>other</code> credit is indistinguishable from a money-backed one: $300.00 lands, <code>owedBack = $300.00</code>, and <code>payoutCeiling</code> (excludes <code>forgiven</code> only) offers it. <code>planRosterDuesRun</code> has no <code>creditType</code> branch — a $0-paid family with a $600.00 Adjustment gets no exception row. No unit test pins this scenario (nearest: <code>coach-dues-band.test.ts:98</code> asserts <code>balance −450</code> without asserting Dues). Reachable today under the 09-11 ceiling: record an Adjustment ≤ what's owed, then lower the schedule.</p>
+  <p><strong>What the proposal does:</strong> a new pre-flight in <code>lib/dues-credit-guards.ts</code> — <code>writeOffCeilingViolation(newScheduleTotal, standingWriteOffs)</code> — asked by both schedule doors before the write, in the payout floor's idiom: refuse with one sentence naming the figure and the door that fixes it. The roster-wide run refuses only the affected families (its existing per-family pattern) and <code>planRosterDuesRun</code> emits them as <code>blocked</code> rows. <code>splitDuesLadder</code> additionally floors <code>dues</code> at zero as belt-and-braces for any pre-guard data. Allow-and-clamp was rejected: it leaves a wrong record and tells the coach nothing.</p>
+  <h2>Scope</h2>
+  <p>One formula change in <code>adjustmentCeiling()</code> (every mode, one credit type). The consequence sentence in the Add Adjustment form when the amount exceeds what's still owed. The refusal sentence names what's left of the bill instead of what's owed. The mirror guard on both schedule doors (F04). Plus whichever of F03 (i)/(ii) is ruled.</p>
+  <div class="note"><strong>Out of scope</strong><p>Forgiveness (<code>credit_type: 'forgiven'</code>) is untouched as a credit type. No installment picker — a credit has never been tied to one installment in this system (that landing is derived at read time, never stored), and picking one wouldn't change the question. No schema change.</p></div>
+  <h2>Approach</h2>
+  <p>Ceiling = original charges − standing write-offs (other + forgiven). Existing test at <code>dues-credit-guards.test.ts:82</code> already pins "an existing <code>other</code> credit reduces the ceiling" (600 → 450) — that case is unchanged. Three cases flip: <code>:49</code> (fundraiser 200 → ceiling 400) becomes 600, because a money-backed credit isn't a write-off; <code>:59</code> (600 paid → 0) becomes 600; <code>:67</code> (<code>keep_separate</code> → 0) becomes 600. The two <code>adjustmentCeilingViolation</code> cases at <code>:102</code>/<code>:110</code> hold; <code>:117</code> (0.01 on keep_separate refused) flips to allowed.</p>
+  <h2>Open questions</h2>
+  <p><strong>F03 — (i) or (ii)?</strong> Screen 5. Recommendation is (i). Move to Decisions once ruled.</p>
+  <p><strong>Exact wording</strong> of the consequence sentence in the form, the refusal sentence, and the owed-back note in the drawer — the mockup proposes language; it is not final.</p>
+  <h2>Rollout</h2>
+  <p>No migration. Unit coverage: the four flipped cases above plus a partial-payment case ($500.00 of $900.00, $900.00 written off → $400.00 lands, $500.00 owed back); under (i), a <code>keep_separate</code> allocation test proving <code>other</code> now lands like <code>forgiven</code>; for F04, both doors refusing $300.00 against $600.00 written off (per-player 409 with the sentence; roster-wide refusing that family by name and completing the rest), <code>planRosterDuesRun</code> emitting the blocked row, and <code>splitDuesLadder</code> never returning a negative <code>dues</code>. The Exceptions-First preview gains one blocked-row kind, so its help sentence about blocked rows widens by a clause. Help copy for the Adjustment ceiling needs rewriting either way. The coach demo's money narration doesn't describe the ceiling, so no dock/tour line moves. <code>/review</code> required — it touches money guards on three doors and (under (i)) the allocation engine.</p>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens — not written up after the fact.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">The Adjustment ceiling's hand-back exception — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: from .env.local · Org/Team: uat-test-org / UAT Test Team. Built on dev 2026-09-12; the seeded write-off is the $17.00 “Team photos not ordered” adjustment on a family paid in full. Every step that adds an adjustment or changes a setting says how to put it back.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+const intents={
+  'screen-wall':'The two refusal messages a coach can hit today, side by side — different sentences, identical outcome: the write-off cannot be saved.',
+  'screen-workarounds':'Both existing doors move the same $17.00. Neither keeps the reason where an Adjustment already keeps it.',
+  'screen-proposal':'Same form, same fields — the only addition is the sentence that states the consequence before Save. The drawer already knows how to draw an Adjustment; only the payable-back note is new.',
+  'screen-guardrail':'The ceiling is the bill, not the balance and not the payments — one rule for every team, held from both directions: an Adjustment cannot push past the bill, and a schedule edit cannot pull the bill beneath its write-offs (that second half is a hole today).',
+  'screen-scope':'The one genuine hole a bill-sized ceiling opens, and it is on the payout side, not the ceiling. Recommendation shown; ruling still needed.'
+};
+function showScreen(){const id=location.hash.slice(1)||'screen-wall';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+intents[id]:'';document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+  F01:{t:'The ceiling measures the wrong thing',now:'The ceiling is what’s still OWED — $0.00 once every installment is paid, and $0.00 unconditionally on a hand-back team — so a family who paid $500.00 of a $900.00 bill can have at most $400.00 written off, and a family who paid all $900.00 can have nothing written off, even though the Adjustment lowers the bill in every mode.',fix:'The ceiling becomes what’s left of the BILL — original charges minus write-offs already recorded — for every team. Payments don’t enter into it. The write-off lands on what’s owed first; only the leftover becomes a credit owed back, which can never exceed what the family sent.'},
+  F02:{t:'A reason that doesn’t survive',now:'Lowering the bill through Edit schedule does create a payable-back credit, but it’s labelled with a fixed system sentence ("Overpayment (dues changed)") no coach can edit or explain, and it quietly rewrites what the family was "always billed" on every season report.',fix:'The Adjustment keeps the coach’s own written reason ("Team photos not ordered"), shown in Adjustments & forgiveness exactly where every other write-off lives — the original $900.00 charge is never rewritten.'},
+  F04:{t:'The bill can be lowered below its write-offs — today',now:'Neither schedule door — the per-family Edit schedule, or Set dues for all players — looks at write-offs when the new total is LOWER. Both read credits only when a payout exists, and only for the payout floor. So $900.00 bill, $600.00 written off, schedule retyped to $300.00: it saves; the drawer prints Original charges $300.00 / Adjustments & forgiveness −$600.00 / Dues −$300.00; and for an Adjustment (not forgiveness) the extra $300.00 flows to "owed back" and the Pay out sheet offers it. The roster-wide preview shows no exception row. Reachable right now, before this project.',fix:'Both schedule doors pre-flight a LOWER against standing write-offs the same way they already pre-flight a RAISE against the payout floor: refuse, by name, with the sentence shown. Set dues for all refuses only the affected families and lists them as blocked rows. Write-offs ≤ bill becomes an invariant every door that touches either side asks. Allow-and-clamp was considered and rejected: it leaves "$300.00 charged, $600.00 written off" on the record forever and the coach never learns the adjustment is wrong.'},
+  F03:{t:'The hand-back payout hole',now:'On a "settle at season’s end" team, no credit except forgiveness lands on an installment until settlement — so an Adjustment’s whole amount reads as "owed back" at once, and the mid-season Pay out door offers it in full regardless of what the family has paid. With a bill-sized ceiling, a $900.00 write-off on a family who paid $0.00 would be payable in cash. This is the hole yesterday’s zero-ceiling was closing.',fix:'Recommended: an Adjustment lands on what’s owed immediately on a hand-back team, exactly as forgiveness already does there — then the roll-forward arithmetic closes the hole with no extra rule. Alternative: keep it held until settlement and cap what’s refundable at what the family has paid in.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+const DECISIONS=[
+  {date:'2026-09-12',ask:'F01 — Is the Adjustment ceiling what’s still owed, or the bill?',ruling:'accepted',label:'Accepted',why:'The bill. Owner: “the adjustment is to the total dues, so we shouldn’t be able to total adjustments more than the total dues … regardless of how much they have paid.” Ceiling = original charges − standing write-offs, every team, every mode. Payments and money-backed credits (fundraiser, sponsor, reimbursement) don’t enter into it.'},
+  {date:'2026-09-12',ask:'F03 — On a hand-back team, does an Adjustment land on the bill immediately, or stay held until settlement?',ruling:'accepted',label:'Accepted · (i)',why:'It lands immediately, exactly as a forgiven amount already does in that mode. One rule everywhere and no refund cap — the roll-forward arithmetic closes the payout hole on its own. The one visible change on hand-back teams: a mid-season write-off lowers the next installment instead of coming back at season’s end.'},
+  {date:'2026-09-12',ask:'F04 — Can a schedule edit lower the bill beneath its standing write-offs?',ruling:'accepted',label:'Accepted',why:'No. Both schedule doors (Edit schedule; Set dues for all players) refuse by name with one sentence, the same pre-flight they already run for a raise against the payout floor; the roster-wide door refuses only the affected families and lists them as blocked rows in its preview. Allow-and-clamp rejected — it leaves a wrong record and tells the coach nothing. Noted: this is a hole today, not one the new ceiling opens.'},
+  {date:'2026-09-12',ask:'The three sentences — consequence before Save, the refusal, the owed-back note in the drawer',ruling:'accepted',label:'Accepted as drawn',why:'Owner: “I agree with your recommendations.” Wording as on Screens 3–4; may still be trued up at the QA walk.'},
+  {date:'2026-09-12',ask:'Let the coach pick which installment(s) an Adjustment lowers',ruling:'rejected',label:'Withdrawn',why:'The owner’s opening idea, set aside on review: a credit has never been tied to one installment (that landing is derived at read time, never stored), and choosing one doesn’t change the question — whether an Adjustment may exceed the balance at all. The bill-sized ceiling answers that without a new field.'},
+  {date:'2026-09-12',ask:'Scope the fix to hand-back teams only (the first draft’s Option A/B)',ruling:'rejected',label:'Withdrawn',why:'The first draft framed this as a mode-specific exception and bounded the ceiling by payments. Both wrong — the Dues figure subtracts write-offs in every mode, so the ceiling is the bill everywhere and the question collapses.'},
+  {date:'2026-09-12',ask:'Raised by /review: should the Credits-reduce option named “They don’t — settle at season’s end” be renamed, now that a write-off does lower the bill on that setting?',ruling:'deferred',label:'Open — for the owner',why:'The standalone policy sentence was corrected (“Money credits don’t reduce bills — settled at season’s end”) and the option’s hint already carries the exception. The option’s NAME is quoted as a help term and in this walk; renaming it is a vocabulary ruling, not a review fix. Recommendation: leave it.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+const QA_PARTS=[
+  {id:'A',title:'The ceiling is the bill — Add adjustment',steps:[
+    'Money → Player Dues. Open the family carrying the seeded “Team photos not ordered” adjustment (they have paid in full). Under Original charges, Dues reads the original figure minus $17.00.',
+    '+ Add adjustment. Type an amount EQUAL to what is left of the bill (Original charges − $17.00). The “When you save” line says nothing is left owing, so the whole amount becomes a credit the team can hand back. The Add adjustment button is live.',
+    'Change the amount to one cent MORE than that. The form now reads “An Adjustment can’t lower this bill by more than what’s left of it — $…” and the Add adjustment button is dead. Cancel.',
+    'Open a family who has paid PART of their bill. + Add adjustment for more than they still owe but within the bill. The line names both halves: “$… clears what … still owes, and $… becomes a credit the team can hand back.” Save.',
+    'On that family’s record: the row appears under Adjustments & forgiveness with your reason; Dues dropped by the full amount; every installment reads settled; a credit owed back to them equals the second half of the sentence. Then remove that adjustment (the bin) to put the family back.',
+  ]},
+  {id:'B',title:'The other direction — the schedule doors refuse',steps:[
+    'Back on the “Team photos” family: Edit schedule. Retype the installments so they total LESS than $17.00 (one installment of $10.00 will do). Save schedule.',
+    'Refused, nothing changed: “This family has $17.00 written off — a $10.00 bill would be less than that. Lower or remove the adjustment first.” Cancel; their schedule is as it was.',
+    'Set dues for all players. Give every player a total BELOW $17.00, press Preview. That family appears as a Refused row reading the same sentence; the button’s count excludes them. Do NOT confirm — Cancel.',
+  ]},
+  {id:'C',title:'A hand-back team — a write-off lands now',steps:[
+    'Team settings → Money → Credits reduce. Note the third option’s hint: “Money credits wait for season’s end — a bill the coach lowers is lower now.” Pick it, save.',
+    'Player Dues: open a family with an installment still to send. + Add adjustment for a small amount. The “When you save” line reads “… owes $… less, taken off their next payment first” — NOT “settled at season’s end”. Save.',
+    'Their next unsent installment’s “to send” dropped by that amount, and the adjustment does NOT appear as money owed back to them. Remove the adjustment; set Credits reduce back to what it was.',
+  ]},
+  {id:'D',title:'Help',steps:[
+    'Help search “write off a paid bill” lands on the Money guide; its Adding an adjustment section carries the paragraph “The limit is the bill, not the balance.”',
+    'The Set dues for all players article’s refusal paragraph now also names a family whose adjustments exceed the new total.',
+  ]},
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-state-handback')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-state-handback',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

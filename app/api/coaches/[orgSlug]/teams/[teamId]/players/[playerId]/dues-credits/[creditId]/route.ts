@@ -4,6 +4,8 @@ import {
   getCoachingAssignmentsForUser,
   getRepTeam,
   getActiveRepProgramYear,
+  getRepPlayerDuesSchedule,
+  getRepPlayerDuesInstallments,
   getRepDuesCreditsForPlayer,
   getRepDuesPayoutsForPlayer,
   getRepDuesPaidBackByCredit,
@@ -11,7 +13,10 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { payoutFloorViolation, payoutFloorMessage, creditIsPaidBack, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
+import {
+  payoutFloorViolation, payoutFloorMessage, creditIsPaidBack, CREDIT_HAS_PAYOUT,
+  adjustmentCeilingViolation, adjustmentCeilingMessage, ADJUSTMENT_EXCEEDS_CEILING,
+} from '@/lib/dues-credit-guards';
 import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION, CREDIT_FOLLOWS_SCHEDULE, RESERVED_CREDIT_DESCRIPTION_REFUSAL } from '@/lib/dues-payments';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -54,6 +59,14 @@ function payoutCeilingRefusal(
     { error: payoutFloorMessage(violation.paidOut, action), code: CREDIT_HAS_PAYOUT },
     { status: 409 },
   );
+}
+
+/** This player's installments/payments, fresh — the other half of the Adjustment ceiling
+ *  (lib/dues-credit-guards.ts), which also needs the family's credits/payouts the caller already
+ *  holds. Split out because both the pre-check and the post-write re-check need it. */
+async function loadAdjustmentCeilingBills(playerId: string, programYearId: string) {
+  const schedule = await getRepPlayerDuesSchedule(playerId, programYearId);
+  return schedule ? getRepPlayerDuesInstallments(schedule.id) : [];
 }
 
 // PATCH /api/coaches/[orgSlug]/teams/[teamId]/players/[playerId]/dues-credits/[creditId]
@@ -139,6 +152,28 @@ export const PATCH = withObservability(async (req: Request,
   );
   if (refusal) return refusal;
 
+  /* ⚠⚠ THE ADJUSTMENT CEILING IS THE BILL (owner ruling 2026-09-11, corrected 2026-09-12) — see
+     lib/dues-credit-guards.ts. Only `other` (Adjustment) is asked: a legacy hand-typed
+     `fundraiser`/`contribution` row from before R6/R7 closed those doors is real arrived money and
+     keeps the older, uncapped behaviour.
+     ⚠ ONLY A RAISE IS ASKED. A bill can have been lowered beneath its write-offs before the
+     schedule doors learned to refuse that (2026-09-12) — re-asking on every save would refuse a
+     coach who only fixed a typo in the date or description on an untouched amount. Lowering only
+     shrinks what the team appears to owe, which this rule has no objection to. */
+  if (credit.creditType === 'other' && amount > credit.amount + 0.005) {
+    const installments = await loadAdjustmentCeilingBills(playerId, programYear.id);
+    const violation = adjustmentCeilingViolation(amount, {
+      installments,
+      credits: credits.filter(c => c.id !== creditId),
+    });
+    if (violation) {
+      return NextResponse.json(
+        { error: adjustmentCeilingMessage(violation.ceiling), code: ADJUSTMENT_EXCEEDS_CEILING },
+        { status: 400 },
+      );
+    }
+  }
+
   const { error } = await supabaseAdmin
     .from('rep_dues_credits')
     .update({
@@ -180,6 +215,29 @@ export const PATCH = withObservability(async (req: Request,
       .eq('player_id', playerId)
       .eq('program_year_id', programYear.id);
     return stillSafe;
+  }
+
+  // Same re-check for the Adjustment ceiling — a concurrent write can shrink the room this
+  // credit's new amount was judged against just as easily as it can break the payout floor.
+  // Same raise-only gate as the pre-check, and for the same reason.
+  if (credit.creditType === 'other' && amount > credit.amount + 0.005) {
+    const installments = await loadAdjustmentCeilingBills(playerId, programYear.id);
+    const stillRoom = adjustmentCeilingViolation(amount, {
+      installments,
+      credits: freshCredits.filter(c => c.id !== creditId),
+    });
+    if (stillRoom) {
+      await supabaseAdmin
+        .from('rep_dues_credits')
+        .update({ amount: credit.amount })
+        .eq('id', creditId)
+        .eq('player_id', playerId)
+        .eq('program_year_id', programYear.id);
+      return NextResponse.json(
+        { error: adjustmentCeilingMessage(stillRoom.ceiling), code: ADJUSTMENT_EXCEEDS_CEILING },
+        { status: 400 },
+      );
+    }
   }
 
   return NextResponse.json({ ok: true });

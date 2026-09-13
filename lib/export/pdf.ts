@@ -1849,7 +1849,11 @@ export interface FamilyDuesStatementRender {
   /** When the label IS the children ("Isla and Emmett's family"), the addressee line skips
    *  naming them a second time. */
   labelledByPlayer?: boolean;
-  stats: { billed: string; received: string; credits: string; handedBack: string; leftToSend: string };
+  stats: { billed: string; dues?: string; fundraising?: string; otherCredits?: string; balance?: string; received: string; credits: string; handedBack: string; leftToSend: string };
+  billBreakdown?: string[][];
+  adjustments?: string[][];
+  fundraisingCredits?: string[][];
+  otherCredits?: string[][];
   next: string[];
   schedules: { label: string; rows: string[][] }[];
   payments: string[][];
@@ -1994,7 +1998,14 @@ export function buildFamilyDuesStatementsDoc(jsPDFClass: any, autoTable: any, op
     y += 8.5;
 
     // ── The headline band: the four numbers a parent came for ──────────────
-    const stats = [
+    const stats = family.stats.dues !== undefined ? [
+      { n: family.stats.dues, label: 'dues' },
+      ...(family.stats.fundraising && family.stats.fundraising !== '$0.00' ? [{ n: family.stats.fundraising, label: 'fundraising' }] : []),
+      ...(family.stats.otherCredits && family.stats.otherCredits !== '$0.00' ? [{ n: family.stats.otherCredits, label: 'other credits' }] : []),
+      { n: family.stats.received, label: 'paid' },
+      ...(family.stats.handedBack !== '—' ? [{ n: family.stats.handedBack, label: 'handed back' }] : []),
+      { n: family.stats.balance ?? family.stats.leftToSend, label: 'balance' },
+    ] : [
       { n: family.stats.billed, label: 'billed this season' },
       // No thank-you for zero — a family that hasn't sent anything yet is not being thanked,
       // and a family that has must be.
@@ -2038,13 +2049,30 @@ export function buildFamilyDuesStatementsDoc(jsPDFClass: any, autoTable: any, op
       sectionLabel(sched.label, family);
       table(STATEMENT_SCHEDULE_HEAD, sched.rows, family);
     }
+    if (family.adjustments?.length) {
+      sectionLabel('Adjustments & forgiveness', family);
+      table(['Date', 'Player', 'Amount', 'Reason'], family.adjustments, family);
+    }
+    if (family.billBreakdown?.length) {
+      sectionLabel('How your dues were calculated', family);
+      table(['', 'Amount'], family.billBreakdown, family);
+    }
+    if (family.fundraisingCredits !== undefined && family.otherCredits !== undefined) {
+      if (family.fundraisingCredits.length) {
+        sectionLabel(`Fundraising — ${family.stats.fundraising}`, family);
+        table(STATEMENT_CREDIT_HEAD, family.fundraisingCredits, family);
+      }
+      if (family.otherCredits.length) {
+        sectionLabel(`Other credits — ${family.stats.otherCredits}`, family);
+        table(STATEMENT_CREDIT_HEAD, family.otherCredits, family);
+      }
+    } else if (family.credits.length > 0) {
+      sectionLabel('Credits earned', family);
+      table(STATEMENT_CREDIT_HEAD, family.credits, family);
+    }
     if (family.payments.length > 0) {
       sectionLabel('Payments received — thank you', family);
       table(STATEMENT_PAYMENT_HEAD, family.payments, family);
-    }
-    if (family.credits.length > 0) {
-      sectionLabel('Credits earned', family);
-      table(STATEMENT_CREDIT_HEAD, family.credits, family);
     }
     if (family.payouts.length > 0) {
       sectionLabel('Handed back to you', family);

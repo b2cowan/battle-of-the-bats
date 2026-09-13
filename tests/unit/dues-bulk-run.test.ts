@@ -181,6 +181,51 @@ describe('planRosterDuesRun — the three shapes a roster can be in', () => {
     assert.deepEqual(plan.blockedPlayerIds, ['both']);
   });
 
+  /* F04 (owner ruling 2026-09-12): the write-off ceiling from the schedule's side. A $0-paid
+     family with a $600 Adjustment is the canonical case — no payout, no payment, and until this
+     rule the run wrote them a $300 bill that read "Dues −$300.00". */
+  it('WRITE-OFFS: a family whose bill would drop beneath its write-offs is refused, by that guard', () => {
+    const plan = planRosterDuesRun({
+      players: roster('writtenoff', 'fine'),
+      newScheduleTotal: 300,
+      newDueDates: ['2026-10-10'],
+      existingRows: [row('writtenoff', 1, 900, '2026-10-10'), row('fine', 1, 900, '2026-10-10')],
+      paymentTotals: new Map(),
+      creditsByPlayer: new Map([
+        ['writtenoff', [{ id: 'c1', amount: 600, creditType: 'other' }]],
+        // Money-backed credits do not count — a $900 fundraiser share is not a write-off.
+        ['fine', [{ id: 'c2', amount: 900, creditType: 'fundraiser' }]],
+      ]),
+      payoutsByPlayer: empty,
+    });
+    assert.deepEqual(plan.blockedPlayerIds, ['writtenoff']);
+    const blocked = plan.exceptions.find(e => e.playerId === 'writtenoff')!;
+    assert.equal(blocked.tone, 'blocked');
+    assert.equal(blocked.writtenOff, 600, 'the figure the sentence names');
+    assert.equal(blocked.paidOut, null, 'exactly one guard is the reason');
+    assert.equal(blocked.creditCreated, 0);
+    assert.equal(plan.newScheduleTotal, 300, 'echoed so the row can name the bill it was refused against');
+    assert.equal(plan.exceptions.some(e => e.playerId === 'fine'), false);
+  });
+
+  it('WRITE-OFFS outrank the payout floor when both would refuse — one reason per row', () => {
+    const plan = planRosterDuesRun({
+      players: roster('both'),
+      newScheduleTotal: 300,
+      newDueDates: ['2026-10-10'],
+      existingRows: [],
+      paymentTotals: new Map([['both', 1200]]),
+      creditsByPlayer: new Map([['both', [
+        { id: 'c1', amount: 600, creditType: 'other' },
+        { id: 'c2', amount: 400, creditType: 'overpayment', consolidatable: true },
+      ]]]),
+      payoutsByPlayer: new Map([['both', [{ amount: 400 }]]]),
+    });
+    assert.equal(plan.exceptions.length, 1);
+    assert.equal(plan.exceptions[0].writtenOff, 600);
+    assert.equal(plan.exceptions[0].paidOut, null);
+  });
+
   it('a family whose payout is still covered after the change is NOT refused', () => {
     const plan = planRosterDuesRun({
       players: roster('safe'),
