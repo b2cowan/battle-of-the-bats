@@ -187,9 +187,9 @@ closing. Two ways to close it:
       keep_separate` still read "Credits don't reduce bills" standalone → "Money credits…"; (Low)
       NaN fails the guard open → `cents()` isFinite; the statement's dead no-ladder fallback floored;
       a walkthrough code comment trued up. **Refuted:** the statement's `balance` as a second
-      formula — it is the ladder's closing identity. **Advisory, left:** the picker LABEL "They
-      don't — settle at season's end" (a help term; renaming is a vocabulary ruling — recommend
-      leaving it, the hint beside it carries the exception); oldest-first payout attribution in the
+      formula — it is the ladder's closing identity. **Advisory, RULED by the owner 2026-09-12 — "leave it":** the picker LABEL "They
+      don't — settle at season's end" stays (a help term; the hint beside it carries the
+      exception); oldest-first payout attribution in the
       engine (pre-existing aggregate model); preview/write override parity (dormant); the
       guard-then-write window (documented class); `toFixed` without a thousands separator (mirrors
       the sibling sentence). Rendered check aborted on the shared dev server's memory floor — not
