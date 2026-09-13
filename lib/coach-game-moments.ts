@@ -83,12 +83,10 @@ export function sortMomentsNewestFirst<T extends GameMomentLike>(moments: readon
 }
 
 /**
- * How many of a player's moments their page shows before falling back to a count. The page
- * only glances; the selection and the honest total are done in the query
- * (`getRepTeamGameMomentsForPlayer`) rather than by fetching the team's whole season.
+ * ⚰ `PLAYER_MOMENTS_SHOWN` retired 2026-09-13: the player page no longer pages its moments — they
+ * read in full on the Notes tab (`roster/[playerId]/notes`), one player in one season being a
+ * bounded set. `getRepTeamGameMomentsForPlayer` takes an optional limit for any future glance.
  */
-export const PLAYER_MOMENTS_SHOWN = 8;
-
 export interface WrappedMomentSlot {
   /** How many the season holds — the honest count, not a curated "best of". */
   total: number;

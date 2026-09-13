@@ -38,6 +38,16 @@ export function playerName(player: Pick<NamedRosterPlayer, 'playerFirstName' | '
   return [cleanNamePart(player.playerFirstName), cleanNamePart(player.playerLastName)].filter(Boolean).join(' ');
 }
 
+/**
+ * A `tel:` href from a phone number as a coach typed it ("(905) 555-0142" → "tel:9055550142").
+ * ⚠ ONE STRIPPING RULE (roster + player page review /simplify, 2026-09-13): it was written inline
+ * in four places and NOT at all in a fifth — the roster's desktop Family cell — so one phone number
+ * produced two different hrefs on one row.
+ */
+export function telHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}
+
 export function playerDisplayName(player: NamedRosterPlayer): string {
   return [player.playerNumber ? `#${player.playerNumber}` : '', playerName(player)].filter(Boolean).join(' ');
 }

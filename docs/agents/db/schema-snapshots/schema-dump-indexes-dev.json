@@ -2360,6 +2360,36 @@
     "indexdef": "CREATE INDEX rep_player_measurables_type_idx ON public.rep_player_measurables USING btree (measurable_type_id)"
   },
   {
+    "tablename": "rep_player_notes",
+    "indexname": "rep_player_notes_event_idx",
+    "indexdef": "CREATE INDEX rep_player_notes_event_idx ON public.rep_player_notes USING btree (event_id) WHERE (event_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_player_notes",
+    "indexname": "rep_player_notes_goal_idx",
+    "indexdef": "CREATE INDEX rep_player_notes_goal_idx ON public.rep_player_notes USING btree (goal_id) WHERE (goal_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_player_notes",
+    "indexname": "rep_player_notes_org_idx",
+    "indexdef": "CREATE INDEX rep_player_notes_org_idx ON public.rep_player_notes USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_player_notes",
+    "indexname": "rep_player_notes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_notes_pkey ON public.rep_player_notes USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_notes",
+    "indexname": "rep_player_notes_player_idx",
+    "indexdef": "CREATE INDEX rep_player_notes_player_idx ON public.rep_player_notes USING btree (player_id, noted_on DESC)"
+  },
+  {
+    "tablename": "rep_player_notes",
+    "indexname": "rep_player_notes_team_idx",
+    "indexdef": "CREATE INDEX rep_player_notes_team_idx ON public.rep_player_notes USING btree (team_id, noted_on DESC)"
+  },
+  {
     "tablename": "rep_player_observations",
     "indexname": "rep_player_observations_goal_idx",
     "indexdef": "CREATE INDEX rep_player_observations_goal_idx ON public.rep_player_observations USING btree (goal_id) WHERE (goal_id IS NOT NULL)"

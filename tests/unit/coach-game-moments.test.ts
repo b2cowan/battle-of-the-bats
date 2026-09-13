@@ -19,7 +19,6 @@ import { describe, it } from 'node:test';
 import {
   GAME_MOMENT_MAX,
   deriveWrappedMomentSlot,
-  PLAYER_MOMENTS_SHOWN,
   sortMomentsNewestFirst,
   validateGameMoment,
   type GameMomentLike,
@@ -112,15 +111,6 @@ describe('ordering', () => {
     const before = input.map(m => m.id);
     sortMomentsNewestFirst(input);
     assert.deepEqual(input.map(m => m.id), before);
-  });
-});
-
-describe('the player page’s cap', () => {
-  it('is a shared constant, so the query limit and the "N this season" line agree', () => {
-    // The selection itself is done in SQL (getRepTeamGameMomentsForPlayer) — a player page has
-    // no business fetching every other player's moments to show a handful of its own.
-    assert.equal(Number.isInteger(PLAYER_MOMENTS_SHOWN), true);
-    assert.equal(PLAYER_MOMENTS_SHOWN > 0, true);
   });
 });
 

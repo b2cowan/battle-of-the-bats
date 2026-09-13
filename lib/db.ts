@@ -19,7 +19,7 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
@@ -9081,6 +9081,88 @@ export async function appendRepDevelopmentGoalReview(fields: {
  * "written by" on a goal, an observation and a review (every record names who wrote it, owner
  * ruling 2026-09-11). Unset names are simply absent; the caller picks the fallback.
  */
+// ── Player notes (mig 296) — the general note on the player's Notes tab ─────────────────────────
+function mapRepPlayerNote(r: Record<string, unknown>): RepPlayerNote {
+  return {
+    id: r.id as string, orgId: r.org_id as string, teamId: r.team_id as string, playerId: r.player_id as string,
+    notedOn: r.noted_on as string, body: r.body as string,
+    goalId: (r.goal_id as string | null) ?? null, eventId: (r.event_id as string | null) ?? null,
+    createdBy: (r.created_by as string | null) ?? null,
+    createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  };
+}
+
+/** Newest first — the timeline reads down from the latest, like observations. */
+export async function getRepPlayerNotesForPlayer(playerId: string): Promise<RepPlayerNote[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_notes')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('noted_on', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(r => mapRepPlayerNote(r as Record<string, unknown>));
+}
+
+/** ONE note, team + player scoped in the query (the observations precedent). */
+export async function getRepPlayerNote(id: string, teamId: string, playerId: string): Promise<RepPlayerNote | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_notes')
+    .select('*')
+    .eq('id', id).eq('team_id', teamId).eq('player_id', playerId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerNote(data as Record<string, unknown>) : null;
+}
+
+export async function createRepPlayerNote(fields: {
+  orgId: string; teamId: string; playerId: string; notedOn: string; body: string;
+  goalId?: string | null; eventId?: string | null; createdBy?: string | null;
+}): Promise<RepPlayerNote> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_notes')
+    .insert({
+      org_id: fields.orgId, team_id: fields.teamId, player_id: fields.playerId,
+      noted_on: fields.notedOn, body: fields.body.trim(),
+      goal_id: fields.goalId ?? null, event_id: fields.eventId ?? null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerNote(data as Record<string, unknown>);
+}
+
+/** Scoped update; `updated_at` is app-side (the repo's convention — no trigger). */
+export async function updateRepPlayerNote(
+  id: string, teamId: string, playerId: string,
+  fields: { notedOn?: string; body?: string; goalId?: string | null; eventId?: string | null },
+): Promise<RepPlayerNote | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.notedOn !== undefined) patch.noted_on = fields.notedOn;
+  if (fields.body !== undefined) patch.body = fields.body.trim();
+  if (fields.goalId !== undefined) patch.goal_id = fields.goalId;
+  if (fields.eventId !== undefined) patch.event_id = fields.eventId;
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_notes')
+    .update(patch)
+    .eq('id', id).eq('team_id', teamId).eq('player_id', playerId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerNote(data as Record<string, unknown>) : null;
+}
+
+export async function deleteRepPlayerNote(id: string, teamId: string, playerId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_notes')
+    .delete()
+    .eq('id', id).eq('team_id', teamId).eq('player_id', playerId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
 export async function getOrgMemberDisplayNames(orgId: string, userIds: string[]): Promise<Record<string, string>> {
   const ids = [...new Set(userIds.filter(Boolean))];
   if (ids.length === 0) return {};
@@ -14458,16 +14540,22 @@ export async function getRepTeamGameMomentsForEvent(
  * discarding it in JS: this runs on every player-page load, and a player page has no business
  * fetching every other player's moments to show eight of its own.
  */
+/**
+ * One player's moments for one season, newest first. `limit` is optional: the player's Notes tab
+ * reads them ALL (one player in one season is a bounded set, tighter than the whole-season reader
+ * below) — a sentinel "big enough" number would truncate silently the day it was not.
+ */
 export async function getRepTeamGameMomentsForPlayer(
-  teamId: string, programYearId: string, playerId: string, limit: number,
+  teamId: string, programYearId: string, playerId: string, limit?: number,
 ): Promise<{ moments: RepTeamGameMoment[]; total: number }> {
-  const { data, error, count } = await supabaseAdmin
+  let q = supabaseAdmin
     .from('rep_team_game_moments').select('*', { count: 'exact' })
     .eq('team_id', teamId).eq('program_year_id', programYearId).eq('player_id', playerId)
     // The `id` tiebreak matches `sortMomentsNewestFirst` — the "add another" loop makes
     // same-second captures likely, and two of them must not swap places between page loads.
-    .order('happened_at', { ascending: false }).order('id', { ascending: false })
-    .limit(limit);
+    .order('happened_at', { ascending: false }).order('id', { ascending: false });
+  if (limit != null) q = q.limit(limit);
+  const { data, error, count } = await q;
   if (error) throw error;
   return { moments: (data ?? []).map(mapRepTeamGameMoment), total: count ?? 0 };
 }

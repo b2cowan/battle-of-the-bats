@@ -985,6 +985,20 @@ export const MIDSEASON_AWARDS: ReadonlyArray<{
 ];
 
 /**
+ * Two GENERAL NOTES on the showcase player (roster + player page review, 2026-09-13) — the one
+ * kind of entry on the player's Notes tab that has no other source. Both are noticed at a game
+ * (`gameIndex`, like an award) so they carry that game's date and ride the nightly re-anchor with
+ * it; the Notes tab's chip names the game. ⚠ Written to agree with the tour's story about this
+ * player — the fewest-innings outlier — not to decorate him.
+ */
+export const MIDSEASON_PLAYER_NOTES: ReadonlyArray<{ rosterIndex: number; gameIndex: number; body: string }> = [
+  { rosterIndex: MIDSEASON_SHOWCASE_ROSTER_INDEX, gameIndex: 16,
+    body: 'Asked to try a game at second base — worth a look given how thin we are there. Reads the ball fine in warm-up.' },
+  { rosterIndex: MIDSEASON_SHOWCASE_ROSTER_INDEX, gameIndex: 11,
+    body: 'Spoke with his dad after the game about innings. He is fine with the bench time as long as he knows why, so tell him why.' },
+];
+
+/**
  * The 12U's SCOUTING BOOK — book lines and observations on the teams they have played.
  *
  * ⚠ Added 2026-08-20 alongside the awards, and for the same reason: `scripts/seed-demo-coach.mjs`

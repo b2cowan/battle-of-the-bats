@@ -1271,8 +1271,10 @@
 }
 .pageHeaderHelp { flex-shrink: 0; display: inline-flex; }
 /* Phone: the "?" keeps the title line's right corner on EVERY page (one findable home);
-   only the actions drop to a right-pinned row beneath. Secondaries go icon-only via
-   .headerBtnLabel; the one lime primary keeps its words. */
+   only the actions drop to a right-pinned row beneath. Every action goes icon-only via
+   .headerBtnLabel, the lime primary included — house rule 3 (2026-08-23): on a phone words
+   become symbols, and the aria-label carries the words. (An older note here claimed the primary
+   kept its word; nothing ever re-showed the label, and the rule says it should not.) */
 .headerBtnLabel { display: inline; }
 @media (max-width: 640px) {
   .pageHeaderStd { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 0.75rem; }
@@ -1291,6 +1293,7 @@
      with it (flagged in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). */
   .pageHeaderStd .pageHeaderActions button,
   .pageHeaderStd .pageHeaderActions a,
+  .pageHeaderStd .pageHeaderActions select,
   .pageHeaderStd .pageHeaderHelp button {
     min-height: var(--tap-min, 44px);
   }
@@ -1317,6 +1320,7 @@
 @media (min-width: 641px) and (max-width: 768px) {
   .pageHeaderStd .pageHeaderActions button,
   .pageHeaderStd .pageHeaderActions a,
+  .pageHeaderStd .pageHeaderActions select,
   .pageHeaderStd .pageHeaderHelp button {
     min-height: var(--tap-min, 44px);
   }
@@ -4059,13 +4063,65 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--text-tertiary);
   font-size: var(--type-body);
   text-decoration: none;
-  border-bottom: 1px dashed var(--home-line-strong, rgba(255,255,255,0.18));
-  padding-bottom: 1px;
+  /* ⚠ NO DASHED UNDERLINE (hub F03, 2026-09-13). One dashed prompt is quiet; twenty-four of them —
+     two columns on a fresh twelve-player roster — were a texture, two thirds of the table's width
+     drawn in dashes. The words, the place and the link are unchanged; the leading "+" in the
+     markup does the inviting, and the underline arrives on hover/focus like every other quiet
+     door in the portal. */
 }
-.rosterAddPrompt:hover { color: var(--text-secondary); border-bottom-style: solid; }
+.rosterAddPrompt:hover, .rosterAddPrompt:focus-visible { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 768px) {
+  /* An inline link is a control (register F-23) and takes the floor in the whole touch band (K-12).
+     The prompt was 17px tall at 768 — the roster's cheapest debt, and the one this review owns. */
+  .rosterAddPrompt { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
 
-/* The three markers on a name: A-squad, pitcher rank, medical notes. All three come off data the
-   row already carries. Each is a SHAPE plus a label, never a colour alone. */
+/* The jersey number: data face, tabular, secondary ink — the treatment the off-roster shelf and
+   the depth chart already use (hub F02). Was an inline 13.6px + `--home-ink-soft` on the cell,
+   which no CSS-reading guard could see; the ladder has no 13.6. */
+.rosterNumTd {
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  width: 52px;
+}
+/* The drag grip: a real class instead of five inline declarations, and a floor in the 641–768
+   touch band (register F-21) — it was ~23px there with a finger driving it. */
+.gripTd { width: 28px; padding-left: 0.25rem !important; padding-right: 0 !important; }
+.rosterGripBtn {
+  display: inline-grid; place-items: center;
+  background: none; border: none; padding: 4px; line-height: 0;
+  color: var(--text-tertiary);
+  cursor: grab;
+  touch-action: none;
+}
+.rosterGripBtn:disabled { cursor: default; opacity: 0.6; }
+@media (max-width: 768px) {
+  .rosterGripBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}
+
+/* Positions cell: the pitching chip leads, the field positions follow (hub F04/F05). */
+.rosterPosCell { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; }
+/* The phone card's positions chip (`.playerPosChip`, below) in olive, because "Ace" is a ROLE,
+   not a value. Not `composes`: that chip is declared LATER in this file, and with equal
+   specificity the later declaration wins — the olive would lose to the grey. */
+.rosterPitchChip {
+  font-family: var(--font-data, monospace);
+  font-size: var(--type-label); font-weight: 700; letter-spacing: 0.02em;
+  color: var(--home-olive, var(--text-secondary));
+  background: var(--home-olive-soft, var(--white-8));
+  border: 1px solid rgba(var(--home-olive-rgb, 87, 101, 30), 0.35);
+  border-radius: 5px;
+  padding: 0.1rem 0.42rem;
+  white-space: nowrap;
+}
+
+/* The phone card's Call button — its cell is drawn only at ≤640, see the roster reflow block. */
+.rosterCallTd { display: none; }
+
+/* The two markers on a name: A-squad and medical notes. Both come off data the row already
+   carries. Each is a SHAPE plus a label, never a colour alone. (The pitcher marker moved to the
+   Positions cell on 2026-09-13 — it is about a position, not the person.) */
 .rosterFlags { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.45rem; }
 .rosterFlag {
   display: inline-grid; place-items: center;
@@ -4083,16 +4139,6 @@ a.oneChip:hover { border-color: currentColor; }
    box adds nothing and costs the legibility. Gold because the product's own words for this are
    "gold-medal starter". */
 .rosterFlagSquad { color: var(--warning); font-size: var(--type-body); }
-/* The pitcher marker keeps a chip because it carries TEXT ("P1") — bare, it reads as part of the
-   player's name. Quiet fill, so the gold star stays the thing the eye finds first. */
-.rosterFlagPitch {
-  background: var(--white-8);
-  color: var(--text-secondary);
-  border-radius: 5px;
-  min-width: 17px; height: 17px; padding: 0 0.22rem;
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-token); font-weight: 700;
-}
 .rosterFlagMed { color: var(--danger); font-size: var(--type-support); font-weight: 700; }
 
 /* The family cell leads with the person; the address and phone follow it, quieter. */
@@ -4149,9 +4195,11 @@ a.oneChip:hover { border-color: currentColor; }
 .offRosterNum { font-family: var(--font-data, monospace); font-size: var(--type-support); color: var(--text-tertiary); }
 .offRosterAdd { margin-left: auto; font-size: var(--type-support); padding: 0.25rem 0.6rem; }
 
-@media (max-width: 640px) {
-  /* The shelf's own row is a target on a phone like every other control here. */
+@media (max-width: 768px) {
+  /* The shelf's own row, its name links and its Add back are targets in the whole touch band
+     (K-12 — the tablet band was missed at ≤640, and the name link had no floor at any width). */
   .offRosterSummary { min-height: var(--tap-min, 44px); }
+  .offRosterName { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   .offRosterAdd { min-height: var(--tap-min, 44px); }
 }
 
@@ -4161,18 +4209,34 @@ a.oneChip:hover { border-color: currentColor; }
    avatars removed 2026-07-28 (owner) — they encoded nothing (name-hash colour),
    ate card width, and were the portal's only circular monogram. */
 .playerCell { display: inline-flex; align-items: center; min-width: 0; }
+/* ⚠ THE QUIET DOOR — a house rule, in ONE place (roster + player page review, 2026-09-13). A link
+   or button that opens something reads as a door AT REST: a hairline underline in the line-strong
+   token, solid ink on hover/focus. The roster's player name, the recap row and the Notes tab's
+   Edit / Remove all compose it; a token change here reaches every one of them. */
+.quietUnderline {
+  text-decoration: underline;
+  text-decoration-color: var(--home-line-strong, rgba(255,255,255,0.18));
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.12s, text-decoration-color 0.12s;
+}
+.quietUnderline:hover, .quietUnderline:focus-visible { text-decoration-color: currentColor; }
+
 .playerNameLink {
+  composes: quietUnderline;
   font-weight: 600;
   font-size: var(--type-body);
   color: var(--text-primary);
-  text-decoration: none;
+  /* ⚠ THE NAME IS THE DOOR, AND NOW SAYS SO AT REST (hub F01, 2026-09-13). The standard's rule
+     for a row that navigates is name-as-link, never a row click — the roster followed it, but bold
+     body text with nothing under it reads as a label, on the one list where every row is a door.
+     The row itself stays inert on purpose: the Family cell holds tap-to-contact links a row click
+     would swallow. */
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color 0.12s;
 }
-.playerNameLink:hover { color: var(--blueprint-light); text-decoration: underline; }
 
 /* Mobile header meta: jersey # + status badges fold into the player row (their own rows hide). */
 .playerCellMeta { display: none; }
@@ -4272,14 +4336,39 @@ a.oneChip:hover { border-color: currentColor; }
   .rosterTable td[data-label="#"],
   .rosterTable td[data-label="Positions"],
   .rosterTable td[data-label="Family"] { display: none; }
-  .playerCell { width: 100%; }
+  /* ⚠ THE CARD IS THE DOOR (hub F06, register F-23, 2026-09-13). The name link was the card's
+     only door, at 19–22px on a phone — below the tap floor — and the register offered two exits:
+     raise the link, or make the card the door. The card wins, the way practice-plan and scouting
+     rows already work: the name link stretches over the whole card through its ::after, so a
+     thumb anywhere on the row opens the player. Desktop never gets this (the row stays inert there
+     by the standard's rule); it lives inside this ≤640 block only. */
+  .rosterTable tr { position: relative; }
+  .playerNameLink::after { content: ''; position: absolute; inset: 0; }
+  .playerCell { width: 100%; flex-wrap: wrap; row-gap: 0.2rem; }
   .playerCellMeta { display: inline-flex; align-items: center; gap: 0.4rem; margin-left: auto; flex-shrink: 0; }
+  /* The Call button, corner-pinned ABOVE the stretched link (standard K-09: an icon-only card
+     action is a corner, not a row). 44px both ways. Drawn only when a phone is on file — the cell
+     is not rendered otherwise — and the card makes room for it only then (density by content). */
+  .rosterCallTd { display: block; padding: 0 !important; position: static; }
+  .rosterCallBtn {
+    display: grid; place-items: center;
+    position: absolute; right: 0.45rem; top: 50%; transform: translateY(-50%);
+    width: var(--tap-min, 44px); height: var(--tap-min, 44px);
+    border-radius: 9px;
+    border: 1px solid var(--home-line-strong, var(--border-2));
+    background: var(--home-card, rgba(255,255,255,0.06));
+    color: var(--home-olive, var(--text-primary));
+    z-index: 1;
+    text-decoration: none;
+  }
+  .rosterCallBtn:hover, .rosterCallBtn:focus-visible { background: var(--home-olive-soft, rgba(255,255,255,0.1)); }
+  .rosterTable tr:has(.rosterCallBtn) { padding-right: 3.6rem; }
   /* The drag hint stands down here (no grip on a phone); the arrows variant it used to swap in is
      retired with the arrows themselves — see the tip rule at the foot of this block. */
   .rosterHintDrag { display: none; }
-  /* Page-header ruling 2026-08-11 inverted the old collapse here: the one lime PRIMARY
-     ("+ Add Player") keeps its words at every width; it's the SECONDARY buttons that go
-     icon-only on phones (.headerBtnLabel). A primary you can't read isn't a primary. */
+  /* House rule 3 (2026-08-23): on a phone words become symbols in the header AND the toolbar, so
+     "+ Add Player" renders as a bare lime "+" here — deliberately. (An older note in this spot
+     claimed the primary kept its word; the CSS never did, and the rule says it should not.) */
   .rosterTable td::before {
     content: attr(data-label);
     flex-shrink: 0;
@@ -5062,16 +5151,6 @@ a.oneChip:hover { border-color: currentColor; }
   .listToolbarFactPhoneDrop { display: none; }
 }
 
-/* Its partner: with the fact gone, the remaining pair would sit right-aligned as a clump with a
-   wide hole where the count used to be. On a phone they take the row instead — the switcher on
-   the left and Export on the right, which is the shape Schedule’s toolbar already has.
-
-   ⚠ Opt-in for the same reason as above: `.listToolbarEnd` also carries Schedule’s lone Export
-   button, and spreading a one-child row would push that button to the LEFT edge. */
-@media (max-width: 640px) {
-  .listToolbarEndSpread { width: 100%; justify-content: space-between; }
-}
-
 .segChoice {
   display: inline-flex;
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
@@ -5118,15 +5197,19 @@ a.oneChip:hover { border-color: currentColor; }
    the LARGEST max-content instead — so both pills take the width of the longer label, the box grows
    to hold them, and no label can be squeezed. Equal by construction rather than by division.
 
-   ⚠ Scoped to `.listToolbarEnd` on purpose. The base `.segChoice` is also the sheets' Paste/Upload
-   switch and the Home/Away/Neutral field, both of which want the full-width flex behaviour. */
-.listToolbarEnd .segChoice {
+   ⚠ Scoped to the toolbar's VIEW SWITCH on purpose (`.listToolbarView`, worn by the toggle that
+   LEADS a list toolbar — owner ruling 2026-09-13, hub R2-4, moved it out of `.listToolbarEnd`
+   to the left of the row where Schedule, Money and Insights already put theirs, standard §3.9).
+   The base `.segChoice` is also the sheets' Paste/Upload switch and the Home/Away/Neutral field,
+   both of which want the full-width flex behaviour. Two classes, so source order against the
+   base rule stops mattering. */
+.listToolbar .listToolbarView {
   display: inline-grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   width: fit-content;
 }
-.listToolbarEnd .segBtn { text-align: center; white-space: nowrap; }
+.listToolbar .listToolbarView .segBtn { text-align: center; white-space: nowrap; }
 
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
 @media (max-width: 640px) {
@@ -5218,41 +5301,246 @@ a.oneChip:hover { border-color: currentColor; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* ── The tabs ─────────────────────────────────────────────────────────────────────────────
-   A rail of three, underlined rather than pilled: these are NAVIGATION within one record, and a
-   segmented pill row in this portal means a one-value FORM field (owner ruling 2026-08-22). The
-   two must not look alike. */
-.playerTabs {
-  display: flex;
-  gap: 0.15rem;
-  border-bottom: 1px solid var(--border-2);
-  margin-bottom: 1rem;
-  overflow-x: auto;
+/* ⚰ The player page's hand-rolled tab rail (`.playerTabs` / `.playerTab*`) retired 2026-09-13
+   (roster + player page review, hub F13): the tabs are `CoachTabBar` links with a real `?tab=`
+   address now — the same component the Money hub, Insights and Skills & Goals use. One tab
+   component in the portal, not two. */
+
+/* ── Glance card doors (hub F10/F15) ──────────────────────────────────────────────────────
+   Every tile opens the section it names; the one warning chip opens Safety. A tile that says
+   "Attendance" and opens nothing made attendance appear three times on one tab with no door. */
+.playerTileDoor {
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  padding-right: 1.6rem;
+  transition: border-color 0.12s, background 0.12s;
 }
-.playerTab {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: 0.6rem 0.85rem;
-  font-size: var(--type-body);
+.playerTileDoor::after {
+  content: '›';
+  position: absolute; right: 0.6rem; top: 0.45rem;
+  font-size: var(--type-heading); line-height: 1;
+  color: var(--text-tertiary);
+}
+.playerTileDoor:hover, .playerTileDoor:focus-visible {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+}
+.chipDoor { text-decoration: none; border: 1px solid transparent; }
+.chipDoor:hover, .chipDoor:focus-visible { border-color: currentColor; }
+
+/* ── A flat page section (CoachPageSection) — the collapse section's card and heading, no fold
+   (hub F09). Composed from the fold's own card so the two families share one border, radius and
+   scroll margin; only the spacing between sections is this one's. ── */
+.pageSection {
+  composes: collapseSection;
+  margin-bottom: 0.75rem;
+}
+.pageSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem 0.4rem;
+}
+.pageSectionTitle {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+.pageSectionMeta {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
   font-weight: 600;
   color: var(--text-tertiary);
-  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
-.playerTab:hover { color: var(--text-secondary); }
-/* The long/short label swap — see PLAYER_TABS. */
-.playerTabLong  { display: inline; }
-.playerTabShort { display: none; }
-.playerTabOn, .playerTabOn:hover {
-  color: var(--text-primary);
-  border-bottom-color: var(--logic-lime);
+.pageSectionBody { composes: collapseBody; padding-top: 0.4rem; }
+/* A section with no heading (the Skills & Goals tab's one section, a month group) opens with the
+   full top padding its missing head row would have left. A class, not an inline style — a size
+   set inline is invisible to every CSS-reading guard, which is the roster's 13.6px lesson. */
+.pageSectionBodyBare { padding-top: 1rem; }
+/* A section's last line: a sentence and a door, in the quiet voice (not the uppercase list label,
+   which is a HEADING for a list, not a footnote under figures). */
+.sectionFoot { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.75rem 0 0; }
+.sectionFoot a { font-weight: 600; }
+
+/* The read-only record (hub F16): what a coach without roster-write sees on Details and Family
+   instead of inputs that refuse to save. Label / value rows; "—" for empty; one line for what is
+   kept to the head coach. */
+/* The commitment page's label / value idiom (`.commitFields`) with a wider lane and the display
+   face on the label. Not `composes`: that grid is declared LATER in this file and would win the
+   lane width and the label's padding at equal specificity. */
+.recordList {
+  display: grid;
+  grid-template-columns: minmax(120px, 170px) 1fr;
+  gap: 0.45rem 1rem;
+  margin: 0;
+  font-size: var(--type-body);
+  align-items: baseline;
 }
-/* 38px — the three doors a player's profile is read through, and the first thing a thumb reaches
-   for on the screen. Padding already carries most of the height; this is the last 6px. */
+.recordList dt {
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+.recordList dd { margin: 0; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
+.recordList dd[data-empty] { color: var(--text-tertiary); }
+@media (max-width: 480px) {
+  /* Stacked, as the commitment grid stacks: a label lane plus a long value is a wrap on a phone. */
+  .recordList { grid-template-columns: 1fr; gap: 0.15rem; }
+  .recordList dt { padding-top: 0.45rem; }
+}
+
+/* The family season recap as ONE quiet row at the foot of the record tab (hub F11): an eye and a
+   sentence, the preview opening beneath it in place. The tinted box it lived in is gone. */
+.recapRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.25rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.recapRowBtn {
+  composes: linkBtn quietUnderline;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: var(--text-secondary);
+}
+.recapRowBtn:hover, .recapRowBtn:focus-visible { color: var(--text-primary); }
+.recapPreview { margin: 0.25rem 0 1rem; }
+
+/* ── The Notes tab (hub F20) ──────────────────────────────────────────────────────────────
+   The pinned About note, one Add-a-note door, then the timeline: months, then entries — date ·
+   source chip · the words · who wrote it. The source chip is the only colour on the tab, and
+   only the game-day one is coloured, because a moment came from a night the coach ran. */
+.aboutNoteText { margin: 0; white-space: pre-wrap; font-size: var(--type-body); color: var(--text-primary); }
+.notesToolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+  margin: 0.25rem 0 0.75rem;
+}
+.notesToolbarHint { font-size: var(--type-support); color: var(--text-tertiary); margin-left: auto; }
+.noteForm { display: grid; gap: 0.6rem; margin-bottom: 0.9rem; }
+.noteFormRow { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: flex-end; }
+.noteFormRow > * { min-width: 0; }
+.noteFormActions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.notesMonth {
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 0.35rem 0.15rem;
+}
+/* The months sit inside ONE section card; the gap is BETWEEN groups, so the first sits flush. */
+.notesMonthGroup + .notesMonthGroup { margin-top: 1rem; }
+.noteList { list-style: none; margin: 0; padding: 0; }
+.noteRow {
+  display: grid;
+  grid-template-columns: 3.6rem 1fr auto;
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  font-size: var(--type-body);
+}
+.noteRow:last-child { border-bottom: none; }
+.noteDate {
+  font-family: var(--font-data);
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  padding-top: 0.15rem;
+}
+.noteMain { min-width: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.noteAbout {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--white-8);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
+  border-radius: 5px;
+  padding: 0.08rem 0.45rem;
+  margin: 0 0.5rem 0.15rem 0;
+  text-decoration: none;
+  vertical-align: 1px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis;
+}
+a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); border-color: var(--text-secondary); }
+.noteAboutGame {
+  color: var(--home-live, var(--danger));
+  background: var(--home-live-soft, rgba(var(--danger-rgb), 0.1));
+  border-color: rgba(var(--home-live-rgb, var(--danger-rgb)), 0.35);
+}
+.noteQualifier { font-style: italic; color: var(--text-secondary); }
+.noteSide {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap;
+  padding-top: 0.15rem;
+}
+.noteAction { composes: linkBtn quietUnderline; color: var(--text-tertiary); }
+.noteAction:hover, .noteAction:focus-visible { color: var(--danger); }
+.notesFoot { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.9rem 0.15rem 0; }
+
+/* ⚠ THE PLAYER PAGE'S TAP FLOOR, ON ITS SURFACES, ONCE (roster + player page review /simplify,
+   2026-09-13). The portal's convention is that the 44px floor belongs to the surface a control
+   sits on (`.pageHeaderStd .pageHeaderActions`, `.panelToolbarActions`, `.listToolbar`), not to
+   each control — five per-class floors were written here first, each found by the rendered sweep
+   one at a time. Every control on the page's own surfaces takes the floor in the touch band
+   (≤768, K-12): the Notes tab's toolbar, form and rows, the recap row, and the removal at the
+   foot of Details. An inline link is a control too (register F-23), so a source chip grows to
+   the floor and the row with it. The Skills & Goals section keeps its own rules — it is the
+   Development hub's component, not this page's. */
 @media (max-width: 768px) {
-  .playerTab { min-height: var(--tap-min, 44px); }
+  .notesToolbar button,
+  .noteForm button, .noteForm select, .noteForm input,
+  .noteList .noteAction,
+  .recapRowBtn,
+  .playerDangerZone > button { min-height: var(--tap-min, 44px); }
+  .noteList a.noteAbout { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .noteSide .noteAction { padding: 0 0.4rem; }
+}
+@media (max-width: 640px) {
+  .noteRow { grid-template-columns: 1fr; gap: 0.2rem; }
+  .noteDate { padding-top: 0; }
+  .noteSide { padding-top: 0; }
+}
+
+/* The Switch player dropdown in the page header's trailing slot (hub F14, owner R2-5: a dropdown,
+   not arrows). A native select — the sidebar's team switcher is one too — so the list is the
+   platform's, the keyboard works, and there is nothing to maintain. Its tap floor comes from the
+   header's own rules (`.pageHeaderStd .pageHeaderActions select`, beside the buttons), so a
+   future header select is covered without a rule of its own. */
+.playerSwitch {
+  min-height: 36px;
+  max-width: 220px;
+  padding: 0.35rem 1.9rem 0.35rem 0.7rem;
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: 8px;
+  background: var(--home-card, rgba(255,255,255,0.05)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23615A54'/%3E%3C/svg%3E") no-repeat right 0.7rem center;
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  -webkit-appearance: none; appearance: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+  .playerSwitch { max-width: 100%; }
 }
 
 /* ── Taking a player off the roster ───────────────────────────────────────────────────────
@@ -5278,12 +5566,7 @@ a.oneChip:hover { border-color: currentColor; }
   /* Two-up rather than four across — four tiles on a phone gives each one about 80px, which is
      narrower than "None set". */
   .playerGlanceTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .playerTab { min-height: var(--tap-min, 44px); padding: 0.6rem 0.7rem; flex: 1; }
-  .playerTabLong  { display: none; }
-  .playerTabShort { display: inline; }
-  /* Three short labels fit, so the rail stops scrolling and stops looking cut off. */
-  .playerTabs { overflow-x: visible; }
-  .playerDangerZone > button { min-height: var(--tap-min, 44px); width: 100%; }
+  .playerDangerZone > button { width: 100%; }
 }
 
 /* ── Detail form (player detail page) ──────────────────────────────────── */
@@ -5328,21 +5611,9 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* Medical-info flag in the player status row */
 
-.sectionHeadRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-/* ⚠ 15px — the smallest control on any of the six drill-ins measured in the 641–768 pass, and the
-   least defensible of them: `Preview` on a player's profile, the door to what a family reads.
-   ⚠ SCOPED TO THIS ROW, not to `.linkBtn`, which is the portal's shared quiet-action link and
-   appears on ten surfaces. Raising it everywhere is the portal-wide touch-debt decision, not this
-   one. */
-@media (max-width: 768px) {
-  .sectionHeadRow .linkBtn { min-height: var(--tap-min, 44px); }
-}
+/* ⚰ `.sectionHeadRow` retired 2026-09-13 — its last two renderers (the recap box and "Moments you
+   logged" on the player page) left with the five-tab rebuild. The 15px `Preview` control it once
+   floored at 768 is now `.recapRowBtn`, which carries its own floor. */
 
 /* Read-only row of stat BOXES (attendance / dues roll-ups on a player's profile).
    ⚠⚠ RENAMED FROM `.statStrip` ON 2026-09-01 (cleanup tranche 6), and the rename is the bug fix.
@@ -7732,6 +8003,14 @@ a.oneChip:hover { border-color: currentColor; }
 .coachTabActive {
   color: var(--home-olive, var(--logic-lime));
   border-bottom-color: var(--home-olive, var(--logic-lime));
+}
+/* A tab's short label on a phone (CoachTabBar `short`, 2026-09-13 — the player page's five tabs
+   are the first caller): the long word at every other width. */
+.coachTabLong  { display: inline; }
+.coachTabShort { display: none; }
+@media (max-width: 640px) {
+  .coachTabLong  { display: none; }
+  .coachTabShort { display: inline; }
 }
 
 @media (max-width: 640px) {
@@ -12571,8 +12850,11 @@ button.gdChip[aria-pressed='true'] {
      390px it took the whole row, which pushed the export off the end and produced the defect
      above. Scoped back to `fit-content` here only; every form-context `.segChoice` is untouched.
      ⚠ Do NOT "simplify" this by editing the base rule — the sheets' Paste/Upload switch and the
-     Home/Away/Neutral field both depend on the full-width default. */
-  .listToolbarEnd .segChoice {
+     Home/Away/Neutral field both depend on the full-width default.
+     ⚠ The toggle LEADS the toolbar now (`.listToolbarView`, 2026-09-13) and no longer sits in
+     this slot, so the fit-content grid, the floor and the padding are on the view switch itself
+     — one home, wherever the toggle sits in the row. */
+  .listToolbar .listToolbarView {
     display: inline-grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
@@ -12597,7 +12879,7 @@ button.gdChip[aria-pressed='true'] {
      container-only override never finishes the job: the CHILD carries the property doing the
      squeezing. `nowrap` is the belt to that braces — a segmented pill that has wrapped reads as a
      broken control, not a tight one. */
-  .listToolbarEnd .segBtn { padding: 0.42rem 0.7rem; }
+  .listToolbar .listToolbarView .segBtn { flex: 0 0 auto; padding: 0.42rem 0.7rem; min-height: var(--tap-min, 44px); }
 
   /* The live fact yields first — it is prose, the two controls are targets. Scoped to a direct
      child of the toolbar because `.listToolbarFact` is also worn by the player page's status row,

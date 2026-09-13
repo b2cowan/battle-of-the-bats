@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, ClipboardPaste, HelpCircle, Upload } from 'lucide-react';
+import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, ClipboardPaste, HelpCircle, Upload, Phone } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -27,6 +27,9 @@ import { hasRecordAccess } from '@/lib/coach-capabilities';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { pitcherRankLabel } from '@/lib/lineup-profile';
+import { cleanNamePart, playerName, telHref } from '@/lib/coach-roster-name';
+import { playerTabHref } from '@/lib/coach-player-tabs';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -76,15 +79,6 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-// A bad import/seed can leave a name part as the literal string "null"/"undefined" (truthy, so a
-// plain filter(Boolean) keeps it). Treat those as blank — same rule the schedule view uses.
-function cleanNamePart(part: string | null | undefined): string {
-  const s = (part ?? '').trim();
-  return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : s;
-}
-function playerFullName(p: { playerFirstName: string | null; playerLastName: string | null }): string {
-  return [cleanNamePart(p.playerFirstName), cleanNamePart(p.playerLastName)].filter(Boolean).join(' ');
-}
 
 export default function RosterPage({
   params,
@@ -708,15 +702,21 @@ export default function RosterPage({
             `.segBtn` note) and the count was never the problem. It goes now for the honest reason:
             a roster is twelve rows on one screen, and counting something a coach can see is chrome
             charging rent. */}
-        <span className={`${styles.listToolbarEnd} ${styles.listToolbarEndSpread}`}>
-          <div className={styles.segChoice} aria-label="Roster view">
-            <button type="button" aria-pressed={view === 'list'}
-              className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
-              onClick={() => setView('list')}>List</button>
-            <button type="button" aria-pressed={view === 'depth'}
-              className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
-              onClick={() => setView('depth')}>Depth chart</button>
-          </div>
+        {/* ⚠ THE VIEW SWITCH LEADS THE ROW (owner ruling 2026-09-13, hub R2-4). It used to ride
+            inside `.listToolbarEnd` beside Export, which left the whole left half of the toolbar
+            empty once the count went. Every other view switch in the portal — Schedule, Money,
+            Insights — sits at the LEFT of its row, and the table standard (§3.9) puts the
+            arrangement control left with only the export pinned right. `.listToolbarView` carries
+            the phone rules the toggle used to inherit from the slot it has left. */}
+        <div className={`${styles.segChoice} ${styles.listToolbarView}`} aria-label="Roster view">
+          <button type="button" aria-pressed={view === 'list'}
+            className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
+            onClick={() => setView('list')}>List</button>
+          <button type="button" aria-pressed={view === 'depth'}
+            className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
+            onClick={() => setView('depth')}>Depth chart</button>
+        </div>
+        <span className={styles.listToolbarEnd}>
           {rosterExport}
         </span>
       </div>
@@ -804,7 +804,7 @@ export default function RosterPage({
                 {offRoster.map(p => (
                   <li key={p.id} className={styles.offRosterRow}>
                     <Link href={`${base}/roster/${p.id}`} className={styles.offRosterName}>
-                      {playerFullName(p)}
+                      {playerName(p)}
                     </Link>
                     {p.playerNumber && <span className={styles.offRosterNum}>#{p.playerNumber}</span>}
                     {/* Only the head coach (or an assistant granted roster-write) may put someone
@@ -1054,23 +1054,37 @@ function SortableRow({
     transition,
     opacity: isDragging ? 0.6 : 1,
   };
-  const fullName = playerFullName(p);
+  const fullName = playerName(p);
   const guardianName = [p.guardianFirstName, p.guardianLastName].filter(Boolean).join(' ').trim();
+  const playerHref = `${base}/roster/${p.id}`;
+  // ⚠ PITCHING COUNTS AS A POSITION (hub F04, 2026-09-13). The mound is deliberately not in the
+  // position picker, so a player whose whole job is pitching has no field positions — and this
+  // column used to tell the coach to "Add a position" on the team's ace, forever. The pitching
+  // chip leads the cell, worded the way the editor words it (`pitcherRankLabel`: "Ace", "P2"…),
+  // then the field positions; the prompt only when there is neither.
+  const pitcherRank = p.lineupProfile?.pitcher?.rank ?? null;
+  const pitchLabel = pitcherRank ? pitcherRankLabel(pitcherRank) : null;
+  const pitchTitle = pitcherRank === 1 ? 'Pitcher, the ace' : `Pitcher, rank ${pitcherRank}`;
+  const fieldPositions = [p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ');
+  const hasPositions = Boolean(pitchLabel || fieldPositions);
   return (
     <tr ref={setNodeRef} style={style} className={styles.tr}>
-      <td className={`${styles.td} ${styles.gripTd}`} style={{ width: 28, paddingLeft: '0.25rem', paddingRight: 0 }}>
+      <td className={`${styles.td} ${styles.gripTd}`}>
         <button
           type="button"
           aria-label="Drag to reorder"
           disabled={dragDisabled}
-          style={{ background: 'none', border: 'none', padding: 4, lineHeight: 0, cursor: dragDisabled ? 'default' : 'grab', color: 'var(--home-dim, rgba(255,255,255,0.35))', touchAction: 'none' }}
+          className={styles.rosterGripBtn}
           {...attributes}
           {...listeners}
         >
           <GripVertical size={15} />
         </button>
       </td>
-      <td className={styles.td} data-label="#" style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.55))', fontSize: '0.85rem', width: '52px' }}>
+      {/* The jersey number in the data face, tabular, secondary ink — the same treatment the
+          off-roster shelf and the depth chart already give it (hub F02). It carried an inline
+          13.6px and an off-tier ink here, which no CSS-reading guard could see. */}
+      <td className={`${styles.td} ${styles.rosterNumTd}`} data-label="#">
         {p.playerNumber
           ? (isDuplicateNumber
               ? <span className={styles.jerseyDup} title="Another player wears this number"><AlertTriangle size={12} /> {p.playerNumber}</span>
@@ -1079,22 +1093,19 @@ function SortableRow({
       </td>
       <td className={`${styles.td} ${styles.playerCellTd}`} data-label="Player">
         <span className={styles.playerCell}>
-          <Link href={`${base}/roster/${p.id}`} className={styles.playerNameLink}>{fullName}</Link>
-          {/* ⚠ THREE MARKERS, ALL FROM DATA ALREADY ON THIS ROW — no extra call, nothing new for a
-              coach to enter. They are what someone actually scans a roster for: who starts, who
-              pitches, and who the trainer needs to know about. Each carries a title AND an
-              accessible label, because a coloured square is not information to a screen reader
-              and colour alone is not information to anyone (the portal's own contrast ruling). */}
-          {(p.lineupProfile?.aSquad || p.lineupProfile?.pitcher || p.medicalNotes) && (
+          <Link href={playerHref} className={styles.playerNameLink}>{fullName}</Link>
+          {/* ⚠ TWO MARKERS, BOTH FROM DATA ALREADY ON THIS ROW — no extra call, nothing new for a
+              coach to enter: who starts, and who the trainer needs to know about. Each carries a
+              title AND an accessible label, because a coloured square is not information to a
+              screen reader and colour alone is not information to anyone (the portal's own
+              contrast ruling). The pitcher marker moved to the Positions cell (hub F05) — it is
+              about a position, not the person, and beside the name it rendered a bare "P" whenever
+              the rank was unset. */}
+          {(p.lineupProfile?.aSquad || p.medicalNotes) && (
             <span className={styles.rosterFlags}>
               {p.lineupProfile?.aSquad && (
                 <span className={`${styles.rosterFlag} ${styles.rosterFlagSquad}`}
                   title="A-squad — gold-medal starter" aria-label="A-squad">★</span>
-              )}
-              {p.lineupProfile?.pitcher && (
-                <span className={`${styles.rosterFlag} ${styles.rosterFlagPitch}`}
-                  title={`Pitcher — rank ${p.lineupProfile.pitcher.rank}`}
-                  aria-label={`Pitcher, rank ${p.lineupProfile.pitcher.rank}`}>P{p.lineupProfile.pitcher.rank}</span>
               )}
               {p.medicalNotes && (
                 <span className={`${styles.rosterFlag} ${styles.rosterFlagMed}`}
@@ -1102,7 +1113,7 @@ function SortableRow({
               )}
             </span>
           )}
-          {/* Mobile only: jersey # + status fold into the header row (their own rows are hidden). */}
+          {/* Mobile only: jersey # + positions fold into the card (their own rows are hidden). */}
           <span className={styles.playerCellMeta}>
             {p.playerNumber && (
               <span
@@ -1112,12 +1123,11 @@ function SortableRow({
                 #{p.playerNumber}
               </span>
             )}
-            {/* Positions ride the name row on a phone; their own card line is hidden at 640. Short
-                enough to sit beside a name, which is exactly why this one moved up and the guardian
-                contact did not. */}
-            {(p.primaryPosition || p.secondaryPosition) && (
+            {/* Positions ride the card on a phone; their own card line is hidden at 640. Pitching
+                leads here too, so the ace's card does not read as a player with no position. */}
+            {hasPositions && (
               <span className={styles.playerPosChip}>
-                {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ')}
+                {[pitchLabel, fieldPositions].filter(Boolean).join(' · ')}
               </span>
             )}
             {/* Reorder arrows live here on mobile (drag is disabled on touch); hidden on desktop. */}
@@ -1146,9 +1156,18 @@ function SortableRow({
           </span>
         </span>
       </td>
-      <td className={styles.td} data-label="Positions" style={{ fontSize: '0.85rem' }}>
-        {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ')
-          || <Link href={`${base}/roster/${p.id}`} className={styles.rosterAddPrompt}>Add a position</Link>}
+      {/* ⚠ THE PROMPTS LINK TO THE TAB THEY NAME. The player page's tabs carry a `?tab=` address
+          (hub F13); a bare player URL lands on the default tab, which for a contact was two clicks
+          from the field it named. `?section=` still scrolls-and-flashes within the tab. */}
+      <td className={styles.td} data-label="Positions">
+        {hasPositions
+          ? <span className={styles.rosterPosCell}>
+              {pitchLabel && (
+                <span className={styles.rosterPitchChip} title={pitchTitle} aria-label={pitchTitle}>{pitchLabel}</span>
+              )}
+              {fieldPositions && <span>{fieldPositions}</span>}
+            </span>
+          : <Link href={playerTabHref(playerHref, 'details', { section: 'player' })} className={styles.rosterAddPrompt}><span aria-hidden="true">+</span> Add a position</Link>}
       </td>
       {/* ⚠ THE COLUMN LEADS WITH THE PERSON, NOT THE ADDRESS (owner ruling 2026-08-26). It used to
           print the guardian's email as the whole cell — the widest thing on the page, and the least
@@ -1160,7 +1179,7 @@ function SortableRow({
           badge drops in later rather than forcing a rebuild — see the plan §2.
           ⚠ Redaction is unchanged: a coach without guardian-contact access has these fields
           stripped by the API before they reach here, so the cell simply falls to its prompt. */}
-      <td className={styles.td} data-label="Family" style={{ fontSize: '0.85rem' }}>
+      <td className={styles.td} data-label="Family">
         {(guardianName || p.guardianEmail || p.guardianPhone)
           ? <span className={styles.guardianStack}>
               {guardianName && <span className={styles.familyName}>{guardianName}</span>}
@@ -1168,11 +1187,30 @@ function SortableRow({
                 <a href={`mailto:${p.guardianEmail}`} className={styles.guardianEmail}>{p.guardianEmail}</a>
               )}
               {p.guardianPhone && (
-                <a href={`tel:${p.guardianPhone}`} className={styles.guardianPhone}>{p.guardianPhone}</a>
+                <a href={telHref(p.guardianPhone)} className={styles.guardianPhone}>{p.guardianPhone}</a>
               )}
             </span>
-          : <Link href={`${base}/roster/${p.id}`} className={styles.rosterAddPrompt}>Add a contact</Link>}
+          : <Link href={playerTabHref(playerHref, 'family', { section: 'guardian' })} className={styles.rosterAddPrompt}><span aria-hidden="true">+</span> Add a contact</Link>}
       </td>
+      {/* ⚠ THE PHONE CARD'S ONE ACTION (hub F06, register F-23). At ≤640 the Family cell above is
+          hidden and the whole card becomes the door to the player (the name link stretches over
+          the card — see the roster reflow block). A parent's phone number is the one thing a coach
+          at the field wants from this list, so when one is on file the card carries a 44px Call
+          button, corner-pinned above the stretched link (standard K-09). Desktop never draws it —
+          the Family cell already has the tel: link there. PII-gated the same way as that cell: a
+          coach without guardian-contact access gets `guardianPhone` nulled by the API. */}
+      {p.guardianPhone && (
+        <td className={`${styles.td} ${styles.rosterCallTd}`}>
+          <a
+            href={telHref(p.guardianPhone)}
+            className={styles.rosterCallBtn}
+            aria-label={`Call ${guardianName || fullName + '’s family'}`}
+            title={`Call ${guardianName || 'the family'} · ${p.guardianPhone}`}
+          >
+            <Phone size={17} />
+          </a>
+        </td>
+      )}
     </tr>
   );
 }

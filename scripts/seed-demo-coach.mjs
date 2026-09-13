@@ -38,7 +38,7 @@ import {
   MIDSEASON_MONEY_TAGS,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
-  MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_SCOUTING, demoOpponent,
+  MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_PLAYER_NOTES, MIDSEASON_SCOUTING, demoOpponent,
   MIDSEASON_SHOWCASE_ROSTER_INDEX, OFFSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
   SEASONS_END_PRACTICE_PLANS, SEASONS_END_PRACTICE_RECAPS,
@@ -347,7 +347,9 @@ async function wipeProgramYearChildren(teamId, pyId) {
   // Documents + development (team-scoped)
   await del('rep_player_documents', q => q.eq('team_id', teamId));
   await del('rep_document_templates', q => q.eq('team_id', teamId));
-  // Phase 2 records (mig 295) — reviews and observations before the goals they point at.
+  // Phase 2 records (mig 295) — reviews and observations before the goals they point at; the
+  // general notes (mig 296) with them, for the same reason (a note may point at a goal).
+  await del('rep_player_notes', q => q.eq('team_id', teamId));
   await del('rep_development_goal_reviews', q => q.eq('team_id', teamId));
   await del('rep_player_observations', q => q.eq('team_id', teamId));
   await del('rep_evaluation_not_assessed', q => q.eq('team_id', teamId));
@@ -1562,6 +1564,15 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       note: a.note, created_by: coach.id,
     })));
   }
+
+  // Two general notes on the showcase player (2026-09-13) — so the Notes tab a prospect opens is
+  // not an empty state. Dated by the game they were noticed at, exactly as an award is, so the
+  // nightly re-anchor moves them with the schedule.
+  await insertAll('rep_player_notes', MIDSEASON_PLAYER_NOTES.map(n => ({
+    org_id: org.id, team_id: team.id, player_id: playerIds[n.rosterIndex],
+    noted_on: state.games[n.gameIndex].date, body: n.body,
+    event_id: eventIdByKey.get(state.games[n.gameIndex].key), created_by: coach.id,
+  })));
 
   // The scouting book — book lines and the observation log. Same 2026-08-20 gap as the awards: the
   // seed only ever DELETED these two tables, so every opponent card in the sandbox opened on an

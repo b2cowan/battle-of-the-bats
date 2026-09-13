@@ -60,7 +60,12 @@ export const toDollars = (c: number) => c / 100;
  * a different kind of number.
  */
 export const formatMoney = (n: number) =>
-  `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // ⚠ THE NEGATIVE BRANCH (roster + player page review, hub F12, 2026-09-13). Without it a
+  // negative figure rendered "$-945.15" — dollar sign, then minus — which is how an over-credited
+  // family's balance read on the player page. A real minus, before the sign: "−$945.15". Callers
+  // that mean "credit" should say the word and pass the absolute value; this is the fallback
+  // spelling for any figure that reaches a screen signed.
+  `${n < 0 ? '−' : ''}$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /**
  * The six kinds a row can be, which are also the six filters (plus All).

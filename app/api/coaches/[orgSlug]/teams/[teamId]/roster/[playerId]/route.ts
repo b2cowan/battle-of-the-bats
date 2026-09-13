@@ -9,9 +9,9 @@ import {
   getRepPlayerAttendanceSummary,
   getRepPlayerDuesSummary,
   getRepPlayerAwardsSummary,
-  getRepTeamGameMomentsForPlayer,
+  getRepRosterPlayers,
 } from '@/lib/db';
-import { PLAYER_MOMENTS_SHOWN } from '@/lib/coach-game-moments';
+import { playerName } from '@/lib/coach-roster-name';
 import type { RepRosterStatus, LineupProfile } from '@/lib/types';
 import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } from '@/lib/rep-roster-options';
 import { getSportPack } from '@/lib/sports';
@@ -19,7 +19,7 @@ import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import {
-  denyUnless, canLogGameMoment, canViewMoney, hasRecordAccess, redactRosterPlayer,
+  denyUnless, canViewMoney, hasRecordAccess, redactRosterPlayer,
 } from '@/lib/coach-capabilities';
 
 function trimmedOrNull(v: unknown): string | null {
@@ -72,30 +72,23 @@ export const GET = withObservability(async (_req: Request,
   }
 
   /**
-   * Game-Day Mode P2 — the moments tagged to THIS player (owner Q3, 2026-08-05).
+   * ⚰ The bench MOMENTS left this payload on 2026-09-13 (roster + player page review, hub F20).
+   * They were a section of their own on the record tab; they now read on the player's Notes tab,
+   * in one timeline with observations, goal reviews and general notes — served by
+   * `roster/[playerId]/notes`, which keeps the same live-season-only, can-log-a-moment gate.
    *
-   * The plan called this "the recap composer handoff", but there is no composer: the family
-   * season recap generates itself from records and the coach only previews it. The owner ruled
-   * the COACH-SIDE version — moments are material a coach reads before the season-end
-   * conversation, and they never reach a family surface. `PlayerRecapPreview` is untouched.
+   * Playing time (hub Q9) is NOT here either, on purpose: it is a whole-season lineup roll-up
+   * (every saved lineup, every entry), and the page's landing tab never shows it. The page asks
+   * the existing `lineup-analytics` route for it only when This season is open.
    *
-   * ⚠ LIVE SEASON ONLY, deliberately narrower than this route's own rail. `roster/[playerId]`
-   * is season-aware (an archive door), and quietly serving a new content type through it would
-   * be exactly the silent archive expansion CLAUDE.md forbids. The one archive surface the
-   * owner ruled on is Wrapped; widening this needs its own decision, not a side effect here.
-   *
-   * ⚠ Gated on the same predicate that allows capturing one — a coach who cannot run the bench
-   * does not receive the staff's private lines about a child.
+   * The ROSTER NAMES (the Switch player dropdown) ride here instead — one narrow map the page
+   * would otherwise fetch as a second full roster request per player opened.
    */
-  const showMoments = !isReadOnly && canLogGameMoment(capabilities);
-
-  const [attendance, dues, awards, moments] = await Promise.all([
+  const [attendance, dues, awards, rosterRows] = await Promise.all([
     getRepPlayerAttendanceSummary(playerId, programYear.id),
     getRepPlayerDuesSummary(playerId, programYear.id),
     getRepPlayerAwardsSummary(playerId),
-    showMoments
-      ? getRepTeamGameMomentsForPlayer(teamId, programYear.id, playerId, PLAYER_MOMENTS_SHOWN)
-      : Promise.resolve({ moments: [], total: 0 }),
+    getRepRosterPlayers(programYear.id),
   ]);
 
   return NextResponse.json({
@@ -104,7 +97,8 @@ export const GET = withObservability(async (_req: Request,
     attendance,
     dues: canViewMoney(capabilities) ? dues : null,
     awards,
-    moments,
+    // Active players in the coach's own (display) order — names only, nothing to redact.
+    roster: rosterRows.filter(p => p.status === 'active').map(p => ({ id: p.id, name: playerName(p) || 'Unnamed player' })),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });
 

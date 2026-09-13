@@ -89,8 +89,18 @@ export function normalizeLineupProfile(input: unknown, validPositions: string[])
  * writes from here on) is returned as-is.
  */
 export function dropLegacyLineupProfileKeys(profile: LineupProfile | null): LineupProfile | null {
-  if (!profile || !('canPlay' in profile)) return profile;
-  return { morePreferred: profile.morePreferred, never: profile.never, pitcher: profile.pitcher, aSquad: profile.aSquad };
+  if (!profile) return profile;
+  // ⚠ THE RANK IS MADE HONEST HERE TOO (roster + player page review /simplify, 2026-09-13). The type
+  // says `rank: number`, but a legacy or hand-written row reaches every reader with it absent —
+  // and three readers had each grown their own defence (`?? 1` on the depth chart, a guard inside
+  // the rank label, and NONE in the lineup generator, where an undefined rank is NaN in a sort).
+  // `normalizePitcher` already defaults a bad rank to 1 on WRITE; this is the same rule on READ,
+  // in the one mapper every reader is built on, so no reader needs a fallback of its own.
+  const pit = profile.pitcher;
+  const rank = pit ? (Number.isFinite(pit.rank) && pit.rank >= 1 ? Math.round(pit.rank) : 1) : null;
+  const pitcher = pit ? (rank === pit.rank ? pit : { ...pit, rank: rank! }) : pit;
+  if (!('canPlay' in profile) && pitcher === pit) return profile;
+  return { morePreferred: profile.morePreferred, never: profile.never, pitcher, aSquad: profile.aSquad };
 }
 
 /**
@@ -152,6 +162,24 @@ export function playerPositionPrefs(
   }
 
   return { preferred, never };
+}
+
+/**
+ * The word a coach reads for a pitcher's rank, everywhere a rank is read back (roster row, the
+ * player page's glance chip and read-only record). ⚠ ONE WORD, ONE PLACE (hub F05, 2026-09-13):
+ * the roster row rendered `P{rank}` and the glance chip `Pitcher · rank {rank}` — and both
+ * rendered NOTHING after the letter when the rank was unset. The rank is made honest at the read
+ * boundary now (`dropLegacyLineupProfileKeys`), so this takes a number and nothing else. Rank 1 is
+ * "Ace" because that is what the editor calls it ("1 — Ace"); the rest read "P2"…"P5" so they
+ * cannot be mistaken for a jersey number in the column beside them.
+ */
+export function pitcherRankLabel(rank: number): string {
+  return rank === 1 ? 'Ace' : `P${rank}`;
+}
+
+/** The whole stored pitching profile in the form's words: "Ace · no cap", "P2 · 4 IP cap". */
+export function pitcherSummary(pitcher: LineupPitcherProfile, capWord: 'IP cap' | 'innings cap' = 'IP cap'): string {
+  return `${pitcherRankLabel(pitcher.rank)} · ${pitcher.maxInnings != null ? `${pitcher.maxInnings} ${capWord}` : `no ${capWord === 'IP cap' ? 'cap' : 'innings cap'}`}`;
 }
 
 // ── Three-state cycle (Best → Never → blank), shared by every position picker ──

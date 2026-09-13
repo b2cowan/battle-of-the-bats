@@ -3251,6 +3251,43 @@ moment it lands.
 <!-- dict:col:rep_development_goal_reviews.created_by -->
 **`created_by`** (FK → `auth.users.id` SET NULL, nullable) — who wrote the review ("written by" on the timeline).
 
+### \`rep_player_notes\`
+<!-- dict:table:rep_player_notes -->
+
+**Purpose:** a dated GENERAL note a coach wrote about a player — the one kind of entry on the player page's **Notes** tab that has no other source. The Notes tab is ONE READ over four tables (this one, \`rep_team_game_moments\`, \`rep_player_observations\`, \`rep_development_goal_reviews\`), merged newest-first by \`lib/player-notes-timeline.ts\`; moments, observations and reviews are written where they belong and only read there. Added by migration 296 (roster + player page review, owner rulings 2026-09-13, hub F20 / R2-3 / Q7–Q10). **⚠ DEV-ONLY / PROD-PENDING at author time (order-critical after 295).**
+
+**Gotchas (read first):**
+1. **The goals' sensitivity class, exactly.** A dated free-text log about a minor is the surface most likely to drift into what the product's privacy posture rules out (skill/goal-oriented content, no behavioural profiling — see \`rep_player_development_goals\` gotcha 3). So: READ on Internal notes (\`canViewDevelopmentGoals\`), WRITE on the Development grant AND notes (\`canWriteDevelopmentGoals\`); never a family surface; the season recap never reads it. The tab says so in one line at its foot.
+2. **Season-scoped through the roster row** (composite FK \`(player_id, team_id) → rep_roster_players(id, team_id)\` CASCADE) — a roster row is one player in one season, so the table carries no \`program_year_id\` and the route learns no year.
+3. **What it is ABOUT is optional and proved by the route.** \`goal_id\` is a composite FK with \`team_id\` (SET NULL); \`event_id\` is a plain FK onto \`rep_team_events\` (SET NULL) — the route proves the event is on this season's schedule before writing. Deleting the goal or the event leaves the note standing as a dated record.
+4. **Only a general note is edited or removed on the Notes tab** — a moment, an observation or a review is edited at its source. UPDATE/DELETE policies exist here (unlike reviews, which are append-only).
+5. **No tags, no categories, no attachments, no filter** (owner Q10): a season is a few dozen entries; the source chip on each entry does the sorting a reader's eye needs.
+6. **RLS (schema-invisible; MANUAL_PROD_STEPS):** 2 SELECT + INSERT + UPDATE + DELETE on mig 292's predicate. \`updated_at\` is app-side (no trigger — the repo's convention): the update route sets it.
+
+**Fields** (boilerplate \`id\`, \`created_at\`, \`updated_at\` omitted):
+
+<!-- dict:col:rep_player_notes.org_id -->
+<!-- dict:col:rep_player_notes.team_id -->
+**\`org_id\` / \`team_id\`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_player_notes.player_id -->
+**\`player_id\`** (uuid, NOT NULL; composite FK with \`team_id\` → \`rep_roster_players(id, team_id)\` CASCADE) — the player the note is about (gotcha 2).
+
+<!-- dict:col:rep_player_notes.noted_on -->
+**\`noted_on\`** (date, NOT NULL) — when the coach noticed it. Coach-chosen; the form defaults to today. A date, not a timestamp ("Thursday's practice", not 19:42:07).
+
+<!-- dict:col:rep_player_notes.body -->
+**\`body\`** (text, NOT NULL; CHECK \`1..600\`) — the note, in the coach's words. The observation limit, deliberately.
+
+<!-- dict:col:rep_player_notes.goal_id -->
+**\`goal_id\`** (uuid, nullable; composite FK with \`team_id\` → \`rep_player_development_goals(id, team_id)\` SET NULL) — the goal it is about, when it is about one ("Note · First-step quickness" on the timeline; the chip opens the goal).
+
+<!-- dict:col:rep_player_notes.event_id -->
+**\`event_id\`** (uuid, nullable; FK → \`rep_team_events.id\` SET NULL) — the game or practice it was noticed at, when it was ("Note · vs Milton"; the chip opens the schedule).
+
+<!-- dict:col:rep_player_notes.created_by -->
+**\`created_by\`** (FK → \`auth.users.id\` SET NULL, nullable) — who wrote it ("written by" on the timeline; every record names its author, owner ruling 2026-09-11).
+
 ### `rep_player_continuity_links`
 <!-- dict:table:rep_player_continuity_links -->
 

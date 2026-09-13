@@ -216,8 +216,14 @@ describe('the chrome (S4)', () => {
     // lands on a 404, which is the one failure a narration sentence cannot paper over.
     const recapStep = steps.find(s => s.anchor?.includes('family-recap'));
     assert.ok(recapStep, 'the family-recap beat is part of the approved spine');
-    assert.ok(recapStep!.href.endsWith(DEMO_COACH_SHOWCASE.midSeasonPlayerId),
+    // The path names the player; the query names the TAB the recap row lives on (This season, since
+    // the five-tab rebuild of 2026-09-13 — a bare player URL now lands on Details, where the anchor
+    // is not). Both halves are load-bearing.
+    const recapPath = recapStep!.href.split('?')[0];
+    assert.ok(recapPath.endsWith(DEMO_COACH_SHOWCASE.midSeasonPlayerId),
       'the family-recap step must address the fixed showcase player');
+    assert.ok(/[?&]tab=season(&|$)/.test(recapStep!.href),
+      'the family-recap step must open the This season tab, where the recap row lives');
   });
 
   test('EVERY step narrates — the defect that made the first tour read as dead buttons', () => {

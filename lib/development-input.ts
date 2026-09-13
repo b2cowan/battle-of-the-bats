@@ -62,6 +62,49 @@ function readText(raw: unknown, max: number, what: string): InputResult<string |
 const obj = (raw: unknown): Record<string, unknown> =>
   (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
 
+// ── A general player note (rep_player_notes, mig 296 — the Notes tab's one write) ────────────────
+export const MAX_PLAYER_NOTE_LEN = 600;
+
+export interface PlayerNoteFields {
+  notedOn: string;
+  body: string;
+  goalId: string | null;
+  eventId: string | null;
+}
+/**
+ * The note's body is REQUIRED (a note with no words is not a note); the date defaults to today on
+ * the form, so an absent one here is a client bug and refused. `goalId` / `eventId` are proved to
+ * belong to the player / the season by the route, not here — this only reads the shape.
+ */
+export function readPlayerNoteInput(raw: unknown, mode: 'create'): InputResult<PlayerNoteFields>;
+export function readPlayerNoteInput(raw: unknown, mode: 'patch'): InputResult<Partial<PlayerNoteFields>>;
+export function readPlayerNoteInput(raw: unknown, mode: 'create' | 'patch'): InputResult<Partial<PlayerNoteFields>> {
+  const o = obj(raw);
+  const out: Partial<PlayerNoteFields> = {};
+  if (mode === 'create' || 'notedOn' in o) {
+    const d = readDate(o.notedOn, 'Date');
+    if ('error' in d) return d;
+    out.notedOn = d.fields;
+  }
+  if (mode === 'create' || 'body' in o) {
+    const b = readText(o.body, MAX_PLAYER_NOTE_LEN, 'The note');
+    if ('error' in b) return b;
+    if (!b.fields) return { error: 'Write the note first.' };
+    out.body = b.fields;
+  }
+  // On create the two links are always decided (absent = none); on patch an absent key means
+  // "leave it", the same convention the goal and observation patches use.
+  if (mode === 'create' || 'goalId' in o) {
+    if (o.goalId != null && !isId(o.goalId)) return { error: 'Invalid goal.' };
+    out.goalId = (o.goalId as string | null) ?? null;
+  }
+  if (mode === 'create' || 'eventId' in o) {
+    if (o.eventId != null && !isId(o.eventId)) return { error: 'Invalid event.' };
+    out.eventId = (o.eventId as string | null) ?? null;
+  }
+  return { fields: out };
+}
+
 // ── Metric definitions (rep_team_measurable_types) ───────────────────────────────────────────────
 
 /** A whole definition, as a create sends it — every field present, defaults already applied. */

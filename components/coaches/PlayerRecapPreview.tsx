@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useState } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import warm from '@/components/consumer/warmTheme.module.css';
 import PlayerRecapView from '@/components/family/PlayerRecapView';
 import type { PlayerSeasonRecapPayload } from '@/lib/rep-player-season-recap';
@@ -19,6 +19,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *
  * 2. IT IS COLLAPSED BY DEFAULT and fetches only when opened. A child's development record is
  *    not something to load onto a screen the coach opened to check a jersey size.
+ *
+ * 3. IT IS ONE QUIET ROW AT THE FOOT OF THE RECORD TAB (roster + player page review, hub F11,
+ *    2026-09-13). It used to be a tinted box with a blue border and a small-caps title sitting
+ *    between the coach's own records, in a visual language nothing else on the page used. It is a
+ *    preview of an OUTPUT — what the family will read — not a record, so it sits after the
+ *    records it is built from, in the portal's quiet-door voice: an eye and a sentence.
  *
  * The route behind it is LIVE-SEASON-ONLY by design (the archive is opt-in): this is the
  * moment a coach can still act on what they see — log a final reading, give an award — which
@@ -59,29 +65,26 @@ export default function PlayerRecapPreview({ orgSlug, teamId, playerId, playerFi
     if (next && !recap && !loading) void load();
   }
 
+  const who = playerFirstName ? `${playerFirstName}’s family` : 'the family';
   return (
     // data-sandbox-tour: the beat the demo's "read what a parent gets" step rings. Inert off a
     // demo org — the attribute carries no styling and no behaviour.
-    <div className={styles.detailSection} data-sandbox-tour="family-recap">
-      <div className={styles.sectionHeadRow}>
-        <p className={styles.detailSectionTitle}>Family season recap</p>
-        <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={toggle}>
-          <Eye size={13} aria-hidden /> {open ? 'Hide preview' : 'Preview'}
+    <div data-sandbox-tour="family-recap">
+      <div className={styles.recapRow}>
+        <button type="button" className={styles.recapRowBtn} onClick={toggle} aria-expanded={open}>
+          {open ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
+          {open ? `Hide what ${who} will read at season’s end` : `Preview what ${who} will read at season’s end`}
         </button>
       </div>
-
-      {!open && (
-        <p className={styles.detailPlaceholder}>
-          What {playerFirstName}’s connected parent or guardian reads once you close the season.
-          Built from what you already record — nothing extra to write.
-        </p>
-      )}
-
-      {open && loading && <CoachLoading label="Loading the preview…" inline />}
-      {open && error && <p className={styles.detailPlaceholder}>{error}</p>}
-      {open && recap && (
-        <div className={warm.warm}>
-          <PlayerRecapView recap={recap} isPreview />
+      {open && (
+        <div className={styles.recapPreview}>
+          {loading && <CoachLoading label="Loading the preview…" inline />}
+          {error && <p className={styles.detailPlaceholder}>{error}</p>}
+          {recap && (
+            <div className={warm.warm}>
+              <PlayerRecapView recap={recap} isPreview />
+            </div>
+          )}
         </div>
       )}
     </div>

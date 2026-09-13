@@ -1,0 +1,931 @@
+<title>Roster and Player Page Review</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;
+/* the PRODUCT's warm tokens, verbatim from app/globals.css — used inside the frames only */
+--p-paper:#F8F4ED;--p-card:#FFFFFF;--p-ink:#241E15;--p-ink-soft:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line-strong:rgba(70,55,30,.20);--p-olive:#57651E;--p-olive-soft:rgba(87,101,30,.10);--p-lime:#D9F99D;--p-live:#B03A22;--p-live-soft:rgba(176,58,34,.10);--p-amber:#835006;--p-blue:#134FD3;--p-fill:rgba(70,55,30,.08);
+--f-display:'Barlow Condensed','Arial Narrow',sans-serif;--f-body:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;--f-data:'IBM Plex Mono',ui-monospace,Menlo,monospace;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 var(--f-body)}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h1[tabindex]:focus{outline:none}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--p-paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+main.hubsection{padding:0}
+.screen{background-image:linear-gradient(#ebe6dc 1px,transparent 1px),linear-gradient(90deg,#ebe6dc 1px,transparent 1px);background-size:22px 22px}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.specimenlabel{display:inline-block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;padding:4px 9px;border-radius:4px;margin:0 0 10px}
+.specimenlabel.today{background:#eeeee9;color:#5c6658}.specimenlabel.after{background:var(--lime);color:#2b3f12}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;padding:10px 28px;font-size:12px;color:var(--muted);background:#fafbf7;border-bottom:1px solid var(--line);align-items:center}
+
+/* ── the product specimen ─────────────────────────────────────────── */
+.masthead{background:var(--p-card);border-bottom:1px solid var(--p-line);padding:10px 28px;display:flex;align-items:center;gap:20px;color:var(--p-ink)}
+.masthead .tname{font-weight:700;font-size:16px;line-height:1.2}.masthead .tmeta{font:11px var(--f-data);color:var(--p-dim);letter-spacing:.3px;margin-top:2px}.masthead .tmeta b{color:var(--p-ink)}
+.masthead .next{margin-left:auto;text-align:right;font-size:13px;font-weight:700;color:var(--p-ink)}.masthead .next small{display:block;font:10px var(--f-data);letter-spacing:1.2px;color:var(--p-dim)}
+.masthead .help{width:34px;height:34px;border-radius:50%;border:1px solid var(--p-line-strong);background:var(--p-card);display:grid;place-items:center;font-weight:700;color:var(--p-ink)}
+.body{padding:26px 36px 34px;max-width:1220px;color:var(--p-ink)}
+.body.narrow{max-width:1012px;margin:0 auto}
+.pagehead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pagehead .icon{width:40px;height:40px;border-radius:10px;background:#E9E2D2;border:1px solid var(--p-line);display:grid;place-items:center;color:var(--p-olive)}
+.pagehead h1{font:700 22px var(--f-display);margin:0;letter-spacing:.2px;color:var(--p-ink)}
+.backlink{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--p-ink-soft);text-decoration:none;padding-right:14px;border-right:1px solid var(--p-line);margin-right:2px}
+.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.btn{min-height:36px;padding:6px 14px;white-space:nowrap;border:1px solid var(--p-line-strong);border-radius:8px;background:var(--p-card);font-weight:700;font-size:14px;color:var(--p-ink);display:inline-flex;align-items:center;gap:6px}
+.btn.lime{background:var(--p-lime);border-color:#b9d88c}
+.btn.ghost{background:#F3EFE6;border-color:var(--p-line)}
+.toolbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:10px 0 12px}
+.seg{display:inline-flex;border:1px solid var(--p-line-strong);border-radius:8px;overflow:hidden}
+.seg span{padding:7px 22px;font-weight:700;font-size:14px;background:var(--p-card);color:var(--p-ink)}.seg span.on{background:var(--p-ink);color:#fff}
+.stepper{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--p-line-strong);border-radius:8px;background:var(--p-card);overflow:hidden}
+.stepper button{width:36px;height:36px;border:0;background:transparent;font-size:18px;color:var(--p-ink);display:grid;place-items:center}
+.stepper span{font:600 12px var(--f-data);color:var(--p-dim);padding:0 6px;white-space:nowrap}
+
+.card{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;overflow:hidden}
+table.roster{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;color:var(--p-ink)}
+.roster th{font:700 12px var(--f-display);letter-spacing:.6px;text-transform:uppercase;color:var(--p-ink-soft);padding:9px 16px;border-bottom:1px solid var(--p-line);text-align:left;white-space:nowrap}
+.roster th.grip,.roster td.grip{width:28px;padding-left:10px;padding-right:0;color:var(--p-dim)}
+.roster td{padding:9px 16px;border-bottom:1px solid var(--p-line);vertical-align:middle;line-height:1.5}
+.roster tr:last-child td{border-bottom:0}
+.roster td.num{color:var(--p-ink-soft);font-size:13.6px;width:52px}
+.roster td.num.data{font:600 14px var(--f-data);font-variant-numeric:tabular-nums;color:var(--p-ink-soft)}
+.roster td.small{font-size:13.6px}
+.roster tr.comfy td{padding-top:12px;padding-bottom:12px}
+.pname{font-weight:600;color:var(--p-ink);text-decoration:none}
+.pname.rest{text-decoration:underline;text-decoration-color:var(--p-line-strong);text-underline-offset:3px;text-decoration-thickness:1px}
+.pname.rest:hover{text-decoration-color:var(--p-ink)}
+.flag{display:inline-block;margin-left:6px;font-size:12px;vertical-align:1px}
+.flag.pit{font:700 10px var(--f-data);background:var(--p-fill);border:1px solid var(--p-line-strong);border-radius:4px;padding:1px 5px;color:var(--p-ink-soft);vertical-align:2px}
+.flag.star{color:#b8860b}.flag.med{color:var(--p-live);font-weight:800}
+.prompt{color:var(--p-dim);text-decoration:none;border-bottom:1px dashed var(--p-line-strong);padding-bottom:1px}
+.prompt2{color:var(--p-dim);text-decoration:none}.prompt2:hover{text-decoration:underline}.prompt2 b{font-weight:600;margin-right:3px}
+.pos{display:inline-flex;align-items:center;gap:8px}
+.pchip{font:700 11px var(--f-data);background:var(--p-olive-soft);border:1px solid rgba(87,101,30,.35);color:var(--p-olive);border-radius:5px;padding:2px 7px;letter-spacing:.3px}
+.fam{display:flex;flex-direction:column;line-height:1.35}.fam b{font-weight:600}.fam a{color:var(--p-ink-soft);text-decoration:none;font-size:13px}.fam a:hover{text-decoration:underline}
+.shelf{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:14px;color:var(--p-ink-soft);border-top:1px solid var(--p-line)}
+.hint{font-size:12px;color:var(--p-dim);margin:10px 4px 0}
+
+/* phone cards (390) */
+.pfr{width:390px;flex:none;border:1px solid #c6cebc;border-radius:22px;overflow:hidden;background:var(--p-paper);box-shadow:0 12px 36px #2732210a}
+.pfr .masthead{padding:10px 16px;gap:10px}.pfr .masthead .next{display:none}
+.pfr .body{padding:14px 16px 24px}
+.pcards{display:flex;flex-direction:column;gap:6px}
+.pcard{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--p-olive-soft);border:1px solid var(--p-line);border-radius:10px;min-height:44px;color:var(--p-ink);text-decoration:none}
+.pcard .pname{font-size:15px}.pcard .badge{margin-left:auto;font:700 11px var(--f-data);background:var(--p-card);border:1px solid var(--p-line);border-radius:6px;padding:2px 7px;color:var(--p-ink-soft)}
+.pcard2{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:2px 8px;align-items:center;padding:8px 8px 8px 12px;background:var(--p-olive-soft);border:1px solid var(--p-line);border-radius:10px;color:var(--p-ink);text-decoration:none;position:relative}
+.pcard2 .l1{display:flex;align-items:center;gap:6px}.pcard2 .l2{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--p-ink-soft)}
+.pcard2 .badge{font:700 11px var(--f-data);background:var(--p-card);border:1px solid var(--p-line);border-radius:6px;padding:2px 7px;color:var(--p-ink-soft);justify-self:end}
+.pcard2 .call{grid-row:1/3;grid-column:2;width:44px;height:44px;border-radius:9px;border:1px solid var(--p-line-strong);background:var(--p-card);display:grid;place-items:center;color:var(--p-olive);font-size:17px}
+.pcard2 .badge.hasCall{grid-column:1;justify-self:start}
+.pnav{display:flex;justify-content:space-around;align-items:flex-end;padding:8px 6px 10px;border-top:1px solid var(--p-line);background:var(--p-card);font:700 9px var(--f-data);letter-spacing:.8px;color:var(--p-dim);text-transform:uppercase}
+.pnav span{display:flex;flex-direction:column;align-items:center;gap:5px}.pnav i{width:22px;height:22px;border:2px solid currentColor;border-radius:6px;display:block}.pnav span.on{color:var(--p-olive)}
+.twoup{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;padding:24px 20px 28px}
+.twoup .col{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+
+/* player page */
+.glance{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.jersey{font:700 12px var(--f-data);background:var(--p-fill);border-radius:6px;padding:2px 7px;color:var(--p-ink-soft)}
+.chip{font-size:12px;font-weight:600;color:var(--p-ink-soft);background:var(--p-fill);border-radius:999px;padding:3px 9px}
+.chip.danger{color:var(--p-live);background:var(--p-live-soft);display:inline-flex;gap:4px;align-items:center}
+.chip.door{border:1px solid transparent}.chip.door:hover{border-color:var(--p-live)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tile{border:1px solid var(--p-line);border-radius:9px;padding:9px 11px;display:flex;flex-direction:column;gap:2px;min-width:0;text-decoration:none;color:var(--p-ink);background:var(--p-card)}
+.tile.door{cursor:pointer;position:relative}.tile.door:hover{border-color:var(--p-olive);background:#fbfbf6}
+.tile.door::after{content:'›';position:absolute;right:10px;top:8px;color:var(--p-dim);font-size:16px}
+.tile .k{font:700 10px var(--f-data);letter-spacing:1px;text-transform:uppercase;color:var(--p-dim)}
+.tile .v{font-size:16px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tile .v.danger{color:var(--p-live)}
+.tile .f{font-size:12px;color:var(--p-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptabs{display:flex;gap:2px;border-bottom:1px solid var(--p-line);margin-bottom:14px}
+.ptabs span{padding:10px 14px;font-size:14px;font-weight:600;color:var(--p-dim);border-bottom:2px solid transparent;margin-bottom:-1px}
+.ptabs span.on{color:var(--p-ink);border-bottom-color:var(--p-lime)}.ptabs span.on.olive{color:var(--p-olive);border-bottom-color:var(--p-olive)}
+.ptabs .mk,.ptabs .fl{padding:2px 6px;font-size:10px;border-bottom-width:1px;margin:auto 0 auto 6px;font-weight:800}
+.fold{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;margin-bottom:10px}
+.fold .sum{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;font-weight:700;font-size:16px;min-height:52px}
+.fold .sum .m{font:600 11px var(--f-data);color:var(--p-dim)}.fold .sum .chev{color:var(--p-dim);font-size:14px;margin-left:10px}
+.fold .fb{padding:0 18px 16px}
+.sect{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;margin-bottom:10px;padding:14px 18px 16px}
+.sect h3{font-size:16px;font-weight:700;margin:0 0 10px;color:var(--p-ink);display:flex;justify-content:space-between;align-items:center}
+.sect h3 .m{font:600 11px var(--f-data);color:var(--p-dim)}
+.lbl{font:700 11px var(--f-display);letter-spacing:1.2px;text-transform:uppercase;color:var(--p-ink-soft);margin:12px 0 6px}
+.mrow{display:flex;align-items:center;gap:12px;padding:8px 12px;background:#F3EFE6;border:1px solid var(--p-line);border-radius:8px;margin-bottom:6px;font-size:14px}
+.mrow .r{margin-left:auto;display:flex;gap:12px;align-items:center;color:var(--p-ink-soft);font-size:13px}.mrow .r i{color:var(--p-dim);font-size:12px}
+.mrow .st{font:700 10px var(--f-data);background:#F1E7C8;border:1px solid #d9c98d;color:var(--p-amber);border-radius:4px;padding:2px 7px;letter-spacing:.5px}
+.gbtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border:1px solid var(--p-line-strong);border-radius:8px;background:#F3EFE6;font:700 12px var(--f-display);letter-spacing:.3px;color:var(--p-ink);margin:2px 0 8px}
+.recapbox{background:var(--p-olive-soft);border:1px solid rgba(19,79,211,.15);border-radius:8px;padding:18px 20px;margin-bottom:12px}
+.recapbox .t{font:700 12px var(--f-display);letter-spacing:1.2px;text-transform:uppercase;color:var(--p-ink-soft);display:flex;justify-content:space-between}
+.recapbox .t a{font:600 12px var(--f-body);text-transform:none;letter-spacing:0;color:var(--p-ink)}
+.recapbox p{margin:14px 0 0;font-style:italic;color:var(--p-ink-soft)}
+.recaprow{display:flex;align-items:center;gap:8px;padding:10px 4px;font-size:13px;color:var(--p-ink-soft)}.recaprow a{color:var(--p-ink-soft);text-decoration:underline;text-decoration-color:var(--p-line-strong);text-underline-offset:3px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}
+.stat{border:1px solid var(--p-line);border-radius:8px;padding:8px 10px}.stat b{display:block;font-size:18px}.stat small{font:700 10px var(--f-data);letter-spacing:1px;text-transform:uppercase;color:var(--p-dim)}
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ladder .stat b{font-size:16px}.ladder .stat.good b{color:#34662A}.ladder .stat.bad b{color:var(--p-live)}
+.mini{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--p-line);font-size:14px}.mini:last-child{border-bottom:0}.mini span{color:var(--p-dim);font-size:13px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}.formgrid .full{grid-column:1/-1}
+.field label{display:block;font:700 11px var(--f-display);letter-spacing:1.2px;text-transform:uppercase;color:var(--p-ink-soft);margin-bottom:5px}
+.input{min-height:38px;border:1px solid var(--p-line);border-radius:7px;background:#F7F3EB;padding:8px 11px;font-size:14px;color:var(--p-ink)}
+.input.ph{color:var(--p-dim)}
+.ro{display:grid;grid-template-columns:150px 1fr;gap:6px 16px;font-size:14px;align-items:baseline}.ro dt{font:700 11px var(--f-display);letter-spacing:1.2px;text-transform:uppercase;color:var(--p-dim);margin:0}.ro dd{margin:0}
+.poschips{display:flex;gap:6px;flex-wrap:wrap}.poschips span{width:40px;height:32px;border:1px solid var(--p-line-strong);border-radius:999px;display:grid;place-items:center;font:700 12px var(--f-data);color:var(--p-ink-soft);background:var(--p-card)}
+.poschips span.b{background:rgba(132,204,22,.2);border-color:rgba(101,163,13,.6);color:var(--p-ink)}
+.danger{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--p-line);border-radius:12px;background:#F7F3EB;margin-top:12px}
+.danger b{display:block}.danger i{color:var(--p-ink-soft);font-size:13px}
+.danger .btn{color:var(--p-live);border-color:rgba(176,58,34,.4)}
+.savebar{display:flex;justify-content:flex-end;gap:8px;align-items:center;padding:10px 0 0;font-size:13px;color:var(--p-ink-soft)}
+.note{font-size:13px;color:var(--p-ink-soft);font-style:italic;margin:0 0 10px}
+.desktopOnly{display:block}.phoneOnly{display:none}
+.twoUpDoc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+@container(max-width:700px){.body{padding:14px 14px 24px}.masthead{padding:10px 14px}.masthead .next{display:none}.tiles{grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(3,1fr)}.ladder{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.actions{margin-left:0}.ptabs span{padding:10px 8px}.twoUpDoc{grid-template-columns:1fr}.roster th,.roster td.num,.roster td.grip{display:none}.roster,.roster tbody,.roster tr,.roster td{display:block}.roster tr{border:1px solid var(--p-line);border-radius:10px;background:var(--p-olive-soft);margin:6px 0}.roster td{border:0;padding:6px 12px}.roster td:first-child{padding-top:10px}.roster td:last-child{padding-bottom:10px}.desktopOnly{display:none}.phoneOnly{display:block}.ro{grid-template-columns:1fr}}
+
+/* docs */
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0;font-style:normal;color:var(--ink)}
+.docpage table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}.docpage th{background:var(--soft)}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin-bottom:5px}
+.tablewrap{overflow-x:auto}
+.docpage h3.fh{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:16px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.open{background:#fff7dc;border-color:#e6cf7a}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;font-family:var(--f-body)}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px var(--f-body);border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4;white-space:nowrap}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.twoup{padding:14px 6px}.pfr{width:100%;flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Roster + player page — review hub</strong><br><small>BUILT on dev 2026-09-13 (uncommitted) · five tabs · Notes tab + migration 296 · roster list restyled · help synced · demo reseeded · Owner QA walk §182 on the QA Walk tab</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Round 1 evaluated + drawn 2026-09-13; round 2 (five tabs, Notes) drawn 2026-09-13 on the owner's rulings">Design</li>
+    <li class="stage done" title="Plan approved 2026-09-13 — Q1–Q10 accepted as recommended, R2-1..7 (owner: 'I agree with your recommendations, go ahead')">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-13: roster list (F01–F08, F21), player page shell + five tabs (F09–F17, F19), Notes tab (F20, migration 296 applied to dev), help synced, demo reseeded; typecheck + 3,809 unit tests green; layout sweep on the six screens">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage current" title="Walk §182 written 2026-09-13 — owed">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#s1">1 · Roster today</a>
+    <a href="#s2">2 · Roster proposed</a>
+    <a href="#s3">3 · Roster on a phone</a>
+    <a href="#s4">4 · Player today</a>
+    <a href="#s5">5 · Player · Details</a>
+    <a href="#s6">6 · Player · This season</a>
+    <a href="#s7">7 · Player · Skills &amp; Goals</a>
+    <a href="#s8">8 · Player · Notes</a>
+    <a href="#s9">9 · Player · Family &amp; paperwork</a>
+    <a href="#s10">10 · Player on a phone</a>
+  </nav>
+  <div class="legend"><span><button class="fl" type="button" data-finding="F01" data-here="This is the legend — the flag opens the finding it names.">F01</button> a problem in today's screen — click it</span><span><button class="fl fix" type="button" data-finding="F01" data-here="This is the legend.">fixes F01</button> where the proposal answers it</span><span><span class="mk" data-k="new" data-note="Legend sample.">New</span><span class="mk" data-k="re" data-note="Legend sample.">Restyled</span><span class="mk" data-k="un" data-note="Legend sample.">Unchanged</span> every tag opens a note</span><span>Frames are drawn at true desktop and 390px phone widths with the portal's real warm tokens and type.</span></div>
+  <div class="frame" id="frame">
+    <main>
+
+      <!-- ═══ 1 · ROSTER TODAY ═══ -->
+      <section class="screen" id="s1">
+        <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Sat 10:45 p.m. practice</div><div class="help">?</div></div>
+        <div class="body">
+          <span class="specimenlabel today">Today · desktop 1440 · as measured</span>
+          <div class="pagehead"><div class="icon">👥</div><h1>Roster</h1><div class="actions"><span class="btn lime">+ Add Player</span><span class="btn">⇪ Import</span></div></div>
+          <div class="toolbar"><span class="seg"><span class="on">List</span><span>Depth chart</span></span> <button class="fl" type="button" data-finding="F21" data-here="The List / Depth chart toggle sits at the right, beside Export, with the whole left half of the toolbar empty since the player count was removed. Every other view switch in the portal (Schedule, Money, Insights) sits at the left of its row.">F21</button><span class="btn">⇩ Export</span></div>
+          <div class="card">
+            <table class="roster">
+              <thead><tr><th class="grip"></th><th>#</th><th>Player <button class="fl" type="button" data-finding="F01" data-here="Twelve names, twelve doors, and nothing on the row or the name says so — the name is bold body text, no underline, the row has no hover and an arrow cursor.">F01</button></th><th>Positions <button class="fl" type="button" data-finding="F03" data-here="Every one of the twelve rows carries a dashed 'Add a position' — twelve dashed underlines in this column alone.">F03</button></th><th>Family <button class="fl" type="button" data-finding="F03" data-here="…and twelve more here. Twenty-four dashed prompts is two thirds of the table's width.">F03</button></th></tr></thead>
+              <tbody>
+                <tr><td class="grip">⠿ <button class="fl" type="button" data-finding="F08" data-here="The drag grip is about 23px square, with no floor, and it still renders at tablet widths where a finger drives it.">F08</button></td><td class="num">1 <button class="fl" type="button" data-finding="F02" data-here="This cell is 13.6px in an ink the three-tier system doesn't name. The ladder is 14 / 12 / 11 / 10.">F02</button></td><td><a class="pname" href="#s4">Avery Test</a><span class="flag pit">P</span> <button class="fl" type="button" data-finding="F05" data-here="A bare 'P'. The chip is meant to read P1, P2… — the rank is missing on this player, so the chip and its screen-reader name ('Pitcher, rank ') both come out empty.">F05</button></td><td class="small"><a class="prompt" href="#s4">Add a position</a> <button class="fl" type="button" data-finding="F04" data-here="Avery is the team's pitcher — the chip on the name says so — and this column tells the coach to add a position. Pitching is not counted as one.">F04</button></td><td class="small"><a class="prompt" href="#s4">Add a contact</a> <button class="fl" type="button" data-finding="F07" data-here="This link opens Avery's page on 'This season'. The contact lives on 'Family &amp; paperwork', two clicks further on.">F07</button></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">2</td><td><a class="pname" href="#s4">Blake Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">3</td><td><a class="pname" href="#s4">Casey Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">4</td><td><a class="pname" href="#s4">Devon Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">5</td><td><a class="pname" href="#s4">Emerson Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">6</td><td><a class="pname" href="#s4">Frankie Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">7</td><td><a class="pname" href="#s4">Gray Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">8</td><td><a class="pname" href="#s4">Harper Test</a></td><td class="small"><a class="prompt" href="#s4">Add a position</a></td><td class="small"><a class="prompt" href="#s4">Add a contact</a></td></tr>
+              </tbody>
+            </table>
+            <div class="shelf">▸ Off the roster (1)</div>
+          </div>
+          <div class="hint">Drag to set the order players appear in · <i>four more rows below the fold on the fixture</i></div>
+        </div>
+      </section>
+
+      <!-- ═══ 2 · ROSTER PROPOSED ═══ -->
+      <section class="screen" id="s2" hidden>
+        <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="next"><small>NEXT</small>Thu 6:30 p.m. game</div><div class="help">?</div></div>
+        <div class="body">
+          <span class="specimenlabel after">Proposed · desktop · drawn on a mid-season roster so the mature state shows too</span>
+          <div class="pagehead"><div class="icon">👥</div><h1>Roster <span class="mk" data-k="un" data-note="Header, Add Player, Import, the List/Depth chart toggle, Export and the off-roster shelf are all untouched by this pass.">Unchanged</span></h1><div class="actions"><span class="btn lime">+ Add Player</span><span class="btn">⇪ Import</span></div></div>
+          <div class="toolbar" style="justify-content:space-between"><span><span class="seg"><span class="on">List</span><span>Depth chart</span></span><span class="mk" data-k="re" data-note="The view switch moves to the left end of its row, where every other view switch in the portal sits (owner, round 2). Export stays pinned right at every width — that is a house rule, and it is the only thing that belongs there.">Restyled</span> <button class="fl fix" type="button" data-finding="F21" data-here="Toggle left, Export right: the toolbar reads the way Schedule, Money and Insights read.">fixes F21</button></span><span class="btn">⇩ Export</span></div>
+          <div class="card">
+            <table class="roster">
+              <thead><tr><th class="grip"></th><th>#</th><th>Player</th><th>Positions</th><th>Family</th></tr></thead>
+              <tbody>
+                <tr class="comfy"><td class="grip">⠿</td><td class="num data">1 <span class="mk" data-k="re" data-note="Jersey numbers move to the data face, tabular, secondary ink — the same treatment the off-roster shelf and the depth chart already use. One roster family, one way of writing a number. Cell on the 14px body step, not 13.6.">Restyled</span> <button class="fl fix" type="button" data-finding="F02" data-here="On the ladder: 14px body on every cell, the number in the data face and the secondary ink tier.">fixes F02</button></td><td><a class="pname rest" href="#s5">Maya Okafor</a><span class="flag star">★</span> <span class="mk" data-k="re" data-note="The name keeps being the only door (the standard's rule for a row that navigates) but now says so at rest: a hairline underline in the line-strong token, solid ink on hover. No row click, no chevron — the Family cell holds tap-to-contact links a row click would swallow.">Restyled</span> <button class="fl fix" type="button" data-finding="F01" data-here="Underlined at rest; the row itself stays inert on purpose.">fixes F01</button></td><td><span class="pos"><span class="pchip">Ace</span> C / 1B</span> <span class="mk" data-k="re" data-note="The pitching marker leaves the name cell and leads the Positions cell, worded the way the editor words it: 'Ace' for rank 1, 'P2'…'P5' otherwise. A pitcher with no field positions now reads 'Ace', not 'Add a position'.">Restyled</span> <button class="fl fix" type="button" data-finding="F04" data-here="The mound counts as a position here. Rank 1 reads 'Ace', matching the Details form's own wording.">fixes F04</button> <button class="fl fix" type="button" data-finding="F05" data-here="Rank has a fallback everywhere it is read, so the chip can never render empty again.">fixes F05</button></td><td><span class="fam"><b>Dana Okafor</b><a href="#">dana.okafor@example.ca</a><a href="#">(905) 555-0142</a></span> <span class="mk" data-k="un" data-note="A populated Family cell is exactly today's: name, then tap-to-email and tap-to-call. Rows with a contact are comfortable-density, rows without stay compact — as today.">Unchanged</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num data">2</td><td><a class="pname rest" href="#s5">Liam Tremblay</a></td><td><span class="pos"><span class="pchip">P2</span> SS</span></td><td><a class="prompt2" href="#s7"><b>+</b>Add a contact</a> <span class="mk" data-k="re" data-note="Same words, same place, same link — but tertiary ink with a leading + and no underline at rest (underline on hover, like every other quiet door). One of these is quiet; twenty-four dashed ones were a texture.">Restyled</span> <button class="fl fix" type="button" data-finding="F03" data-here="No dashed underline. On a new roster the table reads as a list of names with quiet gaps, not a grid of dashes.">fixes F03</button> <button class="fl fix" type="button" data-finding="F07" data-here="The link now opens the player on Family &amp; paperwork, scrolled to Guardian contact — because tabs have an address (screen 5).">fixes F07</button></td></tr>
+                <tr class="comfy"><td class="grip">⠿</td><td class="num data">4</td><td><a class="pname rest" href="#s5">Priya Nair</a><span class="flag med">✚</span> <span class="mk" data-k="un" data-note="★ A-squad and ✚ medical notes stay beside the name — they are about the player, not a position.">Unchanged</span></td><td>2B / SS</td><td><span class="fam"><b>Anil Nair</b><a href="#">anil.nair@example.ca</a><a href="#">(905) 555-0177</a></span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num data">7</td><td><a class="pname rest" href="#s5">Noah Bergeron</a></td><td><a class="prompt2" href="#s6"><b>+</b>Add a position</a></td><td><a class="prompt2" href="#s7"><b>+</b>Add a contact</a></td></tr>
+                <tr class="comfy"><td class="grip">⠿</td><td class="num data">9</td><td><a class="pname rest" href="#s5">Sophie Chen</a><span class="flag star">★</span></td><td>CF / LF</td><td><span class="fam"><b>Wei Chen</b><a href="#">wei.chen@example.ca</a><a href="#">(905) 555-0119</a></span></td></tr>
+                <tr class="comfy"><td class="grip">⠿</td><td class="num data">11</td><td><a class="pname rest" href="#s5">Ethan Roy</a></td><td>3B</td><td><span class="fam"><b>Marc Roy</b><a href="#">(905) 555-0163</a></span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num data">12</td><td><a class="pname rest" href="#s5">Ava Singh</a></td><td>RF</td><td><a class="prompt2" href="#s7"><b>+</b>Add a contact</a></td></tr>
+              </tbody>
+            </table>
+            <div class="shelf">▸ Off the roster (1)</div>
+          </div>
+          <div class="hint">Drag to set the order players appear in</div>
+        </div>
+      </section>
+
+      <!-- ═══ 3 · ROSTER ON A PHONE ═══ -->
+      <section class="screen" id="s3" hidden>
+        <div class="twoup">
+          <div class="col">
+            <span class="specimenlabel today">Today · 390px · as measured</span>
+            <div class="pfr">
+              <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="help" style="margin-left:auto">?</div></div>
+              <div class="body">
+                <div class="pagehead"><div class="icon">👥</div><h1>Roster</h1><div class="actions"><span class="btn lime" style="width:44px;height:44px;justify-content:center">+</span></div></div>
+                <div class="toolbar" style="justify-content:space-between"><span class="seg"><span class="on">List</span><span>Depth chart</span></span><span class="btn" style="width:44px;justify-content:center">⇩</span></div>
+                <div class="pcards">
+                  <div class="pcard"><a class="pname" href="#">Maya Okafor</a><span class="flag star">★</span><span class="badge">#1</span> <button class="fl" type="button" data-finding="F06" data-here="This is the whole card: a name and a number. The 19px name is the only door (below the 44px floor — register row F-23), and nothing on it reaches a parent. Maya's family has a phone number on file; it is three taps away.">F06</button></div>
+                  <div class="pcard"><a class="pname" href="#">Liam Tremblay</a><span class="flag pit">P2</span><span class="badge">#2</span></div>
+                  <div class="pcard"><a class="pname" href="#">Priya Nair</a><span class="flag med">✚</span><span class="badge">#4</span></div>
+                  <div class="pcard"><a class="pname" href="#">Noah Bergeron</a><span class="badge">#7</span></div>
+                  <div class="pcard"><a class="pname" href="#">Sophie Chen</a><span class="flag star">★</span><span class="badge">#9</span></div>
+                  <div class="pcard"><a class="pname" href="#">Ethan Roy</a><span class="badge">#11</span></div>
+                  <div class="pcard"><a class="pname" href="#">Ava Singh</a><span class="badge">#12</span></div>
+                </div>
+              </div>
+              <div class="pnav"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Chat</span><span class="on"><i></i>Roster</span><span><i></i>More</span></div>
+            </div>
+          </div>
+          <div class="col">
+            <span class="specimenlabel after">Proposed · 390px · open this artifact on your phone to judge the targets</span>
+            <div class="pfr">
+              <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="help" style="margin-left:auto">?</div></div>
+              <div class="body">
+                <div class="pagehead"><div class="icon">👥</div><h1>Roster</h1><div class="actions"><span class="btn lime" style="width:44px;height:44px;justify-content:center">+</span></div></div>
+                <div class="toolbar" style="justify-content:space-between"><span class="seg"><span class="on">List</span><span>Depth chart</span></span><span class="btn" style="width:44px;justify-content:center">⇩</span></div>
+                <div class="pcards">
+                  <a class="pcard2" href="#s5"><span class="l1"><span class="pname">Maya Okafor</span><span class="flag star">★</span><span class="mk" data-k="re" data-note="The whole card is the door now (register F-23's second exit; the practice-plan and scouting rows already work this way). A thumb anywhere on the row opens the player.">Restyled</span></span><span class="l2"><span class="pchip">Ace</span> C / 1B <span class="badge hasCall">#1</span><span class="mk" data-k="new" data-note="A second line, only when there is something to put on it: the positions chip on the left, and a corner-pinned 44px Call button on the right when a phone number is on file (gated exactly like the desktop Family cell). No email on the card. Rows with neither stay one line.">New</span></span><span class="call">📞</span> <button class="fl fix" type="button" data-finding="F06" data-here="One tap opens the player; one tap calls the parent. The button is a separate 44px control pinned to the corner, so it does not fight the card's own link.">fixes F06</button></a>
+                  <a class="pcard2" href="#s5"><span class="l1"><span class="pname">Liam Tremblay</span></span><span class="l2"><span class="pchip">P2</span> SS <span class="badge hasCall">#2</span></span><span class="call" style="opacity:.35" title="No phone on file — no button">📞</span></a>
+                  <a class="pcard2" href="#s5"><span class="l1"><span class="pname">Priya Nair</span><span class="flag med">✚</span></span><span class="l2">2B / SS <span class="badge hasCall">#4</span></span><span class="call">📞</span></a>
+                  <a class="pcard" href="#s5"><span class="pname">Noah Bergeron</span><span class="badge">#7</span></a>
+                  <a class="pcard2" href="#s5"><span class="l1"><span class="pname">Sophie Chen</span><span class="flag star">★</span></span><span class="l2">CF / LF <span class="badge hasCall">#9</span></span><span class="call">📞</span></a>
+                  <a class="pcard2" href="#s5"><span class="l1"><span class="pname">Ethan Roy</span></span><span class="l2">3B <span class="badge hasCall">#11</span></span><span class="call">📞</span></a>
+                  <a class="pcard2" href="#s5"><span class="l1"><span class="pname">Ava Singh</span></span><span class="l2">RF <span class="badge hasCall">#12</span></span></a>
+                </div>
+                <p class="hint">The faded button on Liam's card is a drawing aid only — a row with no phone on file renders no button.</p>
+              </div>
+              <div class="pnav"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Chat</span><span class="on"><i></i>Roster</span><span><i></i>More</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ 4 · PLAYER TODAY ═══ -->
+      <section class="screen" id="s4" hidden>
+        <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Sat 10:45 p.m. practice</div></div>
+        <div class="body narrow">
+          <span class="specimenlabel today">Today · desktop · "This season" tab, as measured (Avery Test, the fixture's pitcher)</span>
+          <div class="pagehead"><a class="backlink" href="#s1">← Roster</a><div class="icon">👥</div><h1>Avery Test</h1><div class="actions"><button class="fl" type="button" data-finding="F14" data-here="The header's trailing slot is empty. To open the next player a coach goes back to the roster and picks again — twelve times, if they are logging a measurable for everyone after practice.">F14</button></div></div>
+          <div class="glance">
+            <div class="chips"><span class="jersey">#1</span><span class="chip">Pitcher · rank <button class="fl" type="button" data-finding="F05" data-here="'Pitcher · rank ' and then nothing — the same missing rank the roster's bare 'P' comes from. Even when it has a digit it says 'rank 1' where the form says 'Ace'.">F05</button></span></div>
+            <div class="tiles">
+              <div class="tile"><span class="k">Dues</span><span class="v">Paid</span><span class="f">3/3 installments paid</span></div>
+              <div class="tile"><span class="k">Attendance</span><span class="v">100%</span><span class="f">13 recorded <button class="fl" type="button" data-finding="F10" data-here="A tile that says Attendance and opens nothing. The same figure is inside Development's Context block and again in the closed Attendance fold below — three places, no door.">F10</button></span></div>
+              <div class="tile"><span class="k">Family</span><span class="v">No contact</span><span class="f">Add one on Family &amp; paperwork <button class="fl" type="button" data-finding="F10" data-here="The tile names the tab in prose and does not take you there.">F10</button></span></div>
+              <div class="tile"><span class="k">Awards</span><span class="v">0</span><span class="f">this season</span></div>
+            </div>
+          </div>
+          <div class="ptabs"><span class="on">This season</span><span>Details</span><span>Family &amp; paperwork <button class="fl" type="button" data-finding="F13" data-here="These three are buttons with no address. Reload, and you are back on This season; Back does not undo a tab switch; nothing on the roster or in help can link to a tab.">F13</button></span></div>
+          <div class="fold"><div class="sum">Development <span><button class="fl" type="button" data-finding="F19" data-here="This one section is 698px tall on a LIGHT fixture and is about to gain attempts per test, observed skills, goal reviews and a four-way view switch (Phase 2, this week). It is one of five things on a tab that is supposed to be a summary.">F19</button> <span class="chev">︿</span></span></div><div class="fb">
+            <div style="display:flex;justify-content:flex-end"><span class="gbtn">⚙ Metrics</span></div>
+            <div class="lbl">Focus areas</div>
+            <p class="note">No focus areas yet — add the first thing this player is working on.</p>
+            <span class="gbtn">+ Add focus area</span>
+            <div class="lbl">Measurables</div>
+            <div class="mrow">60-yd sprint <span class="r">8.75 seconds <i>trend shows after a second entry</i> Aug 26</span></div>
+            <div class="mrow">Throw speed <span class="r">84 km/h <i>trend shows after a second entry</i> 3 Jun</span></div>
+            <span class="gbtn">+ Log a measurable</span>
+            <div class="lbl">Context</div>
+            <div class="mrow">This season <span class="r">31 field innings · 11 bench</span></div>
+            <div class="mrow">Attendance <span class="r">100% of recorded sessions</span></div>
+            <span class="gbtn">🖶 Print summary (PDF)</span>
+          </div></div>
+          <div class="recapbox"><div class="t"><span>Family season recap</span><a href="#">👁 Preview</a></div><p>What Avery's connected parent or guardian reads once you close the season. Built from what you already record — nothing extra to write. <button class="fl" type="button" data-finding="F11" data-here="A tinted box with a blue border and a small-caps title, sitting between the coach's own records. It is a preview of what the FAMILY will read at season's end — an output, not a record — and it is the one thing on the tab drawn in a different visual language.">F11</button></p></div>
+          <div class="fold"><div class="sum">Attendance <span class="chev">﹀</span> <button class="fl" type="button" data-finding="F09" data-here="A tab is already a grouping. Inside it, Attendance, Awards and Dues are folded a second time — the coach picked the tab and still has to open the drawer. The whole tab with every fold open is about two desktop screens; it does not need hiding.">F09</button></div></div>
+          <div class="fold"><div class="sum">Awards <span class="chev">﹀</span></div></div>
+          <p class="hint">Not drawn: "Moments you logged" (dated bench notes) sits between Development and the recap when the coach can log moments; "Notes (private)" is an undated box on Details; observations and goal reviews are arriving inside Development this week. <button class="fl" type="button" data-finding="F20" data-here="Four places to write about one player, on three tabs, and no place to read them together.">F20</button></p>
+          <div class="fold"><div class="sum">Dues <span><span class="m">$-945.15 <button class="fl" type="button" data-finding="F12" data-here="The tile above says 'Paid'. This header says '$-945.15' — the same balance, printed raw through a formatter with no negative branch. Avery's family is over-credited; the product should say 'credit', once, the same way in both places.">F12</button></span><span class="chev">﹀</span></span></div></div>
+        </div>
+      </section>
+
+      <!-- ═══ 5 · PLAYER · DETAILS (landing, proposed) ═══ -->
+      <section class="screen" id="s5" hidden>
+        <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="next"><small>NEXT</small>Thu 6:30 p.m. game</div></div>
+        <div class="body narrow">
+          <span class="specimenlabel after">Proposed · desktop · Details is the landing tab (Maya Okafor, 1 of 12); inset: what an assistant sees</span>
+          <div class="pagehead"><a class="backlink" href="#s2">← Roster</a><div class="icon">👥</div><h1>Maya Okafor</h1><div class="actions"><button type="button" class="btn" aria-haspopup="listbox" aria-label="Switch player">Switch player <span aria-hidden="true">▾</span></button><span class="mk" data-k="new" data-note="A Switch player dropdown in the header's trailing slot (owner, round 2: a dropdown, not arrows — the combined control looked odd). It lists the roster in the coach's own order, active players only, with the current player marked; picking one opens that player on the same tab. The next player is two taps (open, pick), which is what the after-practice pass costs. Same shape as the team switcher at the top of the sidebar. On a phone it is a 44px icon-only button that opens the same list.">New</span> <button class="fl fix" type="button" data-finding="F14" data-here="A Switch player dropdown: the jump to any player and the after-practice pass (open, pick the next) without returning to the roster. The first record-to-record navigation in the portal; drawn here so the owner can judge it before it becomes a pattern.">fixes F14</button></div></div>
+          <div class="glance">
+            <div class="chips"><span class="jersey">#1</span><span class="chip">Ace · no cap</span><span class="mk" data-k="re" data-note="Reads the way the editor names it: 'Ace' (or 'P2'…), plus the innings cap when one is set. Never an empty rank again.">Restyled</span> <button class="fl fix" type="button" data-finding="F05" data-here="Same word on the card, the row and the form.">fixes F05</button><span class="chip">C / 1B</span><span class="chip">A-squad</span><span class="chip">Age 12</span><span class="chip danger door">⚠ Medical notes</span><span class="mk" data-k="re" data-note="The one warning chip becomes a door: it opens Family &amp; paperwork scrolled to Safety. Today it is inert and the notes it points at sit behind a closed fold.">Restyled</span> <button class="fl fix" type="button" data-finding="F15" data-here="The chip that warns is the chip that opens.">fixes F15</button></div>
+            <div class="tiles">
+              <a class="tile door" href="#dues6"><span class="k">Dues</span><span class="v">Paid</span><span class="f">$120.00 credit held</span></a>
+              <a class="tile door" href="#att6"><span class="k">Attendance</span><span class="v">92%</span><span class="f">24 recorded · 1 not recorded</span></a>
+              <a class="tile door" href="#s9"><span class="k">Family</span><span class="v">Dana Okafor</span><span class="f">(905) 555-0142</span></a>
+              <a class="tile door" href="#aw6"><span class="k">Awards</span><span class="v">2</span><span class="f">this season</span></a>
+            </div>
+            <div><span class="mk" data-k="re" data-note="Same four tiles, same figures, same shape — but every tile is a door. Dues, Attendance and Awards open This season at their section; Family opens Family &amp; paperwork at Guardian contact. The › in the corner is the only visible change. This is what lets Details be the landing tab without losing the mid-season answer: the card carries it on every tab.">Restyled</span> <button class="fl fix" type="button" data-finding="F10" data-here="The glance card becomes the page's index on every tab.">fixes F10</button> <button class="fl fix" type="button" data-finding="F12" data-here="One currency treatment for the page: a negative balance is a credit — 'credit held' on the tile foot, 'credit' on the section heading. Positive balances unchanged.">fixes F12</button></div>
+          </div>
+          <div class="ptabs"><span class="on olive">Details</span><span>This season</span><span>Skills &amp; Goals</span><span>Notes</span><span>Family &amp; paperwork</span><span class="mk" data-k="new" data-note="Five tabs, in this order, on the portal's shared tab bar (the one Money, Insights and Skills &amp; Goals use) with a real address per tab. Details lands first (owner, round 2). Skills &amp; Goals is named for the sidebar item it belongs to. Notes is new. On a phone the rail scrolls with short labels: Details · Season · Skills · Notes · Family.">New</span> <button class="fl fix" type="button" data-finding="F13" data-here="One tab component in the portal, and every tab has a URL — reload keeps it, Back undoes it, the roster's prompts and help can point at it.">fixes F13</button> <button class="fl fix" type="button" data-finding="F19" data-here="Development leaves This season for a tab of its own, named for the sidebar item.">fixes F19</button></div>
+          <div class="twoUpDoc">
+            <div>
+              <div class="sect"><h3>Player <span class="mk" data-k="re" data-note="The same form, no fold. Today the Details tab is one accordion titled 'Player' with nothing to fold against — the chevron was decoration. One field leaves: 'Notes (private)' moves to the Notes tab as the pinned 'About' note (Q8).">Restyled</span> <button class="fl fix" type="button" data-finding="F09" data-here="A tab that holds one section holds it flat.">fixes F09</button></h3>
+                <div class="formgrid">
+                  <div class="field"><label>First name</label><div class="input">Maya</div></div>
+                  <div class="field"><label>Last name</label><div class="input">Okafor</div></div>
+                  <div class="field"><label>Date of birth</label><div class="input">2014-03-08</div></div>
+                  <div class="field"><label>Jersey #</label><div class="input">1</div></div>
+                  <div class="field full"><label>Positions</label><div class="poschips"><span class="b">C</span><span class="b">1B</span><span>2B</span><span>3B</span><span>SS</span><span>LF</span><span>CF</span><span>RF</span></div><p class="hint" style="margin:6px 0 0">Best — tap to rank · Never — a hard block · Blank — fine anywhere they're not Never <span class="mk" data-k="un" data-note="The three-state position picker shipped 2026-09-12 and is untouched here.">Unchanged</span></p></div>
+                  <div class="field full"><label>Pitching</label><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span>☑ This player pitches</span><div class="input" style="min-width:120px">1 — Ace ▾</div><div class="input ph" style="min-width:110px">No limit</div></div></div>
+                  <div class="field full"><label>A-squad</label><span>★ Gold-medal starter</span></div>
+                  <div class="field"><label>Bats</label><div class="input">Right ▾</div></div>
+                  <div class="field"><label>Throws</label><div class="input">Right ▾</div></div>
+                  <div class="field"><label>Jersey size</label><div class="input">Youth L ▾</div></div>
+                </div>
+                <p class="hint" style="margin-top:12px">Private notes now live on the <a href="#s8">Notes</a> tab. <span class="mk" data-k="re" data-note="The undated 'Notes (private)' box was the fourth place a coach could write about a player. It becomes the pinned 'About' note at the top of the Notes tab — same field, same text, same gate; nothing is migrated or lost.">Restyled</span> <button class="fl fix" type="button" data-finding="F20" data-here="One fewer place to write; the same text, now beside everything else written about this player.">fixes F20</button></p>
+                <div class="savebar">● Unsaved changes <span class="btn ghost">Discard</span><span class="btn lime">Save changes</span> <span class="mk" data-k="un" data-note="The pinned save bar and the unsaved-changes guard are unchanged.">Unchanged</span></div>
+              </div>
+              <div class="danger"><div><b>Take Maya off the roster</b><i>They stop appearing in lineups, attendance, dues and team emails. Everything recorded is kept, and you can put them back any time.</i></div><span class="btn">Take off the roster</span><span class="mk" data-k="un" data-note="Removal stays a named action at the foot of Details, exactly as shipped 2026-08-27.">Unchanged</span></div>
+            </div>
+            <div>
+              <div class="sect" style="background:#FBF9F4"><h3>Player <span class="m">READ-ONLY · ASSISTANT COACH</span></h3><span class="mk" data-k="new" data-note="A coach without roster-write sees a record, not a form: label / value rows, '—' for empty, and one line saying which fields are kept to the head coach instead of blank inputs that read as 'nobody filled this in'. No save bar.">New</span> <button class="fl fix" type="button" data-finding="F16" data-here="Today this assistant sees the same editable inputs as the head coach, types, gets a save bar, and the server refuses. Redacted contact fields render as empty boxes.">fixes F16</button>
+                <dl class="ro"><dt>Name</dt><dd>Maya Okafor</dd><dt>Jersey #</dt><dd>1</dd><dt>Date of birth</dt><dd>Kept to the head coach</dd><dt>Positions</dt><dd>Best: C, 1B</dd><dt>Pitching</dt><dd>Ace · no innings cap</dd><dt>A-squad</dt><dd>★ Yes</dd><dt>Bats / throws</dt><dd>Right / Right</dd><dt>Jersey size</dt><dd>Youth L</dd></dl>
+                <p class="hint" style="margin-top:12px">Only the head coach can edit a player's record.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ 6 · PLAYER · THIS SEASON (proposed) ═══ -->
+      <section class="screen" id="s6" hidden>
+        <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="next"><small>NEXT</small>Thu 6:30 p.m. game</div></div>
+        <div class="body narrow">
+          <span class="specimenlabel after">Proposed · desktop · This season — the record tab: what happened, in figures</span>
+          <div class="pagehead"><a class="backlink" href="#s2">← Roster</a><div class="icon">👥</div><h1>Maya Okafor</h1><div class="actions"><button type="button" class="btn" aria-haspopup="listbox" aria-label="Switch player">Switch player <span aria-hidden="true">▾</span></button></div></div>
+          <div class="glance" style="padding:10px 16px"><div class="chips"><span class="jersey">#1</span><span class="chip">Ace · no cap</span><span class="chip">C / 1B</span><span class="chip">A-squad</span><span class="chip">Age 12</span><span class="chip danger door">⚠ Medical notes</span><span class="meta" style="margin-left:auto">tiles as on screen 5</span></div></div>
+          <div class="ptabs"><span>Details</span><span class="on olive">This season</span><span>Skills &amp; Goals</span><span>Notes</span><span>Family &amp; paperwork</span></div>
+
+          <div class="sect" id="att6"><h3>Attendance <span class="m">92% · 24 RECORDED</span></h3><span class="mk" data-k="re" data-note="The fold's contents, shown. Same five figures, same 'last sessions' list. The heading carries the rate as its meta so the section reads at a glance without opening anything — because there is nothing to open.">Restyled</span> <button class="fl fix" type="button" data-finding="F09" data-here="No fold. The tab was the grouping; each section is a card with a heading, and a section deep-link still scrolls-and-flashes to it.">fixes F09</button>
+            <div class="stats"><div class="stat"><b>92%</b><small>Attendance</small></div><div class="stat"><b>22</b><small>Present</small></div><div class="stat"><b>1</b><small>Late</small></div><div class="stat"><b>1</b><small>Absent</small></div><div class="stat"><b>24</b><small>Recorded</small></div></div>
+            <div class="lbl">Last 5 sessions</div>
+            <div class="mini">Practice · Tue Sep 9 <span>Present</span></div><div class="mini">Game vs Milton · Sat Sep 6 <span>Present</span></div><div class="mini">Practice · Thu Sep 4 <span>Late</span></div><div class="mini">Practice · Tue Sep 2 <span>Present</span></div><div class="mini">Game vs Oakville · Sat Aug 30 <span>Present</span></div>
+            <p class="hint" style="margin-top:8px">1 session not recorded — not counted in the rate. <span class="mk" data-k="new" data-note="Sessions marked 'unknown' were invisible. The denominator says so now.">New</span></p>
+          </div>
+
+          <div class="sect"><h3>Playing time <span class="m">31 FIELD · 11 BENCH</span></h3><span class="mk" data-k="re" data-note="This lived inside Development as a 'Context' line ('This season · 31 field innings · 11 bench'). It is a season fact, not a development judgement, so it moves here with its own section when Development becomes a tab (Q9). Same figures, same source — the games you ran the bench for. Vocabulary follows the playing-time ruling: innings and shares, never 'fair'.">Restyled</span> <button class="fl fix" type="button" data-finding="F19" data-here="The record tab keeps the season's facts; the judgement tab keeps the judgement.">fixes F19</button>
+            <div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><b>31</b><small>Field innings</small></div><div class="stat"><b>11</b><small>Bench innings</small></div><div class="stat"><b>74%</b><small>On the field</small></div><div class="stat"><b>9</b><small>Games</small></div></div>
+            <p class="hint" style="margin-top:8px">By position: C 20 · 1B 11 · <a href="#">Playing time report →</a></p>
+          </div>
+
+          <div class="sect" id="aw6"><h3>Awards <span class="m">2 THIS SEASON</span></h3><span class="mk" data-k="re" data-note="The fold's contents, shown, in the same shape as the other summaries: each award and how many times, no dates. The data the page already receives (owner, round 2 — count per type, plus a door to the log).">Restyled</span> <button class="fl fix" type="button" data-finding="F17" data-here="Award and count here; when each was given lives one door away in the awards log.">fixes F17</button>
+            <div class="mini">🏆 Player of the game <span>×1</span></div>
+            <div class="mini">🔥 Hustle award <span>×1</span></div>
+            <p class="hint" style="margin-top:8px"><a href="#">When each was given →</a> <span class="mk" data-k="new" data-note="One door to the awards log in Insights, opened at this player. The dates and games live there already; this page does not need to carry them.">New</span></p>
+          </div>
+
+          <div class="sect" id="dues6"><h3>Dues <span class="m">$120.00 CREDIT</span></h3><span class="mk" data-k="re" data-note="The ladder in the ladder's order, flat. The heading meta says 'credit' for a negative balance instead of '$-120.00'. 'Manage dues' renders only when a schedule exists.">Restyled</span>
+            <div class="ladder"><div class="stat"><b>$1,200.00</b><small>Dues</small></div><div class="stat"><b>$320.00</b><small>Fundraising</small></div><div class="stat"><b>$1,000.00</b><small>Paid</small></div><div class="stat good"><b>$120.00 credit</b><small>Balance</small></div></div>
+            <p class="hint" style="margin-top:8px">4/4 installments paid · <a href="#">Manage dues →</a></p>
+          </div>
+
+          <p class="hint">"Moments you logged" is no longer a section here — game-day moments read in the <a href="#s8">Notes</a> timeline with everything else written about Maya. <span class="mk" data-k="re" data-note="The moments are stored and captured exactly as today (one line from the bench, tagged to a player). Only where they are READ changes: the Notes tab, dated, beside observations and reviews.">Restyled</span> <button class="fl fix" type="button" data-finding="F20" data-here="One timeline instead of a section per source.">fixes F20</button></p>
+          <div class="recaprow">👁 <a href="#">Preview what Maya's family will read at season's end</a> <span class="mk" data-k="re" data-note="The family season recap becomes one quiet row at the foot of the record tab — same preview, same fetch-on-open, same gate. The tinted box, the blue border and the small-caps title go. It sits last because it is what the season produces, not what the coach records.">Restyled</span> <button class="fl fix" type="button" data-finding="F11" data-here="An output preview sits after the records it is built from, in the portal's quiet-door voice.">fixes F11</button></div>
+        </div>
+      </section>
+
+      <!-- ═══ 7 · PLAYER · SKILLS & GOALS (proposed) ═══ -->
+      <section class="screen" id="s7" hidden>
+        <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="next"><small>NEXT</small>Thu 6:30 p.m. game</div></div>
+        <div class="body narrow">
+          <span class="specimenlabel after">Proposed · desktop · Skills &amp; Goals — the judgement tab, with room to grow</span>
+          <div class="pagehead"><a class="backlink" href="#s2">← Roster</a><div class="icon">👥</div><h1>Maya Okafor</h1><div class="actions"><button type="button" class="btn" aria-haspopup="listbox" aria-label="Switch player">Switch player <span aria-hidden="true">▾</span></button></div></div>
+          <div class="glance" style="padding:10px 16px"><div class="chips"><span class="jersey">#1</span><span class="chip">Ace · no cap</span><span class="chip">C / 1B</span><span class="chip">A-squad</span><span class="chip">Age 12</span><span class="chip danger door">⚠ Medical notes</span><span class="meta" style="margin-left:auto">tiles as on screen 5</span></div></div>
+          <div class="ptabs"><span>Details</span><span>This season</span><span class="on olive">Skills &amp; Goals</span><span>Notes</span><span>Family &amp; paperwork</span></div>
+
+          <div class="sect">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><span class="seg"><span class="on">Goals</span><span>Results</span></span><span class="mk" data-k="new" data-note="The view switch Phase 2 of the development lifecycle is building this week — drawn here with the tab's full width instead of a card's. Phase 2 plans four views (Goals · Results · Observations · Previous seasons). This project draws TWO: observations read under the goal or skill they belong to and in the Notes timeline (Q7), and Previous seasons is out of this project's scope (owner, round 2) — whatever Phase 2 ships for the archive is untouched here.">New</span> <button class="fl fix" type="button" data-finding="F19" data-here="The section that was outgrowing a card gets a tab: the view switch, the goal cards and the results grid all have the width they need.">fixes F19</button><span style="margin-left:auto"><span class="gbtn" style="margin:0">⚙ Metrics</span></span></div>
+            <div class="lbl">Focus areas</div>
+            <div class="sect" style="margin-bottom:8px;padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><b>First-step quickness off the bag</b><span class="mrow" style="margin:0;padding:3px 8px;background:transparent;border:0"><span class="st">WORKING ON IT</span></span></div>
+              <p class="hint" style="margin:6px 0 8px">Success looks like: leads off on the pitcher's first move without a cue · Review on Sep 30 <span class="mk" data-k="new" data-note="Phase 2's optional 'What would success look like?' and 'Review on' fields, drawn where they land. Not this project's build.">New</span></p>
+              <div class="mini" style="font-size:13px;justify-content:flex-start;gap:6px">Sep 6 · <span class="pchip" style="margin:0 6px">Skill</span> Sets feet before throwing — <i>with a reminder</i> · "Used the routine after one cue." <span>Coach Dana</span></div>
+              <div class="mini" style="font-size:13px;justify-content:flex-start;gap:6px">Aug 30 · <span class="pchip" style="margin:0 6px">Review</span> Working on it — "Better on the second and third reads." <span>Coach Dana</span></div>
+              <p class="hint" style="margin:8px 0 0"><span class="mk" data-k="new" data-note="A goal's history — its observations and reviews — reads under the goal, newest first, instead of in a separate Observations view. The same entries appear in the Notes timeline in date order. Written once, read twice (Q7).">New</span> <a href="#">Record an observation</a> · <a href="#">Review this goal</a></p>
+            </div>
+            <div class="sect" style="margin-bottom:8px;padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:center"><b>Frame the low pitch</b><span class="mrow" style="margin:0;padding:3px 8px;background:transparent;border:0"><span class="st" style="background:#E3F3D4;border-color:#b9d88c;color:#34662A">ACHIEVED</span></span></div><p class="hint" style="margin:6px 0 0">Achieved Aug 16 · "Held three low strikes in a row vs Burlington."</p></div>
+            <span class="gbtn">+ Add focus area</span>
+            <div class="lbl">Measurables</div>
+            <div class="mrow">60-yd sprint <span class="r">8.28 seconds <svg width="44" height="14" aria-hidden="true"><polyline points="2,3 14,6 26,5 42,11" fill="none" stroke="#57651E" stroke-width="2"/></svg> best of 3 · 26 Aug</span></div>
+            <div class="mrow">Throw speed <span class="r">84 km/h <i>trend shows after a second entry</i> 3 Jun</span></div>
+            <span class="gbtn">+ Log a measurable</span>
+            <p class="hint" style="margin-top:6px">Tryout snapshot, the returning-player prompt and the carry-forward offer keep their places above the goals. <span class="mk" data-k="un" data-note="Everything inside Development today — the continuity rows, the carry-forward banner, the tryout snapshot, focus areas, measurables and the print button — moves with it, unchanged. Only 'Context' leaves (playing time to This season; attendance already has its section). The previous-seasons archive is out of this project's scope and is not drawn.">Unchanged</span></p>
+            <span class="gbtn">🖶 Print summary (PDF)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ 8 · PLAYER · NOTES (proposed, new) ═══ -->
+      <section class="screen" id="s8" hidden>
+        <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="next"><small>NEXT</small>Thu 6:30 p.m. game</div></div>
+        <div class="body narrow">
+          <span class="specimenlabel after">Proposed · desktop · Notes — one timeline of everything written about Maya, written once wherever it was written</span>
+          <div class="pagehead"><a class="backlink" href="#s2">← Roster</a><div class="icon">👥</div><h1>Maya Okafor</h1><div class="actions"><button type="button" class="btn" aria-haspopup="listbox" aria-label="Switch player">Switch player <span aria-hidden="true">▾</span></button></div></div>
+          <div class="glance" style="padding:10px 16px"><div class="chips"><span class="jersey">#1</span><span class="chip">Ace · no cap</span><span class="chip">C / 1B</span><span class="chip">A-squad</span><span class="chip">Age 12</span><span class="chip danger door">⚠ Medical notes</span><span class="meta" style="margin-left:auto">tiles as on screen 5</span></div></div>
+          <div class="ptabs"><span>Details</span><span>This season</span><span>Skills &amp; Goals</span><span class="on olive">Notes</span><span>Family &amp; paperwork</span></div>
+
+          <div class="sect" style="background:#FBF9F4"><h3>About Maya <span class="m">PINNED · EDIT</span></h3><span class="mk" data-k="re" data-note="The 'Notes (private)' box from Details, moved here and pinned at the top. One undated standing note per player — the things that are always true ('lefty; mum prefers text; gets quiet after an error'). Same field, same 1,000-character limit, same gate. Nothing migrates (Q8).">Restyled</span>
+            <p style="margin:6px 0 0">Catcher first, 1B second. Gets quiet after an error — a word on the walk back works better than a talk in the dugout. Mum (Dana) prefers text over email.</p>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 8px"><span class="gbtn" style="margin:0">+ Add a note</span><span class="mk" data-k="new" data-note="The one general door (owner, round 2: allowed). A sheet with a date (today), the words, and an optional 'about' link to a goal or a game. Gated exactly like goals: writes need the Development grant plus notes access; reads ride notes access; families never see any of it and the recap never draws from it. No tags, no attachments, no categories beyond the source.">New</span> <button class="fl fix" type="button" data-finding="F20" data-here="One place to write the note that fits nothing else; every other note is written where it belongs and read here.">fixes F20</button><span class="hint" style="margin:0 0 0 auto">Newest first · grouped by month · <span class="mk" data-k="new" data-note="No filter, no search in the first build (Q10). A season is a few dozen entries; the source chip on each entry does the sorting a reader's eye needs. A filter row is one afternoon later if a coach asks.">New</span></span></div>
+
+          <div class="lbl">September</div>
+          <div class="sect" style="padding:10px 14px">
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Sep 9</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px">Note</span>Asked to try second base at Thursday's practice — worth a look given the SS depth. <span class="mk" data-k="new" data-note="A general note: the only kind written on this tab.">New</span></span><span>Coach Dana</span></div>
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Sep 6</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px;background:var(--p-live-soft);border-color:rgba(176,58,34,.35);color:var(--p-live)">Game · vs Milton</span>Turned two from the 4-6-3 in the fifth — first time all year. <span class="mk" data-k="re" data-note="A game-day moment, exactly as typed at the bench. Read here instead of in a 'Moments you logged' section on This season. The chip names the game and opens it on the Schedule.">Restyled</span></span><span>Coach Marc</span></div>
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Sep 6</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px">Skill · Sets feet before throwing</span><i>With a reminder</i> — "Used the routine after one cue during the partner drill." <span class="mk" data-k="new" data-note="A Phase 2 skill observation, read here in date order. The chip names the skill and opens it on Skills &amp; Goals. Written there, never here.">New</span></span><span>Coach Dana</span></div>
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Sep 2</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px">Goal · First-step quickness</span>Working on it — "Better on the second and third reads." <span class="mk" data-k="new" data-note="A Phase 2 goal review: the decision and the note, dated. The chip opens the goal.">New</span></span><span>Coach Dana</span></div>
+          </div>
+          <div class="lbl">August</div>
+          <div class="sect" style="padding:10px 14px">
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Aug 30</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px;background:var(--p-live-soft);border-color:rgba(176,58,34,.35);color:var(--p-live)">Game · vs Oakville</span>Called the pickoff herself.</span><span>Coach Marc</span></div>
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Aug 16</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px">Goal · Frame the low pitch</span>Achieved — "Held three low strikes in a row vs Burlington."</span><span>Coach Dana</span></div>
+            <div class="mini" style="align-items:flex-start;gap:12px"><span style="min-width:52px;color:var(--p-dim);font:600 12px var(--f-data)">Aug 12</span><span style="flex:1;color:var(--p-ink);font-size:14px"><span class="pchip" style="margin-right:8px">Note</span>Talked with Dana after practice about the glasses — new pair ordered, fine to catch without them for now.</span><span>Coach Dana</span></div>
+          </div>
+          <p class="hint">Who can read this: coaches with notes access, the same as goals. Families never see the Notes tab, and the season recap does not draw from it. <span class="mk" data-k="new" data-note="Said on the tab itself, once, because a dated free-text log about a minor is the surface most likely to drift into something the product's privacy posture says it must not be. The help article says the same in more words.">New</span></p>
+        </div>
+      </section>
+
+      <!-- ═══ 9 · PLAYER · FAMILY & PAPERWORK (proposed) ═══ -->
+      <section class="screen" id="s9" hidden>
+        <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div><div class="next"><small>NEXT</small>Thu 6:30 p.m. game</div></div>
+        <div class="body narrow">
+          <span class="specimenlabel after">Proposed · desktop · Family &amp; paperwork, flat</span>
+          <div class="pagehead"><a class="backlink" href="#s2">← Roster</a><div class="icon">👥</div><h1>Maya Okafor</h1><div class="actions"><button type="button" class="btn" aria-haspopup="listbox" aria-label="Switch player">Switch player <span aria-hidden="true">▾</span></button></div></div>
+          <div class="glance" style="padding:10px 16px"><div class="chips"><span class="jersey">#1</span><span class="chip">Ace · no cap</span><span class="chip">C / 1B</span><span class="chip">A-squad</span><span class="chip">Age 12</span><span class="chip danger door">⚠ Medical notes</span><span class="meta" style="margin-left:auto">tiles as on screen 5</span></div></div>
+          <div class="ptabs"><span>Details</span><span>This season</span><span>Skills &amp; Goals</span><span>Notes</span><span class="on olive">Family &amp; paperwork</span></div>
+          <div class="sect"><h3>Guardian contact <span class="mk" data-k="re" data-note="Same fields, same helper line, same Email / Call links — the fold becomes a section. This is where the roster's '+ Add a contact' and the Family tile now land, scrolled and flashed.">Restyled</span></h3>
+            <p class="note">The contact on this player's roster record — where dues reminders and team emails go.</p>
+            <div class="formgrid"><div class="field"><label>First name</label><div class="input">Dana</div></div><div class="field"><label>Last name</label><div class="input">Okafor</div></div><div class="field"><label>Email</label><div class="input">dana.okafor@example.ca</div></div><div class="field"><label>Phone</label><div class="input">(905) 555-0142</div></div></div>
+            <p class="hint" style="margin-top:10px"><a href="#">Email guardian</a> · <a href="#">Call or text</a></p>
+          </div>
+          <div class="sect" id="safety9"><h3>Safety</h3><span class="mk" data-k="re" data-note="Open, not folded — this is where the ⚠ Medical notes chip lands. Allergies and the emergency contact are the two things a coach opens this tab for in a hurry.">Restyled</span> <button class="fl fix" type="button" data-finding="F15" data-here="The medical notes are on screen the moment the tab opens; the chip on the glance card jumps here.">fixes F15</button>
+            <div class="formgrid"><div class="field full"><label>Allergies / medical notes</label><div class="input" style="min-height:60px">Peanut allergy — EpiPen in the team bag, second in Dana's car.</div></div><div class="field"><label>Emergency contact name</label><div class="input">Dana Okafor</div></div><div class="field"><label>Emergency contact phone</label><div class="input">(905) 555-0142</div></div></div>
+          </div>
+          <div class="sect"><h3>Documents <span class="m">2 ON FILE</span></h3><span class="mk" data-k="re" data-note="Fold → section. Upload stays right-aligned; the table is unchanged.">Restyled</span>
+            <div class="mini">Waiver · 2026-signed.pdf <span>Waiver · 212 KB · Apr 14</span></div><div class="mini">Medical consent.pdf <span>Medical consent · 96 KB · Apr 14</span></div>
+            <p class="hint" style="margin-top:8px"><span class="gbtn" style="margin:0">⇪ Upload</span></p>
+          </div>
+          <p class="hint">Guardians (the invite door) appears here between Safety and Documents when the guardian tier is switched on — unchanged from today, and hidden on this build because the tier is off.</p>
+        </div>
+      </section>
+
+      <!-- ═══ 10 · PLAYER ON A PHONE ═══ -->
+      <section class="screen" id="s10" hidden>
+        <div class="twoup">
+          <div class="col">
+            <span class="specimenlabel today">Today · 390px · This season</span>
+            <div class="pfr">
+              <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div></div>
+              <div class="body">
+                <div class="pagehead"><a class="backlink" href="#">←</a><div class="icon">👥</div><h1>Maya Okafor</h1></div>
+                <div class="glance"><div class="chips"><span class="jersey">#1</span><span class="chip">Pitcher · rank 1</span><span class="chip">C / 1B</span></div>
+                  <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><span class="k">Dues</span><span class="v">Paid</span><span class="f">4/4 installments paid</span></div><div class="tile"><span class="k">Attendance</span><span class="v">92%</span><span class="f">24 recorded</span></div><div class="tile"><span class="k">Family</span><span class="v">Dana Okafor</span><span class="f">(905) 555-0142</span></div><div class="tile"><span class="k">Awards</span><span class="v">2</span><span class="f">this season</span></div></div></div>
+                <div class="ptabs"><span class="on">Season</span><span>Details</span><span>Family</span></div>
+                <div class="fold"><div class="sum">Development <span class="chev">︿</span></div><div class="fb"><div class="lbl">Focus areas</div><div class="mrow" style="font-size:13px">First-step quickness… <span class="r"><span class="st">WORKING ON IT</span></span></div><div class="lbl">Measurables</div><div class="mrow" style="font-size:13px">60-yd sprint <span class="r">8.28 s</span></div><span class="gbtn">+ Log a measurable</span></div></div>
+                <div class="recapbox"><div class="t"><span>Family season recap</span><a href="#">👁 Preview</a></div><p style="font-size:13px">What Maya's connected parent or guardian reads once you close the season. <button class="fl" type="button" data-finding="F11" data-here="On a phone the tinted box is a full screen-width interruption between Development and the three closed folds.">F11</button></p></div>
+                <div class="fold"><div class="sum">Attendance <span class="chev">﹀</span> <button class="fl" type="button" data-finding="F09" data-here="Three closed drawers under a tab the coach already chose.">F09</button></div></div>
+                <div class="fold"><div class="sum">Awards <span class="chev">﹀</span></div></div>
+                <div class="fold"><div class="sum">Dues <span><span class="m">$-120.00</span> <span class="chev">﹀</span></span></div></div>
+              </div>
+              <div class="pnav"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Chat</span><span class="on"><i></i>Roster</span><span><i></i>More</span></div>
+            </div>
+          </div>
+          <div class="col">
+            <span class="specimenlabel after">Proposed · 390px · the Notes tab, where a note gets typed at the field</span>
+            <div class="pfr">
+              <div class="masthead"><div><div class="tname">Riverdale Ridge 12U</div><div class="tmeta">Riverdale Ridge · 2026 Season · <b>7-3-1</b></div></div></div>
+              <div class="body">
+                <div class="pagehead"><a class="backlink" href="#">←</a><div class="icon">👥</div><h1>Maya Okafor</h1><div class="actions"><button type="button" class="btn" aria-haspopup="listbox" aria-label="Switch player" style="width:44px;height:44px;padding:0;justify-content:center">👥▾</button><span class="mk" data-k="new" data-note="On a phone the Switch player dropdown is a 44px icon-only button (house rule: words → symbols on a phone) opening the same roster-ordered list. The Roster tab on the bottom bar remains the other way to another player.">New</span> <button class="fl fix" type="button" data-finding="F14" data-here="One thumb-sized button in the title row — the header's own slot, where a phone puts symbols — opening the roster-ordered list.">fixes F14</button></div></div>
+                <div class="glance"><div class="chips"><span class="jersey">#1</span><span class="chip">Ace · no cap</span><span class="chip">C / 1B</span><span class="chip danger door">⚠ Medical</span></div>
+                  <div class="tiles" style="grid-template-columns:1fr 1fr"><a class="tile door" href="#"><span class="k">Dues</span><span class="v">Paid</span><span class="f">$120.00 credit held</span></a><a class="tile door" href="#"><span class="k">Attendance</span><span class="v">92%</span><span class="f">24 recorded</span></a><a class="tile door" href="#"><span class="k">Family</span><span class="v">Dana Okafor</span><span class="f">(905) 555-0142</span></a><a class="tile door" href="#"><span class="k">Awards</span><span class="v">2</span><span class="f">this season</span></a></div>
+                  <span class="mk" data-k="re" data-note="Tiles are doors here too — on a phone they are the fastest way down a long tab.">Restyled</span></div>
+                <div class="ptabs" style="overflow-x:auto;white-space:nowrap"><span>Details</span><span>Season</span><span>Skills</span><span class="on olive">Notes</span><span>Family</span><span class="mk" data-k="new" data-note="Five short labels on the shared tab bar, which scrolls sideways with edge arrows at this width — the same behaviour the Money hub's seven tabs have on a phone.">New</span></div>
+                <div class="sect" style="background:#FBF9F4;padding:10px 12px"><h3 style="font-size:14px">About Maya <span class="m">PINNED</span></h3><p style="margin:0;font-size:13px">Catcher first, 1B second. Gets quiet after an error — a word on the walk back works better than a talk in the dugout.</p></div>
+                <span class="gbtn" style="min-height:44px;width:100%;justify-content:center">+ Add a note</span>
+                <div class="lbl">September</div>
+                <div class="sect" style="padding:8px 12px">
+                  <div class="mini" style="flex-direction:column;align-items:flex-start;gap:3px;font-size:13px"><span style="font:600 11px var(--f-data);color:var(--p-dim)">Sep 9 · Coach Dana</span><span style="color:var(--p-ink)"><span class="pchip" style="margin-right:6px">Note</span>Asked to try second base Thursday — worth a look given the SS depth.</span></div>
+                  <div class="mini" style="flex-direction:column;align-items:flex-start;gap:3px;font-size:13px"><span style="font:600 11px var(--f-data);color:var(--p-dim)">Sep 6 · Coach Marc</span><span style="color:var(--p-ink)"><span class="pchip" style="margin-right:6px;background:var(--p-live-soft);border-color:rgba(176,58,34,.35);color:var(--p-live)">Game · vs Milton</span>Turned two from the 4-6-3 in the fifth — first time all year.</span></div>
+                  <div class="mini" style="flex-direction:column;align-items:flex-start;gap:3px;font-size:13px"><span style="font:600 11px var(--f-data);color:var(--p-dim)">Sep 6 · Coach Dana</span><span style="color:var(--p-ink)"><span class="pchip" style="margin-right:6px">Skill · Sets feet</span><i>With a reminder</i> — "Used the routine after one cue."</span></div>
+                  <div class="mini" style="flex-direction:column;align-items:flex-start;gap:3px;font-size:13px"><span style="font:600 11px var(--f-data);color:var(--p-dim)">Sep 2 · Coach Dana</span><span style="color:var(--p-ink)"><span class="pchip" style="margin-right:6px">Goal · First-step</span>Working on it — "Better on the second and third reads."</span></div>
+                </div>
+                <p class="hint" style="font-size:12px">Coaches with notes access read this. Families never do.</p>
+              </div>
+              <div class="pnav"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Chat</span><span class="on"><i></i>Roster</span><span><i></i>More</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- ═══════════════ PM BRIEF ═══════════════ -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Product-manager brief</div>
+  <h1>Roster + player page review</h1>
+  <p class="sub">The August rework got the shape right. This pass closes the seams it left — no new data, no migration, two screens.</p>
+
+  <h2>What changes for the coach</h2>
+  <p><strong>On the roster.</strong> The list keeps its five columns and its toolbar. A player's name is underlined quietly so it reads as the door it already is. Jersey numbers take the same data face the rest of the portal uses for numbers. A pitcher's row says <em>Ace</em> or <em>P2</em> in the Positions column instead of "Add a position". The two "Add a…" prompts lose their dashed underline, so a brand-new roster reads as a list of names with quiet gaps rather than a grid of dashes — and tapping one lands on the right tab of the player's page, scrolled to the right field. On a phone the whole card opens the player, and a card whose family has a phone number on file carries a thumb-sized Call button in its corner.</p>
+  <p><strong>On a player's page.</strong> The header gains previous / next arrows, in the coach's own roster order, that keep whatever tab is open — so logging a note for twelve players is twelve taps of the arrow, never a trip back to the roster. The four glance tiles become doors: Attendance jumps to attendance, Dues to dues, Awards to awards, Family to the guardian contact. The red "Medical notes" chip jumps to Safety. <strong>Five tabs replace three (round 2, owner):</strong> Details lands first, then This season (the record: attendance, playing time, awards, dues), then Skills &amp; Goals (the judgement, named for the sidebar item it belongs to, with the room its growing content needs), then Notes, then Family &amp; paperwork. Everything inside every tab is <em>flat</em> — the drawers are gone, each section is a card with a heading, and the tab a coach opened shows what they opened it for. The family season recap moves from a tinted box in the middle of the season to one quiet line at the foot of the record tab. A family that has over-paid reads "credit" in both places the balance appears, instead of "Paid" above and "$-945.15" below. An assistant coach who cannot edit sees a clean read-only record instead of editable boxes that refuse to save.</p>
+  <p><strong>Notes.</strong> A coach can already write about a player in four places — a line from the bench on game day, a skill observation, a goal review, and an undated private box on Details — and nowhere to read them together. The Notes tab is that place: one timeline, newest first, grouped by month, every entry marked with where it came from (Game · vs Milton, Skill · Sets feet before throwing, Goal · First-step quickness, Note) and who wrote it, linking back to its source. Nothing is written twice. Two things move to make room: the private box becomes the pinned "About" note at the top of Notes, and "Moments you logged" stops being its own section. One general "Add a note" door covers what fits nothing else, gated exactly like goals; families never see the tab and the season recap never reads from it.</p>
+
+  <h2>Why it matters</h2>
+  <p>The roster is the page everything else reads from, and the player page is where a coach answers "how is this kid doing" and "who do I call" — often standing on a field with a phone. Today both pages hide their answers one step further away than they need to: a name that doesn't look like a door, a contact that isn't on the card, an attendance figure shown three times with no way to reach it, a form folded inside a tab that holds nothing else. None of it is broken; all of it costs a tap or a moment of doubt, dozens of times a week.</p>
+
+  <h2>Customer impact</h2>
+  <p>Every coach with portal access, on every team, every time they open the roster or a player. Assistants without contact access stop seeing blank editable boxes. Families are not affected — the recap they receive is unchanged; only the coach's preview of it moves.</p>
+
+  <h2>What is deliberately not changing</h2>
+  <ul>
+    <li><strong>No dues or attendance on the roster list.</strong> The reason from August still holds: a coach opens this list beside a parent. Both re-examined on merit, both left off — recorded as open questions rather than rulings.</li>
+    <li><strong>No filters, counts or sort.</strong> Twelve rows on one screen.</li>
+    <li><strong>The three tabs, the glance card, the named removal at the foot of Details, the depth chart, the off-roster shelf</strong> — untouched.</li>
+    <li><strong>Reordering stays desktop-only.</strong></li>
+  </ul>
+
+  <h2>Trade-offs</h2>
+  <ul>
+    <li>Flattening the tabs makes "This season" longer for a player with many measurables. The tiles are the index, and the whole tab fully open measures about two desktop screens today.</li>
+    <li>The player stepper is the portal's first record-to-record navigation. It is drawn so it can be judged before it becomes a pattern; if it earns its place here it should be offered to the tryout board and the staff sheet later, not copied silently.</li>
+    <li>Five tabs is more rail than three. It is within what the shared tab bar already handles (the Money hub has seven) and each tab now answers one question: who is this · what happened · how are they developing · what have we noticed · who do I call.</li>
+    <li>The Notes timeline shows observations and reviews that also appear under their goal on Skills &amp; Goals. That is a read in two places, never a write in two places. The trims (Q7–Q10) exist to keep it that way.</li>
+  </ul>
+
+  <h2>Priority</h2>
+  <p>After the depth-chart and development work in flight. It touches no data model, so it can slot in without a migration window. The two type-and-tab fixes (F02, F13) are the ones the layout gate and the recipe guard already want.</p>
+
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach can call a parent from the phone roster in one tap, and open the player in one tap.</li>
+    <li>A coach can log a measurable for every player without returning to the roster.</li>
+    <li>"Add a contact" on the roster lands on Guardian contact; reloading a player page keeps the tab.</li>
+    <li>No cell on the roster is off the type ladder; no accordion remains inside a player-page tab.</li>
+    <li>One balance, one reading: no page shows "Paid" and a negative dollar figure for the same player.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ FULL PLAN ═══════════════ -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Full assessment</div>
+  <h1>Roster + player page — evaluation and plan</h1>
+  <div class="note"><strong>How this was evaluated.</strong> Three read-only code maps (the roster page, the player page, and every list-to-detail table in the app) plus a browser pass against the running dev server at desktop and phone width, signed in as the UAT coach: full-page screenshots of the roster and every player-page tab, the measured type, ink and padding of every table cell, and the open/closed state of every fold. Findings cite what the code does, not what a plan says it does. The predecessor plan's reasons were re-tested on merit (§2); nothing is kept "because it was ruled".</div>
+
+  <h2>1. The verdict</h2>
+  <p>The August rework got the <em>shape</em> right — glance card, three tabs, removal named and moved, status column gone — and the instinct behind it ("less on this page") still holds. What it left behind is a set of seams. On the roster: two right-hand columns that are dashed prompts on every row of a new team; three cells that mint their own type size; a phone card that lost the contact line the plan promised; a pitcher who reads "Add a position" forever. On the player page: three tabs that are right, with everything inside them folded a second time; a Details tab that is one accordion with nothing to fold against; four glance tiles that name Attendance, Dues, Awards and Family and open nothing; a family recap filed among the records in a different visual language; tabs with no address, so the roster's prompts land on the wrong tab; and no way to step from one player to the next. None of this needs new data. Every fix reads fields the pages already fetch.</p>
+
+  <h2>2. The predecessor's reasons, re-tested</h2>
+  <div class="tablewrap"><table><tr><th>August reason</th><th>Still true?</th><th>Here</th></tr>
+  <tr><td>No Dues column on the roster — "a page a coach opens standing beside a parent"</td><td><strong>Yes.</strong> Another family's balance should not be readable over a shoulder.</td><td>Money stays off the list. The player page's Dues tile and section stay — one family's own record.</td></tr>
+  <tr><td>No Attendance column — "a second door sent coaches back to a page they had never visited"</td><td><strong>Partly.</strong> That was a back-link bug, not an argument against the figure. The standard's own test still says no: a column earns its place if a coach scans the list <em>for</em> it, and attendance is read per player.</td><td>Not added. Open question Q2.</td></tr>
+  <tr><td>No filter chips or counts</td><td><strong>Yes.</strong></td><td>Nothing added.</td></tr>
+  <tr><td>Three tabs on the player page</td><td><strong>Yes.</strong> The three jobs are the right split.</td><td>Kept. What changes is inside them.</td></tr>
+  <tr><td>Quiet in-row prompts, dim not amber</td><td>Yes for the colour; <strong>no</strong> for the dashed underline — one is quiet, twenty-four are a texture.</td><td>Restyled (F03).</td></tr>
+  </table></div>
+
+  <h2>3. Roster list — findings</h2>
+  <h3 class="fh">F01 — The name is the door, and nothing says so</h3>
+  <p><strong>Today:</strong> the name is bold body text with no underline and no colour shift; the row has no hover and an arrow cursor. The table standard is explicit — <em>a row that navigates has the name as the link, never a row-level click</em> — so the roster is compliant, and the row-tappable rows elsewhere in the portal (Player Dues, Payables, Fundraisers) are rows that <em>expand or open a room in place</em>, a different affordance by the 2026-08-15 table. But compliant is not legible: this is the one list where every row is a door.</p>
+  <p><strong>Proposal:</strong> keep name-as-link and an inert row (the Family cell holds tap-to-email and tap-to-call links a row click would swallow). The name takes the portal's quiet-link treatment at rest — a 1px underline in the line-strong token, solid ink on hover. No chevron column. The standard's K-08 ("every list table's last column is one chevron") has no register row excusing the roster, and the register's preamble says a difference is registered or it is a bug — so this pass writes the register row: <em>Roster — no action column; the name is the door; the trailing cell is Family, whose contact links a chevron would compete with.</em> Same shape as club-admin Families. (Q1.)</p>
+
+  <h3 class="fh">F02 — Three cells mint their own type size and ink</h3>
+  <p><strong>Today:</strong> the #, Positions and Family cells carry an inline 13.6px size, and # an inline ink outside the three named tiers. The ladder has no 13.6. This is the defect the table standard retired in September, in an inline style the CSS guard cannot see.</p>
+  <p><strong>Proposal:</strong> cells on the body step; the jersey number in the data face, tabular, secondary ink — the treatment the off-roster shelf and the depth chart already use. The three inline declarations go on the recipe guard's known-debt list until removed.</p>
+
+  <h3 class="fh">F03 — On a new team, half the table is dashed prompts</h3>
+  <p><strong>Today:</strong> Positions and Family both fall back to a dashed-underlined "Add a position" / "Add a contact"; on a fresh twelve-player roster that is twenty-four dashed underlines across two thirds of the table. The reason for in-row prompts holds; the dashed treatment is what turns them into texture.</p>
+  <p><strong>Proposal:</strong> tertiary-ink text with a leading "+" and no underline at rest (underline on hover and focus, like every other quiet door). Same words, same place, same link.</p>
+
+  <h3 class="fh">F04 — A pitcher reads "Add a position" forever</h3>
+  <p><strong>Today:</strong> the Positions cell shows the top-two <em>field</em> Best positions. The mound is deliberately not in the position picker, so a player whose job is pitching has no field positions and the cell prompts "Add a position" — on the team's ace.</p>
+  <p><strong>Proposal:</strong> the Positions cell leads with the pitching chip when the player pitches — "Ace" for rank 1, "P2"…"P5" otherwise, the editor's own wording — then the field positions; the prompt only when there is neither.</p>
+
+  <h3 class="fh">F05 — A bare "P", and a pitcher marker in the wrong column</h3>
+  <p><strong>Today:</strong> the name cell carries ★, the pitcher chip and ✚. On a pitcher whose rank is unset the chip renders a bare "P" and its accessible name reads "Pitcher, rank"; the glance card has the same hole ("Pitcher · rank "). The depth chart already defends the same field with a fallback; the roster and the card do not.</p>
+  <p><strong>Proposal:</strong> a rank fallback everywhere the profile is read; the pitcher marker moves to the Positions cell (F04); ★ and ✚ stay beside the name because they are about the player, not a position. The card chip reads "Ace · no cap" or "P2 · 4 IP cap" — the whole stored profile, in the form's words.</p>
+
+  <h3 class="fh">F06 — The phone card has no way to reach a parent</h3>
+  <p><strong>Today:</strong> at phone width the card is one line — name, flags, number — and the Family cell is hidden outright. The August plan says "guardian keeps its own line"; the stylesheet hides it. A coach at the field who needs a parent's number opens the player, switches tabs, finds the Call link: three taps on the one device where a phone number is most useful. The register already names half of this: row F-23 says the card's 19–22px name link is below the tap floor and offers two exits — raise the link, or make the card the door.</p>
+  <p><strong>Proposal:</strong> (a) the whole card is the link, the way practice-plan and scouting rows already are; (b) a second card line — positions chip on the left, and a corner-pinned 44px Call button on the right when a phone is on file (the standard's "icon-only action is corner-pinned" rule; gated exactly like the desktop cell). No email on the card. Rows with neither stay one line.</p>
+
+  <h3 class="fh">F07 — "Add a contact" and "Add a position" open the wrong tab</h3>
+  <p><strong>Today:</strong> both prompts link to the bare player URL, which always opens This season. The contact lives on Family &amp; paperwork; positions on Details. Cause: the tabs have no address (F13). The help article's deep links and the Family tile's own prose ("Add one on Family &amp; paperwork") have the same gap.</p>
+  <p><strong>Proposal:</strong> once tabs are addressable, the prompts link to the tab and section they name.</p>
+
+  <h3 class="fh">F08 — Small type-and-touch debt</h3>
+  <ul><li>The drag grip is ~23px with no floor and still renders in the 641–768 touch band (register F-21). Give it the floor.</li><li>The heading rule is the plain line token; the standard says line-strong under a heading row.</li><li>The help article "How to build your roster" still says <em>use the pencil to edit and the trash icon to remove</em> — true of the free-tier editor, false here. A docs pass.</li><li>Three code comments assert "Add Player keeps its word on a phone"; the CSS renders a bare "+", which is what the house rule (words → symbols on a phone) wants. Fix the comments, not the button.</li></ul>
+
+  <h3 class="fh">F21 — The view switch sits at the wrong end of its row</h3>
+  <p><strong>Today:</strong> List / Depth chart is right-aligned beside Export, with the left of the toolbar empty since the player count was removed in August. Every other view switch in the portal (Schedule, Money, Insights) sits at the left of its row, and the table standard puts the arrangement control left with only the export pinned right.</p>
+  <p><strong>Proposal (owner, round 2):</strong> the toggle moves to the left end of the toolbar at every width. Export stays pinned right. On a phone the row already reads toggle-left, export-right.</p>
+
+  <h2>4. Player page — findings</h2>
+  <h3 class="fh">F09 — Folds inside tabs: the thing the tab was opened for is behind a second click</h3>
+  <p><strong>Today:</strong> every tab is a stack of drawers. This season: Development open, then the recap panel, then Attendance / Awards / Dues closed. Family &amp; paperwork: Guardian contact open, Safety / Documents closed. <strong>Details: a single drawer, "Player", with nothing to fold against.</strong> A coach who taps Family &amp; paperwork to check an allergy has picked the tab and must still open Safety. The measured page does not need this: the whole This season tab, every fold open, is about two desktop screens.</p>
+  <p><strong>Proposal:</strong> no folds inside tabs. Each tab is a flat page of sections, each its own card with the heading the fold used, minus the chevron. Development's internal structure is unchanged. The glance card is the page's index (F10). The section deep-link's scroll-and-flash behaviour is kept — it was the only good thing the folds did.</p>
+
+  <h3 class="fh">F10 — The four glance tiles open nothing</h3>
+  <p><strong>Today:</strong> Dues, Attendance, Family and Awards are plain boxes. The Family tile's foot literally says "Add one on Family &amp; paperwork". Attendance appears three times on This season (tile, Development's Context line, the Attendance drawer) and none is a door.</p>
+  <p><strong>Proposal:</strong> every tile is a door — Dues, Attendance and Awards to their section; Family to the Family &amp; paperwork tab at Guardian contact. Same mechanism the Overview's tiles use.</p>
+
+  <h3 class="fh">F11 — The family season recap is a preview of an output, filed among the records</h3>
+  <p><strong>Today:</strong> between "Moments you logged" and Attendance sits a tinted olive panel with a blue border and a small-caps title — a different visual language from every card around it — holding one sentence and a Preview button. It is the coach's preview of what the <em>family</em> will read at season's end: not a record, not something read weekly.</p>
+  <p><strong>Proposal:</strong> one quiet row at the foot of This season — an eye glyph and "Preview what Maya's family will read at season's end" — opening the same preview in place. Same fetch-on-open, same component, same gate. The tinted box goes.</p>
+
+  <h3 class="fh">F12 — One figure, two readings: "Paid" above, "$-945.15" below</h3>
+  <p><strong>Today:</strong> the Dues tile reads "Paid" for any balance at or below zero; the drawer header prints the raw signed balance through a formatter with no negative branch, so an over-credited family reads "$-945.15", and inside the drawer the same figure is tinted good. "Manage dues →" also renders when no schedule exists.</p>
+  <p><strong>Proposal:</strong> one treatment for the page — a negative balance is a credit: tile "Paid" with foot "$945.15 credit held"; section meta "$945.15 credit"; positive balances unchanged. The Manage dues door renders only with a schedule. The house currency helper gains the negative branch so no page writes this again.</p>
+
+  <h3 class="fh">F13 — Tabs have no address</h3>
+  <p><strong>Today:</strong> tab state is local. Reload returns to This season; Back does not undo a tab switch; nothing can link to a tab; a section deep-link to a non-default tab lands on the wrong tab silently because its target is not in the DOM. The Money hub, Insights and Skills &amp; Goals all use the shared tab bar, whose tabs are links with real addresses, for exactly this reason.</p>
+  <p><strong>Proposal:</strong> the player page uses the shared tab bar with <code>?tab=season|details|family</code> (default season); <code>?section=</code> keeps scrolling within the tab. One tab component in the portal; the underline turns olive like its siblings.</p>
+
+  <h3 class="fh">F14 — A coach opening a player one at a time has no next</h3>
+  <p><strong>Today:</strong> the header has the back arrow and nothing else; there is no record-to-record stepping anywhere in the coach portal. The workflow that wants it is weekly: log a measurable for every player after practice; check every family has a contact before the season email; read twelve development records before an evaluation.</p>
+  <p><strong>Proposal (revised round 2, R2-5):</strong> a <em>Switch player</em> dropdown in the header's trailing slot, listing the roster in the coach's own order with the current player marked; picking one opens that player on the same tab (the tab rides in the URL). Active players only. The after-practice pass is open-then-pick per player. Phone: a 44px icon-only button opening the same list. It reads the roster the depth chart already fetches; no new endpoint. Off-roster players stay reachable from the shelf only. A combined arrows-plus-dropdown control was drawn first and withdrawn.</p>
+
+  <h3 class="fh">F15 — Safety is a fold, and the red chip that points at it is not a door</h3>
+  <p><strong>Today:</strong> the one warning chip on the glance card ("⚠ Medical notes") is inert, and the notes it warns about are behind the closed Safety drawer two clicks away.</p>
+  <p><strong>Proposal:</strong> the chip opens Family &amp; paperwork at Safety; Safety is flat.</p>
+
+  <h3 class="fh">F16 — The Details form is editable for coaches who cannot save</h3>
+  <p><strong>Today:</strong> every field on Details and Family &amp; paperwork is a live input for every coach with record access, and only the head coach can save. An assistant types, gets a save bar, and the server refuses. Contact fields redacted for that assistant render as blank editable inputs, which reads as "nobody filled this in".</p>
+  <p><strong>Proposal:</strong> a coach without roster-write sees read-only label / value rows, "—" for empty, and one line naming the fields kept to the head coach; no save bar. The head coach keeps inline editing exactly as today. (Q6.)</p>
+
+  <h3 class="fh">F17 — Awards can only count</h3>
+  <p><strong>Today:</strong> the page receives awards as a total and a per-type count, so the Awards section can say "Player of the game ×2" and nothing else, though every award has a date and a game.</p>
+  <p><strong>Proposal (revised round 2, owner):</strong> flat, in the same shape as the other summaries — each award and its count, the data the page already receives — plus one door, "When each was given →", to the Insights awards log opened at this player. No dates carried here; no payload change.</p>
+
+  <h3 class="fh">F18 — Minor, recorded</h3>
+  <ul><li>Attendance sessions marked "unknown" are excluded from the rate and the five boxes; say "n not recorded" so the denominator is honest.</li><li>"Moments you logged" shows the last few with no way to see all; add "All n moments →" when truncated.</li><li>A second private-notes field exists in the record with no UI; leave it out (a question, not a bug).</li><li>The recap's access gate differs from Development's; not this project.</li></ul>
+
+  <h2>4b. Round 2 — five tabs, and Notes (owner rulings 2026-09-13)</h2>
+  <p>The owner ruled three things on reading round 1: Development becomes its own tab (it is where metrics and coach notes go and will be data-intensive); Details is the first tab; and a per-player Notes section exists, as its own tab, with a general "Add a note" allowed. The resulting rail is <strong>Details · This season · Skills &amp; Goals · Notes · Family &amp; paperwork</strong>. Each tab answers one question: who is this · what happened · how are they developing · what have we noticed · who do I call.</p>
+
+  <h3 class="fh">F19 — Development outgrows This season</h3>
+  <p><strong>Today:</strong> the Development section is 698px tall on a light fixture and sits as one of five things on the This season tab. Phase 2 of the development lifecycle (in build this week) adds attempts per test, observed skills, goal reviews and a four-way view switch inside that same section, planned as a control nested in a card on a summary tab.</p>
+  <p><strong>Proposal:</strong> a tab of its own, named <em>Skills &amp; Goals</em> because that is the sidebar item it belongs to. The view switch gets the tab's full width. The "Context" block leaves: playing time becomes its own section on This season (Q9), and attendance already has one. Everything else inside Development — continuity rows, the carry-forward offer, the tryout snapshot, focus areas, measurables, the previous-seasons scrapbook, print — moves with it unchanged. This season becomes the record tab: attendance · playing time · awards · dues, with the recap row at its foot.</p>
+
+  <h3 class="fh">F20 — Four places to write about a player, none to read them</h3>
+  <p><strong>Today:</strong> a coach writes about a player in four places on three tabs — a one-line game moment from the bench (read on This season), a skill observation and a goal review (inside Development, new this week), and an undated "Notes (private)" box on Details. Nothing shows them together, and the undated box is the one most likely to hold what belongs in the others.</p>
+  <p><strong>Proposal — the Notes tab, and how the sources are organised:</strong></p>
+  <ul>
+    <li><strong>One timeline, newest first, grouped by month.</strong> Every dated entry about this player, whatever wrote it. Each entry carries a source chip that names its origin and opens it — <em>Game · vs Milton</em> (the schedule), <em>Skill · Sets feet before throwing</em> (Skills &amp; Goals), <em>Goal · First-step quickness</em> (the goal), <em>Note</em> — and the staff member who wrote it.</li>
+    <li><strong>Written once, at its source.</strong> Observations and reviews are recorded on Skills &amp; Goals; moments at the bench; the general note here. The timeline is a read. Nothing is duplicated in storage and nothing is written twice.</li>
+    <li><strong>The pinned About note.</strong> The "Notes (private)" box moves from Details to the top of Notes, unchanged in field, limit and gate, as the one undated standing note per player (Q8).</li>
+    <li><strong>One general door.</strong> "Add a note": a date (today), the words, an optional link to a goal or a game. Gated exactly like goals — writes need the Development grant plus notes access, reads ride notes access. Families never see the tab; the recap never reads from it. The tab says so in one line.</li>
+  </ul>
+  <p><strong>The trims, to lower the complexity (each an open question):</strong></p>
+  <ul>
+    <li><strong>Q7</strong> — no separate Observations view inside the player's Skills &amp; Goals. Phase 2 plans Goals · Results · Observations · Previous seasons; with a Notes tab the Observations view is a third listing. Observations read under the goal or skill they belong to, and in the timeline. This needs the Phase 2 session's agreement and is drawn, not built.</li>
+    <li><strong>Q8</strong> — the Details box leaves Details. One fewer place to write.</li>
+    <li><strong>Q9</strong> — playing time is a season fact and moves to This season.</li>
+    <li><strong>Q10</strong> — no filter or search on Notes in the first build. A season is a few dozen entries; the source chip does the sorting a reader's eye needs.</li>
+    <li>"Moments you logged" stops being a section on This season; the moments themselves are captured and stored exactly as today.</li>
+  </ul>
+  <p><strong>Privacy posture, stated once.</strong> The product's standing position is that development content about a minor stays skill-and-goal oriented and never becomes behavioural profiling. A dated free-text log is the surface most likely to drift there. The mitigations are the ones goals already have (the notes grant, no family visibility, no recap read) plus a one-line statement on the tab and a help article that says what the log is for.</p>
+
+  <h2>5. Build sequence</h2>
+  <ol>
+    <li><strong>Roster list</strong> — F02, F03, F04, F05, F06, F08. No migration. Register row for F01; recipe-guard debt entry.</li>
+    <li><strong>Player page shell</strong> — F13 (shared tab bar, five tabs, tab in the URL, Details default), F14 (stepper), F10 / F15 (tiles and chip as doors), F07 (roster prompts target the tab), F19 (Skills &amp; Goals tab; coordinate with the Phase 2 session on where its view switch lands).</li>
+    <li><strong>Player page tabs</strong> — F09 (flatten), F11 (recap to the foot of This season), F12 (one currency treatment), F16 (read-only record), F17 (award rows in the payload), Q9 (playing time section).</li>
+    <li><strong>Notes</strong> — F20: the timeline read (moments + observations + reviews + general notes), the general note's record and route (one new table, gated like goals), the About note's move. The only migration in the project.</li>
+    <li><strong>Docs + demos</strong> — a docs pass on the roster article and the player-record guide (five tabs, Notes); the coach sandbox tour's player step narrates the drawers — re-read and true up; the demo seed gains two general notes so the Notes tab is not empty on the shop window.</li>
+    <li>Simplify → adversarial review → owner QA walk on this hub.</li>
+  </ol>
+  <div class="note"><strong>Out of scope.</strong> The depth chart view, the Add Player modal, the bulk import sheet, the off-roster shelf, reordering, the guardian tier, any new column on the roster (Q2, Q3), and the Phase 2 development records themselves (this project moves where they are read, not what they are).</div>
+
+  <h2>6. Risks</h2>
+  <div class="tablewrap"><table><tr><th>Risk</th><th>Handling</th></tr>
+  <tr><td>Flattening makes This season long for a player with many measurables</td><td>Development's own expand-in-place rows are unchanged; the tiles are the index; measured today at about two desktop screens fully open</td></tr>
+  <tr><td>The stepper is a new pattern</td><td>Drawn here for judgement first; if it earns its place it is offered elsewhere deliberately, not copied</td></tr>
+  <tr><td>A tab in the URL changes every existing deep link</td><td>Default stays This season; every existing producer lands where it did</td></tr>
+  <tr><td>The layout gate's baseline churns — the player page loses every fold</td><td>Read the churn rather than re-record it blind</td></tr>
+  <tr><td>Read-only Details hides redacted fields</td><td>Says so in one line rather than rendering blanks</td></tr>
+  </table></div>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">Six open questions with a recommendation each. Rows are appended as the owner rules.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden data-walk="§182">
+  <div class="eyebrow" style="padding:0 24px">Owner QA walk</div>
+  <h1 style="padding:0 24px">Roster + player page — Owner QA §182</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: from .env.local · Org/Team: uat-test-org / UAT Test Team</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));window.scrollTo({top:0})}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+const intents={
+ s1:'The roster exactly as it renders on the UAT fixture today at 1440 — every flag is a measured fact, not an opinion. Note what the eye lands on: twenty-four dashed prompts and a wall of identical rows.',
+ s2:'Same five columns, same toolbar, same shelf. Drawn on a mid-season roster so the mature state shows too: the changes are the name underline, the number face, the pitching chip in Positions, and quieter prompts. Nothing is added to the list.',
+ s3:'True 390px frames. Open this artifact on your phone to judge the targets — the card is the door, and the Call button is a separate 44px control in the corner, so a thumb never has to hit a 19px name.',
+ s4:'The player page as measured, on the fixture\'s pitcher. Three tabs, then drawers inside them; four tiles that open nothing; the recap in a box of its own; a balance printed two ways.',
+ s5:'Details is the landing tab (owner, round 2). The glance card carries the mid-season answer on every tab, so opening on the record\'s identity costs nothing. The inset is the same tab for an assistant coach.',
+ s6:'This season becomes the record tab: attendance, playing time (moved out of Development), awards, dues — flat, with the recap as one quiet row at the foot. Moments now read on Notes.',
+ s7:'Skills & Goals gets a tab of its own, named for the sidebar item. Phase 2\'s view switch has the full width, drawn as Goals · Results: observations read under their goal (Q7) and Previous seasons is out of scope.',
+ s8:'Notes: one timeline of everything dated a coach wrote about the player, written once at its source and read here — plus the pinned About note (from Details) and the one general Add a note door.',
+ s9:'Family & paperwork flat: Guardian contact is where the roster\'s "+ Add a contact" lands; Safety is where the red chip lands; both are on screen the moment the tab is.',
+ s10:'The phone before (This season today) and after (the Notes tab, where a note gets typed at the field). Five short tab labels scroll on the shared bar; Switch player is one 44px button.'
+};
+function showScreen(){const id=location.hash.slice(1)||'s1';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+esc(intents[id]):'';const s=document.getElementById(id);if(s){showHub('mockup');s.querySelector('h1')?.focus?.({preventScroll:true})}}
+window.addEventListener('hashchange',showScreen);showScreen();
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'The name is the door, and nothing says so',now:'The player\'s name is bold body text with no underline; the row has no hover and an arrow cursor. Compliant with the table standard ("a row that navigates has the name as the link") but it does not read as a door.',fix:'The name is underlined at rest with the hairline token, solid on hover. The row stays inert on purpose — the Family cell holds tap-to-contact links. No chevron column; the register gets a row saying so.'},
+ F02:{t:'Three cells mint their own type size and ink',now:'#, Positions and Family cells carry an inline 13.6px size; # an inline ink outside the three named tiers. The ladder is 14 / 12 / 11 / 10.',fix:'Cells on the body step; the jersey number in the data face, tabular, secondary ink — the treatment the off-roster shelf and the depth chart already use.'},
+ F03:{t:'On a new team, half the table is dashed prompts',now:'Positions and Family fall back to a dashed-underlined "Add a position" / "Add a contact" on every row — twenty-four dashed underlines on a fresh roster.',fix:'Tertiary ink, a leading +, no underline at rest (underline on hover and focus). Same words, same place, same link.'},
+ F04:{t:'A pitcher reads "Add a position" forever',now:'The Positions cell shows the top-two field positions. The mound is not in the picker, so a player whose job is pitching has none and the cell prompts "Add a position".',fix:'The cell leads with the pitching chip ("Ace", "P2"…) when the player pitches, then field positions; the prompt only when there is neither.'},
+ F05:{t:'A bare "P", and a pitcher marker in the wrong column',now:'The name-cell chip renders P plus the rank; the rank is unset on this player so it renders a bare P, and the glance card reads "Pitcher · rank " with nothing after it.',fix:'A rank fallback everywhere the profile is read; the marker moves to the Positions column and uses the form\'s words — "Ace" for rank 1, "P2" and so on; the card says "Ace · no cap".'},
+ F06:{t:'The phone card has no way to reach a parent',now:'At phone width the card is one line — name, flags, number — with the Family cell hidden. The 19px name is the only door (register F-23). A parent\'s number is three taps away.',fix:'The whole card is the link; a second line carries positions and a corner-pinned 44px Call button when a phone is on file. Rows with neither stay one line.'},
+ F07:{t:'"Add a contact" opens the wrong tab',now:'Both prompts link to the bare player URL, which always opens This season. The contact is on Family & paperwork; positions on Details.',fix:'Once tabs have an address (F13), the prompts link to the tab and section they name, scrolled and flashed.'},
+ F08:{t:'Small type-and-touch debt',now:'The drag grip is ~23px with no floor in the 641–768 touch band; the heading rule is the plain line token; the help article describes pencil/trash row actions this page does not have.',fix:'Floor the grip; line-strong under the heading; a docs pass on the article.'},
+ F09:{t:'Folds inside tabs',now:'Every tab is a stack of drawers. Details holds a single drawer titled "Player" with nothing to fold against. A coach who chose Family & paperwork must still open Safety.',fix:'No folds inside tabs: each section is a card with a heading. Deep links still scroll-and-flash to a section. Development\'s contents are unchanged.'},
+ F10:{t:'The four glance tiles open nothing',now:'Dues, Attendance, Family and Awards are plain boxes. The Family tile\'s foot says "Add one on Family & paperwork" in prose. Attendance is shown three times on one tab with no door.',fix:'Every tile is a door to its section (Family to its tab at Guardian contact). The card becomes the page\'s index.'},
+ F11:{t:'The family recap is filed among the records',now:'A tinted olive box with a blue border and a small-caps title sits between the coach\'s own records, holding one sentence and a Preview button. It is a preview of what the family will read — an output.',fix:'One quiet row at the foot of This season: an eye glyph and "Preview what Maya\'s family will read at season\'s end", opening the same preview in place.'},
+ F12:{t:'One figure, two readings',now:'The Dues tile says "Paid" for any balance at or below zero; the drawer header prints the raw signed number ("$-945.15"); inside, the same figure is tinted good.',fix:'A negative balance is a credit, once, the same way everywhere on the page: "$945.15 credit held" on the tile foot, "$945.15 credit" on the section. The house currency helper gains the negative branch.'},
+ F13:{t:'Tabs have no address',now:'The three tabs are buttons with local state: reload returns to This season, Back does not undo a switch, nothing can link to a tab, and a section link to a non-default tab lands on the wrong tab silently.',fix:'The shared coach tab bar with ?tab= in the URL — the same component Money, Insights and Skills & Goals use. One tab component in the portal.'},
+ F14:{t:'No next player',now:'The header has the back arrow and nothing else. There is no record-to-record stepping anywhere in the coach portal. Logging a measurable for twelve players is twelve round trips through the roster.',fix:'A Switch player dropdown in the header\'s trailing slot, listing the roster in the coach\'s order with the current player marked; picking one opens that player on the same tab. Active players only. Phone: a 44px icon-only button opening the same list. Same shape as the team switcher in the sidebar.'},
+ F15:{t:'The red chip is not a door',now:'"⚠ Medical notes" on the glance card is inert; the notes are behind the closed Safety drawer, two clicks away.',fix:'The chip opens Family & paperwork at Safety, and Safety is flat.'},
+ F16:{t:'Editable for coaches who cannot save',now:'Every field is a live input for every coach with record access; only the head coach can save. Redacted contact fields render as blank editable boxes.',fix:'A coach without roster-write sees read-only label / value rows and one line naming what is kept to the head coach. No save bar.'},
+ F19:{t:'Development outgrows This season',now:'The Development section is 698px tall on a light fixture and sits as one of five things on the This season tab. Phase 2 of the development lifecycle is adding attempts per test, observed skills, goal reviews and a four-way view switch inside it this week.',fix:'A tab of its own, named Skills & Goals for the sidebar item it belongs to. The view switch gets the tab\'s full width. Playing time (the Context line) moves to This season, which becomes the record tab.'},
+ F20:{t:'Four places to write about a player, none to read them',now:'Game moments (This season), skill observations and goal reviews (inside Development, new this week) and the undated Notes (private) box on Details. Each is a separate surface; nothing shows them together.',fix:'A Notes tab: one timeline of every dated entry, each marked with its source and linking back, plus the pinned About note (the Details box, moved) and one general Add a note door gated like goals. Moments stop being a section; the Details box stops being a field. Nothing is written twice.'},
+ F21:{t:'The view switch sits at the wrong end of its row',now:'List / Depth chart is right-aligned beside Export, and the left of the toolbar is empty since the player count was removed. Every other view switch in the portal sits at the left of its row; the table standard puts the arrangement control left and only the export pinned right.',fix:'The toggle moves to the left end of the toolbar at every width. Export stays pinned right. Nothing else on the row changes.'},
+ F17:{t:'Awards is a closed fold with no way to the log',now:'The Awards drawer is closed by default and shows a count per award type; the dates and games each was given live in the Insights awards log with no door to them from here.',fix:'Flat, in the same shape as the other summaries: each award and its count (the data the page already receives), plus one door — "When each was given →" — to the awards log opened at this player. Owner, round 2: keep the count shape; do not carry dates here.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag\'s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const fl=e.target.closest('.fl');if(fl){e.preventDefault();e.stopPropagation();explainFinding(fl.dataset.finding,fl.dataset.here);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+const DECISIONS=[
+ {date:'2026-09-13',ask:'Q1 · Should the roster row carry a right-hand chevron so the row reads as a door, as well as the underlined name?',ruling:'accepted',label:'Accepted as recommended (no)',why:'The Family cell holds tap-to-email and tap-to-call links; a chevron invites a row click that competes with them. Underlined name only, and a register row recording the exception to K-08.'},
+ {date:'2026-09-13',ask:'Q2 · Attendance percentage on the roster list? (Re-opened on merit, not on the August reason.)',ruling:'accepted',label:'Accepted as recommended (no)',why:'Attendance is read per player, not scanned down a list. With the stepper and the tile-as-door it is one tap from any roster row. A column would be the first figure on a page a coach opens beside a parent.'},
+ {date:'2026-09-13',ask:'Q3 · Age or birth year on the roster? (Rep eligibility; already fetched; PII-gated.)',ruling:'accepted',label:'Accepted as recommended (not now)',why:'Nobody has asked for it and it would render blank for every assistant without contact access. Add it the day a coach asks.'},
+ {date:'2026-09-13',ask:'Q4 · Player stepper order — the coach\'s roster (drag) order, or alphabetical?',ruling:'accepted',label:'Accepted as recommended (roster order)',why:'It is the coach\'s own order and the list they just left; "next" should mean the next row.'},
+ {date:'2026-09-13',ask:'Q5 · Keep the Dues section on This season, or make the tile a door to the Money hub only?',ruling:'accepted',label:'Accepted as recommended (keep)',why:'The per-player ladder is the one place a coach reads one family\'s whole arithmetic. The Money hub reads it by installment.'},
+ {date:'2026-09-13',ask:'Q6 · Read-only Details for non-writers (F16) in this pass, or later?',ruling:'accepted',label:'Accepted as recommended (this pass)',why:'It is the same tab being rebuilt; doing it later means touching the form twice.'},
+ {date:'2026-09-13',ask:'R2-1 · Development gets its own tab, and Details lands first',ruling:'accepted',label:'Accepted (owner)',why:'Development is where metrics and coach notes go and will be data-intensive; it should not be one of a few things on This season. Details is the first tab. The glance card stays the index on every tab so the mid-season answer is not lost.'},
+ {date:'2026-09-13',ask:'R2-2 · The tab is named Skills & Goals',ruling:'accepted',label:'Accepted (owner)',why:'It is the sidebar item this area belongs to; a tab named differently from its hub is two names for one thing.'},
+ {date:'2026-09-13',ask:'R2-3 · Notes is its own tab, and a general Add a note is allowed',ruling:'accepted',label:'Accepted (owner)',why:'Game moments are not development, so the timeline is not a Skills & Goals view. The general note is gated exactly like goals. Owner asked to see how the sources are organised and where to trim (Q7–Q10).'},
+ {date:'2026-09-13',ask:'Q7 · Trim: no separate Observations view inside the player\'s Skills & Goals — observations read under their goal or skill, and in the Notes timeline',ruling:'deferred',label:'Deferred — Observations view KEPT for now',why:'Accepted in principle, but the Phase 2 session had already built and committed the Observations view before this build started, and the owner paused that walk (§180) for a holistic re-evaluation. The Skills & Goals tab carries the four views as committed; the trim goes into that re-evaluation rather than ahead of it. Nothing was ripped out.'},
+ {date:'2026-09-13',ask:'Q8 · Trim: the undated Notes (private) box leaves Details and becomes the pinned About note at the top of Notes',ruling:'accepted',label:'Accepted as recommended (yes)',why:'Same field, same gate, no migration; one fewer place to write about a player, and the standing note sits beside the dated ones.'},
+ {date:'2026-09-13',ask:'Q9 · Playing time moves from Development\'s Context line to its own section on This season',ruling:'accepted',label:'Accepted as recommended (yes)',why:'Field and bench innings are a season fact, not a development judgement. This season becomes the record tab: attendance, playing time, awards, dues.'},
+ {date:'2026-09-13',ask:'Q10 · Notes has no filter or search in the first build — month groups and a source chip per entry only',ruling:'accepted',label:'Accepted as recommended (yes)',why:'A season is a few dozen entries. A filter row is cheap to add later if a coach asks; adding it now is complexity ahead of evidence.'},
+ {date:'2026-09-13',ask:'R2-4 · The List / Depth chart toggle is left-aligned, like every other view switch in the app',ruling:'accepted',label:'Accepted (owner)',why:'Export stays pinned right (house rule 2); the arrangement control belongs at the left of its row, where Schedule, Money and Insights already put theirs.'},
+ {date:'2026-09-13',ask:'R2-5 · Player navigation: arrows, a dropdown, or both?',ruling:'accepted',label:'Accepted — dropdown only',why:'A combined arrows-plus-dropdown control was drawn first and the owner found it odd (it went left/right AND opened a list). Dropdown only: the jump to any player in one control, and the after-practice pass is open-then-pick. Same shape as the team switcher in the sidebar; icon-only on a phone.'},
+ {date:'2026-09-13',ask:'R2-7 · Previous seasons is out of scope',ruling:'accepted',label:'Accepted (owner)',why:'The archive view is Phase 2 / history-in-place work, not this project. The Skills & Goals switch is drawn as Goals · Results; whatever Phase 2 ships for the archive is untouched here.'},
+ {date:'2026-09-13',ask:'R2-6 · Awards shows award + count like the other summaries, with a door to the log of when each was given',ruling:'accepted',label:'Accepted (owner)',why:'The page already receives the count per type; the dates live in the Insights awards log. One door beats carrying the rows here.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+const QA_PARTS=[
+ {id:'A',title:'Roster list — desktop (UAT Test Team, 1440)',steps:[
+  'The List / Depth chart toggle sits at the LEFT of its row and Export alone at the right; the depth chart still opens and the toggle survives in it.',
+  'Every player name is underlined quietly at rest and goes solid on hover; the row itself does nothing on click (hover a row: no tint).',
+  'Jersey numbers read in the data face (the same face as the off-roster shelf), not the body face.',
+  'The fixture player marked as the pitcher reads an "Ace" chip in the Positions column — not "Add a position" — and the chip is gone from beside the name (★ and ✚ still sit by the name where set).',
+  'A row with no positions reads "+ Add a position" with no dashed underline (underline only on hover); a row with no contact reads "+ Add a contact" the same way.',
+  '"+ Add a contact" opens that player on Family & paperwork, scrolled to Guardian contact (it flashes once). "+ Add a position" opens them on Details.',
+  'A row whose family has an email and a phone still shows name / email / phone in Family, unchanged.']},
+ {id:'B',title:'Roster on a phone (390)',steps:[
+  'First give one fixture player a guardian phone number (any player, Family & paperwork → Guardian contact → Save).',
+  'Tapping ANYWHERE on a card opens the player (not just the name).',
+  'Only the card whose family has a phone shows a corner Call button; it is thumb-sized, sits above the card link, and opens the dialer with that number.',
+  'The toggle sits left and Export right on one row; nothing scrolls sideways.',
+  'Put the phone number back to blank afterwards if you want the fixture as it was.']},
+ {id:'C',title:'Player page — the shell',steps:[
+  'Opening a player from the roster lands on DETAILS; the five tabs read Details · This season · Skills & Goals · Notes · Family & paperwork.',
+  'Switch to any tab, reload: the same tab is still open. Press Back: the previous tab returns.',
+  'The Switch player dropdown (top right) lists the roster in your order; picking another player opens THEM on the SAME tab you were on.',
+  'Each glance tile opens its section: Dues → the Dues section, Attendance → Attendance, Awards → Awards (all on This season, scrolled and flashed); Family → Family & paperwork at Guardian contact.',
+  'Give a player medical notes (Family & paperwork → Safety → Save): the red Medical notes chip appears on the card and opens Safety when pressed.',
+  'On a phone (390) the five tabs read Details · Season · Skills · Notes · Family and the dropdown sits under the name.']},
+ {id:'D',title:'This season — the record tab',steps:[
+  'Attendance is open (no drawer), with the five figures and the last sessions; if any session was left unmarked, a line says "n sessions not recorded — not counted in the rate".',
+  'Playing time is its own section with field innings, bench innings, share on the field, games, and a "Playing time report →" door.',
+  'Awards lists each award with ×count (no dates) and a "When each was given →" door into Insights.',
+  'Dues shows the ladder flat; for the fixture player whose family is over-credited the tile reads Paid with "… credit held" beneath and the section heading reads "… credit" — never a "$-" figure.',
+  'The last line of the tab is "Preview what <first name>’s family will read at season’s end"; pressing it opens the recap in place and the same line hides it. No tinted box anywhere.',
+  '"Moments you logged" is no longer a section on this tab.']},
+ {id:'E',title:'Skills & Goals',steps:[
+  'The tab holds the whole Development content — the view switch, focus areas, measurables, tryout snapshot, and the "Preview development handout" link at its foot (Phase 3) — with nothing folded.',
+  'From the Skills & Goals hub (Players view), open a player: it lands on this tab, not on Details.',
+  'The four views (Goals · Results · Observations · Previous seasons) are exactly as the Phase 2 build left them — this pass moved the section, it did not change it.']},
+ {id:'F',title:'Notes',steps:[
+  'The pinned "About <first name>" note holds what the Details tab’s old Notes (private) box held; editing it shows the Save bar and Save keeps it.',
+  'Add a note (date defaults to today; choose a goal or a game under About; write the words; Save): it appears at the top with a "Note" chip and your name.',
+  'Edit changes the words in place; Remove asks first and takes it off.',
+  'The fixture’s observation and goal review read as entries with "Skill · …" and "Goal · …" chips; pressing a chip opens Skills & Goals.',
+  'The foot line says who can read the tab and that families never see it.',
+  'If an assistant coach account WITHOUT Internal notes is available: signed in as them, the Notes tab is not offered at all.']},
+ {id:'G',title:'Family & paperwork',steps:[
+  'Guardian contact, Safety and Documents are all open on arrival — no drawers.',
+  'The Family tile from the glance card lands here at Guardian contact.',
+  'Documents still uploads and lists as before.']},
+ {id:'H',title:'The read-only record (assistant coach)',steps:[
+  'If an assistant coach account WITHOUT roster-write is available: Details shows label / value rows (Name, Jersey #, Positions, Pitching, A-squad, …) and "Only the head coach can edit a player’s record" — no inputs, no Save bar.',
+  'For that assistant, contact and birth-date rows read "Kept to the head coach" where the head coach would see values.']},
+ {id:'I',title:'Demo (riverdale-ridge) — waivable',steps:[
+  'Guided tour step 7 ("Read what a parent gets") opens the showcase player on THIS SEASON and its narration points at the preview line at the foot.',
+  'The showcase player’s Notes tab shows two general notes, each with a "Note · <game>" chip.']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-roster-player-review')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-roster-player-review',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

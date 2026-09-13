@@ -262,7 +262,16 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx', occurrence: 0,
-    screen: 'Roster → one player', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'Roster → one player',
+    variant: 'standard', helpHost: 'masthead',
+    actions: {
+      // The Switch player dropdown (roster + player page review, hub F14; owner R2-5: a dropdown,
+      // not arrows). Not a create, not an export — a native select listing the roster in the
+      // coach's own order. Present at every width (no phone flags): on a phone it drops to the
+      // row beneath the title like any other action.
+      from: 'switchPlayer', slot: 'action', holds: 'Switch player (a dropdown of the roster in the coach\'s order)',
+      phoneHidden: null, phoneInTitleRow: null,
+    },
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', occurrence: 0,

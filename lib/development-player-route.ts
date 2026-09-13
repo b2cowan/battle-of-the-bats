@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from './api-auth';
 import {
   getCoachingAssignmentsForUser, getRepRosterPlayer, getRepPlayerDevelopmentGoal,
-  getRepPlayerMeasurablesForPlayer, getRepPlayerObservationsForPlayer,
+  getRepPlayerMeasurablesForPlayer, getRepPlayerObservationsForPlayer, getRepTeamEventById,
 } from './db';
 import { denyUnless, canWriteDevelopment, canWriteDevelopmentGoals, DEVELOPMENT_GRANT_MESSAGE } from './coach-capabilities';
 import { pastSeasonRefusal } from './development-season-guard';
@@ -50,6 +50,16 @@ export async function resolveDevelopmentPlayerContext(
 export async function assertGoalBelongsToPlayer(teamId: string, playerId: string, goalId: string | null): Promise<string | null> {
   if (!goalId) return null;
   return (await getRepPlayerDevelopmentGoal(goalId, teamId, playerId)) ? null : 'That goal isn’t on this player’s record.';
+}
+
+/**
+ * An event named by id must be on THIS season's schedule — one scoped read, never "fetch every
+ * event to find one". A general note (mig 296) may say which game or practice it was noticed at.
+ */
+export async function assertEventBelongsToSeason(programYearId: string, eventId: string | null): Promise<string | null> {
+  if (!eventId) return null;
+  const ev = await getRepTeamEventById(eventId);
+  return ev && ev.programYearId === programYearId ? null : 'That event isn’t on this season’s schedule.';
 }
 
 /**

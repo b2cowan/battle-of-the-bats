@@ -2,27 +2,28 @@
 
 **Generated:** 2026-09-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 137 divergence(s)** across dev/prod.
+**⚠️ 163 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 3 | 0 | — |
-| Columns | 54 | 4 | 1 |
-| Indexes | 23 | 2 | 0 |
-| Constraints | 23 | 1 | — |
-| RLS / CHECK | 24 | 0 | 0 (RLS state) |
+| Tables | 4 | 0 | — |
+| Columns | 65 | 4 | 1 |
+| Indexes | 29 | 2 | 0 |
+| Constraints | 30 | 1 | — |
+| RLS / CHECK | 25 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (3)
+### Only in DEV (4)
 - `rep_development_goal_reviews`
 - `rep_evaluation_not_assessed`
+- `rep_player_notes`
 - `rep_player_observations`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (54)
+### Only in DEV (65)
 - `rep_development_goal_reviews.created_at`
 - `rep_development_goal_reviews.created_by`
 - `rep_development_goal_reviews.evidence_measurable_ids`
@@ -52,6 +53,17 @@ _none_
 - `rep_player_measurables.corrected_at`
 - `rep_player_measurables.corrected_by`
 - `rep_player_measurables.corrected_from`
+- `rep_player_notes.body`
+- `rep_player_notes.created_at`
+- `rep_player_notes.created_by`
+- `rep_player_notes.event_id`
+- `rep_player_notes.goal_id`
+- `rep_player_notes.id`
+- `rep_player_notes.noted_on`
+- `rep_player_notes.org_id`
+- `rep_player_notes.player_id`
+- `rep_player_notes.team_id`
+- `rep_player_notes.updated_at`
 - `rep_player_observations.created_at`
 - `rep_player_observations.created_by`
 - `rep_player_observations.descriptor`
@@ -88,7 +100,7 @@ _none_
 - `rep_team_measurable_types.unit` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (23)
+### Only in DEV (29)
 - `rep_development_goal_reviews_goal_idx`
 - `rep_development_goal_reviews_org_idx`
 - `rep_development_goal_reviews_pkey`
@@ -102,6 +114,12 @@ _none_
 - `rep_evaluation_not_assessed_uniq`
 - `rep_player_development_goals_id_team_uniq`
 - `rep_player_measurables_session_attempt_uniq`
+- `rep_player_notes_event_idx`
+- `rep_player_notes_goal_idx`
+- `rep_player_notes_org_idx`
+- `rep_player_notes_pkey`
+- `rep_player_notes_player_idx`
+- `rep_player_notes_team_idx`
 - `rep_player_observations_goal_idx`
 - `rep_player_observations_org_idx`
 - `rep_player_observations_pkey`
@@ -121,7 +139,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (23)
+### Only in DEV (30)
 - `rep_development_goal_reviews.rep_development_goal_reviews_created_by_fkey`
 - `rep_development_goal_reviews.rep_development_goal_reviews_goal_team_fkey`
 - `rep_development_goal_reviews.rep_development_goal_reviews_org_id_fkey`
@@ -136,6 +154,13 @@ _none_
 - `rep_evaluation_not_assessed.rep_evaluation_not_assessed_team_id_fkey`
 - `rep_evaluation_not_assessed.rep_evaluation_not_assessed_type_team_fkey`
 - `rep_player_measurables.rep_player_measurables_corrected_by_fkey`
+- `rep_player_notes.rep_player_notes_created_by_fkey`
+- `rep_player_notes.rep_player_notes_event_id_fkey`
+- `rep_player_notes.rep_player_notes_goal_team_fkey`
+- `rep_player_notes.rep_player_notes_org_id_fkey`
+- `rep_player_notes.rep_player_notes_pkey`
+- `rep_player_notes.rep_player_notes_player_team_fkey`
+- `rep_player_notes.rep_player_notes_team_id_fkey`
 - `rep_player_observations.rep_player_observations_created_by_fkey`
 - `rep_player_observations.rep_player_observations_goal_team_fkey`
 - `rep_player_observations.rep_player_observations_org_id_fkey`
@@ -153,7 +178,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (24)
+### CHECK only in DEV (25)
 - `rep_development_goal_reviews.rep_development_goal_reviews_note_check`
 - `rep_development_goal_reviews.rep_development_goal_reviews_status_check`
 - `rep_evaluation_not_assessed.rep_evaluation_not_assessed_reason_check`
@@ -161,6 +186,7 @@ _none_
 - `rep_player_development_goals.rep_player_development_goals_success_check`
 - `rep_player_measurables.rep_player_measurables_attempt_no_check`
 - `rep_player_measurables.rep_player_measurables_correction_whole_check`
+- `rep_player_notes.rep_player_notes_body_check`
 - `rep_player_observations.rep_player_observations_descriptor_check`
 - `rep_player_observations.rep_player_observations_has_content_check`
 - `rep_player_observations.rep_player_observations_metric_kind_check`

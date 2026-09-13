@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useSectionArrival } from '@/components/coaches/useSectionArrival';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -29,25 +29,11 @@ export default function CoachCollapseSection({
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
-  const searchParams = useSearchParams();
-  const ref = useRef<HTMLDetailsElement>(null);
+  // The arrival (scroll + flash) is the shared hook's; the fold's own job is to OPEN on it, before
+  // the frame in which the hook scrolls, so the section has its full height to scroll to.
+  const { ref, targeted, flash } = useSectionArrival<HTMLDetailsElement>(sectionId);
   const [open, setOpen] = useState(defaultOpen);
-  const [flash, setFlash] = useState(false);
-  const targeted = searchParams.get('section') === sectionId;
-
-  useEffect(() => {
-    if (!targeted || !ref.current) return;
-    setOpen(true);
-    // Scroll after the open state paints so the section has its full height.
-    const t = requestAnimationFrame(() => {
-      // An explicit JS 'smooth' overrides the global reduced-motion CSS kill-switch
-      // (CSSOM View), so honor the preference here directly (/review 2026-08-02).
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      ref.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-      setFlash(true);
-    });
-    return () => cancelAnimationFrame(t);
-  }, [targeted]);
+  useEffect(() => { if (targeted) setOpen(true); }, [targeted]);
 
   return (
     <details

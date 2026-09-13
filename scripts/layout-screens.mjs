@@ -109,8 +109,21 @@ export const SCREENS = [
    * true of the mechanism, false of the list, which is exactly the gap this comment exists to
    * stop reopening. ⚠ Before claiming a sweep covers a family of screens, LIST them.
    */
+  /* ⚠ FIVE TABS, EACH ITS OWN SCREEN (roster + player page review, 2026-09-13). `coach-player` is
+     the bare address, which now lands on Details; the other four tabs are addressed screens
+     because each is a different body (a form; the season's figures; the development section;
+     the notes timeline; the family form) and a sweep that measured only the landing tab would
+     report green over four unmeasured ones. */
   { id: 'coach-player',          session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}` },
+  { id: 'coach-player-season',   session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=season` },
+  { id: 'coach-player-skills',   session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=skills` },
+  { id: 'coach-player-notes',    session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=notes` },
+  { id: 'coach-player-family',   session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=family` },
   { id: 'coach-lineup-builder',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.gameEventId}` },
   { id: 'coach-lineup-template', session: 'coach', ready: 'h1',

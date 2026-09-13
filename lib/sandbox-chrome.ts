@@ -937,13 +937,17 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
     {
       n: 7,
       label: 'Read what a parent gets',
-      href: team(DEMO_COACH_TEAM_IDS.midSeason, `/roster/${DEMO_COACH_SHOWCASE.midSeasonPlayerId}`),
+      // ⚠ THE RECORD TAB, BY ADDRESS (roster + player page review, 2026-09-13). The player page
+      // lands on Details now, and the recap row lives at the foot of This season — a bare player
+      // URL would open a tab the anchor is not on, and the tour would point at nothing. The tour's
+      // own `anchor` below does the scrolling; the address names only the tab.
+      href: team(DEMO_COACH_TEAM_IDS.midSeason, `/roster/${DEMO_COACH_SHOWCASE.midSeasonPlayerId}?tab=season`),
       exactPath: true,
       anchor: '[data-sandbox-tour="family-recap"]',
       // Asks for a PRESS, which is safe: the preview only reads. No step in this tour may ask a
       // visitor to save, score or change anything — the sandbox blocks every write centrally, and
       // a step that invited one would be writing a cheque the demo bounces.
-      said: 'This is the player you just saw at the bottom of that table. Press Preview: this is the page his family opens at the end of the season — their view, not yours, drawn by the very screen they will see. It writes itself from what you have already recorded.',
+      said: 'This is the player you just saw at the bottom of that table, on the tab that holds his season. Press the preview line at the foot of the page: this is what his family opens at the end of the season — their view, not yours, drawn by the very screen they will see. It writes itself from what you have already recorded.',
       nextLabel: 'Next: a finished year',
     },
     {

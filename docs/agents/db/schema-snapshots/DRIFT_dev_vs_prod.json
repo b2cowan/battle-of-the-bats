@@ -1,12 +1,12 @@
 {
   "generated": "2026-09-13",
-  "total": 137,
+  "total": 163,
   "counts": {
-    "tables": 3,
-    "columns": 59,
-    "indexes": 25,
-    "constraints": 24,
-    "rls": 26
+    "tables": 4,
+    "columns": 70,
+    "indexes": 31,
+    "constraints": 31,
+    "rls": 27
   },
   "items": [
     {
@@ -43,6 +43,10 @@
     },
     {
       "key": "check:only-dev:rep_player_measurables.rep_player_measurables_correction_whole_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_player_notes.rep_player_notes_body_check",
       "sig": ""
     },
     {
@@ -234,6 +238,50 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_player_notes.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.goal_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.noted_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_notes.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_player_observations.created_at",
       "sig": ""
     },
@@ -406,6 +454,34 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_event_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_goal_team_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_player_team_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_notes.rep_player_notes_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_player_observations.rep_player_observations_created_by_fkey",
       "sig": ""
     },
@@ -498,6 +574,30 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_player_notes_event_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_notes_goal_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_notes_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_notes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_notes_player_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_notes_team_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_player_observations_goal_idx",
       "sig": ""
     },
@@ -551,6 +651,10 @@
     },
     {
       "key": "table:only-dev:rep_evaluation_not_assessed",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_player_notes",
       "sig": ""
     },
     {

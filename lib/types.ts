@@ -2158,6 +2158,30 @@ export interface RepDevelopmentGoalReview {
 
 export type RepDevelopmentGoalStatus = 'working' | 'achieved' | 'parked';
 
+/**
+ * A dated GENERAL note a coach wrote about a player (`rep_player_notes`, mig 296) — the one kind of
+ * entry on the player's Notes tab that has no other source. Moments, observations and goal reviews
+ * are written where they belong and only READ on that tab; this is the note that fits none of
+ * them. Same sensitivity class as a goal (read on notes, written on the Development grant + notes;
+ * never a family surface). Season-scoped through the roster row.
+ */
+export interface RepPlayerNote {
+  id: string;
+  orgId: string;
+  teamId: string;
+  playerId: string;
+  /** When the coach noticed it — a date, coach-chosen, defaults to today. */
+  notedOn: string;
+  body: string;
+  /** The goal it is about, when it is about one. */
+  goalId: string | null;
+  /** The game or practice it was noticed at, when it was. */
+  eventId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RepPlayerDevelopmentGoal {
   id: string;
   orgId: string;

@@ -265,54 +265,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-roster|361|tap-floor|a·Avery Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Blake Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Casey Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Devon Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Emerson Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Frankie Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Gray Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Harper Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Indigo Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Jules Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Kai Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Logan Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
     "coach-budget|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -473,54 +425,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-roster|390|tap-floor|a·Avery Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Blake Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Casey Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Devon Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Emerson Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Frankie Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Gray Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Harper Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Indigo Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Jules Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Kai Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Logan Test": {
-      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
     "coach-budget|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -680,106 +584,6 @@
     "coach-attendance|768|control-width|button·Help: Attendance": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-roster|768|tap-floor|button·Help: Roster": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·List": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Depth chart": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Export": {
-      "reason": "List-toolbar export at the grandfathered desktop height; clears 44 at <=640 via .listToolbarEnd. REPLACES two entries (\"Export as Excel\" + \"More export formats\") — the admin split button became one coach control.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Drag to reorder": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Avery Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Add a position": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Add a contact": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Blake Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Casey Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Devon Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Emerson Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Frankie Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Gray Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Harper Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Indigo Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Jules Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Kai Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Logan Test": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Create link": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Staff only": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Families": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Public link": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|control-width|button·Help: Roster": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-roster|768|control-width|button·Drag to reorder": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "23px wide (floor 44) — icon-only control"
     },
     "coach-budget|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
@@ -3618,6 +3422,362 @@
       "detail": "34px tall (floor 44)"
     },
     "coach-history-development-practices|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-player|361|tap-floor|input·<input>": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·How positions guide the lineup": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·C: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·2B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·SS: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|select·—LeftRightSwitch": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|select·—LeftRight": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|361|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-family|361|tap-floor|input·<input>": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-family|361|tap-floor|button·Upload document": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|input·<input>": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·How positions guide the lineup": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·C: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·2B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·SS: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|select·—LeftRightSwitch": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|select·—LeftRight": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|390|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-family|390|tap-floor|input·<input>": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-family|390|tap-floor|button·Upload document": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|input·<input>": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·How positions guide the lineup": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·C: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·2B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·SS: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|select·—LeftRightSwitch": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|select·—LeftRight": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-family|768|tap-floor|input·<input>": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-family|768|tap-floor|button·Upload document": {
+      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Avery Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Blake Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Casey Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Devon Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Emerson Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Frankie Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Gray Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Harper Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Indigo Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Jules Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Kai Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Logan Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Avery Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Blake Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Casey Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Devon Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Emerson Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Frankie Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Gray Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Harper Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Indigo Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Jules Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Kai Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Logan Test": {
+      "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Help: Roster": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·List": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Depth chart": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Export": {
+      "reason": "List-toolbar export at the grandfathered desktop height; clears 44 at <=640 via .listToolbarEnd. REPLACES two entries (\"Export as Excel\" + \"More export formats\") — the admin split button became one coach control.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Avery Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Blake Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Casey Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Devon Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Emerson Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Frankie Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Gray Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Harper Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Indigo Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Jules Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Kai Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Logan Test": {
+      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|control-width|button·Help: Roster": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     }

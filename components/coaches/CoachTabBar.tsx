@@ -25,6 +25,12 @@ export interface CoachTab<Id extends string> {
   id: Id;
   label: string;
   href: string;
+  /**
+   * A shorter label for phones (≤640), when the full one would cut a five-tab rail mid-word
+   * ("Family & paperwork" → "Family"). Optional; the player page is the first caller. The long
+   * label stays the accessible name so a tab is announced the same at every width.
+   */
+  short?: string;
 }
 
 export default function CoachTabBar<Id extends string>({
@@ -131,8 +137,11 @@ export default function CoachTabBar<Id extends string>({
             href={t.href}
             className={`${styles.coachTabBtn} ${activeId === t.id ? styles.coachTabActive : ''}`}
             aria-current={activeId === t.id ? 'page' : undefined}
+            aria-label={t.short ? t.label : undefined}
           >
-            {t.label}
+            {t.short
+              ? <><span className={styles.coachTabLong} aria-hidden>{t.label}</span><span className={styles.coachTabShort} aria-hidden>{t.short}</span></>
+              : t.label}
           </Link>
         ))}
       </nav>

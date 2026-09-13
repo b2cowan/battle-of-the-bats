@@ -367,6 +367,8 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
     // handed out before the season started, and the book would show notes from games that had not
     // happened yet. Both surfaces print their dates, so the drift would be visible, not theoretical.
     { data: awards, error: awardError },
+    // A general note on a player is dated the game it was noticed at (2026-09-13), like an award.
+    { data: playerNotes, error: noteError },
     { data: observations, error: obsError },
     { data: opponents, error: oppError },
     // Credits are season-scoped (no team_id of their own), so they come via the roster — this
@@ -379,6 +381,7 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
     db.from('rep_fundraisers').select('id, start_date, end_date').eq('team_id', teamId).not('end_date', 'is', null),
     db.from('rep_fundraiser_entries').select('id, received_date').eq('team_id', teamId).not('received_date', 'is', null),
     db.from('rep_player_awards').select('id, awarded_at').eq('team_id', teamId),
+    db.from('rep_player_notes').select('id, noted_on').eq('team_id', teamId),
     db.from('rep_team_opponent_observations').select('id, created_at').eq('team_id', teamId),
     db.from('rep_team_opponents').select('id, last_note_updated_at')
       .eq('team_id', teamId).not('last_note_updated_at', 'is', null),
@@ -392,6 +395,7 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   if (fundError) throw new Error(fundError.message);
   if (fundEntryError) throw new Error(fundEntryError.message);
   if (awardError) throw new Error(awardError.message);
+  if (noteError) throw new Error(noteError.message);
   if (obsError) throw new Error(obsError.message);
   if (oppError) throw new Error(oppError.message);
   if (rosterError) throw new Error(rosterError.message);
@@ -411,6 +415,7 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   type FundraiserEntryRow = { id: string; received_date: string };
   type CreditRow = { id: string; credit_date: string };
   type AwardRow = { id: string; awarded_at: string };
+  type PlayerNoteRow = { id: string; noted_on: string };
   type ObservationRow = { id: string; created_at: string };
   type OpponentRow = { id: string; last_note_updated_at: string };
   const allEvents = (events ?? []) as EventRow[];
@@ -452,6 +457,9 @@ async function shiftTeamSchedule(db: CoachDemoDb, teamId: string, days: number, 
   ) + (
     await shiftRows(db, 'rep_player_awards', (awards ?? []) as AwardRow[], 'awarded_at',
       a => ({ awarded_at: addCalendarDays(a.awarded_at, days) }))
+  ) + (
+    await shiftRows(db, 'rep_player_notes', (playerNotes ?? []) as PlayerNoteRow[], 'noted_on',
+      n => ({ noted_on: addCalendarDays(n.noted_on, days) }))
   ) + (
     // `created_at` is an instant, not a date — shifted whole days so the evening an observation
     // was logged stays an evening across DST, exactly as the events themselves do.

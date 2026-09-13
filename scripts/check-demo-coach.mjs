@@ -41,7 +41,7 @@ import {
   MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
   MIDSEASON_CLUB_MONEY,
   MIDSEASON_DUES, resolveMidSeasonState,
-  MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_SCOUTING,
+  MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_PLAYER_NOTES, MIDSEASON_SCOUTING,
   SEASON_START_BUDGET_LINES,
   TRYOUT_CANDIDATES, MIDSEASON_RESULTS, SEASONS_END_RESULTS,
 } from '../lib/demo-coach.ts';
@@ -968,6 +968,14 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       'every award is dated on or before today and hangs off the game it was given at');
     check(new Set((awards12 ?? []).map(a => a.awarded_at)).size >= 4,
       'and they are SPREAD across the season — handed out in the moment, not written up in one sitting');
+    /* The Notes tab (2026-09-13): two general notes on the showcase player, each dated by the game it
+       was noticed at — so a prospect who opens the tour's player finds a timeline, not an empty state,
+       and a re-anchor that forgot `rep_player_notes` would date them into the future. */
+    const { data: notes12 } = await db.from('rep_player_notes').select('player_id, noted_on, event_id').eq('team_id', teamId);
+    check((notes12 ?? []).length === MIDSEASON_PLAYER_NOTES.length
+      && (notes12 ?? []).every(n => n.player_id === DEMO_COACH_SHOWCASE.midSeasonPlayerId && !!n.event_id && n.noted_on <= today),
+      `${MIDSEASON_PLAYER_NOTES.length} general notes on the showcase player, each dated on or before today by the game it was noticed at`,
+      `${(notes12 ?? []).length} notes`);
 
     const { data: book } = await db.from('rep_team_opponents')
       .select('id, display_name, normalized_name, summary').eq('team_id', teamId);
