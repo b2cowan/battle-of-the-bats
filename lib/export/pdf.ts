@@ -1565,10 +1565,15 @@ export async function downloadPracticeSheet(filename: string, opts: PracticeShee
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  Player Development summary (Player Development 3D)
-//  A one-page, hand-delivered family handout: the player's focus areas and their
-//  dated measurable log. CURRENT SEASON ONLY, player-vs-self only — no deltas, no
-//  percentages, no peer numbers, and never a shareable link (client-side download).
+//  Player Development handout (Player Development 3D; development lifecycle
+//  Phase 3, mockup screen 6 — "A conversation with the player")
+//  A hand-delivered handout the coach CHOSE: the goals this conversation is
+//  about, a recent observation, selected test results with the attempts behind
+//  them, a coach-written next step, and — on request — the full dated result log
+//  as an appendix. CURRENT SEASON ONLY, player-vs-self only — no deltas, no
+//  percentages, no peer numbers, no tryout material, no internal notes, and never
+//  a shareable link (client-side download). Numbers and dates on the first page;
+//  the log is an appendix; long content paginates, never shrinks (F13).
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface DevelopmentSummaryOptions {
@@ -1577,41 +1582,74 @@ export interface DevelopmentSummaryOptions {
   playerNumber?: string | null;
   teamName: string;
   seasonLabel?: string | null;
-  /** Status pre-labelled by the caller ("Working on it" / "Achieved" / "Parked"). */
-  goals: { focusArea: string; status: string; note: string | null }[];
-  /** One row per reading, grouped by test by the caller, dates pre-formatted. */
-  measurables: { test: string; reading: string; date: string; note: string | null }[];
+  /** "Prepared 13 Sep 2026 · Coach Jordan" — the caller formats the date and names the coach. */
+  preparedLine: string;
+  /** "What we're working on" — the chosen goals: the focus and the goal's own success sentence. */
+  goals: { focusArea: string; success: string | null }[];
+  /** "A recent observation" — the chosen observations, dates pre-formatted, descriptor and what was seen joined by the caller. */
+  observations: { date: string; text: string }[];
+  /** "Selected test results" — one row per chosen result: the headline, its date, and how it was read (attempts + method). */
+  results: { test: string; result: string; date: string; note: string | null }[];
+  /** The coach's own words, and the next review date from the goal when one is set (pre-formatted). */
+  nextStep: string | null;
+  nextReviewOn: string | null;
+  /** The appendix — one line per session, per test — or null when the coach left it out. */
+  log: { test: string; lines: string[] }[] | null;
   settings: OrgPdfSettings;
 }
 
 /**
- * Save the one-page development summary — the report title/subtitle is the player identity
- * and season, the sections are Focus areas + Measurables (each with its own columns). Built
- * on the shared `downloadPDF`/`buildTablePDF` report engine via its multi-header `groups`
- * mode, so org header/footer/branding stay in ONE place. Current season only, no deltas.
+ * Save the development handout — the title is the player identity, the subtitle who prepared it
+ * and when; each chosen section is its own group (own columns), the next step is a key/value
+ * block, the log is the last group. Built on the shared `downloadPDF`/`buildTablePDF` report
+ * engine via its multi-header `groups` mode, so org header/footer/branding and pagination stay
+ * in ONE place. Current season only, no deltas.
  */
 export async function downloadDevelopmentSummary(filename: string, opts: DevelopmentSummaryOptions): Promise<void> {
   const groups: { label: string; headers: string[]; rows: (string | null)[][] }[] = [];
   if (opts.goals.length > 0) {
     groups.push({
-      label: 'Focus areas', headers: ['Focus area', 'Status', 'Note'],
-      rows: opts.goals.map(g => [g.focusArea, g.status, g.note]),
+      label: 'What we’re working on', headers: ['Focus', 'What success looks like'],
+      rows: opts.goals.map(g => [g.focusArea, g.success]),
     });
   }
-  if (opts.measurables.length > 0) {
+  if (opts.observations.length > 0) {
+    groups.push({
+      label: opts.observations.length === 1 ? 'A recent observation' : 'Recent observations',
+      headers: ['Date', 'What was seen'],
+      rows: opts.observations.map(o => [o.date, o.text]),
+    });
+  }
+  if (opts.results.length > 0) {
     // Parent-facing labels (D6 /marketing pass): the printed handout uses "Test results"
     // and "Result" — plainer than the in-app coach term "Measurables"/"Reading".
     groups.push({
-      label: 'Test results', headers: ['Test', 'Result', 'Date', 'Note'],
-      rows: opts.measurables.map(m => [m.test, m.reading, m.date, m.note]),
+      label: opts.results.length === 1 ? 'Selected test result' : 'Selected test results',
+      headers: ['Test', 'Result', 'Date', 'How it was read'],
+      rows: opts.results.map(r => [r.test, r.result, r.date, r.note]),
     });
   }
-  const title = `Development summary — ${opts.playerName}${opts.playerNumber ? `  ${opts.playerNumber}` : ''}`;
-  // D1: the header carries the team's name; the subtitle keeps only the season.
-  const subtitle = opts.seasonLabel || undefined;
+  if (opts.nextStep || opts.nextReviewOn) {
+    // A group whose headers are all blank is a key/value block, not a table (the practice sheet's idiom).
+    const rows: (string | null)[][] = [];
+    if (opts.nextStep) rows.push([opts.nextStep]);
+    if (opts.nextReviewOn) rows.push([`We’ll look at this together again on ${opts.nextReviewOn}.`]);
+    groups.push({ label: 'Next step', headers: [''], rows });
+  }
+  if (opts.log && opts.log.length > 0) {
+    groups.push({
+      label: `Full dated result log${opts.seasonLabel ? ` · ${opts.seasonLabel}` : ''}`,
+      headers: ['Test', 'Result'],
+      rows: opts.log.flatMap(t => t.lines.map(line => [t.test, line])),
+    });
+  }
+  const title = `Player development — ${opts.playerName}${opts.playerNumber ? `  ${opts.playerNumber}` : ''}`;
+  // D1: the header carries the team's name; the subtitle says who prepared it, when, and the season.
+  const subtitle = [opts.preparedLine, opts.seasonLabel].filter(Boolean).join(' · ');
   await downloadPDF(filename, title, subtitle, [], [], opts.settings, {
     groups,
     identity: opts.teamName,
+    notes: [{ text: 'For this player’s development conversation · A record of this season’s coaching' }],
   });
 }
 

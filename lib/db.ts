@@ -8858,6 +8858,30 @@ export async function getRepSessionNotAssessed(sessionId: string, teamId: string
   return (data ?? []).map(mapRepEvaluationNotAssessed);
 }
 
+/**
+ * Every "not assessed" mark on these players, each with the DATE of the session that made it — the
+ * Coverage report's cell reads "Not assessed · Jun 10" when nothing was recorded since (Phase 3,
+ * F12). One read: the session embeds through the only FK between the two tables (composite, mig 295).
+ * Scoped by the ids alone, like its sibling per-player reads — the caller passes the working
+ * season's roster, and the mark's composite (player_id, team_id) FK keeps a mark on this team.
+ */
+export async function getRepTeamNotAssessedForPlayers(
+  playerIds: string[],
+): Promise<{ playerId: string; measurableTypeId: string; sessionId: string; sessionDate: string }[]> {
+  if (playerIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_evaluation_not_assessed')
+    .select('player_id, measurable_type_id, session_id, rep_team_evaluation_sessions!inner(session_date)')
+    .in('player_id', playerIds);
+  if (error) throw error;
+  return (data ?? []).map((m: any) => ({
+    playerId: m.player_id as string,
+    measurableTypeId: m.measurable_type_id as string,
+    sessionId: m.session_id as string,
+    sessionDate: m.rep_team_evaluation_sessions.session_date as string,
+  }));
+}
+
 /** Mark once — a second mark of the same cell is the same mark (the unique), returned as it stands. */
 export async function markRepSessionNotAssessed(fields: {
   orgId: string; teamId: string; sessionId: string; playerId: string; measurableTypeId: string;

@@ -31,6 +31,15 @@ export function stripTeamNamePrefix(
 }
 
 /**
+ * A coaching assignment's season name for a document or a section — the program year with the
+ * team-name prefix stripped, or null when the org never named it. The player page and the handout
+ * both read it; a third hand-copy of the strip is how this file came to exist.
+ */
+export function assignmentSeasonName(a: { programYearName: string | null | undefined; teamName: string | null | undefined }): string | null {
+  return stripTeamNamePrefix(a.programYearName, a.teamName) || null;
+}
+
+/**
  * The masthead's season text. An org that NAMED its season ("Fall Ball 2026", "2026 Season")
  * shows that name verbatim — new information the derived year can't carry. A bare-year name
  * (or no name at all) renders "<year> season" exactly as the masthead always has. Returns

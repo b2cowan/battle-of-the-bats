@@ -105,17 +105,85 @@ export function parseSkillsAndGoalsSection(raw: string | null | undefined): Skil
 }
 
 /**
+ * Insights → Development — the Report selector's state (Phase 3, mockup screen 5) on the hub's own
+ * `?section=development` address: `report=`, and for Player progress `player=`, `metric=`, `show=`
+ * and `compare=`, beside the practice-review `tag=` Phase 1 added. Changing the player keeps the
+ * report, the metric and the window; Back/Forward and a fresh link move every selector, because the
+ * panel reads the address on every render.
+ */
+export type DevelopmentReport = 'coverage' | 'progress' | 'practices';
+export const DEVELOPMENT_REPORTS: ReadonlyArray<DevelopmentReport> = ['coverage', 'progress', 'practices'];
+export type ProgressShow = 'headline' | 'average';
+export const PROGRESS_SHOWS: ReadonlyArray<ProgressShow> = ['headline', 'average'];
+export type CompareWindow = 'season' | 'last-two';
+export const COMPARE_WINDOWS: ReadonlyArray<CompareWindow> = ['season', 'last-two'];
+
+export interface InsightsDevelopmentAddress {
+  /** The practice-review filter as the panel holds it (a tag id or `UNTAGGED_FILTER`), or null. */
+  tag: string | null;
+  /** An unknown or missing report lands on Coverage. */
+  report: DevelopmentReport;
+  playerId: string | null;
+  metricId: string | null;
+  show: ProgressShow | null;
+  compare: CompareWindow | null;
+}
+
+export interface InsightsDevelopmentOpts {
+  tag?: string | null;
+  report?: DevelopmentReport | null;
+  playerId?: string | null;
+  metricId?: string | null;
+  show?: ProgressShow | null;
+  compare?: CompareWindow | null;
+}
+
+/**
  * Insights → Development, carrying the practice-review tag filter when one is set. `tag` is the
  * filter as the panel holds it — a tag id, or the "no tags" sentinel (`UNTAGGED_FILTER`, a string
- * with a space in it) — and this is the ONE place its wire spelling, `none`, is written.
+ * with a space in it) — and this is the ONE place its wire spelling, `none`, is written. Coverage
+ * is the report the address names by saying nothing.
  */
 const UNTAGGED_ON_THE_WIRE = 'none';
-export function insightsDevelopmentHref(base: string, opts: { tag?: string | null } = {}): string {
+export function insightsDevelopmentHref(base: string, opts: InsightsDevelopmentOpts = {}): string {
   const tag = opts.tag === UNTAGGED_FILTER ? UNTAGGED_ON_THE_WIRE : opts.tag;
-  return insightsSectionHref(base, 'development', tag ? { tag } : undefined);
+  const extra: Record<string, string> = {};
+  if (opts.report && opts.report !== 'coverage') extra.report = opts.report;
+  if (opts.playerId) extra.player = opts.playerId;
+  if (opts.metricId) extra.metric = opts.metricId;
+  if (opts.show) extra.show = opts.show;
+  if (opts.compare) extra.compare = opts.compare;
+  if (tag) extra.tag = tag;
+  return insightsSectionHref(base, 'development', Object.keys(extra).length > 0 ? extra : undefined);
 }
 /** The filter as the panel holds it, from `?tag=` — the inverse of the encoding above. */
 export function insightsTagFromAddress(raw: string | null | undefined): string | null {
   if (!raw) return null;
   return raw === UNTAGGED_ON_THE_WIRE ? UNTAGGED_FILTER : id(raw);
+}
+/** The whole report state from the hub's address — every selector, read on every render. */
+export function parseInsightsDevelopmentAddress(params: ParamReader): InsightsDevelopmentAddress {
+  const rawReport = params.get('report');
+  const rawShow = params.get('show');
+  const rawCompare = params.get('compare');
+  return {
+    tag: insightsTagFromAddress(params.get('tag')),
+    report: DEVELOPMENT_REPORTS.includes(rawReport as DevelopmentReport) ? (rawReport as DevelopmentReport) : 'coverage',
+    playerId: id(params.get('player')),
+    metricId: id(params.get('metric')),
+    show: PROGRESS_SHOWS.includes(rawShow as ProgressShow) ? (rawShow as ProgressShow) : null,
+    compare: COMPARE_WINDOWS.includes(rawCompare as CompareWindow) ? (rawCompare as CompareWindow) : null,
+  };
+}
+
+/**
+ * The handout preview (Phase 3, mockup screen 6) — a page of its own under the player's record,
+ * with the way back to wherever the coach came from (the Development section, or a report).
+ */
+export function developmentHandoutHref(base: string, playerId: string, opts: { returnTo?: string | null } = {}): string {
+  const back = safeReturnPath(opts.returnTo ?? null, base);
+  const qp = new URLSearchParams();
+  if (back) qp.set('return', back);
+  const query = qp.toString();
+  return `${base}/roster/${playerId}/development/handout${query ? `?${query}` : ''}`;
 }

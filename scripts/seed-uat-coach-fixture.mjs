@@ -3044,6 +3044,46 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     }
     ok(`Phase 2 records present — scoped session ${scoped.id} (Devon two attempts incl. a correction · Avery one of two · Casey not assessed · Blake not recorded · Emerson outside the scope), one observation, one goal review`);
   }
+
+  /* ── Phase 3 (2026-09-13): explain progress — what the report and the handout draw ────────────
+     · Readings on the RANGE test (Changeup speed, 62–68 mph) for Devon in TWO sessions, so the
+       progress chart shades the band, fills the marks that landed in it and dashes the average —
+       and the read-back says "moved into the range": an earlier session ("Phase 3 probe — range",
+       May 27) with 0 of 3 in range, then the scoped Jun 10 session with 2 of 3.
+     Everything re-asserted by name on a re-run; the walk leaves the fixture as it found it. */
+  {
+    const changeupId = typeByName.get('Changeup speed');
+    const y = py.year;
+    const earlierDate = `${y}-05-27`;
+    let { data: rangeSession } = await db.from('rep_team_evaluation_sessions').select('id')
+      .eq('team_id', team.id).eq('note', 'Phase 3 probe — range').limit(1).maybeSingle();
+    if (!rangeSession) {
+      const ins = await db.from('rep_team_evaluation_sessions').insert({
+        org_id: org.id, team_id: team.id, program_year_id: py.id, session_date: earlierDate, note: 'Phase 3 probe — range',
+        scope_metric_ids: [changeupId], scope_player_ids: [devonId], created_by: user.id,
+      }).select('id').single();
+      if (ins.error) { console.error('✗ range session insert', ins.error.message); process.exit(1); }
+      rangeSession = ins.data;
+    }
+    const { data: scoped } = await db.from('rep_team_evaluation_sessions').select('id')
+      .eq('team_id', team.id).eq('note', 'Phase 2 probe — scoped').limit(1).maybeSingle();
+    const { data: haveChangeup } = await db.from('rep_player_measurables').select('id')
+      .eq('team_id', team.id).eq('player_id', devonId).eq('measurable_type_id', changeupId).limit(1);
+    if (!haveChangeup?.length && scoped) {
+      const row = (value, attempt, recordedOn, sessionId) => ({
+        org_id: org.id, team_id: team.id, player_id: devonId, measurable_type_id: changeupId,
+        value, unit: 'mph', recorded_on: recordedOn, session_id: sessionId, attempt_no: attempt, created_by: user.id,
+      });
+      const ins = await db.from('rep_player_measurables').insert([
+        // May 27: 0 of 3 in range (60 −2 · 70 +2 · 61 −1) — average 63.7.
+        row(60, 1, earlierDate, rangeSession.id), row(70, 2, earlierDate, rangeSession.id), row(61, 3, earlierDate, rangeSession.id),
+        // Jun 10 (the scoped session): 2 of 3 in range (66 in · 70 +2 · 64 in) — average 66.7. "Moved into the range".
+        row(66, 1, `${y}-06-10`, scoped.id), row(70, 2, `${y}-06-10`, scoped.id), row(64, 3, `${y}-06-10`, scoped.id),
+      ]);
+      if (ins.error) { console.error('✗ changeup readings insert', ins.error.message); process.exit(1); }
+    }
+    ok(`Phase 3 records present — Changeup speed on Devon in two sessions (May 27: 0 of 3 in range · Jun 10: 2 of 3 in range — the band, the filled marks, the dashed average, "moved into the range")`);
+  }
 }
 
 /* ⚖ THE END-OF-RUN BACKFILL IS GONE (Payables Rebuild P2). It derived installments and payments

@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   parseDevelopmentAddress, safeReturnPath, playerDevelopmentHref, returnLabel,
   skillsAndGoalsHref, insightsDevelopmentHref, insightsTagFromAddress, parseSkillsAndGoalsSection,
+  parseInsightsDevelopmentAddress, developmentHandoutHref,
 } from '../../lib/development-address.ts';
 import { UNTAGGED_FILTER } from '../../lib/rep-drills.ts';
 
@@ -77,5 +78,27 @@ describe('the workspace and Insights addresses', () => {
     assert.equal(insightsTagFromAddress('TAG1'), 'TAG1');
     assert.equal(insightsTagFromAddress(null), null);
     assert.equal(insightsTagFromAddress('not a tag id!'), null);
+  });
+  it('the Report selector rides the same address — Coverage by saying nothing; the progress selectors only when set (Phase 3)', () => {
+    assert.equal(insightsDevelopmentHref(base, { report: 'coverage' }), `${base}/history?section=development`);
+    assert.equal(insightsDevelopmentHref(base, { report: 'practices', tag: 'TAG1' }), `${base}/history?section=development&report=practices&tag=TAG1`);
+    assert.equal(
+      insightsDevelopmentHref(base, { report: 'progress', playerId: 'P1', metricId: 'M1', show: 'average', compare: 'last-two' }),
+      `${base}/history?section=development&report=progress&player=P1&metric=M1&show=average&compare=last-two`,
+    );
+    const a = parseInsightsDevelopmentAddress(new URLSearchParams('report=progress&player=P1&metric=M1&show=average&compare=last-two&tag=none'));
+    assert.deepEqual(a, { tag: UNTAGGED_FILTER, report: 'progress', playerId: 'P1', metricId: 'M1', show: 'average', compare: 'last-two' });
+    const b = parseInsightsDevelopmentAddress(new URLSearchParams('report=leaderboard&player=../x&show=best&compare=year'));
+    assert.deepEqual(b, { tag: null, report: 'coverage', playerId: null, metricId: null, show: null, compare: null }, 'unknown values are dropped, never passed through');
+    assert.equal(parseInsightsDevelopmentAddress(new URLSearchParams('')).report, 'coverage');
+  });
+  it('the handout preview is a page of its own under the record, carrying a SAFE way back only', () => {
+    assert.equal(developmentHandoutHref(base, 'P1'), `${base}/roster/P1/development/handout`);
+    assert.equal(
+      developmentHandoutHref(base, 'P1', { returnTo: `${base}/roster/P1?section=development&view=results` }),
+      `${base}/roster/P1/development/handout?return=${encodeURIComponent(`${base}/roster/P1?section=development&view=results`)}`,
+    );
+    assert.equal(developmentHandoutHref(base, 'P1', { returnTo: 'https://evil.example/x' }), `${base}/roster/P1/development/handout`);
+    assert.equal(developmentHandoutHref(base, 'P1', { returnTo: `${base}/history?section=development&year=2025` }), `${base}/roster/P1/development/handout`, 'never a year');
   });
 });

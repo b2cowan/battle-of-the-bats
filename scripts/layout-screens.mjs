@@ -32,7 +32,7 @@
  * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
  *            fundraiserId:string, sponsorId:string, clubBillId:string, finishedTeamId:string,
  *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
- *            evalSessionId:string, opponentKey:string, measurableTypeId:string,
+ *            evalSessionId:string, opponentKey:string, measurableTypeId:string, rangeTypeId:string, skillTypeId:string,
  *            finishedYearId:string}} Ctx
  *
  * ⚠ Keep this in step with what `scripts/uat-fixture-context.mjs` actually returns. It had drifted
@@ -147,6 +147,8 @@ export const SCREENS = [
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=observations` },
   { id: 'coach-player-development-archive', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=archive` },
+  { id: 'coach-development-handout', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}/development/handout` },
 
   // ── Practice plans (Phase 4 slice 1a/1b/2, QA pending) ──────────────────────
   // The hub (2026-08-15) — the list of practices and what still needs a plan. Added with the
@@ -452,6 +454,17 @@ export const SCREENS = [
    */
   { id: 'coach-history',             session: 'coach', path: (c) => `${team(c)}/history`,             ready: 'h1' },
   { id: 'coach-history-development', session: 'coach', path: (c) => `${team(c)}/history?section=development`, ready: 'h1' },
+  /* Development lifecycle Phase 3 (mockup screen 5): the Report selector's three reports, each with
+     the fixture populated — a test with attempts (the sprint), the RANGE test (the band, the filled
+     marks, the dashed average), the observed SKILL (a timeline, never a line) — and the handout. */
+  { id: 'coach-history-development-progress', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&report=progress&player=${c.receiptPlayerId}&metric=${c.measurableTypeId}` },
+  { id: 'coach-history-development-progress-range', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&report=progress&player=${c.receiptPlayerId}&metric=${c.rangeTypeId}` },
+  { id: 'coach-history-development-progress-skill', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&report=progress&player=${c.receiptPlayerId}&metric=${c.skillTypeId}` },
+  { id: 'coach-history-development-practices', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&report=practices` },
   { id: 'coach-history-results',     session: 'coach', path: (c) => `${team(c)}/history?section=results`,     ready: 'h1' },
   /**
    * ⚠ ADDED 2026-08-16 (archive rail Phase 2) — it was the one Insights door with NO rendered

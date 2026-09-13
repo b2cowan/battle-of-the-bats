@@ -10,7 +10,8 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
-import { formatValue, formatShortDate, formatWeekdayDate } from '@/lib/measurable-format';
+import { formatShortDate, formatWeekdayDate } from '@/lib/measurable-format';
+import { coverageCell, observationText } from '@/lib/development-report';
 import SessionScopeDialog, { type ScopeRosterRow, type ScopeEventOption } from '@/components/coaches/SessionScopeDialog';
 import { canManageSchedule, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
@@ -35,6 +36,8 @@ interface BoardRow {
   /** The HEADLINE of the latest session per test (Phase 2) — never the last row typed. */
   latest: Record<string, { value: number; unit: string; recordedOn: string; attempts: number; inRange: number | null }>;
   latestObservation?: Record<string, { descriptor: string | null; note: string | null; observedOn: string }>;
+  /** metric id → the date of the latest session that marked this player not assessed on it (Phase 3). */
+  notAssessedOn?: Record<string, string>;
 }
 interface BoardData { showGoals: boolean; showMeasurables: boolean; rows: BoardRow[] }
 
@@ -597,6 +600,8 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
                 const working = r.goals.filter(g => g.status === 'working').map(g => g.focusArea);
                 const latest = chosenType && !chosenIsSkill ? r.latest[chosenType.id] : undefined;
                 const latestObs = chosenType && chosenIsSkill ? r.latestObservation?.[chosenType.id] : undefined;
+                // The ONE cell spelling Insights → Coverage reads too: the headline, "Not assessed" dated by its session, or an absence.
+                const cell = coverageCell({ latest: latest ?? null, latestObservation: null, notAssessedOn: chosenType ? (r.notAssessedOn?.[chosenType.id] ?? null) : null }, chosenType ?? { kind: 'test', aim: 'record' });
                 const href = playerDevelopmentHref(base, r.playerId, chosenType
                   ? { view: chosenIsSkill ? 'observations' : 'results', metricId: chosenType.id, returnTo: here }
                   : { view: 'goals', returnTo: here });
@@ -610,7 +615,7 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
                     {chosenType && chosenIsSkill ? (
                       <>
                         <td data-label={chosenType.name}>
-                          {latestObs ? [latestObs.descriptor, latestObs.note].filter(Boolean).join(' — ') : <Muted>—</Muted>}
+                          {latestObs ? observationText(latestObs) : <Muted>—</Muted>}
                         </td>
                         <td data-label="Observed" className={styles.devBoardVal}>
                           {latestObs ? formatShortDate(latestObs.observedOn) : <Muted>not observed</Muted>}
@@ -619,16 +624,13 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
                     ) : chosenType ? (
                       <>
                         <td data-label={chosenType.name} className={styles.devBoardVal}>
-                          {/* The headline of the latest session: "8.05 seconds (best of 3)" · "2 of 3 in range" (Phase 2). */}
-                          {latest
-                            ? latest.inRange != null
-                              ? `${latest.inRange} of ${latest.attempts} in range`
-                              : `${formatValue(latest.value)} ${latest.unit}${latest.attempts > 1 ? ` (of ${latest.attempts})` : ''}`
-                            : <Muted>—</Muted>}
+                          {/* The headline of the latest session — "8.05 seconds (of 3)" · "2 of 3 in range" — in the
+                              coverage cell's one spelling (Phase 3: Insights → Coverage reads the same helper). */}
+                          {cell.state === 'recorded' ? cell.text : cell.state === 'not_assessed' ? <Muted>{cell.text}</Muted> : <Muted>—</Muted>}
                         </td>
                         {/* The date belongs to the metric chosen — never one "last eval" for everything (F12). */}
                         <td data-label="Recorded" className={styles.devBoardVal}>
-                          {latest ? formatShortDate(latest.recordedOn) : <Muted>not recorded</Muted>}
+                          {cell.on ? formatShortDate(cell.on) : <Muted>not recorded</Muted>}
                         </td>
                       </>
                     ) : (

@@ -6,7 +6,7 @@ import { Plus, X, Check, Settings2, Printer } from 'lucide-react';
 import TagPicker from '@/components/coaches/TagPicker';
 import { FOCUS_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
-import { playerDevelopmentHref, type DevelopmentAddress, type DevelopmentView } from '@/lib/development-address';
+import { playerDevelopmentHref, developmentHandoutHref, type DevelopmentAddress, type DevelopmentView } from '@/lib/development-address';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -24,10 +24,6 @@ import ReviewGoalDialog from '@/components/coaches/ReviewGoalDialog';
 import RecordObservationDialog from '@/components/coaches/RecordObservationDialog';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
-import {
-  buildFilename, DEFAULT_PDF_SETTINGS, downloadDevelopmentSummary, fetchResolvedPdfSettings,
-  type OrgPdfSettings,
-} from '@/lib/export';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
   RepTryoutBaselineSnapshot, RepPlayerObservation, RepDevelopmentGoalReview,
@@ -72,7 +68,11 @@ interface Props {
   orgSlug: string;
   teamId: string;
   playerId: string;
-  /** Identity + season lines for the printable summary (3D) — quoted from the page. */
+  /**
+   * Identity + season lines the old in-section PDF quoted from the page. The handout page (Phase 3)
+   * reads its own; these stay on the contract only until the player page's rebuild lands and both
+   * sides drop them together.
+   */
   playerName: string;
   playerNumber: string | null;
   teamName: string;
@@ -92,7 +92,7 @@ interface Props {
  * section (F16) — they are quoted from other homes, never owned here.
  */
 export default function PlayerDevelopmentSection({
-  orgSlug, teamId, playerId, playerName, playerNumber, teamName, seasonName, arrival, onArrived,
+  orgSlug, teamId, playerId, arrival, onArrived,
 }: Props) {
   const router = useRouter();
   const portalBase = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -213,11 +213,10 @@ export default function PlayerDevelopmentSection({
     };
   }, [data]);
 
-  // ── 3D: previous-seasons archive + the one-time carry-forward offer + print ──
+  // ── 3D: previous-seasons archive + the one-time carry-forward offer ──
   const [expandedSeasonId, setExpandedSeasonId] = useState<string | null>(null);
   const [carryBusy, setCarryBusy] = useState(false);
   const [carryErr, setCarryErr] = useState('');
-  const [printBusy, setPrintBusy] = useState(false);
 
   // Inline validation shown right beside the button the coach pressed — a button that
   // silently does nothing is not an answer (owner feedback, 2026-07-17).
@@ -599,53 +598,6 @@ export default function PlayerDevelopmentSection({
     window.setTimeout(() => {
       document.getElementById(`dev-archive-${priorRosterId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 50);
-  }
-
-  /**
-   * One-page family handout — current season only, no deltas, generated on this device (there is
-   * deliberately no shareable link). Phase 3 redraws it; here it only stops mis-counting attempts:
-   * ONE row per session with the headline and the attempts listed, never three rows for three sprints.
-   */
-  async function printSummary() {
-    if (printBusy || !data) return;
-    setPrintBusy(true);
-    setError('');
-    try {
-      const fetched = await fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`);
-      const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(fetched ?? {}) };
-      const measurableRows: { test: string; reading: string; date: string; note: string | null }[] = [];
-      for (const t of data.types) {
-        if (t.kind !== 'test') continue;
-        const rows = groupBySession(data.measurables.filter(e => e.measurableTypeId === t.id), t);
-        // Library order; each test's rows oldest→newest — a dated log, never a computed trend.
-        for (const r of [...rows].reverse()) {
-          const attemptsNote = r.attempts.length > 1 ? `attempts ${r.attempts.map(a => formatValue(a.value)).join(' · ')}` : null;
-          const notes = [attemptsNote, ...r.attempts.map(a => a.note).filter(Boolean)].filter(Boolean).join(' · ');
-          measurableRows.push({
-            test: t.name,
-            reading: headlineMethod(r, t) ? `${headlineLabel(r, t)} (${headlineMethod(r, t)})` : headlineLabel(r, t),
-            date: formatShortDate(r.recordedOn),
-            note: notes || null,
-          });
-        }
-      }
-      await downloadDevelopmentSummary(
-        buildFilename({ org: orgSlug, dataset: 'development', scope: playerName }, 'pdf'),
-        {
-          playerName,
-          playerNumber: playerNumber ? `#${playerNumber}` : null,
-          teamName,
-          seasonLabel: seasonName,
-          goals: data.goals.map(g => ({ focusArea: g.focusArea, status: STATUS_LABELS[g.status], note: g.note })),
-          measurables: measurableRows,
-          settings,
-        },
-      );
-    } catch {
-      setError("Couldn't build the PDF — try again.");
-    } finally {
-      setPrintBusy(false);
-    }
   }
 
   if (!data && !error) {
@@ -1253,14 +1205,17 @@ export default function PlayerDevelopmentSection({
         )
       )}
 
-      {/* ── Print summary (3D, M1) — a one-page, hand-delivered handout; current season only ── */}
-      {(data.goals.length > 0 || data.measurables.length > 0) && (
+      {/* ── The handout (3D, M1; Phase 3 screen 6) — a page of its own where the coach CHOOSES what
+          belongs in this conversation, previews the paper and prints it. Was "Print summary (PDF)",
+          which sent the whole log with no preview and no choice (F13). Carries the way back to this
+          view. Current season only; the old PDF's boundary unchanged. ── */}
+      {(data.goals.length > 0 || data.measurables.length > 0 || data.observations.length > 0) && (
         <div style={{ marginTop: '0.7rem' }}>
-          <button type="button" className={`btn btn-ghost ${styles.tapFloor}`}
-            style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-            disabled={printBusy} onClick={printSummary}>
-            <Printer size={13} /> {printBusy ? 'Building PDF…' : 'Print summary (PDF)'}
-          </button>
+          <Link href={developmentHandoutHref(portalBase, playerId, { returnTo: playerDevelopmentHref(portalBase, playerId, { view: activeView, returnTo: arrival.returnTo }) })}
+            className={`btn btn-ghost ${styles.tapFloor}`}
+            style={{ fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Printer size={13} /> Preview development handout
+          </Link>
         </div>
       )}
 

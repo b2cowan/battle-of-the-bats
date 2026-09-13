@@ -205,8 +205,11 @@ export const GET = withObservability(async (_req: Request,
     }
   }
 
-  // "Entered by" / "written by" — every record names who wrote it (owner ruling 2026-09-11).
+  // "Entered by" / "written by" — every record names who wrote it (owner ruling 2026-09-11). The
+  // caller is resolved through the SAME map (Phase 3: the handout reads "Prepared <date> · <coach>").
+  const viewerId = resolved.ctx.user.id;
   const authors = await getOrgMemberDisplayNames(resolved.ctx.org.id, [
+    viewerId,
     ...measurables.map(m => m.createdBy ?? ''), ...goals.map(g => g.createdBy ?? ''),
     ...observations.map(o => o.createdBy ?? ''), ...reviews.map(r => r.createdBy ?? ''),
   ]);
@@ -222,6 +225,7 @@ export const GET = withObservability(async (_req: Request,
     observations,
     reviews,
     authors,
+    viewerId,
     archive,
     carry,
     // The stored snapshot ONLY — never recomputed here. A rubric edited in September must not

@@ -357,6 +357,13 @@ const SITES: Site[] = [
     screen: 'Evaluation session', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
+    // Preview development handout (Phase 3, mockup screen 6) — ONE component draws the page. The way
+    // back is the arrow; Print / Save as PDF is an EXPORT and sits in the body (house rule 2), never
+    // in the header, even though the mockup drew it there.
+    file: 'components/coaches/DevelopmentHandoutPreview.tsx', occurrence: 0,
+    screen: 'Preview development handout', variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/drills/page.tsx', occurrence: 0,
     screen: 'Drills',
     variant: 'standard', helpHost: 'masthead',

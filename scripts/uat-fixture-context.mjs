@@ -259,6 +259,32 @@ export async function resolveUatContext() {
     );
   }
 
+  /**
+   * The RANGE test and the OBSERVED skill (development lifecycle Phase 3, fixture §16): the progress
+   * report draws a band for the first and a timeline for the second, and a sweep over the sprint
+   * alone would never open either drawing. Both fail loudly, like the sprint above.
+   */
+  const rangeType = await db.from('rep_team_measurable_types')
+    .select('id').eq('team_id', team.data.id).eq('aim', 'range')
+    .ilike('name', 'Changeup speed').limit(1).maybeSingle();
+  if (rangeType.error) throw new FixtureError(`range type lookup failed: ${rangeType.error.message}`);
+  if (!rangeType.data) {
+    throw new FixtureError(
+      'No range test "Changeup speed" on the probe team, so the progress chart\'s band cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+  const skillType = await db.from('rep_team_measurable_types')
+    .select('id').eq('team_id', team.data.id).eq('kind', 'skill')
+    .ilike('name', 'Sets feet before throwing').limit(1).maybeSingle();
+  if (skillType.error) throw new FixtureError(`skill type lookup failed: ${skillType.error.message}`);
+  if (!skillType.data) {
+    throw new FixtureError(
+      'No observed skill "Sets feet before throwing" on the probe team, so the observation timeline cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
   const evalSession = await db.from('rep_team_evaluation_sessions')
     .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
     .order('session_date', { ascending: false }).limit(1).maybeSingle();
@@ -370,6 +396,9 @@ export async function resolveUatContext() {
     scopedSessionId: scopedSession.data.id,
     /** The active "60-yd sprint" — a defined test WITH readings, so the editor's successor rule shows. */
     measurableTypeId: measurableType.data.id,
+    /** The range test and the observed skill the progress report draws (Phase 3). */
+    rangeTypeId: rangeType.data.id,
+    skillTypeId: skillType.data.id,
     /** One commitment, for the `?bill=` page — a `tournament_payable`, never a plain cost. */
     commitmentId: commitment.data.id,
     /** The opponent the scouting drill-in opens, taken from a real played game. */

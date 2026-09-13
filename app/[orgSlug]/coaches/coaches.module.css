@@ -13246,3 +13246,42 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .managerAddTitle { margin: 0 0 0.15rem; font-weight: 600; font-size: var(--type-body); color: var(--text-primary); }
 .managerAddUnfold { display: flex; flex-direction: column; gap: 0.35rem; padding-left: 0.75rem; border-left: 2px solid var(--home-olive-soft, rgba(255,255,255,0.12)); }
 .managerAddActions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
+/* ── Insights → Development: the Report selector and the three reports (development lifecycle
+   Phase 3, mockup screen 5). ONE labelled row of form controls under the seven tabs — never a third
+   row of tabs. Each field is the Players view's own labelled select (.field + .label + .select
+   .devToolbarControl); on a phone each is a labelled full-width control (plan §6). */
+.devReportToolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; align-items: flex-end; margin: 0 0 1rem; }
+.devReportToolbar .field { flex: 1 1 200px; min-width: 160px; max-width: 300px; }
+.devReportToolbar .select { min-width: 0; text-overflow: ellipsis; }
+@media (max-width: 640px) {
+  .devReportToolbar .field { flex: 1 1 100%; }
+}
+/* The answer in words — the one figure, its date, and the change since the first point. */
+.devReportAnswer { margin: 0.2rem 0 0.15rem; font-size: var(--type-body); color: var(--text-primary); line-height: 1.4; }
+.devReportAnswer strong { font-size: 1.35em; font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.devReportAnswerSub { color: var(--text-secondary); font-size: var(--type-body); font-weight: 500; }
+/* The explicit denominator above the coverage table — a sentence, not a figure. */
+.devReportDenominator { margin: 0.2rem 0 0.1rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); line-height: 1.4; }
+.devReportHead { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin: 0.6rem 0 0.2rem; }
+.devReportHead h2 { margin: 0; font-size: var(--type-heading); font-weight: 800; color: var(--text-primary); }
+/* The observation and goal-review timelines — dated entries, never joined by a line. */
+.devReportTimeline { list-style: none; margin: 0.4rem 0 0; padding: 0; display: grid; gap: 0.55rem; }
+.devReportTimeline li { padding: 0.6rem 0.8rem; border: 1px solid var(--border-2); border-radius: 10px; background: var(--card-bg); }
+.devReportTimeline time { display: block; font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); letter-spacing: 0.03em; }
+.devReportTimeline p { margin: 0.15rem 0 0; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.45; }
+.devReportTimeline p strong { color: var(--text-primary); }
+/* A link inside a table row — inline-block with VERTICAL padding only, so its tap floor never
+   overflows a card-reflowed cell sideways at 361px (the Phase 2 lesson). */
+.devReportRowLink {
+  display: inline-block; padding: 0.55rem 0; font-size: var(--type-support); font-weight: 600;
+  color: var(--blueprint-light); text-decoration: none; white-space: nowrap; min-height: var(--tap-min, 44px); line-height: 1.2;
+}
+.devReportRowLink:hover { text-decoration: underline; }
+
+/* The filter chips (the practice review's tag filter, the drill library, the template room) take
+   the touch floor on phone and tablet widths — the same rule .playerSwitch follows. Desktop keeps
+   the compact chip by the portal-wide decision. Closes the Phase 0 deferral on the Practice review
+   (development lifecycle Phase 3 restyles that report). */
+@media (max-width: 768px) {
+  .ppSuggestChip { min-height: var(--tap-min, 44px); padding-top: 0.3rem; padding-bottom: 0.3rem; }
+}

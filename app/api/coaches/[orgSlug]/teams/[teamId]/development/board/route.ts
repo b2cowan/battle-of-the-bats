@@ -6,6 +6,7 @@ import {
   getRepRosterPlayers,
   getRepTeamMeasurableTypes,
   getRepTeamMeasurablesForPlayers,
+  getRepTeamNotAssessedForPlayers,
   getRepTeamObservationsForPlayers,
   getRepTeamDevelopmentGoalsForPlayers,
   getRepTeamContinuityLinks,
@@ -124,7 +125,7 @@ export const GET = withObservability(async (req: Request,
   // season label. `years` is fetched once and shared with getPriorContinuityIdentities (which
   // otherwise fetches it internally) to avoid a duplicate round trip. No PII on the wire.
   const years = withHistory ? await getRepProgramYears(teamId) : [];
-  const [types, measurables, goals, observations, links, priorIdentitiesResult, practiceResult] = await Promise.all([
+  const [types, measurables, goals, observations, links, priorIdentitiesResult, practiceResult, notAssessedMarks] = await Promise.all([
     typesPromise,
     showMeasurables ? getRepTeamMeasurablesForPlayers(playerIds) : Promise.resolve([]),
     showGoals ? getRepTeamDevelopmentGoalsForPlayers(playerIds) : Promise.resolve([]),
@@ -133,6 +134,10 @@ export const GET = withObservability(async (req: Request,
     withHistory ? getRepTeamContinuityLinks(teamId) : Promise.resolve([]),
     withHistory ? getPriorContinuityIdentities(teamId, programYear.id, years) : Promise.resolve({ priorProgramYearIds: [], identities: [] }),
     practicesPromise,
+    // "Not assessed" is a session fact about a result that was not taken — it rides the results gate
+    // exactly as the readings do (Phase 3: the Coverage cell and the Players view read it, dated by
+    // the session that marked it).
+    showMeasurables ? getRepTeamNotAssessedForPlayers(playerIds) : Promise.resolve([]),
   ]);
   const priorIdentities = priorIdentitiesResult.identities;
   const practices = practiceResult.rows;
@@ -168,10 +173,15 @@ export const GET = withObservability(async (req: Request,
    * test's latest is its attempts in range (`inRange` of `attempts`); the screen says so.
    */
   const typeById = new Map((types as RepTeamMeasurableType[]).map(t => [t.id, t]));
+  /** The per-(player, metric) map every column below is bucketed into — one get-or-create, four callers. */
+  const perPlayer = <V,>(map: Map<string, Map<string, V>>, playerId: string): Map<string, V> => {
+    let perType = map.get(playerId);
+    if (!perType) { perType = new Map(); map.set(playerId, perType); }
+    return perType;
+  };
   const readingsByPlayer = new Map<string, Map<string, typeof measurables>>();
   for (const e of measurables) {
-    let perType = readingsByPlayer.get(e.playerId);
-    if (!perType) { perType = new Map(); readingsByPlayer.set(e.playerId, perType); }
+    const perType = perPlayer(readingsByPlayer, e.playerId);
     const list = perType.get(e.measurableTypeId) ?? [];
     list.push(e);
     perType.set(e.measurableTypeId, list);
@@ -184,8 +194,7 @@ export const GET = withObservability(async (req: Request,
       if (!def) continue;
       const latest = latestSessionResult(groupBySession(list, def));
       if (!latest || latest.headline == null) continue;
-      let perType = latestByPlayer.get(playerId);
-      if (!perType) { perType = new Map(); latestByPlayer.set(playerId, perType); }
+      const perType = perPlayer(latestByPlayer, playerId);
       const isRange = def.aim === 'range';
       perType.set(typeId, {
         // For a range test the cell is "k of N in range" — the numeric value is the average, for the line.
@@ -200,9 +209,16 @@ export const GET = withObservability(async (req: Request,
   // Latest OBSERVATION per (player, skill) — newest-first from the read, so first wins.
   const latestObservationByPlayer = new Map<string, Map<string, { descriptor: string | null; note: string | null; observedOn: string }>>();
   for (const o of observations) {
-    let perType = latestObservationByPlayer.get(o.playerId);
-    if (!perType) { perType = new Map(); latestObservationByPlayer.set(o.playerId, perType); }
+    const perType = perPlayer(latestObservationByPlayer, o.playerId);
     if (!perType.has(o.measurableTypeId)) perType.set(o.measurableTypeId, { descriptor: o.descriptor, note: o.note, observedOn: o.observedOn });
+  }
+  // The LATEST "not assessed" date per (player, metric) — the Coverage cell shows it only when no
+  // result was recorded for that metric at all; a result always wins (the cell's own rule).
+  const notAssessedByPlayer = new Map<string, Map<string, string>>();
+  for (const m of notAssessedMarks) {
+    const perType = perPlayer(notAssessedByPlayer, m.playerId);
+    const last = perType.get(m.measurableTypeId);
+    if (!last || m.sessionDate > last) perType.set(m.measurableTypeId, m.sessionDate);
   }
   const goalsByPlayer = new Map<string, { focusArea: string; status: string }[]>();
   for (const g of goals) {
@@ -239,6 +255,8 @@ export const GET = withObservability(async (req: Request,
       goals: goalsByPlayer.get(p.id) ?? [],
       latest: Object.fromEntries(latestByPlayer.get(p.id) ?? []),
       latestObservation: Object.fromEntries(latestObservationByPlayer.get(p.id) ?? []),
+      /** metric id → the date of the latest session that marked this player not assessed on it. */
+      notAssessedOn: Object.fromEntries(notAssessedByPlayer.get(p.id) ?? []),
       lastRecordedOn: lastRecordedByPlayer.get(p.id) ?? null,
       historyLinked: historyLabelFor(p),
       /**

@@ -416,6 +416,23 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
       'The dues document a coach can HAND ONE FAMILY: what that household was billed, payments received (with a thank-you), credits earned, what is left, and when the next payment falls due. Siblings share one statement; no other family appears. Two doors: a single family from the player’s drawer, or one PDF with every family on its own page for handing out.',
   },
   {
+    id: 'coaches-development-handout',
+    label: 'Coaches Portal — Development Handout',
+    module: 'coaches',
+    page: 'Preview development handout',
+    file: 'components/coaches/DevelopmentHandoutPreview.tsx',
+    formats: ['pdf'],
+    defaultFormat: 'pdf',
+    // NO PLAN GATE: development rides the coach capabilities (results on any record duty; goals and
+    // observations on Internal notes), and the handout applies the same gates as the screens.
+    audiences: ['coach'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: false,
+    serverSide: false,
+    helpSummary:
+      'The handout a coach can HAND ONE PLAYER for a development conversation: the goals the coach chose ("What we’re working on"), a recent observation, selected test results with the attempts behind them, a coach-written next step, and — on request — the full dated result log as an appendix. Current season only; no tryout material, no other players’ figures, no internal notes, no link, nothing sent. Was "Print summary (PDF)".',
+  },
+  {
     id: 'accounting-budget-vs-actual',
     label: 'Budget vs. Actual',
     module: 'accounting',

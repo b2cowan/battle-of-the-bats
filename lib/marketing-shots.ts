@@ -473,7 +473,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // class-substring guess.
     clip: '#development',
     width: 1280,
-    size: { w: 960, h: 715 },
+    size: { w: 960, h: 678 },
     takenAt: '2026-09-13',
     alt: 'One player’s development record on its Results view: the coach’s own tests — a sprint, exit velocity and a run to first — each showing the latest result, its date and a small line showing the direction of travel, with the sprint opened out to show both testing days, the three attempts taken on each with the best and the average, and the months between them.',
     caption: 'The same tests run again, every attempt kept — so “he’s improved” becomes two numbers and the months between them.',

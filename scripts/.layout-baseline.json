@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-13T15:25:07.353Z",
+  "generated": "2026-09-13T21:11:48.476Z",
   "entries": {
     "coach-development-session-scoped|768|tap-floor|button·Help: Skills & Goals": {
       "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
@@ -141,14 +141,6 @@
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "22px tall (floor 44)"
     },
-    "coach-history-development|361|tap-floor|button·All 4": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|button·No tags 4": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "22px tall (floor 44)"
-    },
     "coach-history-development|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -199,14 +191,6 @@
     },
     "coach-history-development|390|tap-floor|a·#12 Logan Test": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|button·All 4": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|button·No tags 4": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "22px tall (floor 44)"
     },
     "coach-development-session|768|tap-floor|button·Help: Skills & Goals": {
@@ -272,14 +256,6 @@
     "coach-history-development|768|tap-floor|a·#12 Logan Test": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "17px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|button·All 4": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-history-development|768|tap-floor|button·No tags 4": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "22px tall (floor 44)"
     },
     "coach-attendance|361|tap-floor|a·Take attendance": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
@@ -3560,6 +3536,90 @@
     "coach-depth-chart|768|tap-floor|button·A-squad": {
       "reason": "DEFERRED, not accepted — SHARED HELP CHROME. This is the portal-wide HelpTooltip \"?\" trigger (components/help/HelpTooltip.tsx), placed on the A-squad column header by the depth-chart three-states change (2026-09-12) so the star explains itself on tap rather than in a hover title. Its size is the shared component's, identical to the Positions picker's \"?\" on the player page and every other tooltip trigger in the portal, and it must be raised in the component, not one screen at a time. The board's OWN controls in this band (field cells, rank dropdown, cap input, Undo/Redo) were raised to 44px in the same change.",
       "detail": "16px tall (floor 44)"
+    },
+    "coach-development-handout|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-history-development-progress|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-progress-range|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-progress-skill|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-practices|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-handout|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-history-development-progress|390|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-progress-range|390|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-progress-skill|390|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-practices|390|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-handout|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-handout|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-handout|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-history-development-progress|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development-progress|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-progress-range|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development-progress-range|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-progress-skill|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development-progress-skill|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-practices|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development-practices|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
     }
   }
 }

@@ -963,31 +963,51 @@ export async function buildDocuments() {
     ],
   });
 
+  // The development HANDOUT (development lifecycle Phase 3, mockup screen 6): what the coach chose
+  // for one conversation — goals, a recent observation, selected results with the attempts behind
+  // them, a written next step — and the full dated log only as an appendix.
+  const HANDOUT = {
+    playerName: 'Maya Chen', playerNumber: '#7', teamName: TEAM, seasonLabel: SEASON,
+    preparedLine: 'Prepared Sep 11, 2026 · Coach Jordan',
+    goals: [
+      { focusArea: 'Throw with a settled base', success: 'A settled setup that repeats without a reminder during the partner drill.' },
+    ],
+    observations: [
+      { date: 'Sep 8', text: 'Independently — set feet before throwing without a cue during partner work.' },
+    ],
+    results: [
+      { test: '60-yd sprint', result: '8.05 seconds', date: 'Sep 8', note: 'Best of 3 attempts that day (8.12 · 8.05 · 8.2). Standing start on the same marked course.' },
+    ],
+    nextStep: 'Keep using the setup in partner practice.',
+    nextReviewOn: 'Sep 22',
+    log: null,
+  };
   doc({
     id: 'coach-development-summary',
-    label: 'Player development summary',
+    label: 'Player development handout',
     entry: 'downloadDevelopmentSummary',
     screens: [
-      'components/coaches/PlayerDevelopmentSection.tsx',
-      'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx',
+      'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/development/handout/page.tsx',
     ],
-    render: (name, settings) => downloadDevelopmentSummary(name, {
-      playerName: 'Maya Chen', playerNumber: '#7', teamName: TEAM, seasonLabel: SEASON,
-      goals: [
-        { focusArea: 'Backhand pickups', status: 'Working on it', note: 'Big improvement since July' },
-        { focusArea: 'First-pitch strikes (pitching)', status: 'Achieved', note: '68% over the last four outings' },
-      ],
-      measurables: [
-        { test: 'Home-to-first sprint', reading: '4.74 s', date: 'Aug 13, 2026', note: 'Best of the season' },
-        { test: 'Throwing velocity', reading: '55 mph', date: 'Aug 13, 2026', note: null },
-      ],
-      settings,
-    }),
+    render: (name, settings) => downloadDevelopmentSummary(name, { ...HANDOUT, settings }),
     edgeCases: [
-      // A player with nothing recorded yet — the shape a brand-new roster prints.
+      // The full dated log ticked — the appendix, one line per session per test, after the first page's numbers.
+      ['with-log', (name, settings) => downloadDevelopmentSummary(name, {
+        ...HANDOUT, settings,
+        log: [
+          { test: '60-yd sprint', lines: ['Aug 4 · best 8.4 of 3 (8.4 · 8.52 · 8.47)', 'Aug 18 · best 8.25 of 2 (8.31 · 8.25)', 'Aug 25 · best 8.1 of 3 (8.1 · 8.18 · 8.14)', 'Sep 8 · best 8.05 of 3 (8.12 · 8.05 · 8.2)'] },
+          { test: 'Changeup speed', lines: ['Aug 25 · 0 of 3 in range (60 · 70 · 61)', 'Sep 8 · 2 of 3 in range (66 · 70 · 64)'] },
+        ],
+      })],
+      // A coach without Internal notes: results only — the handout says nothing about goals or observations.
+      ['results-only', (name, settings) => downloadDevelopmentSummary(name, {
+        ...HANDOUT, settings, goals: [], observations: [], nextStep: null, nextReviewOn: null,
+      })],
+      // A player with nothing chosen yet — the shape a brand-new roster prints.
       ['nothing-recorded', (name, settings) => downloadDevelopmentSummary(name, {
         playerName: 'Declan O’Shaughnessy', playerNumber: '#22', teamName: TEAM, seasonLabel: SEASON,
-        goals: [], measurables: [], settings,
+        preparedLine: 'Prepared Sep 11, 2026 · Coach Jordan',
+        goals: [], observations: [], results: [], nextStep: null, nextReviewOn: null, log: null, settings,
       })],
     ],
   });

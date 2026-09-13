@@ -1,0 +1,88 @@
+/* ═══ Preview development handout (development lifecycle Phase 3, mockup screen 6) ═══
+   Two halves: what the coach CHOOSES (a form) and the paper it makes (a preview of the printed
+   sheet). The paper is white in either theme, because it previews paper — the two inks are
+   token-exempt for that reason and nothing else on this screen is. The tap floors this component
+   needs live HERE, in its own module (the Phase 2 lesson). */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── The choices ── */
+.choose {
+  display: flex; flex-direction: column; gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-2); border-radius: var(--radius);
+  background: var(--card-bg);
+}
+.chooseTitle { margin: 0; font-size: var(--type-heading); font-weight: 800; color: var(--text-primary); }
+.chooseSub { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+.group { margin: 0; padding: 0; border: 0; min-width: 0; }
+.group legend { padding: 0; margin-bottom: 0.3rem; font-size: var(--type-support); font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.choice {
+  display: flex; align-items: flex-start; gap: 0.55rem;
+  min-height: var(--tap-min, 44px); padding: 0.35rem 0;
+  font-size: var(--type-body); color: var(--text-primary); line-height: 1.4; cursor: pointer;
+}
+.choice input { margin-top: 0.3rem; flex: none; width: 1rem; height: 1rem; }
+.choiceMeta { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.sessionPick { margin-left: 1.6rem; display: flex; flex-direction: column; gap: 0.2rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.sessionPick select { max-width: 100%; }
+.nextStep { display: flex; flex-direction: column; gap: 0.3rem; font-size: var(--type-support); font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.nextStep textarea {
+  min-height: 5.5rem; padding: 0.55rem 0.7rem; resize: vertical;
+  border: 1px solid var(--border-2); border-radius: 8px; background: var(--white-8, var(--card-bg));
+  color: var(--text-primary); font: inherit; font-size: var(--type-body); font-weight: 400; text-transform: none; letter-spacing: 0;
+}
+.keepLink { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.keepLink a { color: var(--blueprint-light); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+.keepLink a:hover { text-decoration: underline; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.boundary { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+
+/* ── The paper ── */
+.paper {
+  --paper: #ffffff;        /* token-exempt: a print preview — paper is white in either theme */
+  --paper-ink: #1f1f24;    /* token-exempt: ink on the print preview's white paper */
+  --paper-muted: #5a5651;  /* token-exempt: quiet ink on the print preview's white paper (AA on white) */
+  --paper-line: #d9d6cf;   /* token-exempt: hairlines on the print preview's white paper */
+  background: var(--paper); color: var(--paper-ink);
+  padding: 1.6rem 1.8rem 1.4rem;
+  border: 1px solid var(--border-2); border-radius: 6px;
+  box-shadow: var(--shadow-lg);
+  max-width: 44rem; width: 100%; min-width: 0;
+  font-size: var(--type-body); line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .paper { padding: 1.1rem 1rem 1rem; }
+}
+.letterhead {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  padding-bottom: 0.6rem; margin-bottom: 0.9rem; border-bottom: 1px solid var(--paper-line);
+  font-weight: 700; font-size: var(--type-support); letter-spacing: 0.02em;
+}
+.letterhead img { height: 28px; width: auto; max-width: 96px; object-fit: contain; }
+.eyebrow { font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.08em; color: var(--paper-muted); }
+.name { margin: 0.1rem 0 0; font-size: var(--type-title, 1.4rem); font-weight: 800; line-height: 1.2; }
+.name span { font-weight: 500; color: var(--paper-muted); font-size: 0.75em; }
+.prepared { margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--paper-muted); }
+.section { margin-top: 1.1rem; }
+.section h3 { margin: 0 0 0.35rem; font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.06em; color: var(--paper-muted); }
+.section p { margin: 0 0 0.3rem; }
+.section table { width: 100%; border-collapse: collapse; margin-bottom: 0.35rem; }
+.section th, .section td { text-align: left; padding: 0.3rem 0.5rem 0.3rem 0; border-bottom: 1px solid var(--paper-line); vertical-align: top; }
+.section th { font-size: var(--type-support); color: var(--paper-muted); font-weight: 600; }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.hint { font-size: var(--type-support); color: var(--paper-muted); }
+.coachWords { padding-left: 0.75rem; border-left: 3px solid var(--paper-line); font-style: italic; }
+.log p { margin: 0 0 0.15rem; font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: var(--type-support); }
+.log strong { display: block; font-family: var(--font-sans, inherit); font-size: var(--type-body); margin-top: 0.5rem; }
+.paperFoot { margin-top: 1.4rem; padding-top: 0.6rem; border-top: 1px solid var(--paper-line); font-size: var(--type-support); color: var(--paper-muted); }
+.empty { margin: 0; color: var(--paper-muted); font-style: italic; }
