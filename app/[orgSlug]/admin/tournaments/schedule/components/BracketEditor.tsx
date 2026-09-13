@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle, Layers, Plus, Trash2 } from 'lucide-react';
 import { Division, Team, Venue, Tournament, Game, PlayoffTierConfig } from '@/lib/types';
 import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed } from '@/lib/playoff-bracket';
-import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
+import { hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
 import NumberStepper from '@/components/admin/NumberStepper';
@@ -77,7 +77,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
 
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const isPlayoffOnly = useMemo(() => resolveIsPlayoffOnly(tournament), [tournament]);
+  const isPlayoffOnly = useMemo(() => !resolveHasRoundRobin(tournament), [tournament]);
 
   // One bracketId for the whole bracket: the existing single id, else a fresh one.
   // Computed once on mount via a lazy initializer (no ref mutation in render).

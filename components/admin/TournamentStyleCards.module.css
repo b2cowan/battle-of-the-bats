@@ -1,0 +1,43 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.card {
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--white);
+  min-height: 44px;
+  font: inherit;
+}
+
+.cardSelected {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border-color: var(--logic-lime);
+}
+
+.title {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.desc {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--white-60);
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

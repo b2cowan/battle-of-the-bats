@@ -18,6 +18,8 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS } from '@/lib/types';
+import TournamentStyleCards from '@/components/admin/TournamentStyleCards';
+import { tournamentFormatCreatePatch } from '@/lib/tournament-phase';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
@@ -1428,12 +1430,13 @@ export default function OnboardingPage() {
         }),
       })));
 
-      // Bracket-only is stored as a tournament setting (default round-robin needs no write).
-      if (tournamentForm.format === 'playoff_only') {
+      // The style is a tournament setting; only the default (round robin + playoffs) needs no write.
+      const formatPatch = tournamentFormatCreatePatch(tournamentForm.format);
+      if (formatPatch) {
         await requestJson<{ success: boolean }>(`/api/admin/tournaments${orgParam}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'patch-settings', id: created.id, data: { settings: { format: 'playoff_only' } } }),
+          body: JSON.stringify({ action: 'patch-settings', id: created.id, data: formatPatch }),
         }).catch(() => { /* non-fatal: format can still be set in Event Settings */ });
       }
 
@@ -2095,30 +2098,10 @@ export default function OnboardingPage() {
 
             <div className={styles.fieldLabel}>
               Tournament style
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.35rem' }}>
-                {([
-                  { value: 'round_robin_playoffs', title: 'Round robin + playoffs', desc: 'Teams play a round robin, then a bracket seeded from the standings.' },
-                  { value: 'playoff_only', title: 'Bracket only', desc: 'No round robin — seed teams straight into a playoff bracket.' },
-                ] as const).map(opt => {
-                  const selected = (tournamentForm.format ?? 'round_robin_playoffs') === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setTournamentForm(form => ({ ...form, format: opt.value }))}
-                      style={{
-                        textAlign: 'left', padding: '0.7rem 0.8rem', borderRadius: 6, cursor: 'pointer',
-                        background: selected ? 'rgba(var(--logic-lime-rgb), 0.1)' : 'var(--surface)',
-                        border: `1px solid ${selected ? 'var(--logic-lime)' : 'var(--border)'}`,
-                        color: 'var(--white)',
-                      }}
-                    >
-                      <span style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem' }}>{opt.title}</span>
-                      <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--white-60)', marginTop: '0.2rem', lineHeight: 1.35 }}>{opt.desc}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <TournamentStyleCards
+                value={tournamentForm.format}
+                onChange={format => setTournamentForm(form => ({ ...form, format }))}
+              />
             </div>
 
             <label className={styles.fieldLabel}>

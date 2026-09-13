@@ -5,7 +5,7 @@ import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
-import { isPlayoffOnly } from '@/lib/tournament-phase';
+import { hasRoundRobin } from '@/lib/tournament-phase';
 import { isPublicBracketVisible } from '@/lib/public-pages';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
@@ -178,7 +178,7 @@ export default async function TournamentLayout({
   // (lifecycle + capacity aware). Skip the capacity queries entirely when the
   // register page is hidden, since there's no CTA to show then.
   // Bracket-only tournaments have no round-robin standings — hide that nav tab.
-  const navHiddenPages = isPlayoffOnly(tournament)
+  const navHiddenPages = !hasRoundRobin(tournament)
     ? Array.from(new Set([...(tournament.publicHiddenPages ?? []), 'standings' as const]))
     : (tournament.publicHiddenPages ?? []);
 

@@ -7,7 +7,7 @@ import { ExternalLink, X } from 'lucide-react';
 import { getHelpSections } from '@/lib/help-content/registry';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { isWithinEventDates } from '@/lib/tournament-phase';
+import { hasPlayoffs, isWithinEventDates } from '@/lib/tournament-phase';
 import { daysUntilStart, getStageShortcuts, resolveGuidanceStage, type TaskShortcut } from '@/lib/tournament-guidance';
 import type { HelpRequest } from './help-drawer-context';
 import HelpSectionBlock from './HelpSectionBlock';
@@ -119,7 +119,7 @@ export default function HelpDrawer({
       daysUntil: daysUntilStart(startDate),
     });
     if (!stage) return [];
-    return getStageShortcuts(stage, { orgSlug: currentOrg.slug, planId: currentOrg.planId });
+    return getStageShortcuts(stage, { orgSlug: currentOrg.slug, planId: currentOrg.planId, hasPlayoffs: hasPlayoffs(currentTournament) });
   }, [request, currentOrg, currentTournament]);
 
   if (!open || typeof document === 'undefined' || !request) return null;

@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isPublicBracketVisible, isPublicPageEnabled, type PublicPageKey } from '../../lib/public-pages.ts';
+import { isPublicBracketVisible, isPublicPageEnabled, visiblePublicPages, type PublicPageKey } from '../../lib/public-pages.ts';
 import { visibleTournamentTabs } from '../../lib/tournament-page-tabs.ts';
 
 /**
@@ -27,6 +27,43 @@ const roundRobin = (hidden: PublicPageKey[] = []) => ({
 const bracketOnly = (hidden: PublicPageKey[] = []) => ({
   publicHiddenPages: hidden,
   settings: { format: 'playoff_only' as const },
+});
+const exhibition = (hidden: PublicPageKey[] = []) => ({
+  publicHiddenPages: hidden,
+  settings: { format: 'exhibition' as const },
+});
+
+describe('an EXHIBITION event has standings and no bracket (2026-09-13)', () => {
+  test('Standings follows the organizer, exactly like a normal event', () => {
+    assert.equal(isPublicPageEnabled(exhibition(), 'standings'), true,
+      'Exhibition has a round robin, so its Standings page is not force-hidden by format');
+    assert.equal(isPublicPageEnabled(exhibition(['standings']), 'standings'), false,
+      'the existing Hide Standings switch is how a scrimmage day goes table-less (ruling D2)');
+    assert.deepEqual(visiblePublicPages(exhibition()).map(p => p.key), visiblePublicPages(roundRobin()).map(p => p.key));
+  });
+
+  test('the bracket itself is never visible, whatever the organizer hides — the /review-caught regression', () => {
+    // isPublicBracketVisible must check hasPlayoffs FIRST. Exhibition has a round robin, so
+    // without that guard this falls to the Standings-visibility branch and reads true by default —
+    // letting the direct-URL Playoffs page render "the bracket isn't set yet" on a format that
+    // will never set one, and letting a STALE division playoff_config (switching format only
+    // deletes games, never playoff_config) resurface a real bracket on the public site.
+    assert.equal(isPublicBracketVisible(exhibition()), false);
+    assert.equal(isPublicBracketVisible(exhibition(['standings'])), false);
+  });
+
+  test('no bracket is ever configured, so the Playoffs tab never appears — the tab rule needs no format branch', () => {
+    // The layout passes hasBracket=false because no division carries a playoff config; the tab
+    // list must not grow one for an Exhibition whatever the hidden-pages list says.
+    assert.ok(!visibleTournamentTabs([], false).some(t => t.key === 'playoffs'));
+    assert.ok(!visibleTournamentTabs(['standings'], false).some(t => t.key === 'playoffs'));
+  });
+
+  test('an unknown stored style reads as the default, never as the else-branch', () => {
+    const odd = { publicHiddenPages: [] as PublicPageKey[], settings: { format: 'jamboree' as unknown as 'exhibition' } };
+    assert.equal(isPublicPageEnabled(odd, 'standings'), true);
+    assert.equal(isPublicBracketVisible(odd), true);
+  });
 });
 
 describe('public bracket visibility', () => {

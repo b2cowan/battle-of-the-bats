@@ -3,7 +3,7 @@
 // decide what the public can see, which is exactly the kind of rule that should be pinned by tests
 // rather than only by rendering a page.
 import type { Tournament } from './types.ts';
-import { isPlayoffOnly } from './tournament-phase.ts';
+import { hasPlayoffs, hasRoundRobin } from './tournament-phase.ts';
 
 export const PUBLIC_PAGE_OPTIONS = [
   { key: 'news', label: 'News' },
@@ -25,8 +25,9 @@ export function normalizeHiddenPublicPages(value: unknown): PublicPageKey[] {
 }
 
 export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined, key: PublicPageKey): boolean {
-  // Bracket-only tournaments have no round-robin standings.
-  if (key === 'standings' && isPlayoffOnly(tournament)) return false;
+  // No round robin (bracket-only) means no standings to show. An Exhibition HAS a round robin, so
+  // its Standings page follows the organizer's choice like any other.
+  if (key === 'standings' && !hasRoundRobin(tournament)) return false;
   return !normalizeHiddenPublicPages(tournament?.publicHiddenPages).includes(key);
 }
 
@@ -49,17 +50,26 @@ export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPa
  * A bracket-only event therefore reads the organizer's RAW choice rather than the derived answer —
  * hiding Standings there is still respected as "hide the bracket", since it is the only lever they
  * have over it, but the format alone no longer suppresses it.
+ *
+ * ⚠ An Exhibition event (no playoffs at all, 2026-09-13) is checked FIRST and unconditionally: it
+ * has a round robin, so without this guard the function would fall to the Standings-visibility
+ * branch below and read `true` whenever Standings is public — the default state. That would let
+ * the direct-URL Playoffs page render its "the bracket isn't set yet" copy on a format that will
+ * never set one, and — the sharper case — let a division's PLAYOFF CONFIG survive a Draft-stage
+ * switch to Exhibition (switching formats only deletes games, never `divisions.playoff_config`)
+ * and resurface a real, stale bracket on the public site. `hasPlayoffs()` short-circuits both.
  */
 export function isPublicBracketVisible(
   tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined,
 ): boolean {
+  if (!hasPlayoffs(tournament)) return false;
   const hiddenByOrganizer = normalizeHiddenPublicPages(tournament?.publicHiddenPages).includes('standings');
-  if (isPlayoffOnly(tournament)) return !hiddenByOrganizer;
+  if (!hasRoundRobin(tournament)) return !hiddenByOrganizer;
   return isPublicPageEnabled(tournament, 'standings');
 }
 
 export function visiblePublicPages(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined) {
   const hidden = normalizeHiddenPublicPages(tournament?.publicHiddenPages);
-  const playoffOnly = isPlayoffOnly(tournament);
-  return PUBLIC_PAGE_OPTIONS.filter(page => !hidden.includes(page.key) && !(playoffOnly && page.key === 'standings'));
+  const noStandings = !hasRoundRobin(tournament);
+  return PUBLIC_PAGE_OPTIONS.filter(page => !hidden.includes(page.key) && !(noStandings && page.key === 'standings'));
 }

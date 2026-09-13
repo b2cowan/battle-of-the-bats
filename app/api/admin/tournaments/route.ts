@@ -7,6 +7,7 @@ import {
 } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
+import { TOURNAMENT_FORMAT_VALUES } from '@/lib/tournament-phase';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -601,7 +602,7 @@ export const POST = withObservability(async (req: Request) => {
         'roster_min_players',
         'roster_max_players',
       ]);
-      const FORMAT_VALUES           = new Set(['round_robin_playoffs', 'playoff_only']);
+      const FORMAT_VALUES           = new Set<string>(TOURNAMENT_FORMAT_VALUES);
       const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
       const RESOURCES_LAYOUT_VALUES = new Set(['list', 'grid']);
       const GAME_TIMING_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);

@@ -1,0 +1,620 @@
+<title>Exhibition Tournament Style</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;
+/* the product specimen — the tournament admin and public site render dark; tokens lifted from app/globals.css */
+--a-bg:#0b1020;--a-surface:#111a2e;--a-line:#26324d;--a-text:#f4f6fb;--a-muted:#9aa5bd;--a-lime:#d9f99d;--a-lime-ink:#1f2a08;--a-info:#7dd3fc;--a-warn:#f5c26b;--a-ok:#86efac;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h1[tabindex]:focus{outline:none}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted);text-align:right}
+main.hubsection{padding:0}
+.screen{padding:28px 36px 36px;background-image:linear-gradient(#e6e8de 1px,transparent 1px),linear-gradient(90deg,#e6e8de 1px,transparent 1px);background-size:22px 22px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.specimenlabel{display:inline-block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;padding:4px 9px;border-radius:4px;margin-bottom:10px}
+.specimenlabel.today{background:#eeeee9;color:#5c6658}.specimenlabel.after{background:var(--lime);color:#2b3f12}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.stack{display:grid;gap:20px}
+.panel{background:white;border:1px solid #c8d3dc;border-radius:12px;padding:16px 18px}
+.footnote{font-size:12px;color:var(--ink);margin:12px 0 0;padding:8px 12px;background:#f3f6ea;border:1px solid #d7e2c3;border-radius:8px;max-width:78ch}
+
+/* ── the product specimen (dark admin + dark public site) ── */
+.app{background:var(--a-bg);color:var(--a-text);border-radius:12px;padding:20px 22px;border:1px solid #1f2a44;font-size:14px}
+.app .lab{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:800;color:#c9d1e3;margin:14px 0 6px}
+.app .lab:first-child{margin-top:0}
+.field{background:var(--a-surface);border:1px solid var(--a-line);border-radius:8px;padding:11px 13px;font-size:15px;min-height:44px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wizhead{display:flex;align-items:center;gap:14px;font-size:11px;letter-spacing:1.5px;font-weight:800;color:var(--a-lime)}
+.bar{flex:1;height:4px;background:var(--a-line);border-radius:2px;overflow:hidden}.bar i{display:block;width:20%;height:100%;background:var(--a-lime)}
+.wiztitle{font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--a-lime);font-weight:800;margin:14px 0 2px}
+.wizsub{color:var(--a-muted);font-size:14px;margin-bottom:6px}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.opts.twoup{grid-template-columns:1fr 1fr}
+.opt{position:relative;text-align:left;padding:12px 14px;border-radius:8px;background:var(--a-surface);border:1px solid var(--a-line);color:var(--a-text);min-height:44px}
+.opt.on{background:rgba(217,249,157,.1);border-color:var(--a-lime)}
+.opt b{display:block;font-size:14px}.opt small{display:block;font-size:12px;color:var(--a-muted);margin-top:4px;line-height:1.4}
+.hint{color:var(--a-muted);font-size:13px;margin:8px 0 0}
+/* admin schedule */
+.pagehead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pagehead h2{margin:0;font-size:20px;letter-spacing:-.4px}
+.tb{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 14px}
+.tb .grow{flex:1}
+.aseg{display:inline-flex;border:1px solid var(--a-line);border-radius:8px;overflow:hidden;background:var(--a-surface)}
+.aseg span{padding:9px 14px;font-weight:700;font-size:13px;min-height:40px;display:flex;align-items:center}.aseg span.on{background:var(--a-lime);color:var(--a-lime-ink)}
+.aseglab{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--a-muted);font-weight:800;margin-right:4px}
+.abtn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;border-radius:8px;border:1px solid var(--a-line);background:var(--a-surface);font-weight:700;font-size:13px;color:var(--a-text)}
+.abtn.lime{background:var(--a-lime);color:var(--a-lime-ink);border-color:var(--a-lime)}
+.sel{background:var(--a-surface);border:1px solid var(--a-line);border-radius:8px;padding:8px 32px 8px 12px;min-height:40px;display:inline-flex;align-items:center;font-weight:600;position:relative}
+.sel::after{content:'⌄';position:absolute;right:11px;top:6px;color:var(--a-muted)}
+.callout{background:#101a30;border:1px solid #2b3a5c;border-left:3px solid var(--a-info);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.5}
+.callout b{display:block;color:#fff;margin-bottom:3px}
+.games{margin-top:14px;border:1px solid var(--a-line);border-radius:10px;overflow:hidden}
+.gday{padding:8px 14px;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;color:var(--a-muted);background:var(--a-surface)}
+.grow2{display:grid;grid-template-columns:96px 1fr auto;gap:12px;padding:11px 14px;border-top:1px solid var(--a-line);align-items:center;font-size:14px}
+.grow2 .t{font-variant-numeric:tabular-nums;color:#c9d1e3;font-weight:700}.grow2 .v{color:var(--a-muted);font-size:12px;white-space:nowrap}
+.score{font-variant-numeric:tabular-nums;font-weight:800;margin-left:8px}
+/* dashboard */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.4px}
+.pill.live{background:rgba(245,194,107,.15);color:var(--a-warn);border:1px solid rgba(245,194,107,.5)}
+.pill.ready{background:rgba(134,239,172,.15);color:var(--a-ok);border:1px solid rgba(134,239,172,.5)}
+.gcard{background:var(--a-surface);border:1px solid var(--a-line);border-radius:12px;padding:16px 18px;margin-top:12px}
+.gcard .eyebrow{color:var(--a-muted)}
+.gcard h3{margin:4px 0 6px;font-size:17px;color:#fff}
+.gcard p{color:#c9d1e3;font-size:13px}
+.shortcuts{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.shortcuts li{font-size:13px;color:#c9d1e3;padding-left:14px;position:relative}.shortcuts li::before{content:'→';position:absolute;left:0;color:var(--a-muted)}
+.substats{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--a-muted);margin-top:10px}.substats b{color:#fff;font-variant-numeric:tabular-nums}
+/* public site */
+.pub{background:#0a1226;color:#f4f6fb;border-radius:12px;padding:0;border:1px solid #1f2a44;overflow:hidden;font-size:14px}
+.pubhead{padding:16px 20px 10px;border-bottom:1px solid #1f2a44}
+.pubhead b{font-size:18px;letter-spacing:-.3px}.pubhead small{display:block;color:var(--a-muted);font-size:12px;margin-top:2px}
+.ptabs{display:flex;gap:18px;padding:0 20px;border-bottom:1px solid #1f2a44;overflow:auto;white-space:nowrap}
+.ptabs span{padding:10px 0;font-size:13px;color:var(--a-muted);border-bottom:2px solid transparent;min-height:40px;display:flex;align-items:center}.ptabs span.on{color:#fff;border-bottom-color:var(--a-lime);font-weight:700}
+.pubbody{padding:14px 20px 18px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.chip{padding:7px 12px;border-radius:999px;border:1px solid var(--a-line);background:var(--a-surface);font-size:12px;font-weight:700;min-height:36px;display:flex;align-items:center}.chip.on{background:var(--a-lime);color:var(--a-lime-ink);border-color:var(--a-lime)}
+.empty{padding:22px;text-align:center;color:var(--a-muted);border:1px dashed var(--a-line);border-radius:10px;font-size:13px}
+/* event settings */
+.card{background:var(--a-surface);border:1px solid var(--a-line);border-radius:12px;overflow:hidden}
+.cardhead{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--a-line)}
+.cardhead b{font-size:15px}.cardhead small{color:var(--a-muted);font-size:12px}
+.cardbody{padding:14px 16px}
+.rowhead{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.desc{color:var(--a-muted);font-size:13px;margin:8px 0 0;line-height:1.5}
+.lock{color:var(--a-muted);font-size:12px;margin-top:6px;font-style:italic}
+.dlg{margin-top:12px;background:#0f1730;border:1px solid #2b3a5c;border-radius:10px;padding:12px 14px;font-size:13px;color:#c9d1e3}
+.dlg b{display:block;color:#fff;margin-bottom:4px}
+
+@container(max-width:700px){.screen{padding:18px 14px 24px}.two{grid-template-columns:1fr}.opts,.opts.twoup{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.brandbar{padding:12px 16px;gap:8px 15px}.team{margin-left:0;text-align:left}.grow2{grid-template-columns:72px 1fr;grid-auto-rows:auto}.grow2 .v{grid-column:2}.tb .grow{display:none}.wiztitle{font-size:19px;letter-spacing:1.4px}}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}.docpage th{background:var(--soft)}
+.docpage ul{padding-left:22px}.docpage li{margin-bottom:5px}
+.tablewrap{overflow-x:auto}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.open{background:#fff7dc;border-color:#e6cf7a}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4;white-space:nowrap}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Exhibition — a third tournament style — project hub</strong><br><small>D1–D4 ruled 2026-09-13 · built on dev the same day (no migration) · /simplify + /review (1 real defect found and fixed) + /docs done · QA walk ready on the tab at the right · ledger §184</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup round 1 published to this artifact 2026-09-13, after the owner's assessment question over the setup wizard the same day; D1 + D2 ruled in chat before the mockup was drawn">Design</li>
+    <li class="stage done" title="Plan + PM brief drafted 2026-09-13 (TOURNAMENT_EXHIBITION_FORMAT_PLAN.md / _PM_BRIEF.md); owner accepted D3 + D4 as recommended the same day">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-13 — no migration; the format value + two predicates, a shared style-cards component for both wizards, the three pickers, the admin schedule, dashboard, public schedule, help drawer and help copy; 21 unit tests across two files; typecheck, lint, spelling / CSS-purity / selector / token gates and check:demos clean at hand-off (uncommitted at publish time)">Build</li>
+    <li class="stage done" title="/simplify (4 lenses) fixed a duplicated format-write block across both wizards, two dead default props, and a literal-comparison ternary in Event settings. /review (high-risk, 5 lenses incl. a gap-fill pass) found and fixed one real defect confirmed by three independent lenses: the public bracket-visibility check had no Exhibition case and could show a real or stale bracket on a format that must never have one — closed with a hasPlayoffs guard + a direct regression test — plus one tautological test assertion. /docs added Exhibition to help search coverage (existed in prose only) and widened one FAQ's exceptions sentence. 23 unit tests, 3,869/3,869 full suite, all gates clean. Awaiting commit.">Review</li>
+    <li class="stage current" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#screen-picker">1 · Tournament style</a>
+    <a href="#screen-schedule">2 · Admin schedule</a>
+    <a href="#screen-dashboard">3 · Dashboard, game day</a>
+    <a href="#screen-public">4 · Public schedule</a>
+    <a href="#screen-settings">5 · Event settings</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team"><strong style="color:var(--ink)">UAT Standalone Team Coaches Portal</strong> · Tournament admin · Fall Scrimmage Day, Sat Sep 19 2026<br><span class="meta">A standalone Premium head coach running a one-day exhibition — sample data</span></div>
+    </header>
+    <main>
+
+      <!-- ─────────── 1 · TOURNAMENT STYLE ─────────── -->
+      <section class="screen" id="screen-picker">
+        <div class="head"><div><div class="eyebrow">Tournaments · Create · Step 1 of 5</div><h1 tabindex="-1">The style picker — two cards become three</h1><p class="sub">The same step as the owner's screenshot. The org sign-up wizard shows the identical cards; Event settings gets the third segment on screen 5.</p></div></div>
+        <div class="stack">
+          <div class="panel">
+            <span class="specimenlabel today">Today — as built</span>
+            <div class="app">
+              <div class="wizhead">STEP 1/5 <span class="bar"><i></i></span></div>
+              <div class="wiztitle">Create your tournament</div>
+              <div class="wizsub">Start with core tournament details. The tournament stays private as a draft.</div>
+              <div class="lab">Tournament name</div>
+              <div class="field">Fall Scrimmage Day</div>
+              <div class="lab">Tournament style <button class="fl" data-finding="F01" data-here="Two cards. A coach setting up four scrimmages picks the left one because it is the default and the right one is plainly wrong — and from that moment the product believes a bracket is coming.">F01</button></div>
+              <div class="opts twoup">
+                <div class="opt on"><b>Round robin + playoffs</b><small>Teams play a round robin, then a bracket seeded from the standings.</small></div>
+                <div class="opt"><b>Bracket only</b><small>No round robin — seed teams straight into a playoff bracket.</small></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <span class="specimenlabel after">Proposed — three styles</span>
+            <div class="app">
+              <div class="wizhead">STEP 1/5 <span class="bar"><i></i></span></div>
+              <div class="wiztitle">Create your tournament <span class="mk" data-k="un" data-note="The step's header, progress bar, name and date fields, the orientation blurb and the public-link field are drawn as today. Only the style block changes.">Unchanged</span></div>
+              <div class="wizsub">Start with core tournament details. The tournament stays private as a draft.</div>
+              <div class="lab">Tournament name</div>
+              <div class="field">Fall Scrimmage Day</div>
+              <div class="fields">
+                <div><div class="lab">Start date</div><div class="field">2026-09-19</div></div>
+                <div><div class="lab">End date</div><div class="field">2026-09-19</div></div>
+              </div>
+              <div class="lab">Tournament style <span class="mk" data-k="re" data-note="The cards sit three across on desktop (the grid was two across) and stack one per row under 700px, so each card keeps its full sentence and the 44px tap floor on a phone.">Restyled</span></div>
+              <div class="opts">
+                <div class="opt"><b>Round robin + playoffs</b><small>Teams play a round robin, then a bracket seeded from the standings.</small></div>
+                <div class="opt"><b>Bracket only</b><small>No round robin — seed teams straight into a playoff bracket.</small></div>
+                <div class="opt on"><b>Exhibition <span class="mk" data-k="new" data-note="The third style. Its sentence names the two things a coach asks about — games and standings stay, the bracket goes — and the two occasions it is for. The word is the one already on the marketing page and the coach portal's set-up card (ruling D1).">New</span></b><small>Games and standings, no playoff bracket — for a scrimmage day or an exhibition weekend.</small> <button class="fl fix" data-finding="F01" data-here="Three cards, one of which is the day the coach is actually planning. Picking it is what tells every later screen not to promise a bracket.">fixes F01</button></div>
+              </div>
+              <div class="lab">Public link</div>
+              <div class="field">fall-scrimmage-day</div>
+            </div>
+            <p class="footnote"><strong>Where else the same choice lives:</strong> the org sign-up wizard (identical three cards) and Event settings → Schedule Rules (screen 5). One value, three doors — the same as the two styles today.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 2 · ADMIN SCHEDULE ─────────── -->
+      <section class="screen" id="screen-schedule" hidden>
+        <div class="head"><div><div class="eyebrow">Tournaments · Schedule</div><h1 tabindex="-1">The Schedule page for an Exhibition</h1><p class="sub">Top: the empty state a coach meets first. Bottom: the same page with four scrimmages typed in by hand — the plan this coach is on has no generator.</p></div></div>
+        <div class="two">
+          <div class="panel">
+            <span class="specimenlabel today">Today — as built</span>
+            <div class="app">
+              <div class="pagehead"><h2>Schedule</h2><span class="sel">12U</span></div>
+              <div class="tb">
+                <span class="aseglab">Stage</span><span class="aseg"><span class="on">Round Robin</span><span>Playoffs <button class="fl" data-finding="F02" data-here="The Playoffs side of this switch is empty for an exhibition and offers a Build Bracket button in the header slot. The switch itself tells the coach a second stage exists.">F02</button></span></span>
+                <span class="aseglab">View</span><span class="aseg"><span class="on">List</span><span>Timeline</span></span>
+                <span class="grow"></span>
+                <span class="abtn">⇩ Export</span><span class="abtn lime">+ Add Game</span>
+              </div>
+              <div class="callout"><b>No games scheduled yet</b>Build your schedule by adding games manually, or use the Playoff Bracket Builder to seed a bracket. The Round-Robin Generator is available with Tournament Plus or higher. <button class="fl" data-finding="F02" data-here="This is the sentence a standalone coach reads on their first visit. Half of it is about a bracket builder they will never open.">F02</button></div>
+            </div>
+          </div>
+          <div class="panel">
+            <span class="specimenlabel after">Proposed</span>
+            <div class="app">
+              <div class="pagehead"><h2>Schedule</h2><span class="sel">12U</span></div>
+              <div class="tb">
+                <span class="aseglab">View</span><span class="aseg"><span class="on">List</span><span>Timeline</span></span> <span class="mk" data-k="re" data-note="The Stage switch (Round Robin | Playoffs) does not render for an Exhibition, on the phone row or the desktop control; the page stays on its one list of games, the same way a bracket-only event stays on its bracket today. The View control loses its Bracket option because there is nothing to draw.">Restyled</span> <button class="fl fix" data-finding="F02" data-here="One list of games. No stage to switch to, no Build Bracket in the header slot, no Bracket PDF in Export.">fixes F02</button>
+                <span class="grow"></span>
+                <span class="abtn">⇩ Export</span><span class="abtn lime">+ Add Game <span class="mk" data-k="un" data-note="Add Game stays the header primary in every state of an Exhibition; today it is hidden on the Playoffs stage, which no longer exists here.">Unchanged</span></span>
+              </div>
+              <div class="callout"><b>No games scheduled yet</b>Add your games by hand — a day of scrimmages is a handful of rows. The Round-Robin Generator can build them from your teams with Tournament Plus. <span class="mk" data-k="new" data-note="Exhibition-specific empty state. The Plus sentence appears only when the plan lacks the generator; on Tournament Plus and above it reads 'or use the Round-Robin Generator to build them from your teams.'">New</span></div>
+              <div class="games">
+                <div class="gday">Saturday, Sep 19 · Field 1 &amp; Field 2</div>
+                <div class="grow2"><span class="t">9:00 a.m.</span><span>UAT Ridge 12U vs Hilltop Hawks</span><span class="v">Field 1</span></div>
+                <div class="grow2"><span class="t">10:30 a.m.</span><span>UAT Ridge 12U vs Lakeside Loons</span><span class="v">Field 1</span></div>
+                <div class="grow2"><span class="t">12:00 p.m.</span><span>Hilltop Hawks vs Lakeside Loons</span><span class="v">Field 1</span></div>
+                <div class="grow2"><span class="t">1:30 p.m.</span><span>UAT Ridge 12U vs Hilltop Hawks</span><span class="v">Field 2</span></div>
+              </div>
+              <p class="hint">Schedule Health reads <em>12U · Saved games</em> rather than <em>Saved round robin</em>. <span class="mk" data-k="re" data-note="The health panel's subtitle names the stage it measured; for an Exhibition there is one stage, so it says 'games'.">Restyled</span></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 3 · DASHBOARD ─────────── -->
+      <section class="screen" id="screen-dashboard" hidden>
+        <div class="head"><div><div class="eyebrow">Tournaments · Dashboard · Saturday, 3:10 p.m. — the last score just went in</div><h1 tabindex="-1">The "what's next" card and the status pill</h1><p class="sub">Four games, four finals entered. What the dashboard says at that moment is the difference between "you're done" and "come back tomorrow".</p></div></div>
+        <div class="two">
+          <div class="panel">
+            <span class="specimenlabel today">Today — as built</span>
+            <div class="app">
+              <div class="pagehead"><h2>Fall Scrimmage Day</h2><span class="pill live">● Live <button class="fl" data-finding="F03" data-here="The pill stays on Live for the rest of the day. 'Ready to finalize' needs at least one playoff game to exist, and an exhibition has none.">F03</button></span></div>
+              <div class="substats"><span><b>4/4</b> Games resolved</span><span><b>4/4</b> Pool games</span></div>
+              <div class="gcard">
+                <div class="eyebrow">What's next</div>
+                <h3>It's game day — here's your live view</h3>
+                <p>The scores you enter flow straight to your public site and standings as you go, so coaches and families can follow along.</p>
+                <span class="abtn lime">Enter &amp; review scores</span>
+                <ul class="shortcuts">
+                  <li>Enter or fix a score</li>
+                  <li>View the playoff bracket <button class="fl" data-finding="F04" data-here="A shortcut to a bracket that does not exist, on the card the coach reads all day. Before the event the same list says 'Set up a playoff bracket'.">F04</button></li>
+                  <li>Check who's checked in</li>
+                  <li>Send an update to teams</li>
+                </ul>
+              </div>
+              <p class="hint">The close-out card arrives tomorrow, when the calendar says the event has ended. <button class="fl" data-finding="F03" data-here="On a one-day event, 'event ended' means the day after. The coach who scored the last game at 3 p.m. finds the finalize prompt on Sunday.">F03</button></p>
+            </div>
+          </div>
+          <div class="panel">
+            <span class="specimenlabel after">Proposed</span>
+            <div class="app">
+              <div class="pagehead"><h2>Fall Scrimmage Day</h2><span class="pill ready">✓ Ready to finalize <button class="fl fix" data-finding="F03" data-here="For an Exhibition, every game resolved IS ready — there is no bracket to wait for. The safeguard that stops a round robin from tripping this early stays exactly as it is for the two bracket formats.">fixes F03</button></span></div>
+              <div class="substats"><span><b>4/4</b> Games resolved</span><span><b>4/4</b> Pool games <span class="mk" data-k="un" data-note="The game counters are unchanged. The 'Playoff games' counter and the By-Division 'Playoffs underway / complete' footer already render only when playoff games exist, so they never appear here today either.">Unchanged</span></span></div>
+              <div class="gcard">
+                <div class="eyebrow">What's next</div>
+                <h3>Every game's in — ready to finalize</h3>
+                <p>Every score is final. Mark the tournament complete to lock in your results and standings. <button class="fl fix" data-finding="F06" data-here="The champions sentence is dropped for an Exhibition. The two bracket formats keep 'Your champions are decided and every score is final.'">fixes F06</button></p>
+                <span class="abtn lime">Mark tournament complete</span>
+                <ul class="shortcuts">
+                  <li>Confirm all scores are final</li>
+                  <li>Mark the tournament complete</li>
+                  <li>Export results &amp; schedule</li>
+                  <li>Share the public results link</li>
+                </ul>
+              </div>
+              <p class="hint">Before the event, the card's shortcut "Set up a playoff bracket" reads <strong>Add your games</strong>; on game day "View the playoff bracket" reads <strong>Print today's schedule</strong>. <button class="fl fix" data-finding="F04" data-here="The two bracket shortcuts get an Exhibition alternative that points at something this coach will actually do. The other two shortcuts on each list are unchanged.">fixes F04</button></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 4 · PUBLIC SCHEDULE ─────────── -->
+      <section class="screen" id="screen-public" hidden>
+        <div class="head"><div><div class="eyebrow">Public site · Schedule · what a parent opens on Saturday morning</div><h1 tabindex="-1">The public Schedule for an Exhibition</h1><p class="sub">The overview, standings and team pages already cope with an event that has no bracket. The schedule page is the one that still promises one.</p></div></div>
+        <div class="two">
+          <div class="panel">
+            <span class="specimenlabel today">Today — as built</span>
+            <div class="pub">
+              <div class="pubhead"><b>Fall Scrimmage Day</b><small>Hosted by UAT Standalone Team Coaches Portal · Sat, Sep 19, 2026</small></div>
+              <div class="ptabs"><span>Overview</span><span class="on">Schedule</span><span>Standings</span><span>Teams</span></div>
+              <div class="pubbody">
+                <div class="chips"><span class="aseg"><span class="on">Pool Play</span><span>Playoffs <button class="fl" data-finding="F05" data-here="Tap Playoffs and the page says 'No playoff games yet'. A parent reads that as a stage that is coming later in the day.">F05</button></span></span></div>
+                <div class="chips"><span class="chip on">Sat Sep 19</span></div>
+                <div class="games">
+                  <div class="grow2"><span class="t">9:00 a.m.</span><span>UAT Ridge 12U vs Hilltop Hawks <span class="score">7–4</span></span><span class="v">Field 1 · Final</span></div>
+                  <div class="grow2"><span class="t">10:30 a.m.</span><span>UAT Ridge 12U vs Lakeside Loons</span><span class="v">Field 1 · Live</span></div>
+                  <div class="grow2"><span class="t">12:00 p.m.</span><span>Hilltop Hawks vs Lakeside Loons</span><span class="v">Field 1</span></div>
+                  <div class="grow2"><span class="t">1:30 p.m.</span><span>UAT Ridge 12U vs Hilltop Hawks</span><span class="v">Field 2</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <span class="specimenlabel after">Proposed</span>
+            <div class="pub">
+              <div class="pubhead"><b>Fall Scrimmage Day</b><small>Hosted by UAT Standalone Team Coaches Portal · Sat, Sep 19, 2026</small></div>
+              <div class="ptabs"><span>Overview</span><span class="on">Schedule</span><span>Standings <span class="mk" data-k="un" data-note="Standings stay on the public site for an Exhibition — it still has a table. A coach who wants a pure scrimmage day with no table hides the Standings page under Public pages, which already exists (ruling D2). A Playoffs tab never appears because it needs a bracket, which is already how the tab works today.">Unchanged</span></span><span>Teams</span></div>
+              <div class="pubbody">
+                <div class="chips"><span class="chip on">Sat Sep 19</span> <button class="fl fix" data-finding="F05" data-here="No stage switch — the day chips and the list are the whole page. The phone row and the desktop control both go, the same way they already go for a bracket-only event.">fixes F05</button></div>
+                <div class="games">
+                  <div class="grow2"><span class="t">9:00 a.m.</span><span>UAT Ridge 12U vs Hilltop Hawks <span class="score">7–4</span></span><span class="v">Field 1 · Final</span></div>
+                  <div class="grow2"><span class="t">10:30 a.m.</span><span>UAT Ridge 12U vs Lakeside Loons</span><span class="v">Field 1 · Live</span></div>
+                  <div class="grow2"><span class="t">12:00 p.m.</span><span>Hilltop Hawks vs Lakeside Loons</span><span class="v">Field 1</span></div>
+                  <div class="grow2"><span class="t">1:30 p.m.</span><span>UAT Ridge 12U vs Hilltop Hawks</span><span class="v">Field 2</span></div>
+                </div>
+              </div>
+            </div>
+            <p class="footnote"><strong>Already right, nothing to build:</strong> the overview finishes a no-bracket event on its own once every game is final and the day has passed; the Playoff Picture, the "first playoff game in…" countdown, the champions page and the "Top N advance" line are all behind a bracket existing; the "Playoffs are set" fan push fires only when a bracket is built.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 5 · EVENT SETTINGS ─────────── -->
+      <section class="screen" id="screen-settings" hidden>
+        <div class="head"><div><div class="eyebrow">Tournaments · Settings · Event · Schedule Rules</div><h1 tabindex="-1">The Tournament Format control</h1><p class="sub">The third door to the same value. Locked once the event leaves Draft, exactly as today.</p></div></div>
+        <div class="two">
+          <div class="panel">
+            <span class="specimenlabel today">Today — as built</span>
+            <div class="app">
+              <div class="card">
+                <div class="cardhead"><b>Schedule Rules</b><small>Round robin + playoffs · 60m games</small></div>
+                <div class="cardbody">
+                  <div class="rowhead"><span class="lab" style="margin:0">Tournament Format <button class="fl" data-finding="F01" data-here="Two segments. The description under the control explains the two shapes; neither is a day of scrimmages.">F01</button></span><span class="aseg"><span class="on">Round robin + playoffs</span><span>Bracket only</span></span></div>
+                  <p class="desc">Teams play a round robin, then the top teams advance to a playoff bracket seeded from the standings.</p>
+                  <p class="lock">The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <span class="specimenlabel after">Proposed</span>
+            <div class="app">
+              <div class="card">
+                <div class="cardhead"><b>Schedule Rules</b><small>Exhibition · 60m games <span class="mk" data-k="re" data-note="The card's collapsed summary names the format in one word, as it does for the two styles today.">Restyled</span></small></div>
+                <div class="cardbody">
+                  <div class="rowhead"><span class="lab" style="margin:0">Tournament Format</span><span class="aseg"><span>Round robin + playoffs</span><span>Bracket only</span><span class="on">Exhibition <span class="mk" data-k="new" data-note="A third segment. Same control, same lock rule, same confirm-and-clear behaviour when a Draft already has games (ruling D3 keeps that rule).">New</span></span></span> <button class="fl fix" data-finding="F01" data-here="The same three choices as the wizard, so a coach who picked the wrong card on step 1 can correct it here while the event is still a Draft.">fixes F01</button></div>
+                  <p class="desc">No playoffs — every game is a stand-alone game. Standings still run; hide the Standings page under Public pages if you don't want a table. <span class="mk" data-k="new" data-note="The Exhibition description. Its second sentence is the D2 ruling written where the coach will look for it.">New</span></p>
+                  <p class="lock">The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it. <span class="mk" data-k="un" data-note="The lock rule and its sentence are unchanged.">Unchanged</span></p>
+                  <div class="dlg"><b>Switching to “Exhibition” will permanently delete this tournament’s existing schedule (4 games)</b>because round-robin, bracket and exhibition schedules are built differently. This cannot be undone. <span class="mk" data-k="re" data-note="The confirm dialog names whichever format is being switched to and lists three shapes instead of two. The rule itself is unchanged (D3).">Restyled</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- ─────────── PM BRIEF ─────────── -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief · proposed 2026-09-13</div>
+  <h1>Exhibition: a third tournament style, no playoffs</h1>
+  <p><strong>What it does:</strong> When an organizer creates a tournament, the "Tournament style" step offers a third card beside <em>Round robin + playoffs</em> and <em>Bracket only</em>: <strong>Exhibition</strong> — games and standings, no playoff bracket. Picking it means the product stops promising a bracket everywhere it currently does: the schedule shows one list of games instead of a Round Robin / Playoffs switch, the dashboard never nudges "set up a playoff bracket", and the public page never shows a Playoffs toggle that reads "No playoff games yet". The moment the last score is in, the dashboard says <strong>Ready to finalize</strong> instead of waiting for the next day.</p>
+  <h2>Why it matters</h2>
+  <p>The product already sells this. The coaches marketing page promises "your round-robin, exhibition weekend, or local event"; the coach portal's own set-up card says "A quick round robin or exhibition weekend, set up from here"; the owner's delegation ruling describes the head coach's job as "run the exhibition weekend". The style picker is the only surface that contradicts all three, because both of its cards end in a bracket. Nothing blocks a coach from running a scrimmage day today, but four surfaces nag them about a bracket they will never build, and parents see a Playoffs stage that never comes.</p>
+  <h2>Who benefits</h2>
+  <p>Every organizer, on every plan — the style is a property of the tournament, so a club running a jamboree gets it too. It matters most to the <strong>standalone Premium coach</strong>, whose plan carries free-tier tournament tooling: no round-robin generator and no bracket generator. They type each scrimmage in by hand and were never going to touch a bracket, so every bracket nudge is noise aimed at exactly them. No role or plan gating changes.</p>
+  <h2>What changes for the organizer</h2>
+  <ul>
+    <li><strong>Creating a tournament</strong> — three style cards instead of two, in the setup wizard and in the org sign-up wizard. The new card reads <em>Exhibition — Games and standings, no playoff bracket — for a scrimmage day or an exhibition weekend.</em> On a phone the cards stack.</li>
+    <li><strong>Event settings → Schedule Rules</strong> — the Tournament Format control gains an <em>Exhibition</em> segment, with its own one-line description and the card summary reading <em>Exhibition · 60m games</em>. Still locked once the event leaves Draft; switching still clears the schedule when games exist (recommended ruling D3).</li>
+    <li><strong>The admin Schedule page</strong> — no Round Robin / Playoffs stage switch; View offers List and Timeline; <em>Add Game</em> stays the main button; the empty state says "Add your games by hand" and mentions the Round-Robin Generator only as the Plus upgrade; no Build Bracket button, no Bracket PDF.</li>
+    <li><strong>The dashboard</strong> — before the event the shortcut "Set up a playoff bracket" reads "Add your games"; on game day "View the playoff bracket" reads "Print today's schedule"; when the last score lands the status pill flips to <strong>Ready to finalize</strong> and the card says <em>Every score is final. Mark the tournament complete to lock in your results and standings.</em> — no mention of champions, because there are none.</li>
+    <li><strong>The public schedule</strong> — one list of games, no Pool Play / Playoffs toggle. Standings stay on the public page as today, and the organizer hides them with the existing Hide Standings switch if a scrimmage day should have no table (ruling D2). The public overview already knows how to finish a tournament with no bracket, so nothing changes there.</li>
+    <li><strong>Help</strong> gains a sentence per touch-point for the third style. <strong>The demos do not change</strong> (recommended ruling D4).</li>
+  </ul>
+  <h2>Expected impact</h2>
+  <p>A coach can set up a one-day scrimmage in the same number of taps as today and never see the word "bracket"; families see a schedule that promises exactly what will happen; the organizer gets the close-out prompt the same afternoon rather than the next morning; one fewer "do I have to build a bracket?" support question.</p>
+  <h2>Trade-offs made</h2>
+  <ul>
+    <li>Switching a Draft's format with games already typed still deletes them all, even though Exhibition and Round robin + playoffs share identical round-robin games. Kept for this pass because the format is only changeable in Draft and a draft rarely has games; a smarter rule is a small follow-up if anyone asks (D3).</li>
+    <li>Exhibition still runs standings. A pure scrimmage day with no table is the existing Hide Standings switch, not a fourth format (D2).</li>
+    <li>The Round-Robin Generator stays a Tournament Plus feature; Exhibition does not unlock it for the standalone coach.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium — small build (about a day and a half including tests, help and review), no migration, no plan or gate change; it closes a gap between the marketing copy and the picker on the surface a new standalone coach reaches first. Sequence after the roster/player-page and development-lifecycle commits in flight so the review runs on a clean diff.</p>
+  <h2>Success criteria</h2>
+  <p>An organizer who picks Exhibition sees no Stage switch, no Build Bracket button and no bracket wording anywhere on the admin schedule; the public schedule for that event has no Pool Play / Playoffs toggle; the dashboard reads <em>Ready to finalize</em> the moment the last game is scored, and a round robin + playoffs event whose bracket is not built yet still does NOT (the original safeguard survives, pinned by a unit test); the word "Exhibition" is the only name the third style has anywhere a customer reads it.</p>
+</section>
+
+<!-- ─────────── FULL PLAN ─────────── -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment · 2026-09-13 · argued from what the code does</div>
+  <h1>Exhibition — implementation plan</h1>
+  <div class="note"><strong>Status:</strong> proposed. D1 (name) and D2 (no fourth format) ruled 2026-09-13; D3 and D4 recommended on the Decisions tab. No code before Phase 0 (this mockup) is ratified. The repo copy of this plan, with file and line references, is <code>docs/projects/active/TOURNAMENT_EXHIBITION_FORMAT_PLAN.md</code>.</div>
+  <h2>Goal</h2>
+  <p>A coach (or any organizer) can pick <strong>Exhibition</strong> as the tournament's style and never be shown a bracket they are not going to build — not on the schedule, not on the dashboard, not on the public page — and the dashboard tells them they are done the moment the last score is in.</p>
+  <h2>What the code does today</h2>
+  <ul>
+    <li><strong>Where the format lives.</strong> A key inside the tournament's settings JSON — not a column of its own. Two values today; absent means round robin + playoffs. No database constraint, so a third value needs <strong>no migration</strong>. The admin API keeps an allow-list of accepted values; anything else is silently dropped from a settings write.</li>
+    <li><strong>One helper answers one question — "is this bracket-only?"</strong> — and eleven places ask it: the admin preview layout, the bracket editor, the admin schedule page, the playoff wizard, the public tournament layout, the public schedule, the public-page visibility rules (three places) and one unit test.</li>
+    <li><strong>Three pickers.</strong> The setup wizard and the org sign-up wizard each draw two cards and <em>write the setting only when the choice is Bracket only</em> ("the default needs no write"). Event settings → Schedule Rules has a two-segment control, locked outside Draft, with a confirm-and-clear-the-schedule flow when games exist — and it <strong>parses the stored value as "bracket-only, otherwise round robin"</strong>, so any third value would silently read back as round robin + playoffs on that page. That parse is the trap the two-predicate refactor exists to remove.</li>
+    <li><strong>Plan reality.</strong> The Premium Coaches Portal ranks with the free Tournament floor: the Round-Robin Generator and the bracket generator are Tournament Plus; hand-building games and a bracket is free. The standalone coach adds every game by hand.</li>
+    <li><strong>Already tolerant of no bracket:</strong> the public overview (its third "finished" path is explicitly a no-bracket event that has played out), the Playoffs tab (needs a playoff config), the Playoff Picture and its countdown, champions (a decided final only), the summary's champions band, the standings' "Top N advance" caption, the "Playoffs are set" fan push, the coach-side phase model, and activation / completion (no bracket check).</li>
+    <li><strong>Copy already promising it:</strong> the coaches marketing page ("your round-robin, exhibition weekend, or local event"), the coach portal's set-up card ("A quick round robin or exhibition weekend, set up from here") and the 2026-09-13 delegation ruling ("run the exhibition weekend").</li>
+  </ul>
+  <h2>Findings</h2>
+  <h3>F01 — The style picker offers two shapes and both end in a bracket</h3>
+  <p>Wizard, onboarding and Event settings all offer Round robin + playoffs or Bracket only. The marketing page, the coach set-up card and the owner's ruling all describe an exhibition weekend. The picker is the only surface that contradicts them.</p>
+  <h3>F02 — The admin schedule shows a Playoffs stage and a bracket callout on a tournament that has no bracket</h3>
+  <p>The Stage toggle (phone row and desktop control) renders for every non-bracket-only event; the Playoffs side offers a Build Bracket primary; the empty-state callout ends "For playoffs, use the Playoff Bracket Builder."</p>
+  <h3>F03 — "Ready to finalize" requires a bracket, so an exhibition never gets the finalize prompt on the day</h3>
+  <p>The guard is deliberate (so a round robin whose bracket is not built yet never trips it early) and right for the two bracket formats. For an exhibition the rail stays on the live card after the last score and the close-out prompt waits for the calendar — the next day, on a one-day event.</p>
+  <h3>F04 — The dashboard's shortcuts name a bracket before and during the event</h3>
+  <p>"Set up a playoff bracket" pre-event; "View the playoff bracket" on game day. No format-aware alternative.</p>
+  <h3>F05 — The public schedule shows a Pool Play | Playoffs toggle whose Playoffs side reads "No playoff games yet"</h3>
+  <p>Both renderings of the stage control appear for every non-bracket-only event. A parent reads "Playoffs" as a stage that is coming.</p>
+  <h3>F06 — The ready-stage copy says "Your champions are decided"</h3>
+  <p>True for both bracket formats; false for an exhibition, which crowns nobody by construction.</p>
+  <h2>Proposal (recommended)</h2>
+  <ul>
+    <li><strong>P1 — A third value, and two predicates instead of one.</strong> The format type gains <em>exhibition</em>. Two helpers — <em>has a round robin?</em> and <em>has playoffs?</em> — replace the single "is bracket-only?" question, and its eleven call sites are re-pointed to whichever question each was actually asking. A fourth format then never needs a sweep, and the settings page's "everything else is round robin" parse is replaced by a validated parse of all three. The API allow-list gains the value. No migration.</li>
+    <li><strong>P2 — Three cards, one segmented control.</strong> Wizard and onboarding draw three cards (three across on desktop, stacked on a phone) and write the setting whenever it is not the default. Event settings gains a third segment, a third description ("No playoffs — every game is a stand-alone game. Standings still run; hide the Standings page under Public pages if you don't want a table."), the summary reads <em>Exhibition · 60m games</em>, the lock note is unchanged, and the confirm dialog names whichever format is being switched to.</li>
+    <li><strong>P3 — The admin schedule under Exhibition.</strong> No Stage toggle; the page pinned to its one list (the mirror of today's bracket-only pin); View offers List | Timeline; Add Game stays the header primary; the Bracket Builder launcher and the Bracket PDF item never render; the empty state reads "Add your games by hand — a day of scrimmages is a handful of rows. The Round-Robin Generator can build them from your teams with Tournament Plus." (the Plus half only when the plan lacks the generator); Schedule Health's subtitle reads <em>Saved games</em>.</li>
+    <li><strong>P4 — The dashboard knows the format.</strong> "Ready to finalize" no longer waits for a playoff game when the format has none — extracted into a pure helper beside the stage resolver so it gets a unit test. The guidance card learns whether the event has playoffs: the pre-event shortcut becomes <em>Add your games</em>, the game-day shortcut <em>Print today's schedule</em>, and the ready-stage sentence drops the champions clause for an exhibition. The status pill then reads Ready to finalize the moment the last game is scored.</li>
+    <li><strong>P5 — The public schedule under Exhibition.</strong> The stage control (both renderings) and the Bracket view option are behind "has playoffs"; the playoff-day auto-switch is a no-op. Nothing else on the public site changes; Standings stays and honours Hide Standings (D2).</li>
+    <li><strong>P6 — Words.</strong> One sentence per help touch-point (the public-pages paragraph, the setup and schedule articles) via <code>/docs</code>; a changelog entry; the spelling gate sees one word — Exhibition. Demos unchanged (D4).</li>
+  </ul>
+  <div class="note"><strong>The alternative (not recommended):</strong> no new format — detect "no playoff config on any division" at render time and hide the same things. Cheaper by a picker, but the promise disappears only after the organizer has <em>not</em> done something, so every surface flickers between the two shapes as the tournament is set up, and the dashboard could never safely fire Ready to finalize early (the whole reason F03's guard exists). A format is a decision the organizer makes once; the surfaces should follow the decision, not guess it.</div>
+  <h2>Owner forks (rule on the Decisions tab)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Question</th><th>Recommendation</th><th>State</th></tr>
+    <tr><td>D1</td><td>What is the third style called?</td><td><strong>Exhibition.</strong> The word already on the marketing page, the coach set-up card and the delegation ruling. "Scrimmage" is a coach-schedule event type and stays out of this picker.</td><td>Accepted 2026-09-13</td></tr>
+    <tr><td>D2</td><td>Does a scrimmage day need a fourth, standings-less format?</td><td><strong>No.</strong> The existing Hide Standings switch already gives that.</td><td>Accepted 2026-09-13</td></tr>
+    <tr><td>D3</td><td>Switching format when a Draft has games deletes the whole schedule today. Keep the blanket rule for v1?</td><td><strong>Keep it.</strong> The format is only changeable in Draft, and a draft with typed games that then changes shape is rare; a smarter "delete only the playoff games" rule is a separate small project if ever asked for.</td><td>Open</td></tr>
+    <tr><td>D4</td><td>Should a demo world show an Exhibition tournament?</td><td><strong>Not now.</strong> Both demos run round robin + playoffs and their narration is already owed a truing-up; a third shape in the coach sandbox is a re-seed decision for the next coach-demo change.</td><td>Open</td></tr>
+  </table></div>
+  <h2>Phases</h2>
+  <h3>Phase 0 — Mockup ratified (this hub)</h3>
+  <p>Owner reads the five screens on desktop and phone width and rules D3/D4. No code before this.</p>
+  <h3>Phase 1 — The value and the pickers</h3>
+  <p>The type, the two helpers, the retired one and its eleven call sites, the API allow-list, the three pickers including the settings page's parse, summary, description and confirm copy, and the write rule in both wizards.</p>
+  <h3>Phase 2 — The surfaces</h3>
+  <p>Admin schedule (P3), dashboard (P4, with the finalize predicate extracted and tested), public schedule (P5). The admin preview layout is unchanged — it hides Standings for bracket-only only.</p>
+  <h3>Phase 3 — Words</h3>
+  <p><code>/docs</code> for the three help touch-points and their search keywords; a changelog entry; the spelling gate. Demos untouched per D4; <code>check:demos</code> must stay green.</p>
+  <h3>Phase 4 — Verify and hand off</h3>
+  <p>Typecheck (a shared type changes) and <code>verify:changed</code>. Tests: the public-bracket-visibility test gains an Exhibition fixture (Standings visible, no Playoffs tab, no bracket), and a new finalize test pins the predicate for all three formats — including the original case the guard exists for (round robin + playoffs, all pool games resolved, no bracket built → NOT ready). A rendered layout check of the three-card grid at phone / 641–768 / desktop. Then <code>/simplify</code> (the altitude pass confirms no call site still asks the old question), <code>/review</code>, <code>/docs</code>, a commit in a private index, and the owner QA walk added to this hub as its QA Walk tab (fixture: the <code>uat-standalone</code> coach org; steps pin identities, never figures the calendar moves).</p>
+  <h2>Out of scope</h2>
+  <ul>
+    <li>A smarter format switch that keeps the round-robin games (D3 keeps the blanket rule).</li>
+    <li>A standings-less format (D2).</li>
+    <li>Any change to the plan gates — the Round-Robin Generator stays Tournament Plus.</li>
+    <li>Linking the coach schedule's Scrimmage event type to hosted exhibition games.</li>
+    <li>The history look-back layer — no route or page learns a year.</li>
+  </ul>
+  <h2>Verification and residual risk</h2>
+  <ul>
+    <li><strong>The parse trap.</strong> After Phase 1 a search for the two old literal values outside the type, the helpers, the pickers, the allow-list and the tests should return nothing; any remaining literal is a place that will read an exhibition as one of the other two.</li>
+    <li><strong>The finalize guard.</strong> The unit test must include the case that motivated the original guard.</li>
+    <li><strong>Residual.</strong> A settings write of the new value against a not-yet-deployed API is dropped by the allow-list (the wizard already treats that write as non-fatal), so on stale code the picker degrades to round robin + playoffs — today's behaviour. Nothing to migrate: both old values stay valid.</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens — not written up after the fact.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk · ledger §184 · written 2026-09-13 against the build on dev</div>
+  <h1 style="padding:0 24px">Exhibition — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: <strong>http://localhost:3000</strong> (dev server up) · Account: <strong>uat-coach@uat-test-org.local</strong> · Password: <strong>UATPassword2026!</strong> · Workspace: the standalone fixture <strong>uat-standalone</strong> / UAT Standalone Team — a Premium Coaches Portal, so there is no Round-Robin Generator and no bracket generator (rebuild the fixture with <code>node scripts/seed-uat-standalone-coach.mjs</code> if it is stale). Dev-only credentials — keep this page private. <br><br><strong>Stage the walk is written for:</strong> you create the Exhibition tournament yourself in Part A and it is a <strong>Draft</strong> until Part C activates it; Part E needs the event date to be <strong>today</strong>, so set the dates to today when you create it. The four games you add in Part B are the ones the later steps count.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- hub-level tabs ---- */
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));window.scrollTo({top:0})}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* ---- phone / desktop toggle (affects the embedded product frame only) ---- */
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+/* ---- mockup screen router ---- */
+const intents={
+ 'screen-picker':'Three cards, not a dropdown — the choice is made once and read by every later screen, so it earns the room. The Exhibition sentence names what stays (games, standings) before what goes (the bracket), because that is the question a coach asks.',
+ 'screen-schedule':'Remove the promise, keep the door. Nothing a coach on this plan can do is taken away; the switch that led to an empty stage is gone, and the empty state describes the work they will actually do.',
+ 'screen-dashboard':'The safeguard stays for the formats it protects. Exhibition is the one format where "every game resolved" and "done" are the same fact, so the pill and the card say so on the day, not the day after.',
+ 'screen-public':'One list is the whole schedule. A toggle a parent cannot use is a promise the product cannot keep; the overview and standings already knew how to finish a no-bracket event, so only this page changes.',
+ 'screen-settings':'The same value, the same lock, the same clearing rule — the third segment changes nothing about how the control behaves, only what it can hold. D2 is written into the description where the coach will look for it.'
+};
+function showScreen(){const id=location.hash.slice(1)||'screen-picker';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+intents[id]:'';document.getElementById(id)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+/* ---- explanations behind every highlight ---- */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'The style picker offers two shapes and both end in a bracket',now:'The setup wizard, the org sign-up wizard and Event settings → Schedule Rules offer Round robin + playoffs or Bracket only. The coaches marketing page, the coach portal’s set-up card and the owner’s 2026-09-13 delegation ruling all describe an exhibition weekend; the picker is the only surface that contradicts them.',fix:'A third choice, Exhibition — games and standings, no playoff bracket — drawn as a third card in both wizards and a third segment in Event settings. The stored value is one word; every later screen reads it through two questions (has a round robin? has playoffs?) instead of today’s single “is it bracket-only?”.'},
+ F02:{t:'The admin schedule shows a Playoffs stage and a bracket callout on a tournament that has no bracket',now:'The Stage switch (Round Robin | Playoffs) renders on every event that is not bracket-only. Its Playoffs side is empty and puts a Build Bracket button in the header; the first-visit callout ends “For playoffs, use the Playoff Bracket Builder.”',fix:'For an Exhibition the Stage switch does not render on the phone row or the desktop control, the page stays on its one list, View offers List | Timeline, Add Game stays the primary, the bracket launcher and the Bracket PDF never appear, and the empty state describes adding games by hand (with the generator named only as the Plus upgrade).'},
+ F03:{t:'“Ready to finalize” requires a bracket, so an exhibition never gets the finalize prompt on the day',now:'The dashboard flips to Ready to finalize only when every game is resolved AND at least one playoff game exists — a deliberate guard so a round robin whose bracket is not built yet never trips it early. For an exhibition it means the pill stays on Live all day and the close-out card waits for the calendar, which on a one-day event is tomorrow.',fix:'The predicate learns the format: for an Exhibition, every game resolved is ready. The guard stays exactly as it is for the two bracket formats, and a unit test pins the original case (round robin, pool games done, no bracket → not ready).'},
+ F04:{t:'The dashboard’s shortcuts name a bracket before and during the event',now:'The “what’s next” card lists “Set up a playoff bracket” before the event and “View the playoff bracket” on game day, for every format.',fix:'When the event has no playoffs the two lines read “Add your games” and “Print today’s schedule”. The other shortcuts on each list are unchanged.'},
+ F05:{t:'The public schedule shows a Pool Play | Playoffs toggle whose Playoffs side reads “No playoff games yet”',now:'Both renderings of the stage control (the phone row and the desktop control) appear on every event that is not bracket-only. Tap Playoffs on an exhibition and the page says “No playoff games yet”.',fix:'The stage control and the Bracket view option are behind “has playoffs”. The day chips and the list are the whole page. Nothing else on the public site changes — the overview, standings and champions surfaces already cope with an event that has no bracket.'},
+ F06:{t:'The ready-stage copy says “Your champions are decided”',now:'The Ready to finalize card reads “Your champions are decided and every score is final.” for every format.',fix:'For an Exhibition the card reads “Every score is final. Mark the tournament complete to lock in your results and standings.” The two bracket formats keep the champions sentence.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ---- Decisions — one entry per ruling; append as they happen ---- */
+const DECISIONS=[
+ {date:'2026-09-13',ask:'D1 — What is the third style called?',ruling:'accepted',label:'Accepted · Exhibition',why:'Owner, in chat: “I am good with Exhibition.” The word already on the coaches marketing page, the coach portal’s set-up card and the 2026-09-13 delegation ruling. “Scrimmage” is a coach-schedule event type and stays out of this picker.'},
+ {date:'2026-09-13',ask:'D2 — Does a scrimmage day need a fourth, standings-less format?',ruling:'accepted',label:'Accepted · no fourth format',why:'Owner, in chat: “the existing hide standings is sufficient.” Exhibition keeps standings; a coach who wants no table hides the Standings page under Public pages, which already exists.'},
+ {date:'2026-09-13',ask:'D3 — Switching format when a Draft already has games deletes the whole schedule. Keep that rule for v1?',ruling:'accepted',label:'Accepted · keep the rule',why:'Owner: “agree with your recommendations.” The format is only changeable in Draft, and a draft with typed games that then changes shape is rare. Exhibition and Round robin + playoffs share identical round-robin games, so a smarter “delete only the playoff games” rule is possible — as a separate small project if it is ever asked for.'},
+ {date:'2026-09-13',ask:'D4 — Should a demo world show an Exhibition tournament?',ruling:'accepted',label:'Accepted · no demo change',why:'Owner: “agree with your recommendations.” Both demos run round robin + playoffs and the coach demo’s narration is already owed a truing-up across five releases. A third shape in the coach sandbox is a re-seed decision for the next coach-demo change, not this one.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+/* ---- QA walk — six parts; steps pin identities and wording, never a figure the calendar moves ---- */
+const QA_PARTS=[
+ {id:'A',title:'The third card — creating the tournament (Draft)',steps:[
+  'From the coach portal’s Tournaments page, open Set up a tournament (the create wizard). Step 1 of 5 shows THREE style cards in one row on desktop, in this order: Round robin + playoffs · Bracket only · Exhibition. The Exhibition sentence reads exactly: “Games and standings, no playoff bracket — for a scrimmage day or an exhibition weekend.”',
+  'Narrow the browser below tablet width (or open it on your phone): the three cards stack one per row and each is still a full-height tap target.',
+  'Pick Exhibition, name it Fall Scrimmage Day, set BOTH dates to today, and finish the wizard with one division and one venue. Open Event settings → Schedule Rules: the Tournament Format control has three segments with Exhibition selected; the description under it reads “No playoffs — every game is a stand-alone game. Standings still run; hide the Standings page under Public pages if you don’t want a table.”; the collapsed card summary starts with “Exhibition ·”.',
+  'Still a Draft with no games: click Round robin + playoffs, then Exhibition again. Neither switch asks for confirmation (there is no schedule to clear) and the description follows each click.'
+ ]},
+ {id:'B',title:'The Schedule page under Exhibition (Draft)',steps:[
+  'Open Schedule. There is NO Stage switch — no Round Robin | Playoffs on the desktop toolbar and no stage row on the phone. View offers List and Timeline only. Add Game is the header button.',
+  'The empty-state callout reads: “Add your games by hand — a day of scrimmages is a handful of rows. The Round-Robin Generator can build them from your teams with Tournament Plus.” (this workspace’s plan has no generator).',
+  'Open the toolbar’s Tools menu (and the phone’s tools menu): the Build / Generate section shows the Round-Robin Generator with its Plus lock, and there is NO “Auto-Generate Bracket” item at all — absent, not locked.',
+  'Add four games by hand on today’s date between the fixture’s accepted teams (accept two registrations first if the division has none). Each saves as a normal game; the list shows four rows and still no stage switch.',
+  'The Schedule Health panel’s subtitle ends “· Saved games” — not “Saved round robin”.',
+  'Open Export: the PDF item is “PDF report”. There is no “Bracket PDF” and no “Blank bracket PDF”.'
+ ]},
+ {id:'C',title:'Switching with games, then activating (Draft → Active) — ruling D3',steps:[
+  'Event settings → Schedule Rules (still a Draft): click Bracket only. The confirm dialog is titled “Clear the existing schedule?” and its message starts “Switching to “Bracket only” will permanently delete this tournament’s existing schedule (4 games), because the schedule is built for the style you pick.” Cancel — the format stays Exhibition and the four games are still there.',
+  'Activate the tournament. Back in Schedule Rules the three segments are dimmed and the note reads “The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.”'
+ ]},
+ {id:'D',title:'The public site (Active)',steps:[
+  'Open the public Schedule page for Fall Scrimmage Day. On desktop and on the phone there is NO Pool Play | Playoffs toggle — the day chip and the list of four games are the whole page.',
+  'The tab row under the header shows Overview · Schedule · Standings · Teams (whatever you left public) and never a Playoffs tab. The Overview has no Playoff Picture and no “first playoff game in” countdown.',
+  'Under Public pages, hide Standings and reload the public site: the Standings tab is gone — ruling D2: the existing switch is how a scrimmage day goes table-less. Turn it back on.'
+ ]},
+ {id:'E',title:'Game day and finalize (Active, event date = today)',steps:[
+  'Enter finals for THREE of the four games. The dashboard’s status pill reads Live; the “what’s next” card is the game-day card (“It’s game day — here’s your live view”) and its second shortcut reads “Print today’s schedule” — not “View the playoff bracket”.',
+  'Enter the fourth final. Reload the dashboard: the status pill reads Ready to finalize and the card’s headline is “Every game’s in — ready to finalize” with the sentence “Every score is final. Mark the tournament complete to lock in your results and standings.” — no champions sentence.',
+  'The card’s shortcuts are the close-out four: Confirm all scores are final · Mark the tournament complete · Export results & schedule · Share the public results link.',
+  'Optional control (also pinned by a unit test): a Round robin + playoffs tournament with every pool game scored and NO bracket built does NOT read Ready to finalize — the original safeguard survives.',
+  'Mark the tournament complete. The public Overview shows the finished experience — final record, no champions block — and the dashboard reads Completed.'
+ ]},
+ {id:'F',title:'The help drawer and the help articles',steps:[
+  'On any page of the Exhibition tournament, open the in-context help drawer: its “I want to…” shortcuts match the dashboard card for the same stage (no bracket line for this event).',
+  'Help → Tournaments → “Build a playoff bracket”: the second paragraph names Exhibition as the third style with no Playoffs stage. “Tournament workflow at a glance” step 1 names the three styles. The schedule recipe’s Add Game step mentions Exhibition.',
+  'Help search for “exhibition” finds those articles.'
+ ]}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-exhibition')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-exhibition',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

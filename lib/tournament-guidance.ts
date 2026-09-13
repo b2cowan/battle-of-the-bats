@@ -24,6 +24,12 @@ export interface GuidanceContext {
   planId: OrgPlan;
   daysUntil: number | null;
   checklist: { hasDates: boolean; hasDivisions: boolean; ready: boolean };
+  /**
+   * False for an Exhibition (no playoff bracket): the two bracket shortcuts get a no-bracket
+   * alternative and the ready-to-finalize card drops its champions sentence. Absent = true, so a
+   * caller without the tournament keeps today's wording.
+   */
+  hasPlayoffs?: boolean;
 }
 
 export interface GuidanceAction {
@@ -69,10 +75,11 @@ export function resolveGuidanceStage(opts: {
   isGameDay?: boolean;
   daysUntil: number | null;
   /**
-   * True once every non-cancelled game is resolved AND a playoff bracket exists —
-   * i.e. the event is genuinely finished and only needs finalizing. When set, an
-   * active tournament advances to 'ready' (the finalize prompt) instead of staying
-   * on 'live'. Callers without the completion counts omit it and keep 'live'.
+   * True once every non-cancelled game is resolved AND — for a format that ends in a
+   * bracket — a playoff bracket exists (an Exhibition has none to wait for); see
+   * `isReadyToFinalize` in lib/tournament-phase. When set, an active tournament
+   * advances to 'ready' (the finalize prompt) instead of staying on 'live'. Callers
+   * without the completion counts omit it and keep 'live'.
    */
   readyToFinalize?: boolean;
 }): GuidanceStage | null {
@@ -192,8 +199,9 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
       // navigation, so completion is one click from the dashboard.
       return {
         headline: 'Every game’s in — ready to finalize',
-        context:
-          'Your champions are decided and every score is final. Mark the tournament complete to lock in your results and standings.',
+        context: ctx.hasPlayoffs === false
+          ? 'Every score is final. Mark the tournament complete to lock in your results and standings.'
+          : 'Your champions are decided and every score is final. Mark the tournament complete to lock in your results and standings.',
         cta: { label: 'Mark tournament complete', href: '#complete', actionId: 'complete' },
         nudge: hasSummary
           ? {
@@ -267,9 +275,12 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
  */
 export function getStageShortcuts(
   stage: GuidanceStage,
-  opts: { orgSlug: string; planId: OrgPlan },
+  opts: { orgSlug: string; planId: OrgPlan; hasPlayoffs?: boolean },
 ): TaskShortcut[] {
   const { orgSlug, planId } = opts;
+  // An Exhibition has no bracket: its two bracket shortcuts point at what that organizer will
+  // actually do instead. Absent = true (a caller without the tournament keeps today's list).
+  const endsInBracket = opts.hasPlayoffs !== false;
   const billingHref = getBillingHref(orgSlug, planId);
   const canImport = hasPlanFeature(planId, 'bulk_data_imports');
   const canClone = hasPlanFeature(planId, 'tournament_cloning');
@@ -293,13 +304,17 @@ export function getStageShortcuts(
     ],
     pre: [
       { label: 'Get my schedule onto the public site', sectionId: 'recipe-build-tournament-schedule' },
-      { label: 'Set up a playoff bracket', sectionId: 'schedule-playoffs' },
+      endsInBracket
+        ? { label: 'Set up a playoff bracket', sectionId: 'schedule-playoffs' }
+        : { label: 'Add your games', sectionId: 'recipe-build-tournament-schedule' },
       { label: 'Hand scorekeeping to a volunteer', sectionId: 'scores-and-results' },
       { label: 'Send an announcement to all teams', sectionId: 'public-communication' },
     ],
     live: [
       { label: 'Enter or fix a score', sectionId: 'scores-and-results' },
-      { label: 'View the playoff bracket', sectionId: 'schedule-playoffs' },
+      endsInBracket
+        ? { label: 'View the playoff bracket', sectionId: 'schedule-playoffs' }
+        : { label: 'Print today’s schedule', sectionId: 'exports' },
       { label: 'Check who’s checked in', sectionId: 'scores-and-results' },
       { label: 'Send an update to teams', sectionId: 'public-communication' },
     ],

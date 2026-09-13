@@ -27,7 +27,7 @@ import {
   type SchedulePrioritySettings,
 } from '@/lib/schedule-generator';
 import { generateBracket, nextPow2, ordinal, remapTierSeed, suggestDefaultTiers, validateTierRanges } from '@/lib/playoff-bracket';
-import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
+import { hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import BracketColumns, { buildBracketColumns } from './components/BracketColumns';
 import BracketHealthPanel from './components/BracketHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -281,7 +281,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   }, [selectedDivisionId, divisions, initialConfig]);
 
   // ── Playoff-only (bracket-first) seeding ───────────────────────────────────
-  const isPlayoffOnly = useMemo(() => resolveIsPlayoffOnly(tournament), [tournament]);
+  const isPlayoffOnly = useMemo(() => !resolveHasRoundRobin(tournament), [tournament]);
   const [seededTeams, setSeededTeams] = useState<Team[]>([]);
   const [protectTopSeeds, setProtectTopSeeds] = useState(0);
   const seedSensors = useSensors(

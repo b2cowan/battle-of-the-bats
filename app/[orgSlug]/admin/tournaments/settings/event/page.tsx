@@ -11,6 +11,7 @@ import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { DEFAULT_ROSTER_WAIVER_TEXT, ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
+import { TOURNAMENT_FORMAT_OPTIONS, getTournamentFormat, tournamentFormatLabel, tournamentFormatSettingsDescription } from '@/lib/tournament-phase';
 import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
 import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, type TieBreaker } from '@/lib/tie-breakers';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
@@ -236,7 +237,9 @@ export default function TournamentEventSettingsPage() {
         const venueMoveBuf = typeof t.settings?.schedule_travel_venue_buffer_minutes === 'number' ? t.settings.schedule_travel_venue_buffer_minutes : 0;
         const facilityMoveBuf = typeof t.settings?.schedule_travel_facility_buffer_minutes === 'number' ? t.settings.schedule_travel_facility_buffer_minutes : 0;
 
-        const fmt: TournamentFormat = t.settings?.format === 'playoff_only' ? 'playoff_only' : 'round_robin_playoffs';
+        // Validated by the shared helper — never "anything else is round robin", which would have
+        // read a third style as the wrong one silently.
+        const fmt: TournamentFormat = getTournamentFormat(t);
 
         const rawFeeScope = t.settings?.fee_scope;
         const validFeeScopes = new Set<string>(['tournament', 'allow_override', 'per_division', 'free']);
@@ -810,7 +813,7 @@ export default function TournamentEventSettingsPage() {
   })();
 
   const scheduleRulesSummary = (() => {
-    const fmt = tournamentFormat === 'playoff_only' ? 'Bracket only' : 'Round robin + playoffs';
+    const fmt = tournamentFormatLabel(tournamentFormat);
     const timing = gameTimingScope === 'per_division' ? 'per-division timing'
       : `${gameDurationMinutes}m games`;
     return `${fmt} · ${timing}`;
@@ -1650,24 +1653,22 @@ export default function TournamentEventSettingsPage() {
             <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
               <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tournament Format</p>
               <div className={styles.segmentedControl}>
-                {(['round_robin_playoffs', 'playoff_only'] as const).map(fmt => (
+                {TOURNAMENT_FORMAT_OPTIONS.map(opt => (
                   <button
-                    key={fmt}
+                    key={opt.value}
                     type="button"
                     disabled={formatLocked || formatBusy}
-                    onClick={() => requestFormatChange(fmt)}
-                    className={`${styles.segmentButton} ${tournamentFormat === fmt ? styles.segmentButtonActive : ''}`}
+                    onClick={() => requestFormatChange(opt.value)}
+                    className={`${styles.segmentButton} ${tournamentFormat === opt.value ? styles.segmentButtonActive : ''}`}
                     style={formatLocked ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
                   >
-                    {fmt === 'round_robin_playoffs' ? 'Round robin + playoffs' : 'Bracket only'}
+                    {opt.title}
                   </button>
                 ))}
               </div>
             </div>
             <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-              {tournamentFormat === 'round_robin_playoffs'
-                ? 'Teams play a round robin, then the top teams advance to a playoff bracket seeded from the standings.'
-                : 'No round robin — the event starts straight with a playoff bracket. You seed teams into the first round yourself (manually or randomized) in the Playoff Bracket Builder.'}
+              {tournamentFormatSettingsDescription(tournamentFormat)}
             </p>
             {formatLocked && (
               <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
@@ -1887,7 +1888,7 @@ export default function TournamentEventSettingsPage() {
         onClose={() => { setFormatConfirmOpen(false); setPendingFormat(null); }}
         onConfirm={confirmFormatChange}
         title="Clear the existing schedule?"
-        message={`Switching to ${pendingFormat === 'playoff_only' ? '“Bracket only”' : '“Round robin + playoffs”'} will permanently delete this tournament’s existing schedule (${existingGameCount} game${existingGameCount === 1 ? '' : 's'}), because round-robin and bracket schedules are built differently. This cannot be undone.`}
+        message={`Switching to “${tournamentFormatLabel(pendingFormat ?? 'round_robin_playoffs')}” will permanently delete this tournament’s existing schedule (${existingGameCount} game${existingGameCount === 1 ? '' : 's'}), because the schedule is built for the style you pick. This cannot be undone.`}
         type="warning"
         confirmText="Clear schedule & switch"
       />

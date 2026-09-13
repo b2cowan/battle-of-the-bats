@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, CloudRain, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions, descendantBracketCodes, findBracketSchedulingViolations, nextManualBracketCode, groupGamesByBracketId } from '@/lib/playoff-bracket';
-import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
+import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { tournamentToday } from '@/lib/timezone';
@@ -223,7 +223,7 @@ export default function AdminSchedulePage() {
   }
 
   function openGenerator() {
-    if (resolveIsPlayoffOnly(currentTournament)) return; // no round robin in bracket-only events
+    if (!resolveHasRoundRobin(currentTournament)) return; // no round robin in bracket-only events
     if (!canAutoGenerateSchedule) {
       showScheduleUpgrade('Round-Robin Generator Requires Tournament Plus', 'auto_schedule');
       return;
@@ -368,9 +368,14 @@ export default function AdminSchedulePage() {
   // Bracket only exists under Playoffs — fall back to List if the stage flips to round robin.
   useEffect(() => { if (viewMode === 'pool' && layout === 'bracket') setLayout('list'); }, [viewMode, layout]);
 
-  // Bracket-only tournaments have no round-robin stage — keep the stage on Playoffs.
-  const isPlayoffOnly = resolveIsPlayoffOnly(currentTournament);
-  useEffect(() => { if (isPlayoffOnly && viewMode === 'pool') setViewMode('playoff'); }, [isPlayoffOnly, viewMode]);
+  // The format pins the stage: a bracket-only event has no round-robin stage (stay on Playoffs);
+  // an Exhibition has no playoff stage (stay on Round Robin). The Stage toggle renders only when
+  // both stages exist — a switch to an empty stage is a promise the event cannot keep.
+  const hasRoundRobinStage = resolveHasRoundRobin(currentTournament);
+  const hasPlayoffStage = resolveHasPlayoffs(currentTournament);
+  const showStageToggle = hasRoundRobinStage && hasPlayoffStage;
+  useEffect(() => { if (!hasRoundRobinStage && viewMode === 'pool') setViewMode('playoff'); }, [hasRoundRobinStage, viewMode]);
+  useEffect(() => { if (!hasPlayoffStage && viewMode === 'playoff') setViewMode('pool'); }, [hasPlayoffStage, viewMode]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
@@ -1433,7 +1438,7 @@ export default function AdminSchedulePage() {
           {/* While editing a bracket, the view/stage controls are hidden so they can't
               unmount the editor (and lose edits) — exit via the editor's Cancel/Save. */}
           {/* Mobile: prominent stage toggle (desktop keeps the segmented control below) */}
-          {!isPlayoffOnly && !editingBracket && (
+          {showStageToggle && !editingBracket && (
           <div className={styles.mobileStageToggle} role="group" aria-label="Stage">
             {(['pool', 'playoff'] as const).map(v => (
               <button
@@ -1448,8 +1453,8 @@ export default function AdminSchedulePage() {
             ))}
           </div>
           )}
-          {/* Stage: Round Robin | Playoffs */}
-          {!isPlayoffOnly && !editingBracket && (
+          {/* Stage: Round Robin | Playoffs — only when the format has both */}
+          {showStageToggle && !editingBracket && (
           <ToolbarSegmentedControl<'pool' | 'playoff'>
             className={styles.desktopModeControl}
             value={viewMode}
@@ -1518,8 +1523,10 @@ export default function AdminSchedulePage() {
           <ScheduleToolsMenu
             className={styles.scheduleToolsMenu}
             disabled={!currentTournament}
-            canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
+            showAutoGenerate={hasRoundRobinStage}
+            canAutoGenerate={canAutoGenerateSchedule}
             onAutoGenerate={openGenerator}
+            showAutoBracket={hasPlayoffStage}
             canAutoBracket={canAutoGenerateSchedule}
             onAutoBracket={openAutoGenerator}
             canRainDelay={canRainDelay}
@@ -1566,8 +1573,10 @@ export default function AdminSchedulePage() {
           })()}
           <MobileToolsMenu
             className={styles.scheduleMobileTools}
-            canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
+            showAutoGenerate={hasRoundRobinStage}
+            canAutoGenerate={canAutoGenerateSchedule}
             onAutoGenerate={openGenerator}
+            showAutoBracket={hasPlayoffStage}
             canAutoBracket={canAutoGenerateSchedule}
             onAutoBracket={openAutoGenerator}
             canRainDelay={canRainDelay}
@@ -1753,8 +1762,12 @@ export default function AdminSchedulePage() {
         <HelpCallout
           variant="info"
           title="No games scheduled yet"
-          body={isPlayoffOnly
+          body={!hasRoundRobinStage
             ? 'This is a bracket-only tournament. Open the Playoff Bracket Builder to seed your teams and generate the bracket.'
+            : !hasPlayoffStage
+            ? (canAutoGenerateSchedule
+              ? 'Add your games by hand — a day of scrimmages is a handful of rows — or use the Round-Robin Generator to build them from your teams.'
+              : 'Add your games by hand — a day of scrimmages is a handful of rows. The Round-Robin Generator can build them from your teams with Tournament Plus.')
             : canAutoGenerateSchedule
             ? 'Build your schedule by adding games manually, or use the Round-Robin Generator to auto-build games from your teams. For playoffs, use the Playoff Bracket Builder.'
             : 'Build your schedule by adding games manually, or use the Playoff Bracket Builder to seed a bracket. The Round-Robin Generator is available with Tournament Plus or higher.'}
@@ -1764,7 +1777,7 @@ export default function AdminSchedulePage() {
       {savedScheduleMetrics && (
         <ScheduleHealthPanel
           metrics={savedScheduleMetrics}
-          subtitle={`${activeDivision?.name ?? 'Division'} · ${viewMode === 'playoff' ? 'Saved playoffs' : 'Saved round robin'}`}
+          subtitle={`${activeDivision?.name ?? 'Division'} · ${viewMode === 'playoff' ? 'Saved playoffs' : hasPlayoffStage ? 'Saved round robin' : 'Saved games'}`}
           defaultOpen={false}
           showTeamTable
           onJumpToConflict={() => {
@@ -2979,8 +2992,10 @@ function UnpublishControl({
 
 function MobileToolsMenu({
   className,
+  showAutoGenerate,
   canAutoGenerate,
   onAutoGenerate,
+  showAutoBracket,
   canAutoBracket,
   onAutoBracket,
   canRainDelay,
@@ -2988,8 +3003,12 @@ function MobileToolsMenu({
   rainDelayAvailable,
 }: {
   className?: string;
+  /** False when the format has no round robin (bracket-only): the item is absent, not locked. */
+  showAutoGenerate: boolean;
   canAutoGenerate: boolean;
   onAutoGenerate: () => void;
+  /** False when the format has no playoffs (Exhibition): the item is absent, not locked. */
+  showAutoBracket: boolean;
   canAutoBracket: boolean;
   onAutoBracket: () => void;
   canRainDelay: boolean;
@@ -3082,7 +3101,7 @@ function MobileToolsMenu({
               see .scheduleMobilePublish in the toolbar. */}
 
           <div style={sectionLabel}>Generate</div>
-          {row({
+          {showAutoGenerate && row({
             icon: <Sparkles size={13} style={{ color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
             label: 'Round-Robin Generator',
             sub: 'Auto-build games from your teams',
@@ -3090,7 +3109,7 @@ function MobileToolsMenu({
             lockTitle: 'Included with Tournament Plus and up',
             onClick: () => act(onAutoGenerate),
           })}
-          {row({
+          {showAutoBracket && row({
             icon: <Trophy size={13} style={{ color: canAutoBracket ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
             label: 'Auto-Generate Bracket',
             sub: 'Build a full bracket from a format',
@@ -3121,8 +3140,10 @@ function MobileToolsMenu({
 
 function ScheduleToolsMenu({
   disabled,
+  showAutoGenerate,
   canAutoGenerate,
   onAutoGenerate,
+  showAutoBracket,
   canAutoBracket,
   onAutoBracket,
   canRainDelay,
@@ -3131,8 +3152,12 @@ function ScheduleToolsMenu({
   className,
 }: {
   disabled: boolean;
+  /** False when the format has no round robin (bracket-only): the item is absent, not locked. */
+  showAutoGenerate: boolean;
   canAutoGenerate: boolean;
   onAutoGenerate: () => void;
+  /** False when the format has no playoffs (Exhibition): the item is absent, not locked. */
+  showAutoBracket: boolean;
   canAutoBracket: boolean;
   onAutoBracket: () => void;
   canRainDelay: boolean;
@@ -3207,7 +3232,7 @@ function ScheduleToolsMenu({
           }}
         >
           <div style={sectionLabel}>Build</div>
-          {row({
+          {showAutoGenerate && row({
             icon: <Sparkles size={13} style={{ color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
             label: 'Round-Robin Generator',
             sub: 'Auto-build games from your teams',
@@ -3215,7 +3240,7 @@ function ScheduleToolsMenu({
             lockTitle: 'Included with Tournament Plus and up',
             onClick: onAutoGenerate,
           })}
-          {row({
+          {showAutoBracket && row({
             icon: <Trophy size={13} style={{ color: canAutoBracket ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
             label: 'Auto-Generate Bracket',
             sub: 'Build a full bracket from a format',

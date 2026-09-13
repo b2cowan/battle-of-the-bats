@@ -12,7 +12,7 @@ import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { TieredBracket } from '@/components/bracket/TieredBracket';
 import { bracketRoundInfo, fanGameLabel, fanSlotLabel, inferGamePool, inferGamePoolSides } from '@/lib/playoff-bracket';
 import { computePlacementStandings } from '@/lib/playoff-standings';
-import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
+import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress, followKey } from '@/lib/follow';
@@ -175,7 +175,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     resolveInitialDivision(initialData?.divisions, orgSlug)?.id ?? ''
   );
   const [viewMode, setViewMode]           = useState<ScheduleStage>(() => {
-    if (resolveIsPlayoffOnly(initialData?.tournament)) return 'playoff';
+    if (!resolveHasRoundRobin(initialData?.tournament)) return 'playoff';
     // On playoff day the body should open on the playoff stage — a playoff game
     // live right now (or on today's card) outranks day-one pool results. The
     // manual toggle below still switches freely; this only picks the default.
@@ -188,7 +188,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     );
     return playoffDay ? 'playoff' : 'pool';
   });
-  const [bracketLayout, setBracketLayout] = useState<BracketLayout>(() => resolveIsPlayoffOnly(initialData?.tournament) ? 'bracket' : 'list');
+  const [bracketLayout, setBracketLayout] = useState<BracketLayout>(() => resolveHasRoundRobin(initialData?.tournament) ? 'list' : 'bracket');
   const [loading, setLoading]             = useState(!initialData);
   const [requireFinalization, setRequireFinalization] = useState(
     initialData?.organization.requireScoreFinalization ?? initialData?.tournament?.requireScoreFinalization ?? true
@@ -209,12 +209,17 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [dayJumpOpen, setDayJumpOpen] = useState(false);
   const dayStripRowRef = useRef<HTMLDivElement | null>(null);
 
-  // Bracket-only tournaments have no round-robin stage — never sit on the empty
-  // pool stage, and the pool/playoff toggle is hidden below.
-  const isPlayoffOnly = resolveIsPlayoffOnly(selectedTournament);
+  // The format pins the stage: a bracket-only event has no pool stage (never sit on it) and an
+  // Exhibition has no playoff stage (never sit on that one). The Pool Play | Playoffs toggle
+  // renders only when both stages exist — a Playoffs button on a scrimmage day promises a stage
+  // that is never coming.
+  const hasRoundRobinStage = resolveHasRoundRobin(selectedTournament);
+  const hasPlayoffStage = resolveHasPlayoffs(selectedTournament);
+  const showStageToggle = hasRoundRobinStage && hasPlayoffStage;
   useEffect(() => {
-    if (isPlayoffOnly && viewMode === 'pool') setViewMode('playoff');
-  }, [isPlayoffOnly, viewMode]);
+    if (!hasRoundRobinStage && viewMode === 'pool') setViewMode('playoff');
+    if (!hasPlayoffStage && viewMode === 'playoff') setViewMode('pool');
+  }, [hasRoundRobinStage, hasPlayoffStage, viewMode]);
 
   // Playoff-day default, client-fetch path: the live fan route mounts with no
   // initialData (games arrive async), so the lazy initializer above can't see
@@ -224,7 +229,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   useEffect(() => {
     if (autoStagedRef.current || games.length === 0 || !activeGroup) return;
     autoStagedRef.current = true;
-    if (isPlayoffOnly || viewMode !== 'pool') return;
+    if (!showStageToggle || viewMode !== 'pool') return;
     const today = tournamentToday();
     const playoffDay = games.some(g =>
       g.isPlayoff &&
@@ -232,7 +237,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       (g.date === today || isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES))
     );
     if (playoffDay) setViewMode('playoff');
-  }, [games, activeGroup, isPlayoffOnly, viewMode]);
+  }, [games, activeGroup, showStageToggle, viewMode]);
 
   useEffect(() => {
     // Browser-local preference hydrates after the public page renders — and must
@@ -1177,9 +1182,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             </div>
             {/* Stage toggle anchored left; the playoff List/Bracket display toggle
                 grows in to its right — kept off the search row so search never shrinks. */}
-            {(!isPlayoffOnly || viewMode === 'playoff') && (
+            {(showStageToggle || viewMode === 'playoff') && (
               <div className={styles.mobileStageRow}>
-                {!isPlayoffOnly && (
+                {showStageToggle && (
                 <div className={styles.mobileStageControl} role="group" aria-label="Schedule stage">
                   <button
                     type="button"
@@ -1264,7 +1269,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   <ChevronDown size={16} className="select-icon" />
                 </div>
               )}
-              {!isPlayoffOnly && (
+              {showStageToggle && (
               <div className={styles.segmentedControl} role="group" aria-label="Schedule stage">
                 <button
                   type="button"

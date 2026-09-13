@@ -11,7 +11,7 @@ import {
   getTournamentPreviewContext,
 } from '@/lib/tournament-preview';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
-import { isPlayoffOnly } from '@/lib/tournament-phase';
+import { hasRoundRobin } from '@/lib/tournament-phase';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +34,7 @@ export default async function TournamentPreviewLayout({
   // Bracket-only tournaments have no round-robin standings — hide that nav tab,
   // matching the live public layout (the preview nav otherwise can't detect this
   // because it only receives the hidden-pages list, not the tournament settings).
-  const hiddenPages = isPlayoffOnly(tournament)
+  const hiddenPages = !hasRoundRobin(tournament)
     ? Array.from(new Set([...(tournament.publicHiddenPages ?? []), 'standings' as const]))
     : (tournament.publicHiddenPages ?? []);
   const previewBase = `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`;

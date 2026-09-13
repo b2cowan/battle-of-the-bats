@@ -33,6 +33,7 @@ import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tourna
 import styles from './dashboard.module.css';
 import { copiedSummary, formatTime } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
+import { hasPlayoffs, isReadyToFinalize } from '@/lib/tournament-phase';
 import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 
 // ── Domain types ────────────────────────────────────────────────────────────
@@ -1034,13 +1035,20 @@ export default function AdminDashboard() {
 
   const daysUntil = computeDaysUntil(currentTournament?.startDate);
 
-  // "Ready to finalize" — every non-cancelled game is in a terminal state AND a
-  // playoff bracket exists (so a round robin whose bracket isn't built yet never
-  // trips it early — see DASHBOARD_COMPLETION_GUIDANCE_PLAN, decision #2). This is
-  // what the guidance rail keys off to stop showing the live "game day" card once
-  // the event is genuinely finished but still active (awaiting a manual complete).
-  const allGamesResolved = gd.totalGames > 0 && gd.resolved >= gd.totalGames;
-  const readyToFinalize  = isActive && allGamesResolved && gd.playoffGamesTotal > 0;
+  // "Ready to finalize" — every non-cancelled game is in a terminal state AND, when the format
+  // ends in a bracket, a playoff bracket exists (so a round robin whose bracket isn't built yet
+  // never trips it early — see DASHBOARD_COMPLETION_GUIDANCE_PLAN, decision #2). An Exhibition
+  // has no bracket to wait for. The rule itself lives in lib/tournament-phase (unit-tested);
+  // this is what the guidance rail keys off to stop showing the live "game day" card once the
+  // event is genuinely finished but still active (awaiting a manual complete).
+  const tournamentHasPlayoffs = hasPlayoffs(currentTournament);
+  const readyToFinalize = isReadyToFinalize({
+    isActive,
+    totalGames: gd.totalGames,
+    resolvedGames: gd.resolved,
+    playoffGamesTotal: gd.playoffGamesTotal,
+    hasPlayoffs: tournamentHasPlayoffs,
+  });
   // Playoffs done (every playoff game terminal) — completion-aware By-Division footer.
   const playoffsAllDone  = gd.playoffGamesTotal > 0 && gd.playoffResolved >= gd.playoffGamesTotal;
 
@@ -1065,6 +1073,7 @@ export default function AdminDashboard() {
       planId: currentOrg.planId,
       daysUntil,
       checklist: { hasDates: checklist.hasDates, hasDivisions: checklist.hasDivisions, ready: checklist.ready },
+      hasPlayoffs: tournamentHasPlayoffs,
     };
     return (
       <GuidanceRail

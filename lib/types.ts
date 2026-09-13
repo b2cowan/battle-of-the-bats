@@ -21,9 +21,17 @@ export type PublicPageKey = 'news' | 'schedule' | 'standings' | 'teams' | 'rules
  * Tournament structure. 'round_robin_playoffs' (default) = the standard round
  * robin → playoffs flow (bracket seeds from standings). 'playoff_only' =
  * bracket-only: no round robin, the organizer seeds teams directly into the
- * first round (resolved at bracket creation).
+ * first round (resolved at bracket creation). 'exhibition' = games and
+ * standings with no playoff bracket at all — a scrimmage day or an exhibition
+ * weekend (owner ruling 2026-09-13).
+ *
+ * ⚠ Never compare the literal on a surface. Ask `hasRoundRobin()` / `hasPlayoffs()`
+ * (lib/tournament-phase.ts) — every screen wants one of those two answers, and a
+ * fourth format then needs no sweep. The Event settings page once parsed
+ * "not bracket-only" as round robin, which would have read an Exhibition as the
+ * wrong format silently.
  */
-export type TournamentFormat = 'round_robin_playoffs' | 'playoff_only';
+export type TournamentFormat = 'round_robin_playoffs' | 'playoff_only' | 'exhibition';
 
 /**
  * Organizer-defined thresholds that determine what a "healthy" schedule is, edited
@@ -48,7 +56,8 @@ export interface TournamentSettings {
   /**
    * Tournament structure. Absent/`'round_robin_playoffs'` = standard round robin →
    * playoffs; `'playoff_only'` = bracket-only (no round robin; organizer seeds the
-   * bracket directly). See lib/playoff-bracket.ts + lib/tournament-phase.ts helpers.
+   * bracket directly); `'exhibition'` = no playoffs at all. Read through
+   * `hasRoundRobin()` / `hasPlayoffs()` in lib/tournament-phase.ts.
    */
   format?: TournamentFormat;
   /** Public rules page layout for the rule-section grid. Default: 'columns' (2-col). */
