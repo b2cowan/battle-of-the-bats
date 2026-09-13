@@ -192,3 +192,20 @@ test('the chevron stops the row underneath it from toggling as well', () => {
     + 'tap now, so a click on the chevron toggles the fold twice and the category never opens.',
   );
 });
+
+test('the Player installments row opens PLAYER DUES — never the whole-roster generator (owner ruling F, 2026-09-13)', () => {
+  /* The walk of 2026-09-13 found the row opening the Set-dues sheet — the whole-roster re-run,
+     whose first sentence is a warning that it replaces every schedule. A schedule that has gone
+     out to families stays all year; the coach tapping this row wants to SEE it, and both change
+     doors (the per-family pencil, the bulk re-run with its warning) already live on Player Dues.
+     So the row is a LINK there, on both views, for every coach who can read money — and nothing
+     on either view may hand this row a door into the generator again. */
+  const links = budget.split('\n').filter(l => /title="Open Player Dues"/.test(l));
+  assert.equal(links.length, 2, 'the grid and the List each carry the installments row\'s link to Player Dues');
+  assert.ok(
+    !/title="Set dues for all players"/.test(budget),
+    'A row control on the plan is titled "Set dues for all players" again — the installments row '
+    + 'must open Player Dues (the schedule\'s own room), never the whole-roster generator.',
+  );
+  assert.match(budget, /duesHref=\{duesHref\}/, 'the grid is handed the Player Dues href');
+});

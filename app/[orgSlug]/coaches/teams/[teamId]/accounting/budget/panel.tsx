@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { BarChart3, Plus, X, ChevronDown, ChevronRight, AlertTriangle, Settings2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -53,6 +54,7 @@ import {
 } from '@/lib/coach-budget-period-modes';
 import { joinPeriodSplits } from '@/lib/coach-budget-periods-payload';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { shortfallPhrase, closingClause } from '@/components/coaches/BudgetBalanceWords';
 import type {
   RepBudgetPlan,
   RepBudgetLineWithPeriods,
@@ -348,18 +350,6 @@ function duesBadge(badgeClass: string, draft: boolean): React.ReactNode {
   return <span className={`${styles.planBadgeOff} ${badgeClass}`}>{draft ? 'Draft' : 'Scheduled'}</span>;
 }
 
-/** "September 2026 closes ($1,533.00)" — the shortfall, said ONE way wherever a sentence names it
- *  (the status line, the trial sentence, the sheet's draft note). */
-function shortfallPhrase(shortfall: NonNullable<PeriodBalance['shortfall']>): string {
-  return `${formatMonthLong(shortfall.monthKey)} closes ${fmtSigned(-shortfall.amount)}`;
-}
-
-/** The clause a before → after sentence ends on: the first month below zero, or the all-clear. */
-function closingClause(balance: PeriodBalance, suffix = ''): React.ReactNode {
-  if (balance.shortfall) return <>; <strong>{shortfallPhrase(balance.shortfall)}</strong>{suffix}.</>;
-  return balance.months.length > 0 ? '; every month stays at or above zero.' : '.';
-}
-
 /** The index of the first month at or after today, or 0 when today is past the plan — the month
  *  a coach is most likely asking about. Shared by the grid's opening window and the trial's default. */
 function monthAtOrAfterToday(monthKeys: readonly string[]): number {
@@ -634,12 +624,16 @@ function BudgetLineRow({
  * already enter. Read-only by design: this is a way to SEE the plan, and every edit still happens
  * in the list's own form, so there is exactly one place a budget line can be changed.
  */
-function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onEditLine, onSetDues, writtenOffClause, duesDraft }: {
+function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle, onEditLine, duesHref, writtenOffClause, duesDraft }: {
   view: PeriodView;
-  /** Opens the Set-dues sheet — the Player installments row's door (plan §3.4: "opening that row
-   *  uses the dues flow"). Absent for a coach who cannot write money, and the row then carries no
-   *  affordance at all rather than offering a sheet the server would refuse. */
-  onSetDues?: () => void;
+  /**
+   * Where the Player installments row goes: the Player Dues tab — the schedule's own room (owner
+   * ruling F, 2026-09-13, mockup round 2 option A). ⚠ NOT the Set-dues sheet. A schedule that has
+   * gone out to families stays all year; the whole-roster re-run is the rare, disruptive act, and it
+   * lives on Player Dues with its own warning — available, never the plan's default tap. A READ
+   * door, so it is offered to every coach who can read money.
+   */
+  duesHref: string;
   /** "after $17.00 of adjustments" etc. — the same clause the tile above states beside its figure
    *  (owner ruling §160 Part F2). Computed in the panel, which already holds the write-off data;
    *  passed down rather than re-derived so the two surfaces cannot read two different write-offs. */
@@ -705,6 +699,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
      ⚠ The undated column is NOT a month and never pages; it leads, on both grids.
      ⚠ QUARTERS DO NOT PAGE. Two years of quarters is eight columns and always fits, so a control
      there would be furniture that never does anything. */
+  const router = useRouter();
   const undatedCol = view.columns.find(c => c.unscheduled) ?? null;
   const dateCols = view.columns.filter(c => !c.unscheduled);
   const paged = granularity === 'months' && dateCols.length > MONTH_WINDOW;
@@ -770,30 +765,30 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
    * whenever a schedule is lowered after its instalments were generated — abs()ed, the overshoot
    * printed as a positive and the row stopped summing to its own Total).
    *
-   * The installments row's control is a DOOR to the Set-dues sheet (plan §3.4, "opening that row
-   * uses the dues flow") — the same shape a line row uses one level down: the row is the pointer
-   * shortcut, the button is the keyboard's. Absent for a coach who cannot write money.
+   * The installments row's control is a LINK to Player Dues (owner ruling F, 2026-09-13) — the
+   * same shape a line row uses one level down: the row is the pointer shortcut, the link is the
+   * keyboard's. The trial row carries no door: there is no record to open.
    */
   const derivedRow = (
-    key: string, name: string, t: PeriodTotals, green: boolean, badge: React.ReactNode, door: (() => void) | null,
+    key: string, name: string, t: PeriodTotals, green: boolean, badge: React.ReactNode, href: string | null,
   ) => (
     <tr
       key={key}
-      className={`${shared.moneyGridCat} ${green ? styles.periodGridFunding : ''} ${door ? shared.rowTappable : ''}`}
-      onClick={door ? () => { if (window.getSelection()?.toString()) return; door(); } : undefined}
+      className={`${shared.moneyGridCat} ${green ? styles.periodGridFunding : ''} ${href ? shared.rowTappable : ''}`}
+      onClick={href ? () => { if (window.getSelection()?.toString()) return; router.push(href); } : undefined}
     >
       <th scope="rowgroup">
-        {door ? (
-          <button
-            type="button"
+        {href ? (
+          <Link
+            href={href}
             className={shared.moneyGridToggle}
-            onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) return; door(); }}
-            title="Set dues for all players"
+            onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) e.preventDefault(); }}
+            title="Open Player Dues"
           >
             <span className={shared.moneyGridChevronSpacer} aria-hidden />
             <span className={shared.wrap640}>{name}</span>
             {badge}
-          </button>
+          </Link>
         ) : (
           <span className={shared.moneyGridToggle}>
             <span className={shared.moneyGridChevronSpacer} aria-hidden />
@@ -1008,7 +1003,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
                 standing in for it (decision D). */}
             {view.installments && derivedRow(
               'installments', PLAN_LADDER_LABEL.installments, view.installments, true,
-              duesBadge(styles.periodGridBadge, duesDraft === true), onSetDues ?? null,
+              duesBadge(styles.periodGridBadge, duesDraft === true), duesHref,
             )}
             {revenueGroups.map(renderGroup)}
             {!view.installments && revenueGroups.length === 0 && (
@@ -1338,6 +1333,9 @@ export function BudgetPlanPanel({
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  const router = useRouter();
+  /** The Player installments row's door on both views (owner ruling F, 2026-09-13). */
+  const duesHref = moneySectionHref(base, 'dues', undefined);
 
   const [plan,       setPlan]       = useState<RepBudgetPlan | null>(null);
   /* The "Bring last season's plan" door's one fact (owner Q8b): an earlier season with lines,
@@ -2935,16 +2933,6 @@ export function BudgetPlanPanel({
     'Pick a month to see how much room the rest of the season leaves.'
   );
 
-  /** The sentence the Set-dues sheet prints under its preview while a draft stands in (decision D). */
-  const draftNote: React.ReactNode = duesDraft ? (
-    <>
-      On the plan: season closing {fmtSigned(baseView.balance.seasonClosing)} → <strong>{fmtSigned(balance.seasonClosing)}</strong>
-      {closingClause(balance)}
-      {duesDraft.kept > 0 && <> The {duesDraft.kept === 1 ? 'schedule' : `${duesDraft.kept} schedules`} being kept {duesDraft.kept === 1 ? 'is' : 'are'} not in the draft.</>}
-      {' '}Cancel restores the saved plan.
-    </>
-  ) : null;
-
   // Page-level action ruling 2026-08-13: "Add Line" acts on the BUDGET, and the nearest chrome
   // that names the budget is the plan's own control row — not the Money hub header above it,
   // which names the container. So the create lives in the toolbar below.
@@ -3370,7 +3358,7 @@ export function BudgetPlanPanel({
               onEditLine={moneyCanWrite
                 ? (lineId: string) => { const line = allLines.find(l => l.id === lineId); if (line) openEdit(line); }
                 : undefined}
-              onSetDues={moneyCanWrite ? () => setGenOpen(true) : undefined}
+              duesHref={duesHref}
               writtenOffClause={writtenOffClause}
               duesDraft={duesDraft != null}
             />
@@ -3486,29 +3474,25 @@ export function BudgetPlanPanel({
                   Player Dues tab. ⚠ Only on the UNFILTERED plan — a slice has no schedule. */}
               {whenFilter === 'all' && periodView.installments && (
                 <tr
-                  className={`${styles.ladderRow} ${styles.fundingRow} ${moneyCanWrite ? shared.rowTappable : ''}`}
-                  /* The row's door is the dues flow (plan §3.4) — the whole-roster Set-dues sheet,
-                     where the figure this row prints is made. Tap anywhere for a pointer; the name
-                     is the keyboard's control. No affordance for a read-only coach. */
-                  onClick={moneyCanWrite ? () => { if (window.getSelection()?.toString()) return; setGenOpen(true); } : undefined}
+                  className={`${styles.ladderRow} ${styles.fundingRow} ${shared.rowTappable}`}
+                  /* The row's door is PLAYER DUES — the schedule's own room (owner ruling F,
+                     2026-09-13, mockup round 2 option A), never the whole-roster re-run: a schedule
+                     that has gone out to families stays all year, and both change doors (the
+                     per-family pencil, the bulk re-run with its warning) already live there. A read
+                     door, so every coach who can read money gets it. Tap anywhere for a pointer;
+                     the name is the keyboard's link. */
+                  onClick={() => { if (window.getSelection()?.toString()) return; router.push(duesHref); }}
                 >
                   <th scope="row" className={styles.lead}>
-                    {moneyCanWrite ? (
-                      <button
-                        type="button"
-                        className={shared.moneyGridToggle}
-                        onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) return; setGenOpen(true); }}
-                        title="Set dues for all players"
-                      >
-                        <span>{PLAN_LADDER_LABEL.installments}</span>
-                        {duesBadge(styles.ladderBadge, duesDraft != null)}
-                      </button>
-                    ) : (
-                      <>
-                        {PLAN_LADDER_LABEL.installments}
-                        {duesBadge(styles.ladderBadge, duesDraft != null)}
-                      </>
-                    )}
+                    <Link
+                      href={duesHref}
+                      className={shared.moneyGridToggle}
+                      onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) e.preventDefault(); }}
+                      title="Open Player Dues"
+                    >
+                      <span>{PLAN_LADDER_LABEL.installments}</span>
+                      {duesBadge(styles.ladderBadge, duesDraft != null)}
+                    </Link>
                   </th>
                   <td className={styles.schedCell} />
                   <td className={styles.fundingAmount}>{fmt(periodView.installments.total)}</td>
@@ -4799,18 +4783,18 @@ export function BudgetPlanPanel({
           // ⚠ The HUB tab — the legacy standalone page one directory down used to resolve too
           // (without the hub's tab bar, stranding the coach), which is why this link goes through
           // the shared builder. Those routes were deleted outright on 2026-08-31.
-          duesHref={moneySectionHref(base, 'dues', undefined)}
+          duesHref={duesHref}
           // Must travel with the modal: the hub keeps this panel mounted behind another tab, and
           // a dirty form that can't be seen must not intercept clicks. See the prop's own note.
           tabActive={tabActive}
           onClose={() => setGenOpen(false)}
           onGenerated={load}
-          /* The plan's answer to the schedule being previewed (decision D): the sheet hands the
-             draft up, the panel builds the view over it, and the sentence comes back down. The
-             callback is the setter itself, which is referentially stable, so the sheet's effect
-             does not re-fire on every panel render. */
+          /* The schedule being previewed (decision D): the sheet hands the draft up and the plan
+             behind it shows the row as Draft. The sheet prints its own "On the plan" sentence
+             (ruling F — it must say so wherever it is opened, Player Dues included). The callback
+             is the setter itself, referentially stable, so the sheet's effect does not re-fire on
+             every panel render. */
           onDraft={setDuesDraft}
-          draftNote={draftNote}
         />
       )}
 

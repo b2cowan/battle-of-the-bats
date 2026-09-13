@@ -111,12 +111,42 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:
 .empty{padding:24px;white-space:normal;text-align:left!important;color:#615a54}
 .footnotes:empty{display:none}
 
+/* ── round 2: the installments row's door ── */
+.roundnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 24px 0}
+.roundnav button{min-height:40px;border:1px solid var(--line);border-radius:20px;padding:7px 14px;background:white;font-size:13px}
+.roundnav button[aria-pressed=true]{background:var(--lime);border-color:#8aa15a;font-weight:700}
+.screennav{display:flex;gap:6px;flex-wrap:wrap;margin:14px 24px 4px}
+.screennav button{min-height:40px;border:1px solid var(--line);border-radius:7px;padding:7px 12px;background:white;font-size:13px}
+.screennav button[aria-pressed=true]{background:#3a4932;color:#fff;border-color:#3a4932;font-weight:700}
+.screen{position:relative}
+.screen .frame{position:relative}
+.pin{position:absolute;z-index:3;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#b8261c;color:#fff;font-weight:800;font-size:12px;border:2px solid #fff;box-shadow:0 2px 8px #0003;cursor:pointer}
+.pin[aria-expanded=true]{background:#1c2417}
+.pinnote{position:absolute;z-index:4;max-width:320px;background:#1c2417;color:#f2f5ea;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.45;box-shadow:0 6px 24px #0004}
+.pinnote[hidden]{display:none}
+.overlay{position:absolute;inset:0;background:#1c2417a8;z-index:2}
+.sheet{position:absolute;z-index:3;left:50%;top:40px;transform:translateX(-50%);width:min(760px,calc(100% - 40px));background:#fff;border-radius:12px;box-shadow:0 20px 60px #0006;padding:22px 26px;color:#241e15}
+.sheet h3{margin:0 0 14px;font-size:18px}.sheet p{margin:8px 0}.sheet .warn{color:#a3231b}.sheet .info{color:#3f5b7a}
+.sheet .opt{border:1px solid #d9d4c8;border-radius:8px;padding:12px 14px;margin:8px 0;display:flex;justify-content:space-between;gap:12px;align-items:center}.sheet .opt.on{background:#f1f3e8;border-color:#8aa15a}
+.sheet .opt small{display:block;color:#615a54}.sheet .per{font-weight:800;font-size:18px;text-align:right}.sheet .per small{font-size:10px;letter-spacing:.06em}
+.sheet .foot{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.sheet .foot button{min-height:44px;border:1px solid #b3b6ad;border-radius:7px;padding:8px 16px;background:white}
+.sheet .onplan{margin-top:12px;padding:10px 12px;border-left:3px solid #b8c69b;background:#eaf0df;font-size:14px}
+.panel{position:absolute;z-index:3;right:24px;top:24px;bottom:24px;width:min(420px,calc(100% - 48px));background:#fff;border-radius:12px;box-shadow:0 20px 60px #0006;padding:20px 22px;overflow:auto;color:#241e15}
+.panel h3{margin:0 0 4px;font-size:18px}.panel .sub{margin-bottom:14px}.panel table{font-size:14px}.panel th,.panel td{padding:8px 10px;border-bottom:1px solid #ebe6de;text-align:right}.panel th:first-child,.panel td:first-child{text-align:left;position:static;min-width:0}
+.panel .doors{display:grid;gap:10px;margin-top:18px}.panel .doors a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #687846;border-radius:7px;background:var(--lime);color:#241e15;text-decoration:none;font-weight:700}
+.panel .doors .quiet{color:#615a54;font-size:13px;text-align:center}
+.dues .band{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #dcd5c9;border-radius:9px;overflow:hidden;background:#fff;margin-bottom:14px}
+.dues .band div{padding:14px 18px;border-right:1px solid #e6e0d7}.dues .band div:last-child{border:0}.dues .band label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#615a54;font-weight:700}.dues .band b{font-size:24px;font-variant-numeric:tabular-nums}.dues .band small{display:block;color:#615a54;font-size:12px}
+.dues .sched{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;font-size:13px;color:#615a54}.dues .sched span{border:1px solid #dcd5c9;border-radius:20px;padding:5px 11px;background:#fff}
+.dues .status{margin:0}.dues .pill{display:inline-block;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700}.dues .ok{background:#e3f3d4;color:#3a5a20}.dues .late{background:#f3dede;color:#8f2b23}.dues .pen{color:#456435;font-size:12px}
+.r2notes{max-width:900px;margin:18px auto 30px;padding:0 24px;font-size:14px;color:var(--muted)}.r2notes h3{color:var(--ink);font-size:15px;margin:14px 0 6px}.r2notes p{margin:6px 0}
+@container(max-width:700px){.dues .band{grid-template-columns:1fr 1fr}.panel{left:10px;right:10px;width:auto;top:10px;bottom:10px}.sheet{top:10px;width:calc(100% - 20px)}}
 @container(max-width:700px){.frame .page{padding:14px 10px}.shell{padding:12px}.shell small{font-size:11px}.summary{grid-template-columns:1fr}.tile{border-right:0;border-bottom:1px solid #e6e0d7;padding:11px 14px}.figure{font-size:24px}.tile small{display:inline}.prodtabs{gap:14px;font-size:12px}th,td{padding:10px}.frame th:first-child{min-width:165px;max-width:165px;white-space:normal}.rowtag{display:none}.helper{gap:12px}.preview-controls{align-items:stretch}.toolbar-group button{padding:8px 10px}}
 @media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.review-controls{margin:14px 14px}}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Revenue first, balances carried forward — project hub</strong><br><small>Committed 182c7192 2026-09-12 · owner walk owed — Owner QA §173 (QA Walk tab)</small></div>
+  <div class="hubtitle"><strong>Revenue first, balances carried forward — project hub</strong><br><small>Committed 182c7192 2026-09-12 · walk in progress (§173) · ruling F built: the installments row opens Player Dues</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Mockup rounds 2026-09-09 – 2026-09-12, Owner QA §164 F1">Design</li>
     <li class="stage done" title="Approved 2026-09-12, decisions A–D">Plan</li>
@@ -138,6 +168,11 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:
 
 <!-- ═══════════════════════════════ MOCKUP ═══════════════════════════════ -->
 <section id="hub-mockup" class="hubsection">
+  <div class="roundnav" role="tablist" aria-label="Mockup rounds">
+    <button type="button" data-round="r1" aria-pressed="false">Round 1 · the plan (approved 2026-09-12, built)</button>
+    <button type="button" data-round="r2" aria-pressed="true">Round 2 · the Player installments row's door (ruled A, built 2026-09-13)</button>
+  </div>
+  <div id="round-r1" hidden>
   <p class="mockupintro">Revenue first, expenses next, then the balance you bring into the next period. The same budget stays in view as you estimate costs, set player dues and consider another purchase. Ported from <code>COACH_BUDGET_REVENUE_FIRST_MOCKUP.html</code> — nothing here changes real team data.</p>
   <div class="review-controls">
     <label for="scenario">Explore a stage of the budget
@@ -182,6 +217,157 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:
       </section>
     </div>
   </article>
+  </div>
+
+  <div id="round-r2">
+  <p class="mockupintro"><strong>The question (owner, walk 2026-09-13):</strong> once dues are scheduled, tapping the <strong>Player installments</strong> row opens the whole-roster generator. A coach mid-season rarely wants that — once the schedule has gone out to families it stays all year, and changes (overall or one family) should be possible without being <em>encouraged</em>. Three screens, true size: as built, and two shapes for what the tap should do instead. Red pins are clickable.</p>
+  <div class="screennav" role="tablist" aria-label="Round 2 screens">
+    <button type="button" data-screen="asbuilt" aria-pressed="true">0 · As built — the row opens the generator</button>
+    <button type="button" data-screen="optA" aria-pressed="false">A · The row opens Player Dues</button>
+    <button type="button" data-screen="optA2" aria-pressed="false">A′ · …and the sheet says what it does to the plan</button>
+    <button type="button" data-screen="optB" aria-pressed="false">B · A "behind this figure" panel on the plan</button>
+  </div>
+
+  <!-- ── 0 · as built ── -->
+  <div class="screen" id="screen-asbuilt">
+  <article class="frame" aria-label="As built: tapping Player installments opens the Set-dues sheet">
+    <div class="shell"><span>FieldLogicHQ <small> / Coaches</small></span><small>U14 team · 2026 season</small></div>
+    <div class="page">
+      <div class="crumb">Team / Money</div><h2>Budget</h2>
+      <div class="prodtabs"><span class="active">Budget</span><span>Budget vs. Actual</span><span>Player dues</span></div>
+      <div class="summary"><div class="tile"><label>Total revenue</label><div class="figure">$14,000</div><small>Includes player installments</small></div><div class="tile"><label>Total expenses</label><div class="figure">$14,000</div><small>From your budget items</small></div><div class="tile"><label>Closing balance</label><div class="figure">$1,000</div><small>From $1,000 opening</small></div></div>
+      <div class="status bad">September 2026 closes ($1,000) below zero · Review when installments arrive or expenses fall due.</div>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Category / line</th><th scope="col">When</th><th scope="col">Planned</th></tr></thead><tbody>
+        <tr class="band"><th colspan="3" scope="colgroup">REVENUE</th></tr>
+        <tr style="background:#f1f3e8;outline:2px solid #b8261c;outline-offset:-2px"><th scope="row">Player installments <span class="rowtag">Scheduled</span></th><td class="muted">Sep · Oct · Nov</td><td class="good">$12,000</td></tr>
+        <tr><th scope="row">Sponsorship</th><td class="muted">Oct</td><td class="good">$2,000</td></tr>
+        <tr class="subtotal"><th scope="row">Total revenue</th><td></td><td>$14,000</td></tr>
+        <tr class="band"><th colspan="3" scope="colgroup">EXPENSES</th></tr>
+        <tr><th scope="row">Ice rental</th><td class="muted">Sep – Dec</td><td>$10,000</td></tr>
+        <tr class="subtotal"><th scope="row">Total expenses</th><td></td><td>$14,000</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="overlay"></div>
+    <div class="sheet" role="dialog" aria-label="Set dues for all players (as built)">
+      <h3>Set dues for all players</h3>
+      <p>Every active roster player receives the same schedule.</p>
+      <p class="info">This roster already has dues. Generating replaces the schedule; payments already recorded are kept and count toward the new one.</p>
+      <div class="opt on"><div><strong>Split the budget evenly</strong><small>$14,000.00 line items − $2,000.00 planned funding ÷ 12 players</small></div><div class="per">$1,000.00<small>PER PLAYER</small></div></div>
+      <div class="opt"><div><strong>Set the amounts myself</strong><small>Type each installment. We'll show how it compares to the $12,000.00 players need to fund.</small></div><div class="per" style="font-size:14px">You decide</div></div>
+      <div class="foot"><button type="button">Cancel</button><button type="button">Preview</button></div>
+    </div>
+    <button type="button" class="pin" style="left:300px;top:478px" aria-expanded="false" aria-controls="n-ab-1">1</button>
+    <div class="pinnote" id="n-ab-1" style="left:334px;top:466px" hidden>One tap on the row opens the whole-roster generator. Its first sentence is a warning — "This roster already has dues. Generating replaces the schedule." That is the rare, disruptive act, offered as the row's default answer.</div>
+    <button type="button" class="pin" style="left:calc(50% + 300px);top:120px" aria-expanded="false" aria-controls="n-ab-2">2</button>
+    <div class="pinnote" id="n-ab-2" style="left:calc(50% + 40px);top:154px" hidden>What a coach mid-season actually wants from this tap: to SEE the schedule — the dates, who is on it, what has been written off — not to re-run it. Nothing here shows the schedule.</div>
+  </article>
+  </div>
+
+  <!-- ── A · the row opens Player Dues ── -->
+  <div class="screen" id="screen-optA" hidden>
+  <article class="frame dues" aria-label="Option A: the tap lands on the Player Dues tab">
+    <div class="shell"><span>FieldLogicHQ <small> / Coaches</small></span><small>U14 team · 2026 season</small></div>
+    <div class="page">
+      <div class="crumb">Team / Money</div><h2>Player dues</h2>
+      <div class="prodtabs"><span>Budget</span><span>Budget vs. Actual</span><span class="active">Player dues</span></div>
+      <div class="band"><div><label>Dues</label><b>$12,000.00</b><small>12 players · Scheduled</small></div><div><label>Collected</label><b>$5,200.00</b><small>after $17.00 of adjustments</small></div><div><label>Balance owing</label><b>$6,800.00</b><small>across 9 families</small></div><div><label>Past due</label><b style="color:#8f2b23">$333.33</b><small>1 family</small></div></div>
+      <div class="sched"><span>Collection schedule</span><span>#1 · Sep 15 · $4,000 · 11 of 12 paid</span><span>#2 · Oct 15 · $4,000</span><span>#3 · Nov 15 · $4,000</span></div>
+      <div class="toolbar"><div class="toolbar-group"><button type="button" aria-pressed="true">View · Season totals</button><button type="button">By installment</button></div><div class="toolbar-group"><button type="button">Export</button><button type="button">Record a payment</button><button type="button" style="border-color:#b8261c">Set dues for all players</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Player</th><th scope="col">Dues</th><th scope="col">Fundraising</th><th scope="col">Other credits</th><th scope="col">Paid</th><th scope="col">Handed back</th><th scope="col">Balance</th><th scope="col">Status</th></tr></thead><tbody>
+        <tr><th scope="row">Avery Test <span class="pen">✎</span></th><td>$1,000.00</td><td>—</td><td>—</td><td>$333.33</td><td>—</td><td>$666.67</td><td><span class="pill ok">On track</span></td></tr>
+        <tr><th scope="row">Blake Test <span class="pen">✎</span></th><td>$983.00</td><td>$17.00</td><td>—</td><td>$333.33</td><td>—</td><td>$632.67</td><td><span class="pill ok">On track</span></td></tr>
+        <tr><th scope="row">Casey Test <span class="pen">✎</span></th><td>$1,000.00</td><td>—</td><td>—</td><td>—</td><td>—</td><td>$1,000.00</td><td><span class="pill late">Past due</span></td></tr>
+        <tr><th scope="row">Devon Test <span class="pen">✎</span></th><td>$1,000.00</td><td>—</td><td>$100.00</td><td>$233.33</td><td>—</td><td>$666.67</td><td><span class="pill ok">On track</span></td></tr>
+        <tr><td colspan="8" class="empty">… 8 more families</td></tr>
+      </tbody></table></div>
+    </div>
+    <button type="button" class="pin" style="left:186px;top:56px" aria-expanded="false" aria-controls="n-a-1">1</button>
+    <div class="pinnote" id="n-a-1" style="left:220px;top:44px" hidden>The row's tap lands HERE — the schedule's own room. The row on the plan reads exactly as it does today (name, Scheduled tag, figure); only where it goes changed. Nothing new to learn: this is the tab a coach already uses for dues.</div>
+    <button type="button" class="pin" style="left:118px;top:484px" aria-expanded="false" aria-controls="n-a-2">2</button>
+    <div class="pinnote" id="n-a-2" style="left:152px;top:472px" hidden>A change to ONE family is the pencil on their row — the door that already exists, with its own guard-rails (adjustments, forgiveness, a hand-set schedule kept as it is on any later re-run).</div>
+    <button type="button" class="pin" style="right:26px;top:298px" aria-expanded="false" aria-controls="n-a-3">3</button>
+    <div class="pinnote" id="n-a-3" style="right:26px;top:330px" hidden>A change to EVERYONE is still one door — the same sheet as today, where it always lived, with its "this roster already has dues" warning. It is here and not on the plan, so it is available without being the plan's default tap.</div>
+    <button type="button" class="pin" style="left:520px;top:332px" aria-expanded="false" aria-controls="n-a-4">4</button>
+    <div class="pinnote" id="n-a-4" style="left:554px;top:320px" hidden>The Collection schedule strip already answers "when, and how much" — the thing the plan's row was being tapped to find out.</div>
+  </article>
+  </div>
+
+  <!-- ── A′ · the sheet says what it does to the plan ── -->
+  <div class="screen" id="screen-optA2" hidden>
+  <article class="frame dues" aria-label="Option A continued: the Set-dues sheet, opened from Player Dues, prints the plan's answer">
+    <div class="shell"><span>FieldLogicHQ <small> / Coaches</small></span><small>U14 team · 2026 season</small></div>
+    <div class="page">
+      <div class="crumb">Team / Money</div><h2>Player dues</h2>
+      <div class="prodtabs"><span>Budget</span><span>Budget vs. Actual</span><span class="active">Player dues</span></div>
+      <div class="band"><div><label>Dues</label><b>$12,000.00</b><small>12 players · Scheduled</small></div><div><label>Collected</label><b>$5,200.00</b><small>after $17.00 of adjustments</small></div><div><label>Balance owing</label><b>$6,800.00</b><small>across 9 families</small></div><div><label>Past due</label><b style="color:#8f2b23">$333.33</b><small>1 family</small></div></div>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Player</th><th scope="col">Dues</th><th scope="col">Paid</th><th scope="col">Balance</th></tr></thead><tbody><tr><th scope="row">Avery Test</th><td>$1,000.00</td><td>$333.33</td><td>$666.67</td></tr><tr><th scope="row">Blake Test</th><td>$983.00</td><td>$333.33</td><td>$632.67</td></tr><tr><td colspan="4" class="empty">…</td></tr></tbody></table></div>
+    </div>
+    <div class="overlay"></div>
+    <div class="sheet" role="dialog" aria-label="Set dues for all players, previewed">
+      <h3>Set dues for all players</h3>
+      <p class="info">This roster already has dues. Generating replaces the schedule; payments already recorded are kept and count toward the new one.</p>
+      <p>Every player: <strong>$1,000.00</strong> in 3 installments (15 Sep, 15 Oct, 15 Nov) — <strong>$12,000.00</strong> across 12 players.</p>
+      <p style="color:#3a5a20">= Collecting $1,000.00 per player — $12,000.00 across the roster. <strong>Matches what players need to fund.</strong></p>
+      <div class="onplan"><strong>On the plan:</strong> season closing $1,000 → <strong>$1,000</strong>; <strong>September 2026 closes ($1,000)</strong>. The 2 schedules being kept are not in the draft. Cancel restores the saved plan.</div>
+      <div class="foot"><button type="button">Back</button><button type="button" style="background:#d9f99d;border-color:#687846;font-weight:700">Set dues for 10 players</button></div>
+    </div>
+    <button type="button" class="pin" style="left:calc(50% - 360px);top:296px" aria-expanded="false" aria-controls="n-a2-1">1</button>
+    <div class="pinnote" id="n-a2-1" style="left:calc(50% - 326px);top:330px" hidden>Decision D, kept whole: the "what does this schedule do to my months" sentence moves INTO the sheet, so it appears wherever the sheet is opened — including a mid-season re-run from Player Dues, which is exactly when it matters. Today it shows only when the sheet is opened from the Budget tab.</div>
+    <button type="button" class="pin" style="left:calc(50% + 310px);top:246px" aria-expanded="false" aria-controls="n-a2-2">2</button>
+    <div class="pinnote" id="n-a2-2" style="left:calc(50% + 20px);top:280px" hidden>The Draft row on the plan behind the sheet stays as built when the sheet is opened from the Budget tab (before dues exist). From Player Dues there is no plan on screen, so the sentence carries the whole answer.</div>
+  </article>
+  </div>
+
+  <!-- ── B · a panel on the plan ── -->
+  <div class="screen" id="screen-optB" hidden>
+  <article class="frame" aria-label="Option B: a behind-this-figure panel on the plan">
+    <div class="shell"><span>FieldLogicHQ <small> / Coaches</small></span><small>U14 team · 2026 season</small></div>
+    <div class="page">
+      <div class="crumb">Team / Money</div><h2>Budget</h2>
+      <div class="prodtabs"><span class="active">Budget</span><span>Budget vs. Actual</span><span>Player dues</span></div>
+      <div class="summary"><div class="tile"><label>Total revenue</label><div class="figure">$14,000</div><small>Includes player installments</small></div><div class="tile"><label>Total expenses</label><div class="figure">$14,000</div><small>From your budget items</small></div><div class="tile"><label>Closing balance</label><div class="figure">$1,000</div><small>From $1,000 opening</small></div></div>
+      <div class="status bad">September 2026 closes ($1,000) below zero · Review when installments arrive or expenses fall due.</div>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Category / line</th><th scope="col">When</th><th scope="col">Planned</th></tr></thead><tbody>
+        <tr class="band"><th colspan="3" scope="colgroup">REVENUE</th></tr>
+        <tr style="background:#f1f3e8"><th scope="row">Player installments <span class="rowtag">Scheduled</span></th><td class="muted">Sep · Oct · Nov</td><td class="good">$12,000</td></tr>
+        <tr><th scope="row">Sponsorship</th><td class="muted">Oct</td><td class="good">$2,000</td></tr>
+        <tr class="subtotal"><th scope="row">Total revenue</th><td></td><td>$14,000</td></tr>
+        <tr class="band"><th colspan="3" scope="colgroup">EXPENSES</th></tr>
+        <tr><th scope="row">Ice rental</th><td class="muted">Sep – Dec</td><td>$10,000</td></tr>
+        <tr class="subtotal"><th scope="row">Total expenses</th><td></td><td>$14,000</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="overlay" style="background:#1c241766"></div>
+    <div class="panel" role="dialog" aria-label="Player installments — behind this figure">
+      <h3>Player installments <span class="rowtag">Scheduled</span></h3>
+      <p class="sub">12 of 12 players scheduled · after $17.00 of adjustments</p>
+      <table><thead><tr><th scope="col">Installment</th><th scope="col">Due</th><th scope="col">Per player</th><th scope="col">Roster</th></tr></thead><tbody>
+        <tr><td>#1</td><td>15 Sep 2026</td><td>$333.33</td><td>$4,000.00</td></tr>
+        <tr><td>#2</td><td>15 Oct 2026</td><td>$333.33</td><td>$4,000.00</td></tr>
+        <tr><td>#3</td><td>15 Nov 2026</td><td>$333.34</td><td>$4,000.00</td></tr>
+        <tr><td>No date yet</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr class="subtotal"><td>Total</td><td></td><td>$1,000.00</td><td>$12,000.00</td></tr>
+      </tbody></table>
+      <div class="doors"><a href="#">Open Player Dues →</a><span class="quiet">Change one family from their row there · <u>Re-run for all players</u> replaces every schedule</span></div>
+    </div>
+    <button type="button" class="pin" style="right:412px;top:60px" aria-expanded="false" aria-controls="n-b-1">1</button>
+    <div class="pinnote" id="n-b-1" style="right:446px;top:48px" hidden>The tap opens a panel over the plan: the schedule as the plan sees it — instalment by instalment, per player and across the roster, the write-off clause, and how many players are on it. Answers the mid-season question without leaving the tab.</div>
+    <button type="button" class="pin" style="right:26px;top:392px" aria-expanded="false" aria-controls="n-b-2">2</button>
+    <div class="pinnote" id="n-b-2" style="right:26px;top:424px" hidden>Two doors, ranked: "Open Player Dues" is the button; the whole-roster re-run is a quiet underlined line beneath it, named for what it does. Available, not encouraged.</div>
+    <button type="button" class="pin" style="left:300px;top:478px" aria-expanded="false" aria-controls="n-b-3">3</button>
+    <div class="pinnote" id="n-b-3" style="left:334px;top:466px" hidden>Cost of this shape: it brings the drill-in-panel notation onto a tab that deliberately does not use it (every other row here opens its own edit form), it needs its own mockup round for the panel's content, and the By-period columns already show the same dates.</div>
+  </article>
+  </div>
+
+  <div class="r2notes">
+    <h3>Recommendation</h3>
+    <p><strong>A.</strong> The row is the thing; the thing lives on Player Dues. One tap lands on the schedule with both change doors already in place and already guarded — the per-family pencil and the bulk re-run with its replace warning — so changes stay possible without the plan advertising the disruptive one. The plan keeps no re-run door once dues exist; before dues exist nothing changes (the Required player dues helper's door is still the one way in). The one piece of build in A is moving the "on the plan" sentence into the sheet so a mid-season re-run from Player Dues still shows what it does to the months.</p>
+    <h3>What B buys, and costs</h3>
+    <p>B answers the question without a tab change and can rank the two doors on the same surface. It costs a new notation on this tab, a panel to design and test, and a second place that lists instalment dates the By-period view already shows.</p>
+    <h3>Not drawn</h3>
+    <p>C — no door at all on the row, with a sentence under the table pointing to Player Dues. Honest, but it makes the one row that looks tappable (green, tagged) the one row that does nothing.</p>
+  </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════ PM BRIEF ═══════════════════════════════ -->
@@ -200,7 +386,7 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:
 <section id="hub-decisions" class="hubsection docpage" hidden>
   <div class="eyebrow" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Rulings</div>
   <h1>Decisions</h1>
-  <p class="sub" style="margin-bottom:22px">This round's five decisions, all made 2026-09-12 (E was ruled at the start of the build). The rulings this project inherits from the By-period close (§164) that made revenue-first worth proposing in the first place follow, for context.</p>
+  <p class="sub" style="margin-bottom:22px">Five decisions made 2026-09-12 (E at the start of the build), and F from the walk on 2026-09-13 — ruled on mockup round 2, built the same day. The rulings this project inherits from the By-period close (§164) that made revenue-first worth proposing in the first place follow, for context.</p>
   <h2>This round — 2026-09-12</h2>
   <div id="decisionRows"></div>
   <h2>Inherited from Owner QA §164 (2026-09-09/10)</h2>
@@ -413,7 +599,7 @@ const QA_PARTS=[
     'EXPENSES follows: the categories, then Lines so far, then Over your estimate in red with "Your estimate is …" and its Edit door, then Total expenses.',
     'The plan closes on Opening balance, Season net, Closing balance. Check the arithmetic on screen: Season net = Total revenue − Total expenses, and Closing balance = Opening balance + Season net.',
     'Under the table, in order: where the opening balance comes from (Team settings → Money); the write-off clause on the Player installments row; the No date yet note naming the last dated month\'s closing beside the season closing; the brackets legend (Net vs Closing balance).',
-    'Tap the Player installments row (anywhere, or its name from the keyboard) → the Set-dues sheet opens. The row is the door to the dues flow; nothing on the plan edits dues in place.',
+    'Tap the Player installments row (anywhere, or its name from the keyboard) → you land on PLAYER DUES, the schedule\'s own room (ruling F). Nothing on the plan re-runs dues once they are out; the pencil and Set dues for all players are where they always were, on that tab.',
     'When → No date yet: the two subtotals read Revenue shown / Expenses shown, the three balance rows and the estimate rows step aside, and the "Could we add another expense?" section is gone. Show the whole plan brings all of it back.',
   ]},
   {id:'C',title:'By period — months and quarters',steps:[
@@ -431,10 +617,10 @@ const QA_PARTS=[
     'Clear preview removes the row and restores every figure. Applying a When filter clears it. Adding a real line through Add Line reloads the plan and clears it.',
     'Export (CSV / Excel / PDF) while a preview is on: the file carries no Extra expense row and no helper — a file is the saved plan.',
   ]},
-  {id:'E',title:'The Set-dues sheet\'s draft (decision D)',steps:[
-    'Open the sheet from the Player installments row; give the installment a date; Preview → under the sheet\'s own "Every player …" sentence a line reads "On the plan: season closing … → …; <month> closes (…)", and says how many kept schedules are not in the draft.',
-    'Behind the sheet the Player installments row reads Draft, the Total revenue tile says "(draft)", the Closing balance caption says "with the draft schedule", and the sentence under the card answers the draft.',
-    'Cancel (and Discard) → the row reads Scheduled again and every figure is the saved plan\'s.',
+  {id:'E',title:'The Set-dues sheet\'s draft (decision D, ruling F)',steps:[
+    'From PLAYER DUES → Set dues for all players; give the installment a date; Preview → under the sheet\'s own "Every player …" sentence a line reads "On the plan: season closing … → …; <month> closes (…)", and says how many kept schedules are not in the draft. (Ruling F: the sentence lives in the sheet, so it shows here — the mid-season case — not only on the Budget tab.)',
+    'Before dues exist (not reachable on this fixture — pinned by the unit tests and the pre-dues probe): the sheet opened from the Required-player-dues helper shows the same sentence, and the plan behind it shows the Player installments row as Draft with "(draft)" on the Total revenue tile.',
+    'Cancel (and Discard) → nothing on Player Dues changed; back on the Budget tab every figure is the saved plan\'s.',
   ]},
   {id:'F',title:'Before dues exist (not reachable on this fixture — probed by response interception + unit tests)',steps:[
     'Under the table, on both views: "Required player dues · $…" = Total expenses less every other planned revenue (never below zero), "≈ $… per player ÷ <roster>", "Dates not set", and the Set dues for all players door (write coaches only). No installments row in Revenue; the band shows a one-line prompt when there is no money in at all.',
@@ -466,8 +652,13 @@ function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h
 drawQA();
 $('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary (§173)`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
 
+/* ---- mockup rounds, round-2 screens and the clickable pins ---- */
+document.querySelectorAll('[data-round]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-round]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));$('round-r1').hidden=b.dataset.round!=='r1';$('round-r2').hidden=b.dataset.round!=='r2';window.scrollTo({top:0})});
+document.querySelectorAll('[data-screen]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-screen]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.querySelectorAll('.screen').forEach(s=>{s.hidden=s.id!=='screen-'+b.dataset.screen})});
+document.querySelectorAll('.pin').forEach(pin=>pin.onclick=()=>{const note=document.getElementById(pin.getAttribute('aria-controls'));const open=note.hidden;document.querySelectorAll('.pinnote').forEach(n=>n.hidden=true);document.querySelectorAll('.pin').forEach(p=>p.setAttribute('aria-expanded','false'));note.hidden=!open;pin.setAttribute('aria-expanded',String(open))});
+
 /* ---- phone / desktop toggle (affects the embedded product frame only) ---- */
-$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+$('phone').onclick=()=>{const narrow=!$('frame').classList.contains('phone');document.querySelectorAll('.frame').forEach(f=>f.classList.toggle('phone',narrow));$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
 
 /* ───────────── tiny Markdown renderer for the embedded documents ───────────── */
 function md(src){
@@ -493,6 +684,7 @@ $('briefBody').innerHTML=md($('md-brief').textContent);$('planBody').innerHTML=m
 
 /* ───────────── Decisions ───────────── */
 const DECISIONS=[
+  {date:'2026-09-13',ask:'F — Once dues are scheduled, what does tapping the Player installments row do? (walk finding: as built it opened the whole-roster generator)',ruling:'accepted',label:'A — the row opens Player Dues',why:'Owner, on mockup round 2: a schedule that has gone out to families stays all year; changes overall and per family must stay possible without being encouraged. The row is a link to Player Dues — the schedule\'s own room, where both change doors already live with their guard-rails — for every coach who can read money. The plan keeps no re-run door once dues exist. The "On the plan: season closing X → Y" sentence moved INTO the Set-dues sheet, so it shows wherever the sheet is opened, Player Dues included (decision D kept whole). Built the same day.'},
   {date:'2026-09-12',ask:'E — Tile wording: the mockup drew "Planned revenue / Planned expenses / Projected season closing"; the table beneath closes on "Total revenue / Total expenses / Closing balance". Which do the tiles wear?',ruling:'accepted',label:'The table’s words',why:'The tiles ARE the table’s subtotals, same names verbatim (ruling of 2026-09-08) — one name, one number on this screen. The captions carry the qualifiers the mockup’s labels were trying to: "includes player installments", "your estimate", "includes the No date yet amounts". The mockup and this hub were corrected to match before the build.'},
   {date:'2026-09-12',ask:'A — The season-estimate rule: keep the 2026-08-12 ruling, or revert to "the bigger of estimate and lines"?',ruling:'accepted',label:'Kept as built',why:'The estimate keeps governing the total families are asked to cover, in both directions, symmetrically netted into "No date yet." The reversal originally drafted in §4 is withdrawn, not adopted. One follow-up carried forward: confirm every reader of this total already agrees, since they should share one calculation.'},
   {date:'2026-09-12',ask:'B — Should Quarters show a running balance, given a quarter total can hide a bad month inside it?',ruling:'accepted',label:'Confirmed as specified',why:'A quarter’s opening is its first month’s, its closing its last month’s, summed from the underlying months — and a negative month still raises its own warning even inside a quarter that nets positive. No change from the draft.'},

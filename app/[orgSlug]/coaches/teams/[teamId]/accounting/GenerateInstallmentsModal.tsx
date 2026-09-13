@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -18,6 +18,8 @@ import { formatPlayerLastFirst } from '@/lib/player-name';
 import { pluralize } from '@/lib/utils';
 import type { DuesRunException, DuesRunPlan } from '@/lib/dues-bulk-run';
 import type { RepBudgetPlan, RepInstallmentPreviewRow } from '@/lib/types';
+import { buildPeriodView } from '@/lib/coach-budget-periods-view';
+import { onThePlanSentence } from '@/components/coaches/BudgetBalanceWords';
 import DateField from './DateField';
 import styles from './budget/budget.module.css';
 // ⚠ One `..` shallower than the panels' copy of this import — this file sits at the accounting
@@ -73,9 +75,11 @@ interface HandSetPlayer { id: string; name: string }
 
 /**
  * THE SCHEDULE BEING PREVIEWED, as the Budget plan reads it (owner decision D, 2026-09-12): the
- * roster-wide total and dated instalments this run would WRITE, handed up so the plan can stand it
- * in for the saved schedule — the installments row reads Draft, the balance walks it, and the
- * before → after sentence comes back down as `draftNote`. Null = no preview standing.
+ * roster-wide total and dated instalments this run would WRITE. This sheet prints what it does to
+ * the plan itself ("On the plan: season closing …" — owner ruling F, 2026-09-13: said wherever the
+ * sheet is opened, Player Dues included), and hands it up through `onDraft` so a plan mounted
+ * behind the sheet can stand it in for the saved schedule (the installments row reads Draft).
+ * Null = no preview standing.
  *
  * ⚠ IT IS WHAT THE RUN WRITES, NOT WHAT THE SEASON WILL HOLD. Families the coach is keeping as
  * they are, and families the payout floor refuses, keep their existing schedules — which this
@@ -123,7 +127,7 @@ interface ReplaceFacts {
  *     total becomes an overpayment credit — all said out loud in the success state.
  */
 export default function GenerateInstallmentsModal({
-  orgSlug, teamId, budgetHref, duesHref, tabActive = true, onClose, onGenerated, onDraft, draftNote,
+  orgSlug, teamId, budgetHref, duesHref, tabActive = true, onClose, onGenerated, onDraft,
 }: {
   orgSlug: string;
   teamId: string;
@@ -142,16 +146,19 @@ export default function GenerateInstallmentsModal({
   tabActive?: boolean;
   onClose: () => void;
   onGenerated: () => void | Promise<void>;
-  /** Hands the previewed schedule up to the plan (decision D) — called with null whenever the
-   *  preview is dropped and on unmount, so Cancel restores the saved plan. Pass a STABLE function
-   *  (a state setter): it is an effect dependency. */
+  /** Hands the previewed schedule up to a plan mounted behind this sheet (decision D) — called
+   *  with null whenever the preview is dropped and on unmount, so Cancel restores the saved plan.
+   *  Pass a STABLE function (a state setter): it is an effect dependency. Absent from Player Dues,
+   *  where there is no plan on screen — the sentence below carries the whole answer there. */
   onDraft?: (draft: DuesDraft | null) => void;
-  /** The plan's before → after sentence for the draft, rendered under the preview. */
-  draftNote?: ReactNode;
 }) {
   const [loading,        setLoading]        = useState(true);
   const [plan,           setPlan]           = useState<RepBudgetPlan | null>(null);
   const [seasonTotal,    setSeasonTotal]    = useState<number | null>(null);
+  /** What the plan's balance is walked from besides the lines — the SAVED schedule (to build the
+   *  "before") and the season's opening balance. Read from the same GET the plan reads. */
+  const [savedDues,      setSavedDues]      = useState<{ assessed: number; installments: Array<{ date: string | null; amount: number }> } | null>(null);
+  const [openingBalance, setOpeningBalance] = useState<number | null>(null);
   const [loadError,      setLoadError]      = useState('');
 
   const [installments,   setInstallments]   = useState<InstallmentRow[]>([{ ...DEFAULT_INSTALLMENT }]);
@@ -231,6 +238,10 @@ export default function GenerateInstallmentsModal({
         if (!res.ok || !data) throw new Error(data?.error ?? 'Failed to load your budget');
         setPlan(data.plan ?? null);
         setSeasonTotal(data.seasonBudgetAmount ?? null);
+        setSavedDues(data.duesScheduled === true
+          ? { assessed: Number(data.duesAssessed ?? 0) || 0, installments: data.duesInstallments ?? [] }
+          : null);
+        setOpeningBalance(typeof data.openingBalance === 'number' ? data.openingBalance : null);
       } catch (e: unknown) {
         if (live) setLoadError(e instanceof Error ? e.message : 'Failed to load your budget');
       } finally {
@@ -595,9 +606,8 @@ export default function GenerateInstallmentsModal({
      ⚠ `untouchedKey` rather than the Set itself in the deps — a Set is a fresh object every
      render, and the effect would re-fire (and re-walk the plan's balance) on every keystroke. */
   const untouchedKey = [...untouched].sort().join(',');
-  useEffect(() => {
-    if (!onDraft) return;
-    if (!preview || preview.length === 0) { onDraft(null); return; }
+  const draft = useMemo<DuesDraft | null>(() => {
+    if (!preview || preview.length === 0) return null;
     const skip = new Set(untouchedKey ? untouchedKey.split(',') : []);
     const written = preview.filter(row => !skip.has(row.playerId));
     const byDate = new Map<string | null, number>();
@@ -610,14 +620,29 @@ export default function GenerateInstallmentsModal({
       }
     }
     const r2 = (n: number) => Math.round(n * 100) / 100;
-    onDraft({
+    return {
       assessed: r2(assessed),
       installments: [...byDate].map(([date, amount]) => ({ date, amount: r2(amount) })),
       players: written.length,
       kept: preview.length - written.length,
-    });
-  }, [preview, untouchedKey, onDraft]);
+    };
+  }, [preview, untouchedKey]);
+  useEffect(() => { onDraft?.(draft); }, [draft, onDraft]);
   useEffect(() => () => { onDraft?.(null); }, [onDraft]);
+
+  /* ── WHAT THIS SCHEDULE DOES TO THE PLAN (owner ruling F, 2026-09-13) ─────────────────────────
+     The plan's own calculation, run twice — once over the SAVED schedule, once over the draft —
+     and the difference said in the plan's own words: where the season closes, and the first month
+     below zero. Built here, from this sheet's own read of the plan, so the sentence appears
+     wherever the sheet is opened: the Budget tab before dues exist, and Player Dues for the
+     mid-season re-run, which is exactly when "what does this do to my months" matters most. */
+  const onThePlan = useMemo(() => {
+    if (!draft || !plan) return null;
+    const opts = { estimatedTotal: seasonTotal, openingBalance };
+    const before = buildPeriodView(plan.lines, 'months', { ...opts, dues: savedDues });
+    const after = buildPeriodView(plan.lines, 'months', { ...opts, dues: { assessed: draft.assessed, installments: draft.installments } });
+    return onThePlanSentence(before.balance, after.balance, draft.kept);
+  }, [draft, plan, seasonTotal, savedDues, openingBalance]);
 
   /* The itemized consequences, each counted over the players the run will actually reach.
 
@@ -1151,9 +1176,9 @@ export default function GenerateInstallmentsModal({
                     families said nothing about a shortfall. */}
                 {reconcileLine(true)}
                 {/* The plan's own answer to this schedule — where the season closes and the first
-                    month below zero, read off the Budget tab's balance rows with this draft standing
-                    in for the saved schedule (decision D). Absent when the caller has no plan view. */}
-                {draftNote && <p className={styles.runCommon}>{draftNote}</p>}
+                    month below zero (decision D; ruling F moved it in here from the Budget tab so
+                    it shows from Player Dues too). */}
+                {onThePlan && <p className={styles.runCommon}>{onThePlan}</p>}
 
                 {/* ── The players this run treats differently ────────────────────────────────
                     Paid money re-applying, credits being created, hand-set plans at risk, and the

@@ -22002,9 +22002,30 @@ formatter the JSX reaches for; its header says why), and one that is YOURS to ru
 1. **The tiles' captions carry what the mockup's labels said** — "includes the No date yet amounts",
    "with your expense preview", "with the draft schedule". If a caption reads as clutter, that is the
    place to trim; the labels are settled.
-2. **The Player installments row is now a door** (to the Set-dues sheet). It is the only place on the
-   Budget tab that reaches the dues flow once dues exist — the old "set dues" link on the shortfall
-   caption went with the caption. If you would rather it went to the Player Dues tab, say so on Part B.
+2. ~~The Player installments row is a door to the Set-dues sheet~~ — **RULED F on the walk, 2026-09-13,
+   and built the same day** (mockup round 2, option A): the row opens **Player Dues**, the schedule's
+   own room. See the addendum below.
+
+### Ruling F — walk finding 2026-09-13: the Player installments row's door (mockup round 2, option A, built the same day)
+
+**What you saw.** Tapping the Player installments row opened the whole-roster generator — "This roster
+already has dues. Generating replaces the schedule." Your words: once installments have gone out to the
+parents they stay all year; changes overall and to individual players must stay possible without being
+encouraged. **Mockup round 2** (hub, Mockup tab) drew as-built, A and B; you ruled **A**.
+
+**What changed.** On both views the row is now a **link to Player Dues** — the schedule's own room, where
+the per-family pencil and *Set dues for all players* (with its replace warning) already live — offered
+to every coach who can read money (a read door, so the read-only assistant gets it too). The plan keeps
+no re-run door once dues exist; before dues exist nothing changed (the Required-player-dues helper's
+door is still the one way in). **Decision D kept whole:** the "On the plan: season closing X → Y;
+<month> closes (…)" sentence moved INTO the Set-dues sheet, computed from the sheet's own read of the
+plan, so it prints wherever the sheet is opened — including *Change the schedule for everyone* on
+Player Dues, the mid-season case. Opened from the plan (before dues), the plan behind the sheet still
+shows the Draft row. Verified rendered: the row lands on Player Dues from List and By period; the sheet
+opened from Player Dues printed the same figures the Budget-tab flow had ("$2,614.30 → ($954.75);
+January 2026 closes ($1,533.00). The 3 schedules being kept are not in the draft."). Pinned by the
+grid-doors guard (the row's two links; no control on the plan titled "Set dues for all players"
+again). Walk Parts B5 and E re-worded on the hub. Help article updated.
 
 ### Owed / next
 
