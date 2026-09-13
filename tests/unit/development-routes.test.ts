@@ -20,8 +20,13 @@ const api = (...rel: string[]) => readFileSync(join(process.cwd(), 'app', 'api',
 
 describe('readMeasurableTypeInput — a test needs a name and a unit', () => {
   it('trims both and accepts a full create', () => {
-    assert.deepEqual(readMeasurableTypeInput({ name: ' 60-yd sprint ', unit: ' seconds ' }, 'create'),
-      { fields: { name: '60-yd sprint', unit: 'seconds' } });
+    // Phase 1 widened the create to the WHOLE definition (kind · aim · attempts · headline …) with
+    // defaults for a bare name + unit — `development-definitions.test.ts` pins those; this case
+    // keeps pinning the two fields Phase 0 owned.
+    const r = readMeasurableTypeInput({ name: ' 60-yd sprint ', unit: ' seconds ' }, 'create');
+    assert.ok('fields' in r);
+    assert.equal(r.fields.name, '60-yd sprint');
+    assert.equal(r.fields.unit, 'seconds');
   });
   it('refuses a missing or over-long name (40) and unit (20), with the wording the screens show', () => {
     const noName = readMeasurableTypeInput({ unit: 's' }, 'create');

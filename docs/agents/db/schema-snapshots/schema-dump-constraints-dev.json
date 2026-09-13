@@ -4575,7 +4575,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -4585,7 +4585,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -5968,6 +5968,16 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "constraint_name": "rep_team_measurable_types_replaced_by_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "replaced_by_id",
+    "foreign_table": "rep_team_measurable_types",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "rep_team_measurable_types",

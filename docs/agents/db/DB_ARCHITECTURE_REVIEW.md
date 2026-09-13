@@ -38,6 +38,8 @@
 **Recommendation:** Apply 292 as written (approved). For the season gap, when the `rep_*` policies are next touched as a family: join `rep_program_years` and require `status IN ('draft','active')` in the coach-write subqueries, or point them at `rep_team_staff_memberships` with `status = 'active'` (the M1 truth) — one migration for the whole family, never one table at a time. Not in scope for the development lifecycle; recorded so it is a decision rather than a surprise.
 **Status:** Open (the season gap) · Addressed — mig 292 applied to dev 2026-09-12 (the migration itself)
 
+**Addendum (2026-09-12, mig 294):** the successor step became a SECURITY DEFINER function (`replace_rep_team_measurable_type`) with EXECUTE for `service_role` ONLY — a definer function that takes a team id and checks only that its rows belong to that team cannot know whether the CALLER coaches the team, so granting it to `authenticated` would be an RLS bypass with a team id as the key. ⚠ `merge_rep_team_award_types` (mig 289) grants `authenticated` and has exactly that shape; its route proves ownership app-side, but a direct RPC call from any signed-in user's session would not. Recommend revoking `authenticated` on it in the next migration that touches awards. **Status:** Open (Advisory).
+
 ---
 
 ### [2026-08-17] — Finding #35: Identity is a STRING — guardian/coach identity travels as a normalized email across 30 tables; there is no person entity

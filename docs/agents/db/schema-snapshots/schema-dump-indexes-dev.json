@@ -2886,6 +2886,11 @@
   },
   {
     "tablename": "rep_team_measurable_types",
+    "indexname": "rep_team_measurable_types_replaced_by_idx",
+    "indexdef": "CREATE INDEX rep_team_measurable_types_replaced_by_idx ON public.rep_team_measurable_types USING btree (replaced_by_id) WHERE (replaced_by_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_measurable_types",
     "indexname": "rep_team_measurable_types_team_idx",
     "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
   },

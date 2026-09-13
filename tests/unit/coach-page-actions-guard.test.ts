@@ -329,16 +329,28 @@ const SITES: Site[] = [
 
   // ── Development ──────────────────────────────────────────────────────────────────────────────
   {
+    // Development lifecycle Phase 1 (2026-09-12): three views on one screen (Sessions · Players ·
+    // Metrics), and the page's ONE create — Start session — moves into the header as the lime
+    // action (it was the sessions card's own button). Held back (aria-disabled, never `disabled`)
+    // until a measured test exists; absent for a coach without the Development grant.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 0,
-    screen: 'Skills & Goals', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'Skills & Goals — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/board/page.tsx', occurrence: 0,
-    screen: 'Team board — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 1,
+    screen: 'Skills & Goals', variant: 'standard', helpHost: 'masthead',
+    actions: {
+      from: 'startAction', slot: 'action', holds: 'Start session (the one create; held back until a test is defined)',
+      phoneHidden: null, phoneInTitleRow: null,
+    },
   },
+  /* The team board's page is a REDIRECT into the Players view now (Phase 1) — no header. */
   {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/board/page.tsx', occurrence: 1,
-    screen: 'Team board', variant: 'standard', helpHost: 'masthead', actions: null,
+    // Define a metric / one metric's definition (Phase 1, mockup screen 2) — ONE component draws
+    // both routes (`metrics/new`, `metrics/[typeId]`). The way back is the arrow to Metrics; the
+    // form's actions are the form's, not the header's.
+    file: 'components/coaches/MetricDefinitionEditor.tsx', occurrence: 0,
+    screen: 'Define a metric · a metric definition', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/sessions/[sessionId]/page.tsx', occurrence: 0,
@@ -346,7 +358,7 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/drills/page.tsx', occurrence: 0,
-    screen: 'Your drills',
+    screen: 'Drills',
     variant: 'standard', helpHost: 'masthead',
     actions: {
       from: 'inline', slot: 'action', holds: 'New drill — one create with two ways inside it (Phase 3)',
@@ -841,7 +853,21 @@ describe('coach page headers — what the actions slot may hold', () => {
       );
       // The two legal shapes, derived rather than trusted: inside the team layout the masthead
       // hosts the "?" (CoachPageHelpProvider is mounted there); outside it the page draws its own.
-      const derived = listed.file.startsWith('app/[orgSlug]/coaches/teams/[teamId]/') ? 'masthead' : 'own';
+      // A COMPONENT is placed by its pages, so its host is derived from where the pages that import
+      // it live — every importer must agree, or the component draws two shapes and the entry lies.
+      const hostOf = (file: string): 'masthead' | 'own' => (file.startsWith('app/[orgSlug]/coaches/teams/[teamId]/') ? 'masthead' : 'own');
+      const derived = listed.file.startsWith('components/')
+        ? (() => {
+            const name = listed.file.replace(/^.*\//, '').replace(/\.tsx$/, '');
+            const importers = walk(COACH_PAGES_ROOT)
+              .filter(full => /page\.tsx$/.test(full) && readFileSync(full, 'utf8').includes(`/${name}'`))
+              .map(full => repoPath(full));
+            assert.ok(importers.length > 0, `${listed.screen}: no coach page imports ${name}, so its help host cannot be derived`);
+            const hosts = new Set(importers.map(hostOf));
+            assert.equal(hosts.size, 1, `${listed.screen} is mounted both inside and outside the team layout (${importers.join(', ')}) — one entry cannot describe two help hosts`);
+            return [...hosts][0];
+          })()
+        : hostOf(listed.file);
       assert.equal(
         derived, listed.helpHost,
         `${listed.screen} moved in or out of the team layout, which changes who draws its help "?". ` +
@@ -1024,8 +1050,8 @@ describe('coach page headers — what the actions slot may hold', () => {
    * looks like, raised and deliberately not taken (spread ruling §7, "no unrelated header tidying").
    */
   const BACK_LINK_FALLBACKS = [
-    /* The team board's failed-load branch — an error line and a way out, no title row. */
-    'app/[orgSlug]/coaches/teams/[teamId]/development/board/page.tsx',
+    /* (The team board's failed-load branch left this list on 2026-09-12: the board page is a
+        redirect into Skills & Goals → Players now, and renders nothing of its own.) */
     /* The awards CERTIFICATE screen — a print surface; its way out rides the print toolbar. */
     'app/[orgSlug]/coaches/teams/[teamId]/history/awards/certificate/page.tsx',
     /* Opponent detail's failed-load branch — the same shape as the board's. */

@@ -248,6 +248,17 @@ export async function resolveUatContext() {
     );
   }
 
+  const measurableType = await db.from('rep_team_measurable_types')
+    .select('id').eq('team_id', team.data.id).eq('is_active', true).eq('kind', 'test')
+    .ilike('name', '60-yd sprint').limit(1).maybeSingle();
+  if (measurableType.error) throw new FixtureError(`measurable type lookup failed: ${measurableType.error.message}`);
+  if (!measurableType.data) {
+    throw new FixtureError(
+      'No active "60-yd sprint" on the probe team, so the metric editor cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
   const evalSession = await db.from('rep_team_evaluation_sessions')
     .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
     .order('session_date', { ascending: false }).limit(1).maybeSingle();
@@ -343,6 +354,8 @@ export async function resolveUatContext() {
     planTemplateId: planTemplate.data.id,
     lineupTemplateId: lineupTemplate.data.id,
     evalSessionId: evalSession.data.id,
+    /** The active "60-yd sprint" — a defined test WITH readings, so the editor's successor rule shows. */
+    measurableTypeId: measurableType.data.id,
     /** One commitment, for the `?bill=` page — a `tournament_payable`, never a plain cost. */
     commitmentId: commitment.data.id,
     /** The opponent the scouting drill-in opens, taken from a real played game. */

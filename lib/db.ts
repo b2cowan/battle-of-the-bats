@@ -1,6 +1,7 @@
 import { seasonDuesBand, type DuesCreditKind } from './coach-dues-actual';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
+import type { MeasurableTypeCreateFields } from './development-input';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
@@ -7573,13 +7574,39 @@ function mapRepTeamMeasurableType(r: any): RepTeamMeasurableType {
     orgId: r.org_id,
     teamId: r.team_id,
     name: r.name,
-    unit: r.unit,
+    // The definition (mig 293). A legacy row reads test · record only · one attempt · last · no method.
+    kind: r.kind ?? 'test',
+    unit: r.unit ?? null,
+    aim: r.aim ?? 'record',
+    rangeFrom: r.range_from == null ? null : Number(r.range_from),
+    rangeTo: r.range_to == null ? null : Number(r.range_to),
+    method: r.method ?? null,
+    attemptsPerSession: r.attempts_per_session ?? 1,
+    headline: r.headline ?? 'last',
+    descriptors: Array.isArray(r.descriptors) ? r.descriptors : [],
+    replacedById: r.replaced_by_id ?? null,
     sortOrder: r.sort_order,
     isActive: r.is_active,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
+}
+
+/** The definition's columns, from the reader's shape — one mapping for create, update and replace. */
+function measurableDefinitionColumns(fields: Partial<MeasurableTypeCreateFields>): Record<string, unknown> {
+  const cols: Record<string, unknown> = {};
+  if (fields.kind !== undefined) cols.kind = fields.kind;
+  if (fields.name !== undefined) cols.name = fields.name.trim();
+  if (fields.unit !== undefined) cols.unit = fields.unit == null ? null : fields.unit.trim();
+  if (fields.aim !== undefined) cols.aim = fields.aim;
+  if (fields.rangeFrom !== undefined) cols.range_from = fields.rangeFrom;
+  if (fields.rangeTo !== undefined) cols.range_to = fields.rangeTo;
+  if (fields.method !== undefined) cols.method = fields.method;
+  if (fields.attemptsPerSession !== undefined) cols.attempts_per_session = fields.attemptsPerSession;
+  if (fields.headline !== undefined) cols.headline = fields.headline;
+  if (fields.descriptors !== undefined) cols.descriptors = fields.descriptors;
+  return cols;
 }
 
 /** NOT seeded (unlike award types) — measurables are deliberately coach-defined per team,
@@ -7594,17 +7621,16 @@ export async function getRepTeamMeasurableTypes(
   return (data ?? []).map(mapRepTeamMeasurableType);
 }
 
-export async function createRepTeamMeasurableType(fields: {
-  orgId: string; teamId: string; name: string; unit: string; createdBy?: string | null;
+export async function createRepTeamMeasurableType(fields: MeasurableTypeCreateFields & {
+  orgId: string; teamId: string; createdBy?: string | null;
 }): Promise<RepTeamMeasurableType> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_measurable_types')
     .insert({
       org_id: fields.orgId,
       team_id: fields.teamId,
-      name: fields.name.trim(),
-      unit: fields.unit.trim(),
       created_by: fields.createdBy ?? null,
+      ...measurableDefinitionColumns(fields),
     })
     .select()
     .single();
@@ -7612,16 +7638,33 @@ export async function createRepTeamMeasurableType(fields: {
   return mapRepTeamMeasurableType(data);
 }
 
-/** Scoped update — rename/unit-edit/retire/restore. team_id guards cross-team edits even if
- *  RLS is bypassed. Never a delete — types are only ever soft-retired (migration 189). A unit
- *  edit only affects FUTURE entries (each entry carries its own unit snapshot). */
+/** One definition by id, team-scoped — the editor's read and the patch route's "current". */
+export async function getRepTeamMeasurableType(id: string, teamId: string): Promise<RepTeamMeasurableType | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_measurable_types').select('*').eq('id', id).eq('team_id', teamId).maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamMeasurableType(data) : null;
+}
+
+/** Does any reading point at this definition? The successor rule (ruling 3) turns on it. Team-scoped
+ *  like every sibling read, so a foreign id can never answer — even from a caller that forgot to check. */
+export async function repTeamMeasurableTypeHasReadings(typeId: string, teamId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin
+    .from('rep_player_measurables').select('id', { count: 'exact', head: true })
+    .eq('measurable_type_id', typeId).eq('team_id', teamId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Scoped update — any field of the definition, retire/restore. team_id guards cross-team edits
+ *  even if RLS is bypassed. Never a delete — types are only ever soft-retired (migration 189). A
+ *  unit edit only affects FUTURE entries (each entry carries its own unit snapshot) — and on a test
+ *  WITH readings the route refuses it in favour of `replaceRepTeamMeasurableType` (ruling 3). */
 export async function updateRepTeamMeasurableType(
   id: string, teamId: string,
-  fields: { name?: string; unit?: string; isActive?: boolean },
+  fields: Partial<MeasurableTypeCreateFields> & { isActive?: boolean },
 ): Promise<RepTeamMeasurableType | null> {
-  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (fields.name !== undefined) patch.name = fields.name.trim();
-  if (fields.unit !== undefined) patch.unit = fields.unit.trim();
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString(), ...measurableDefinitionColumns(fields) };
   if (fields.isActive !== undefined) patch.is_active = fields.isActive;
   const { data, error } = await supabaseAdmin
     .from('rep_team_measurable_types')
@@ -7632,6 +7675,48 @@ export async function updateRepTeamMeasurableType(
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamMeasurableType(data) : null;
+}
+
+/**
+ * ═══ THE SUCCESSOR (owner ruling 3, 2026-09-11) ═══
+ * A unit or method change on a test that already has readings starts a NEW definition and retires
+ * this one: the predecessor keeps its name, unit and every reading under it (marked retired,
+ * pointing at its successor); the successor takes the name and the new definition, with no
+ * readings. The two are never drawn as one line (F01 — the unit split already guarantees that).
+ *
+ * ⚠ ONE TRANSACTION, in the database (`replace_rep_team_measurable_type`, mig 294): retire →
+ * insert under the same name → link, with the predecessor row locked for the duration. The
+ * partial unique index on active names dictates that order; a first draft did the three steps
+ * from here with compensation and two reviewers found the window it left (a reading landing on
+ * the successor makes its compensating delete impossible, and the predecessor's restore then
+ * collides on the name). A name collision surfaces as 23505 and the route maps it to 409; the
+ * function's own refusals (not found / not active / not a test) are re-checked by the route first
+ * and would only fire on a race, so they are surfaced as errors here.
+ */
+export async function replaceRepTeamMeasurableType(fields: MeasurableTypeCreateFields & {
+  predecessorId: string; orgId: string; teamId: string; createdBy?: string | null;
+}): Promise<{ predecessor: RepTeamMeasurableType; successor: RepTeamMeasurableType }> {
+  const { data: successorId, error } = await supabaseAdmin.rpc('replace_rep_team_measurable_type', {
+    p_predecessor: fields.predecessorId,
+    p_team: fields.teamId,
+    p_org: fields.orgId,
+    p_created_by: fields.createdBy ?? null,
+    p_name: fields.name,
+    p_unit: fields.unit,
+    p_aim: fields.aim,
+    p_range_from: fields.rangeFrom,
+    p_range_to: fields.rangeTo,
+    p_method: fields.method,
+    p_attempts: fields.attemptsPerSession,
+    p_headline: fields.headline,
+  });
+  if (error) throw error;
+  const [predecessor, successor] = await Promise.all([
+    getRepTeamMeasurableType(fields.predecessorId, fields.teamId),
+    getRepTeamMeasurableType(successorId as string, fields.teamId),
+  ]);
+  if (!predecessor || !successor) throw new Error('Measurable type not found');
+  return { predecessor, successor };
 }
 
 function mapRepPlayerMeasurable(r: any): RepPlayerMeasurable {

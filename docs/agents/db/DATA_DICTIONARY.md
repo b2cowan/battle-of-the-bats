@@ -2810,7 +2810,7 @@ moment it lands.
 ### `rep_team_measurable_types`
 <!-- dict:table:rep_team_measurable_types -->
 
-**Purpose:** a coach's own per-team measurable-test library ("60-yd sprint (seconds)", "Overhand throw velo (mph)") that `rep_player_measurables` entries point at. Added by migration 189 (Player Development, slice 3A). Mirrors `rep_team_award_types` (mig 182) structurally. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+**Purpose:** a coach's own per-team library of metric DEFINITIONS — measured tests ("60-yd sprint (seconds)", "Overhand throw velo (mph)") that `rep_player_measurables` entries point at, and, since mig 293, observed SKILLS (descriptors, no unit; recorded against in Phase 2). Added by migration 189 (Player Development, slice 3A); the definition — kind · aim · range · method · attempts · headline · descriptors · successor link — by migration 293 (development lifecycle Phase 1, 2026-09-12; ⚠ PROD-PENDING, and the parity gate on the master build is red until it lands). Mirrors `rep_team_award_types` (mig 182) structurally.
 
 **Gotchas (read first):**
 1. **Never hard-deleted.** No DELETE route/policy — "retire" is `is_active=false`; every logged entry keeps resolving the type's current name at render time. Retiring drops the type from the picker without fragmenting a player's history (the anti-"60yd / Sixty" drift design).
@@ -2818,6 +2818,9 @@ moment it lands.
 3. **`unit` lives on the type AND is snapshotted onto each entry** at log time (see `rep_player_measurables.unit`) so a later unit edit never silently rewrites history.
 4. **NOT seeded** (unlike award types) — measurables are deliberately coach-defined per team, sport-neutral by construction (no SportPack catalog in V1; a sport-seeded starter set is a listed fast-follow).
 5. **`team_id` NOT NULL** — no org-shared rows in V1 (org-shared libraries are a fast-follow; award types' mig-184 widening is the precedent when that happens).
+7. **A LEGACY ROW READS `test · record · 1 attempt · last · method NULL` — and NO meaning was backfilled as fact** (mig 293; plan §10 "no unknown meaning is backfilled"). The product says "record only · method not recorded" for such a row rather than guessing an aim or a method. The column default for `headline` was moved to `'best'` AFTER the add (ruling 6: headline defaults to best), so new rows land on the ruled default while legacy rows keep `last` — a schema-only two-step, deliberately not an UPDATE.
+8. **The successor rule is decided in the ROUTE and executed in ONE TRANSACTION** (`replace_rep_team_measurable_type(...)`, mig 294 — SECURITY DEFINER, EXECUTE for `service_role` only) and recorded in `replaced_by_id` (owner ruling 3: rename keeps the series; a unit or WRITTEN-method change — changing OR erasing it — on a test WITH readings starts a new definition and retires this one). Inside the function: lock the predecessor, retire it, insert the successor under the same name (the partial unique index dictates that order), link. `replaced_by_id IS NULL OR is_active = false` is a CHECK; restore is refused on a replaced row. Writing a method where none was recorded is NOT a change of method. ⚠ The function is invisible to the drift gates (pg_proc only); `MANUAL_PROD_STEPS.json` carries 294.
+9. **Cross-column CHECKs make a nonsense definition unstorable by any path:** a test has a unit and a skill has none (`unit_by_kind`); a range aim carries both edges with from < to and a non-range aim carries neither (`range`); a range test never leads with `best` and a non-range test never with `in_range` (`headline_by_aim`); a record-only test has no `best` (`record_has_no_best`, mig 294); a skill carries no aim, range, attempts or headline of its own (`skill_shape`, mig 294 — aim record, headline last, one attempt, no edges); descriptors belong to skills and number ≤ 10 (`descriptors`); method ≤ 600 chars. Per-descriptor length (≤ 60) lives in the reader (`lib/development-input.ts`). ⚠ Because a raw insert taking both column defaults must satisfy `record_has_no_best`, mig 294 moved the `headline` default back to `'last'` (beside the aim default `'record'`); the ruled default, best, is the reader's default for a directional aim and every create goes through it.
 6. **Writes follow the DEVELOPMENT GRANT at BOTH layers** (owner ruling 2026-09-11, mig 292 — replacing Player Development D1's head-coach-only rule). App routes gate on `canWriteDevelopment` (`isHeadCoach || development`) AND the RLS write policies ("development writers can …") require a `rep_team_coaches` row with `coach_role = 'head_coach' OR (capabilities->>'development') = 'true'` — the same predicate in both layers, so a direct PostgREST call from an assistant's session cannot do more than the routes allow (mig-141 chat-engine lesson). The grant is one JSON key on the assignment's `capabilities`; NULL (every head row, every pre-grant assistant) reads as not granted and the OR carries the head coach. No org-admin write policies exist (no admin write surface; future ones would use service-role routes). Applies to all five development tables (this one, `rep_player_measurables`, `rep_player_development_goals`, `rep_team_evaluation_sessions`, `rep_player_continuity_links`). Every policy is DROP-IF-EXISTS-guarded → re-runnable. ⚠ A policy rewrite is invisible to every drift gate — its prod state is knowable only from `pg_policies` (MANUAL_PROD_STEPS.json carries 292).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
@@ -2829,8 +2832,33 @@ moment it lands.
 <!-- dict:col:rep_team_measurable_types.name -->
 **`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the test's label; unique per team while active (gotcha 2).
 
+<!-- dict:col:rep_team_measurable_types.kind -->
+**`kind`** (text, NOT NULL, default `'test'`; CHECK `test | skill`; mig 293) — a measured test (a number with a unit) or an observed skill (descriptors, no unit). Fixed at creation — the reader refuses a kind on a patch.
+
 <!-- dict:col:rep_team_measurable_types.unit -->
-**`unit`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(unit)) ≤ 20`) — free-text unit ("seconds", "mph"); snapshotted onto entries (gotcha 3).
+**`unit`** (text, **nullable since mig 293**; CHECK `1 ≤ char_length(btrim(unit)) ≤ 20` when present; `unit_by_kind` CHECK: NOT NULL on a test, NULL on a skill) — free-text unit ("seconds", "mph"); snapshotted onto entries (gotcha 3). ⚠ App code narrows with `isMeasuredTest()` before reading it as a string.
+
+<!-- dict:col:rep_team_measurable_types.aim -->
+**`aim`** (text, NOT NULL, default `'record'`; CHECK `lower | higher | range | record`; mig 293) — what a better result looks like. `record` = record only, no direction claimed (every legacy row). Changing it never starts a successor — it is interpretation, not measurement.
+
+<!-- dict:col:rep_team_measurable_types.range_from -->
+<!-- dict:col:rep_team_measurable_types.range_to -->
+**`range_from` / `range_to`** (numeric(8,3), nullable; mig 293; `range` CHECK: both set with from < to iff `aim = 'range'`) — the band, in the unit, for a range test (owner: the range aim kept and drawn properly). Each attempt reads in / +n / −n against it.
+
+<!-- dict:col:rep_team_measurable_types.method -->
+**`method`** (text, nullable; CHECK ≤ 600; mig 293) — how the test is run, in the coach's words, so results are comparable. NULL = not recorded (every legacy row; the product says so). Changing a WRITTEN method on a test with readings starts a successor (gotcha 8).
+
+<!-- dict:col:rep_team_measurable_types.attempts_per_session -->
+**`attempts_per_session`** (smallint, NOT NULL, default 1; CHECK 1–5; mig 293) — how many attempts one session records per player (owner ruling 2026-09-11: every attempt is recorded). Phase 2 records them; until then a definition carries the number.
+
+<!-- dict:col:rep_team_measurable_types.headline -->
+**`headline`** (text, NOT NULL, default `'last'` — mig 293 set `'best'`, mig 294 moved it back so a raw insert on the defaults satisfies `record_has_no_best`; legacy rows carry `'last'`; CHECK `best | average | last | in_range`; `headline_by_aim` + `record_has_no_best` CHECKs; migs 293 + 294) — which attempt rows and charts lead with. The reader supplies the ruled default (best, for a directional aim). Computed from attempts by `sessionHeadline()` (lib/measurable-series.ts, ONE home), never stored as a result.
+
+<!-- dict:col:rep_team_measurable_types.descriptors -->
+**`descriptors`** (text[], NOT NULL, default `'{}'`; CHECK: empty on a test, ≤ 10; mig 293) — a skill's coach-written words for what they saw, in the coach's order. Never a scale, never averaged.
+
+<!-- dict:col:rep_team_measurable_types.replaced_by_id -->
+**`replaced_by_id`** (FK → this table, ON DELETE SET NULL, nullable, partial index; CHECK `IS NULL OR is_active = false`; mig 293) — set on a RETIRED definition a unit/method change replaced: the successor it points at carries the same name. Gotcha 8.
 
 <!-- dict:col:rep_team_measurable_types.sort_order -->
 **`sort_order`** (int, NOT NULL, default 0) — picker display order.

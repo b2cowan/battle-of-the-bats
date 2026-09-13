@@ -1,13 +1,19 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { Plus, X, Check, Settings2, Printer } from 'lucide-react';
+import TagPicker from '@/components/coaches/TagPicker';
+import { FOCUS_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
+import { useFocusTags } from '@/components/coaches/use-focus-tags';
+import type { DevelopmentAddress } from '@/lib/development-address';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import { splitSeriesByUnit, drawableSegment, unitSplitNote } from '@/lib/measurable-series';
-import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesManager';
+import { NewTypeFields } from '@/components/coaches/NewTypeFields';
+import { activeMeasuredTests, measuredTestsWithHistory } from '@/lib/measurable-definition';
+import { skillsAndGoalsHref } from '@/lib/development-address';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
@@ -75,15 +81,22 @@ interface Props {
   playerNumber: string | null;
   teamName: string;
   seasonName: string | null;
+  /** The address the coach arrived on (view · metric · goal · the way back) — parsed once by the page. */
+  arrival: DevelopmentAddress;
+  /** Called once the addressed row has been opened and flashed, so a remount does not do it again. */
+  onArrived: () => void;
 }
 
-// NewTypeFields lives in TestTypesManager.tsx (single home; acyclic import graph).
+// NewTypeFields lives in its own file (single home; acyclic import graph).
 
 export default function PlayerDevelopmentSection({
   orgSlug, teamId, playerId, bestPositions, attendancePct, playerName, playerNumber, teamName, seasonName,
+  arrival, onArrived,
 }: Props) {
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/development`;
   const typesBase = `/api/coaches/${orgSlug}/teams/${teamId}/development/measurable-types`;
+  // The library's ONE editor (Phase 1): the Metrics tab. "Test types" used to open a dialog here.
+  const metricsHref = skillsAndGoalsHref(`/${orgSlug}/coaches/teams/${teamId}`, 'metrics');
   const confirm = useConfirm();
 
   const [data, setData] = useState<DevelopmentData | null>(null);
@@ -95,6 +108,23 @@ export default function PlayerDevelopmentSection({
   const [goalFormOpen, setGoalFormOpen] = useState(false);
   const [goalFocus, setGoalFocus] = useState('');
   const [goalNote, setGoalNote] = useState('');
+  /**
+   * F11 (Phase 1): the goal form exposes the focus TAG that mig 221 gave a goal — the same picker
+   * the tryout hand-off uses, the same 'focus' vocabulary the drills and the focus rail read. One
+   * tag, optional, never inferred from the text (the type's own note). `verifyFocusTag` proves
+   * ownership on both goal routes; the picker only offers this team's words.
+   */
+  const [goalTagId, setGoalTagId] = useState<string | null>(null);
+  // Fetched only once the read says goals are shown here — a results-only coach never pays for it.
+  const { tags: focusTags, createTag: createFocusTag, reload: reloadFocusTags } = useFocusTags(orgSlug, teamId, { skipFetch: !data?.showGoals });
+  const focusTagById = useMemo(() => new Map(focusTags.map(t => [t.id, t])), [focusTags]);
+  /**
+   * The arrival address (Phase 1, F09): `?section=development` opens this section (the collapse
+   * primitive's job); `view` + `metric` / `goal` say WHICH row the link meant, and it is opened and
+   * flashed ONCE on arrival — the page owns the address and `onArrived` clears it, because this
+   * section remounts on a tab switch and must not run the arrival again on the same address.
+   */
+  const [flashRowId, setFlashRowId] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -107,12 +137,28 @@ export default function PlayerDevelopmentSection({
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeUnit, setNewTypeUnit] = useState('');
 
-  const [manageOpen, setManageOpen] = useState(false);
-  // data/showMeasurables referenced via `data?.` here — canWrite alias isn't declared until
-  // after the `if (!data) return` below, but this hook must run before any early return.
-  useOverlayOpen(!!data?.canWrite && manageOpen && !!data?.showMeasurables);
 
-  const [expandedTypeId, setExpandedTypeId] = useState<string | null>(null);
+  const [expandedTypeId, setExpandedTypeId] = useState<string | null>(arrival.view === 'results' ? arrival.metricId : null);
+  // Scroll the addressed row into view once the data has drawn it, then let the flash fade.
+  useEffect(() => {
+    if (!data) return;
+    const rowId = arrival.view === 'results' && arrival.metricId ? `dev-metric-${arrival.metricId}`
+      : arrival.view === 'goals' && arrival.goalId ? `dev-goal-${arrival.goalId}` : null;
+    if (!rowId) return;
+    const el = document.getElementById(rowId);
+    if (!el) return;
+    // After the row paints (the collapse primitive's own idiom), so the flash lands on a drawn row.
+    let fade: ReturnType<typeof setTimeout> | null = null;
+    const raf = requestAnimationFrame(() => {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+      setFlashRowId(rowId);
+      onArrived();
+      fade = setTimeout(() => setFlashRowId(null), 2400);
+    });
+    return () => { cancelAnimationFrame(raf); if (fade) clearTimeout(fade); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the data first draws the row
+  }, [data === null]);
 
   // ── 3D: previous-seasons archive + the one-time carry-forward offer + print ──
   const [expandedSeasonId, setExpandedSeasonId] = useState<string | null>(null);
@@ -209,13 +255,14 @@ export default function PlayerDevelopmentSection({
       const res = await fetch(url, {
         method: editingGoalId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ focusArea: focus, note: goalNote.trim() || null }),
+        body: JSON.stringify({ focusArea: focus, note: goalNote.trim() || null, tagId: goalTagId }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json) throw new Error(json?.error ?? 'Could not save — try again.');
       setGoalFormOpen(false);
       setGoalFocus('');
       setGoalNote('');
+      setGoalTagId(null);
       const wasEdit = !!editingGoalId;
       setEditingGoalId(null);
       // Merge the mutation's own response locally — no full refetch (documents-section pattern).
@@ -476,7 +523,9 @@ export default function PlayerDevelopmentSection({
 
   const canWrite = data.canWrite;
   const canWriteGoals = data.canWriteGoals;
-  const activeTypes = data.types.filter(t => t.isActive);
+  // Measured TESTS only (Phase 1): a skill is a definition with no unit and nothing to log against
+  // until Phase 2 records observations — offering it here would take a fabricated number.
+  const activeTypes = activeMeasuredTests(data.types);
   // The value/date fields only exist once a real, active test is selected — no dead "Log it".
   const selectedLogType = activeTypes.find(t => t.id === logTypeId) ?? null;
   // With zero tests, the set-up-a-test form IS the flow — it can't be toggled closed.
@@ -488,8 +537,7 @@ export default function PlayerDevelopmentSection({
     entriesByType.set(e.measurableTypeId, list);
   }
   // Summary rows in library order (roster-order principle: stable, never sorted by result).
-  const typeRows = data.types
-    .filter(t => t.isActive || entriesByType.has(t.id))
+  const typeRows = measuredTestsWithHistory(data.types, id => entriesByType.has(id))
     .map(t => {
       const entries = entriesByType.get(t.id) ?? []; // newest-first from the API
       /**
@@ -533,12 +581,14 @@ export default function PlayerDevelopmentSection({
               )}
             </span>
           )}
-          {canWrite && data.showMeasurables && (
-            <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
-              style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-              onClick={() => setManageOpen(true)}>
-              <Settings2 size={13} /> Test types
-            </button>
+          {/* Metrics (Phase 1, mockup screen 1): the library has ONE editor now — the Metrics tab on
+              Skills & Goals — where "Test types" used to open a dialog of its own here. A quiet door
+              for anyone who can read the library (the tab is read-only without the grant). */}
+          {data.showMeasurables && (
+            <Link href={metricsHref} className={`btn btn-ghost ${styles.devSectionAction}`}
+              style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Settings2 size={13} /> Metrics
+            </Link>
           )}
         </div>
       </div>
@@ -613,7 +663,7 @@ export default function PlayerDevelopmentSection({
           {data.goals.length > 0 && (
             <ul className={styles.miniList}>
               {data.goals.map(g => (
-                <li key={g.id} className={styles.miniRow}>
+                <li key={g.id} id={`dev-goal-${g.id}`} className={`${styles.miniRow}${flashRowId === `dev-goal-${g.id}` ? ` ${styles.collapseFlash}` : ''}`}>
                   <span className={styles.miniRowMain}>
                     {canWriteGoals ? (
                       <button type="button"
@@ -623,11 +673,16 @@ export default function PlayerDevelopmentSection({
                           setEditingGoalId(g.id);
                           setGoalFocus(g.focusArea);
                           setGoalNote(g.note ?? '');
+                          setGoalTagId(g.tagId ?? null);
                           setGoalFormOpen(true);
                         }}>
                         {g.focusArea}
                       </button>
                     ) : g.focusArea}
+                    {/* The focus TAG (F11) — the grouping word the focus rail matches on, shown with the area it groups. */}
+                    {g.tagId && focusTagById.has(g.tagId) && (
+                      <span className={`${styles.badge} ${styles.badgeDraft}`} style={{ marginLeft: '0.4rem' }}>{focusTagById.get(g.tagId)!.name}</span>
+                    )}
                     {g.note && <span className={styles.devCardNote}>{g.note}</span>}
                   </span>
                   {canWriteGoals ? (
@@ -648,7 +703,7 @@ export default function PlayerDevelopmentSection({
           {canWriteGoals && !goalFormOpen && (
             <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
               style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: '0.55rem 0 1rem' }}
-              onClick={() => { setEditingGoalId(null); setGoalFocus(''); setGoalNote(''); setGoalErr(''); setGoalFormOpen(true); }}>
+              onClick={() => { setEditingGoalId(null); setGoalFocus(''); setGoalNote(''); setGoalTagId(null); setGoalErr(''); setGoalFormOpen(true); }}>
               <Plus size={13} /> Add focus area
             </button>
           )}
@@ -665,6 +720,22 @@ export default function PlayerDevelopmentSection({
                 <input id="dev-goal-note" className={styles.input} type="text" value={goalNote}
                   onChange={e => setGoalNote(e.target.value)} maxLength={280}
                   placeholder="One short note the player would be happy to read" />
+              </div>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                {/* ONE optional grouping tag, the team's own 'focus' words — so the focus rail can tell this
+                    area belongs to tonight's practice. The text above stays the coach's specific words. */}
+                <TagPicker
+                  all={focusTags}
+                  selected={goalTagId ? [goalTagId] : []}
+                  onChange={next => setGoalTagId(next[0] ?? null)}
+                  onCreate={createFocusTag}
+                  single
+                  label="Focus tag (optional)"
+                  placeholder="Group it with a focus word…"
+                  emptyHint="No focus words yet — type one to make your team’s first."
+                  manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+                  onManageChanged={reloadFocusTags}
+                />
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`} style={{ flexDirection: 'row', display: 'flex', gap: '0.6rem', alignItems: 'center', marginTop: '0.35rem' }}>
                 <button type="button" className="btn btn-lime" style={{ fontSize: '0.8rem' }} disabled={busy} onClick={saveGoal}>
@@ -703,7 +774,7 @@ export default function PlayerDevelopmentSection({
           {typeRows.length > 0 && (
             <ul className={styles.miniList}>
               {typeRows.map(({ type, entries, latest, chronoDrawable, splitNote }) => (
-                <li key={type.id} className={styles.miniRow} style={{ flexWrap: 'wrap' }}>
+                <li key={type.id} id={`dev-metric-${type.id}`} className={`${styles.miniRow}${flashRowId === `dev-metric-${type.id}` ? ` ${styles.collapseFlash}` : ''}`} style={{ flexWrap: 'wrap' }}>
                   <span className={styles.miniRowMain}>
                     <button type="button"
                       style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', textAlign: 'left' }}
@@ -786,7 +857,7 @@ export default function PlayerDevelopmentSection({
               {newTypeFormOpen && (
                 <div className={`${styles.field} ${styles.formGridFull}`}>
                   <NewTypeFields idPrefix="dev-newtype" name={newTypeName} unit={newTypeUnit}
-                    onName={setNewTypeName} onUnit={setNewTypeUnit}
+                    onName={setNewTypeName} onUnit={setNewTypeUnit} metricsHref={metricsHref}
                     onAdd={async () => {
                       if (!newTypeName.trim() || !newTypeUnit.trim()) {
                         setLogErr('Give the test a name and a unit (like seconds).');
@@ -925,27 +996,6 @@ export default function PlayerDevelopmentSection({
             Shown as a record, side by side — never a computed &ldquo;better or worse than last year.&rdquo;
           </p>
         </>
-      )}
-
-      {/* ── Manage test types (M3) — a centered dialog hosting the ONE shared manager ── */}
-      {canWrite && manageOpen && data.showMeasurables && (
-        <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Test types</h3>
-              <button type="button" className={styles.modalCloseBtn} aria-label="Close"
-                onClick={() => setManageOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <TestTypesManager
-              apiBase={typesBase}
-              types={data.types}
-              canWrite={canWrite}
-              onTypesChanged={update => setData(d => d ? { ...d, types: update(d.types) } : d)}
-            />
-          </div>
-        </div>
       )}
 
       {/* ── Context (quoted, never recomputed) ── */}

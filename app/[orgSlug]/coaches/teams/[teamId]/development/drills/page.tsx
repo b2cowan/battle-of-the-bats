@@ -387,7 +387,7 @@ export default function CoachDrillsPage({
   const helpRequest = {
     module: 'coaches' as const,
     sectionIds: ['premium-drill-library'],
-    label: 'Your drills',
+    label: 'Drills',
     fullGuideHref: `/${orgSlug}/coaches/help#premium-drill-library`,
   };
 
@@ -407,7 +407,7 @@ export default function CoachDrillsPage({
           header, where a phone collapses it to the bare "+" in the title-line corner. */}
       <CoachPageHeader
         icon={Library}
-        title="Your drills"
+        title="Drills"
         backTo={{ href: `${base}/development`, label: 'Skills & Goals' }}
         actions={canWrite ? (
           <CoachToolbarMenu
@@ -432,7 +432,7 @@ export default function CoachDrillsPage({
         ) : undefined}
         actionsPhoneInTitleRow
         actionsPhoneHidden={!canWrite}
-        helpLabel="Your drills"
+        helpLabel="Drills"
         help={helpRequest}
       />
     </>

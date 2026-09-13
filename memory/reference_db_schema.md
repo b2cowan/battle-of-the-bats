@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-11 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-13 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-11
+# DB Schema Reference — 2026-09-13
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -300,8 +300,8 @@ id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, program_year_id (uui
 - Indexes: rep_team_lineups_event_id_key, rep_team_lineups_event_idx, rep_team_lineups_org_idx, rep_team_lineups_program_year_id_idx, rep_team_lineups_team_idx
 
 ### rep_team_measurable_types
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, name NOT NULL, unit NOT NULL, sort_order (integer), is_active (boolean), created_by (uuid), created_at, updated_at
-- Indexes: rep_team_measurable_types_name_uniq, rep_team_measurable_types_org_idx, rep_team_measurable_types_team_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, name NOT NULL, unit, sort_order (integer), is_active (boolean), created_by (uuid), created_at, updated_at, kind, aim, range_from (numeric), range_to (numeric), method, attempts_per_session, headline, descriptors, replaced_by_id (uuid) → rep_team_measurable_types.id
+- Indexes: rep_team_measurable_types_name_uniq, rep_team_measurable_types_org_idx, rep_team_measurable_types_replaced_by_idx, rep_team_measurable_types_team_idx
 
 ### rep_team_money_in
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, entry_kind NOT NULL, amount (numeric) NOT NULL, received_date NOT NULL, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, description, notes, received_from, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid), created_at, updated_at
@@ -344,8 +344,8 @@ id (uuid), tournament_team_id (uuid) → teams.id NOT NULL, rep_team_id (uuid) �
 - Indexes: rep_team_tournament_registrations_org_idx, rep_team_tournament_registrations_rep_team_idx, rep_team_tournament_registrations_tournament_team_unique
 
 ### rep_teams
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_link_token_hash, family_link_created_at, family_link_created_by (uuid), family_calendar_token_hash, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb)
-- Indexes: idx_rep_teams_org_share_club_book, rep_teams_family_calendar_token_uniq, rep_teams_family_link_token_uniq, rep_teams_group_id_idx, rep_teams_org_id_slug_key
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_calendar_token_hash, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb)
+- Indexes: idx_rep_teams_org_share_club_book, rep_teams_family_calendar_token_uniq, rep_teams_group_id_idx, rep_teams_org_id_slug_key
 
 ### rep_tryout_evaluator_sessions
 id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, evaluator_name, token_hash NOT NULL, expires_at NOT NULL, revoked_at, created_at
@@ -635,7 +635,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, email NOT NULL, opted_ou
 - Indexes: family_email_optouts_org_email_uniq
 
 ### family_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, role NOT NULL, player_id (uuid) → rep_roster_players.id, user_id (uuid), invited_email NOT NULL, relationship, status, verified_via, requested_player_name, claim_token_hash, claim_expires_at, invited_by_user_id (uuid), calendar_token_hash, consent_recorded_at, consent_ip, approved_by_user_id (uuid), approved_at, declined_at, revoked_at, created_at, updated_at, claimed_email, person_id (uuid) → org_people.id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, role NOT NULL, player_id (uuid) → rep_roster_players.id, user_id (uuid), invited_email NOT NULL, relationship, status, verified_via, claim_token_hash, claim_expires_at, invited_by_user_id (uuid), calendar_token_hash, consent_recorded_at, consent_ip, approved_by_user_id (uuid), approved_at, declined_at, revoked_at, created_at, updated_at, claimed_email, person_id (uuid) → org_people.id
 - Indexes: family_links_calendar_token_hash_key, family_links_claim_token_hash_key, family_links_email_idx, family_links_live_uniq, family_links_org_idx, family_links_person_id_idx, family_links_player_id_idx, family_links_team_status_idx, family_links_user_idx
 
 ### family_recap_views

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-12T16:29:03.730Z",
+  "generated": "2026-09-13T03:11:08.785Z",
   "entries": {
     "coach-schedule|768|tap-floor|button·Help: Schedule": {
       "reason": null,
@@ -124,10 +124,6 @@
     "coach-development-session|361|control-width|button·Remove Devon's reading": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "24px wide (floor 44) — icon-only control"
-    },
-    "coach-development-session|361|tap-floor|input·Emerson Test — 60-yd sprint (seconds)": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "35px tall (floor 44)"
     },
     "coach-development-session|361|tap-floor|input·Frankie Test — 60-yd sprint (seconds)": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
@@ -260,10 +256,6 @@
     "coach-development-session|390|control-width|button·Remove Devon's reading": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "24px wide (floor 44) — icon-only control"
-    },
-    "coach-development-session|390|tap-floor|input·Emerson Test — 60-yd sprint (seconds)": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "35px tall (floor 44)"
     },
     "coach-development-session|390|tap-floor|input·Frankie Test — 60-yd sprint (seconds)": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
@@ -404,10 +396,6 @@
     "coach-development-session|768|control-width|button·Remove Devon's reading": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "24px wide (floor 44) — icon-only control"
-    },
-    "coach-development-session|768|tap-floor|input·Emerson Test — 60-yd sprint (seconds)": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "35px tall (floor 44)"
     },
     "coach-development-session|768|tap-floor|input·Frankie Test — 60-yd sprint (seconds)": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records (types, readings, goals, a retired test, a departed player, three practice-review states). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
@@ -1391,11 +1379,11 @@
     },
     "coach-development-drills|361|tap-floor|button·All 1": {
       "reason": null,
-      "detail": "21px tall (floor 44)"
+      "detail": "22px tall (floor 44)"
     },
     "coach-development-drills|361|tap-floor|button·No tags 1": {
       "reason": null,
-      "detail": "21px tall (floor 44)"
+      "detail": "22px tall (floor 44)"
     },
     "coach-development-templates|361|tap-floor|button·All 15": {
       "reason": null,
@@ -1467,11 +1455,11 @@
     },
     "coach-development-drills|390|tap-floor|button·All 1": {
       "reason": null,
-      "detail": "21px tall (floor 44)"
+      "detail": "22px tall (floor 44)"
     },
     "coach-development-drills|390|tap-floor|button·No tags 1": {
       "reason": null,
-      "detail": "21px tall (floor 44)"
+      "detail": "22px tall (floor 44)"
     },
     "coach-development-templates|390|tap-floor|button·All 15": {
       "reason": null,
@@ -1541,25 +1529,13 @@
       "reason": null,
       "detail": "22px tall (floor 44)"
     },
-    "coach-development-drills|768|tap-floor|button·Help: Your drills": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|a·Skills & Goals": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|button·New drill": {
-      "reason": "As coach-development-templates New template — grandfathered desktop height, clears 44 at <=640, and replaces two filter-row buttons with one.",
-      "detail": "31px tall (floor 44)"
-    },
     "coach-development-drills|768|tap-floor|button·All 1": {
       "reason": null,
-      "detail": "21px tall (floor 44)"
+      "detail": "22px tall (floor 44)"
     },
     "coach-development-drills|768|tap-floor|button·No tags 1": {
       "reason": null,
-      "detail": "21px tall (floor 44)"
+      "detail": "22px tall (floor 44)"
     },
     "coach-development-templates|768|tap-floor|button·Help: Plan templates": {
       "reason": null,
@@ -3023,83 +2999,31 @@
     },
     "coach-development|1440|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
     },
     "coach-development|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
     },
     "coach-development|361|tap-floor|a·Schedule →": {
       "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|button·Add test": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|button·New session": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|input·e.g. 60-yd sprint": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|input·seconds": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
+      "detail": "15px tall (floor 44)"
     },
     "coach-development|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
     },
     "coach-development|390|tap-floor|a·Schedule →": {
       "reason": null,
       "detail": "15px tall (floor 44)"
     },
-    "coach-development|390|tap-floor|button·Add test": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|button·New session": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|input·e.g. 60-yd sprint": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|input·seconds": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
     "coach-development|768|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
     },
     "coach-development|768|tap-floor|a·Schedule →": {
       "reason": null,
       "detail": "15px tall (floor 44)"
-    },
-    "coach-development|768|tap-floor|button·Add test": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-development|768|tap-floor|button·Help: Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development|768|tap-floor|button·New session": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-development|768|tap-floor|input·e.g. 60-yd sprint": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|768|tap-floor|input·seconds": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
     },
     "coach-dues-settlement|768|tap-floor|button·Export": {
       "reason": null,
@@ -4201,10 +4125,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-development-board|768|control-width|button·Help: Team board": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-practice-plans|768|control-width|button·Help: Practice plans": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -4226,10 +4146,6 @@
       "detail": "33px tall (floor 44)"
     },
     "coach-season-end|768|tap-floor|button·Help: Season's End": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-board|768|tap-floor|button·Help: Team board": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
       "detail": "34px tall (floor 44)"
     },
@@ -4264,6 +4180,90 @@
     "coach-budget-period|768|control-width|button·Show the next month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
       "detail": "36px wide (floor 44) — icon-only control"
+    },
+    "coach-player|361|tap-floor|button·Changeup speed": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-session|361|tap-floor|button·Remove Emerson's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|361|control-width|button·Remove Emerson's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-player|390|tap-floor|button·Changeup speed": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-session|390|tap-floor|button·Remove Emerson's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|390|control-width|button·Remove Emerson's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-player|768|tap-floor|button·Changeup speed": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development|768|control-width|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-drills|768|tap-floor|button·Help: Drills": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-drills|768|control-width|button·Help: Drills": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-board|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-board|768|control-width|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-metrics|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-metrics|768|control-width|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-metric-new|768|tap-floor|button·Help: Metrics": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-metric-new|768|control-width|button·Help: Metrics": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-metric|768|tap-floor|button·Help: Metrics": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-metric|768|control-width|button·Help: Metrics": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session|768|tap-floor|button·Remove Emerson's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-session|768|control-width|button·Remove Emerson's reading": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "24px wide (floor 44) — icon-only control"
     }
   }
 }

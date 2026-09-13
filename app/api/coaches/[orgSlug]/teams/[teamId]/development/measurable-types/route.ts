@@ -1,26 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import {
-  getCoachingAssignmentsForUser,
-  getRepTeamMeasurableTypes,
-  createRepTeamMeasurableType,
-} from '@/lib/db';
+import { getRepTeamMeasurableTypes, createRepTeamMeasurableType } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { resolveCoachTeamAssignment } from '@/lib/coach-route-context';
 import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableTypeInput } from '@/lib/development-input';
 
-async function resolveContext(orgSlug: string, teamId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
+// The definition routes share ONE auth chain — the repo's shared home for it — rather than three
+// hand-rolled copies (the /simplify pass, 2026-09-12).
+const resolveContext = resolveCoachTeamAssignment;
 
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-
-  return { ctx, assignment };
-}
-
+/** The whole library — every definition, retired ones with `?all=1`. The Metrics tab reads this. */
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -34,6 +23,13 @@ export const GET = withObservability(async (req: Request,
   return NextResponse.json({ types });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/measurable-types' });
 
+/**
+ * Define a metric (Phase 1, mockup screen 2): a measured test — name · unit · aim (with a range's
+ * edges) · method · attempts per session · headline — or an observed skill with its descriptors.
+ * ⚠ A bare `{ name, unit }` still creates (the session chip's "+ New test…" and the profile's
+ * quick add are the unchanged idiom): it lands as a record-only test with no method, which the
+ * Metrics tab then says out loud. The reader supplies those defaults; nothing is guessed here.
+ */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -52,17 +48,16 @@ export const POST = withObservability(async (req: Request,
 
   const read = readMeasurableTypeInput(body, 'create');
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
-  const { name, unit } = read.fields;
 
   try {
     const type = await createRepTeamMeasurableType({
-      orgId: ctx.org.id, teamId, name, unit, createdBy: ctx.user.id,
+      ...read.fields, orgId: ctx.org.id, teamId, createdBy: ctx.user.id,
     });
     return NextResponse.json({ type }, { status: 201 });
   } catch (error: unknown) {
     // Partial unique index (active names, case-insensitive) → 409, matching the award-types UX.
     if (typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505') {
-      return NextResponse.json({ error: 'A measurable with that name already exists.' }, { status: 409 });
+      return NextResponse.json({ error: 'A metric with that name already exists.' }, { status: 409 });
     }
     throw error;
   }

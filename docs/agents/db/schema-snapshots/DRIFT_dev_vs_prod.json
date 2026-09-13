@@ -1,12 +1,12 @@
 {
   "generated": "2026-09-13",
-  "total": 8,
+  "total": 32,
   "counts": {
     "tables": 0,
-    "columns": 4,
-    "indexes": 1,
-    "constraints": 1,
-    "rls": 2
+    "columns": 14,
+    "indexes": 2,
+    "constraints": 2,
+    "rls": 14
   },
   "items": [
     {
@@ -16,6 +16,94 @@
     {
       "key": "check:changed:family_links.family_links_role_player_ck",
       "sig": "((role = 'guardian'::text) AND (player_id IS NOT NULL)) :: (((role = 'follower'::text) AND (player_id IS NULL)) OR ((role = 'guardian'::text) AND ((status <> 'verified'::text) OR (player_id IS NOT NULL))))"
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_aim_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_attempts_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_descriptors_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_headline_by_aim_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_headline_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_range_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_record_has_no_best_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_replaced_is_retired_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_skill_shape_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_measurable_types.rep_team_measurable_types_unit_by_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "column:changed:rep_team_measurable_types.unit",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.aim",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.attempts_per_session",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.descriptors",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.headline",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.range_from",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.range_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_measurable_types.replaced_by_id",
+      "sig": ""
     },
     {
       "key": "column:only-prod:family_links.requested_player_name",
@@ -34,7 +122,15 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_measurable_types.rep_team_measurable_types_replaced_by_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-prod:rep_teams.rep_teams_family_link_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_measurable_types_replaced_by_idx",
       "sig": ""
     },
     {

@@ -1,6 +1,8 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { parseDevelopmentAddress, returnLabel } from '@/lib/development-address';
 import { Users, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { stripTeamNamePrefix } from '@/lib/coach-season-label';
@@ -294,6 +296,22 @@ export default function PlayerDetailPage({
   }
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  /**
+   * The way back names where the coach CAME FROM when a development link brought them here
+   * (Phase 1, F09: the Players tab or the Insights report, carrying its own filters) — a back
+   * arrow fixed to Roster would move a coach to a page they were never on (the 2026-08-26 rule:
+   * a back arrow names where it returns to, and returns there). Only a path inside this team's
+   * portal survives the parse; anything else falls back to Roster.
+   */
+  const searchParams = useSearchParams();
+  // Parsed ONCE, here, because this page survives a tab switch and the Development section does
+  // not: the section flashes the addressed row on arrival and then tells the page it has — a
+  // remount (Season → Family → Season) must not re-run the arrival on the same address.
+  const [arrival, setArrival] = useState(() => parseDevelopmentAddress(searchParams, base));
+  const returnTo = arrival.returnTo;
+  const backTo = returnTo && returnLabel(returnTo, base)
+    ? { href: returnTo, label: returnLabel(returnTo, base)! }
+    : { href: `${base}/roster`, label: 'Roster' };
 
   if (assignmentsLoading || fetching) return <CoachLoading label="Loading this player…" />;
   if (!page.hasAccess) {
@@ -332,7 +350,7 @@ export default function PlayerDetailPage({
       <CoachPageHeader
         icon={Users}
         title={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
-        backTo={{ href: `${base}/roster`, label: 'Roster' }}
+        backTo={backTo}
       />
 
       {/* ⚠ THE PLAYER, BEFORE THE FORM (owner ruling 2026-08-26). What stood here was a "Status"
@@ -725,6 +743,8 @@ export default function PlayerDetailPage({
             playerNumber={player.playerNumber ? clean(player.playerNumber) : null}
             teamName={assignment.teamName}
             seasonName={stripTeamNamePrefix(assignment.programYearName, assignment.teamName) || null}
+            arrival={arrival}
+            onArrived={() => setArrival(a => ({ ...a, view: null, metricId: null, goalId: null }))}
           />
         </CoachCollapseSection>
       )}

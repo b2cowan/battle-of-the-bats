@@ -14206,7 +14206,7 @@
     "column_name": "unit",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 5
   },
@@ -14254,6 +14254,87 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'test'::text",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "aim",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'record'::text",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "range_from",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "range_to",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "method",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "attempts_per_session",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "headline",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'last'::text",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "descriptors",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "NO",
+    "column_default": "'{}'::text[]",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "replaced_by_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
   },
   {
     "table_name": "rep_team_money_in",

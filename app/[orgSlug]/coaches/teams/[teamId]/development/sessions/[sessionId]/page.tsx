@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { ClipboardCheck, X } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { NewTypeFields } from '@/components/coaches/TestTypesManager';
+import { NewTypeFields } from '@/components/coaches/NewTypeFields';
+import { isMeasuredTest } from '@/lib/measurable-definition';
+import { skillsAndGoalsHref } from '@/lib/development-address';
 import { formatValue, formatShortDate } from '@/lib/measurable-format';
 import { sessionMetricChips, sessionRows, sessionEnteredCount, defaultSessionChip } from '@/lib/development-session-view';
 import styles from '../../../../../coaches.module.css';
@@ -130,7 +132,10 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
    * to active ones and the players to the current roster before drawing anything, so retiring a
    * test or a player leaving the team hid rows that were still in the record.
    */
-  const metricChips = sessionMetricChips(types, entries);
+  // ⚠ TESTS ONLY (Phase 1): an observed skill is a definition with no unit and nothing a session
+  // can record yet — recording an observation is Phase 2, when it joins these chips (mockup screen
+  // 3 draws it as one). A skill here now would be a chip whose grid could only take a fabricated number.
+  const metricChips = sessionMetricChips(types.filter(isMeasuredTest), entries);
   const activeTypes = metricChips.filter(c => !c.retired).map(c => c.type);
   // With nothing chosen yet, the session opens on the first test it already holds rows for, else
   // the first active test (`defaultSessionChip`) — derived here, once. ⚠ A chosen chip that has since VANISHED (its
@@ -444,7 +449,8 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
       {canWrite && (newTypeOpen || activeTypes.length === 0) && (
         <div style={{ margin: '0 0 0.8rem' }}>
           <NewTypeFields idPrefix="dev-session-newtype" name={newTypeName} unit={newTypeUnit}
-            onName={setNewTypeName} onUnit={setNewTypeUnit} onAdd={addType} />
+            onName={setNewTypeName} onUnit={setNewTypeUnit} onAdd={addType}
+            metricsHref={skillsAndGoalsHref(base, 'metrics')} />
         </div>
       )}
 

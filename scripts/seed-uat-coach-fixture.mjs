@@ -2783,29 +2783,63 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 {
   const typeByName = new Map();
+  /**
+   * Phase 1 (2026-09-12) — the DEFINITION (mig 293), so the Metrics tab and the editor can be
+   * walked against both shapes: a defined test (the sprint: aim, method, attempts, headline), a
+   * LEGACY one (Throw speed: record only, no method — exactly what an un-edited row reads), a
+   * retired one, a RANGE test (Changeup speed, 62–68 mph — the owner kept the range aim) and an
+   * observed SKILL with descriptors (defined in Phase 1; recorded against in Phase 2).
+   * `definition` columns are re-asserted on every run; the seeder never touches a row a coach's
+   * successor walk retired and replaced (`replaced_by_id`), and prefers the ACTIVE row of a name.
+   */
   const TYPES = [
-    { name: '60-yd sprint', unit: 'seconds', sort_order: 0, is_active: true },
-    { name: 'Throw speed', unit: 'km/h', sort_order: 1, is_active: true },   // readings began in mph (F01)
-    { name: 'Shuttle run', unit: 'seconds', sort_order: 2, is_active: false }, // retired, with rows (F02)
+    { name: '60-yd sprint', unit: 'seconds', sort_order: 0, is_active: true,
+      definition: { kind: 'test', aim: 'lower', attempts_per_session: 2, headline: 'best',
+        method: 'Standing start on the same marked 60-yd course, after warm-up. Hand-timed from first movement.' } },
+    // readings began in mph (F01); LEGACY definition on purpose — record only, method not recorded
+    { name: 'Throw speed', unit: 'km/h', sort_order: 1, is_active: true,
+      definition: { kind: 'test', aim: 'record', attempts_per_session: 1, headline: 'last', method: null } },
+    // retired, with rows (F02)
+    { name: 'Shuttle run', unit: 'seconds', sort_order: 2, is_active: false,
+      definition: { kind: 'test', aim: 'lower', attempts_per_session: 1, headline: 'last', method: null } },
+    // a range test (owner ruling: the range aim, kept and drawn properly) — no readings yet
+    { name: 'Changeup speed', unit: 'mph', sort_order: 3, is_active: true,
+      definition: { kind: 'test', aim: 'range', range_from: 62, range_to: 68, attempts_per_session: 3, headline: 'in_range',
+        method: 'Radar gun behind the plate, five warm-up throws first. Three changeups on the coach’s call.' } },
+    // an observed skill — a definition with descriptors and no unit (Phase 1); observations are Phase 2
+    { name: 'Sets feet before throwing', unit: null, sort_order: 4, is_active: true,
+      definition: { kind: 'skill', aim: 'record', attempts_per_session: 1, headline: 'last', method: null,
+        descriptors: ['With support — coach guides the setup', 'With a reminder — one verbal cue', 'Independently — without a cue'] } },
   ];
   for (const t of TYPES) {
-    const found = await db.from('rep_team_measurable_types').select('id, unit, is_active')
-      .eq('team_id', team.id).ilike('name', t.name).limit(1).maybeSingle();
+    const found = await db.from('rep_team_measurable_types').select('id, unit, is_active, replaced_by_id, kind, aim, attempts_per_session, headline, method, range_from, range_to, descriptors')
+      .eq('team_id', team.id).ilike('name', t.name).is('replaced_by_id', null)
+      .order('is_active', { ascending: false }).limit(1).maybeSingle();
     if (found.error) { console.error('✗ measurable type lookup', found.error.message); process.exit(1); }
     let id = found.data?.id;
+    const def = { range_from: null, range_to: null, descriptors: [], ...t.definition };
     if (!id) {
       const ins = await db.from('rep_team_measurable_types')
-        .insert({ org_id: org.id, team_id: team.id, name: t.name, unit: t.unit, sort_order: t.sort_order, is_active: t.is_active, created_by: user.id })
+        .insert({ org_id: org.id, team_id: team.id, name: t.name, unit: t.unit, sort_order: t.sort_order, is_active: t.is_active, created_by: user.id, ...def })
         .select('id').single();
       if (ins.error) { console.error(`✗ measurable type "${t.name}" insert`, ins.error.message); process.exit(1); }
       id = ins.data.id;
-    } else if (found.data.unit !== t.unit || found.data.is_active !== t.is_active) {
-      // The unit and the retired flag ARE the fixture — a re-run restores them.
-      await db.from('rep_team_measurable_types').update({ unit: t.unit, is_active: t.is_active }).eq('id', id);
+    } else {
+      // The unit, the retired flag AND the definition are the fixture — a re-run restores them.
+      const f = found.data;
+      const drift = f.unit !== t.unit || f.is_active !== t.is_active || f.kind !== def.kind || f.aim !== def.aim
+        || f.attempts_per_session !== def.attempts_per_session || f.headline !== def.headline || (f.method ?? null) !== def.method
+        || (f.range_from == null) !== (def.range_from == null) || (f.range_from != null && Number(f.range_from) !== Number(def.range_from))
+        || (f.range_to == null) !== (def.range_to == null) || (f.range_to != null && Number(f.range_to) !== Number(def.range_to))
+        || JSON.stringify(f.descriptors ?? []) !== JSON.stringify(def.descriptors);
+      if (drift) {
+        const up = await db.from('rep_team_measurable_types').update({ unit: t.unit, is_active: t.is_active, ...def }).eq('id', id);
+        if (up.error) { console.error(`✗ measurable type "${t.name}" update`, up.error.message); process.exit(1); }
+      }
     }
     typeByName.set(t.name, id);
   }
-  ok('measurable types present (60-yd sprint · Throw speed [km/h, was mph] · Shuttle run [retired])');
+  ok('metrics present (60-yd sprint [defined] · Throw speed [km/h, was mph; legacy] · Shuttle run [retired] · Changeup speed [range 62–68 mph] · Sets feet before throwing [skill])');
 
   // The probe session (section 11) — readings taken at the seeded practice.
   const { data: probeSession } = await db.from('rep_team_evaluation_sessions')

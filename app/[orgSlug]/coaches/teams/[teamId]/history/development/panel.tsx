@@ -1,6 +1,8 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { insightsDevelopmentHref, insightsTagFromAddress, playerDevelopmentHref } from '@/lib/development-address';
 import { Info } from 'lucide-react';
 import { formatShortDate } from '@/lib/measurable-format';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -96,8 +98,22 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const [data, setData] = useState<ReportData | null>(null);
   const [noSeason, setNoSeason] = useState(false);
   const [error, setError] = useState('');
-  /** null = every practice. A tag id, or the "no tags" sentinel. */
-  const [practiceTag, setPracticeTag] = useState<string | null>(null);
+  /**
+   * null = every practice. A tag id, or the "no tags" sentinel. Rides `?tag=` on the hub's own
+   * `?section=` address (Phase 1, F09 — exact addresses): a player link from this report carries
+   * the report WITH its filter back, so the way back lands where the coach was. `none` spells the
+   * untagged filter on the wire (the in-memory sentinel is a string with a space in it).
+   */
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Read from the address on EVERY render, not copied into state once: the hub keeps this panel
+  // mounted, so a Back/Forward or a fresh link that changes `?tag=` must move the filter with it.
+  const practiceTag = insightsTagFromAddress(searchParams.get('tag'));
+  const setPracticeTag = (next: string | null) => {
+    router.replace(insightsDevelopmentHref(base, { tag: next }), { scroll: false });
+  };
+  /** Where a player link comes back to: this report, this filter. */
+  const here = insightsDevelopmentHref(base, { tag: practiceTag });
 
   /**
    * Sequence guard (the session screen's idiom): the failed-practices "Try again" can be pressed
@@ -278,7 +294,8 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                   return (
                     <tr key={r.playerId}>
                       <td>
-                        <Link href={`${base}/roster/${r.playerId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        {/* The record, opened on Development's Goals view, carrying the way back (F09). */}
+                        <Link href={playerDevelopmentHref(base, r.playerId, { view: 'goals', returnTo: here })} style={{ color: 'inherit', textDecoration: 'none' }}>
                           {r.number ? <span className={styles.devRowNum}>#{r.number} </span> : null}{name}
                         </Link>
                       </td>

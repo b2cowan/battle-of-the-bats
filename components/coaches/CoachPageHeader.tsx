@@ -145,12 +145,12 @@ export default function CoachPageHeader({
    * the portal's back treatment on **every drill-in that has a page header**. Twelve screens
    * carry it; there is no "second site is drift" clause left to trip over.
    *
-   * ⚠⚠ `CoachBackLink` SURVIVES, ON EXACTLY THREE SURFACES, AND THAT IS THE PART TO READ BEFORE
-   * DELETING IT. The arrow lives in a header, so a surface with no header cannot take one. Three
-   * live back links have no header beside them, enumerated here so a fourth reads as drift:
-   *   1. Team board, FAILED-LOAD branch      — an error message and a way out, no title row.
-   *   2. Opponent detail, FAILED-LOAD branch — the same shape.
-   *   3. The awards CERTIFICATE screen       — a print surface whose back link sits in its own
+   * ⚠⚠ `CoachBackLink` SURVIVES, ON EXACTLY TWO SURFACES, AND THAT IS THE PART TO READ BEFORE
+   * DELETING IT. The arrow lives in a header, so a surface with no header cannot take one. Two
+   * live back links have no header beside them, enumerated here so a third reads as drift (the
+   * team board's failed-load branch was one until 2026-09-12, when that page became a redirect):
+   *   1. Opponent detail, FAILED-LOAD branch — an error message and a way out, no title row.
+   *   2. The awards CERTIFICATE screen       — a print surface whose back link sits in its own
    *      print toolbar beside "Print certificate"; it has never rendered a page header at all.
    * Giving an error state a page header is a separate decision about what a failed screen looks
    * like, and was deliberately NOT taken here (spread ruling §7: "no unrelated header tidying").

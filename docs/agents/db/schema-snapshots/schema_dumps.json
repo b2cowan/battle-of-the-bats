@@ -14209,7 +14209,7 @@
         "column_name": "unit",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -14256,6 +14256,87 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 11,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'test'::text"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 12,
+        "column_name": "aim",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'record'::text"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 13,
+        "column_name": "range_from",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 14,
+        "column_name": "range_to",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 15,
+        "column_name": "method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 16,
+        "column_name": "attempts_per_session",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 17,
+        "column_name": "headline",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'last'::text"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 18,
+        "column_name": "descriptors",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 19,
+        "column_name": "replaced_by_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_team_money_in",
@@ -20404,14 +20485,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -21071,6 +21152,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "rep_team_measurable_types_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "column_name": "replaced_by_id",
+        "foreign_table": "rep_team_measurable_types",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_measurable_types_replaced_by_id_fkey"
       },
       {
         "table_name": "rep_team_measurable_types",
@@ -24836,6 +24924,11 @@
       },
       {
         "tablename": "rep_team_measurable_types",
+        "indexname": "rep_team_measurable_types_replaced_by_idx",
+        "indexdef": "CREATE INDEX rep_team_measurable_types_replaced_by_idx ON public.rep_team_measurable_types USING btree (replaced_by_id) WHERE (replaced_by_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_measurable_types",
         "indexname": "rep_team_measurable_types_team_idx",
         "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
       },
@@ -27674,8 +27767,80 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_aim_check",
+        "check_clause": "(aim = ANY (ARRAY['lower'::text, 'higher'::text, 'range'::text, 'record'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_attempts_check",
+        "check_clause": "((attempts_per_session >= 1) AND (attempts_per_session <= 5))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_descriptors_check",
+        "check_clause": "(((kind = 'skill'::text) OR (cardinality(descriptors) = 0)) AND (cardinality(descriptors) <= 10))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_headline_by_aim_check",
+        "check_clause": "(((aim = 'range'::text) AND (headline <> 'best'::text)) OR ((aim <> 'range'::text) AND (headline <> 'in_range'::text)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_headline_check",
+        "check_clause": "(headline = ANY (ARRAY['best'::text, 'average'::text, 'last'::text, 'in_range'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['test'::text, 'skill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_method_check",
+        "check_clause": "((method IS NULL) OR (char_length(method) <= 600))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
         "detail": "rep_team_measurable_types_name_check",
         "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 40))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_range_check",
+        "check_clause": "(((aim = 'range'::text) AND (range_from IS NOT NULL) AND (range_to IS NOT NULL) AND (range_from < range_to)) OR ((aim <> 'range'::text) AND (range_from IS NULL) AND (range_to IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_record_has_no_best_check",
+        "check_clause": "((aim <> 'record'::text) OR (headline <> 'best'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_replaced_is_retired_check",
+        "check_clause": "((replaced_by_id IS NULL) OR (is_active = false))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_skill_shape_check",
+        "check_clause": "((kind <> 'skill'::text) OR ((aim = 'record'::text) AND (headline = 'last'::text) AND (attempts_per_session = 1) AND (range_from IS NULL) AND (range_to IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_unit_by_kind_check",
+        "check_clause": "(((kind = 'test'::text) AND (unit IS NOT NULL)) OR ((kind = 'skill'::text) AND (unit IS NULL)))"
       },
       {
         "kind": "CHECK",

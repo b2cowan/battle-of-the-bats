@@ -11,6 +11,7 @@ import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { isValidRecordDate } from '@/lib/measurable-format';
+import { isMeasuredTest } from '@/lib/measurable-definition';
 
 async function resolveContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -91,8 +92,9 @@ export const POST = withObservability(async (req: Request,
   // records nothing, so it must not be creatable. The hub already holds its button back in
   // this state, but the honest prerequisite belongs on the write path too — the old UI let
   // the click through and landed the coach on an empty session screen.
-  // ACTIVE types only: an all-retired list leaves the session picker empty just the same.
-  const activeTypes = await getRepTeamMeasurableTypes(teamId, { includeRetired: false });
+  // ACTIVE TESTS only: an all-retired list leaves the session picker empty just the same, and a
+  // team whose only metric is an observed skill has nothing a session can record yet (Phase 2).
+  const activeTypes = (await getRepTeamMeasurableTypes(teamId, { includeRetired: false })).filter(isMeasuredTest);
   if (activeTypes.length === 0) {
     return NextResponse.json(
       { error: 'Add at least one test to your list before running a session — a session with nothing to measure records nothing.' },

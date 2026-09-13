@@ -1,0 +1,256 @@
+import { test, expect, type Page } from '@playwright/test';
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * SKILLS & GOALS — find and define (development lifecycle Phase 1, mockup screens 1 + 2; built
+ * 2026-09-12). The exit condition (plan §10): a coach can define a test with its aim and method,
+ * define a skill, find a less-used metric on the Players view, and reach a named player's Goals
+ * or Results view from a link that returns them to where they were; legacy records read honestly.
+ *
+ * ⚠ METHOD. Status and payload assertions on the routes, plus a few RENDERED probes over the
+ * populated UAT fixture (a green sweep over an empty fixture proves nothing — §58). `innerText`
+ * applies `text-transform`, so both sides of a text comparison are lower-cased.
+ *
+ * ⚠ WRITES ONLY WHAT IT TAKES BACK. The definitions this file creates are named "Probe …" and
+ * removed at the end (their probe readings taken back first, so the RESTRICT FK cannot object), and the successor
+ * walk is run on a probe test of its own (never on the fixture's sprint, whose readings the owner
+ * walk pins). A leftover "Probe" definition from a crashed run is reported, not worked around.
+ *
+ * Runs on the shared UAT fixture (`uat-test-org`). By file path, never `-g`:
+ *   npx playwright test --config playwright.config.ts tests/uat/scenarios/coach-development-metrics.spec.ts
+ */
+
+function loadEnv() {
+  const envPath = path.resolve(process.cwd(), '.env.local');
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const eq = t.indexOf('=');
+    if (eq === -1) continue;
+    const k = t.slice(0, eq).trim();
+    if (!process.env[k]) process.env[k] = t.slice(eq + 1).trim();
+  }
+}
+loadEnv();
+
+const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';
+if ((process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').includes(PROD_PROJECT_REF)) {
+  throw new Error('coach-development-metrics.spec.ts refuses to run: NEXT_PUBLIC_SUPABASE_URL points at PRODUCTION.');
+}
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+
+const ORG_SLUG = process.env.UAT_ORG_SLUG!;
+const COACH = process.env.UAT_COACH_EMAIL!;
+const PASSWORD = process.env.UAT_COACH_PASSWORD!;
+
+let teamId = '';
+let devonId = '';
+let sprintId = '';
+
+test.beforeAll(async () => {
+  const { data: org } = await admin.from('organizations').select('id').eq('slug', ORG_SLUG).single();
+  const { data: team } = await admin.from('rep_teams').select('id').eq('org_id', org!.id).eq('name', 'UAT Test Team').single();
+  teamId = team!.id;
+  const { data: py } = await admin.from('rep_program_years')
+    .select('id').eq('team_id', teamId).eq('status', 'active').order('year', { ascending: false }).limit(1).single();
+  const { data: devon } = await admin.from('rep_roster_players')
+    .select('id').eq('program_year_id', py!.id).eq('player_first_name', 'Devon').eq('player_last_name', 'Test').limit(1).single();
+  devonId = devon!.id;
+  const { data: sprint } = await admin.from('rep_team_measurable_types')
+    .select('id').eq('team_id', teamId).ilike('name', '60-yd sprint').eq('is_active', true).limit(1).single();
+  sprintId = sprint!.id;
+  // A crashed run leaves probe definitions behind — say so rather than work around it.
+  const { data: strays } = await admin.from('rep_team_measurable_types').select('name').eq('team_id', teamId).ilike('name', 'Probe %');
+  if (strays && strays.length > 0) {
+    throw new Error(`Leftover probe definitions from a crashed run: ${strays.map(s => s.name).join(', ')} — retire them from Metrics before re-running.`);
+  }
+});
+
+async function signIn(page: Page, email: string) {
+  await page.context().clearCookies();
+  await page.goto('/auth/login');
+  await page.getByLabel(/email/i).fill(email);
+  await page.getByLabel(/password/i).fill(PASSWORD);
+  await page.getByRole('button', { name: /sign in|log in/i }).click();
+  await page.waitForURL(url => !url.pathname.includes('/auth/login'), { timeout: 45_000 });
+}
+const api = () => `/api/coaches/${ORG_SLUG}/teams/${teamId}/development/measurable-types`;
+const base = () => `/${ORG_SLUG}/coaches/teams/${teamId}`;
+async function call(page: Page, method: 'get' | 'post' | 'patch' | 'delete', url: string, data?: unknown) {
+  const res = await page.request[method](url, { data, timeout: 60_000 });
+  let body: Record<string, unknown> = {};
+  try { body = await res.json(); } catch { /* non-JSON */ }
+  return { status: res.status(), body };
+}
+const created: string[] = [];
+
+test.describe('the definition contract, through the routes', () => {
+  test('defines a test with its aim and method, a range test, and a skill; a legacy row reads honestly', async ({ page }) => {
+    await signIn(page, COACH);
+
+    const list = await call(page, 'get', `${api()}?all=1`);
+    expect(list.status).toBe(200);
+    const types = list.body.types as Array<Record<string, unknown>>;
+    const throwSpeed = types.find(t => t.name === 'Throw speed')!;
+    expect(throwSpeed.aim).toBe('record');
+    expect(throwSpeed.method).toBeNull();
+    expect(throwSpeed.headline).toBe('last');
+    const skill = types.find(t => t.name === 'Sets feet before throwing')!;
+    expect(skill.kind).toBe('skill');
+    expect(skill.unit).toBeNull();
+    expect((skill.descriptors as string[]).length).toBe(3);
+
+    const test1 = await call(page, 'post', api(), {
+      name: 'Probe throw distance', unit: 'feet', aim: 'higher', method: 'From the line, three steps.', attemptsPerSession: 3,
+    });
+    expect(test1.status).toBe(201);
+    const t1 = test1.body.type as Record<string, unknown>;
+    created.push(t1.id as string);
+    expect(t1.headline).toBe('best');
+    expect(t1.aim).toBe('higher');
+
+    const range = await call(page, 'post', api(), {
+      name: 'Probe changeup', unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, method: 'Radar gun.', attemptsPerSession: 3,
+    });
+    expect(range.status).toBe(201);
+    created.push((range.body.type as Record<string, unknown>).id as string);
+    expect((range.body.type as Record<string, unknown>).headline).toBe('in_range');
+
+    const badRange = await call(page, 'post', api(), { name: 'Probe bad', unit: 'mph', aim: 'range', rangeFrom: 68, rangeTo: 62 });
+    expect(badRange.status).toBe(400);
+
+    const skillDef = await call(page, 'post', api(), { kind: 'skill', name: 'Probe skill', descriptors: ['With support', 'Independently'] });
+    expect(skillDef.status).toBe(201);
+    created.push((skillDef.body.type as Record<string, unknown>).id as string);
+    expect((skillDef.body.type as Record<string, unknown>).unit).toBeNull();
+
+    // A skill takes no number, and no session can be started against skills alone (the sprint exists, so this one is about the reading).
+    const reading = await call(page, 'post', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development/measurables`,
+      { measurableTypeId: (skillDef.body.type as Record<string, unknown>).id, value: 3, recordedOn: new Date().toISOString().slice(0, 10) }); // utc-intentional: any valid date
+    expect(reading.status).toBe(400);
+  });
+
+  test('the successor rule: rename keeps the series; a unit change on a test with readings is refused with the offer, and replace starts a successor', async ({ page }) => {
+    await signIn(page, COACH);
+    // A probe test WITH a reading of its own — the fixture's sprint is the owner's, never the probe's.
+    const made = await call(page, 'post', api(), { name: 'Probe series', unit: 'seconds', aim: 'lower', method: 'Standing start.' });
+    expect(made.status).toBe(201);
+    const probeId = (made.body.type as Record<string, unknown>).id as string;
+    created.push(probeId);
+    const today = new Date().toISOString().slice(0, 10); // utc-intentional: any valid date will do for a probe reading
+    const read = await call(page, 'post', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development/measurables`,
+      { measurableTypeId: probeId, value: 9.1, recordedOn: today, note: 'metrics probe' });
+    expect(read.status).toBe(201);
+    const entryId = (read.body.entry as { id: string }).id;
+
+    // Rename keeps the series.
+    const renamed = await call(page, 'patch', `${api()}/${probeId}`, { name: 'Probe series (renamed)' });
+    expect(renamed.status).toBe(200);
+    // Writing a method where one exists: a CHANGE → refused with the offer.
+    const methodChange = await call(page, 'patch', `${api()}/${probeId}`, { method: 'Flying start.' });
+    expect(methodChange.status).toBe(409);
+    expect((methodChange.body.successor as { reasons: string[] }).reasons).toEqual(['method']);
+    // Aim and attempts never fork.
+    const aimChange = await call(page, 'patch', `${api()}/${probeId}`, { aim: 'higher', attemptsPerSession: 2 });
+    expect(aimChange.status).toBe(200);
+    // A unit change is refused …
+    const unitChange = await call(page, 'patch', `${api()}/${probeId}`, { unit: 'ms' });
+    expect(unitChange.status).toBe(409);
+    // … and the dedicated action starts the successor and retires the predecessor.
+    const replaced = await call(page, 'post', `${api()}/${probeId}/replace`, { unit: 'ms', aim: 'lower', method: 'Standing start.' });
+    expect(replaced.status).toBe(201);
+    const successor = replaced.body.successor as Record<string, unknown>;
+    const predecessor = replaced.body.predecessor as Record<string, unknown>;
+    created.push(successor.id as string);
+    expect(predecessor.isActive).toBe(false);
+    expect(predecessor.replacedById).toBe(successor.id);
+    expect(successor.unit).toBe('ms');
+    expect(successor.name).toBe('Probe series (renamed)');
+    // The retired predecessor cannot be restored — its name lives on the successor.
+    const restore = await call(page, 'patch', `${api()}/${probeId}`, { isActive: true });
+    expect(restore.status).toBe(400);
+    // The reading stays under the predecessor, in its unit.
+    const profile = await call(page, 'get', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development`);
+    const entry = (profile.body.measurables as Array<{ id: string; unit: string; measurableTypeId: string }>).find(m => m.id === entryId)!;
+    expect(entry.unit).toBe('seconds');
+    expect(entry.measurableTypeId).toBe(probeId);
+
+    // Take the probe reading back (the routes, never the database).
+    const gone = await call(page, 'delete', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development/measurables/${entryId}`);
+    expect(gone.status).toBe(200);
+  });
+});
+
+test.describe('the three views and the exact addresses, rendered', () => {
+  test('Sessions is the landing with the tour anchor; Players shows the chosen metric with ITS date; the way back returns', async ({ page }) => {
+    await signIn(page, COACH);
+    await page.goto(`${base()}/development`);
+    await expect(page.locator('[data-sandbox-tour="development-sessions"]')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Skills and Goals views' }).getByRole('link', { name: 'Metrics' })).toBeVisible();
+
+    // The board's old address lands on the Players view.
+    await page.goto(`${base()}/development/board`);
+    await page.waitForURL(url => url.searchParams.get('section') === 'players', { timeout: 30_000 });
+
+    // Choose Throw speed: Devon's row shows the km/h reading and the date it was recorded on.
+    const throwSpeed = (await call(page, 'get', `${api()}?all=1`)).body.types as Array<{ id: string; name: string }>;
+    const ts = throwSpeed.find(t => t.name === 'Throw speed')!;
+    await page.goto(`${base()}/development?section=players&metric=${ts.id}`);
+    const devonRow = page.locator('tr', { hasText: 'Devon Test' });
+    await expect(devonRow).toBeVisible();
+    expect((await devonRow.innerText()).toLowerCase()).toContain('84 km/h');
+    // A player with no reading under this metric says so — never a blank that could be a zero.
+    const caseyRow = page.locator('tr', { hasText: 'Casey Test' });
+    expect((await caseyRow.innerText()).toLowerCase()).toContain('not recorded');
+
+    // The name is a link into the record's Results view, carrying the metric and the way back.
+    const href = await devonRow.getByRole('link', { name: /Devon Test/ }).getAttribute('href');
+    expect(href).toContain('section=development');
+    expect(href).toContain('view=results');
+    expect(href).toContain(`metric=${ts.id}`);
+    expect(decodeURIComponent(href!)).toContain(`return=${base()}/development?section=players&metric=${ts.id}`);
+    await page.goto(href!);
+    await expect(page.locator('#development')).toBeVisible();
+    // The header's way back names where the coach came from and returns there.
+    const back = page.getByRole('link', { name: 'Back to Skills & Goals' });
+    await expect(back).toBeVisible();
+    expect(await back.getAttribute('href')).toBe(`${base()}/development?section=players&metric=${ts.id}`);
+  });
+
+  test('Metrics lists every definition with what a record means; a legacy test says its method was not recorded', async ({ page }) => {
+    await signIn(page, COACH);
+    await page.goto(`${base()}/development?section=metrics`);
+    const table = page.locator('table').first();
+    await expect(table).toBeVisible();
+    const text = (await table.innerText()).toLowerCase();
+    expect(text).toContain('throw speed');
+    expect(text).toContain('method not recorded');
+    expect(text).toContain('lower is the aim');
+    expect(text).toContain('observed skill');
+    expect(text).toContain('aim: 62–68 mph');
+    // The editor opens on a definition with readings and shows the rule.
+    await page.goto(`${base()}/development/metrics/${sprintId}`);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('60-yd sprint');
+    await expect(page.getByLabel('How do you run the test?')).toHaveValue(/Standing start/);
+    await expect(page.getByText(/Changing a definition later/)).toBeVisible();
+  });
+});
+
+test.afterAll(async () => {
+  // Remove every probe definition this file created. Definitions are never hard-deleted APP-side
+  // (a coach's saved readings point at them), but a probe's readings were taken back above, so the
+  // RESTRICT FK cannot object — and leaving them retired would put five "Probe …" rows in the
+  // Retired disclosure the owner walks. The successor link is cleared first (it points within the set).
+  for (const id of created) {
+    await admin.from('rep_team_measurable_types').update({ replaced_by_id: null }).eq('id', id).eq('team_id', teamId);
+  }
+  for (const id of created) {
+    const del = await admin.from('rep_team_measurable_types').delete().eq('id', id).eq('team_id', teamId);
+    expect(del.error, ).toBeNull();
+  }
+  const { data: strayReadings } = await admin.from('rep_player_measurables').select('id').eq('note', 'metrics probe');
+  expect(strayReadings ?? []).toHaveLength(0);
+});

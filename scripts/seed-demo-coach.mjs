@@ -1125,6 +1125,9 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     die('insert measurable type', (await db.from('rep_team_measurable_types').insert({
       id, org_id: org.id, team_id: team.id,
       name: OFFSEASON_MEASURABLE_TYPES[i].name, unit: OFFSEASON_MEASURABLE_TYPES[i].unit,
+      // The definition (mig 293) — a defined test, not a legacy row, so the Metrics tab reads whole.
+      kind: 'test', aim: OFFSEASON_MEASURABLE_TYPES[i].aim, method: OFFSEASON_MEASURABLE_TYPES[i].method,
+      attempts_per_session: 1, headline: 'best',
       sort_order: i, is_active: true, created_by: coach.id,
     })).error);
   }

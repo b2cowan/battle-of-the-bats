@@ -10,6 +10,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableInput } from '@/lib/development-input';
+import { isMeasuredTest } from '@/lib/measurable-definition';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
@@ -63,6 +64,11 @@ export const POST = withObservability(async (req: Request,
   const type = types.find(t => t.id === measurableTypeId);
   if (!type) {
     return NextResponse.json({ error: 'Pick an active measurable type for this team.' }, { status: 400 });
+  }
+  // A number is a TEST's record. An observed skill is a definition in Phase 1; recording an
+  // observation against it is Phase 2, and a value filed under a skill would be a fabricated score.
+  if (!isMeasuredTest(type)) {
+    return NextResponse.json({ error: 'An observed skill takes an observation, not a number — recording observations comes in a later release.' }, { status: 400 });
   }
 
   // Optional evaluation-session tag (3B) — must be THIS team's session AND the same season

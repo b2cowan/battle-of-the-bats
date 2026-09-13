@@ -1492,10 +1492,16 @@ export const OFFSEASON_DEVELOPMENT_GOALS = [
 ] as const;
 
 /** The team's testing library — coach-defined, as the product intends (nothing ships seeded). */
+/**
+ * Each with its AIM and METHOD (development lifecycle Phase 1, 2026-09-12): a definition without
+ * them reads "record only · method not recorded" on the Metrics tab, which is honest of a real
+ * coach's legacy row and a poor first impression of a shop window. One attempt per session — the
+ * showcase player's three sprints on each testing day are Phase 2's seed change.
+ */
 export const OFFSEASON_MEASURABLE_TYPES = [
-  { name: '60-yard dash',  unit: 'seconds' },
-  { name: 'Exit velocity', unit: 'mph' },
-  { name: 'Home to first', unit: 'seconds' },
+  { name: '60-yard dash',  unit: 'seconds', aim: 'lower',  method: 'Standing start on the same marked 60-yard line, after warm-up. Hand-timed from first movement.' },
+  { name: 'Exit velocity', unit: 'mph',     aim: 'higher', method: 'Off the tee, radar gun behind the plate. Five swings; the coach records the best.' },
+  { name: 'Home to first', unit: 'seconds', aim: 'lower',  method: 'Full swing on a coach pitch, timed from contact to the bag.' },
 ] as const;
 
 /**

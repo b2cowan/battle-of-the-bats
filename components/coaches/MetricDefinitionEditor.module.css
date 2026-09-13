@@ -1,0 +1,115 @@
+/* MetricDefinitionEditor — "Define a metric" (development lifecycle Phase 1, mockup screen 2,
+   owner-approved 2026-09-11). The editor on the left, the live preview of what a saved record
+   reads back as on the right; on a phone the preview follows the form. Tokens only, no colour
+   literals; warm-gate safe (--home-* with the portal's dark fallbacks). Two breakpoints only
+   (900 / 640), per the primitives header in coaches.module.css. */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.help { margin: -0.4rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The read-only face — a value where a control would be (read-only is a capability, not a door). */
+.value { font-size: var(--type-body); color: var(--text-primary); margin: 0; white-space: pre-wrap; }
+
+/* "Changing a definition later" — the rule said where it bites, not only in the help guide. */
+.rule {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border-radius: 0 var(--radius-sm, 7px) var(--radius-sm, 7px) 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.rule strong { color: var(--text-primary); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--border-2);
+}
+.actionsSpacer { flex: 1; }
+
+/* ── The preview ─────────────────────────────────────────────────────────── */
+.preview {
+  position: sticky;
+  top: 0.75rem;
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.eyebrow {
+  margin: 0;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.previewName { margin: 0; font-size: var(--type-title); color: var(--text-primary); }
+.big {
+  margin: 0.2rem 0 0;
+  font-size: var(--type-display, 2rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.big small { font-size: var(--type-body); font-weight: 500; color: var(--text-secondary); margin-left: 0.3rem; }
+.meta { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
+.previewRule { height: 1px; background: var(--border-2); margin: 0.5rem 0; }
+.previewHead { margin: 0; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.readBack { margin: 0; font-size: var(--type-body); color: var(--text-primary); }
+.readBack strong { color: var(--logic-lime); }
+.hint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.tag {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: var(--type-label);
+  font-weight: 600;
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--text-primary);
+}
+
+/* The 44px floor on every control the editor draws, at touch widths — the shared .input / .select /
+   .btn* classes render 31–41px there portal-wide (a standing ratchet item), and a NEW form does not
+   get to inherit that debt. */
+@media (max-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .preview { position: static; }
+  .editor input, .editor select, .editor textarea, .actions button, .actions a { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .pair { grid-template-columns: minmax(0, 1fr); }
+  .editor { padding: 0.9rem; }
+}

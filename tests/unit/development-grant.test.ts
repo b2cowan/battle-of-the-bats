@@ -6,7 +6,7 @@ import {
   STAFF_KINDS, STAFF_PRESETS, ASSISTANT_DEFAULTS, DEVELOPMENT_GRANT_MESSAGE,
   resolveCoachCapabilities, sanitizeAssistantGrants,
   canWriteDevelopment, canWriteDevelopmentGoals, canViewDevelopmentGoals, canViewMeasurables,
-  hasRecordAccess, hasNonMoneyRecordAccess, canWritePracticePlans,
+  hasRecordAccess, hasNonMoneyRecordAccess, canWritePracticePlans, staffKindLabel,
   type AssistantCapabilityGrants, type CoachCapabilities,
 } from '../../lib/coach-capabilities.ts';
 import { isCoachNavItemVisible } from '../../lib/coach-nav-visibility.ts';
@@ -86,6 +86,16 @@ describe('who may write development', () => {
     assert.equal(canWriteDevelopmentGoals(both), true);
     assert.equal(canWriteDevelopmentGoals(assistant({ notes: true })), false, 'notes alone never writes');
     assert.equal(canWriteDevelopmentGoals(head()), true);
+  });
+
+  /**
+   * The display fallback for a row written before mig 288 derives "helper" from holding NO record
+   * duty. Development is a duty now, so such a row granted the switch reads "assistant" — intended:
+   * a person who records results is not a station helper any more. A label only; it gates nothing.
+   */
+  it('a pre-288 helper granted Development is labelled an assistant by the fallback (a label, never a gate)', () => {
+    assert.equal(staffKindLabel(assistant({ ...STAFF_PRESETS.helper, development: true }), null), 'assistant');
+    assert.equal(staffKindLabel(assistant({ ...STAFF_PRESETS.helper, development: true }), 'helper'), 'helper', 'a STORED kind still wins');
   });
 
   it('does not touch the practice-plan seam (R7): plans, drills and templates still ride schedule editing', () => {

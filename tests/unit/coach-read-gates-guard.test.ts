@@ -105,7 +105,8 @@ test('the pages behind hidden nav doors render the shared not-granted block, not
     'announcements/page.tsx',
     'chat/page.tsx',
     'tournaments/page.tsx',
-    'development/board/page.tsx',
+    // Phase 1 (2026-09-12): the board's page redirects into Skills & Goals, which carries the block.
+    'development/page.tsx',
   ];
   for (const p of pages) {
     const src = read(`app/[orgSlug]/coaches/teams/[teamId]/${p}`);

@@ -1858,14 +1858,42 @@ export interface RepPlayerAward {
 
 // Player Development (roadmap Phase 3, slice 3A — migration 189)
 
+/** A metric is a measured TEST (a number with a unit) or an observed SKILL (descriptors, no unit). */
+export type MeasurableKind = 'test' | 'skill';
+/** What a better result looks like. `record` = record only — no direction is claimed. */
+export type MeasurableAim = 'lower' | 'higher' | 'range' | 'record';
+/** Which attempt a session's rows and charts lead with. `in_range` is a range test's only extra. */
+export type MeasurableHeadline = 'best' | 'average' | 'last' | 'in_range';
+
+/**
+ * A metric DEFINITION (`rep_team_measurable_types`, migs 189 + 293). Was a name and a unit; the
+ * development lifecycle (Phase 1, 2026-09-12) made it the whole contract of plan §7 — kind, aim,
+ * range, method, attempts per session, headline, descriptors — so a result can be read honestly.
+ * ⚠ A legacy row reads kind `test`, aim `record`, one attempt, headline `last`, method null:
+ * "record only · method not recorded". No meaning was backfilled as fact.
+ */
 export interface RepTeamMeasurableType {
   id: string;
   orgId: string;
   teamId: string;
   name: string;
+  kind: MeasurableKind;
   // Free-text unit ("seconds", "mph") — snapshotted onto each entry at log time, so editing
-  // the type's unit never rewrites logged history.
-  unit: string;
+  // the type's unit never rewrites logged history. NULL on a skill (`isMeasuredTest` narrows).
+  unit: string | null;
+  aim: MeasurableAim;
+  /** The band, in the unit, when `aim === 'range'`; null otherwise. */
+  rangeFrom: number | null;
+  rangeTo: number | null;
+  /** How the test is run, in the coach's words. null = not recorded (legacy). */
+  method: string | null;
+  /** 1–5. Every attempt is recorded (owner ruling 2026-09-11); Phase 2 records them. */
+  attemptsPerSession: number;
+  headline: MeasurableHeadline;
+  /** A skill's coach-written descriptors, in the coach's order. Empty on a test. */
+  descriptors: string[];
+  /** Set on a RETIRED definition a unit/method change replaced — the successor's id. */
+  replacedById: string | null;
   sortOrder: number;
   isActive: boolean;
   createdBy: string | null;

@@ -32,7 +32,7 @@
  * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
  *            fundraiserId:string, sponsorId:string, clubBillId:string, finishedTeamId:string,
  *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
- *            evalSessionId:string, opponentKey:string,
+ *            evalSessionId:string, opponentKey:string, measurableTypeId:string,
  *            finishedYearId:string}} Ctx
  *
  * ⚠ Keep this in step with what `scripts/uat-fixture-context.mjs` actually returns. It had drifted
@@ -119,7 +119,13 @@ export const SCREENS = [
   // ── Player development (restructured 2026-07-31, QA pending) ────────────────
   { id: 'coach-development',           session: 'coach', path: (c) => `${team(c)}/development`,           ready: 'h1' },
   { id: 'coach-development-drills',    session: 'coach', path: (c) => `${team(c)}/development/drills`,    ready: 'h1' },
-  { id: 'coach-development-board',     session: 'coach', path: (c) => `${team(c)}/development/board`,     ready: 'h1' },
+  // Phase 1 (2026-09-12): three views on one screen. The board's page redirects into Players;
+  // the id is kept so the baseline's keys carry over. Metrics and its editor are new screens.
+  { id: 'coach-development-board',     session: 'coach', path: (c) => `${team(c)}/development?section=players`, ready: 'h1' },
+  { id: 'coach-development-metrics',   session: 'coach', path: (c) => `${team(c)}/development?section=metrics`, ready: 'h1' },
+  { id: 'coach-development-metric-new', session: 'coach', path: (c) => `${team(c)}/development/metrics/new`, ready: 'h1' },
+  { id: 'coach-development-metric',    session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/development/metrics/${c.measurableTypeId}` },
   { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/development/templates`, ready: 'h1' },
   // Two more of the six — see the block above `coach-player`.
   { id: 'coach-development-template', session: 'coach', ready: 'h1',
