@@ -6,8 +6,8 @@ at the owner's request (2026-09-12), **corrected the same day** by the owner: *"
 to the total dues, so we shouldn't be able to total adjustments more than the total dues …
 regardless of how much they have paid."* The first draft of this plan bounded the ceiling by
 payments; that was wrong and is gone. **Owner QA ✅ §174 PASSED 13/13 2026-09-12; `/review`
-run the same day, seven findings fixed (build note below).** Committed with the
-adjustment-breakdown work, whose ceiling this corrected before it was ever committed.
+run the same day, seven findings fixed (build note below).** Committed `c6b54182` 2026-09-12
+with the adjustment-breakdown work, whose ceiling this corrected before it was ever committed.
 
 **Project hub (mockup + PM brief + this plan + decisions, one URL):**
 https://claude.ai/code/artifact/4ce67727-c449-41ed-bb78-3da5da22d8c1 — republished to the same
@@ -195,9 +195,10 @@ closing. Two ways to close it:
       the sibling sentence). Rendered check aborted on the shared dev server's memory floor — not
       restarted (peers), so unproven; the only screen-visible change is one caption on the player
       page.
-- [x] Commit — with the adjustment-breakdown work (§160's 2026-09-12 follow-up), whose ceiling this
-      corrected before it was committed. Built in a private index; the shared index's foreign
-      staged files untouched.
+- [x] Commit — **`c6b54182` 2026-09-12**, with the adjustment-breakdown work (§160's 2026-09-12
+      follow-up), whose ceiling this corrected before it was committed. Built in a private index
+      (CAS on the ref); TODO.md, the QA ledger and the help file went in as reconstructed
+      HEAD+this-unit blobs — other sessions' hunks stayed in the working copy.
 
 **Considered and not done:** sorting `other` ahead of money-backed credits in the spendable queue
 (so a fundraiser share is never consumed by a bill a write-off would have cancelled). The identity
