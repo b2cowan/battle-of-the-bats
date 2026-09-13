@@ -162,6 +162,23 @@ describe('GiveAwardModal — the door', () => {
     assert.match(modal, /TagManagerDrawer/);
     assert.match(modal, /inUseRemove:\s*'merge-or-retire'/);
   });
+
+  /** Found live 2026-09-12: creating a duplicate-named award type refused with a 409, but the
+   *  message rendered in the shared `error` state at the very bottom of the form — past the Note
+   *  field, in a modal that scrolls internally (max-height: 90vh). On a short viewport (a docked
+   *  devtools panel) a coach never saw it and the create read as having silently done nothing. */
+  it('a failed create-type shows its OWN error right beside the +New row, not the shared bottom-of-form error', () => {
+    assert.match(modal, /const \[createTypeError, setCreateTypeError\] = useState/);
+    const createFn = modal.slice(modal.indexOf('async function handleCreateType'), modal.indexOf('async function handleSave'));
+    assert.match(createFn, /setCreateTypeError\(/, 'handleCreateType must use its own error state, not the shared `error`');
+    assert.doesNotMatch(createFn, /(?<!setC)setError\(/, 'handleCreateType must not fall back to the shared `error` state');
+    // The error paragraph must render inside the `creatingType &&` block (beside the Add row),
+    // not after it alongside the Note section / shared error at the bottom.
+    const creatingBlockStart = modal.indexOf('{creatingType && (');
+    const creatingBlockEnd = modal.indexOf('{pickerOpen && (');
+    const creatingBlock = modal.slice(creatingBlockStart, creatingBlockEnd);
+    assert.match(creatingBlock, /createTypeError && <p/);
+  });
 });
 
 describe('TeamTagShelf — the Awards row', () => {

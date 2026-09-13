@@ -60,6 +60,7 @@ export default function GiveAwardModal({
   const [creatingType, setCreatingType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeEmoji, setNewTypeEmoji] = useState<string | null>('🏅');
+  const [createTypeError, setCreateTypeError] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
 
@@ -88,7 +89,7 @@ export default function GiveAwardModal({
   async function handleCreateType() {
     const name = newTypeName.trim();
     if (!name) return;
-    setError('');
+    setCreateTypeError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`, {
         method: 'POST',
@@ -104,7 +105,12 @@ export default function GiveAwardModal({
       setCreatingType(false);
       onChanged();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not create award type');
+      // Shown right beside the +New row it belongs to (below), NOT the shared `error` state at
+      // the bottom of the form — this modal scrolls internally (max-height: 90vh), and a coach on
+      // a shorter viewport (a docked devtools panel, a small laptop) never sees new content
+      // appended past the Note field with nothing prompting them to scroll for it. A duplicate
+      // name silently "doing nothing" was reported as exactly that (2026-09-12).
+      setCreateTypeError(e instanceof Error ? e.message : 'Could not create award type');
     }
   }
 
@@ -197,7 +203,7 @@ export default function GiveAwardModal({
                   {t.emoji ? `${t.emoji} ` : ''}{t.name}
                 </button>
               ))}
-              <button type="button" className={styles.tagChipCreate} onClick={() => setCreatingType(v => !v)}>
+              <button type="button" className={styles.tagChipCreate} onClick={() => { setCreateTypeError(''); setCreatingType(v => !v); }}>
                 + New
               </button>
             </div>
@@ -205,19 +211,26 @@ export default function GiveAwardModal({
               {AWARD_TAG_MANAGE.door}
             </button>
             {creatingType && (
-              <div className={styles.tagPickerRow} style={{ marginTop: '0.5rem' }}>
-                <button type="button" className={styles.awardEmojiPickBtn} onClick={() => setPickerOpen(true)}>
-                  {newTypeEmoji || '🏅'}
-                </button>
-                <input
-                  className={styles.input}
-                  value={newTypeName}
-                  maxLength={40}
-                  placeholder="New award name"
-                  onChange={e => setNewTypeName(e.target.value)}
-                />
-                <button className={styles.btnSecondary} disabled={!newTypeName.trim()} onClick={handleCreateType}>Add</button>
-              </div>
+              <>
+                <div className={styles.tagPickerRow} style={{ marginTop: '0.5rem' }}>
+                  <button type="button" className={styles.awardEmojiPickBtn} onClick={() => setPickerOpen(true)}>
+                    {newTypeEmoji || '🏅'}
+                  </button>
+                  <input
+                    className={styles.input}
+                    value={newTypeName}
+                    maxLength={40}
+                    placeholder="New award name"
+                    onChange={e => setNewTypeName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && newTypeName.trim()) void handleCreateType(); }}
+                  />
+                  <button className={styles.btnSecondary} disabled={!newTypeName.trim()} onClick={handleCreateType}>Add</button>
+                </div>
+                {/* Right beside the row that failed, not the shared error at the bottom of a
+                    modal that scrolls (max-height: 90vh) — a coach on a short viewport never saw
+                    a duplicate-name refusal that only appeared past the Note field. */}
+                {createTypeError && <p className={styles.errorText} style={{ marginTop: '0.4rem' }}>{createTypeError}</p>}
+              </>
             )}
             {pickerOpen && (
               <AwardIconPicker
