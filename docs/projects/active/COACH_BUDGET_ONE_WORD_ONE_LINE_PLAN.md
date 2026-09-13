@@ -125,6 +125,9 @@ case that does not cover is two of the same word in the same month, where a sing
 - [x] Import route: a row whose word is already on the plan — or already written **earlier in the same
       file** — is **skipped with the word named**, not summed and not overwritten. Summing would
       invent an amount nobody typed; overwriting is what used to happen when two rows shared a match.
+      **⚠ OVERTURNED by owner ruling, QA §162 E1, 2026-09-12: it now JOINS instead — the amount adds
+      to the existing line's total and the two schedules concatenate via `joinPeriodSplits`, exactly
+      what the form's own "Add to X" does. Fixed the same day. See the Deviations section below.**
 - [x] Carry: no guard needed, and the reason is written where it would go — both callers copy into an
       empty plan, and the index covers every season.
 
@@ -263,14 +266,28 @@ dictionary + spelling + selectors + export catalog + date-correctness all green.
    doesn't read like x + y = plan"). What shipped removes **only the indented sub-rows**; bands,
    category rows, both subtotals and the ladder stay. That is the part of the specimen that carried
    the argument (nesting is what breaks the round trip); the column redesign was over-drawn.
-2. **The import skips a duplicate row rather than adding to the line.** The form adds because the
-   coach is watching; a file is not, and a sheet holding one word twice is a mistake only the coach
-   can resolve.
+2. ~~**The import skips a duplicate row rather than adding to the line.**~~ The form adds because
+   the coach is watching; a file is not, and a sheet holding one word twice is a mistake only the
+   coach can resolve — that was the reasoning at build time, and QA put it in front of the owner
+   rather than leaving it as an unquestioned deviation.
+   **⚠⚠ OVERTURNED — owner ruling, QA §162 E1, 2026-09-12: "Make it add, like the form."** The two
+   "already spoken for" branches in the import route (a word already on the plan, or already written
+   earlier in the same file) now read the target line fresh from the database and JOIN: the amount
+   adds to the total and the two schedules concatenate through `joinPeriodSplits` — the exact rule
+   the manual "Add to X" form already used. Notes are left untouched (the ruling was about the
+   money, not the note, and overwriting a coach's note from a re-imported file would be a new loss
+   nobody asked for). Fixed the same day; typecheck clean, focused lint clean on the touched file.
+   No unit test pins this route-level behaviour (it needs `supabaseAdmin`, so it is untested the same
+   way its sibling "update" and "insert" branches are) — `/review` is the safety net here, same as
+   every other write in this file.
 
 ### Owed
 
 - [x] Owner QA walk written — ledger **§162**, instrument published as artifact `444d13c4` (twenty steps in five parts; Part E is four rulings, one checkbox per option so the tick IS the answer). Logged on the run order as step **B20** (B19 was claimed by a peer session mid-write).
-- [ ] The walk taken, findings fixed, §162 closed.
+- [x] **The walk taken — Pass 16, 2026-09-12: zero defects across A–D, five rulings in Part E.**
+      E2–E5 confirm the shipped behaviour and approve shipping with the release. **E1 overturned the
+      import-skip deviation and was fixed the same day** (see the Deviations section above). §162 is
+      closed pending `check:layout` and the prod migration below.
 - [ ] `check:layout` rendered sweep (not run in this session; the dev server is shared).
 - [ ] **Migration 286 on prod**, at promote time. ⚠ **Do not apply it ahead of the code**: the index
       would make the CURRENTLY deployed form 500 when a coach adds a second line on the public demo.

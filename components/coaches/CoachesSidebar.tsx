@@ -335,9 +335,12 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
 
                 ⚠ AND NO ROLE HEADING (2026-08-18, header vertical-space pass, direction C). An
                 "Assistant Coach" label stood here and said the same thing as the masthead's role
-                chip, two inches away, on all forty screens. The chip is the survivor deliberately:
-                it is beside the team the role belongs to, and it is the only one that exists on a
-                phone, where this rail does not render at all. */}
+                chip, two inches away, on all forty screens, so it was cut in favour of the chip.
+                The chip itself was later removed too (2026-09-11 owner ruling, CoachTeamHeader.tsx)
+                — it only ever showed the binary permission tier, never the staff title a coach was
+                actually invited as (Treasurer/Manager/Helper), which read as wrong more often than
+                right. Nothing replaced either: a coach already knows what they were invited as, and
+                what matters on screen is what the nav and page controls actually let them do. */}
             {/* ⚠ A group renders only when the coach can see something in it, so an assistant's
                 sidebar is shorter — but every item they DO have is always in the same place. That
                 is the whole win of deleting the Explore shelf: position is a function of the

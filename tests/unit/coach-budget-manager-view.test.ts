@@ -162,10 +162,28 @@ test('search narrows to matching headings (whole shelf) or matching items (those
   const hidden = buildManagerView(library(), TEAM, 'team', 'jerseys');
   assert.deepEqual(hidden.bands.in, []);
   assert.deepEqual(hidden.bands.out, []);
-  assert.equal(hidden.matchesUnderEverything, 2, 'Team Gear + Jerseys would show under Everything');
+  assert.equal(hidden.matchesUnderEverything, 1, 'only Jerseys matches; Team Gear is context');
 
   const found = buildManagerView(library(), TEAM, 'team', 'choc');
   assert.equal(found.matchesUnderEverything, 0, 'no door when the filter already matches');
+});
+
+test('search counts matching names, not every row shown beneath a matching category', () => {
+  assert.equal(buildManagerView(library(), TEAM, 'team', 'team gear').matchesUnderEverything, 1);
+  assert.equal(buildManagerView(library(), TEAM, 'team', 'tournaments').matchesUnderEverything, 1,
+    'a matching category appears on both sides but is one result');
+  assert.equal(buildManagerView(library(), TEAM, 'platform', 'old heading').matchesUnderEverything, 1,
+    'a matching empty category is still a result');
+  assert.equal(buildManagerView(library(), TEAM, 'team', 'not a match').matchesUnderEverything, 0);
+});
+
+test('search counts distinct matching items and matching categories together', () => {
+  const categories = [category('Jerseys', 'platform', 1, [
+    ['Home jerseys', 'out', 'platform'], ['Away jerseys', 'out', 'platform'],
+    ['Jerseys sponsor', 'in', 'platform'], ['Hats', 'out', 'platform'],
+  ])];
+  assert.equal(buildManagerView(categories, TEAM, 'team', '  JERSEYS  ').matchesUnderEverything, 4,
+    'one category and three matching items, excluding Hats and the repeated heading');
 });
 
 test('the add form\'s category list is ordered, not filtered: taking this side first, then every other heading', () => {

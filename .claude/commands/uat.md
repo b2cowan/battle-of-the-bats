@@ -172,6 +172,10 @@ When the user replies:
 
 - Dev server: `http://localhost:3000` (or `UAT_BASE_URL`)
 - Test org slug: `UAT_ORG_SLUG` from `.env.local`
+- Coach fixtures (dev): the club-linked team `UAT Test Team` in `UAT_ORG_SLUG` (repair with
+  `node scripts/seed-uat-coach-fixture.mjs`), and its standalone-Premium twin `UAT Standalone Team`
+  at `/uat-standalone/coaches` — same `UAT_COACH_EMAIL`, no club behind it (rebuild with
+  `node scripts/seed-uat-standalone-coach.mjs --null-dangling --reset`; read that script's header first)
 - Auth sessions cached in `tests/uat/.auth/` (one JSON per role)
 - Findings log: `UAT_FINDINGS.md` (root of repo)
 - Results JSON: `tests/uat/results/results.json`

@@ -1,5 +1,13 @@
 # The By-Period Close — plan
 
+> **QA update, 2026-09-12:** §164 returned 15 passes, zero defects, and 3 rulings;
+> all 18 steps judged. F2 keeps the conditional brackets legend; F3 keeps “Lines so far.”
+> F1 now requests balances carried forward and a revenue-first redesign proposal.
+> The historical deferral below is superseded as follow-up direction. See
+> [the new proposal](../archive/COACH_BUDGET_REVENUE_FIRST_PLAN.md) and
+> [interactive mockup](../archive/COACH_BUDGET_REVENUE_FIRST_MOCKUP.html). Proposed policy changes
+> in that document are separate from approval of this tested build.
+
 **Status:** approved 2026-09-09 (owner, three mockup rounds).
 **Mockup:** `docs/projects/active/COACH_BUDGET_PERIOD_CLOSE_MOCKUP.html`
 (Artifact `https://claude.ai/code/artifact/4a8f3335-8621-4b37-8ae5-77b746cbca2f`, rounds 1–3).

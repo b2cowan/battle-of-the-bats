@@ -1,5 +1,13 @@
 # The By-Period Close — PM brief
 
+> **QA update, 2026-09-12:** §164 returned 15 passes, zero defects, and 3 rulings;
+> all 18 steps judged. F2 keeps the conditional brackets legend; F3 keeps “Lines so far.”
+> F1 now requests balances carried forward and a revenue-first redesign proposal.
+> The historical deferral below is superseded as follow-up direction. See
+> [the new proposal](../archive/COACH_BUDGET_REVENUE_FIRST_PLAN.md) and
+> [interactive mockup](../archive/COACH_BUDGET_REVENUE_FIRST_MOCKUP.html). Proposed policy changes
+> in that document are separate from approval of this tested build.
+
 **Plan:** `COACH_BUDGET_PERIOD_CLOSE_PLAN.md` · **Mockup:** rounds 1–3, owner-approved 2026-09-09.
 
 ## What a coach sees differently

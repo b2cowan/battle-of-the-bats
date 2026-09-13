@@ -107,6 +107,7 @@ export default function BudgetItemManagerModal({
   const [error, setError] = useState('');
   /** What the last write did, in the coach's words — kept on the list they return to. */
   const [notice, setNotice] = useState('');
+  const [removalWarning, setRemovalWarning] = useState<{ id: string; message: string } | null>(null);
 
   /**
    * How many records are filed against each of this team's own items — WITH the library those
@@ -117,7 +118,7 @@ export default function BudgetItemManagerModal({
    * so a coach filing a cost in another tab against one of the very items being folded refreshes this
    * list underneath the open confirmation. An identity comparison cannot fail to notice that.
    *
-   * ⚠ IT DISABLES THE BIN; THE SERVER IS WHAT REFUSES. A coach in another tab can file a cost between
+   * The bin explains known usage when clicked; the server still refuses deletion. Another tab can file a cost between
    * this fetch and the click, so every write path counts again and returns the real sentence.
    */
   const [counted, setCounted] = useState<
@@ -257,7 +258,7 @@ export default function BudgetItemManagerModal({
       setNotice(`Removed “${cat.name}”.`);
       onChanged();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not remove that category');
+      setRemovalWarning({ id: cat.id, message: e instanceof Error ? e.message : 'Could not remove that category' });
     } finally {
       setBusyId(null);
     }
@@ -297,12 +298,15 @@ export default function BudgetItemManagerModal({
         `/api/coaches/${orgSlug}/budget-items/${item.id}?teamId=${teamId}`, { method: 'DELETE' });
       if (!res.ok) {
         const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Could not remove that item');
+        const guidance = res.status === 409
+          ? ' To delete it, change the linked records to another item first, or use “Use a shared item instead”.'
+          : '';
+        throw new Error((d.error ?? 'Could not remove that item') + guidance);
       }
       setNotice(`Removed “${item.name}”.`);
       onChanged();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not remove that item');
+      setRemovalWarning({ id: item.id, message: e instanceof Error ? e.message : 'Could not remove that item' });
     } finally {
       setBusyId(null);
     }
@@ -424,12 +428,23 @@ export default function BudgetItemManagerModal({
       </button>
     );
   }
-  function bin(label: string, disabled: boolean, onClick: () => void) {
+  function bin(id: string, label: string, blockedReason: string | null, onClick: () => void) {
     return (
-      <button type="button" title={label} aria-label={label} disabled={!!busyId || disabled} onClick={onClick}>
+      <button type="button" title={label} aria-label={label} disabled={!!busyId} onClick={() => {
+        setError('');
+        setNotice('');
+        setRemovalWarning(blockedReason ? { id, message: blockedReason } : null);
+        if (!blockedReason) onClick();
+      }}>
         <Trash2 size={14} aria-hidden />
       </button>
     );
+  }
+
+  function removalFeedback(id: string) {
+    return removalWarning?.id === id
+      ? <span className={`${styles.managerSub} ${styles.errorText}`} role="alert">{removalWarning.message}</span>
+      : null;
   }
 
   /** The inline rename — one input, Enter saves, Escape cancels — shared by headings and items. */
@@ -460,8 +475,8 @@ export default function BudgetItemManagerModal({
     );
   }
 
-  /** A heading row. Own headings rename inline and carry a bin that is grey while anything sits
-   *  under them; shared headings are read-only and dim, with their tier chip. */
+  /** Own headings rename inline; their bin explains why a heading with items cannot be removed.
+   *  Shared headings are read-only and dim, with their tier chip. */
   function headingRow(cat: BudgetCategoryWithItems) {
     const own = isOwn(cat);
     const holds = (cat.items ?? []).length;
@@ -474,16 +489,20 @@ export default function BudgetItemManagerModal({
     }
     return (
       <div key={`h-${cat.id}`} className={`${styles.tagManagerRow} ${styles.managerHead}`}>
-        <span className={`${styles.tagManagerName} ${own ? '' : styles.mutedInline}`}>{cat.name}</span>
+        <span className={`${styles.tagManagerName} ${own ? '' : styles.mutedInline}`}>
+          {cat.name}
+          {removalFeedback(cat.id)}
+        </span>
         {tierChip(cat)}
         {own && (
           <div className={styles.tagManagerActions}>
             {pencil(`Rename ${cat.name}`, () => { setError(''); setRenamingCatId(cat.id); setRenameCatDraft(cat.name); })}
             {bin(
+              cat.id,
+              `Remove ${cat.name}`,
               holds > 0
-                ? `${cat.name} can’t be removed while it holds ${holds} item${holds === 1 ? '' : 's'}`
-                : `Remove ${cat.name}`,
-              holds > 0,
+                ? `“${cat.name}” can’t be removed while it holds ${holds} item${holds === 1 ? '' : 's'}. Remove those items or use “Use a shared item instead” to move them to another category first. You can also rename this category.`
+                : null,
               () => removeCategory(cat),
             )}
           </div>
@@ -492,7 +511,7 @@ export default function BudgetItemManagerModal({
     );
   }
 
-  /** An item row. Own items carry the usage sub-line (why the bin is grey) and rename inline;
+  /** An item row. Own items carry the usage sub-line and explain blocked deletion on click;
    *  shared items are read-only. The tier chip appears only under Everything, where tiers mix. */
   function itemRow(item: BudgetItem) {
     const own = isOwn(item);
@@ -510,16 +529,18 @@ export default function BudgetItemManagerModal({
         <span className={`${styles.tagManagerName} ${own ? '' : styles.mutedInline}`}>
           {item.name}
           {own && <span className={styles.managerSub}>{usageLine(used, !!usage)}</span>}
+          {removalFeedback(item.id)}
         </span>
         {showTier && tierChip(item)}
         {own && (
           <div className={styles.tagManagerActions}>
             {pencil(`Rename ${item.name}`, () => { setError(''); setRenamingId(item.id); setRenameDraft(item.name); })}
             {bin(
+              item.id,
+              `Remove ${item.name}`,
               used?.total
-                ? `${item.name} can’t be removed — ${describeBudgetItemUsage(used)} ${used.total === 1 ? 'is' : 'are'} filed against it`
-                : `Remove ${item.name}`,
-              !!used?.total,
+                ? `“${item.name}” can’t be removed — ${describeBudgetItemUsage(used)} ${used.total === 1 ? 'is' : 'are'} filed against it. Change those records to another item before deleting this one, or choose “Use a shared item instead” to move them together. Renaming this item also updates every linked record.`
+                : null,
               () => remove(item),
             )}
           </div>
@@ -541,7 +562,6 @@ export default function BudgetItemManagerModal({
   function addForm(side: BudgetItemDirection) {
     if (adding !== side || !addOptions) return null;
     const isNew = addCatId === NEW_CATEGORY;
-    const optionLabel = (c: BudgetCategoryWithItems) => isOwn(c) ? `${c.name} · yours` : c.name;
     const report = reportingLine(addTarget, side);
     return (
       <div className={styles.managerAddForm}>
@@ -558,12 +578,12 @@ export default function BudgetItemManagerModal({
           <option value="">— pick a category —</option>
           {addOptions.taking.length > 0 && (
             <optgroup label={side === 'in' ? 'Already take money in' : 'Already hold a cost'}>
-              {addOptions.taking.map(c => <option key={c.id} value={c.id}>{optionLabel(c)}</option>)}
+              {addOptions.taking.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </optgroup>
           )}
           {addOptions.notYet.length > 0 && (
             <optgroup label={notYetLabel(side)}>
-              {addOptions.notYet.map(c => <option key={c.id} value={c.id}>{optionLabel(c)}</option>)}
+              {addOptions.notYet.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </optgroup>
           )}
           <option value={NEW_CATEGORY}>+ New category…</option>
@@ -841,19 +861,22 @@ export default function BudgetItemManagerModal({
           </p>
         )}
 
-        {SIDE_ORDER.map(band)}
+        {/* Keep the bands together so formBody's field gap does not pad empty rows from below. */}
+        <div>
+          {SIDE_ORDER.map(band)}
 
-        {view.orphans.length > 0 && (
-          <div>
-            <div className={styles.managerBand}>
-              <span className={styles.managerBandTitle}>Nothing under it yet</span>
-              <span className={styles.managerBandCount}>
-                {view.orphans.length === 1 ? 'a heading of yours with no items' : 'headings of yours with no items'}
-              </span>
+          {view.orphans.length > 0 && (
+            <div>
+              <div className={styles.managerBand}>
+                <span className={styles.managerBandTitle}>Nothing under it yet</span>
+                <span className={styles.managerBandCount}>
+                  {view.orphans.length === 1 ? 'a heading of yours with no items' : 'headings of yours with no items'}
+                </span>
+              </div>
+              <div className={styles.managerShelf}>{view.orphans.map(headingRow)}</div>
             </div>
-            <div className={styles.managerShelf}>{view.orphans.map(headingRow)}</div>
-          </div>
-        )}
+          )}
+        </div>
 
         <p className={styles.formHint} style={{ marginTop: '0.5rem' }}>
           Renaming changes the name <strong>everywhere</strong>, including on everything already filed

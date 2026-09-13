@@ -97,7 +97,8 @@ export interface ManagerView {
   counts: Record<ManagerFilter, number>;
   /** "3 of yours" on a band: the team's own headings and items sitting under it. */
   ownPerBand: Record<BudgetItemDirection, number>;
-  /** When the current filter matched nothing but the query would under Everything: how many rows.
+  /** When the current filter matched nothing but the query would under Everything: how many names match.
+   *  Context headings and nonmatching children do not count; a matching heading counts once across sides.
    *  The dialog turns a non-zero here into the one-line door that switches the chip. Zero otherwise. */
   matchesUnderEverything: number;
 }
@@ -132,12 +133,13 @@ function assemble(
   teamId: string,
   filter: ManagerFilter,
   query: string,
-): { bands: Record<BudgetItemDirection, Shelf[]>; orphans: BudgetCategoryWithItems[]; rows: number } {
+): { bands: Record<BudgetItemDirection, Shelf[]>; orphans: BudgetCategoryWithItems[]; rows: number; matches: number } {
   const q = normalise(query);
   const passesTier = (tier: BudgetItemTier) => filter === 'all' || tier === filter;
   const bands: Record<BudgetItemDirection, Shelf[]> = { in: [], out: [] };
   const orphans: BudgetCategoryWithItems[] = [];
   let rows = 0;
+  let matches = 0;
 
   for (const category of [...categories].sort(byShelfOrder)) {
     if (!mine(category, teamId)) continue;
@@ -152,10 +154,12 @@ function assemble(
       if (tierOfCategory(category) === 'team' && (filter === 'team' || filter === 'all') && headingMatches) {
         orphans.push(category);
         rows += 1;
+        matches += 1;
       }
       continue;
     }
 
+    let countedHeading = false;
     for (const side of SIDE_ORDER) {
       const onSide = items.filter(i => i.direction === side && passesTier(tierOfItem(i)));
       if (onSide.length === 0) continue;
@@ -163,9 +167,14 @@ function assemble(
       if (shown.length === 0) continue;
       bands[side].push({ category, items: shown });
       rows += 1 + shown.length;
+      if (headingMatches && !countedHeading) {
+        matches += 1;
+        countedHeading = true;
+      }
+      matches += shown.filter(i => i.name.toLowerCase().includes(q)).length;
     }
   }
-  return { bands, orphans, rows };
+  return { bands, orphans, rows, matches };
 }
 
 export function buildManagerView(
@@ -199,7 +208,7 @@ export function buildManagerView(
 
   const matchesUnderEverything =
     rows === 0 && filter !== 'all' && normalise(query) !== ''
-      ? assemble(categories, teamId, 'all', query).rows
+      ? assemble(categories, teamId, 'all', query).matches
       : 0;
 
   return { bands, orphans, counts, ownPerBand, matchesUnderEverything };

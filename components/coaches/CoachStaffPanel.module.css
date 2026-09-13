@@ -238,14 +238,6 @@
 .itemHint { grid-column: 1 / -1; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); max-width: 46ch; }
 /* Consequences are said on the control, in the accent — the one rule the old grid never stated. */
 .itemHint strong { color: var(--home-olive, var(--logic-lime)); font-weight: 600; }
-
-.asksFirst {
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--badge-warning-ink);
-}
 /* A control a delegate may not fully use (Manage staff, 2026-09-13): shown, dimmed, and the reason
    said under it in the sensitive amber — never hidden, or the sheet looks broken for one person. */
 .itemLocked .itemLabel, .itemLocked .itemHint { opacity: 0.72; }

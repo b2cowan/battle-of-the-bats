@@ -568,27 +568,7 @@
    "2026 season · 12–4–1 · Game day — Lions, 6:30 p.m." Each part is its own span and any part can
    be absent (no games played, a quiet week), so the separator is drawn BETWEEN siblings rather
    than punctuated into the strings — otherwise a missing middle leaves a stranded dot. */
-/* Name line is a flex row so the role tag can ride beside the name (ruling 2026-08-11)
-   and wrap under it rather than squeezing it on a phone. */
 .teamHeaderNameRow { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
-
-/* The viewer's role — "Head Coach" / "Assistant Coach" — as a quiet identity tag beside the
-   team name (page-header ruling 2026-08-11; owner refined meta-line text → name-line tag the
-   same day). Chips are the portal's identity/state vocabulary; quantities still never chip. */
-.teamHeaderRole {
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  background: var(--home-card, transparent);
-  border: 1px solid var(--white-20);
-  border-radius: 7px;
-  padding: 0.14rem 0.45rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
 
 .teamHeaderMeta {
   display: flex;
@@ -772,9 +752,6 @@
   .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; justify-content: center; }
   .teamHeaderCollapsed .teamHeaderMeta { display: none; }
   .teamHeaderCollapsed .teamHeaderName { font-size: var(--type-body); }
-  /* A collapsed phone bar is the BARE team name (ruled 2026-08-02) — the role tag folds away
-     with the season, record and right slot rather than surviving as the only non-name content. */
-  .teamHeaderCollapsed .teamHeaderRole { display: none; }
   /* The right slot folds with the rest of the detail — a collapsed phone bar is the bare team
      name, and a chip plus a two-line stack beside it would defeat the point of collapsing. */
   .teamHeaderCollapsed .teamHeaderRight { display: none; }
@@ -13498,12 +13475,13 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 }
 .managerChip b { font-weight: 500; opacity: 0.75; margin-left: 0.3rem; font-variant-numeric: tabular-nums; }
 .managerChip:hover { color: var(--text-primary); }
-.managerChipOn { background: var(--logic-lime); border-color: var(--logic-lime); color: var(--on-lime); }
-.managerChipOn:hover { color: var(--on-lime); }
+/* Selected chips use the fill token: --logic-lime becomes text-only olive in the warm theme. */
+.managerChipOn { background: var(--home-lime, var(--logic-lime)); border-color: var(--home-lime, var(--logic-lime)); color: var(--home-lime-ink, var(--on-lime)); }
+.managerChipOn:hover { color: var(--home-lime-ink, var(--on-lime)); }
 /* The band — the side, said once above its shelves, on the paper ground so it reads as a heading
    of headings rather than one more row. Bleeds through the pane's padding like the pane does. */
 .managerBand {
-  display: flex; align-items: center; gap: 0.6rem; margin: 0.25rem -1.5rem 0; padding: 0.6rem 1.5rem;
+  display: flex; align-items: center; gap: 0.6rem; margin: 0 -1.5rem; padding: 0.35rem 1.5rem;
   background: var(--home-paper, var(--surface-2)); border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
 }
@@ -13511,17 +13489,19 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .managerBandCount { flex: 1; font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
 .managerAdd {
   display: inline-flex; align-items: center; gap: 0.2rem; font-size: var(--type-support); font-weight: 600;
+  margin-left: auto; flex-shrink: 0;
   padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid transparent; background: none;
   color: var(--logic-lime); cursor: pointer; min-height: 28px;
 }
 .managerAdd:hover { background: var(--home-olive-soft, rgba(255,255,255,0.08)); }
 .managerAdd:disabled { opacity: 0.45; cursor: default; }
 .managerShelf { display: flex; flex-direction: column; }
-.managerHead { border-bottom: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); padding-top: 0.7rem; }
+.managerHead { border-bottom: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); padding-block: 0.3rem; }
 .managerHead .tagManagerName { font-weight: 600; font-size: var(--type-body); }
-.managerItem { padding-left: 1rem; }
+.managerItem { padding: 0.25rem 0 0.25rem 1rem; }
 .managerSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.05rem; }
-.managerEmpty { padding: 0.5rem 0 0.25rem; }
+.managerSub[role="alert"] { color: var(--danger); font-weight: 400; margin-top: 0.35rem; }
+.managerEmpty { padding: 0.6rem 0; }
 /* The inline add form under a band: paper ground, one box, the same fields the picker's create
    panel asks in the same words. */
 .managerAddForm {
@@ -13532,6 +13512,7 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .managerAddTitle { margin: 0 0 0.15rem; font-weight: 600; font-size: var(--type-body); color: var(--text-primary); }
 .managerAddUnfold { display: flex; flex-direction: column; gap: 0.35rem; padding-left: 0.75rem; border-left: 2px solid var(--home-olive-soft, rgba(255,255,255,0.12)); }
 .managerAddActions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
+
 /* ── Insights → Development: the Report selector and the three reports (development lifecycle
    Phase 3, mockup screen 5). ONE labelled row of form controls under the seven tabs — never a third
    row of tabs. Each field is the Players view's own labelled select (.field + .label + .select

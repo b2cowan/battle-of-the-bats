@@ -1889,7 +1889,8 @@ export default function TeamOverviewPage({
       )}
 
       {/* Page-header ruling 2026-08-11: title + chips + actions + help, NOTHING under the title.
-          The masthead directly above owns the team name, season and the coach's role. */}
+          The masthead directly above owns the team name and season (the role badge it also
+          carried was removed 2026-09-11 — see CoachTeamHeader.tsx). */}
       {/* ⚠ The page-header ruling's ONE exception, RETIRED by the owner 2026-08-12. The approved
           mockup drew Overview title-only — the reasoning being that an icon marks a SECTION, and the
           hub's front door has no sibling to be distinguished from. That holds only if you see the

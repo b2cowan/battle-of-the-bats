@@ -10,6 +10,7 @@ import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
+import { joinPeriodSplits, type JoinablePeriod } from '@/lib/coach-budget-periods-payload';
 import {
   isFundingKind, FUNDING_LINE_KINDS, budgetLineKindForItem, type BudgetItemActualSource,
 } from '@/lib/coach-budget-totals';
@@ -320,7 +321,9 @@ export const POST = withObservability(async (req: Request,
     for (const l of (lineRows ?? []) as Array<Record<string, unknown>>) {
       if (l.item_id) lineIdByItem.set(l.item_id as string, l.id as string);
     }
-    const itemsWrittenThisRun = new Set<string>();
+    /* itemId → the line THIS run is already writing it onto — a Map, not a Set, so a later
+       duplicate row in the same file can join the line a prior row just created for the word. */
+    const itemsWrittenThisRun = new Map<string, string>();
 
     let nextSortOrder = (lineRows ?? []).reduce(
       (max: number, l: Record<string, unknown>) => Math.max(max, (l.sort_order as number) ?? 0), -1,
@@ -439,21 +442,64 @@ export const POST = withObservability(async (req: Request,
         continue;
       }
 
-      /* ⚠ THE WORD IS ALREADY SPOKEN FOR — SKIPPED, NOT SUMMED AND NOT OVERWRITTEN. A file has one
-         row per word, so a second row naming a word this plan (or this file) already used is a
-         mistake in the sheet, and the coach is the only one who can say which figure they meant.
-         Summing would invent an amount nobody typed; overwriting would lose one in silence, which
-         is what used to happen when two rows shared a match. It lands in the skipped list with the
-         word named, beside every other row that needs a look. */
-      const takenLineId = itemsWrittenThisRun.has(item.id) ? 'this-file' : lineIdByItem.get(item.id);
+      /* ⚠⚠ THE WORD IS ALREADY SPOKEN FOR — JOINED, NOT SKIPPED (owner ruling, QA §162 E1,
+         2026-09-12, overturning the deviation flagged at build time). A second row naming a word
+         this plan (or this file) already used now does exactly what the coach's own "Add to X"
+         form does: the amount is ADDED to the line that is already there and the two schedules
+         become one, through the same `joinPeriodSplits` the form calls. Read fresh from the
+         database rather than tracked through the loop — a row with no month columns leaves an
+         existing split untouched (see the periods block below), so the line's own current state
+         is the only trustworthy answer once a prior row in this run may have already changed it. */
+      const takenLineId = itemsWrittenThisRun.get(item.id) ?? lineIdByItem.get(item.id);
       if (takenLineId && takenLineId !== row.matchedLineId) {
-        skipped.push({
-          rowNumber: row.rowNumber,
-          name: label,
-          reason: takenLineId === 'this-file'
-            ? `${item.name} appears more than once in this file — only the first row was imported.`
-            : `${item.name} is already on this plan. Change that line instead, or give this row a different item.`,
-        });
+        const [{ data: takenLine }, { data: takenPeriods }] = await Promise.all([
+          supabaseAdmin.from('rep_budget_lines').select('total_amount').eq('id', takenLineId).maybeSingle(),
+          supabaseAdmin.from('rep_budget_periods').select('period_label, period_date, amount')
+            .eq('budget_line_id', takenLineId).order('sort_order'),
+        ]);
+        if (!takenLine) {
+          failed.push({ rowNumber: row.rowNumber, name: label, error: 'Could not add this to the existing line' });
+          continue;
+        }
+        const existingTotal = (takenLine.total_amount as number) ?? 0;
+        const existingPeriods: JoinablePeriod[] = (takenPeriods ?? []).map((p: Record<string, unknown>) => ({
+          periodLabel: p.period_label as string,
+          periodDate: (p.period_date as string | null) ?? null,
+          amount: (p.amount as number) ?? 0,
+        }));
+        const addedPeriods: JoinablePeriod[] = row.periods
+          .map(p => ({ periodLabel: formatMonthLabel(p.month), periodDate: `${p.month}-01`, amount: moneyValue(p.amount) ?? 0 }))
+          .filter(p => p.amount > 0);
+        const joinedPeriods = joinPeriodSplits(
+          { total: existingTotal, periods: existingPeriods },
+          { total: row.total, periods: addedPeriods },
+        );
+        const joinedTotal = Math.round((existingTotal + row.total) * 100) / 100;
+
+        const { error: joinErr } = await supabaseAdmin
+          .from('rep_budget_lines')
+          .update({ total_amount: joinedTotal, updated_at: new Date().toISOString() })
+          .eq('id', takenLineId)
+          .eq('program_year_id', programYear.id);
+        if (joinErr) { failed.push({ rowNumber: row.rowNumber, name: label, error: joinErr.message }); continue; }
+        updated.push({ rowNumber: row.rowNumber, name: label });
+        itemsWrittenThisRun.set(item.id, takenLineId);
+
+        await supabaseAdmin.from('rep_budget_periods').delete().eq('budget_line_id', takenLineId);
+        if (joinedPeriods.length > 0) {
+          const { error: joinPerErr } = await supabaseAdmin.from('rep_budget_periods').insert(
+            joinedPeriods.map((p, i) => ({
+              budget_line_id: takenLineId,
+              period_label: p.periodLabel,
+              period_date: p.periodDate,
+              amount: p.amount,
+              sort_order: i,
+            })),
+          );
+          if (joinPerErr) {
+            skipped.push({ rowNumber: row.rowNumber, name: label, reason: 'Added, but its month split could not be stored.' });
+          }
+        }
         continue;
       }
 
@@ -539,8 +585,8 @@ export const POST = withObservability(async (req: Request,
         nextSortOrder += 1;
         created.push({ rowNumber: row.rowNumber, name: label });
       }
-      // Written — so a later row in this same file naming the same word is caught above.
-      itemsWrittenThisRun.add(item.id);
+      // Written — so a later row in this same file naming the same word joins this line above.
+      itemsWrittenThisRun.set(item.id, lineId!);
 
       // Payment periods, when the sheet had month columns. A full replace, matching the periods
       // endpoint's own contract: the sheet is the coach's statement of when this line is paid.

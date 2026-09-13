@@ -1,0 +1,645 @@
+<title>Development Lifecycle, End to End</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F4F5F1; --surface:#FFFFFF; --ink:#1A211B; --ink-2:#4A544B; --muted:#6F796F; --rule:#D8DDD4;
+  --accent:#4C7719; --accent-ink:#37570F; --accent-soft:#E4EDD3; --ask:#8F540C; --ask-soft:#F5E7CF;
+  --mono-bg:#EBEEE6; --push-soft:#EEF1EA; --focus:#2F6FD1;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+    --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+    --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+  --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+  --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-ink);text-decoration-thickness:1px;text-underline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.82em}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button{font:inherit;color:inherit}
+
+.shell{display:grid;grid-template-columns:minmax(0,1fr);max-width:1180px;margin:0 auto;padding:0 20px 80px}
+@media (min-width:1040px){.shell{grid-template-columns:232px minmax(0,1fr);gap:48px;padding:0 32px 96px}}
+
+/* ── The arc (rail) ── */
+.rail{position:sticky;top:0;z-index:2;background:var(--paper);padding:14px 0 10px;border-bottom:1px solid var(--rule)}
+@media (min-width:1040px){.rail{align-self:start;top:0;height:100vh;overflow:auto;padding:40px 0 24px;border-bottom:0;border-right:1px solid var(--rule);padding-right:20px}}
+.railhead{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.arc{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+@media (min-width:1040px){.arc{flex-direction:column;gap:2px;overflow:visible}}
+.arc a{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-family:var(--display);font-weight:500;font-size:14px;white-space:nowrap;line-height:1.25}
+.arc a:hover{background:var(--accent-soft);color:var(--ink)}
+.arc a.current{color:var(--ink);background:var(--accent-soft)}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--muted);background:transparent}
+.dot.some{background:linear-gradient(90deg,var(--accent) 50%,transparent 50%);border-color:var(--accent)}
+.dot.all{background:var(--accent);border-color:var(--accent)}
+.arc .n{font-family:var(--mono);font-size:11px;color:var(--muted);width:1.4em;text-align:right;flex:none}
+@media (min-width:1040px){.arc a{white-space:normal;align-items:flex-start}.arc .dot{margin-top:4px}.arc .n{margin-top:2px}}
+.railfoot{margin-top:14px;font-size:13px;color:var(--muted);font-family:var(--display)}
+@media (max-width:1039px){.railfoot{display:none}}
+.railfoot strong{color:var(--ink)}
+
+/* ── Masthead ── */
+.masthead{padding:44px 0 36px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+.masthead h1{font-size:clamp(34px,5vw,52px);font-weight:700;line-height:1.02;letter-spacing:-.015em;margin:10px 0 18px}
+.lede{font-size:20px;line-height:1.5;max-width:64ch;color:var(--ink)}
+.lede em{font-style:italic}
+.how{margin-top:28px;display:grid;gap:22px}
+@media (min-width:760px){.how{grid-template-columns:1fr 1fr}}
+.how h2{font-size:15px;font-weight:600;letter-spacing:.02em;margin-bottom:8px}
+.how ul{margin:0;padding-left:1.1em}
+.how li{margin:4px 0;font-size:15.5px;line-height:1.5;color:var(--ink-2)}
+.world{margin-top:26px;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.world table{width:100%;border-collapse:collapse;font-size:14.5px}
+.world th{font-family:var(--display);font-weight:600;text-align:left;padding:8px 12px;background:var(--mono-bg);color:var(--ink-2);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}
+.world td{padding:8px 12px;border-top:1px solid var(--rule);vertical-align:top;line-height:1.45}
+.world td:first-child{font-family:var(--display);font-weight:600;white-space:nowrap;width:1%}
+.world .who{color:var(--ink-2)}
+
+/* ── Stations ── */
+.station{display:grid;grid-template-columns:minmax(0,1fr);gap:8px 0;padding:44px 0 40px;border-bottom:1px solid var(--rule);scroll-margin-top:72px}
+@media (min-width:760px){.station{grid-template-columns:72px minmax(0,1fr);scroll-margin-top:24px}}
+.num{font-family:var(--display);font-weight:700;font-size:44px;line-height:1;color:var(--accent);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+@media (min-width:760px){.num{grid-column:1;grid-row:1;padding-top:4px}.station > :not(.num){grid-column:2}}
+.station h2{font-size:clamp(24px,3vw,30px);font-weight:600;line-height:1.15;letter-spacing:-.01em;max-width:30ch}
+.job{font-size:18px;font-style:italic;color:var(--ink-2);max-width:60ch;margin-top:4px}
+.where{margin-top:16px;padding:12px 14px;background:var(--mono-bg);border-radius:6px;font-family:var(--mono);font-size:13px;line-height:1.55;color:var(--ink-2);overflow-x:auto}
+.where b{color:var(--ink);font-weight:500}
+.where .path{color:var(--muted)}
+.label{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 6px}
+.seen{max-width:66ch}
+.seen p{margin:0 0 10px}
+.seen ul{margin:0 0 10px;padding-left:1.15em}
+.seen li{margin:3px 0}
+.u{font-family:var(--mono);font-size:.84em;background:var(--mono-bg);padding:.05em .35em;border-radius:3px;white-space:nowrap}
+
+/* the question */
+.ask{margin:18px 0 0;padding:18px 20px 16px;border-left:3px solid var(--ask);background:var(--ask-soft);border-radius:0 8px 8px 0;max-width:70ch}
+.ask .qn{font-family:var(--mono);font-size:12px;color:var(--ask);letter-spacing:.04em}
+.ask h3{font-size:19px;font-weight:600;line-height:1.3;margin:4px 0 8px;color:var(--ink)}
+.ask p{font-size:15.5px;line-height:1.55;color:var(--ink-2);margin:0 0 6px}
+.ask .rides{font-size:14px;color:var(--muted);margin-top:8px}
+.ask .rides b{color:var(--ink-2);font-weight:600}
+.ruling{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ruling button{font-family:var(--display);font-weight:600;font-size:13.5px;padding:8px 12px;min-height:40px;border:1.5px solid var(--rule);background:var(--surface);border-radius:20px;cursor:pointer;color:var(--ink-2)}
+.ruling button:hover{border-color:var(--ink-2);color:var(--ink)}
+.ruling button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ruling button[aria-pressed="true"].reshape{background:var(--ask);border-color:var(--ask);color:#fff}
+.note{width:100%;margin-top:8px;font:inherit;font-size:15px;line-height:1.45;padding:8px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical;min-height:40px}
+.note::placeholder{color:var(--muted)}
+
+/* what sits under it */
+.under{margin-top:18px;max-width:70ch}
+.calls{display:flex;flex-direction:column;gap:6px}
+details.call{border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+details.call summary{cursor:pointer;list-style:none;padding:8px 12px;font-family:var(--display);font-size:14px;font-weight:500;display:flex;gap:10px;align-items:baseline;min-height:40px}
+details.call summary::-webkit-details-marker{display:none}
+details.call summary .tag{font-family:var(--mono);font-size:11.5px;color:var(--accent-ink);background:var(--accent-soft);padding:2px 6px;border-radius:3px;white-space:nowrap}
+details.call summary .tag.d{color:var(--ask);background:var(--ask-soft)}
+details.call summary .tag.r{color:var(--muted);background:var(--mono-bg)}
+details.call summary::after{content:"+";margin-left:auto;color:var(--muted);font-family:var(--mono)}
+details.call[open] summary::after{content:"–"}
+details.call .body{padding:0 12px 12px;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+details.call .body p{margin:0 0 6px}
+
+/* where I'd push */
+.push{margin-top:18px;padding:14px 18px;background:var(--push-soft);border-radius:8px;max-width:70ch;font-size:15.5px;line-height:1.55}
+.push .label{margin:0 0 4px}
+.push p{margin:0 0 6px;color:var(--ink)}
+
+/* standing back */
+.standing{padding:48px 0 40px;border-bottom:1px solid var(--rule)}
+.standing h2{font-size:clamp(26px,3.4vw,34px);font-weight:600;letter-spacing:-.01em}
+.standing .intro{max-width:64ch;color:var(--ink-2);margin:10px 0 6px;font-size:17px}
+.standing .ask{margin-top:16px}
+
+/* summary */
+.summary{padding:36px 0 0}
+.summary h2{font-size:22px;font-weight:600}
+.summary p{color:var(--ink-2);max-width:64ch;margin:6px 0 14px;font-size:15.5px}
+.summary button{font-family:var(--display);font-weight:600;font-size:15px;padding:10px 16px;min-height:44px;border:0;background:var(--accent);color:#fff;border-radius:8px;cursor:pointer}
+:root[data-theme="dark"] .summary button, :root:not([data-theme="light"]) .summary button{color:#fff}
+.summary textarea{width:100%;margin-top:14px;font-family:var(--mono);font-size:12.5px;line-height:1.5;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);min-height:260px}
+.foot{margin-top:28px;font-size:13.5px;color:var(--muted);max-width:64ch;line-height:1.5}
+.foot a{color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="shell">
+<aside class="rail" aria-label="The arc">
+  <div class="railhead">The arc</div>
+  <ol class="arc" id="arc"></ol>
+  <div class="railfoot" id="railfoot"></div>
+</aside>
+
+<main>
+<header class="masthead">
+  <div class="eyebrow">Coach development lifecycle · the re-evaluation · 2026-09-13</div>
+  <h1>The whole workflow, read end to end</h1>
+  <p class="lede">Phase 2’s walk paused on a small question — should picking an event lock a session’s date? — and you said the real problem was wider: you needed the whole workflow in front of you before ruling on any of its parts. Phase 3 is built and committed, so the whole workflow now exists. This page walks it the way a head coach would, one screen at a time, on the real product with the UAT fixture. At each screen it puts a question to you about the <em>shape</em> — not whether a label is right, but whether this is the right screen, in the right place, asking the right thing.</p>
+  <div class="how">
+    <div>
+      <h2>How to use it</h2>
+      <ul>
+        <li>Open the product on a second screen and walk the nine stations in order — it is the coach’s sequence, from defining a test to handing a family a sheet of paper.</li>
+        <li>Each station describes what is on the screen as built, then asks its shape question. Answer <strong>Keep the shape</strong>, <strong>Reshape</strong> or <strong>Not yet</strong> and write what you are thinking. Answers stay in this browser; <em>Build summary</em> at the foot gives you text to paste back.</li>
+        <li>The build calls that sit under each screen are listed there so you can see what rides on your answer — but nothing here asks you to rule on them. Those are Part D (nine) and Part E (eight) on the <a href="https://claude.ai/code/artifact/23bbc89a-f0b5-46e3-b5e5-1b7f9268517c">hub’s QA Walk tab</a>, and they follow the shape.</li>
+        <li>“Where I’d push” is my own reading, argued from what the code does. Disagree with it freely; it is there so you have something to argue with.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>The world you walk in</h2>
+      <ul>
+        <li>Sign in as the <strong>UAT head coach</strong>; <strong>UAT Test Team · 2026 Season</strong>. Station 9 uses two assistants (same UAT password).</li>
+        <li>The player throughout is <strong>Devon Test (#4)</strong> — every state the lifecycle can hold sits on his record.</li>
+        <li>Nothing here writes. Where a station suggests trying something, it says what to remove, so the fixture is left as you found it.</li>
+        <li>The player’s record now has five tabs (Details · This season · Skills &amp; Goals · Notes · Family &amp; paperwork) — the roster + player page rebuild, committed to dev today. The development work lives on <strong>Skills &amp; Goals</strong>; the old “Development” links still land there.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="world">
+    <table>
+      <thead><tr><th>Identity</th><th>What it carries</th></tr></thead>
+      <tbody>
+        <tr><td>60-yd sprint</td><td class="who">A defined test — seconds, two attempts, best leads, lower is the aim, method written. Devon: 6 May 8.62 · 20 May 8.41 · 10 Jun two attempts (8.31 corrected from 8.51, 8.24) · 26 Aug 8.28.</td></tr>
+        <tr><td>Changeup speed</td><td class="who">A range test, 62–68 mph, three attempts. Devon: 27 May 0 of 3 in range (60 · 70 · 61) · 10 Jun 2 of 3 (66 · 70 · 64) — “moved into the range”.</td></tr>
+        <tr><td>Throw speed</td><td class="who">A legacy test (record only, method not recorded) whose unit changed: 48 mph, 51 mph, then 84 km/h. The unit break.</td></tr>
+        <tr><td>Sets feet before throwing</td><td class="who">An observed skill with three descriptors. One observation on Devon (10 Jun, “With a reminder — one verbal cue”), evidence for his goal.</td></tr>
+        <tr><td>Shuttle run</td><td class="who">Retired, with readings still on the record.</td></tr>
+        <tr><td>Devon’s goal</td><td class="who">“First-step quickness off the bag” — set with the player, success sentence written, reviewed 10 Jun (working on it), next review 24 Jun.</td></tr>
+        <tr><td>Two sessions</td><td class="who">“Phase 2 probe — scoped” (10 Jun): scope of five players and four metrics; Devon two attempts, Avery one of two, Casey not assessed (absent), Blake not recorded, Emerson outside the scope with a reading. “Phase 3 probe — range” (27 May): Devon’s first changeup session.</td></tr>
+        <tr><td>Three practices</td><td class="who">An upcoming plan · a past plan with no recap (the probe practice) · a recap written up (14 May).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<section class="station" id="s1" data-title="Define what the team measures" data-rail="Define the metrics">
+  <div class="num">1</div>
+  <h2>Define what the team measures</h2>
+  <p class="job">Before the season, and again the day a test turns out to be wrong: decide what this team measures and how.</p>
+  <div class="where"><b>Skills &amp; Goals → Metrics</b> <span class="path">…/development?section=metrics</span> · open <b>60-yd sprint</b>, then <b>Throw speed</b></div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>One table: 60-yd sprint (seconds · lower is the aim) · Throw speed (km/h · higher is the aim · method not recorded) · Changeup speed (mph · aim: 62–68 mph) · Sets feet before throwing (Observed skill · 3 descriptors); “Retired definitions (1)” folds Shuttle run away. Open the sprint and a definition is a page: kind, attempts per session, which attempt leads, unit, aim, and the written method — with a live preview of how a result will read (<span class="u">Best of 2 attempts · 0.35 seconds lower</span>). Change the unit or a written method and the product starts a <em>new</em> definition; old results stay under the retired one. Writing a method where none was recorded keeps the series.</p>
+    <p>A session can still add a test by name and unit alone (“+ New test…”) and sends the coach to Metrics for the rest.</p>
+  </div>
+  <div class="ask" data-q="1.1">
+    <div class="qn">Q 1.1</div>
+    <h3>Is a full definition the right amount of ceremony before a coach can record anything?</h3>
+    <p>A test needs six facts before its results read honestly downstream — that is why the chart can say “same method throughout” and the coverage cell can say “best of 2”. The price is that the quick road (name + unit on a session) produces a test that reads “method not recorded” everywhere, forever, until someone finishes it. Two tiers, or one?</p>
+    <div class="rides">Ruled and walked: Phase 1 passed 16/16 (§178), the successor rule and “keep the series when writing a first method” as built. Nothing open here — this station is the ground the rest stands on.</div>
+  </div>
+  <div class="ask" data-q="1.2">
+    <div class="qn">Q 1.2</div>
+    <h3>Measured test and observed skill — is that the split coaches think in?</h3>
+    <p>Everything downstream forks on it: a test gets attempts, a headline, a chart and a change sentence; a skill gets descriptors, an observation, a timeline and no line. It is honest — a descriptor is not a number — but the coach meets the fork on the definition page, on the session grid, in the player’s views and in the Metric dropdown.</p>
+    <div class="rides"><b>What rides on it:</b> the whole record model (tests vs. observations, mig 293/295); the Observed-skill chip on the grid (station 3); Observations as a view (station 5).</div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>I think this station is right and I would not spend the re-evaluation here. The two-tier definition is the honest answer to “a coach on the field will not fill in six fields”, and the split between a number and a descriptor is what lets the reports refuse to draw a line through “With a reminder”. The risk is not the model; it is vocabulary — the coach meets “metric”, “test”, “observed skill”, “measurable”, “result” and “reading” for two kinds of thing. That is Standing back, question 1.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<section class="station" id="s2" data-title="Start a session with a scope" data-rail="Start a session">
+  <div class="num">2</div>
+  <h2>Start a session with a scope</h2>
+  <p class="job">It is testing day — or a practice where you will time a few sprints. Say what you will record and who is here.</p>
+  <div class="where"><b>Skills &amp; Goals → Sessions → “+ Start session”</b> <span class="path">…/development?section=sessions</span> · the dialog “Choose this session’s scope” · try it, name it <b>Walk</b>, delete it from the list afterwards</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>The dialog comes <em>before</em> anything exists: Date (today) · “Taken at” (optional — pick a practice and the date fills itself in; it does not lock) · a note · “What will you record?” (every active metric ticked, the observed skill included) · “Who is here?” (every active player ticked; Everyone / No one). “Start recording” creates the session and opens its grid, with the scope line across the top: <span class="u">Scope: 11 selected players · 3 metrics · Change scope</span>. A session from before the scope existed reads “not stated — counts run against the active roster · Set the scope”.</p>
+    <p>The Sessions list is a table of date and note with a “Find a session” box.</p>
+  </div>
+  <div class="ask" data-q="2.1">
+    <div class="qn">Q 2.1 · the question that paused the walk, widened</div>
+    <h3>What is a session — a testing day of its own, or something that happens at a practice?</h3>
+    <p>Today a session is its own record: a date, an optional event, a note, a scope. A practice has its own record of what happened: the plan and the recap. Two records can describe the same evening, and the link between them is one optional field that pre-fills a date. If a session is a <em>facet of a practice</em>, “Taken at” is its identity and the date locks by definition — but every testing day must then be an event on the calendar. If a session is <em>its own thing</em>, the date stays free and the two records stay two, with a visible link both ways at most.</p>
+    <div class="rides"><b>What rides on it:</b> the “Taken at” rule (§10.2 ruling 1, twice implemented); whether a practice’s page should list the readings taken at it; whether Practice review and the Sessions list are two lists of one evening (station 7).</div>
+  </div>
+  <div class="ask" data-q="2.2">
+    <div class="qn">Q 2.2</div>
+    <h3>Is the scope worth a dialog between the coach and the first field?</h3>
+    <p>The scope exists so that a blank can mean something: “Not recorded” is a player who was in scope and got no reading; without a scope the count can only run against the whole roster. The alternative is to infer the scope from whoever got a reading or a not-assessed mark — no dialog, and no “Not recorded” state.</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-call1</b> (the scope stored as two id lists; “not assessed” its own record) · Part D steps 1–2, 10–11 · Coverage’s “Not assessed” dated by its session (station 7).</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag d">D-call1</span> The scope lives on the session as two id lists; “not assessed” is its own record</summary><div class="body"><p>A snapshot of intent, never queried by member; the route proves every id is this team’s. The alternative shape on the hub: a participants list with a present/absent state per player.</p></div></details>
+      <details class="call"><summary><span class="tag r">ruled</span> “Taken at” pre-fills the date and never locks it — §10.2 ruling 1, unchanged by Phase 2</summary><div class="body"><p>The behaviour that raised the pause. It is exactly as designed and as the code comment says; no defect is recorded against it. Q 2.1 is the question underneath it.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>I’d keep the scope and I’d keep the session as its own thing — and I’d say why, because the code sides that way for a reason: recording happens outside practices (a testing day, a combine-style morning), a recap is prose about the practice while a session is figures about players, and folding one into the other forces every testing day onto the calendar. What I would not defend is the link being invisible: a session taken at a practice should show on that practice, and the practice on the session. That is an item, and it waits — but it is the honest answer to the question that paused the walk: the date did not need to lock; the two records needed to see each other.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<section class="station" id="s3" data-title="Record — attempts, a correction, an absence, an observation" data-rail="Record on the field">
+  <div class="num">3</div>
+  <h2>Record — attempts, a correction, an absence, an observation</h2>
+  <p class="job">Get the figures down fast, on the field, without lying about the blanks.</p>
+  <div class="where"><b>Skills &amp; Goals → Sessions → “Phase 2 probe — scoped” (10 Jun)</b> — every state at once, read-only for your purposes · your <b>Walk</b> session to type into</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>A chip per metric in scope. One row per player, one field per attempt (the sprint: two; the changeup: three). Enter moves attempt → attempt → next player, and the headline reads back live under the row: <span class="u">Best of 2 attempts · 8.5 · 8.4 · average 8.45</span>, or for the range test <span class="u">2 of 3 in range · 66 (in) · 70 (+2) · 64 (in)</span>. Every row carries a state — Saved · Saving · Not saved — retry · Not recorded · Not assessed — and “entered by”. Edit a saved attempt and it becomes a correction: <span class="u">8.31*</span>, “corrected — was 8.51”, the original kept on the row. “Mark not assessed” appears on blank rows only. The count under the grid: <span class="u">2 recorded · 1 not assessed · 2 not recorded — of 5 in scope</span>; Emerson is listed with a reading and “· outside the scope”, never counted.</p>
+    <p>The skill chip is the same grid in a different register: a descriptor dropdown and a “What you saw” field per player. Saving one writes an <em>observation</em> on the player, dated by the session. It needs the Development grant <em>and</em> Internal notes; without notes the chip is held back with the reason.</p>
+  </div>
+  <div class="ask" data-q="3.1">
+    <div class="qn">Q 3.1</div>
+    <h3>Is the grid the right instrument on the field?</h3>
+    <p>One row per player, one field per attempt, Enter to move on. It was built for a laptop at the fence or a phone held sideways. The other shapes a coach might want: one player at a time (a card you swipe through, phone-first), or one attempt at a time (“next up”). The grid wins on a roster of twelve; it is the wrong shape if the real moment is one player, one stopwatch, one thumb.</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-call4</b> (a correction keeps the original; no history table) · <b>D-call6</b> (“entered by” is the display name) · <b>D-opencall2</b> (“Mark not assessed” a link on blank rows only) · Part D steps 3–7.</div>
+  </div>
+  <div class="ask" data-q="3.2">
+    <div class="qn">Q 3.2</div>
+    <h3>Does an observed skill belong on the same grid as a stopwatch?</h3>
+    <p>The skill chip records a note-like thing in a spreadsheet-like place. That is the coach’s moment if observations are made in the same drill as the timing. It is the wrong moment if an observation is something written later, on the player, from the bench — which the product also allows, from two more doors (station 5). One record, three places to write it.</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-call2</b> (an observation needs a descriptor <em>or</em> what was seen) · Part D step 8 · the Observations view and the Notes timeline (station 5).</div>
+  </div>
+  <div class="ask" data-q="3.3">
+    <div class="qn">Q 3.3</div>
+    <h3>Are two kinds of blank one too many for the field?</h3>
+    <p>“Not recorded” is in scope with nothing typed; “Not assessed” is the coach saying so — absent, hurt, skipped — with a reason. Both honest, both shown, both counted apart. Coverage later reads “Not assessed” with the date of the session that said it. Is that the distinction that makes Coverage trustworthy, or a finer line than a coach at the fence will draw?</p>
+    <div class="rides"><b>What rides on it:</b> Coverage’s third cell state (station 7) and the count line’s three numbers.</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag d">D-call2</span> An observation needs a descriptor OR what was seen — at least one</summary><div class="body"><p>“With a reminder” is itself what was seen. The alternative on the hub: what was seen always required.</p></div></details>
+      <details class="call"><summary><span class="tag d">D-call4</span> A correction keeps the first original on the row (“corrected — was 8.51”); no history table</summary><div class="body"><p>Deferred by name. The alternative: a correction history now.</p></div></details>
+      <details class="call"><summary><span class="tag d">D-call6</span> “Entered by” / “written by” is the org member’s display name, “a coach” when unset</summary><div class="body"><p>Never an email address. The alternative: the email when there is no display name.</p></div></details>
+      <details class="call"><summary><span class="tag d">D-opencall2</span> “Mark not assessed” is a link on blank rows only</summary><div class="body"><p>Carried at its recommendation. The alternative: a control on every row.</p></div></details>
+      <details class="call"><summary><span class="tag r">/review</span> Eight fixes landed inside the paused walk (§180)</summary><div class="body"><p>A conflicting save re-reads the row instead of looping on Retry; Edit keeps an attempt still saving; a range headline no longer repeats itself; “not assessed” and a value never coexist; a review’s evidence is proven to be this player’s own; the grid never hides an attempt the row holds; a same-value edit is not a correction; the profile’s reload is sequenced. None walked.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>The grid is right for tests, and the two blanks are the reason Coverage can be believed — I would keep both. Where I am less sure is the skill chip. Reading the code: an observation can be written from the session grid, from the goal, and from the Observations view, and it is now read in four places (those three plus the Notes timeline). A record written from three doors and read in four is a shape smell, not a bug. The question to settle is at station 5; the chip follows from the answer.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 4 ───────────────────────── -->
+<section class="station" id="s4" data-title="Review the session">
+  <div class="num">4</div>
+  <h2>Review the session</h2>
+  <p class="job">Before leaving the field, know what you missed.</p>
+  <div class="where"><b>The session → “Review session →”</b> · “Return to recording” or “Back to Sessions”</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>A dialog lists each metric with its counts — <span class="u">1 recorded · 0 not assessed · 10 not recorded — of 11 in scope</span> — names who ran fewer attempts than the test asks for, and says plainly that a review never creates a zero and never marks the session complete. It stores nothing. The Sessions list afterwards shows the session exactly as before.</p>
+  </div>
+  <div class="ask" data-q="4.1">
+    <div class="qn">Q 4.1</div>
+    <h3>Is a review that stores nothing a review?</h3>
+    <p>The build prompt asked for “a review state” and “never marks complete” in adjacent lines; storing a state would have been the mark, so none is stored. A session therefore never says “reviewed”, and a Sessions list of ten gives no sign which were finished. Is a session’s doneness something the team needs to see later, or are the counts themselves the only truth worth keeping?</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-call5</b> (“Review session” stores nothing) · Part D step 9.</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag d">D-call5</span> “Review session” stores nothing; no review state on the session</summary><div class="body"><p>Disagreed before building, then built as read-back only. The alternative on the hub: a session carries a “reviewed” mark.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>Keep it storing nothing, and name the risk: the Sessions list cannot tell a finished session from an abandoned one. If that bites, the fix is a <em>derived</em> label — a session is “complete” when every in-scope row has a state — not a stored mark that can be true while the rows are not.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 5 ───────────────────────── -->
+<section class="station" id="s5" data-title="The player's record">
+  <div class="num">5</div>
+  <h2>The player’s record — Goals · Results · Observations · Previous seasons</h2>
+  <p class="job">One player in front of you, or their family: what have we set, what have we measured, what have we seen.</p>
+  <div class="where"><b>Roster → Devon Test → Skills &amp; Goals</b> <span class="path">…/roster/{devon}?tab=skills</span> · then the <b>Notes</b> tab beside it</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>Inside the tab, one segmented control with four views. <strong>Goals:</strong> “First-step quickness off the bag” with its origin (Set with the player) and “written by”; selected, its facts — Success looks like · Next review 24 Jun · Status — the actions Review goal · Record an observation · Edit wording, and “How this goal has developed”: reviewed 10 Jun, observed 10 Jun, set. <strong>Results:</strong> each test leads with its latest headline (<span class="u">8.31 seconds · best of 2 attempts · avg 8.275</span>); open it for one row per session with every attempt, the correction, who entered it and a Session → door; “+ Record a result” records a single reading here, outside any session. <strong>Observations:</strong> a timeline per skill — descriptor, what was seen, “in an evaluation session”, “Evidence for: First-step quickness off the bag”, written by; “+ Record an observation”. <strong>Previous seasons:</strong> the 2025 record. Above the views: the continuity card, the carry-forward offer, the tryout snapshot heading Goals. At the foot: “Preview development handout”.</p>
+    <p>And beside it, new today: the <strong>Notes</strong> tab — one timeline of game moments, these same observations, these same goal reviews, and a general note, newest first. Nothing is written twice; observations and reviews are still written on Skills &amp; Goals. The rebuild deliberately left the Observations view alone and deferred the question of dropping it to this page.</p>
+  </div>
+  <div class="ask" data-q="5.1">
+    <div class="qn">Q 5.1</div>
+    <h3>Four views inside a tab — is that one screen too many?</h3>
+    <p>A fold inside a tab is a second click (the rebuild’s own finding, and the reason the record has tabs with addresses now). Goals and Results are two different kinds of record; Observations is evidence for the first; Previous seasons is archive. Is the segmented control the right way to hold four things, or should the tab be two (Goals · Results) with observations living where they are read?</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-opencall5</b> (four views as one segmented control) · the rebuild’s R2-7 (Previous seasons out of its scope; its switch was drawn Goals · Results) · Part D steps 12, 17.</div>
+  </div>
+  <div class="ask" data-q="5.2">
+    <div class="qn">Q 5.2</div>
+    <h3>Where does an observation live — under the skill, under the goal, or in the Notes timeline?</h3>
+    <p>Today it is read in all three, from one record: the Observations view lists them by skill; the goal’s history lists the ones that are its evidence; the Notes tab lists them in the season’s timeline with everything else. Each is defensible alone. Together they are three readings of one line. Is one of them the home and the others doors to it — and if so, which?</p>
+    <div class="rides"><b>What rides on it:</b> the rebuild’s <b>Q7</b> (drop the Observations view — deferred here by name) · the skill chip on the grid (Q 3.2) · “Record an observation” on the goal · Part D steps 13, 17.</div>
+  </div>
+  <div class="ask" data-q="5.3">
+    <div class="qn">Q 5.3</div>
+    <h3>Is this record the coach’s, or the family’s?</h3>
+    <p>This is the page the conversation happens on. Goals, observations and reviews are behind <em>Internal notes</em>; results are on any record duty. Two clicks away, the handout prints the goals for the family (station 8). So a goal is internal to read and public to print. Which is it — and does the answer change what an observation’s “what you saw” is allowed to say?</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-call3</b> (origin recorded from now on; older goals show none) · the notes gate on every quoted goal/observation/review line · station 9.</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag d">D-opencall5</span> Four views as one segmented control inside the section; the record’s tabs untouched</summary><div class="body"><p>Carried at its recommendation and built. The rebuild then gave the section a tab of its own (“Skills &amp; Goals”) and drew the switch as Goals · Results, leaving the Observations question to this page.</p></div></details>
+      <details class="call"><summary><span class="tag d">D-call3</span> A goal’s origin is recorded from now on; older goals show no origin line</summary><div class="body"><p>Rather than a guessed one. The alternative on the hub: older goals read “Set with the player”.</p></div></details>
+      <details class="call"><summary><span class="tag r">rebuild Q7</span> Drop the Observations view from the player’s Skills &amp; Goals — DEFERRED to this re-evaluation</summary><div class="body"><p>The roster + player page rebuild (committed today) proposed it and stopped at the Phase 2 plan’s four views. It is Q 5.2, not an item.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>This is where I would spend the re-evaluation. The Observations view was built by Phase 2 and the Notes timeline by the rebuild a day later; each is right on its own and together they are two of the same thing. My reading from the code: the goal’s history is what an observation is <em>for</em> (it is evidence, and the record links it as evidence); the Notes timeline is where a coach re-reads the season; the Observations view is the one that is derivable from the other two. I’d drop it — the rebuild’s Q7 — and let the skill chip and “Record an observation” on the goal stay as the two ways to write. But rule Q 5.2 first; the view follows from the answer, not the other way round.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 6 ───────────────────────── -->
+<section class="station" id="s6" data-title="Review a goal">
+  <div class="num">6</div>
+  <h2>Review a goal</h2>
+  <p class="job">Sit with the player, say how it is going, date it, and say when you will look again.</p>
+  <div class="where"><b>Goals → the goal → “Review goal”</b> · the status pill on the list · “+ Add goal” → “More — success, review date, tag” · add nothing you do not remove</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>“Review goal” asks for a status (required), a date (today), a note, a next review date and evidence (the linked observations), and appends one dated event to “How this goal has developed” — set → observed → reviewed, never overwritten, each with who wrote it. The status pill on the list still cycles (Working on it → Achieved → Parked) and each tap appends a dated status-only review. A goal carries five facts beyond its focus: the success sentence, the review date, the origin, the tag, the status.</p>
+  </div>
+  <div class="ask" data-q="6.1">
+    <div class="qn">Q 6.1</div>
+    <h3>Is a status change a review?</h3>
+    <p>Every tap on the pill is a review with no words. That keeps the history complete — nothing changes without a dated row — and it makes the history noisy the first time a coach cycles the pill to find the status they meant. The alternatives: retire the pill and route every change through the dialog; or keep the pill and fold status-only rows into the history quietly.</p>
+    <div class="rides"><b>What rides on it:</b> <b>D-opencall1</b> (a review requires a status, never prose; the pill appends) · Part D step 14 · the handout’s “Save this next step as a review →” (E-call2), which is a door to this dialog.</div>
+  </div>
+  <div class="ask" data-q="6.2">
+    <div class="qn">Q 6.2</div>
+    <h3>Is set → observed → reviewed the lifecycle coaches want, or is a goal simpler than that?</h3>
+    <p>The mockup approved a goal with a success sentence, a review date, an origin and a tag, and a history behind it. The question the fixture cannot answer is whether coaches fill those in. A goal that is only ever “focus + status” is fine here — the extras are optional and fold away — but the reports and the handout lean on them (“Next review: 24 Jun”, “Success looks like…”). Is the richer goal the shape, or the ceiling?</p>
+    <div class="rides"><b>What rides on it:</b> the goal’s history in Player progress (station 7) · the handout’s “What we’re working on” lines (station 8) · Part D steps 13, 15.</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag d">D-opencall1</span> A goal review requires a status, never prose; the pill still works and adds a status-only review</summary><div class="body"><p>Carried at its recommendation. The alternative: a review must carry a note.</p></div></details>
+      <details class="call"><summary><span class="tag r">/review accepted</span> Two coaches reviewing one goal within the same second can leave its status one event behind</summary><div class="body"><p>Self-correcting on the next review; a database-side transaction if it is ever seen. Recorded, not fixed.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>Keep the append-only history — it is the one thing that makes “how this goal has developed” true rather than a status with a date on it. The pill I would watch rather than remove: it is the cheap path, so it will be the common one, and if the history fills with status-only rows the fix is to show them collapsed, not to take the pill away and make every change a dialog.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 7 ───────────────────────── -->
+<section class="station" id="s7" data-title="Ask the reports">
+  <div class="num">7</div>
+  <h2>Ask the reports — Coverage · Player progress · Practice review</h2>
+  <p class="job">Step back from the one player. Who have we measured? How is Devon going? What did we actually practise?</p>
+  <div class="where"><b>Insights → Development</b> <span class="path">…/history?section=development</span> · one row of dropdowns: <b>Report</b> and <b>Metric</b> · then <b>Skills &amp; Goals → Players</b> for the comparison in Q 7.1</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p><strong>Coverage:</strong> a bold sentence states the denominator — “4 of 12 players have a 60-yd sprint result recorded this season. This describes the records that exist. It does not assess the attention a player received.” — then one row per player in roster order: Active focus · Selected metric · Recorded on · In a plan · Returning player, and “Progress →”. The metric’s cell answers for <em>that</em> metric with <em>its</em> date: <span class="u">8.31 seconds (of 2)</span>, <span class="u">2 of 3 in range</span>, a skill’s descriptor, <span class="u">Not assessed</span> dated 10 Jun, or “No result recorded for this test this season”. The single “last measurable” date is gone.</p>
+    <p><strong>Player progress:</strong> Player · Metric · Show (only where there is a choice) · Compare. The answer first, in words — <span class="u">8.28 seconds on 26 Aug · 0.34 seconds lower since 6 May</span> — the scope line beneath (“4 recorded results · 5 attempts · same method throughout · lower is the aim”), then the chart on real calendar dates: the headline per session as the line, every attempt a quiet mark, labelled ticks, no fill; the range test shades its band, fills the marks that landed in it and dashes the average, and reads “moved into the range since 27 May (0 of 3)”; Throw speed is one point and no line with its mph readings listed, not drawn. Under it, “Records behind the chart” and the sentence “A change in this test does not explain why it happened.” An observed skill shows the observation timeline and the goal’s history instead of a chart. Every selector rides the address.</p>
+    <p><strong>Practice review:</strong> every practice with a plan or a recap — Upcoming plan · Past plan · no recap · Recap recorded — filtered by tag, and the line “A topic appearing in a plan does not prove that a specific player worked on or achieved a goal.”</p>
+  </div>
+  <div class="ask" data-q="7.1">
+    <div class="qn">Q 7.1</div>
+    <h3>Skills &amp; Goals → Players and Insights → Coverage answer the same question. Which is the home?</h3>
+    <p>Both are one row per player in roster order with the latest headline of a chosen metric and its date — they share the same cell, by design. Players has a Show picker and opens the record; Coverage adds the denominator sentence, In a plan, Returning player and the door to Player progress. Two screens, one question, two names for the same door. Is one the home and the other a door to it — or is the split (working view vs. report) real and worth two screens?</p>
+    <div class="rides"><b>What rides on it:</b> <b>E-call1</b> (Coverage keeps Active focus — six columns) · Part C step 2 and Part E steps 2–4 · the Skills &amp; Goals hub’s three views (Phase 1, walked).</div>
+  </div>
+  <div class="ask" data-q="7.2">
+    <div class="qn">Q 7.2</div>
+    <h3>Is Practice review a development report?</h3>
+    <p>It lists practices and whether a recap was written. It sits under Development because its honesty line is about players — a topic in a plan is not evidence a child worked on it — but the thing it lists is practices. Does it belong here, on the Practice hub, or in both places with one reading?</p>
+    <div class="rides"><b>What rides on it:</b> <b>E-call4</b> (a recap shows no “Written by”) · <b>E-call8</b> (the chip floor) · Part E step 12 · Q 2.1 (a session at a practice).</div>
+  </div>
+  <div class="ask" data-q="7.3">
+    <div class="qn">Q 7.3</div>
+    <h3>How much should the product say?</h3>
+    <p>“0.34 seconds lower since 6 May”, never “faster”. Every attempt drawn, the aim on its own line, no “on track”, no team average beside a child, a caption on every chart saying the number does not explain itself. That restraint is the plan’s ten rules and the reason the reports can be trusted. It is also a voice, and it is the voice of every report, the handout and the help. Is it the right amount of restraint for a coach reading their own player, or a shade too coy?</p>
+    <div class="rides"><b>What rides on it:</b> <b>E-call5</b> (the change sentence is arithmetic in the unit; the aim on the scope line) · <b>E-call6</b> (Show only where there is a choice) · Part E steps 5–11 · the “what the product refuses to say” rule (Standing back, 5).</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag">E-call1</span> Coverage keeps “Active focus” beside “Selected metric” and “Recorded on” — six columns</summary><div class="body"><p>The mockup drew five without it; the prompt said “today’s table with the Selected metric column”. Active focus is a built, ruled, goals-gated column; F12’s defect was the single “Last measurable” date, so that went. The alternative: five columns as drawn.</p></div></details>
+      <details class="call"><summary><span class="tag">E-call4</span> A recap shows no “Written by” because the record has no recap author</summary><div class="body"><p>A practice’s recap is one text column with no author, and Phase 3 adds no migration, so nothing is guessed. A column when wanted.</p></div></details>
+      <details class="call"><summary><span class="tag">E-call5</span> The change sentence is arithmetic in the unit; the aim is stated on the scope line; “faster” is never written</summary><div class="body"><p>Plan §8 permits “faster in this test” when the method is comparable and lower is the aim; the build states the aim and leaves the reading to the coach. A legacy test reads “method not recorded” and no direction is claimed of it.</p></div></details>
+      <details class="call"><summary><span class="tag">E-call6</span> “Show” appears only where there is a choice</summary><div class="body"><p>Best attempt (or Last) · Average of attempts. A range test has no choice (its line is the average); a test that already leads with the average has one. Compare shows for every measured test.</p></div></details>
+      <details class="call"><summary><span class="tag">E-call8</span> The practice-review filter chips took the 44px floor on phone and tablet</summary><div class="body"><p>Deferred on 2026-09-11 as “closes with Phase 2”, which did not touch them; Phase 3 restyled the report, so the shared chip class gained the floor (the drill library and the template room get the same). Six baseline rows closed.</p></div></details>
+      <details class="call"><summary><span class="tag r">/review advisory</span> The Insights hub’s tab link drops the report state on tab-away-and-back</summary><div class="body"><p>As Phase 1’s tag filter always did — a hub-level change (the tab bar would need to remember each tab’s last address), left for this page rather than patched inside Development alone.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>Q 7.1 is the one I would rule first, because the code has already answered half of it: Players and Coverage draw their cells from the same reader — they are one table in two sets of chrome. I’d keep Coverage (it has the denominator and the door to progress) and let Skills &amp; Goals → Players become the place you <em>record from</em> — the sessions and the metrics — rather than a second reading of the same figures. Practice review I would leave under Development; its honesty line is the whole reason it exists, and that line is about players. On the voice: it is right for a youth product and it is the plan; if it ever reads as coy, the place to loosen it is the scope line (“lower is the aim” → “a lower time is what you’re after”), not the change sentence.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 8 ───────────────────────── -->
+<section class="station" id="s8" data-title="Print the handout">
+  <div class="num">8</div>
+  <h2>Print the handout</h2>
+  <p class="job">The conversation with the player and their family, on paper.</p>
+  <div class="where"><b>Devon → Skills &amp; Goals → “Preview development handout”</b> <span class="path">…/roster/{devon}/development/handout</span> · a page of its own; the back arrow returns to the view you left</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>Left, “Choose what belongs in this conversation”: the working goal ticked (with its success sentence), the 10 Jun observation ticked, each active test’s latest result ticked with a “Which result” picker where there is more than one session, Shuttle run offered as “· retired” and unticked, a “Next step” box in your own words, “Include the full dated result log”, and “Print / Save as PDF” in the body above the boundary sentence. Right, the paper, live: the team’s letterhead, PLAYER DEVELOPMENT, Devon Test #4, “Prepared <em>today</em> · UAT Head Coach”, the sections in the mockup’s order, the footer “For this player’s development conversation · A record of this season’s coaching”. Under the next-step box: “To keep this next step on the record, review the goal — Save this next step as a review →”.</p>
+    <p>Nothing is stored and nothing is sent. The boundary: current season only, no tryout evaluations, no other players’ figures, no internal notes, no link.</p>
+  </div>
+  <div class="ask" data-q="8.1">
+    <div class="qn">Q 8.1</div>
+    <h3>Does “nothing stored” hold for a document a family will keep?</h3>
+    <p>Built as a print of the record as of today; the choices vanish when the page closes. If a family gets one in June and one in September, the product does not remember what the June one said — the family does. A next step worth keeping is a goal review, and the page says so. A stored “handout version” is Phase 4’s review pack. Is the rule right for now, and is it right for good?</p>
+    <div class="rides"><b>What rides on it:</b> <b>E-call2</b> (choices and next step not stored; “Save as a review” is a link) · <b>E-call7</b> (defaults: each active test’s latest; retired offered, unticked) · Part E steps 14–16 · Phase 4’s review pack.</div>
+  </div>
+  <div class="ask" data-q="8.2">
+    <div class="qn">Q 8.2</div>
+    <h3>Is the handout the family’s whole view of development, or the first of two?</h3>
+    <p>The boundary implies a family audience, and the product already previews a family recap elsewhere. A printed page is the right first surface — a conversation, not a portal — but it is also the only one, and it is one-directional. Is paper the whole family surface for development, or the first of two?</p>
+    <div class="rides"><b>What rides on it:</b> <b>E-call3</b> (Print in the body, not the header — house rule 2) · the family recap preview (the rebuild’s work) · Standing back, 4.</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag">E-call2</span> The handout’s choices and next step are NOT stored; “Save this next step as a review” is a link to the goal</summary><div class="body"><p>Built at the prompt’s recommendation. The alternative: store a handout version (Phase 4’s review pack, brought forward).</p></div></details>
+      <details class="call"><summary><span class="tag">E-call3</span> “Print / Save as PDF” sits in the body beside the choices, not in the page header</summary><div class="body"><p>The mockup drew it as the header’s primary button; the page-actions guard build-enforces “no export control in a header”. Same reach, one line lower.</p></div></details>
+      <details class="call"><summary><span class="tag">E-call7</span> The handout ticks each ACTIVE test’s latest result; a retired test is offered, labelled, unticked</summary><div class="body"><p>A retired test’s results are still a record (F02), so they are offered — but a conversation about this season leads with the tests the team still runs.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>Hold “nothing stored”. A stored handout is a <em>version</em> of the record, and every version needs a reader, a way to compare two, and a rule for how long it lives — none of which a print needs. Q 8.1’s risk is real, and it is the argument for Phase 4’s review pack, not for this page remembering itself. The one thing I would not wait for is at station 9: the paper prints what the record hides.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── 9 ───────────────────────── -->
+<section class="station" id="s9" data-title="Who sees what">
+  <div class="num">9</div>
+  <h2>Who sees what</h2>
+  <p class="job">Hand out only what you hold. An assistant records; a helper reads; the family gets paper.</p>
+  <div class="where">Sign in as <b>uat-asst-nomoney</b> (record access, no Internal notes) and <b>uat-asst-development</b> (the Development grant + Internal notes) · same UAT password · sign back in as the head coach afterwards</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>Without the Development grant: Skills &amp; Goals opens read-only — values not fields, no “+ Start session”, no Mark not assessed, no Change scope, no “+ Define a metric”; the player’s record shows no Add goal / Record a result / Record an observation. With the grant but without Internal notes: results record, the skill chip is held back with the reason, the Metric dropdown offers tests only, Coverage has no Active focus column, Player progress draws the same chart, and the handout offers results only — no goals, no observation, no next-step link. With both: everything.</p>
+  </div>
+  <div class="ask" data-q="9.1">
+    <div class="qn">Q 9.1</div>
+    <h3>Is Internal notes the right key for goals, observations and reviews?</h3>
+    <p>The grant is a record duty and opens results. Internal notes opens the words: goals, observations, reviews. A development goal set <em>with</em> the player and printed <em>for</em> the family sits behind the same key as a private note about them. The line was drawn so that an observation’s free text — “what you saw” — is never open to someone with only the grant, which is right. The question is whether the goal belongs on that side of the line with it, or needs its own key, or none.</p>
+    <div class="rides"><b>What rides on it:</b> <b>B-call2</b> (a goal is written only with Development AND Internal notes — ruled as built, §178) · the notes gate on every quoted line in the panel, the handout, the board and the Players view · Part D step 19 · Part E step 17.</div>
+  </div>
+  <div class="under">
+    <div class="label">Under this screen</div>
+    <div class="calls">
+      <details class="call"><summary><span class="tag r">ruled</span> B-call1 · The Development switch is a record duty — ruled as built (§178)</summary><div class="body"><p>A helper given only Development reaches the roster (names only), Skills &amp; Goals, Insights and Season’s End.</p></div></details>
+      <details class="call"><summary><span class="tag r">ruled</span> B-call2 · A goal is written only with Development AND Internal notes; results need the grant alone — ruled as built (§178)</summary><div class="body"><p>Re-asked here only because station 8 prints what this station hides. A ruling re-opened on merit, not on a date.</p></div></details>
+    </div>
+  </div>
+  <div class="push">
+    <div class="label">Where I’d push</div>
+    <p>The line is defensible and it was ruled; I re-ask it for one reason only — the handout. If a goal is a family-facing thing, its gate should be the grant, and “what you saw” should stay behind Internal notes; then a coach who can print the paper can read every line on it. If a goal is a coach’s private judgement, the handout should not print it without the coach choosing to — which is what it does today. Either is coherent. Today’s shape is the second with the first’s paper.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── Standing back ───────────────────────── -->
+<section class="standing" id="standing" data-title="Standing back">
+  <h2>Standing back</h2>
+  <p class="intro">Five questions that cut across every station. They are the ones a single walk never surfaces, because each screen is right on its own.</p>
+
+  <div class="ask" data-q="S1">
+    <div class="qn">S 1</div>
+    <h3>One record, how many names?</h3>
+    <p>The coach meets “Skills &amp; Goals” (the sidebar, the hub, the player’s tab), “Development” (the Insights tab, the grant, the handout, the help), and for the things inside: metric, test, observed skill, measurable, result, reading, attempt, headline, observation, goal, focus area, review. Some of that is real distinction and some is drift across four phases and two sessions. Should the coach meet one word for the door, and how many for what is behind it?</p>
+  </div>
+  <div class="ask" data-q="S2">
+    <div class="qn">S 2</div>
+    <h3>How many doors to one figure?</h3>
+    <p>Devon’s latest sprint headline can be read on the session grid, on Skills &amp; Goals → Players, on his Results view, in Coverage, in Player progress and on the handout — six readings of one number, all from one reader, all correct. Which of those are homes, and which are doors that should say so?</p>
+  </div>
+  <div class="ask" data-q="S3">
+    <div class="qn">S 3</div>
+    <h3>Is the session the right spine?</h3>
+    <p>Everything dated hangs off a session — results, not-assessed marks, observations — except a goal review (dated on its own) and a single reading recorded on the player (“+ Record a result”, outside any session). Two ways to record a result: in a session on the field, and on the player from the bench. Is that the right pair, or should every result have a session, even a session of one?</p>
+  </div>
+  <div class="ask" data-q="S4">
+    <div class="qn">S 4</div>
+    <h3>Reading it top-down, is a screen missing?</h3>
+    <p>The four phases built the model from the bottom — trust the records, define, record, explain. Read as a coach on a Tuesday, the workflow has no “this week”: nothing says which goals are due for review, who has not been measured since May, which sessions were left half-recorded. Coverage answers one metric at a time; the goal’s review date is on the goal. Is that view Phase 4, or is it the screen the whole lifecycle was missing?</p>
+  </div>
+  <div class="ask" data-q="S5">
+    <div class="qn">S 5</div>
+    <h3>What the product refuses to say — is the refusal right for every team on it?</h3>
+    <p>No ranking, no sort by result, no team average beside a child, no percentile, no “on track”, no projected date, no “faster”. Right for a youth product, and the plan says so in as many words. The teams this portal now serves include ones whose coaches will ask for exactly those things. Is the refusal a product principle, a default a team can loosen, or something in between?</p>
+  </div>
+</section>
+
+<section class="summary" id="summary">
+  <h2>Build summary</h2>
+  <p>Every answer and note on this page, as text, to paste back into the chat. Nothing leaves this browser until you do.</p>
+  <button type="button" id="buildSummary">Build summary</button>
+  <textarea id="summaryOut" hidden aria-label="Summary text"></textarea>
+  <p class="foot">Project hub (mockup · brief · plan · decisions · QA walks A–E): <a href="https://claude.ai/code/artifact/23bbc89a-f0b5-46e3-b5e5-1b7f9268517c">claude.ai/code/artifact/23bbc89a…</a> · Plan: <code>docs/projects/active/COACH_DEVELOPMENT_LIFECYCLE_PLAN.md</code> · Ledger §180 (Phase 2, the pause) and §183 (Phase 3). Phase 2 committed <code>b03721d6</code>, Phase 3 <code>c13efb9d</code>, the player-page rebuild <code>114f67c8</code> — all on dev, 2026-09-13.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  var KEY='reeval-dev-lifecycle-v1';
+  var state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+  var CHOICES=[['keep','Keep the shape'],['reshape','Reshape'],['later','Not yet']];
+
+  // ── ruling controls under every question ──
+  var asks=Array.prototype.slice.call(document.querySelectorAll('.ask[data-q]'));
+  asks.forEach(function(ask){
+    var q=ask.getAttribute('data-q');
+    var wrap=document.createElement('div');wrap.className='ruling';wrap.setAttribute('role','group');wrap.setAttribute('aria-label','Your answer to '+q);
+    CHOICES.forEach(function(c){
+      var b=document.createElement('button');b.type='button';b.textContent=c[1];b.className=c[0];
+      b.setAttribute('aria-pressed',String(state['a-'+q]===c[0]));
+      b.addEventListener('click',function(){
+        state['a-'+q]=state['a-'+q]===c[0]?undefined:c[0];
+        if(state['a-'+q]===undefined)delete state['a-'+q];
+        save();paint(ask);paintRail();
+      });
+      wrap.appendChild(b);
+    });
+    var note=document.createElement('textarea');note.className='note';note.rows=1;note.placeholder='What you are thinking — the shape you want, or why this one holds';
+    note.value=state['n-'+q]||'';
+    note.addEventListener('input',function(){state['n-'+q]=note.value;if(!note.value)delete state['n-'+q];save();paintRail()});
+    ask.appendChild(wrap);ask.appendChild(note);
+  });
+  function paint(ask){
+    var q=ask.getAttribute('data-q');
+    Array.prototype.forEach.call(ask.querySelectorAll('.ruling button'),function(b){b.setAttribute('aria-pressed',String(state['a-'+q]===b.className))});
+  }
+
+  // ── the rail ──
+  var sections=Array.prototype.slice.call(document.querySelectorAll('section[data-title]'));
+  var arc=document.getElementById('arc');
+  sections.forEach(function(s,i){
+    var li=document.createElement('li');
+    var a=document.createElement('a');a.href='#'+s.id;
+    var dot=document.createElement('span');dot.className='dot';dot.setAttribute('data-for',s.id);
+    var n=document.createElement('span');n.className='n';n.textContent=s.classList.contains('standing')?'·':String(i+1);
+    a.appendChild(dot);a.appendChild(n);a.appendChild(document.createTextNode(s.getAttribute('data-rail')||s.getAttribute('data-title')));
+    li.appendChild(a);arc.appendChild(li);
+  });
+  function paintRail(){
+    var total=0,answered=0;
+    sections.forEach(function(s){
+      var qs=Array.prototype.slice.call(s.querySelectorAll('.ask[data-q]'));
+      var done=qs.filter(function(a){return !!state['a-'+a.getAttribute('data-q')]}).length;
+      total+=qs.length;answered+=done;
+      var dot=arc.querySelector('.dot[data-for="'+s.id+'"]');
+      dot.className='dot'+(done===0?'':done===qs.length?' all':' some');
+    });
+    var foot=document.getElementById('railfoot');
+    foot.innerHTML='<strong>'+answered+'</strong> of '+total+' questions answered';
+  }
+  paintRail();
+
+  // current station in the rail
+  if('IntersectionObserver' in window){
+    var links={};Array.prototype.forEach.call(arc.querySelectorAll('a'),function(a){links[a.getAttribute('href').slice(1)]=a});
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){if(e.isIntersecting){Object.keys(links).forEach(function(k){links[k].classList.toggle('current',k===e.target.id)})}});
+    },{rootMargin:'-20% 0px -70% 0px'});
+    sections.forEach(function(s){io.observe(s)});
+  }
+
+  // ── paste-back ──
+  document.getElementById('buildSummary').addEventListener('click',function(){
+    var lines=['Development lifecycle — re-evaluation (shape rulings) — '+new Date().toISOString().slice(0,10),''];
+    sections.forEach(function(s,i){
+      var qs=Array.prototype.slice.call(s.querySelectorAll('.ask[data-q]'));
+      lines.push((s.classList.contains('standing')?'':(i+1)+' · ')+s.getAttribute('data-title'));
+      qs.forEach(function(a){
+        var q=a.getAttribute('data-q');var h=a.querySelector('h3').textContent.trim();
+        var ans=state['a-'+q];var label=ans?CHOICES.filter(function(c){return c[0]===ans})[0][1]:'no answer';
+        lines.push('  ['+(ans?'x':' ')+'] Q'+q+' — '+h);
+        lines.push('      -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''));
+      });
+      lines.push('');
+    });
+    var out=document.getElementById('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
+  });
+})();
+</script>

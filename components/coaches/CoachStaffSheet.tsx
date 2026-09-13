@@ -620,7 +620,6 @@ export default function CoachStaffSheet({
       <div key={c.key} className={reason ? `${css.item} ${css.itemLocked}` : css.item}>
         <span className={css.itemLabel} id={labelId}>
           {c.label}
-          {c.sensitive && <span className={css.asksFirst}>asks first</span>}
         </span>
         <span className={css.itemControl}>{control}</span>
         <span className={css.itemHint}>
@@ -640,7 +639,7 @@ export default function CoachStaffSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`${shared.modal} ${shared.modalFlushFooter} ${css.sheet}`}
+        className={`${shared.modal} ${shared.modalFlushFooter} ${shared.modalScrollBody} ${css.sheet}`}
         onClick={e => e.stopPropagation()}
       >
         <CoachModalHeader title={title} subtitle={subtitle} onClose={closeUnlessBusy} closeAriaLabel="Close">
@@ -651,7 +650,7 @@ export default function CoachStaffSheet({
           </span>
         </CoachModalHeader>
 
-        <div className={shared.formBody}>
+        <div className={`${shared.formBody} ${shared.scrollPane}`}>
           {isNew && (
             <div className={shared.field}>
               <label className={shared.label} htmlFor={`${uid}-email`}>Their email</label>

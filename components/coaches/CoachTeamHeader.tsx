@@ -183,20 +183,18 @@ function CoachTeamHeaderInner({
    */
   const seasonFinished = !liveSeason && !!closedSeason;
   const year = season?.programYearYear ?? null;
-  // Page-header ruling 2026-08-11: the masthead owns the season AND the role, so no page
-  // subtitle ever restates either. Both resolve HERE, client-side, for the season on screen.
-  //  · Season text: an org's NAMED season ("Fall Ball 2026", "2026 Season") renders verbatim
-  //    (team-name prefix stripped — the stutter the old year-only rule guarded against); a
-  //    bare-year name keeps the classic "{year} season". This supersedes the "never
-  //    programYearName" half of the meta-line rule in the docblock above.
-  //  · Role: read off the RESOLVED season (CoachSeasonOption carries coachRole beside
-  //    capabilities, for the same per-season reason) — never a second search of the
-  //    assignment arrays, which is how a mid-rollover team gets described wrong. Falls back
-  //    to the team's assignment only while the season is still resolving.
-  const seasonRole = season?.coachRole ?? (live ?? closed)?.coachRole ?? null;
-  const roleLabel = seasonRole
-    ? (seasonRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach')
-    : null;
+  // Page-header ruling 2026-08-11: the masthead owns the season, so no page subtitle ever
+  // restates it. Resolves HERE, client-side, for the season on screen. An org's NAMED season
+  // ("Fall Ball 2026", "2026 Season") renders verbatim (team-name prefix stripped — the stutter
+  // the old year-only rule guarded against); a bare-year name keeps the classic "{year} season".
+  // This supersedes the "never programYearName" half of the meta-line rule in the docblock above.
+  //
+  // Role badge removed 2026-09-11 (owner ruling): it only ever showed the binary permission
+  // tier (Head Coach / Assistant Coach), never the staff title (Treasurer, Manager, Helper) a
+  // coach is actually invited as, which read as flatly wrong for anyone but a plain assistant.
+  // A person already knows what they were invited as on a given team; what they need on screen
+  // is what they can DO here, which the nav and page controls already show by simply not
+  // rendering what a role can't reach.
   const seasonText = mastheadSeasonLabel(season?.programYearName, teamName, year);
   // The record OF THE SEASON ON SCREEN — an archive gets its own frozen final tally, never the
   // live season's. Absent from the map means no decided game yet, which renders as nothing: a
@@ -242,9 +240,6 @@ function CoachTeamHeaderInner({
         <div className={styles.teamHeaderLeft}>
           <span className={styles.teamHeaderNameRow}>
             <span className={styles.teamHeaderName}>{teamName}</span>
-            {/* Who you are here — identity, so it rides the identity bar on every page
-                (2026-08-11; previously the Overview subtitle). Folds on the collapsed bar. */}
-            {roleLabel && <span className={styles.teamHeaderRole}>{roleLabel}</span>}
           </span>
           <div className={styles.teamHeaderMeta}>
             {/* The club, FIRST segment of the meta line (2026-08-18, direction B — it used to be

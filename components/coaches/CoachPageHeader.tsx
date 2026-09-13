@@ -24,7 +24,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * whose page header is already on screen — actions only), and `nested` (a hub tab that has
  * drilled into ONE record — the same slots at h2, no "?").
  *
- * - NO SUBTITLE SLOT EXISTS. The masthead above owns season + role; live facts live in the
+ * - NO SUBTITLE SLOT EXISTS. The masthead above owns the season; live facts live in the
  *   body they describe; required framing lines live in the card they frame. A page that wants
  *   a line under its title is a page trying to re-litigate the ruling.
  * - The help "?" is chrome, not an action: its own slot, always LAST, top-right at every width.
