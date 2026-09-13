@@ -2353,22 +2353,6 @@
       "reason": null,
       "detail": "37px tall (floor 44)"
     },
-    "coach-depth-chart|361|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·Redo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·Undo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
     "coach-depth-chart|390|tap-floor|a·Edit in Settings →": {
       "reason": null,
       "detail": "19px tall (floor 44)"
@@ -2376,22 +2360,6 @@
     "coach-depth-chart|390|tap-floor|a·Prepare a game lineup →": {
       "reason": null,
       "detail": "37px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Redo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Undo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
     },
     "coach-depth-chart|768|contrast|button·Avery A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255": {
       "reason": null,
@@ -2443,19 +2411,19 @@
     },
     "coach-depth-chart|768|tap-floor|a·Avery Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Blake Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Casey Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Devon Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Edit in Settings →": {
       "reason": null,
@@ -2463,35 +2431,35 @@
     },
     "coach-depth-chart|768|tap-floor|a·Emerson Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Frankie Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Gray Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Harper Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Indigo Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Jules Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Kai Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Logan Test": {
       "reason": null,
-      "detail": "16px tall (floor 44)"
+      "detail": "17px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|a·Prepare a game lineup →": {
       "reason": null,
@@ -2501,325 +2469,37 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Avery at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Avery pitching: not a pitcher. Tap to ch": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Blake A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Blake pitching: not a pitcher. Tap to ch": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Casey A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Casey at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Casey pitching: not a pitcher. Tap to ch": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Depth chart": {
       "reason": null,
-      "detail": "29px tall (floor 44)"
+      "detail": "30px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Devon A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Devon at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Devon pitching: not a pitcher. Tap to ch": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Emerson A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Emerson pitching: not a pitcher. Tap to ": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Frankie A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Frankie at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Frankie pitching: not a pitcher. Tap to ": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Gray A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Gray at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Gray pitching: not a pitcher. Tap to cha": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Harper A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Harper pitching: not a pitcher. Tap to c": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Help: Roster": {
       "reason": null,
@@ -2829,171 +2509,19 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Indigo at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Indigo pitching: not a pitcher. Tap to c": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Jules A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Jules pitching: not a pitcher. Tap to ch": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Kai A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Kai at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Kai pitching: not a pitcher. Tap to chan": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·List": {
       "reason": null,
-      "detail": "29px tall (floor 44)"
+      "detail": "30px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Logan A-squad: no. Tap to add.": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at 1B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at 2B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at 3B: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at C: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at CF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at LF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at RF: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan at SS: not set. Tap to change.": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Logan pitching: not a pitcher. Tap to ch": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Redo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|768|tap-floor|button·Undo": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
@@ -4264,6 +3792,18 @@
     "coach-development-session|768|control-width|button·Remove Emerson's reading": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "24px wide (floor 44) — icon-only control"
+    },
+    "coach-depth-chart|768|control-width|button·Help: Roster": {
+      "reason": null,
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-depth-chart|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-depth-chart|768|tap-floor|button·A-squad": {
+      "reason": "DEFERRED, not accepted — SHARED HELP CHROME. This is the portal-wide HelpTooltip \"?\" trigger (components/help/HelpTooltip.tsx), placed on the A-squad column header by the depth-chart three-states change (2026-09-12) so the star explains itself on tap rather than in a hover title. Its size is the shared component's, identical to the Positions picker's \"?\" on the player page and every other tooltip trigger in the portal, and it must be raised in the component, not one screen at a time. The board's OWN controls in this band (field cells, rank dropdown, cap input, Undo/Redo) were raised to 44px in the same change.",
+      "detail": "16px tall (floor 44)"
     }
   }
 }
