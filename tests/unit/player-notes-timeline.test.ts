@@ -61,7 +61,7 @@ describe('buildPlayerNotesTimeline', () => {
     assert.equal(by['note:n1'].about, 'Note · First-step quickness');
     assert.equal(by['note:n1'].aboutHref, `${playerBase}?tab=skills&section=development&view=goals`);
     assert.equal(by['note:n2'].about, 'Note · vs Milton');
-    assert.equal(by['note:n2'].aboutHref, `${teamBase}/schedule`);
+    assert.equal(by['note:n2'].aboutHref, `${teamBase}/schedule?event=E1`);
     assert.equal(by['note:n3'].about, 'Note');
     assert.equal(by['note:n3'].aboutHref, null);
     assert.equal(by['moment:m1'].about, 'Game · vs Milton');

@@ -5239,14 +5239,6 @@ a.oneChip:hover { border-color: currentColor; }
   gap: 0.85rem;
 }
 .playerGlanceChips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
-.playerGlanceJersey {
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-support); font-weight: 700;
-  color: var(--text-secondary);
-  background: var(--white-8);
-  border-radius: 6px;
-  padding: 0.12rem 0.45rem;
-}
 /* Quiet identity chips — positions, A-squad, pitcher rank, age. These are facts, not warnings,
    so they take the neutral fill; the portal reserves colour for state that needs acting on. */
 .chipQuiet {
@@ -5462,7 +5454,14 @@ a.oneChip:hover { border-color: currentColor; }
   white-space: nowrap;
   padding-top: 0.15rem;
 }
-.noteMain { min-width: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+/* ⚠ THE CHIP AND THE WORDS ARE TWO LINES, NOT ONE (owner call, 2026-09-13). They used to run
+   inline — a short note sat right beside the source chip and read fine, but a longer one wrapped
+   under and around the chip, which reads as jumbled rather than as "here's the source, here's
+   what was written". `.noteMainHead` is its own block so the chip always leads on its own line;
+   the words start fresh on the next regardless of length. */
+.noteMain { display: block; min-width: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.noteMainHead { display: block; }
+.noteBody { display: block; }
 .noteAbout {
   display: inline-block;
   font-family: var(--font-data);
@@ -5619,14 +5618,20 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    ⚠⚠ RENAMED FROM `.statStrip` ON 2026-09-01 (cleanup tranche 6), and the rename is the bug fix.
    Two unrelated families both declared `.statStrip` at the top level, ~3,500 lines apart: the
    inline text strip up at the snapshot tiles (`.statStripItem` / `.statStripDot`, one caller —
-   Tryouts history) and this box row (`.statBox`, two callers on the player profile). Whichever
+   Tryouts history) and this box row (`.statBox`, three callers on the player profile — Attendance,
+   Playing time and Dues). Whichever
    came LAST won for every caller of both, so the text strip silently lost its baseline alignment,
    its 0.35rem/0.85rem gap and its 1.25rem bottom margin to this rule's flat 0.75rem gap. Neither
    file was wrong; the collision was invisible in both. The name now says which family it is, and
    `.statBox` is the child that proves it. */
+/* Grid, not flex (owner call, 2026-09-13): a flex row left-packs its boxes and leaves the rest of
+   the card empty whenever a section has few of them (Dues shows as few as 3, Attendance always 5).
+   `auto-fit` collapses the empty tracks so the boxes that exist stretch to fill the row — the same
+   full-width spread the glance card's four tiles use — while still wrapping normally once a row
+   can't fit the minimum width, so it still behaves on a phone with no separate breakpoint rule. */
 .statBoxRow {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -5634,7 +5639,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  min-width: 88px;
   padding: 0.65rem 0.85rem;
   background: var(--white-5);
   border: 1px solid var(--border-2);

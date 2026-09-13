@@ -643,27 +643,6 @@ export default function PlayerDevelopmentSection({
   return (
     <>
       {/* No title of its own: the profile page's collapse summary carries "Development" now. */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          {savedFlash && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--logic-lime)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <Check size={12} /> Saved
-              {lastCreated && (
-                <button type="button" className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem' }} onClick={undoLastCreate}>
-                  Undo
-                </button>
-              )}
-            </span>
-          )}
-          {data.showMeasurables && (
-            <Link href={metricsHref} className={`btn btn-ghost ${styles.devSectionAction}`}
-              style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Settings2 size={13} /> Metrics
-            </Link>
-          )}
-        </div>
-      </div>
-
       {error && <p className={styles.errorText} role="alert">{error}</p>}
 
       {/* ── Returning player? (3C — UNCHANGED, above the views) ── */}
@@ -715,15 +694,42 @@ export default function PlayerDevelopmentSection({
         </div>
       )}
 
-      {/* ── The four views — ONE segmented control (F14: inside the section, never a fourth tab) ── */}
-      <div className={styles.segChoice} role="group" aria-label="Development views" style={{ marginBottom: '0.8rem', maxWidth: '100%', flexWrap: 'wrap' }}>
-        {views.map(v => (
-          <button key={v.id} type="button" aria-pressed={activeView === v.id}
-            className={`${styles.segBtn} ${styles.tapFloor}${activeView === v.id ? ' ' + styles.segBtnActive : ''}`}
-            onClick={() => chooseView(v.id)}>
-            {v.label}
-          </button>
-        ))}
+      {/* ── The views (F14: inside the section, never a fourth tab) share ONE toolbar row with
+          Metrics/Saved — the view switch leads the row and the actions pin right, the same
+          shape as Roster's List/Depth-chart toggle (owner ruling 2026-09-13, hub R2-4, §3.9) —
+          rather than the switch getting a stacked row of its own beneath an otherwise-empty one.
+          ⚠ NOT `.listToolbarView`: that modifier locks its pills into ONE non-wrapping row
+          (built for Roster's two-item toggle) — this switch carries up to four, which ran off
+          the right edge on a phone with no way to reach the last one (check:layout caught it).
+          Plain `.segChoice` with its own wrap stays free to drop onto a second line instead. */}
+      <div className={styles.listToolbar}>
+        <div className={styles.segChoice} role="group" aria-label="Development views" style={{ maxWidth: '100%', flexWrap: 'wrap' }}>
+          {views.map(v => (
+            <button key={v.id} type="button" aria-pressed={activeView === v.id}
+              className={`${styles.segBtn} ${styles.tapFloor}${activeView === v.id ? ' ' + styles.segBtnActive : ''}`}
+              onClick={() => chooseView(v.id)}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+        <span className={styles.listToolbarEnd}>
+          {savedFlash && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--logic-lime)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <Check size={12} /> Saved
+              {lastCreated && (
+                <button type="button" className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem' }} onClick={undoLastCreate}>
+                  Undo
+                </button>
+              )}
+            </span>
+          )}
+          {data.showMeasurables && (
+            <Link href={metricsHref} className={`btn btn-ghost ${styles.devSectionAction}`}
+              style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Settings2 size={13} /> Metrics
+            </Link>
+          )}
+        </span>
       </div>
 
       {/* ══ GOALS ══ */}

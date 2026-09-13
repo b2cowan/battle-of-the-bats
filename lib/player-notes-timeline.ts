@@ -83,7 +83,9 @@ export function buildPlayerNotesTimeline(input: {
       key: `note:${n.id}`, source: 'note', id: n.id, on: n.notedOn, createdAt: n.createdAt,
       body: n.body, qualifier: null,
       about: goal ? chip('Note', goal.focusArea) : chip('Note', evName(ev)),
-      aboutHref: goal ? skillsHref('goals') : ev ? `${input.teamBase}/schedule` : null,
+      // The schedule's own deep-link param (every other jump-to-a-game link in the portal uses
+      // it) opens straight into that game/practice's detail rather than landing on the bare list.
+      aboutHref: goal ? skillsHref('goals') : ev ? `${input.teamBase}/schedule?event=${ev.id}` : null,
       authorId: n.createdBy, editable: true,
     });
   }
@@ -95,7 +97,7 @@ export function buildPlayerNotesTimeline(input: {
       // and month key, so the wrong day would file a bench line under the wrong night.
       on: orgDayKey(m.happenedAt), createdAt: m.createdAt,
       body: m.body, qualifier: null,
-      about: chip('Game', evName(eventById.get(m.eventId))), aboutHref: `${input.teamBase}/schedule`,
+      about: chip('Game', evName(eventById.get(m.eventId))), aboutHref: `${input.teamBase}/schedule?event=${m.eventId}`,
       authorId: m.createdBy, editable: false,
     });
   }

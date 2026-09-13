@@ -427,10 +427,13 @@ export default function PlayerDetailPage({
   return (
     <div className={styles.page}>
       <UnsavedChangesGuard active={isDirty} />
-      {/* Header (page-header ruling 2026-08-11): the player's name, nothing under the title —
-          jersey number and age are live facts, so they lead the glance card one line down.
-          The way back is the ARROW in this header's leading corner (amendment 2026-08-26); the
-          trailing slot holds the Switch player dropdown (2026-09-13). */}
+      {/* Header (page-header ruling 2026-08-11): the player's name, nothing under the title — age
+          is a live fact, so it leads the glance card one line down. The jersey number chip that
+          used to sit beside it was dropped (owner call, 2026-09-13): it read as an orphaned badge
+          floating alone whenever a player carried no other chip, and it is not lost — the Details
+          tab's record row still names it. The way back is the ARROW in this header's leading
+          corner (amendment 2026-08-26); the trailing slot holds the Switch player dropdown
+          (2026-09-13). */}
       <CoachPageHeader
         icon={Users}
         title={fullName}
@@ -448,7 +451,6 @@ export default function PlayerDetailPage({
           {player.status !== 'active' && (
             <span className={`${styles.badge} ${styles.badgeDraft}`}>Off the roster</span>
           )}
-          {player.playerNumber && <span className={styles.playerGlanceJersey}>#{cleanNamePart(player.playerNumber)}</span>}
           {/* The pitching chip reads the way the editor names it — "Ace", "P2" (hub F05) — with
               the innings cap when one is set: the whole stored profile, in the form's words. */}
           {player.lineupProfile?.pitcher && (

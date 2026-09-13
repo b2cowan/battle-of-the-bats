@@ -250,11 +250,17 @@ export default function PlayerNotesTab({
                     <li key={e.key} className={styles.noteRow}>
                       <span className={styles.noteDate}>{formatShortDate(e.on)}</span>
                       <span className={styles.noteMain}>
-                        {e.aboutHref
-                          ? <Link href={e.aboutHref} className={`${styles.noteAbout}${e.source === 'moment' ? ` ${styles.noteAboutGame}` : ''}`}>{e.about}</Link>
-                          : <span className={styles.noteAbout}>{e.about}</span>}
-                        {e.qualifier && <span className={styles.noteQualifier}>{e.qualifier}{e.body ? ' — ' : ''}</span>}
-                        {e.body}
+                        <span className={styles.noteMainHead}>
+                          {e.aboutHref
+                            ? <Link href={e.aboutHref} className={`${styles.noteAbout}${e.source === 'moment' ? ` ${styles.noteAboutGame}` : ''}`}>{e.about}</Link>
+                            : <span className={styles.noteAbout}>{e.about}</span>}
+                        </span>
+                        {(e.qualifier || e.body) && (
+                          <span className={styles.noteBody}>
+                            {e.qualifier && <span className={styles.noteQualifier}>{e.qualifier}{e.body ? ' — ' : ''}</span>}
+                            {e.body}
+                          </span>
+                        )}
                       </span>
                       <span className={styles.noteSide}>
                         {authorName(e.authorId)}
