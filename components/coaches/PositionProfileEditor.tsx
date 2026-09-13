@@ -1,24 +1,27 @@
 'use client';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import HelpTooltip from '@/components/help/HelpTooltip';
+import { positionStateOf, cyclePositionState, type PositionState } from '@/lib/lineup-profile';
 
-// Best / Okay / Never position picker for the Lineup Intelligence player profile (P1).
-// Replaces the old Primary/Secondary dropdowns with a single, richer control:
-//   • Tap a position chip to cycle it: (unset) → Best → Okay → Never → (unset).
+// Best / Never position picker for the Lineup Intelligence player profile (P1; three states since
+// the owner's 2026-09-12 ruling). Replaces the old Primary/Secondary dropdowns with one control:
+//   • Tap a position chip to cycle it: (blank) → Best → Never → (blank).
 //   • "Best" is RANKED — the order chips are added is the priority; reorder with the arrows.
 //   • "Never" is a HARD block the lineup auto-fill will never assign.
-// The parent owns the value ({best, okay, never}); this component is presentational + stateless.
+//   • Blank means "fine anywhere they're not Never" — it is NOT a fourth rating. The old "Okay"
+//     state sat between blank and Best, was defined in this legend with the same words as blank,
+//     and only did anything in Competitive mode; a fill-in spot is now a low-ranked Best.
+// The parent owns the value ({best, never}); this component is presentational + stateless.
 //
 // Warm-theme note: this component is 100% inline-styled, so no CSS override can reach it.
 // Colours use the role-based `var(--home-X, <exact-dark-literal>)` / `rgba(var(--home-X-rgb,
 // <dark-rgb>), a)` pattern — the --home-* tokens are undefined outside the warm coach gate, so
 // dark falls back to the original literal (byte-identical) and warms on cream under the gate.
 
-export type PositionState = 'best' | 'okay' | 'never' | 'neutral';
+export type { PositionState };
 
 export interface PositionProfileValue {
   best: string[];   // ordered = priority (rank 1 first)
-  okay: string[];
   never: string[];
 }
 
@@ -30,63 +33,37 @@ interface Props {
   disabled?: boolean;
 }
 
-const NEXT_STATE: Record<PositionState, PositionState> = {
-  neutral: 'best',
-  best: 'okay',
-  okay: 'never',
-  never: 'neutral',
-};
-
 const CHIP_STYLE: Record<PositionState, React.CSSProperties> = {
   best:    { background: 'rgba(var(--home-olive-rgb, 132,204,22),0.16)', borderColor: 'rgba(var(--home-olive-rgb, 132,204,22),0.55)', color: 'var(--home-olive, #bef264)' },
-  okay:    { background: 'rgba(var(--home-blue-rgb, 96,165,250),0.14)', borderColor: 'rgba(var(--home-blue-rgb, 96,165,250),0.45)', color: 'var(--home-blue, #93c5fd)' },
   never:   { background: 'rgba(var(--home-live-rgb, 248,113,113),0.14)', borderColor: 'rgba(var(--home-live-rgb, 248,113,113),0.5)', color: 'var(--home-live, #fca5a5)', textDecoration: 'line-through' },
   neutral: { background: 'rgba(var(--home-line-rgb, 255,255,255),0.04)', borderColor: 'rgba(var(--home-line-rgb, 255,255,255),0.14)', color: 'var(--home-dim, rgba(255,255,255,0.6))' },
 };
 
 const STATE_WORD: Record<Exclude<PositionState, 'neutral'>, string> = {
-  best: 'Best', okay: 'Okay', never: 'Never',
+  best: 'Best', never: 'Never',
 };
 
 export default function PositionProfileEditor({ positions, value, onChange, labelFor, disabled }: Props) {
-  const { best, okay, never } = value;
+  const { best, never } = value;
 
-  const stateOf = (code: string): PositionState => {
-    if (best.includes(code)) return 'best';
-    if (okay.includes(code)) return 'okay';
-    if (never.includes(code)) return 'never';
-    return 'neutral';
-  };
+  const stateOf = (code: string): PositionState => positionStateOf(value, code);
 
-  const setState = (code: string, target: PositionState) => {
-    // Remove from every bucket, then add to the target (neutral = removed everywhere).
-    const next: PositionProfileValue = {
-      best: best.filter(c => c !== code),
-      okay: okay.filter(c => c !== code),
-      never: never.filter(c => c !== code),
-    };
-    if (target === 'best') next.best = [...next.best, code];
-    else if (target === 'okay') next.okay = [...next.okay, code];
-    else if (target === 'never') next.never = [...next.never, code];
-    onChange(next);
-  };
-
-  const cycle = (code: string) => { if (!disabled) setState(code, NEXT_STATE[stateOf(code)]); };
+  const cycle = (code: string) => { if (!disabled) onChange(cyclePositionState(value, code)); };
 
   const moveBest = (idx: number, dir: -1 | 1) => {
     const j = idx + dir;
     if (disabled || j < 0 || j >= best.length) return;
     const reordered = [...best];
     [reordered[idx], reordered[j]] = [reordered[j], reordered[idx]];
-    onChange({ best: reordered, okay, never });
+    onChange({ best: reordered, never });
   };
 
   const label = (code: string) => (labelFor ? labelFor(code) : code);
 
   // Show a chip for every offered position, plus any value already set that isn't offered
   // (e.g. a legacy OF/DH or a custom entry) so nothing becomes an un-editable ghost. Extras
-  // vanish once cycled back to Not set, so the list self-cleans down to the offered positions.
-  const extras = Array.from(new Set([...best, ...okay, ...never].filter(c => !positions.includes(c))));
+  // vanish once cycled back to blank, so the list self-cleans down to the offered positions.
+  const extras = Array.from(new Set([...best, ...never].filter(c => !positions.includes(c))));
   const allChips = [...positions, ...extras];
 
   if (!allChips.length) {
@@ -97,10 +74,9 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
     <div>
       {/* Legend */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 10, fontSize: 12, color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>
-        <LegendDot state="best" text="Best (tap to rank)" />
-        <LegendDot state="okay" text="Okay — fill in if needed" />
-        <LegendDot state="never" text="Never — hard block" />
-        <LegendDot state="neutral" text="Not set — only if needed" />
+        <LegendDot state="best" text="Best — tap to rank; used first" />
+        <LegendDot state="never" text="Never — a hard block, in every mode" />
+        <LegendDot state="neutral" text="Blank — fine anywhere they’re not Never" />
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           Tap a position to cycle
           <HelpTooltip
@@ -111,11 +87,10 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
                 <p style={{ margin: '0 0 8px' }}>Where the game-day <strong>Auto-fill</strong> will play this player:</p>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <HelpStateRow state="best" label="Best" desc="go-to spots, in your rank order — used first" />
-                  <HelpStateRow state="okay" label="Okay" desc="a fine fill-in when Best spots are taken" />
-                  <HelpStateRow state="never" label="Never" desc="a hard block — never placed here" />
-                  <HelpStateRow state="neutral" label="Not set" desc="allowed, not preferred — used only to round out the field" />
+                  <HelpStateRow state="never" label="Never" desc="a hard block — never placed here, in any mode" />
+                  <HelpStateRow state="neutral" label="Blank" desc="fine — anywhere they’re not Never" />
                 </ul>
-                <p style={{ margin: '9px 0 0', color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>Bench time rotates evenly (no back-to-back sits). You can edit the lineup before the game.</p>
+                <p style={{ margin: '9px 0 0', color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>Auto-fill never places a player at a Never. Best ranks matter most in Competitive games; Balanced rotates anyone rated Best; Development rotates everyone. Bench time rotates evenly. You can edit the lineup before the game.</p>
               </div>
             }
           />
@@ -133,7 +108,7 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
               type="button"
               onClick={() => cycle(code)}
               disabled={disabled}
-              aria-label={`${label(code)}: ${st === 'neutral' ? 'not set' : STATE_WORD[st]}. Tap to change.`}
+              aria-label={`${label(code)}: ${st === 'neutral' ? 'blank — fine' : STATE_WORD[st]}. Tap to change.`}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '6px 12px', borderRadius: 999, border: '1px solid',

@@ -588,7 +588,7 @@ export default function CoachGameConsolePage({
       players: players.map(p => {
         const prefs = playerPositionPrefs(p, sportPack.pitcherPosition);
         return {
-          playerId: p.id, preferred: prefs.preferred, canPlay: prefs.canPlay, never: prefs.never,
+          playerId: p.id, preferred: prefs.preferred, never: prefs.never,
           pitcher: p.lineupProfile?.pitcher ?? null, aSquad: p.lineupProfile?.aSquad ?? false,
           inningPositions: {},
         };

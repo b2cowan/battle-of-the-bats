@@ -57,7 +57,7 @@ const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
 interface AddForm {
   playerFirstName: string; playerLastName: string;
   playerDateOfBirth: string; playerNumber: string;
-  // One position on this form — see the "Best Position" field. Further ranks, Okay/Never,
+  // One position on this form — see the "Best Position" field. Further ranks, Never,
   // pitching and A-squad are set on the player's profile.
   primaryPosition: string;
   guardianFirstName: string; guardianLastName: string;
@@ -902,7 +902,7 @@ export default function RosterPage({
               </div>
               {/* ONE position at add-time — the player's first "Best" pick. It's the same setting
                   the profile's tap-to-rank grid edits, which is the better place to add further
-                  choices, Okay/Never, pitching and A-squad. Two dropdowns here gave one setting two
+                  choices, Never, pitching and A-squad. Two dropdowns here gave one setting two
                   vocabularies (readiness review f1-5); owner call 2026-07-28 to drop the second. */}
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-primary-position">Best Position</label>

@@ -337,7 +337,7 @@ export default function LineupEditor(props: LineupEditorProps) {
       players: fielders.map(r => {
         const prefs = playerPositionPrefs(r.player, sportPack.pitcherPosition);
         return {
-          playerId: r.player.id, preferred: prefs.preferred, canPlay: prefs.canPlay, never: prefs.never,
+          playerId: r.player.id, preferred: prefs.preferred, never: prefs.never,
           pitcher: r.player.lineupProfile?.pitcher ?? null, aSquad: r.player.lineupProfile?.aSquad ?? false,
           inningPositions: r.inningPositions,
         };
@@ -488,9 +488,12 @@ export default function LineupEditor(props: LineupEditorProps) {
                   <label className={styles.lineupControlLabel}>
                     <span>Mode</span>
                     <select className={styles.select} value={autoPolicy} onChange={e => setAutoPolicy(e.target.value as PositionPolicy)}>
-                      <option value="competitive">Competitive — best on the field</option>
-                      <option value="balanced">Balanced — preferred spots, rotate</option>
-                      <option value="development">Development — rotate everyone</option>
+                      {/* Each label says what the mode does with the depth chart's ratings (owner,
+                          2026-09-12): the old "preferred spots, rotate" implied Balanced read the
+                          Best RANK, and it never has — it rotates evenly among anyone rated Best. */}
+                      <option value="competitive">Competitive — Best spots first, in your rank order</option>
+                      <option value="balanced">Balanced — anyone rated Best, rotated evenly</option>
+                      <option value="development">Development — everyone rotates; only Never is honoured</option>
                     </select>
                   </label>
                   {autoPolicy === 'competitive' && (

@@ -6,13 +6,15 @@
    reflows to a per-player accordion. */
 
 .wrap {
-  /* Best/Okay/Never chip tints — identical hexes to PositionProfileEditor so the two surfaces match.
+  /* Best/Never chip tints — identical hexes to PositionProfileEditor so the two surfaces match.
      Pinned design-audited palette (2026-07-02); kept as-is in the P3 token judgment tranche —
-     TH-5 warm variant is ratified separately, not a token-swap candidate here.
+     TH-5 warm variant is ratified separately, not a token-swap candidate here. The former Okay
+     tint (blue) left with the fourth state (2026-09-12); the blue survives only as --link-fg, the
+     colour of the two links on this board and the cap figure.
      ⚠ The warm portal remaps ALL of these locals at the foot of this file — keep the two lists in
      sync: a new local token added here needs a matching warm line there, or it falls through dark. */
   --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264; /* token-exempt: pinned to match PositionProfileEditor palette */
-  --okay-bg: rgba(96, 165, 250, 0.14); --okay-bd: rgba(96, 165, 250, 0.45); --okay-fg: #93c5fd; /* token-exempt: pinned to match PositionProfileEditor palette */
+  --link-fg: #93c5fd; /* token-exempt: the dark board's link blue (was the Okay foreground) */
   --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5; /* token-exempt: pinned to match PositionProfileEditor palette */
   --ink: rgba(231, 237, 246, 0.95); --ink-70: rgba(231, 237, 246, 0.72); --ink-45: rgba(231, 237, 246, 0.45);
   --line: rgba(var(--blueprint-blue-rgb), 0.28); /* coach card border */
@@ -29,7 +31,7 @@
 }
 .capsBar b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 .dot { color: var(--ink-45); }
-.editlink { margin-left: auto; color: var(--okay-fg); font-weight: 600; font-size: var(--type-support); text-decoration: none; white-space: nowrap; }
+.editlink { margin-left: auto; color: var(--link-fg); font-weight: 600; font-size: var(--type-support); text-decoration: none; white-space: nowrap; }
 .editlink:hover { text-decoration: underline; }
 .capsNone { color: var(--ink-45); font-style: italic; }
 
@@ -51,9 +53,9 @@
 .swatch { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 14px; height: 14px; border-radius: 5px; border: 1px solid; }
 .swB { background: var(--best-bg); border-color: var(--best-bd); }
-.swO { background: var(--okay-bg); border-color: var(--okay-bd); }
 .swN { background: var(--never-bg); border-color: var(--never-bd); }
-.swX { background: var(--home-card, rgba(255, 255, 255, 0.04)); border-color: var(--line-soft); }
+/* ⚠ LADDER-EXEMPT: an ICON (the A-squad star, at legend size), not type. */
+.legendStar { color: var(--gold); font-size: 1rem; line-height: 1; margin-right: 6px; }
 .tip { margin-left: auto; color: var(--ink-45); }
 
 /* ── desktop grid ── */
@@ -71,11 +73,12 @@
 }
 .colPitch { color: var(--best-fg); }
 .colASquad { color: var(--gold); }
+.colASquadInner { display: inline-flex; align-items: center; gap: 4px; }
 
 /* pinned identity cluster: Player + Pitcher + A-squad all sticky-left (solid, no zebra) */
 .cPlayer, .table td.cPlayer { position: sticky; left: 0; z-index: 2; min-width: 150px; width: 150px; text-align: left; padding: 0 12px; }
 .cPitch, .table td.cPitch { position: sticky; z-index: 2; min-width: 86px; width: 86px; }
-.cASquad, .table td.cASquad { position: sticky; z-index: 2; min-width: 64px; width: 64px; border-right: 1px solid var(--line); }
+.cASquad, .table td.cASquad { position: sticky; z-index: 2; min-width: 80px; width: 80px; border-right: 1px solid var(--line); } /* 80 (was 64): room for the header's "?" tooltip trigger */
 .table thead th.cPlayer, .table thead th.cPitch, .table thead th.cASquad { z-index: 4; }
 .table td.cPlayer, .table td.cPitch, .table td.cASquad { background: var(--panel); }
 .table td.cPlayer { border-right: 1px solid var(--line-soft); }
@@ -98,20 +101,31 @@
 .cellbtn:hover { border-color: var(--line); }
 .cellbtn:disabled { cursor: default; opacity: 0.5; } /* view-only cue (matches .iconBtn) */
 .cellbtn.b { background: var(--best-bg); border-color: var(--best-bd); color: var(--ink); } /* rank number WHITE */
-.cellbtn.o { background: var(--okay-bg); border-color: var(--okay-bd); color: var(--okay-fg); }
 .cellbtn.n { background: var(--never-bg); border-color: var(--never-bd); color: var(--never-fg); }
 
 .pitch { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; user-select: none; padding: 4px 0; }
+/* The pitcher rank is a <select> dressed as the chip — one tap to any rank or to "—" (not a
+   pitcher). The chevron is drawn inline so the chip keeps its pill shape on every browser. */
 .pchip {
   min-height: 34px; display: inline-flex; align-items: center; /* dense-grid touch target */
-  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--best-bd);
+  padding: 4px 26px 4px 12px; border-radius: 999px; border: 1px solid var(--best-bd);
   background: var(--best-bg); color: var(--best-fg); font-weight: 800; font-size: var(--type-support); cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23bef264'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
 }
-.pchip.off { border-color: var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.03)); color: var(--ink-45); font-weight: 700; }
+.pchip.off {
+  border-color: var(--line-soft); background-color: var(--home-card, rgba(255, 255, 255, 0.03)); color: var(--ink-45); font-weight: 700;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a9484'/%3E%3C/svg%3E");
+}
 .pchip:disabled { cursor: default; opacity: 0.5; }
+.pchip:focus { outline: none; border-color: var(--line); }
+.pchip option { color: initial; background: initial; } /* the native list, not the chip */
+.capUnit { display: inline-flex; align-items: center; gap: 4px; }
+.capUnit > span { font-size: var(--type-label); font-weight: 800; letter-spacing: 0.04em; color: var(--ink-45); }
 .capInput {
-  width: 54px; min-height: 30px; text-align: center; background: var(--home-card, rgba(255, 255, 255, 0.04)); border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm); color: var(--okay-fg); font-size: var(--type-label); font-weight: 600; padding: 3px 4px;
+  width: 48px; min-height: 30px; text-align: center; background: var(--home-card, rgba(255, 255, 255, 0.04)); border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm); color: var(--ink); font-size: var(--type-label); font-weight: 600; padding: 3px 4px;
   font-variant-numeric: tabular-nums;
 }
 .capInput::placeholder { color: var(--ink-45); font-weight: 400; }
@@ -132,7 +146,7 @@
 /* ── save bar ── */
 .saveBar { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 0 2px; }
 .iconBtn {
-  width: 40px; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line-soft);
+  width: 44px; height: 44px; border-radius: var(--radius-sm); /* 44 = the touch floor; was 40 */ border: 1px solid var(--line-soft);
   background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink-70); cursor: pointer; font-size: var(--type-heading);
   display: inline-flex; align-items: center; justify-content: center;
 }
@@ -146,11 +160,27 @@
 }
 .autofill:hover { border-color: var(--line); }
 
-.foot { margin-top: 12px; font-size: var(--type-support); color: var(--ink-45); padding: 0 4px; }
+.footNote {
+  margin: 12px 4px 0; padding: 8px 12px; font-size: var(--type-support); color: var(--ink-70); max-width: 78ch;
+  background: var(--home-card, rgba(255, 255, 255, 0.03)); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+}
+.footNote strong { color: var(--ink); }
+.foot { margin-top: 8px; font-size: var(--type-support); color: var(--ink-45); padding: 0 4px; }
 
 /* ── responsive: grid on desktop/tablet, accordion on phone ── */
 .desktopGrid { display: block; }
 .mobileAcc { display: none; }
+
+/* 641–768 (the tablet band): every control the finger lands on meets the 44px floor — the field
+   cells, the rank dropdown and the cap input (owner floor, rendered check). Cells were 36px here
+   from the board's first day; the dropdown and the cap grew with the three-states change
+   (2026-09-12) rather than inheriting the debt. A pitcher's row stacks two 44px controls, so it
+   runs taller than its neighbours in this band only. */
+@media (max-width: 768px) {
+  .cellbtn { height: 44px; }
+  .pchip { min-height: 44px; }
+  .capInput { min-height: 44px; }
+}
 
 @media (max-width: 640px) {
   .desktopGrid { display: none; }
@@ -199,14 +229,14 @@
 
 /* empty / read-only states */
 .empty { padding: 28px 18px; text-align: center; color: var(--ink-70); font-size: var(--type-body); }
-.empty a { color: var(--okay-fg); text-decoration: none; font-weight: 600; }
+.empty a { color: var(--link-fg); text-decoration: none; font-weight: 600; }
 .readOnlyNote { font-size: var(--type-support); color: var(--ink-45); margin: 10px 2px 0; }
 
 /* ── Warm portal — ratified depth-chart palette (TH-5 ③), gated ──────────────────
    The board defines its own near-white ink + pastel tri-tier palette for the DARK surface;
    on the warm cream ground that ink washes out. This remaps the board's LOCAL tokens to the
    ratified warm values — ink text on paper; Best = olive tint with the rank number in INK,
-   Okay = home-blue tint, Never = live-red tint. Additive + warm-gated, so the dark board
+   Never = live-red tint, links in home-blue. Additive + warm-gated, so the dark board
    (the pinned 2026-07-02 palette above) is byte-identical. Full Stage-4 fidelity pass (star,
    pitcher pills, mobile accordion) still reviews this against the round-2 frame. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wrap {
@@ -216,9 +246,7 @@
   --best-bg:    var(--home-olive-soft);
   --best-bd:    rgba(var(--home-olive-rgb), 0.45);
   --best-fg:    var(--home-ink);
-  --okay-bg:    rgba(var(--home-blue-rgb), 0.12);
-  --okay-bd:    rgba(var(--home-blue-rgb), 0.45);
-  --okay-fg:    var(--home-blue);
+  --link-fg:    var(--home-blue);
   --never-bg:   var(--home-live-soft);
   --never-bd:   rgba(var(--home-live-rgb), 0.5);
   --never-fg:   var(--home-live);
@@ -231,6 +259,15 @@
      (ratified TH-5 ④ warm A-squad star = gold-strong, no glow). */
   --gold:       var(--gold-strong);
 }
+/* The rank chip's chevron is a data-URI image, so it cannot read --best-fg: recolour it to the
+   warm ink / warm dim under the gate to match the chip text it sits beside. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pchip {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23241E15'/%3E%3C/svg%3E");
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pchip.off {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23615A54'/%3E%3C/svg%3E");
+}
+
 
 /* Ratified TH-5 ④: the warm A-squad star carries NO glow on white (the dark board keeps its
    gold glow). Drop the text-shadow on all three star glyphs under the warm gate. */

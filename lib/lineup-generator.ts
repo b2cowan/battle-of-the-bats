@@ -3,16 +3,22 @@
 // back-to-back sits when avoidable); ties are broken RANDOMLY so each "Generate" gives a
 // natural, non-repetitive rotation rather than the same rigid roster-order blocks.
 //
-// Each player carries position preferences (Lineup Intelligence, P1):
+// Each player carries position preferences (Lineup Intelligence, P1; three states since the
+// owner's 2026-09-12 ruling — see the depth-chart three-states plan):
 //   • never[]     — a HARD exclusion: the player is never auto-assigned these, in any mode.
 //   • preferred[] — ranked "Best" spots (rank 1 first); shapes who takes each position but
 //                   never overrides the fairness/bench guarantees above.
-//   • canPlay[]   — "Okay" fallback spots, below preferred.
+//   • (blank)     — every other position is FINE: eligible in every mode, chosen after anyone
+//                   who rates the spot Best (where the mode reads ratings at all).
+// What each mode does with those — and this is the whole reason the fourth "Okay" tier went:
+//   competitive → Best first, in rank order (the player for whom the spot ranks highest wins);
+//   balanced    → anyone rated Best, rotated evenly (rank ignored on purpose — "rotate" is the
+//                 point); development → everyone rotates, only Never is read.
 // If a position has no eligible player (e.g. everyone left has it in never[]) it is left BLANK
 // rather than aborting the inning — the analysis layer surfaces the hole to the coach.
 //
 // Pitching (P2): one sport position (GenerateOptions.pitcherPosition, e.g. 'P') is governed by a
-// separate pitcher depth chart, not the Best/Okay ratings. Among on-field players (fairness/bench
+// separate pitcher depth chart, not the Best/Never ratings. Among on-field players (fairness/bench
 // runs FIRST, unchanged) the mound goes to an eligible pitcher — under their per-game innings cap —
 // chosen by rank (competitive leads with the ace; balanced/development spread the load). A capped
 // pitcher is never pushed past their limit; if no under-cap pitcher is available the mound is left
@@ -40,11 +46,10 @@ export type FillMode = 'empty' | 'regenerate';
 
 export interface GeneratorPlayer {
   playerId: string;
-  preferred: string[]; // ordered "Best" positions (rank 1 first)
-  canPlay: string[];   // "Okay" positions (below preferred)
+  preferred: string[]; // ordered "Best" positions (rank 1 first); anything not listed here or in never[] is fine
   never: string[];     // hard exclusions — never auto-assigned here, any mode
   /** Pitcher depth-chart entry (P2). null = not a pitcher. rank: 1 = ace. maxInnings: per-game
-   *  arm-care cap; null = no cap. Governs the pitcherPosition slot, not the Best/Okay ratings. */
+   *  arm-care cap; null = no cap. Governs the pitcherPosition slot, not the Best/Never ratings. */
   pitcher: { rank: number; maxInnings: number | null } | null;
   aSquad: boolean; // P4: a gold-medal starter — protected from the bench in competitive mode
   inningPositions: Record<string, string>; // existing grid (honored when fillMode = 'empty')
@@ -52,7 +57,6 @@ export interface GeneratorPlayer {
 
 interface PrefMaps {
   prefRankOf: Map<string, Map<string, number>>; // playerId → (position → 0-based rank among Best)
-  canOf: Map<string, Set<string>>;              // playerId → Okay positions
   neverOf: Map<string, Set<string>>;            // playerId → hard-excluded positions
 }
 
@@ -60,7 +64,6 @@ interface PrefMaps {
  *  player's Best positions in order (contiguous — non-field entries are skipped, not counted). */
 function buildPrefMaps(players: GeneratorPlayer[], fieldSet: Set<string>): PrefMaps {
   const prefRankOf = new Map<string, Map<string, number>>();
-  const canOf = new Map<string, Set<string>>();
   const neverOf = new Map<string, Set<string>>();
   for (const p of players) {
     const ranks = new Map<string, number>();
@@ -69,10 +72,9 @@ function buildPrefMaps(players: GeneratorPlayer[], fieldSet: Set<string>): PrefM
       if (n && fieldSet.has(n) && !ranks.has(n)) ranks.set(n, ranks.size);
     }
     prefRankOf.set(p.playerId, ranks);
-    canOf.set(p.playerId, new Set((p.canPlay ?? []).map(norm).filter(x => fieldSet.has(x))));
     neverOf.set(p.playerId, new Set((p.never ?? []).map(norm)));
   }
-  return { prefRankOf, canOf, neverOf };
+  return { prefRankOf, neverOf };
 }
 
 export interface GenerateOptions {
@@ -128,7 +130,7 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   let lastBench = new Set<string>();
   const posPlays = new Map<string, Map<string, number>>(); // playerId → position → times played
 
-  const { prefRankOf, canOf, neverOf } = buildPrefMaps(players, fieldSet);
+  const { prefRankOf, neverOf } = buildPrefMaps(players, fieldSet);
   const bump = (id: string, pos: string) => {
     let m = posPlays.get(id);
     if (!m) { m = new Map(); posPlays.set(id, m); }
@@ -249,7 +251,25 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     // Assign open positions to the on-field players per policy. Shuffle the pool so a tied
     // choice (e.g. several players who all prefer the same spot) varies between runs.
     const unassigned = new Map(available.filter(p => !benched.has(p.playerId)).map(p => [p.playerId, p]));
-    for (const pos of openPositions) {
+    // Fill order (2026-09-12, with the three-states change): the mound first (a pitcher must never be
+    // spent on a field slot before the mound is filled), then every position somebody on the field
+    // rates Best, then the rest. Before this, positions filled in the sport's listed order, so a
+    // coach's one rated shortstop could be handed catcher — unrated, listed earlier — and "Best
+    // spots first" was only usually true. Stable within each tier; Development keeps the plain
+    // order because it reads no ratings.
+    // Development reads no ratings (see the header comment), so it skips this entirely rather than
+    // building an onField/tier pass it would only throw away. Tiers are computed once per position
+    // up front — not inside the sort comparator, which Array.sort would otherwise call on every
+    // comparison — since a position's tier depends only on itself, not on what it's compared against.
+    let fillOrder = openPositions;
+    if (policy !== 'development') {
+      const onField = [...unassigned.values()];
+      const ratedHere = (pos: string) => onField.some(p => prefRankOf.get(p.playerId)?.has(pos) && !neverOf.get(p.playerId)!.has(pos));
+      const tierOf = (pos: string) => (pos === pitcherPosition ? 0 : ratedHere(pos) ? 1 : 2);
+      const tierByPos = new Map(openPositions.map(pos => [pos, tierOf(pos)]));
+      fillOrder = [...openPositions].sort((a, b) => tierByPos.get(a)! - tierByPos.get(b)!);
+    }
+    for (const pos of fillOrder) {
       // Hard filters: 'never' positions, plus the P3 rotation cap (max innings at one non-mound
       // position). A player already at their cap for this spot is ineligible here this inning.
       const overRotationCap = (p: GeneratorPlayer) =>
@@ -271,7 +291,7 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
       } else {
         // Non-pitcher position, or a team with no pitcher depth chart set up yet (pre-P2 behavior:
         // the mound fills like any other position so auto-fill still works before pitching is used).
-        pick = pickForPosition(pos, eligible, policy, prefRankOf, canOf, playedCount);
+        pick = pickForPosition(pos, eligible, policy, prefRankOf, playedCount);
       }
       if (!pick) continue;
       result.get(pick.playerId)![key] = pos;
@@ -284,21 +304,20 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
 }
 
 /** Choose a player for one open position from an already-shuffled, never-filtered pool.
- *  competitive → the player for whom this is the highest-priority Best spot (tie: least played);
- *  balanced    → rotate among anyone who prefers OR can play it (else least played overall);
+ *  competitive → the player for whom this is the highest-priority Best spot (tie: A-squad, then
+ *                least played); nobody rates it → least played of the (fine) pool;
+ *  balanced    → rotate among anyone rated Best here (else least played overall);
  *  development → least played overall, ignoring preferences (maximizes variety). */
 function pickForPosition(
   pos: string,
   pool: GeneratorPlayer[],
   policy: PositionPolicy,
   prefRankOf: Map<string, Map<string, number>>,
-  canOf: Map<string, Set<string>>,
   playedCount: (id: string, pos: string) => number,
 ): GeneratorPlayer | undefined {
   if (policy === 'development') return leastPlayed(pool, pos, playedCount);
 
   const rankAt = (p: GeneratorPlayer) => prefRankOf.get(p.playerId)?.get(pos);
-  const canAt = (p: GeneratorPlayer) => canOf.get(p.playerId)?.has(pos) ?? false;
 
   if (policy === 'competitive') {
     const prefMatches = pool.filter(p => rankAt(p) !== undefined);
@@ -316,13 +335,11 @@ function pickForPosition(
       }
       return best;
     }
-    const canMatches = pool.filter(canAt);
-    if (canMatches.length) return leastPlayed(canMatches, pos, playedCount);
     return leastPlayed(pool, pos, playedCount);
   }
 
   // balanced
-  const matches = pool.filter(p => rankAt(p) !== undefined || canAt(p));
+  const matches = pool.filter(p => rankAt(p) !== undefined);
   return leastPlayed(matches.length ? matches : pool, pos, playedCount);
 }
 
@@ -368,11 +385,11 @@ function leastPlayed(
 function scoreLineup(assignment: Map<string, Record<string, string>>, opts: GenerateOptions): number {
   const { players, inningCount, policy, fieldPositions, pitcherPosition, minInningsPerPlayer = null, aSquadEmphasis = 'balanced_sits' } = opts;
   const fieldSet = new Set(fieldPositions);
-  const { prefRankOf, canOf } = buildPrefMaps(players, fieldSet);
+  const { prefRankOf } = buildPrefMaps(players, fieldSet);
 
   const benchCounts: number[] = [];
   let backToBack = 0;
-  let prefTop = 0, prefOther = 0, canHit = 0, offPref = 0;
+  let prefTop = 0, prefOther = 0;
   let varietyBonus = 0;
   let pitcherRankReward = 0;               // competitive: reward low-rank (ace) pitching
   const pitchersUsed = new Set<string>();  // balanced/development: reward spreading the mound
@@ -382,7 +399,6 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
   for (const p of players) {
     const grid = assignment.get(p.playerId) ?? {};
     const ranks = prefRankOf.get(p.playerId)!;
-    const can = canOf.get(p.playerId)!;
     let bench = 0, prevBench = false, onField = 0;
     const distinct = new Set<string>();
     for (let inn = 1; inn <= inningCount; inn++) {
@@ -398,11 +414,11 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
         if (policy === 'competitive') pitcherRankReward += Math.max(0.2, 2 - (p.pitcher.rank - 1) * 0.8);
         continue;
       }
+      // A blank (unrated) placement is neutral — "fine" carries no penalty; Best keeps its reward
+      // so preference still steers the candidate pick.
       const rank = ranks.get(pos);
       if (rank === 0) prefTop++;
       else if (rank !== undefined) prefOther++;
-      else if (can.has(pos)) canHit++;
-      else offPref++;
     }
     benchCounts.push(bench);
     varietyBonus += distinct.size;
@@ -430,8 +446,8 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
   let score = -benchSpread * 6 - backToBack * 10 - unfilled * 4 - minPlayShort * 8;
   // Policy fit shapes the positions (top Best spot rewarded most in competitive); pitching adds a
   // rank reward in competitive (ace-heavy) and a spread reward otherwise (more distinct pitchers).
-  if (policy === 'competitive') score += prefTop * 2.5 + prefOther * 1.5 + canHit * 0.5 - offPref * 1.5 + pitcherRankReward - aSquadBench * 2;
-  else if (policy === 'balanced') score += (prefTop + prefOther) * 1 + canHit * 0.75 - offPref * 1 + pitchersUsed.size;
+  if (policy === 'competitive') score += prefTop * 2.5 + prefOther * 1.5 + pitcherRankReward - aSquadBench * 2;
+  else if (policy === 'balanced') score += (prefTop + prefOther) * 1 + pitchersUsed.size;
   else score += varietyBonus * 1.5 + pitchersUsed.size; // development rewards position variety + spread
   return score;
 }

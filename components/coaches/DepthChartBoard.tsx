@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { Undo2, Redo2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
-import { playerPositionPrefs } from '@/lib/lineup-profile';
+import { playerPositionPrefs, positionStateOf, cyclePositionState } from '@/lib/lineup-profile';
 import { hasRecordAccess } from '@/lib/coach-capabilities';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import PositionProfileEditor from '@/components/coaches/PositionProfileEditor';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import type { RepRosterPlayer, LineupSettings } from '@/lib/types';
@@ -16,8 +17,13 @@ import styles from './DepthChartBoard.module.css';
 // player, mirroring the player-detail page's model exactly so the two surfaces write the same thing.
 // Saved via the same per-player PATCH (server derives primary/secondary + the stored profile via
 // buildLineupProfileWrite) — the board never introduces a new write path.
+//
+// Three states per field cell (owner, 2026-09-12): Best (ranked, numbered in tap order), Never, or
+// BLANK — and blank means "fine anywhere they're not Never". The fourth "Okay" state is gone: it
+// was defined with the same words as blank, was read as distinct only in Competitive mode, and
+// nothing after Auto-fill ever showed it. A fill-in spot is a low-ranked Best now.
 interface PlayerProfile {
-  best: string[]; okay: string[]; never: string[];
+  best: string[]; never: string[];
   isPitcher: boolean; rank: number; maxInnings: string; // '' = no cap
   aSquad: boolean;
 }
@@ -29,7 +35,7 @@ function playerToProfile(p: RepRosterPlayer, pitcherPos: string | null): PlayerP
   const prefs = playerPositionPrefs(p, pitcherPos);
   const pit = p.lineupProfile?.pitcher;
   return {
-    best: prefs.preferred, okay: prefs.canPlay, never: prefs.never,
+    best: prefs.preferred, never: prefs.never,
     isPitcher: !!pit, rank: pit?.rank ?? 1, maxInnings: pit?.maxInnings != null ? String(pit.maxInnings) : '',
     aSquad: p.lineupProfile?.aSquad ?? false,
   };
@@ -47,7 +53,7 @@ function sanitizeCap(v: string): number | null {
 
 function profilePayload(pp: PlayerProfile, pitcherPos: string | null) {
   return {
-    preferred: pp.best, canPlay: pp.okay, never: pp.never,
+    preferred: pp.best, never: pp.never,
     pitcher: pitcherPos && pp.isPitcher ? { rank: pp.rank, maxInnings: sanitizeCap(pp.maxInnings) } : null,
     aSquad: pp.aSquad,
   };
@@ -205,26 +211,24 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
     applySnapshot(snap);
   }, [canEdit, applySnapshot]);
 
-  // ── field cell cycle: unset → Best → Okay → Never → unset ──
-  const cycleField = (id: string, code: string) => mutate(id, p => {
-    const cur = p.best.includes(code) ? 'b' : p.okay.includes(code) ? 'o' : p.never.includes(code) ? 'n' : '';
-    const next = cur === '' ? 'b' : cur === 'b' ? 'o' : cur === 'o' ? 'n' : '';
-    const best = p.best.filter(c => c !== code);
-    const okay = p.okay.filter(c => c !== code);
-    const never = p.never.filter(c => c !== code);
-    if (next === 'b') best.push(code); else if (next === 'o') okay.push(code); else if (next === 'n') never.push(code);
-    return { ...p, best, okay, never };
-  });
-  // desktop pitcher chip cycle: not-a-pitcher → Ace(1) → #2 → … → #5 → not-a-pitcher
-  const cyclePitcher = (id: string) => mutate(id, p => {
-    if (!p.isPitcher) return { ...p, isPitcher: true, rank: 1 };
-    if (p.rank >= 5) return { ...p, isPitcher: false };
-    return { ...p, rank: p.rank + 1 };
-  });
+  // ── field cell cycle: blank → Best → Never → blank ──
+  // The transition table itself lives once, in lib/lineup-profile.ts, shared with the player
+  // page's picker — this just merges the {best, never} delta into the player's richer profile.
+  const cycleField = (id: string, code: string) => mutate(id, p => ({ ...p, ...cyclePositionState(p, code) }));
+  // Pitcher rank is a dropdown on the grid too (a field choosing one value is a dropdown — owner,
+  // 2026-08-22; the phone accordion always was one). 0 = not a pitcher. The old chip cycled through
+  // six states, so un-pitchering a #2 was four autosaved taps.
+  const setPitcherRank = (id: string, rank: number) => mutate(id, p =>
+    rank <= 0 ? { ...p, isPitcher: false } : { ...p, isPitcher: true, rank });
   const toggleASquad = (id: string) => mutate(id, p => ({ ...p, aSquad: !p.aSquad }));
-  const rankLabel = (pp: PlayerProfile) => !pp.isPitcher ? '—' : pp.rank === 1 ? 'Ace' : `#${pp.rank}`;
-  const stateOf = (pp: PlayerProfile, code: string) =>
-    pp.best.includes(code) ? 'b' : pp.okay.includes(code) ? 'o' : pp.never.includes(code) ? 'n' : '';
+  const rankWord = (rank: number) => rank === 1 ? 'Ace' : `#${rank}`;
+  const rankLabel = (pp: PlayerProfile) => !pp.isPitcher ? '—' : rankWord(pp.rank);
+  // 'b'/'n'/'' are this board's own short codes for its CSS classes + ARIA text — mapped from the
+  // shared PositionState rather than re-derived, so there is one place deciding what a position IS.
+  const stateOf = (pp: PlayerProfile, code: string) => {
+    const s = positionStateOf(pp, code);
+    return s === 'best' ? 'b' : s === 'never' ? 'n' : '';
+  };
 
   // ── caps summary from the season defaults ──
   const caps = programYear?.lineupSettings ?? null;
@@ -280,12 +284,15 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
           {/* ── Desktop / tablet: the grid ── */}
           <div className={styles.desktopGrid}>
             <section className={`${styles.card} ${styles.gridCard}`}>
+              {/* Two swatches and a sentence — blank is not a choice a coach makes, so it gets no
+                  box (it used to sit in this row as a fourth "Not set" swatch). The ★ line says
+                  WHEN A-squad matters; the column header repeats it as a tooltip. */}
               <div className={styles.legend}>
                 <span className={styles.swatch}><span className={`${styles.sw} ${styles.swB}`} />Best (ranked)</span>
-                <span className={styles.swatch}><span className={`${styles.sw} ${styles.swO}`} />Okay</span>
                 <span className={styles.swatch}><span className={`${styles.sw} ${styles.swN}`} />Never</span>
-                <span className={styles.swatch}><span className={`${styles.sw} ${styles.swX}`} />Not set</span>
-                <span className={styles.tip}>Tap a cell to cycle · Best cells number in the order you pick them</span>
+                <span className={styles.swatch}>Blank = fine anywhere they’re not Never</span>
+                <span className={styles.swatch}><span className={styles.legendStar} aria-hidden>★</span>A-squad — gold-medal starter, kept off the bench in Competitive games</span>
+                <span className={styles.tip}>Tap a cell to cycle · Best cells number in the order you pick them · re-order on the player’s page</span>
               </div>
               {/* CoachScrollX owns the scroller AND its swipe hint together (Chunk A rule) — this
                   was the portal's last bare sideways scroller (f9-2 remainder, Chunk E WI-4). The
@@ -293,12 +300,16 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                   against the scroller CoachScrollX renders); frame=false — the card already
                   draws the frame. */}
               <CoachScrollX hint="swipe for more positions" frame={false} className={styles.gridScrollWrap} scrollerClassName={styles.gridScroller}>
-                <table className={styles.table} style={{ minWidth: 150 + (pitcherPos ? 86 : 0) + 64 + fieldCols.length * 56 }}>
+                <table className={styles.table} style={{ minWidth: 150 + (pitcherPos ? 86 : 0) + 80 + fieldCols.length * 56 }}>
                   <thead>
                     <tr>
                       <th scope="col" className={styles.cPlayer}>Player</th>
                       {pitcherPos && <th scope="col" className={`${styles.cPitch} ${styles.colPitch}`} style={{ left: 150 }}>Pitcher</th>}
-                      <th scope="col" className={`${styles.cASquad} ${styles.colASquad}`} style={{ left: pitcherPos ? 236 : 150 }}>A-squad</th>
+                      <th scope="col" className={`${styles.cASquad} ${styles.colASquad}`} style={{ left: pitcherPos ? 236 : 150 }}>
+                        <span className={styles.colASquadInner}>A-squad
+                          <HelpTooltip title="A-squad" body="A gold-medal starter. In Competitive games Auto-fill gives A-squad players their Best positions and, with the A-squad dial set to prioritized, keeps them off the bench. It does nothing in Balanced or Development games." />
+                        </span>
+                      </th>
                       {fieldCols.map(c => <th scope="col" key={c}>{c}</th>)}
                     </tr>
                   </thead>
@@ -314,13 +325,19 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                           {pitcherPos && (
                             <td className={styles.cPitch} style={{ left: 150 }}>
                               <span className={styles.pitch}>
-                                <button type="button" className={`${styles.pchip}${pp.isPitcher ? '' : ' ' + styles.off}`} onClick={() => cyclePitcher(p.id)} disabled={!canEdit}
-                                  aria-pressed={pp.isPitcher}
-                                  aria-label={`${p.playerFirstName} pitching: ${pp.isPitcher ? rankLabel(pp) : 'not a pitcher'}.${canEdit ? ' Tap to change.' : ''}`}>{rankLabel(pp)}</button>
+                                <select className={`${styles.pchip}${pp.isPitcher ? '' : ' ' + styles.off}`} value={pp.isPitcher ? pp.rank : 0} disabled={!canEdit}
+                                  aria-label={`${p.playerFirstName} pitching rank: ${pp.isPitcher ? rankLabel(pp) : 'not a pitcher'}`}
+                                  onChange={e => setPitcherRank(p.id, Number(e.target.value))}>
+                                  <option value={0}>—</option>
+                                  {[1, 2, 3, 4, 5].map(r => <option key={r} value={r}>{rankWord(r)}</option>)}
+                                </select>
                                 {pp.isPitcher && (
-                                  <input className={styles.capInput} type="number" min={1} max={20} placeholder="cap" value={pp.maxInnings}
-                                    disabled={!canEdit} aria-label={`Max innings per game for ${p.playerFirstName}`}
-                                    onChange={e => mutate(p.id, x => ({ ...x, maxInnings: e.target.value }), false)} />
+                                  <span className={styles.capUnit}>
+                                    <input className={styles.capInput} type="number" min={1} max={20} placeholder="no cap" value={pp.maxInnings}
+                                      disabled={!canEdit} aria-label={`Max innings per game for ${p.playerFirstName}`}
+                                      onChange={e => mutate(p.id, x => ({ ...x, maxInnings: e.target.value }), false)} />
+                                    <span aria-hidden>IP</span>
+                                  </span>
                                 )}
                               </span>
                             </td>
@@ -333,12 +350,12 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                           {fieldCols.map(code => {
                             const st = stateOf(pp, code);
                             const rank = st === 'b' ? pp.best.indexOf(code) + 1 : 0;
-                            const word = st === 'b' ? 'Best ' + rank : st === 'o' ? 'Okay' : st === 'n' ? 'Never' : 'not set';
+                            const word = st === 'b' ? 'Best ' + rank : st === 'n' ? 'Never' : 'blank — fine';
                             return (
                               <td key={code}>
                                 <button type="button" className={`${styles.cellbtn}${st ? ' ' + styles[st] : ''}`} onClick={() => cycleField(p.id, code)} disabled={!canEdit}
                                   aria-label={`${p.playerFirstName} at ${code}: ${word}.${canEdit ? ' Tap to change.' : ''}`}>
-                                  {st === 'b' ? rank : st === 'o' ? '✓' : st === 'n' ? '✕' : ''}
+                                  {st === 'b' ? rank : st === 'n' ? '✕' : ''}
                                 </button>
                               </td>
                             );
@@ -351,7 +368,10 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
               </CoachScrollX>
             </section>
             {saveBar}
-            <p className={styles.foot}>Edits here write the same profile as each player’s page — positions, pitching, and A-squad stay in sync. Saves automatically as you go.</p>
+            {/* What Auto-fill will DO with the board — the sentence a coach needs before building
+                their first lineup, and the same one the Auto-fill mode picker and help now carry. */}
+            <p className={styles.footNote}><strong>What Auto-fill does with this:</strong> it never places a player at a Never. Your Best ranks matter most in Competitive games; Balanced rotates anyone rated Best; Development rotates everyone.</p>
+            <p className={styles.foot}>Saves automatically as you go — Undo and Redo above if you mis-tap.</p>
           </div>
 
           {/* ── Phone: per-player accordion ── */}
@@ -376,9 +396,9 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                       <div className={styles.pcardBody}>
                         <PositionProfileEditor
                           positions={fieldCols}
-                          value={{ best: pp.best, okay: pp.okay, never: pp.never }}
+                          value={{ best: pp.best, never: pp.never }}
                           disabled={!canEdit}
-                          onChange={next => mutate(p.id, x => ({ ...x, best: next.best, okay: next.okay, never: next.never }))}
+                          onChange={next => mutate(p.id, x => ({ ...x, best: next.best, never: next.never }))}
                         />
                         {pitcherPos && (
                           <>
@@ -400,7 +420,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                                   </div>
                                   <div className={styles.fieldMini}>
                                     <label htmlFor={`cap-${p.id}`}>Max IP / game</label>
-                                    <input id={`cap-${p.id}`} className={styles.capNum} type="number" min={1} max={20} placeholder="No limit" value={pp.maxInnings}
+                                    <input id={`cap-${p.id}`} className={styles.capNum} type="number" min={1} max={20} placeholder="No cap" value={pp.maxInnings}
                                       disabled={!canEdit} onChange={e => mutate(p.id, x => ({ ...x, maxInnings: e.target.value }), false)} />
                                   </div>
                                 </>

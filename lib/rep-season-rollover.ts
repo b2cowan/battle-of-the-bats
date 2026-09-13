@@ -279,7 +279,11 @@ export async function startNextRepSeason(params: {
           bats: p.bats,
           throws: p.throws,
           jerseySize: p.jerseySize,
-          lineupProfile: p.lineupProfile, // Best/Okay/Never + pitcher/A-squad persist across seasons
+          // Best/Never + pitcher/A-squad persist across seasons. `p` came from getRepRosterPlayers
+          // (line 255), so a legacy row's stray "Okay" key is already stripped by the DB reader's
+          // own sanitizer (lib/lineup-profile.ts:dropLegacyLineupProfileKeys) before it ever
+          // reaches here — this copy can't perpetuate it into the new season's row.
+          lineupProfile: p.lineupProfile,
           // adminNotes + tryoutRegistrationId intentionally dropped (stale staff/tryout provenance)
         });
         playerIdMap.set(p.id, created.id);

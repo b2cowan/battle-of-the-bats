@@ -9,6 +9,7 @@ import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
 import { resolveAwardTypeMergeCollisions } from './rep-award-occasion';
+import { dropLegacyLineupProfileKeys } from './lineup-profile';
 import { formatPlayerFirstLast } from './player-name';
 import {
   DERIVED_INCOME_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
@@ -5256,7 +5257,7 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
     bats: r.bats ?? null,
     throws: r.throws ?? null,
     jerseySize: r.jersey_size ?? null,
-    lineupProfile: (r.lineup_profile ?? null) as LineupProfile | null,
+    lineupProfile: dropLegacyLineupProfileKeys((r.lineup_profile ?? null) as LineupProfile | null),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

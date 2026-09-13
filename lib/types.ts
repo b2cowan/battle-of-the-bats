@@ -1302,13 +1302,17 @@ export interface RepTryoutScore {
 // which stay authoritative for the top-two "Best" positions. Null on legacy rows and on rows
 // created by non-picker paths (quick-add, tryout-accept, season rollover). Shape + vocabulary are
 // app-enforced (lib/lineup-profile.ts, validated against the team Sport Pack) — no DB CHECK.
+//
+// Three states per position (owner ruling 2026-09-12, depth-chart three-states plan): a position
+// is one of the player's ranked Best spots, a Never, or BLANK — and blank means "fine anywhere
+// they're not Never". The former fourth bucket ("Okay" / `canPlay`) was folded into the Best tail
+// by migration 291; the normalizer ignores a stray `canPlay` key on a row it has not reached.
 export interface LineupPitcherProfile {
   rank: number;              // 1 = ace; lower number = higher priority (P2)
   maxInnings: number | null; // per-player arm-care cap; null = use the season default (P2)
 }
 export interface LineupProfile {
   morePreferred: string[];   // "Best" positions ranked 3+ (primary/secondary hold ranks 1 & 2)
-  canPlay: string[];         // "Okay" — fill in if needed
   never: string[];           // hard exclusions the auto-fill will NEVER assign
   pitcher: LineupPitcherProfile | null; // P2; null = not a pitcher
   aSquad: boolean;           // P4; gold-medal starter

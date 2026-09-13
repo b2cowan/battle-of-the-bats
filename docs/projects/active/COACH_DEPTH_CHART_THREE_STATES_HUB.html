@@ -1,0 +1,631 @@
+<title>Three-State Depth Chart</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--gold:#b8860b;
+--best-bg:rgba(132,204,22,.2);--best-bd:rgba(101,163,13,.6);--okay-bg:rgba(36,95,121,.11);--okay-bd:rgba(36,95,121,.42);--okay-fg:#245f79;--never-bg:rgba(158,48,48,.1);--never-bd:rgba(158,48,48,.45);--never-fg:#9e3030;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h1[tabindex]:focus{outline:none}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted);text-align:right}
+main.hubsection{padding:0}
+.screen{padding:28px 36px 36px;background-image:linear-gradient(#e6e8de 1px,transparent 1px),linear-gradient(90deg,#e6e8de 1px,transparent 1px);background-size:22px 22px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.specimenlabel{display:inline-block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;padding:4px 9px;border-radius:4px;margin-bottom:10px}
+.specimenlabel.today{background:#eeeee9;color:#5c6658}.specimenlabel.after{background:var(--lime);color:#2b3f12}
+
+/* ── the product specimen: Roster page, Depth chart view ── */
+.pagehead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.pagehead .icon{width:40px;height:40px;border-radius:10px;background:#dfe6d2;display:grid;place-items:center;font-size:18px}
+.pagehead h1{font-size:22px;margin:0;letter-spacing:-.5px}
+.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{min-height:40px;padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:white;font-weight:700;font-size:14px}
+.btn.lime{background:var(--lime);border-color:#b9d88c}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg span{padding:8px 16px;font-weight:700;font-size:14px;background:white}.seg span.on{background:#222b21;color:white}
+.capsbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--muted);margin-bottom:12px}
+.capsbar b{color:var(--ink);font-variant-numeric:tabular-nums}.capsbar a{margin-left:auto;font-weight:600;text-decoration:none;white-space:nowrap}
+.card{background:white;border:1px solid #c8d3dc;border-radius:12px;box-shadow:0 1px 2px #22302010,inset 0 1px 0 #ffffffcc;overflow:hidden}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:11px 16px;font-size:13px;color:var(--muted);border-bottom:1px solid #e8ebe2}
+.sw{display:inline-block;width:14px;height:14px;border-radius:5px;border:1px solid;vertical-align:-2px;margin-right:6px}
+.sw.b{background:var(--best-bg);border-color:var(--best-bd)}.sw.o{background:var(--okay-bg);border-color:var(--okay-bd)}.sw.n{background:var(--never-bg);border-color:var(--never-bd)}.sw.x{background:#fafbf7;border-color:#d3d9cd}
+.legend .tip{margin-left:auto;text-align:right}
+.legend .star{color:var(--gold);font-size:15px;margin-right:4px}
+.scroller{overflow-x:auto}
+table.board{border-collapse:separate;border-spacing:0;min-width:900px;width:100%;font-size:14px}
+.board th{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;color:var(--muted);padding:12px 6px;border-bottom:1px solid #e8ebe2;text-align:center;white-space:nowrap}
+.board th.pl{text-align:left;padding-left:18px;width:190px}.board th.pi{width:110px}.board th.as{width:76px;border-right:1px solid #e8ebe2}
+.board td{padding:8px 6px;border-bottom:1px solid #eef0e8;text-align:center;vertical-align:middle}
+.board tr:nth-child(even) td{background:#f8f7f2}
+.board td.pl{text-align:left;padding-left:18px;white-space:nowrap}.board td.as{border-right:1px solid #e8ebe2}
+.pnum{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);margin-right:8px}.pname{font-weight:700;color:var(--ink);text-decoration:none}
+.cell{width:44px;height:36px;margin:0 auto;border-radius:7px;border:1px solid #d3d9cd;background:#fbfbf8;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;color:#8a9484}
+.cell.b{background:var(--best-bg);border-color:var(--best-bd);color:var(--ink)}.cell.o{background:var(--okay-bg);border-color:var(--okay-bd);color:var(--okay-fg)}.cell.n{background:var(--never-bg);border-color:var(--never-bd);color:var(--never-fg)}
+.cellwrap{position:relative;display:inline-block}.cellwrap .fl,.cellwrap .mk{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);margin:0;z-index:2}
+.pitch{display:inline-flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.pchip{min-height:34px;padding:4px 14px;border-radius:999px;border:1px solid var(--best-bd);background:var(--best-bg);font-weight:800;font-size:13px;color:#2b3f12}
+.pchip.off{border-color:#d3d9cd;background:#fbfbf8;color:#8a9484;font-weight:700}
+.capin{width:54px;min-height:30px;text-align:center;border:1px solid #d3d9cd;border-radius:6px;background:#fbfbf8;color:var(--okay-fg);font-size:12px;font-weight:600;padding:3px 4px;font-variant-numeric:tabular-nums}
+.capin::placeholder{color:#8a9484;font-weight:400}
+.capunit{display:inline-flex;align-items:center;gap:4px}.capunit .capin{width:46px;color:var(--ink)}.capunit small{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.5px}
+.rank{min-height:34px;padding:4px 30px 4px 14px;border-radius:999px;border:1px solid var(--best-bd);background:var(--best-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%232b3f12'/%3E%3C/svg%3E") no-repeat right 12px center;font-weight:800;font-size:13px;color:#2b3f12;-webkit-appearance:none;appearance:none}
+.rank.off{border-color:#d3d9cd;background-color:#fbfbf8;color:#5c6658;font-weight:700}
+.starbtn{width:40px;height:40px;background:none;border:0;font-size:22px;line-height:1;color:#b9c0b2;padding:0}.starbtn.on{color:var(--gold);text-shadow:0 0 10px #b8860b55}
+.hq{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--muted);font-size:10px;font-weight:800;color:var(--muted);margin-left:5px;vertical-align:middle;background:white}
+.savebar{display:flex;align-items:center;gap:10px;padding:12px 4px;font-size:13px;color:var(--muted)}
+.iconbtn{width:36px;height:36px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--muted);font-size:15px}
+.savebar .chk{color:var(--olive);font-weight:800}.savebar a{margin-left:auto;font-weight:700;text-decoration:none}
+.foot{font-size:12px;color:var(--muted);margin:2px 4px 0;max-width:70ch}
+.footnote{font-size:12px;color:var(--ink);margin:0 4px 6px;padding:8px 12px;background:#f3f6ea;border:1px solid #d7e2c3;border-radius:8px;max-width:78ch}
+.desktopOnly{display:block}.phoneOnly{display:none}
+/* phone: per-player accordion */
+.acc{display:flex;flex-direction:column;gap:8px}
+.prow{background:white;border:1px solid #c8d3dc;border-radius:10px;overflow:hidden}
+.phead{display:flex;align-items:center;gap:8px;padding:12px 14px;min-height:52px;width:100%;background:none;border:0;text-align:left}
+.phead .mini{display:inline-flex;gap:4px;flex-wrap:wrap;margin-left:auto}.mchip{font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px;background:var(--best-bg);border:1px solid var(--best-bd)}.mchip.pit{background:var(--soft);border-color:var(--line)}
+.pbody{padding:4px 14px 14px;border-top:1px solid #eef0e8}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.chip{min-height:40px;padding:6px 12px;border-radius:999px;border:1px solid #d3d9cd;background:#fbfbf8;font-weight:700;font-size:13px;color:#5c6658}
+.chip.b{background:var(--best-bg);border-color:var(--best-bd);color:var(--ink)}.chip.o{background:var(--okay-bg);border-color:var(--okay-bd);color:var(--okay-fg)}.chip.n{background:var(--never-bg);border-color:var(--never-bd);color:var(--never-fg);text-decoration:line-through}
+.grp{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;font-weight:800;color:var(--muted);margin:12px 0 6px}
+.fieldrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}
+.sel{min-height:40px;padding:6px 30px 6px 10px;border:1px solid var(--line);border-radius:7px;background:white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23222b21'/%3E%3C/svg%3E") no-repeat right 10px center;-webkit-appearance:none;appearance:none;font-weight:600}
+/* picker + autofill specimens */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.panel{background:white;border:1px solid #c8d3dc;border-radius:12px;padding:16px 18px}
+.legendlist{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);margin:0 0 12px;padding:0;list-style:none}
+.legendlist li{display:flex;align-items:center;gap:8px}
+.menu{background:white;border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:0 8px 24px #22302014;max-width:420px}
+.menu label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+.options{border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink)}
+.options div{padding:9px 12px;border-bottom:1px solid #eef0e8;display:flex;align-items:center;gap:8px}.options div:last-child{border:0}.options div.on{background:var(--soft);font-weight:700}
+.modelabel{display:flex;flex-direction:column}.modelabel small{color:var(--muted);font-weight:400;font-size:12px}
+
+@container(max-width:700px){.screen{padding:18px 14px 24px}.pagehead h1{font-size:19px}.actions{margin-left:0}.desktopOnly{display:none}.phoneOnly{display:block}.two{grid-template-columns:1fr}.legend .tip{margin-left:0;text-align:left}.capsbar{flex-wrap:wrap}.capsbar a{margin-left:0}.brandbar{padding:12px 16px;gap:8px 15px}.team{margin-left:0;text-align:left}}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}.docpage th{background:var(--soft)}
+.docpage pre{background:#1f261c;color:#e7f0da;padding:14px 16px;border-radius:8px;font-size:12px;overflow-x:auto}
+.docpage ul{padding-left:22px}.docpage li{margin-bottom:5px}
+.tablewrap{overflow-x:auto}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.open{background:#fff7dc;border-color:#e6cf7a}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4;white-space:nowrap}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Depth chart — three states — project hub</strong><br><small>Rulings D1–D4 accepted 2026-09-12 · built on dev the same day · QA walk ready (tab on the right)</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup round 1 published to this artifact 2026-09-12; owner accepted all four recommendations the same day">Design</li>
+    <li class="stage done" title="Plan + PM brief drafted 2026-09-12 (COACH_DEPTH_CHART_THREE_STATES_PLAN.md / _PM_BRIEF.md)">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-12: model + generator + both editors + Auto-fill labels + help + demo seed; migration 291 applied to dev and verified by query (rows_with_key 0, with_okay 0); 27 new unit tests; layout sweep clean">Build</li>
+    <li class="stage current" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#screen-today">1 · Depth chart today</a>
+    <a href="#screen-after">2 · Depth chart proposed</a>
+    <a href="#screen-picker">3 · Player page picker</a>
+    <a href="#screen-autofill">4 · Auto-fill menu</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team"><strong style="color:var(--ink)">UAT Test Team</strong> · UAT Test Org · 2026 Season · 3-2-1<br><span class="meta">Head coach view — sample data, not a real team's ratings</span></div>
+    </header>
+    <main>
+
+      <!-- ─────────── 1 · TODAY ─────────── -->
+      <section class="screen" id="screen-today">
+        <span class="specimenlabel today">Today — as built</span>
+        <div class="pagehead"><div class="icon">👥</div><h1 tabindex="-1">Roster</h1>
+          <div class="actions"><span class="btn lime">+ Add Player</span><span class="btn">⇪ Import</span><span class="seg"><span>List</span><span class="on">Depth chart</span></span><span class="btn">⇩ Export</span></div></div>
+        <div class="capsbar">Pitching <b>≤2</b> IP <a href="#screen-today">Edit in Settings →</a></div>
+        <div class="card">
+          <div class="legend">
+            <span><span class="sw b"></span>Best (ranked)</span>
+            <span><span class="sw o"></span>Okay <button class="fl" data-finding="F01" data-here="The board's legend only lists the word. Open any player's page and its legend defines Okay as “fill in if needed” — directly beside “Not set — only if needed”. Same sentence, two swatches.">F01</button></span>
+            <span><span class="sw n"></span>Never</span>
+            <span><span class="sw x"></span>Not set <button class="fl" data-finding="F04" data-here="A fourth swatch in the legend, drawn like the other three. A coach reads it as a fourth thing to pick; it is the absence of a pick.">F04</button></span>
+            <span class="tip">Tap a cell to cycle · Best cells number in the order you pick them <button class="fl" data-finding="F08" data-here="Avery's SS is Best 1 and 2B is Best 2. To make 2B the first choice on this grid you tap 2B four times round the cycle (Okay → Never → blank → Best) so it re-enters at the end, then do the same to SS. Nothing here says the player's page has arrows.">F08</button></span>
+          </div>
+          <div class="desktopOnly scroller" id="boardToday"></div>
+          <div class="phoneOnly" id="accToday"></div>
+        </div>
+        <div class="savebar"><span class="iconbtn">↶</span><span class="iconbtn">↷</span><span><span class="chk">✓</span> Saved</span><a href="#screen-today">Prepare a game lineup → <button class="fl" data-finding="F03" data-here="Follow this link, press Auto-fill, and look at the grid it builds: a player standing at 2B because it was their Okay looks exactly like one standing there because nobody rated was free. The ladder's effect is never shown.">F03</button></a></div>
+        <p class="foot">Edits here write the same profile as each player’s page — positions, pitching, and A-squad stay in sync. Saves automatically as you go. <button class="fl" data-finding="F09" data-here="The foot note explains where the data goes, not what Auto-fill will do with it. A coach who rates this whole board and then builds a Balanced lineup for Saturday's league game had their Best RANKING ignored, and nothing on this page said so.">F09</button></p>
+      </section>
+
+      <!-- ─────────── 2 · PROPOSED ─────────── -->
+      <section class="screen" id="screen-after" hidden>
+        <span class="specimenlabel after">Proposed — three states</span>
+        <div class="pagehead"><div class="icon">👥</div><h1 tabindex="-1">Roster <span class="mk" data-k="un" data-note="The page header, its actions and the List / Depth chart toggle are drawn exactly as today. Nothing above the grid card changes.">Unchanged</span></h1>
+          <div class="actions"><span class="btn lime">+ Add Player</span><span class="btn">⇪ Import</span><span class="seg"><span>List</span><span class="on">Depth chart</span></span><span class="btn">⇩ Export</span></div></div>
+        <div class="capsbar">Pitching <b>≤2</b> IP <a href="#screen-after">Edit in Settings →</a></div>
+        <div class="card">
+          <div class="legend">
+            <span><span class="sw b"></span>Best (ranked)</span>
+            <span><span class="sw n"></span>Never</span>
+            <span>Blank = fine anywhere they’re not Never <button class="fl fix" data-finding="F01" data-here="Two swatches and one sentence. The blank cell is defined by what it MEANS to Auto-fill, and the Okay swatch — which the old legend defined with the same words — is gone.">fixes F01</button><button class="fl fix" data-finding="F04" data-here="The 'Not set' swatch is removed rather than renamed: blank is not an option a coach picks, so it doesn't get a box in the legend. It gets a sentence.">fixes F04</button></span>
+            <span><span class="star">★</span>A-squad — gold-medal starter, kept off the bench in Competitive games <button class="fl fix" data-finding="F05" data-here="The star's meaning is on the grid, in the legend, in plain words — and it says WHEN it matters (Competitive only), which today's hover title never did.">fixes F05</button></span>
+            <span class="tip">Tap a cell to cycle · Best cells number in the order you pick them · re-order on the player’s page <button class="fl fix" data-finding="F08" data-here="Six words added to the tip. The player's name in each row already links to the page with the reorder arrows; now the tip says that's where to go.">fixes F08</button></span>
+          </div>
+          <div class="desktopOnly scroller" id="boardAfter"></div>
+          <div class="phoneOnly" id="accAfter"></div>
+        </div>
+        <div class="savebar"><span class="iconbtn">↶</span><span class="iconbtn">↷</span><span><span class="chk">✓</span> Saved</span><a href="#screen-after">Prepare a game lineup →</a></div>
+        <p class="footnote"><strong>What Auto-fill does with this:</strong> it never places a player at a Never. Your Best ranks matter most in Competitive games; Balanced rotates anyone rated Best; Development rotates everyone. <button class="fl fix" data-finding="F09" data-here="One sentence per mode, under the grid, before the coach builds their first lineup. It matches the reworded mode picker (screen 4) and the corrected help article word for word.">fixes F09</button><button class="fl fix" data-finding="F02" data-here="With Okay gone, every mode does what its label says with what's left: Never is a wall everywhere, Best is preferred where the mode prefers anything, blank is fine. There is no longer a rung that only works in tournament games.">fixes F02</button> <span class="mk" data-k="new" data-note="A new foot line replacing today's 'edits here write the same profile…' sentence. The sync sentence moves into the help article; the space under the grid goes to the thing a coach actually needs to know before building a lineup.">New</span></p>
+        <p class="foot">Saves automatically as you go — Undo and Redo above if you mis-tap.</p>
+      </section>
+
+      <!-- ─────────── 3 · PLAYER PAGE PICKER ─────────── -->
+      <section class="screen" id="screen-picker" hidden>
+        <div class="head"><div><div class="eyebrow">Player page · Positions</div><h1 tabindex="-1">The Positions picker — before and after</h1><p class="sub">The same three states, the same words, on the surface the depth chart mirrors. Blake Test's profile.</p></div></div>
+        <div class="two">
+          <div class="panel">
+            <span class="specimenlabel today">Today</span>
+            <ul class="legendlist">
+              <li><span class="sw b"></span>Best (tap to rank)</li>
+              <li><span class="sw o"></span>Okay — fill in if needed <button class="fl" data-finding="F01" data-here="This line and the one two below it are the product's own definitions of the two states. “Fill in if needed” and “only if needed” are the same instruction. The coach who said they behave the same was quoting the legend.">F01</button></li>
+              <li><span class="sw n"></span>Never — hard block</li>
+              <li><span class="sw x"></span>Not set — only if needed</li>
+              <li class="meta">Tap a position to cycle <span class="hq">?</span></li>
+            </ul>
+            <div class="chips"><span class="chip b">C 1</span><span class="chip o">1B</span><span class="chip">2B</span><span class="chip">3B</span><span class="chip">SS</span><span class="chip">LF</span><span class="chip">CF</span><span class="chip">RF</span></div>
+            <p class="meta">Cycle: blank → Best → Okay → Never → blank (four taps round). <button class="fl" data-finding="F02" data-here="Blake's 1B is Okay. On Saturday's league game (Balanced mode) that chip and a blank chip are treated… differently in theory (Okay is in the pool, blank is the fallback) — but so is his Best, in the SAME pool as Okay, with the rank ignored. On a scrimmage all three are the same.">F02</button></p>
+          </div>
+          <div class="panel">
+            <span class="specimenlabel after">Proposed</span>
+            <ul class="legendlist">
+              <li><span class="sw b"></span>Best — tap to rank; used first</li>
+              <li><span class="sw n"></span>Never — a hard block, in every mode</li>
+              <li><span class="sw x"></span>Blank — fine anywhere they’re not Never <button class="fl fix" data-finding="F01" data-here="Three lines, three different sentences. Blank is defined by its consequence and no longer shares a definition with anything.">fixes F01</button></li>
+              <li class="meta">Tap a position to cycle <span class="hq">?</span> <span class="mk" data-k="re" data-note="The tooltip behind the ? is rewritten to the same three lines plus the per-mode sentence from the depth chart's foot note. Today it has four rows and describes Not set as 'allowed, not preferred'.">Restyled</span></li>
+            </ul>
+            <div class="chips"><span class="chip b">C 1</span><span class="chip b">1B 2 <span class="mk" data-k="re" data-note="Blake's 1B was Okay. Under the recommended ruling D2 it becomes his Best 2 — ranked after the Best he already had, so nothing he set is lost and it reads as what it always meant: 'fine here, after C'.">Restyled</span></span><span class="chip">2B</span><span class="chip">3B</span><span class="chip">SS</span><span class="chip">LF</span><span class="chip">CF</span><span class="chip">RF</span></div>
+            <p class="meta">Cycle: blank → Best → Never → blank (three taps round). Reorder arrows on the Best chips stay <span class="mk" data-k="un" data-note="The ▲▼ reorder arrows beside each Best chip are unchanged; the depth chart's tip now points here for re-ranking.">Unchanged</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── 4 · AUTO-FILL MENU ─────────── -->
+      <section class="screen" id="screen-autofill" hidden>
+        <div class="head"><div><div class="eyebrow">Lineups · Build lineup · Auto-fill</div><h1 tabindex="-1">The Mode dropdown — before and after</h1><p class="sub">Copy only. Each option says what it does with the ratings, so the depth chart's foot note, this menu and the help article agree.</p></div></div>
+        <div class="two">
+          <div class="menu">
+            <span class="specimenlabel today">Today</span>
+            <label>Mode
+              <div class="options">
+                <div>Competitive — best on the field</div>
+                <div class="on">Balanced — preferred spots, rotate <button class="fl" data-finding="F09" data-here="“Preferred spots” — but Balanced puts everyone rated Best OR Okay in one pool and picks whoever has played the spot least. The rank order a coach set is never read here, and the help article says the opposite.">F09</button></div>
+                <div>Development — rotate everyone <button class="fl" data-finding="F02" data-here="Accurate, but it doesn't say the quiet part: in this mode Best, Okay and blank are all the same. Only Never is read.">F02</button></div>
+              </div>
+            </label>
+          </div>
+          <div class="menu">
+            <span class="specimenlabel after">Proposed</span>
+            <label>Mode
+              <div class="options">
+                <div><span class="modelabel">Competitive<small>Best spots first, in your rank order</small></span></div>
+                <div class="on"><span class="modelabel">Balanced<small>Anyone rated Best, rotated evenly</small></span> <button class="fl fix" data-finding="F09" data-here="Says what it does. 'Rotated evenly' is the honest description of least-played-wins; 'rated Best' is the pool. A coach who wants rank honoured picks Competitive, and now knows that.">fixes F09</button></div>
+                <div><span class="modelabel">Development<small>Everyone rotates; only Never is honoured</small></span> <button class="fl fix" data-finding="F02" data-here="Names the one rating that still applies, so a coach doesn't wonder why their careful Best ranks did nothing on scrimmage day.">fixes F02</button></div>
+              </div>
+            </label>
+            <p class="meta" style="margin-top:10px">Help article “How does Auto-fill decide who plays where?” corrected to match — it currently says Best is used “in the order you ranked them” for every mode. <span class="mk" data-k="re" data-note="Four help articles name the four states or over-claim what Auto-fill does; all four plus their search keywords are swept in the same unit of work.">Restyled</span></p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- ─────────── PM BRIEF ─────────── -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief · proposed 2026-09-12</div>
+  <h1>Depth chart: three states</h1>
+  <p><strong>What it does:</strong> Every cell on the depth chart means one thing a coach can say out loud. A position is either one of the player's <strong>Best</strong> spots (ranked), a <strong>Never</strong>, or <strong>blank — fine anywhere they're not Never</strong>. The confusing fourth state ("Okay", which sat between "Not set" and "Best" and did almost nothing a coach could see) goes away, and the game-day Auto-fill's mode picker says plainly what each mode does with those ratings.</p>
+  <h2>Why it matters</h2>
+  <p>A coach reported that "Okay" and "Not set" behave the same. They were right three times over. The product's own legend described them with the same words ("fill in if needed" / "only if needed"). In the mode Auto-fill picks by default for a league game, Okay and Best were treated as one pool and the Best ranking was ignored; in a scrimmage every rating but Never was ignored. And once a lineup was built, nothing showed which rating put a player where — so even where the four states did differ, the difference was invisible. A rating a coach can't explain or observe is one they'll stop setting, and the depth chart only pays off if it's filled in.</p>
+  <h2>Who benefits</h2>
+  <p>Every coach on a plan with Lineup Intelligence (the depth chart, the Positions picker on a player's page, and Auto-fill). No role or plan gating changes. Assistants who can view the roster still view the depth chart; the head coach still makes the changes.</p>
+  <h2>What changes for the coach</h2>
+  <ul>
+    <li><strong>On the depth chart</strong> — tap a cell to cycle <strong>blank → Best → Never → blank</strong>. Best cells still number in the order you pick them; Never is a red ✕; a blank cell means "fine". The legend shows two swatches and one sentence — the "Not set" swatch is gone because it was never a choice.</li>
+    <li><strong>The A-squad column explains itself</strong> — a ★ line in the legend and a tap-to-read note on the column header say what a gold-medal starter is and that it only matters in Competitive games.</li>
+    <li><strong>Pitcher rank is a dropdown</strong> — pick Ace, #2 … #5 or "not a pitcher" in one tap instead of tapping through all five ranks to get back to none. The phone view already worked this way.</li>
+    <li><strong>The innings cap says "IP"</strong> — so <em>Ace · 3 IP</em> reads as three innings per game, not a mystery number.</li>
+    <li><strong>One line under the grid tells you what Auto-fill will do</strong> with what you set: Never is honoured in every mode; Best ranks matter most in Competitive; Balanced rotates anyone rated Best; Development rotates everyone.</li>
+    <li><strong>On a player's page</strong> — the Positions picker uses the same three states, same legend, same words. Reorder arrows stay there, and the grid's tip now tells you that's where to re-rank.</li>
+    <li><strong>In the Auto-fill menu</strong> — the three modes read <em>Competitive — Best spots first, in your rank order</em> · <em>Balanced — anyone rated Best, rotated evenly</em> · <em>Development — everyone rotates; only Never is honoured</em>. The help article says the same thing instead of over-promising.</li>
+    <li><strong>Your existing "Okay" spots aren't lost</strong> (recommended ruling) — each becomes a Best spot ranked after the ones you already had, in the order you set them. On production today that is nine cells on four players on one team.</li>
+    <li><strong>The coach sandbox's depth chart</strong> (recommended ruling) gains a Never and a third-choice Best so a prospect sees the states in use rather than an empty grid.</li>
+  </ul>
+  <h2>Expected impact</h2>
+  <p>A coach can fill in the depth chart in half the taps and never wonder what a blank means; the lineup builder's behaviour matches its labels, so a carefully ranked roster stops being quietly ignored in league games without the coach knowing; one fewer support question of the "what's the difference between…" kind.</p>
+  <h2>Trade-offs made</h2>
+  <ul>
+    <li>We lose a "soft avoid" rung — "only if I'm desperate" — that the four-state model technically had. It is not a real loss: it was the <em>blank</em> cell, nobody knew, and it worked only in tournament games. If coaches ask for it, it should come back as a named state, not as the meaning of an empty box.</li>
+    <li>Balanced mode keeps ignoring Best <em>rank</em> (it rotates evenly among anyone rated Best). That is the point of Balanced; what changes is that the label and help now say so. The owner can rule otherwise (D4).</li>
+    <li>Nothing yet shows, after Auto-fill runs, <em>why</em> a player landed where they did. That is a lineup-builder feature and gets its own mockup session; this project removes the rung that made the question unanswerable.</li>
+    <li>The fold of existing Okay data is one-way; the owner rules on it before it runs.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium — small build, one data step, high clarity return; it also puts the first unit tests on the lineup generator, which has none today. Sequence after the two coach-money commits in flight, before the next coach demo re-seed so the sandbox change rides that re-seed.</p>
+  <h2>Success criteria</h2>
+  <p>A coach can state what each of the three cell states means without the legend; a Balanced lineup built from a rated roster places a rated player at a spot before an unrated one; a Never is never placed in any mode; the phrase "Okay" appears nowhere a coach reads (screen, help, help search, demo); production reads zero players with an Okay list after the fold, with the folded count recorded in the release notes.</p>
+</section>
+
+<!-- ─────────── FULL PLAN ─────────── -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment · proposed 2026-09-12 · argued from the code, not the original Lineup Intelligence plan</div>
+  <h1>Depth chart — three states — implementation plan</h1>
+  <div class="note"><strong>Status:</strong> mockup round 1 published on this hub; awaiting owner rulings D1–D4 (Decisions tab) before any code. Source of record: <code>docs/projects/active/COACH_DEPTH_CHART_THREE_STATES_PLAN.md</code>.</div>
+
+  <h2>Goal</h2>
+  <p>A coach can say out loud what every cell on the depth chart means, and the game-day Auto-fill does what its mode label says with those cells. The proposal collapses the four-state ladder to three states with sharp meanings — Best (ranked), Never, blank = fine — reworks the Auto-fill mode labels, and fixes five smaller things on the same board.</p>
+
+  <h2>What the code does today (verified 2026-09-12)</h2>
+  <p>Best ranks 1 and 2 live in the roster row's primary/secondary position fields; Best 3+, Okay, Never, the pitcher entry and A-squad live in a per-player lineup profile. Both editors cycle a cell blank → Best → Okay → Never → blank. Auto-fill's mode is pre-picked from the game type: tournament → Competitive, scrimmage → Development, anything else → <strong>Balanced (the league-game default)</strong>.</p>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Competitive</th><th>Balanced</th><th>Development</th></tr>
+    <tr><td>Best (ranked)</td><td>first; the player for whom the spot ranks highest wins, then A-squad, then least-played</td><td>in the pool — <strong>rank ignored</strong>, least-played wins</td><td>ignored</td></tr>
+    <tr><td>Okay</td><td>second; least-played among Okay players</td><td>in the same pool as Best</td><td>ignored</td></tr>
+    <tr><td>Blank</td><td>last resort</td><td>last resort</td><td>ignored (same as Best/Okay)</td></tr>
+    <tr><td>Never</td><td>never placed</td><td>never placed</td><td>never placed</td></tr>
+  </table></div>
+  <p>The lineup analysis layer flags conflicts, bench balance and unfillable spots — never which rung a placement came from. The generator and the profile normalizer have <strong>no unit tests</strong>.</p>
+  <h3>Data on the ground (queried 2026-09-12, read-only)</h3>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>players</th><th>with a profile</th><th>with ≥1 Okay</th><th>with ≥1 Never</th><th>with Best 3+</th><th>teams with Okay</th></tr>
+    <tr><td>dev</td><td>186</td><td>11</td><td>2</td><td>3</td><td>0</td><td>2</td></tr>
+    <tr><td>prod</td><td>65</td><td>14</td><td><strong>4</strong></td><td>12</td><td>12</td><td><strong>1</strong></td></tr>
+  </table></div>
+  <p>Prod's Okay data is nine cells on four players on one real team. That is the whole migration. The coach sandbox seeds two pitchers and Best 1/2 only — no Never, no Best 3+ — and no dock line or tour step narrates the depth chart.</p>
+
+  <h2>Findings</h2>
+  <h3>F01 — The legend describes Okay and Not set with the same words</h3>
+  <p>Player page: "Okay — fill in if needed" / "Not set — only if needed". The coach didn't misread anything.</p>
+  <h3>F02 — The four-rung ladder exists only in Competitive mode</h3>
+  <p>Balanced pools Best + Okay and ignores rank; Development ignores everything but Never. The only rating that means the same thing in every mode is Never.</p>
+  <h3>F03 — Nothing after the fact shows which rung a placement came from</h3>
+  <p>A player at 2B because they were Okay looks identical to one there because nobody rated was free.</p>
+  <h3>F04 — "Not set" sits in the board's legend as a swatch</h3>
+  <p>As if it were a choice a coach makes. It is the absence of one.</p>
+  <h3>F05 — The A-squad column is a row of grey stars with no on-grid explanation</h3>
+  <p>The meaning lives in a hover title only — invisible on a tablet and to a keyboard. It also only does anything in Competitive mode with the A-squad dial on "prioritized".</p>
+  <h3>F06 — The pitcher chip cycles through six states</h3>
+  <p>Un-pitchering a player on desktop is five taps, each autosaved. The phone accordion already uses a dropdown for rank.</p>
+  <h3>F07 — The innings-cap input has no label once it holds a value</h3>
+  <p>The "cap" placeholder vanishes on the first keystroke, so <em>Ace / 1</em> reads as "rank 1, and… 1?".</p>
+  <h3>F08 — Re-ranking Best on the grid is hidden</h3>
+  <p>Order = tap order; moving a spot to the end means cycling it around. The player page has arrows; the grid doesn't say so.</p>
+  <h3>F09 — The board doesn't say which mode it feeds, and the help over-claims</h3>
+  <p>The Auto-fill article says Best is used "in the order you ranked them" unconditionally; Balanced never reads the rank.</p>
+
+  <h2>Proposal (recommended)</h2>
+  <ul>
+    <li><strong>P1 — Three states.</strong> Best (ranked) · Never · blank = fine. Cycle blank → Best → Never → blank. Okay removed from the model, the editors, the generator and the help. Best is already ranked and unlimited, so "can fill in at 2B" is <em>Best, ranked after the real spots</em> — and Competitive already gives the spot to whoever ranks it highest.</li>
+    <li><strong>P2 — The legend tells the truth.</strong> Two swatches and one sentence; the "Not set" swatch goes; the player-page legend and tooltip say the same three lines.</li>
+    <li><strong>P3 — Mode labels say what they do.</strong> <em>Competitive — Best spots first, in your rank order</em> · <em>Balanced — anyone rated Best, rotated evenly</em> · <em>Development — everyone rotates; only Never is honoured</em>. Help corrected to match.</li>
+    <li><strong>P4 — A-squad explained on the grid</strong> — a ★ legend line and a tap-to-read note on the column header.</li>
+    <li><strong>P5 — Pitcher rank is a dropdown on the grid</strong> (— / Ace / #2 … #5), matching the phone view and the 2026-08-22 "a field choosing one value is a dropdown" ruling.</li>
+    <li><strong>P6 — The cap gets its unit</strong> — a visible "IP" suffix, placeholder "no cap".</li>
+    <li><strong>P7 — Re-ranking is discoverable</strong> — the tip ends "· re-order on the player's page".</li>
+    <li><strong>P8 — The board says what Auto-fill will do</strong> — one foot line, one sentence per mode.</li>
+  </ul>
+  <p><strong>Generator under three states:</strong> Competitive → Best matches (rank, A-squad, least-played) else least-played of the never-filtered pool; Balanced → least-played among Best-rated else the pool; Development unchanged. An unrated placement scores neutral in every mode; Best keeps its positive reward. Tests pin the ORDER of picks, never the weights.</p>
+  <div class="note"><strong>The alternative (not recommended):</strong> keep four rungs and rename the third — <em>Best · Backup · Never · blank ("no rating — used last")</em>. Copy-only and cheap, but a rung whose effect shows up only in tournament games and is never surfaced afterwards cannot be used on purpose, and a rename does not change that.</div>
+
+  <h2>Owner forks (rule on the Decisions tab)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Question</th><th>Recommendation</th></tr>
+    <tr><td>D1</td><td>Collapse to three states — or keep four and rename the third?</td><td><strong>Collapse.</strong></td></tr>
+    <tr><td>D2</td><td>Existing Okay data (prod: 9 cells, 4 players, 1 team): fold into the Best tail in the coach's order — or drop it?</td><td><strong>Fold.</strong> Nobody loses a preference.</td></tr>
+    <tr><td>D3</td><td>Seed the coach sandbox so its depth chart shows a Never and a Best 3+?</td><td><strong>Yes</strong> — cheap; the board is otherwise an empty grid in the shop window.</td></tr>
+    <tr><td>D4</td><td>Balanced ignores Best rank today. Keep and label honestly — or make rank matter in Balanced?</td><td><strong>Keep.</strong> "Rotate" is the point of Balanced; the label was the bug.</td></tr>
+  </table></div>
+
+  <h2>Phases</h2>
+  <h3>Phase 0 — Mockup ratified (this hub)</h3>
+  <p>Owner reads the Mockup tab (whole screen before/after on desktop and phone, the picker, the Auto-fill menu) and rules D1–D4. No code before this.</p>
+  <h3>Phase 1 — The model</h3>
+  <p>The profile type and normalizer drop the Okay bucket and <strong>tolerate a stray Okay key on read</strong> (a row written by old code during the deploy window is ignored, never thrown on); the per-player save ignores it; the generator and its scorer lose the Okay tier; <strong>migration 290 (data-only)</strong> folds existing Okay spots into the Best tail; the data dictionary entry is updated; two new unit-test files pin the profile round-trip and the per-mode pick order.</p>
+  <h3>Phase 2 — The surfaces</h3>
+  <p>The depth chart board (cycle, legend, A-squad tooltip, rank dropdown, cap suffix, tip, foot line; the Okay cell style and its colour tokens retired — one of those tokens also colours the Settings link and the cap input and is renamed first), the Positions picker on the player page (state set, cycle, legend, tooltip), the player page's form shape, the Auto-fill mode labels, and the two places that build players for the generator.</p>
+  <h3>Phase 3 — Words and worlds</h3>
+  <p>Four help articles and their search keywords (run <code>/docs</code>); a release-notes entry; the coach sandbox's seed shape, plus — per D3 — one Never and one Best 3+ on the 12U roster, verified with <code>check:demos</code>; the prod re-seed rides the coach demo re-seed already owed from 09-10. UAT and QA-day fixtures write only the pitcher entry today — verified by reading, not assumed.</p>
+  <h3>Phase 4 — Verify and hand off</h3>
+  <p>Typecheck, <code>verify:changed</code>, a rendered layout check of the board at phone / 641–768 / desktop (44px floor on the new dropdown and the cap input), an owner QA walk added to this hub as its QA tab (UAT coach, UAT Test Team; steps pin identities — which glyph after which taps, a Balanced lineup placing a rated player before an unrated one, a Never never placed in any mode), then <code>/simplify</code> and <code>/review</code>.</p>
+
+  <h2>Migration 290 — data-only fold (draft; <code>/db</code> reviews before it is written)</h2>
+  <pre>-- Every "Okay" position becomes a Best ranked AFTER the player's existing
+-- Bests, in the order the coach had them; the Okay key is then removed.
+with src as (
+  select id,
+         array_remove(array[primary_position, secondary_position], null)
+         || coalesce(array(select jsonb_array_elements_text(lineup_profile->'morePreferred')), '{}'::text[])
+         || coalesce(array(select jsonb_array_elements_text(lineup_profile->'canPlay')), '{}'::text[]) as best
+  from rep_roster_players
+  where jsonb_array_length(coalesce(lineup_profile->'canPlay', '[]'::jsonb)) > 0
+)
+update rep_roster_players r
+set primary_position   = src.best[1],
+    secondary_position = src.best[2],
+    lineup_profile     = (r.lineup_profile - 'canPlay')
+                         || jsonb_build_object('morePreferred', to_jsonb(src.best[3:]))
+from src where src.id = r.id;
+update rep_roster_players set lineup_profile = lineup_profile - 'canPlay'
+where lineup_profile ? 'canPlay';</pre>
+  <ul>
+    <li>Okay is already stripped of any position that is also a Best (normalizer precedence), so the concatenation cannot duplicate.</li>
+    <li>⚠ <strong>Data-only → invisible to every drift gate.</strong> Verification is the count query above re-run on each database: players with ≥1 Okay must read 0 and Best 3+ must have risen by the folded rows. Record the numbers, not "applied".</li>
+    <li>Either deploy order is safe because of the read-side tolerance; it adds no rule, so the master build does not force the order.</li>
+  </ul>
+
+  <h2>Standing rulings honoured</h2>
+  <ul>
+    <li>One word everywhere a customer reads it — "Best", "Never", "blank"; no "Okay", "Not set" or "Backup" surviving on a screen, in help keywords or in the demo.</li>
+    <li>Form selects are dropdowns — the pitcher rank on the grid.</li>
+    <li>Every highlight is clickable — the A-squad explanation is a tooltip, not a title.</li>
+    <li>44px tap floor ≤768, rendered check — the new dropdown and the cap input.</li>
+    <li>A season is live until closed; a closed season is ONE PAGE — the depth chart is live-season-only.</li>
+    <li>Help + demo swept in the same unit of work; the coach demo's <em>money</em> narration is not touched here and stays owed separately.</li>
+  </ul>
+
+  <h2>Out of scope</h2>
+  <ul>
+    <li>Showing, after Auto-fill, which rung each placement came from — a lineup-builder feature and a separate mockup session.</li>
+    <li>Drag-to-re-rank on the grid.</li>
+    <li>Any change to bench fairness, min-play floor, innings caps or pitcher selection.</li>
+    <li>Undo of the fold once applied — one-way by design; the owner rules before it runs.</li>
+  </ul>
+</section>
+
+<!-- ─────────── DECISIONS ─────────── -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens. All four were accepted as recommended on 2026-09-12 ("looks good, go ahead with your recommendations"); one build-time decision was added below them.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow" style="padding:24px 24px 0">Owner QA walk</div>
+  <h1 style="padding:0 24px">Depth chart — three states — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: from .env.local (UAT_COACH_PASSWORD) · Org/Team: uat-test-org / UAT Test Team</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- the sample board: six players, eight field positions. Today's board carries Okay cells;
+   the proposed board shows the same coach's ratings after the D2 fold (Okay → Best tail). ---- */
+const POS=['C','1B','2B','3B','SS','LF','CF','RF'];
+const TODAY=[
+ {n:1,name:'Avery Test',pit:{rank:1,cap:'1'},a:false,best:['SS','2B'],okay:[],never:['C']},
+ {n:2,name:'Blake Test',pit:null,a:true,best:['C'],okay:['1B'],never:[]},
+ {n:3,name:'Casey Test',pit:{rank:2,cap:''},a:false,best:['1B','3B'],okay:['LF'],never:[]},
+ {n:4,name:'Devon Test',pit:null,a:true,best:['CF','LF','RF'],okay:[],never:['C','SS']},
+ {n:5,name:'Emerson Test',pit:null,a:false,best:['3B'],okay:['2B','SS'],never:[]},
+ {n:6,name:'Frankie Test',pit:null,a:false,best:[],okay:[],never:[]},
+];
+const AFTER=TODAY.map(p=>({...p,best:[...p.best,...p.okay],okay:[],pit:p.pit?{...p.pit,cap:p.n===1?'3':''}:null}));
+
+/* per-cell / per-control flags on TODAY, and fix chips + tags on AFTER (keyed by "row:col") */
+const FLAG_TODAY={
+ '2:1B':{f:'F02',here:"Blake's 1B is Okay. In Saturday's league game (Balanced — the default) this Okay and his Best C sit in ONE pool with rank ignored; on a scrimmage (Development) this cell and the blank 2B beside it are read identically. The only mode where this ✓ does something distinct is a tournament game."},
+ '6:2B':{f:'F02',here:"Frankie has nothing set. Blank means 'last resort' to Auto-fill — a rating the coach never chose, cannot see, and that the legend calls 'not set' as if it were nothing."},
+};
+const FIX_AFTER={
+ '2:1B':{fix:'F02',here:"Blake's old Okay at 1B is now Best 2 (recommended ruling D2). It means what he always meant by it — 'fine here, after C' — and every mode reads it as a Best."},
+ '6:2B':{mk:'un',note:"A blank cell looks exactly as it does today. What changed is its meaning — 'fine' — and that the legend now says so instead of listing it as a fourth state."},
+ '1:C':{mk:'un',note:"Never is unchanged: the same red ✕, the same wall in every mode. It is the one state that always did what it said."},
+};
+
+function cell(st,rank){return `<span class="cell ${st}">${st==='b'?rank:st==='o'?'✓':st==='n'?'✕':''}</span>`}
+function stateOf(p,c){return p.best.includes(c)?'b':p.okay.includes(c)?'o':p.never.includes(c)?'n':''}
+function rankLabel(pit){return !pit?'—':pit.rank===1?'Ace':'#'+pit.rank}
+
+function boardHTML(rows,variant){
+ const after=variant==='after';
+ const head=`<tr><th class="pl">Player</th><th class="pi">Pitcher${after?' <span class="mk" data-k="re" data-note="The cycling chip becomes a dropdown: — / Ace / #2 / #3 / #4 / #5. One tap to any rank, one tap back to not-a-pitcher. Same chip look, same place.">Restyled</span>':' <button class="fl" data-finding="F06" data-here="Tap Avery\'s Ace chip and it becomes #2, then #3, #4, #5, then not-a-pitcher, then Ace again. Making Casey not-a-pitcher from #2 is four taps, each one saved.">F06</button>'}</th><th class="as">A-squad${after?' <span class="hq" title="Gold-medal starter — kept off the bench in Competitive games">?</span> <button class="fl fix" data-finding="F05" data-here="A ? on the column header opens the same one-sentence explanation the legend now carries — the pattern the player page already uses for its Positions help. Tap or keyboard, not hover.">fixes F05</button>':' <button class="fl" data-finding="F05" data-here="Two of these stars are gold. What a gold star does — protects the player from the bench, and only in Competitive mode with the A-squad dial up — is written in a hover title and nowhere else on this screen.">F05</button>'}</th>${POS.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+ const body=rows.map(p=>{
+  const pitchCtl=after
+   ?`<span class="pitch"><select class="rank${p.pit?'':' off'}" aria-label="${esc(p.name)} pitching rank"><option${!p.pit?' selected':''}>—</option><option${p.pit&&p.pit.rank===1?' selected':''}>Ace</option><option${p.pit&&p.pit.rank===2?' selected':''}>#2</option><option>#3</option><option>#4</option><option>#5</option></select>${p.pit?`<span class="capunit"><input class="capin" value="${esc(p.pit.cap)}" placeholder="no cap" aria-label="Max innings per game for ${esc(p.name)}"><small>IP</small>${p.n===1?'<button class="fl fix" data-finding="F07" data-here="The unit sits beside the number and the placeholder says what empty means. Ace · 3 IP reads as three innings a game, which is what the field is.">fixes F07</button>':''}</span>`:''}</span>`
+   :`<span class="pitch"><span class="pchip${p.pit?'':' off'}">${rankLabel(p.pit)}</span>${p.pit?`<span class="cellwrap"><input class="capin" value="${esc(p.pit.cap)}" placeholder="cap" aria-label="Max innings per game for ${esc(p.name)}">${p.n===1?'<button class="fl" data-finding="F07" data-here="This is Avery\'s arm-care cap: one inning per game. The placeholder said &quot;cap&quot; until the 1 was typed; now the box just says 1 under a chip that says Ace.">F07</button>':''}</span>`:''}</span>`;
+  const cells=POS.map(c=>{
+   const st=stateOf(p,c);const rank=st==='b'?p.best.indexOf(c)+1:0;
+   const key=p.n+':'+c;const ft=FLAG_TODAY[key];const fx=FIX_AFTER[key];
+   let extra='';
+   if(!after&&ft)extra=`<button class="fl" data-finding="${ft.f}" data-here="${esc(ft.here)}">${ft.f}</button>`;
+   if(after&&fx)extra=fx.fix?`<button class="fl fix" data-finding="${fx.fix}" data-here="${esc(fx.here)}">fixes ${fx.fix}</button>`:`<span class="mk" data-k="${fx.mk}" data-note="${esc(fx.note)}">${fx.mk==='un'?'Unchanged':fx.mk==='re'?'Restyled':'New'}</span>`;
+   return `<td><span class="cellwrap">${cell(st,rank)}${extra}</span></td>`;
+  }).join('');
+  return `<tr><td class="pl"><span class="pnum">#${p.n}</span><a class="pname" href="#screen-picker">${esc(p.name)}</a></td><td>${pitchCtl}</td><td class="as"><button class="starbtn${p.a?' on':''}" type="button" aria-pressed="${p.a}" aria-label="${esc(p.name)} A-squad: ${p.a?'yes':'no'}">★</button></td>${cells}</tr>`;
+ }).join('');
+ return `<table class="board"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+/* phone: the per-player accordion the product shows under 640px. One row open. */
+function accHTML(rows,variant){
+ const after=variant==='after';
+ return `<div class="acc" style="padding:12px">${rows.map((p,i)=>{
+  const open=i===1; // Blake — the row with the Okay→Best change
+  const chips=POS.map(c=>{const st=stateOf(p,c);const rank=st==='b'?p.best.indexOf(c)+1:0;return `<span class="chip ${st}">${c}${st==='b'?' '+rank:''}</span>`}).join('');
+  const mini=p.best.map((c,j)=>`<span class="mchip">${c} ${j+1}</span>`).join('')+(p.pit?`<span class="mchip pit">${rankLabel(p.pit)}${p.pit.cap?' ≤'+p.pit.cap:''}</span>`:'');
+  return `<div class="prow"><button class="phead" type="button" aria-expanded="${open}"><span class="pnum">#${p.n}</span><strong>${esc(p.name)}</strong><span class="mini">${mini}</span>${p.a?'<span style="color:var(--gold)">★</span>':''}<span aria-hidden="true">${open?'▾':'▸'}</span></button>${open?`<div class="pbody">
+   <ul class="legendlist" style="margin-top:10px">${after
+     ?'<li><span class="sw b"></span>Best — tap to rank</li><li><span class="sw n"></span>Never — hard block</li><li><span class="sw x"></span>Blank — fine anywhere they’re not Never</li>'
+     :'<li><span class="sw b"></span>Best (tap to rank)</li><li><span class="sw o"></span>Okay — fill in if needed</li><li><span class="sw n"></span>Never — hard block</li><li><span class="sw x"></span>Not set — only if needed</li>'}</ul>
+   <div class="chips">${chips}</div>
+   <div class="grp">Pitching</div>
+   <div class="fieldrow"><label><input type="checkbox"${p.pit?' checked':''}> This player pitches</label>${p.pit?`<select class="sel"><option>1 — Ace</option><option>2</option></select><span class="capunit"><input class="capin" placeholder="${after?'no cap':'No limit'}" value="${esc(p.pit.cap)}">${after?'<small>IP</small>':''}</span>`:''}</div>
+   <div class="grp">A-squad</div>
+   <div class="fieldrow"><span style="flex:1"><span class="meta">Gold-medal starter — ${after?'kept off the bench in Competitive games':'protected in competitive games'}</span></span><button class="starbtn${p.a?' on':''}" type="button">★</button></div>
+  </div>`:''}</div>`}).join('')}</div>`;
+}
+$('boardToday').innerHTML=boardHTML(TODAY,'today');
+$('boardAfter').innerHTML=boardHTML(AFTER,'after');
+$('accToday').innerHTML=accHTML(TODAY,'today');
+$('accAfter').innerHTML=accHTML(AFTER,'after');
+
+/* ---- hub-level tabs ---- */
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));window.scrollTo({top:0})}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* ---- phone / desktop toggle (embedded product frame only) ---- */
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+/* ---- mockup screen router ---- */
+const intents={
+ 'screen-today':'the board exactly as built, with every finding pinned to the control it lives on. Click any red flag. The six players are sample ratings chosen so every state appears at least once.',
+ 'screen-after':'the same six players after the collapse. The grid, the columns, the page chrome and the save bar are unchanged; what moves is the legend, the pitcher control, the cap, the tip and the foot line. Toggle Phone width to see the accordion.',
+ 'screen-picker':'the player page is the surface the depth chart mirrors, so it gets the same three states and the same three sentences — the F01 sentence lives here.',
+ 'screen-autofill':'copy only, but it is the fix for the coach\'s actual experience: the label now tells them what their ratings will do before they press Auto-fill.'
+};
+function showScreen(){const id=location.hash.slice(1)||'screen-today';const known=document.getElementById(id)&&document.getElementById(id).classList.contains('screen');const target=known?id:'screen-today';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==target);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+target?'page':'false'));$('intent').innerHTML=intents[target]?'<strong>Design intent:</strong> '+intents[target]:'';if(known)showHub('mockup');const h=document.getElementById(target)?.querySelector('h1');if(h)h.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+/* ---- explanations behind every highlight ---- */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'The legend describes Okay and Not set with the same words',now:'On a player\'s page the Positions legend reads "Okay — fill in if needed" and, two lines down, "Not set — only if needed". Its help tooltip says Okay is "a fine fill-in when Best spots are taken" and Not set is "allowed, not preferred — used only to round out the field". The coach who said they behave the same was quoting the product.',fix:'Three states, three different sentences: Best — tap to rank, used first · Never — a hard block, in every mode · Blank — fine anywhere they\'re not Never. Okay is removed rather than re-described.'},
+ F02:{t:'The four-rung ladder exists only in Competitive mode',now:'Auto-fill picks its mode from the game type — tournament → Competitive, scrimmage → Development, everything else (a league game) → Balanced. Balanced puts Best and Okay players in ONE pool and gives the spot to whoever has played it least, never reading the rank. Development ignores every rating but Never. Only Competitive walks the full Best → Okay → blank ladder.',fix:'With Okay gone every mode does what its label says with what\'s left: Never is a wall everywhere, Best is preferred wherever the mode prefers anything, blank is fine. The mode labels and the help say exactly that.'},
+ F03:{t:'Nothing after the fact shows which rung a placement came from',now:'The lineup analysis flags conflicts, bench balance and unfillable spots. It never says WHY a player is at 2B — Okay, or last resort. So even in Competitive mode, where Okay and blank differ, the coach can\'t see it.',fix:'Out of scope for this project beyond removing the invisible rung. A per-cell "why" on the lineup grid is a lineup-builder feature and gets its own mockup session.'},
+ F04:{t:'"Not set" sits in the legend as a swatch',now:'The board\'s legend draws four swatches — Best, Okay, Never, Not set — as peers. A blank white box beside three coloured ones reads as a fourth option to choose.',fix:'Two swatches (Best, Never) and one sentence for blank. Blank is not a choice, so it doesn\'t get a box.'},
+ F05:{t:'The A-squad column has no on-grid explanation',now:'The column is a row of grey stars, two of them gold. "Gold-medal starter" is a hover title on the button and nothing else — invisible on a tablet and to a keyboard. It also only changes anything in Competitive mode with the A-squad dial set to "prioritized".',fix:'A ★ line in the legend — "A-squad — gold-medal starter, kept off the bench in Competitive games" — and a ? on the column header that opens the same sentence on tap, the pattern the player page already uses.'},
+ F06:{t:'The pitcher chip cycles through six states',now:'Tap: not-a-pitcher → Ace → #2 → #3 → #4 → #5 → not-a-pitcher. Every tap autosaves. Making a #2 not-a-pitcher is four taps; the phone accordion already uses a dropdown for the same field.',fix:'The chip becomes a dropdown with the same six options and the same chip look. One tap to any rank. Follows the 2026-08-22 ruling that a field choosing one value is a dropdown.'},
+ F07:{t:'The innings-cap input has no label once it holds a value',now:'The input\'s placeholder says "cap" and vanishes on the first keystroke. Avery\'s row reads Ace over a box that says 1. It is the arm-care max innings per game.',fix:'A visible "IP" unit beside the number and the placeholder "no cap", so an empty box says what empty means too.'},
+ F08:{t:'Re-ranking Best on the grid is hidden',now:'Best order is tap order. To move a Best spot to the end of the list on the grid you cycle it all the way round so it re-enters last. The player page has reorder arrows; the grid never mentions them.',fix:'The tip ends "· re-order on the player\'s page". The player\'s name in each row already links there.'},
+ F09:{t:'The board doesn\'t say which mode it feeds, and the help over-claims',now:'The foot note under the grid says the board writes the same profile as the player page. It doesn\'t say what Auto-fill will do with it. The Auto-fill help article says Best is used "in the order you ranked them" — unconditionally — and Balanced never reads the rank.',fix:'A foot line under the grid with one sentence per mode; the Auto-fill mode options carry the same sentences; the help article is corrected to match.'},
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.querySelectorAll('.hq').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;el.title='';el.addEventListener('click',()=>modal('A-squad',`<div class="explain"><p>A <strong>gold-medal starter</strong>. In <strong>Competitive</strong> games Auto-fill gives A-squad players their Best positions and, with the A-squad dial set to prioritized, keeps them off the bench. It does nothing in Balanced or Development games.</p><p class="sub">This is the sentence the ? on the column header opens in the product. Today the same words are a hover title only.</p></div>`))});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();e.stopPropagation();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ---- Decisions — the four open forks; each becomes accepted/deferred/rejected when the owner rules ---- */
+const DECISIONS=[
+ {date:'2026-09-12',ask:'D1 · Collapse to three states (Best · Never · blank = fine) — or keep four and rename the third ("Backup")?',ruling:'accepted',label:'Accepted — collapse',why:'Best is already ranked and unlimited, so a fill-in spot is a low-ranked Best; a rung whose effect showed up only in tournament games and was never surfaced afterwards could not be used on purpose, and renaming it would not have changed that. Built: both editors cycle blank → Best → Never → blank; Okay is gone from the model, the generator and the help.'},
+ {date:'2026-09-12',ask:'D2 · Existing Okay data — fold each into the player\'s Best list after their current Bests, in the coach\'s order, or drop it?',ruling:'accepted',label:'Accepted — fold',why:'Nobody loses a preference. Migration 291 (data-only) appends each Okay position to the Best tail and removes the key; applied to dev and verified by query the same day (2 players folded, 0 rows still carry the key). Prod is pending and is verified the same way after the release — note that the one prod team carrying Okay data was actively editing its depth chart the day of the count, so the fold covers whatever is there at apply time.'},
+ {date:'2026-09-12',ask:'D3 · Seed the coach sandbox so its depth chart shows a Never and a third-choice Best?',ruling:'accepted',label:'Accepted — seed it',why:'Priya (1B) never catches; Sam (LF, CF, then RF) never plays third. Both Nevers were chosen from positions the six saved lineups NEVER give those players, so the depth chart and the playing-time page agree, and check:demos now asserts that agreement plus "no profile still carries the retired key". Dev re-seeded and green; the prod re-seed rides the one already owed.'},
+ {date:'2026-09-12',ask:'D4 · Balanced mode ignores Best rank today. Keep that and label it honestly — or make rank matter in Balanced too?',ruling:'accepted',label:'Accepted — keep, relabel',why:'"Rotate" is the point of Balanced; the mislabel was the bug. The mode picker, the depth chart\'s foot line and the help now say: anyone rated Best, rotated evenly — rank not used.'},
+ {date:'2026-09-12 (build-time, not in the mockup round)',ask:'B1 · Positions used to fill in the sport\'s listed order, so a coach\'s only rated shortstop could be spent on catcher (unrated, listed earlier) — "Best spots first" was only usually true. Reorder the fill so rated positions go first?',ruling:'accepted',label:'Built — flagged to owner',why:'Small and deterministic: the mound still fills first (a pitcher must never be spent on a field slot), then every position somebody on the field rates Best, then the rest; Development keeps the plain order because it reads no ratings. Pinned by a unit test that lists SS after four unrated positions. Called out in the hand-off so the owner can overrule; it is the one thing built that the mockup round did not show.'},
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+/* ---- QA walk — filled in when the walk begins; tab stays hidden until then ---- */
+const QA_PARTS=[
+ {id:'A',title:'The board\'s three states — desktop, UAT Test Team (every cell blank to start; Avery is Ace with a 1-inning cap)',steps:[
+  'Roster → Depth chart. The legend reads exactly: Best (ranked) · Never · "Blank = fine anywhere they\'re not Never" · ★ A-squad — gold-medal starter, kept off the bench in Competitive games. The words "Okay" and "Not set" appear nowhere on the page.',
+  'Tap Blake\'s SS cell once → a green cell with a 1 (Best 1). Tap it again → a red ✕ (Never). Tap it again → blank. Three taps round; no ✓ ever appears.',
+  'Tap Blake\'s 2B, then 3B → they read 1 and 2 (numbered in the order you tapped). Undo once → 3B clears; Redo → it comes back. The status reads "Saving…" then "✓ Saved".',
+  'The tip on the legend row ends "· re-order on the player\'s page". Tap Blake\'s name → the player page. Its Positions picker shows 2B 1 and 3B 2 with reorder arrows, and its legend is the same three lines (Best / Never / Blank). Tap SS twice there (Best → Never), Save, go back: Blake\'s SS on the depth chart is a red ✕.',
+  'Pitcher column: Avery reads Ace, with a box showing 1 and "IP" beside it. Open Casey\'s dropdown → the options are —, Ace, #2, #3, #4, #5. Pick #2 → the chip reads #2 and a cap box appears (placeholder "no cap") with IP. Pick — → back to not a pitcher, the box is gone.',
+  'The A-squad column header carries a small "?". Tap it (not hover) → a note about gold-medal starters and Competitive games opens.',
+  'Under the grid: a line starting "What Auto-fill does with this:" with one sentence per mode, then "Saves automatically as you go — Undo and Redo above if you mis-tap."',
+ ]},
+ {id:'B',title:'Auto-fill honours the states — Lineups, the next league game. Set-up first: Blake Best 2B (1) and 3B (2) with SS Never (from Part A); Casey Never at C; Devon Best SS (1)',steps:[
+  'Lineups → the next league game → Build lineup → open the Auto-fill menu. The Mode dropdown reads exactly: Competitive — Best spots first, in your rank order · Balanced — anyone rated Best, rotated evenly · Development — everyone rotates; only Never is honoured.',
+  'Mode Balanced → Auto-fill. In every inning Devon is on the field, Devon is at SS, and nobody else is ever at SS while Devon is on the field. Blake is never at SS; Casey is never at C. Reshuffle twice — all three still hold.',
+  'Mode Competitive → Reshuffle. In every inning Blake is on the field, Blake is at 2B (his Best 1; nobody else rates it). Blake still never at SS; Casey still never at C.',
+  'Mode Development → Reshuffle. Blake still never at SS and Casey still never at C (Never holds in every mode). Devon and Blake may now be anywhere else — that is the mode doing what its label says.',
+ ]},
+ {id:'C',title:'Phone — the same board as a per-player list (narrow the window under 640px, or use a phone)',steps:[
+  'Roster → Depth chart shows the tap-a-player list. Open Blake → chips read 2B 1, 3B 2, and SS struck through in red; the legend above the chips is the three lines; the Pitching row has the "This player pitches" box; the A-squad row reads "Gold-medal starter — kept off the bench in Competitive games".',
+  'Tap Blake\'s LF chip once → LF 3 (Best 3). Tap it again → struck through (Never). Tap again → plain. Three taps round.',
+ ]},
+ {id:'D',title:'Help agrees with the screen',steps:[
+  'Help → search "okay" → the depth chart article is found (the old word is kept as a search alias only). Its text describes Best / Never / blank and ends with the same three mode sentences as the board\'s foot line; no sentence says Okay is a state you can set.',
+  'Search "does balanced use rank" → the Auto-fill article is found and says Balanced does not use the rank order.',
+ ]},
+ {id:'E',title:'The coach sandbox shows the states (dev; skip if you do not want to check the demo — say so rather than ticking)',steps:[
+  'Open the coach sandbox (See it live → coach) → the mid-season 12U team → Roster → Depth chart. Priya Chandran shows a red ✕ at C; Sam Tanaka shows LF 1, CF 2, RF 3 and a red ✕ at 3B; Theo Marsh reads Ace with 3 IP; Marco Reyes reads #2 with no cap.',
+ ]},
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-state-depth-three')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-state-depth-three',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

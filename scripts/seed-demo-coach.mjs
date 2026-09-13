@@ -33,7 +33,7 @@ import {
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, midseasonLineupGrid, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
-  midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
+  midseasonLineupProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
   MIDSEASON_CLUB_MONEY,
   MIDSEASON_MONEY_TAGS,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
@@ -761,7 +761,7 @@ function guardianFirstFor(p) {
   return GUARDIAN_FIRSTS[(p.first.length * 3 + p.last.length) % GUARDIAN_FIRSTS.length];
 }
 function midProfileFor(team, i) {
-  return team.id === DEMO_COACH_TEAMS.midSeason.id ? midseasonPitcherProfile(i) : null;
+  return team.id === DEMO_COACH_TEAMS.midSeason.id ? midseasonLineupProfile(i) : null;
 }
 
 /** Category id → its `income_source`, filled by the lookup below. Read only by `budgetItemIds`. */

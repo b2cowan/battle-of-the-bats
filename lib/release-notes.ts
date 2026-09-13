@@ -52,6 +52,10 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         text: 'Add coaching staff — assistants, managers, treasurers, or helpers — with their access already set before they ever open an invite. Resend or cancel a pending invite from the same list, and hand off head coach to someone else on your staff without leaving the team. Each role sees only what it’s given — a helper sees their schedule and station, nothing more.',
       },
       {
+        category: 'improved',
+        text: 'The depth chart has three states instead of four: a position is one of a player’s ranked Best spots, a Never, or blank — and blank means fine anywhere they’re not Never. The old "Okay" state, which a coach told us behaved the same as blank, is gone; any Okay spots you had set are now low-ranked Bests, in the order you had them. The Auto-fill mode picker now says what each mode does with your ratings, the pitcher rank is a one-tap dropdown on the grid, the innings cap says IP, and the A-squad star explains itself.',
+      },
+      {
         category: 'fixed',
         text: 'The opponent scouting log now opens as a quick form next to your notes, instead of sitting open on the page the whole time.',
       },

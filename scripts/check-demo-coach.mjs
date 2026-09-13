@@ -589,6 +589,27 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       const avg = shares.reduce((s, x) => s + x, 0) / shares.length;
       check(Math.min(...shares) < avg * 0.85, 'the playing-time outlier is real (one player >15% below average)');
       check(pitcherAtCap, 'a pitcher sits AT the arm-care cap (3 innings)');
+
+      // The depth chart shows every state a coach can set (three since 2026-09-12: Best ranked,
+      // Never, blank = fine), and the world agrees with itself: no saved lineup places a player
+      // at one of their Nevers, and no profile still carries the retired "Okay" key.
+      const { data: profiles } = await db.from('rep_roster_players')
+        .select('id, lineup_profile').eq('program_year_id', py.id).eq('status', 'active');
+      const withNever = (profiles ?? []).filter(r => (r.lineup_profile?.never ?? []).length > 0);
+      const withBest3 = (profiles ?? []).filter(r => (r.lineup_profile?.morePreferred ?? []).length > 0);
+      check(withNever.length >= 1 && withBest3.length >= 1,
+        'the depth chart shows a Never and a third-choice Best, not just Best 1/2 and two pitchers',
+        `never=${withNever.length} best3+=${withBest3.length}`);
+      check((profiles ?? []).every(r => !r.lineup_profile || !('canPlay' in r.lineup_profile)),
+        'no profile carries the retired "Okay" (canPlay) key');
+      const neverOf = new Map(withNever.map(r => [r.id, new Set(r.lineup_profile.never)]));
+      const contradicted = (entries ?? []).filter(e => {
+        const nev = neverOf.get(e.player_id); if (!nev) return false;
+        return Object.values(e.inning_positions ?? {}).some(pos => nev.has(pos));
+      });
+      check(contradicted.length === 0,
+        'no saved lineup places a player at one of their Nevers (the depth chart and playing time agree)',
+        `${contradicted.length} contradicting entries`);
     }
 
     // The attendance dip: the most recent past Tuesday practice runs under 80%.
@@ -1042,9 +1063,14 @@ console.log("\nSeason's End — Riverdale Ridge 13U");
       .sort((a, b) => a.batting_order - b.batting_order).map(e => e.player_id).join('|');
     const counts = new Map();
     for (const lu of lineups ?? []) counts.set(orderKey(lu.id), [...(counts.get(orderKey(lu.id)) ?? []), lu.event_id]);
-    const reused = [...counts.values()].find(ids => ids.length >= 3);
+    // ⚠ Order-independent on purpose (2026-09-12): the lineups select carries no ORDER BY, so
+    // Map insertion order is whatever the database returned. The 13U season carries TWO reused
+    // orders — one used 5× at 4-1 and one used 3× at 3-0 — and `find` used to pass or fail on
+    // which came back first. The sentence asserts that SOME order was reused 3+ times and won
+    // every time; check exactly that.
     const gameById = new Map(games.map(g => [g.id, g]));
-    check(!!reused && reused.every(id => gameById.get(id)?.result === 'win'),
+    const reusedAllWins = [...counts.values()].some(ids => ids.length >= 3 && ids.every(id => gameById.get(id)?.result === 'win'));
+    check(reusedAllWins,
       'a batting order reused 3+ times, all wins — the Wrapped lineup fact is TRUE');
 
     const { data: awards } = await db.from('rep_player_awards').select('id').eq('team_id', teamId);

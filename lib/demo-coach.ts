@@ -442,14 +442,29 @@ export const MIDSEASON_LINEUP_SETTINGS = {
   minInningsPerPlayer: 2,
 } as const;
 
-export function midseasonPitcherProfile(rosterIndex: number): object | null {
+/**
+ * The 12U lineup profiles the depth chart shows. Two pitchers (the arm-care story above), and —
+ * so the shop-window board shows every state a coach can set, not just Best 1/2 — one third-
+ * choice Best and two Nevers (owner ruling D3, 2026-09-12: the board was an empty grid before).
+ *
+ * ⚠ A NEVER MUST AGREE WITH THE SIX SAVED LINEUPS. The rotation in midseasonLineupGrid permutes
+ * field positions per game, so most players have played most spots; a Never at a spot a saved
+ * lineup put them at would be a world that disagrees with itself (the depth chart says never, the
+ * playing-time page says last week). The two below are chosen from positions the grid NEVER
+ * gives that player across all six games — Priya (3) is a first baseman who never catches, Sam
+ * (8) an outfielder who never plays third — and `check:demos` asserts the agreement, so a
+ * re-authored grid cannot silently break it.
+ */
+export function midseasonLineupProfile(rosterIndex: number): object | null {
   // The FULL LineupProfile shape (lib/types.ts), matching what the app's own normalizer
   // persists — readers cast this column without runtime defaulting, so a partial object here
   // would be the one row in the product that doesn't conform to its own type.
-  const profile = (rank: number, maxInnings: number | null) =>
-    ({ morePreferred: [], canPlay: [], never: [], pitcher: { rank, maxInnings }, aSquad: false });
-  if (rosterIndex === 0) return profile(1, 3);
-  if (rosterIndex === 4) return profile(2, null);
+  const profile = (o: { morePreferred?: string[]; never?: string[]; pitcher?: { rank: number; maxInnings: number | null } | null }) =>
+    ({ morePreferred: o.morePreferred ?? [], never: o.never ?? [], pitcher: o.pitcher ?? null, aSquad: false });
+  if (rosterIndex === 0) return profile({ pitcher: { rank: 1, maxInnings: 3 } });
+  if (rosterIndex === 3) return profile({ never: ['C'] });                       // Priya — 1B, never catches
+  if (rosterIndex === 4) return profile({ pitcher: { rank: 2, maxInnings: null } });
+  if (rosterIndex === 8) return profile({ morePreferred: ['RF'], never: ['3B'] }); // Sam — LF, CF, then RF; never third
   return null;
 }
 

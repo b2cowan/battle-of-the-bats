@@ -131,7 +131,7 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json();
 
-  // Lineup Intelligence: the Best/Okay/Never picker sends a `lineupProfile` payload; derive the
+  // Lineup Intelligence: the Best/Never picker sends a `lineupProfile` payload; derive the
   // primary/secondary columns + the stored profile from it server-side so they can't drift. Falls
   // back to explicit primary/secondary for legacy/quick-add-style callers.
   let positionWrite: {
