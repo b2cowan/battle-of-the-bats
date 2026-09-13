@@ -681,7 +681,10 @@
    how urgent, the words say what. `ok` is the all-clear and takes the confirmation green; `warn`
    is something to finish (dates, an estimate, dues); `bad` is a month below zero. */
 .planStatus {
-  margin: 0.75rem 0 0;
+  /* Air on BOTH sides (owner, walk 2026-09-13: it sat flush on the View / Add Line row). The
+     bottom matches the toolbar's own rhythm below the table, so the card → sentence → controls
+     stack reads as three things, not a sentence glued to a button row. */
+  margin: 0.75rem 0 1rem;
   padding: 0.55rem 0.85rem;
   border-left: 3px solid var(--success-light);
   background: color-mix(in srgb, var(--success-light) 6%, transparent);
