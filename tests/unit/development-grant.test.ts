@@ -163,9 +163,13 @@ describe('the development routes refuse with the grant’s own sentence, never "
   });
 
   it('the staff sheet enumerates the grant, so a PATCH from it cannot drop the switch', () => {
+    // The sheet's `grantsFrom` is the model's `grantsOf` since 2026-09-13 (the server reads the same
+    // enumeration to compare bundles) — the promise is the same: every key is sent, or the type fails.
+    const model = read('lib/coach-capabilities.ts');
+    const grantsOf = model.slice(model.indexOf('export function grantsOf'), model.indexOf('}', model.indexOf('export function grantsOf')) + 1);
+    assert.match(grantsOf, /development: c\.development/, 'grantsOf() must send the development key');
     const sheet = read('components/coaches/CoachStaffSheet.tsx');
-    const grantsFrom = sheet.slice(sheet.indexOf('export function grantsFrom'), sheet.indexOf('}', sheet.indexOf('export function grantsFrom')) + 1);
-    assert.match(grantsFrom, /development: c\.development/, 'grantsFrom() must send the development key');
+    assert.match(sheet, /grantsFrom[^\n]*= grantsOf/, 'the sheet must send bundles through grantsOf');
     assert.match(sheet, /key: 'development'/, 'the sheet must render the Development switch');
   });
 });

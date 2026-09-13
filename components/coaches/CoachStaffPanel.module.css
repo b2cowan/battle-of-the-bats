@@ -246,6 +246,10 @@
   text-transform: uppercase;
   color: var(--badge-warning-ink);
 }
+/* A control a delegate may not fully use (Manage staff, 2026-09-13): shown, dimmed, and the reason
+   said under it in the sensitive amber — never hidden, or the sheet looks broken for one person. */
+.itemLocked .itemLabel, .itemLocked .itemHint { opacity: 0.72; }
+.itemLockReason { grid-column: 1 / -1; font-size: var(--type-support); line-height: 1.45; color: var(--badge-warning-ink); }
 
 .switch { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--logic-lime); }
 

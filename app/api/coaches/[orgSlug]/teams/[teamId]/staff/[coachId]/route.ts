@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import {
-  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE,
+  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, grantsOf,
 } from '@/lib/coach-capabilities';
+import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
+import { grantLabel } from '@/lib/coach-staff-labels';
 import {
   requireHeadCoachMembership,
+  requireStaffManagerMembership,
   getTeamStaffMembershipById,
   updateStaffMemberAccess,
   setStaffMemberRole,
@@ -22,11 +25,22 @@ import { withObservability } from '@/lib/observability';
  * ⚠ WIDENED for R8 (pass 2, 2026-09-11): a HEAD-COACH row is now a legal target — for a ROLE
  * change ("Make assistant coach") and for removal, both under the last-head-coach guard — but
  * never for grants (a head coach has none to set) and never for self. `allowHeadCoach` says which.
+ *
+ * ⚠ WIDENED AGAIN for Manage staff (owner ruling 2026-09-13): the caller may be a DELEGATE — a
+ * non-head holder of the grant. `headOnly` keeps a verb with the head coach (role changes, D4);
+ * otherwise the delegate's walls apply on top: a head-coach row is never their target
+ * (`allowHeadCoach` is honoured only for a head-coach caller), and every grant write below runs
+ * the ceiling. The self-target refusal already covered head coaches; it now covers delegates too.
  */
-async function resolveHeadCoachTarget(orgSlug: string, teamId: string, membershipId: string, opts?: { allowHeadCoach?: boolean }) {
-  const gate = await requireHeadCoachMembership(orgSlug, teamId);
+async function resolveHeadCoachTarget(
+  orgSlug: string, teamId: string, membershipId: string,
+  opts?: { allowHeadCoach?: boolean; headOnly?: boolean },
+) {
+  const gate = opts?.headOnly
+    ? await requireHeadCoachMembership(orgSlug, teamId, 'Only a head coach changes who is a head coach.')
+    : await requireStaffManagerMembership(orgSlug, teamId);
   if ('error' in gate) return gate;
-  const { ctx, team } = gate;
+  const { ctx, team, capabilities: actor } = gate;
 
   // Tenancy: a membership id from another team (or org) is a 404, never an edit.
   const target = await getTeamStaffMembershipById(membershipId);
@@ -34,20 +48,30 @@ async function resolveHeadCoachTarget(orgSlug: string, teamId: string, membershi
     return { error: NextResponse.json({ error: 'Coach not found on this team.' }, { status: 404 }) };
   }
 
-  if (target.coachRole !== 'assistant_coach' && !opts?.allowHeadCoach) {
-    return { error: NextResponse.json({ error: 'A head coach has every area — there is nothing to set.' }, { status: 400 }) };
+  if (target.coachRole !== 'assistant_coach') {
+    // D4 — a delegate never touches a head coach, on any verb.
+    if (!actor.isHeadCoach) {
+      return { error: NextResponse.json({ error: 'Only a head coach can change a head coach.' }, { status: 403 }) };
+    }
+    if (!opts?.allowHeadCoach) {
+      return { error: NextResponse.json({ error: 'A head coach has every area — there is nothing to set.' }, { status: 400 }) };
+    }
   }
-  // Never let a head coach target their own row: the last-head guard would still hold, but "make
-  // yourself an assistant" from the only page that needs a head coach to render is a trap.
+  // Never let anyone target their own row: for a head coach, "make yourself an assistant" from the
+  // only page that needs a head coach to render is a trap; for a delegate (D5), editing their own
+  // row is the shortest way past the ceiling.
   if (target.userId === ctx.user.id) {
-    return { error: NextResponse.json({ error: 'You cannot change your own role here — ask another head coach.' }, { status: 400 }) };
+    return { error: NextResponse.json({ error: actor.isHeadCoach
+      ? 'You cannot change your own role here — ask another head coach.'
+      : 'This is your own access — ask a head coach to change it.' }, { status: 400 }) };
   }
 
-  return { ctx, team, target };
+  return { ctx, team, target, actor };
 }
 
 // PATCH — set a member's per-duty grants and/or their kind (the sheet), or change their ROLE
-// (R8: `{ coachRole: 'head_coach' | 'assistant_coach' }`). Head coach only. Grants live on the
+// (R8: `{ coachRole: 'head_coach' | 'assistant_coach' }`). The role branch is head coach ONLY; the
+// grants branch takes a head coach or a Manage staff holder under the ceiling. Grants live on the
 // membership and apply everywhere at once; the live season's record row is mirrored in the same
 // call (the projection invariant — see lib/coach-membership.ts). The kind is a label and is not
 // projected.
@@ -58,7 +82,7 @@ export const PATCH = withObservability(async (req: Request,
 
   // ── A role change (R8) ────────────────────────────────────────────────────────────────────
   if (body.coachRole === 'head_coach' || body.coachRole === 'assistant_coach') {
-    const resolved = await resolveHeadCoachTarget(orgSlug, teamId, coachId, { allowHeadCoach: true });
+    const resolved = await resolveHeadCoachTarget(orgSlug, teamId, coachId, { allowHeadCoach: true, headOnly: true });
     if ('error' in resolved) return resolved.error!;
     const result = await setStaffMemberRole(resolved.target.id, teamId, body.coachRole);
     if (!result.ok) {
@@ -93,6 +117,22 @@ export const PATCH = withObservability(async (req: Request,
   if (!patch.capabilities && !patch.staffKind) {
     return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
   }
+  if (!resolved.actor.isHeadCoach && patch.capabilities) {
+    // The ceiling (D3, D6, D8) against the row's CURRENT bundle: a client-sent bundle above the
+    // actor's level is refused by name; the server's own preset (a bare kind change) is clamped.
+    const current = grantsOf(resolveCoachCapabilities('assistant_coach', resolved.target.capabilities));
+    const proposed = grantsOf(resolveCoachCapabilities('assistant_coach', patch.capabilities));
+    if (body.capabilities && typeof body.capabilities === 'object') {
+      const violation = delegationViolation(resolved.actor, current, proposed);
+      if (violation) {
+        return NextResponse.json({ error: delegationReasonSentence(violation, grantLabel), key: violation.key }, { status: 403 });
+      }
+      // Store the RESOLVED bundle, so a partial body from a delegate cannot leave the row half-written.
+      patch.capabilities = proposed;
+    } else {
+      patch.capabilities = clampForDelegate(resolved.actor, current, proposed).grants;
+    }
+  }
 
   // The WHERE re-asserts team + active + assistant — a target removed (or changed) after this
   // screen loaded comes back null instead of silently editing a revoked record.
@@ -114,8 +154,9 @@ export const PATCH = withObservability(async (req: Request,
 
 // DELETE — remove someone from the team: everywhere, at once (membership revoked, live season's
 // row dropped, guest org membership cleaned up). Their name stays on the seasons they coached, and
-// re-inviting them later reactivates the same membership. Another head coach may be removed —
-// never the last one (R8).
+// re-inviting them later reactivates the same membership. Another head coach may be removed by a
+// head coach — never the last one (R8), and never by a delegate (D4; D7 lets a delegate remove any
+// non-head member).
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; coachId: string }> },) => {
   const { orgSlug, teamId, coachId } = await params;

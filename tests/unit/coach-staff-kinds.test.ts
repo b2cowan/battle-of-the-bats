@@ -34,7 +34,7 @@ describe('the four presets are what the plan says they are, and survive the sani
   it('spells out every grant on every preset, so a PATCH from the sheet drops nothing', () => {
     const keys = Object.keys(sanitizeAssistantGrants({
       schedule: true, scheduleManage: true, staffChat: true, attendance: true, lineups: true, rosterPii: true,
-      notes: true, announcementsSend: true, tryouts: true, scoutingBook: true, development: true, money: 'off', documents: 'off',
+      notes: true, announcementsSend: true, tryouts: true, scoutingBook: true, development: true, manageStaff: true, money: 'off', documents: 'off',
     })).sort();
     for (const kind of STAFF_KINDS) {
       assert.deepEqual(Object.keys(STAFF_PRESETS[kind]).sort(), keys, `${kind} must name every grant explicitly`);
@@ -109,12 +109,13 @@ describe('the doors each kind meets on their first sign-in', () => {
     assert.equal(hasNonMoneyRecordAccess(t), false);
   });
 
-  it('manager: Schedule, Money, Documents, Chat, Email families, Settings, Tournaments, Roster — Insights via documents, no Lineups/Attendance/Tryouts', () => {
+  it('manager: Schedule, Money, Documents, Chat, Email families, Settings, Tournaments, Roster, Staff — Insights via documents, no Lineups/Attendance/Tryouts', () => {
     const m = preset('manager');
-    for (const door of ['Schedule', 'Money', 'Documents', 'Chat', 'Email families', 'Settings', 'Tournaments', 'Roster', 'Insights']) {
+    // Staff joined the manager's doors on 2026-09-13 (Manage staff, D2) — the only preset that opens it.
+    for (const door of ['Schedule', 'Money', 'Documents', 'Chat', 'Email families', 'Settings', 'Tournaments', 'Roster', 'Insights', 'Staff']) {
       assert.equal(isCoachNavItemVisible(m, door), true, `${door} must open for a manager`);
     }
-    for (const door of ['Lineups', 'Attendance', 'Tryouts', 'Staff']) {
+    for (const door of ['Lineups', 'Attendance', 'Tryouts']) {
       assert.equal(isCoachNavItemVisible(m, door), false, `${door} must stay shut for a manager`);
     }
   });

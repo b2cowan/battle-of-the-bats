@@ -79,7 +79,7 @@ describe('coach membership — the projection invariant is structural, not conve
   it('the converted routes actually resolve membership (the whitelist is not guarding a no-op)', () => {
     for (const rel of MEMBERSHIP_CONVERTED_ROUTES) {
       const src = readFileSync(join(ROOT, rel), 'utf8');
-      assert.match(src, /requireHeadCoachMembership\(|getEntitledTeamMembership\(/,
+      assert.match(src, /requireHeadCoachMembership\(|requireStaffManagerMembership\(|getEntitledTeamMembership\(/,
         `${rel} no longer resolves a team membership — if its gate moved somewhere shared, `
         + 'point this test at the new shape rather than deleting the assertion.');
     }

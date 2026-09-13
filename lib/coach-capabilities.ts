@@ -40,6 +40,7 @@ export interface AssistantCapabilityGrants {
   staffChat?: boolean;           // a seat in the team's staff chat room (see the note below)
   scoutingBook?: boolean;        // read the POOLED scouting book (everyone's notes + the book line)
   development?: boolean;         // WRITE development — tests, sessions, results, goals (see below)
+  manageStaff?: boolean;         // open the Staff page: invite, set others' access, remove (see below)
 }
 
 /**
@@ -107,6 +108,20 @@ export interface CoachCapabilities {
    * record results with no door to the screen that records them is a dead switch.
    */
   development: boolean;
+  /**
+   * ═══ MANAGE STAFF — THE DELEGABLE MASTER KEY (owner ruling 2026-09-13) ═══
+   * Open the Staff page, invite people, change what others can open, resend/cancel invites, remove
+   * a member. Head-coach-only from birth; the owner asked for it as *"an option, default to off,
+   * but can never do anything to any head coach permissions"*. Always TRUE for a head coach, FALSE
+   * by default for an assistant, ON only in the Team manager preset.
+   *
+   * ⚠ Holding it does NOT make someone a head coach. Every write a non-head holder makes runs the
+   * ceiling rule in `lib/coach-staff-delegation.ts`: a Sensitive grant may be WIDENED only up to
+   * what the actor holds themselves, a head-coach row is untouchable, roles are head-only, their
+   * own row is read-only, and this switch itself is never in anything they write (no chain).
+   * Plan: `docs/projects/active/COACH_STAFF_DELEGATION_PLAN.md`.
+   */
+  manageStaff: boolean;
 }
 
 /** The least-privilege bundle a freshly-invited assistant gets before any grant. */
@@ -134,6 +149,8 @@ export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   // OFF by default: development writes were head-only until 2026-09-11, and the ruling is that a
   // head coach delegates them per person, deliberately — never by accident of a default.
   development: false,
+  // OFF by default — the master key is the one switch that must never widen by accident (2026-09-13).
+  manageStaff: false,
 };
 
 /** A head coach's full-access bundle. */
@@ -153,6 +170,7 @@ const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   staffChat: true,
   scoutingBook: true,
   development: true,
+  manageStaff: true,
 };
 
 /**
@@ -202,17 +220,25 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
   assistant: {
     schedule: true, scheduleManage: true, attendance: true, lineups: true, staffChat: true,
     documents: 'view', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: true, development: false,
+    tryouts: false, scoutingBook: true, development: false, manageStaff: false,
   },
+  /**
+   * ⚠ THE MANAGER STARTS WITH `manageStaff` ON (owner ruling 2026-09-13, D2) — the only preset that
+   * does. Inviting Saturday's parent helper and chasing a lapsed invite is the manager's job, and
+   * until this the only hand-off was Make head coach. A preset is where access STARTS: managers
+   * invited before this shipped are deliberately NOT backfilled (contrast R7, which widened every
+   * existing assistant because plan-writing was a coaching duty their schedule grant already
+   * implied — this is the master key, and it is never widened by default).
+   */
   manager: {
     schedule: true, scheduleManage: true, attendance: false, lineups: false, staffChat: true,
     documents: 'manage', money: 'write', rosterPii: true, notes: false, announcementsSend: true,
-    tryouts: false, scoutingBook: true, development: false,
+    tryouts: false, scoutingBook: true, development: false, manageStaff: true,
   },
   treasurer: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'write', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: false, development: false,
+    tryouts: false, scoutingBook: false, development: false, manageStaff: false,
   },
   /**
    * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
@@ -234,7 +260,7 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
   helper: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: true, development: false,
+    tryouts: false, scoutingBook: true, development: false, manageStaff: false,
   },
 };
 
@@ -277,12 +303,12 @@ export const STAFF_KIND_COPY: Readonly<Record<StaffKind, {
   },
   manager: {
     name: 'Team manager',
-    sentence: 'Runs the team off the field — money, forms, family emails. Not the lineup.',
+    sentence: 'Runs the team off the field — money, forms, family emails, the staff list. Not the lineup.',
     asA: 'the team manager',
     inviteVerb: 'to help run',
     emailSubject: team => `You're invited to help run ${team}`,
     emailHeading: 'You’re invited to help run the team',
-    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails and the staff chat — the head coach can change any of it.',
+    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails, the staff chat and the staff list — the head coach can change any of it.',
   },
   treasurer: {
     name: 'Team treasurer',
@@ -387,8 +413,37 @@ export function resolveCoachCapabilities(
     staffChat: g.staffChat ?? ASSISTANT_DEFAULTS.staffChat,
     scoutingBook: g.scoutingBook ?? ASSISTANT_DEFAULTS.scoutingBook,
     development: g.development ?? ASSISTANT_DEFAULTS.development,
+    manageStaff: g.manageStaff ?? ASSISTANT_DEFAULTS.manageStaff,
   };
 }
+
+/**
+ * THE ONE PREDICATE the Staff nav door, the Staff page, its header button and every staff route
+ * read (2026-09-13). A head coach always; otherwise the Manage staff grant. Holding it is NOT being
+ * a head coach — see `CoachCapabilities.manageStaff` and `lib/coach-staff-delegation.ts`.
+ */
+export const canManageStaff = (c: CoachCapabilities) => c.isHeadCoach || c.manageStaff;
+
+/**
+ * The stored-bundle view of a resolved capability set — EVERY grant key, so a PATCH built from it
+ * replaces the whole jsonb without dropping one (an omitted key is not "left alone"; the resolver
+ * fills it from the defaults). The `Required<>` return is what ENFORCES that: adding a grant is a
+ * compile error here until this function sends it. The sheet's `grantsFrom` is this function; the
+ * server uses it to compare a row's current bundle with a proposed one (`delegationViolation`).
+ */
+export function grantsOf(c: CoachCapabilities): Required<AssistantCapabilityGrants> {
+  return {
+    schedule: c.schedule, scheduleManage: c.scheduleManage,
+    attendance: c.attendance, lineups: c.lineups,
+    rosterPii: c.rosterPii, notes: c.notes,
+    money: c.money, documents: c.documents,
+    announcementsSend: c.announcementsSend, tryouts: c.tryouts,
+    staffChat: c.staffChat, scoutingBook: c.scoutingBook,
+    development: c.development,
+    manageStaff: c.manageStaff,
+  };
+}
+export const MANAGE_STAFF_DENIED_MESSAGE = 'Managing staff isn’t turned on for you.';
 
 // ── Predicates ───────────────────────────────────────────────────────────────
 export const canViewMoney = (c: CoachCapabilities) => c.money !== 'off';
@@ -717,6 +772,7 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
   const t = bool(src.tryouts); if (t !== undefined) out.tryouts = t;
   const sb = bool(src.scoutingBook); if (sb !== undefined) out.scoutingBook = sb;
   const dv = bool(src.development); if (dv !== undefined) out.development = dv;
+  const ms = bool(src.manageStaff); if (ms !== undefined) out.manageStaff = ms;
   if (typeof src.money === 'string' && MONEY_VALUES.includes(src.money as MoneyAccess)) out.money = src.money as MoneyAccess;
   if (typeof src.documents === 'string' && DOCS_VALUES.includes(src.documents as DocsAccess)) out.documents = src.documents as DocsAccess;
   return out;

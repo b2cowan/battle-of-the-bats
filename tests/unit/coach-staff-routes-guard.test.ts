@@ -7,11 +7,16 @@
  *      missing kind would reopen the "safer accident" the sheet was built to close.
  *   2. The last head coach cannot be demoted or removed — from the portal. Both write paths read
  *      the one pure rule, and the portal's removal opts into it explicitly.
- *   3. A pending invite is head-coach-only and team-scoped on every verb: an id from another team
- *      is a 404, never a row.
+ *   3. A pending invite is STAFF-MANAGER-gated (a head coach or a Manage staff holder, 2026-09-13)
+ *      and team-scoped on every verb: an id from another team is a 404, never a row.
  *   4. Practice-plan, drill and template WRITES gate on `canWritePracticePlans`, and the past-season
  *      library imports on BOTH that and the look-back read — never on the head-only Development
  *      predicate they borrowed until R7.
+ *   5. THE CEILING (Manage staff, owner ruling 2026-09-13): every route that WRITES a grant bundle
+ *      on behalf of a possibly-non-head caller runs `delegationViolation` (a client bundle) or
+ *      `clampForDelegate` (the server's own preset) before it writes.
+ *   6. Roles stay with the head coach: the `coachRole` branch resolves its target with `headOnly`,
+ *      and a non-head caller can never resolve a head-coach row as a target.
  *
  * WHY A GUARD RATHER THAN A COMMENT. Each of these is invisible when it is missing: the route
  * still works for the head coach who tests it, and the only person who notices is the one the
@@ -79,10 +84,11 @@ test('the portal’s DELETE opts into the last-head refusal and the PATCH turns 
   assert.match(src, /target\.userId === ctx\.user\.id/, 'a head coach may never target their own row');
 });
 
-// ── 3. Pending invites: head-coach-only, team-scoped, every verb ───────────────────────────────
-test('every verb on a pending invite resolves the caller as THIS team’s head coach and the invite as THIS team’s', () => {
+// ── 3. Pending invites: staff-manager-gated, team-scoped, every verb ──────────────────────────
+test('every verb on a pending invite resolves the caller as THIS team’s staff manager and the invite as THIS team’s', () => {
   const src = read(`${TEAM_API}/staff/invites/[inviteId]/route.ts`);
-  assert.match(src, /requireHeadCoachMembership\(orgSlug, teamId/, 'the shared head-coach gate');
+  assert.match(src, /requireStaffManagerMembership\(orgSlug, teamId/, 'the shared staff-manager gate (a head coach or a Manage staff holder)');
+  assert.doesNotMatch(src, /requireHeadCoachMembership\(/, 'no verb on an invite is head-only any more — the ceiling, not the role, bounds a delegate');
   assert.match(src, /getOpenAssistantInviteForTeam\(inviteId, teamId\)/, 'the invite read must carry the team — a foreign id is a 404');
   for (const method of ['PATCH', 'POST', 'DELETE'] as const) {
     assert.match(handler(src, method), /resolveInvite\(orgSlug, teamId, inviteId\)/, `${method} must go through the shared resolver`);
@@ -93,6 +99,41 @@ test('every verb on a pending invite resolves the caller as THIS team’s head c
     const firstQuery = body.slice(0, body.indexOf('maybeSingle'));
     assert.match(firstQuery, /\.eq\('team_id', teamId\)/, `${fn} must re-assert team_id in its own WHERE`);
   }
+});
+
+// ── 5. The ceiling — every grant-writing route asks the pure rule ──────────────────────────────
+test('every route that writes a grant bundle runs the ceiling before the write', () => {
+  const routes = [
+    `${TEAM_API}/staff/invite/route.ts`,
+    `${TEAM_API}/staff/[coachId]/route.ts`,
+    `${TEAM_API}/staff/invites/[inviteId]/route.ts`,
+  ];
+  for (const rel of routes) {
+    const src = read(rel);
+    assert.match(src, /from '@\/lib\/coach-staff-delegation'/, `${rel} must import the pure rule`);
+    assert.match(src, /delegationViolation\(/, `${rel} must refuse a client bundle above the caller's ceiling`);
+    assert.match(src, /clampForDelegate\(/, `${rel} must clamp the server's own preset rather than refuse it`);
+    assert.match(src, /status: 403/, `${rel} must answer a violation with a 403 that names the key`);
+    assert.match(src, /isHeadCoach/, `${rel} must skip the ceiling for a head coach — it is about delegates`);
+  }
+  // The list read is gated the same way, and tells the sheet who is looking.
+  const list = read(`${TEAM_API}/staff/route.ts`);
+  assert.match(list, /requireStaffManagerMembership\(/);
+  assert.match(list, /viewer:/, 'the list must report the viewer so the sheet can draw the walls');
+});
+
+// ── 6. Roles stay with the head coach ──────────────────────────────────────────────────────────
+test('the role branch is head-only and a delegate can never resolve a head-coach row as a target', () => {
+  const src = read(`${TEAM_API}/staff/[coachId]/route.ts`);
+  const patch = handler(src, 'PATCH');
+  assert.match(patch, /coachRole === 'head_coach'[\s\S]{0,400}?headOnly: true/, 'the coachRole branch must resolve its target head-only');
+  const resolver = src.slice(src.indexOf('async function resolveHeadCoachTarget'), src.indexOf('export const PATCH'));
+  assert.match(resolver, /opts\?\.headOnly[\s\S]*?requireHeadCoachMembership\([\s\S]*?requireStaffManagerMembership\(/, 'the resolver picks the gate from headOnly');
+  assert.match(resolver, /target\.coachRole !== 'assistant_coach'[\s\S]{0,200}?!actor\.isHeadCoach[\s\S]{0,200}?status: 403/, 'a non-head caller targeting a head-coach row must be a 403 before any allowHeadCoach is honoured');
+  assert.match(resolver, /target\.userId === ctx\.user\.id/, 'nobody may target their own row');
+  // The sheet hides the buttons too, but the route is the wall.
+  const sheet = read('components/coaches/CoachStaffSheet.tsx');
+  assert.match(sheet, /actorIsHead && \([\s\S]{0,200}?changeRole\(/, 'the sheet must render the role buttons only for a head coach');
 });
 
 // ── 4. Plan, drill and template writes follow "Schedule: View + edit" ──────────────────────────

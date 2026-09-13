@@ -7,6 +7,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachStaffPanel from '@/components/coaches/CoachStaffPanel';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachLoading from '@/components/coaches/CoachLoading';
+import { canManageStaff } from '@/lib/coach-capabilities';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 export default function CoachStaffPage({
@@ -22,8 +23,12 @@ export default function CoachStaffPage({
   // stale archived `?year=` URL, would answer with a bygone season's role: a demoted former head
   // coach would watch the live panel try to render and fail, and a newly-promoted one would be
   // told only the head coach manages staff (adversarial review 2026-08-16).
+  //
+  // A head coach OR a Manage staff holder opens the page (owner ruling 2026-09-13). The panel and
+  // the sheet draw the delegate's walls from the list response's `viewer`, not from here.
   const assignment = assignments.find(a => a.teamId === teamId);
-  const isHeadCoach = (assignment?.capabilities ?? page.capabilities)?.isHeadCoach ?? false;
+  const caps = assignment?.capabilities ?? page.capabilities;
+  const managesStaff = caps ? canManageStaff(caps) : false;
   // Inviting is the page-level action, so the header owns the button and the panel owns the sheet
   // it opens (pass 2 of the staff access plan, 2026-09-11).
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -49,7 +54,7 @@ export default function CoachStaffPage({
         title="Coaching staff"
         helpLabel="Coaching staff"
         help={{ module: 'coaches', sectionIds: ['premium-staff'], fullGuideHref: `/${orgSlug}/coaches/help#premium-staff` }}
-        actions={isHeadCoach ? (
+        actions={managesStaff ? (
           <button type="button" className={styles.btnPrimary} onClick={() => setInviteOpen(true)}>
             <UserPlus size={15} aria-hidden /> Invite someone
           </button>
@@ -63,7 +68,7 @@ export default function CoachStaffPage({
         a team with no live season lands on its closed-season page. One of the twenty-nine.
       */}
 
-      {isHeadCoach ? (
+      {managesStaff ? (
         <CoachStaffPanel
           orgSlug={orgSlug}
           teamId={teamId}
@@ -75,10 +80,10 @@ export default function CoachStaffPage({
         <CoachEmptyState
           quiet
           icon={<ShieldCheck size={20} aria-hidden />}
-          headline="Only the head coach manages staff"
+          headline="Managing staff isn’t turned on for you"
           description="This is where a team's staff are invited and their access is set, one area at a time."
           payoff="It's what gives each person their own sign-in rather than a shared password — which is why your own access is set here too."
-          blocker="Ask your head coach if you need more areas turned on for you."
+          blocker="Ask your head coach if you need it — it’s a switch on your access, like the others."
         />
       )}
     </div>

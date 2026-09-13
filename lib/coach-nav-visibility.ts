@@ -1,5 +1,5 @@
 import {
-  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canWriteMoney,
+  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canWriteMoney, canManageStaff,
   type CoachCapabilities,
 } from './coach-capabilities';
 
@@ -221,7 +221,10 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     case 'Skills & Goals':
     case 'Development':   return hasRecordAccess(caps);
     case 'Documents':     return caps.documents !== 'off';
-    case 'Staff':         return caps.isHeadCoach;
+    // A head coach, or anyone holding the Manage staff grant (owner ruling 2026-09-13) — the
+    // delegate's walls (no head-coach rows, no roles, no self-edit, the ceiling) are enforced on
+    // the page and the routes, not by hiding the door.
+    case 'Staff':         return canManageStaff(caps);
     /**
      * ── The three doors that used to fall through to `true` (closed 2026-08-03) ──────────────
      *

@@ -33,7 +33,7 @@ import {
   type PlayingTimeSummary,
   type TileKey,
 } from '@/lib/coach-overview';
-import { canConfigureTeam, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
@@ -1024,7 +1024,8 @@ export default function TeamOverviewPage({
       href: `${base}/staff`,
       complete: (milestones?.assistants ?? 0) > 0,
       group: 'optional',
-      visible: assignment.capabilities.isHeadCoach,
+      // The same door as the nav's Staff item — a Manage staff holder is offered the task they can do.
+      visible: canManageStaff(assignment.capabilities),
       help: { title: 'Staff', body: 'Invite someone by email as an assistant coach, a team manager, a team treasurer or a helper. Each role starts with a sensible set of areas; you adjust any of them before the invite is sent, and anything sensitive — money, family contacts, emailing families — is confirmed with you first.' },
     },
     {

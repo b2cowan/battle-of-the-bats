@@ -21989,14 +21989,8 @@ formatter the JSX reaches for; its header says why), and one that is YOURS to ru
 
 ### Three things worth your eye on the walk
 
-0. **Money past the two-year window (a plan longer than 24 months).** Today the table folds it into
-   the LAST visible column (the rule since §133) while the new balance rows leave it out of every
-   month and count it only in the season Total (plan §5: "a cash forecast must not pretend those
-   amounts arrive earlier") — so on a >24-month plan the same dollar reads as "in the last month" on
-   the row and "not in that month" on the balance beneath it. The general fix is to file it under
-   **No date yet** on the row too (it is money the grid cannot place), which changes the §133-era
-   display rule and the truncated note. A ruling, not a cleanup: say "No date yet" on Part C and it
-   is a one-line change in the view plus its test; say "leave it" and the note stays as written.
+0. ~~Money past the two-year window~~ — **RULED 2026-09-13 after the walk, and built the same day: it
+   sits under No date yet, with a note.** See "Ruling 0" below.
 
 
 1. **The tiles' captions carry what the mockup's labels said** — "includes the No date yet amounts",
@@ -22042,6 +22036,36 @@ Budget vs. Actual's Statement and Months. Re-measured after: every view 10px bet
 from its table at both widths (Months' 13 is its own wrapper's gap; the Statement was already at the figure
 through per-note margins and simply joined the class). The sentences' ink and size stay each report's own;
 the ruling decides only the air. The next money report takes the class rather than a margin of its own.
+
+### Ruling 0 — after the walk, 2026-09-13: money dated past the two-year window sits under No date yet, with a note
+
+**The question.** By period shows at most two years of columns. A line dated after the last column was
+folded INTO that column on the row (the rule since §133, so every row still added to its Total) while the
+balance rows beneath left it out of every month (plan §5: a cash forecast must not pretend money arrives
+early) — so on a plan longer than two years the same dollar read "in the last month" on the row and "not in
+that month" on the balance under it. Three options were put to you: file it under No date yet with a note
+(recommended), fold it into the last column and make the balance agree, or add a "Later" column. **You took
+the recommendation.**
+
+**What changed.** On the grid, money dated past the last column now sits under **No date yet** on its row —
+where the balance walk already put it, and where Budget vs. Actual's own Months view has always filed it
+("never silently dropped, never smeared"). The last visible month's cells and its Net row agree again. The
+note under the table replaced the old "counted in the last one" sentence with one that names the facts:
+*"Your plan runs past the two years shown — the columns stop at Dec '27, and the $1,200.00 of expenses
+dated after that sits under No date yet: in the season Total, in no month."* (Both sides are named when both
+carry money.) Nothing else moved: the Total column, the estimate rule (decision A), the walk, the shortfall
+sentence and the room-to-spend gate (which still declines to claim room on a truncated plan) are unchanged.
+The By-period file follows the screen, as it always has. ⚠ One consequence worth knowing: a By-period file
+re-imported from a plan longer than two years brings that far money back as undated (before, it came back
+dated in the last window month — a date the line never had); the List → CSV round trip is untouched.
+
+**Verified.** Unit tests: the two truncation cases re-pinned (the far amount under No date yet on the row
+and on Total expenses, counted once in the season net, the last month's closing untouched) and a new case
+for far-dated dues and a far-dated trial under quarters. Rendered on the UAT Test Team with a $1,200 line
+dated June 2029 injected into the plan's response: Lines so far's No date yet cell rose by exactly $1,200
+and Over your estimate fell by it, Total expenses and every month unchanged, the note printed as quoted.
+Help article carries one clause. Not reachable on the fixture without adding a three-year line, so not on
+the walk.
 
 ### Owed / next
 
@@ -22241,11 +22265,11 @@ Unit: **76 new** across `development-grant`, `development-definitions`, `develop
 
 Both parts landed 2026-09-13 — `87b94167` (the grant) and `0c3a62ee` (Phase 1) — each verified in an isolated worktree first (typecheck clean; the unit suite's only failures the eight already red at the parent — two peers' source guards; every static gate green). Migs 292, 293 + 294 prod-pending (293 and 294 order-critical: the master build's parity gate is red until they land). The prod coach-demo re-seed. Then Phase 2 (attempts, scope, observations, reviews, the four views) — **kickoff prompt written 2026-09-13 for a fresh chat: `COACH_DEVELOPMENT_LIFECYCLE_PHASE2_BUILD_PROMPT.md`** (six sections: read-first, the inherited rulings, four checkpoints A–D, the paid lessons incl. Phase 1's own, the funnel with Part D, the do-nots).
 
-## §179 · Manage staff, delegated — a head coach can hand the Staff page to a Team manager: one Sensitive switch (default off, ON in the Manager preset), the ceiling (a delegate hands out only what they hold — Sensitive access up to their own level, Everyday access freely), head coaches and roles untouchable, their own row read-only, the switch never passed on, a preset they apply clamped rather than refused — owner-directed 2026-09-13 and built on dev the same day, **no migration**, awaiting QA · hub artifact `2c569b73` (Mockup · PM Brief · Full Plan · Decisions · QA Walk tabs) · plan `COACH_STAFF_DELEGATION_PLAN.md` + `_PM_BRIEF.md`
+## §179 · Manage staff, delegated — a head coach can hand the Staff page to a Team manager: one Sensitive switch (default off, ON in the Manager preset), the ceiling (a delegate hands out only what they hold — Sensitive access up to their own level, Everyday access freely), head coaches and roles untouchable, their own row read-only, the switch never passed on, a preset they apply clamped rather than refused — owner-directed 2026-09-13 and built on dev the same day, **no migration**, **✅ WALK PASSED 25/25, five parts PASS, zero defects, 2026-09-13 (incl. the three optional hand-built 403s)** · hub artifact `2c569b73` (Mockup · PM Brief · Full Plan · Decisions · QA Walk tabs) · plan `COACH_STAFF_DELEGATION_PLAN.md` + `_PM_BRIEF.md`
 
 **Why it exists:** the owner asked whether a head coach should be able to hand staff management to an assistant — "an option, default to off, but can never do anything to any head coach permissions". Argued from the code: Staff was head-only at the nav door, the page and all four routes, so the only hand-off was *Make head coach* — which also hands over money write, every family's contacts, tryouts, internal notes and the power to remove the head coach. The write-up widened the owner's wall to the real exposure (self-escalation through ANOTHER row — grant a friend money, invite a second account) with the ceiling rule; the owner accepted it and ruled the Manager preset ON.
 
-**What the walk covers (five parts, 24 steps). Two accounts: the UAT head coach (`UAT_COACH_EMAIL` in `.env.local`, uat-test-org / UAT Test Team) and a Team manager on that team — the manager you invited in §169 if still on the staff, otherwise invite a fresh alias as Team manager now (it starts with Manage staff ON) and accept from the email in a second browser profile.**
+**What the walk covers (five parts, 25 steps). Two accounts: the UAT head coach (`UAT_COACH_EMAIL` in `.env.local`, uat-test-org / UAT Test Team) and a Team manager on that team — the manager you invited in §169 if still on the staff, otherwise invite a fresh alias as Team manager now (it starts with Manage staff ON) and accept from the email in a second browser profile.**
 - **A · The switch (as head coach).** Open the manager's row: the Sensitive group ends with **Manage staff**, sentence "Invite people and change what others can open — never more than they hold, never a head coach, never this switch." If off, turn it on: the confirm reads "Let {name} manage your staff?" and names the three walls; the row gains an amber **Manage staff** chip; the group heading's count went up by one. Turn it off and on again: off is instant and silent. On a plain assistant's row the switch is off. Invite sheet → choose **Team manager**: Manage staff is pre-ticked; choose **Team treasurer**: it is not.
 - **B · The manager's page (as the manager).** **Staff** is in Team — desktop sidebar, phone bar, and the phone's More sheet. The list shows every row including the head coach and the manager themselves; **Invite someone** is in the header. The head coach's row reads **View access ›**; the manager's own row reads **Your access ›**; the assistant's row reads **Edit access ›**.
 - **C · The ceiling (as the manager, on the assistant's row).** **Internal notes** and **Tryouts** are dimmed with "You don't hold this, so you can't hand it out." under each; **Manage staff** is dimmed with "Only a head coach hands this out."; **Team money** is fully live (the manager holds View + edit) — set it to View, then back to Hidden, both save; **Contacts & birthdates** and **Email families** are live and ask before granting; **Attendance** (which the manager does NOT hold) is live — turn it on, it saves. Role → **Helper**: applies; Role → **Team treasurer**: applies (money write is within the ceiling); Role → **Team manager**: applies with **Manage staff staying OFF** and its line reading "Stays at Off — you can only hand out what you hold." The footer has **Remove from team** and **no Make head coach**.
@@ -22253,3 +22277,9 @@ Both parts landed 2026-09-13 — `87b94167` (the grant) and `0c3a62ee` (Phase 1)
 - **E · Everyone else (as head coach, then as the treasurer/helper alias if you still have one).** Turn Manage staff OFF for the manager; as the manager, reload: Staff leaves the Team menu and `/staff` shows "Managing staff isn't turned on for you · Ask your head coach if you need it — it's a switch on your access, like the others." A treasurer/helper never had the door. Help: search "manage staff" and "let my manager invite" → the coaching-staff guide's new Q "Can someone other than me manage the staff?"; the older "How do I choose what an assistant coach can do?" no longer says "card" or "two schedule switches".
 
 **Verification at hand-off:** 19 new unit tests on the pure rule (the ceiling table, the clamp, the row rule) + the model; 3,745/3,745 unit tests green after re-registering the staff gate on the billing rail and re-pointing four guards at the new shape; `typecheck` clean; `verify:changed` green on every gate but schema parity, which reports other sessions' dev-only migrations (290, 293, 294) — this work has none; `check:layout --only=coach-staff` green at 390/768/1440 (as the head coach — the sweep still has no delegate session, a standing gap). Browser verification of the delegate's sheet is the owner's, above.
+
+**Result (owner, 2026-09-13):** all five parts PASS, 25/25 ticked, no notes, no defects — including the three optional hand-built requests (a delegate's role change → 403, a bundle above the ceiling → 403 naming the key, a delegate removing the head coach → 403).
+
+**`/review` run after the walk, 2026-09-13 — 6 confirmed findings fixed, 3,747/3,747 green.** The one that changes what the walk saw: Manage staff is now locked for a delegate in BOTH directions (a head coach's decision to hand it out is not a delegate's to undo), so its lock line reads **"Only a head coach changes this."** rather than "…hands this out." (step C2 was walked with the earlier wording; the Critical it fixed — a manager unable to save ANY switch on a fellow manager's row — was not a walk step, because the UAT team has one manager). Also fixed: the Overview's "Invite your staff" tile now shows for a Manage staff holder; the invite sheet waits for the list before it draws; a cancelled role pick no longer leaves clamp notes behind. Then the commit.
+
+⚠ Bookkeeping note: this section was written by the delegation session and, between the walk and the commit, was deleted from the shared working copy by another session and restored by that session from an older copy (commit `bf011c69`); the text above is the delegation session's own, re-applied over that restore.

@@ -6,8 +6,9 @@ import { Lock, UserPlus } from 'lucide-react';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import CoachStaffSheet, {
-  EVERYDAY, SENSITIVE, daysLeftLabel, type PendingInvite, type SheetTarget, type StaffMember,
+  EVERYDAY, SENSITIVE, daysLeftLabel, type PendingInvite, type SheetTarget, type StaffMember, type StaffViewer,
 } from '@/components/coaches/CoachStaffSheet';
+import { delegateMayEditRow } from '@/lib/coach-staff-delegation';
 import {
   STAFF_KIND_COPY, staffKindLabel, staffKindWord, scheduleAccessOf, canViewScoutingBook,
   type CoachCapabilities, type StaffKind,
@@ -32,6 +33,11 @@ import css from './CoachStaffPanel.module.css';
  *
  * M1 (owner ruling 2026-08-16): staff is THE TEAM'S — one list, no season attached. Removing
  * someone revokes their access to every screen and every season at once.
+ *
+ * Manage staff (owner ruling 2026-09-13): the same list renders for a non-head holder of the grant.
+ * What differs is drawn from `viewer` (the list route says who is looking): a head coach's row and
+ * their own row open the sheet READ-ONLY ("View access ›" / "Your access ›"), and the sheet locks
+ * what they may not hand out. The head coach's own row keeps its "Hand over" disclosure.
  */
 
 type Caps = CoachCapabilities;
@@ -92,6 +98,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
   onInviteOpenChange: (open: boolean) => void;
 }) {
   const [staff, setStaff] = useState<StaffMember[] | null>(null);
+  const [viewer, setViewer] = useState<StaffViewer | null>(null);
   const [pending, setPending] = useState<PendingInvite[]>([]);
   const [loadError, setLoadError] = useState('');
   const [notice, setNotice] = useState('');
@@ -109,6 +116,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
       if (!res.ok) throw new Error('Could not load the coaching staff.');
       const json = await res.json();
       setStaff(json.staff ?? []);
+      setViewer(json.viewer ?? null);
       setPending(json.pending ?? []);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Could not load the coaching staff.');
@@ -192,6 +200,10 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
 
   const people = staff ?? [];
   const empty = staff !== null && people.every(s => s.isSelf) && pending.length === 0;
+  const viewerIsHead = viewer?.capabilities.isHeadCoach ?? true;
+  /** D4/D5 — a delegate opens a head coach's row, and their own, to read rather than edit. */
+  const canEdit = (member: StaffMember) =>
+    viewerIsHead || !viewer || delegateMayEditRow({ userId: viewer.userId, isHeadCoach: false }, member);
 
   return (
     <section className={css.wrap} aria-labelledby={`${uid}-title`}>
@@ -241,19 +253,25 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
                   {chips.length === 0 && note}
                 </p>
                 <div className={css.act}>
-                  {member.isSelf ? (
+                  {member.isSelf && viewerIsHead ? (
                     <button type="button" className={css.quietLink} aria-expanded={handOverOpen}
                       onClick={() => setHandOverOpen(o => !o)}>
                       Hand over to someone else <span aria-hidden>›</span>
                     </button>
+                  ) : member.isSelf ? (
+                    // A delegate's own row: their sheet opens read-only — "ask a head coach" (D5).
+                    <button type="button" className={css.quietLink} onClick={() => setSheet({ mode: 'member', member })}
+                      aria-label="View your own access">
+                      Your access <span aria-hidden>›</span>
+                    </button>
                   ) : (
                     <button type="button" className={css.rowLink} onClick={() => setSheet({ mode: 'member', member })}
-                      aria-label={`Edit access for ${name}`}>
-                      <span className={css.rowLinkLabel}>Edit access</span> <span aria-hidden>›</span>
+                      aria-label={`${canEdit(member) ? 'Edit' : 'View'} access for ${name}`}>
+                      <span className={css.rowLinkLabel}>{canEdit(member) ? 'Edit access' : 'View access'}</span> <span aria-hidden>›</span>
                     </button>
                   )}
                 </div>
-                {member.isSelf && handOverOpen && (
+                {member.isSelf && viewerIsHead && handOverOpen && (
                   <p className={css.handOver}>
                     Open the other person’s access and choose <strong>Make head coach</strong>. Once they’re a head coach they
                     can make you an assistant coach, or remove you — the team always keeps at least one head coach.
@@ -324,13 +342,19 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
         </p>
       )}
 
-      {target && (
+      {/* The sheet mounts only once the list has said who is looking — a delegate's walls are
+          drawn from `viewer`, and a sheet that guessed "head coach" until then would show a
+          delegate unlocked switches for a beat (/review 2026-09-13). The key remounts it per row,
+          so one row's optimistic grants and clamp notes never survive into another's. */}
+      {target && viewer && (
         <CoachStaffSheet
+          key={target.mode === 'member' ? target.member.memberId : target.mode === 'pending' ? target.invite.inviteId : 'invite'}
           orgSlug={orgSlug}
           teamId={teamId}
           teamName={teamName}
           target={target}
           headCoachCount={headCoachCount}
+          viewer={viewer}
           onClose={closeSheet}
           onMemberChanged={replaceMember}
           onMemberRemoved={id => setStaff(prev => prev?.filter(s => s.memberId !== id) ?? prev)}

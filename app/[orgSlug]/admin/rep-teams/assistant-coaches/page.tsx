@@ -45,6 +45,9 @@ function grantSummary(c: Caps): string {
   if (c.documents !== 'off' && c.rosterPii) grants.push("players' signed forms");
   if (c.announcementsSend) grants.push('send announcements');
   if (c.tryouts) grants.push('tryouts');
+  // Manage staff (2026-09-13): the one grant that reaches the others — an admin reading "who can
+  // change what people see on this team?" needs it on the row.
+  if (c.manageStaff) grants.push('manage staff');
   const off: string[] = [];
   // A1 (2026-08-03): "no roster" left this list with the switch that produced it. Names are baseline
   // now, and the roster PAGE follows record access rather than a grant an admin can read off a row.

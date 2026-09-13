@@ -10,9 +10,13 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { formatStoredDate } from '@/lib/timezone';
 import {
   STAFF_KINDS, STAFF_KIND_COPY, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE,
-  resolveCoachCapabilities, scheduleAccessOf, scheduleGrantsFor, hasRecordAccess,
+  resolveCoachCapabilities, scheduleAccessOf, scheduleGrantsFor, hasRecordAccess, grantsOf,
   type CoachCapabilities, type AssistantCapabilityGrants, type StaffKind, type ScheduleAccess,
 } from '@/lib/coach-capabilities';
+import {
+  isWidening, rank, delegateMaySet, delegateMayEditRow, clampForDelegate, type GrantKey,
+} from '@/lib/coach-staff-delegation';
+import { GRANT_LABELS } from '@/lib/coach-staff-labels';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachStaffPanel.module.css';
 
@@ -28,7 +32,19 @@ import css from './CoachStaffPanel.module.css';
  * invite is ONE POST at send, with every sensitive grant confirmed once, together. The
  * confirm-before-grant copy and the Documents + Contacts compound rule are carried over
  * unchanged from the grid this replaces.
+ *
+ * ═══ THE DELEGATE'S SHEET (Manage staff, owner ruling 2026-09-13) ═══
+ * The same sheet opens for a non-head holder of the Manage staff grant, with walls drawn from
+ * `viewer` (who is looking, as the list route reports it): a head-coach row and their own row open
+ * READ-ONLY with a sentence saying who can act; a Sensitive control they may not widen past their
+ * own level renders disabled with the reason under it (never hidden — a switch that vanishes for
+ * one person makes the sheet look broken); Manage staff itself is never theirs to hand out; a
+ * preset they apply is CLAMPED to their level and says which controls it capped; and the role
+ * buttons are absent. Every rule here has a twin on the server (`lib/coach-staff-delegation.ts`).
  */
+
+/** Who is looking at the sheet — the list route's `viewer`. Null only before the list has loaded. */
+export type StaffViewer = { userId: string; capabilities: CoachCapabilities };
 
 type Caps = CoachCapabilities;
 
@@ -71,7 +87,7 @@ export type SheetTarget =
 // ── The controls, with their sentences ──────────────────────────────────────────────────────
 
 type SegKey = 'schedule' | 'documents' | 'money';
-type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts';
+type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts' | 'manageStaff';
 /** A three-way option: its button label, and the one word the row chip uses ("Schedule · edit"). */
 type SegOption = { value: string; label: string; chip: string };
 export type StaffControl =
@@ -88,38 +104,44 @@ export type StaffControl =
  * edit" writes practice plans. That was the plan's condition for the widening.
  */
 export const EVERYDAY: ReadonlyArray<StaffControl> = [
-  { kind: 'seg', key: 'schedule', label: 'Schedule',
+  { kind: 'seg', key: 'schedule', label: GRANT_LABELS.schedule,
     sentence: 'See the schedule and practice plans. Edit adds, changes and cancels events, and writes practice plans.',
     options: [{ value: 'off', label: 'Hidden', chip: '' }, { value: 'view', label: 'View', chip: 'view' }, { value: 'manage', label: 'View + edit', chip: 'edit' }] },
-  { kind: 'switch', key: 'attendance', label: 'Attendance', sentence: 'Mark who came, at practices and games.' },
-  { kind: 'switch', key: 'lineups', label: 'Lineups', sentence: 'Build and change game lineups.' },
+  { kind: 'switch', key: 'attendance', label: GRANT_LABELS.attendance, sentence: 'Mark who came, at practices and games.' },
+  { kind: 'switch', key: 'lineups', label: GRANT_LABELS.lineups, sentence: 'Build and change game lineups.' },
   /**
    * THE DEVELOPMENT GRANT (owner ruling 2026-09-11) — one switch for every development write.
    * Everyday, not Sensitive: it hands over no new READ (goals still ride Internal notes, results
    * ride the record duties) — it delegates the recording. The sentence names the compound the
    * way Documents names Contacts: a goal is written only with Internal notes as well.
    */
-  { kind: 'switch', key: 'development', label: 'Development',
+  { kind: 'switch', key: 'development', label: GRANT_LABELS.development,
     sentence: 'Define tests, run sessions and record results. With Internal notes, write goals too.' },
-  { kind: 'switch', key: 'staffChat', label: 'Staff chat', sentence: 'A seat in the team’s private staff room.' },
-  { kind: 'switch', key: 'scoutingBook', label: 'Scouting book',
+  { kind: 'switch', key: 'staffChat', label: GRANT_LABELS.staffChat, sentence: 'A seat in the team’s private staff room.' },
+  { kind: 'switch', key: 'scoutingBook', label: GRANT_LABELS.scoutingBook,
     sentence: 'Read everyone’s notes on opponents and the team’s book line. Off, they can still add their own.' },
-  { kind: 'seg', key: 'documents', label: 'Documents',
+  { kind: 'seg', key: 'documents', label: GRANT_LABELS.documents,
     sentence: 'Blank team forms. Signed player forms also need Contacts & birthdates.',
     options: [{ value: 'off', label: 'Hidden', chip: '' }, { value: 'view', label: 'View', chip: 'view' }, { value: 'manage', label: 'Manage', chip: 'manage' }] },
 ];
 
 export const SENSITIVE: ReadonlyArray<StaffControl> = [
-  { kind: 'seg', key: 'money', label: 'Team money', sentence: 'Budget, dues, expenses and every payment.', sensitive: true,
+  { kind: 'seg', key: 'money', label: GRANT_LABELS.money, sentence: 'Budget, dues, expenses and every payment.', sensitive: true,
     options: [{ value: 'off', label: 'Hidden', chip: '' }, { value: 'read', label: 'View', chip: 'view' }, { value: 'write', label: 'View + edit', chip: 'edit' }] },
-  { kind: 'switch', key: 'rosterPii', label: 'Contacts & birthdates', sensitive: true,
+  { kind: 'switch', key: 'rosterPii', label: GRANT_LABELS.rosterPii, sensitive: true,
     sentence: 'Guardian names, emails and phones; players’ birthdates, medical and emergency details.' },
-  { kind: 'switch', key: 'notes', label: 'Internal notes', sensitive: true,
+  { kind: 'switch', key: 'notes', label: GRANT_LABELS.notes, sensitive: true,
     sentence: 'Private staff notes about each player, never shown to families.' },
-  { kind: 'switch', key: 'announcementsSend', label: 'Email families', sensitive: true,
+  { kind: 'switch', key: 'announcementsSend', label: GRANT_LABELS.announcementsSend, sensitive: true,
     sentence: 'Send announcements to every guardian. Off means they can draft, not send.' },
-  { kind: 'switch', key: 'tryouts', label: 'Tryouts', sensitive: true,
+  { kind: 'switch', key: 'tryouts', label: GRANT_LABELS.tryouts, sensitive: true,
     sentence: 'Every candidate’s guardian details and your evaluation decisions.' },
+  /**
+   * THE MASTER KEY (owner ruling 2026-09-13) — last in Sensitive because it reaches every other
+   * switch one step removed. The sentence names the three walls the holder lives under.
+   */
+  { kind: 'switch', key: 'manageStaff', label: GRANT_LABELS.manageStaff, sensitive: true,
+    sentence: 'Invite people and change what others can open — never more than they hold, never a head coach, never this switch.' },
 ];
 
 /**
@@ -135,30 +157,16 @@ const STANDING_ACCESS_NOTE =
 const OPENS_ROSTER = 'Turning this on also opens the roster page for them.';
 const RECORD_DUTIES: ReadonlySet<string> = new Set(['attendance', 'lineups', 'documents', 'development']);
 
-/** Any WIDENING counts as a grant, not just off→on — money read→write is the bigger of the two. */
-const RANK: Record<string, number> = { off: 0, view: 1, read: 1, manage: 2, write: 2 };
-const rank = (v: unknown) => (typeof v === 'boolean' ? (v ? 1 : 0) : (RANK[String(v)] ?? 0));
-const isWidening = (from: unknown, to: unknown) => rank(to) > rank(from);
+/** `rank` / `isWidening` live in the pure module now, so the server and this sheet agree on "wider". */
 const granted = (v: unknown) => v !== false && v !== 'off';
 
 /**
- * EVERY grant the server understands must appear here, including the ones this sheet has no
- * control for. A PATCH replaces the whole stored bundle, so an omitted key is not "left alone" —
- * it is dropped, and the server then resolves it from the defaults. The `Required<>` return type
- * is what ENFORCES that: adding a grant to the server is a compile error here until the sheet
- * decides what to do about it.
+ * EVERY grant the server understands must be in a PATCH from here — a PATCH replaces the whole
+ * stored bundle, so an omitted key is not "left alone", it is dropped and re-resolved from the
+ * defaults. `grantsOf` in the model is that enumeration (its `Required<>` return makes a new grant
+ * a compile error until it is sent); this is the sheet's name for it.
  */
-export function grantsFrom(c: Caps): Required<AssistantCapabilityGrants> {
-  return {
-    schedule: c.schedule, scheduleManage: c.scheduleManage,
-    attendance: c.attendance, lineups: c.lineups,
-    rosterPii: c.rosterPii, notes: c.notes,
-    money: c.money, documents: c.documents,
-    announcementsSend: c.announcementsSend, tryouts: c.tryouts,
-    staffChat: c.staffChat, scoutingBook: c.scoutingBook,
-    development: c.development,
-  };
-}
+export const grantsFrom: (c: Caps) => Required<AssistantCapabilityGrants> = grantsOf;
 
 /**
  * EVERY grant in the Sensitive group asks first. Revoking is never confirmed — a head coach taking
@@ -191,6 +199,10 @@ const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, ConfirmOnGrant>> = {
     title: `Share your internal notes with ${who}?`,
     message: `${who} will see private staff notes about each player, which are written for coaches and never shown to families.`,
   }),
+  manageStaff: who => ({
+    title: `Let ${who} manage your staff?`,
+    message: `${who} will be able to invite people and change what others can open — sensitive access only up to what they hold themselves. They can’t change any head coach, change anyone’s role, or pass this switch on. You can take this back any time.`,
+  }),
   /**
    * ⚠ Documents sits in EVERYDAY because on its own it grants blank team forms — but a player's
    * signed waiver / medical consent needs `documents` AND `rosterPii` together. When contacts are
@@ -213,6 +225,7 @@ function sensitiveWords(c: Caps): string[] {
   if (c.notes) out.push('internal notes');
   if (c.announcementsSend) out.push('emailing families');
   if (c.tryouts) out.push('tryouts');
+  if (c.manageStaff) out.push('managing staff');
   return out;
 }
 function joinWords(words: string[]): string {
@@ -227,6 +240,7 @@ function sensitiveConsequences(c: Caps): string[] {
   if (c.notes) out.push('your private staff notes about each player');
   if (c.announcementsSend) out.push('the power to email every family');
   if (c.tryouts) out.push('every candidate’s guardian details and your decisions');
+  if (c.manageStaff) out.push('the Staff page — inviting people and setting what others can open, up to their own access');
   return out;
 }
 
@@ -235,7 +249,7 @@ const ROLE_OPTIONS = STAFF_KINDS.map(k => ({ value: k, name: STAFF_KIND_COPY[k].
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CoachStaffSheet({
-  orgSlug, teamId, teamName, target, headCoachCount, onClose,
+  orgSlug, teamId, teamName, target, headCoachCount, viewer, onClose,
   onMemberChanged, onMemberRemoved, onInviteChanged, onInviteCreated, onResendInvite, onCancelInvite,
 }: {
   orgSlug: string;
@@ -244,6 +258,8 @@ export default function CoachStaffSheet({
   target: SheetTarget;
   /** Active head coaches on the team, for the last-head refusal's client-side twin. */
   headCoachCount: number;
+  /** Who is looking — the delegate's walls are drawn from this. The panel mounts the sheet only once it has it. */
+  viewer: StaffViewer;
   onClose: () => void;
   onMemberChanged: (m: StaffMember) => void;
   onMemberRemoved: (memberId: string) => void;
@@ -263,6 +279,17 @@ export default function CoachStaffSheet({
   const invite = target.mode === 'pending' ? target.invite : null;
   const isNew = target.mode === 'invite';
   const isHeadRow = member?.coachRole === 'head_coach';
+
+  // ── the delegate's walls (D3–D8) ──
+  const actor: Caps = viewer.capabilities;
+  const actorIsHead = actor.isHeadCoach;
+  // A head-coach row or the viewer's own row is read-only for a delegate (D4, D5). The head coach's
+  // own row never reaches this sheet (the list shows "Hand over" there instead).
+  const readOnly = !!member && !actorIsHead
+    && !delegateMayEditRow({ userId: viewer.userId, isHeadCoach: false }, member);
+  const isOwnRow = !!member && member.userId === viewer.userId;
+  // Controls a preset just capped for a delegate, so each can say so for one save cycle (D8).
+  const [clampedKeys, setClampedKeys] = useState<ReadonlySet<GrantKey>>(() => new Set());
 
   const [caps, setCaps] = useState<Caps>(() =>
     member?.capabilities ?? invite?.capabilities ?? resolveCoachCapabilities('assistant_coach', {}));
@@ -337,6 +364,7 @@ export default function CoachStaffSheet({
       if (!ok) return;
     }
     const next = { ...caps, ...patch };
+    setClampedKeys(new Set());
     if (isNew) { setCaps(next); return; }
     setCaps(next); // optimistic; a failed save re-reads below
     const ok = await patchAccess(next, null);
@@ -356,8 +384,15 @@ export default function CoachStaffSheet({
     // The dropdown fires for the option already chosen too — re-picking the same role must not
     // throw away the switches the coach has just adjusted (/review, 2026-09-11).
     if (nextKind === kind) return;
-    const preset = resolveCoachCapabilities('assistant_coach', STAFF_PRESETS[nextKind]);
-    if (isNew) { setKind(nextKind); setCaps(preset); return; }
+    // A read-only row (D4/D5) refuses here as well as on the control — the dropdown's option list
+    // has no disabled state of its own (/review 2026-09-13).
+    if (readOnly) return;
+    // D8 — a delegate's preset is clamped to what they hold (and never carries Manage staff); a
+    // head coach's applies as written. The capped controls say so until the next change.
+    const raw = resolveCoachCapabilities('assistant_coach', STAFF_PRESETS[nextKind]);
+    const { grants, clamped } = clampForDelegate(actor, isNew ? null : grantsFrom(caps), grantsFrom(raw));
+    const preset = resolveCoachCapabilities('assistant_coach', grants);
+    if (isNew) { setClampedKeys(new Set(clamped)); setKind(nextKind); setCaps(preset); return; }
     const widened = sensitiveWords(preset).filter(w => !sensitiveWords(caps).includes(w));
     const copy = STAFF_KIND_COPY[nextKind];
     if (widened.length > 0) {
@@ -369,9 +404,12 @@ export default function CoachStaffSheet({
       if (!ok) return;
     }
     const previousKind = kind;
+    // Set only now — a cancelled confirm above must not leave “Stays at …” notes on an untouched
+    // bundle (/review 2026-09-13).
+    setClampedKeys(new Set(clamped));
     setKind(nextKind); setCaps(preset);
     const ok = await patchAccess(preset, nextKind);
-    if (!ok) { setKind(previousKind); setCaps(caps); }
+    if (!ok) { setKind(previousKind); setCaps(caps); setClampedKeys(new Set()); }
   }
 
   async function changeRole(coachRole: 'head_coach' | 'assistant_coach') {
@@ -500,17 +538,41 @@ export default function CoachStaffSheet({
         ? `Invited ${formatStoredDate(invite!.createdAt, { withYear: false })} · waiting for your club admin to approve`
         : `Invited ${formatStoredDate(invite!.createdAt, { withYear: false })} · ${daysLeftLabel(invite!.expiresAt)}`;
 
+  /**
+   * The one line under a control a delegate cannot fully use (D3, D6, D8). Null when nothing is
+   * locked. The schedule key is never Sensitive, so it never has one.
+   */
+  const lockReason = (c: StaffControl): string | null => {
+    if (readOnly || actorIsHead) return null;
+    if (c.key === 'schedule') return null;
+    if (c.key === 'manageStaff') return 'Only a head coach changes this.';
+    if (clampedKeys.has(c.key)) {
+      const level = c.kind === 'seg' ? (c.options.find(o => o.value === String(caps[c.key]))?.label ?? 'Hidden') : (caps[c.key] ? 'On' : 'Off');
+      return `Stays at ${level} — you can only hand out what you hold.`;
+    }
+    if (c.kind === 'seg') {
+      const blocked = c.options.some(o => !delegateMaySet(actor, c.key, caps[c.key], o.value));
+      if (!blocked) return null;
+      const mine = c.options.find(o => rank(o.value) === rank(actor[c.key]))?.label ?? 'Hidden';
+      return `You hold ${mine} here, so that’s as far as you can hand it out.`;
+    }
+    return caps[c.key] || delegateMaySet(actor, c.key, caps[c.key], true) ? null : 'You don’t hold this, so you can’t hand it out.';
+  };
+
   const renderControl = (c: StaffControl) => {
     const labelId = `${uid}-${c.key}`;
     const consequence = opensRoster && RECORD_DUTIES.has(c.key) && !granted(caps[c.key]) ? OPENS_ROSTER : null;
+    const reason = lockReason(c);
     const control = c.kind === 'seg'
       ? (
         <span className={css.segControl} role="group" aria-labelledby={labelId}>
           {c.options.map(opt => {
             const current = c.key === 'schedule' ? scheduleAccessOf(caps) : String(caps[c.key]);
             const active = current === opt.value;
+            // A seg keeps its lower options live for a delegate; only the ones past their level lock.
+            const locked = readOnly || (c.key !== 'schedule' && !delegateMaySet(actor, c.key, caps[c.key], opt.value));
             return (
-              <button key={opt.value} type="button" aria-pressed={active} disabled={busy}
+              <button key={opt.value} type="button" aria-pressed={active} disabled={busy || locked}
                 className={active ? `${css.segBtn} ${css.segBtnOn}` : css.segBtn}
                 onClick={() => {
                   if (c.key === 'schedule') setSchedule(opt.value as ScheduleAccess);
@@ -523,12 +585,13 @@ export default function CoachStaffSheet({
         </span>
       )
       : (
-        <input type="checkbox" className={css.switch} aria-labelledby={labelId} disabled={busy}
+        <input type="checkbox" className={css.switch} aria-labelledby={labelId}
+          disabled={busy || readOnly || !delegateMaySet(actor, c.key, caps[c.key], !caps[c.key])}
           checked={Boolean(caps[c.key])}
           onChange={e => { void setGrant({ [c.key]: e.target.checked } as Partial<Caps>); }} />
       );
     return (
-      <div key={c.key} className={css.item}>
+      <div key={c.key} className={reason ? `${css.item} ${css.itemLocked}` : css.item}>
         <span className={css.itemLabel} id={labelId}>
           {c.label}
           {c.sensitive && <span className={css.asksFirst}>asks first</span>}
@@ -538,6 +601,7 @@ export default function CoachStaffSheet({
           {c.sentence}
           {consequence && <> <strong>{consequence}</strong></>}
         </span>
+        {reason && <span className={css.itemLockReason}>{reason}</span>}
       </div>
     );
   };
@@ -572,14 +636,24 @@ export default function CoachStaffSheet({
           )}
 
           {isHeadRow ? (
-            <p className={css.headNote}>A head coach can open everything on this team — including this page. There is nothing to switch.</p>
+            <p className={css.headNote}>
+              {actorIsHead
+                ? 'A head coach can open everything on this team — including this page. There is nothing to switch.'
+                : `${who} is a head coach. Only another head coach changes a head coach’s access or role.`}
+            </p>
           ) : (
             <>
+              {readOnly && (
+                // D5 — the delegate's own row: everything below is drawn, nothing is switchable.
+                <p className={css.headNote}>
+                  {isOwnRow ? 'This is your own access. Ask a head coach to change it.' : `Only a head coach changes ${who}’s access.`}
+                </p>
+              )}
               <div className={css.group}>
                 <div className={css.groupHead}>
                   {/* ⚠ SublinedChoice draws NO visible label — its `label` prop is the ARIA name only. */}
                   <label className={css.groupTitle} htmlFor={`${uid}-kind`}>{isNew ? 'Who are they?' : 'Role'}</label>
-                  {!isNew && <span className={css.groupMeta}>Changing it applies that role’s starting access</span>}
+                  {!isNew && !readOnly && <span className={css.groupMeta}>Changing it applies that role’s starting access</span>}
                 </div>
                 <SublinedChoice
                   id={`${uid}-kind`}
@@ -588,14 +662,14 @@ export default function CoachStaffSheet({
                   value={kind}
                   onChange={v => { void chooseKind(v); }}
                   placeholder="Choose who they are"
-                  disabled={busy}
+                  disabled={busy || readOnly}
                 />
                 {kindCopy && <p className={css.kindHint}>{kindCopy.sentence}</p>}
               </div>
 
               <div className={css.group}>
                 <div className={css.groupHead}>
-                  <span className={css.groupTitle}>{isNew ? 'What they’ll be able to open' : 'Everyday'}</span>
+                  <span className={css.groupTitle}>{isNew ? 'What they’ll be able to open' : 'Standard access'}</span>
                   {isNew && kindCopy && <span className={css.groupMeta}>Set from “{kindCopy.name}” — change anything</span>}
                 </div>
                 {isNew && !kind ? (
@@ -636,16 +710,24 @@ export default function CoachStaffSheet({
               </button>
             </>
           )}
-          {member && (
+          {member && readOnly && (
+            // D4/D5 — a delegate on a head coach's row or their own: no Remove, no role change.
+            <span className={css.footNote}>{isHeadRow ? 'Only a head coach can change or remove a head coach.' : 'Ask a head coach to change your access.'}</span>
+          )}
+          {member && !readOnly && (
             <>
               <button type="button" className={shared.btnDanger} disabled={busy} onClick={() => void removeMember()}>
                 <Trash2 size={14} aria-hidden /> Remove from team
               </button>
               <span className={css.footSpacer} />
-              <button type="button" className={shared.btnSecondary} disabled={busy}
-                onClick={() => void changeRole(isHeadRow ? 'assistant_coach' : 'head_coach')}>
-                {isHeadRow ? 'Make assistant coach' : 'Make head coach'}
-              </button>
+              {/* Roles stay with the head coach (D4) — the button is absent for a delegate, and the
+                  server refuses the request regardless of what a client sends. */}
+              {actorIsHead && (
+                <button type="button" className={shared.btnSecondary} disabled={busy}
+                  onClick={() => void changeRole(isHeadRow ? 'assistant_coach' : 'head_coach')}>
+                  {isHeadRow ? 'Make assistant coach' : 'Make head coach'}
+                </button>
+              )}
             </>
           )}
           {invite && (

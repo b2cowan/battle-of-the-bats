@@ -13,6 +13,8 @@ import {
 import {
   resolveCoachCapabilities,
   denyUnless,
+  canManageStaff,
+  MANAGE_STAFF_DENIED_MESSAGE,
   type AssistantCapabilityGrants,
   type CoachCapabilities,
   type StaffKind,
@@ -176,24 +178,26 @@ export async function getEntitledTeamMembership(
   return membership;
 }
 
-/**
- * The staff routes' shared gate: signed in → this org → this team → ACTIVE head-coach membership.
- * The team and membership lookups are independent, so they run together — this is the resolver
- * three staff routes (list, per-member, invite) used to hand-copy, one serial await apiece.
- */
-export async function requireHeadCoachMembership(
-  orgSlug: string,
-  teamId: string,
-  deniedMessage = 'Only the head coach manages the coaching staff.',
-): Promise<
+type StaffGate =
   | { error: Response }
   | {
       ctx: NonNullable<Awaited<ReturnType<typeof getAuthContext>>>;
       team: NonNullable<Awaited<ReturnType<typeof getRepTeam>>>;
       membership: TeamStaffMembership;
       capabilities: CoachCapabilities;
-    }
-> {
+    };
+
+/**
+ * The staff routes' shared gate: signed in → this org → this team → ACTIVE membership → `allowed`.
+ * The team and membership lookups are independent, so they run together — this is the resolver
+ * three staff routes (list, per-member, invite) used to hand-copy, one serial await apiece.
+ */
+async function requireStaffGate(
+  orgSlug: string,
+  teamId: string,
+  allowed: (c: CoachCapabilities) => boolean,
+  deniedMessage: string,
+): Promise<StaffGate> {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
@@ -208,10 +212,33 @@ export async function requireHeadCoachMembership(
   if (!membership) return { error: forbidden() };
 
   const capabilities = resolveMembershipCapabilities(membership);
-  const denied = denyUnless(capabilities.isHeadCoach, deniedMessage);
+  const denied = denyUnless(allowed(capabilities), deniedMessage);
   if (denied) return { error: denied };
 
   return { ctx, team, membership, capabilities };
+}
+
+/** Head coach ONLY — role changes (Make head coach / Make assistant coach) and nothing else on Staff. */
+export function requireHeadCoachMembership(
+  orgSlug: string,
+  teamId: string,
+  deniedMessage = 'Only the head coach manages the coaching staff.',
+): Promise<StaffGate> {
+  return requireStaffGate(orgSlug, teamId, c => c.isHeadCoach, deniedMessage);
+}
+
+/**
+ * A head coach OR a holder of the Manage staff grant (owner ruling 2026-09-13) — the list, the
+ * invite, a member's grants/kind/removal, and the pending-invite verbs. ⚠ Passing this gate does
+ * not make the caller a head coach: every write behind it runs `delegationViolation` and the
+ * head-row / self-row refusals in `lib/coach-staff-delegation.ts`.
+ */
+export function requireStaffManagerMembership(
+  orgSlug: string,
+  teamId: string,
+  deniedMessage = MANAGE_STAFF_DENIED_MESSAGE,
+): Promise<StaffGate> {
+  return requireStaffGate(orgSlug, teamId, canManageStaff, deniedMessage);
 }
 
 /* ⚰ `getActiveMembershipsForUser` and `getActiveMembershipTeamIds` stood here and were deleted on

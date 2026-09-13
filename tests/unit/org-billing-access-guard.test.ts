@@ -248,6 +248,8 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'coach-tag-routes',            // the tag route FACTORY; rides the two resolvers above
       // M1 (2026-08-16): the staff routes' shared head-coach gate.
       'requireHeadCoachMembership',  // lib/coach-membership.ts          → getAuthContext (requireOrgSlug: true)
+      // Manage staff (2026-09-13): the staff routes' wider gate — same requireStaffGate, same chokepoint.
+      'requireStaffManagerMembership', // lib/coach-membership.ts        → requireStaffGate → getAuthContext (requireOrgSlug: true)
     ];
 
     // ⚠ SCOPE LIMIT, STATED SO IT IS NOT MISTAKEN FOR COVERAGE: only `[orgSlug]` routes. The FREE

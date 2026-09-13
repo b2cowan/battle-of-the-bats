@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resolveCoachCapabilities, sanitizeAssistantGrants } from '@/lib/coach-capabilities';
-import { requireHeadCoachMembership, getTeamStaffPanelList } from '@/lib/coach-membership';
+import { requireStaffManagerMembership, getTeamStaffPanelList } from '@/lib/coach-membership';
 import { listOpenAssistantInvitesForTeam } from '@/lib/assistant-invites';
 import { withObservability } from '@/lib/observability';
 import { listVerifiedFamilyEmails } from '@/lib/family-access';
@@ -8,13 +8,14 @@ import { normalizeGuardianEmail } from '@/lib/guardian-email';
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/staff — THE team's staff (M1: one list, no season
 // dimension) + each member's effective capabilities and stored kind, plus the team's outstanding
-// invites (R3, pass 2 — a standalone team has no admin page to see them on), for the head coach's
-// staff list. Head coach only. Seasons' staff RECORDS are separate (`rep_team_coaches`) and not
-// served here.
+// invites (R3, pass 2 — a standalone team has no admin page to see them on), for the staff list.
+// A head coach or a Manage staff holder (2026-09-13); the response carries the VIEWER's own
+// capabilities so the sheet can lock what they may not hand out. Seasons' staff RECORDS are
+// separate (`rep_team_coaches`) and not served here.
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const gate = await requireHeadCoachMembership(orgSlug, teamId);
+  const gate = await requireStaffManagerMembership(orgSlug, teamId);
   if ('error' in gate) return gate.error;
   const { ctx } = gate;
 
@@ -61,6 +62,8 @@ export const GET = withObservability(async (_req: Request,
   };
 
   return NextResponse.json({
+    // Who is looking — the sheet's ceiling and its read-only rows are drawn from this, not guessed.
+    viewer: { userId: ctx.user.id, capabilities: gate.capabilities },
     staff: staff.map(m => ({
       memberId: m.id,
       userId: m.userId,

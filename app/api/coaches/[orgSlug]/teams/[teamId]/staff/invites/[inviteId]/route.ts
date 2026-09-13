@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { requireHeadCoachMembership } from '@/lib/coach-membership';
+import { requireStaffManagerMembership } from '@/lib/coach-membership';
 import {
-  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS,
+  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, grantsOf,
 } from '@/lib/coach-capabilities';
+import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
+import { grantLabel } from '@/lib/coach-staff-labels';
 import {
   getOpenAssistantInviteForTeam, updateAssistantInviteAccess, resendAssistantInvite,
   revokeAssistantInvite, sendAssistantInviteEmail, notifyAdminOfPendingInvite, orgRequiresAssistantApproval,
@@ -18,20 +20,22 @@ import { withObservability } from '@/lib/observability';
  * to one before it is accepted: change what it will hand over (PATCH), send it again (POST
  * resend), and cancel it (DELETE).
  *
- * ⚠ HEAD-COACH-ONLY AND TEAM-SCOPED, every verb: the shared gate resolves the caller's active
- * head-coach membership on THIS team, and every lib read below re-asserts `team_id` — an invite
- * id from another team is a 404, never a row. An accepted invite is not "open" and 404s too; by
- * then the membership, not the invite, is the person's access truth.
+ * ⚠ STAFF-MANAGER-GATED AND TEAM-SCOPED, every verb: the shared gate resolves the caller's active
+ * membership on THIS team and requires a head coach or a Manage staff holder (2026-09-13), and
+ * every lib read below re-asserts `team_id` — an invite id from another team is a 404, never a
+ * row. An accepted invite is not "open" and 404s too; by then the membership, not the invite, is
+ * the person's access truth. A delegate's PATCH runs the ceiling against what the invite already
+ * hands over.
  */
 async function resolveInvite(orgSlug: string, teamId: string, inviteId: string) {
-  const gate = await requireHeadCoachMembership(orgSlug, teamId, 'Only the head coach manages invites.');
+  const gate = await requireStaffManagerMembership(orgSlug, teamId);
   if ('error' in gate) return gate;
   const invite = await getOpenAssistantInviteForTeam(inviteId, teamId);
   if (!invite) return { error: NextResponse.json({ error: 'That invite is no longer open.' }, { status: 404 }) };
   return { ...gate, invite };
 }
 
-/** The head coach's display name for the admin's bell ("Jane changed…"), best-effort. */
+/** The caller's display name for the admin's bell ("Jane changed…"), best-effort. */
 async function inviterName(orgId: string, userId: string): Promise<string | null> {
   const { data } = await supabaseAdmin
     .from('organization_members').select('display_name')
@@ -68,6 +72,21 @@ export const PATCH = withObservability(async (req: Request,
   }
   if (!patch.staffKind && !patch.initialCapabilities) {
     return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
+  }
+  if (!resolved.capabilities.isHeadCoach && patch.initialCapabilities) {
+    // The ceiling, against what the invite ALREADY hands over: a client-sent bundle is refused by
+    // name; the server's own preset (a bare kind change) is clamped — same split as the invite route.
+    const current = grantsOf(resolveCoachCapabilities('assistant_coach', sanitizeAssistantGrants(resolved.invite.initialCapabilities)));
+    const proposed = grantsOf(resolveCoachCapabilities('assistant_coach', patch.initialCapabilities));
+    if (body.capabilities && typeof body.capabilities === 'object') {
+      const violation = delegationViolation(resolved.capabilities, current, proposed);
+      if (violation) {
+        return NextResponse.json({ error: delegationReasonSentence(violation, grantLabel), key: violation.key }, { status: 403 });
+      }
+      patch.initialCapabilities = proposed;
+    } else {
+      patch.initialCapabilities = clampForDelegate(resolved.capabilities, current, proposed).grants;
+    }
   }
 
   const updated = await updateAssistantInviteAccess(inviteId, teamId, patch);

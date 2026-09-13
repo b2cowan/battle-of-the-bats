@@ -30,6 +30,7 @@ const HEAD_CAPS: CoachCapabilities = {
   tryouts: true,
   scoutingBook: true,
   development: true,
+  manageStaff: true,
 };
 
 function caps(overrides: Partial<CoachCapabilities> = {}): CoachCapabilities {

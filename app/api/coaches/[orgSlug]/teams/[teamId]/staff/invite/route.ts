@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { requireHeadCoachMembership, resolveWorkingProgramYear, getTeamStaffPanelList } from '@/lib/coach-membership';
+import { requireStaffManagerMembership, resolveWorkingProgramYear, getTeamStaffPanelList } from '@/lib/coach-membership';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
-import { STAFF_PRESETS, sanitizeAssistantGrants, sanitizeStaffKind } from '@/lib/coach-capabilities';
+import { STAFF_PRESETS, sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, grantsOf } from '@/lib/coach-capabilities';
+import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
+import { grantLabel } from '@/lib/coach-staff-labels';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import {
   createAssistantInvite, orgRequiresAssistantApproval, sendAssistantInviteEmail, notifyAdminOfPendingInvite,
@@ -11,17 +13,19 @@ import { withObservability } from '@/lib/observability';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// POST /api/coaches/[orgSlug]/teams/[teamId]/staff/invite — the head coach invites someone by
-// email, naming WHO they are (one of the four kinds) and WHAT they will be able to open.
+// POST /api/coaches/[orgSlug]/teams/[teamId]/staff/invite — the head coach, or a Manage staff
+// holder, invites someone by email, naming WHO they are (one of the four kinds) and WHAT they will
+// be able to open. A delegate's invite runs the ceiling (2026-09-13): nothing Sensitive above what
+// they hold, and never Manage staff itself.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
 
   // M1: authority is the caller's ACTIVE team membership — which also means a head coach whose
   // season just ended can still build next year's staff (the between-seasons state is ordinary).
-  const gate = await requireHeadCoachMembership(orgSlug, teamId, 'Only the head coach can invite staff.');
+  const gate = await requireStaffManagerMembership(orgSlug, teamId);
   if ('error' in gate) return gate.error;
-  const { ctx, team } = gate;
+  const { ctx, team, capabilities: actor } = gate;
 
   // The invite token still records a season for provenance; acceptance grants TEAM membership,
   // so between seasons the newest closed year stands in and nothing about access reads it.
@@ -55,11 +59,30 @@ export const POST = withObservability(async (req: Request,
    */
   const kind = sanitizeStaffKind(body.kind);
   if (!kind) return NextResponse.json({ error: 'Choose who they are before sending the invite.' }, { status: 400 });
-  const initialCapabilities = body.capabilities && typeof body.capabilities === 'object'
+  let initialCapabilities = body.capabilities && typeof body.capabilities === 'object'
     ? sanitizeAssistantGrants(body.capabilities)
     : { ...STAFF_PRESETS[kind] };
+  if (!actor.isHeadCoach) {
+    /**
+     * THE CEILING (D3, D6, D8). A client-sent bundle above the actor's level is REFUSED, naming the
+     * switch — the sheet pre-locks, so this is reachable only by a stale sheet or a hand-built
+     * request. A bundle the server chose itself (the bare preset) is CLAMPED instead: the manager
+     * preset carries Manage staff, and a delegate inviting a manager should get a manager without
+     * the master key, not an error about a switch they never touched.
+     */
+    const proposed = grantsOf(resolveCoachCapabilities('assistant_coach', initialCapabilities));
+    if (body.capabilities && typeof body.capabilities === 'object') {
+      const violation = delegationViolation(actor, null, proposed);
+      if (violation) {
+        return NextResponse.json({ error: delegationReasonSentence(violation, grantLabel), key: violation.key }, { status: 403 });
+      }
+      initialCapabilities = proposed;
+    } else {
+      initialCapabilities = clampForDelegate(actor, null, proposed).grants;
+    }
+  }
 
-  // The head coach's own display name for the email ("Jane invited you…").
+  // The inviter's own display name for the email ("Jane invited you…").
   const { data: inviterMember } = await supabaseAdmin
     .from('organization_members').select('display_name')
     .eq('organization_id', ctx.org.id).eq('user_id', ctx.user.id).maybeSingle<{ display_name: string | null }>();

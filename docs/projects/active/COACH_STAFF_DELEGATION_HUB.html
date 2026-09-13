@@ -1,0 +1,601 @@
+<title>Manage Staff, Delegated</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--amber:#fbf1dc;--amberline:#e3c98f;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}.danger{color:var(--error);border-color:#e0a9a9}.ghost{border-color:transparent;background:transparent}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted);text-align:right}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.specimen{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:var(--muted);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+.specimen::after{content:'';flex:1;height:1px;background:var(--line)}
+.specimen.first{margin-top:0}
+
+/* ── product specimens: the staff list ── */
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:white;overflow:hidden}
+.row{display:grid;grid-template-columns:minmax(180px,1.1fr) 120px minmax(220px,2fr) auto;gap:8px 18px;align-items:center;padding:13px 18px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}.row.pending{background:#fafbf7}
+.who{display:flex;flex-direction:column;gap:1px;min-width:0}.name{font-weight:650}.you{color:var(--muted);font-weight:500}.email{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rolechip{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--soft);white-space:nowrap}
+.rolechip.head{background:#2f3f28;color:#eaf3dc;border-color:#2f3f28}.rolechip.manager{background:#e3edf2;border-color:#b6cfdb;color:#1d4a5e}.rolechip.treasurer{background:#f0e9d8;border-color:#d9c896;color:#5a4410}.rolechip.helper{background:#eeeee9}.rolechip.invited{background:white;color:var(--muted);border-style:dashed}
+.caps{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;border:1px solid var(--line);background:#fafbf7;white-space:nowrap}
+.chip.sens{background:var(--amber);border-color:var(--amberline);color:#5a4410}
+.chip.sens::before{content:'🔒';font-size:9px}
+.capnote{color:var(--muted)}
+.rowlink{border:0;background:transparent;color:var(--blue);text-decoration:underline;text-underline-offset:3px;font-size:13px;padding:8px 0;min-height:44px;white-space:nowrap}
+.rowlink.quiet{color:var(--muted)}
+.pagehead{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}
+.pagehead h1{font-size:24px;margin:0;display:flex;align-items:center;gap:10px}
+.ng{border:1px solid var(--line);border-radius:10px;background:white;padding:22px 24px;max-width:560px}
+.ng h2{margin:0 0 6px;font-size:17px}.ng p{margin:0;color:var(--muted);font-size:14px}
+.sidenav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;font-size:12px;color:var(--muted)}
+.sidenav span{padding:4px 9px;border-radius:5px;background:var(--soft)}.sidenav span.on{background:var(--lime);color:#1c2417;font-weight:700}
+
+/* ── product specimens: the access sheet ── */
+.sheet{width:min(560px,100%);border:1px solid #c6cebc;border-radius:12px;background:white;box-shadow:0 10px 30px #27322114;overflow:hidden}
+.sheethead{display:flex;justify-content:space-between;align-items:start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.sheethead h2{margin:0;font-size:17px}.sheethead .sub{font-size:13px}
+.sheetbody{padding:6px 20px 18px}
+.group{padding:14px 0 6px;border-top:1px solid var(--line)}.group:first-child{border-top:0}
+.grouphead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:8px}.grouptitle{font-weight:700;font-size:13px}.groupmeta{font-size:12px;color:var(--muted)}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 16px;align-items:start;padding:9px 0}
+.ctl .lab{font-weight:600;font-size:14px}.ctl .sent{font-size:12.5px;color:var(--muted);grid-column:1}.ctl .why{font-size:12px;color:var(--warn);grid-column:1;margin-top:2px}
+.ctl.locked .lab,.ctl.locked .sent{opacity:.6}
+.sw{width:40px;height:24px;border-radius:14px;background:#cdd3c7;position:relative;border:0;grid-row:1/3;align-self:center}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 2px #0003}
+.sw.on{background:var(--olive)}.sw.on::after{left:19px}
+.sw.locked{background:#e4e7de;border:1px dashed #aab6a1}.sw.locked::after{background:#f4f4f0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;grid-row:1/3;align-self:center}
+.seg button{border:0;background:white;padding:6px 11px;font-size:12.5px;min-height:34px}
+.seg button[aria-pressed=true]{background:var(--soft);font-weight:700}.seg button:disabled{color:#9fa89a;background:#f6f7f3;text-decoration:line-through}
+.pick{display:flex;flex-direction:column;border:1px solid #aab6a1;border-radius:7px;padding:9px 12px;margin-bottom:8px;background:white}
+.pick b{font-size:14px}.pick small{color:var(--muted);font-size:12px}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 6px}
+.sheetfoot{display:flex;gap:10px;align-items:center;padding:12px 20px;border-top:1px solid var(--line);background:#fafbf7}
+.sheetfoot .spacer{flex:1}
+.readnote{padding:14px 16px;background:#fafbf7;border:1px solid var(--line);border-radius:8px;font-size:14px;margin:12px 0}
+.confirm{width:min(480px,100%);border:1px solid var(--line);border-radius:12px;background:white;box-shadow:0 10px 30px #27322114;padding:20px 22px}
+.confirm h2{margin:0 0 8px;font-size:17px}.confirm p{font-size:14px}.confirm .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.twoup{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}.docpage th,.docpage td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}.docpage th{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.docpage .tablewrap{overflow-x:auto}
+.docpage ul,.docpage ol{padding-left:22px;margin:0 0 14px}.docpage li{margin-bottom:5px}
+.docpage code{font:12.5px/1.4 ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.proposed{background:#e3edf2;border-color:#b6cfdb}.tag.assumed{background:white}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+@container(max-width:700px){main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.head{flex-wrap:wrap;gap:12px}h1{font-size:23px}
+ .row{grid-template-columns:1fr auto;gap:6px 12px}.row .caps{grid-column:1/-1}.row .rowlink{grid-column:1/-1;justify-self:start}.pagehead{flex-wrap:wrap}.twoup{grid-template-columns:1fr}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Manage staff, delegated — project hub</strong><br><small>Owner-directed 2026-09-13 · built, §179 ✅ 25/25, /review 6 fixes — all 2026-09-13 · no migration</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup drawn 2026-09-13 on this hub (four screens, whole-page before/after)">Design</li>
+    <li class="stage done" title="COACH_STAFF_DELEGATION_PLAN.md + _PM_BRIEF.md written 2026-09-13">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-13 — 19 new unit tests, 3,745/3,745 green, typecheck clean, layout sweep green on coach-staff; no migration">Build</li>
+    <li class="stage done" title="/review 2026-09-13 — 4 lenses, 12→8→6 confirmed and fixed (1 Critical, 1 High, 3 Medium, 1 Low), 3,747/3,747 green after">Review</li>
+    <li class="stage done" title="§179 ✅ PASSED 25/25, five parts, zero defects — owner, 2026-09-13">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#screen-page">1 · The Staff page, as the manager</a>
+    <a href="#screen-switch">2 · The head coach's sheet — the new switch</a>
+    <a href="#screen-ceiling">3 · The manager's sheet — the ceiling</a>
+    <a href="#screen-walls">4 · The walls — head coach, own row, a preset</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">Riverdale Ridge · U13 Purple · 2026 Season<br><span class="meta" id="viewerline">Signed in as Priya Nair — Team manager</span></div>
+    </header>
+    <main>
+
+      <!-- ─────────── SCREEN 1 ─────────── -->
+      <section class="screen" id="screen-page">
+        <div class="specimen first">Today — what Priya sees when she reaches Team → Staff (the door isn't even in her nav)</div>
+        <div class="sidenav" aria-label="Team group, today"><span>Roster</span><span>Tryouts</span><span>Documents</span><span>Settings</span></div>
+        <div class="ng">
+          <h2>Only the head coach manages staff <button class="fl" data-finding="F04" data-here="This sentence stops being true the moment a manager holds the page. It is rewritten in the proposal.">F04</button></h2>
+          <p>Ask your head coach if you need more areas turned on for you.</p>
+        </div>
+        <p class="sub" style="margin-top:10px">Priya runs the team off the field — money, forms, family emails. Inviting Saturday's parent helper is her job, and the only way Jordan can hand it to her today is <strong>Make head coach</strong>.<button class="fl" data-finding="F01" data-here="The head coach's one door out of this: promote the manager to head coach, which also hands over tryouts, internal notes, every family's contacts and the power to remove the head coach.">F01</button></p>
+
+        <div class="specimen">Proposed — the same page once Jordan turns on “Manage staff” for her</div>
+        <div class="sidenav" aria-label="Team group, proposed"><span>Roster</span><span>Tryouts</span><span class="on">Staff <span class="mk" data-k="new" data-note="The Staff door in Team opens for anyone holding Manage staff — desktop sidebar, phone bar and the phone's More sheet all read one visibility table, so it appears in all three at once.">New</span></span><span>Documents</span><span>Settings</span></div>
+        <div class="pagehead">
+          <h1>Staff <span class="mk" data-k="un" data-note="The list is the pass-2 screen unchanged: one row each, role chip, what they can open, a door into the sheet.">Unchanged</span></h1>
+          <button class="button primary" type="button">＋ Invite someone <span class="mk" data-k="new" data-note="The header's page-level action follows the same predicate as the page: head coach OR Manage staff.">New</span></button>
+        </div>
+        <div class="list">
+          <div class="row">
+            <div class="who"><span class="name">Jordan Blake</span><span class="email">jordan.blake@email.com</span></div>
+            <div><span class="rolechip head">Head coach</span></div>
+            <div class="caps"><span class="capnote">Everything — including this page.</span></div>
+            <a class="rowlink" href="#screen-walls">Edit access ›</a>
+          </div>
+          <div class="row">
+            <div class="who"><span class="name">Priya Nair <span class="you">(you)</span></span><span class="email">priya.nair@email.com</span></div>
+            <div><span class="rolechip manager">Team manager</span></div>
+            <div class="caps"><span class="chip">Schedule · edit</span><span class="chip">Staff chat</span><span class="chip">Documents · manage</span><span class="chip sens">Money · edit</span><span class="chip sens">Contacts &amp; birthdates</span><span class="chip sens">Email families</span><span class="chip sens">Manage staff <button class="fl fix" data-finding="F01" data-here="The amber chip on the row: one glance answers “who can change the staff?”, the same way the money chip answers “who can see the money?”.">fixes F01</button></span></div>
+            <a class="rowlink quiet" href="#screen-walls">Your access › <span class="mk" data-k="re" data-note="The head coach's own row carries “Hand over to someone else ›”. A delegate's own row can't hand anything over, so it opens their own sheet read-only instead.">Restyled</span></a>
+          </div>
+          <div class="row">
+            <div class="who"><span class="name">Sam Ferreira</span><span class="email">sam.ferreira@email.com</span></div>
+            <div><span class="rolechip">Assistant coach</span></div>
+            <div class="caps"><span class="chip">Schedule · edit</span><span class="chip">Attendance</span><span class="chip">Lineups</span><span class="chip">Staff chat</span><span class="chip">Scouting book</span><span class="chip">Documents · view</span></div>
+            <a class="rowlink" href="#screen-ceiling">Edit access ›</a>
+          </div>
+          <div class="row">
+            <div class="who"><span class="name">Dana Whitlock</span><span class="email">dana.w@email.com</span></div>
+            <div><span class="rolechip treasurer">Team treasurer</span></div>
+            <div class="caps"><span class="chip">Schedule · view</span><span class="chip sens">Money · edit</span><span class="capnote">Keeps the books. Nothing else.</span></div>
+            <a class="rowlink" href="#screen-ceiling">Edit access ›</a>
+          </div>
+          <div class="row pending">
+            <div class="who"><span class="name">marcus.t@email.com</span><span class="email">Invited Sep 12 · link works 6 more days</span></div>
+            <div><span class="rolechip invited">Invited</span></div>
+            <div class="caps"><span class="capnote">Will start as <strong>a helper</strong> with the everyday tools.</span> <a class="rowlink" href="#screen-walls">Change that before they accept ›</a></div>
+            <div style="display:flex;gap:8px"><button class="button" type="button" style="min-height:36px;padding:5px 11px">Resend</button><button class="button ghost" type="button" style="min-height:36px;padding:5px 11px">Cancel</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 2 ─────────── -->
+      <section class="screen" id="screen-switch" hidden>
+        <div class="specimen first">Jordan (head coach) opens Priya's access — the Sensitive group gains one switch</div>
+        <div class="twoup">
+          <div class="sheet" role="dialog" aria-label="Priya Nair — access">
+            <div class="sheethead"><div><h2>Priya Nair</h2><p class="sub">Team manager · priya.nair@email.com</p></div><span class="meta">✓ Saved</span></div>
+            <div class="sheetbody">
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Role</span><span class="groupmeta">Changing it applies that role’s starting access</span></div>
+                <div class="pick"><b>Team manager</b><small>Runs the team off the field — money, forms, family emails, the staff list. Not the lineup. <span class="mk" data-k="re" data-note="The manager's one-line description gains “the staff list” — this string is read by the dropdown subline, the sheet hint and the invite email, so one edit changes all three.">Restyled</span></small></div>
+              </div>
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Standard access</span><span class="groupmeta">7 controls · collapsed here</span></div>
+                <p class="hint">Schedule View + edit · Attendance off · Lineups off · Development off · Staff chat on · Scouting book on · Documents Manage <span class="mk" data-k="un" data-note="The Everyday group is unchanged. Drawn collapsed so the new control is what this screen shows.">Unchanged</span></p>
+              </div>
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Sensitive — asks before granting</span><span class="groupmeta">4 granted</span></div>
+                <div class="ctl"><span class="lab">Team money</span><span class="seg" role="group"><button type="button">Hidden</button><button type="button">View</button><button type="button" aria-pressed="true">View + edit</button></span><span class="sent">Budget, dues, expenses and every payment.</span></div>
+                <div class="ctl"><span class="lab">Contacts &amp; birthdates</span><button class="sw on" type="button" aria-label="Contacts and birthdates, on"></button><span class="sent">Guardian names, emails and phones; players’ birthdates, medical and emergency details.</span></div>
+                <div class="ctl"><span class="lab">Internal notes</span><button class="sw" type="button" aria-label="Internal notes, off"></button><span class="sent">Private staff notes about each player, never shown to families.</span></div>
+                <div class="ctl"><span class="lab">Email families</span><button class="sw on" type="button" aria-label="Email families, on"></button><span class="sent">Send announcements to every guardian. Off means they can draft, not send.</span></div>
+                <div class="ctl"><span class="lab">Tryouts</span><button class="sw" type="button" aria-label="Tryouts, off"></button><span class="sent">Every candidate’s guardian details and your evaluation decisions.</span></div>
+                <div class="ctl"><span class="lab">Manage staff <span class="mk" data-k="new" data-note="The 14th grant. It lives in the Sensitive group because it is the master key: whoever holds it can change what others can open. Like money and contacts, turning it on asks first; turning it off is instant.">New</span> <button class="fl fix" data-finding="F01" data-here="One switch, off by default, ON in the Team manager preset — so a manager invited from today holds it before the email goes out, and Jordan can switch it off right there.">fixes F01</button></span><button class="sw on" type="button" aria-label="Manage staff, on"></button><span class="sent">Invite people and change what others can open — never more than they hold, never a head coach, never this switch.</span></div>
+              </div>
+            </div>
+            <div class="sheetfoot"><button class="button danger" type="button">🗑 Remove from team</button><span class="spacer"></span><button class="button" type="button">Make head coach <span class="mk" data-k="un" data-note="Role changes stay exactly as pass 2 built them — and they stay with the head coach (screen 3 shows this button gone for a delegate).">Unchanged</span></button></div>
+          </div>
+          <div>
+            <div class="specimen first">What Jordan confirms when he switches it on</div>
+            <div class="confirm" role="alertdialog" aria-labelledby="c1">
+              <h2 id="c1">Let Priya manage your staff? <span class="mk" data-k="new" data-note="Every Sensitive grant asks once before granting (carried from the 2026-07-31 grid). This one names the three walls so the head coach knows what they are and are not handing over.">New</span></h2>
+              <p>Priya will be able to invite people and change what others can open — sensitive access only up to what she holds herself. She can’t change any head coach, change anyone’s role, or pass this switch on. You can take this back any time.</p>
+              <div class="acts"><button class="button ghost" type="button">Cancel</button><button class="button primary" type="button">Turn on</button></div>
+            </div>
+            <p class="sub" style="margin-top:16px">Revoking is instant and never asks — a head coach taking access back is always in a hurry. Existing managers are <strong>not</strong> changed by this shipping: a preset is where access starts, and this is the one switch that should never widen by default.<button class="fl" data-finding="F02" data-here="Why default-off matters more here than on any other switch: this one reaches every other switch one step removed.">F02</button></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 3 ─────────── -->
+      <section class="screen" id="screen-ceiling" hidden>
+        <div class="specimen first">Priya (Team manager, holds Manage staff) opens Sam's access — switches she can't hand out are locked, with the reason</div>
+        <div class="twoup">
+          <div class="sheet" role="dialog" aria-label="Sam Ferreira — access">
+            <div class="sheethead"><div><h2>Sam Ferreira</h2><p class="sub">Assistant coach · sam.ferreira@email.com</p></div><span class="meta"></span></div>
+            <div class="sheetbody">
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Role</span><span class="groupmeta">Changing it applies that role’s starting access</span></div>
+                <div class="pick"><b>Assistant coach</b><small>Coaches beside you — attendance, lineups, the schedule. <span class="mk" data-k="un" data-note="The four-role dropdown is available to a delegate too; a preset it applies is capped to what the delegate holds (screen 4).">Unchanged</span></small></div>
+              </div>
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Standard access</span><span class="groupmeta">Priya can change all of these</span></div>
+                <div class="ctl"><span class="lab">Attendance <span class="mk" data-k="un" data-note="Everyday access is not bounded by the ceiling: Priya holds no Attendance herself, yet she may give it — it is a coaching duty, not a data exposure. Bounding everyday grants would have made the switch useless to exactly the person it is for.">Unchanged</span></span><button class="sw on" type="button" aria-label="Attendance, on"></button><span class="sent">Mark who came, at practices and games.</span></div>
+                <div class="ctl"><span class="lab">Lineups</span><button class="sw on" type="button" aria-label="Lineups, on"></button><span class="sent">Build and change game lineups.</span></div>
+                <div class="ctl"><span class="lab">Development</span><button class="sw" type="button" aria-label="Development, off"></button><span class="sent">Define tests, run sessions and record results. With Internal notes, write goals too.</span></div>
+                <p class="hint">Schedule · Staff chat · Scouting book · Documents — drawn collapsed, all live for Priya.</p>
+              </div>
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Sensitive — asks before granting</span><span class="groupmeta">none granted</span></div>
+                <div class="ctl"><span class="lab">Team money</span><span class="seg" role="group"><button type="button" aria-pressed="true">Hidden</button><button type="button">View</button><button type="button">View + edit</button></span><span class="sent">Budget, dues, expenses and every payment.</span><span class="why" style="color:var(--muted)">Live — Priya holds View + edit, so she may hand out up to that. <span class="mk" data-k="new" data-note="The ceiling per control: a delegate may widen a Sensitive grant only up to their own level. Priya holds Money: View + edit, so all three options stay clickable here.">New</span></span></div>
+                <div class="ctl"><span class="lab">Contacts &amp; birthdates</span><button class="sw" type="button" aria-label="Contacts and birthdates, off"></button><span class="sent">Guardian names, emails and phones; players’ birthdates, medical and emergency details.</span></div>
+                <div class="ctl locked"><span class="lab">Internal notes <button class="fl fix" data-finding="F02" data-here="Priya does not hold Internal notes, so the switch is shown, disabled, and says why. She could still turn it OFF for someone who has it — lowering is always allowed.">fixes F02</button></span><button class="sw locked" type="button" aria-label="Internal notes, off, locked" disabled></button><span class="sent">Private staff notes about each player, never shown to families.</span><span class="why">You don’t hold this, so you can’t hand it out. <span class="mk" data-k="new" data-note="The locked state: disabled control plus one line of reason under the sentence. Not hidden — a switch that vanishes for one person and not another makes the sheet look broken.">New</span></span></div>
+                <div class="ctl"><span class="lab">Email families</span><button class="sw" type="button" aria-label="Email families, off"></button><span class="sent">Send announcements to every guardian. Off means they can draft, not send.</span></div>
+                <div class="ctl locked"><span class="lab">Tryouts</span><button class="sw locked" type="button" aria-label="Tryouts, off, locked" disabled></button><span class="sent">Every candidate’s guardian details and your evaluation decisions.</span><span class="why">You don’t hold this, so you can’t hand it out.</span></div>
+                <div class="ctl locked"><span class="lab">Manage staff <button class="fl fix" data-finding="F03" data-here="A delegate never passes the master key on, even though they hold it — so the head coach always knows exactly who can manage staff. No chain delegation.">fixes F03</button></span><button class="sw locked" type="button" aria-label="Manage staff, off, locked" disabled></button><span class="sent">Invite people and change what others can open — never more than they hold, never a head coach, never this switch.</span><span class="why">Only a head coach changes this.</span></div>
+              </div>
+            </div>
+            <div class="sheetfoot"><button class="button danger" type="button">🗑 Remove from team <span class="mk" data-k="un" data-note="A delegate may remove any non-head member (D7). Removal is disruptive, not an exposure, and re-inviting reactivates the same person. One line to flip if the owner wants it head-only.">Unchanged</span></button><span class="spacer"></span><span class="meta">Make head coach — not shown <span class="mk" data-k="new" data-note="Role changes are head-coach-only in both directions. The button is absent for a delegate, and the server refuses the request regardless of what a client sends.">New</span> <button class="fl fix" data-finding="F03" data-here="Roles stay with the head coach: no Make head coach, no Make assistant coach, from a delegate's sheet.">fixes F03</button></span></div>
+          </div>
+          <div>
+            <div class="specimen first">Same sheet on Dana (treasurer)</div>
+            <p class="sub">Dana holds <strong>Money: View + edit</strong> — the same level Priya holds, so Priya can leave it, lower it, or keep it. Nothing on Dana's row is above Priya's ceiling, so nothing is locked except Manage staff. A row that holds something a delegate doesn't (say, Tryouts) shows that one control locked and the rest live — the sheet is never all-or-nothing.</p>
+            <div class="specimen">What the server checks, in one sentence</div>
+            <p class="sub">For each sensitive area: if the change <em>widens</em> it, the new level must be no higher than the person making the change holds themselves. Lowering is always allowed. Manage staff must be off in anything a delegate writes. A head coach skips the whole check.<button class="fl fix" data-finding="F02" data-here="The sheet pre-locks so this refusal is unreachable by hand; it exists for a stale sheet, a race, or a hand-built request — and names the switch it refused.">fixes F02</button></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 4 ─────────── -->
+      <section class="screen" id="screen-walls" hidden>
+        <div class="specimen first">Priya opens Jordan's row · Priya opens her own row · Priya invites a treasurer</div>
+        <div class="twoup">
+          <div class="sheet" role="dialog" aria-label="Jordan Blake — access">
+            <div class="sheethead"><div><h2>Jordan Blake</h2><p class="sub">Head coach · jordan.blake@email.com</p></div></div>
+            <div class="sheetbody">
+              <div class="readnote">Jordan is a head coach. Only another head coach changes a head coach’s access or role. <span class="mk" data-k="new" data-note="A head-coach row opens for a delegate with no controls and no footer buttons — the head coach's own sheet reads “A head coach can open everything on this team… There is nothing to switch”; this sentence replaces it for a delegate and says who can act.">New</span> <button class="fl fix" data-finding="F03" data-here="The owner's wall, drawn: a delegate can never do anything to a head coach — not access, not role, not removal. Read-only, and the server refuses all three.">fixes F03</button></div>
+            </div>
+            <div class="sheetfoot"><span class="meta">No Remove, no Make assistant coach.</span></div>
+          </div>
+          <div class="sheet" role="dialog" aria-label="Priya Nair — your access">
+            <div class="sheethead"><div><h2>Priya Nair <span class="you">(you)</span></h2><p class="sub">Team manager · priya.nair@email.com</p></div></div>
+            <div class="sheetbody">
+              <div class="readnote">This is your own access. Ask a head coach to change it. <span class="mk" data-k="new" data-note="Without this, the ceiling means nothing: a delegate who could widen their own row could widen anything. The controls render read-only below the note so they can still see what they hold.">New</span> <button class="fl fix" data-finding="F02" data-here="Self-edit is the shortest escalation path, so it is closed outright rather than ceiling-checked.">fixes F02</button></div>
+              <p class="hint">Schedule View + edit · Staff chat · Documents Manage · 🔒 Money View + edit · 🔒 Contacts &amp; birthdates · 🔒 Email families · 🔒 Manage staff</p>
+            </div>
+          </div>
+        </div>
+        <div class="specimen">Inviting as a delegate — the preset is capped to what Priya holds, and says so</div>
+        <div class="sheet" role="dialog" aria-label="Invite someone">
+          <div class="sheethead"><div><h2>Invite someone</h2><p class="sub">They’ll get an email with a link to join your staff.</p></div></div>
+          <div class="sheetbody">
+            <div class="group"><span class="grouptitle">Their email</span><div class="pick" style="margin-top:6px"><b style="font-weight:500">alex.romero@email.com</b></div></div>
+            <div class="group">
+              <div class="grouphead"><span class="grouptitle">Who are they?</span></div>
+              <div class="pick"><b>Team treasurer</b><small>Keeps the books. Nothing else.</small></div>
+            </div>
+            <div class="group">
+              <div class="grouphead"><span class="grouptitle">What they’ll be able to open</span><span class="groupmeta">Set from “Team treasurer” — change anything</span></div>
+              <div class="ctl"><span class="lab">Team money</span><span class="seg" role="group"><button type="button">Hidden</button><button type="button">View</button><button type="button" aria-pressed="true">View + edit</button></span><span class="sent">Budget, dues, expenses and every payment.</span><span class="why" style="color:var(--muted)">Within what Priya holds — applied as the preset says.</span></div>
+              <div class="ctl locked"><span class="lab">Manage staff</span><button class="sw locked" type="button" aria-label="Manage staff, off, locked" disabled></button><span class="sent">Invite people and change what others can open — never more than they hold, never a head coach, never this switch.</span><span class="why">Only a head coach changes this.</span></div>
+              <p class="hint" style="margin-top:8px">If a delegate holding <strong>Money: View</strong> chose this preset, Money would be set to <strong>View</strong> and the control would read <em>“Stays at View — you can only hand out what you hold.”</em> <span class="mk" data-k="new" data-note="D8: a preset a delegate applies is clamped, never refused — the sheet sends a bundle the server will accept, and names each control it had to cap for one save cycle.">New</span></p>
+            </div>
+          </div>
+          <div class="sheetfoot"><span class="meta">Nothing sensitive beyond what you hold.</span><span class="spacer"></span><button class="button ghost" type="button">Cancel</button><button class="button primary" type="button">Send invite</button></div>
+        </div>
+      </section>
+
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- ─────────── PM BRIEF ─────────── -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Manage staff, delegated — a head coach can hand the Staff page to a manager</h1>
+  <p class="sub">Directed by the owner 2026-09-13 · Manager preset ON ruled the same day · Priority: medium — no data exposure today; a real friction for the Team manager role, and a standalone team's only alternative is a second head coach.</p>
+
+  <h2>What a head coach sees and does differently</h2>
+  <ul>
+    <li><strong>One more switch on a person's access sheet — “Manage staff”.</strong> It sits in the Sensitive group with money and family contacts, so turning it on asks you to confirm first. It is <strong>off</strong> for everyone by default.</li>
+    <li><strong>A new Team manager starts with it on.</strong> When you invite someone as a Team manager, the sheet shows Manage staff already on before you send — switch it off there like any other starting grant. Managers you invited before this shipped are <strong>not</strong> changed; flip it for them if you want it.</li>
+    <li>With it on, that person <strong>can open your Staff page, invite people, change what others can open, resend or cancel invites, and remove someone</strong> — with three walls:
+      <ol>
+        <li><strong>They can never touch a head coach.</strong> Not your access, not your role, not remove you. Your row opens for them read-only.</li>
+        <li><strong>They can only hand out what they hold.</strong> Everyday access (schedule, attendance, lineups, development, chat, scouting book, documents) they may give freely. Sensitive access — money, contacts, internal notes, emailing families, tryouts — only up to their own level.</li>
+        <li><strong>They can't pass the switch on.</strong> Only a head coach decides who manages staff, so you always know exactly who holds it.</li>
+      </ol>
+    </li>
+    <li><strong>“Make head coach” stays yours.</strong> Roles are only ever changed by a head coach.</li>
+  </ul>
+
+  <h2>What a Team manager (or anyone granted) sees differently</h2>
+  <ul>
+    <li><strong>Staff appears in their Team menu</strong> — desktop, phone bar, and the phone's More sheet — with <strong>Invite someone</strong> in the header. Today the page says “Only the head coach manages staff”.</li>
+    <li>Opening someone's access, <strong>switches they can't hand out are shown but locked</strong>, with the reason under each: “You don't hold this, so you can't hand it out” — or, on Manage staff, “Only a head coach changes this.”</li>
+    <li>Picking a role preset for someone applies it <strong>within their own level</strong> and says so on any switch it had to cap.</li>
+    <li>Their <strong>own row</strong> opens read-only (“Ask a head coach to change it”). A head coach's row opens read-only (“Only another head coach changes a head coach”).</li>
+    <li>The footer has <strong>Remove from team</strong> but no <strong>Make head coach</strong>.</li>
+  </ul>
+
+  <h2>What does not change</h2>
+  <p>Treasurers, helpers and plain assistants: no Staff door, exactly as today. Two head coaches, hand-over, the last-head-coach rule, the club admin's oversight page and the invite emails are unchanged. Nothing in the database changes shape — no migration, nothing to apply to prod separately. The coach demo sandbox has no staff rows and no narration about the Staff page, so nothing there goes stale.</p>
+
+  <h2>Why it matters</h2>
+  <p>The Team manager role exists to run the team off the field. Inviting Saturday's parent helper and chasing a lapsed invite is that job, and today only a head coach can do it. The only way to hand it over is <strong>Make head coach</strong>, which also hands over every family's contact details, tryouts, internal notes and the power to remove the head coach. A switch bounded by “only what you hold” gives the manager the duty without the keys.</p>
+
+  <h2>Trade-offs made</h2>
+  <ul>
+    <li><strong>Default off everywhere except the Manager preset.</strong> Existing managers keep their current access — a preset is where access <em>starts</em>, and the master key is the one switch that should never widen by default.</li>
+    <li><strong>The ceiling is about sensitive access, not everything.</strong> A manager without Attendance can still give an assistant Attendance — a coaching duty, not a data exposure. Bounding everyday grants would make the switch useless to the person it's for.</li>
+    <li><strong>Removal is allowed</strong> for anyone who isn't a head coach — disruptive but reversible. One line to flip if you'd rather keep removal head-only.</li>
+  </ul>
+
+  <h2>One thing worth deciding separately (not built here)</h2>
+  <p>There is <strong>no record of who changed someone's access</strong>, today or after this. With one head coach it didn't matter; with a manager also editing access, “who turned on Money for Marcus?” has no answer. Proposed follow-up: a “changed by …, date” line on each person's sheet. Logged on the Decisions tab as Proposed.</p>
+
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A head coach grants Manage staff to a manager; the manager invites a helper end to end without the head coach — and cannot widen anyone's money, contacts, notes, email or tryouts past their own, cannot touch a head coach, cannot pass the switch on (QA §179, parts A–E).</li>
+    <li>Treasurers and helpers still see no Staff door.</li>
+    <li>No migration; no demo drift; the help article answers “can someone else manage my staff?” in one Q.</li>
+  </ul>
+</section>
+
+<!-- ─────────── FULL PLAN ─────────── -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full plan</div>
+  <h1>Manage staff, delegated — implementation plan</h1>
+  <p class="sub">The repo copy is <code>docs/projects/active/COACH_STAFF_DELEGATION_PLAN.md</code> (file:line evidence and code signatures live there). This tab is the same plan, readable. QA: Owner QA Ledger §179. Migration: none.</p>
+
+  <h2>Findings — what the code does today</h2>
+  <h3>F01 — Delegating staff means making a second head coach</h3>
+  <p>Staff management is head-coach-only at every layer: the nav door (<code>case 'Staff': return caps.isHeadCoach</code>), the page gate, and every route (list, invite, member edit/remove, pending-invite verbs all call <code>requireHeadCoachMembership</code>). No grant exists for it. The only hand-off is <strong>Make head coach</strong>, which also grants money write, every family's contacts, tryouts, internal notes and the power to remove the head coach. Standalone Premium teams have no club admin to fall back on. <em>Fix:</em> a <code>manageStaff</code> grant; the four routes and the two doors gate on <code>canManageStaff = isHeadCoach || manageStaff</code>.</p>
+  <h3>F02 — Staff management is a master key, and “protect the head coach” alone doesn't close it</h3>
+  <p>Whoever can set other people's grants can reach anything one step removed — grant a friend money access, or invite a second account of their own with everything on. Protecting head-coach rows doesn't close that. <em>Fix:</em> the ceiling (D3): a delegate may widen a Sensitive grant only up to what they hold; they cannot edit their own row (D5); a delegate's bundle is clamped by the sheet (D8) and checked by the server.</p>
+  <h3>F03 — Roles and head coaches</h3>
+  <p>The owner's wall: a delegate can never do anything to a head coach's permissions. <em>Fix:</em> head rows are read-only for a delegate and refused on every verb; the <code>coachRole</code> branch checks <code>isHeadCoach</code> explicitly (D4); the Manage staff switch itself is never grantable by a delegate (D6).</p>
+  <h3>F04 — The not-granted copy would lie</h3>
+  <p>“Only the head coach manages staff” stops being true once a manager holds the page. <em>Fix:</em> “Managing staff isn't turned on for you · Ask your head coach if you need it.”</p>
+
+  <h2>The rules</h2>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Rule</th><th>Source</th></tr>
+    <tr><td>D1</td><td>Manage staff is a grant — one switch, default off, Sensitive group (asks before granting).</td><td>Owner 09-13</td></tr>
+    <tr><td>D2</td><td>The Team manager preset starts with it ON; Assistant, Treasurer, Helper OFF. Existing managers are not changed.</td><td>Owner 09-13</td></tr>
+    <tr><td>D3</td><td>The ceiling: Everyday access may be given freely; Sensitive access widened only up to the delegate's own level. Keeping or lowering is always allowed.</td><td>Recommendation</td></tr>
+    <tr><td>D4</td><td>Head coaches untouchable; role changes head-only. Head rows open read-only for a delegate.</td><td>Owner 09-13</td></tr>
+    <tr><td>D5</td><td>A delegate cannot edit their own row.</td><td>Recommendation</td></tr>
+    <tr><td>D6</td><td>A delegate cannot pass Manage staff on. No chain delegation.</td><td>Recommendation</td></tr>
+    <tr><td>D7</td><td>A delegate may remove any non-head member and manage any pending invite.</td><td>Assumption — one line to flip</td></tr>
+    <tr><td>D8</td><td>A preset applied by a delegate is clamped, not refused, and the sheet says which control it capped.</td><td>Recommendation</td></tr>
+  </table></div>
+  <div class="note"><strong>The one rule the server runs:</strong> for each Sensitive key, if the change widens it, the new level must be ≤ the actor's own level; <code>manageStaff</code> must be false in anything a non-head actor writes. Head-coach actors skip the check. Rank: off 0 · view/read 1 · manage/write 2; booleans 0/1 — moved from the sheet into the pure module so both sides read one definition.</div>
+
+  <h2>Model</h2>
+  <ul>
+    <li><code>manageStaff</code> joins the grant bundle and the resolved capabilities; assistant default false, head coach true; presets: manager true, the other three false.</li>
+    <li><code>canManageStaff(c)</code> — the one predicate nav, page, header button and route gate read.</li>
+    <li>The manager's one-line description gains “the staff list” (read by dropdown, sheet hint and invite email).</li>
+    <li>The sheet's <code>grantsFrom()</code> returns a <code>Required&lt;&gt;</code> bundle, so adding the key is a compile error until the sheet handles it.</li>
+    <li><strong>No migration.</strong> Grants are jsonb; an absent key resolves to the default. Nothing to backfill, nothing for a schema gate to miss.</li>
+  </ul>
+
+  <h2>The pure rule — new <code>lib/coach-staff-delegation.ts</code></h2>
+  <p>Framework-free, table-tested, imported by the server and the sheet: <code>delegationViolation(actor, current, next)</code> (null = allowed; names the key and whether it was above the ceiling or the master key), <code>clampForDelegate(actor, current, next)</code> (the sheet's D8, returns the clamped keys), <code>delegateMayEditRow(actor, target)</code> (D4 + D5). Head-coach actors: no violation, nothing clamped.</p>
+
+  <h2>Server</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Route</th><th>Today</th><th>After</th></tr>
+    <tr><td>Staff list read</td><td>head only</td><td>staff manager</td></tr>
+    <tr><td>Invite</td><td>head only</td><td>staff manager; grants checked against the ceiling (current = nothing); <code>manageStaff</code> forced false for a non-head actor</td></tr>
+    <tr><td>Member grants / kind</td><td>head only</td><td>staff manager; head target → 403 for a non-head actor; self-target refused as today; widening check → 403 naming the key</td></tr>
+    <tr><td>Member role change</td><td>head only</td><td><strong>head only, unchanged</strong> — explicit <code>isHeadCoach</code> check first</td></tr>
+    <tr><td>Member remove</td><td>head only</td><td>staff manager for non-head targets; head target → 403 for a non-head actor; last-head guard unchanged</td></tr>
+    <tr><td>Pending invite edit / cancel / resend</td><td>head only</td><td>staff manager; edits run the widening check against the invite's stored starting access</td></tr>
+  </table></div>
+  <p>A new <code>requireStaffManagerMembership()</code> sits beside <code>requireHeadCoachMembership()</code> with the same shape; the head-only one stays for the role branch. The routes guard test's promise 3 (“a pending invite is head-coach-only”) is rewritten to “staff-manager-gated on every verb”, and gains: every grant-writing route calls the violation check; the role branch checks <code>isHeadCoach</code>.</p>
+
+  <h2>Nav, page, header</h2>
+  <p>The Staff case in the nav visibility table reads <code>canManageStaff</code> (both navs and the phone More sheet read that one table). The page gates on the same predicate, passes the viewer's capabilities and id to the panel and sheet, and the header's Invite button follows it (re-register the header occurrence in the page-actions guard). Not-granted copy per F04.</p>
+
+  <h2>The sheet and the list</h2>
+  <ul>
+    <li>New Sensitive control, last in the group: <strong>Manage staff</strong> — “Invite people and change what others can open — never more than they hold, never a head coach, never this switch.” Confirm on grant: “Let {who} manage your staff?” with the three walls in the message.</li>
+    <li><strong>Delegate mode:</strong> controls above the viewer's level render disabled with a reason line (“You don't hold this, so you can't hand it out.” / “Only a head coach changes this.”); lowering stays live; presets route through the clamp and say what they capped; footer hides Make head coach / Make assistant coach, keeps Remove.</li>
+    <li>Head-coach row for a delegate: “{Name} is a head coach. Only another head coach changes a head coach's access or role.” — no controls, no footer buttons. Own row: “This is your own access. Ask a head coach to change it.” The list's own-row action reads “Your access ›”.</li>
+    <li>The list's access chips gain <strong>Manage staff</strong> as a sensitive (amber, lock) chip; the phone caps line follows.</li>
+    <li>Club admin oversight page: no gating change; add the chip if it lists grants (verify while building).</li>
+  </ul>
+
+  <h2>Help, demos</h2>
+  <p>The coaching-staff help article gains a Q — “Can someone other than me manage the staff?” — plus keywords. <strong>Already stale before this work:</strong> the older assistant-access article still describes “a card with two groups” and two schedule switches from before pass 2; fix it in the same <code>/docs</code> pass rather than adding a third description. The coach sandbox has one head coach and no staff rows, and no dock line or tour step narrates Staff — nothing goes stale. The standing “seed one assistant + one pending invite” idea would now naturally seed a Team manager wearing the chip; still ask first, not part of this build.</p>
+
+  <h2>Tests</h2>
+  <ul>
+    <li>Capabilities: defaults/head/resolve carry the key; <code>canManageStaff</code>.</li>
+    <li>Kinds/presets: manager ON, the other three OFF.</li>
+    <li><strong>New</strong> delegation table: widen within ceiling ok · widen above → key · lower an above-ceiling grant ok · <code>manageStaff</code> true → violation · head actor → null · new invite with no current; clamp returns the capped keys; row-edit rule (head no, self no, assistant yes).</li>
+    <li>Nav visibility: Staff opens on <code>manageStaff</code> alone; closed for treasurer/helper presets. Page-actions guard re-registered. Routes guard promises per the server section. <code>check:layout --only=staff</code> after.</li>
+  </ul>
+
+  <h2>Sequence and gates</h2>
+  <p>One pass, one commit, no migration: model → pure rule + tests → server → nav/page → sheet/list → help → <code>/simplify</code> (a new pure module and a new sheet mode is the shape that warrants it) → <code>/review</code> → QA §179 walk on this hub's QA Walk tab → commit on <code>dev</code> with explicit pathspecs. <code>npm run typecheck</code> (shared module changed) + <code>verify:changed</code>; restart the dev server before handoff (new file).</p>
+
+  <h2>QA §179 — parts</h2>
+  <ul>
+    <li><strong>A · The switch</strong> (head coach, UAT team): Sensitive group ends with Manage staff; granting asks; amber chip on the row; revoking is instant and silent.</li>
+    <li><strong>B · The manager's page:</strong> as the granted manager, Staff appears in Team (desktop, phone bar, More sheet); the list shows every row incl. the head coach and themselves; Invite someone in the header.</li>
+    <li><strong>C · The ceiling:</strong> on the assistant's row Internal notes and Tryouts are locked with the reason; Money live; Helper preset applies; Treasurer preset applies within ceiling; Manage staff locked; footer has Remove, no Make head coach.</li>
+    <li><strong>D · The walls:</strong> head coach's row read-only; own row read-only; a hand-built role change → 403; a hand-built invite with Manage staff on → 403 naming the key.</li>
+    <li><strong>E · Everyone else:</strong> treasurer/helper still have no Staff door; the not-granted copy reads the new sentence.</li>
+  </ul>
+
+  <h2>Out of scope / flagged</h2>
+  <ul>
+    <li><strong>No audit trail on access changes</strong> — true today too, but with two editors “who turned on Money for Marcus?” has no answer. Proposed follow-up: a “changed by {name}, {date}” line on the sheet. Raised on the Decisions tab as Proposed.</li>
+    <li>Chain delegation (D6 forbids it) — revisit only if a real team asks.</li>
+    <li>A per-team “only head coaches manage staff” lock — unnecessary; the default-off switch is that lock.</li>
+    <li>Two head coaches, hand-over, the last-head guard — unchanged from pass 2.</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden data-walk="§179">
+  <div class="eyebrow" style="padding:0 24px">Owner QA walk</div>
+  <h1 style="padding:0 24px">Manage staff, delegated — QA walk §179</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Two accounts, dev server at http://localhost:3000, org/team uat-test-org / UAT Test Team.</strong><br>① The UAT head coach — <code>UAT_COACH_EMAIL</code> / <code>UAT_COACH_PASSWORD</code> from <code>.env.local</code>.<br>② A <strong>Team manager</strong> on that team — the manager you invited in §169 if still on the staff; otherwise, as the head coach, invite a fresh alias of your own as Team manager now (it starts with Manage staff ON) and accept from the email in a second browser profile. Parts B–D are walked as the manager.</div>
+    <p class="sub" style="margin-bottom:16px">Steps pin identities (a role, a row, a sentence), never a figure. Optional hand-built requests in Part D are marked; skip them rather than guess.</p>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+const intents={
+ 'screen-page':'The whole page, before and after, as the person the switch is for. The list is pass 2 unchanged; what changes is who can reach it and the one amber chip that says so. The door appears in all three navs from one table.',
+ 'screen-switch':'The head coach’s side: one more Sensitive switch, one confirm that names the three walls. The Manager preset carries it ON so a manager invited from today holds it before the email goes out — and existing managers are not touched.',
+ 'screen-ceiling':'The delegate’s side: nothing is hidden, the locked controls say why, and the reason is per control — a sheet is never all-or-nothing. Everyday access is free; Sensitive access is bounded by what the delegate holds; the master key never passes on.',
+ 'screen-walls':'The three walls drawn as the delegate meets them — a head coach’s row, their own row, and a preset applied within their ceiling. Read-only notes say who CAN act, not just that they can’t.'
+};
+function showScreen(){const id=location.hash.slice(1)||'screen-page';const known=document.getElementById(id)&&document.getElementById(id).classList.contains('screen');const target=known?id:'screen-page';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==target);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+target?'page':'false'));$('intent').innerHTML=intents[target]?'<strong>Design intent:</strong> '+intents[target]:'';const vl=$('viewerline');if(vl)vl.textContent=target==='screen-switch'?'Signed in as Jordan Blake — Head coach':'Signed in as Priya Nair — Team manager';showHub('mockup')}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+  F01:{t:'Delegating staff means making a second head coach',now:'Staff management is head-coach-only at every layer — the nav door, the page, and all four routes (list, invite, member edit/remove, pending invites). No grant exists for it. The only hand-off is Make head coach, which also grants money write, every family’s contacts, tryouts, internal notes and the power to remove the head coach.',fix:'A Manage staff grant, off by default, ON in the Team manager preset. The doors and routes gate on “head coach OR holds Manage staff”. The row shows an amber chip so “who can change the staff?” is one glance.'},
+  F02:{t:'Staff management is a master key — protecting the head coach alone does not close it',now:'Whoever can set other people’s grants can reach anything one step removed: grant a friend money access, or invite a second account of their own with everything on.',fix:'The ceiling: a delegate may widen a Sensitive grant only up to what they hold; Everyday grants are free. They cannot edit their own row. The sheet pre-locks and clamps so the server’s refusal is unreachable by hand; the server checks anyway and names the switch.'},
+  F03:{t:'Head coaches and roles stay with the head coach',now:'The owner’s wall: a delegate can never do anything to a head coach’s permissions.',fix:'Head-coach rows open read-only for a delegate and are refused on every verb (edit, remove, role). Make head coach / Make assistant coach are absent from a delegate’s sheet and refused server-side. The Manage staff switch itself is never grantable by a delegate — no chain delegation.'},
+  F04:{t:'The not-granted copy would lie',now:'The Staff page tells everyone who is not a head coach “Only the head coach manages staff”.',fix:'“Managing staff isn’t turned on for you · Ask your head coach if you need it.” — the portal’s standard not-granted block, true for every reader.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+const DECISIONS=[
+  {date:'2026-09-13',ask:'D1 · Should a head coach be able to hand staff management to an assistant?',ruling:'accepted',label:'Accepted',why:'Owner: “I think that should be an option, default to off.” One switch, default off, in the Sensitive group so it asks before granting.'},
+  {date:'2026-09-13',ask:'D2 · Does the Team manager preset start with Manage staff ON?',ruling:'accepted',label:'Accepted',why:'Recommended as an open call (manager’s sentence is “runs the team off the field”); owner: “I am fine defaulting the manager to on.” New invites only — existing managers are not changed; a preset is where access starts.'},
+  {date:'2026-09-13',ask:'D3 · The ceiling — a delegate hands out only what they hold (Sensitive access); Everyday access is free.',ruling:'accepted',label:'Accepted with the write-up',why:'Widened from the owner’s “never touch a head coach”: the real exposure is self-escalation through another row, not the head coach’s row. Bounding Everyday grants would make the switch useless to the manager it is for.'},
+  {date:'2026-09-13',ask:'D4 · A delegate can never do anything to a head coach; roles are head-only in both directions.',ruling:'accepted',label:'Accepted',why:'Owner’s own wall (“can never do anything to any head coach permissions”). Head rows read-only for a delegate; Make head coach / Make assistant coach absent and refused.'},
+  {date:'2026-09-13',ask:'D5 · A delegate cannot edit their own row.',ruling:'accepted',label:'Accepted with the write-up',why:'The shortest escalation path; closed outright rather than ceiling-checked. The existing self-target refusal for head coaches is the same shape.'},
+  {date:'2026-09-13',ask:'D6 · A delegate cannot CHANGE Manage staff — on or off.',ruling:'accepted',label:'Accepted; tightened by /review',why:'Only a head coach hands out the master key (no chain delegation) — and only a head coach takes it back. Built first as “must be off in a delegate’s write”; /review found that refused EVERY save on a fellow manager’s row, because the sheet re-sends the whole bundle, and let a hand-built partial body knock a peer’s key off. “Unchanged” closes both.'},
+  {date:'2026-09-13',ask:'D7 · A delegate may remove any non-head member and manage any pending invite.',ruling:'assumed',label:'Assumed — one line to flip',why:'Removal is disruptive, not an exposure; re-inviting reactivates the same membership. Flip to head-only if the owner prefers.'},
+  {date:'2026-09-13',ask:'D8 · A preset applied by a delegate is clamped, not refused.',ruling:'accepted',label:'Accepted with the write-up',why:'The sheet never sends a bundle the server would refuse; each capped control says “Stays at {level} — you can only hand out what you hold.” for one save cycle.'},
+  {date:'2026-09-13',ask:'Follow-up · Should the sheet record who changed someone’s access, and when?',ruling:'proposed',label:'Proposed — not built here',why:'No audit trail exists today either, but with two editors “who turned on Money for Marcus?” has no answer. A “changed by {name}, {date}” line on each sheet is the smallest honest answer. Needs its own ruling.'},
+  {date:'2026-09-13',ask:'Build call B1 · A client-sent bundle above the ceiling is REFUSED (403, naming the switch); the server’s own preset (a bare kind change) is CLAMPED.',ruling:'assumed',label:'Built as recommended',why:'The sheet pre-locks and pre-clamps, so a refusal is reachable only by a stale sheet or a hand-built request — and a hand-built request deserves the honest answer, not a silent edit. A preset the server chose itself should land as the role without the master key, not as an error about a switch nobody touched.'},
+  {date:'2026-09-13',ask:'Build call B2 · A delegate’s row for a head coach reads “View access ›”; their own row reads “Your access ›”. The head coach keeps “Hand over to someone else ›”.',ruling:'assumed',label:'Built as recommended',why:'“Edit access” on a row the sheet then refuses to edit would be the door-that-404s in a politer coat. The word on the row promises exactly what the sheet delivers.'},
+  {date:'2026-09-13',ask:'/review · Six findings fixed after the walk (1 Critical, 1 High, 3 Medium, 1 Low).',ruling:'accepted',label:'Fixed',why:'Critical: a manager could not save ANY switch on a fellow manager’s row (D6 tightened). High: a hand-built partial body could knock a peer’s Manage staff off (same fix; the accepted bundle is stored whole). Medium: the Overview’s “Invite your staff” tile hid from a Manage staff holder; the invite sheet could open before the list said who was looking; a cancelled role pick left clamp notes behind. Low: the read-only row’s dropdown had no in-code guard. Not this change’s: a 32px “Open schedule” link on the Overview, reported not baselined.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+
+const QA_PARTS=[
+  {id:'A',title:'The switch — as the head coach',steps:[
+    'Open the manager’s row (Edit access). The Sensitive group ends with Manage staff; its sentence reads “Invite people and change what others can open — never more than they hold, never a head coach, never this switch.”',
+    'If it is off, turn it on. The confirm is titled “Let {name} manage your staff?” and names the three walls (no head coach, no roles, not passed on). Confirm: ✓ Saved; the group heading’s count went up by one.',
+    'Back on the list, the manager’s row carries an amber Manage staff chip (lock icon, same treatment as Money).',
+    'Turn it off, then on again. Off saves instantly with no dialog; on asks again.',
+    'Open a plain assistant coach’s row: Manage staff is off. Open Invite someone → choose Team manager: Manage staff is pre-ticked in the starting access; choose Team treasurer: it is not. Cancel.',
+  ]},
+  {id:'B',title:'The manager’s page — as the manager',steps:[
+    'Staff appears in the Team group of the desktop sidebar. On a phone width, it appears in the phone bar’s Team entry AND in the More sheet.',
+    'The list shows every row: the head coach, the manager themselves (marked “(you)”), each assistant/treasurer/helper, and any pending invites. Invite someone is in the page header.',
+    'The head coach’s row reads View access ›. Your own row reads Your access ›. The assistant’s row reads Edit access ›.',
+  ]},
+  {id:'C',title:'The ceiling — as the manager, on the assistant coach’s row',steps:[
+    'Internal notes and Tryouts are dimmed, switch disabled, each with “You don’t hold this, so you can’t hand it out.” under its sentence.',
+    'Manage staff is dimmed and disabled with “Only a head coach changes this.” (walked as “…hands this out.”; reworded by the post-walk /review, which locked the switch in both directions for a delegate)',
+    'Team money is fully live (you hold View + edit): set View — saves; set Hidden — saves; set View + edit — asks, then saves.',
+    'Contacts & birthdates and Email families are live and ask before granting (you hold both). Grant one, then take it back: revoking is instant.',
+    'Attendance — which YOU do not hold — is live. Turn it on: it saves. (Everyday access is not ceilinged.)',
+    'Role → Helper: applies without a lock note. Role → Team treasurer: applies (money write is within your ceiling). Role → Team manager: applies with Manage staff staying OFF and its line reading “Stays at Off — you can only hand out what you hold.”',
+    'The footer has Remove from team and NO Make head coach.',
+  ]},
+  {id:'D',title:'The walls — as the manager',steps:[
+    'Open the head coach’s row (View access): one sentence, “{name} is a head coach. Only another head coach changes a head coach’s access or role.” No controls; the footer says only a head coach can change or remove a head coach.',
+    'Open Your access: “This is your own access. Ask a head coach to change it.” Every control is disabled; the footer offers nothing.',
+    'Invite someone → Team treasurer → send to a throwaway alias: it sends (money write is within your ceiling) and the pending row appears; Manage staff was locked off in the sheet.',
+    'OPTIONAL, by hand (devtools/curl with the manager’s cookie): PATCH /api/coaches/uat-test-org/teams/{teamId}/staff/{headCoachMembershipId} with {"coachRole":"assistant_coach"} → 403 “Only a head coach changes who is a head coach.”',
+    'OPTIONAL, by hand: PATCH the assistant’s membership with a full capabilities bundle that sets "notes":true → 403 “You can’t hand out Internal notes — you don’t hold it yourself.” with "key":"notes" in the body.',
+    'OPTIONAL, by hand: DELETE the head coach’s membership → 403 “Only a head coach can change a head coach.”',
+  ]},
+  {id:'E',title:'Everyone else, and the words',steps:[
+    'As the head coach, turn Manage staff OFF for the manager. As the manager, reload: Staff leaves the Team menu (all three navs); opening /staff by URL shows “Managing staff isn’t turned on for you · Ask your head coach if you need it — it’s a switch on your access, like the others.”',
+    'A treasurer or helper alias (if you still hold one) never had the Staff door, before or after.',
+    'Help: search “manage staff” and “let my manager invite” → the coaching-staff guide’s new Q “Can someone other than me manage the staff?” opens and reads the three walls.',
+    'Help: “How do I choose what an assistant coach can do?” no longer says “card” or “two schedule switches” — it describes the sheet and the three-way Schedule control, and names Manage staff among the sensitive switches.',
+  ]},
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-state-staff-delegation')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-state-staff-delegation',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>
