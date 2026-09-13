@@ -21915,7 +21915,7 @@ line was cut in the same sitting (`lib/practice-truth.ts`, the help FAQ, the hub
 
 ---
 
-## §173 · Revenue first, balances carried forward — the Budget plan reads Revenue → Expenses and closes on Opening / Net / Closing balance in both views and both files, a Required-player-dues helper sits under the table before dues exist, and two previews (an extra expense; the Set-dues sheet's draft) show before → after — built on dev 2026-09-12, **committed `182c7192` 2026-09-12** (private index; `/simplify` + `/review` first), **no migration**, awaiting QA · hub artifact `88741405` (QA Walk tab, 8 parts) · plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md` · §164 F1's follow-up
+## §173 · Revenue first, balances carried forward — the Budget plan reads Revenue → Expenses and closes on Opening / Net / Closing balance in both views and both files, a Required-player-dues helper sits under the table before dues exist, and two previews (an extra expense; the Set-dues sheet's draft) show before → after — built on dev 2026-09-12, **committed `182c7192` 2026-09-12** (private index; `/simplify` + `/review` first), **no migration**, **✅ WALK PASSED 36/36, zero defects, all eight parts, 2026-09-13** · hub artifact `88741405` (QA Walk tab, 8 parts) · plan `COACH_BUDGET_REVENUE_FIRST_PLAN.md` · §164 F1's follow-up
 
 **What you asked for (§164 F1), and where it went.** Revenue above Expenses on every reading of the plan,
 a required/expected-installments helper before dues are set, installments inside Revenue once set, and
@@ -22029,12 +22029,20 @@ again). Walk Parts B5 and E re-worded on the hub. Help article updated.
 
 ### Owed / next
 
-The walk (hub QA Walk tab, Parts A–H) — and ruling 0 above. `/simplify` and `/review` both ran before the commit
-(above). **Committed `182c7192`** in a private index; the candidate tree (HEAD + this commit alone) typechecked clean
-and ran the whole suite green before the ref moved. ⚠ Two of its files also carried other sessions' hunks: the
-Set-dues sheet and the help article were committed as mine-only blobs (their other hunks stay in the working
-copy); the budget panel shipped WITH the Categories & Items door (§163, owner QA ✅ 35/35 2026-09-11) by the
-owner's word. Restart the dev server before you walk it — hot reload carried the change, but shared modules moved.
+**The walk is done — 36/36, zero defects, all eight parts, 2026-09-13.** Every part named in the plan
+walked clean: the card and its one sentence (A); the List reading Revenue → Expenses onto a balance,
+including the Player installments row's door to Player Dues and the No-date-yet collapse (B); By period's
+months and quarters with the balance chain and the red-only bracket rule (C); the expense preview on both
+views, including its absence from every export (D); the Set-dues sheet's draft sentence (E); the
+before-dues state, probed rather than walked live on this fixture (F); the three export files round-
+tripping through Import (G); help and the demo re-read (H). Ruling 0 (above) stands as its own open item —
+not a walk defect, and not resolved by this pass.
+
+`/simplify` and `/review` both ran before the commit (above). **Committed `182c7192`** in a private index;
+the candidate tree (HEAD + this commit alone) typechecked clean and ran the whole suite green before the
+ref moved. ⚠ Two of its files also carried other sessions' hunks: the Set-dues sheet and the help article
+were committed as mine-only blobs (their other hunks stay in the working copy); the budget panel shipped
+WITH the Categories & Items door (§163, owner QA ✅ 35/35 2026-09-11) by the owner's word.
 
 ---
 
