@@ -87,6 +87,31 @@ export const ALL_CAPABILITY_KEYS: Capability[] = [
   'module_families',
 ];
 
+/**
+ * WHICH MEMBERSHIPS ARE SEATS (owner ruling 2026-09-13: *"coaching staff don't count"*).
+ *
+ * A plan's `seatLimit` counts admin/staff — the people who run the org side. Two kinds of
+ * membership are never a seat:
+ *   · `coach` — coaching staff. Since the team-membership model (2026-08-16) every accepted staff
+ *     invite writes a capability-less coach-role membership so the person can sign in; that row
+ *     is plumbing, and "coaching staff is unlimited on every tier" (2026-08-10) means it must not
+ *     fill the bundled tournament-admin side's 3-seat guard in a Premium workspace. It did, until
+ *     this ruling — a workspace with three coaching staff read its guard as FULL before any org-side
+ *     co-organizer was invited.
+ *   · `official` — on plans where `officialsFreeSeats` is on.
+ * Every seat count and every seat-limit check reads this, so the three of them cannot drift.
+ */
+export function countsAsSeat(role: OrgRole | string, plan: { officialsFreeSeats: boolean }): boolean {
+  if (role === 'coach') return false;
+  if (role === 'official' && plan.officialsFreeSeats) return false;
+  return true;
+}
+
+/** The roles `countsAsSeat` excludes, for a database count (`.not('role', 'in', …)`). */
+export function seatExemptRoles(plan: { officialsFreeSeats: boolean }): string[] {
+  return plan.officialsFreeSeats ? ['coach', 'official'] : ['coach'];
+}
+
 export function hasCapability(
   role: OrgRole,
   capabilities: Record<string, boolean> | null,

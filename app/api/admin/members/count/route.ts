@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { seatExemptRoles } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (request: Request) => {
@@ -13,10 +14,13 @@ export const GET = withObservability(async (request: Request) => {
   const { org } = ctx;
   const planCfg = PLAN_CONFIG[org.planId];
 
-  const { count: totalCount } = await supabaseAdmin
+  // Coaching staff never count (owner ruling 2026-09-13); officials only where the plan frees them.
+  const exempt = seatExemptRoles(planCfg);
+  const { count: billedCount } = await supabaseAdmin
     .from('organization_members')
     .select('id', { count: 'exact', head: true })
-    .eq('organization_id', org.id);
+    .eq('organization_id', org.id)
+    .not('role', 'in', `(${exempt.join(',')})`);
 
   let officialCount = 0;
   if (planCfg.officialsFreeSeats) {
@@ -28,7 +32,7 @@ export const GET = withObservability(async (request: Request) => {
     officialCount = count ?? 0;
   }
 
-  const billed = (totalCount ?? 0) - officialCount;
+  const billed = billedCount ?? 0;
 
   return NextResponse.json({
     billed,

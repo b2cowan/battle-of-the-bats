@@ -9,7 +9,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpTooltip from '@/components/help/HelpTooltip';
-import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
+import { ROLE_DEFAULTS, hasCapability, countsAsSeat } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 import type { Capability } from '@/lib/roles';
 import ExportMenu from '@/components/admin/ExportMenu';
@@ -279,8 +279,7 @@ export default function MembersPage() {
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
-    const isOfficial = inviteRole === 'official';
-    if (atLimit && !(isOfficial && planCfg.officialsFreeSeats)) {
+    if (atLimit && countsAsSeat(inviteRole, planCfg)) {
       showError(`Seat limit reached (${seatLimit} seat${seatLimit === 1 ? '' : 's'}). Upgrade to add more members.`);
       return;
     }
@@ -524,11 +523,10 @@ export default function MembersPage() {
     ? `/${currentOrg?.slug}/admin/tournaments/settings/members/audit`
     : `/${currentOrg?.slug}/admin/org/members/audit`;
   const seatLimit = planCfg.seatLimit;
-  const billableMembers = planCfg.officialsFreeSeats
-    ? members.filter(m => m.role !== 'official')
-    : members;
+  // One rule with the server (`countsAsSeat`): coaching staff never count, free officials don't.
+  const billableMembers = members.filter(m => countsAsSeat(m.role, planCfg));
   const seatCount = billableMembers.length;
-  const officialCount = members.length - billableMembers.length;
+  const officialCount = planCfg.officialsFreeSeats ? members.filter(m => m.role === 'official').length : 0;
   const atLimit = seatCount >= seatLimit;
   const nearLimit = !atLimit && seatLimit < 9999 && seatCount > 0 && seatCount / seatLimit >= 0.8;
 

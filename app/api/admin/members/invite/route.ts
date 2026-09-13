@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { countsAsSeat, seatExemptRoles } from '@/lib/roles';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
@@ -51,21 +52,17 @@ export const POST = withObservability(async (req: Request) => {
 
   const planCfg = PLAN_CONFIG[org.planId];
 
-  // Officials are free on Pro/Elite — skip the seat check entirely for them.
-  const skipSeatCheck = role === 'official' && planCfg.officialsFreeSeats;
+  // A role that is not a seat (a free official; coaching staff) never trips the guard.
+  const skipSeatCheck = !countsAsSeat(role, planCfg);
 
   if (!skipSeatCheck) {
-    // Count only billable seats (exclude officials on plans where they are free).
-    let seatQuery = supabaseAdmin
+    // Count only the memberships that are seats — one rule, shared with the count read and the
+    // Members page (owner ruling 2026-09-13: coaching staff don't count).
+    const { count: seatCount } = await supabaseAdmin
       .from('organization_members')
       .select('id', { count: 'exact', head: true })
-      .eq('organization_id', org.id);
-
-    if (planCfg.officialsFreeSeats) {
-      seatQuery = seatQuery.neq('role', 'official');
-    }
-
-    const { count: seatCount } = await seatQuery;
+      .eq('organization_id', org.id)
+      .not('role', 'in', `(${seatExemptRoles(planCfg).join(',')})`);
     const seatLimit = planCfg.seatLimit;
 
     if ((seatCount ?? 0) >= seatLimit) {
