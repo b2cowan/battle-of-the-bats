@@ -6,8 +6,9 @@ the guardian tier and its portal are untouched.** Project hub (mockup · brief �
 decisions): `docs/projects/active/COACH_FAMILY_LINK_REMOVAL_HUB.html`
 (https://claude.ai/code/artifact/46987cce-34c3-4643-b0e8-b09d6e5c0f1f).
 
-**Status:** built on dev 2026-09-12 (this session); **mig 290 applied to dev 2026-09-12, prod
-PENDING and ORDER-CRITICAL** (see §5). Owner QA walk owed.
+**Status:** built and **committed `8971ee89`** on dev 2026-09-12 (walk format follow-up in the
+next commit); **mig 290 applied to dev 2026-09-12, prod PENDING and ORDER-CRITICAL** (see §5).
+**✅ Owner QA walk PASSED 16/16, 2026-09-12 — ledger §176**, zero defects.
 
 ## 1. What was true, and why "make dev like prod" had no code meaning
 
@@ -120,7 +121,7 @@ tautological and stay. Surfaced to the owner: who may change visibility moved fr
 access (the old card) to schedule management; and "Families" has no live audience until the guardian
 switch opens.
 
-## 6. Owner QA walk (owed)
+## 6. Owner QA walk — ✅ PASSED 16/16, 2026-09-12 (ledger §176)
 
 The walk is the hub's **QA Walk** tab (same URL as the mockup): five parts, sixteen steps, a
 checkbox per observable, Pass/Flag per step, notes, and a paste-back summary. Sign in as the UAT
