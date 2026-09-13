@@ -102,7 +102,7 @@ no filter or search on Notes in the first build.
 
 ---
 
-## Built (2026-09-13, on dev, uncommitted)
+## Built (2026-09-13, committed `114f67c8` after a cleanup pass and a review pass)
 
 Everything above is built and can be walked: the roster list changes, the five-tab player page, the Notes tab (one new table, applied to dev), the help guide updated, and the coach demo reseeded so its Notes tab has two notes. Three things to know before walking:
 

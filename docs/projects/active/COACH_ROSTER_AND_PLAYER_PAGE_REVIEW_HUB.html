@@ -186,12 +186,12 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Roster + player page — review hub</strong><br><small>BUILT on dev 2026-09-13 (uncommitted) · five tabs · Notes tab + migration 296 · roster list restyled · help synced · demo reseeded · Owner QA walk §182 on the QA Walk tab</small></div>
+  <div class="hubtitle"><strong>Roster + player page — review hub</strong><br><small>COMMITTED <code>114f67c8</code> 2026-09-13 after /simplify + /review · five tabs · Notes tab + migration 296 (dev; prod after 295) · roster list restyled · help synced · demo reseeded · Owner QA walk §182 on the QA Walk tab</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Round 1 evaluated + drawn 2026-09-13; round 2 (five tabs, Notes) drawn 2026-09-13 on the owner's rulings">Design</li>
     <li class="stage done" title="Plan approved 2026-09-13 — Q1–Q10 accepted as recommended, R2-1..7 (owner: 'I agree with your recommendations, go ahead')">Plan</li>
-    <li class="stage done" title="Built on dev 2026-09-13: roster list (F01–F08, F21), player page shell + five tabs (F09–F17, F19), Notes tab (F20, migration 296 applied to dev), help synced, demo reseeded; typecheck + 3,809 unit tests green; layout sweep on the six screens">Build</li>
-    <li class="stage" title="—">Review</li>
+    <li class="stage done" title="Built on dev 2026-09-13: roster list (F01–F08, F21), player page shell + five tabs (F09–F17, F19), Notes tab (F20, migration 296 applied to dev), help synced, demo reseeded; typecheck + unit tests green; layout sweep on the six screens; committed 114f67c8 2026-09-13">Build</li>
+    <li class="stage done" title="/simplify 2026-09-13 (4 lenses; plan §10.1) then /review (5 lenses; plan §10.2): 10 findings → 4 confirmed and fixed (a moment dated by the UTC day; Switch player dropped unsaved edits silently; a double-tap could save a note twice; a note could not be unlinked on edit), 4 refuted (the page remounts per player), 2 skipped (pre-existing shared dialog; FK precedent)">Review</li>
     <li class="stage current" title="Walk §182 written 2026-09-13 — owed">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>

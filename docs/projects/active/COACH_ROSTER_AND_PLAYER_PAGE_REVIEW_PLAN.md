@@ -1,6 +1,6 @@
 # Coach Roster + Player Page — full evaluation and redesign plan
 
-**Status:** BUILT on dev 2026-09-13 (uncommitted) — owner accepted Q1–Q10 as recommended and R2-1..7 the same day; migration 296 applied to dev (PROD-PENDING, order-critical after 295); help synced; coach demo reseeded; Owner QA §182 owed (hub QA Walk tab). ⚠ Q7 DEFERRED — the Observations view was built and committed by Phase 2 first and the owner paused §180 for a holistic re-evaluation; the trim belongs there.
+**Status:** COMMITTED `114f67c8` 2026-09-13 (after /simplify §10.1 and /review §10.2) — owner accepted Q1–Q10 as recommended and R2-1..7 the same day; migration 296 applied to dev (PROD-PENDING, order-critical after 295); help synced; coach demo reseeded; Owner QA §182 owed (hub QA Walk tab). ⚠ Q7 DEFERRED — the Observations view was built and committed by Phase 2 first and the owner paused §180 for a holistic re-evaluation; the trim belongs there.
 **Origin:** owner, 2026-09-13 — *"do a full evaluation of the roster page and player pages within
 them … are we making this visually appealing? … showing the right things? … using our table/colour/
 font styles? … linking into player pages consistently? … is a back link enough? … this family
