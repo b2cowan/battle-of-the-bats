@@ -409,7 +409,7 @@ export default function CoachStaffSheet({
        * sentence stays scoped to coaching access; the flag only ADDS the family warning.
        */
       message: member.alsoFollowsTeam
-        ? `${who} loses their coaching access to this team immediately — every screen, every season. Their name stays on the seasons they coached. ⚠ They're also connected to this team as a family member, and that's separate — they'll keep seeing your schedule, results and any game page you've shared. To end that too, remove them under Family access on your Roster page.`
+        ? `${who} loses their coaching access to this team immediately — every screen, every season. Their name stays on the seasons they coached. ⚠ They're also connected to this team as a family member, and that's separate — they'll keep seeing your schedule, results and any game page you've shared. To end that too, remove them under Guardians on their player's page.`
         : `${who} loses their coaching access to this team immediately — every screen, every season. Their name stays on the seasons they coached, and adding them back later restores their access.`,
       confirmText: 'Remove', cancelText: 'Keep them', tone: 'danger',
     });

@@ -31,8 +31,9 @@ export const POST = withObservability(async (req: Request,
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const link = await getVerifiedLinkForUserTeam(user.id, teamId);
-  // Followers are refused here as flatly as strangers: inviting a co-guardian is a
-  // guardian-tier act, and a follower has no player to invite anyone to.
+  // Only a verified GUARDIAN may invite a co-guardian — a link with no player has nobody to
+  // invite anyone to, and is refused as flatly as a stranger. (The role check outlived the
+  // follower tier it was written against; it costs nothing and fails closed.)
   if (!link || link.role !== 'guardian') {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }

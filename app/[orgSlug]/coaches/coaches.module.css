@@ -1150,6 +1150,19 @@
 .settingRowDesc { font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
 .settingRowCtl { flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .settingRowSaved { font-size: var(--type-support); color: var(--success-light); font-weight: 600; }
+/* A setting whose control is a three-way segmented choice (Schedule visibility, 2026-09-12).
+   `.settingRowCtl` is `flex-shrink: 0` on purpose — a switch must never be squeezed — but three
+   labelled pills are wider than a phone row, so once the row has stacked this control takes the
+   WHOLE row and the ≤640 `.segChoice { width: 100% }` rule resolves against the row rather than
+   against the control's own content (which is how it spilled 14px at 361). The tablet band
+   (641–768) is where `.segBtn`'s compact desktop height falls under the tap floor with no phone
+   rule to catch it, so the floor is stated here for this control. */
+@media (max-width: 768px) {
+  .settingRowCtlWide .segBtn { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .settingRowCtlWide { flex: 1 1 100%; min-width: 0; }
+}
 /* Deep-link arrival flash — same orientation cue as admin's ?section= highlight. */
 .collapseFlash { animation: collapseFlash 2s ease-out 1; }
 @keyframes collapseFlash {

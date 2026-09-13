@@ -1,5 +1,8 @@
-/* Coach "Team family access" panel (Chunk D 1.2 / 1.4 / 1.5).
-   Design tokens only — no literal colours (the token guardrail is at ZERO in every scope). */
+/* The coach-side family cards — the per-player Guardians card and the Share-game row (Chunk D
+   1.2 / 1.4 / 1.5). Began life as the Roster page's "Team family access" panel's stylesheet;
+   that panel went with the family link on 2026-09-12 and the two cards that shared its rows
+   kept the sheet. Design tokens only — no literal colours (the token guardrail is at ZERO in
+   every scope). */
 
 .panel {
   border: 1px solid var(--white-10);
@@ -104,30 +107,8 @@
   word-break: break-all;
 }
 
-/* Visibility segmented control */
-.seg {
-  display: inline-flex;
-  border: 1px solid var(--white-15, var(--white-10));
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.segBtn {
-  padding: 0.4rem 0.75rem;
-  font-size: var(--type-support);
-  font-weight: 600;
-  background: transparent;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  font-family: inherit;
-  min-height: 34px;
-}
-
-.segBtn + .segBtn { border-left: 1px solid var(--white-10); }
-.segBtnActive { background: var(--white-10); color: var(--text-primary); }
-
-/* Requests + followers */
+/* Requests + connected rows (the `.follower` names date from the retired follower tier; they are
+   class identifiers, so they stay — the Guardians card draws its connected rows with them) */
 .request {
   display: flex;
   align-items: center;
@@ -205,7 +186,7 @@
   margin-left: 0.4rem;
 }
 
-/* ⚠ THE PHONE TAP FLOOR, ADDED WHEN THIS PANEL WENT BEHIND A FOLD (2026-08-24).
+/* ⚠ THE PHONE TAP FLOOR, ADDED WHEN THE FAMILY-ACCESS PANEL WENT BEHIND A FOLD (2026-08-24).
    These controls have measured 34px at 361/390 since they were built — eight recorded entries in
    the rendered baseline. That was visible debt while the panel sat open at the top of Roster; the
    moment it collapsed it became debt nobody would trip over again, because a sweep cannot measure
@@ -214,8 +195,7 @@
    Desktop keeps the portal's grandfathered compact control heights. */
 @media (max-width: 640px) {
   .btn,
-  .linkBtn,
-  .segBtn {
+  .linkBtn {
     min-height: var(--tap-min, 44px);
   }
 }

@@ -13,13 +13,20 @@ import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membe
  *     NOTHING guardian-shaped may be created — not by the UI, not by a direct API call. A
  *     feature "shipped disabled" whose disable can be stepped around is not disabled, and this
  *     one is gating a consent flow that has not been through counsel yet.
- *  2. THE TIER BOUNDARY. An approved FOLLOWER must fail closed on every guardian payload. This
- *     is the standing security invariant of the two-tier model: a follower is connected to a
- *     TEAM and to no child, and no route may hand them one.
+ *  2. THE BOUNDARY. A signed-in account with NO guardian link must fail closed on every family
+ *     payload, and the database must refuse the two shapes that can no longer exist: a
+ *     team-level "follower" row, and a guardian row with no child.
+ *
+ * ⚠ REWRITTEN 2026-09-12: the team family LINK and the FOLLOWER tier were removed (owner, mig
+ * 290). This file's second job used to be "an approved FOLLOWER reaches no child data" — the
+ * standing invariant of a two-tier model that no longer exists — and its switch probes went
+ * through the join page. The persona is now simply "signed in, not connected", the join probes
+ * are gone with the route, and the database assertions are inverted to match mig 290's strict
+ * CHECKs.
  *
  * The boundary assertions are written to pass whether the switch is on or off, so this file
  * keeps working as the standing guard the day the tier is turned on. The switch assertions
- * self-skip when it is on, and say so rather than silently passing.
+ * FAIL (never skip) when it is on, and say so.
  *
  * Data-level and HTTP-status assertions only. Self-provisions via service-role with the
  * `capguard-` marker; pre-cleans, tears down, and ASSERTS the teardown.
@@ -50,18 +57,17 @@ const GUARDIAN_TIER_ENABLED = process.env.GUARDIAN_TIER_ENABLED === 'true';
 
 const MARK = 'capguard';
 const COACH_EMAIL = `${MARK}-coach@dev.local`;
-const FOLLOWER_EMAIL = `${MARK}-follower@dev.local`;
+const OUTSIDER_EMAIL = `${MARK}-outsider@dev.local`;
 const PASSWORD = 'devpass123';
 const ORG_SLUG = 'dev-club-org';
 const GUESSED_TOKEN = 'ZZZZthisTokenWasNeverMintedBBBBBBBBBBBBBBBB';
 
 let orgId = '';
 let coachUserId = '';
-let followerUserId = '';
+let outsiderUserId = '';
 let teamId = '';
 let yearId = '';
 let playerId = '';
-let familyLinkToken = '';
 
 const YEAR = new Date().getFullYear() + 1;
 
@@ -113,15 +119,11 @@ test.beforeAll(async () => {
     status: 'active', accepted_at: new Date().toISOString(),
   });
   if (memErr) throw memErr;
-  followerUserId = await makeAccount(FOLLOWER_EMAIL);
+  outsiderUserId = await makeAccount(OUTSIDER_EMAIL);
 
-  const crypto = await import('node:crypto');
-  familyLinkToken = crypto.randomBytes(32).toString('base64url');
   const { data: team, error: teamErr } = await admin.from('rep_teams').insert({
     org_id: orgId, name: `${MARK} Guardians`, slug: `${MARK}-guardians`, sport: 'softball',
     schedule_visibility: 'families',
-    family_link_token_hash: crypto.createHash('sha256').update(familyLinkToken).digest('hex'),
-    family_link_created_at: new Date().toISOString(),
   }).select('id').single();
   if (teamErr) throw teamErr;
   teamId = team!.id;
@@ -138,7 +140,7 @@ test.beforeAll(async () => {
   });
   if (coachErr) throw coachErr;
 
-  // The child whose data must never reach a follower.
+  // The child whose data must never reach an unconnected account.
   const { data: player, error: playerErr } = await admin.from('rep_roster_players').insert({
     program_year_id: yearId, team_id: teamId, org_id: orgId,
     player_first_name: `${MARK}Child`, player_last_name: 'Surname',
@@ -158,13 +160,9 @@ test.beforeAll(async () => {
   });
   if (annErr) throw annErr;
 
-  // A VERIFIED FOLLOWER — the persona the boundary is about.
-  const { error: linkErr } = await admin.from('family_links').insert({
-    org_id: orgId, rep_team_id: teamId, role: 'follower', player_id: null,
-    user_id: followerUserId, invited_email: FOLLOWER_EMAIL, status: 'verified',
-    verified_via: 'coach_approved', approved_at: new Date().toISOString(),
-  });
-  if (linkErr) throw linkErr;
+  // The OUTSIDER holds no family_links row at all — that is the persona. (The old fixture
+  // here was a verified FOLLOWER; the database now refuses that row, see the probe below.)
+  void outsiderUserId;
 
   /**
    * ⚠ M1 MEMBERSHIPS — THE ACCESS TRUTH (owner ruling 2026-08-16, mig 245). Without this every
@@ -179,7 +177,7 @@ test.afterAll(async () => {
   await cleanup();
   const { data: leftTeams } = await admin.from('rep_teams').select('id').like('name', `${MARK}%`);
   expect(leftTeams ?? []).toHaveLength(0);
-  const { data: leftLinks } = await admin.from('family_links').select('id').eq('invited_email', FOLLOWER_EMAIL);
+  const { data: leftLinks } = await admin.from('family_links').select('id').eq('rep_team_id', teamId);
   expect(leftLinks ?? []).toHaveLength(0);
 });
 
@@ -249,34 +247,6 @@ test.describe('guardian tier switch', () => {
     ).toBe(false);
   });
 
-  test('a direct guardian request is refused and writes NOTHING', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
-
-    // Deliberately a well-formed request with every consent ticked — the point is that a
-    // complete, valid payload is still refused, so the switch is the gate rather than
-    // validation happening to reject it.
-    const res = await apiPost(page, `/api/family/join/${familyLinkToken}`, {
-      role: 'guardian',
-      playerFirstName: `${MARK}Child`,
-      playerLastName: 'Surname',
-      relationship: 'Parent',
-      ageBand: 'under_13',
-      consentDataCollection: true,
-      consentGuardian: true,
-    });
-    expect(res.status).toBe(409);
-    expect(JSON.stringify(res.body ?? {})).toContain('guardian_tier_unavailable');
-
-    // The real assertion: no guardian link and no consent record exist.
-    const { data: links } = await admin.from('family_links')
-      .select('id').eq('rep_team_id', teamId).eq('role', 'guardian');
-    expect(links ?? []).toHaveLength(0);
-
-    const { data: consents } = await admin.from('family_consents')
-      .select('id').eq('guardian_email', FOLLOWER_EMAIL);
-    expect(consents ?? []).toHaveLength(0);
-  });
-
   test('the coach guardian routes do not exist', async ({ page }) => {
     await signIn(page, COACH_EMAIL);
     const list = await apiGet(page, `/api/coaches/${ORG_SLUG}/teams/${teamId}/guardians`);
@@ -289,29 +259,31 @@ test.describe('guardian tier switch', () => {
   });
 
   test('an invite cannot be claimed', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+    await signIn(page, OUTSIDER_EMAIL);
     const res = await apiPost(page, `/api/family/claim/${GUESSED_TOKEN}`, {});
     expect(res.status).toBe(404);
-  });
 
-  test('the join page reports the tier as off, so the UI cannot offer it', async ({ page }) => {
-    await page.context().clearCookies();
-    const res = await apiGet(page, `/api/family/join/${familyLinkToken}`);
-    expect(res.status).toBe(200);
-    expect((res.body as { guardianTierEnabled?: boolean }).guardianTierEnabled).toBe(false);
+    // The real assertion: with both on-ramps shut, no guardian link and no consent record can
+    // exist for this team — the switch is the gate, not validation happening to reject.
+    const { data: links } = await admin.from('family_links')
+      .select('id').eq('rep_team_id', teamId);
+    expect(links ?? []).toHaveLength(0);
+    const { data: consents } = await admin.from('family_consents')
+      .select('id').eq('guardian_email', OUTSIDER_EMAIL);
+    expect(consents ?? []).toHaveLength(0);
   });
 });
 
 // ── 2. The tier boundary — true whether the switch is on or off ──────────────
 
-test.describe('tier boundary — a follower reaches no child data', () => {
-  test('the follower payload carries no player, no announcement, no roster secret', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+test.describe('boundary — an account with no guardian link reaches no child data', () => {
+  test('the team payload is refused outright and names nothing', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
     const res = await apiGet(page, `/api/family/teams/${teamId}`);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
 
     const serialized = JSON.stringify(res.body ?? {});
-    // Everything the fixture planted that a follower must never receive.
+    // Everything the fixture planted that an unconnected account must never receive.
     expect(serialized).not.toContain(`${MARK}Child`);
     expect(serialized).not.toContain('Surname');
     expect(serialized).not.toContain(`${MARK}MedicalSecret`);
@@ -319,60 +291,48 @@ test.describe('tier boundary — a follower reaches no child data', () => {
     expect(serialized).not.toContain(`${MARK}AnnouncementSubject`);
     expect(serialized).not.toContain(`${MARK}AnnouncementBody`);
     expect(serialized).not.toContain(`${MARK}-parent@dev.local`);
-
-    // The guardian payload must be absent entirely — not present-but-empty, which would mean
-    // the shape reached them and only happened to be unfilled.
-    const body = res.body as { role?: string; guardian?: unknown };
-    expect(body.role).toBe('follower');
-    expect(body.guardian ?? null).toBeNull();
+    expect(serialized).not.toContain(MARK);
   });
 
-  test('a follower cannot invite a co-guardian', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+  test('an unconnected account cannot invite a co-guardian', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
     const res = await apiPost(page, `/api/family/teams/${teamId}/co-guardian`, {
       email: 'other-parent@dev.local',
     });
-    // 404 whether the tier is off (route disabled) or on (follower has no player) — either
-    // way a follower can never attach an adult to a child.
+    // 404 whether the tier is off (route disabled) or on (no link, no player) — either way an
+    // unconnected account can never attach an adult to a child.
     expect(res.status).toBe(404);
   });
 
-  test('a follower cannot reach the coach-side guardian routes', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+  test('an unconnected account cannot reach the coach-side guardian routes', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
     const res = await apiGet(page, `/api/coaches/${ORG_SLUG}/teams/${teamId}/guardians`);
     expect([401, 403, 404]).toContain(res.status);
   });
 
-  test('the database refuses a follower row carrying a player', async () => {
+  test('the database refuses a follower row — with or without a player', async () => {
     // The last line of defence, asserted directly: even if every app-layer check were wrong,
-    // the CHECK constraint makes a child-linked follower impossible to store.
-    const { error } = await admin.from('family_links').insert({
-      org_id: orgId, rep_team_id: teamId, role: 'follower',
-      player_id: playerId,                                   // ← the violation
-      invited_email: `${MARK}-illegal@dev.local`, status: 'verified',
-    });
-    expect(error).not.toBeNull();
-    expect(String(error?.message ?? '')).toMatch(/family_links_role_player_ck|violates check/i);
+    // mig 290's role CHECK makes a team-level connection impossible to store.
+    for (const player_id of [playerId, null]) {
+      const { error } = await admin.from('family_links').insert({
+        org_id: orgId, rep_team_id: teamId, role: 'follower', player_id,
+        invited_email: `${MARK}-illegal@dev.local`, status: 'verified',
+      });
+      expect(error).not.toBeNull();
+      expect(String(error?.message ?? '')).toMatch(/family_links_role_check|family_links_role_player_ck|violates check/i);
+    }
   });
 
-  test('the database still allows a guardian REQUEST with no player yet', async () => {
-    // Migration 216's other half: the coach attaches the player at approval, so a waiting
-    // request legitimately has none. If this ever fails, the request flow is broken.
+  test('the database refuses a guardian row with no player', async () => {
+    // Mig 290 restored mig 215's strict form. The only producer of a player-less request was
+    // the ask-via-link path, which went with the family link; if this ever passes, the CHECK
+    // has been loosened again and something can once more write a child-less guardian.
     const { error } = await admin.from('family_links').insert({
       org_id: orgId, rep_team_id: teamId, role: 'guardian',
       player_id: null, invited_email: `${MARK}-pending@dev.local`,
-      status: 'requested', requested_player_name: 'Someone',
+      status: 'requested',
     });
-    expect(error).toBeNull();
-
-    // ...and refuses to let that row become VERIFIED without one.
-    const { error: verifyError } = await admin.from('family_links')
-      .update({ status: 'verified' })
-      .eq('rep_team_id', teamId)
-      .eq('invited_email', `${MARK}-pending@dev.local`);
-    expect(verifyError).not.toBeNull();
-
-    await admin.from('family_links').delete()
-      .eq('rep_team_id', teamId).eq('invited_email', `${MARK}-pending@dev.local`);
+    expect(error).not.toBeNull();
+    expect(String(error?.message ?? '')).toMatch(/family_links_role_player_ck|violates check/i);
   });
 });

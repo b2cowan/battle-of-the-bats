@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Link2 } from 'lucide-react';
-import styles from './FamilyAccessPanel.module.css';
+import styles from './FamilyCard.module.css';
 
 /**
  * "Share game link" (Chunk D 1.8) — one deliberate coach act per game.

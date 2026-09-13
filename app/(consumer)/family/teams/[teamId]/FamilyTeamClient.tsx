@@ -47,8 +47,8 @@ function ScoreCell({ entry }: { entry: FamilyScheduleEntry }) {
 
 /**
  * The GUARDIAN-only half. Rendered from a payload the server attaches only for a verified
- * guardian link — a follower's response has no `guardian` object at all, so there is nothing
- * here for them to receive. The tier boundary is in the DATA, not in this component.
+ * guardian link — a response without one has no `guardian` object at all, so there is nothing
+ * here for it to receive. The boundary is in the DATA, not in this component.
  */
 /** The recap door (Chunk D 3.2). Two honest states and no third: it is here, or it is written
  *  when the coach closes the season. Never "coming soon", never a disabled button. */
@@ -116,10 +116,10 @@ function GuardianSections({ guardian, recap }: { guardian: GuardianPayload; reca
 
 export default function FamilyTeamClient({ view, guardian, recap }: {
   view: FamilyTeamView;
-  /** Present only for a verified guardian; a follower never receives this. */
+  /** Present only for a verified guardian tied to a player. */
   guardian?: GuardianPayload | null;
-  /** Resolved server-side through the shared recap gate. A follower never receives this
-   *  either — it renders inside the guardian half only. */
+  /** Resolved server-side through the shared recap gate. Renders inside the guardian half
+   *  only. */
   recap?: FamilyRecapDoor | null;
 }) {
   const nextUpRef = useRef<HTMLDivElement | null>(null);

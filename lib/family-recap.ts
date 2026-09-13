@@ -72,7 +72,7 @@ export async function resolveFamilyRecapAvailability(params: {
   const { link, repTeamId } = params;
 
   // The tier boundary — the same predicate the guardian payload uses, not a second copy.
-  // A follower reaching this URL gets `unavailable`, which is also what a stranger gets.
+  // A link without a player reaching this URL gets `unavailable`, which is also what a stranger gets.
   if (!guardianLinkEarnsPlayerData(link)) return { status: 'unavailable' };
   if (link.repTeamId !== repTeamId) return { status: 'unavailable' };
 

@@ -4155,7 +4155,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4165,17 +4165,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "prior_roster_id",
-    "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4193,7 +4183,7 @@
     "table_name": "rep_player_continuity_links",
     "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
+    "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "team_id",
     "delete_rule": "CASCADE",
@@ -4206,6 +4196,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -6577,16 +6577,6 @@
     "foreign_table": "teams",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_teams",
-    "constraint_name": "rep_teams_family_link_created_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "family_link_created_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

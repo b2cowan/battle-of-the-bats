@@ -47,7 +47,7 @@ export interface RecapEngagement {
  *
  * Both numbers are counts, and `eligible` is counted from the links themselves rather than a
  * stored total, so it can never drift from the rows it describes (the same rule
- * `getFamilyAdoptionCounts` follows).
+ * `getOrgFamilyRollup` follows).
  *
  * ⚠ THE NUMERATOR IS RESOLVED FROM THE DENOMINATOR, deliberately, and the two queries are
  * therefore SEQUENTIAL rather than parallel. Counting every view row for the season

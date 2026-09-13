@@ -21,8 +21,7 @@ import {
  * ⚠ The whole route 404s while the guardian tier is switched off. A coach must not see a
  * panel for something that cannot yet happen.
  *
- * Permission: `rosterPii`, same as the team family access panel — this surface shows guardian
- * email addresses.
+ * Permission: `rosterPii` — this surface shows guardian email addresses.
  *
  * ⚠ LIVE SEASON ONLY — rides `resolveFamilyCoachContext`, which resolves the team's ACTIVE year
  * and nothing else. Managing who may reach a child is an instrument, not a record.
@@ -48,16 +47,11 @@ export const GET = withObservability(async (_req: Request,
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return NextResponse.json({ error: 'no_active_season' }, { status: 404 });
 
-  const { byPlayer, unattachedRequests } = await getGuardiansByPlayer(teamId, programYear.id);
+  const byPlayer = await getGuardiansByPlayer(teamId, programYear.id);
   return NextResponse.json({
     ok: true,
     maxPerPlayer: MAX_GUARDIANS_PER_PLAYER,
     byPlayer: Object.fromEntries(byPlayer),
-    // Parent-initiated requests arrive with NO player attached — the coach names the child at
-    // approval. They are returned separately because there is no player to file them under,
-    // and the coach's screen shows them on every player page so the coach can approve the one
-    // whose child it is.
-    unattachedRequests,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/guardians' });
 
@@ -136,11 +130,11 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ ok: true, status: 'verified' });
     }
     if (action === 'decline') {
-      const link = await declineFamilyLink({ linkId, repTeamId: teamId, role: 'guardian' });
+      const link = await declineFamilyLink({ linkId, repTeamId: teamId });
       return NextResponse.json({ ok: true, status: link.status });
     }
     if (action === 'revoke') {
-      const link = await revokeFamilyLink({ linkId, repTeamId: teamId, role: 'guardian' });
+      const link = await revokeFamilyLink({ linkId, repTeamId: teamId });
       return NextResponse.json({ ok: true, status: link.status });
     }
     return NextResponse.json({ error: 'bad_action' }, { status: 400 });

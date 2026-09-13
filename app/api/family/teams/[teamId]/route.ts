@@ -51,11 +51,11 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ ok: true, state: 'hidden' });
   }
 
-  // ── The tier boundary, at the one place it decides a response ──
+  // ── The boundary, at the one place it decides a response ──
   // The guardian payload is attached ONLY for a link whose role is literally 'guardian' AND
-  // which carries a player. A follower cannot reach this branch — and because the guardian
-  // payload is a separate shape rather than extra fields on `view`, a follower's response has
-  // nowhere for child data to appear even if this check were wrong.
+  // which carries a player. Because it is a separate shape rather than extra fields on `view`,
+  // a response without one has nowhere for child data to appear even if this check were wrong.
+  // (Written against the follower tier, retired 2026-09-12; kept because it fails closed.)
   const guardian = await resolveGuardianPayloadForLink(link, teamId);
 
   return NextResponse.json({ ok: true, state: 'open', view, role: link.role, guardian });

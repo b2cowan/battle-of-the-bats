@@ -1,4 +1,5 @@
-/* Chunk D family surfaces — the join page and the family team view.
+/* Chunk D family surfaces — the family team view, its recap, and the guardian claim page.
+   (The join page — the team family link's landing — was removed with the link, 2026-09-12.)
    Warm tokens from components/consumer/warmTheme.module.css (the .warm wrapper on each
    page root); this file only USES them and never redefines a global token. Dark is
    covered because the warm tokens themselves flip with the user theme — the same
@@ -37,34 +38,6 @@
   margin: 0 0 0.6rem;
 }
 
-/* ── Join page header ────────────────────────────────────────────────────── */
-
-.joinHead {
-  text-align: center;
-  padding: 1.5rem 0.5rem 0.5rem;
-}
-
-.orgMark {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  margin: 0 auto 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1.05rem;
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-  overflow: hidden;
-}
-
-.orgMark img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .orgName {
   font-family: var(--font-data);
   font-size: 0.72rem;
@@ -87,63 +60,6 @@
   font-size: 0.92rem;
   margin: 0 auto;
   max-width: 34ch;
-  line-height: 1.5;
-}
-
-/* ── Tier chooser ────────────────────────────────────────────────────────── */
-
-.tier {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  width: 100%;
-  text-align: left;
-  border: 1.5px solid var(--home-line-strong);
-  border-radius: var(--home-radius-sm);
-  padding: 0.7rem 0.8rem;
-  background: transparent;
-  color: var(--home-ink);
-  cursor: pointer;
-  min-height: 44px;   /* mobile touch floor */
-  font: inherit;
-}
-
-.tier + .tier {
-  margin-top: 0.5rem;
-}
-
-.tierOn {
-  border-width: 2px;
-  border-color: var(--home-ink);
-}
-
-.tierLabel {
-  font-weight: 700;
-  display: block;
-}
-
-.tierSub {
-  font-size: 0.78rem;
-  color: var(--home-dim);
-  display: block;
-  margin-top: 0.1rem;
-  line-height: 1.4;
-}
-
-.tierRadio {
-  flex: none;
-  margin-top: 0.15rem;
-  color: var(--home-dim);
-}
-
-/* The guardian hold state — an honest closed door, not a dead control. */
-.holdNote {
-  margin: 0.6rem 0 0;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--home-radius-sm);
-  background: var(--home-olive-soft);
-  color: var(--home-ink-soft);
-  font-size: 0.82rem;
   line-height: 1.5;
 }
 
@@ -284,17 +200,6 @@
   background: var(--home-ink-soft);
 }
 
-/* Lime is reserved for the ONE account-creation conversion moment (mockup rule). */
-.chipLime {
-  background: var(--home-lime);
-  color: var(--home-lime-ink);
-}
-
-.chipLime:hover {
-  background: var(--home-lime);
-  opacity: 0.9;
-}
-
 .chip:disabled {
   opacity: 0.55;
   cursor: default;
@@ -348,16 +253,6 @@
   font-weight: 700;
   font-size: 0.85rem;
   text-decoration: none;
-}
-
-.linkAction {
-  display: inline-block;
-  margin-top: 0.7rem;
-  color: var(--home-olive);
-  font-weight: 600;
-  font-size: 0.86rem;
-  min-height: 44px;
-  line-height: 44px;
 }
 
 .footNote {

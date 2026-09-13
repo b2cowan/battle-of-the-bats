@@ -16,14 +16,18 @@ import { FamilyLinkError, type FamilyLink } from './family-access';
  * The owner's reasoning for building now (2026-08-01), recorded because it is a fair
  * correction to how this was first framed: a coach INVITING the guardian address already on
  * the roster is not a new trust decision — that address is already on the player row and
- * already receives team email and tryout offers. What IS new is (a) the standing view of a
- * child's records a connected guardian receives, and (b) an unsolicited requester ASSERTING
- * a parental relationship the coach cannot truly verify. Those two are what the counsel
- * questions cover, and they are why this stays off by default.
+ * already receives team email and tryout offers. What IS new is the standing view of a
+ * child's records a connected guardian receives, and that is what the counsel questions
+ * cover, and why this stays off by default.
  *
- * The tier boundary is the standing security invariant of the whole family layer: guardian
- * payloads live in their own DTOs (see `lib/family-guardian-view.ts`), never as a widened
- * follower payload.
+ * ⚠ ONE DOOR SINCE 2026-09-12. A parent used to be able to ASK through the team's family
+ * link, naming their child, with the coach attaching the roster row at approval. That link
+ * was removed with the follower tier (owner), and the ask-by-link path went with it — the
+ * coach's invite to the address already on the roster row is now the only way in. A claim
+ * from a different address still lands in the coach's queue, so approval still exists.
+ *
+ * Guardian payloads live in their own DTOs (see `lib/family-guardian-view.ts`), never as a
+ * widened team-level payload.
  */
 
 /**
@@ -72,7 +76,6 @@ export interface PlayerGuardianRow {
   relationship: string | null;
   status: FamilyLink['status'];
   verifiedVia: FamilyLink['verifiedVia'];
-  requestedPlayerName: string | null;
   createdAt: string;
   approvedAt: string | null;
   /**
@@ -85,9 +88,8 @@ export interface PlayerGuardianRow {
   matchesRosterContact: boolean;
   /**
    * The address the person who claimed the invite actually holds, when it DIFFERS from the one
-   * the coach invited (mig 220). Null on every other row — a parent-initiated request (where
-   * the invited address IS the requester's own), an outstanding invite nobody has claimed, and
-   * a claim that matched.
+   * the coach invited (mig 220). Null on every other row — an outstanding invite nobody has
+   * claimed, and a claim that matched.
    *
    * ⚠ This is the whole reason a mismatched claim is in the queue. Without it on screen the
    * coach is asked to adjudicate a mismatch they cannot see, which is a blind approval on a
@@ -98,7 +100,7 @@ export interface PlayerGuardianRow {
 
 const GUARDIAN_COLUMNS =
   'id, org_id, rep_team_id, role, player_id, user_id, invited_email, claimed_email, relationship, ' +
-  'status, verified_via, requested_player_name, created_at, approved_at';
+  'status, verified_via, created_at, approved_at';
 
 interface GuardianRow {
   id: string;
@@ -108,7 +110,6 @@ interface GuardianRow {
   relationship: string | null;
   status: FamilyLink['status'];
   verified_via: FamilyLink['verifiedVia'];
-  requested_player_name: string | null;
   created_at: string;
   approved_at: string | null;
 }
@@ -122,10 +123,9 @@ interface GuardianRow {
 export async function getGuardiansByPlayer(
   repTeamId: string,
   programYearId: string,
-): Promise<{ byPlayer: Map<string, PlayerGuardianRow[]>; unattachedRequests: PlayerGuardianRow[] }> {
+): Promise<Map<string, PlayerGuardianRow[]>> {
   const out = new Map<string, PlayerGuardianRow[]>();
-  const unattachedRequests: PlayerGuardianRow[] = [];
-  if (!GUARDIAN_TIER_ENABLED) return { byPlayer: out, unattachedRequests };
+  if (!GUARDIAN_TIER_ENABLED) return out;
 
   const [{ data: linkRows, error: linkError }, { data: playerRows, error: playerError }] =
     await Promise.all([
@@ -159,7 +159,6 @@ export async function getGuardiansByPlayer(
       relationship: raw.relationship,
       status: raw.status,
       verifiedVia: raw.verified_via,
-      requestedPlayerName: raw.requested_player_name,
       createdAt: raw.created_at,
       approvedAt: raw.approved_at,
       matchesRosterContact: !!raw.player_id
@@ -173,19 +172,14 @@ export async function getGuardiansByPlayer(
         : null,
     };
 
-    // ⚠ A guardian REQUEST has no player yet — the parent typed a name into a form that
-    // showed them no roster, and the COACH attaches the row at approval (mig 216). An earlier
-    // version skipped these as "structurally impossible", which was true under mig 215's
-    // stricter CHECK and became false the moment that CHECK was relaxed for this very flow.
-    // The result was that every parent-initiated request — the PRIMARY on-ramp — was
-    // invisible to every coach screen and could never be approved.
-    if (!raw.player_id) {
-      unattachedRequests.push(row);
-      continue;
-    }
+    // Every guardian row carries its player from the moment it is written (mig 290 restored
+    // the strict CHECK once the ask-by-link path, the only producer of a player-less request,
+    // was removed). A null here is a row the database should have refused — skip, never file
+    // it under a child it does not name.
+    if (!raw.player_id) continue;
     out.set(raw.player_id, [...(out.get(raw.player_id) ?? []), row]);
   }
-  return { byPlayer: out, unattachedRequests };
+  return out;
 }
 
 /** Live guardians for a player — the cap counts these. `declined`/`revoked` never count, so a
@@ -201,108 +195,7 @@ async function countLiveGuardians(playerId: string): Promise<number> {
   return count ?? 0;
 }
 
-// ── Requests, invites and approval ────────────────────────────────────────────
-
-/**
- * A parent asks to be connected to a named child (the primary, parent-initiated on-ramp).
- *
- * The player name is stored as TYPED and matched by the coach by hand — never matched
- * automatically, and never echoed back. This function deliberately does not look the name up:
- * a response that varied by whether the name matched would turn the request form into a
- * roster oracle, which is exactly what owner ruling #3 forbids.
- */
-export async function requestGuardianLink(params: {
-  orgId: string;
-  repTeamId: string;
-  userId: string;
-  email: string;
-  /** FULL name — see the note below on why both parts are required. */
-  playerFirstName: string;
-  playerLastName: string;
-  relationship: string | null;
-  ageBand: GuardianAgeBand;
-  consentIp: string | null;
-  consentText: string;
-}): Promise<FamilyLink['status']> {
-  assertEnabled();
-
-  const email = normalizeGuardianEmail(params.email);
-  if (!email) throw new FamilyLinkError('not_found', 'A valid email address is required.');
-
-  // BOTH parts are required (owner, 2026-08-01). The first-name-only version was
-  // data-minimization applied to the wrong side of the exchange: minimization governs what we
-  // DISCLOSE, and this form discloses nothing — the parent is typing their own child's name,
-  // not selecting from anything we showed them. What it costs is real: on a team with two
-  // Mayas, the coach approving a request is being asked to guess which child an adult belongs
-  // to, which is the single decision in this flow that must not be a guess.
-  const first = params.playerFirstName.trim().slice(0, 60);
-  const last = params.playerLastName.trim().slice(0, 60);
-  if (!first) throw new FamilyLinkError('not_found', 'A player’s first name is required.');
-  if (!last) throw new FamilyLinkError('not_found', 'A player’s last name is required.');
-  const playerName = `${first} ${last}`;
-
-  const { data: existing, error: existingError } = await supabaseAdmin
-    .from('family_links')
-    .select('id, status')
-    .eq('rep_team_id', params.repTeamId)
-    .eq('invited_email', email)
-    .eq('role', 'guardian')
-    .not('status', 'in', '("declined","revoked")')
-    .maybeSingle();
-  if (existingError) throw existingError;
-  if (existing) {
-    const status = (existing as { status: string }).status;
-    throw new FamilyLinkError(
-      status === 'verified' ? 'already_connected' : 'already_requested',
-      status === 'verified'
-        ? 'You’re already connected to this team.'
-        : 'Your request is already with the coach.',
-    );
-  }
-
-  const now = new Date().toISOString();
-  const { data, error } = await supabaseAdmin
-    .from('family_links')
-    .insert({
-      org_id: params.orgId,
-      rep_team_id: params.repTeamId,
-      role: 'guardian',
-      // NULL until the coach attaches the roster row at approval. The DB CHECK requires a
-      // guardian to have a player_id, so this row is created as `requested` with the name
-      // only — see the note on `attachPlayerAtApproval` for why that is safe.
-      player_id: null,
-      user_id: params.userId,
-      invited_email: email,
-      relationship: params.relationship,
-      requested_player_name: playerName,
-      status: 'requested',
-      consent_recorded_at: now,
-      consent_ip: params.consentIp,
-    })
-    .select('id, status')
-    .single();
-  if (error) {
-    if ((error as { code?: string }).code === '23505') {
-      throw new FamilyLinkError('already_requested', 'Your request is already with the coach.');
-    }
-    throw error;
-  }
-
-  // The consent ledger row lands with the request, not at approval: the parent consented
-  // when they ticked the boxes, and a record dated to someone else's later decision would
-  // misstate when consent was actually given.
-  await recordGuardianConsent({
-    orgId: params.orgId,
-    userId: params.userId,
-    email,
-    consentIp: params.consentIp,
-    consentText: params.consentText,
-    ageBand: params.ageBand,
-    sourceLinkId: (data as { id: string }).id,
-  });
-
-  return (data as { status: FamilyLink['status'] }).status;
-}
+// ── Invites and approval ──────────────────────────────────────────────────────
 
 /** Write the consent evidence. Separate function so the wording that counsel returns has one
  *  place to land, and so a future flow can record consent without duplicating the shape. */

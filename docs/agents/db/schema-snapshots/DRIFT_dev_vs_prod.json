@@ -1,12 +1,45 @@
 {
-  "generated": "2026-09-11",
-  "total": 0,
+  "generated": "2026-09-13",
+  "total": 8,
   "counts": {
     "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "columns": 4,
+    "indexes": 1,
+    "constraints": 1,
+    "rls": 2
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:changed:family_links.family_links_role_check",
+      "sig": "(role = 'guardian'::text) :: (role = ANY (ARRAY['guardian'::text, 'follower'::text]))"
+    },
+    {
+      "key": "check:changed:family_links.family_links_role_player_ck",
+      "sig": "((role = 'guardian'::text) AND (player_id IS NOT NULL)) :: (((role = 'follower'::text) AND (player_id IS NULL)) OR ((role = 'guardian'::text) AND ((status <> 'verified'::text) OR (player_id IS NOT NULL))))"
+    },
+    {
+      "key": "column:only-prod:family_links.requested_player_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_teams.family_link_created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_teams.family_link_created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_teams.family_link_token_hash",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:rep_teams.rep_teams_family_link_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:rep_teams_family_link_token_uniq",
+      "sig": ""
+    }
+  ]
 }

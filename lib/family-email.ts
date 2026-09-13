@@ -159,7 +159,7 @@ function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEm
 export type FamilySendResult = SendEmailResult | { status: 'suppressed' };
 
 /**
- * Send one family email. The ONLY sanctioned way to mail a guardian or follower.
+ * Send one family email. The ONLY sanctioned way to mail a connected guardian.
  *
  * Pass `suppressed` when the caller already loaded the list (a bulk send); omit it and this
  * fetches per recipient. Either way the guard runs — an opted-out address returns

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import CoachCollapseSection from './CoachCollapseSection';
-import styles from './FamilyAccessPanel.module.css';
+import styles from './FamilyCard.module.css';
 
 /**
  * "{Player}'s guardians" (S5, bottom card) — the coach's per-player guardian management.
@@ -33,7 +33,6 @@ interface GuardianRow {
   relationship: string | null;
   status: string;
   verifiedVia: string | null;
-  requestedPlayerName: string | null;
   createdAt: string;
   matchesRosterContact: boolean;
   /** Set only when the person who claimed your invite holds a DIFFERENT address than the one
@@ -54,10 +53,6 @@ export default function PlayerGuardiansCard({
   const [available, setAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<GuardianRow[]>([]);
-  /** Parent-initiated requests with no child attached yet. They appear on EVERY player's card
-   *  because that is the decision the coach is making: "this adult belongs to THIS child."
-   *  The name the parent typed is shown so the coach can match it. */
-  const [pendingRequests, setPendingRequests] = useState<GuardianRow[]>([]);
   const [maxPerPlayer, setMaxPerPlayer] = useState(2);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +70,6 @@ export default function PlayerGuardiansCard({
       const data = await res.json();
       setMaxPerPlayer(data.maxPerPlayer ?? 2);
       setRows((data.byPlayer?.[playerId] ?? []) as GuardianRow[]);
-      setPendingRequests((data.unattachedRequests ?? []) as GuardianRow[]);
     } catch {
       setAvailable(false);
     } finally {
@@ -132,7 +126,9 @@ export default function PlayerGuardiansCard({
   const invited = rows.filter(r => r.status === 'invited');
   const waiting = rows.filter(r => r.status === 'pending_approval');
   const atCap = connected.length >= maxPerPlayer;
-  const decidable = [...pendingRequests, ...waiting];
+  // Only a mismatched claim waits on the coach now — the ask-by-link request, which arrived
+  // with no child attached and appeared on every player's card, went with the family link.
+  const decidable = waiting;
 
   return (
     <CoachCollapseSection sectionId="guardians" title="Guardians" defaultOpen={false}>
@@ -168,7 +164,6 @@ export default function PlayerGuardiansCard({
                 address (the old behaviour) hid the single fact that sent this row to the
                 queue, and made the approval a guess. */}
             {r.claimedEmail ?? r.email}
-            {r.requestedPlayerName && <> · says they&rsquo;re a parent of <strong>{r.requestedPlayerName}</strong></>}
             {r.relationship && <> · {r.relationship}</>}
             {/* An assist, never authorization — it confirms the address, not the relationship. */}
             {r.matchesRosterContact && !r.claimedEmail && (

@@ -14,9 +14,11 @@ import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membe
  *
  *  1. THE ANONYMOUS CALLER. No session, no recap — and the refusal must name no child, no
  *     team and no season.
- *  2. THE FOLLOWER. The standing invariant of the two-tier model. An APPROVED follower is a
- *     real, verified, connected person, and they must still reach nothing player-level. This
- *     probe is written to pass in BOTH guardian-switch states so it stays the standing guard.
+ *  2. THE SIGNED-IN NON-GUARDIAN. A real account with no guardian link to this team must reach
+ *     nothing player-level. (Until 2026-09-12 this persona was an APPROVED FOLLOWER — a verified,
+ *     team-level connection with no child. The follower tier was removed with the family link, so
+ *     the persona is now simply "signed in, not connected"; the probe proves the same thing and
+ *     still passes in BOTH guardian-switch states.)
  *  3. GUARDIAN OF PLAYER A vs PLAYER B. There is no player id in any URL — the child is
  *     whoever the coach attached to the link — so this probe asserts the STRUCTURAL property:
  *     whatever the guardian receives, it is never the other child's name.
@@ -59,7 +61,7 @@ const HEAD_EMAIL = `${MARK}-head@dev.local`;
 const ASSISTANT_EMAIL = `${MARK}-assistant@dev.local`;
 const GUARDIAN_A_EMAIL = `${MARK}-guardian-a@dev.local`;
 const GUARDIAN_B_EMAIL = `${MARK}-guardian-b@dev.local`;
-const FOLLOWER_EMAIL = `${MARK}-follower@dev.local`;
+const OUTSIDER_EMAIL = `${MARK}-outsider@dev.local`;
 const PASSWORD = 'devpass123';
 const ORG_SLUG = 'dev-club-org';
 
@@ -72,7 +74,7 @@ let headUserId = '';
 let assistantUserId = '';
 let guardianAUserId = '';
 let guardianBUserId = '';
-let followerUserId = '';
+let outsiderUserId = '';
 
 /** The CLOSED season the recap belongs to. */
 let teamId = '';
@@ -198,7 +200,7 @@ test.beforeAll(async () => {
 
   guardianAUserId = await makeAccount(GUARDIAN_A_EMAIL);
   guardianBUserId = await makeAccount(GUARDIAN_B_EMAIL);
-  followerUserId = await makeAccount(FOLLOWER_EMAIL);
+  outsiderUserId = await makeAccount(OUTSIDER_EMAIL);
 
   const closed = await makeTeam('closed', 'completed');
   teamId = closed.teamId; closedYearId = closed.yearId;
@@ -216,12 +218,9 @@ test.beforeAll(async () => {
   await addGuardian(teamId, guardianAUserId, GUARDIAN_A_EMAIL, playerAId);
   await addGuardian(teamId, guardianBUserId, GUARDIAN_B_EMAIL, playerBId);
 
-  const { error: followerErr } = await admin.from('family_links').insert({
-    org_id: orgId, rep_team_id: teamId, role: 'follower', player_id: null,
-    user_id: followerUserId, invited_email: FOLLOWER_EMAIL, status: 'verified',
-    verified_via: 'coach_approved', approved_at: new Date().toISOString(),
-  });
-  if (followerErr) throw followerErr;
+  // The outsider holds NO family_links row at all — that is the persona. (A follower row, the
+  // old fixture here, is now refused by the database: mig 290 admits only 'guardian'.)
+  void outsiderUserId;
 
   const live = await makeTeam('live', 'active');
   liveTeamId = live.teamId; liveYearId = live.yearId;
@@ -298,19 +297,19 @@ test.describe('the anonymous caller', () => {
   });
 });
 
-// ── 2. The follower — the standing tier boundary ──────────────────────────────
+// ── 2. The signed-in non-guardian — the standing boundary ─────────────────────
 
-test.describe('the tier boundary — an approved FOLLOWER is not a guardian', () => {
-  test('a verified follower reaches no recap at all', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+test.describe('the boundary — a signed-in account with no guardian link is not a guardian', () => {
+  test('an account with no link reaches no recap at all', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
     const { html } = await pageHtml(page, `/family/teams/${teamId}/recap`);
     expect(html).not.toContain(CHILD_A);
     expect(html).not.toContain(CHILD_B);
     expect(html).toMatch(/not available/i);
   });
 
-  test('the follower\'s team payload still carries no player field', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+  test('the outsider\'s team payload carries no player field', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
     const res = await apiGet(page, `/api/family/teams/${teamId}`);
     const body = JSON.stringify(res.body ?? {});
     expect(body).not.toContain(CHILD_A);

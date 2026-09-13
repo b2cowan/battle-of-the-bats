@@ -427,7 +427,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
       personId: other.id,
       name: personDisplayName(other),
       email: other.email_normalized,
-      provenance: l.relationship ? `Family link · ${l.relationship}` : 'Family link',
+      provenance: l.relationship ? `Connected guardian · ${l.relationship}` : 'Connected guardian',
       portalActive: l.status === 'verified' && !!l.user_id,
     });
   }

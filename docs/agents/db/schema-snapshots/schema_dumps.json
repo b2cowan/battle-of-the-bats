@@ -3540,15 +3540,6 @@
       },
       {
         "table_name": "family_links",
-        "pos": 11,
-        "column_name": "requested_player_name",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "family_links",
         "pos": 12,
         "column_name": "claim_token_hash",
         "data_type": "text",
@@ -15285,33 +15276,6 @@
       },
       {
         "table_name": "rep_teams",
-        "pos": 13,
-        "column_name": "family_link_token_hash",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "rep_teams",
-        "pos": 14,
-        "column_name": "family_link_created_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "rep_teams",
-        "pos": 15,
-        "column_name": "family_link_created_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "rep_teams",
         "pos": 16,
         "column_name": "family_calendar_token_hash",
         "data_type": "text",
@@ -20209,34 +20173,27 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
@@ -20245,6 +20202,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -21415,13 +21379,6 @@
         "foreign_table": "teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_tournament_registrations_tournament_team_id_fkey"
-      },
-      {
-        "table_name": "rep_teams",
-        "column_name": "family_link_created_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "rep_teams_family_link_created_by_fkey"
       },
       {
         "table_name": "rep_teams",
@@ -25139,11 +25096,6 @@
       },
       {
         "tablename": "rep_teams",
-        "indexname": "rep_teams_family_link_token_uniq",
-        "indexdef": "CREATE UNIQUE INDEX rep_teams_family_link_token_uniq ON public.rep_teams USING btree (family_link_token_hash) WHERE (family_link_token_hash IS NOT NULL)"
-      },
-      {
-        "tablename": "rep_teams",
         "indexname": "rep_teams_group_id_idx",
         "indexdef": "CREATE INDEX rep_teams_group_id_idx ON public.rep_teams USING btree (group_id)"
       },
@@ -26175,13 +26127,13 @@
         "kind": "CHECK",
         "table_name": "family_links",
         "detail": "family_links_role_check",
-        "check_clause": "(role = ANY (ARRAY['guardian'::text, 'follower'::text]))"
+        "check_clause": "(role = 'guardian'::text)"
       },
       {
         "kind": "CHECK",
         "table_name": "family_links",
         "detail": "family_links_role_player_ck",
-        "check_clause": "(((role = 'follower'::text) AND (player_id IS NULL)) OR ((role = 'guardian'::text) AND ((status <> 'verified'::text) OR (player_id IS NOT NULL))))"
+        "check_clause": "((role = 'guardian'::text) AND (player_id IS NOT NULL))"
       },
       {
         "kind": "CHECK",

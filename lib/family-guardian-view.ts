@@ -5,14 +5,15 @@ import { getActiveRepProgramYear } from './db';
 import type { FamilyLink } from './family-access';
 
 /**
- * lib/family-guardian-view.ts — what a VERIFIED GUARDIAN sees that a follower does not.
+ * lib/family-guardian-view.ts — what a VERIFIED GUARDIAN sees beyond the team's schedule.
  *
- * THE TIER BOUNDARY LIVES IN THIS FILE'S EXISTENCE. The follower payload
- * (`lib/family-view.ts`) has no player field at all; this is a SEPARATE type reached only
- * after a caller has proven a verified guardian link. The boundary is therefore structural —
- * a follower cannot receive a partially-filled guardian payload, because there is no shared
- * shape for one to be filled into. Never merge these two modules, and never add a player
- * field to `FamilyScheduleEntry` to "reuse" this.
+ * THE BOUNDARY LIVES IN THIS FILE'S EXISTENCE. The team payload (`lib/family-view.ts`) has
+ * no player field at all; this is a SEPARATE type reached only after a caller has proven a
+ * verified guardian link. The boundary is therefore structural — a caller cannot receive a
+ * partially-filled guardian payload, because there is no shared shape for one to be filled
+ * into. Never merge these two modules, and never add a player field to
+ * `FamilyScheduleEntry` to "reuse" this. (The split was drawn for the follower tier, retired
+ * 2026-09-12; it stays because the public team page reads the team payload too.)
  *
  * ⚠ Every function here returns null/empty while `GUARDIAN_TIER_ENABLED` is off.
  *
@@ -49,7 +50,7 @@ export interface GuardianPayload {
    *
    * Guardian-only by recommendation of the discovery review and the approved mockup: coach
    * emails routinely carry money asks and registration matters, which are the accountable
-   * adult's business and not a team follower's.
+   * adult's business and nobody else's.
    */
   announcements: GuardianAnnouncement[];
 }
@@ -76,8 +77,8 @@ export function guardianLinkEarnsPlayerData(
  * Both readers — the SSR family team page and the family team API — previously wrote this
  * condition by hand. That is duplicated TIER-BOUNDARY logic, which is the last thing that
  * should live in two files: the next person tightening it has two places to remember and
- * nothing telling them so. A follower reaches this and gets null, because the role check and
- * the payload build are the same function.
+ * nothing telling them so. A link without a player reaches this and gets null, because the
+ * role check and the payload build are the same function.
  */
 export async function resolveGuardianPayloadForLink(
   link: Pick<FamilyLink, 'role' | 'playerId' | 'relationship'>,

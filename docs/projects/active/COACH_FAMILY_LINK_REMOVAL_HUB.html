@@ -1,0 +1,371 @@
+<title>Family Link Removal</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;
+/* the coach portal's warm paper, for the embedded frames */
+--p-ground:#f8f4ed;--p-white:#fff;--p-ink:#241e15;--p-muted:#615a54;--p-line:#e5dfd4;--p-line2:#dcd5c9;--p-olive:#657d30;--p-lime:#d9f99d;--p-onlime:#1c2417;--p-soft:#f2eee6;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.mockupintro{max-width:820px;margin:20px auto 0;padding:0 24px;color:var(--muted);font-size:14px}
+
+/* ── the product frame ── */
+.frame{width:min(1180px,calc(100% - 48px));margin:16px auto 20px;border:1px solid #c5c4bb;border-radius:12px;overflow:hidden;background:var(--p-ground);box-shadow:0 8px 30px #1c22300a;color:var(--p-ink);container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.shell{background:var(--p-white);border-bottom:1px solid var(--p-line);padding:13px 24px;display:flex;align-items:center;gap:16px;font-weight:800;letter-spacing:-.3px}
+.shell .portal{font-weight:700;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--p-muted);border-left:1px solid var(--p-line2);padding-left:14px}
+.shell .who{margin-left:auto;font-weight:500;font-size:12px;color:var(--p-muted)}
+.body{display:grid;grid-template-columns:230px 1fr;min-height:560px}
+.side{background:var(--p-white);border-right:1px solid var(--p-line);padding:14px 0 18px;font-size:14px}
+.side .grp{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--p-muted);font-weight:800;padding:14px 18px 6px}
+.side .it{padding:8px 18px;color:var(--p-ink)}.side .it.on{background:var(--p-soft);border-left:3px solid var(--p-olive);padding-left:15px;font-weight:700}
+.side .it.dim{color:var(--p-muted)}
+.main{min-width:0}
+.pagehead{padding:16px 24px 12px;display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--p-line);background:var(--p-white)}
+.pagehead h2{margin:0;font-size:20px}.pagehead .crumb{font:12px/1.5 ui-monospace,'Cascadia Mono',monospace;color:var(--p-muted)}
+.next{text-align:right;font-size:12px}.next b{display:block;font-size:10px;letter-spacing:1.4px;color:var(--p-muted)}
+.page{padding:18px 24px 28px}
+.settingspage h2.pt{margin:0 0 4px;font-size:22px}
+table.roster{width:100%;border-collapse:separate;border-spacing:0;background:var(--p-white);border:1px solid var(--p-line2);border-radius:9px;overflow:hidden;font-size:14px;font-variant-numeric:tabular-nums}
+.roster td{padding:11px 12px;border-top:1px solid var(--p-line)}.roster tr:first-child td{border-top:0}
+.roster .grip{color:#b9b1a5;width:22px;font-size:16px}.roster .num{width:34px;color:var(--p-muted)}.roster .name{font-weight:700;width:34%}
+.roster .link{color:var(--p-ink);text-decoration:underline;text-underline-offset:3px;text-decoration-color:#b9b1a5}
+.fold{margin-top:12px;background:var(--p-white);border:1px solid var(--p-line2);border-radius:9px;padding:11px 14px;font-weight:700;font-size:14px}
+.fold small{font-weight:500;color:var(--p-muted);margin-right:8px}
+.hint{margin:10px 0 0;font-size:13px;color:var(--p-muted)}
+.panel{margin-top:14px;background:var(--p-white);border:1px solid var(--p-line2);border-radius:10px;padding:16px 18px}
+.panel .ph{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}.panel .ph h3{margin:0;font-size:17px}.panel .ph span{font:12px ui-monospace,monospace;color:var(--p-muted)}
+.prow{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--p-line)}
+.prow .ic{color:var(--p-muted);font-size:15px;text-align:center}.prow .l{font-weight:700;font-size:15px}.prow .s{font-size:13px;color:var(--p-muted);margin-top:2px}
+.pbtn{border:1px solid #b9b1a5;background:var(--p-white);border-radius:7px;padding:9px 13px;font-weight:700;font-size:13px;min-height:40px}
+.seg{display:inline-flex;border:1px solid #cfc7ba;border-radius:7px;overflow:hidden}
+.seg span{padding:9px 14px;font-weight:700;font-size:13px;color:var(--p-muted);background:#fbf9f5;border-right:1px solid var(--p-line)}.seg span:last-child{border-right:0}
+.seg span.on{background:var(--p-lime);color:var(--p-onlime)}
+/* team settings */
+.sect{background:var(--p-white);border:1px solid var(--p-line2);border-radius:10px;margin-top:12px}
+.sect .sh{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;font-weight:700;font-size:15px}
+.sect .sh span{font-weight:500;font-size:12px;color:var(--p-muted)}
+.sect.open .sh{border-bottom:1px solid var(--p-line)}
+.sect .sb{padding:6px 16px 14px}
+.who{font-size:13px;color:var(--p-muted);margin:8px 0 10px}
+.srow{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--p-line);flex-wrap:wrap}
+.srow:first-of-type{border-top:0}.srow .m{flex:1 1 240px;min-width:0}.srow .lbl{font-weight:600;font-size:15px}.srow .d{font-size:13px;color:var(--p-muted);line-height:1.45;margin-top:2px}
+.srow .ctl{display:flex;align-items:center;gap:8px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px}.chk i{width:16px;height:16px;border:1px solid #9a9184;border-radius:3px;display:inline-block;background:#fff}
+.chk i.on{background:var(--p-olive);border-color:var(--p-olive);position:relative}.chk i.on::after{content:'';position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.ghost{margin-top:14px;border:2px dashed #c9bfb0;border-radius:10px;padding:14px 18px;color:var(--p-muted);font-size:13px;background:transparent}
+.ghost b{color:var(--p-ink)}
+
+/* clickable highlights */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage .tablewrap{overflow-x:auto;margin:0 0 18px}.docpage table{border-collapse:collapse;width:100%;font-size:14px}
+.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}.docpage thead th{background:var(--soft)}
+.docpage ul{padding-left:22px}.docpage li{margin-bottom:6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+
+@container(max-width:700px){.body{grid-template-columns:1fr}.side{display:none}.pagehead{flex-wrap:wrap}.page{padding:14px 14px 22px}.roster .name{width:auto}.prow{grid-template-columns:22px 1fr}.prow .pbtn,.prow .seg{grid-column:2}.srow .ctl{width:100%}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Family link removal — project hub</strong><br><small>Built + reviewed on dev 2026-09-12 · mig 290 on dev, prod pending · owner QA walk owed</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Hub published 2026-09-12; owner go 2026-09-12">Design</li>
+    <li class="stage done" title="Plan of record: COACH_FAMILY_LINK_REMOVAL_PLAN.md, 2026-09-12">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-12 — typecheck, 3,639 unit tests, 38/38 family-layer probes, all static gates green; mig 290 applied to dev">Build</li>
+    <li class="stage current" title="/review 2026-09-12 — 5 lenses + rendered check; 4 High copy findings outside the diff fixed (public team page, pitch deck, pricing facts, Premium bullet); 2 rendered findings fixed">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#roster-before">1 · Roster — today</a>
+    <a href="#roster-after">2 · Roster — after</a>
+    <a href="#settings-after">3 · Team settings — after</a>
+  </nav>
+  <p class="mockupintro">Three whole screens, desktop first (use <em>Phone width</em> to reflow). Click any red flag or tag to read what it marks. The UAT Test Team is the sample; the same is true of every entitled team.</p>
+  <div class="frame" id="frame">
+    <header class="shell"><span>FIELDLOGIC<span style="color:var(--p-olive)">HQ</span></span><span class="portal">Coaches Portal</span><span class="who">Head coach · UAT Test Team</span></header>
+    <main>
+
+      <!-- ── 1 · Roster, today ── -->
+      <section class="screen" id="roster-before">
+        <div class="body">
+          <aside class="side" aria-hidden="true">
+            <div class="grp">Progress</div><div class="it dim">Skills &amp; Goals</div><div class="it dim">Insights</div>
+            <div class="grp">Money</div><div class="it dim">Money</div>
+            <div class="grp">Communication</div><div class="it dim">Chat</div><div class="it dim">Email families</div>
+            <div class="grp">Team</div><div class="it on">Roster</div><div class="it">Tryouts</div><div class="it">Staff</div><div class="it">Documents</div><div class="it">Settings</div>
+          </aside>
+          <div class="main">
+            <div class="pagehead"><div><h2 tabindex="-1">UAT Test Team</h2><div class="crumb">UAT Test Org · 2026 Season · 3-2-1</div></div><div class="next"><b>NEXT</b>Fri 1:56 p.m. practice</div></div>
+            <div class="page">
+              <table class="roster" aria-label="Roster (last five rows)">
+                <tr><td class="grip">⠿</td><td class="num">8</td><td class="name">Harper Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">9</td><td class="name">Indigo Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">10</td><td class="name">Jules Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">11</td><td class="name">Kai Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">12</td><td class="name">Logan Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+              </table>
+              <div class="fold"><small>▸</small>Off the roster (1)</div>
+              <p class="hint">⠿ Drag to set the order players appear in</p>
+
+              <div class="panel">
+                <div class="ph"><h3>Team family access <button class="fl" type="button" data-finding="F01" data-here="The whole section, open because this team has never created a link.">F01</button></h3><span>No link yet ⌃</span></div>
+                <div class="prow"><div class="ic">⛓</div><div><div class="l">Family link <button class="fl" type="button" data-finding="F01" data-here="The link row — Create link mints a URL families use to ask to follow the team.">F01</button></div><div class="s">Share it with your team’s families — anyone with it can ask to follow the team, and you approve every request.</div></div><span class="pbtn">Create link</span></div>
+                <div class="prow"><div class="ic">◉</div><div><div class="l">Schedule visibility <button class="fl" type="button" data-finding="F02" data-here="The one control on this card that survives — it moves to Team settings.">F02</button></div><div class="s">Connected families see the full schedule, games and practices. Individual game pages you share still work.</div></div><span class="seg"><span>Staff only</span><span class="on">Families</span><span>Public link</span></span></div>
+                <div class="prow"><div class="ic">⚇</div><div><div class="l">Family followers · 0 <button class="fl" type="button" data-finding="F01" data-here="The followers list and the approval queue — both exist only because of the link.">F01</button></div><div class="s">Grandparents and relatives following the team — not tied to any player.</div></div><span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 2 · Roster, after ── -->
+      <section class="screen" id="roster-after" hidden>
+        <div class="body">
+          <aside class="side" aria-hidden="true">
+            <div class="grp">Progress</div><div class="it dim">Skills &amp; Goals</div><div class="it dim">Insights</div>
+            <div class="grp">Money</div><div class="it dim">Money</div>
+            <div class="grp">Communication</div><div class="it dim">Chat</div><div class="it dim">Email families</div>
+            <div class="grp">Team</div><div class="it on">Roster</div><div class="it">Tryouts</div><div class="it">Staff</div><div class="it">Documents</div><div class="it">Settings</div>
+          </aside>
+          <div class="main">
+            <div class="pagehead"><div><h2 tabindex="-1">UAT Test Team</h2><div class="crumb">UAT Test Org · 2026 Season · 3-2-1</div></div><div class="next"><b>NEXT</b>Fri 1:56 p.m. practice</div></div>
+            <div class="page">
+              <table class="roster" aria-label="Roster (last five rows)">
+                <tr><td class="grip">⠿</td><td class="num">8</td><td class="name">Harper Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">9</td><td class="name">Indigo Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">10</td><td class="name">Jules Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">11</td><td class="name">Kai Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+                <tr><td class="grip">⠿</td><td class="num">12</td><td class="name">Logan Test</td><td><span class="link">Add a position</span></td><td><span class="link">Add a contact</span></td></tr>
+              </table>
+              <div class="fold"><small>▸</small>Off the roster (1) <span class="mk" data-k="un" data-note="The roster list, the off-the-roster fold and the drag hint are drawn exactly as today. The page now ends where the roster ends.">Unchanged</span></div>
+              <p class="hint">⠿ Drag to set the order players appear in</p>
+              <div class="ghost"><b>Nothing below the roster.</b> The Team family access section is gone, not folded — no link, no followers, no approval queue. <button class="fl fix" type="button" data-finding="F01" data-here="Where the section used to sit. The page simply ends.">fixes F01</button> <button class="fl fix" type="button" data-finding="F02" data-here="Schedule visibility is not lost — screen 3 shows its new home.">moves F02</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 3 · Team settings, after ── -->
+      <section class="screen" id="settings-after" hidden>
+        <div class="body">
+          <aside class="side" aria-hidden="true">
+            <div class="grp">Progress</div><div class="it dim">Skills &amp; Goals</div><div class="it dim">Insights</div>
+            <div class="grp">Money</div><div class="it dim">Money</div>
+            <div class="grp">Communication</div><div class="it dim">Chat</div><div class="it dim">Email families</div>
+            <div class="grp">Team</div><div class="it">Roster</div><div class="it">Tryouts</div><div class="it">Staff</div><div class="it">Documents</div><div class="it on">Settings</div>
+          </aside>
+          <div class="main">
+            <div class="pagehead"><div><h2 tabindex="-1">Team settings</h2><div class="crumb">UAT Test Team · UAT Test Org · 2026 Season</div></div></div>
+            <div class="page settingspage">
+              <div class="sect"><div class="sh">Team <span>UAT Test Team · Baseball · 13U</span></div></div>
+              <div class="sect"><div class="sh">Season <span>2026 Season · Active</span></div></div>
+              <div class="sect"><div class="sh">Game day <span>No caps set</span></div></div>
+              <div class="sect"><div class="sh">Money <span>Reminders on · credits applied to the next payment</span></div></div>
+              <div class="sect"><div class="sh">Tags <span>4 libraries</span></div></div>
+              <div class="sect open">
+                <div class="sh">Sharing <span class="mk" data-k="re" data-note="This section exists today but only for a Club-plan team whose club turned on book sharing. It now also appears for any premium team, because Schedule visibility lives here. The summary line names the visibility setting first.">Restyled</span> <span>Schedule: Families · Book not shared</span></div>
+                <div class="sb">
+                  <p class="who">Who outside your staff can see what. Each setting is yours alone — nothing is shared by surprise.</p>
+                  <div class="srow">
+                    <div class="m"><div class="lbl">Schedule visibility <span class="mk" data-k="re" data-note="Moved from the Team family access card on Roster. Same three settings, same meanings, same control — only its address changed. Head coaches and assistants who manage the schedule can change it, the same people who can share a game link.">Restyled</span></div><div class="d">Who can see games and practices. <strong>Staff only</strong> keeps them inside your coaching staff and stops a shared game page opening. <strong>Families</strong> lets the people you have connected see the full schedule, and game pages you share work. <strong>Public link</strong> also shows the schedule on your team’s public page.</div></div>
+                    <div class="ctl"><span class="seg"><span>Staff only</span><span class="on">Families</span><span>Public link</span></span></div>
+                  </div>
+                  <div class="srow">
+                    <div class="m"><div class="lbl">Share our book with the club <span class="mk" data-k="un" data-note="The Club Shared Book switch, unchanged. It still appears only for a Club-plan team whose club admin turned sharing on — a team that cannot use it sees no trace of it, exactly as today.">Unchanged</span></div><div class="d">Your book line and observations become readable by your club’s other sharing teams. Stop sharing any time. <em>(Club-plan clubs only — shown here so the section reads whole.)</em></div></div>
+                    <div class="ctl"><span class="chk"><i></i>Not sharing</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sect"><div class="sh">Organization <span>Standalone team</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Family link removal</h1>
+  <h2>What changes for the coach</h2>
+  <p>The <strong>Team family access</strong> section disappears from the bottom of the Roster page. A coach can no longer create a family link, nobody can use one to ask to follow the team, and there is no follower list or approval queue to tend. The Roster page ends where the roster ends.</p>
+  <p>The one control on that card that still does something — <strong>Schedule visibility</strong> (Staff only / Families / Public link) — moves to <strong>Team settings → Sharing</strong>. Same three settings, same meanings: Staff only keeps games and practices inside the coaching staff and stops a shared game page opening; Families lets connected people see the full schedule; Public link also puts it on the team’s public page.</p>
+  <p>Nothing else in the family layer changes: a player’s parent or guardian still has their family portal (behind the platform-wide guardian switch, which stays off pending the privacy review), the coach still previews the family season recap on a player’s page, sharing a single game link still works, and the club admin still sees how many families are connected per team.</p>
+  <h2>Why it matters</h2>
+  <p>Grandparent-and-relative following was a door the owner has decided the product does not need. Leaving the card in place would keep showing every premium coach a “Create link” control for a path that is being retired, and would keep an unused approval queue on a page coaches visit every week.</p>
+  <h2>Customer impact</h2>
+  <p>No customer loses anything they were using: on production, no team has ever created a family link and no follower exists. Every premium coach sees a shorter Roster page and finds Schedule visibility in Team settings the next time they look for it. The in-app help guide is rewritten to match, and the help drawer on Roster no longer points at the family-access guide.</p>
+  <h2>Priority</h2>
+  <p>Owner-directed, 2026-09-12. Small in customer impact; medium in code (a database step is part of it, see the plan) — worth doing in one sitting so the roster page and the help guide never disagree.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>No coach screen, help article or API offers a way to create, share, request through, approve or reset a family link.</li>
+    <li>Schedule visibility is set from Team settings and still governs the public team page and sharing a game.</li>
+    <li>Guardian portal, family recap preview and game-link sharing behave exactly as before.</li>
+    <li>The build gates stay green: type check, unit tests, help-search spelling, dictionary coverage, schema parity once the migration is on both databases.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Family link removal — implementation plan</h1>
+  <p class="sub">Plan of record: <code>docs/projects/active/COACH_FAMILY_LINK_REMOVAL_PLAN.md</code> (carries the build ledger and the rollout detail). This tab is the plan as approved, rendered for reading.</p>
+  <h2>Problem / context</h2>
+  <p>The Team family access card shipped with Chunk D, Slice 1 (2026-08): a team-level link a coach shares, families ask to follow through it, the coach approves, and followers see the schedule and results. The owner asked on 2026-09-12 for the family link functionality to be removed, and ruled the scope as <em>the link and followers</em>: Schedule visibility survives (relocated), and the guardian portal survives untouched.</p>
+  <p><strong>Dev and prod run identical code here.</strong> The panel hides itself only when a team is not entitled to the premium portal; the one real team on production is entitled and sees this card too. “Make dev like prod” therefore has no code meaning — the removal is the whole job.</p>
+  <h3>F01 — The family link and everything that exists because of it</h3>
+  <p>Today: a coach mints a link (Roster → Team family access → Create link), families open <code>/family/join/…</code>, sign in, choose <em>follow</em> (or <em>guardian</em>, which the switched-off guardian tier refuses), and the request waits on the same card for Approve / Decline; Manage lists followers with Remove; Reset link kills every shared copy. Proposal: all of it goes — the card, the link mint/reset, the join page and its API, follower request/approve/decline/revoke, the follower safety ceiling, the follower split in the club admin’s counts, and the three link columns on the team record.</p>
+  <h3>F02 — Schedule visibility loses its home</h3>
+  <p>Today: the setting lives on the card being removed. Proposal: it moves to Team settings → Sharing, served and saved by the team settings API, gated on the same permission as sharing a game (head coach, or an assistant who manages the schedule). Absent — never locked — for a team that is not on the premium portal, matching how the Club Shared Book switch already behaves.</p>
+  <h2>Scope</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Area</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td>Roster page</td><td>Remove the Team family access section and its help-drawer pointer.</td></tr>
+      <tr><td>Team settings</td><td>Sharing section gains Schedule visibility (three-way control); the section now shows for any premium team. Club-book switch unchanged.</td></tr>
+      <tr><td>Coach API</td><td>Delete the family-access routes (panel payload, mint/reset, approve/decline/revoke). Team settings GET/PATCH carry schedule visibility.</td></tr>
+      <tr><td>Family side</td><td>Delete the join page and join API. Claim (coach-sent guardian invite), family team page, calendar feeds, recap, co-guardian: unchanged.</td></tr>
+      <tr><td>Library</td><td>Remove link mint/resolve, follower request, follower-role mutators, adoption counts and the follower split in the club rollup; remove the guardian request-by-link path (its only door was the link).</td></tr>
+      <tr><td>Database (mig 290)</td><td>Drop the three link columns and their index from the team record; tighten the family-link role to guardian only (the follower branch of the tier check goes with it). Dictionary updated; snapshots refreshed.</td></tr>
+      <tr><td>Help</td><td>Rewrite the family guide around the recap and the guardian tier; Schedule visibility documented under Team settings; hub links and the staff-removal FAQ reworded; club-admin “families connected” article stops mentioning followers.</td></tr>
+      <tr><td>Tests</td><td>Retire the follower-boundary scenarios; keep and re-point schedule-visibility, share-game, guardian and recap scenarios.</td></tr>
+      <tr><td>Release notes</td><td>One entry: the card is gone, the setting moved.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><strong>Out of scope</strong><p>The guardian tier and its portal, the family season recap, the keepsake card, calendar feeds, sharing a single game, the club admin’s connected-families counts, and the demo sandbox (which seeds guardians, never followers, and narrates neither). Undoing the August premium-packaging decision is <em>not</em> implied — the family layer stays premium.</p></div>
+  <h2>Approach</h2>
+  <p>Delete rather than hide. A hidden panel with live endpoints behind it is the “write controls the server refuses” shape the coaches portal rules forbid. The migration goes in the same unit of work as the code, because a column nothing reads is schema drift the gates cannot see. The alternative — leaving the columns and the follower role in the database “in case” — was rejected: it keeps a retired concept alive in the dictionary and every future reader has to be told it is dead.</p>
+  <h2>Open questions</h2>
+  <p>None blocking. One consequence worth knowing: with the link gone, a parent can only enter the guardian tier (when it opens) through a coach-sent invite, not by asking through a team link. The help guide says so.</p>
+  <h2>Rollout</h2>
+  <ul>
+    <li>Migration 290 applies to dev with the build; it is <strong>prod-owed and order-critical</strong> — the master build’s schema-parity gate fails until it is on production, so it is applied before or with the release, never after.</li>
+    <li>No demo re-seed needed: neither sandbox seeds a follower or mentions the link.</li>
+    <li>Dev server restart at hand-off (files deleted, shared modules changed).</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">Family link removal — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · the UAT coach on <strong>uat-test-org / UAT Test Team</strong> (password in .env.local). Part D also needs an assistant or helper who does not manage the schedule.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+const intents={
+ 'roster-before':'The whole screen as it stands, scrolled to the bottom. Three rows on one card; two of them exist only because of the link, and the third is a setting that belongs with the team’s other settings.',
+ 'roster-after':'Whole screen, same scroll. The proof is what is NOT here: the page ends at the drag hint. Nothing is folded, gated or greyed — the section is gone.',
+ 'settings-after':'Team settings with Sharing open. Schedule visibility keeps its three words and its control; the section’s summary line names the current setting so a coach does not have to open it to know.'
+};
+function showScreen(){const id=location.hash.slice(1)||'roster-before';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+esc(intents[id]):'';document.getElementById(id)?.querySelector('h2')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'The family link and everything that exists because of it',now:'A coach creates a link on this card and shares it. Anyone holding it can sign in and ask to follow the team; the request waits here for Approve or Decline; Manage lists followers with Remove; Reset link kills every shared copy. On production no team has ever created one.',fix:'The card, the link, the join page, the request/approve/decline/remove path and the follower count all go. The roster page ends at the roster.'},
+ F02:{t:'Schedule visibility loses its home',now:'The three-way setting (Staff only / Families / Public link) lives on the card being removed. It still matters: Staff only stops a shared game page opening; Public link puts the schedule on the team’s public page.',fix:'It moves to Team settings → Sharing with the same three words and the same control, changeable by the same people who can share a game. A team not on the premium portal simply does not see it.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today.',re:'Exists today and changes in shape, wording or place.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><p><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></p></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+const DECISIONS=[
+ {date:'2026-09-12',ask:'How much of the family layer goes?',ruling:'accepted',label:'Accepted',why:'The family link and followers only. Schedule visibility survives and moves to Team settings; the guardian portal is untouched. Removing the whole panel (visibility included) and removing the entire family layer were both offered and not taken.'},
+ {date:'2026-09-12',ask:'“Make dev like prod” — is there a prod difference to reproduce?',ruling:'accepted',label:'Resolved',why:'No. Dev and prod run the same code for this card and prod shows it for the one real, entitled team. The owner confirmed nothing more was meant than removing the card.'},
+ {date:'2026-09-12',ask:'Leave the link columns and the follower role in the database “in case”?',ruling:'rejected',label:'Rejected — owner go, 2026-09-12',why:'A column nothing reads and a role nothing writes are drift the gates cannot see. Migration 290 drops the three link columns and the typed child\'s name, narrows the role to guardian and restores the strict guardian-has-a-player rule. Applied to dev 2026-09-12; prod-pending and order-critical (apply before or with the promote).'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+
+/* ---- QA walk — six parts; steps pin identities and relationships, never a figure ---- */
+const QA_PARTS=[
+ {id:'A',title:'Roster — the card is gone',steps:['Open Roster (list view) and scroll to the bottom: below “Drag to set the order players appear in” there is nothing — no Team family access section, folded or otherwise.','Open the help “?” on Roster: it offers the roster recipes and no family guide.']},
+ {id:'B',title:'Team settings → Sharing — the setting lives here',steps:['Open Team settings: a collapsed Sharing section is present with a summary reading “Schedule: Families”.','Open it: a Schedule visibility row with a three-way control — Staff only / Families / Public link — and a one-sentence explanation that changes with the selection.','Pick Public link: the section summary updates; open the team’s public page in another tab and the schedule is there.','Pick Staff only: the public page loses the schedule, and on the Schedule screen sharing a game refuses with the “Schedule visibility is set to Staff only” message.','Set it back to Families.']},
+ {id:'C',title:'The club-book row is unaffected',steps:['On the UAT team (no Club Shared Book) the Sharing section shows only the visibility row.','On a Club-plan team with book sharing turned on (the coach demo’s club, if handy) both rows appear and the summary reads both states.']},
+ {id:'D',title:'Who can change it',steps:['Signed in as an assistant or helper who does not manage the schedule: the Sharing section shows the current visibility as text with “only coaches who manage the schedule can change it”, and no control.']},
+ {id:'E',title:'Help',steps:['Coaches help → “Families and your season recap (Premium)” reads as rewritten: recap preview first, then where Schedule visibility lives, then the guardian tier as not yet open.','“Team settings (Premium)” → “Sharing: who can see your schedule, and your book” exists.','Search “family link” in help: the FAQ “Where did the Team family access card and the family link go?” is the answer.']},
+ {id:'F',title:'Nothing else moved',steps:['A player’s page still shows Family season recap → Preview.','Sharing a single game from the Schedule still works while visibility is Families.','As the club admin, the Rep Teams list still shows a Families count on the coach demo’s 13U team.']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-family-link-removal')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-family-link-removal',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

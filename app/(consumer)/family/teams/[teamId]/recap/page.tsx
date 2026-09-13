@@ -17,8 +17,8 @@ import { recordRecapView } from '@/lib/family-engagement';
  * player id is accepted from the client at all — the child is whoever the coach attached to
  * this guardian's link. "Guardian of player A cannot reach player B" is therefore structural.
  *
- * A follower who guesses this URL, a declined or revoked requester, and a stranger all get the
- * same page: not connected. Never indexed, never cached; `/family` is already in the service
+ * A declined or revoked requester and a stranger who guesses this URL get the same page: not
+ * connected. Never indexed, never cached; `/family` is already in the service
  * worker's NEVER_CACHE list.
  */
 
@@ -94,7 +94,7 @@ export default async function FamilyRecapPage({ params }: { params: Promise<{ te
     : null;
 
   if (state.status !== 'ready' || !recap) {
-    // ONE state covering follower, waiting, declined, revoked, not-your-team, lapsed-premium
+    // ONE state covering waiting, declined, revoked, not-your-team, lapsed-premium
     // and "the roster row went away" alike. Telling a caller WHICH of those it was is telling
     // them something about a child they have no connection to.
     return (

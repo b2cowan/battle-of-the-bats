@@ -1949,7 +1949,8 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_teams.family_link_token_hash -->
 <!-- dict:col:rep_teams.family_link_created_at -->
 <!-- dict:col:rep_teams.family_link_created_by -->
-**`family_link_token_hash` / `family_link_created_at` / `family_link_created_by`** (text unique-partial / timestamptz / uuid → `auth.users`, all nullable; **mig 215**) — the team family link, the ONLY door into the family layer (ruling #3: parent-initiated, coach-approved, **no public search for a team or child, ever**). Standard no-login token posture (`lib/no-login-token.ts`): 32 random bytes → base64url in the URL, **SHA-256 hex stored**, so a database read can never reconstruct a live link. **Reset IS the revocation** — overwriting the hash kills every previously-shared copy at the same instant. The raw token is returned exactly once, at mint.
+<!-- The three anchors above outlive the columns on purpose: the coverage gate reads the UNION of the dev and prod snapshots, and prod carries these until mig 290 is applied there. They are ignored once neither database has the column. -->
+**Dropped by mig 290 (2026-09-12): `family_link_token_hash` / `family_link_created_at` / `family_link_created_by`** — the team family link (mig 215), the one door relatives used to ask to FOLLOW a team. Removed with the follower tier on the owner's ruling; no team on either database had ever minted one. The record of what it was: a no-login token (32 random bytes, SHA-256 hex stored), reset-as-revocation, raw token returned once at mint. Do not re-add a shareable team link without re-reading that ruling.
 
 <!-- dict:col:rep_teams.family_calendar_token_hash -->
 **`family_calendar_token_hash`** (text, nullable, unique-partial; **mig 215**) — the TEAM-WIDE calendar (ICS) feed token, handed out only at `public_link`. Same hash-only posture. **Minting it is not itself an exposure**: the feed route re-checks `schedule_visibility` on every read, so a token minted while public stops serving the moment the team stops being public. Distinct from `family_links.calendar_token_hash`, which is the per-FAMILY feed available at `families`.
@@ -4522,10 +4523,13 @@ team, on what lawful basis, and who has asked not to be emailed. Companion docs:
    RLS-with-no-policies is what actually walls these off. The browser never queries them;
    every read goes through a server route that resolves identity from the session. Read the
    live posture from `pg_class`, never from a migration comment.
-2. **The tier boundary is a DATABASE constraint, not a convention.**
-   `family_links_role_player_ck` enforces `role='follower' ⇒ player_id IS NULL`. A follower is
-   a TEAM-level relationship that touches no child data at all; that is what let the follower
-   tier ship ahead of the guardian tier's PIPEDA/CASL counsel review.
+2. **ONE tier since mig 290 (2026-09-12), and it is a DATABASE constraint, not a convention.**
+   `family_links_role_check` admits only `guardian`, and `family_links_role_player_ck` requires
+   `player_id IS NOT NULL` on every row — a family connection is always to a child. The
+   FOLLOWER tier (a team-level connection tied to no child, entered through a shareable team
+   link) shipped first in mig 215 so families could follow ahead of the guardian tier's
+   PIPEDA/CASL counsel review; the owner removed it, and the link, on 2026-09-12. Zero follower
+   rows existed on either database when it went.
 3. **The whole layer is PREMIUM-ONLY** (owner ruling, 2026-08-01). Every entry point runs
    `isFamilyLayerEnabled` — a per-team entitlement for standalone Coaches-Portal teams, the
    org plan for org-native League/Club teams. It is re-checked on **every read**, so a team
@@ -4541,13 +4545,14 @@ team, on what lawful basis, and who has asked not to be emailed. Companion docs:
 <!-- dict:table:family_links -->
 
 **Purpose:** one row per person connected (or asking to connect) to a rep team's family layer.
-The two-tier model from owner ruling #17 lives here: a **guardian** is tied to one player and is
-the accountable adult for money, registration and the player-specific payloads; a **follower**
-is tied to the team and to no child at all.
+Since mig 290 that is one kind of person: a **guardian**, tied to one player, the accountable
+adult for money, registration and the player-specific payloads.
 
-**Note on scope:** mig 215 creates the FULL two-tier schema, but Slice 1 wires only the
-follower path. The guardian tier is blocked on counsel sign-off, not on schema — so Slice 2
-adds no migration, and the CHECK protecting followers exists before anything can violate it.
+**Note on history:** mig 215 created a TWO-tier schema (guardian + a team-level **follower**
+with no child) and wired the follower path first; the guardian tier waited on counsel sign-off
+(and still does — `GUARDIAN_TIER_ENABLED`). The owner removed the follower tier and the team
+family link on 2026-09-12 (mig 290); the guardian tier is what remains, with a single on-ramp:
+the coach-sent invite to the address already on the roster row.
 
 <!-- dict:col:family_links.id -->
 **`id`** (uuid, PK).
@@ -4557,21 +4562,20 @@ adds no migration, and the CHECK protecting followers exists before anything can
 **`org_id` / `rep_team_id`** (uuid, NOT NULL, FK → `organizations` / `rep_teams`, both CASCADE) — tenancy + team scope. Every mutation filters on `rep_team_id` in the WHERE clause as well as the id, so a link id from another team can never be acted on by this team's coach.
 
 <!-- dict:col:family_links.role -->
-**`role`** (text, NOT NULL; CHECK `guardian|follower`) — the tier. See gotcha 2.
+**`role`** (text, NOT NULL; CHECK `guardian` only since **mig 290** — was `guardian|follower`) — kept as a column, and as a named type in `lib/family-access.ts`, so a second tier would re-enter through one CHECK rather than as a bare string. See gotcha 2.
 
 <!-- dict:col:family_links.player_id -->
-**`player_id`** (uuid → `rep_roster_players`, nullable, CASCADE) — **guardian only**; **ALWAYS NULL for a follower**, enforced by `family_links_role_player_ck`. Season-scoped by construction because roster rows are (a guardian link is re-established at continuity-confirm; a follower link simply persists).
+**`player_id`** (uuid → `rep_roster_players`, **NOT NULL by CHECK** since mig 290, CASCADE) — the roster row this guardian is the accountable adult for. Season-scoped by construction because roster rows are (a guardian link is re-established at continuity-confirm).
 
 **⚠ CAP ENFORCED BY TRIGGER (mig 217).** `family_links_guardian_cap` (`enforce_guardian_cap()`) refuses a third LIVE guardian on a player. The app also checks — that is what produces the friendly message — but the app counts then inserts in two statements, so two coaches approving different requests for the same player at the same moment both read the same count and both proceed. Owner ruling #17 is "one per household, room for a second", and a cap enforced only by a racing read is not that cap. `declined`/`revoked` never count toward it, so a mistake is recoverable rather than permanently burning a slot. ⚠ Trigger-only changes get a FALSE GREEN from `check:migrations` (mig-211 lesson) — confirm in prod via `pg_trigger` directly.
 
-**⚠ CHECK amended by mig 216.** Mig 215 required *every* guardian row to carry a player, which the ruled-on flow cannot satisfy: parent-initiated + coach-approved means the parent types a child's **first name** into a form that shows them no roster, and the **coach** attaches the actual roster row at approval. A request that could select a roster row would mean the requester had picked a child from a list they must never see (ruling #3). The constraint is now:
+**⚠ CHECK history: strict (215) → relaxed (216) → strict again (290).** Mig 216 relaxed `family_links_role_player_ck` to `status <> 'verified' OR player_id IS NOT NULL` for exactly one producer — the parent's ask-via-link request, a row written with a typed child's name and no player, attached by the coach at approval. That producer was the family link; mig 290 removed both and restored the strict form:
 
 ```
-(role = 'follower' AND player_id IS NULL)                                  -- UNCHANGED: the security half
-OR (role = 'guardian' AND (status <> 'verified' OR player_id IS NOT NULL)) -- a VERIFIED guardian has one
+role = 'guardian' AND player_id IS NOT NULL
 ```
 
-The follower half — the tier boundary the whole two-tier model rests on — is byte-identical and must never be loosened. `approveGuardianLink` sets `player_id` in the SAME statement that sets `status='verified'`, so there is no window in which a verified guardian lacks a player.
+A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_approval`, but that row was born from the invite, which already carried the player — nothing that can still be written violates the strict form. `approveGuardianLink` continues to set `player_id` and `status='verified'` in one statement.
 
 <!-- dict:col:family_links.user_id -->
 **`user_id`** (uuid → `auth.users`, nullable, SET NULL) — NULL until the family creates/attaches an account. The email is the match key either way, because registrations are account-less by design (G7).
@@ -4590,13 +4594,13 @@ The follower half — the tier boundary the whole two-tier model rests on — is
 **`relationship`** (text, nullable) — display label only ('Grandparent', 'Aunt'), capped at 40 chars. **Never used for authorization** and never matched against the roster.
 
 <!-- dict:col:family_links.status -->
-**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|pending_approval|verified|declined|revoked`) — only `verified` grants anything. Partial UNIQUE `(rep_team_id, invited_email, role) WHERE status NOT IN ('declined','revoked')` = one LIVE link per person per tier per team. **`declined` and `revoked` are deliberately outside that index**: a coach who declines by mistake, or removes someone who later rejoins the family, must be able to let them back in. Re-request spam is handled by the rate limiter, not by a permanent lockout.
+**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|pending_approval|verified|declined|revoked`) — only `verified` grants anything. Partial UNIQUE `(rep_team_id, invited_email, role) WHERE status NOT IN ('declined','revoked')` (`role` is still in the key though it now has one value — harmless, and a second tier would need it back) = one LIVE link per person per tier per team. **`declined` and `revoked` are deliberately outside that index**: a coach who declines by mistake, or removes someone who later rejoins the family, must be able to let them back in. Re-request spam is handled by the rate limiter, not by a permanent lockout.
 
 <!-- dict:col:family_links.verified_via -->
 **`verified_via`** (text, nullable; CHECK `email_match|coach_approved|registration_match`) — how the link was verified. Slice 1 writes only `coach_approved`; the other two are the Slice 2 on-ramps G3 granted.
 
 <!-- dict:col:family_links.requested_player_name -->
-**`requested_player_name`** (text, nullable) — guardian requests only: the name the parent typed, **matched against the roster by the COACH at approval time**. Never matched automatically and never echoed back to the requester — the request page shows them nothing from the roster (ruling #3).
+**Dropped by mig 290: `requested_player_name`** — the child's name a parent typed into the ask-via-link request, matched by the COACH by hand at approval and never echoed back. It existed only for that request path, which went with the family link.
 
 <!-- dict:col:family_links.claim_token_hash -->
 <!-- dict:col:family_links.claim_expires_at -->
@@ -4604,11 +4608,11 @@ The follower half — the tier boundary the whole two-tier model rests on — is
 **`claim_token_hash` / `claim_expires_at` / `invited_by_user_id`** (text unique / timestamptz / uuid → `auth.users`, nullable; **Slice 2**) — the coach-sent DIRECT invite (the secondary on-ramp). Hash-only, same no-login token posture. Unused in Slice 1.
 
 <!-- dict:col:family_links.calendar_token_hash -->
-**`calendar_token_hash`** (text, nullable, unique) — this family's own ICS feed token, minted on demand from the family view. Per family, not per team, so revoking one household's access does not disturb anyone else's calendar. **Nulled on revoke** — a removed follower whose phone kept refreshing a feed would be a revocation in name only.
+**`calendar_token_hash`** (text, nullable, unique) — this family's own ICS feed token, minted on demand from the family view. Per family, not per team, so revoking one household's access does not disturb anyone else's calendar. **Nulled on revoke** — a removed guardian whose phone kept refreshing a feed would be a revocation in name only.
 
 <!-- dict:col:family_links.consent_recorded_at -->
 <!-- dict:col:family_links.consent_ip -->
-**`consent_recorded_at` / `consent_ip`** (timestamptz / text, nullable; **Slice 2**) — guardian-tier consent evidence; the matching `family_consents` row is written in the same transaction. Unused in Slice 1: the follower path collects no child-data consent because it touches no child data.
+**`consent_recorded_at` / `consent_ip`** (timestamptz / text, nullable; **Slice 2**) — guardian-tier consent evidence; the matching `family_consents` row is written in the same transaction. (The retired follower tier never wrote these — it touched no child data.)
 
 <!-- dict:col:family_links.approved_by_user_id -->
 <!-- dict:col:family_links.approved_at -->

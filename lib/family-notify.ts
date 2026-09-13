@@ -202,7 +202,7 @@ export async function notifyFamiliesOfGameUpdate(params: {
 
     // Sent in bounded parallel, NOT one at a time. This dispatcher runs inside the coach's
     // "save score" request (awaited, because this host has no reliable after-response hook),
-    // so a team at the follower ceiling would otherwise add fifty sequential provider
+    // so a team with many connected families would otherwise add dozens of sequential provider
     // round-trips to a button press — long enough to look hung and be retried. Eight at a
     // time keeps a full team under a second or two without hammering the provider.
     const SEND_CONCURRENCY = 8;

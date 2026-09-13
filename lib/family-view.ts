@@ -16,11 +16,12 @@ import {
  * simply existing. That is the difference between a filter (which forgets) and an
  * allow-list (which has to be told).
  *
- * The follower payload is TEAM-LEVEL ONLY — schedule, results, venue. There is no player
+ * The team payload is TEAM-LEVEL ONLY — schedule, results, venue. There is no player
  * field in `FamilyScheduleEntry` at all, because the tier boundary is a security boundary
- * and the cheapest way to guarantee a follower cannot reach child data is for the shape
- * they receive to have nowhere to put it. The guardian payload (Slice 2) will be a
- * SEPARATE type that adds the player allow-list; it must never be added to this one.
+ * and the cheapest way to guarantee a team-level reader (the public team page, a shared
+ * game) cannot reach child data is for the shape it receives to have nowhere to put it. The
+ * guardian payload is a SEPARATE type that adds the player allow-list; it must never be
+ * added to this one.
  */
 
 // ── The one-list schedule (owner ruling #2) ────────────────────────────────────

@@ -219,7 +219,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
                     {member.isSelf && <span className={css.you}> (you)</span>}
                   </span>
                   {member.email && member.displayName && <span className={css.email}>{member.email}</span>}
-                  {member.alsoFollowsTeam && <span className={css.fam}>Also follows the team as a family member</span>}
+                  {member.alsoFollowsTeam && <span className={css.fam}>Also connected to this team as a family member</span>}
                 </div>
                 <div className={css.role}><span className={`${css.roleChip} ${chip.cls}`}>{chip.label}</span></div>
                 <div className={css.caps}>

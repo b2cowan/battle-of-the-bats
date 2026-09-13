@@ -338,18 +338,18 @@ const repTeamsHelp: HelpPageContent = {
       id: 'family-adoption',
       group: 'Org-level tools',
       heading: 'Seeing which teams have families connected',
-      summary: 'Each team card shows how many families are connected and how many requests are waiting on a coach — counts only, never who.',
-      keywords: ['families', 'family', 'connected families', 'guardians', 'followers', 'waiting', 'requests waiting', 'family access', 'adoption', 'which teams are using it', 'parents connected', 'rep teams list'],
-      searchText: 'families connected count per team rep teams list card guardians followers waiting requests pending a coach club wide line how many families across teams adoption read only counts never names never email addresses coaches keep the contacts premium coaches portal family access hidden when zero',
+      summary: 'Each team card shows how many families are connected and whether anyone is waiting on a coach — counts only, never who.',
+      keywords: ['families', 'family', 'connected families', 'guardians', 'waiting', 'requests waiting', 'family access', 'adoption', 'which teams are using it', 'parents connected', 'rep teams list'],
+      searchText: 'families connected count per team rep teams list card guardians waiting requests pending a coach club wide line how many families across teams adoption read only counts never names never email addresses coaches keep the contacts premium coaches portal family access hidden when zero',
       links: [
-        { label: 'Coaches Portal guide — family access', href: '../help/coaches#premium-family-access' },
+        { label: 'Coaches Portal guide — families and the season recap', href: '../help/coaches#premium-family-access' },
       ],
       content: (
         <>
           <p>On your <strong>Rep Teams</strong> list, a team that has started connecting families shows two extra numbers on its card:</p>
           <ul>
-            <li><strong>Families</strong> — how many people are connected to that team, counting both a player&apos;s parents or guardians and relatives who follow the team.</li>
-            <li><strong>Waiting</strong> — requests that have arrived and are sitting with the coach. This is the one worth watching: a coach who never opens their queue leaves families waiting, and this is the only place that&apos;s visible from outside the team.</li>
+            <li><strong>Families</strong> — how many parents or guardians are connected to that team&apos;s players.</li>
+            <li><strong>Waiting</strong> — a connection that needs the coach&apos;s say-so before it&apos;s live (a parent who accepted an invite from a different email address than the one the coach sent it to). Rare, but worth a glance: it&apos;s the only place a stalled connection is visible from outside the team.</li>
           </ul>
           <p>A club-wide line under the page title totals the same thing across every team, so you can see at a glance how far the feature has actually spread.</p>
           <p><strong>These are counts, and only counts.</strong> No name, email address or relationship appears here, and there&apos;s nothing to click through to — the club sees adoption, the coach keeps the contacts. The numbers are hidden on a team that hasn&apos;t connected anyone, so a list of teams that never turned it on isn&apos;t a column of zeros.</p>

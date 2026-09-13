@@ -14,8 +14,11 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteScoutingSummary, canViewMoney } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteScoutingSummary, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
+import {
+  SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, setScheduleVisibility, type ScheduleVisibility,
+} from '@/lib/family-access';
 
 /**
  * M1 (2026-08-16): the gate is TEAM MEMBERSHIP, and the between-seasons state is ordinary.
@@ -109,6 +112,21 @@ export const GET = withObservability(async (_req: Request,
       canEdit: canWriteScoutingSummary(assignment.capabilities),
     },
     /**
+     * Schedule visibility — who outside the coaching staff may see games and practices. It sat
+     * on the Roster page's "Team family access" card until 2026-09-12, when the family link and
+     * its followers were removed (owner); the setting survived because it still decides two real
+     * things — whether a shared game page opens (`staff` refuses it) and whether the public team
+     * page shows the schedule (`public_link`) — and a team SETTING belongs on Team settings.
+     *
+     * ⚠ NULL when the team is not on the premium portal. The family layer is premium and the
+     * setting does nothing without it, so the row is ABSENT, never locked — the same rule as
+     * `clubBook.showSwitch` above. `canEdit` is schedule MANAGEMENT, the grant that shares a
+     * single game: both are acts of publishing the schedule.
+     */
+    scheduleVisibility: (await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))
+      ? { value: team.scheduleVisibility, canEdit: canManageSchedule(assignment.capabilities) }
+      : null,
+    /**
      * The Money group's two settings, for the Settings page.
      *
      * ⚠ Served from HERE rather than by a second request to the accounting-settings route: that
@@ -189,6 +207,28 @@ export const PATCH = withObservability(async (req: Request,
     } catch {
       return NextResponse.json({ error: 'Could not change book sharing.' }, { status: 500 });
     }
+  }
+
+  /**
+   * Schedule visibility — see the GET's note. Gated on schedule MANAGEMENT (the grant that
+   * shares a game), and the premium gate is re-checked HERE rather than trusted from the GET,
+   * for the same reason the club-book switch re-checks the org-level switch above.
+   */
+  if ('scheduleVisibility' in body) {
+    const denied = denyUnless(
+      canManageSchedule(assignment.capabilities),
+      'Only coaches who manage the schedule can change who sees it.',
+    );
+    if (denied) return denied;
+    if (!(await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))) {
+      return NextResponse.json({ error: 'Schedule visibility is a Premium Coaches Portal setting.' }, { status: 404 });
+    }
+    const visibility = body.scheduleVisibility;
+    if (!SCHEDULE_VISIBILITIES.includes(visibility)) {
+      return NextResponse.json({ error: 'scheduleVisibility must be staff, families or public_link' }, { status: 400 });
+    }
+    await setScheduleVisibility({ repTeamId: teamId, visibility: visibility as ScheduleVisibility });
+    return NextResponse.json({ ok: true, scheduleVisibility: visibility });
   }
 
   // Lineup season-default caps (P3) — an OPERATIONAL setting, gated on the lineups capability

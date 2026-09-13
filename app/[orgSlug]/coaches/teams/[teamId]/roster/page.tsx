@@ -26,7 +26,6 @@ import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { hasRecordAccess } from '@/lib/coach-capabilities';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
-import FamilyAccessPanel from '@/components/coaches/FamilyAccessPanel';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -539,9 +538,7 @@ export default function RosterPage({
   // where there is no HelpButton label to fall back to.
   const rosterHelpRequest = {
     module: 'coaches' as const,
-    // Team family access lives on this page, so its guide has to be reachable from this
-    // page's "?" — a coach about to paste a link into a group chat looks for help here.
-    sectionIds: ['recipe-add-player', 'premium-bulk-roster', 'premium-family-access'],
+    sectionIds: ['recipe-add-player', 'premium-bulk-roster'],
     label: 'Roster',
     fullGuideHref: `/${orgSlug}/coaches/help#recipe-add-player`,
   };
@@ -701,14 +698,6 @@ export default function RosterPage({
         help={rosterHelpRequest}
       />
 
-      {/* Team family access (Chunk D). Mounted on the ROSTER index rather than the player
-          page the mockup drew it on: in Slice 1 this card is entirely TEAM-level (the link,
-          the visibility setting, the followers, who are tied to no player), so a coach looking
-          at one child is the wrong place for it. When Slice 2 adds the per-player guardians
-          card, that one goes on the player page as mocked and this stays here.
-          Renders nothing for a non-premium team or a coach without guardian-contact access —
-          it asks the API first and draws only on a yes. */}
-
       {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live
           here) — plus the counts that used to be the header subtitle (page-header ruling
           2026-08-11: a live fact leads the body it counts, not the chrome above it). */}
@@ -856,19 +845,11 @@ export default function RosterPage({
         </>
       )}
 
-      {/*
-        ⚠ TEAM FAMILY ACCESS SITS BELOW THE ROSTER, AND IT USED TO SIT ABOVE IT (owner call,
-        2026-08-24). As a three-row card between the page header and the list, it pushed the
-        roster itself under the fold on a laptop — a settings surface a coach touches a handful
-        of times a season was outranking the thing the page is named after. Below the list, and
-        collapsed (the panel owns its own disclosure), it is available without being in the way.
-
-        ⚠ It does NOT go quiet when someone is waiting: the panel opens itself when there are
-        approval requests, because that is a real person waiting on this coach and the whole
-        reason the queue lives on a page they already visit. Moving it must never turn it into
-        a place approvals go to be missed.
-      */}
-      {view === 'list' && <FamilyAccessPanel orgSlug={orgSlug} teamId={teamId} />}
+      {/* ⚠ NOTHING BELOW THE ROSTER, deliberately. The "Team family access" card (the family
+          link, its approval queue and Schedule visibility) sat here until 2026-09-12, when the
+          link and the follower tier were removed (owner). Schedule visibility moved to Team
+          settings → Sharing. Do not put a settings surface back under this list — it was moved
+          below the fold once (2026-08-24) for outranking the roster, and then retired. */}
 
       {/* Add player modal */}
       <UnsavedChangesGuard active={addDirty} />
@@ -1174,10 +1155,9 @@ function SortableRow({
           glanceable: at a glance a coach wants "can I reach this family", not a 40-character string
           they will copy rather than read. The name leads; the address and phone stay one tap away
           beneath it.
-          ⚠ AND THERE IS NO "on the family app" BADGE HERE, deliberately. Team family-access
-          followers carry NO player, so they cannot answer it for one child, and the per-player
-          guardian tier is shipped SWITCHED OFF pending privacy counsel review. This cell is shaped
-          so that badge drops in later rather than forcing a rebuild — see the plan §2.
+          ⚠ AND THERE IS NO "on the family app" BADGE HERE, deliberately. The per-player guardian
+          tier is shipped SWITCHED OFF pending privacy counsel review. This cell is shaped so that
+          badge drops in later rather than forcing a rebuild — see the plan §2.
           ⚠ Redaction is unchanged: a coach without guardian-contact access has these fields
           stripped by the API before they reach here, so the cell simply falls to its prompt. */}
       <td className={styles.td} data-label="Family" style={{ fontSize: '0.85rem' }}>

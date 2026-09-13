@@ -15,6 +15,7 @@ import {
   CREDIT_MODE_SENTENCES, normalizeCreditApplicationMode, type CreditApplicationMode,
 } from '@/lib/dues-credits';
 import type { LineupSettings } from '@/lib/types';
+import type { ScheduleVisibility } from '@/lib/family-access';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -31,6 +32,10 @@ interface SettingsData {
   /** Club Shared Book. `showSwitch` false ⇒ the whole section is absent — either the club is
    *  not on the Club plan, or its admin has not turned sharing on. Never a locked tease. */
   clubBook: { showSwitch: boolean; sharing: boolean; canEdit: boolean };
+  /** Who outside the staff sees games and practices. Null ⇒ not a premium team ⇒ the row is
+   *  absent (never locked), exactly like `clubBook`. Moved here from the Roster page's retired
+   *  "Team family access" card (2026-09-12). */
+  scheduleVisibility: { value: ScheduleVisibility; canEdit: boolean } | null;
   /** Null when this coach has no money access — the server omits the figures entirely. */
   money: {
     autoRemindersEnabled: boolean; creditApplication: string; defaultPlayerCreditPercent?: number;
@@ -49,6 +54,22 @@ function fmtMoney(n: number): string {
 
 const STATUS_LABEL: Record<string, string> = {
   draft: 'Draft', active: 'Active', completed: 'Completed', archived: 'Archived',
+};
+
+/** The three words a coach reads on the control — the same three the retired card used, so a
+ *  coach who set this last month finds the setting they remember. */
+const VISIBILITY_LABEL: Record<ScheduleVisibility, string> = {
+  staff: 'Staff only',
+  families: 'Families',
+  public_link: 'Public link',
+};
+
+/** One sentence per setting, stating what it DOES rather than restating its name. Each names
+ *  the consequence a coach can actually observe: a shared game page, the public team page. */
+const VISIBILITY_HELP: Record<ScheduleVisibility, string> = {
+  staff: 'Games and practices stay inside your coaching staff. Connected families see a quiet “not available” message, and a game page you shared stops opening until you switch back.',
+  families: 'The families you have connected see the full schedule, and game pages you share work.',
+  public_link: 'Everything Families gets, and your team’s public page shows the schedule to anyone who visits it.',
 };
 
 export default function TeamSettingsPage({
@@ -79,6 +100,8 @@ export default function TeamSettingsPage({
   // Club Shared Book — the head coach's switch.
   const [savingShare, setSavingShare] = useState(false);
   const [shareError, setShareError] = useState('');
+  const [savingVisibility, setSavingVisibility] = useState(false);
+  const [visibilityError, setVisibilityError] = useState('');
 
   /**
    * Money group. These two settings used to live at the bottom of the dues page, where a
@@ -208,6 +231,33 @@ export default function TeamSettingsPage({
       setCapsError('Could not save.');
     } finally {
       setSavingCaps(false);
+    }
+  }
+
+  async function changeVisibility(next: ScheduleVisibility) {
+    const current = data?.scheduleVisibility?.value;
+    if (!current || next === current) return;
+    setSavingVisibility(true);
+    setVisibilityError('');
+    // Optimistic, like the club-book switch: the control is the answer to the question the coach
+    // just asked. A failure re-reads the server's answer rather than assuming the old value.
+    setData(prev => prev?.scheduleVisibility ? { ...prev, scheduleVisibility: { ...prev.scheduleVisibility, value: next } } : prev);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduleVisibility: next }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? 'Could not change who can see the schedule.');
+      // The server's word, not the optimistic guess — same discipline as the club-book switch.
+      const saved = json.scheduleVisibility as ScheduleVisibility | undefined;
+      if (saved) setData(prev => prev?.scheduleVisibility ? { ...prev, scheduleVisibility: { ...prev.scheduleVisibility, value: saved } } : prev);
+    } catch (e) {
+      setVisibilityError(e instanceof Error ? e.message : 'Could not change who can see the schedule.');
+      await load();
+    } finally {
+      setSavingVisibility(false);
     }
   }
 
@@ -764,28 +814,76 @@ export default function TeamSettingsPage({
 
         {/* ── Tags — the central shelf for every tag library (One Tag Idiom Q1) ── */}
         <TeamTagShelf orgSlug={orgSlug} teamId={teamId} />
-        {/* ── Sharing (Club Shared Book) ───────────────────────────────────── */}
-        {showTeamGroups && data.clubBook.showSwitch && (
+        {/* ── Sharing — Schedule visibility + the Club Shared Book ─────────── */}
+        {/* Two settings about what leaves the team. Schedule visibility arrived 2026-09-12 from the
+            Roster page's retired "Team family access" card (the family link went; the setting
+            stayed, because it still governs a shared game page and the public team page). The
+            section shows when EITHER row is available and each row hides on its own rule —
+            absent, never locked, so a coach is never offered a control that does nothing. The
+            summary names the visibility first: it is the one a coach changes more than once. */}
+        {showTeamGroups && (data.scheduleVisibility || data.clubBook.showSwitch) && (
           <CoachCollapseSection
             sectionId="club-book"
             title="Sharing"
             defaultOpen={false}
-            meta={data.clubBook.sharing ? 'Book shared with the club' : 'Book not shared'}
+            meta={[
+              data.scheduleVisibility ? `Schedule: ${VISIBILITY_LABEL[data.scheduleVisibility.value]}` : null,
+              data.clubBook.showSwitch ? (data.clubBook.sharing ? 'Book shared with the club' : 'Book not shared') : null,
+            ].filter(Boolean).join(' · ')}
           >
             <p className={styles.settingWho}>
-              Each head coach decides for their own team — nothing is shared by surprise. Other teams
-              can read your book; they can never edit or remove anything in it, and you can never
-              change theirs. Sharing stops at your club&apos;s walls.
+              Who outside your staff can see what. Each setting is yours alone — nothing is shared
+              by surprise.
             </p>
             <div className={styles.settingRows}>
+              {data.scheduleVisibility && (
+                <div className={styles.settingRow}>
+                  <div className={styles.settingRowMain}>
+                    <span className={styles.settingRowLabel}>Schedule visibility</span>
+                    <span className={styles.settingRowDesc}>
+                      Who can see games and practices. {VISIBILITY_HELP[data.scheduleVisibility.value]}
+                    </span>
+                  </div>
+                  <div className={`${styles.settingRowCtl} ${styles.settingRowCtlWide}`}>
+                    {data.scheduleVisibility.canEdit ? (
+                      <div className={styles.segChoice} role="group" aria-label="Who can see games and practices">
+                        {(['staff', 'families', 'public_link'] as ScheduleVisibility[]).map(v => (
+                          <button
+                            key={v}
+                            type="button"
+                            aria-pressed={data.scheduleVisibility?.value === v}
+                            className={`${styles.segBtn}${data.scheduleVisibility?.value === v ? ' ' + styles.segBtnActive : ''}`}
+                            onClick={() => changeVisibility(v)}
+                            disabled={savingVisibility}
+                          >
+                            {VISIBILITY_LABEL[v]}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className={styles.settingRowDesc}>
+                        {VISIBILITY_LABEL[data.scheduleVisibility.value]} — only coaches who manage the
+                        schedule can change it.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              {visibilityError && (
+                <div className={styles.settingRow}>
+                  <p className={styles.errorText} style={{ margin: 0 }} role="alert">{visibilityError}</p>
+                </div>
+              )}
+              {data.clubBook.showSwitch && (
               <div className={styles.settingRow}>
                 <div className={styles.settingRowMain}>
                   <span className={styles.settingRowLabel}>Share our book with the club</span>
                   <span className={styles.settingRowDesc}>
                     Your book line and observations become readable by your club&apos;s other sharing
-                    teams, labelled with your team and each writer&apos;s name. You&apos;ll see their
-                    shared books while you share yours. Stop sharing any time — your book disappears
-                    from their pages immediately.
+                    teams, labelled with your team and each writer&apos;s name — they can never edit or
+                    remove anything in it, and sharing stops at your club&apos;s walls. You&apos;ll see
+                    their shared books while you share yours. Stop sharing any time — your book
+                    disappears from their pages immediately.
                   </span>
                 </div>
                 <div className={styles.settingRowCtl}>
@@ -809,6 +907,7 @@ export default function TeamSettingsPage({
                   )}
                 </div>
               </div>
+              )}
               {shareError && (
                 <div className={styles.settingRow}>
                   <p className={styles.errorText} style={{ margin: 0 }}>{shareError}</p>

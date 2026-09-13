@@ -340,21 +340,22 @@ export const PITCH_SLIDES = {
     imageClass: 'explainer',
     drawingId: 'roster-group-text',
     pain: 'The roster lives in a group text.',
-    claim: 'One roster with positions, numbers and contact details — and families who can see their own schedule without asking you for it.',
-    // ⚠ VERIFIED, AND ONE TIER IS DELIBERATELY NOT PROMISED. A roster row carries the jersey
-    // number, a primary and second position (derived from the profile's Best/Okay/Never picker)
-    // and the family contacts. Family access is a coach-minted share link with per-request
-    // approval — and only the FOLLOWER tier is live (schedule, results, game updates, calendar
-    // feed). The guardian/parent tier is env-gated OFF (lib/family-guardian.ts,
-    // GUARDIAN_TIER_ENABLED) pending privacy review, so this answer promises FOLLOWING the
-    // team and nothing more — no parent portal, no player questions.
+    claim: 'One roster with positions, numbers and contact details — and a schedule families can read without asking you for it.',
+    // ⚠ VERIFIED 2026-09-12, AND NOTHING FAMILY-FACING IS OVER-PROMISED. A roster row carries the
+    // jersey number, a primary and second position (derived from the profile's Best/Okay/Never
+    // picker) and the family contacts. The coach-minted family link and its follower tier were
+    // REMOVED on 2026-09-12 (owner); what a family can read today is the team's PUBLIC page when
+    // Schedule visibility is set to Public link, plus any single game page the coach shares. The
+    // guardian/parent tier is env-gated OFF (lib/family-guardian.ts, GUARDIAN_TIER_ENABLED)
+    // pending privacy review, so this answer promises the public schedule and nothing more — no
+    // link, no following, no parent portal.
     pageAnswer:
-      'One roster, not a thread: jersey numbers, a primary and second position for each player, and the family contacts beside them. Share one link and approve who joins — an approved family follows the team on its own page, with the schedule, results and a calendar feed, without you forwarding anything.',
+      'One roster, not a thread: jersey numbers, a primary and second position for each player, and the family contacts beside them. One setting puts your schedule and results on the team’s own page, and any single game can be shared as a page of its own — families read it there, without you forwarding anything.',
     seoPhrase: 'one roster instead of a group text',
     alt: 'Four overlapping chat bubbles, two carrying fragments of team admin and one holding only a question mark. Beside them, three aligned roster rows — a number badge, a name, a position and a contact dot each — with a dotted line running down to a small phone showing a calendar.',
     // Both halves verified against the product: the roster carries jersey numbers, ranked
-    // positions and contact details, and a connected family reads the team's schedule on their
-    // own page without the coach sending it.
+    // positions and contact details, and a family reads the team's schedule on its public page
+    // without the coach sending it.
     caption: 'The roster stops being a thread nobody can search — and the family gets the schedule without asking.',
   },
   '#06': {
@@ -391,13 +392,15 @@ export const PITCH_SLIDES = {
     imageClass: 'explainer',
     drawingId: 'one-message',
     pain: 'Parents text “score?” while you are coaching third base.',
-    claim: 'Families follow the score themselves; ending the game sends them one message, not one per run.',
+    claim: 'Families watch the score on the team’s own page; nothing is sent while the game runs.',
     // Same verification as the slide comment above: the bench console's running-score save is a
-    // QUIET write that notifies nobody, families watching the team's page see it move on their
-    // own, and ending the game is the one non-quiet write — a single final-score message.
-    // "Families who follow the team" is the coach-approved follower tier, same as #05.
+    // QUIET write that notifies nobody, and families watching the team's PUBLIC page (Schedule
+    // visibility: Public link) see it move on their own. ⚠ The "one final-score message" half was
+    // dropped 2026-09-12: that message goes to CONNECTED families, and with the follower tier
+    // removed and the guardian tier switched off nobody can be connected today. Promise only what
+    // a prospect can see.
     pageAnswer:
-      'Keep score from the bench and it shows up on the team’s own page as it moves — families who follow the team just watch it there. Nothing is sent while the game runs; ending it sends the one message that matters, the final score.',
+      'Keep score from the bench and it shows up on the team’s own page as it moves — families just watch it there. Nothing is sent while the game runs, and nobody texts you for the score.',
     seoPhrase: 'a score families watch themselves',
     alt: 'Four chat bubbles down one side, two of them reading “score?” and one holding only a question mark. Facing them, a two-box scoreboard with a broadcast symbol, and below a dividing rule a single envelope with one arrow leaving it.',
     caption: 'The same question all afternoon, answered once — by a scoreboard they can watch themselves, and one message when it is over.',

@@ -3146,11 +3146,6 @@
   },
   {
     "tablename": "rep_teams",
-    "indexname": "rep_teams_family_link_token_uniq",
-    "indexdef": "CREATE UNIQUE INDEX rep_teams_family_link_token_uniq ON public.rep_teams USING btree (family_link_token_hash) WHERE (family_link_token_hash IS NOT NULL)"
-  },
-  {
-    "tablename": "rep_teams",
     "indexname": "rep_teams_group_id_idx",
     "indexdef": "CREATE INDEX rep_teams_group_id_idx ON public.rep_teams USING btree (group_id)"
   },

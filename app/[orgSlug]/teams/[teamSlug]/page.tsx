@@ -246,19 +246,12 @@ export default async function TeamPublicPage({
           </div>
         )}
 
-        {/* Standing public schedule + the connect-your-account invitation (Chunk D 1.9).
-            The pitch is deliberately soft and last: this page's job is to answer "where is
-            the game", and a family that only ever uses this page is a retention win, not a
-            funnel failure. */}
-        {publicSchedule && (
-          <>
-            <RepTeamPublicSchedule view={publicSchedule} />
-            <p className={publicStyles.note}>
-              Following this team? Ask the coach for the team’s family link to get the schedule
-              in your own calendar and updates when a game changes.
-            </p>
-          </>
-        )}
+        {/* Standing public schedule (Chunk D 1.9). This page's job is to answer "where is the
+            game", and a family that only ever uses this page is a retention win, not a funnel
+            failure. ⚠ Until 2026-09-12 a footnote here told families to "ask the coach for the
+            team's family link"; that link was removed with the follower tier (owner), so the
+            page now simply shows the schedule and asks for nothing. */}
+        {publicSchedule && <RepTeamPublicSchedule view={publicSchedule} />}
 
         {/* Past seasons */}
         {pastYears.length > 0 && (

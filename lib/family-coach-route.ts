@@ -10,18 +10,19 @@ import type { RepTeam } from './types';
  * lib/family-coach-route.ts — the auth chain every COACH-side family route runs.
  *
  * The coaches API's house style is a per-file `resolveCoachContext` (49 routes do it), and
- * that convention is not being changed here. What this replaces is three BYTE-IDENTICAL
+ * that convention is not being changed here. What this replaced was three BYTE-IDENTICAL
  * copies created in a single change — which is a different thing from a convention that grew
- * one route at a time. Sharing them also means the premium gate is part of the chain rather
- * than a step each family route has to remember, so a fourth family route cannot be added
- * without it.
+ * one route at a time. Two of the original three routes remain (sharing a game, the guardians
+ * card); the team family-access routes were removed with the family link on 2026-09-12.
+ * Sharing the chain also means the premium gate is part of it rather than a step each family
+ * route has to remember, so a further family route cannot be added without it.
  *
  * ⚠ LIVE SEASON ONLY. This deliberately does NOT import `lib/coach-team-read.ts`. Family access
  * is an INSTRUMENT — it configures who may reach the team RIGHT NOW — so it resolves the team's
  * ACTIVE state and cannot serve a season that has ended, let alone one a caller names. Routes
  * using it must never appear in the guard's `HISTORY_ENDPOINTS`.
  *
- * Capability checks stay at the CALL SITE: the panel routes need guardian-contact access
+ * Capability checks stay at the CALL SITE: the guardians card needs guardian-contact access
  * (`rosterPii`) while sharing a game needs schedule access, and folding those together here
  * would grant one route the other's permission.
  */

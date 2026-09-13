@@ -5,29 +5,31 @@ import path from 'path';
 import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membership-fixture';
 
 /**
- * The family layer's access boundary (Coach Portal Chunk D, Slice 1).
+ * The family layer's access boundary (Coach Portal Chunk D).
  *
  * This chunk's entire risk is READ AUTHORIZATION on data about minors, so every probe below
  * is written from an UNAUTHORIZED persona's point of view. The question each one asks is not
  * "does the happy path work" (the owner walks that in a browser) but "does the wrong person
  * get a 200".
  *
- *  1. THE STRANGER. A guessed join URL, a guessed family-team URL, a guessed game page. All
- *     must be indistinguishable from "no such thing" — a 404 that leaks nothing, including
+ * ⚠ REWRITTEN 2026-09-12: the team family LINK and the FOLLOWER tier were removed (owner, mig
+ * 290). The connected persona here used to be an approved follower — a verified, team-level
+ * connection with no child — and the file also proved the join URL and the link reset. Those
+ * probes are gone with the feature; the database now refuses a follower row outright. The
+ * connected persona is a VERIFIED GUARDIAN tied to the fixture's one child, which is the only
+ * kind of connection that can exist. What the file proves is unchanged in substance:
+ *
+ *  1. THE STRANGER. A guessed family-team URL, a guessed calendar token, a guessed game page.
+ *     All must be indistinguishable from "no such thing" — a 404 that leaks nothing, including
  *     whether the team exists.
- *  2. THE PENDING / DECLINED / REVOKED REQUESTER. Asking is not access; being declined is not
- *     access; having been removed is not access. Each is asserted as an HTTP status, because
- *     losing the card in Following is not losing the data.
- *  3. THE TIER BOUNDARY — the standing security invariant of the two-tier model. An approved
- *     FOLLOWER must fail closed on anything player-level. In Slice 1 the guardian payloads do
- *     not exist yet, so this probe asserts the two things that DO: the follower's schedule
- *     payload contains no player field at all, and the coach-only routes refuse them.
- *  4. CROSS-TEAM. A verified follower of team A probing team B gets nothing.
- *  5. THE RESET LINK. Resetting is the revocation — the previous URL must die instantly.
- *  6. VISIBILITY FLIPPED TO STAFF. The setting is enforced at the API, so flipping it must
- *     remove the DATA from every surface (family view, calendar feed, game page, public team
- *     page), not just hide a button.
- *  7. THE SHARE GATE. A game page does not exist until the coach shares that specific game.
+ *  2. THE DECLINED / REVOKED / UNLINKED ACCOUNT. Being declined is not access; having been
+ *     removed is not access; being signed in is not access.
+ *  3. CROSS-TEAM. A verified guardian on team A probing team B gets nothing.
+ *  4. VISIBILITY FLIPPED TO STAFF. The setting is enforced at the API, so flipping it must
+ *     remove the DATA from every surface (family view, game page, public team page), not just
+ *     hide a button — and it is now SET from Team settings, so the coach-side write is probed
+ *     through the team settings API rather than the retired family-access route.
+ *  5. THE SHARE GATE. A game page does not exist until the coach shares that specific game.
  *
  * Data-level and HTTP-status assertions only — never screenshots.
  * Self-provisions via service-role with the `capfamily-` marker; pre-cleans, tears down, and
@@ -56,27 +58,28 @@ const admin = createClient(
 
 const MARK = 'capfamily';
 const COACH_EMAIL = `${MARK}-coach@dev.local`;
-const FOLLOWER_EMAIL = `${MARK}-follower@dev.local`;
+const GUARDIAN_EMAIL = `${MARK}-guardian@dev.local`;
 const DECLINED_EMAIL = `${MARK}-declined@dev.local`;
 const REVOKED_EMAIL = `${MARK}-revoked@dev.local`;
 const STRANGER_EMAIL = `${MARK}-stranger@dev.local`;
 const PASSWORD = 'devpass123';
 const ORG_SLUG = 'dev-club-org';
 
-/** A syntactically valid token that was never minted — the stranger's guess. */
+/** A syntactically valid token that was never minted — the stranger's guess at a calendar feed. */
 const GUESSED_TOKEN = 'ZZZZthisTokenWasNeverMintedAAAAAAAAAAAAAAAA';
 
 let orgId = '';
 let coachUserId = '';
-let followerUserId = '';
+let guardianUserId = '';
 let declinedUserId = '';
 let revokedUserId = '';
 let strangerUserId = '';
 
-/** Team A — the one the follower is verified on. */
+/** Team A — the one the guardian is verified on. */
 let teamAId = '';
 let teamASlug = '';
 let yearAId = '';
+let playerAId = '';
 let sharedGameId = '';
 let unsharedGameId = '';
 
@@ -144,9 +147,12 @@ async function makeTeam(suffix: string): Promise<{ teamId: string; slug: string;
   return { teamId: team!.id, slug, yearId: year!.id };
 }
 
+/** A guardian row in a given state. Every row carries the child (mig 290's strict CHECK) —
+ *  declined and revoked rows keep whatever they had, and neither counts toward the two-per-player
+ *  cap, so three rows on one child provision cleanly. */
 async function addLink(teamId: string, userId: string, email: string, status: string) {
   const { error } = await admin.from('family_links').insert({
-    org_id: orgId, rep_team_id: teamId, role: 'follower', player_id: null,
+    org_id: orgId, rep_team_id: teamId, role: 'guardian', player_id: playerAId,
     user_id: userId, invited_email: email, status,
     ...(status === 'verified' ? { verified_via: 'coach_approved', approved_at: new Date().toISOString() } : {}),
     ...(status === 'declined' ? { declined_at: new Date().toISOString() } : {}),
@@ -169,7 +175,7 @@ test.beforeAll(async () => {
   });
   if (memErr) throw memErr;
 
-  followerUserId = await makeAccount(FOLLOWER_EMAIL);
+  guardianUserId = await makeAccount(GUARDIAN_EMAIL);
   declinedUserId = await makeAccount(DECLINED_EMAIL);
   revokedUserId = await makeAccount(REVOKED_EMAIL);
   strangerUserId = await makeAccount(STRANGER_EMAIL);
@@ -179,14 +185,15 @@ test.beforeAll(async () => {
   const b = await makeTeam('team-b');
   teamBId = b.teamId; teamBSlug = b.slug;
 
-  // A player on team A. Nothing in Slice 1 should ever surface this to a follower — its whole
-  // job in this fixture is to exist so a leak has something to leak.
-  const { error: playerErr } = await admin.from('rep_roster_players').insert({
+  // A player on team A — the child the guardian is tied to, and the thing the anonymous
+  // surfaces (a shared game page) must never surface.
+  const { data: player, error: playerErr } = await admin.from('rep_roster_players').insert({
     program_year_id: yearAId, team_id: teamAId, org_id: orgId,
     player_first_name: `${MARK}Secret`, player_last_name: 'Child',
     guardian_email: 'someone@dev.local', status: 'active', source: 'admin_manual',
-  });
+  }).select('id').single();
   if (playerErr) throw playerErr;
+  playerAId = player!.id;
 
   const soon = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
   const later = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString();
@@ -208,7 +215,7 @@ test.beforeAll(async () => {
   if (unsharedErr) throw unsharedErr;
   unsharedGameId = unshared!.id;
 
-  await addLink(teamAId, followerUserId, FOLLOWER_EMAIL, 'verified');
+  await addLink(teamAId, guardianUserId, GUARDIAN_EMAIL, 'verified');
   await addLink(teamAId, declinedUserId, DECLINED_EMAIL, 'declined');
   await addLink(teamAId, revokedUserId, REVOKED_EMAIL, 'revoked');
 
@@ -228,7 +235,7 @@ test.afterAll(async () => {
   await cleanup();
   const { data: leftTeams } = await admin.from('rep_teams').select('id').like('name', `${MARK}%`);
   expect(leftTeams ?? []).toHaveLength(0);
-  const { data: leftLinks } = await admin.from('family_links').select('id').eq('invited_email', FOLLOWER_EMAIL);
+  const { data: leftLinks } = await admin.from('family_links').select('id').eq('invited_email', GUARDIAN_EMAIL);
   expect(leftLinks ?? []).toHaveLength(0);
 });
 
@@ -269,14 +276,6 @@ async function setVisibility(teamId: string, visibility: string) {
 // ── 1. The stranger ───────────────────────────────────────────────────────────
 
 test.describe('the stranger — a guessed URL learns nothing', () => {
-  test('a guessed join token is 404 and names no team', async ({ page }) => {
-    await page.context().clearCookies();
-    const res = await apiGet(page, `/api/family/join/${GUESSED_TOKEN}`);
-    expect(res.status).toBe(404);
-    // The refusal must not confirm that any particular team exists.
-    expect(JSON.stringify(res.body ?? {})).not.toContain(MARK);
-  });
-
   test('an anonymous caller cannot read a family team payload', async ({ page }) => {
     await page.context().clearCookies();
     const res = await apiGet(page, `/api/family/teams/${teamAId}`);
@@ -300,7 +299,7 @@ test.describe('a request is not an approval', () => {
     expect(res.status).toBe(404);
   });
 
-  test('a REVOKED follower is refused the schedule', async ({ page }) => {
+  test('a REVOKED guardian is refused the schedule', async ({ page }) => {
     await signIn(page, REVOKED_EMAIL);
     const res = await apiGet(page, `/api/family/teams/${teamAId}`);
     expect(res.status).toBe(404);
@@ -312,7 +311,7 @@ test.describe('a request is not an approval', () => {
     expect(res.status).toBe(404);
   });
 
-  test('a revoked follower cannot mint a calendar token', async ({ page }) => {
+  test('a revoked guardian cannot mint a calendar token', async ({ page }) => {
     await signIn(page, REVOKED_EMAIL);
     const res = await page.evaluate(async (id) => {
       const r = await fetch(`/api/family/teams/${id}`, { method: 'POST' });
@@ -322,96 +321,74 @@ test.describe('a request is not an approval', () => {
   });
 });
 
-// ── 3. The tier boundary — the standing invariant ────────────────────────────
+// ── 3. A family connection is not staff, and is one team wide ───────────────
 
-test.describe('tier boundary — a follower reaches no child data', () => {
-  test('the follower payload contains no player field and no roster name', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
-    const res = await apiGet(page, `/api/family/teams/${teamAId}`);
-    expect(res.status).toBe(200);
-
-    const serialized = JSON.stringify(res.body ?? {});
-    // The fixture put a real player on this team. If any of these appear, the DTO leaked.
-    expect(serialized).not.toContain('Secret');
-    expect(serialized).not.toContain('someone@dev.local');
-
-    /**
-     * ⚠ REWRITTEN 2026-08-03 (Tier 1 pilot). This asserted `not.toContain('guardian')` and
-     * `not.toContain('player')` against the serialized body. Slice 2 later added a
-     * `"guardian": null` FIELD to this payload — the correct, safe value for a follower — and the
-     * substring check started failing on a KEY NAME while no data had leaked at all.
-     *
-     * A blunt substring over a serialized DTO cannot tell "the guardian's email is in here" from
-     * "there is a field called guardian and it is empty". Assert the SHAPE instead: the field is
-     * present and null, and no player-level container exists.
-     */
-    const body = res.body as { role?: string; guardian?: unknown; view?: Record<string, unknown> };
-    expect(body.role).toBe('follower');
-    expect(body.guardian ?? null).toBeNull();
-    expect(body.view).not.toHaveProperty('players');
-    expect(body.view).not.toHaveProperty('roster');
-
-    // And it must actually be serving the schedule — otherwise the assertions above pass
-    // vacuously on an empty payload.
-    expect(((body.view?.entries as unknown[]) ?? []).length).toBeGreaterThan(0);
-  });
-
-  test('a follower is refused every coach-side family route', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
-    const panel = await apiGet(page, `/api/coaches/${ORG_SLUG}/teams/${teamAId}/family-access`);
-    expect([401, 403, 404]).toContain(panel.status);
-
+test.describe('a connected family member is not staff', () => {
+  test('a verified guardian is refused the coach-side roster and team-settings routes', async ({ page }) => {
+    await signIn(page, GUARDIAN_EMAIL);
     const roster = await apiGet(page, `/api/coaches/${ORG_SLUG}/teams/${teamAId}/roster`);
     expect([401, 403, 404]).toContain(roster.status);
+
+    // Schedule visibility is a coach SETTING now (Team settings → Sharing). A connected family
+    // member must not be able to read it, let alone widen it to public.
+    const settings = await apiGet(page, `/api/coaches/${ORG_SLUG}/teams/${teamAId}`);
+    expect([401, 403, 404]).toContain(settings.status);
+    const widen = await page.request.patch(`/api/coaches/${ORG_SLUG}/teams/${teamAId}`, {
+      data: { scheduleVisibility: 'public_link' },
+    });
+    expect([401, 403, 404]).toContain(widen.status());
+  });
+
+  test('a verified guardian on team A is refused team B', async ({ page }) => {
+    await signIn(page, GUARDIAN_EMAIL);
+    const res = await apiGet(page, `/api/family/teams/${teamBId}`);
+    expect(res.status).toBe(404);
+  });
+
+  test('the database refuses a follower row — the tier no longer exists', async () => {
+    // Mig 290's whole point, asserted at the last line of defence: nothing can store a
+    // team-level connection with no child, however every app-layer check is written.
+    const { error } = await admin.from('family_links').insert({
+      org_id: orgId, rep_team_id: teamAId, role: 'follower', player_id: null,
+      invited_email: `${MARK}-illegal@dev.local`, status: 'verified',
+    });
+    expect(error).not.toBeNull();
+    expect(String(error?.message ?? '')).toMatch(/family_links_role_check|family_links_role_player_ck|violates check/i);
   });
 });
 
-// ── 4. Cross-team ─────────────────────────────────────────────────────────────
-
-test('a verified follower of team A is refused team B', async ({ page }) => {
-  await signIn(page, FOLLOWER_EMAIL);
-  const res = await apiGet(page, `/api/family/teams/${teamBId}`);
-  expect(res.status).toBe(404);
-});
-
-// ── 5. Reset is the revocation ────────────────────────────────────────────────
-
-test('resetting the team family link kills the previous URL', async ({ page }) => {
-  // Mint by hand at the data layer so the probe does not depend on the coach UI.
-  const crypto = await import('node:crypto');
-  const first = crypto.randomBytes(32).toString('base64url');
-  const firstHash = crypto.createHash('sha256').update(first).digest('hex');
-  const { error: e1 } = await admin.from('rep_teams')
-    .update({ family_link_token_hash: firstHash, family_link_created_at: new Date().toISOString() })
-    .eq('id', teamAId);
-  if (e1) throw e1;
-
-  await page.context().clearCookies();
-  const alive = await apiGet(page, `/api/family/join/${first}`);
-  expect(alive.status).toBe(200);
-
-  // Reset — a NEW token replaces the hash.
-  const second = crypto.randomBytes(32).toString('base64url');
-  const secondHash = crypto.createHash('sha256').update(second).digest('hex');
-  const { error: e2 } = await admin.from('rep_teams')
-    .update({ family_link_token_hash: secondHash })
-    .eq('id', teamAId);
-  if (e2) throw e2;
-
-  const dead = await apiGet(page, `/api/family/join/${first}`);
-  expect(dead.status).toBe(404);
-
-  const fresh = await apiGet(page, `/api/family/join/${second}`);
-  expect(fresh.status).toBe(200);
-});
-
-// ── 6. Visibility is enforced at the API, not the UI ─────────────────────────
+// ── 4. Visibility is enforced at the API, not the UI ─────────────────────────
 
 test.describe('schedule visibility', () => {
   test.afterEach(async () => { await setVisibility(teamAId, 'families'); });
 
-  test('flipping to STAFF removes the schedule from a verified follower', async ({ page }) => {
-    await signIn(page, FOLLOWER_EMAIL);
+  test('the coach sets it from the team settings API, and the setting is what the API reports back', async ({ page }) => {
+    await signIn(page, COACH_EMAIL);
+    const before = await apiGet(page, `/api/coaches/${ORG_SLUG}/teams/${teamAId}`);
+    expect(before.status).toBe(200);
+    const shape = (before.body as { scheduleVisibility?: { value?: string; canEdit?: boolean } | null }).scheduleVisibility;
+    // dev-club-org is org-native, so the family layer is entitled and the row is PRESENT.
+    expect(shape?.value).toBe('families');
+    expect(shape?.canEdit).toBe(true);
+
+    const res = await page.request.patch(`/api/coaches/${ORG_SLUG}/teams/${teamAId}`, {
+      data: { scheduleVisibility: 'staff' },
+    });
+    expect(res.status()).toBe(200);
+    const { data: row } = await admin.from('rep_teams').select('schedule_visibility').eq('id', teamAId).single();
+    expect(row?.schedule_visibility).toBe('staff');
+
+    // A value outside the three is refused, and the row is untouched.
+    const bad = await page.request.patch(`/api/coaches/${ORG_SLUG}/teams/${teamAId}`, {
+      data: { scheduleVisibility: 'everyone' },
+    });
+    expect(bad.status()).toBe(400);
+    const { data: still } = await admin.from('rep_teams').select('schedule_visibility').eq('id', teamAId).single();
+    expect(still?.schedule_visibility).toBe('staff');
+  });
+
+  test('flipping to STAFF removes the schedule from a verified guardian', async ({ page }) => {
+    await signIn(page, GUARDIAN_EMAIL);
 
     const before = await apiGet(page, `/api/family/teams/${teamAId}`);
     expect(before.status).toBe(200);
@@ -450,7 +427,7 @@ test.describe('schedule visibility', () => {
   });
 });
 
-// ── 7. A game page does not exist until it is shared ─────────────────────────
+// ── 5. A game page does not exist until it is shared ─────────────────────────
 
 test.describe('per-game share gate', () => {
   test('an UNSHARED game has no page', async ({ page }) => {
@@ -466,7 +443,7 @@ test.describe('per-game share gate', () => {
     // The anonymous-public invariant: nothing about a person in the SSR HTML.
     expect(html).not.toContain('Secret');
     expect(html).not.toContain('someone@dev.local');
-    expect(html).not.toContain(FOLLOWER_EMAIL);
+    expect(html).not.toContain(GUARDIAN_EMAIL);
     // It IS serving the game, so the assertions above are not vacuous.
     expect(html).toContain('Falcons');
     // Never indexed — a coach sharing one game did not ask to publish a fixture list.

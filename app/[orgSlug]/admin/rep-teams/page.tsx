@@ -34,7 +34,7 @@ interface TeamSummary {
   pendingTryouts: number;
   /** Chunk D 3.6 — read-only family-adoption counts. Never any family's identity.
    *  `connected` is summed server-side so no surface re-derives what counts as connected. */
-  family?: { guardians: number; followers: number; connected: number; awaiting: number };
+  family?: { connected: number; awaiting: number };
 }
 
 interface TeamForm {

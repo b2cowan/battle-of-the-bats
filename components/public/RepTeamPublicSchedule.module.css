@@ -216,18 +216,6 @@
   min-width: 0;
 }
 
-.note {
-  margin-top: 1rem;
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  background: var(--white-5);
-  border: 1px solid var(--white-8);
-  color: var(--white-45);
-  font-size: 0.8rem;
-  line-height: 1.55;
-  text-align: center;
-}
-
 .cta {
   display: inline-flex;
   align-items: center;
