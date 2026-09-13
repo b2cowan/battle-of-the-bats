@@ -122,31 +122,19 @@ switch opens.
 
 ## 6. Owner QA walk (owed)
 
-Sign in as the UAT coach on `uat-test-org / UAT Test Team`.
+The walk is the hub's **QA Walk** tab (same URL as the mockup): five parts, sixteen steps, a
+checkbox per observable, Pass/Flag per step, notes, and a paste-back summary. Sign in as the UAT
+coach (`uat-coach@uat-test-org.local`, password in `.env.local`) on uat-test-org / UAT Test Team;
+Part D needs a second coach on that team without schedule management (optional — Flag with a note
+if none); Part E's club-admin step uses `uat-admin@uat-test-org.local`.
 
-**Part A — Roster.** Open Roster (list view), scroll to the bottom. Below "Drag to set the order
-players appear in" there is nothing: no Team family access section, folded or otherwise. The
-help "?" on Roster lists the roster recipes and no family guide.
-
-**Part B — Team settings → Sharing.** Open Team settings. A **Sharing** section is present
-(collapsed) with a summary reading `Schedule: Families`. Open it: a **Schedule visibility** row
-with a three-way control — Staff only / Families / Public link — and a one-sentence explanation
-that changes with the selection. Pick **Public link**; the summary line updates. Open the team's
-public page in another tab: the schedule is there. Pick **Staff only**; the public page loses it,
-and on the Schedule, sharing a game refuses with "Schedule visibility is set to Staff only…". Set
-it back to **Families**.
-
-**Part C — the club-book row is unaffected.** On a Club-plan team with book sharing on, the
-Sharing section shows both rows; on the UAT team (no club book) only the visibility row appears.
-
-**Part D — assistant without schedule management.** Signed in as an assistant who does not manage
-the schedule (or a helper): the Sharing section shows the current visibility as text with "only
-coaches who manage the schedule can change it", no control.
-
-**Part E — help.** Coaches help → "Families and your season recap (Premium)" reads as rewritten;
-"Team settings (Premium)" → "Sharing: who can see your schedule, and your book" exists; searching
-"family link" surfaces the "Where did the Team family access card and the family link go?" FAQ.
-
-**Part F — nothing else moved.** A player's page still shows Family season recap → Preview;
-sharing a single game from the Schedule still works at Families; the club admin's Rep Teams list
-still shows a Families count on the coach demo's 13U team.
+- **A · Roster — the card is gone** (A1 the page ends at the roster; A2 the help drawer)
+- **B · Team settings → Sharing** (B1 the section exists, collapsed; B2 the control and its
+  sentence; B3 Public link puts the schedule on the public page — and the old "ask the coach for
+  the family link" footnote is gone; B4 Staff only pulls it back and refuses a shared game; B5
+  Families, and it survives a reload)
+- **C · Help says where it went** (C1 the family guide; C2 the Team settings guide; C3 search
+  "family link" / "followers"; C4 the Premium overview bullet)
+- **D · Who can change it** (D1 read-only text for a coach without schedule management)
+- **E · Nothing else moved** (E1 recap preview; E2 sharing one game; E3 the club admin's Rep
+  Teams list and its help article; E4 the public walkthrough's roster and score slides)

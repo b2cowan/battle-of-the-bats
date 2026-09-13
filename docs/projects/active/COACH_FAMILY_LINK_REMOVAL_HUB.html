@@ -96,6 +96,41 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 @container(max-width:700px){.body{grid-template-columns:1fr}.side{display:none}.pagehead{flex-wrap:wrap}.page{padding:14px 14px 22px}.roster .name{width:auto}.prow{grid-template-columns:22px 1fr}.prow .pbtn,.prow .seg{grid-column:2}.srow .ctl{width:100%}}
 @media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* ── QA walk (the WALK-file format: a card per step, a checkbox per observable) ── */
+.qawrap{max-width:860px;margin:0 auto;padding:24px 24px 56px}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13.5px;line-height:1.55;margin:14px 0 6px}
+.signin b{color:var(--ink)}
+.qaprogress{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-weight:700;margin:14px 0 4px}
+.qaprogress .bar{flex:1 1 200px;height:8px;background:var(--soft);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.qaprogress .bar i{display:block;height:100%;background:var(--olive);width:0}
+.parthead{margin-top:38px;border-top:2px solid var(--ink);padding-top:12px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{margin:4px 0 6px;font-size:22px;line-height:1.15;text-wrap:balance}
+.parthead p{color:var(--muted);font-size:14px;max-width:72ch;margin:0}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+.step{background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.step-head{display:flex;gap:12px;align-items:baseline;padding:14px 18px 0}
+.qnum{font-weight:800;color:var(--olive);font-variant-numeric:tabular-nums;min-width:3ch;font-size:17px}
+.step-head h3{margin:0;font-size:16px}
+.step-body{padding:8px 18px 16px;display:flex;flex-direction:column;gap:12px}
+.do{margin:0;font-size:14px;line-height:1.55}.do b{color:var(--ink)}
+.do .k{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--olive);margin-right:6px}
+.why{margin:0;font-size:14px;color:var(--muted);max-width:72ch;line-height:1.55}.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.qchk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--white);font-size:14px;line-height:1.5}
+.qchk input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--olive);cursor:pointer}
+.qchk label{cursor:pointer;min-width:0}
+.qchk.on label{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.hintline{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.vbtn{padding:5px 13px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:13px;min-height:32px;text-transform:none;letter-spacing:0}
+.vbtn[aria-pressed=true][data-v=pass]{background:#e3f3d4;border-color:#b9d88c;color:var(--olive)}
+.vbtn[aria-pressed=true][data-v=flag]{background:#f3dede;border-color:#e0a9a9;color:var(--error)}
+.step textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit;font-size:13px;resize:vertical;min-height:40px}
+.qafoot{margin-top:28px;display:flex;flex-direction:column;gap:10px}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.5 ui-monospace,monospace;min-height:160px}
+@media(max-width:600px){.qawrap{padding:18px 14px 44px}.step-head{padding:12px 14px 0}.step-body{padding:8px 14px 14px}}
 </style>
 
 <div class="hubbar">
@@ -302,14 +337,17 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
 
 <section id="hub-qa" class="hubsection" hidden>
-  <div class="eyebrow">Owner QA walk</div>
-  <h1 style="padding:0 24px">Family link removal — QA walk</h1>
-  <div style="padding:0 24px 24px">
-    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · the UAT coach on <strong>uat-test-org / UAT Test Team</strong> (password in .env.local). Part D also needs an assistant or helper who does not manage the schedule.</div>
-    <div class="qaprogress" id="qaCount"></div>
+  <div class="qawrap">
+    <div class="eyebrow">Owner QA walk · 2026-09-12</div>
+    <h1>Family link removal — QA walk</h1>
+    <p class="sub">Five parts, sixteen steps. Tick each thing you actually see; give every step a verdict. Ticks and notes stay in this browser; the button at the bottom builds a summary to paste back.</p>
+    <div class="signin"><b>Sign in as</b> — URL: <b>http://localhost:3000</b> · Account: <b>uat-coach@uat-test-org.local</b> · Password: from <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>) · Org/Team: <b>uat-test-org / UAT Test Team</b> · keep this page private.<br>Part D (who can change the setting) needs a coach on the same team who does <em>not</em> manage the schedule; if you have no such account, mark D1 <em>Flag</em> with a note and move on. Part E's club-admin step uses <b>uat-admin@uat-test-org.local</b> (<code>UAT_ORG_ADMIN_PASSWORD</code>).</div>
+    <div class="qaprogress"><span id="qaCount"></span><span class="bar"><i id="qaBar"></i></span></div>
     <div id="qaParts"></div>
-    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
-    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+    <div class="qafoot">
+      <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+      <textarea id="summaryOut" rows="10" readonly hidden></textarea>
+    </div>
   </div>
 </section>
 
@@ -348,24 +386,81 @@ const DECISIONS=[
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
 
-/* ---- QA walk — six parts; steps pin identities and relationships, never a figure ---- */
+/* ---- QA walk — a card per step, a checkbox per observable; state in localStorage ---- */
 const QA_PARTS=[
- {id:'A',title:'Roster — the card is gone',steps:['Open Roster (list view) and scroll to the bottom: below “Drag to set the order players appear in” there is nothing — no Team family access section, folded or otherwise.','Open the help “?” on Roster: it offers the roster recipes and no family guide.']},
- {id:'B',title:'Team settings → Sharing — the setting lives here',steps:['Open Team settings: a collapsed Sharing section is present with a summary reading “Schedule: Families”.','Open it: a Schedule visibility row with a three-way control — Staff only / Families / Public link — and a one-sentence explanation that changes with the selection.','Pick Public link: the section summary updates; open the team’s public page in another tab and the schedule is there.','Pick Staff only: the public page loses the schedule, and on the Schedule screen sharing a game refuses with the “Schedule visibility is set to Staff only” message.','Set it back to Families.']},
- {id:'C',title:'The club-book row is unaffected',steps:['On the UAT team (no Club Shared Book) the Sharing section shows only the visibility row.','On a Club-plan team with book sharing turned on (the coach demo’s club, if handy) both rows appear and the summary reads both states.']},
- {id:'D',title:'Who can change it',steps:['Signed in as an assistant or helper who does not manage the schedule: the Sharing section shows the current visibility as text with “only coaches who manage the schedule can change it”, and no control.']},
- {id:'E',title:'Help',steps:['Coaches help → “Families and your season recap (Premium)” reads as rewritten: recap preview first, then where Schedule visibility lives, then the guardian tier as not yet open.','“Team settings (Premium)” → “Sharing: who can see your schedule, and your book” exists.','Search “family link” in help: the FAQ “Where did the Team family access card and the family link go?” is the answer.']},
- {id:'F',title:'Nothing else moved',steps:['A player’s page still shows Family season recap → Preview.','Sharing a single game from the Schedule still works while visibility is Families.','As the club admin, the Rep Teams list still shows a Families count on the coach demo’s 13U team.']}
+ {id:'A',title:'Roster — the card is gone',intro:'Signed in as the UAT coach, UAT Test Team, 2026 Season.',steps:[
+  {id:'A1',title:'The page ends at the roster',do:'Open <b>Roster</b> (list view) and scroll to the very bottom.',why:'The roster table, then the folded <b>Off the roster (1)</b> row, then the grey line “Drag to set the order players appear in” — and nothing after it. No <b>Team family access</b> section, open or folded, no “No link yet”, no “Create link”.',checks:[
+   {t:'Nothing renders below the drag hint',h:'The section is gone, not collapsed — there is no heading to open'},
+   {t:'Open the Off the roster fold and close it again: still nothing new appears below'},
+   {t:'Switch to <b>Depth chart</b> and back to <b>List</b>: the bottom of the list view is unchanged'}]},
+  {id:'A2',title:'The help “?” on Roster',do:'Tap the help <b>?</b> in the Roster page header.',why:'The drawer lists the roster recipes (adding a player, adding several at once) and nothing about families, links or followers.',checks:[
+   {t:'No “Letting families follow your team” entry and no “family access” entry in the drawer'},
+   {t:'“Read the full guide” opens the coaches guide at the Add-a-player recipe'}]}
+ ]},
+ {id:'B',title:'Team settings → Sharing — the setting lives here',intro:'Still the UAT coach. Keep a second tab handy for the team’s public page: http://localhost:3000/uat-test-org/teams/uat-test-team',steps:[
+  {id:'B1',title:'A Sharing section exists, collapsed',do:'Open <b>Team settings</b> from the sidebar.',why:'The groups read Team · Season · Game day · Money · Tags · <b>Sharing</b> · Organization, each closed. Sharing’s summary line on the right reads <b>Schedule: Families</b>.',checks:[
+   {t:'A <b>Sharing</b> section is present, between Tags and Organization',h:'On this team it used to exist only for a Club-plan club with book sharing on'},
+   {t:'Its summary reads exactly “Schedule: Families”'}]},
+  {id:'B2',title:'The control and its sentence',do:'Open <b>Sharing</b>.',why:'One short line — “Who outside your staff can see what…” — then a <b>Schedule visibility</b> row: label on the left with a sentence that starts “Who can see games and practices.”, and on the right a three-way control <b>Staff only · Families · Public link</b> with Families lit.',checks:[
+   {t:'Three buttons, Families lit, the same three words the old card used'},
+   {t:'The sentence under the label describes <em>Families</em>: connected families see the full schedule, and game pages you share work'},
+   {t:'No “Share our book with the club” row on this team',h:'The UAT org has no Club Shared Book — the row is absent, not locked'}]},
+  {id:'B3',title:'Public link puts the schedule on the public page',do:'Pick <b>Public link</b>. Then open the team’s public page in the second tab.',why:'The sentence changes to the public-page wording and the summary line reads “Schedule: Public link”. On the public page, an <b>Upcoming</b> schedule appears (this team has one practice next Saturday).',checks:[
+   {t:'Sentence and summary both switch to Public link the moment you tap',h:'No page reload, no Save button'},
+   {t:'The public page shows the schedule'},
+   {t:'Nothing on the public page asks families to “ask the coach for the team’s family link”',h:'That footnote sat under the schedule until this change'}]},
+  {id:'B4',title:'Staff only pulls it back — and refuses a shared game',do:'Pick <b>Staff only</b>. Reload the public page. Then go to <b>Schedule</b>, open a game (add one if there is none: Add game, any opponent, next week) and use <b>Share game link</b>.',why:'The public page still renders the team but the schedule is gone. Sharing the game is refused with a message that says Schedule visibility is set to Staff only and to change it to Families or Public link first.',checks:[
+   {t:'Public page: team header still there, schedule gone'},
+   {t:'Share game link refuses, naming Staff only',h:'This is the one consequence of Staff only a coach can trip over, so it is spelled out'}]},
+  {id:'B5',title:'Families, and it sticks',do:'Back in Team settings, pick <b>Families</b>. Reload the whole page and open Sharing again.',why:'After the reload the control still shows Families — the saved value, not a guess the page made.',checks:[
+   {t:'Families lit after a full reload'},
+   {t:'Summary reads “Schedule: Families” again'}]}
+ ]},
+ {id:'C',title:'Help says where it went',intro:'Any signed-in coach. The in-app help is what a coach who remembers the old card will search.',steps:[
+  {id:'C1',title:'The family guide',do:'Open the coaches help and find <b>Families and your season recap (Premium)</b> under Premium Coaches Portal.',why:'It leads with what a connected family reads and the recap you can preview today; the second paragraph says Schedule visibility now lives in Team settings → Sharing and that the old card and its link were removed.',checks:[
+   {t:'Heading reads “Families and your season recap (Premium)” — not “Letting families follow your team”'},
+   {t:'Subtopics: “The season recap you can already look at” and “Deciding who sees the schedule” (which points at Team settings → Sharing)'},
+   {t:'FAQ “Where did the Team family access card and the family link go?” is present and marked popular'},
+   {t:'No subtopic about sharing a link, approving people, or resetting a link'}]},
+  {id:'C2',title:'The Team settings guide',do:'Open <b>Team settings (Premium)</b> in the same guide.',why:'Its summary now includes “who can see your schedule”, and the Sharing subtopic reads “Sharing: who can see your schedule, and your book”, explaining the three settings.',checks:[
+   {t:'Subtopic “Sharing: who can see your schedule, and your book” exists and describes Staff only / Families / Public link'}]},
+  {id:'C3',title:'Search',do:'In help search, type <b>family link</b>; then <b>followers</b>.',why:'“family link” surfaces the where-did-it-go FAQ first. “followers” surfaces nothing that describes following a team as something a coach can set up today.',checks:[
+   {t:'“family link” → the where-did-it-go FAQ'},
+   {t:'“followers” → no article offering a link, an approval queue or a follower list'}]},
+  {id:'C4',title:'The Premium overview bullet',do:'Open the guide’s Premium overview (“What the Premium Coaches Portal adds”).',why:'The families bullet reads “Families and your schedule — a Schedule visibility setting… shareable pages for individual games, and a season recap…” — not “one link that lets grandparents and relatives follow…”.',checks:[
+   {t:'Bullet reads the new wording'}]}
+ ]},
+ {id:'D',title:'Who can change it',intro:'Optional — needs a second coach on UAT Test Team who does NOT manage the schedule (a Helper, or an assistant without Schedule: view + edit). Invite one from Staff if you want to run it; otherwise Flag D1 with a note.',steps:[
+  {id:'D1',title:'Read-only for a coach without schedule management',do:'Sign in as that coach and open <b>Team settings → Sharing</b>.',why:'The Schedule visibility row shows the current value as text — “Families — only coaches who manage the schedule can change it” — and no buttons.',checks:[
+   {t:'The value reads as text, no three-way control'},
+   {t:'The Sharing section is still visible (not hidden) so they can see what the setting is'}]}
+ ]},
+ {id:'E',title:'Nothing else moved',intro:'Back as the UAT coach, then once as the UAT org admin.',steps:[
+  {id:'E1',title:'Family season recap preview',do:'Open any player from Roster and find <b>Family season recap</b>.',why:'Preview still opens and shows the family’s screen.',checks:[
+   {t:'Preview opens as before'}]},
+  {id:'E2',title:'Sharing one game',do:'With visibility on Families, open a game on the Schedule and use <b>Share game link</b>; open the link in a private window.',why:'A page for that one game opens signed out — teams, time, place — with no player names.',checks:[
+   {t:'The game page opens signed out'},
+   {t:'No roster, no player name, no email on it'}]},
+  {id:'E3',title:'The club admin’s Rep Teams list',do:'Sign in as <b>uat-admin@uat-test-org.local</b> and open <b>Rep Teams</b>.',why:'Neither UAT team has a connected family, so no “Families” or “Waiting” number appears on their cards — the count only shows when it is above zero, exactly as before.',checks:[
+   {t:'No Families / Waiting numbers on the UAT team cards'},
+   {t:'The Rep Teams help article “Seeing which teams have families connected” says the Families count is parents or guardians — no mention of relatives who follow'}]},
+  {id:'E4',title:'The public walkthrough',do:'Signed out, open <b>http://localhost:3000/for-coaches/walkthrough</b> and read the third slide (“The roster lives in a group text”).',why:'It says one setting puts the schedule and results on the team’s own page and any single game can be shared — nothing about sharing a link or approving who joins. The score slide says families watch the score on the team’s page; it no longer promises a final-score message.',checks:[
+   {t:'Roster slide: no “share one link and approve who joins”'},
+   {t:'Score slide: no “families who follow the team” and no “one message”'}]}
+ ]}
 ];
-let qa={};try{qa=JSON.parse(localStorage.getItem('qa-family-link-removal')||'{}')}catch(e){qa={}}
-function saveQA(){try{localStorage.setItem('qa-family-link-removal',JSON.stringify(qa))}catch(e){}}
-function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
-function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
-function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
- document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
- document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
- document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+const QA_KEY='qa-family-link-removal-v2';
+let qa={};try{qa=JSON.parse(localStorage.getItem(QA_KEY)||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem(QA_KEY,JSON.stringify(qa))}catch(e){}}
+function allSteps(){return QA_PARTS.flatMap(p=>p.steps)}
+function qaCounts(){let checked=0,total=0;allSteps().forEach(st=>st.checks.forEach((_,i)=>{total++;if(qa['c-'+st.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();const steps=allSteps();const passed=steps.filter(st=>qa['v-'+st.id]==='pass').length;const flagged=steps.filter(st=>qa['v-'+st.id]==='flag').length;$('qaCount').textContent=`Checked ${c.checked} of ${c.total} · ${passed} pass · ${flagged} flagged · ${steps.length-passed-flagged} open`;$('qaBar').style.width=(c.total?Math.round(100*c.checked/c.total):0)+'%'}
+function drawQA(){
+ $('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="parthead"><div class="eyebrow">Part ${esc(p.id)}</div><h2>${esc(p.title)}</h2><p>${esc(p.intro)}</p></div><div class="steps">${p.steps.map(st=>`<article class="step" data-step="${st.id}"><div class="step-head"><span class="qnum">${esc(st.id)}</span><h3>${esc(st.title)}</h3></div><div class="step-body"><p class="do"><span class="k">Do</span>${st.do}</p><p class="why">${st.why}</p><div class="checks">${st.checks.map((c,i)=>`<div class="qchk${qa['c-'+st.id+'-'+i]?' on':''}"><input type="checkbox" id="c-${st.id}-${i}" data-check="c-${st.id}-${i}" ${qa['c-'+st.id+'-'+i]?'checked':''}><label for="c-${st.id}-${i}">${c.t}${c.h?`<span class="hintline">${c.h}</span>`:''}</label></div>`).join('')}</div><div class="verdict">Verdict ${['pass','flag'].map(v=>`<button class="vbtn" type="button" data-vstep="${st.id}" data-v="${v}" aria-pressed="${qa['v-'+st.id]===v}">${v==='pass'?'Pass':'Flag'}</button>`).join('')}</div><textarea data-notes="${st.id}" placeholder="Notes…">${esc(qa['n-'+st.id]||'')}</textarea></div></article>`).join('')}</div>`).join('');
+ document.querySelectorAll('[data-check]').forEach(el=>el.onchange=()=>{qa[el.dataset.check]=el.checked;el.closest('.qchk').classList.toggle('on',el.checked);saveQA();paintQACount()});
+ document.querySelectorAll('[data-vstep]').forEach(el=>el.onclick=()=>{const cur=qa['v-'+el.dataset.vstep];qa['v-'+el.dataset.vstep]=cur===el.dataset.v?'':el.dataset.v;saveQA();document.querySelectorAll('[data-vstep="'+el.dataset.vstep+'"]').forEach(b=>b.setAttribute('aria-pressed',String(qa['v-'+el.dataset.vstep]===b.dataset.v)));paintQACount()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['n-'+el.dataset.notes]=el.value;saveQA()});
  paintQACount()}
 drawQA();
-$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+$('buildSummary').onclick=()=>{const c=qaCounts();const strip=h=>h.replace(/<[^>]+>/g,'');const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{lines.push(`Part ${p.id} · ${p.title}`);p.steps.forEach(st=>{const v=qa['v-'+st.id]||'open';lines.push(`  ${st.id} ${st.title} — ${v.toUpperCase()}`);st.checks.forEach((ch,i)=>lines.push(`    [${qa['c-'+st.id+'-'+i]?'x':' '}] ${strip(ch.t)}`));if(qa['n-'+st.id])lines.push('    Notes: '+qa['n-'+st.id])});lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
 </script>
