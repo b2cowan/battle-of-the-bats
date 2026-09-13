@@ -147,8 +147,9 @@ describe('F03 — practiceTruth: only a recap may describe what happened', () =>
   it('a plan in the future is an upcoming plan', () => {
     assert.equal(practiceTruth({ startsAt: '2026-09-15T22:00:00Z', practiceRecap: null }, now), 'upcoming');
   });
-  it('a past practice with no recap is a past plan — the saved plan does not establish what happened', () => {
+  it('a past practice with no recap is a past plan, and its row carries ONE sentence (owner ruling 2026-09-12)', () => {
     assert.equal(practiceTruth({ startsAt: '2026-08-25T22:00:00Z', practiceRecap: null }, now), 'past-no-recap');
+    assert.equal(PRACTICE_TRUTH_LABELS['past-no-recap'].meta, null, 'the second line was cut on the Phase 0 walk');
   });
   it('a recap is the evidence, whatever the date', () => {
     assert.equal(practiceTruth({ startsAt: '2026-09-08T22:00:00Z', practiceRecap: 'Went well.' }, now), 'recap');

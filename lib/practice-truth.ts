@@ -29,6 +29,8 @@ export function practiceTruth(
 /** The chip and the quiet line beneath it — the report's words, drawn once. */
 export const PRACTICE_TRUTH_LABELS: Readonly<Record<PracticeTruth, { label: string; meta: string | null }>> = {
   upcoming: { label: 'Upcoming plan', meta: 'This practice has not happened yet.' },
-  'past-no-recap': { label: 'Past plan · no recap', meta: 'The saved plan does not establish what happened.' },
+  // Owner ruling 2026-09-12 (Phase 0 walk, Part A): the row's one sentence — "A plan was saved. Nothing
+  // was written afterwards." — says it; the second line was cut.
+  'past-no-recap': { label: 'Past plan · no recap', meta: null },
   recap: { label: 'Recap recorded', meta: null },
 };

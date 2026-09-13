@@ -21829,7 +21829,7 @@ View + edit.
 
 ---
 
-## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11, committed `340dca2a` the same day (+ `ea2de010` /simplify, `6f3422ea` /review, `b5f37207` /docs on 2026-09-12), **no migration**, awaiting QA · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
+## §172 · Development lifecycle — Phase 0, trust in existing records: a trend line never joins two units, an old session shows everything saved in it, "Practices you've run" becomes Practice review with three truth labels, a finished season's goals and readings refuse edits, and the Development report tells "couldn't load" from "nothing here" — built on dev 2026-09-11, committed `340dca2a` the same day (+ `ea2de010` /simplify, `6f3422ea` /review, `b5f37207` /docs on 2026-09-12), **no migration** · **QA ✅ 14/14 2026-09-12** · hub artifact `23bbc89a` (QA Walk tab · Part A) · plan `COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §4 F01–F05 + §15.2 F21 · Phase 0 of 4
 
 **Why this phase comes first (plan §10):** the four phases that follow draw conclusions from these
 records — charts, headlines, a handout — and a chart drawn over a series that quietly joins mph to
@@ -21893,8 +21893,9 @@ focus-area rule, no cast) · `6f3422ea` (/review, six fixes: a vanished selectio
 another test; a session opens on its own data; a blank session id is refused; the past-plan back
 link; a sequence guard on the report's Try again; the fixture's recap practice moved to May 14) ·
 `b5f37207` (/docs: units changed, what an old session shows, a past season is read-only, the three
-Practice review labels). ⚠ Walk notes: the recap practice is now **May 14**; the probe session
-opens on **60-yd sprint** (the first test it holds rows for). Owner walk still owed.
+Practice review labels). **Owner walk PASSED 14/14 on 2026-09-12** — one ruling: the read-back under
+"Past plan · no recap" is ONE sentence ("A plan was saved. Nothing was written afterwards."); the second
+line was cut in the same sitting (`lib/practice-truth.ts`, the help FAQ, the hub). Phase 0 is closed.
 
 ---
 
