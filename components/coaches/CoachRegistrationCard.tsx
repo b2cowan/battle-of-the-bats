@@ -23,7 +23,8 @@ function formatCardDate(value: string, options: Intl.DateTimeFormatOptions): str
   return date.toLocaleDateString('en-CA', options);
 }
 
-function formatCardDateRange(start: string | null, end: string | null): string | null {
+/** Exported for the "Tournaments you run" rows, so a hosted tournament's dates read like an entry's. */
+export function formatCardDateRange(start: string | null, end: string | null): string | null {
   if (!start) return null;
   if (end && end !== start) {
     return `${formatCardDate(start, { month: 'short', day: 'numeric' })} - ${formatCardDate(end, { month: 'short', day: 'numeric', year: 'numeric' })}`;

@@ -36,7 +36,7 @@ import type { AssistantCapabilityGrants, CoachCapabilities } from './coach-capab
 export type GrantKey = keyof Required<AssistantCapabilityGrants>;
 
 /** The Sensitive group — the sheet's `SENSITIVE` controls, by key. Mirrors `CoachStaffSheet.tsx`. */
-export const SENSITIVE_KEYS: ReadonlyArray<GrantKey> = ['money', 'rosterPii', 'notes', 'announcementsSend', 'tryouts'];
+export const SENSITIVE_KEYS: ReadonlyArray<GrantKey> = ['money', 'rosterPii', 'notes', 'announcementsSend', 'tryouts', 'tournaments'];
 
 /**
  * Any WIDENING counts, not just off→on — money read→write is the bigger of the two. Booleans are

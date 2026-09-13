@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireStaffManagerMembership, resolveWorkingProgramYear, getTeamStaffPanelList } from '@/lib/coach-membership';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
-import { STAFF_PRESETS, sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, grantsOf } from '@/lib/coach-capabilities';
+import { STAFF_PRESETS, sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, grantsOf, applyOrgGrantPolicy } from '@/lib/coach-capabilities';
 import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
 import { grantLabel } from '@/lib/coach-staff-labels';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
@@ -81,6 +81,8 @@ export const POST = withObservability(async (req: Request,
       initialCapabilities = clampForDelegate(actor, null, proposed).grants;
     }
   }
+  // Run tournaments exists only in a Premium workspace (D2) — the manager preset carries it on.
+  initialCapabilities = applyOrgGrantPolicy(initialCapabilities, { isTeamWorkspace: isTeamWorkspaceOrg(ctx.org) });
 
   // The inviter's own display name for the email ("Jane invited you…").
   const { data: inviterMember } = await supabaseAdmin
@@ -114,6 +116,7 @@ export const POST = withObservability(async (req: Request,
 
   await sendAssistantInviteEmail({
     email, teamName: team.name, invitedByName, rawToken: rawToken!, staffKind: kind,
+    isTeamWorkspace: isTeamWorkspaceOrg(ctx.org),
   });
 
   return NextResponse.json({ ok: true, inviteId, pendingApproval: false });

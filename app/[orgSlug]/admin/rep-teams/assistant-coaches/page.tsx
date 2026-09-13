@@ -48,6 +48,8 @@ function grantSummary(c: Caps): string {
   // Manage staff (2026-09-13): the one grant that reaches the others — an admin reading "who can
   // change what people see on this team?" needs it on the row.
   if (c.manageStaff) grants.push('manage staff');
+  // Run tournaments (2026-09-13): the one grant that reaches OTHER teams' coaches and their payments.
+  if (c.tournaments) grants.push('run tournaments');
   const off: string[] = [];
   // A1 (2026-08-03): "no roster" left this list with the switch that produced it. Names are baseline
   // now, and the roster PAGE follows record access rather than a grant an admin can read off a row.

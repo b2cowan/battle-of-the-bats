@@ -12,6 +12,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
+import CoachHostedTournamentsSection from '@/components/coaches/CoachHostedTournamentsSection';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -203,6 +204,10 @@ export default function PremiumTeamTournamentsPage({
           }}
         />
       )}
+
+      {/* The second half of the season — the tournament(s) this workspace RUNS — below the entries
+          (owner ruling 2026-09-13). Renders nothing for anyone who cannot run one. */}
+      {(data !== null || error) && <CoachHostedTournamentsSection orgSlug={orgSlug} teamId={teamId} />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import { STAFF_KIND_COPY, type StaffKind } from '@/lib/coach-capabilities';
+import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
   FOUNDING_SEASON_END_LABEL,
   FOUNDING_SEASON_FIRST_CHARGE_LABEL,
@@ -1076,9 +1076,11 @@ export function assistantCoachInviteHtml(p: {
    * lineups" would have been false on all three counts.
    */
   staffKind: StaffKind;
+  /** A standalone Premium workspace — where the manager's promise includes the team's tournaments. */
+  isTeamWorkspace?: boolean;
 }) {
   const by = p.invitedByName ? `<strong>${p.invitedByName}</strong>` : 'The head coach';
-  const copy = STAFF_KIND_COPY[p.staffKind];
+  const copy = staffKindCopyFor(p.staffKind, { isTeamWorkspace: p.isTeamWorkspace ?? false });
   const heading = copy.emailHeading;
   const line = `${by} invited you ${copy.inviteVerb} <strong>${p.teamName}</strong> as <strong>${copy.asA}</strong> on <strong>FieldLogicHQ</strong>.`;
   const what = copy.emailWhat;

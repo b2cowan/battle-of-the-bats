@@ -1,0 +1,548 @@
+<title>Run Tournaments, Delegated</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ground:#e7e9e1;--hub:#222d1e;--hubtext:#d5dfcc;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#20261d;--white:#2a3226;--ink:#eef1e7;--muted:#a9b39f;--line:#3d4737;--soft:#33402c;--lime:#b7dc6c;--olive:#a9cf72;--blue:#8cc3dd;--error:#e79a9a;--warn:#e2b56a;--ground:#161a14;--hub:#0f130e;--hubtext:#a9b39f;color-scheme:dark}}
+:root[data-theme=dark]{--paper:#20261d;--white:#2a3226;--ink:#eef1e7;--muted:#a9b39f;--line:#3d4737;--soft:#33402c;--lime:#b7dc6c;--olive:#a9cf72;--blue:#8cc3dd;--error:#e79a9a;--warn:#e2b56a;--ground:#161a14;--hub:#0f130e;--hubtext:#a9b39f;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c;color:#1c2417}.danger{color:var(--error);border-color:#e0a9a9}.ghost{border-color:transparent;background:transparent}
+.textbutton{border:0;background:transparent;min-height:44px;padding:8px 0;color:var(--blue);text-decoration:underline;text-underline-offset:3px;font-weight:600}
+
+.hubbar{background:var(--hub);color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:var(--hubtext)}
+.hubtitle{margin-right:auto;max-width:720px}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:#d9f99d}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:var(--white);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted);text-align:right}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:var(--paper);font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.specimen{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:var(--muted);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+.specimen::after{content:'';flex:1;height:1px;background:var(--line)}.specimen.first{margin-top:0}
+.twoup{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+
+/* ── product specimens: the Overview (whole screen, compressed) ── */
+.shell{display:grid;grid-template-columns:200px 1fr;min-height:420px}
+.side{border-right:1px solid var(--line);background:var(--white);padding:14px 0;font-size:13px;display:flex;flex-direction:column}
+.side .grp{padding:10px 16px 4px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.side .it{padding:7px 16px;color:var(--ink)}.side .it.on{background:var(--soft);font-weight:700}
+.side .foot{margin-top:auto;border-top:1px solid var(--line);padding-top:8px}
+.page{padding:18px 22px}
+.pagehead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}.pagehead h1{font-size:20px;margin:0}
+.chip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;border:1px solid var(--line);border-radius:5px;margin-left:8px;vertical-align:middle}
+.glance{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.tile{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:12px 14px;font-size:12px}.tile b{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}.tile .big{font-size:18px;font-weight:800;margin:6px 0 2px}
+.banner{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:10px;background:var(--white);padding:12px 14px;font-size:13px}
+.banner .ico{width:34px;height:34px;border-radius:8px;background:var(--soft);display:grid;place-items:center;flex-shrink:0}
+.banner .body{flex:1}.banner .body strong{display:block;font-size:14px}.banner .body span{color:var(--muted);font-size:12.5px}
+.banner .cta{background:var(--lime);color:#1c2417;border:1px solid #b9d88c;border-radius:7px;padding:8px 12px;font-weight:700;font-size:13px}
+.gone{border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--muted);background:transparent}
+.forbid{border:1px solid #e0a9a9;background:#f3dede;color:#5a1d1d;border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px}
+
+/* ── product specimens: the access sheet ── */
+.sheet{width:min(560px,100%);border:1px solid var(--line);border-radius:12px;background:var(--white);box-shadow:0 10px 30px #27322114;overflow:hidden}
+.sheethead{display:flex;justify-content:space-between;align-items:start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.sheethead h2{margin:0;font-size:17px}.sheethead .sub{font-size:13px}
+.sheetbody{padding:6px 20px 18px}
+.group{padding:14px 0 6px;border-top:1px solid var(--line)}.group:first-child{border-top:0}
+.grouphead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:8px}.grouptitle{font-weight:700;font-size:13px}.groupmeta{font-size:12px;color:var(--muted)}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 16px;align-items:start;padding:9px 0}
+.ctl .lab{font-weight:600;font-size:14px}.ctl .sent{font-size:12.5px;color:var(--muted);grid-column:1}
+.sw{width:40px;height:24px;border-radius:14px;background:#cdd3c7;position:relative;border:0;grid-row:1/3;align-self:center}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 2px #0003}
+.sw.on{background:var(--olive)}.sw.on::after{left:19px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;grid-row:1/3;align-self:center}
+.seg button{border:0;background:var(--white);padding:6px 11px;font-size:12.5px;min-height:34px}
+.seg button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.pick{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin-bottom:8px;background:var(--white)}
+.pick b{font-size:14px}.pick small{color:var(--muted);font-size:12px}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 6px}
+.sheetfoot{display:flex;gap:10px;align-items:center;padding:12px 20px;border-top:1px solid var(--line);background:var(--paper)}.sheetfoot .spacer{flex:1}
+.confirm{width:min(480px,100%);border:1px solid var(--line);border-radius:12px;background:var(--white);box-shadow:0 10px 30px #27322114;padding:20px 22px}
+.confirm h2{margin:0 0 8px;font-size:17px}.confirm p{font-size:14px}.confirm .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.rowlist{border:1px solid var(--line);border-radius:10px;background:var(--white);overflow:hidden;font-size:13px}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:11px 14px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.row .who{font-weight:700}.row .caps{grid-column:1/-1;color:var(--muted);font-size:12px}
+.row .caps em{font-style:normal;background:var(--lime);color:#1c2417;padding:1px 6px;border-radius:4px;font-weight:700}
+/* the phone More sheet */
+.more{width:min(390px,100%);border:1px solid var(--line);border-radius:14px 14px 0 0;background:var(--white);padding:8px 0 14px;box-shadow:0 -10px 30px #27322114}
+.more .mi{display:flex;align-items:center;gap:12px;padding:12px 18px;font-size:15px}.more .mi span:last-child{margin-left:auto;color:var(--muted)}
+/* the admin landing */
+.adminshell{display:grid;grid-template-columns:180px 1fr;min-height:300px}
+.adminside{border-right:1px solid var(--line);background:var(--white);padding:12px 0;font-size:13px}
+.adminside .it{padding:7px 16px}.adminside .it.on{background:var(--soft);font-weight:700}
+.adminside .grp{padding:10px 16px 4px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.adminside .it.gone{color:var(--muted);text-decoration:line-through;padding:7px 16px}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:var(--soft);font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}.docpage th{background:var(--soft);white-space:nowrap}
+.docpage li{margin-bottom:6px}.tablewrap{overflow-x:auto}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c;color:#1c2417}.tag.deferred{background:#f4ecd9;border-color:#e0c98a;color:#3d2c08}.tag.rejected{background:#f3dede;border-color:#e0a9a9;color:#5a1d1d}.tag.proposed{background:#e3edf2;border-color:#b6cfdb;color:#1d4a5e}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:#9e3030;border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:#486224;letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:var(--white);border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;background:var(--white)}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:var(--white)}
+
+@container(max-width:700px){main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.head{flex-wrap:wrap;gap:12px}h1{font-size:23px}.shell{grid-template-columns:1fr}.side{display:none}.glance{grid-template-columns:1fr 1fr}.adminshell{grid-template-columns:1fr}.adminside{display:none}.twoup{grid-template-columns:1fr}.pagehead{flex-wrap:wrap}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Run tournaments, delegated — project hub</strong><br><small>Owner-directed 2026-09-13 ("delegate managing their exhibition weekends … one permission, everything on that page … off for assistants, on for managers") · ruling 2 the same day on the first mockup: hosting lives on the existing Tournaments page, not a second nav · <strong>built on dev 2026-09-13</strong> (no migration) · Owner QA §181 owed — the QA Walk tab · seven calls on the Decisions tab, accepted as recommended with the owner’s “go ahead”. Mockup data is fictional; every interaction here is local to this page.</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup drawn 2026-09-13 from dev 87b94167; revised the same day to owner ruling 2 (one Tournaments page) and again to land Manage on the Dashboard">Design</li>
+    <li class="stage done" title="COACH_TOURNAMENT_DELEGATION_PLAN.md written 2026-09-13; owner “go ahead” the same day">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-13 — chunks A + B, no migration, 15 new unit tests, typecheck clean">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage current" title="Owner QA §181 owed — the QA Walk tab">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#screen-today">1 · Today's dead end</a>
+    <a href="#screen-overview">2 · Overview, after</a>
+    <a href="#screen-switch">3 · The switch</a>
+    <a href="#screen-door">4 · One Tournaments page</a>
+    <a href="#screen-landing">5 · Where it lands</a>
+  </nav>
+  <div class="frame" id="frame">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">Milton Bats U13 Purple · 2027 Season<br><span class="meta">Premium Coaches Portal (standalone workspace)</span></div>
+    </header>
+    <main>
+
+      <!-- ─────────── SCREEN 1 · today ─────────── -->
+      <section class="screen" id="screen-today">
+        <div class="specimen first">Whole screen, today — Sam (assistant coach) on the team Overview</div>
+        <div class="shell">
+          <aside class="side">
+            <div class="it on">Overview</div>
+            <div class="grp">Season</div><div class="it">Schedule</div><div class="it">Practice plans</div><div class="it">Lineups</div><div class="it">Tournaments</div>
+            <div class="grp">Team</div><div class="it">Roster</div><div class="it">Documents</div><div class="it">Settings</div>
+            <div class="foot"><div class="it">Help</div></div>
+          </aside>
+          <div class="page">
+            <div class="pagehead"><h1>Milton Bats U13 Purple <span class="chip">Assistant coach</span></h1><span class="meta">Next · Sep 19, 9:00 a.m. scrimmage</span></div>
+            <div class="eyebrow" style="margin-bottom:8px">Your team at a glance</div>
+            <div class="glance">
+              <div class="tile"><b>Money</b><div class="big">Not set up</div>Dues, a budget, and who has paid</div>
+              <div class="tile"><b>Attendance</b><div class="big">Not enough yet</div>Take attendance to see the trend</div>
+              <div class="tile"><b>Record</b><div class="big">No games yet</div>Fills in as you finalize scores</div>
+            </div>
+            <div class="banner">
+              <div class="ico">🏆</div>
+              <div class="body"><strong>Your team can run local tournaments here too <button class="fl" data-finding="F01" data-here="Sam holds no tournament right at all, and this banner shows for him exactly as it does for the head coach — it only checks that the workspace has the tournament module and no tournament yet.">F01</button></strong><span>Set up a quick round robin or exhibition weekend from this Coaches Portal.</span></div>
+              <span class="cta">Open setup</span>
+            </div>
+            <div class="forbid"><strong>What Sam gets after filling in the tournament form:</strong> “Forbidden.” The page opened, the list loaded, the create button was there — and the server refused at the last step, with no explanation. <button class="fl" data-finding="F02" data-here="And the head coach, Jordan, has no switch anywhere in the portal that would have let Sam do this.">F02</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 2 · overview after ─────────── -->
+      <section class="screen" id="screen-overview" hidden>
+        <div class="specimen first">Whole screen, after — the same Overview, two viewers</div>
+        <div class="twoup">
+          <div>
+            <p class="hint"><strong>Sam, assistant coach — no grant.</strong></p>
+            <div class="shell" style="min-height:300px">
+              <aside class="side">
+                <div class="it on">Overview</div>
+                <div class="grp">Season</div><div class="it">Schedule</div><div class="it">Practice plans</div><div class="it">Lineups</div><div class="it">Tournaments</div>
+                <div class="foot"><div class="it">Help</div></div>
+              </aside>
+              <div class="page">
+                <div class="glance" style="grid-template-columns:1fr 1fr 1fr">
+                  <div class="tile"><b>Money</b><div class="big">Not set up</div></div>
+                  <div class="tile"><b>Attendance</b><div class="big">Not enough yet</div></div>
+                  <div class="tile"><b>Record</b><div class="big">No games yet</div></div>
+                </div>
+                <div class="gone">The tournament banner is not rendered for Sam. <button class="fl fix" data-finding="F01" data-here="The banner now asks one more question of the same call it already makes: can this person run tournaments here? Sam can't, so nothing is drawn — no door, no refusal.">fixes F01</button> <span class="mk" data-k="re" data-note="The banner exists today and is unchanged in shape and words. What changes is who it is shown to: only someone who can act on it (the head coach, a club admin, or a staff member holding the new switch).">Restyled</span></div>
+                <p class="meta" style="margin-top:10px">Everything else on the Overview is exactly as today. <span class="mk" data-k="un" data-note="The Next-game card, the six tiles and the tail are untouched. Drawn compressed here so the one change is what this screen shows.">Unchanged</span></p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="hint"><strong>Priya, team manager — grant on.</strong></p>
+            <div class="shell" style="min-height:300px">
+              <aside class="side">
+                <div class="it on">Overview</div>
+                <div class="grp">Season</div><div class="it">Schedule</div><div class="it">Practice plans</div><div class="it">Lineups</div><div class="it">Tournaments</div>
+                <div class="foot"><div class="it">Help</div></div>
+              </aside>
+              <div class="page">
+                <div class="glance" style="grid-template-columns:1fr 1fr 1fr">
+                  <div class="tile"><b>Money</b><div class="big">$2,140 in</div></div>
+                  <div class="tile"><b>Attendance</b><div class="big">Not enough yet</div></div>
+                  <div class="tile"><b>Record</b><div class="big">No games yet</div></div>
+                </div>
+                <div class="gone">No banner for Priya either. <span class="mk" data-k="re" data-note="Owner ruling 2: the Overview banner is retired in the coach portal for everyone. Hosting has one home — the Tournaments page (screen 4) — and the Overview stays about today's work. The Tournaments tile above it is already the door to that page.">Restyled</span></div>
+                <p class="meta" style="margin-top:10px">The Tournaments tile (“1 registered”) is already the door to the page where hosting now lives. The foot-of-menu “Admin” link stays exactly as today — owner only, unchanged. <button class="fl fix" data-finding="F03" data-here="Priya's door is the Tournaments page itself — the one she already uses for the team's entries.">fixes F03</button></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 3 · the switch ─────────── -->
+      <section class="screen" id="screen-switch" hidden>
+        <div class="specimen first">Jordan (head coach) opens Priya's access — the Sensitive group gains one switch</div>
+        <div class="twoup">
+          <div class="sheet" role="dialog" aria-label="Priya Nair — access">
+            <div class="sheethead"><div><h2>Priya Nair</h2><p class="sub">Team manager · priya.nair@email.com</p></div><span class="meta">✓ Saved</span></div>
+            <div class="sheetbody">
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Role</span><span class="groupmeta">Changing it applies that role’s starting access</span></div>
+                <div class="pick"><b>Team manager</b><small>Runs the team off the field — money, forms, family emails, tournaments. Not the lineup. <span class="mk" data-k="re" data-note="The manager's one-line description gains “tournaments”. The same sentence family feeds the invite email, which must promise what the preset grants — so the email says it too.">Restyled</span></small></div>
+              </div>
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Standard access</span><span class="groupmeta">7 controls · collapsed here</span></div>
+                <p class="hint">Schedule View + edit · Attendance off · Lineups off · Development off · Staff chat on · Scouting book on · Documents Manage <span class="mk" data-k="un" data-note="The Everyday group is unchanged. Drawn collapsed so the new control is what this screen shows.">Unchanged</span></p>
+              </div>
+              <div class="group">
+                <div class="grouphead"><span class="grouptitle">Sensitive — asks before granting</span><span class="groupmeta">4 granted</span></div>
+                <div class="ctl"><span class="lab">Team money</span><span class="seg" role="group"><button type="button">Hidden</button><button type="button">View</button><button type="button" aria-pressed="true">View + edit</button></span><span class="sent">Budget, dues, expenses and every payment.</span></div>
+                <div class="ctl"><span class="lab">Contacts &amp; birthdates</span><button class="sw on" type="button" aria-label="Contacts and birthdates, on"></button><span class="sent">Guardian names, emails and phones; players’ birthdates, medical and emergency details.</span></div>
+                <div class="ctl"><span class="lab">Internal notes</span><button class="sw" type="button" aria-label="Internal notes, off"></button><span class="sent">Private staff notes about each player, never shown to families.</span></div>
+                <div class="ctl"><span class="lab">Email families</span><button class="sw on" type="button" aria-label="Email families, on"></button><span class="sent">Send announcements to every guardian. Off means they can draft, not send.</span></div>
+                <div class="ctl"><span class="lab">Tryouts</span><button class="sw" type="button" aria-label="Tryouts, off"></button><span class="sent">Every candidate’s guardian details and your evaluation decisions.</span></div>
+                <div class="ctl"><span class="lab">Run tournaments <span class="mk" data-k="new" data-note="One switch. On = everything on the tournament page: set it up, registrations, schedule, scores, announcements, what visiting teams see. No finer tournament permissions exist in the coach portal, on purpose (owner, 2026-09-13). It lives in the Sensitive group because registrations carry other teams' coaches' details and payments — the same class of thing as Contacts. ON in the Team manager preset; OFF for assistant, treasurer and helper. Shown only in a Premium workspace, never in a club.">New</span> <button class="fl fix" data-finding="F02" data-here="This is the switch Jordan didn't have. One tap, one confirm, and Priya runs the weekend.">fixes F02</button></span><button class="sw on" type="button" aria-label="Run tournaments, on"></button><span class="sent">Set up and run the team’s tournaments from the Tournaments page — registrations, schedule, scores, and what visiting teams see.</span></div>
+              </div>
+            </div>
+            <div class="sheetfoot"><button class="button danger" type="button">🗑 Remove from team</button><span class="spacer"></span><button class="button" type="button">Make head coach <span class="mk" data-k="un" data-note="Role changes stay exactly as built.">Unchanged</span></button></div>
+          </div>
+          <div>
+            <div class="specimen first">What Jordan confirms when he switches it on</div>
+            <div class="confirm" role="alertdialog" aria-labelledby="c1">
+              <h2 id="c1">Let Priya run your tournaments? <span class="mk" data-k="new" data-note="Every Sensitive grant asks once before granting. This one names what a tournament page holds that is not the team's own — other teams' coaches and their payments — and what it does not hand over.">New</span></h2>
+              <p>Priya will be able to set up and run this workspace’s tournaments — registrations, the schedule, scores, announcements and what visiting teams see, including their coaches’ contact details and payments. She won’t be able to change your staff, your settings or your billing. You can take this back any time.</p>
+              <div class="acts"><button class="button ghost" type="button">Cancel</button><button class="button primary" type="button">Turn on</button></div>
+            </div>
+            <div class="specimen">The staff list, after — the row says it</div>
+            <div class="rowlist">
+              <div class="row"><span class="who">Priya Nair</span><span class="meta">Team manager</span><span class="caps">Schedule · edit · Documents · manage · Money · edit · Contacts · Email families · <em>Tournaments</em> <span class="mk" data-k="new" data-note="The row chips are derived from the same control table the sheet renders, so the grant's name is written once.">New</span></span></div>
+              <div class="row"><span class="who">Sam Okafor</span><span class="meta">Assistant coach</span><span class="caps">Schedule · edit · Attendance · Lineups · Staff chat · Scouting book · Documents · view <span class="mk" data-k="un" data-note="An assistant's default bundle does not change. Run tournaments starts OFF for them; Jordan can turn it on per person.">Unchanged</span></span></div>
+            </div>
+            <p class="sub" style="margin-top:14px">Turning it off is instant and never asks. Managers already on a team today are <strong>not</strong> switched on by this shipping — a preset is where access starts, not where it must stay (D3, yours to overrule).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 4 · one Tournaments page ─────────── -->
+      <section class="screen" id="screen-door" hidden>
+        <div class="specimen first">Whole screen — the existing Tournaments page, as Priya (grant on) sees it</div>
+        <div class="shell">
+          <aside class="side">
+            <div class="it">Overview</div>
+            <div class="grp">Season</div><div class="it">Schedule</div><div class="it">Practice plans</div><div class="it">Lineups</div><div class="it on">Tournaments</div>
+            <div class="grp">Team</div><div class="it">Roster</div><div class="it">Documents</div><div class="it">Settings</div>
+            <div class="foot"><div class="it">Help</div><div class="it" style="color:var(--muted)">Admin <span class="mk" data-k="un" data-note="Owner ruling 2: no second nav. The foot-of-menu “Admin” link keeps today's rule exactly — workspace owner or admin only, into the whole admin area. Priya does not see it (drawn greyed here to say so). It is no longer the tournament door for anyone.">Unchanged</span></div></div>
+          </aside>
+          <div class="page">
+            <div class="pagehead"><h1>🏆 Tournaments</h1><span class="meta">Help</span></div>
+            <p class="hint">Live and upcoming first — tap an entry for schedule, roster submission, and organizer updates. <span class="mk" data-k="un" data-note="This season's entries — the page's existing content — are untouched, and stay the page's primary content.">Unchanged</span></p>
+            <div class="rowlist" style="margin-bottom:18px">
+              <div class="row"><span class="who">Halton Fall Invitational</span><span class="meta">Oct 3–4 · Registered</span><span class="caps">Halton Minor Baseball · Milton Bats U13 Purple</span></div>
+              <div class="row"><span class="who">Burlington Season Opener</span><span class="meta">Sep 26–27 · Confirmed</span><span class="caps">Burlington Bulldogs · Milton Bats U13 Purple</span></div>
+            </div>
+            <div class="eyebrow" style="margin-bottom:8px">Tournaments you run <span class="mk" data-k="new" data-note="The second half of the team's tournament season, on the page that already holds the first half (owner ruling 2). Rendered ONLY for a viewer who holds the right — the head coach, a club admin who coaches, or a staff member with Run tournaments on. Sam (assistant) sees the entries above and nothing below them: no heading, no card. It sits BELOW the entries on purpose (D8) — the season's entries are what the page is for; hosting is the secondary layer."> New</span> <button class="fl fix" data-finding="F03" data-here="This section is the door — before and after the tournament exists — for everyone who can run one. It replaces the Overview banner and the widened menu link from the first mockup.">fixes F03</button> <button class="fl fix" data-finding="F01" data-here="An assistant without the right sees nothing here, so there is nothing to click and nothing to be refused.">fixes F01</button></div>
+            <div class="twoup">
+              <div>
+                <p class="hint"><strong>Before any tournament exists</strong></p>
+                <div class="banner">
+                  <div class="ico">🏆</div>
+                  <div class="body"><strong>Run your own tournament</strong><span>A quick round robin or exhibition weekend, set up from here. <span class="mk" data-k="re" data-note="The retired Overview banner's sentence, moved to its permanent home. Its acquisition analytics event moves with it, so nothing is lost.">Restyled</span></span></div>
+                  <span class="cta">Set up a tournament <span class="mk" data-k="new" data-note="Opens the create wizard directly (the admin side already supports a direct entry into it) and finishes on the new tournament's Dashboard. The All-tournaments list is skipped.">New</span></span>
+                </div>
+              </div>
+              <div>
+                <p class="hint"><strong>Once one exists</strong></p>
+                <div class="rowlist">
+                  <div class="row"><span class="who">Bats Fall Classic</span><span class="meta">Oct 17–18 · <em style="font-style:normal;background:var(--soft);padding:1px 6px;border-radius:4px">Registration open</em></span><span class="caps">4 of 6 teams registered · <a href="#screen-landing">Manage →</a> <span class="mk" data-k="new" data-note="Name, dates, the tournament's own status word (Draft / Registration open / Live / Finished), teams registered, and one door: Manage, straight into that tournament's Dashboard (screen 5) — never the workspace's All-tournaments list. A Premium workspace has one slot, so this is normally one row.">New</span></span></div>
+                </div>
+              </div>
+            </div>
+            <p class="meta" style="margin-top:14px">On a phone the same section stacks under the entries; there is no separate More-sheet door any more. <span class="mk" data-k="un" data-note="No nav change on any device. The phone bar, the More sheet and the desktop sidebar are exactly as today.">Unchanged</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── SCREEN 5 · landing ─────────── -->
+      <section class="screen" id="screen-landing" hidden>
+        <div class="specimen first">Where Manage lands — the tournament's own Dashboard, the screen it is run from</div>
+        <div class="adminshell">
+          <aside class="adminside">
+            <div class="it" style="color:var(--muted);font-size:12px">← Coaches Portal <span class="mk" data-k="un" data-note="The admin rail's existing door back to the Coaches Portal. Priya came from the Tournaments page and this is how she returns.">Unchanged</span></div>
+            <div class="grp">Bats Fall Classic</div>
+            <div class="it on">Dashboard</div>
+            <div class="it">Teams</div>
+            <div class="it">Schedule</div>
+            <div class="it">Results</div>
+            <div class="it">Check-in</div>
+            <div class="it">Staff Kit</div>
+            <div class="it">Communications</div>
+            <div class="it">Chat</div>
+            <div class="grp">Setup ▸</div>
+            <div class="grp">Admin ▸</div>
+            <div class="it gone" style="margin-top:8px">Members · Subscription <span class="mk" data-k="un" data-note="Not in the bundle, and the admin rail already hides them from anyone without those rights — so Priya's rail is the tournament and nothing else. No admin-side page changes in this project.">Unchanged</span></div>
+          </aside>
+          <div class="page">
+            <div class="eyebrow">Milton Bats U13 Purple</div>
+            <div class="pagehead"><h1>Bats Fall Classic <span class="chip">Draft</span></h1><span class="meta">Oct 17–18 · Exhibition</span></div>
+            <div class="glance">
+              <div class="tile"><b>Teams</b><div class="big">4 of 6</div>registered</div>
+              <div class="tile"><b>Schedule</b><div class="big">Not built</div>0 games</div>
+              <div class="tile"><b>Public page</b><div class="big">Hidden</div>until you publish</div>
+            </div>
+            <p class="meta">This is the same working screen a standalone tournament account lands on — Dashboard, Teams, Schedule, Results, Check-in, communications, set-up. <span class="mk" data-k="un" data-note="The existing per-tournament admin, unchanged. What is new is only that a coach-portal staff member can hold the right to use all of it, and that the coach portal's Manage door opens here directly.">Unchanged</span> <strong>Manage</strong> opens it directly; <strong>Set up a tournament</strong> opens the create wizard directly and finishes here. The workspace-level “All tournaments” list is never a stop on either path. <span class="mk" data-k="re" data-note="The first draft of this screen landed Priya on the workspace's All-tournaments list — a lobby with one row and a create button. Withdrawn: the door opens onto the working screen. The list page still exists for the owner via the Admin link, as today.">Restyled</span> The one-tournament limit applies to Priya exactly as to Jordan. <span class="mk" data-k="un" data-note="Premium includes one tournament slot. The grant does not add one; a second Set up gets the same limit message the head coach gets.">Unchanged</span></p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Run tournaments, delegated</h1>
+  <p class="sub">Owner direction 2026-09-13 — two rulings: delegate with one switch; centralize hosting on the existing Tournaments page · ships after “Manage staff, delegated” (same staff sheet)</p>
+  <h2>What changes for the coach</h2>
+  <p><strong>Today.</strong> Every Premium Coaches Portal can run one tournament — a round robin, an exhibition weekend. Only the head coach can actually do it. Every staff member sees the same “Your team can run local tournaments here too — Open setup” invitation on the team Overview, follows it into a tournament page that looks fully theirs, fills in the form, and is refused with a bare “Forbidden” at the last step. And the head coach has no way, anywhere in the portal, to let a manager run the weekend for them.</p>
+  <p><strong>After.</strong></p>
+  <ol>
+    <li><strong>One Tournaments page, both halves.</strong> The page that already lists this season’s entries gains a second section underneath, <em>Tournaments you run</em>. With nothing yet it offers <em>Set up a tournament</em>; once one exists it shows the tournament’s name, dates, status and teams registered, with a <em>Manage</em> door. The section appears only for people who hold the right — everyone else sees the entries and nothing more. The “run local tournaments here too” banner on the Overview goes away, and the “Admin” link at the foot of the menu is untouched. Nobody is walked to a refusal, and there is one place to look.</li>
+    <li><strong>The staff sheet gains one switch: <em>Run tournaments</em>.</strong> It sits in the Sensitive group with Team money and Contacts, because a tournament’s registrations hold other teams’ coaches’ details and payments. Turning it on asks once and says what it hands over; turning it off is instant. Whoever holds it can do <strong>everything</strong> on the tournament page. There are no finer-grained tournament permissions in the coach portal, on purpose.</li>
+    <li><strong>Defaults follow the role.</strong> A new Team manager starts with it on (their invite email says so); an assistant coach, treasurer or helper starts with it off. Managers already on a team are not changed — it is one tap on their sheet.</li>
+    <li><strong>Running it happens where it always has.</strong> <em>Manage</em> opens the tournament’s own Dashboard — Teams, Schedule, Results, Check-in and the rest, in the admin look, the same screen a standalone tournament account works in. <em>Set up</em> opens the create wizard directly and finishes on that Dashboard. Neither path stops at a list page. A delegate lands on the tournament and nothing else: no Members, no settings, no billing.</li>
+    <li><strong>Premium workspaces only.</strong> In a club, the tournaments belong to the club; club coaches don’t get the switch, and the section shows only for club admins who also coach.</li>
+  </ol>
+  <h2>Why it matters</h2>
+  <p>The head coach who bought Premium is a volunteer with a job. “Run the exhibition weekend” is the most delegable thing on the team, and today it is the one thing the portal will not let them hand off — while advertising it to the very people who can’t do it. Fixing both halves turns a dead end into the reason a manager logs in.</p>
+  <h2>Customer impact</h2>
+  <ul>
+    <li><strong>Head coach:</strong> one switch, one confirm, done. Nothing else on their screen moves.</li>
+    <li><strong>Team manager:</strong> invited from today, they can run the weekend the day they accept.</li>
+    <li><strong>Assistant / helper / treasurer:</strong> a misleading banner disappears; nothing they had is taken.</li>
+    <li><strong>Club coaches / club admins:</strong> no change.</li>
+    <li><strong>Do nothing:</strong> every assistant keeps hitting “Forbidden”, and the head coach keeps running the tournament themselves or handing over their login.</li>
+  </ul>
+  <h2>Trade-offs made</h2>
+  <ul>
+    <li><strong>All-or-nothing on purpose.</strong> No per-area tournament permissions in the coach portal (the owner’s call). A head coach who needs finer control than “run it” is running a tournament business, and that product exists.</li>
+    <li><strong>The switch is per person, not per team</strong>, because the tournament belongs to the workspace. Someone on two of your teams gets one answer.</li>
+    <li><strong>Existing managers are not switched on retroactively</strong> — widening access silently on ship is the one thing this portal’s access model has never done.</li>
+  </ul>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Nobody reaches a “Forbidden” from the coach portal; a person without the right sees no hosting section at all.</li>
+    <li>A head coach can grant <em>Run tournaments</em> to a manager from the staff sheet and that manager creates and runs the workspace’s tournament without any admin-side help.</li>
+    <li>A newly invited Team manager has the section without a second step; a newly invited assistant does not.</li>
+    <li>Taking the switch back, or removing the person from their last team, removes the section and the right together.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Run tournaments, delegated — implementation plan</h1>
+  <p class="sub">Written 2026-09-13 from the code at dev <code>87b94167</code>. The source of record is <code>docs/projects/active/COACH_TOURNAMENT_DELEGATION_PLAN.md</code>; this tab is the same plan, readable.</p>
+
+  <h2>What the code does today</h2>
+  <h3>F01 — The “run tournaments” banner is a dead end for everyone but the workspace owner</h3>
+  <p>The banner on the team Overview shows whenever the workspace has the tournaments module and no tournament yet. It never asks who is looking. An assistant coach holds a workspace role that deliberately carries zero rights (a past audit found coach-role members reading org-wide finance through admin routes, so the role was emptied). On the click: the admin shell admits any member except a scorekeeper; the tournament page renders with its list and its create button (neither is gated on the right); the create request is refused with a bare “Forbidden”. That is the standing rule — <em>if a surface cannot honestly serve someone, hide its entry point</em> — broken.</p>
+  <h3>F02 — A head coach has no way to hand tournament-running to their staff</h3>
+  <p>The head coach is the workspace’s owner and can run its one tournament. Every staff member they invite is a rights-less coach. The staff sheet offers thirteen grants; none touches tournaments. <strong>The right already exists one floor down:</strong> the workspace keeps a per-member override map that every tournament page and route already honours, and the admin Members page can set it — but that page speaks the vocabulary of a tournament company (“override individual capabilities above or below role defaults”) and no head coach will ever find it.</p>
+  <h3>F03 — The coach portal has no home for “the tournament we run”</h3>
+  <p>The banner hides itself once a tournament exists (by design). After that the only door is the “Admin” link at the foot of the coach menu, owner/admin only, into the whole admin area. Meanwhile the portal already has a Tournaments page — this season’s entries, with an empty state that teaches what lands there — and hosting lives nowhere on it.</p>
+
+  <h2>Design — one grant, <em>Run tournaments</em></h2>
+  <div class="tablewrap"><table>
+    <tr><th>Where it lives</th><td>On the person’s <strong>workspace membership</strong>, not on a team-staff row. The tournament belongs to the workspace (one slot) and a workspace may hold several teams; a person on two teams must get one answer.</td></tr>
+    <tr><th>What “on” does</th><td>Writes the full tournament bundle as that person’s overrides — every tournament action plus the tournament module and its look-and-feel (D4). <strong>Never</strong> members, settings, billing, or any other module.</td></tr>
+    <tr><th>What “off” does</th><td>Removes exactly those keys; leaves anything else an admin set there.</td></tr>
+    <tr><th>How the sheet reads it</th><td>ON when the one key every write route checks is on. A partial hand-set map reads as OFF; switching on writes the whole bundle. The sheet is the front door; the Members page stays the advanced view of the same stored truth.</td></tr>
+    <tr><th>Group on the sheet</th><td><strong>Sensitive — asks before granting.</strong> Registrations carry visiting coaches’ contact details and payment records. Revoking is instant and never asks.</td></tr>
+    <tr><th>Presets</th><td>Team manager ON · assistant, treasurer, helper OFF. The manager’s invite email gains “the team’s tournaments” (the email must promise what the preset grants).</td></tr>
+    <tr><th>Existing staff</th><td>Not changed on ship (D3). A preset is where access starts.</td></tr>
+    <tr><th>Head coach</th><td>Always on; not switchable for themselves.</td></tr>
+    <tr><th>Where offered</th><td>Standalone Premium workspaces only (D2). In a club-attached team the row is not rendered.</td></tr>
+    <tr><th>Who may flip it</th><td>The head coach. When “Manage staff, delegated” ships, its “never more than they hold” wall covers this switch with no extra rule.</td></tr>
+    <tr><th>Leaving</th><td>Removing a person’s last staff seat in the workspace already deletes their workspace membership — the right goes with it. Pin it with a test. Someone still on another team keeps it: the person-level rule holding.</td></tr>
+  </table></div>
+
+  <h3>The door — one section on the existing Tournaments page (owner ruling 2)</h3>
+  <ul>
+    <li><strong>“Tournaments you run”</strong>, a second block under this season’s entries, rendered only for a viewer holding the right. Nobody else sees a heading, a row or an empty card.</li>
+    <li><strong>No hosted tournament yet:</strong> one quiet card — “Run your own tournament. A quick round robin or exhibition weekend, set up from here.” → <em>Set up a tournament</em> (the acquisition event the banner used to fire moves here).</li>
+    <li><strong>Hosted tournament(s) exist:</strong> one row each — name · dates · status word · teams registered · <em>Manage →</em> straight into that tournament’s Dashboard. Normally one row in a Premium workspace (one slot).</li>
+    <li><strong>Below the entries, never above</strong> (D8) — entries are the page’s primary content.</li>
+    <li><strong>The Overview banner is retired</strong> (D7); <strong>the foot-of-menu “Admin” link is untouched</strong> — no nav change on any device.</li>
+    <li><strong>The page’s own gate stays:</strong> the Tournaments page opens with the Schedule grant (every preset gives it). A holder of the right with Schedule hidden would not reach the section; the switch’s sentence says “on the Tournaments page”, which is the honest answer.</li>
+    <li><strong>In a club:</strong> the section renders for a club admin who also coaches; ordinary club coaches see nothing.</li>
+  </ul>
+  <h3>What the delegate lands on</h3>
+  <p><em>Manage</em> opens that tournament’s own <strong>Dashboard</strong> — the working screen with its rail (Dashboard, Teams, Schedule, Results, Check-in, Staff Kit, Communications, Chat, Setup, Admin), the same screen a standalone tournament account lands on. <em>Set up a tournament</em> opens the create wizard directly and finishes on the new tournament’s Dashboard. The workspace-level “All tournaments” list is never a stop on either path (it remains reachable by the owner through the Admin link, as today). The rail already hides Members and Subscription from anyone without those rights — the bundle does not include them. Same one-slot limit. <strong>No admin-side page changes.</strong></p>
+
+  <h2>Build</h2>
+  <div class="note"><strong>Sequencing.</strong> Lands after (or with) <em>Manage staff, delegated</em> — both add a Sensitive switch to the same staff sheet and both edit the same presets; that sheet carries another session’s uncommitted work today. Do not build against a stale copy.</div>
+  <h3>Chunk A — the section replaces the banner (independent; ship first)</h3>
+  <ol><li>A small coach-portal call answers “can this person run tournaments here, and which exist?” — empty for anyone who cannot.</li><li>The Tournaments page renders the “Tournaments you run” block only when the answer is yes; both existing empty states keep their copy.</li><li>The Overview banner and its call are removed; the acquisition event moves to the section’s button.</li><li>Tests: no section for a rights-less coach; rows for the owner. This alone closes F01 everywhere and F03 for the head coach.</li></ol>
+  <h3>Chunk B — the grant</h3>
+  <ol>
+    <li>Add <em>tournaments</em> to the grant vocabulary and the four presets; update the manager’s invite promise. Document that this key is the one exception — resolved from the workspace membership, not the staff row.</li>
+    <li>A small pure module owns the bundle: the key list, read, apply. Unit-tested; the single home.</li>
+    <li>The staff-access save route: when the body carries the switch, the org is a Premium workspace and the caller is the head coach — write the bundle onto the target’s <em>coach</em> membership, re-asserting “still a coach row” in the write (never widen an admin’s map from here). Refuse honestly in a club.</li>
+    <li>The staff list reads the same truth so the row chip and the sheet agree.</li>
+    <li>One Sensitive switch on the sheet, rendered only in a Premium workspace; asks-first copy as drawn.</li>
+    <li>Invite acceptance: when the accepted invite carries the switch (manager preset), write the bundle in the same step that creates the membership.</li>
+    <li>No nav change (owner ruling 2). The delegate’s door is Chunk A’s section, which already reads the right the switch writes.</li>
+    <li>Tests: bundle round-trip; refuse in a club; never touch a non-coach row; last-seat removal clears the right; the section appears for a granted manager.</li>
+  </ol>
+  <h3>Chunk C — words</h3>
+  <ul><li>Help: the staff-access article (grant list + manager sentence) and the coach “run a tournament” mention.</li><li>Demo: the sandbox’s head coach now finds hosting on the Tournaments page instead of an Overview banner. Re-read any dock/tour line mentioning the banner or “Open setup” at build (grep finds none today), and consider pointing the Tournaments tour step at the section.</li><li>Spelling gate: no variant words introduced.</li></ul>
+  <h3>Not built here</h3>
+  <ul><li>Per-tournament / per-area permissions inside the coach portal (owner: not needed).</li><li>Backfilling existing managers (D3).</li><li>Any club-side change.</li><li>A tournament-slot change: still one.</li></ul>
+
+  <h2>Verification (becomes the QA Walk tab at build)</h2>
+  <p>Needs a <strong>Premium workspace</strong> fixture — the UAT org is a Tournament-plan org. Parts: A the dead end is gone (assistant: no banner for anyone, no section) · B granting (head coach) · C the delegate’s section, the Set-up card becoming a row, the one-slot limit, no Members/settings/billing, no “Admin” link · D taking it back (instant), and last-team removal · E invite a manager (promised, present) vs an assistant (absent) · F a club-attached coach sees neither switch nor section.</p>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">Three ruled by the owner; seven proposed with a recommendation each. A row moves to Accepted / Rejected as you rule.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">Run tournaments, delegated — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: UAT_COACH_EMAIL (from .env.local) · Org/Team: <strong>uat-standalone / UAT Standalone Team</strong> — a Premium workspace, NOT the club-linked uat-test-org (Part F is the only part taken there). Rebuild the fixture if stale: <code>node scripts/seed-uat-standalone-coach.mjs --null-dangling --reset</code>. You also need a Team manager and an assistant on the team — invite two fresh aliases from Staff if there are none. Ledger entry: §181.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+const intents={
+ 'screen-today':'The whole Overview as an assistant sees it today, so the cumulative effect of the fix can be judged: the banner is the only thing that changes, and it changes by disappearing.',
+ 'screen-overview':'The same screen for two viewers, and the same answer for both: the banner is gone. Hosting has one home now, and it is not the Overview.',
+ 'screen-switch':'One switch, in the Sensitive group, with a confirm that names what a tournament page holds that is not the team’s own. Draw the decision, not every control — the Everyday group is collapsed on purpose.',
+ 'screen-door':'One page for both halves of the team’s tournament season. The whole screen is drawn so the cumulative effect can be judged: the entries stay on top, and hosting is one quiet block below them, present only for people who can act on it.',
+ 'screen-landing':'The door opens onto the working screen, not a lobby: the tournament’s own Dashboard, with its own rail. No admin-side page changes — the rail already hides what the bundle does not include.'
+};
+function showScreen(){const id=location.hash.slice(1)||'screen-today';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+intents[id]:'';document.getElementById(id)?.querySelector('h1,h2')?.focus?.({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'The banner is a dead end for everyone but the owner',now:'The “Your team can run local tournaments here too” banner shows to every staff member of a workspace that has the tournament module and no tournament yet. It never asks who is looking. An assistant follows it into the tournament admin page — the shell admits them, the list loads, the create button is there — and the create request is refused with a bare “Forbidden”.',fix:'The banner is retired. Hosting moves to a section on the Tournaments page that renders only for people holding the right. No door, no refusal, and the “viewed” analytics event fires only from a control someone can actually use.'},
+ F02:{t:'A head coach cannot delegate tournament-running',now:'The head coach is the workspace’s owner and can run its one tournament. Everyone they invite is a rights-less coach. The staff sheet has thirteen grants and none touches tournaments. The right does exist one floor down — a per-member override the admin Members page can set — but that page speaks a tournament company’s vocabulary and no head coach will find it.',fix:'One Sensitive switch on the staff sheet, “Run tournaments”. On writes the whole tournament bundle onto the person’s workspace membership — the same override every tournament page and route already honours — so nothing on the admin side changes. Manager preset ON, everyone else OFF. Premium workspaces only.'},
+ F03:{t:'The coach portal has no home for the tournament you run',now:'The banner hides itself once a tournament exists, by design. After that the only door is the “Admin” link at the foot of the coach menu, owner/admin only, into the whole admin area. Meanwhile the portal already has a Tournaments page — this season’s entries — and hosting lives nowhere on it.',fix:'The Tournaments page gains a “Tournaments you run” section below the entries, shown only to people holding the right: a Set-up card before any tournament exists, then a row per hosted tournament with a Manage door. The Overview banner is retired and the menu is untouched (owner ruling 2).'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+const DECISIONS=[
+ {date:'2026-09-13',ask:'Can a head coach delegate running their tournaments to staff?',ruling:'accepted',label:'Accepted',why:'Owner: “the head coach needs to be able to delegate managing their exhibition weekends to managers and assistants.”'},
+ {date:'2026-09-13',ask:'One permission for the whole tournament page — no finer tournament staff permissions in the coach portal; off for assistants, on for managers',ruling:'accepted',label:'Accepted',why:'Owner: “for those that have it can do everything in that tournament page, so we don’t need further tournament staff permissions in there like we have in the tournament standalone accounts. default off for assistants and on for managers.”'},
+ {date:'2026-09-13',ask:'D1 — The grant lives on the person’s workspace membership (person-level), not on a team-staff row',ruling:'proposed',label:'Proposed · recommended',why:'The tournament belongs to the workspace (one slot) and a workspace can hold several teams; a person on two teams must get one answer. It also rides the override every tournament page and route already honours — zero admin-side changes. The alternative teaches every admin route a second permission source.'},
+ {date:'2026-09-13',ask:'D2 — Offered in standalone Premium workspaces only; never in a club-attached team',ruling:'proposed',label:'Proposed · recommended',why:'In a club the tournaments are the club’s, a club coach cannot hand out club-level rights, and the club admin already has the Members page. If club coaches should run club tournaments from the portal, that is a club-admin consent question — a different project.'},
+ {date:'2026-09-13',ask:'D3 — Managers already on a team are NOT switched on when this ships; “on for managers” applies at invite time',ruling:'proposed',label:'Proposed · recommended',why:'A preset is where access starts, not where it must stay. Silently widening access on ship is the one thing this portal’s access model has never done, and it is one tap per existing manager.'},
+ {date:'2026-09-13',ask:'D4 — The bundle includes the tournament’s look-and-feel (branding)',ruling:'proposed',label:'Proposed · recommended',why:'“Everything in that page” includes the branding tab. In a Premium workspace the org’s branding and the tournament’s are effectively the same surface. Say no and the delegate gets everything except the look-and-feel.'},
+ {date:'2026-09-13',ask:'Hosting lives on the existing Tournaments page — one centralized section, not a second nav',ruling:'accepted',label:'Accepted',why:'Owner, on the first mockup: “we already have a tournaments page where it shows teams’ tournaments they are participants in — use that as the way for admins and head coaches to create their own; a centralized tournaments section instead of 2 separate navs.” D5 (a widened, renamed foot-of-menu door) is withdrawn.'},
+ {date:'2026-09-13',ask:'D7 — The Overview banner is retired in the coach portal',ruling:'proposed',label:'Proposed · recommended',why:'The Tournaments page section is its permanent, discoverable home; two doors to one destination is what the account-menu ruling removed elsewhere. The acquisition event moves to the section’s button, so nothing is lost in analytics.'},
+ {date:'2026-09-13',ask:'D8 — The section sits BELOW this season’s entries, never above',ruling:'proposed',label:'Proposed · recommended',why:'Entries are what the page is for; hosting is the secondary layer. Put it above and one hosted tournament out-weighs the whole season for every viewer who holds the right.'},
+ {date:'2026-09-13',ask:'D6 — Sensitive group, asks before granting; revoking is instant',ruling:'proposed',label:'Proposed · recommended',why:'A tournament’s registrations carry visiting coaches’ contact details and payment records — other people’s PII, the same class as Contacts & birthdates.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+const QA_PARTS=[
+ {id:'A',title:'The dead end is gone',steps:['The Overview shows no tournament banner for anyone (head coach included)','As an assistant with no grant: the Tournaments page shows this season’s entries and no “Tournaments you run” heading','Typing /uat-standalone/admin/org/tournaments directly and trying to create: still refused (unchanged)']},
+ {id:'B',title:'Granting',steps:['As head coach, open the manager’s sheet: the Sensitive group holds “Run tournaments” just above Manage staff, with the sentence “Set up and run the team’s tournaments from the Tournaments page — registrations, schedule, scores, and what visiting teams see.”','Turn it on: the confirm reads “Let {name} run your tournaments?” and names registrations, visiting coaches’ contact details and payments, and what it does NOT hand over (staff, settings, billing)','Save: the staff row’s chips include “Run tournaments”','Open the assistant’s sheet: “Run tournaments” is off by default']},
+ {id:'C',title:'The delegate',steps:['As that manager: the Tournaments page shows “Tournaments you run” below the entries, with the Set up a tournament card','Set up opens the create wizard directly (not a list page); finish it: the success notice’s button reads “Open the dashboard” and lands on the new tournament’s Dashboard','Back on the Tournaments page the card is now a row: name, dates, “0 teams registered”, Draft, “Manage →”','Manage opens that tournament’s Dashboard directly, with its rail (Teams, Schedule, Results, Check-in…)','A second Set up gets the tournament-limit message','The admin rail shows no Members or Subscription','The foot-of-menu “Admin” link is not shown to the manager (unchanged rule)']},
+ {id:'D',title:'Taking it back',steps:['Head coach turns it off: instant, no confirm','The manager’s Tournaments page has no “Tournaments you run” section, and a direct-URL create is refused','Remove the manager from their only team: their workspace membership is gone with the right']},
+ {id:'E',title:'Invite',steps:['Invite a new Team manager: the invite email promises tournaments','After accepting, the section is there with no second step','Invite a new Assistant coach: no section']},
+ {id:'F',title:'Club (uat-test-org)',steps:['As the UAT head coach in the club-linked uat-test-org: a staff sheet there has no “Run tournaments” row','The Tournaments page there has no “Tournaments you run” section']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-state-tournament-delegation')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-state-tournament-delegation',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

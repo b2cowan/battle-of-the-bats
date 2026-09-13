@@ -64,6 +64,21 @@
   flex-shrink: 0;
 }
 
+/* A hosted-tournament row ("Tournaments you run") carries its status badge AND the one door's
+   word beside it, so the whole-surface click has a name. */
+.cardStatus:has(.cardAction) {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cardAction {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .cardMeta span + span::before {
     content: none;

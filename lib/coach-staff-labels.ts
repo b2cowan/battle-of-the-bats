@@ -21,6 +21,7 @@ export const GRANT_LABELS: Readonly<Record<keyof Required<AssistantCapabilityGra
   announcementsSend: 'Email families',
   tryouts: 'Tryouts',
   manageStaff: 'Manage staff',
+  tournaments: 'Run tournaments',
 };
 
 export function grantLabel(key: keyof Required<AssistantCapabilityGrants>): string {

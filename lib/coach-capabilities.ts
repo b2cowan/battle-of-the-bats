@@ -41,6 +41,7 @@ export interface AssistantCapabilityGrants {
   scoutingBook?: boolean;        // read the POOLED scouting book (everyone's notes + the book line)
   development?: boolean;         // WRITE development — tests, sessions, results, goals (see below)
   manageStaff?: boolean;         // open the Staff page: invite, set others' access, remove (see below)
+  tournaments?: boolean;         // RUN the workspace's tournaments — everything on that page (see below)
 }
 
 /**
@@ -122,6 +123,27 @@ export interface CoachCapabilities {
    * Plan: `docs/projects/archive/COACH_STAFF_DELEGATION_PLAN.md`.
    */
   manageStaff: boolean;
+  /**
+   * ═══ RUN TOURNAMENTS — ONE SWITCH FOR THE WHOLE TOURNAMENT PAGE (owner ruling 2026-09-13) ═══
+   * A Premium workspace can run one tournament (a round robin, an exhibition weekend). The owner:
+   * *"the head coach needs to be able to delegate managing their exhibition weekends to managers
+   * and assistants … for those that have it can do everything in that tournament page, so we
+   * don't need further tournament staff permissions in there … default off for assistants and
+   * on for managers."* Always TRUE for a head coach; FALSE by default; ON only in the Team
+   * manager preset.
+   *
+   * ⚠ THIS KEY IS THE ONE GRANT NO COACH ROUTE READS. Tournaments are run on the admin side, and
+   * every admin tournament page and route decides on the person's ORG membership
+   * (`organization_members.capabilities`, the per-member override `hasCapability` consults). So
+   * the stored grant is PROJECTED there — `syncTournamentGrantProjection` in
+   * `lib/coach-membership.ts` writes the tournament bundle (`lib/coach-tournament-grant.ts`) onto
+   * the person's coach-role membership whenever any of their active staff rows in the workspace
+   * holds this (a head-coach row always does), and removes it when none does. Person-level, not
+   * per-team, because the tournament belongs to the workspace. In a CLUB the switch is not
+   * offered and the projection does not run — a club's tournaments are the club admin's, through
+   * the Members page. Plan: `docs/projects/active/COACH_TOURNAMENT_DELEGATION_PLAN.md`.
+   */
+  tournaments: boolean;
 }
 
 /** The least-privilege bundle a freshly-invited assistant gets before any grant. */
@@ -151,6 +173,8 @@ export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   development: false,
   // OFF by default — the master key is the one switch that must never widen by accident (2026-09-13).
   manageStaff: false,
+  // OFF by default — a tournament's registrations carry other teams' coaches and their payments.
+  tournaments: false,
 };
 
 /** A head coach's full-access bundle. */
@@ -171,6 +195,7 @@ const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   scoutingBook: true,
   development: true,
   manageStaff: true,
+  tournaments: true,
 };
 
 /**
@@ -220,7 +245,7 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
   assistant: {
     schedule: true, scheduleManage: true, attendance: true, lineups: true, staffChat: true,
     documents: 'view', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: true, development: false, manageStaff: false,
+    tryouts: false, scoutingBook: true, development: false, manageStaff: false, tournaments: false,
   },
   /**
    * ⚠ THE MANAGER STARTS WITH `manageStaff` ON (owner ruling 2026-09-13, D2) — the only preset that
@@ -234,11 +259,14 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
     schedule: true, scheduleManage: true, attendance: false, lineups: false, staffChat: true,
     documents: 'manage', money: 'write', rosterPii: true, notes: false, announcementsSend: true,
     tryouts: false, scoutingBook: true, development: false, manageStaff: true,
+    // ON (owner ruling 2026-09-13): running the exhibition weekend is the manager's job. Existing
+    // managers are not backfilled — a preset is where access starts.
+    tournaments: true,
   },
   treasurer: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'write', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: false, development: false, manageStaff: false,
+    tryouts: false, scoutingBook: false, development: false, manageStaff: false, tournaments: false,
   },
   /**
    * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
@@ -260,7 +288,7 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
   helper: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
-    tryouts: false, scoutingBook: true, development: false, manageStaff: false,
+    tryouts: false, scoutingBook: true, development: false, manageStaff: false, tournaments: false,
   },
 };
 
@@ -329,6 +357,24 @@ export const STAFF_KIND_COPY: Readonly<Record<StaffKind, {
     emailWhat: 'Accept below to set up your account. On a practice day you’ll see the plan, the station you’re running and the players with you — on your own phone, at the field. That’s all it does.',
   },
 };
+
+/**
+ * THE COPY FOR A KIND, IN A GIVEN ORG. `STAFF_KIND_COPY` is the club-true base: `emailWhat` must
+ * promise what the preset grants, and in a club the manager preset's `tournaments` is written off
+ * (`applyOrgGrantPolicy`). In a standalone Premium workspace the manager DOES start with Run
+ * tournaments, so the sentence and the email promise say so there — and only there. Every surface
+ * that names what a kind hands over reads through here with the org in hand; the bare table is
+ * for surfaces that are club-only by construction (the admin's approval notification).
+ */
+export function staffKindCopyFor(kind: StaffKind, org: { isTeamWorkspace: boolean }): (typeof STAFF_KIND_COPY)[StaffKind] {
+  const base = STAFF_KIND_COPY[kind];
+  if (kind !== 'manager' || !org.isTeamWorkspace) return base;
+  return {
+    ...base,
+    sentence: 'Runs the team off the field — money, forms, family emails, the staff list, tournaments. Not the lineup.',
+    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails, the staff chat, the staff list and the team’s tournaments — the head coach can change any of it.',
+  };
+}
 
 /**
  * DISPLAY ONLY — which word describes this person on a staff list.
@@ -414,6 +460,7 @@ export function resolveCoachCapabilities(
     scoutingBook: g.scoutingBook ?? ASSISTANT_DEFAULTS.scoutingBook,
     development: g.development ?? ASSISTANT_DEFAULTS.development,
     manageStaff: g.manageStaff ?? ASSISTANT_DEFAULTS.manageStaff,
+    tournaments: g.tournaments ?? ASSISTANT_DEFAULTS.tournaments,
   };
 }
 
@@ -441,6 +488,7 @@ export function grantsOf(c: CoachCapabilities): Required<AssistantCapabilityGran
     staffChat: c.staffChat, scoutingBook: c.scoutingBook,
     development: c.development,
     manageStaff: c.manageStaff,
+    tournaments: c.tournaments,
   };
 }
 export const MANAGE_STAFF_DENIED_MESSAGE = 'Managing staff isn’t turned on for you.';
@@ -773,9 +821,22 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
   const sb = bool(src.scoutingBook); if (sb !== undefined) out.scoutingBook = sb;
   const dv = bool(src.development); if (dv !== undefined) out.development = dv;
   const ms = bool(src.manageStaff); if (ms !== undefined) out.manageStaff = ms;
+  const tn = bool(src.tournaments); if (tn !== undefined) out.tournaments = tn;
   if (typeof src.money === 'string' && MONEY_VALUES.includes(src.money as MoneyAccess)) out.money = src.money as MoneyAccess;
   if (typeof src.documents === 'string' && DOCS_VALUES.includes(src.documents as DocsAccess)) out.documents = src.documents as DocsAccess;
   return out;
+}
+
+/**
+ * The grants a given org can HOLD. `tournaments` exists only in a standalone Premium workspace
+ * (owner ruling 2026-09-13, D2): in a club the tournaments are the club's, so the switch is not
+ * offered and a bundle arriving with it — a client, or the Team manager PRESET, which carries it
+ * on — is written with it off. Applied by every route that stores a bundle (invite, sheet save,
+ * kind change), so the row chip, the sheet and the projection can never disagree in a club.
+ */
+export function applyOrgGrantPolicy<T extends AssistantCapabilityGrants>(grants: T, org: { isTeamWorkspace: boolean }): T {
+  if (org.isTeamWorkspace || !grants.tournaments) return grants;
+  return { ...grants, tournaments: false };
 }
 
 /** Returns a 403 `Response` when `allowed` is false, otherwise null (proceed). A route handler

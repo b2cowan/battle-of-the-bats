@@ -22,13 +22,15 @@ export async function sendAssistantInviteEmail(p: {
   invitedByName: string | null;
   rawToken: string;
   staffKind: StaffKind | null;
+  /** A standalone Premium workspace — the manager's promise includes the team's tournaments there. */
+  isTeamWorkspace: boolean;
 }): Promise<void> {
   const kind: StaffKind = p.staffKind ?? 'assistant';
   const inviteUrl = `${APP_URL}/auth/accept-assistant-invite?token=${p.rawToken}`;
   await sendEmail(
     p.email,
     STAFF_KIND_COPY[kind].emailSubject(p.teamName),
-    assistantCoachInviteHtml({ teamName: p.teamName, invitedByName: p.invitedByName, inviteUrl, staffKind: kind }),
+    assistantCoachInviteHtml({ teamName: p.teamName, invitedByName: p.invitedByName, inviteUrl, staffKind: kind, isTeamWorkspace: p.isTeamWorkspace }),
   );
 }
 

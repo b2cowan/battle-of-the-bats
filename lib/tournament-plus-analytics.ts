@@ -30,6 +30,9 @@ export const TOURNAMENT_PLUS_ACQUISITION_SOURCES = [
   'registration_confirmation',
   'post_event_results_email',
   'coach_portal_banner',
+  // The Overview banner's successor (2026-09-13): the "Tournaments you run" section on the coach
+  // portal's Tournaments page. The old value stays for the rows already written.
+  'coach_portal_tournaments',
   'post_tournament_summary',
 ] as const;
 

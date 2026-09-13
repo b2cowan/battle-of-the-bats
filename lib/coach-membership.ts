@@ -21,6 +21,7 @@ import {
   wouldLeaveNoHeadCoach,
 } from './coach-capabilities';
 import { isTeamWorkspaceOrg, getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
+import { applyTournamentGrant } from './coach-tournament-grant';
 import type { Organization, RepProgramYear } from './types';
 
 /**
@@ -403,6 +404,12 @@ export async function addStaffMember(input: AddStaffMemberInput): Promise<TeamSt
   const membership = mapMembership(data);
 
   await syncLiveSeasonProjection(membership);
+  // Best-effort here: an invite acceptance has already consumed its token and written the row, so
+  // a transient projection failure must not 500 a join that succeeded. The coach-side read
+  // (hosted-tournaments) re-derives the projection before answering, which is what heals this.
+  await syncTournamentGrantProjection(membership.orgId, membership.userId).catch((e) => {
+    console.error('[coach-membership] tournament-grant projection failed (membership written):', e);
+  });
   return membership;
 }
 
@@ -480,6 +487,8 @@ export async function setStaffMemberRole(
 
   const membership = mapMembership(data);
   await syncLiveSeasonProjection(membership);
+  // A head coach always holds Run tournaments; a demoted one holds what their stored grants say.
+  await syncTournamentGrantProjection(membership.orgId, membership.userId);
   return { ok: true, membership };
 }
 
@@ -545,6 +554,11 @@ export async function removeStaffMember(
   await cleanupOrphanedGuestOrgMembership(orgId, userId).catch((e) => {
     console.error('[coach-membership] guest org-membership cleanup failed (removal succeeded):', e);
   });
+  // Still on another team in this workspace? Their tournament right follows what THOSE rows hold.
+  // (Their last seat gone → the membership row above is deleted, and the right went with it.)
+  await syncTournamentGrantProjection(orgId, userId).catch((e) => {
+    console.error('[coach-membership] tournament-grant projection failed (removal succeeded):', e);
+  });
   return data ? 'removed' : 'nothing';
 }
 
@@ -584,7 +598,68 @@ export async function updateStaffMemberAccess(
   if (!data) return null;
   const membership = mapMembership(data);
   await syncLiveSeasonProjection(membership);
+  await syncTournamentGrantProjection(membership.orgId, membership.userId);
   return membership;
+}
+
+/**
+ * ═══ RUN TOURNAMENTS → THE ORG MEMBERSHIP (owner ruling 2026-09-13) ═══
+ * The `tournaments` grant is the one grant no coach route reads: tournaments are run on the admin
+ * side, whose pages and routes decide on `organization_members.capabilities`. This projects the
+ * grant there. The rule is PERSON-level in the workspace — the tournament belongs to the
+ * workspace, not to a team — so: any ACTIVE staff row this person holds in the org that carries
+ * the grant (a head-coach row always does) ⇒ the tournament bundle is written onto their
+ * coach-role membership; none ⇒ the bundle's keys are removed. Keys outside the bundle are never
+ * touched, and a membership whose role is not `coach` (an owner, an admin, a treasurer the club
+ * gave a real role) is never written — their rights come from that role.
+ *
+ * Runs ONLY in a standalone Premium workspace. In a club the switch is not offered
+ * (`applyOrgGrantPolicy`), and a club admin's hand-set overrides on a coach-role member are theirs
+ * to keep — a staff edit here must not silently clear them.
+ *
+ * Called after every write that can change what a person's rows hold: add / reactivate, a grant
+ * or kind change, a role change, a removal. Idempotent; the no-change case does not write.
+ */
+export async function syncTournamentGrantProjection(orgId: string, userId: string): Promise<void> {
+  const { data: org, error: orgError } = await supabaseAdmin
+    .from('organizations')
+    .select('account_kind, plan_id')
+    .eq('id', orgId)
+    .maybeSingle<{ account_kind: string | null; plan_id: string | null }>();
+  if (orgError) throw orgError;
+  if (!org || !isTeamWorkspaceOrg({ accountKind: org.account_kind as Organization['accountKind'], planId: org.plan_id as Organization['planId'] })) return;
+
+  const { data: rows, error: rowsError } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('coach_role, capabilities')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (rowsError) throw rowsError;
+  const holds = (rows ?? []).some(r =>
+    r.coach_role === 'head_coach'
+    || (r.capabilities as AssistantCapabilityGrants | null)?.tournaments === true,
+  );
+
+  const { data: member, error: memberError } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, role, capabilities')
+    .eq('organization_id', orgId)
+    .eq('user_id', userId)
+    .maybeSingle<{ id: string; role: string; capabilities: Record<string, boolean> | null }>();
+  if (memberError) throw memberError;
+  if (!member || member.role !== 'coach') return;
+
+  const next = applyTournamentGrant(member.capabilities, holds);
+  if (next === (member.capabilities ?? null)) return;
+  // The WHERE re-asserts the role — a membership promoted to a real role between the read and
+  // the write keeps that role's map untouched (check-then-act discipline).
+  const { error: writeError } = await supabaseAdmin
+    .from('organization_members')
+    .update({ capabilities: next })
+    .eq('id', member.id)
+    .eq('role', 'coach');
+  if (writeError) throw writeError;
 }
 
 /** Mirror one field set onto an existing projection row when it diverges from the membership. */

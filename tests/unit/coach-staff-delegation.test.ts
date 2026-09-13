@@ -165,6 +165,6 @@ describe('rank — one definition of “wider” for the server and the sheet', 
     assert.equal(rank('off'), 0); assert.equal(rank('view'), 1); assert.equal(rank('read'), 1);
     assert.equal(rank('manage'), 2); assert.equal(rank('write'), 2);
     assert.equal(rank(false), 0); assert.equal(rank(true), 1); assert.equal(rank(undefined), 0);
-    assert.deepEqual([...SENSITIVE_KEYS], ['money', 'rosterPii', 'notes', 'announcementsSend', 'tryouts']);
+    assert.deepEqual([...SENSITIVE_KEYS], ['money', 'rosterPii', 'notes', 'announcementsSend', 'tryouts', 'tournaments']);
   });
 });

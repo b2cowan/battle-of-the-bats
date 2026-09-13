@@ -148,11 +148,17 @@ function buildDivisionRows(names: string[]): DivisionRow[] {
 export default function AdminTournamentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ create?: string | string[] }>;
+  searchParams: Promise<{ create?: string | string[]; source?: string | string[] }>;
 }) {
   const resolvedSearchParams = use(searchParams);
   const createValue = resolvedSearchParams.create;
   const createOnLoad = createValue === '1' || (Array.isArray(createValue) && createValue.includes('1'));
+  // Arrived from the coach portal's "Tournaments you run" section (owner ruling 2026-09-13): the
+  // create wizard opened directly, and finishing it should land on the new tournament's Dashboard
+  // — this list is a lobby that door was built to skip. Everyone else keeps "Got it" (stays here).
+  const sourceValue = resolvedSearchParams.source;
+  const fromCoachPortal = sourceValue === 'coach_portal_tournaments'
+    || (Array.isArray(sourceValue) && sourceValue.includes('coach_portal_tournaments'));
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [modal, setModal]       = useState<ModalMode>(null);
@@ -189,7 +195,7 @@ export default function AdminTournamentsPage({
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const [slugMessage, setSlugMessage] = useState('');
   const [createdTournament, setCreatedTournament] = useState<CreatedTournamentNotice | null>(null);
-  const { refresh: refreshCtx } = useTournament();
+  const { refresh: refreshCtx, tournaments: ctxTournaments, setCurrentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
 
   const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
@@ -1216,9 +1222,24 @@ export default function AdminTournamentsPage({
               </div>
             </div>
             <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
-              <button className="btn btn-lime btn-data" onClick={() => setCreatedTournament(null)}>
-                Got it
-              </button>
+              {fromCoachPortal ? (
+                <Link
+                  href={`/${currentOrg.slug}/admin/tournaments/dashboard?tournamentSlug=${encodeURIComponent(createdTournament.slug)}`}
+                  className="btn btn-lime btn-data"
+                  onClick={() => {
+                    // Same admin layout, so the tournament context does not remount and would keep
+                    // whichever tournament was current: select the new one by hand (/review 2026-09-13).
+                    const created = ctxTournaments.find(t => t.slug === createdTournament.slug);
+                    if (created) setCurrentTournament(created);
+                  }}
+                >
+                  Open the dashboard
+                </Link>
+              ) : (
+                <button className="btn btn-lime btn-data" onClick={() => setCreatedTournament(null)}>
+                  Got it
+                </button>
+              )}
             </div>
           </div>
         </div>

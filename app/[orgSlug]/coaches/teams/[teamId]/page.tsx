@@ -13,7 +13,6 @@ import CoachHelperHome from '@/components/coaches/CoachHelperHome';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CloseSeasonModal from '@/components/coaches/CloseSeasonModal';
-import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
 // Loaded on demand, mirroring HelpDrawerProvider's treatment of the help drawer: the tour is a
 // one-time offer most returning coaches have already dismissed, so it shouldn't sit in the
 // Overview bundle (already one of the portal's heaviest) for everyone who never opens it.
@@ -2183,12 +2182,10 @@ export default function TeamOverviewPage({
         </div>
       )}
 
-      {/* Tournament-acquisition awareness — moved here from the retired My Teams hub (its
-          only surface; the hub is now a pure redirector). Quiet, below all content, self-
-          gating (only orgs with the entitlement and no tournaments yet) and dismissible. */}
-      <div style={{ marginTop: '1.25rem' }}>
-        <CoachTournamentAwarenessBanner orgSlug={orgSlug} isTeamWorkspace={isTeamWorkspace} />
-      </div>
+      {/* The "run local tournaments here too" banner stood here until 2026-09-13. It showed to every
+          staff member and walked the ones without the right into a "Forbidden"; hosting now has one
+          home — the "Tournaments you run" section on the Tournaments page — shown only to people
+          who can act on it (owner ruling: one centralized tournaments section, no second door). */}
 
       {/* "Close out the season" from the winding-down cue — the SAME rollover sheet Settings
           opens (closing and starting next season are one honest action). */}

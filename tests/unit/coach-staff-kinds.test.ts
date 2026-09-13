@@ -34,7 +34,7 @@ describe('the four presets are what the plan says they are, and survive the sani
   it('spells out every grant on every preset, so a PATCH from the sheet drops nothing', () => {
     const keys = Object.keys(sanitizeAssistantGrants({
       schedule: true, scheduleManage: true, staffChat: true, attendance: true, lineups: true, rosterPii: true,
-      notes: true, announcementsSend: true, tryouts: true, scoutingBook: true, development: true, manageStaff: true, money: 'off', documents: 'off',
+      notes: true, announcementsSend: true, tryouts: true, scoutingBook: true, development: true, manageStaff: true, tournaments: true, money: 'off', documents: 'off',
     })).sort();
     for (const kind of STAFF_KINDS) {
       assert.deepEqual(Object.keys(STAFF_PRESETS[kind]).sort(), keys, `${kind} must name every grant explicitly`);

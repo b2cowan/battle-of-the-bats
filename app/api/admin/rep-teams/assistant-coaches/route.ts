@@ -117,6 +117,8 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
       invitedByName: approved.invite.invited_by_name,
       rawToken: approved.rawToken,
       staffKind: sanitizeStaffKind(approved.invite.staff_kind),
+      // Approval is a club-only path (a workspace has no admin to approve) — never a workspace.
+      isTeamWorkspace: false,
     });
     return NextResponse.json({ ok: true });
   }

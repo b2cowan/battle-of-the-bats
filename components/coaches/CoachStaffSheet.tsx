@@ -9,7 +9,7 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { formatStoredDate } from '@/lib/timezone';
 import {
-  STAFF_KINDS, STAFF_KIND_COPY, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE,
+  STAFF_KINDS, STAFF_KIND_COPY, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, staffKindCopyFor, applyOrgGrantPolicy,
   resolveCoachCapabilities, scheduleAccessOf, scheduleGrantsFor, hasRecordAccess, grantsOf,
   type CoachCapabilities, type AssistantCapabilityGrants, type StaffKind, type ScheduleAccess,
 } from '@/lib/coach-capabilities';
@@ -17,6 +17,8 @@ import {
   isWidening, rank, delegateMaySet, delegateMayEditRow, clampForDelegate, type GrantKey,
 } from '@/lib/coach-staff-delegation';
 import { GRANT_LABELS } from '@/lib/coach-staff-labels';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { useOrg } from '@/lib/org-context';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachStaffPanel.module.css';
 
@@ -87,7 +89,7 @@ export type SheetTarget =
 // ── The controls, with their sentences ──────────────────────────────────────────────────────
 
 type SegKey = 'schedule' | 'documents' | 'money';
-type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts' | 'manageStaff';
+type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts' | 'tournaments' | 'manageStaff';
 /** A three-way option: its button label, and the one word the row chip uses ("Schedule · edit"). */
 type SegOption = { value: string; label: string; chip: string };
 export type StaffControl =
@@ -136,6 +138,14 @@ export const SENSITIVE: ReadonlyArray<StaffControl> = [
     sentence: 'Send announcements to every guardian. Off means they can draft, not send.' },
   { kind: 'switch', key: 'tryouts', label: GRANT_LABELS.tryouts, sensitive: true,
     sentence: 'Every candidate’s guardian details and your evaluation decisions.' },
+  /**
+   * RUN TOURNAMENTS (owner ruling 2026-09-13) — one switch, everything on the tournament page.
+   * Sensitive because a tournament's registrations carry OTHER teams' coaches and their payments.
+   * ⚠ Offered only in a standalone Premium workspace — `controlsFor` drops it in a club, where the
+   * tournaments are the club's (D2). The sentence names where the door is: the Tournaments page.
+   */
+  { kind: 'switch', key: 'tournaments', label: GRANT_LABELS.tournaments, sensitive: true,
+    sentence: 'Set up and run the team’s tournaments from the Tournaments page — registrations, schedule, scores, and what visiting teams see.' },
   /**
    * THE MASTER KEY (owner ruling 2026-09-13) — last in Sensitive because it reaches every other
    * switch one step removed. The sentence names the three walls the holder lives under.
@@ -199,6 +209,10 @@ const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, ConfirmOnGrant>> = {
     title: `Share your internal notes with ${who}?`,
     message: `${who} will see private staff notes about each player, which are written for coaches and never shown to families.`,
   }),
+  tournaments: who => ({
+    title: `Let ${who} run your tournaments?`,
+    message: `${who} will be able to set up and run this workspace’s tournaments — registrations, the schedule, scores, announcements and what visiting teams see, including their coaches’ contact details and payments. They won’t be able to change your staff, your settings or your billing. You can take this back any time.`,
+  }),
   manageStaff: who => ({
     title: `Let ${who} manage your staff?`,
     message: `${who} will be able to invite people and change what others can open — sensitive access only up to what they hold themselves. They can’t change any head coach, change anyone’s role, or pass this switch on. You can take this back any time.`,
@@ -225,6 +239,7 @@ function sensitiveWords(c: Caps): string[] {
   if (c.notes) out.push('internal notes');
   if (c.announcementsSend) out.push('emailing families');
   if (c.tryouts) out.push('tryouts');
+  if (c.tournaments) out.push('running tournaments');
   if (c.manageStaff) out.push('managing staff');
   return out;
 }
@@ -240,11 +255,14 @@ function sensitiveConsequences(c: Caps): string[] {
   if (c.notes) out.push('your private staff notes about each player');
   if (c.announcementsSend) out.push('the power to email every family');
   if (c.tryouts) out.push('every candidate’s guardian details and your decisions');
+  if (c.tournaments) out.push('the workspace’s tournaments — registrations, schedule, scores and what visiting teams see');
   if (c.manageStaff) out.push('the Staff page — inviting people and setting what others can open, up to their own access');
   return out;
 }
 
-const ROLE_OPTIONS = STAFF_KINDS.map(k => ({ value: k, name: STAFF_KIND_COPY[k].name, sub: STAFF_KIND_COPY[k].sentence }));
+/** The Role dropdown's options, with the manager's sub-line naming tournaments only in a workspace. */
+const roleOptionsFor = (org: { isTeamWorkspace: boolean }) =>
+  STAFF_KINDS.map(k => ({ value: k, name: STAFF_KIND_COPY[k].name, sub: staffKindCopyFor(k, org).sentence }));
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -272,6 +290,8 @@ export default function CoachStaffSheet({
   useOverlayOpen(true);
   const confirm = useConfirm();
   const uid = useId();
+  const { currentOrg } = useOrg();
+  const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
   const panelRef = useRef<HTMLDivElement>(null);
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/staff`;
 
@@ -389,12 +409,14 @@ export default function CoachStaffSheet({
     if (readOnly) return;
     // D8 — a delegate's preset is clamped to what they hold (and never carries Manage staff); a
     // head coach's applies as written. The capped controls say so until the next change.
-    const raw = resolveCoachCapabilities('assistant_coach', STAFF_PRESETS[nextKind]);
+    // The org policy first (a club never holds Run tournaments), so the confirm below and the
+    // bundle sent both say what the server will actually write (/review 2026-09-13).
+    const raw = resolveCoachCapabilities('assistant_coach', applyOrgGrantPolicy({ ...STAFF_PRESETS[nextKind] }, { isTeamWorkspace }));
     const { grants, clamped } = clampForDelegate(actor, isNew ? null : grantsFrom(caps), grantsFrom(raw));
     const preset = resolveCoachCapabilities('assistant_coach', grants);
     if (isNew) { setClampedKeys(new Set(clamped)); setKind(nextKind); setCaps(preset); return; }
     const widened = sensitiveWords(preset).filter(w => !sensitiveWords(caps).includes(w));
-    const copy = STAFF_KIND_COPY[nextKind];
+    const copy = staffKindCopyFor(nextKind, { isTeamWorkspace });
     if (widened.length > 0) {
       const ok = await confirm({
         title: `Make ${who} ${copy.asA}?`,
@@ -526,8 +548,12 @@ export default function CoachStaffSheet({
   // ── render ─────────────────────────────────────────────────────────────────
 
   const opensRoster = !hasRecordAccess(caps);
-  const sensitiveCount = SENSITIVE.filter(c => granted(caps[c.key])).length;
-  const kindCopy = kind ? STAFF_KIND_COPY[kind] : null;
+  // Run tournaments exists only in a Premium workspace (D2): in a club the control is not drawn and
+  // its chip never shows (the server writes the key off there — `applyOrgGrantPolicy`).
+  const sensitiveControls = isTeamWorkspace ? SENSITIVE : SENSITIVE.filter(c => c.key !== 'tournaments');
+  const sensitiveCount = sensitiveControls.filter(c => granted(caps[c.key])).length;
+  const kindCopy = kind ? staffKindCopyFor(kind, { isTeamWorkspace }) : null;
+  const roleOptions = roleOptionsFor({ isTeamWorkspace });
 
   const title = isNew ? `Invite someone to ${teamName}` : member ? (member.displayName || member.email || 'Staff member') : invite!.email;
   const subtitle = isNew
@@ -658,7 +684,7 @@ export default function CoachStaffSheet({
                 <SublinedChoice
                   id={`${uid}-kind`}
                   label={isNew ? 'Who are they?' : 'Role'}
-                  options={ROLE_OPTIONS}
+                  options={roleOptions}
                   value={kind}
                   onChange={v => { void chooseKind(v); }}
                   placeholder="Choose who they are"
@@ -688,7 +714,7 @@ export default function CoachStaffSheet({
                     <span className={css.groupTitle}>Sensitive — asks before granting</span>
                     <span className={css.groupMeta}>{sensitiveCount === 0 ? 'none granted' : `${sensitiveCount} granted`}</span>
                   </div>
-                  {SENSITIVE.map(renderControl)}
+                  {sensitiveControls.map(renderControl)}
                 </div>
               )}
             </>

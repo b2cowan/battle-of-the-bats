@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireStaffManagerMembership } from '@/lib/coach-membership';
 import {
-  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, grantsOf,
+  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, grantsOf, applyOrgGrantPolicy,
 } from '@/lib/coach-capabilities';
 import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
 import { grantLabel } from '@/lib/coach-staff-labels';
@@ -88,6 +88,10 @@ export const PATCH = withObservability(async (req: Request,
       patch.initialCapabilities = clampForDelegate(resolved.capabilities, current, proposed).grants;
     }
   }
+  // Run tournaments exists only in a Premium workspace (D2).
+  if (patch.initialCapabilities) {
+    patch.initialCapabilities = applyOrgGrantPolicy(patch.initialCapabilities, { isTeamWorkspace: isTeamWorkspaceOrg(resolved.ctx.org) });
+  }
 
   const updated = await updateAssistantInviteAccess(inviteId, teamId, patch);
   if (!updated) return NextResponse.json({ error: 'That invite is no longer open.' }, { status: 409 });
@@ -134,6 +138,7 @@ export const POST = withObservability(async (req: Request,
     invitedByName: minted.invitedByName,
     rawToken: minted.rawToken,
     staffKind: minted.invite.staffKind,
+    isTeamWorkspace: isTeamWorkspaceOrg(resolved.ctx.org),
   });
   return NextResponse.json({ ok: true, pendingApproval: false, invite: shape(minted.invite) });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/staff/invites/[inviteId]' });

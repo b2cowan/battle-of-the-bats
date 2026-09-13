@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
-  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, grantsOf,
+  sanitizeAssistantGrants, sanitizeStaffKind, resolveCoachCapabilities, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, grantsOf, applyOrgGrantPolicy,
 } from '@/lib/coach-capabilities';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { delegationViolation, clampForDelegate, delegationReasonSentence } from '@/lib/coach-staff-delegation';
 import { grantLabel } from '@/lib/coach-staff-labels';
 import {
@@ -132,6 +133,11 @@ export const PATCH = withObservability(async (req: Request,
     } else {
       patch.capabilities = clampForDelegate(resolved.actor, current, proposed).grants;
     }
+  }
+  // Run tournaments exists only in a Premium workspace (D2) — a client bundle or the manager
+  // preset arriving with it in a club is written with it off, never refused.
+  if (patch.capabilities) {
+    patch.capabilities = applyOrgGrantPolicy(patch.capabilities, { isTeamWorkspace: isTeamWorkspaceOrg(resolved.ctx.org) });
   }
 
   // The WHERE re-asserts team + active + assistant — a target removed (or changed) after this
