@@ -33,8 +33,10 @@ import {
   type TileKey,
 } from '@/lib/coach-overview';
 import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
+import { practicePlanState } from '@/lib/practice-state';
+import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
-import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
+import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
 import { fieldNounFor } from '@/lib/sports';
 import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/coach-game-day';
@@ -1586,6 +1588,12 @@ export default function TeamOverviewPage({
   // The console's live window, from the same predicate the schedule row and lineups hub use.
   // Clock snapshot taken once per mount so render stays pure (the schedule page's twin note).
   const gameDayOpen = !!nextEvent && isInGameDayWindow(toGameDayEventShape(nextEvent), gameDayNowMs);
+  // D7 (practices re-evaluation stage 0): a PRACTICE's state — none · planned · run — read through
+  // the same helper the Practice plans hub's card uses, off the plan that already rides the events
+  // read. Null for anything that is not a practice, so a team event keeps its attendance card.
+  const nextPracticePlan = nextEvent && nextEvent.eventType === 'practice'
+    ? practicePlanState(nextEvent, gameDayNowMs)
+    : null;
   // C0: the ORG'S clock, never the device's. A coach travelling, or a family in another province,
   // must see the game's local start time — the one that means anything.
   const nextTimeLabel = nextEvent
@@ -1630,6 +1638,7 @@ export default function TeamOverviewPage({
     lineupReady: nextLineupReady,
     attendanceTaken,
     gameDayOpen,
+    practicePlan: nextPracticePlan,
   });
 
   /**
@@ -1685,14 +1694,20 @@ export default function TeamOverviewPage({
       case 'next_event':
         return {
           tone: 'work',
-          kicker: `Next ${nextIsGame ? 'game' : 'event'}`,
-          when: nextEventDays == null ? null
-            : nextEventDays === 0 ? 'Today' : nextEventDays === 1 ? 'Tomorrow' : `in ${nextEventDays} days`,
+          // A practice names itself on the kicker and states its plan on the meta line (D7) — the
+          // one fact the card was missing when it offered attendance six days early.
+          kicker: nextPracticePlan !== null ? 'Next event · practice' : `Next ${nextIsGame ? 'game' : 'event'}`,
+          when: nextEventDays == null ? null : relativeDayLabel(nextEventDays),
           headline: nextEvent
             ? `${formatEventDate(nextEvent.startsAt)}${nextTimeLabel ? `, ${nextTimeLabel}` : ''}${nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}`
             : '',
           meta: nextEvent
-            ? ([nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), placeLabel].filter(Boolean).join(' · ') || 'On your schedule')
+            ? (
+              <>
+                {[nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), placeLabel].filter(Boolean).join(' · ') || 'On your schedule'}
+                {nextPracticePlan !== null && <> · <b>{nextPracticePlan === 'none' ? 'No plan yet' : 'Plan set'}</b></>}
+              </>
+            )
             : null,
         };
       /**
@@ -1758,6 +1773,10 @@ export default function TeamOverviewPage({
     switch (action) {
       case 'build_lineup': return nextEvent ? `${base}/lineups/${nextEvent.id}` : `${base}/lineups`;
       case 'take_attendance': return nextEvent ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`;
+      // A practice's three doors (D7): the plan page for plan/open, the field screen inside the window.
+      case 'plan_practice':
+      case 'open_plan': return nextEvent ? `${base}/practice/${nextEvent.id}` : `${base}/practice`;
+      case 'run_practice': return nextEvent ? `${base}/practice/${nextEvent.id}/run` : `${base}/practice`;
       // The console's ONE address, via the same helper the schedule row and lineups hub use — it
       // returns null outside the live window, which the resolver has already ruled out here.
       case 'open_game_day':
@@ -1772,6 +1791,9 @@ export default function TeamOverviewPage({
   const ANCHOR_LABEL: Record<string, string> = {
     build_lineup: 'Build lineup',
     take_attendance: 'Take attendance',
+    plan_practice: 'Plan this practice',
+    open_plan: 'Open the plan',
+    run_practice: 'Run practice',
     open_game_day: 'Open game day',
     open_schedule: 'Open schedule',
     add_event: 'Add an event',
@@ -1940,7 +1962,82 @@ export default function TeamOverviewPage({
           shapes. A `null` primary is deliberate and means informational — the card keeps its
           sentence and drops its button, never a disabled control. */}
       {anchor && (
-        <div className={styles.oneThing} data-shape={anchor.shape} data-kind={anchor.kind}>
+        <CoachOneThingCard
+          kind={anchor.kind}
+          shape={anchor.shape}
+          tone={anchorSlots.tone}
+          kicker={anchorSlots.kicker}
+          when={anchorSlots.when}
+          headline={anchorSlots.headline}
+          /* The shipped lime CTA language + a layout-only modifier, so warm-theme handling and
+             the single-lime-action rule are inherited rather than re-implemented. A `null`
+             primary is deliberate and means informational — the card keeps its sentence and
+             drops its button, never a disabled control. */
+          primary={anchor.primary && (
+            anchor.primary === 'start_next_season' ? (
+              <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
+                {ANCHOR_LABEL[anchor.primary]}
+              </button>
+            ) : anchor.primary === 'take_tour' ? (
+              // Opens the tour DRAWER in place — not a navigation. Opening deliberately does not
+              // retire the offer; only finishing or skipping does (the shipped Quiet Mode rule),
+              // so an accidental Escape doesn't cost the coach their one welcome.
+              <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={openPortalTour}>
+                {ANCHOR_LABEL[anchor.primary]}
+              </button>
+            ) : (
+              <Link href={anchorHref(anchor.primary)} className={`btn btn-lime ${styles.onePrimary}`}>
+                {ANCHOR_LABEL[anchor.primary]} <ArrowRight size={15} aria-hidden />
+              </Link>
+            )
+          )}
+          meta={anchorSlots.meta}
+          answers={(anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) ? (
+            <>
+              {anchor.answers.map(answer => {
+                if (answer === 'not_yet' || answer === 'got_it') {
+                  return (
+                    <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={dismissSeasonCue}>
+                      {ANSWER_LABEL[answer]}
+                    </button>
+                  );
+                }
+                /**
+                 * ⚠ **THE ONLY WAY AN AGED-OUT TEAM CAN FINISH ITS SEASON** (2026-08-18). A
+                 * button, not a link: closing is an action with a confirmation of its own, and
+                 * the dialog behind it is where the unsettled-money warning lives.
+                 */
+                if (answer === 'close_season_only') {
+                  return (
+                    <button key={answer} type="button" className={styles.oneAnswer} onClick={() => setCloseSeasonOpen(true)}>
+                      {ANSWER_LABEL[answer]}
+                    </button>
+                  );
+                }
+                if (answer === 'skip_step') {
+                  return (
+                    <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={() => nextSetupItem && toggleSkip(nextSetupItem.key)}>
+                      {ANSWER_LABEL[answer]}
+                    </button>
+                  );
+                }
+                return (
+                  <Link key={answer} href={anchorHref(answer)} className={styles.oneAnswer}>
+                    {ANSWER_LABEL[answer]}
+                  </Link>
+                );
+              })}
+              {/* The tour is offered ONCE, and only beside the pre-season step — the one moment
+                  it is actually relevant. It no longer shares a rule with this season's next
+                  task. */}
+              {anchor.kind === 'preseason' && !tourSeen && (
+                <button type="button" className={styles.oneAnswer} onClick={openPortalTour}>
+                  Take the 2-minute tour
+                </button>
+              )}
+            </>
+          ) : null}
+        >
           {/* ── ONE SHAPE, six situations (owner 2026-08-12) ───────────────────────────────────
               Each situation contributes a KICKER, a HEADLINE and a META, and the card renders them
               in one arrangement: the primary action sits ON the headline's row and the answers sit
@@ -1964,87 +2061,6 @@ export default function TeamOverviewPage({
               reads as THEIR portal, not a product tour, and lists the areas rather than selling
               them. No colour rule needed: `.oneThing`'s base accent already applies, which is the
               same treatment the pre-season card this replaces was using. */}
-          <p className={styles.oneKicker} data-t={anchorSlots.tone}>
-            {anchorSlots.kicker}
-            {anchorSlots.when && <span className={styles.oneKickerWhen}>{anchorSlots.when}</span>}
-          </p>
-
-          <div className={styles.oneHeadRow}>
-            <p className={styles.oneHeadline}>{anchorSlots.headline}</p>
-            {/* The shipped lime CTA language + a layout-only modifier, so warm-theme handling and
-                the single-lime-action rule are inherited rather than re-implemented.
-                A `null` primary is deliberate and means informational — the card keeps its
-                sentence and drops its button, never a disabled control. */}
-            {anchor.primary && (
-              anchor.primary === 'start_next_season' ? (
-                <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
-                  {ANCHOR_LABEL[anchor.primary]}
-                </button>
-              ) : anchor.primary === 'take_tour' ? (
-                // Opens the tour DRAWER in place — not a navigation. Opening deliberately does not
-                // retire the offer; only finishing or skipping does (the shipped Quiet Mode rule),
-                // so an accidental Escape doesn't cost the coach their one welcome.
-                <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={openPortalTour}>
-                  {ANCHOR_LABEL[anchor.primary]}
-                </button>
-              ) : (
-                <Link href={anchorHref(anchor.primary)} className={`btn btn-lime ${styles.onePrimary}`}>
-                  {ANCHOR_LABEL[anchor.primary]} <ArrowRight size={15} aria-hidden />
-                </Link>
-              )
-            )}
-          </div>
-
-          {(anchorSlots.meta || anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) && (
-            <div className={styles.oneMetaRow}>
-              {anchorSlots.meta && <p className={styles.oneMeta}>{anchorSlots.meta}</p>}
-              {(anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) && (
-                <div className={styles.oneAnswers}>
-                  {anchor.answers.map(answer => {
-                    if (answer === 'not_yet' || answer === 'got_it') {
-                      return (
-                        <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={dismissSeasonCue}>
-                          {ANSWER_LABEL[answer]}
-                        </button>
-                      );
-                    }
-                    /**
-                     * ⚠ **THE ONLY WAY AN AGED-OUT TEAM CAN FINISH ITS SEASON** (2026-08-18). A
-                     * button, not a link: closing is an action with a confirmation of its own, and
-                     * the dialog behind it is where the unsettled-money warning lives.
-                     */
-                    if (answer === 'close_season_only') {
-                      return (
-                        <button key={answer} type="button" className={styles.oneAnswer} onClick={() => setCloseSeasonOpen(true)}>
-                          {ANSWER_LABEL[answer]}
-                        </button>
-                      );
-                    }
-                    if (answer === 'skip_step') {
-                      return (
-                        <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={() => nextSetupItem && toggleSkip(nextSetupItem.key)}>
-                          {ANSWER_LABEL[answer]}
-                        </button>
-                      );
-                    }
-                    return (
-                      <Link key={answer} href={anchorHref(answer)} className={styles.oneAnswer}>
-                        {ANSWER_LABEL[answer]}
-                      </Link>
-                    );
-                  })}
-                  {/* The tour is offered ONCE, and only beside the pre-season step — the one moment
-                      it is actually relevant. It no longer shares a rule with this season's next
-                      task. */}
-                  {anchor.kind === 'preseason' && !tourSeen && (
-                    <button type="button" className={styles.oneAnswer} onClick={openPortalTour}>
-                      Take the 2-minute tour
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* The scoreline. Once a score is entered on game day this is the single most-wanted
               fact on the page, and dropping it in the rewrite would have made the Overview go
@@ -2098,7 +2114,7 @@ export default function TeamOverviewPage({
             </div>
           )}
 
-        </div>
+        </CoachOneThingCard>
       )}
 
       {/* ══ THE BOARD ══════════════════════════════════════════════════════════

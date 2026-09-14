@@ -1389,22 +1389,6 @@
       "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes. The kind-filtered list (?kind=sponsor) draws the same toolbar as coach-fundraisers under its own screen id; first swept 2026-09-02 (List · Room · Question Phase B), not new geometry.",
       "detail": "33px tall (floor 44)"
     },
-    "coach-development-drills|361|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
     "coach-development-templates|361|tap-floor|a·New template": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -1464,22 +1448,6 @@
     "coach-development-templates|361|tap-floor|a·New template 9": {
       "reason": null,
       "detail": "22px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
     },
     "coach-development-templates|390|tap-floor|a·New template": {
       "reason": null,
@@ -1541,33 +1509,9 @@
       "reason": null,
       "detail": "22px tall (floor 44)"
     },
-    "coach-development-drills|768|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
     "coach-development-templates|768|tap-floor|button·Help: Plan templates": {
       "reason": null,
       "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·Skills & Goals": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·New template": {
-      "reason": "Page-header primary at the portal's grandfathered desktop control height, same as Roster's Add Player. The 44px floor is enforced at <=640, where this measures 44 (Phase 3, 2026-08-25). It REPLACES two buttons that stood in the filter row — the fold is a net reduction of one control.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
     },
     "coach-development-templates|768|tap-floor|a·New template": {
       "reason": null,
@@ -2813,33 +2757,9 @@
       "reason": null,
       "detail": "36px tall (floor 44)"
     },
-    "coach-overview|361|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|361|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-overview|768|tap-floor|button·Help: Premium Coaches Portal": {
       "reason": null,
       "detail": "34px tall (floor 44)"
-    },
-    "coach-overview|768|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|768|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-payment-requests|361|tap-floor|a·Open Org Allocations": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -3493,10 +3413,6 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-overview|768|tap-floor|button·Season setup, 4 of 5 done": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). RE-KEYED AGAIN 2026-08-25 (page-title band ruling): the chip took a phone SYMBOL form (ring only) and its aria-label now carries the count, which is its accessible name. Same control, same unchanged 32px at ≥768. At ≤640 it clears the 44px floor via the header grid — verified 44px at 361/390/640.",
-      "detail": "32px tall (floor 44)"
-    },
     "coach-team-hub|768|tap-floor|button·Season setup, 4 of 5 done": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). RE-KEYED AGAIN 2026-08-25 (page-title band ruling): the chip took a phone SYMBOL form (ring only) and its aria-label now carries the count, which is its accessible name. Same control, same unchanged 32px at ≥768. At ≤640 it clears the 44px floor via the header grid — verified 44px at 361/390/640.",
       "detail": "32px tall (floor 44)"
@@ -3759,6 +3675,31 @@
     },
     "coach-development-sessions|768|control-width|button·Help: Skills & Goals": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-templates|361|tap-floor|a·Probe plan template": {
+      "key": "coach-development-templates|361|tap-floor|a·Probe plan template",
+      "reason": "DEFERRED, not accepted — THE TEMPLATE ROW'S NAME LINK, a Phase 3 (2026-08-02) control that pre-dates the practices re-evaluation; its fifteen \"New template N\" siblings on this same screen carry the identical finding under their own names (the baseline is keyed by accessible name, so the fixture's sixteenth template surfaces the same row as a new key). Stage 4 of COACH_PRACTICES_REEVALUATION_PLAN.md redraws the Templates and Drills tab rows (minutes · tags · first line, at the tap floor); raising this one link now is work that stage deletes. Closes with stage 4, or in the portal-wide touch-debt project if it ships first. Recorded 2026-09-14 when the page moved under Practice plans (stage 0, D5) — the move changed nothing about the row.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·Probe plan template": {
+      "key": "coach-development-templates|390|tap-floor|a·Probe plan template",
+      "reason": "DEFERRED, not accepted — THE TEMPLATE ROW'S NAME LINK, a Phase 3 (2026-08-02) control that pre-dates the practices re-evaluation; its fifteen \"New template N\" siblings on this same screen carry the identical finding under their own names (the baseline is keyed by accessible name, so the fixture's sixteenth template surfaces the same row as a new key). Stage 4 of COACH_PRACTICES_REEVALUATION_PLAN.md redraws the Templates and Drills tab rows (minutes · tags · first line, at the tap floor); raising this one link now is work that stage deletes. Closes with stage 4, or in the portal-wide touch-debt project if it ships first. Recorded 2026-09-14 when the page moved under Practice plans (stage 0, D5) — the move changed nothing about the row.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·Probe plan template": {
+      "key": "coach-development-templates|768|tap-floor|a·Probe plan template",
+      "reason": "DEFERRED, not accepted — THE TEMPLATE ROW'S NAME LINK, a Phase 3 (2026-08-02) control that pre-dates the practices re-evaluation; its fifteen \"New template N\" siblings on this same screen carry the identical finding under their own names (the baseline is keyed by accessible name, so the fixture's sixteenth template surfaces the same row as a new key). Stage 4 of COACH_PRACTICES_REEVALUATION_PLAN.md redraws the Templates and Drills tab rows (minutes · tags · first line, at the tap floor); raising this one link now is work that stage deletes. Closes with stage 4, or in the portal-wide touch-debt project if it ships first. Recorded 2026-09-14 when the page moved under Practice plans (stage 0, D5) — the move changed nothing about the row.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|control-width|button·Help: Plan templates": {
+      "key": "coach-development-templates|768|control-width|button·Help: Plan templates",
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-template|768|control-width|button·Help: Plan templates": {
+      "key": "coach-development-template|768|control-width|button·Help: Plan templates",
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
       "detail": "34px wide (floor 44) — icon-only control"
     }
   }

@@ -239,6 +239,16 @@ export function tournamentNow(
 }
 
 /**
+ * "Today" · "Tomorrow" · "In 6 days" — the ONE phrasing for a count of calendar days ahead, fed
+ * by {@link calendarDaysBetween}. The Overview's next-event card and the Practice plans hub's
+ * next-practice card both say it; two hand-rolled ternaries had already drifted on capitalisation
+ * (/simplify, 2026-09-14). Callers that render it in an uppercase kicker lose nothing.
+ */
+export function relativeDayLabel(days: number): string {
+  return days <= 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`;
+}
+
+/**
  * Whole calendar days from `from` to `to` as seen in `timeZone` (default Toronto),
  * counting DATE boundaries — NOT a raw `(to − from) / 86_400_000` rolling-24h span.
  * So an event at 9 PM tonight is 0 ("today"), one tomorrow morning is 1 ("tomorrow"),

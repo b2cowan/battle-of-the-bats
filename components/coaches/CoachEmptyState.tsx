@@ -53,6 +53,13 @@ type CoachEmptyStateProps = {
   payoff?: ReactNode;
   /** The honest prerequisite blocking this section, if any. Rendered dimmer. */
   blocker?: ReactNode;
+  /**
+   * The section's ARC in a few words — "Schedule it → Plan it → Print it or run it → Write how it
+   * went" (practices re-evaluation stage 0, D6). One line in the data face, between the sentence
+   * and the buttons; the first step reads in the section's accent. The caller draws it (so the
+   * step it wants to lead can be its own), this component only places it.
+   */
+  arc?: ReactNode;
   /** The ONE most-important action — rendered btn-lime by default. */
   primaryAction?: EmptyAction;
   /** Optional quieter action — rendered btn-ghost by default. */
@@ -118,6 +125,7 @@ export default function CoachEmptyState({
   description,
   payoff,
   blocker,
+  arc,
   primaryAction,
   secondaryAction,
   compact = false,
@@ -141,6 +149,7 @@ export default function CoachEmptyState({
       <h3 className={styles.headline}>{headline}</h3>
       {description ? <p className={styles.description}>{description}</p> : null}
       {payoff ? <p className={styles.payoff}>{payoff}</p> : null}
+      {arc ? <p className={styles.arc}>{arc}</p> : null}
       {blocker ? <p className={styles.blocker}>{blocker}</p> : null}
       {primaryAction || secondaryAction || children ? (
         <div className={styles.actions}>

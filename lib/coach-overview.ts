@@ -22,12 +22,16 @@
 // `lib/coach-capabilities` ("can complete"), never `lib/coach-nav-visibility` ("can see").
 
 import type { CoachRepPhase } from './coach-rep-phase';
+// A TYPE import only — this module is read under plain node by the layout sweep, and the practice
+// state module's runtime imports are not.
+import type { PracticePlanState } from './practice-state';
 import {
   type CoachCapabilities,
   canViewMoney,
   hasRecordAccess,
   canManageSchedule,
   canViewSchedule,
+  canWritePracticePlans,
   canViewDevelopmentGoals,
 } from './coach-capabilities';
 import { isCoachNavItemVisible } from './coach-nav-visibility';
@@ -50,6 +54,15 @@ export type AnchorAction =
   | 'build_lineup'
   | 'take_attendance'
   | 'open_schedule'
+  /**
+   * A PRACTICE's three doors (practices re-evaluation stage 0, D7, 2026-09-14): the card follows
+   * the practice's state — no plan → plan it; plan set → open it; inside the run window → the
+   * field screen — instead of always offering attendance. Attendance falls to the quiet answers
+   * row while it is still outstanding, exactly where it sits for a game.
+   */
+  | 'plan_practice'
+  | 'open_plan'
+  | 'run_practice'
   /**
    * The bench console. Offered ONLY inside the game's live window (`gameDayOpen`) — outside it
    * the console is a read-only recap of a game that has not happened, which is not an action.
@@ -153,6 +166,13 @@ export interface AnchorInput {
    * hub use to decide whether to show their "Game day" door — one clock, no drift.
    */
   gameDayOpen: boolean;
+  /**
+   * The next PRACTICE's state (D7) — `none` (no plan, or a blockless one) · `planned` · `run` (planned
+   * and inside the practice run window). `null` when the next event is not a practice. Read
+   * through `lib/practice-state` — the same definition the Practice plans hub's card uses, so the
+   * two screens can never disagree about what tonight needs.
+   */
+  practicePlan: PracticePlanState | null;
 }
 
 export interface AnchorDecision {
@@ -178,7 +198,7 @@ export interface AnchorDecision {
 function eventActions(
   nextIsGame: boolean,
   caps: CoachCapabilities,
-  prep: Pick<AnchorInput, 'lineupReady' | 'attendanceTaken' | 'gameDayOpen'>,
+  prep: Pick<AnchorInput, 'lineupReady' | 'attendanceTaken' | 'gameDayOpen' | 'practicePlan'>,
 ): Pick<AnchorDecision, 'primary' | 'answers'> {
   // ⚠ 2026-08-03: this door OPENS the schedule, so it wants the VIEW half of the split — not the
   // half that adds and cancels events. Both are true for every coach invited before the split, so
@@ -189,7 +209,21 @@ function eventActions(
   const attendanceOutstanding = caps.attendance && !prep.attendanceTaken;
 
   if (!nextIsGame) {
-    // A practice or team event: there is no lineup and attendance is the only real preparation.
+    // A PRACTICE (D7): the plan is the preparation, and the card says which of its three doors is
+    // next. Attendance, while still outstanding, becomes the quiet answer — it was the primary for
+    // every event type before, six days early for a practice whose plan was not yet written.
+    if (prep.practicePlan !== null) {
+      const quiet: AnchorAnswer[] = [
+        ...(attendanceOutstanding ? ['take_attendance' as const] : []),
+        ...(canSchedule ? ['open_schedule' as const] : []),
+      ];
+      if (prep.practicePlan === 'run' && canSchedule) return { primary: 'run_practice', answers: quiet };
+      if (prep.practicePlan === 'planned' && canSchedule) return { primary: 'open_plan', answers: quiet };
+      if (prep.practicePlan === 'none' && canWritePracticePlans(caps)) return { primary: 'plan_practice', answers: quiet };
+      // A coach who can neither read nor write the plan keeps the card as it was.
+    }
+    // A team event (or a practice this coach cannot plan): there is no lineup and attendance is
+    // the only real preparation.
     if (attendanceOutstanding) return { primary: 'take_attendance', answers: canSchedule ? ['open_schedule'] : [] };
     return { primary: canSchedule ? 'open_schedule' : null, answers: [] };
   }
@@ -229,8 +263,8 @@ function eventActions(
  * opens on the board. A calm board beats narrating a situation the reader cannot act on.
  */
 export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null {
-  const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons, isColdStart, lineupReady, attendanceTaken, gameDayOpen } = input;
-  const prep = { lineupReady, attendanceTaken, gameDayOpen };
+  const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons, isColdStart, lineupReady, attendanceTaken, gameDayOpen, practicePlan } = input;
+  const prep = { lineupReady, attendanceTaken, gameDayOpen, practicePlan };
   // ⚠ TWO answers since the 2026-08-03 split, and this function needs both. `canSchedule` gates the
   // "add an event" DOOR (a write); `canSeeSchedule` gates any card that makes a CLAIM about what is
   // or isn't on the calendar. Conflating them is how a coach who cannot see the schedule gets told,

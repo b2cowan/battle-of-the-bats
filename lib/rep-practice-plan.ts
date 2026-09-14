@@ -577,12 +577,23 @@ export function formatDuration(duration: PracticeDuration): string {
  * ⚠ The vocabulary is "planned", never "done" (§4). This summary appears on the schedule beside
  * an event that may already be in the past, which is exactly where a word like "completed" would
  * slip in and start describing something the product does not know.
+ *
+ * `fit` (practices re-evaluation stage 0, D4): the Practice plans room reads the plan AGAINST
+ * the practice — "6 blocks · 60 of 90 min · 1 rotation" when the practice's length is known,
+ * "6 blocks · 60 min · 1 rotation" when it is not ("of 90" says what "planned" said, better; the
+ * frame reads "60 min" without it). One builder for the parts, so the two readings cannot drift.
+ * With zero timed minutes the fit is unknowable and the line falls back to the count.
  */
-export function summarizePracticePlan(plan: PracticePlan): string {
+export function summarizePracticePlan(
+  plan: PracticePlan,
+  fit?: { length: number | null },
+): string {
   const blocks = plan.blocks.length;
   const parts = [`${blocks} block${blocks === 1 ? '' : 's'}`];
   const minutes = totalPlannedMinutes(plan);
-  if (minutes > 0) parts.push(`${minutes} min planned`);
+  if (minutes > 0) {
+    parts.push(!fit ? `${minutes} min planned` : fit.length != null ? `${minutes} of ${fit.length} min` : `${minutes} min`);
+  }
   const rotations = plan.blocks.filter(blockRotates).length;
   if (rotations > 0) parts.push(`${rotations} rotation${rotations === 1 ? '' : 's'}`);
   return parts.join(' · ');

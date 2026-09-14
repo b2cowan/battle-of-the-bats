@@ -52,10 +52,11 @@ const SLUG = 'uat-test-org';
 const TEAM = '3127a094-458f-4b78-8726-17342a8e37a6';
 const EVENT = process.env.PROBE_EVENT_ID ?? '';
 
-const templatesUrl = () => `/${SLUG}/coaches/teams/${TEAM}/development/templates`;
+// The Templates TAB of Practice plans since the practices re-evaluation's stage 0 (D5, 2026-09-14);
+// the page title is the room's, "Practice plans", and "Templates" is the selected tab.
+const templatesUrl = () => `/${SLUG}/coaches/teams/${TEAM}/practice?section=templates`;
 const reportUrl = () => `/${SLUG}/coaches/teams/${TEAM}/history?section=development`;
 const planUrl = () => `/${SLUG}/coaches/teams/${TEAM}/practice/${EVENT}`;
-const hubUrl = () => `/${SLUG}/coaches/teams/${TEAM}/development`;
 
 const WIDTHS = [
   { name: '361 (narrowest phone)', width: 361, height: 780 },
@@ -128,7 +129,7 @@ test.describe('plan templates — the room', () => {
     test(`renders, with its stylesheet, and no horizontal overflow at ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto(templatesUrl());
-      await expect(page.getByRole('heading', { name: 'Plan templates' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible();
 
       // ⚠ The Phase 2 trap: a wrong CSS-module depth typechecks cleanly and breaks the route.
       expect(await pageRenderedWithStyles(page), 'the page rendered with its CSS module resolved').toBe(true);
@@ -140,13 +141,16 @@ test.describe('plan templates — the room', () => {
   test('every control this feature adds clears the 44px tap floor at 361', async ({ page }) => {
     await page.setViewportSize({ width: 361, height: 780 });
     await page.goto(templatesUrl());
-    await expect(page.getByRole('heading', { name: 'Plan templates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible();
     expect(await shortPhase3ControlHeights(page)).toEqual([]);
   });
 
   test('the empty state offers all three routes in (owner ruling, frame 03)', async ({ page }) => {
     await page.goto(templatesUrl());
-    await expect(page.getByRole('heading', { name: 'Plan templates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible();
+    // The header paints before the library loads: wait for the list OR the empty state before
+    // deciding which one is on screen, or the count is taken from a page that has neither.
+    await page.getByPlaceholder('Search templates…').or(page.locator('[class*="state"]').filter({ hasText: 'template' })).first().waitFor({ timeout: 30_000 });
     const hasTemplates = await page.locator('[class*="ppDrillCard"]').count() > 0;
     test.skip(hasTemplates, 'this team already has templates — the empty state is not on screen');
     // ⚠ "New template" is offered at ZERO as well as at one: refusing at zero while allowing it at
@@ -172,7 +176,7 @@ test.describe('plan templates — the room', () => {
  */
 async function ensureTemplate(page: Page): Promise<void> {
   await page.goto(templatesUrl());
-  await expect(page.getByRole('heading', { name: 'Plan templates' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible({ timeout: 30_000 });
   if (await page.locator('[class*="ppTemplateLink"]').count() > 0) return;
   // "New template" is offered at ZERO as well as at one, and lands straight in the editor.
   // ⚠ TWO TAPS SINCE PHASE 3 (2026-08-25): the header's create opens a MENU — "Start from blank" or
@@ -191,7 +195,7 @@ test.describe('the template editor — a template carries no people', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await ensureTemplate(page);
     await page.goto(templatesUrl());
-    await expect(page.getByRole('heading', { name: 'Plan templates' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible({ timeout: 30_000 });
     await page.locator('[class*="ppTemplateLink"]').first().click();
 
     await expect(page.getByRole('textbox', { name: 'Name' })).toBeVisible({ timeout: 30_000 });
@@ -345,12 +349,16 @@ test.describe('the Development report — coverage, and the rules that bind hard
   });
 });
 
-test.describe('the Development hub — the new door', () => {
-  test('offers Plan templates beside Your drills', async ({ page }) => {
+test.describe('the Practice plans room — the door to the library (stage 0, D5)', () => {
+  // The Skills & Goals tile that used to be the templates' door is gone (its own stage 0, 2026-09-14);
+  // the library is a TAB of Practice plans, absent for a coach the templates read would refuse.
+  test('offers Templates and Drills as tabs beside Practices', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(hubUrl());
-    await expect(page.getByRole('heading', { name: /^Development/ })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Plan templates/i })).toBeVisible();
+    await page.goto(`/${SLUG}/coaches/teams/${TEAM}/practice`);
+    await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible({ timeout: 30_000 });
+    const tabs = page.getByRole('navigation', { name: 'Practice plans views' });
+    await expect(tabs.getByRole('link', { name: 'Templates' })).toBeVisible();
+    await expect(tabs.getByRole('link', { name: 'Drills' })).toBeVisible();
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   });
 });

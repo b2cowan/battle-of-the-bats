@@ -1881,9 +1881,20 @@
    live exception to the colour-token guardrail). Matches the warn chip on the next line. */
 .lineupFrontChip[data-tone="ok"]   { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
 .lineupFrontChip[data-tone="warn"] { color: var(--warning); background: rgba(var(--warning-rgb), 0.12); }
+/* The record's voice (practices re-evaluation stage 0, D3): a past practice with no plan is
+   "No plan written" — outlined and quiet, never the amber of work still waiting. */
+.lineupFrontChip[data-tone="mute"] { color: var(--text-tertiary); background: transparent; border: 1px solid var(--border-2); }
 .lineupFrontAction {
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
   font-size: var(--type-body); font-weight: 700; color: var(--blueprint-light);
+}
+/* "Open" on a past row — the same door in the record's register (D3). */
+.lineupFrontActionQuiet { color: var(--text-tertiary); font-weight: 600; }
+/* A past practice's recap, first line only (D3) — quoted, one line, clipped rather than wrapped so
+   a paragraph of "how it went" cannot turn a row into a card. */
+.lineupFrontNote {
+  font-size: var(--type-support); color: var(--text-secondary); font-style: italic;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* The Games pane's single lime action (nearest upcoming game without a lineup) — a styled span
    inside the row Link, so the whole row stays one interactive element. */
@@ -2202,6 +2213,11 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
   .lineupFrontDate  { grid-area: date; }
   .lineupFrontMeta  { grid-area: meta; }
   .lineupFrontChip  { grid-area: chip; justify-self: end; }
+  /* The recap line (D3) takes a third row under meta + chip, spanning the content columns — as
+     a `display: contents` child it would otherwise be auto-placed into whatever cell was free
+     and squeeze the meta to a sliver. Explicit placement, not a template row: a row without a
+     note must not pay the row-gap for an empty track. */
+  .lineupFrontNote  { grid-column: 2 / -1; grid-row: 3; min-width: 0; }
   .lineupFrontTitle {
     grid-area: title;
     white-space: normal;          /* was nowrap — a cut name stops naming the game */
@@ -2275,6 +2291,12 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 .oneThing[data-kind="season_check"] { border-left-color: var(--warning); }
 .oneThing[data-kind="lull"] { border-left-color: var(--blueprint-blue); }
 .oneThing[data-kind="preseason"] { border-left-color: var(--blueprint-blue); }
+/* The Practice plans hub's next-practice card (practices re-evaluation stage 0, D1) — the SAME
+   card as the Overview's, rendered on the hub, so D1 and D7 produce one thing. Olive: the room's
+   own accent, neither "live" green nor the schedule blue. */
+.oneThing[data-kind="next_practice"] { border-left-color: var(--home-olive, var(--blueprint-blue)); }
+/* The state chip sits on the meta row beside the quiet links — the row chip's own shape. */
+.oneMetaRow .lineupFrontChip { align-self: center; }
 
 .oneKicker {
   display: flex;
@@ -2436,6 +2458,14 @@ a.oneChip:hover { border-color: currentColor; }
      is just two lines. */
   .oneHeadRow .oneHeadline { flex: 1 1 9rem; }
   .oneAnswers { gap: 0.4rem 0.9rem; }
+}
+/* The quiet answers take the tap floor on a phone and a tablet (practices re-evaluation stage 0,
+   2026-09-14): the card for a practice now carries TWO of them beside the meta, and the rendered
+   sweep measured them at 32px — the base rule's "real touch target" was under the floor. Padding,
+   not margin, so the row's height is the target's height. */
+@media (max-width: 768px) {
+  .oneAnswer,
+  .oneAnswerMuted { min-height: var(--tap-min, 44px); padding: 0.3rem 0; }
 }
 
 /* ══ THE TAIL (Chunk I) ════════════════════════════════════════════════════

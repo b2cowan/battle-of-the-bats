@@ -62,6 +62,8 @@ function anchorInput(overrides: Partial<AnchorInput> = {}): AnchorInput {
     lineupReady: null,
     attendanceTaken: false,
     gameDayOpen: false,
+    // Not a practice unless a case says so (D7) — a team event keeps the attendance card.
+    practicePlan: null,
     ...overrides,
   };
 }
@@ -399,7 +401,7 @@ describe('resolveOverviewAnchor — the button is the first thing NOT DONE', () 
     assert.equal(done?.primary, null, 'their own work is finished — the lineup is not theirs to do');
   });
 
-  it('stops offering attendance on a PRACTICE once it is taken', () => {
+  it('stops offering attendance on a TEAM EVENT once it is taken', () => {
     const outstanding = resolveOverviewAnchor(anchorInput({
       phase: 'in_season', hasNextEvent: true, nextIsGame: false, attendanceTaken: false,
     }));
@@ -408,6 +410,44 @@ describe('resolveOverviewAnchor — the button is the first thing NOT DONE', () 
       phase: 'in_season', hasNextEvent: true, nextIsGame: false, attendanceTaken: true,
     }));
     assert.equal(done?.primary, 'open_schedule');
+  });
+
+  /**
+   * D7 (practices re-evaluation stage 0, 2026-09-14): a PRACTICE's card follows the practice's
+   * state instead of always offering attendance — the plan is the preparation. Attendance, while
+   * outstanding, is the quiet answer beside the schedule door, where it sits for a game.
+   */
+  describe('a practice follows its plan state (D7)', () => {
+    const practice = (o: Partial<AnchorInput>) => resolveOverviewAnchor(anchorInput({
+      phase: 'in_season', hasNextEvent: true, nextIsGame: false, ...o,
+    }));
+    it('no plan → Plan this practice, attendance and the schedule as the quiet answers', () => {
+      const d = practice({ practicePlan: 'none', attendanceTaken: false });
+      assert.equal(d?.primary, 'plan_practice');
+      assert.deepEqual(d?.answers, ['take_attendance', 'open_schedule']);
+    });
+    it('plan set → Open the plan; attendance drops out of the answers once taken', () => {
+      assert.equal(practice({ practicePlan: 'planned', attendanceTaken: false })?.primary, 'open_plan');
+      const taken = practice({ practicePlan: 'planned', attendanceTaken: true });
+      assert.equal(taken?.primary, 'open_plan');
+      assert.deepEqual(taken?.answers, ['open_schedule']);
+    });
+    it('inside the run window → Run practice', () => {
+      assert.equal(practice({ practicePlan: 'run' })?.primary, 'run_practice');
+    });
+    it('a coach who cannot write plans keeps the attendance card for an unplanned practice', () => {
+      // Every event card already needs Schedule: View + edit to render at all, so this is the
+      // resolver's own honesty rather than a reachable screen today — but a gate that is not
+      // asserted is a gate that drifts.
+      const d = practice({ practicePlan: 'none', caps: caps({ scheduleManage: false }) });
+      assert.notEqual(d?.primary, 'plan_practice');
+    });
+    it('a game is untouched — a plan state never reaches a game', () => {
+      const d = resolveOverviewAnchor(anchorInput({
+        phase: 'in_season', hasNextEvent: true, nextIsGame: true, practicePlan: 'none', lineupReady: false,
+      }));
+      assert.equal(d?.primary, 'build_lineup');
+    });
   });
 
   it('offers no text answers on a game card — the chip row carries them', () => {

@@ -96,6 +96,12 @@ export default function CoachTabBar<Id extends string>({
     return () => { ro.disconnect(); el.removeEventListener('scroll', measure); };
   }, [tabsKey, remeasureKey]);
 
+  // A row of ONE tab is not navigation. The Practice plans room drops its two library tabs for a
+  // coach the libraries would refuse (stage 0, D5), and a lone "Practices" tab would be a row that
+  // says nothing — so the bar itself goes. Owned here rather than by that caller because it is a
+  // property of what a tab bar IS. After the hooks, so React's order is stable on every render.
+  if (tabs.length < 2) return null;
+
   function scrollTabs(dir: -1 | 1) {
     const el = barRef.current;
     if (!el) return;

@@ -24,7 +24,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * about); passing it on several rows would spend the page's only emphasis on nothing.
  */
 export type CoachEventRowChip = {
-  tone: 'ok' | 'warn';
+  /**
+   * `mute` (practices re-evaluation stage 0, D3): a PAST practice with no plan reads "No plan
+   * written" in the record's voice — outlined, quiet — never the amber of an upcoming one still
+   * waiting for work. Two halves of a list, two vocabularies; one chip shape.
+   */
+  tone: 'ok' | 'warn' | 'mute';
   label: string;
   icon?: ReactNode;
 };
@@ -36,6 +41,8 @@ export default function CoachEventListRow({
   meta,
   chip,
   action,
+  quietAction,
+  note,
   primaryLabel,
 }: {
   href: string;
@@ -53,6 +60,16 @@ export default function CoachEventListRow({
   chip: CoachEventRowChip | null;
   /** Quiet trailing action, used unless this row carries the page's lime action. */
   action: string;
+  /**
+   * The action in the record's voice (stage 0, D3) — "Open" on a past practice, muted rather than
+   * the working blue of "Open the plan" / "Plan this practice". Default false.
+   */
+  quietAction?: boolean;
+  /**
+   * One optional line under the meta — a past practice's recap, first line only (D3). `null` or
+   * `undefined` renders nothing; the row never draws an empty line.
+   */
+  note?: string | null;
   /** Set on exactly one row per page, `null` on the rest. */
   primaryLabel: string | null;
 }) {
@@ -65,6 +82,7 @@ export default function CoachEventListRow({
       <span className={styles.lineupFrontMain}>
         <span className={styles.lineupFrontTitle}>{title}</span>
         <span className={styles.lineupFrontMeta}>{meta}</span>
+        {note && <span className={styles.lineupFrontNote}>“{note}”</span>}
       </span>
       {chip && (
         <span className={styles.lineupFrontChip} data-tone={chip.tone}>
@@ -76,7 +94,7 @@ export default function CoachEventListRow({
           {primaryLabel} <ArrowRight size={14} aria-hidden />
         </span>
       ) : (
-        <span className={styles.lineupFrontAction}>
+        <span className={`${styles.lineupFrontAction} ${quietAction ? styles.lineupFrontActionQuiet : ''}`}>
           {action}
           <ArrowRight size={14} aria-hidden />
         </span>

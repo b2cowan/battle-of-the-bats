@@ -46,7 +46,8 @@ const SLUG = 'uat-test-org';
 const TEAM = '3127a094-458f-4b78-8726-17342a8e37a6';
 const EVENT = process.env.PROBE_EVENT_ID ?? '';
 
-const drillsUrl = () => `/${SLUG}/coaches/teams/${TEAM}/development/drills`;
+// The Drills TAB of Practice plans since re-evaluation stage 0 (D5, 2026-09-14).
+const drillsUrl = () => `/${SLUG}/coaches/teams/${TEAM}/practice?section=drills`;
 const planUrl = () => `/${SLUG}/coaches/teams/${TEAM}/practice/${EVENT}`;
 
 const WIDTHS = [
@@ -97,7 +98,8 @@ test.describe('drill library — the room', () => {
       await page.waitForLoadState('networkidle');
 
       // The room resolved at all — not "Team not found", not an error state.
-      await expect(page.getByRole('heading', { name: 'Your drills' })).toBeVisible();
+      // The room's title since stage 0 (the page was "Your drills", then "Drills", now a tab).
+      await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible();
 
       expect(await horizontalOverflow(page), 'document scrolls sideways').toBeLessThanOrEqual(1);
     });
@@ -149,6 +151,10 @@ test.describe('drill library — a picked drill is read-only in the plan', () =>
     await page.goto(drillsUrl());
     await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: /New drill/i }).first().click();
+    // "New drill" has been ONE create with two ways inside it since 2026-08-25; the blank form is
+    // the first item. (With no drills at all the empty state's own button opens the form directly.)
+    const blank = page.getByRole('menuitem', { name: /Start from blank/i });
+    if (await blank.count()) await blank.first().click();
     const sheet = page.getByRole('dialog');
     await sheet.getByLabel('Name').or(sheet.locator('input').first()).fill('Probe drill');
     await sheet.getByRole('button', { name: /^Add drill$/ }).click();

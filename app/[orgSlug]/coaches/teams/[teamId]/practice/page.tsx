@@ -1,23 +1,32 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
-  NotebookPen, CalendarPlus, CheckCircle2, TriangleAlert, ArrowRight, HelpCircle, BookMarked,
+  NotebookPen, CalendarPlus, CheckCircle2, TriangleAlert, ArrowRight, HelpCircle, Play,
 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachEventListRow from '@/components/coaches/CoachEventListRow';
+import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabilities';
-import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
-import { formatInOrgZone } from '@/lib/timezone';
+import { parsePracticePlansSection } from '@/lib/practice-plans-address';
+import {
+  practiceHasPlan, practicePlanState, practiceFitLabel, practiceRecapLine, isInRunWindow,
+  practiceLengthMinutes,
+} from '@/lib/practice-state';
+import { calendarDaysBetween, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
+import PracticePlansTabs from './_PracticePlansTabs';
+import DrillsView from './_DrillsView';
+import PlanTemplatesView from './_PlanTemplatesView';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent } from '@/lib/types';
 
 /**
- * ── The Practice plans hub (owner-approved 2026-08-15) ───────────────────────────────────────
+ * ── The Practice plans room (hub 2026-08-15; re-evaluation stage 0 · Arrive, 2026-09-14) ─────────
  *
  * Practice plans had NO front door: the only way to one was the Schedule, tapping the right
  * practice, and scrolling its panel — three interactions deep, and only if the coach already knew
@@ -25,19 +34,30 @@ import type { RepTeamEvent } from '@/lib/types';
  * plan's two-to-three times that, had a nav item, a hub, a readiness filter and a templates page.
  * This is that treatment applied to the more frequent tool.
  *
- * ⚠ NO new API. `RepTeamEvent.practicePlan` already rides the events read (mapped through
- * `parsePracticePlan` on every row), so readiness is computed from the list this page already has
- * to fetch. Do not add a per-practice probe here — the whole point is that the answer is free.
+ * **Stage 0 · Arrive (owner rulings D1–D8, all "build as drawn", 2026-09-14).** The room is the
+ * HUB for three things — the season's practices, plan templates and the drill library — as tabs
+ * (Practices · Templates · Drills; Practices the landing; `?section=`), and it opens on the NEXT
+ * PRACTICE as one card carrying the room's one lime by state: Plan this practice · Open the plan ·
+ * Run practice (inside the run window). "Needs a plan" counts upcoming practices only (it used to
+ * count May in September). Below the line the past reads as a record — "No plan written · Open",
+ * never "Plan this practice", the recap's first line on a written-up row — and a planned row says
+ * how the plan FITS the practice ("3 blocks · 60 of 90 min"). No overview tab, no tiles: the card
+ * and the chip are the room's whole state. The two library pages moved here WHOLE from Skills &
+ * Goals (`_PlanTemplatesView`, `_DrillsView`); their old addresses redirect.
+ *
+ * ⚠ NO new API. `RepTeamEvent.practicePlan`, `practiceRecap` and `endsAt` all ride the events
+ * read, so the card, the fit line and the recap line are computed from the list this page already
+ * has to fetch. Do not add a per-practice probe here — the whole point is that the answer is free.
+ *
+ * ⚠ ONE definition of "has a plan" (at least one BLOCK) and ONE run window, both in
+ * `lib/practice-state.ts` — shared with the Overview's card, so the two screens can never
+ * disagree about what a practice needs next.
  *
  * ⚠ **PLANNING IS A LIVE-SEASON ACT; THE PLANS THEMSELVES ARE A RECORD, AND THIS PAGE USED TO DENY
- * THAT** (P3 C1, 2026-08-16). This hub is the live planner and stays one: it lists the season's
- * practices so the coach can write tonight's plan, which is meaningless once the season is over.
- * But its between-seasons state told the coach a finished season keeps "not the plans" and to
- * "switch back to your current season", and BOTH clauses were false — every plan is kept and
- * readable, and the season switcher was deleted on 2026-08-16, so a between-seasons team has no
- * current season to switch to. P1's `CoachNotOnTeam` sweep covered this page's two children and
- * missed the hub itself; P2 then made the nav door always-visible, which made that false sentence
- * the first thing a between-seasons coach reads about their plans.
+ * THAT** (P3 C1, 2026-08-16). This hub is the live planner and stays one. A team with no live
+ * season lands on its closed-season page, where "The practices you ran" is a shelf, so this page
+ * has nothing to say about a finished season and does not render for one. No page here learns a
+ * year.
  *
  * ⚠ It is deliberately NOT `CoachNotOnTeam`. That component's words are right for a live instrument
  * with nothing to show; this screen genuinely HAS something to show and must hand over the door to
@@ -45,15 +65,11 @@ import type { RepTeamEvent } from '@/lib/types';
  * the instrument case.
  */
 
-/** A practice is "on now" for a window either side of its start — used only to decide whether the
- *  row offers the live "Run practice" door. Clock arithmetic on absolute instants, so there is no
- *  date-boundary question and no timezone to get wrong. */
-const RUN_WINDOW_MS = 3 * 60 * 60 * 1000;
-
 /** Weekday + time only — the date tile beside this line already carries the day and month. */
 function rowMeta(startsAt: string) {
-  return `${formatInOrgZone(startsAt, { weekday: 'short' })} · ${formatInOrgZone(startsAt, { hour: 'numeric', minute: '2-digit' })}`;
+  return `${formatInOrgZone(startsAt, { weekday: 'short' })} · ${clock(startsAt)}`;
 }
+const clock = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' });
 
 export default function CoachesPracticePlansPage({
   params: paramsPromise,
@@ -61,12 +77,21 @@ export default function CoachesPracticePlansPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(paramsPromise);
+  const searchParams = useSearchParams();
+  const section = parsePracticePlansSection(searchParams.get('section'));
   const { loading: ctxLoading } = useCoaches();
   const { openHelp } = useHelpDrawer();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  // Clock snapshot, once per mount — the render body must stay pure (same rule as Lineups).
-  const [nowMs] = useState(() => Date.now());
+  // The clock: snapshotted in state so the render body stays pure (same rule as Lineups), and
+  // re-read once a minute — the card's lime is decided by the run window, and a tab left open
+  // through an afternoon must not keep offering "Run practice" for a practice that ended, or miss
+  // it for one that started (/review, 2026-09-14; the Overview's game-day clock does the same).
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const [upcoming, setUpcoming] = useState<RepTeamEvent[]>([]);
   const [recent, setRecent] = useState<RepTeamEvent[]>([]);
@@ -80,12 +105,14 @@ export default function CoachesPracticePlansPage({
   // Writing a plan follows "Schedule: View + edit" (R7 — the same gate the practice-plan PUT
   // enforces), and a past season can never be written to.
   const canPlan = (caps ? canWritePracticePlans(caps) : false);
-  // The templates door gates on what the templates route itself requires, so this page never
-  // offers a link that 403s on arrival.
-  const canSeeTemplates = caps ? canManageSchedule(caps) : false;
+  // The two library tabs gate on what their reads require (`canManageSchedule`), so this page never
+  // offers a tab that 403s on arrival — the tab is ABSENT for a viewer the page would refuse.
+  const canSeeLibrary = caps ? canManageSchedule(caps) : false;
   // Adding a practice is a SCHEDULE-MANAGE act, not a plan one — a coach who can write plans but
   // not schedule must not be handed an "Add a practice" button they cannot use. Fails closed.
   const canAddPractices = (caps ? canManageSchedule(caps) : false);
+  // A section this coach may not open lands on Practices — the landing, never a refusal screen.
+  const activeSection = canSeeLibrary ? section : 'practices';
 
   const helpRequest = {
     module: 'coaches' as const,
@@ -128,7 +155,9 @@ export default function CoachesPracticePlansPage({
   // Wait for the assignments context before fetching, so the fail-open default above can't fire a
   // request for a coach whose schedule access has been revoked. `hasAccess` is in the guard too —
   // a coach who is not on this team renders "Team not found" below, and firing a request that can
-  // only 403 is work nobody ever sees the result of.
+  // only 403 is work nobody ever sees the result of. ONCE per team, whichever tab the coach lands
+  // on (the Skills & Goals hub's idiom): gating it on the Practices tab re-fetched the list — and
+  // flashed "Loading…" — every time the coach came back from a library tab (/simplify, 2026-09-14).
   useEffect(() => {
     if (ctxLoading || !page.hasAccess || !canSeeSchedule) return;
     let cancelled = false;
@@ -173,6 +202,11 @@ export default function CoachesPracticePlansPage({
     );
   }
 
+  // The two libraries — today's pages moved whole (D5). Each draws the room's header with its own
+  // action and help, and the tab bar under it.
+  if (activeSection === 'drills') return <DrillsView orgSlug={orgSlug} teamId={teamId} />;
+  if (activeSection === 'templates') return <PlanTemplatesView orgSlug={orgSlug} teamId={teamId} />;
+
   /**
    * ⚠ **THE BETWEEN-SEASONS SCREEN THAT STOOD HERE IS DELETED** (2026-08-18). It explained that the
    * season had finished, that plans are still kept, and pointed at where to read them — a whole
@@ -183,48 +217,57 @@ export default function CoachesPracticePlansPage({
 
   const all = [...upcoming, ...recent];
   /**
-   * ⚠ "Has a plan" means it has at least one BLOCK, not that a plan row exists. The builder
-   * autosaves about a second after the last keystroke, and a plan counts as savable once a goal,
-   * an equipment note or a practice type is set — so a coach who types "work on cut-offs" and then
-   * gets called away leaves a real, blockless plan behind. Keying off the row's existence made
-   * this page say "Plan set · 0 blocks" and drop that practice out of the very filter that exists
-   * to catch it. The page's whole job is "what still needs doing", and a goal on its own does not
-   * tell anybody what happens at 6pm. What they typed is still there when they open it.
+   * THE CARD's practice (D1): tonight's, if a planned practice is inside the run window — even one
+   * that started twenty minutes ago and so sits in `recent` — otherwise the nearest upcoming one.
+   * The card is that row promoted; it is left out of the lists below so nothing appears twice.
    */
-  const hasPlan = (e: RepTeamEvent) => (e.practicePlan?.blocks.length ?? 0) > 0;
-  // needsTotal decides whether the filter exists at all; the chip shows the same count.
-  const needsTotal = all.filter(e => !hasPlan(e)).length;
-  const shown = (list: RepTeamEvent[]) => (needsOnly ? list.filter(e => !hasPlan(e)) : list);
-  const upcomingShown = shown(upcoming);
-  const recentShown = shown(recent);
-  // The page's ONE lime action: the nearest visible upcoming practice with no plan. No qualifying
-  // practice → no lime on this page. Lime is earned, never decorative.
-  const primaryId = canPlan ? upcomingShown.find(e => !hasPlan(e))?.id ?? null : null;
+  const cardEvent = all.find(e => practicePlanState(e, nowMs) === 'run') ?? upcoming[0] ?? null;
+  // needsTotal decides whether the filter exists at all; the chip shows the same count. UPCOMING
+  // only (D2): a coach in September was told three practices needed a plan, all in May.
+  const needsTotal = upcoming.filter(e => !practiceHasPlan(e)).length;
+  // The card's practice never repeats in a list. The filter is the COUNT's filter — upcoming only:
+  // with it on, the past half goes (a past practice with no plan is a record, not work), so the
+  // rows shown plus the card, if it needs one, are exactly the number on the chip.
+  const notCard = (list: RepTeamEvent[]) => list.filter(e => e.id !== cardEvent?.id);
+  const upcomingShown = notCard(needsOnly ? upcoming.filter(e => !practiceHasPlan(e)) : upcoming);
+  const recentShown = needsOnly ? [] : notCard(recent);
 
   const noPractices = !loading && !error && all.length === 0;
-  const noMatches = !loading && !error && !noPractices && upcomingShown.length === 0 && recentShown.length === 0;
+  // "All caught up" only when the filter finds nothing AND the card is not itself the match.
+  const cardNeedsPlan = !!cardEvent && !practiceHasPlan(cardEvent);
+  const noMatches = !loading && !error && !noPractices && needsOnly
+    && upcomingShown.length === 0 && !cardNeedsPlan;
 
-  const renderRow = (e: RepTeamEvent) => {
-    const planned = hasPlan(e);
-    const startMs = new Date(e.startsAt).getTime();
+  const renderRow = (e: RepTeamEvent, past: boolean) => {
+    const planned = practiceHasPlan(e);
     // "Run practice" is offered only around the practice itself, and only once there is a plan to
-    // run — the Schedule panel offers the same door off the same condition.
-    const inRunWindow = planned && Math.abs(startMs - nowMs) <= RUN_WINDOW_MS;
+    // run — the Schedule panel offers the same door off the same condition. The card has already
+    // claimed the first such practice; this catches a second one inside the same window.
+    const inRunWindow = planned && isInRunWindow(e.startsAt, nowMs);
+    // Two halves, two vocabularies (D3): above the line the room is a planner, below it a record.
+    // "Open" is the record's door — a past practice, or a coach who cannot write plans — and it is
+    // the quiet one; the working doors keep their weight.
+    const action = planned ? 'Open the plan' : (!past && canPlan) ? 'Plan this practice' : 'Open';
     const row = (
       <CoachEventListRow
         key={e.id}
         href={`${base}/practice/${e.id}`}
         startsAt={e.startsAt}
         title={e.name || 'Practice'}
-        // A planned practice says what the plan IS; an unplanned one has only its time to give.
+        // A planned practice says how its plan FITS (D4); an unplanned one has only its time to give.
         meta={planned && e.practicePlan
-          ? `${rowMeta(e.startsAt)} · ${summarizePracticePlan(e.practicePlan)}`
+          ? `${rowMeta(e.startsAt)} · ${practiceFitLabel(e.practicePlan, e.startsAt, e.endsAt)}`
           : rowMeta(e.startsAt)}
         chip={planned
           ? { tone: 'ok', label: 'Plan set', icon: <CheckCircle2 size={13} aria-hidden /> }
-          : { tone: 'warn', label: 'No plan', icon: <TriangleAlert size={13} aria-hidden /> }}
-        action={planned ? 'Open the plan' : canPlan ? 'Plan this practice' : 'Open'}
-        primaryLabel={e.id === primaryId ? 'Plan this practice' : null}
+          : past
+            ? { tone: 'mute', label: 'No plan written' }
+            : { tone: 'warn', label: 'No plan', icon: <TriangleAlert size={13} aria-hidden /> }}
+        action={action}
+        quietAction={action === 'Open'}
+        note={past ? practiceRecapLine(e.practiceRecap) : null}
+        // The room's one lime lives on the card now (D1) — no row carries it.
+        primaryLabel={null}
       />
     );
     if (!inRunWindow) return row;
@@ -236,31 +279,107 @@ export default function CoachesPracticePlansPage({
     );
   };
 
+  /** The next-practice card (D1) — the Overview's "one thing" card, on the hub. */
+  const renderCard = (e: RepTeamEvent) => {
+    const state = practicePlanState(e, nowMs);
+    const days = Math.max(0, calendarDaysBetween(new Date(nowMs), new Date(e.startsAt)));
+    const when = relativeDayLabel(days);
+    const headline = days === 0
+      ? `Today · ${clock(e.startsAt)}`
+      : `${formatInOrgZone(e.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })} · ${clock(e.startsAt)}`;
+    const length = practiceLengthMinutes(e.startsAt, e.endsAt);
+    const meta = [
+      e.name || 'Practice',
+      e.location,
+      e.endsAt && length ? `${clock(e.startsAt)}–${clock(e.endsAt)}` : null,
+      length ? `${length} min` : null,
+    ].filter(Boolean).join(' · ');
+    const planHref = `${base}/practice/${e.id}`;
+    const runHref = `${planHref}/run`;
+    // The state decides the action. No plan → Plan this practice (for a coach who may); plan set
+    // → Open the plan; on the day → Run practice, with the plan as the quiet link. A coach who
+    // cannot write plans is never shown a lime they cannot earn: an unplanned practice offers
+    // "Open" quietly, read-only.
+    const primary = state === 'run'
+      ? { href: runHref, label: 'Run practice', icon: <Play size={15} aria-hidden /> }
+      : state === 'planned'
+        ? { href: planHref, label: 'Open the plan', icon: null }
+        : canPlan
+          ? { href: planHref, label: 'Plan this practice', icon: null }
+          : null;
+    const answers = state === 'run'
+      ? [{ href: planHref, label: 'Open the plan' }]
+      : primary ? [] : [{ href: planHref, label: 'Open' }];
+    // The state chip rides the answers slot: the meta row's right side, beside the quiet links.
+    const chip = state === 'none' ? (
+      <span className={styles.lineupFrontChip} data-tone="warn">
+        <TriangleAlert size={13} aria-hidden /> No plan yet
+      </span>
+    ) : (
+      <span className={styles.lineupFrontChip} data-tone="ok">
+        <CheckCircle2 size={13} aria-hidden /> Plan set{e.practicePlan ? ` · ${practiceFitLabel(e.practicePlan, e.startsAt, e.endsAt)}` : ''}
+      </span>
+    );
+    return (
+      <CoachOneThingCard
+        kind="next_practice"
+        kicker="Next practice"
+        when={when}
+        headline={headline}
+        primary={primary && (
+          <Link href={primary.href} className={`btn btn-lime ${styles.onePrimary}`}>
+            {primary.icon}{primary.label} <ArrowRight size={15} aria-hidden />
+          </Link>
+        )}
+        meta={meta}
+        answers={(
+          <>
+            {chip}
+            {answers.map(a => (
+              <Link key={a.label} href={a.href} className={styles.oneAnswer}>
+                {a.label} <ArrowRight size={13} aria-hidden />
+              </Link>
+            ))}
+          </>
+        )}
+      />
+    );
+  };
+
   return (
     <div className={styles.page}>
       {header}
+      <PracticePlansTabs base={base} active="practices" showLibrary={canSeeLibrary} />
 
       {loading ? (
         <div className={styles.loadingState}>Loading practices…</div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : noPractices ? (
+        /* D6: headline · one sentence · the arc · one lime. The button opens the Schedule with the
+           Add Practice form already open — not the list two clicks short of it. */
         <CoachEmptyState
           icon={<CalendarPlus size={22} aria-hidden />}
           eyebrow="Practice plans"
           headline="Plan a practice once, run it from your phone"
-          description="A practice plan sets out the blocks, stations and groups for one session — how long each part runs, who's in which group, and what you're teaching."
-          payoff="Save one as a template and next week starts from it instead of a blank page, and anyone helping you run the practice can follow the same plan on their own phone."
-          blocker={canAddPractices
-            ? 'A plan attaches to a real practice, so put one on your schedule first.'
-            : 'A plan attaches to a real practice, and none are on the schedule yet. Adding them needs schedule access — ask your head coach.'}
+          description="A plan sets out the blocks, stations and groups for one practice — and it lives on the practice, so put one on your schedule first."
+          arc={(
+            <span aria-label="How practice plans work: schedule it, plan it, print it or run it, write how it went">
+              {['Schedule it', 'Plan it', 'Print it or run it', 'Write how it went'].map((w, i) => (
+                <span key={w}>{i > 0 && <span aria-hidden>{' → '}</span>}{i === 0 ? <b>{w}</b> : w}</span>
+              ))}
+            </span>
+          )}
+          blocker={canAddPractices ? undefined : 'Adding a practice needs schedule access — ask your head coach.'}
           primaryAction={canAddPractices
-            ? { label: 'Add a practice', icon: <CalendarPlus size={15} aria-hidden />, href: `${base}/schedule` }
+            ? { label: 'Add a practice', icon: <CalendarPlus size={15} aria-hidden />, href: `${base}/schedule?add=practice` }
             : undefined}
           secondaryAction={{ label: 'How practice plans work', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
         />
       ) : (
         <>
+          {cardEvent && renderCard(cardEvent)}
+
           {/* Stays mounted while toggled on even at zero — otherwise planning the last practice
               would unmount the only control that can turn the filter back off. */}
           {(needsTotal > 0 || needsOnly) && (
@@ -279,28 +398,17 @@ export default function CoachesPracticePlansPage({
           {upcomingShown.length > 0 && (
             <section aria-labelledby="practices-upcoming">
               <p className={styles.sectionKicker} id="practices-upcoming">Coming up</p>
-              <div className={styles.lineupFrontList}>{upcomingShown.map(renderRow)}</div>
+              <div className={styles.lineupFrontList}>{upcomingShown.map(e => renderRow(e, false))}</div>
             </section>
           )}
           {recentShown.length > 0 && (
             <section aria-labelledby="practices-recent">
               <p className={styles.sectionKicker} id="practices-recent">Recent practices</p>
-              <div className={styles.lineupFrontList}>{recentShown.map(renderRow)}</div>
+              <div className={styles.lineupFrontList}>{recentShown.map(e => renderRow(e, true))}</div>
             </section>
           )}
           {noMatches && (
             <p className={styles.lineupFilterNoMatch}>All caught up — every practice here has a plan.</p>
-          )}
-
-          {/* The team's reusable plans have ONE home (Development → Plan templates), which already
-              does rename / retire / import. This is a door to it, never a second copy of it — two
-              lists of the same library would eventually disagree about what a template is. */}
-          {canSeeTemplates && (
-            <p className={styles.lineupInsightsLink}>
-              <Link href={`${base}/development/templates`}>
-                <BookMarked size={13} aria-hidden /> Plan templates <ArrowRight size={13} aria-hidden />
-              </Link>
-            </p>
           )}
         </>
       )}

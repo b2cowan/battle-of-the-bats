@@ -591,6 +591,7 @@ export default function CoachesSchedulePage({
   // Deep-link: /schedule?event=<id>&tab=lineup opens that game straight into its builder (the
   // Lineups front door and the Overview "Build lineup" button link here). One-shot per mount.
   const deepLinkHandledRef = useRef(false);
+  const addDeepLinkHandledRef = useRef(false);
   const [tryoutSessions, setTryoutSessions] = useState<RepTryoutSession[]>([]);
   // WI-2B: the rep team's real tournament games. Batch 4 mirrors every DATED one into a real event
   // (so attendance/lineups work), so what this list still uniquely carries is the undated bracket
@@ -945,6 +946,21 @@ export default function CoachesSchedulePage({
       if (sp.get('tab') === 'scouting') setSlideTab('scouting');
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
+
+  // `?add=practice` (practices re-evaluation stage 0, D6): the Practice plans empty state's button
+  // opens the Add Practice FORM directly rather than landing the coach on the list two clicks short
+  // of it. Its own effect, not a branch of the one above: that one waits for a non-empty events
+  // list, and a fresh team — the one case this link exists for — has none. Only for a coach who
+  // may add events; anyone else lands on the list as before. Runs once.
+  useEffect(() => {
+    if (addDeepLinkHandledRef.current) return;
+    if (loading || !canAddEvents) return;
+    addDeepLinkHandledRef.current = true;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get('add') === 'practice') openAddForm('practice');
+    } catch { /* ignore malformed params */ }
+  }, [loading, canAddEvents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Nav-hide + body-scroll-lock while a full-screen modal (detail, add/edit, or the day-list
   // sheet) is open — folded onto the shared CoachesOverlayProvider (Coach Portal Batch 1,

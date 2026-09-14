@@ -133,7 +133,9 @@ export const SCREENS = [
   // The bare address is the OVERVIEW since re-evaluation stage 0 (2026-09-14); Sessions is a tab.
   { id: 'coach-development',           session: 'coach', path: (c) => `${team(c)}/development`,           ready: 'h1' },
   { id: 'coach-development-sessions',  session: 'coach', path: (c) => `${team(c)}/development?section=sessions`, ready: 'h1' },
-  { id: 'coach-development-drills',    session: 'coach', path: (c) => `${team(c)}/development/drills`,    ready: 'h1' },
+  // Drills and Plan templates MOVED under Practice plans as tabs (re-evaluation stage 0, D5,
+  // 2026-09-14); the ids are kept so the baseline's keys carry over (the board precedent below).
+  { id: 'coach-development-drills',    session: 'coach', path: (c) => `${team(c)}/practice?section=drills`,    ready: 'h1' },
   // Phase 1 (2026-09-12): three views on one screen. The board's page redirects into Players;
   // the id is kept so the baseline's keys carry over. Metrics and its editor are new screens.
   { id: 'coach-development-board',     session: 'coach', path: (c) => `${team(c)}/development?section=players`, ready: 'h1' },
@@ -141,10 +143,10 @@ export const SCREENS = [
   { id: 'coach-development-metric-new', session: 'coach', path: (c) => `${team(c)}/development/metrics/new`, ready: 'h1' },
   { id: 'coach-development-metric',    session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/metrics/${c.measurableTypeId}` },
-  { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/development/templates`, ready: 'h1' },
+  { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/practice?section=templates`, ready: 'h1' },
   // Two more of the six — see the block above `coach-player`.
   { id: 'coach-development-template', session: 'coach', ready: 'h1',
-    path: (c) => `${team(c)}/development/templates/${c.planTemplateId}` },
+    path: (c) => `${team(c)}/practice/templates/${c.planTemplateId}` },
   { id: 'coach-development-session',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}` },
   // Phase 2 (2026-09-13): the scoped session — one field per attempt, Saved / Not assessed /

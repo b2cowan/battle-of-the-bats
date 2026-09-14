@@ -107,6 +107,18 @@
   margin: -0.2rem 0 0;
 }
 
+/* The section's arc in a few words (practices re-evaluation stage 0, D6) — the data face, one
+   line, the leading step in the section's accent. The same treatment the Skills & Goals
+   Overview draws its own arc in; a third arc is the moment it becomes a shared component. */
+.arc {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: var(--type-support);
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+.arc b { color: var(--home-olive, var(--primary-light)); font-weight: 700; }
+
 /* The honest prerequisite. Steps back so it reads as a condition, not a scolding. */
 .blocker {
   margin: -0.25rem 0 0;

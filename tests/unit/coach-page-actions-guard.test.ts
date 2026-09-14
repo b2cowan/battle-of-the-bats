@@ -372,18 +372,19 @@ const SITES: Site[] = [
     file: 'components/coaches/DevelopmentHandoutPreview.tsx', occurrence: 0,
     screen: 'Preview development handout', variant: 'standard', helpHost: 'masthead', actions: null,
   },
+  // ── Practice plans — one room, three tabs (practices re-evaluation stage 0, D5, 2026-09-14) ──
+  // The two libraries moved here WHOLE from under Skills & Goals; their old addresses are redirect
+  // pages with no header. Each tab is its own component and draws the room's header itself,
+  // because its header ACTION and its help section are its own — so three call sites carry one
+  // title. The Practices landing holds no action: the next-practice card owns the room's one lime.
   {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/drills/page.tsx', occurrence: 0,
-    screen: 'Drills',
-    variant: 'standard', helpHost: 'masthead',
-    actions: {
-      from: 'inline', slot: 'action', holds: 'New drill — one create with two ways inside it (Phase 3)',
-      phoneHidden: '!canWrite', phoneInTitleRow: 'true',
-    },
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/page.tsx', occurrence: 0,
+    screen: 'Practice plans (the Practices tab, and the "not turned on for you" early return)',
+    variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/templates/page.tsx', occurrence: 0,
-    screen: 'Plan templates',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/_PlanTemplatesView.tsx', occurrence: 0,
+    screen: 'Practice plans → Templates',
     variant: 'standard', helpHost: 'masthead',
     actions: {
       from: 'headerCreate', slot: 'action', holds: 'New template — one create with two ways inside it (Phase 3)',
@@ -391,15 +392,20 @@ const SITES: Site[] = [
     },
   },
   {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/templates/[templateId]/page.tsx', occurrence: 0,
-    screen: 'Plan templates → one template', variant: 'standard', helpHost: 'masthead', actions: null,
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/_DrillsView.tsx', occurrence: 0,
+    screen: 'Practice plans → Drills',
+    variant: 'standard', helpHost: 'masthead',
+    actions: {
+      from: 'inline', slot: 'action', holds: 'New drill — one create with two ways inside it (Phase 3)',
+      phoneHidden: '!canWrite', phoneInTitleRow: 'true',
+    },
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/templates/[templateId]/page.tsx', occurrence: 0,
+    screen: 'Practice plans → Templates → one template', variant: 'standard', helpHost: 'masthead', actions: null,
   },
 
   // ── Practice, lineups, insights, season's end ────────────────────────────────────────────────
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/page.tsx', occurrence: 0,
-    screen: 'Practice plans', variant: 'standard', helpHost: 'masthead', actions: null,
-  },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx', occurrence: 0,
     screen: 'Practice plans → one practice', variant: 'standard', helpHost: 'masthead', actions: null,
