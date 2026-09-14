@@ -74,7 +74,13 @@ work as the code because a column nothing reads and a role nothing writes are dr
 cannot see (the mig-264 lesson, and CLAUDE.md's standing rule). Leaving them "in case" was
 proposed to the owner and rejected with the go-ahead.
 
-## 5. Rollout — mig 290 is prod-pending and order-critical
+## 5. Rollout — mig 290 applied to prod 2026-09-13; code on prod the same day (job 266, `release/2026-09-13`)
+
+**Verified on prod by query:** 0 `family_link_%` columns on `rep_teams`, `requested_player_name`
+gone, 0 follower rows, 12 guardian links intact, both CHECKs read as written. ⚠ **Lesson recorded
+in the manual register:** this DROP was applied ~1h50 ahead of the promote and the 09-11 build
+still SELECTed the dropped columns, so the family portal was exposed to column-does-not-exist
+errors for that window (0 logged). A drop-shaped migration goes on MINUTES before the push.
 
 `supabase/migrations/290_family_link_and_follower_tier_removed.sql`: a data-only DELETE of
 follower rows (verified zero on both databases), the role CHECK narrowed to `guardian`, the

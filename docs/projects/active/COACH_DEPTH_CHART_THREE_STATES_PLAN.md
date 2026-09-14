@@ -1,9 +1,11 @@
 # Depth Chart — Three States — Implementation Plan
 
-> **Status:** BUILT on dev 2026-09-12 (uncommitted at the time of writing — the hub's stage strip
-> carries the anchor once it lands). Owner accepted D1–D4 as recommended the same day. Migration
-> 291 applied to dev 2026-09-12 and verified by query (rows_with_key 0, with_okay 0, with_best3plus
-> 0 → 2); **prod PENDING** (data-only — verify by the count, never by a gate). 27 new unit tests
+> **Status:** BUILT on dev 2026-09-12, **committed `1b4a62cd`**, and **on prod 2026-09-13 (Amplify
+> master job 266, `release/2026-09-13`)**; Owner QA §177 walk owed. Owner accepted D1–D4 as
+> recommended the same day. Migration 291 applied to dev 2026-09-12 and verified by query
+> (rows_with_key 0, with_okay 0, with_best3plus 0 → 2); **applied to prod 2026-09-13** and verified
+> there by query with the real profile keys (`morePreferred`, not `best`): rows_with_key 0,
+> with_okay 0, with_best3plus 14 of 26, 0 duplicated Best positions. 27 new unit tests
 > (the generator's first); layout sweep clean on the board and the player page; `check:demos` green
 > on dev. QA walk on the hub's QA Walk tab, ledger §177. `/simplify` + `/review` + `/docs` offered
 > at hand-off.

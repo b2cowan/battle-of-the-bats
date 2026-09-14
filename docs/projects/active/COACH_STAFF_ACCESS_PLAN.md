@@ -18,8 +18,8 @@ evaluation sessions on `canViewMeasurables`; the schedule panel's Edit / family-
 from the doors object. Refuted: the events read's practice plans + recap (both within the helper's
 grant by ruling).
 **Pass 2 BUILT on dev 2026-09-11 and COMMITTED `a312c7a2` the same day — §2 to §5 in full: the list + the sheet, the four
-kinds and their presets, the stored label (mig 288, applied to dev, PROD-PENDING; its backfill is
-DATA-ONLY), invite with access first, pending rows with resend/cancel, schedule as one three-way
+kinds and their presets, the stored label (mig 288, applied to dev and to prod 2026-09-11 — backfill
+verified on prod by the two mismatch counts, both 0; code on prod 2026-09-11, job 265), invite with access first, pending rows with resend/cancel, schedule as one three-way
 control, plan/drill/template writes on `canWritePracticePlans`, Make head coach with the
 last-head rule, the four emails from `STAFF_KIND_COPY`, the accept page, the admin oversight page,
 the help article and the Overview step. **`/simplify` (8 applied) and `/review` (5 lenses; 13 confirmed
@@ -304,8 +304,9 @@ Migration 288 applied on dev, dictionary + snapshots refreshed, `check:dictionar
 `/review` · Owner QA **§169** walk (head coach: invite each of the four kinds from one sheet,
 resend/cancel a pending invite, change a role both directions, make and un-make a head coach, the
 last-head refusal; second account: each kind's first sign-in lands with the right doors; phone at
-390) · `/docs` · demo decision · commit on `dev`. Migration 288 is **prod-owed** until the next
-release; its data-only backfill is verified on prod by query, never by `check:migrations`.
+390) · `/docs` · demo decision · commit on `dev`. Migration 288 **applied to prod 2026-09-11** and
+its data-only backfill verified there by query (both mismatch counts 0), never by `check:migrations`;
+pass 2 on prod 2026-09-11 (job 265, `release/2026-09-11`).
 
 ---
 

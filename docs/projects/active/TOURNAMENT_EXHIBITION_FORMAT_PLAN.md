@@ -1,7 +1,7 @@
 # Exhibition — a third tournament style, no playoffs — Implementation Plan
 
-> **Status:** BUILT on dev 2026-09-13 (uncommitted at the time of writing — the hub's stage strip
-> carries the anchor once it lands). Owner ruled **D1 (the name is "Exhibition")** and **D2 (no
+> **Status:** BUILT on dev 2026-09-13, **committed `98f3b9b5`** the same day, and **on prod
+> 2026-09-13 (Amplify master job 266, `release/2026-09-13`)**; Owner QA §184 walk owed. Owner ruled **D1 (the name is "Exhibition")** and **D2 (no
 > fourth format — the existing Hide Standings switch covers a scrimmage day)** in chat before the
 > plan was written, and accepted **D3 (keep the clear-the-schedule rule)** and **D4 (no demo
 > change)** as recommended the same day. **No migration.** `/simplify` (4 lenses) found and fixed

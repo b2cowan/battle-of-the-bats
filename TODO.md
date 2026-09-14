@@ -2,19 +2,28 @@
 
 This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
-> ## ⚠⚠ RELEASE 2026-09-08 — "BUILT ON DEV", "DEV ONLY" AND "PROD-OWED" ARE STALE THROUGHOUT THIS FILE
+> ## ⚠⚠ RELEASE 2026-09-13 — "BUILT ON DEV", "UNCOMMITTED", "PROD-PENDING" AND "PROD-OWED" ARE STALE THROUGHOUT THIS FILE
 >
-> **prod HEAD = `2e7ef905` · Amplify master job **262** SUCCEED first time · tag
-> `release/2026-09-08` · 119 commits promoted · migrations **273 through 285 ALL applied to
-> production** that day.**
-> `origin/dev` and `origin/master` are **LEVEL**. Every item below that says "BUILT on dev", "ON
-> DEV", "awaiting production", "not on prod", or names a migration as **DEV ONLY / prod-owed** is
-> describing a state that ended on 2026-09-08. This supersedes the 2026-08-27 banner that stood
-> here, and carries the same caution: it goes stale the moment it stops being re-read.
+> **prod HEAD = `d53cbe1c` · Amplify master job **266** SUCCEED first time · tag
+> `release/2026-09-13` · 52 commits promoted · migrations **290 through 296 ALL applied to
+> production** that day, each verified by querying prod.** Both public demos re-seeded on prod the
+> same day (`check:demos:prod` → 2 presentable).
+> `origin/dev` and `origin/master` are **LEVEL**. Every item below that says "BUILT on dev",
+> "uncommitted", "awaiting production", "not on prod", or names migration 288–296 as **PROD-PENDING /
+> prod-owed** is describing a state that ended on 2026-09-13 (288/289 on 09-11, the rest on 09-13).
+> This supersedes the 2026-09-08 banner that stood here, and carries the same caution: it goes stale
+> the moment it stops being re-read. ⚠ The 2026-09-11 promote (`59f2d6e5`, job 265: staff list pass
+> 2, awards One Tag Idiom, development Phase 0) happened between the two banners and was never
+> recorded anywhere until 09-13.
 >
-> ✅ **THE MIGRATION QUEUE IS EMPTY AND THE TWO SCHEMAS ARE BYTE-IDENTICAL** (DRIFT 0). The
-> schema-parity ratchet reached **ZERO accepted divergences for the first time** — it had been
-> carrying seven, every one a prod-owed migration that landed here.
+> ✅ **THE MIGRATION QUEUE IS EMPTY AND THE TWO SCHEMAS ARE BYTE-IDENTICAL** (DRIFT 0; manual
+> register 22 applied, 0 held, 0 outstanding). ⚠ Lesson from this release: a DROP-COLUMN migration
+> applied hours ahead of its promote breaks the OLD code still serving — 290 opened the family portal
+> to errors for ~1h50 (0 logged; luck). Drops go on MINUTES before the push, LAST in the batch.
+>
+> **Still open from this release (owed walks, not deployment state):** §177 depth chart · §180/§181
+> Part D + E development walks (behind the holistic re-evaluation ruling) · §182 roster + player page
+> · §184 Exhibition · the family-link help/demo follow-through is done.
 >
 > ⚠⚠ **FIVE OF THE THIRTEEN ARE DATA-ONLY AND NO GATE CAN EVER SEE THEM**, so each was verified
 > by querying production directly rather than trusting an exit code: the demo tick moved to

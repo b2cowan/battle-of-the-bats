@@ -1,6 +1,6 @@
 # Coach Tournament Delegation — "Run tournaments" as one staff grant
 
-**Status:** BUILT on dev and **committed `1062e67a` 2026-09-13** (owner "go ahead" the same day; chunks A + B in one pass; no migration; /review 9 fixes, /docs and /strategy in the same commit); Owner QA **§181** owed. Plan written 2026-09-13 from the code at dev `87b94167`.
+**Status:** BUILT on dev and **committed `1062e67a` 2026-09-13** (owner "go ahead" the same day; chunks A + B in one pass; no migration; /review 9 fixes, /docs and /strategy in the same commit); Owner QA **§181 PASSED 22/22** 2026-09-13; **on prod 2026-09-13 (Amplify master job 266, `release/2026-09-13`)**. Plan written 2026-09-13 from the code at dev `87b94167`.
 **Hub (mockup · brief · plan · decisions · QA):** `docs/projects/active/COACH_TOURNAMENT_DELEGATION_HUB.html` (published as the project Artifact).
 **PM brief:** `COACH_TOURNAMENT_DELEGATION_PM_BRIEF.md`.
 **Owner direction (2026-09-13):** *"the head coach needs to be able to delegate managing their
