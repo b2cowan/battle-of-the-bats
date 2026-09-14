@@ -3538,15 +3538,6 @@
   },
   {
     "table_name": "family_links",
-    "column_name": "requested_player_name",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 11
-  },
-  {
-    "table_name": "family_links",
     "column_name": "claim_token_hash",
     "data_type": "text",
     "udt_name": "text",
@@ -9801,6 +9792,123 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "goal_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "reviewed_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "next_review_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "evidence_measurable_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "NO",
+    "column_default": "'{}'::uuid[]",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "evidence_observation_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "NO",
+    "column_default": "'{}'::uuid[]",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_development_goal_reviews",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
     "table_name": "rep_document_templates",
     "column_name": "id",
     "data_type": "uuid",
@@ -10312,6 +10420,87 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "session_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "measurable_type_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
   },
   {
     "table_name": "rep_fundraiser_credit_plan",
@@ -11277,6 +11466,33 @@
     "ordinal_position": 12
   },
   {
+    "table_name": "rep_player_development_goals",
+    "column_name": "success",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_player_development_goals",
+    "column_name": "review_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_player_development_goals",
+    "column_name": "origin",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "rep_player_documents",
     "column_name": "id",
     "data_type": "uuid",
@@ -11716,6 +11932,267 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "column_name": "attempt_no",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "column_name": "corrected_from",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "column_name": "corrected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "column_name": "corrected_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "noted_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "goal_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "event_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_player_notes",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "measurable_type_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "metric_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'skill'::text",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "observed_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "descriptor",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "goal_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "session_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_player_observations",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
   },
   {
     "table_name": "rep_player_tryout_baselines",
@@ -12949,6 +13426,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "column_name": "scope_metric_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "column_name": "scope_player_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
   },
   {
     "table_name": "rep_team_event_attendance",
@@ -14215,7 +14710,7 @@
     "column_name": "unit",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 5
   },
@@ -14263,6 +14758,87 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'test'::text",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "aim",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'record'::text",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "range_from",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "range_to",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "method",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "attempts_per_session",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "headline",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'last'::text",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "descriptors",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "NO",
+    "column_default": "'{}'::text[]",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "column_name": "replaced_by_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
   },
   {
     "table_name": "rep_team_money_in",
@@ -15280,33 +15856,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 12
-  },
-  {
-    "table_name": "rep_teams",
-    "column_name": "family_link_token_hash",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 13
-  },
-  {
-    "table_name": "rep_teams",
-    "column_name": "family_link_created_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 14
-  },
-  {
-    "table_name": "rep_teams",
-    "column_name": "family_link_created_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 15
   },
   {
     "table_name": "rep_teams",

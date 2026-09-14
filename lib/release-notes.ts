@@ -44,16 +44,94 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-13',
+    title: 'Player development, properly recorded — and two more jobs a head coach can hand off',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Player development, end to end. Define each thing you measure once — a timed sprint, a throw speed, a skill you watch for — with what "better" means for it. A testing session asks who’s here and what you’re testing before it opens, records every attempt (all three sprint times, not just the best), lets you mark a player not assessed, and keeps the original when you correct a number. Watch a skill and write down what you saw; review a goal on a date and keep the history. A player’s Development section reads as Goals, Results, Observations and Previous seasons.',
+      },
+      {
+        category: 'new',
+        text: 'Development reports that answer the question. Insights → Development is three reports behind one selector: who has been tested on what and when, a player’s progress on real dates with the change said in plain words, and a practice review. "Print summary" becomes Preview development handout — choose which goals, results and observations belong, write a next step, and print it for the player or their family.',
+      },
+      {
+        category: 'new',
+        text: 'The player page, in five tabs: Details · This season · Skills & Goals · Notes · Family & paperwork. Notes reads every dated line about a player — general notes, game and practice moments, observations — in one timeline, and you can add a note there. Switch to another player without going back to the list.',
+      },
+      {
+        category: 'new',
+        text: 'Run tournaments, delegated. On the Premium Coaches Portal, a head coach can hand the team’s tournament to a manager or assistant with one switch. Tournaments you run now sit on the Tournaments page, with Manage taking you straight to that tournament’s dashboard.',
+      },
+      {
+        category: 'new',
+        text: 'Manage staff, delegated. A head coach can let a Team manager run the Staff page — invite, adjust and remove staff within what the head coach has set. Head coaches and roles stay the head coach’s alone.',
+      },
+      {
+        category: 'new',
+        text: 'Development access, one switch. Give an assistant or manager the Development switch and they can do every part of development work — sessions, results, goals, observations — without asking the head coach each time.',
+      },
+      {
+        category: 'new',
+        text: 'Exhibition tournaments. A third style beside Round robin + playoffs and Bracket only: games and standings, no playoff bracket — for a scrimmage day or an exhibition weekend. Bracket tools don’t appear, and the event is ready to finalize the moment the last score is in.',
+      },
+      {
+        category: 'new',
+        text: 'The budget plan reads revenue first. Revenue, then expenses, closing on Opening balance → Net → Closing balance in both views and both export files, with a helper that says what player dues need to be for the plan to balance.',
+      },
+      {
+        category: 'improved',
+        text: 'The depth chart has three states instead of four: a position is one of a player’s ranked Best spots, a Never, or blank — and blank means fine anywhere they’re not Never. The old "Okay" state behaved the same as blank; any Okay spots you had set are now low-ranked Bests, in the order you had them. The Auto-fill mode picker says what each mode does with your ratings, the pitcher rank is a one-tap dropdown, and the A-squad star explains itself.',
+      },
+      {
+        category: 'improved',
+        text: 'Adjustments are bounded by the bill. A write-off can take a family’s bill to zero whatever they’ve already paid, and a bill can never be lowered beneath what’s already been forgiven on it. The statement shows the breakdown: Original charges → Adjustments & forgiveness → Dues.',
+      },
+      {
+        category: 'improved',
+        text: 'Setting dues says what it does to the plan. The Player installments row opens Player Dues directly, and the Set-dues sheet tells you what a schedule will do to your budget plan wherever you open it from.',
+      },
+      {
+        category: 'improved',
+        text: 'The shareable family link is retired. Families join a team through the coach’s invite only. The Schedule visibility setting has moved to Team settings → Sharing.',
+      },
+      {
+        category: 'improved',
+        text: 'Tournaments are this season’s. The Schedule, the Tournaments page and the Overview tile show this season’s tournaments only — last season’s no longer follows you through a roll-forward.',
+      },
+      {
+        category: 'fixed',
+        text: 'Importing a budget spreadsheet with the same item on two rows now adds the second row to the line already there, instead of skipping it. And when an item or category can’t be removed, the remove button says why and what to do about it.',
+      },
+      {
+        category: 'fixed',
+        text: 'Coaching staff never count against a plan’s seat limit.',
+      },
+      {
+        category: 'fixed',
+        text: 'Money dated more than two years out no longer disappears from the By-period grid; it sits under "No date yet" with a note saying so.',
+      },
+      {
+        category: 'fixed',
+        text: 'A duplicate award-name refusal is visible on a short screen instead of scrolling out of view, and a fast double-click can no longer merge awards twice.',
+      },
+      {
+        category: 'fixed',
+        text: 'A past practice plan with no recap reads one sentence instead of an empty box.',
+      },
+      {
+        category: 'fixed',
+        text: 'The two "getting started" cards on an empty Tournaments page are now one card offering both doors.',
+      },
+    ],
+  },
+  {
     date: '2026-09-11',
     title: 'A staff list with access set before the invite',
     highlights: [
       {
         category: 'new',
         text: 'Add coaching staff — assistants, managers, treasurers, or helpers — with their access already set before they ever open an invite. Resend or cancel a pending invite from the same list, and hand off head coach to someone else on your staff without leaving the team. Each role sees only what it’s given — a helper sees their schedule and station, nothing more.',
-      },
-      {
-        category: 'improved',
-        text: 'The depth chart has three states instead of four: a position is one of a player’s ranked Best spots, a Never, or blank — and blank means fine anywhere they’re not Never. The old "Okay" state, which a coach told us behaved the same as blank, is gone; any Okay spots you had set are now low-ranked Bests, in the order you had them. The Auto-fill mode picker now says what each mode does with your ratings, the pitcher rank is a one-tap dropdown on the grid, the innings cap says IP, and the A-squad star explains itself.',
       },
       {
         category: 'fixed',
