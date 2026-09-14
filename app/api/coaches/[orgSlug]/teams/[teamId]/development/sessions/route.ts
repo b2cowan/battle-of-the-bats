@@ -43,7 +43,9 @@ export const GET = withObservability(async (_req: Request,
   if ('error' in resolved) return resolved.error;
   const { programYear, capabilities, isReadOnly } = resolved;
 
-  const denied = denyUnless(canViewMeasurables(capabilities), 'You do not have access to measurables.');
+  // The sessions list is Skills & Goals' own room: it opens with the Development grant only
+  // (stage 0, D5, 2026-09-14) — the read-only listing record access used to get is gone with the door.
+  const denied = denyUnless(canWriteDevelopment(capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   const canWrite = !isReadOnly && canWriteDevelopment(capabilities);

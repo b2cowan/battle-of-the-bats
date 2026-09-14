@@ -14,6 +14,7 @@ import {
   type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetRotation,
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
+import { canWriteDevelopment } from '@/lib/coach-capabilities';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   MAX_RECAP_LEN,
@@ -150,6 +151,7 @@ export default function CoachPracticePlanPage({
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const canSchedule = assignment ? assignment.capabilities.schedule : true;
+  const canOpenSessions = assignment ? canWriteDevelopment(assignment.capabilities) : false;
 
   const practiceHelpRequest = {
     module: 'coaches' as const,
@@ -1034,14 +1036,16 @@ export default function CoachPracticePlanPage({
               <h2 className={styles.ppRecordedTitle}><Ruler size={15} aria-hidden /> Recorded here</h2>
               <p className={styles.formHint}>Evaluation sessions whose readings were taken at this practice.</p>
               <ul className={styles.ppRecordedList}>
-                {data.sessions.map(session => (
-                  <li key={session.id}>
-                    <Link href={`${base}/development/sessions/${session.id}`}>
-                      {formatInOrgZone(`${session.sessionDate}T12:00:00Z`, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      {session.note ? ` — ${session.note}` : ''}
-                    </Link>
-                  </li>
-                ))}
+                {data.sessions.map(session => {
+                  const label = `${formatInOrgZone(`${session.sessionDate}T12:00:00Z`, { month: 'short', day: 'numeric', year: 'numeric' })}${session.note ? ` — ${session.note}` : ''}`;
+                  // A session's page opens with the Development grant only (stage 0, D5): the
+                  // link is offered to a coach who holds it; everyone else reads the line.
+                  return (
+                    <li key={session.id}>
+                      {canOpenSessions ? <Link href={`${base}/development/sessions/${session.id}`}>{label}</Link> : label}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

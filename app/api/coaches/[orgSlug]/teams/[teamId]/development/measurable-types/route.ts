@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRepTeamMeasurableTypes, createRepTeamMeasurableType } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamAssignment } from '@/lib/coach-route-context';
-import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableTypeInput } from '@/lib/development-input';
 
 // The definition routes share ONE auth chain — the repo's shared home for it — rather than three
@@ -15,7 +15,10 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canViewMeasurables(resolved.assignment.capabilities), 'You do not have access to measurables.');
+  // The library is read by the metric editor only — a room inside Skills & Goals, which opens with
+  // the Development grant and nothing else (re-evaluation stage 0, D5, 2026-09-14). The player's
+  // tab and the session page only WRITE here (below), and those were always grant-gated.
+  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   const includeRetired = new URL(req.url).searchParams.get('all') === '1';

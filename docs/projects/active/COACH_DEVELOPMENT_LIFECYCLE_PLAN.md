@@ -394,3 +394,27 @@ Two calls were made while reading the hub, and both change what round 2 drew.
 **One “Development” grant covers every write (owner, superseding the same day’s results-only widening).** “Make an access option to write to development and have that cover all of the writes — metrics, notes, goals, etc. — so that when this is released, if a head coach wants to delegate this they can. Read can stay with all coaches.” The staff card gains a Development toggle beside attendance, lineups, notes, money, documents, tryouts and schedule; the head coach holds it always and cannot remove it from themselves; an assistant has it off until the head coach switches it on. On, it covers defining and retiring tests, starting sessions, recording results and attempts, goals, observations and reviews; off, the assistant reads what their other duties allow, as today. Every record names who wrote it, on the row and in the record. The build adds the capability and its presets (coordinated with staff-access pass 2, whose four presets carry it off), and rewrites the development write policies — head-coach-only from birth — to check the grant.
 
 **The range aim, kept and drawn (owner, over a recommendation to drop it).** Lower, Higher and Record only cover the sprint and the throw; a range is for a test where the target is a band, such as a changeup that only works between 62 and 68 mph. Choosing it reveals From and To in the test’s unit. Capture does not change — the coach types each attempt — but each attempt reads “in”, “+2” or “−3” against the band; the headline is attempts in range or the average, never best; the player’s results and the handout say “2 of 3 in range”; the progress chart shades the band, fills the marks inside it and dashes the average; and the read-back says “moved into the range”, never faster or slower. Cost: a third summary shape in every place a headline appears (rows, chart, handout, export), which is why it was recommended for later.
+
+## 17. The re-evaluation, one stage at a time — stage 0 · Arrive (ruled and built 2026-09-14)
+
+The holistic walk (artifact `0f62f000`, nine stations) is ruled **stage by stage**: the artifact is
+tabbed — "The walk" is the record, and each stage gets a proposal tab as it is reached, because a
+later stage may depend on an earlier ruling. The owner reads the tab, answers its decisions, pastes
+the summary back; the stage is built and logged; the next tab opens.
+
+**Stage 0 — Arrive.** Added after the owner read the walk: it began at the first task (Define) and
+never assessed the first screen. Ruled 2026-09-14, eight decisions:
+
+| # | Ruling | Built as |
+|---|--------|----------|
+| D1 | Build | A getting-started card in two states: no measured test → "Start by deciding what this team measures" (lime → the metric editor); tests but no session → "Run your first session" naming the metrics from the definitions (lime → the scope dialog). |
+| D2 | Build | The header's lime follows the stage: absent until a test exists, "+ Start session" after. No switched-off primary. |
+| D3 | Remove the tiles; touch nothing in Practice plans | The four door tiles (Insights · Drills · Plan templates · Players) and the "practice plans live in your Schedule" line are gone. The drill library keeps no door here — the practice-plans walkthrough (another session) owns the practice instruments; drills stay usable from inside a practice. |
+| D4 | Build — **the owner's own proposal** | **Overview is the landing**: Overview · Sessions · Players · Metrics. The bare address is the Overview (never `?section=overview`). It answers the walk's S4 ("no this-week screen"). The demo tour's step 2 destination moves to `?section=sessions` (build-enforced anchor). |
+| D5 | Change — "either they can see/update everything in there or they cannot" | A coach without the Development grant has **no door**: the nav hides Skills & Goals; the hub, a session's page and a metric's editor render the shared not-granted block; the sessions list and detail reads refuse with the grant's sentence; the "Session →" doors on the player's tab, the Insights records table and a practice's "Recorded here" list are offered only to a coach holding the grant. **Not behind the switch (station 9's question):** the player's own Skills & Goals tab and the Insights → Development reports. This reverses the read-only door kept after §178, on merit. |
+| D6 | Build | The arc reads Define → Record → Review → Share, the stage's word in bold. |
+| D7 | Build | The dashboard is **state, not analysis**: four count tiles (each a door), Needs attention (goal reviews due by the coach's local day · players with no result this season · sessions left unfinished — the DERIVED completeness station 4 asked for: in-scope cells with no reading, no not-assessed mark, no observation), the Everything-in rail. Every figure comes from the readers the Players view and Insights already use. No chart, no table, no team average. |
+| D8 | Build (= not now) | Team-level progress waits for S5 (are the refusals principle or default?). Its own stage when ruled. |
+
+No migration: `unrecordedCount` (sessions) and `id` + `reviewOn` on the board's goal rows are
+derived on existing reads. Verification and the walk: ledger §185.

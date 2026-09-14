@@ -62,13 +62,16 @@ describe('the profile address', () => {
 });
 
 describe('the workspace and Insights addresses', () => {
-  it('Skills & Goals is three sections on ?section=, with the chosen metric on Players', () => {
+  it('Skills & Goals is four sections on ?section= — the overview is the bare address, with the chosen metric on Players', () => {
     assert.equal(skillsAndGoalsHref(base, 'sessions'), `${base}/development?section=sessions`);
     assert.equal(skillsAndGoalsHref(base, 'players', { metric: 'M1' }), `${base}/development?section=players&metric=M1`);
     assert.equal(skillsAndGoalsHref(base, 'metrics'), `${base}/development?section=metrics`);
+    // Stage 0 (2026-09-14): the overview is the landing and the bare address — never `?section=overview`.
+    assert.equal(skillsAndGoalsHref(base, 'overview'), `${base}/development`);
     assert.equal(parseSkillsAndGoalsSection('players'), 'players');
-    assert.equal(parseSkillsAndGoalsSection('board'), 'sessions', 'an unknown section lands on the everyday one');
-    assert.equal(parseSkillsAndGoalsSection(null), 'sessions');
+    assert.equal(parseSkillsAndGoalsSection('overview'), 'overview');
+    assert.equal(parseSkillsAndGoalsSection('board'), 'overview', 'an unknown section lands on the overview');
+    assert.equal(parseSkillsAndGoalsSection(null), 'overview');
   });
   it('Insights keeps ?section=development and carries the practice-review tag filter — the untagged sentinel spelled "none" on the wire, once', () => {
     assert.equal(insightsDevelopmentHref(base), `${base}/history?section=development`);

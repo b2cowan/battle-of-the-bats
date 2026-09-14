@@ -1,5 +1,6 @@
 import {
   hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canWriteMoney, canManageStaff,
+  canWriteDevelopment,
   type CoachCapabilities,
 } from './coach-capabilities';
 
@@ -218,8 +219,16 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * this nav item is the workbench where a coach sets focus areas and records measurables, and
      * the two sharing a name is what sent coaches to the wrong one.
      */
+    /**
+     * ⚠ SINCE 2026-09-14 (re-evaluation stage 0, owner ruling D5) THE DOOR IS THE DEVELOPMENT
+     * GRANT, NOT RECORD ACCESS. "Either they can see and update everything in there or they
+     * cannot" — the read-only face this door used to open (kept after the Phase 1 walk, §178) is
+     * gone with it. What is NOT behind this switch: the player's own Skills & Goals tab on the
+     * roster page and the Insights → Development reports, which keep their own duties until the
+     * re-evaluation's station 9 rules on them.
+     */
     case 'Skills & Goals':
-    case 'Development':   return hasRecordAccess(caps);
+    case 'Development':   return canWriteDevelopment(caps);
     case 'Documents':     return caps.documents !== 'off';
     // A head coach, or anyone holding the Manage staff grant (owner ruling 2026-09-13) — the
     // delegate's walls (no head-coach rows, no roles, no self-edit, the ceiling) are enforced on

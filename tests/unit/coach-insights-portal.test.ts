@@ -101,7 +101,9 @@ describe('the Insights door moves for the treasurer and for nobody else', () => 
    */
   it('no other record surface narrows with it', () => {
     const treasurer = assistant({ ...NOTHING, money: 'write' });
-    for (const door of ['Roster', "Season's End", 'Skills & Goals']) {
+    // Skills & Goals left this list on 2026-09-14 (re-evaluation stage 0, D5): its door is the
+    // Development grant now, not record access — see the rename block below.
+    for (const door of ['Roster', "Season's End"]) {
       assert.equal(
         isCoachNavItemVisible(treasurer, door), true,
         `${door} closed for the treasurer. Only the Insights door was meant to move.`,
@@ -112,10 +114,19 @@ describe('the Insights door moves for the treasurer and for nobody else', () => 
 
 // ── 2 · The rename ──────────────────────────────────────────────────────────
 describe('the workbench renamed, and the old label still gates', () => {
-  it('"Skills & Goals" is gated exactly as "Development" was', () => {
-    const helper = assistant(NOTHING);
-    assert.equal(isCoachNavItemVisible(helper, 'Skills & Goals'), false);
-    assert.equal(isCoachNavItemVisible(assistant(), 'Skills & Goals'), true);
+  /**
+   * ⚠ SINCE 2026-09-14 (re-evaluation stage 0, owner ruling D5) the door is the DEVELOPMENT GRANT:
+   * "either they can see and update everything in there or they cannot". A default assistant —
+   * record access, no grant — used to get a read-only face; now they get no door. The head coach
+   * and a granted assistant get the whole room.
+   */
+  it('"Skills & Goals" opens on the Development grant alone, and the old label gates the same way', () => {
+    assert.equal(isCoachNavItemVisible(assistant(NOTHING), 'Skills & Goals'), false);
+    assert.equal(isCoachNavItemVisible(assistant(), 'Skills & Goals'), false, 'record access alone no longer opens the door');
+    assert.equal(isCoachNavItemVisible(assistant({ development: true }), 'Skills & Goals'), true);
+    assert.equal(isCoachNavItemVisible(resolveCoachCapabilities('head_coach'), 'Skills & Goals'), true);
+    assert.equal(isCoachNavItemVisible(assistant(), 'Development'), false);
+    assert.equal(isCoachNavItemVisible(assistant({ development: true }), 'Development'), true);
   });
 
   /**

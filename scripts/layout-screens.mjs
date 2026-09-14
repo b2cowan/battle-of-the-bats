@@ -130,7 +130,9 @@ export const SCREENS = [
     path: (c) => `${team(c)}/lineups/templates/${c.lineupTemplateId}` },
 
   // ── Player development (restructured 2026-07-31, QA pending) ────────────────
+  // The bare address is the OVERVIEW since re-evaluation stage 0 (2026-09-14); Sessions is a tab.
   { id: 'coach-development',           session: 'coach', path: (c) => `${team(c)}/development`,           ready: 'h1' },
+  { id: 'coach-development-sessions',  session: 'coach', path: (c) => `${team(c)}/development?section=sessions`, ready: 'h1' },
   { id: 'coach-development-drills',    session: 'coach', path: (c) => `${team(c)}/development/drills`,    ready: 'h1' },
   // Phase 1 (2026-09-12): three views on one screen. The board's page redirects into Players;
   // the id is kept so the baseline's keys carry over. Metrics and its editor are new screens.

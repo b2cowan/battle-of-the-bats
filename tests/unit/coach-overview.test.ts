@@ -744,6 +744,17 @@ describe('resolveCoachingPair — a tile is only offered when its NUMBER is real
   it('offers Development to a coach who can actually see goals', () => {
     assert.ok(resolveCoachingPair(caps({ lineups: false, notes: true })).includes('development'));
   });
+
+  /**
+   * ⚠ Re-evaluation stage 0, D5 (2026-09-14): Skills & Goals opens with the Development grant and
+   * with nothing else — an assistant with notes but no grant reaches the not-granted block. A tile
+   * is a door; it must not be offered to a coach the door refuses (/review, the same day).
+   */
+  it('does not offer Development to a notes-only assistant the Skills & Goals door refuses', () => {
+    const notesOnly = caps({ isHeadCoach: false, lineups: false, notes: true, development: false });
+    assert.ok(!resolveCoachingPair(notesOnly).includes('development'));
+    assert.ok(resolveCoachingPair(caps({ isHeadCoach: false, lineups: false, notes: true, development: true })).includes('development'));
+  });
 });
 
 describe('resolveOverviewAnchor — the lull keeps its tournament door (review finding)', () => {

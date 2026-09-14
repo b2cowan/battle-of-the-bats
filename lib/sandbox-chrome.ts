@@ -485,7 +485,9 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
     {
       n: 2,
       label: 'Find the two blanks',
-      href: team(DEMO_COACH_TEAM_IDS.offSeason, '/development'),
+      // The Sessions TAB, not the hub's bare address: since the re-evaluation's stage 0 (2026-09-14)
+      // the hub lands on an Overview dashboard, and the card this step rings lives on Sessions.
+      href: team(DEMO_COACH_TEAM_IDS.offSeason, '/development?section=sessions'),
       exactPath: true,
       anchor: '[data-sandbox-tour="development-sessions"]',
       said: 'Two testing days, months apart — which is the whole reason the second set of numbers means anything. Each session names who was there, so a player who missed it is outside its scope rather than a blank that could mean anything; nothing here is invented to fill a column. Open one and a player who ran the dash more than once has every attempt kept, the best leading. Underneath, the goals this team is working on — one already reached, one reviewed with a note.',

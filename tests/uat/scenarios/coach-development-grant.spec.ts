@@ -97,13 +97,40 @@ const today = () => new Date().toISOString().slice(0, 10); // utc-intentional: a
 // ── The switch OFF: read-only screens, one refusal ─────────────────────────────
 
 test.describe('an assistant WITHOUT the Development grant', () => {
-  test('reads Skills & Goals as read-only and every write answers the grant’s sentence', async ({ page }) => {
+  /**
+   * ⚠ Re-evaluation stage 0, owner ruling D5 (2026-09-14): a coach without the grant has NO door —
+   * not the read-only face this probe used to assert. The nav hides Skills & Goals, the hub and
+   * the rooms inside it render the shared not-granted block, and the sessions reads refuse with
+   * the grant's own sentence. The player's tab and the Insights reports are NOT behind this switch
+   * (station 9 of the re-evaluation decides those) — the profile read below still answers 200.
+   */
+  test('meets no door — the nav hides Skills & Goals, the hub says so, and every read and write answers the grant’s sentence', async ({ page }) => {
     await signIn(page, NOT_GRANTED);
 
+    // The nav: no Skills & Goals entry anywhere the coach can tap.
+    await page.goto(`/${ORG_SLUG}/coaches/teams/${teamId}`);
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole('link', { name: 'Skills & Goals' })).toHaveCount(0);
+
+    // The address itself: the shared not-granted block, never a false empty state.
+    await page.goto(`/${ORG_SLUG}/coaches/teams/${teamId}/development`);
+    await expect(page.getByText(/opens with the Development grant/i).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole('link', { name: 'Sessions', exact: true })).toHaveCount(0); // no tab bar behind the block
+
+    // The reads behind the room refuse the same coach.
     const hub = await call(page, 'get', `${api()}/development/sessions`);
-    expect(hub.status).toBe(200);
-    expect(hub.body.canWrite).toBe(false);
-    expect((hub.body.sessions as unknown[]).length).toBeGreaterThan(0); // reading is unchanged
+    expect(hub.status).toBe(403);
+    expect(hub.body.error).toMatch(REFUSAL);
+
+    // The metric library is a room inside too (its editor is the only reader).
+    const types = await call(page, 'get', `${api()}/development/measurable-types`);
+    expect(types.status).toBe(403);
+    expect(types.body.error).toMatch(REFUSAL);
+
+    // Not behind the switch: the player's own development read still answers.
+    const profile = await call(page, 'get', `${api()}/roster/${playerId}/development`);
+    expect(profile.status).toBe(200);
+    expect(profile.body.canWrite).toBe(false);
 
     const session = await call(page, 'post', `${api()}/development/sessions`, { sessionDate: today() });
     expect(session.status).toBe(403);

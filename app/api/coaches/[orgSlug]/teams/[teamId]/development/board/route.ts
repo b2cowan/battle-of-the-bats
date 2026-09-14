@@ -220,10 +220,12 @@ export const GET = withObservability(async (req: Request,
     const last = perType.get(m.measurableTypeId);
     if (!last || m.sessionDate > last) perType.set(m.measurableTypeId, m.sessionDate);
   }
-  const goalsByPlayer = new Map<string, { focusArea: string; status: string }[]>();
+  // `id` + `reviewOn` ride along for the Skills & Goals Overview's "review due" line (stage 0,
+  // 2026-09-14) — the same read the Players view draws, no second query.
+  const goalsByPlayer = new Map<string, { id: string; focusArea: string; status: string; reviewOn: string | null }[]>();
   for (const g of goals) {
     const list = goalsByPlayer.get(g.playerId) ?? [];
-    list.push({ focusArea: g.focusArea, status: g.status });
+    list.push({ id: g.id, focusArea: g.focusArea, status: g.status, reviewOn: g.reviewOn ?? null });
     goalsByPlayer.set(g.playerId, list);
   }
 

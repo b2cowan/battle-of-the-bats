@@ -78,6 +78,8 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const router = useRouter();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}`;
+  // A session is a room inside Skills & Goals: the subtree's layout answers a coach without the
+  // Development grant before this mounts (D5), and the GET refuses the same coach.
 
   const [data, setData] = useState<SessionWorld | null>(null);
   const [error, setError] = useState('');

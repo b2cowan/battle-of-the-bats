@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRepTeamMeasurableType, updateRepTeamMeasurableType, repTeamMeasurableTypeHasReadings } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamAssignment as resolveContext } from '@/lib/coach-route-context';
-import { denyUnless, canViewMeasurables, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 import { readMeasurableTypeInput, applyDefinitionPatch } from '@/lib/development-input';
 import { successorSentence } from '@/lib/measurable-definition';
 
@@ -16,7 +16,8 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, typeId } = await params;
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canViewMeasurables(resolved.assignment.capabilities), 'You do not have access to measurables.');
+  // One definition, read by its editor page only — behind the Development grant, like the room (D5).
+  const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
 
   const [type, hasReadings] = await readDefinition(typeId, teamId);

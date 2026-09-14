@@ -25,8 +25,14 @@ import { UNTAGGED_FILTER } from './rep-drills.ts';
 export type DevelopmentView = 'goals' | 'results' | 'observations' | 'archive';
 export const DEVELOPMENT_VIEWS: ReadonlyArray<DevelopmentView> = ['goals', 'results', 'observations', 'archive'];
 
-export type SkillsAndGoalsSection = 'sessions' | 'players' | 'metrics';
-export const SKILLS_AND_GOALS_SECTIONS: ReadonlyArray<SkillsAndGoalsSection> = ['sessions', 'players', 'metrics'];
+/**
+ * Skills & Goals — four views on one screen. `overview` is the LANDING (re-evaluation stage 0,
+ * owner ruling 2026-09-14): Money's shape — a getting-started card while there is nothing to
+ * count, the season's dashboard once there is. The bare hub address IS the overview, so it never
+ * carries `?section=overview`; the other three are addressed as before.
+ */
+export type SkillsAndGoalsSection = 'overview' | 'sessions' | 'players' | 'metrics';
+export const SKILLS_AND_GOALS_SECTIONS: ReadonlyArray<SkillsAndGoalsSection> = ['overview', 'sessions', 'players', 'metrics'];
 
 export interface DevelopmentAddress {
   view: DevelopmentView | null;
@@ -91,17 +97,18 @@ export function returnLabel(returnTo: string | null, base: string): string | nul
   return null;
 }
 
-/** Skills & Goals — three sections on `?section=`, the Money and Insights hubs' convention. */
+/** Skills & Goals — sections on `?section=`, the Money and Insights hubs' convention; the overview is the bare address. */
 export function skillsAndGoalsHref(base: string, section: SkillsAndGoalsSection, extra?: { metric?: string | null }): string {
   const qp = new URLSearchParams();
-  qp.set('section', section);
+  if (section !== 'overview') qp.set('section', section);
   if (extra?.metric) qp.set('metric', extra.metric);
-  return `${base}/development?${qp.toString()}`;
+  const q = qp.toString();
+  return q ? `${base}/development?${q}` : `${base}/development`;
 }
 
-/** An unknown or missing section lands on the everyday one. */
+/** An unknown or missing section lands on the overview — the landing. */
 export function parseSkillsAndGoalsSection(raw: string | null | undefined): SkillsAndGoalsSection {
-  return SKILLS_AND_GOALS_SECTIONS.includes(raw as SkillsAndGoalsSection) ? (raw as SkillsAndGoalsSection) : 'sessions';
+  return SKILLS_AND_GOALS_SECTIONS.includes(raw as SkillsAndGoalsSection) ? (raw as SkillsAndGoalsSection) : 'overview';
 }
 
 /**

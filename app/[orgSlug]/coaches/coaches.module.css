@@ -1991,14 +1991,6 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 
 /* Question-titled doorway tiles. Sparse data = softened (visible, teaching);
    a permission-gated tile is simply absent (never rendered). */
-.insightsDoors { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; }
-.insightsDoor { display: block; text-decoration: none; color: inherit; background: var(--white-8); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: var(--radius); box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.85rem 0.95rem; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s; min-width: 0; }
-.insightsDoor:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.6); background: var(--white-10); box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top); transform: translateY(-1px); }
-.insightsDoorQ { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 800; font-size: var(--type-heading); color: var(--text-primary); margin-bottom: 0.3rem; }
-.insightsDoorQ span { color: rgba(var(--blueprint-blue-rgb), 0.75); font-weight: 400; }
-.insightsDoorSum { font-size: var(--type-support); color: var(--text-tertiary); }
-.insightsDoorSoft { opacity: 0.65; }
-.insightsDoorSoft .insightsDoorSum { font-style: italic; }
 /* Report pages — real tables, never accordions. */
 .insightsBasis { color: var(--text-tertiary); font-size: var(--type-support); margin: -0.35rem 0 1rem; }
 /* "vs {tag}" record — replaces .insightsBasis (not alongside it) while a tag filter is active,
@@ -8764,6 +8756,21 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .devBands { display: flex; flex-direction: column; gap: 1rem; }
 
 /* Card title + its one action, on a row. Was an inline style repeated per card. */
+/* ── Skills & Goals list tabs (Sessions · Players · Metrics) — MONEY'S LIST-TAB GRAMMAR ──
+   (owner, 2026-09-14: "why do we have these gray backgrounds… different shades of gray in these
+   whole sections?"). The three views used to sit inside `.detailSection` — the olive-soft tinted
+   panel with a grey uppercase title — so the table inherited the tint and the empty state was a
+   white card on a tinted card on the paper. The table standard (§3.3) says the ground is the card
+   and the frame is neutral, never an accent tint; Money's Ledger and Player Dues do exactly that:
+   a toolbar on the paper (context left, the control right), then the table on white. The toolbar
+   IS Money's — `.panelToolbar` with the control in `.panelToolbarActions` (/simplify, 2026-09-14:
+   a second toolbar class one file away from the first was the drift the shared-class rule names);
+   these two classes are only the lede and the ground. The tinted panel is not used here any more. */
+.devListLede { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); max-width: 64ch; line-height: 1.45; flex: 1 1 24rem; }
+.devListLede strong { color: var(--text-secondary); }
+/* The table's ground — `.tableWrap` draws the neutral frame; the card ground is the standard's. */
+.devTableCard { background: var(--card-bg, var(--surface)); }
+
 .devCardHeadRow {
   display: flex;
   flex-wrap: wrap; /* a toolbar control (the session search, the Players "Show") drops under the title at 361px rather than overflowing it */
@@ -8791,28 +8798,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .devDisclosureSummary { display: flex; align-items: center; min-height: var(--tap-min, 44px); cursor: pointer; }
 
 /* (The "Then go look" band rule and its label retired with the band stack — Skills & Goals is
-   three views on `?section=` since the development lifecycle's Phase 1, 2026-09-12.) */
-
-/* First-run only: the sessions card is present and readable but plainly not yet available,
-   rather than dangling a button that leads to a session with nothing to record. */
-.devHeldBack { opacity: 0.78; }
-.devBtnHeld {
-  background: transparent;
-  color: var(--text-tertiary);
-  border: 1px dashed var(--border-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--type-support);
-  font-weight: 600;
-  padding: 0.3rem 0.7rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  cursor: not-allowed;
-}
-
-/* Practice plans — demoted from a full dashed card to one honest line. Still sets the
-   expectation; no longer claims a tool's worth of visual weight for something that isn't one. */
-.devTail { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.1rem 0 0; }
+   views on `?section=` since the development lifecycle's Phase 1, 2026-09-12. ⚰ The first-run
+   held-back treatment — `.devHeldBack`, the dashed `.devBtnHeld` — and the `.devTail` practice-plans
+   line retired with the Overview landing, re-evaluation stage 0, 2026-09-14: a switched-off lime
+   button was the first thing on the old landing, and the card that replaced it needs neither.) */
 
 /* Session run screen — the grid moved to components/coaches/DevelopmentSession.module.css
    (development lifecycle Phase 2, 2026-09-13: one field per attempt, a state per row). What stays

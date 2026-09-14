@@ -146,11 +146,15 @@ describe('a helper meets exactly two doors in the portal', () => {
     // The whole safety argument for the three new grants is that they change nothing for anyone
     // already invited. Every door an assistant could open before must still open.
     const caps = assistant();
-    for (const door of ['Roster', 'Attendance', 'Lineups', 'Documents', 'Development', 'Insights', 'Chat', 'Settings', 'Schedule']) {
+    for (const door of ['Roster', 'Attendance', 'Lineups', 'Documents', 'Insights', 'Chat', 'Settings', 'Schedule']) {
       assert.equal(isCoachNavItemVisible(caps, door), true, `${door} must stay open to an assistant`);
     }
     assert.equal(isCoachNavItemVisible(caps, 'Staff'), false);   // head coach only, unchanged
     assert.equal(isCoachNavItemVisible(caps, 'Tryouts'), false); // ungranted by default, unchanged
+    // Skills & Goals (the old 'Development' label) left the open list on 2026-09-14 — re-evaluation
+    // stage 0, owner ruling D5: the door is the Development grant, which no default assistant
+    // holds. Not this preset's doing; recorded here so the list stays honest.
+    assert.equal(isCoachNavItemVisible(caps, 'Development'), false);
   });
 
   /**

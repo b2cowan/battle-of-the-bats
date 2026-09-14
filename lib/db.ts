@@ -8659,24 +8659,55 @@ export async function getRepTeamEvaluationSessions(programYearId: string): Promi
   const sessions = (data ?? []).map(mapRepTeamEvaluationSession);
   if (sessions.length === 0) return sessions;
 
-  const { data: entryRows, error: entriesError } = await supabaseAdmin
-    .from('rep_player_measurables')
-    .select('session_id, player_id, measurable_type_id')
-    .in('session_id', sessions.map(s => s.id));
+  const ids = sessions.map(s => s.id);
+  // Four reads: one per kind of record a cell can hold — a reading, a "not assessed" mark, an
+  // observation — and the ACTIVE roster. The counts come from the first; the derived completeness
+  // needs all three record reads, because an in-scope cell is "unrecorded" only when it holds NONE
+  // of them (the review dialog's rule), and the roster because a scoped player who has since left
+  // the team is never counted — `sessionScopeCounts` in lib/development-session-view.ts is the
+  // rule the session page reads by, and this reader must produce the same "N of M".
+  const [{ data: entryRows, error: entriesError }, { data: naRows, error: naError }, { data: obsRows, error: obsError }, { data: activeRows, error: activeError }] = await Promise.all([
+    supabaseAdmin.from('rep_player_measurables').select('session_id, player_id, measurable_type_id').in('session_id', ids),
+    supabaseAdmin.from('rep_evaluation_not_assessed').select('session_id, player_id, measurable_type_id').in('session_id', ids),
+    supabaseAdmin.from('rep_player_observations').select('session_id, player_id, measurable_type_id').in('session_id', ids),
+    supabaseAdmin.from('rep_roster_players').select('id').eq('program_year_id', programYearId).eq('status', 'active'),
+  ]);
   if (entriesError) throw entriesError;
+  if (naError) throw naError;
+  if (obsError) throw obsError;
+  if (activeError) throw activeError;
+  const activeIds = new Set((activeRows ?? []).map((r: { id: string }) => r.id));
 
-  const agg = new Map<string, { players: Set<string>; types: Set<string>; entries: number }>();
+  const agg = new Map<string, { players: Set<string>; types: Set<string>; entries: number; cells: Set<string> }>();
+  const cellOf = (row: { player_id: string; measurable_type_id: string }) => `${row.player_id}|${row.measurable_type_id}`;
+  const bucket = (sessionId: string) => {
+    let a = agg.get(sessionId);
+    if (!a) { a = { players: new Set(), types: new Set(), entries: 0, cells: new Set() }; agg.set(sessionId, a); }
+    return a;
+  };
   for (const row of entryRows ?? []) {
     if (!row.session_id) continue;
-    let a = agg.get(row.session_id);
-    if (!a) { a = { players: new Set(), types: new Set(), entries: 0 }; agg.set(row.session_id, a); }
+    const a = bucket(row.session_id);
     a.players.add(row.player_id);
     a.types.add(row.measurable_type_id);
     a.entries += 1;
+    a.cells.add(cellOf(row));
+  }
+  for (const row of [...(naRows ?? []), ...(obsRows ?? [])]) {
+    if (!row.session_id) continue;
+    bucket(row.session_id).cells.add(cellOf(row));
   }
   return sessions.map(s => {
     const a = agg.get(s.id);
-    return { ...s, playerCount: a?.players.size ?? 0, typeCount: a?.types.size ?? 0, entryCount: a?.entries ?? 0 };
+    let unrecordedCount: number | null = null;
+    let scopeCellCount: number | null = null;
+    if (s.scopePlayerIds && s.scopeMetricIds) {
+      const counted = s.scopePlayerIds.filter(p => activeIds.has(p));
+      scopeCellCount = counted.length * s.scopeMetricIds.length;
+      unrecordedCount = 0;
+      for (const p of counted) for (const m of s.scopeMetricIds) if (!a?.cells.has(`${p}|${m}`)) unrecordedCount += 1;
+    }
+    return { ...s, playerCount: a?.players.size ?? 0, typeCount: a?.types.size ?? 0, entryCount: a?.entries ?? 0, unrecordedCount, scopeCellCount };
   });
 }
 

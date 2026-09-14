@@ -1261,7 +1261,9 @@ function ResultRow({ row, type, portalBase, author, canWrite, onDelete }: {
       </span>
       <span className={styles.miniRowMeta}>{formatShortDate(row.recordedOn)}</span>
       <span className={styles.miniRowMeta}>
-        {row.sessionId ? <Link href={`${portalBase}/development/sessions/${row.sessionId}`} className={`${styles.devTailLink} ${styles.tapFloor}`} style={{ display: 'inline-flex', alignItems: 'center' }}>Session →</Link> : 'Single reading'}
+        {/* The session is a room inside Skills & Goals, which opens with the Development grant only
+            (stage 0, D5) — a coach without it reads the result here and gets no door that 403s. */}
+        {row.sessionId ? (canWrite ? <Link href={`${portalBase}/development/sessions/${row.sessionId}`} className={`${styles.devTailLink} ${styles.tapFloor}`} style={{ display: 'inline-flex', alignItems: 'center' }}>Session →</Link> : 'In a session') : 'Single reading'}
         {by ? ` · entered by ${by}` : ''}
       </span>
       {canWrite && single && (

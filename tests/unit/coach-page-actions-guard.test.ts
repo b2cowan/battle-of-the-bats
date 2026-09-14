@@ -338,18 +338,18 @@ const SITES: Site[] = [
 
   // ── Development ──────────────────────────────────────────────────────────────────────────────
   {
-    // Development lifecycle Phase 1 (2026-09-12): three views on one screen (Sessions · Players ·
-    // Metrics), and the page's ONE create — Start session — moves into the header as the lime
-    // action (it was the sessions card's own button). Held back (aria-disabled, never `disabled`)
-    // until a measured test exists; absent for a coach without the Development grant.
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 0,
-    screen: 'Skills & Goals — the "not turned on for you" early return', variant: 'standard', helpHost: 'masthead', actions: null,
+    // Development lifecycle Phase 1 (2026-09-12): views on one screen, and the page's ONE create —
+    // Start session — in the header as the lime action. Re-evaluation stage 0 (2026-09-14): Overview
+    // is the landing and the action is ABSENT (not held back) until a measured test exists; the
+    // not-granted return now keys on the Development grant.
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/layout.tsx', occurrence: 0,
+    screen: 'Skills & Goals — the "not turned on for you" gate on the whole subtree (D5)', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 1,
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 0,
     screen: 'Skills & Goals', variant: 'standard', helpHost: 'masthead',
     actions: {
-      from: 'startAction', slot: 'action', holds: 'Start session (the one create; held back until a test is defined)',
+      from: 'startAction', slot: 'action', holds: 'Start session (the one create; ABSENT until a test is defined — stage 0, 2026-09-14)',
       phoneHidden: null, phoneInTitleRow: null,
     },
   },

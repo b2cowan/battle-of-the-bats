@@ -122,6 +122,8 @@ interface PlayerDevelopment {
   observations: RepPlayerObservation[];
   reviews: RepDevelopmentGoalReview[];
   authors: Record<string, string>;
+  /** The Development grant — the only key that opens a session's page (stage 0, D5). */
+  canWrite: boolean;
 }
 
 export function DevelopmentPanel({
@@ -715,7 +717,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         </td>
         <td data-label="Source" className={styles.devBoardVal}>
           {row.sessionId
-            ? <Link href={`${base}/development/sessions/${row.sessionId}`} className={styles.devReportRowLink}>Session →</Link>
+            ? (dev.canWrite ? <Link href={`${base}/development/sessions/${row.sessionId}`} className={styles.devReportRowLink}>Session →</Link> : 'In a session')
             : 'Single reading'}
           {by ? <span className={styles.devCardNote}>entered by {by}</span> : null}
         </td>

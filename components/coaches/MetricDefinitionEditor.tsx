@@ -39,8 +39,11 @@ import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepTeamMeasurab
  * definition and retires this one. The PATCH answers 409 with the offer, the coach is asked, and
  * only a yes posts to `replace`. Retire and Restore live here now (they were on the old list).
  *
- * ⚠ READ-ONLY IS A CAPABILITY, NOT A DOOR: a coach without the Development grant opens the same
- * page and reads values where the controls would be. The Metrics tab links every row here.
+ * ⚠ THE DOOR IS THE GRANT (re-evaluation stage 0, D5, 2026-09-14): a coach without the Development
+ * grant never reaches this page — `development/layout.tsx` answers them with the not-granted block.
+ * The read-only face below (`canWrite` false → values where the controls would be) survives only
+ * for the moment before the assignment is known on the client; retire it with station 1's build
+ * rather than mid-flight (/simplify, 2026-09-14). The Metrics tab links every row here.
  */
 
 type Draft = {

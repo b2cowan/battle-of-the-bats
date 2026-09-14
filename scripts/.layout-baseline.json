@@ -2537,34 +2537,6 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-development|1440|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
-    },
-    "coach-development|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
-    },
-    "coach-development|361|tap-floor|a·Schedule →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-development|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
-    },
-    "coach-development|390|tap-floor|a·Schedule →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-development|768|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 16px"
-    },
-    "coach-development|768|tap-floor|a·Schedule →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
     "coach-dues-settlement|768|tap-floor|button·Export": {
       "reason": null,
       "detail": "33px tall (floor 44)"
@@ -3780,6 +3752,14 @@
     "coach-depth-chart|768|tap-floor|button·A-squad": {
       "reason": "DEFERRED, not accepted — SHARED HELP CHROME. This is the portal-wide HelpTooltip \"?\" trigger (components/help/HelpTooltip.tsx), placed on the A-squad column header by the depth-chart three-states change (2026-09-12) so the star explains itself on tap rather than in a hover title. Its size is the shared component's, identical to the Positions picker's \"?\" on the player page and every other tooltip trigger in the portal, and it must be raised in the component, not one screen at a time. The board's OWN controls in this band (field cells, rank dropdown, cap input, Undo/Redo) were raised to 44px in the same change.",
       "detail": "16px tall (floor 44)"
+    },
+    "coach-development-sessions|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-sessions|768|control-width|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
+      "detail": "34px wide (floor 44) — icon-only control"
     }
   }
 }

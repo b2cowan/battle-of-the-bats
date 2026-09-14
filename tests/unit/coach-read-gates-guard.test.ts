@@ -74,6 +74,30 @@ const READ_GATES: ReadonlyArray<{ route: string; predicate: RegExp; why: string 
     predicate: /denyUnless\(canReadPastPracticePlans\(/,
     why: 'every past-plan read gates on the look-back predicate, and this was the one that did not',
   },
+  // ── Skills & Goals opens with the Development grant and nothing else (re-evaluation stage 0,
+  //    D5, 2026-09-14): the four reads behind its rooms refuse the coach the door refuses. NOT here
+  //    by ruling: /development/board and the per-player development read, which Insights and the
+  //    player's own tab read on their existing duties until station 9 decides them.
+  {
+    route: `${TEAM_API}/development/sessions/route.ts`,
+    predicate: /denyUnless\(canWriteDevelopment\(/,
+    why: 'the sessions list is the Sessions tab — a room inside Skills & Goals, which opens with the grant',
+  },
+  {
+    route: `${TEAM_API}/development/sessions/[sessionId]/route.ts`,
+    predicate: /denyUnless\(canWriteDevelopment\(/,
+    why: 'a session’s page is a room inside Skills & Goals',
+  },
+  {
+    route: `${TEAM_API}/development/measurable-types/route.ts`,
+    predicate: /denyUnless\(canWriteDevelopment\(/,
+    why: 'the metric library is read by the metric editor only, a room inside Skills & Goals',
+  },
+  {
+    route: `${TEAM_API}/development/measurable-types/[typeId]/route.ts`,
+    predicate: /denyUnless\(canWriteDevelopment\(/,
+    why: 'one definition is read by its editor page only',
+  },
 ];
 
 for (const { route, predicate, why } of READ_GATES) {
@@ -106,7 +130,9 @@ test('the pages behind hidden nav doors render the shared not-granted block, not
     'chat/page.tsx',
     'tournaments/page.tsx',
     // Phase 1 (2026-09-12): the board's page redirects into Skills & Goals, which carries the block.
-    'development/page.tsx',
+    // Re-evaluation stage 0 (2026-09-14, D5): the block moved to the SUBTREE's layout — one door for
+    // the hub, a session and a metric's definition, keyed on the Development grant.
+    'development/layout.tsx',
   ];
   for (const p of pages) {
     const src = read(`app/[orgSlug]/coaches/teams/[teamId]/${p}`);

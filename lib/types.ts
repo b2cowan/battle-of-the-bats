@@ -2103,6 +2103,18 @@ export interface RepTeamEvaluationSession {
   playerCount?: number;
   typeCount?: number;
   entryCount?: number;
+  /**
+   * Derived (never stored) — the in-scope (player, metric) cells that hold NOTHING: no reading, no
+   * "not assessed" mark, no observation — over `scopeCellCount`, the cells that COUNT. Both null when
+   * the session stated no scope (nothing to count against). The Overview's "left unfinished" line
+   * reads them (re-evaluation stage 0, 2026-09-14) — the DERIVED completeness the walk's station 4
+   * asked for instead of a stored "reviewed" mark.
+   * ⚠ The denominator is `sessionScopeCounts`' (lib/development-session-view.ts): a scoped player
+   * who has since left the active roster is listed on the session but never counted, so the
+   * Overview and the session page agree on "N of M" (/simplify, 2026-09-14).
+   */
+  unrecordedCount?: number | null;
+  scopeCellCount?: number | null;
 }
 
 /**
