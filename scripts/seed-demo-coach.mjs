@@ -27,6 +27,7 @@ import { randomUUID, randomBytes, createHash } from 'crypto';
 import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import { moneySectionHref } from '../lib/coach-money-links.ts';
 import { insertCommitmentWithRecords } from './lib/seed-commitment-records.mjs';
+import { writeDemoWorldStamp, stampActor } from './lib/demo-world-fingerprint.mjs';
 import {
   DEMO_COACH_ORG_NAME, DEMO_COACH_DISPLAY_NAME, DEMO_COACH_TEAMS, DEMO_HOME_DIAMOND,
   DEMO_DUES_SETTINGS,
@@ -1714,6 +1715,14 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     .update({ status: 'completed' }).eq('id', pyId)).error);
   console.log(`✓ 13U season's end — 26 games (18-6-2), ${SEASONS_END_PRACTICE_PLANS.length} practice plans + ${SEASONS_END_PRACTICE_RECAPS.length} recaps, awards, family recap, year ${state.year} CLOSED (active → completed)`);
 }
+
+// ── the stamp ──
+// Written LAST, so it exists only for a world that was fully built. The master build compares it to
+// the fingerprint of the checkout it is deploying and re-runs this script when they differ — see
+// scripts/lib/demo-world-fingerprint.mjs and scripts/reseed-demos-if-stale.mjs.
+const stamp = await writeDemoWorldStamp(db, org.id, { seedEntry: 'scripts/seed-demo-coach.mjs', actor: stampActor() });
+console.log(`
+✓ Stamped ${stamp.fingerprint} (${stamp.migrationCount} migrations, last ${stamp.lastMigration})`);
 
 // ── report ───────────────────────────────────────────────────────────────────────────────────
 console.log(`\n✅ Seeded the Coach Sandbox — ${DEMO_COACH_ORG_NAME}`);

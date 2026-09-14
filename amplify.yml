@@ -68,6 +68,14 @@ frontend:
         # the heavier page-generation/cache-write phase. If 7168 still OOMs, the next lever
         # is a bigger Amplify build compute instance (console-only setting), not a higher number here.
         - NODE_OPTIONS=--max-old-space-size=7168 pnpm run build
+        # The public demos follow the product (owner ruling 2026-09-13, DEMO_PROCESS_DECOUPLING_PLAN).
+        # Re-seeds a sandbox whose world (seed + imports + migration list) differs from the stamp
+        # its last seed left; a steady release does nothing. Runs on every branch against that
+        # branch's database — dev builds are the rehearsal — and passes --allow-prod to the seed
+        # ONLY on master. NEVER fails the build: a demo that could not be rebuilt is loud here and
+        # is caught by `check:demos:prod` the morning after. Before `prune` so the seeds' imports
+        # resolve; runs AFTER the build so a broken build never reseeds anything.
+        - node scripts/reseed-demos-if-stale.mjs || echo "[reseed-demos] step errored — see above; the build does not wait on a demo"
         # Amplify zips whatever is under node_modules alongside .next for SSR compute — with no
         # --prod flag on the earlier install, the full dev toolchain (Playwright, TypeScript,
         # ESLint, Tailwind/PostCSS) rides along even though nothing at request time touches it.

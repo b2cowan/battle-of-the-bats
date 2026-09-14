@@ -1,6 +1,14 @@
 # Keeping the demo sandboxes in line with the product — Implementation Plan
 
-**Status:** **MEASURES 1, 4 AND 5 BUILT** (1 + 4 on 2026-08-06; **measure 5 on 2026-08-28**). **MEASURES 2 AND 3 STILL PLANNED.**
+**Status:** **MEASURES 1, 2 AND 5 BUILT; MEASURE 4 REPLACED; MEASURE 3 NOT PLANNED.**
+1 on 2026-08-06 · 5 on 2026-08-28 · **2 on 2026-09-13** (`tests/unit/demo-destinations-guard.test.ts`, built
+under `DEMO_PROCESS_DECOUPLING_PLAN.md`). **Measure 4 (the per-commit habit) was RETIRED by owner ruling
+2026-09-13** — it cost attention on every change and still missed five releases running; its job now
+belongs to `/demos`, one pass per release cycle. **Measure 3 (the rendered Playwright pass) is not
+planned**: the two failures it was written for — a stale figure and an unreachable screen — are now
+caught by measure 5 (widened to every figure in every sentence, 2026-09-13) and measure 2; what
+remains for it (an empty panel) is what the `/demos` browser walk is for. Revisit only if a `/demos`
+pass finds a class of defect it cannot see without a browser.
 Owner-approved 2026-08-05 (four measures); 1 and 4 approved for immediate build 2026-08-06.
 Companion brief: `DEMO_SANDBOX_DRIFT_GUARDS_PM_BRIEF.md`.
 Covers **both** sandboxes — the tournament one (`riverdale-minor-ball`) and the coach one

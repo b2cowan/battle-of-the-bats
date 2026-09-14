@@ -70,117 +70,23 @@ After a substantive code change that also **adds a new abstraction** — a new s
 
 When a change alters a **user-facing flow** (admin/coaches UI behavior, a screen/step a customer follows, plan-gating of a visible feature, or new/renamed terminology), proactively offer to run `/docs` — the help-system agent in `.claude/commands/docs.md` — so the in-app guides don't drift. In-app help content is the single source of truth in `lib/help-content/*.tsx` (indexed by the hub arrays in the `help/page.tsx` shells); keeping it current is a code-time task, not a periodic manual sweep. Offer once per logical chunk; skip for purely internal changes (refactors, platform-admin-only ops, DB plumbing with no UI change) and skip if the user already updated docs or declined.
 
-# Demo sandboxes — the shop window drifts silently
+# Demo sandboxes — they follow the product; they never gate it
 
-Two no-login demos run the **real** product on fictional clubs: the tournament sandbox
-(`riverdale-minor-ball`) and the coach sandbox (`riverdale-ridge`). Because they are the live
-product rather than a recording, a product change reaches them the instant it ships — but **the
-story the demo tells over the top of it does not follow.** That story is a set of hand-written
-sentences (the moments dock's arrival lines and the guided tours' step narration) plus a seeded
-world, and both can quietly stop being true while every page still renders perfectly.
+Two no-login demos run the **real** product on fictional clubs (tournament `riverdale-minor-ball`,
+coach `riverdale-ridge`), fully public on production. Owner ruling 2026-09-13: **the demos are
+not a step in development or release.**
 
-This is not hypothetical: three pieces of demo copy were found in 2026-08-05 pointing at things
-the product no longer shows, each having survived a build, a `/simplify` pass and a `/review` pass.
+- **The live demo rebuilds itself.** The master build re-seeds a demo whose world (seed + imports
+  + migrations) changed since its last seed. Never re-seed prod by hand except as the fallback in
+  the plan. `check:demos:prod` is a morning-after monitor, not a promote gate.
+- **Per commit, ask nothing.** The build fails if a tour destination or anchor stops existing;
+  that is the only per-commit demo signal. Do not add "re-read" notes to the demo files.
+- **The story is curated per release cycle** with `/demos` (checklist in
+  `.claude/commands/demos.md`) — that session decides what a release earns in the shop window.
+- **A number in a demo sentence is computed from the seed or it is not in the sentence.**
 
-**So: when a change alters a user-facing coach or tournament flow, ask two questions in the same
-breath as the help-docs one above** — *should a demo moment show this?* and *are the demo's
-existing sentences about this screen still true?* Adjust the seed, the dock copy or the tour steps
-in the same unit of work. `npm run check:demos` (part of `verify:changed`) proves both worlds are
-still in the state a prospect should find them in, but **it can only catch breakage — it cannot
-tell you the demo is missing something the product gained.** That judgement is the reason this
-paragraph exists. Skip for purely internal changes; skip if the demos were already considered.
-
-Plan: `docs/projects/active/DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md` (two further measures approved,
-not built).
-
-**⚠ BOTH DEMOS ARE FULLY PUBLIC ON PRODUCTION as of 2026-08-10** (every claim here verified
-against the live prod database/site, never a plan — this paragraph has been wrong in both
-directions before): both `riverdale-*` organizations are seeded on prod (2026-08-08 02:14 UTC),
-the re-anchor schedules are **active on BOTH databases** and **BOTH are now NIGHTLY**
-(tournament 08:10 UTC, coach 08:20 UTC — migration 273 moved the tournament tick off its old
-2-minute live cycle on 2026-09-08; re-confirmed in `cron.job` on each that day. ⚠ The old
-"every 2 minutes" claim stood here for a month after the daily-snapshot redesign was written), and **the doors are OPEN** — owner-directed
-2026-08-10, via `NEXT_PUBLIC_SEE_IT_LIVE_DOORS=true` set as a **master-branch-scoped** Amplify
-variable + rebuild (job 250, code unchanged at `201ec1bd`). Prod code moved to `ebdf02ea` in the
-2026-08-10 13:37 release push (Amplify job 251 SUCCEED, 13:43 ET), which carries the Sunday
-roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and the coach demo's
-marketing doors: "See it live" verified rendering live post-251 on the homepage hero (both demos),
-both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both door routes 307
-into their worlds. **Prod HEAD is now `ebcb2d52` (2026-09-10, Amplify master job 264 SUCCEED — 30
-commits, tag `release/2026-09-10`: the categories & items door, one word one line, the By-period
-grid's doors, a player handing in more than once, the Escape/accessibility floor, and lime-as-TEXT
-darkening on paper. **Migrations 286 + 287 applied to prod that day and the manual queue is now
-EMPTY — 14 applied, 0 held, 0 outstanding, DRIFT 0, parity 0 accepted.**
-⚠⚠ **JOB 263 FAILED FIRST, AND THE REASON IS A STANDING RULE: `check-schema-parity` runs ONLY on
-master, so it is the master build that ENFORCES migration order.** It failed on mig 286's index
-being on dev and not prod. "Apply the migration after the build goes green" therefore cannot ever
-complete — the build is not green until it is applied. This holds for every rule-ADDING migration.
-The price is one rebuild's worth of window where prod serves OLD code against the new rule, and it
-is unavoidable in the other direction.
-⚠⚠ **THE MANUAL REGISTER WAS STALE IN THE SAFE-LOOKING DIRECTION: 12 entries read "outstanding or
-unverified" and TEN WERE ALREADY ON PROD** (verified by querying production directly, incl. 264
-yet again). Bookkeeping drift is not database drift — an alarming register is no more trustworthy
-than a green gate. Ask the database.
-⚠ **STILL OWED FROM THAT RELEASE: the prod COACH demo re-seed.** `check:demos:prod` is RED with 4
-failures, one of which is that **no player hands in twice** — this release's own headline moment,
-absent from the public shop window. Preconditions were verified (working copy 0 ahead of
-`origin/master`, demo files clean); the run itself was left to the owner.
-The preceding prod HEAD was `2e7ef905` (2026-09-08, Amplify master job 262 SUCCEED first time — 119
-commits, tag `release/2026-09-08`: the coach money quarter (the dues ladder, the budget plan’s
-subtotals, credits and paybacks, fundraising’s one way in), Founding Season 2027 Phases 0–2, the
-notifications redraw, one table standard + its exception register, and the pricing comparison table’s
-removal. **Migrations 273–285 ALL applied to prod that day** — the two schemas are byte-identical
-(DRIFT 0) and the schema-parity ratchet reached **zero accepted divergences** for the first time.
-⚠ FIVE of the thirteen are DATA-ONLY and invisible to every gate, so each was verified by querying
-production directly: the demo tick went nightly, “Other Income” exists with its four words, the
-founding-season end date moved off the January cliff with none left behind, the campaign templates
-match dev at 11, and Grant moved to Sponsorship WITH its one referencing record re-pointed. Live-
-verified post-262 on **www.fieldlogichq.ca**: `/`, `/changelog` and `/pricing` 200, both doors 307
-into their worlds, master stream 0 ERROR, and the new changelog entry rendering. The prior prod HEAD
-was `bf1efee6` (2026-09-02, job 261). Before that, `7f21df47` (2026-08-27, Amplify master job 260 —
-52 commits, tag `release/2026-08-27`: coach money P4, tryout decisions as one tap, the platform no longer
-writing the offer letter, the Add player form at parity with the public form, the roster rework, practice
-staff/equipment libraries, printed posters/cards/brackets, the 641–768 tablet band and "8:00 a.m."
-everywhere; **migrations 262, 263, 265, 266 and 267 applied to prod** that day. ⚠⚠ **264 WAS DESCRIBED HERE FOR
-WEEKS AS “held pending owner approval” AND IT HAD IN FACT RUN** — re-verified 2026-09-08 by querying
-production directly: all three keys it deletes (`tryout_offer_extended`, `tryout_declined`,
-`tryout_offer_accepted`) are absent, and migration 083 had seeded them there, so they were deleted.
-The correction is the point: it is a data-only DELETE, and **NO GATE CAN EVER SEE ONE** — both drift
-checks compare schema, so a deleted ROW is invisible by construction and `check:migrations` reported
-“in sync” throughout, which is evidence of nothing in either direction. **A data-only migration’s
-state is knowable only by asking the database for the rows.** Both doors re-verified
-307ing into their worlds post-260 on **www.fieldlogichq.ca**, `/` and `/changelog` 200, master stream
-0 ERROR). ⚠⚠ **THIS RELEASE CHANGED THE COACH DEMO'S STORY AGAIN AND THE NARRATION HAS NOT BEEN FOLLOWED
-UP AT ALL.** The money vocabulary moved a third time: a family can now pay ONE PIECE of a bill directly
-and be credited for it, one bill can hold both a team payment and a family-fronted one, and undo /
-schedule-edit / delete now REFUSE rather than strand a repayment. The dock lines and tour steps were
-already written against the old six-doors-to-record world and were only partly trued up in the 08-25
-release; nothing was adjusted for P4. **Re-read the whole coach-money narration before the next demo
-change** — this surface has now gone stale across FIVE consecutive releases (09-08 and 09-10 both
-added to the pile), which is the strongest evidence yet for the rule that says it does. ⚠⚠ **AND
-09-10 MADE IT WORSE IN A NEW WAY: the demo world is now missing a MOMENT, not just a sentence.** A
-player can hand money in to a drive more than once, and the live demo has nobody doing it — so the
-release's headline feature is invisible on the page a prospect reads. `check:demos:prod` names it
-outright. **The prod re-seed that fixes it is OWED.** ⚠ `check:demos` self-heals on dev only and never
-writes to prod — production freshness rides the cron alone, so a green local run is NOT evidence about
-the live demos. The preceding prod HEAD was `5ae39f10` (2026-08-17, Amplify job 257 SUCCEED — 72 commits: the Money
-redesign P1–P4, budget item integrity, membership + history-in-place, tryout scorecard weights and
-setup checklist; **migrations 236–250 all applied to prod** that session, leaving the queue empty
-and the two schemas byte-identical; both doors re-verified 307ing into their worlds post-257, and
-`check:demos` reports both worlds presentable). ⚠ This release CHANGED THE COACH DEMO'S STORY —
-the coach sandbox now shows what its club bills it and what it asks back, and the whole money
-vocabulary a coach reads (categories + items, Transactions vs Payables) is new; the dock copy and
-tour narration were adjusted with it, but this is exactly the surface where the demo's sentences go
-quietly stale, so re-read them on the next coach-money change.** The preceding prod HEAD was
-`8fe59ded` (2026-08-14, Amplify job 256 SUCCEED 18:01 ET — the Money quarter + the help guide's
-menu-of-answers format; migrations 230–235 applied to prod that day). The preceding prod HEAD was
-`396bd7cc` (2026-08-12 — two promotes that day: the morning feature release, job 253, then the
-**Next 16.3.0 framework upgrade**, job 254). The three-part go-public decision (`BUSINESS_DECISIONS.md`
-2026-08-07) is fully executed and **the coach door is no longer route-only**. `npm run
-tick:demos` remains the manual repair on dev; `check:demos` self-heals on dev only and **never
-writes to prod** — production freshness rides the cron alone, so a reconcile bug fixed on dev is
-NOT fixed on prod until it reaches the deployed build (learned 2026-08-10 with the Sunday
-roll-forward attendance defect — found, fixed and shipped the same day in job 251).
+Plan: `docs/projects/active/DEMO_PROCESS_DECOUPLING_PLAN.md`. Release/prod state lives in the
+release-history record, not here.
 
 # Business-decision logging
 

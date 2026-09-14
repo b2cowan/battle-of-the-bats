@@ -259,4 +259,4 @@ dropped, and that bucket is the only thing exercising the path.
 public coach demo reads item by item again — 21 budget lines, none unfiled — and the wider finding
 behind it is closed too: the prod demo had never been rebuilt since 2026-08-08, so Sponsorship, club
 money, the scouting book, awards and testing were all rendering EMPTY to a prospect. `npm run
-check:demos:prod` now gates a promote on the live demos still matching the demo world.
+check:demos:prod` now judges the live demos against the demo world. (⚠ No longer a promote gate as of 2026-09-13 — the master build re-seeds a moved world itself; see `DEMO_PROCESS_DECOUPLING_PLAN.md`.)

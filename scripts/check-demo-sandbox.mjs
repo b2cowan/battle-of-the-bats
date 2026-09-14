@@ -34,8 +34,9 @@ import {
 } from '../lib/demo-tournament.ts';
 import {
   DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, INVITATIONAL_FEE,
-  resolveOpenerState, resolveInvitationalState, openerBracketSeeds,
+  resolveOpenerState, resolveInvitationalState, openerBracketSeeds, INVITATIONAL_TEAMS,
 } from '../lib/demo-moments.ts';
+import { sandboxMoments } from '../lib/sandbox-chrome.ts';
 import { buildRegistrationAttentionSummary } from '../lib/registration-attention.ts';
 
 const failures = [];
@@ -380,6 +381,33 @@ if (check(!!invitational, 'the Invitational exists', 'run scripts/seed-demo-tour
     `fees are $${INVITATIONAL_FEE.totalFee} with a $${INVITATIONAL_FEE.deposit} deposit, on both divisions`,
   );
   check(!firstRealLookingContact(invTeams), 'every Invitational contact is an unreachable example.com address');
+}
+
+// ── Arrival lines vs. the seeded world ──────────────────────────────────────────────────────
+// Rule 1 (owner, 2026-09-13): a number in a demo sentence is COMPUTED from the seed or it is not in
+// the sentence. The coach checker carries the same guard for its dock and tour; the tournament
+// dock quotes exactly two figures, both about registration week, both derived here from
+// INVITATIONAL_TEAMS — never typed twice.
+console.log('\nArrival lines vs. the seeded world');
+{
+  const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+  const word = (n) => WORDS[n] ?? String(n);
+  const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+  const moments = sandboxMoments('tournament', { slug: demoOrg.slug, landingPath: demoOrg.landingPath }, { isDemoOrganizer: true });
+  const week = moments.find(m => m.key === 'registration-week');
+  const accepted = INVITATIONAL_TEAMS.filter(t => t.status === 'accepted').length;
+  const CLAIMS = [
+    { line: week?.said ?? '',         who: 'fan',      phrase: `${word(accepted)} teams are in`,                                 from: 'INVITATIONAL_TEAMS (accepted)' },
+    { line: week?.saidOperator ?? '', who: 'operator', phrase: `${cap(word(INVITATIONAL_TEAMS.length))} teams are in the pipeline`, from: 'INVITATIONAL_TEAMS (all)' },
+  ];
+  check(!!week, 'the registration-week moment still exists to narrate');
+  for (const c of CLAIMS) {
+    check(c.line.length > 0 && c.line.includes(c.phrase),
+      `registration-week ${c.who} line says "${c.phrase}"`,
+      c.line.length === 0 ? 'no sentence at all'
+        : `the seed (${c.from}) now says "${c.phrase}", the sentence does not. Fix the sentence, or fix the seed — do not delete the assertion. Line reads: "${c.line}"`);
+  }
 }
 
 // ── verdict ──────────────────────────────────────────────────────────────────────────────────

@@ -245,6 +245,40 @@ if (wantProd) {
   }
 }
 
+/**
+ * ── THE WORLD STAMP (--prod) ─────────────────────────────────────────────────
+ *
+ * Since 2026-09-13 the master build re-seeds a demo whose world moved (`reseed-demos-if-stale.mjs`)
+ * and the seed stamps the org with the fingerprint it wrote. So the first question on production
+ * is no longer "is it broken?" but "which world is it?" — printed here, before the assertions, as
+ * a READOUT rather than a verdict: a working copy ahead of prod legitimately differs, and the
+ * assertions below are what decide presentable. A mismatch on the morning after a promote, with
+ * the checkout at origin/master, means the build's reseed did not run (release runbook §1d-1).
+ */
+if (wantProd && !tickOnly) {
+  const { createClient } = await import('@supabase/supabase-js');
+  const { getDemoOrgByKind } = await import('../lib/demo-org.ts');
+  const { demoWorldFingerprint, readDemoWorldStamp } = await import('./lib/demo-world-fingerprint.mjs');
+  const db = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  for (const [kind, seed] of [['tournament', 'scripts/seed-demo-tournament.mjs'], ['coach', 'scripts/seed-demo-coach.mjs']]) {
+    const slug = getDemoOrgByKind(kind)?.slug;
+    if (!slug) continue;
+    try {
+      const { data } = await db.from('organizations').select('id').eq('slug', slug).maybeSingle();
+      const stamp = data ? await readDemoWorldStamp(db, data.id) : null;
+      const here = demoWorldFingerprint(seed).fingerprint;
+      const there = stamp?.fingerprint ?? null;
+      const verdict = there === here ? '✓ same world as this checkout'
+        : there ? `≠ this checkout is ${here} (expected if this checkout is ahead of prod; otherwise the build's reseed did not run)`
+        : 'never stamped — seeded before 2026-09-13, or the build step has not run yet';
+      console.log(`  world stamp · ${kind}: ${there ?? '—'}${stamp ? ` (${stamp.stampedAt.slice(0, 10)}, ${stamp.commit ? stamp.commit.slice(0, 8) : 'no commit'}, ${stamp.branch ? 'branch ' + stamp.branch : 'by hand'})` : ''} · ${verdict}`);
+    } catch (err) {
+      console.log(`  world stamp · ${kind}: unreadable (${err.message})`);
+    }
+  }
+  console.log('');
+}
+
 if (tickOnly && wantProd) {
   console.error('✗ refusing to re-anchor production. --prod is read-only, always.');
   process.exit(1);
@@ -300,10 +334,10 @@ if (failed.length) {
   if (wantProd) {
     // The prod repair is a deliberate reseed, never a tick: the nightly scheduler already keeps
     // the DATES right there, so anything this gate catches is CONTENT the live world never got.
-    console.error('  The live demo has fallen behind the demo world. Re-seed it deliberately:');
-    console.error('    node --env-file=.env.production.local scripts/seed-demo-coach.mjs --allow-prod');
-    console.error('    node --env-file=.env.production.local scripts/seed-demo-tournament.mjs --allow-prod');
-    console.error('  Do NOT promote a release that changes the demo world while this is red.');
+    console.error('  The live demo has fallen behind the demo world. The master build re-seeds it when the');
+    console.error('  world moves (scripts/reseed-demos-if-stale.mjs) — read the world stamp above and the');
+    console.error('  latest master build log for that step. This never holds a promote; the fallback, once');
+    console.error('  the checkout is at origin/master, is in the release runbook §1d-1.');
   } else {
     console.error('  Re-seed it (scripts/seed-demo-*.mjs), or fix what changed underneath it. A broken');
     console.error('  demo still renders perfectly, which is why this is checked rather than noticed.');

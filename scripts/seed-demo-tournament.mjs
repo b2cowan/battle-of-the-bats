@@ -35,6 +35,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID, randomBytes } from 'crypto';
 import { computeTournamentStandings } from '../lib/tie-breakers.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
+import { writeDemoWorldStamp, stampActor } from './lib/demo-world-fingerprint.mjs';
 import {
   DEMO_ORG_NAME, DEMO_TOURNAMENT_NAME, DEMO_VENUE_NAME, DEMO_FACILITIES,
   DEMO_DIVISIONS, DEMO_PLAYOFF_CONFIG, DEMO_TOURNAMENT_SETTINGS, DEMO_GAME_DURATION_MINUTES,
@@ -525,6 +526,13 @@ for (const team of invitational.teams) {
     registered_at: registeredAtIsoFor(team.registeredDate),
   })).error);
 }
+
+// ── the stamp ──
+// Written LAST, so it exists only for a world that was fully built. The master build compares it to
+// the fingerprint of the checkout it is deploying and re-runs this script when they differ — see
+// scripts/lib/demo-world-fingerprint.mjs and scripts/reseed-demos-if-stale.mjs.
+const stamp = await writeDemoWorldStamp(db, org.id, { seedEntry: 'scripts/seed-demo-tournament.mjs', actor: stampActor() });
+console.log(`\n✓ Stamped ${stamp.fingerprint} (${stamp.migrationCount} migrations, last ${stamp.lastMigration})`);
 
 // ── report ───────────────────────────────────────────────────────────────────────────────────
 console.log(`\n✅ Seeded the sandbox — "${DEMO_TOURNAMENT_NAME}" for ${DEMO_ORG_NAME}`);

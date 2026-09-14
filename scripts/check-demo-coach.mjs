@@ -44,6 +44,7 @@ import {
   MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_PLAYER_NOTES, MIDSEASON_SCOUTING,
   SEASON_START_BUDGET_LINES,
   TRYOUT_CANDIDATES, MIDSEASON_RESULTS, SEASONS_END_RESULTS,
+  DEMO_EVALUATORS, OFFSEASON_DEVELOPMENT_GOALS, SEASONS_END_FAMILY,
 } from '../lib/demo-coach.ts';
 import { sandboxMoments, sandboxTourSteps } from '../lib/sandbox-chrome.ts';
 /* The report's own derivation, not a re-implementation of it — the gate below asserts a sentence
@@ -1173,27 +1174,64 @@ console.log('Arrival lines vs. the seeded world');
   const moments = sandboxMoments('coach', { slug: demoOrg.slug, landingPath: demoOrg.landingPath });
   const said = (key) => moments.find(m => m.key === key)?.said ?? '';
 
+  /* Rule 1 (owner, 2026-09-13): a number in a demo sentence is COMPUTED from the seed or it is not
+     in the sentence. So every figure a dock line or tour step quotes has a row here, and the row
+     derives the phrase — number words included — from the constant the seed built the world from.
+     Add a figure to a sentence → add a row. Cannot derive it → take the figure out of the sentence. */
+  const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty',
+    'twenty-one', 'twenty-two', 'twenty-three', 'twenty-four', 'twenty-five', 'twenty-six', 'twenty-seven', 'twenty-eight', 'twenty-nine', 'thirty'];
+  const word = (n) => WORDS[n] ?? String(n);
+  const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+  const steps = sandboxTourSteps('coach', { slug: demoOrg.slug, landingPath: demoOrg.landingPath });
+  const stepSaid = (n) => steps.find(st => st.n === n)?.said ?? '';
+
+  const seasonStart = resolveSeasonStartState(now);
+  const startPlayed = seasonStart.games.filter(g => g.result).length;
+  const startWaiting = seasonStart.games.length - startPlayed;
+  const scoringEvaluators = DEMO_EVALUATORS.filter(e => e.scoredCount > 0).length;
+  const duesPaymentsIn = OFFSEASON_DUES.dueOffsets.filter(d => d < 0).length;
+  const goalsReached = OFFSEASON_DEVELOPMENT_GOALS.filter(g => g.status === 'achieved').length;
+
   const CLAIMS = [
-    { key: 'tryout-day',  phrase: `${TRYOUT_CANDIDATES.length} kids in bibs`, from: 'TRYOUT_CANDIDATES' },
-    { key: 'mid-season',  phrase: record(MIDSEASON_RESULTS),                  from: 'MIDSEASON_RESULTS' },
-    { key: 'seasons-end', phrase: record(SEASONS_END_RESULTS),                from: 'SEASONS_END_RESULTS' },
+    // ── dock lines ──
+    { where: 'tryout-day',  phrase: `${TRYOUT_CANDIDATES.length} kids in bibs`,                                 from: 'TRYOUT_CANDIDATES' },
+    { where: 'tryout-day',  phrase: `${word(scoringEvaluators)} evaluators partway`,                          from: 'DEMO_EVALUATORS (scoredCount > 0)' },
+    { where: 'off-season',  phrase: `dues ${word(duesPaymentsIn)} payments in`,                                from: 'OFFSEASON_DUES.dueOffsets (< 0)' },
+    { where: 'off-season',  phrase: 'one family behind',                                                        from: 'OFFSEASON_DUES.overdueRosterIndex (a single index)' },
+    { where: 'season-start', phrase: `${word(startPlayed)} games played`,                                      from: 'resolveSeasonStartState().games with a result' },
+    { where: 'mid-season',  phrase: record(MIDSEASON_RESULTS),                                                  from: 'MIDSEASON_RESULTS' },
+    { where: 'seasons-end', phrase: record(SEASONS_END_RESULTS),                                                from: 'SEASONS_END_RESULTS' },
+    { where: 'seasons-end', phrase: `the recap ${word(SEASONS_END_FAMILY.recapViews)} families opened`,        from: 'SEASONS_END_FAMILY.recapViews' },
+    // ── tour steps ──
+    { where: 1, phrase: `${cap(word(TRYOUT_CANDIDATES.length))} kids tried out`,                               from: 'TRYOUT_CANDIDATES' },
+    { where: 2, phrase: `${cap(word(OFFSEASON_TESTING_SESSIONS.length))} testing days`,                       from: 'OFFSEASON_TESTING_SESSIONS' },
+    { where: 2, phrase: `${word(goalsReached)} already reached, ${word(1)} reviewed`,                          from: 'OFFSEASON_DEVELOPMENT_GOALS (achieved) + OFFSEASON_GOAL_REVIEW (one object)' },
+    { where: 3, phrase: `${cap(word(1))} lineup saved`,                                                        from: 'SEASON_START_LINEUP_GRID (the opener, one lineup)' },
+    { where: 3, phrase: `${word(startWaiting)} games waiting`,                                                 from: 'resolveSeasonStartState().games without a result' },
+    { where: 8, phrase: record(SEASONS_END_RESULTS),                                                            from: 'SEASONS_END_RESULTS' },
+    { where: 8, phrase: `${word(SEASONS_END_FAMILY.recapViews)} of ${word(SEASONS_END_FAMILY.verifiedLinks)} families opened`, from: 'SEASONS_END_FAMILY' },
   ];
 
-  check(moments.length > 0, 'the coach dock still has moments to narrate',
-    'sandboxMoments returned nothing — this guard would pass while comparing nothing');
+  check(moments.length > 0 && steps.length > 0, 'the coach dock and tour still have lines to narrate',
+    'sandboxMoments/sandboxTourSteps returned nothing — this guard would pass while comparing nothing');
 
   for (const c of CLAIMS) {
-    const line = said(c.key);
+    const line = typeof c.where === 'number' ? stepSaid(c.where) : said(c.where);
+    const label = typeof c.where === 'number' ? `tour step ${c.where}` : `${c.where} arrival line`;
     check(
       line.length > 0 && line.includes(c.phrase),
-      `${c.key} arrival line says "${c.phrase}"`,
+      `${label} says "${c.phrase}"`,
       line.length === 0
-        ? `the ${c.key} moment has no arrival line at all`
+        ? `${label} has no sentence at all`
         : `the seed (${c.from}) now says "${c.phrase}", the sentence does not. Fix the sentence, or fix the seed — do not delete the assertion. Line reads: "${line}"`,
     );
   }
 
-  console.log(`  · guarded ${CLAIMS.length} countable claim(s); NOT guarded: the split opinion, the evaluators' progress, the families who opened the recap, the dues and lineup states — judgements, not figures`);
+  // The one figure in the tour that is a RATIO rather than a constant — "nearly eight in ten
+  // dollars of dues are in" — is guarded above by a band recomputed through the report's own
+  // derivation (the guided tour's dues ratio), not here.
+  console.log(`  · guarded ${CLAIMS.length} countable claim(s) across the dock and the tour (+ the dues ratio band above); NOT guarded, by design: judgements — "the winter's spending already against it", "one player is well below the rest" (asserted as a seeded fact elsewhere in this file, not as a figure)`);
 }
 
 report();

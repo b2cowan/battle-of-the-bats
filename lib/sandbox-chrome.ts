@@ -139,6 +139,21 @@ export function sandboxMoments(
  * won't deliver ("they don't seem to do anything", owner QA, three times). The approved mockup
  * drew a pulse here; dropping it is an honesty deviation to flag at owner review, not a whim.
  */
+/*
+ * ── The two rules every sentence in this file obeys (owner ruling 2026-09-13) ──────────────────
+ *
+ * 1. **A number in a sentence is computed from the seed, or it is not in the sentence.** Every
+ *    figure below — 28, two, three, twelve, 14-3-1, nine of twelve — has a line in
+ *    `scripts/check-demo-coach.mjs` ("Arrival lines vs. the seeded world") that derives the same
+ *    phrase from the seed constant and fails when the sentence and the world disagree, in either
+ *    direction. A figure without such a line does not go in a sentence.
+ * 2. **A sentence describes what the screen is FOR, not what it happens to show.** No tab names,
+ *    column headings, controls, chart positions, or derived readings nobody recomputes. That is
+ *    what lets the product move under these lines without anybody re-reading them per commit.
+ *
+ * The story over the seeded world is curated once per release cycle by `/demos`, never per
+ * commit — do NOT add dated "re-read" notes here; git history is the diary.
+ */
 function coachSandboxMoments(org: { slug: string; landingPath: string }): SandboxMoment[] {
   const teamPath = (teamId: string, rest = '') => `/${org.slug}/coaches/teams/${teamId}${rest}`;
   const moment = (m: Omit<SandboxMoment, 'fanPath' | 'operatorPath'> & { path: string }): SandboxMoment => {
@@ -151,11 +166,13 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       label: 'Tryout day',
       sub: 'today, mid-scoring',
       teamId: DEMO_COACH_TEAM_IDS.tryoutDay,
-      // The hub's Score FACE (One-Room build, 2026-08-23) — the standalone /tryouts/score page is
-      // a redirect now. Query-addressed like the Money `?section=` destinations; the chrome's
-      // arrival matcher already understands those.
+      // The hub's Score FACE — query-addressed like the Money `?section=` destinations; the
+      // chrome's arrival matcher understands those.
       path: teamPath(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts?stage=tryout-day&view=score'),
-      said: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
+      // The split opinion the seed carries (bib 14) is rendered nowhere — every surface shows the
+      // average — so the line does not claim it (rule 2). If the product ever draws it, /demos
+      // may put it back with an assertion.
+      said: 'Tryout day, mid-flight: 28 kids in bibs and two evaluators partway through their scoring. Blind scoring is on — the board shows bibs, never names.',
       bannerNote: 'Evaluations are mid-flight',
     }),
     moment({
@@ -163,55 +180,8 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       label: 'Off-season',
       sub: 'between seasons',
       teamId: DEMO_COACH_TEAM_IDS.offSeason,
-      // The Money hub's Budget-vs-Actual TAB (query-addressed) — the standalone page is a legacy
-      // redirect now, and the chrome's arrival matcher understands `?section=` destinations.
+      // The Money hub's Budget-vs-Actual TAB (query-addressed).
       path: moneySectionHref(teamPath(DEMO_COACH_TEAM_IDS.offSeason), 'budget-vs-actual'),
-      /* ⚠⚠ RE-READ FOR DUES-ON-THE-STATEMENT (2026-09-04), and this line needed it more than any
-         other in the file: it is the ONE dock moment that lands a prospect directly on Budget vs.
-         Actual, and it makes a claim about dues.
-           · *Still true?* **Yes, and it stopped being a claim you had to take on trust.** "dues two
-             payments in — and one family behind" describes the seeded world; the screen it lands on
-             now carries a Player dues row stating exactly that money, where before this release the
-             report showed none of it. The other two clauses ("a budget built line by line", "the
-             winter's spending already against it") are the expenses half and are untouched.
-           · *Should a moment show it?* **Not a new one.** This moment already opens on the screen
-             that changed, so the world does the showing. No copy is added. */
-      /* ⚠⚠ RE-READ FOR FUNDRAISING — ONE WAY IN (2026-09-08), and this moment needed it: the world
-         it lands on GAINED A FUNDRAISING RECORD in that release. CLAUDE.md's two questions:
-           · *Still true?* **Yes, every clause.** "a budget built line by line", "the winter's
-             spending already against it", "dues two payments in — and one family behind" all
-             describe the seeded world, and none of the three moved: the hoodie order's $480 is the
-             same $480, on the same day, on the same word. What changed is the DOOR it came through
-             — it was a typed income record and is now a drive with one whole-team entry — and no
-             sentence here ever named that door.
-           · ⚠ THE SEEDED WORLD DID CHANGE, which is where the feature shows: this team now has a
-             Fundraising tab with a real drive on it, raising for *Merchandise sales* rather than
-             the shelf's standard word, and a board whose one row reads "The whole team" with a dash
-             where a family share would be. A prospect who opens Fundraising from this moment meets
-             the release without a sentence over it.
-           · *Should a moment show it?* **No new clause.** The `ea8ddd14` cap holds every moment to
-             its own one fact, and this one's is the books being open mid-build. If the owner wants
-             team-raised money narrated, the honest move is to SWAP a clause, not append a fourth.
-             Flagged at Owner QA §157. */
-      /* ⚠⚠ RE-READ FOR THINGS, NOT DATES (2026-09-10) — mandatory here, because this is the one
-         dock moment that lands a prospect directly on Budget vs. Actual and it makes a claim about
-         DUES, which is the row that changed.
-           · *Still true?* **Yes — and one clause got its evidence.** "dues two payments in — and one
-             family behind" describes the seeded world, and no figure on that report moved: the
-             Player dues total is still the sum of the same dollars, now re-summed from one row per
-             family instead of stated as a single number. What changed is that a prospect can now
-             OPEN that row and see WHICH family is behind, with what they were billed, what has come
-             in, and what they still owe. The sentence has been checkable-in-principle since
-             2026-09-04; it is checkable in two taps now.
-           · ⚠ THE OTHER HALF OF THIS RELEASE IS A REMOVAL, and removals are the ones that quietly
-             falsify demo copy. Line items on this report no longer open into their planned months.
-             Nothing in this sentence — or anywhere in this file — names that fold, which was checked
-             rather than assumed (the 09-05 and 09-06 re-reads below reached the same answer about
-             the same furniture, and this release is the one that removes it).
-           · *Should a moment show it?* **No new clause.** The `ea8ddd14` cap holds every moment to
-             one fact and this one's is the books being open mid-build. "Open the dues row and see
-             who owes you" is a genuinely strong shop-window fact, and the honest move if the owner
-             wants it is a SWAP rather than a fourth clause. Flagged at Owner QA. */
       said: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       bannerNote: 'The season is still being built',
     }),
@@ -229,10 +199,11 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       label: 'Mid-season',
       sub: 'game this Saturday',
       teamId: DEMO_COACH_TEAM_IDS.midSeason,
-      // Built from the team id like its siblings (this IS the door's landing path — the door's
-      // constant and this one agree by both deriving from DEMO_COACH_TEAM_IDS).
+      // This IS the door's landing path — both derive from DEMO_COACH_TEAM_IDS.
       path: teamPath(DEMO_COACH_TEAM_IDS.midSeason),
-      said: 'The heart of the year: 14-3-1, three events this week, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
+      // "A game this Saturday" is the one calendar fact the nightly re-anchor guarantees; a count of
+      // the week's events is not, so the line does not quote one (rule 1).
+      said: 'The heart of the year: 14-3-1, a game this Saturday, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
       bannerNote: 'There\'s a game this Saturday',
     }),
     moment({
@@ -241,12 +212,7 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       sub: 'last season, closed',
       teamId: DEMO_COACH_TEAM_IDS.seasonsEnd,
       path: teamPath(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
-      /* ⚠ REWRITTEN 2026-08-18 with the closed-season change, and this is the demo drift CLAUDE.md
-         warns about, caught in the same unit of work. Both lines used to say the season's record
-         was "still open from the same menu — read-only, exactly as it ended". That was true of the
-         portal that turned itself into a read-only copy of itself; it is not true of the one page a
-         closed season is now, and every screen would still have rendered perfectly while the
-         sentence was wrong. */
+      // A closed season is ONE page (owner ruling 2026-08-18) — the line describes that page.
       said: 'A finished year, kept on one page: 18-6-2, the recap nine families opened, and the results, the roster, the practices and the money all folded away underneath.',
       bannerNote: 'A finished year, kept',
     }),
@@ -498,16 +464,18 @@ export function sandboxTourSteps(
  */
 function coachSandboxTourSteps(org: { slug: string; landingPath: string }): SandboxTourStep[] {
   const team = (teamId: string, rest = '') => `/${org.slug}/coaches/teams/${teamId}${rest}`;
+  // ⚠ Owner ruling `ea8ddd14` (2026-08-28): every step is a HOOK plus ONE proof point. A feature
+  // that deserves telling gets a clause SWAPPED, never a fourth appended. The seeded world shows
+  // everything else by itself, one tap from each landing. The sentences also obey the two rules
+  // stated above `coachSandboxMoments` — figures are guarded or absent, and no furniture is named.
   return [
     {
       n: 1,
       label: 'See how 28 kids got ranked',
-      // The DECIDE stage by name (One-Room build, 2026-08-23) — the sentence and the anchor both
-      // describe the decision board, which lives on `?stage=decide`; a bare `/tryouts` would land
-      // on whatever stage auto-selects. Naming the stage is also what keeps this press honest:
-      // the dock's chip lands on the hub's Score face at the SAME pathname now, and only the
-      // query (matcher checks every param the destination names) separates "already here" from
-      // "take me there".
+      // The DECIDE stage by name: the sentence and the anchor describe the decision board, which
+      // lives on `?stage=decide`. Naming the stage is also what keeps the press honest — the dock's
+      // chip lands on the Score face at the SAME pathname, and only the query separates "already
+      // here" from "take me there" (see the same-path trap pinned in the door-and-chrome test).
       href: team(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts?stage=decide'),
       exactPath: true,
       anchor: '[data-sandbox-tour="tryout-decisions"]',
@@ -520,18 +488,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.offSeason, '/development'),
       exactPath: true,
       anchor: '[data-sandbox-tour="development-sessions"]',
-      // ⚠ RE-WRITTEN 2026-08-20 when the world gained a second testing day. The old sentence
-      // ("Eleven of thirteen players were tested that day") never became false — both sessions
-      // are eleven of thirteen — but it described a screen showing ONE date while the screen now
-      // shows two, and it left out the thing the second one exists for. This is the demo-drift
-      // case CLAUDE.md reserves for a person: not a broken sentence, a story that stopped keeping
-      // up with the product. Numbers verified against `OFFSEASON_TESTING_SESSIONS`.
-      // ⚠ RE-NARRATED 2026-09-13 (development lifecycle Phase 2): a session now carries its scope —
-      // the eleven who were there — so the two who missed are outside it rather than blank rows;
-      // a row inside the scope reads "Not recorded" or "Not assessed", never a dash that could mean
-      // four things; and one player runs the dash three times a day, every attempt kept. Numbers
-      // verified against `OFFSEASON_TESTING_SESSIONS` and `offseasonShowcaseAttempts`.
-      said: 'Two testing days, months apart — which is the whole reason the second set of numbers means anything. Each session names who was there: eleven of thirteen, so the two who missed are outside its scope rather than a blank that could mean anything, and nothing here is invented to fill a column. Open one and one player has run the dash three times — every attempt kept, the best leading. Four things this team is working on, one already reached, one reviewed with a note.',
+      said: 'Two testing days, months apart — which is the whole reason the second set of numbers means anything. Each session names who was there, so a player who missed it is outside its scope rather than a blank that could mean anything; nothing here is invented to fill a column. Open one and a player who ran the dash more than once has every attempt kept, the best leading. Underneath, the goals this team is working on — one already reached, one reviewed with a note.',
       nextLabel: 'Next: the season starts',
     },
     {
@@ -547,406 +504,55 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       n: 4,
       label: 'See if the season is on budget',
       // The hub's Budget-vs-Actual TAB — the tour must never walk a prospect onto the tab-less
-      // legacy page (owner, 2026-08-13). exactPath still binds the PATH; the `?section=` part
-      // additionally requires the right tab, so "already here" on another tab still travels.
+      // legacy page (owner, 2026-08-13). exactPath binds the PATH; `?section=` additionally
+      // requires the right tab, so "already here" on another tab still travels.
       href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'budget-vs-actual'),
       exactPath: true,
       anchor: '[data-sandbox-tour="budget-variance"]',
-      // ⚠ THIS STEP ONCE CARRIED THREE MORE CLAUSES — the Bottle Drive, the team-wide dues
-      // settings, and the sponsor — and `ea8ddd14` (owner ruling 2026-08-28: a hook plus ONE
-      // proof point per step) cut them deliberately. The narration now says nothing about
-      // fundraising ON PURPOSE; do not read their absence as drift, and do not re-grow this step
-      // to mention a fundraising change. The seeded WORLD still shows all of it — the drive
-      // (MIDSEASON_FUNDRAISER) and the sponsor (MIDSEASON_SPONSOR, since mig 268 a pledge kept
-      // by dated arrivals), both pinned by `check-demo-coach` — so a prospect who walks into
-      // Fundraising finds the real thing with no sentence over it to go stale.
-      // (Re-read for Direction A, 2026-08-29: no narration anywhere in this tour speaks of
-      // sponsors or fundraising, so the two-bands rework stales nothing here.)
-      // (Re-read for the drive band, 2026-08-31 — the drill-in retired; a drive now expands in
-      // place like a sponsor. Same verdict: no tour step or dock line names the fundraiser
-      // screen, its leaderboard or its back link, so nothing here went stale. The seeded world
-      // simply renders the new in-place shape.)
-      // (Re-read for List · Room · Question Phase B, 2026-09-02 — the in-place expansions retired
-      // in their turn; a drive and a sponsor now open a ROOM over their list, and a cheque can be
-      // edited as well as undone. Same verdict, third time: no step or dock line names any of it,
-      // so nothing here went stale and nothing is added — `ea8ddd14` still caps every step at one
-      // proof point. The seeded world renders the rooms; `check-demo-coach` pins the drive and
-      // the sponsor it opens.)
-      // (Re-read for MORE THAN ONCE, mig 287 — 2026-09-10. A player may now hand money in as many
-      // times as it takes, and a drive's board draws a participant as one row carrying their total
-      // that folds open onto each dated hand-in. Same verdict, fifth time, on the "still true?"
-      // half: NO step or dock line describes the drive's board, its rows or its Record door, so
-      // nothing here went stale — and the one figure this tour does quote off fundraising, the
-      // $335.00 of rebates behind the dues ratio, is UNCHANGED because the demo's new second
-      // hand-in is a SPLIT of an amount that was already there.
-      // ⚠ The *should a moment show it?* half was answered YES, and answered in the WORLD rather
-      // than in a sentence: Theo Marsh now hands in twice, so a prospect who opens Fundraising
-      // finds a row with something to open. That is the `ea8ddd14` cap working as intended — the
-      // world grows, the narration does not — and `check-demo-coach` pins the repeat hand-in so a
-      // later seed edit cannot quietly flatten it back with every page still rendering.)
-      // (Re-read for the MONEY BANNER STANDARD, 2026-09-04 — the tab's four summary cards became
-      // the shared band, and one of the four figures is genuinely NEW: "Still to come", the money
-      // sponsors have promised and not sent. Same verdict, fourth time — no step or dock line names
-      // the tab's summary, so nothing went stale. But the *should a moment show it?* half is less
-      // obvious than usual and is worth writing down: the seeded world DOES carry an unmet promise
-      // (MIDSEASON_SPONSOR is a pledge with a partial arrival), so a prospect who opens Fundraising
-      // now meets a figure the product could not previously state anywhere on this screen. Per the
-      // `ea8ddd14` cap no clause was added; if the owner wants "what is still owed to us" narrated,
-      // the honest move is to SWAP a clause on step 4, not append a fifth.)
-      /* ⚠⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30), and the "over plan" claim was MEASURED
-         rather than assumed — which is the whole point of the rule, because this release changed
-         what that line is made of. The 12U's club bill is now FILED against Facilities · Diamond
-         Permits, so the very row this sentence names absorbed $600 of paid club instalments less
-         the $180 the club paid back. Measured on the reseeded world: planned $3,200, actual $3,870
-         — it was $3,450 before, so the line went from $250 over to $670 over. **Still over. The
-         sentence stands, and it is now truer**: what a coach is looking at genuinely includes what
-         their club billed them.
-         ⚠ NOTHING WAS ADDED FOR THE GRANT, and that is the standing ruling rather than an
-         oversight. The new revenue row ("Grant", a dash under Budget) appears on THIS screen and is
-         the most legible thing in the release — but `ea8ddd14` capped every step at a hook plus ONE
-         proof point (owner, 2026-08-28) and the note above says outright not to re-grow this step.
-         The seeded WORLD shows the fork in full (MIDSEASON_CLUB_MONEY: one grant, one repayment,
-         both approved, both filed, pinned by `check-demo-coach`), so a prospect who opens the report
-         finds the real thing with no sentence over it to go stale. If the owner wants it narrated,
-         the honest move is to SWAP a clause, not append a fourth. */
-      /* ⚠⚠ RE-READ FOR BvA "TWO TRUTHS" (2026-09-02) — the WHOLE coach-money narration, walked as
-         P1 of that build (dock lines and tour steps; CLAUDE.md had flagged this surface stale
-         three releases running, and this read clears the flag):
-           · THIS SENTENCE STANDS. It names the report's variance verdict and the dues rate — not
-             the chart's position (now the "Spending trend" shelf below the table), not the
-             Showing menu (FIVE readings now: "Actual" renamed "Cash", "Season spending" new), and
-             not the Difference basis (plan vs spending since Q3) — so nothing here went stale.
-           · Step 5 (the Ledger), the off-season books line and Season's End's "how the money
-             added up": all untouched — none names a lens, the chart, or the report's totals.
-           · SHOULD a moment show Season spending? The seeded world already CAN: the Spring
-             Invitational's $400 parent-paid deposit (EX-SPRING, mig 267) now appears on the new
-             reading in its category and month, tagged "paid by a family" — no seed change
-             needed, and per the `ea8ddd14` cap no clause was added. If the owner wants the
-             two-truths story narrated, swap a clause; flagged at Owner QA §132. */
-      /* ⚠ RE-READ FOR THE BUDGET TAB REVAMP (2026-09-02), per CLAUDE.md's two questions:
-           · *Still true?* Yes — no tour step stops on the Budget PLAN tab and no sentence
-             anywhere (this step, step 5, the off-season dock line's "a budget built line by
-             line") names its views, controls, export or editor, so the revamp (View/Columns
-             pills, the merged By-period rows, the Schedule column, split_mode, the fourth line
-             kind, the plan PDF) stales nothing.
-           · *Should a moment show it?* The seeded worlds render the new shape by themselves —
-             the off-season books moment lands a prospect one tab from the revamped plan — and
-             the `ea8ddd14` cap (a hook plus ONE proof point per step) says no clause is added
-             for it. If the owner wants the plan's one-grain story narrated, swap a clause. */
-      /* ⚠ RE-READ FOR THE BY-PERIOD CLOSE (2026-09-09 — player installments joined the Budget
-         plan's period grid, and every negative on BOTH money grids now wears brackets instead of
-         a minus), per CLAUDE.md's two questions:
-           · *Still true?* Yes, and the notation is the half worth stating: no sentence in this
-             file quotes a signed figure, a minus sign or a bracketed one — checked, not assumed —
-             so the swap stales nothing even though this tour DOES stop on Budget vs. Actual, where
-             a negative closing balance is now "(380)". The Budget-plan reasoning one note up still
-             holds: no step stops on that tab.
-           · *Should a moment show it?* Not on its own. The new rows answer "is the plan covered,
-             month by month", which is the same question step 5's variance moment already asks in
-             the language a prospect arrives with. Adding a clause would spend the per-step cap on
-             a second telling. Revisit if the plan grid ever grows balances. */
-      /* ⚠ RE-READ FOR REVENUE FIRST, BALANCES CARRIED FORWARD (2026-09-12 — the Budget plan now
-         reads Revenue above Expenses, Player installments is a revenue ROW, the plan closes on
-         Opening / Net / Closing balance in both views and both files, a Required-player-dues helper
-         sits under the table before dues exist, and two transient previews — an extra expense, and
-         the Set-dues sheet's draft — show before → after), per CLAUDE.md's two questions:
-           · *Still true?* Yes — grepped, not assumed: no dock line or tour step names Planned
-             costs, Planned funding, Costs less funding, Shortfall (Buffer) or the plan's tiles, and
-             no step stops on the Budget PLAN tab (the previous two notes' reasoning holds). The
-             sentence that DOES name a balance — step 5's "closing balance (380)" — is Budget vs.
-             Actual's, whose rows did not move.
-           · *Should a moment show it?* This is the one the last note said to revisit, and the
-             honest answer is still no clause: the seeded world renders the new close by itself one
-             tab from the off-season books moment, and step 5 already tells the "is the plan
-             covered, month by month" story in a prospect's words. The two previews are a coach's
-             own what-ifs, transient by design — a demo cannot seed one. If the owner wants the
-             plan's balance narrated, SWAP a clause on step 5; flagged at Owner QA §173. */
-      /* ⚠ RE-READ FOR THE MONEY BANNER STANDARD (2026-09-03 — every Money tab's summary rebuilt as
-         one shared band; on Player Dues both table footers retired and the Collection schedule
-         became a foldable timeline in the header), per CLAUDE.md's two questions:
-           · *Still true?* Yes, and the reason is worth keeping: the two sentences in this narration
-             that mention dues — "Seven in ten dollars of dues are in" here, and the off-season dock
-             line's "dues two payments in — and one family behind" — describe the seeded WORLD, not
-             the screen's furniture. No dock line or tour step names the dues totals row, its column
-             headings, or where the Collection schedule sits, and no tour step stops on Player Dues
-             at all. Moving those figures from a table foot to a header band stales nothing.
-           · *Should a moment show it?* The seeded world renders the new shape by itself — a
-             prospect who opens Player Dues from step 4's hub now meets the band and the timeline
-             with no sentence over them — and the `ea8ddd14` cap (a hook plus ONE proof point per
-             step) says no clause is added. If the owner wants the "one answer at the top of every
-             money screen" story narrated, the honest move is to SWAP a clause, not append one. */
-      /* ⚠⚠ RE-READ FOR DUES-ON-THE-STATEMENT (2026-09-04 — player dues joined Budget vs. Actual's
-         revenue band and the closing "Funded by players" row was deleted), per CLAUDE.md's two
-         questions. This step LANDS a prospect on the changed screen, so the read is not optional:
-           · *Still true?* **Yes — and one clause got materially truer.** "Seven in ten dollars of
-             dues are in" describes the seeded WORLD, and it always did; what changed is that the
-             screen this step stops on now SHOWS that fact, in a Player dues row a prospect can read
-             without going anywhere. Until today the tour asserted a dues ratio on a report from
-             which dues were entirely absent. "Diamond rentals are over plan" is untouched — the
-             expenses half did not move — and no step or dock line names Season net, Total revenue,
-             or the deleted row, so nothing went stale.
-           · ⚠ The seeded mid-season world's Season net moves VISIBLY with this release: it read as
-             a large negative because every cost was counted and the season's biggest money in was
-             not. Nothing narrates it, which is why nothing broke — but a prospect who reads the
-             bottom line now sees a plausible one, which is the point.
-           · *Should a moment show it?* **No new stop, and no new clause.** The `ea8ddd14` cap holds
-             every step at a hook plus ONE proof point, and this step's proof point is the variance
-             verdict. The seeded world renders the dues row and the sentence beneath the table by
-             itself. If the owner wants "do dues cover the plan?" narrated, the honest move is to
-             SWAP a clause here, not append a fourth. Flagged at Owner QA §142.
-
-         (Re-read for BUDGET DATES + the "To date" basis, 2026-09-05 — this tab gained a **Compare**
-         control and every budget line now answers "when does this money move?", per CLAUDE.md's two
-         questions:
-           · *Still true?* YES, every clause, and the reason is the ruling rather than luck:
-             **Whole season stays the default basis**, so a prospect who lands here reads exactly the
-             report this sentence describes. "Diamond rentals are over plan" is a whole-season
-             verdict and is untouched by dating lines — dates re-cut the plan only when a coach asks
-             them to. "A plan built in the spring" is now more literally true than it was: the
-             demo's lines carry the months they land in.
-           · *Should a moment show it?* NO CLAUSE IS ADDED, by the `ea8ddd14` cap (a hook plus ONE
-             proof point per step) — the same answer §137 and §142 got at this step. The honest move
-             if the owner wants the basis narrated is to SWAP a clause, not append a fifth.
-           ⚠ THE SEEDED WORLD DID CHANGE, and that is where the feature shows: thirteen undated
-             demo lines were the shop window demonstrating the exact problem this build fixes. Every
-             live world now carries dated lines plus ONE deliberate "No date yet", so a prospect who
-             opens the plan sees the When column working AND the product being honest about what it
-             cannot date. See `datePlanLines` in the coach seed for why one is left unanswered. */
-      /* (Re-read for ONE SURFACE, 2026-09-05 — the Statement, By activity and the Budget tab's
-         List left the card-stack outline for the Months grid's table recipe, the unplanned row's
-         amber GROUND became an amber DASH, and an activity's net moved onto its category row.
-         This step lands a prospect on the changed screen, so the read is not optional:
-           · *Still true?* YES, every clause, and this time for a structural reason rather than
-             luck: **nothing here names the report's furniture.** "Diamond rentals are over plan"
-             is a variance VERDICT, and the variance word is untouched — it still reads "over",
-             still in prose rather than colour alone. "A plan built in the spring" and "seven in
-             ten dollars of dues are in" describe the seeded WORLD, which did not move at all: no
-             seed, figure or date changed in this release. The one thing a prospect sees
-             differently is that the report is now legible at a glance, which is the change.
-           · ⚠ THE CLAUSE MOST AT RISK WAS "the report says so rather than hiding it", because the
-             tint this release REMOVED was a way the report said something. It was never what said
-             *this*: over-plan has always been carried by the variance word, and the tint marked
-             UNBUDGETED spending — a different fact, which the amber dash still states in the
-             column where a plan figure would be. Checked rather than assumed.
-           · *Should a moment show it?* **No new stop, no new clause.** `ea8ddd14` caps every step
-             at a hook plus ONE proof point, and this step's is the variance verdict — the same
-             answer §137, §142 and the budget-dates re-read reached. A drawing change is also the
-             weakest possible candidate for narration: it is the kind of thing a prospect should
-             simply find easy, not be told about. If the owner ever wants it said, SWAP a clause. */
-      /* (Re-read for BY ACTIVITY FOLDS, 2026-09-06 — an activity became a fold, closed by default,
-         so that tab now opens as a list of bottom lines. Read rather than assumed, and the answer
-         is short: *Still true?* YES, and for the same structural reason as the note above —
-         **nothing in this sentence names the report's furniture**, and this step lands a prospect
-         on the STATEMENT, whose folds already behaved this way and did not move. *Should a moment
-         show it?* No — same `ea8ddd14` cap, same reasoning: a prospect should find the report easy,
-         not be told it folds. Nothing changed here. */
-      /* (Re-read for FUNDRAISING — ONE WAY IN, 2026-09-08. This step LANDS a prospect on Budget vs.
-         Actual, and that report's revenue side moved, so the read is not optional:
-           · *Still true?* YES. The three clauses are the variance verdict on DIAMOND RENTALS, the
-             plan being built in the spring, and the dues ratio — none of them touches fundraising,
-             and the expenses half did not move at all. Season net is unchanged: the same dollars
-             are on the report, distributed differently across its rows.
-           · ⚠ WHAT A PROSPECT SEES DIFFERENTLY, measured rather than assumed: the Bottle Drive's
-             money used to land in a row called "Not in the plan · Fundraising money" because
-             nothing linked a drive to a budget word. It now reads *Fundraising · Fundraising
-             drive*, and the sponsor's $750 reads *Sponsorship · Team sponsorship* — two named rows
-             where there were two anonymous ones. Strictly better and strictly quieter; nothing
-             here claimed either way.
-           · *Should a moment show it?* NO CLAUSE IS ADDED — the same answer §137, §142 and the
-             budget-dates re-read reached, under the same one-proof-point cap (`ea8ddd14`). The
-             seeded world does the showing. If the owner wants "every line gets its own actual"
-             narrated, SWAP a clause. */
-      /* ⚠⚠ RE-READ FOR CREDITS AND PAYBACKS (§153, 2026-09-09) — AND THIS ONE WAS ACTUALLY WRONG.
-         The first of these re-reads to change a sentence rather than confirm it, and the cause is
-         the exact shape CLAUDE.md's demo rule describes: the SCREEN moved under a sentence about a
-         number, every pixel still rendered, and three earlier re-reads of this same step (09-05,
-         09-06, 09-08) each correctly answered "nothing here names the report's furniture" without
-         noticing that the FIGURE had moved. ⚠ The clause was only three days old as a
-         CHECKABLE claim — the 09-04 note above is what put a Player dues row on this screen at
-         all, and it closes by observing that until then "the tour asserted a dues ratio on a
-         report from which dues were entirely absent". A sentence becomes falsifiable the moment
-         the product starts showing the number it quotes, and that is the moment it needs a gate.
-           · *Still true?* **NO.** "Seven in ten dollars of dues are in" was read off a Player dues
-             row that counted CASH. §153 made that row count what families contributed — cash kept,
-             plus team bills families paid, plus fundraising credited to dues. Measured on the live
-             demo database 2026-09-09: dues billed **$5,760.00**, cash **$4,170.00** (72.4% — the
-             old sentence), Player dues actual **$4,505.00** (**78.2%**), the difference being the
-             Bottle Drive's rebates totalling **$335.00**. A prospect who divides the two
-             figures the step lands them on gets eight in ten, not seven.
-           · *Should a moment show it?* **No new clause** — the `ea8ddd14` cap holds, and this is a
-             SWAP, which is what the cap says to do. The clause keeps its job (dues are most of the
-             way in) and stops disagreeing with the row underneath it.
-           · ⚠ NOW GATED. `check-demo-coach.mjs` asserts this ratio against the same derivation the
-             report uses, because nothing in `check:demos` could see this: the world was never
-             broken, only the sentence over it. A number in a demo sentence needs a check that
-             recomputes the number. */
-      /* ⚠⚠ RE-READ FOR THINGS, NOT DATES (2026-09-10) — and the §153 note above is why this one
-         was done as arithmetic rather than as reading. That re-read is the standing proof that a
-         sentence quoting a NUMBER goes stale when the product changes what the number counts, while
-         every pixel still renders.
-           · *Still true?* **YES, and this time it is provable rather than argued.** The dues ratio
-             cannot move: the Player dues figure is now re-summed from one row per family, and both
-             the season total and the per-family rows come from the SAME `duesActual` pass the
-             sentence's own gate recomputes. "Nearly eight in ten" is measured, not restated —
-             `check-demo-coach.mjs` recomputes it on every run and it is green.
-           · "Diamond rentals are over plan — the report says so rather than hiding it" is the
-             expenses half and did not move.
-           · ⚠ WHAT A PROSPECT SEES DIFFERENTLY, measured rather than assumed: a line item no longer
-             opens into the months its plan was split across. That fold was the report's only date,
-             and on a line planned once it filed money under the month it was PLANNED for rather
-             than the month it arrived. Nothing in this step's sentence names it — the same answer
-             the 09-05 and 09-06 re-reads reached about the same furniture, now checked against the
-             release that actually removes it. Player dues gained a fold in the same breath, so the
-             report has not lost a gesture; it has moved it onto rows a prospect can act on.
-           · *Should a moment show it?* **No new clause**, under the same `ea8ddd14` cap. If the
-             owner wants "open Player dues and see who still owes you" told rather than found, the
-             move is a SWAP — this step already carries its one dues clause. Flagged at Owner QA. */
+      // "Nearly eight in ten" is a RATIO, so its guard is a band recomputed through the report's
+      // own derivation (`check-demo-coach.mjs` · the guided tour's dues ratio), not a seed constant.
+      // It went stale once (2026-09-09) when the product changed what the figure counted while
+      // every pixel still rendered — the standing proof of rule 1.
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Nearly eight in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
     {
-      /**
-       * ⚠ A NEW STEP, because the product gained a screen the story had no sentence for (money
-       * redesign P3, 2026-08-17). CLAUDE.md's demo rule asks two questions of every user-facing
-       * change: are the existing sentences still true, and *should a demo moment show this?* The
-       * answers here were yes and yes — nothing above described the Expenses or Money-in lists, so
-       * nothing went stale, but a dated book whose closing balance IS the team's cash is the most
-       * shop-window thing in Money and the tour walked straight past it.
-       *
-       * ⚠ IT IS THE STEP AFTER THE REPORT, DELIBERATELY. Budget vs. Actual answers "are we on
-       * plan?"; this answers "where did it actually go, and what is left?" — and a prospect who has
-       * just seen the plan is the one who wants the second question. Reversing them would make the
-       * register look like a longer version of the report.
-       */
       n: 5,
       label: 'Read the season one row at a time',
       href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'ledger', { view: 'timeline' }),
       exactPath: true,
       anchor: '[data-sandbox-tour="register-balance"]',
-      /* ⚠⚠ FOUR CLAUSE NOTES USED TO STAND HERE AND THEY DESCRIBED COPY THAT NO LONGER EXISTS —
-         removed 2026-08-30. Each one was written when its clause was added to `said` (the P4 club
-         sentence with its $900/$180/$95 figures, the P2 "Record" sentence, the P3 "labels"
-         sentence, the P4 "not the team's money" sentence), and every one of them was left in place
-         when `ea8ddd14` trimmed this step to a hook plus one proof point (owner, 2026-08-28). The
-         result was the drift CLAUDE.md's demo rule describes, pointed the other way: comments
-         asserting the demo narrates a relationship it had stopped narrating, which is how the
-         planning session came to record "the tour lost its club sentence — its comments still
-         describe one". Notes about deleted sentences are worse than no notes, because the next
-         reader trusts them.
-
-         WHAT THIS STEP ACTUALLY SAYS is the three sentences below, and only they need guarding:
-
-         ⚠⚠ THE CASH CLAIM IS LOAD-BEARING AND ITS CHECK IS NOT AUTOMATIC. "The figure at the top is
-         not a summary — it is the team's cash, to the cent" is exactly the identity
-         `npm run check:register` proves, and that script needs a running dev server and a Playwright
-         session, so it is NOT in `verify:changed` and nothing in the build re-runs it. It is run by
-         hand, and it is listed in the plan's done-means and in Owner QA §46. **If this identity is
-         ever relaxed, this sentence is the first thing to change** — do not soften it to "roughly";
-         the whole design is that it is exact, so soften the DESIGN or leave the sentence alone.
-
-         ⚠ "Tap any row to open the bill behind it" is the Payables-Rebuild Part B claim, and it is
-         the widest of the three: a club row opens the Club screen and a dues row opens Player Dues,
-         so "the bill" is the common case rather than the universal one. Pre-existing, noted rather
-         than quietly rewritten — approved narration is the owner's to change.
-
-         ⚠⚠ AND ON 2026-09-06 THE SENTENCE STOPPED BEING GENEROUS AND BECAME LITERAL for the club
-         row — which means it had been quietly FALSE there, not merely wide. Tapping a club row did
-         nothing at all (no room to open, so the handler bailed), and the row's chevron landed on the
-         TOP of the Club tab rather than on that bill. Both are fixed: every row of this book is
-         tappable, and a club row now opens THE BILL BEHIND IT, in its room on the tab that owns it.
-         A prospect who tests the claim on the first row of the seeded world — which is a club bill
-         — now gets what the narration promised instead of a dead tap. No copy changes; the sentence
-         simply came true. Should a moment show it? No: the `ea8ddd14` cap holds this step at a hook
-         plus one proof point, and "the tap works" is not a claim that earns a stop.
-
-         ⚠ NO FIGURES ANYWHERE IN THIS STEP, deliberately and now permanently: the world re-anchors
-         nightly, so any amount named here would be made wrong by a steady day.
-
-         ⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30): the club's rows on this book are unchanged
-         by it. A grant and a repayment are the same cash on the same day either way — the answer
-         moves a row on Budget vs. Actual, never a dollar in this ledger — so all three sentences
-         stand untouched.
-         ⚠ RE-READ FOR LIST · ROOM · QUESTION PHASE A (2026-09-02 — the Club tab rebuilt as a flat
-         list with a bill ROOM and a request window): "a club row opens the Club screen" is still
-         exactly what happens, and no dock line or tour step names the Club tab's rows, folds or
-         buttons, so nothing here went stale. Should a moment show it? The seeded world
-         (MIDSEASON_CLUB_MONEY) renders the new shape by itself, and the `ea8ddd14` cap says no
-         clause is added — if the owner wants the room narrated, swap a clause.
-
-         ⚠⚠ RE-READ FOR LIST · ROOM · QUESTION PHASE C (2026-09-04 — the TEAM bill stopped being a
-         `?bill=` sub-view that replaced the Ledger and became a ROOM over it). Both of CLAUDE.md's
-         questions, answered:
-           · *Are the existing sentences still true?* **Yes, and one of them got MORE true.** "Tap
-             any row to open the bill behind it" described a tap that used to REPLACE this book —
-             the register, its filters and the prospect's scroll all vanished, and the way back was
-             a labelled arrow. The same tap now opens a panel OVER the book, and closing it returns
-             the prospect to the row they tapped. Nothing in the sentence has to change; what it
-             promises simply arrived. The cash-identity claim above is untouched — a room is where
-             a bill is READ, and no arithmetic moved.
-           · *Should a demo moment show this?* **Not a new stop.** The `ea8ddd14` cap holds this
-             step at a hook plus one proof point, and the room is not a claim a prospect needs
-             narrated — it is the thing that stops the demo losing their place when they follow the
-             instruction the sentence already gives them. The seeded world renders it by itself.
-           ⚠ The one thing to watch on the NEXT change here: if the tour ever gains a step that
-           tells a prospect to press "back to Ledger", that label no longer exists. */
-      /* ⚠ RE-READ FOR THE PAYABLES→LEDGER FOLD (2026-08-28), per CLAUDE.md's two questions:
-           · *Are the existing sentences still true?* Yes — the tab is named Ledger now and opens on
-             the same Timeline this step describes (`view` stated explicitly so a prospect's
-             remembered view can never re-aim the stop); the cash identity is untouched; rows still
-             open the bill's page. Payables had no stop of its own to go stale.
-           · *Should a demo moment show this?* The View switch is the fold's one new control, and
-             the "Tap any row" clause already walks a prospect into the By-bill world through a
-             bill's page — a ninth stop for an arrangement control would be ceremony. */
+      // ⚠ NO FIGURES in this step, permanently: the world re-anchors nightly, so any amount named
+      // here would be made wrong by a steady day.
+      // ⚠⚠ "It is the team's cash, to the cent" is exactly the identity `npm run check:register`
+      // proves — a Playwright run, NOT in `verify:changed`. If that identity is ever relaxed, soften
+      // the DESIGN or leave the sentence alone; never soften the sentence to "roughly".
       said: 'Every dollar this season moved, in date order, with the balance running down the side. The figure at the top is not a summary — it is the team’s cash, to the cent. Tap any row to open the bill behind it.',
       nextLabel: 'Next: playing time',
     },
     {
       n: 6,
       label: 'Ask who has been on the field',
-      /* ⚠ THE PLAYING-TIME TAB, not the tab-less legacy page (reports portal P1, 2026-08-18) — the
-         same rule step 4 states for the Money hub. `exactPath` still binds the PATH; the `?section=`
-         part additionally requires the right TAB, so a visitor standing on the portal's Dashboard is
-         not treated as "already here" and travelled correctly to the panel this sentence describes.
-         Delivering in place on the wrong tab would ring an anchor inside a `display:none` panel. */
+      // The Insights hub's Playing-time TAB — same `?section=` rule as step 4; delivering in place
+      // on the wrong tab would ring an anchor inside a `display:none` panel.
       href: insightsSectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'playing-time'),
       exactPath: true,
       anchor: '[data-sandbox-tour="playing-time"]',
-      // Measurement in context, never a verdict — the playing-time vocabulary ruling
-      // (owner 2026-08-04, BUSINESS_DECISIONS.md). Counts and a cap; the reader draws the line.
-      /* ⚠ THE OPENING CLAUSE IS NEW (2026-08-18) and it is the demo's sentence about the portal
-         itself. Insights became one page of seven report tabs the same day; a prospect who lands
-         here mid-tour now sees a tab row the old narration never mentioned, and CLAUDE.md's demo
-         rule asks exactly this — *should a demo moment show this?* One clause on an existing step,
-         not a ninth step: the tour is already eight. */
-      /* ⚠ THE LAST TWO CLAUSES ARE NEW (2026-08-19) and they are the demo's sentence about the two
-         sections this tab gained the same day — the position-recency grid and the arm-care panel.
-         CLAUDE.md's demo rule asks *should a demo moment show this?*; a prospect scrolling past two
-         new blocks the narration never mentions is the drift it exists to prevent. One clause on an
-         existing step, not a ninth: the tour is already eight, and the step before this one made
-         the same call for the same reason.
-         ⚠ THE "no weekly budget" CLAUSE IS LOAD-BEARING, not a caveat. The approved mockup drew
-         arm care against a weekly innings cap this product deliberately does not have, and the
-         owner ruled on 2026-08-19 to redraw it against real numbers rather than invent one. If a
-         prospect reads a ceiling into this screen, the demo has mis-sold it in the one place where
-         being wrong costs a child's arm.
-         ⚠ AND THE GRID ONLY VARIES BECAUSE THE SEED WAS FIXED THE SAME DAY: all six saved lineups
-         used one authored grid, so every cell said the same number. See `midseasonLineupGrid`. */
-      said: 'One row per player, from the lineups you already saved. Most of the team has 24 to 30 innings; one player has 12, and has sat back-to-back six times. Nobody typed any of this in.',
+      // The outlier is a seeded FACT the checker asserts (one player >15% below average, and it is
+      // the showcase player step 7 opens); the innings and sit counts are derived readings, so the
+      // sentence names the outlier and not the numbers (rules 1 and 2).
+      said: 'One row per player, from the lineups you already saved: innings played, where each one stood, and who has sat out back-to-back. One player is well below the rest — that is the row this table exists to surface. Nobody typed any of this in.',
       nextLabel: 'Next: what a parent sees',
     },
     {
       n: 7,
       label: 'Read what a parent gets',
-      // ⚠ THE RECORD TAB, BY ADDRESS (roster + player page review, 2026-09-13). The player page
-      // lands on Details now, and the recap row lives at the foot of This season — a bare player
-      // URL would open a tab the anchor is not on, and the tour would point at nothing. The tour's
-      // own `anchor` below does the scrolling; the address names only the tab.
+      // The path names the showcase player; the query names the TAB the recap row lives on (This
+      // season, since the five-tab player page of 2026-09-13). Both halves are load-bearing and
+      // both are pinned in the door-and-chrome test.
       href: team(DEMO_COACH_TEAM_IDS.midSeason, `/roster/${DEMO_COACH_SHOWCASE.midSeasonPlayerId}?tab=season`),
       exactPath: true,
       anchor: '[data-sandbox-tour="family-recap"]',
-      // Asks for a PRESS, which is safe: the preview only reads. No step in this tour may ask a
-      // visitor to save, score or change anything — the sandbox blocks every write centrally, and
-      // a step that invited one would be writing a cheque the demo bounces.
       said: 'This is the player you just saw at the bottom of that table, on the tab that holds his season. Press the preview line at the foot of the page: this is what his family opens at the end of the season — their view, not yours, drawn by the very screen they will see. It writes itself from what you have already recorded.',
       nextLabel: 'Next: a finished year',
     },
@@ -956,12 +562,6 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
       exactPath: true,
       anchor: '[data-sandbox-tour="season-recaps"]',
-      // ⚠⚠ REWRITTEN 2026-08-18. The middle clause — "the same menu, every screen read-only,
-      // exactly as it ended" — described the portal that turned itself into a read-only copy of
-      // itself, and that state is deleted: a closed season is ONE PAGE with four shut shelves, and
-      // the menu belongs to the team's live season. This is exactly the drift CLAUDE.md's demo rule
-      // is about, and it is worth noting it would have survived a build, a sweep and a review:
-      // every page still renders, and only the sentence over the top of them was false.
       said: 'Last year, kept on one page: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, so this is all of it now: the results, who was on the team, the practices you ran and how the money added up, each folded away until you want it. Open the practices — one reads exactly as it was written.',
     },
   ];
