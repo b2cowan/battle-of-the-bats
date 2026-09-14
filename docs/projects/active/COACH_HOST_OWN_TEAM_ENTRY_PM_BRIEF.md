@@ -4,7 +4,7 @@
 > `COACH_HOST_OWN_TEAM_ENTRY_HUB.html` → https://claude.ai/code/artifact/b776ee02-eb4f-4336-b46e-1281769130f4 ·
 > Raised by the owner 2026-09-13 from a hosted tournament's Teams page inside his own coaches
 > portal; the proposal was accepted the same day, the five open decisions ruled as recommended, and it was
-> **built on dev the same day** (one data-only migration, prod-owed). Awaiting review, QA walk and commit.
+> **built on dev the same day** (one data-only migration, prod-owed). Reviewed, documented and **committed `6cb8d01d` 2026-09-13**; awaiting the owner QA walk.
 
 **What it does:** A coach who runs a tournament from their own coaches portal gets an **Add my
 team** button on the Teams page. One click, pick the division, and their own team is in the

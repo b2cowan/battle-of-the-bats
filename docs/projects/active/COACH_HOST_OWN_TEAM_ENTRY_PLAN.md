@@ -6,8 +6,8 @@
 > Teams page; the three-part proposal (A / B / no directory) was accepted the same day.
 > Status: **BUILT on dev 2026-09-13** — Parts A, B, C (mig 297 applied to dev; prod-owed, `MANUAL_PROD_STEPS`), D;
 > D1–D5 ruled by the owner's "go ahead" on the recommendations the same day (hub Decisions tab); typecheck +
-> `verify:changed` clean; 12 guard tests in `tests/unit/coach-own-team-entry-guard.test.ts`. Awaiting `/review`,
-> the owner QA walk and commit. Stage anchors live on the hub's stage strip.
+> `verify:changed` clean; 12 guard tests in `tests/unit/coach-own-team-entry-guard.test.ts`. `/review` (four lenses, 11 fixes) and `/docs` done;
+> **committed `6cb8d01d` 2026-09-13.** Awaiting the owner QA walk (hub QA tab). Stage anchors live on the hub's stage strip.
 
 ## 0. The ask, and the re-frame
 
