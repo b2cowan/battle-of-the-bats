@@ -1,6 +1,6 @@
 # Practices — holistic re-evaluation: the stage ladder, and stage 0 · Arrive
 
-**Plan · 14 September 2026 · stage 0 ruled 2026-09-14 (D1–D8 all "Build as drawn") · stage 0 BUILT ON DEV and WALKED the same day (§186 passed 24/24) · commit owed**
+**Plan · 14 September 2026 · stage 0 ruled 2026-09-14 (D1–D8 all "Build as drawn") · stage 0 BUILT ON DEV and WALKED the same day (§186 passed 24/24) · committed `b3c97830` 2026-09-14**
 Companions: [PM brief](COACH_PRACTICES_REEVALUATION_PM_BRIEF.md) · the walk + every stage's proposal on ONE artifact:
 https://claude.ai/code/artifact/5c3d2f1b-5159-4d99-bad7-c48b2820da28 (source `COACH_PRACTICES_REEVALUATION.html` — republish the
 SAME path / `url`) · kickoff prompt used for this stage: [COACH_PRACTICES_STAGE0_BUILD_PROMPT.md](COACH_PRACTICES_STAGE0_BUILD_PROMPT.md)
@@ -24,7 +24,7 @@ be (a three-block practice is 6,627px and 59 inputs on desktop; the printed run 
 
 | Stage | Name | What it decides | State |
 |---|---|---|---|
-| 0 | **Arrive** — the Practice plans hub | The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card | **Ruled 2026-09-14 (D1–D8 as drawn) · built on dev and walked the same day (§186 passed 24/24, zero defects) · commit owed** — §3 below |
+| 0 | **Arrive** — the Practice plans hub | The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card | **Ruled 2026-09-14 (D1–D8 as drawn) · built on dev and walked the same day (§186 passed 24/24, zero defects) · committed `b3c97830`** — §3 below |
 | 1 | **The blank page** — the plan page as a document (walk stations 1 · 3) | S.1 is decided here: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page. **First decision: the boundary question** (§2). **Last decision (D9): station 1's question — a practice needs an end time, the Add Practice form asks for it** — this page is built on it | Tab open on the artifact; nine decisions; mockups before any code |
 | 2 | **The block** | One block's anatomy — description, goal, duration, people, coaching points — as a row that opens in place | not drawn |
 | 3 | **Stations & rotation** | Stations as columns under a rotating block, the grid under them | not drawn |
