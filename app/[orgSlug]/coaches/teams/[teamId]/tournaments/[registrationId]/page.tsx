@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { getCoachingAssignmentsForUser, getOrganizationBySlug } from '@/lib/db';
 import { canConfigureTeam, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
+import { registrationBelongsToRepTeam } from '@/lib/coach-registration-access';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
 
 export const metadata = { title: 'Tournament Record' };
@@ -30,10 +31,12 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
     : [];
   const moneyRedacted = isMoneyRedactedForTeam(assignments, teamId);
   // The record follows the Tournaments door (staff access review, 2026-09-10): a coach the door
-  // hides for is sent to the list, which says so. (The shared record below additionally 404s
-  // anyone who does not own the linked coach team — this is the earlier, plainer answer.)
+  // hides for is sent to the list, which says so. And the record follows the LIST (2026-09-13,
+  // Part D): the entry must be one this team's list would show — reachable from this rep team by
+  // either bridge — so a registration id from some other team the same coach happens to hold
+  // cannot render under this team's URL. The shared record then re-checks the user's own right.
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment || !canConfigureTeam(assignment.capabilities)) {
+  if (!assignment || !canConfigureTeam(assignment.capabilities) || !(await registrationBelongsToRepTeam(registrationId, teamId))) {
     redirect(`/${orgSlug}/coaches/teams/${teamId}/tournaments`);
   }
 
@@ -47,6 +50,7 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
       email={user.email}
       suppressUpsell
       moneyRedacted={moneyRedacted}
+      allowAssignmentAccess
       backHref={`/${orgSlug}/coaches/teams/${teamId}/tournaments`}
     />
   );

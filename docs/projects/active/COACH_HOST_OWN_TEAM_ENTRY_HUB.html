@@ -1,0 +1,541 @@
+<title>Your Team, in Your Own Tournament</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;
+/* admin (tournament) shell — the real dark tokens from app/globals.css */
+--a-bg:#0A0A0A;--a-bg2:#0F172A;--a-surface:#111827;--a-line:rgba(255,255,255,.08);--a-line2:rgba(217,249,157,.25);--a-text:rgba(255,255,255,.9);--a-text2:rgba(255,255,255,.7);--a-text3:#94A3B8;--a-lime:#D9F99D;--a-blue:#60A5FA;--a-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.legend{width:min(1180px,calc(100% - 48px));margin:14px auto 0;font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+/* ---- admin (dark) specimen ---- */
+.adm{background:var(--a-bg);color:var(--a-text);font-family:var(--a-mono);font-size:13px}
+.adm .top{display:flex;align-items:center;gap:14px;padding:12px 22px;border-bottom:1px solid var(--a-line);background:#000}
+.adm .logo{font-weight:800;letter-spacing:.5px;color:#fff}.adm .logo b{color:var(--a-lime)}
+.adm .wsbtn{margin-left:auto;border:1px solid var(--a-line2);border-radius:20px;padding:6px 14px;font-size:11px;color:var(--a-lime);font-weight:700;letter-spacing:.5px}
+.adm .body{display:grid;grid-template-columns:230px 1fr}
+.adm .side{background:var(--a-bg2);border-right:1px solid var(--a-line);padding:18px 0;min-height:560px}
+.adm .side .t{padding:0 20px 14px;font-size:15px;color:#fff}
+.adm .side .g{padding:12px 20px 4px;font-size:10px;letter-spacing:1.5px;color:var(--a-text3)}
+.adm .side .i{padding:9px 20px 9px 26px;font-size:12px;letter-spacing:1px;color:var(--a-text2)}.adm .side .i.on{background:#111c33;color:#fff;border-left:2px solid var(--a-lime)}
+.adm .main{padding:18px 26px 28px}
+.adm .crumb{font-size:10px;letter-spacing:1.6px;color:var(--a-text3)}
+.adm .tn{font-size:22px;font-weight:700;color:#fff;margin:4px 0 6px}
+.adm .pill{display:inline-block;font-size:10px;letter-spacing:1px;padding:2px 8px;border:1px solid var(--a-line);border-radius:3px;color:var(--a-text2);margin-right:8px}
+.adm .panel{margin-top:22px;border:1px solid var(--a-line);border-radius:8px;background:var(--a-surface)}
+.adm .ph{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--a-line)}
+.adm .ph h2{margin:0;font-size:17px;letter-spacing:1px;color:#fff;font-family:var(--a-mono)}.adm .ph .s{font-size:12px;color:var(--a-text2)}
+.adm .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.adm .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--a-line2);background:transparent;color:var(--a-text);border-radius:4px;padding:7px 12px;font-size:11px;letter-spacing:1px;font-weight:700;text-transform:uppercase;font-family:var(--a-mono)}
+.adm .btn.lime{background:var(--a-lime);color:#0A0A0A;border-color:var(--a-lime)}
+.adm .btn.ghost{border-color:var(--a-line);color:var(--a-text2)}
+.adm .filters{display:flex;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--a-line);flex-wrap:wrap;font-size:11px;letter-spacing:1px;color:var(--a-text3)}
+.adm .sel{border:1px solid var(--a-line);border-radius:4px;padding:6px 10px;color:var(--a-text);min-width:180px;background:var(--a-bg2)}
+.adm .seg{display:inline-flex;border:1px solid var(--a-line);border-radius:4px;overflow:hidden}.adm .seg span{padding:5px 10px}.adm .seg .on{background:#1f2937;color:#fff}
+.adm .cap{display:flex;align-items:center;gap:12px;padding:12px 18px;font-family:system-ui,sans-serif;font-size:14px;color:var(--a-text2);border-bottom:1px solid var(--a-line)}
+.adm .cap b{color:#fff;font-family:var(--a-mono)}.adm .cap .r{margin-left:auto}
+.adm .empty{padding:56px 18px;text-align:center;font-family:system-ui,sans-serif;color:var(--a-text2)}
+.adm .empty .ic{font-size:40px;opacity:.35;margin-bottom:10px}.adm .empty p{font-size:17px;margin:0 0 18px}
+.adm .empty .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.adm .empty .btn{padding:11px 20px;font-size:13px;letter-spacing:.3px;text-transform:none;font-family:system-ui,sans-serif;font-weight:650}
+.adm table{width:100%;border-collapse:collapse;font-family:system-ui,sans-serif;font-size:13px}
+.adm th{font-family:var(--a-mono);font-size:10px;letter-spacing:1.2px;color:var(--a-text3);text-align:left;padding:10px 12px;border-bottom:1px solid var(--a-line);font-weight:600}
+.adm td{padding:12px;border-bottom:1px solid var(--a-line);vertical-align:middle;color:var(--a-text)}
+.adm td .m{display:block;font-size:12px;color:var(--a-text3)}
+.adm .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(96,165,250,.45);background:rgba(96,165,250,.1);color:#bfdbfe;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:650;cursor:pointer;font-family:system-ui,sans-serif}
+.adm .chip.own{border-color:rgba(217,249,157,.55);background:rgba(217,249,157,.12);color:var(--a-lime)}
+.adm .st{display:inline-block;font-size:10px;letter-spacing:1px;padding:2px 7px;border-radius:3px;border:1px solid}
+.adm .st.ok{color:var(--a-lime);border-color:rgba(217,249,157,.4)}.adm .st.paid{color:#86efac;border-color:rgba(134,239,172,.4)}.adm .st.due{color:#fcd34d;border-color:rgba(252,211,77,.4)}
+.adm .ico{opacity:.6;font-size:14px;margin-right:6px}
+/* modal on the admin */
+.adm .overlay{position:relative;padding:34px 18px;background:rgba(0,0,0,.55)}
+.adm .modal{max-width:560px;margin:0 auto;background:var(--a-surface);border:1px solid var(--a-line2);border-radius:8px;font-family:system-ui,sans-serif}
+.adm .mh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--a-line)}
+.adm .mh h3{margin:0;font-size:16px;color:#fff;font-family:var(--a-mono);letter-spacing:.5px}
+.adm .mb{padding:20px}.adm .lbl{display:block;font-family:var(--a-mono);font-size:10px;letter-spacing:1.4px;color:var(--a-text3);margin-bottom:6px}
+.adm .in{border:1px solid var(--a-line);background:var(--a-bg2);border-radius:4px;padding:9px 10px;color:var(--a-text);font-size:14px;width:100%}
+.adm .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.adm .fg{margin-top:0}
+.adm .hint{margin-top:14px;font-size:13px;color:var(--a-text2);line-height:1.5}
+.adm .status{margin-top:8px;font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:4px;border:1px solid}
+.adm .status.match{color:#d9f99d;border-color:rgba(217,249,157,.35);background:rgba(217,249,157,.06)}
+.adm .status.none{color:var(--a-text2);border-color:var(--a-line);background:rgba(255,255,255,.02)}
+.adm .cb{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:13px;color:var(--a-text)}
+.adm .cb i{display:inline-block;width:16px;height:16px;border:1px solid var(--a-text3);border-radius:3px;flex-shrink:0;margin-top:2px;font-style:normal;text-align:center;line-height:14px;font-size:12px}
+.adm .cb i.on{background:var(--a-lime);border-color:var(--a-lime);color:#000}
+.adm .mf{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--a-line)}
+.adm .vs{margin:22px 0 8px;font-family:var(--a-mono);font-size:10px;letter-spacing:1.6px;color:var(--a-text3)}
+
+/* ---- coach portal (warm) specimen ---- */
+.coach{background:var(--paper);color:var(--ink)}
+.coach .brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.coach .brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.coach .brand span{color:var(--olive)}.coach .team{margin-left:auto;font-size:13px;color:var(--muted)}
+.coach main{padding:28px 36px 36px}
+.coach .eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.coach .sect{margin-top:22px}.coach .sect h2{font-size:16px;margin:0 0 10px}
+.coach .card{background:white;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.coach .card .d{font-size:12px;color:var(--muted)}.coach .card .n{font-weight:700}
+.coach .card .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.coach .badge{font-size:11px;font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}
+.coach .badge.live{background:#e3f3d4;border-color:#b9d88c}
+.coach .btn{border:1px solid var(--line);background:white;border-radius:7px;padding:8px 12px;font-size:13px;font-weight:650}
+
+/* ---- docs, decisions, dialogs ---- */
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}.docpage th{background:var(--soft)}
+.docpage .tblwrap{overflow-x:auto}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin-bottom:6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;font-family:system-ui,sans-serif}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-family:system-ui,sans-serif;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+@container(max-width:700px){.adm .body{grid-template-columns:1fr}.adm .side{display:none}.adm .main{padding:14px}.adm .ph{flex-wrap:wrap}.adm .acts{margin-left:0;width:100%;justify-content:flex-start}.adm .two{grid-template-columns:1fr}.adm th:nth-child(3),.adm td:nth-child(3){display:none}.coach main{padding:20px 16px 28px}.coach .brandbar{padding:12px 16px;gap:8px 15px}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Your team, in your own tournament — project hub</strong><br><small>Built on dev 2026-09-13 (Parts A–D) · D1–D5 ruled by "go ahead" the same day · awaiting review, QA walk and commit</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup drawn 2026-09-13 (this hub, v1)">Design</li>
+    <li class="stage done" title="Plan + PM brief written 2026-09-13 (COACH_HOST_OWN_TEAM_ENTRY_PLAN.md)">Plan</li>
+    <li class="stage current" title="Built on dev 2026-09-13 — Parts A, B, C (mig 297 applied to dev), D; typecheck + verify:changed clean; 12 guard tests">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#s-before">1 · Teams page today</a>
+    <a href="#s-after-empty">2 · Teams page, after</a>
+    <a href="#s-dialog">3 · Add my team</a>
+    <a href="#s-after-in">4 · Your team is in</a>
+    <a href="#s-addteam">5 · Add Team, email-aware</a>
+    <a href="#s-coach">6 · Coach Tournaments page</a>
+  </nav>
+  <div class="legend"><span>Tags are clickable:</span><span class="mk" data-k="new" data-note="Not in the product today.">New</span><span class="mk" data-k="re" data-note="Exists today; changes shape, wording or place.">Restyled</span><span class="mk" data-k="un" data-note="Exists today; drawn unchanged so a build cannot drop it.">Unchanged</span><span>· red flags are findings, green chips are the fixes · Screens 1–5 are the tournament admin inside a coaches portal (its real dark shell); screen 6 is the coach portal.</span></div>
+
+  <div class="frame" id="frame">
+    <!-- ───────── 1 · BEFORE ───────── -->
+    <section class="screen adm" id="s-before">
+      <div class="top"><span class="logo">FIELDLOGIC<b>HQ</b></span><span class="wsbtn">WORKSPACES ⌄</span></div>
+      <div class="body">
+        <aside class="side"><div class="t">Fall Ball 2026</div><div class="g">OPERATIONS</div><div class="i">DASHBOARD</div><div class="i on">TEAMS</div><div class="i">SCHEDULE</div><div class="i">RESULTS</div><div class="i">CHECK-IN</div><div class="i">STAFF KIT</div><div class="i">COMMUNICATIONS</div><div class="i">CHAT</div><div class="g">SETUP</div><div class="i">VENUES &amp; FACILITIES</div><div class="i">DIVISIONS</div></aside>
+        <div class="main">
+          <div class="crumb">MILTON BATS U13 PURPLE COACHES PORTAL</div>
+          <h1 class="tn" tabindex="-1">Fall Ball 2026</h1>
+          <span class="pill">DRAFT</span><span class="crumb">SEP 19, 2026</span>
+          <div class="panel">
+            <div class="ph"><span class="ico">👥</span><div><h2>TEAMS</h2><div class="s">Manage all teams and signups in one place</div></div>
+              <div class="acts"><span class="btn ghost">⤓ Export ⌄</span><span class="btn lime">+ Add Team <button class="fl" data-finding="F01" data-here="The only door on this page. It writes a name, a coach and an email — nothing that connects the entry to a team on the platform, including the host's own.">F01</button></span><span class="btn ghost">? Help</span></div></div>
+            <div class="filters"><span>DIVISION</span><span class="sel">Open ⌄</span><span class="seg"><span>FLAT</span><span class="on">POOLS</span></span><span style="margin-left:auto">⟳ RANDOMIZE</span></div>
+            <div class="filters"><span class="btn ghost">⚟ All statuses</span><span class="sel" style="margin-left:auto;min-width:260px">🔍 Search teams or coaches…</span></div>
+            <div class="cap"><b>0/4</b> 4 spots remaining <span class="r">🔒 Close Registration</span></div>
+            <div class="empty"><div class="ic">👥</div><p>No teams have registered yet.</p><div class="row"><span class="btn lime">Add Team</span></div>
+              <p style="font-size:13px;margin-top:22px;color:var(--a-text3)">Not on this page for a coaches portal: the club-side <em>Link to rep team</em> control <button class="fl" data-finding="F03" data-here="A League/Club organization sees a per-row link control here. A coaches portal is deliberately outside that gate — so the hosting coach, who IS the team, has nothing.">F03</button></p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── 2 · AFTER, EMPTY ───────── -->
+    <section class="screen adm" id="s-after-empty" hidden>
+      <div class="top"><span class="logo">FIELDLOGIC<b>HQ</b></span><span class="wsbtn">WORKSPACES ⌄</span></div>
+      <div class="body">
+        <aside class="side"><div class="t">Fall Ball 2026</div><div class="g">OPERATIONS</div><div class="i">DASHBOARD</div><div class="i on">TEAMS</div><div class="i">SCHEDULE</div><div class="i">RESULTS</div><div class="i">CHECK-IN</div><div class="i">STAFF KIT</div><div class="i">COMMUNICATIONS</div><div class="i">CHAT</div><div class="g">SETUP</div><div class="i">VENUES &amp; FACILITIES</div><div class="i">DIVISIONS</div></aside>
+        <div class="main">
+          <div class="crumb">MILTON BATS U13 PURPLE COACHES PORTAL</div>
+          <h1 class="tn" tabindex="-1">Fall Ball 2026</h1>
+          <span class="pill">DRAFT</span><span class="crumb">SEP 19, 2026</span>
+          <div class="panel">
+            <div class="ph"><span class="ico">👥</span><div><h2>TEAMS</h2><div class="s">Manage all teams and signups in one place</div></div>
+              <div class="acts"><span class="btn ghost">⤓ Export ⌄</span><span class="btn ghost">★ Add my team <span class="mk" data-k="new" data-note="Only on a tournament run from a coaches portal. One click registers the portal's own team, already connected, so it appears on the coach's Tournaments page at once. Disappears — not disabled — once the team is in."></span><button class="fl fix" data-finding="F01" data-here="The host's own team gets its own door. Add Team stays for everyone else.">fixes F01</button></span><span class="btn lime">+ Add Team <span class="mk" data-k="un" data-note="Same button, same form (the form itself learns one thing on screen 5)."></span></span><span class="btn ghost">? Help</span></div></div>
+            <div class="filters"><span>DIVISION</span><span class="sel">Open ⌄</span><span class="seg"><span>FLAT</span><span class="on">POOLS</span></span><span style="margin-left:auto">⟳ RANDOMIZE</span></div>
+            <div class="filters"><span class="btn ghost">⚟ All statuses</span><span class="sel" style="margin-left:auto;min-width:260px">🔍 Search teams or coaches…</span></div>
+            <div class="cap"><b>0/4</b> 4 spots remaining <span class="r">🔒 Close Registration</span></div>
+            <div class="empty"><div class="ic">👥</div><p>No teams have registered yet.</p><div class="row"><span class="btn ghost">Add my team <span class="mk" data-k="new" data-note="The empty state offers both doors side by side; the host's own team is usually the first entry."></span></span><span class="btn lime">Add Team <span class="mk" data-k="un"></span></span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── 3 · DIALOG ───────── -->
+    <section class="screen adm" id="s-dialog" hidden>
+      <div class="top"><span class="logo">FIELDLOGIC<b>HQ</b></span><span class="wsbtn">WORKSPACES ⌄</span></div>
+      <div class="overlay">
+        <div class="modal">
+          <div class="mh"><h3 tabindex="-1">Add Milton Bats U13 Purple to this tournament <span class="mk" data-k="new" data-note="The title names the team, so there is no team-name field to type — the team is a fact the portal already holds."></span></h3><span style="color:var(--a-text3)">✕</span></div>
+          <div class="mb">
+            <div class="two">
+              <div class="fg"><span class="lbl">DIVISION *</span><div class="in">Open ⌄</div></div>
+              <div class="fg"><span class="lbl">PAYMENT STATUS</span><div class="in">Paid ⌄ <span class="mk" data-k="new" data-note="Defaults to Paid — the team owes nothing to its own event, and an Unpaid row would sit in every chase list. Decision D1; the organizer can change it here or on the row."></span></div></div>
+            </div>
+            <p class="hint">Registered as <strong>Rob Cowan · b2cowan@gmail.com</strong>. It shows on your team's Tournaments page right away. <span class="mk" data-k="new" data-note="The registration is written under the HEAD COACH, whoever clicks — a manager with Run tournaments is registering the head coach's team (decision D2). The sentence says where the entry lands so nothing has to be discovered."></span></p>
+          </div>
+          <div class="mf"><span class="btn ghost">Cancel</span><span class="btn lime">Add my team</span></div>
+        </div>
+      </div>
+      <div style="padding:18px 22px 26px;font-family:system-ui,sans-serif;font-size:13px;color:var(--a-text2);max-width:640px">Two fields and a sentence. No coach name, no email, no notify checkbox — the host is the coach, so there is nobody to notify and nothing to prove. Behind it the entry is connected the same way a coach's own registration is, which is what <button class="fl" data-finding="F02" data-here="Today the only two ways an entry gets connected are the coach registering on the public page, or the coach accepting the notify email — both need the coach's sign-in email to equal the entry's email. Adding yourself and then accepting your own email is the workaround this replaces.">F02</button> is about.</div>
+    </section>
+
+    <!-- ───────── 4 · AFTER, TEAM IN ───────── -->
+    <section class="screen adm" id="s-after-in" hidden>
+      <div class="top"><span class="logo">FIELDLOGIC<b>HQ</b></span><span class="wsbtn">WORKSPACES ⌄</span></div>
+      <div class="body">
+        <aside class="side"><div class="t">Fall Ball 2026</div><div class="g">OPERATIONS</div><div class="i">DASHBOARD</div><div class="i on">TEAMS</div><div class="i">SCHEDULE</div><div class="i">RESULTS</div><div class="i">CHECK-IN</div><div class="i">STAFF KIT</div><div class="i">COMMUNICATIONS</div><div class="i">CHAT</div><div class="g">SETUP</div><div class="i">VENUES &amp; FACILITIES</div><div class="i">DIVISIONS</div></aside>
+        <div class="main">
+          <div class="crumb">MILTON BATS U13 PURPLE COACHES PORTAL</div>
+          <h1 class="tn" tabindex="-1">Fall Ball 2026</h1>
+          <span class="pill">DRAFT</span><span class="crumb">SEP 19, 2026</span>
+          <div class="panel">
+            <div class="ph"><span class="ico">👥</span><div><h2>TEAMS</h2><div class="s">Manage all teams and signups in one place</div></div>
+              <div class="acts"><span class="btn ghost">⤓ Export ⌄</span><span class="btn lime">+ Add Team</span><span class="btn ghost">? Help</span><span class="mk" data-k="new" data-note="Add my team is gone, not greyed: there is nothing further it could do. The row below carries the fact instead."></span></div></div>
+            <div class="filters"><span>DIVISION</span><span class="sel">Open ⌄</span><span class="seg"><span class="on">FLAT</span><span>POOLS</span></span></div>
+            <div class="filters"><span class="btn ghost">⚟ All statuses</span><span class="sel" style="margin-left:auto;min-width:260px">🔍 Search teams or coaches…</span></div>
+            <div class="cap"><b>2/4</b> 2 spots remaining <span class="r">🔒 Close Registration</span></div>
+            <table>
+              <thead><tr><th>TEAM</th><th>COACH</th><th>LINK</th><th>STATUS</th><th>PAYMENT</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><strong>Milton Bats U13 Purple</strong><span class="m">Open · registered today</span></td><td>Rob Cowan<span class="m">b2cowan@gmail.com</span></td><td><span class="chip own">★ Your team</span> <span class="mk" data-k="new" data-note="Sits in the slot where a club organization shows its rep-team link chip. Clickable (every highlight explains itself): opens one paragraph — this is your team, registered by the head coach; it appears on your Tournaments page; status, payment and seed are edited here like any other team."></span></td><td><span class="st ok">ACCEPTED</span></td><td><span class="st paid">PAID</span></td><td style="text-align:right;color:var(--a-text3)">✎ ✉ ⋯</td></tr>
+                <tr><td><strong>Oakville Thunder 13U</strong><span class="m">Open · added by you</span></td><td>Dana Whitfield<span class="m">dana.whitfield@example.com</span></td><td><span style="color:var(--a-text3);font-size:12px">— <span class="mk" data-k="un" data-note="An ordinary Add Team entry stays exactly what it is until its coach accepts the notify email. No organizer-side linking."></span></span></td><td><span class="st ok">ACCEPTED</span></td><td><span class="st due">UNPAID</span></td><td style="text-align:right;color:var(--a-text3)">✎ ✉ ⋯</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── 5 · ADD TEAM, EMAIL-AWARE ───────── -->
+    <section class="screen adm" id="s-addteam" hidden>
+      <div class="top"><span class="logo">FIELDLOGIC<b>HQ</b></span><span class="wsbtn">WORKSPACES ⌄</span></div>
+      <div class="overlay">
+        <div class="modal">
+          <div class="mh"><h3 tabindex="-1">Add Team Manually <span class="mk" data-k="un" data-note="Same form, every organization, every plan. It gains one status line under the email — nothing else moves."></span></h3><span style="color:var(--a-text3)">✕</span></div>
+          <div class="mb">
+            <div class="fg"><span class="lbl">TEAM NAME *</span><div class="in">Oakville Thunder 13U</div></div>
+            <div class="two">
+              <div class="fg"><span class="lbl">COACH</span><div class="in">Dana Whitfield</div></div>
+              <div class="fg"><span class="lbl">EMAIL</span><div class="in">dana.whitfield@example.com</div>
+                <div class="status match">This coach is on FieldLogicHQ. The notification is on — they'll see this entry in their portal the moment they accept. <span class="mk" data-k="new" data-note="Shown when the exact address belongs to a coach account. A yes/no only — no name, no team, no organization comes back (decision D3). The Notify checkbox flips on; the organizer can turn it back off."></span><button class="fl fix" data-finding="F01" data-here="The orphan problem for everyone else: the organizer is told the coach is here, and the notify email becomes the accept step it already is.">fixes F01</button></div></div>
+            </div>
+            <div class="two">
+              <div class="fg"><span class="lbl">DIVISION *</span><div class="in">Open ⌄</div></div>
+              <div class="fg"><span class="lbl">PAYMENT STATUS</span><div class="in">Unpaid ⌄</div></div>
+            </div>
+            <div class="cb"><i class="on">✓</i><span>Notify team that they have been registered in this tournament <span class="mk" data-k="re" data-note="Unchanged control; it now turns itself on when the email matched, because for a coach who is already here this email IS how the entry reaches their portal."></span></span></div>
+          </div>
+          <div class="mf"><span class="btn ghost">Cancel</span><span class="btn lime">Save Team</span></div>
+        </div>
+        <div class="vs" style="max-width:560px;margin:22px auto 8px">THE OTHER STATE — EMAIL NOT ON THE PLATFORM</div>
+        <div class="modal">
+          <div class="mb" style="padding-top:16px">
+            <div class="fg"><span class="lbl">EMAIL</span><div class="in">coach.newhere@example.com</div>
+              <div class="status none">When you notify them, this email becomes their sign-in and the entry lands in their free Coaches Portal. <span class="mk" data-k="new" data-note="The truth of today's flow, said out loud. The checkbox is left as the organizer set it."></span></div></div>
+            <div class="cb"><i></i><span>Notify team that they have been registered in this tournament</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── 6 · COACH TOURNAMENTS PAGE ───────── -->
+    <section class="screen coach" id="s-coach" hidden>
+      <header class="brandbar"><div class="brand">FieldLogic<span>HQ</span></div><div class="team">Milton Bats U13 Purple · 2026 season<br><span class="meta">Head coach view</span></div></header>
+      <main>
+        <div class="eyebrow">Team</div>
+        <h1 tabindex="-1">Tournaments</h1>
+        <p class="sub">Live and upcoming first — tap an entry for schedule, roster submission, and organizer updates.</p>
+        <div class="sect"><h2>This season</h2>
+          <div class="card"><div><div class="n">Fall Ball 2026 <span class="mk" data-k="new" data-note="The entry Add my team wrote. It arrives through the same connection a coach's own registration uses, so nothing on this page had to learn a new case."></span></div><div class="d">Milton Bats U13 Purple Coaches Portal · Milton Bats U13 Purple · Sep 19, 2026</div></div><div class="r"><span class="badge live">Accepted</span><span class="badge">Open</span></div></div>
+        </div>
+        <div class="sect"><h2>Tournaments you run</h2>
+          <div class="card"><div><div class="n">Fall Ball 2026 <span class="mk" data-k="un" data-note="Hosting section from the delegation work (2026-09-13). The same tournament sits in both halves — you run it AND your team plays in it — and both are true."></span></div><div class="d">Draft · Sep 19, 2026 · 2 of 4 teams</div></div><div class="r"><span class="btn">Manage</span></div></div>
+        </div>
+        <div class="sect" style="margin-top:30px;padding:14px 16px;border:1px dashed var(--line);border-radius:10px;font-size:13px;color:var(--muted)">
+          <strong style="color:var(--ink)">Tapping an entry</strong> — the record opens for the head coach. Before Part D it did not for an assistant or the team manager <button class="fl" data-finding="W2" data-here="On any Premium team, only the coach who personally registered or accepted can open a record; staff see the row and get a 404. Same for an entry a club linked to its rep team (W1).">W2</button> <button class="fl" data-finding="W1" data-here="An entry a club organization links to its rep team shows in this list and dead-ends on tap.">W1</button> — Part D (ruled in, built): the record now reads the same right the list reads.
+          <br><br><strong style="color:var(--ink)">A portal started from scratch</strong> — today, if this coach registered on someone else's public page, the entry would never appear here <button class="fl" data-finding="F04" data-here="A standalone portal never upgraded from a free team and never claimed an entry has no free-team shadow; a public registration by its coach creates a separate free team the paid portal cannot see.">F04</button>. Part C repairs that for every such portal, existing ones included.
+        </div>
+      </main>
+    </section>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Your team, in your own tournament</h1>
+  <p class="sub">Raised by the owner 2026-09-13 from a hosted tournament's Teams page inside his own coaches portal; the proposal was accepted the same day. Planned, not built.</p>
+  <h2>What it does</h2>
+  <p>A coach who runs a tournament from their own coaches portal gets an <strong>Add my team</strong> button on the Teams page. One click, pick the division, and their own team is in the tournament — already connected to their portal, so it shows up on their Tournaments page right away (under <em>This season</em> as an entry, and under <em>Tournaments you run</em> as the host — both are true). No typing their own name, no emailing themselves, no accepting their own invitation.</p>
+  <p>The ordinary <strong>Add Team</strong> form, on every organization's tournaments, learns one thing: when the email you type belongs to a coach who already uses FieldLogicHQ, the form says so and turns on the notification for you — because that notification <em>is</em> how the coach accepts the entry and gets it in their portal. If the email is new to the platform, the form says what happens instead. Nothing else about the form changes.</p>
+  <p>Underneath, one repair: a coaches portal that was started from scratch — never upgraded from a free team, never claimed a tournament entry — has no way today to recognize an entry its coach makes on someone else's public registration page. That gets fixed for every such portal, existing ones included.</p>
+  <h2>What it deliberately does not do</h2>
+  <p>There is <strong>no search of other clubs' teams</strong> from the organizer's side. Every connection between a tournament entry and a real team on this platform is made by that team's own coach — registering, or accepting. An organizer picking a team from a directory would attach a roster, a schedule and a chat to a team that never agreed to it, and would open a window onto every club's teams that the product has nowhere else. The worry behind the ask — "my Add Team entry is an orphan even though the coach is right here" — is answered by the two parts above, from the two people who actually own the fact.</p>
+  <h2>Why it matters</h2>
+  <p>The portal has been able to host tournaments since the delegation work landed (2026-09-13). The hosting coach is the one person on the platform who is obviously the team they want in the list, and they are the only one with no door: the club-side "link to rep team" control is deliberately not shown to a coaches portal, and both coach-side doors assume the coach is a guest of someone else's tournament. Today the honest workaround is to register on your own public page like a stranger, or add yourself and then accept your own email.</p>
+  <h2>Who benefits</h2>
+  <p>Every Premium coach who hosts; every organizer on every plan who adds teams by hand; every coach who gets added by hand and is already on the platform.</p>
+  <h2>Two things found on the way</h2>
+  <p>The coach-side Tournaments list can show an entry the record page then refuses to open — once for entries a club links to its rep team, and once for every assistant or team manager on a Premium team (only the coach who personally registered can open a record today). Same root cause, one fix; the plan carries it as <strong>Part D</strong> for your ruling, with one data question (whose roster a Premium team submits) flagged for deferral rather than solved in passing.</p>
+  <h2>Decisions open</h2>
+  <p>The host's own team defaults to <em>Paid</em>; a staff member you've handed <em>Run tournaments</em> to can click <em>Add my team</em> (the entry is recorded under the head coach regardless); the email check is a real yes/no lookup rather than a conditional sentence; existing from-scratch portals are repaired on production; Part D is in. Recommendations on the Full Plan tab.</p>
+  <h2>Success criteria</h2>
+  <p>A hosting coach gets their team into their own tournament in one click and sees it on their Tournaments page without leaving the portal; an organizer adding a coach who is already on FieldLogicHQ is told so before they save; a from-scratch standalone portal sees the entries its coach makes elsewhere; no organizer can attach an entry to another club's team.</p>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Your team, in your own tournament — implementation plan</h1>
+  <p class="sub">Engineering detail lives in <code>docs/projects/active/COACH_HOST_OWN_TEAM_ENTRY_PLAN.md</code>; this tab is the same plan in reading order.</p>
+
+  <h2>The ask, and the re-frame</h2>
+  <p>Standing on a hosted tournament's Teams page inside his own portal, the owner asked how to add his own team, and whether he should be able to search the platform's other teams "to ensure proper linkage". The first has no answer today — that is the gap. The second is the wrong instrument for the right worry: the worry is that an Add Team entry is an orphan even when the coach is on the platform; the instrument proposed would let an organizer attach an entry to a team that never agreed to it. Every linkage on the platform is written by the coach's own signed-in action. This plan keeps that invariant and closes the gap from the two sides that already own the fact.</p>
+
+  <h2>What the code does today</h2>
+  <h3>F01 — Add Team creates an orphan, always</h3>
+  <p>"Add Team Manually" inserts a registration row — name, coach, email, division — and nothing else. No connection to any team on the platform, the host's own included.</p>
+  <h3>F02 — The only two linkage doors are coach-side</h3>
+  <p>An entry connects to a coach's team when (a) the coach registers on the public page while signed in with the entry's email, or (b) the coach accepts the notify email on the join page — which requires the same email equality. A host who Add-Teams themselves must then accept their own email.</p>
+  <h3>F03 — The club-side link control is gated off for a coaches portal</h3>
+  <p>League/Club organizations get a per-row "Link to rep team" control; a coaches portal's plan deliberately does not carry that module, and the routes behind the control refuse it too. The one person who obviously <em>is</em> the team has no control at all.</p>
+  <h3>F04 — A from-scratch portal has no free-team shadow, so public registration strands it</h3>
+  <p>A standalone portal gets its free-team shadow only from an upgrade or a claimed entry. A direct signup has neither, so the portal can never resolve one. The public form's picker lists only free teams, so this coach sees none, the platform creates a new free team for the entry, and the paid portal never learns of it. The UAT standalone fixture is exactly this case; the Milton Bats portal in the owner's screenshot may be too (verify on prod before the backfill).</p>
+  <h3>W1 — Widened: a club-linked entry dead-ends on click</h3>
+  <p>The coach Tournaments list merges both connections (the free-team one and the club's admin link) and renders every entry as a link. The record page authorizes only through the free-team connection, membership-checked. A club-linked entry has none — 404. The list promises what the record refuses.</p>
+  <h3>W2 — Widened: on a Premium team, only the coach who personally registered can open a record</h3>
+  <p>Same guard: free-team membership, which is written only for the coach who created or adopted the free team. No staff sync exists. Assistants and the team manager pass the Tournaments door and see the entry; tapping it 404s. Same root cause as W1: the record should read the same right the list read.</p>
+
+  <h2>Scope</h2>
+  <div class="tblwrap"><table><thead><tr><th>Part</th><th>What</th><th>Ruling</th></tr></thead><tbody>
+    <tr><td><strong>A</strong></td><td><strong>Add my team</strong> — one click on a hosted tournament's Teams page registers the host's own team, already connected</td><td>Accepted 2026-09-13 (D1, D2 open)</td></tr>
+    <tr><td><strong>B</strong></td><td><strong>Email-aware Add Team</strong> — the form says when the email belongs to a coach on FieldLogicHQ, and turns the notify on</td><td>Accepted 2026-09-13 (D3 open)</td></tr>
+    <tr><td><strong>C</strong></td><td><strong>Every portal team has a free-team shadow</strong> — provision it, backfill it, and the public form's picker names the portal team</td><td>Required by A; the F04 defect</td></tr>
+    <tr><td><strong>D</strong></td><td><strong>The record follows the list</strong> — a tournament record authorizes by the same right that showed the row (W1 + W2)</td><td><strong>Open — D5</strong></td></tr>
+    <tr><td>✗</td><td>Cross-organization team search / directory</td><td><strong>Rejected 2026-09-13</strong></td></tr>
+  </tbody></table></div>
+  <div class="note"><strong>Out of scope</strong><p style="margin:6px 0 0">Any organizer-side lookup of another club's teams; auto-linking by email match on the organizer side; changing who may host (the delegation ruling stands); the free portal's own Tournaments list beyond what Part C touches.</p></div>
+
+  <h2>Part A — Add my team</h2>
+  <ul>
+    <li><strong>Where:</strong> the hosted tournament's Teams page, only when the tournament is run from a coaches portal. Everywhere else the page is unchanged.</li>
+    <li><strong>Header:</strong> a ghost <em>Add my team</em> button left of <em>Add Team</em>; in the empty state, a second button beside it. Once the team is in, the button is gone (nothing further to do) and the row carries a clickable <em>Your team</em> chip in the slot where a club shows its rep-link chip.</li>
+    <li><strong>Dialog:</strong> "Add {Team} to this tournament" — Division (preselected to the current filter), Payment status (default per D1), one line: "Registered as {head coach} · {email}. It shows on your team's Tournaments page right away." — <em>Add my team</em> / Cancel.</li>
+    <li><strong>Who may click:</strong> anyone who can reach the page for this tournament — the head coach, and staff holding <em>Run tournaments</em> (D2). No second gate.</li>
+    <li><strong>Server:</strong> refuse unless the organization is a coaches portal; resolve the portal's team and its head coach; ensure the free-team shadow (Part C); refuse with 409 if the team is already in this tournament; create the registration <em>as the head coach</em> under the same capacity rules Add Team uses; write both connections (the free-team one that the coach's own pages read, and the rep-team one that public-page recognition reads for delegates).</li>
+    <li><strong>Coach side:</strong> the tournament now sits in both halves of the Tournaments page — an entry under <em>This season</em>, the host under <em>Tournaments you run</em>. Both true.</li>
+  </ul>
+
+  <h2>Part B — Email-aware Add Team</h2>
+  <ul>
+    <li>Every organization's Add Team form. When the email field holds a valid address and blurs, one status line: on a match, "This coach is on FieldLogicHQ. The notification is on — they'll see this entry in their portal the moment they accept." and the Notify checkbox flips on; on no match, "When you notify them, this email becomes their sign-in and the entry lands in their free Coaches Portal." Nothing while empty or invalid.</li>
+    <li><strong>The lookup (D3):</strong> organization-admin only, exact lowercased match, returns a yes/no and nothing else, rate-limited per user. What it exposes: an authenticated admin, one email at a time, learns yes/no for an address they already typed — materially the fact the notify email would disclose anyway. Copy-only (no lookup, always the conditional sentence) is the fallback if D3 rules the other way.</li>
+    <li>No behaviour change on save. Acceptance stays the coach's action; the join page is untouched.</li>
+  </ul>
+
+  <h2>Part C — Every portal team has a free-team shadow</h2>
+  <ol>
+    <li>Provisioning creates the shadow when neither an upgrade nor a claimed entry supplies one, with both back-links exactly as the upgrade path writes them.</li>
+    <li>One "ensure the shadow" helper, called by Part A and by the portal's own resolver instead of giving up.</li>
+    <li>A data-only backfill for every existing from-scratch portal (D4). Data-only migrations are invisible to the migration checker — record it in the release notes by hand.</li>
+    <li>The public form's team picker labels a portal-backed team with the portal's team name and a "Coaches Portal" note so the coach recognizes it.</li>
+    <li>The UAT standalone fixture seeds the shadow; the demo coach seed is checked (the build re-seeds a moved demo on its own).</li>
+  </ol>
+
+  <h2>Part D — The record follows the list (W1 + W2) — needs a ruling</h2>
+  <p>The Premium record page already establishes that the viewer holds a coaching assignment on this team. What it does not establish is that this entry belongs to this team. Proposed: one resolver that answers "does this entry belong to this rep team, by either connection", and the Premium page passes that verdict into the shared record as the access fact. The free portal's own record keeps its membership check. Every API the record calls moves with it, or the page opens and its tabs refuse. One of those — roster submission — reads the master roster from the <em>free</em> team, which for a Premium team is the wrong roster; that is where D stops being an access change and becomes a data question. <strong>Recommendation:</strong> rule D in, defer the roster-source question to its own line. D is a day with that deferral; several without.</p>
+
+  <h2>Sequencing</h2>
+  <p>C → A → B → D. C first because A cannot connect the entry without it; A before B because A is the owner's actual blocker; B is a form change plus copy; D on its own ruling. C's backfill applies to dev with the build and to prod at promote time, recorded by hand.</p>
+
+  <h2>Decisions open — recommendations</h2>
+  <ul>
+    <li><strong>D1 — Payment status of the host's own team.</strong> Default <em>Paid</em>: the team owes nothing to its own event, and an Unpaid row would sit in every "who hasn't paid" chase. Editable like any team.</li>
+    <li><strong>D2 — May a delegated runner click Add my team?</strong> Yes: the <em>Run tournaments</em> switch hands over the whole page or nothing; a second gate on one button contradicts it. The entry is written as the head coach either way.</li>
+    <li><strong>D3 — Email-aware: do the lookup, or copy only?</strong> The lookup — it is what makes the form <em>aware</em>. Copy-only is the fallback.</li>
+    <li><strong>D4 — Backfill existing from-scratch portals on prod.</strong> Yes. Without it, an existing standalone coach registering anywhere keeps stranding entries.</li>
+    <li><strong>D5 — Part D in scope?</strong> In, with the roster-source question deferred to its own line.</li>
+  </ul>
+
+  <h2>Verification (owner walk drafted when built)</h2>
+  <ul>
+    <li>Hosted tournament, head coach: Add my team → dialog → row with Your team chip → button gone → coach Tournaments page shows the entry under This season and the tournament under Tournaments you run → the entry's record opens.</li>
+    <li>Same as a staff member holding Run tournaments (D2): button present; the entry's coach and email are the head coach's.</li>
+    <li>Second click impossible (button gone); a direct request is refused as already in.</li>
+    <li>Club organization (uat-test-org): Teams page unchanged apart from Part B's status line; no Add my team.</li>
+    <li>Part B: a known coach email → match line, checkbox on; unknown → the other line; empty → nothing.</li>
+    <li>Part C: a fresh from-scratch standalone portal registers on a public page → the entry appears on its Tournaments page (today it does not).</li>
+    <li>Part D (if ruled in): an assistant opens an entry from the list; a club-linked entry opens from the list.</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens — not written up after the fact.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden data-walk="ready">
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">Your team, in your own tournament — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: the UAT coach (UAT_COACH_EMAIL in .env.local) · Portal: <strong>uat-standalone</strong> (UAT Standalone Team Coaches Portal — hosts no tournament yet; Part A's first step creates one) · Control org: <strong>uat-test-org</strong> (a club, not a portal). If the standalone portal looks wrong, rebuild it: <code>node scripts/seed-uat-standalone-coach.mjs --null-dangling --reset</code>.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+
+const intents={
+ 's-before':'The owner\'s screenshot, redrawn. The whole page exists to get teams in, and the host has one door that cannot mean "me".',
+ 's-after-empty':'One new ghost button beside the lime one, and the empty state offers both. Nothing else on the page moves — the change is additive on purpose, and only appears when a coaches portal is the host.',
+ 's-dialog':'Two fields and a sentence. Every fact the old form would have asked for — team name, coach, email — the portal already holds, so the dialog does not ask.',
+ 's-after-in':'The button is gone rather than greyed, and the fact moves to the row as a chip. An ordinary Add Team row beside it stays exactly what it is: the organizer never links other people\'s teams.',
+ 's-addteam':'The one form change for every organization: a status line under the email, in two states, and the notify checkbox turning itself on when the coach is already here. The form is otherwise unchanged.',
+ 's-coach':'What the host sees on their own portal afterwards — the same tournament in both halves, and the two widened findings placed where the coach would hit them.'
+};
+function showScreen(){const id=location.hash.slice(1)||'s-before';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+esc(intents[id]):'';document.getElementById(id)?.querySelector('h1,h3')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'Add Team creates an orphan, always',now:'"Add Team Manually" writes a registration row — name, coach, email, division — and nothing else. It never connects the entry to a team on the platform, the host\'s own team included.',fix:'Two doors from the two people who own the fact: the host gets Add my team (already connected, no email, no accepting); the ordinary form tells the organizer when the email belongs to a coach who is already here and turns the notify on, because that email IS the accept step.'},
+ F02:{t:'The only two linkage doors are coach-side',now:'An entry connects to a coach\'s team only when the coach registers on the public page signed in with the same email, or accepts the notify email on the join page with the same email. A host who adds themselves must then accept their own email.',fix:'Add my team writes the connection server-side: the portal already knows the org → workspace → team chain with certainty, so there is nothing for the coach to prove.'},
+ F03:{t:'The club-side link control is gated off for a coaches portal',now:'League/Club organizations get a per-row "Link to rep team" control; a coaches portal\'s plan deliberately does not carry that module, and both routes behind the control refuse it. The hosting coach has no control at all.',fix:'Not un-gated — a coaches portal has exactly one team, so a picker is the wrong shape. Add my team is that picker collapsed to one button, and the Your team chip is the link chip for the one case it can mean.'},
+ F04:{t:'A from-scratch portal has no free-team shadow',now:'A standalone portal gets its free-team shadow only from an upgrade or a claimed entry; a direct signup has neither. The public form lists only free teams, so this coach sees none, a new free team is created for the entry, and the paid portal never learns of it.',fix:'Part C: provision the shadow at signup, create it lazily where it is missing, backfill existing portals (D4), and label the portal-backed team in the public form\'s picker.'},
+ W1:{t:'Widened: a club-linked entry dead-ends on click',now:'The coach Tournaments list merges both connections and links every row; the record page authorizes only through the free-team connection. A club-linked entry has none — 404.',fix:'Part D (needs ruling D5): the record authorizes by the same right the list read — a coaching assignment on this team plus "this entry belongs to this team by either connection".'},
+ W2:{t:'Widened: only the coach who personally registered can open a record',now:'Record access is free-team MEMBERSHIP, written only for the coach who created or adopted the free team; no staff sync exists. Assistants and the manager see the row and get a 404.',fix:'Same fix as W1. One caveat flagged for deferral: roster submission reads the FREE team\'s master roster, which for a Premium team is the wrong roster — a data question, not an access one.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag\'s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.textContent.trim())el.textContent=KIND[el.dataset.k]==='Restyled from today'?'Restyled':KIND[el.dataset.k]==='Unchanged from today'?'Unchanged':'New';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+const DECISIONS=[
+ {date:'2026-09-13',ask:'Should a hosting coach be able to search other clubs\' teams from the Teams page "to ensure proper linkage"?',ruling:'rejected',label:'Rejected',why:'Every connection on the platform is made by the team\'s own coach — registering or accepting. An organizer-side directory would attach a roster, schedule and chat to a team that never agreed to it, and open a cross-club read the product has nowhere else. The worry behind the ask is answered by Parts A and B instead.'},
+ {date:'2026-09-13',ask:'The three-part proposal: Add my team for the host · email-aware Add Team · no directory',ruling:'accepted',label:'Accepted',why:'"I agree with your proposal, write it up." Parts A and B accepted; Part C surfaced as a prerequisite while planning.'},
+ {date:'2026-09-13',ask:'D1 — Payment status of the host's own team',ruling:'accepted',label:'Paid by default',why:'"Go ahead" on the recommendation: the team owes nothing to its own event, and an Unpaid row would sit in every chase list. Editable on the dialog and on the row like any team.'},
+ {date:'2026-09-13',ask:'D2 — May a staff member holding Run tournaments click Add my team?',ruling:'accepted',label:'Yes',why:'The switch hands over the whole tournament page or nothing (delegation ruling); a second gate on one button contradicts it. The entry is written under the head coach whoever clicks.'},
+ {date:'2026-09-13',ask:'D3 — Email-aware Add Team: a real lookup, or copy only?',ruling:'accepted',label:'The lookup',why:'Org-admin only, exact match, a yes/no and nothing else, rate-limited per user. What it discloses is the fact the notify email discloses anyway by landing or bouncing.'},
+ {date:'2026-09-13',ask:'D4 — Backfill existing from-scratch portals on production',ruling:'accepted',label:'Yes',why:'Data-only migration 297, applied to dev the same day (four from-scratch workspaces repaired, incl. the UAT standalone fixture); prod-owed at the next promote and recorded in MANUAL_PROD_STEPS. The runtime also self-heals on first read, so a late apply degrades to "created on first visit", never "stranded".'},
+ {date:'2026-09-13',ask:'D5 — Part D (the record follows the list) in scope?',ruling:'accepted',label:'In, roster deferred',why:'Built: the record and its two APIs read the same right the Tournaments list reads. Deferred to its own line: whose roster a Premium team submits (roster submission still reads the free-team shadow's master roster, which may be empty).'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+const QA_PARTS=[
+ {id:'A',title:'Add my team — the host's own team, one click',steps:[
+  'In uat-standalone → Tournaments → Run your own tournament: create a small tournament (any style) with at least one division. Open Manage → Teams.',
+  'The Teams header shows a ghost "Add my team" (star) LEFT of the lime Add Team; the empty state shows both buttons side by side. Screenshot 2 on the Mockup tab.',
+  'Click Add my team. The dialog is titled "Add UAT Standalone Team to this tournament" — no team name, coach or email field. Division is preselected; Payment status defaults to Paid; one sentence says it is registered under your head coach and shows on your Tournaments page.',
+  'Add my team → the row appears, status Accepted, payment Paid, coach = YOUR name and email. The row carries a lime "Your team" chip; the header button is GONE (not greyed) and the empty-state button with it.',
+  'Click the "Your team" chip: a dialog explains the row (your team, registered under the head coach, edits like any other team). Close it.',
+  'Refresh the page. Button still gone, chip still present (the state is read from the server, not remembered by the browser).',
+  'Go to the portal's Tournaments page. The tournament appears under "This season" AS AN ENTRY (accepted) and under "Tournaments you run" as the host — both. Tap the entry: the record opens (schedule, status, roster submission, announcements).',
+  'Back on Teams: edit the row (status, payment, seed) — it edits like any other registration. Do NOT delete it.',
+ ]},
+ {id:'B',title:'Add my team — a delegate, and the refusals',steps:[
+  'On uat-standalone → Staff: give a non-head-coach staff member the "Run tournaments" switch (Manager preset has it on). Sign in as that person (or use a second browser).',
+  'As the head coach, create a SECOND hosted tournament (leave your team out of it). As the delegate, open it from Tournaments you run → Manage → Teams: "Add my team" is present. Add it: the registration's coach and email are the HEAD COACH's, not the delegate's.',
+  'In uat-test-org (the club) → any tournament → Teams: there is NO "Add my team" anywhere — header or empty state. The club's "Link to rep team" control is unchanged.',
+  'Complete (lock) a hosted tournament that has no entry from your team, then open Teams: Add my team is absent (locked tournaments take no new teams), same as Add Team.',
+ ]},
+ {id:'C',title:'Email-aware Add Team — every organization',steps:[
+  'In uat-test-org → a tournament → Teams → Add Team. Type a team name; in Email, type the UAT coach's own email and tab out. A lime status line appears under the field: "This coach is on FieldLogicHQ…" and the Notify checkbox turns itself ON.',
+  'Untick Notify (allowed — it does not fight you). Change the email to a made-up address (e.g. nobody-here-2026@example.com) and tab out: the line changes to the "When you notify them, this email becomes their sign-in…" wording; the checkbox stays as you left it.',
+  'Clear the email: no status line at all. Type half an address (no @): no status line.',
+  'Save a team with the made-up email and Notify ON: the same email arrives as before — nothing about the save changed. Close and re-open Add Team: the status line starts blank (it never carries over).',
+ ]},
+ {id:'D',title:'The from-scratch portal sees its entries (Part C)',steps:[
+  'Signed in as the UAT coach, open a PUBLIC registration page of a uat-test-org tournament (Register). In the "which team" picker your teams are listed; the portal team reads "UAT Standalone Team · Coaches Portal". Pick it and register.',
+  'Open uat-standalone → Tournaments: the entry appears under "This season" (before this build a from-scratch portal never saw it). Tap it: the record opens.',
+  'In uat-test-org → that tournament → Teams: the new row is an ordinary registration (no "Your team" chip — that chip is only for the HOST's own team on a portal-run tournament).',
+ ]},
+ {id:'E',title:'The record follows the list (Part D — W1 and W2)',steps:[
+  'W2: sign in as an assistant coach or the team manager of uat-standalone (someone who did NOT register anything). Tournaments → tap the entry from Part A or Part D: the record OPENS (before: a 404). Roster submission shows the submit form; its pick list may be empty for a from-scratch portal — expected, deferred (plan §3.D).',
+  'W1: in uat-test-org (League/Club) → a tournament → Teams → on any registration use "Link to rep team" and link it to a uat-test-org rep team you coach. Then, as that rep team's coach, open the coach Tournaments page: the entry is listed and TAPPING IT OPENS the record (before: 404).',
+  'Negative: from the record URL of Part A, swap the teamId segment in the address bar for a different team you coach (or a random id): you are sent back to that team's Tournaments list, not shown a record under the wrong team.',
+  'Negative: sign in as a coach with NO assignment on the team (or a staff member whose access is "Everyday" only, no schedule) and open the record URL: no record (list redirect or 404).',
+ ]},
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('qa-host-own-team')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('qa-host-own-team',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

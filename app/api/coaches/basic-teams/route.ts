@@ -9,6 +9,7 @@ import {
   canUserAccessTournamentRegistration,
 } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
+import { excludeActivePremiumUpgrades } from '@/lib/coach-team-page';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -65,9 +66,23 @@ export const GET = withObservability(async (req: NextRequest) => {
         : Promise.resolve(null),
     ]);
 
+    // Which of these teams are the free-team SHADOW of a LIVE paid portal (mig 297 / Part C of
+    // "your team in your own tournament"). The public register form's picker labels them so a
+    // Premium coach recognizes their portal team rather than minting a stray free one; a canceled
+    // portal's team is an ordinary free team again and is not labelled.
+    // Fails soft: a label is a nicety; the team list is what the register form and join page need.
+    let portalTeamIds: string[] = [];
+    try {
+      const freeOnly = new Set((await excludeActivePremiumUpgrades(teams)).map(t => t.id));
+      portalTeamIds = teams.filter(t => !freeOnly.has(t.id)).map(t => t.id);
+    } catch (err) {
+      console.error('[coaches basic-teams GET] portal-team labels unavailable (non-fatal):', err);
+    }
+
     return json({
       user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name },
       teams,
+      portalTeamIds,
       ...(wantContext ? { teamContexts } : {}),
       pendingRegistration,
       // Already linked to this account → the join page skips the "choose team" interstitial.

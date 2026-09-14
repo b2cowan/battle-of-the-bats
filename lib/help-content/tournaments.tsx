@@ -553,6 +553,23 @@ const tournamentsHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-add-team-manually',
+          question: 'How do I add a team by hand — and what is the note under the email?',
+          answerText: 'On the Teams page click Add Team. Type the team name, the coach and their email, pick the division and a payment status, and save — the team is accepted straight away. When you tab out of the email field the form tells you one of two things. "This coach is on FieldLogicHQ" means the address already belongs to a coach account: the Notify checkbox turns itself on, because that notification is how the coach accepts the entry — the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off. The other note, "this email becomes their sign-in", means the address is new to the platform: notifying them creates their free Coaches Portal around this entry. There is no way to attach an entry to another club\'s team from your side, on purpose — a team joins a tournament only by its own coach registering or accepting. If you run the tournament from your own Coaches Portal, your own team has its own one-click door: Add my team.',
+          keywords: ['add team', 'add team manually', 'add a team by hand', 'register a team for them', 'coach is on fieldlogichq', 'notify team', 'notification checkbox', 'email becomes their sign-in', 'this coach is on', 'attach to a team', 'search for a team', 'find a team on the platform', 'link a team', 'add my team'],
+          answer: (
+            <>
+              <p>On the <strong>Teams</strong> page click <strong>Add Team</strong>. Type the team name, the coach and their email, pick the division and a payment status, and save &mdash; the team is accepted straight away.</p>
+              <p>When you tab out of the <strong>Email</strong> field the form tells you one of two things:</p>
+              <ul>
+                <li><strong>&ldquo;This coach is on FieldLogicHQ&rdquo;</strong> &mdash; the address already belongs to a coach account. The <strong>Notify</strong> checkbox turns itself on, because that notification is how the coach <em>accepts</em> the entry: the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off.</li>
+                <li><strong>&ldquo;This email becomes their sign-in&rdquo;</strong> &mdash; the address is new to the platform. Notifying them creates their free Coaches Portal around this entry.</li>
+              </ul>
+              <p>There is no way to attach an entry to another club&rsquo;s team from your side, on purpose &mdash; a team joins a tournament only by its own coach registering or accepting. If you run the tournament from your own Coaches Portal, your own team has its own one-click door: <strong>Add my team</strong>.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-add-team-email',
           question: 'How do I add or fix a team\'s email address?',
           answerText: 'Open Registrations, expand the team\'s row, and click the pencil (Edit) icon to add or change its email. If the Registration Health card or the dashboard flags teams with no email on file, click that flag to jump straight to the affected teams instead of searching the full list.',

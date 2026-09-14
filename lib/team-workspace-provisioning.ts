@@ -10,7 +10,7 @@ import { addStaffMember } from './coach-membership';
 import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
-import { findBasicCoachTeamIdForTournamentRegistration } from './basic-coach-teams';
+import { findBasicCoachTeamIdForTournamentRegistration, resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
 import { migrateBasicTeamIntoWorkspace } from './coach-upgrade-migration';
 import { DEFAULT_SPORT } from './sports';
 import { normalizeCreditApplicationMode } from './dues-credits';
@@ -370,6 +370,25 @@ export async function provisionStandaloneTeamWorkspace(
         .select('id');
       if (claimError) throw claimError;
       migrationClaimed = (claimed?.length ?? 0) > 0;
+    }
+
+    // Every paid portal carries a free-team SHADOW (2026-09-13, Part C of "your team in your own
+    // tournament"): the coach-side tournament record, roster submission and the public register
+    // form's picker all key on it. An upgrade/claim supplied one above; a from-scratch signup did
+    // not, and used to be stranded for good. Best-effort here (the resolver also self-heals on first
+    // read) — a shadow hiccup must never fail the payment/provision.
+    if (!basicCoachTeamId) {
+      try {
+        await resolveBasicCoachTeamIdForWorkspace({
+          id: workspace.id as string,
+          repTeamId: team.id,
+          primaryOwnerUserId: ownerUserId,
+          sourceTournamentTeamId: input.sourceTournamentTeamId ?? null,
+          basicCoachTeamId: null,
+        });
+      } catch (err) {
+        console.error('[provisionStandaloneTeamWorkspace] free-team shadow not created (non-fatal, resolver self-heals on first read):', err);
+      }
     }
 
     const { data: entitlement, error: entitlementError } = await supabaseAdmin

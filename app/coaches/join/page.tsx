@@ -55,6 +55,9 @@ function JoinForm() {
   const [loading, setLoading]   = useState(false);
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
   const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
+  // A live Coaches Portal's team is labelled (the API says which) so a Premium coach accepting an
+  // invite links it to their portal team knowingly, not by guessing between two same-named rows.
+  const [portalTeamIds, setPortalTeamIds] = useState<Set<string>>(() => new Set());
   const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
   const [linkMode, setLinkMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
@@ -106,6 +109,7 @@ function JoinForm() {
         const data = await res.json() as {
           user?: { email?: string };
           teams?: BasicCoachTeamOption[];
+          portalTeamIds?: string[];
           pendingRegistration?: PendingRegistration | null;
           alreadyLinked?: boolean;
         };
@@ -121,6 +125,7 @@ function JoinForm() {
         setSignedInEmail(data.user?.email ?? user.email);
         setEmail(data.user?.email ?? user.email);
         setBasicCoachTeams(data.teams ?? []);
+        setPortalTeamIds(new Set(data.portalTeamIds ?? []));
         setPendingRegistration(data.pendingRegistration ?? null);
         if ((data.teams ?? []).length > 0) setLinkMode('existing');
       } finally {
@@ -379,7 +384,7 @@ function JoinForm() {
                   >
                     <option value="" disabled>Select a team</option>
                     {basicCoachTeams.map(team => (
-                      <option key={team.id} value={team.id}>{team.name}</option>
+                      <option key={team.id} value={team.id}>{team.name}{portalTeamIds.has(team.id) ? ' · Coaches Portal' : ''}</option>
                     ))}
                   </select>
                   <ChevronDown size={16} className="select-icon" />

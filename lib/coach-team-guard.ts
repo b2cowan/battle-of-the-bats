@@ -2,6 +2,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { userOwnsBasicCoachTeam, findLinkedBasicTeamForRegistration } from '@/lib/basic-coach-teams';
+import { findRepTeamAccessForRegistration } from '@/lib/coach-registration-access';
 
 /**
  * The two-layer auth gate for org-less Basic-coach-team APIs (the master-roster routes and any
@@ -36,9 +37,17 @@ export async function requireBasicCoachTeamOwner(basicCoachTeamId: string): Prom
  * the EXPLICIT-link ownership check (`findLinkedBasicTeamForRegistration`). On success it also
  * returns the owned `basicCoachTeamId` so the caller can read that team's master roster without a
  * second lookup. Returns 403 for an unclaimed/foreign registration (IDOR boundary).
+ *
+ * SECOND ANSWER (2026-09-13, "the record follows the list" — lib/coach-registration-access.ts):
+ * when the user is not a member of the linked free team, the registration may still belong to a
+ * rep team they hold a configuring coaching assignment on — an assistant or manager on a Premium
+ * team, or any coach of a team the club linked from the organizer side. That is the right the
+ * Tournaments LIST already reads; the record and its APIs now read the same one. In that case
+ * `basicCoachTeamId` is the rep team's free-team shadow, or null for a club-linked team with no
+ * workspace — callers that read the master roster treat null as "no master roster".
  */
 export type CoachRegistrationGuardResult =
-  | { ok: true; user: { id: string; email: string }; basicCoachTeamId: string }
+  | { ok: true; user: { id: string; email: string }; basicCoachTeamId: string | null; via: 'membership' | 'assignment' }
   | { ok: false; status: 401 | 403 };
 
 export async function requireCoachRegistrationAccess(registrationId: string): Promise<CoachRegistrationGuardResult> {
@@ -47,6 +56,8 @@ export async function requireCoachRegistrationAccess(registrationId: string): Pr
   if (!user?.id || !user.email) return { ok: false, status: 401 };
   if (await isPlatformAdminEmail(user.email)) return { ok: false, status: 401 };
   const basicCoachTeamId = await findLinkedBasicTeamForRegistration(user.id, registrationId);
-  if (!basicCoachTeamId) return { ok: false, status: 403 };
-  return { ok: true, user: { id: user.id, email: user.email }, basicCoachTeamId };
+  if (basicCoachTeamId) return { ok: true, user: { id: user.id, email: user.email }, basicCoachTeamId, via: 'membership' };
+  const repAccess = await findRepTeamAccessForRegistration(user.id, registrationId);
+  if (!repAccess) return { ok: false, status: 403 };
+  return { ok: true, user: { id: user.id, email: user.email }, basicCoachTeamId: repAccess.basicCoachTeamId, via: 'assignment' };
 }

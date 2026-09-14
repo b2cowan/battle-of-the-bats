@@ -848,8 +848,8 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-run-tournaments',
           question: 'Can I run my own tournament from the Coaches Portal?',
-          answerText: 'Yes, on a standalone Premium Coaches Portal — it includes one tournament slot. Open Tournaments: below this season’s entries is Tournaments you run. Before one exists it offers Set up a tournament, which opens the tournament set-up directly; finishing it lands you on the new tournament’s Dashboard, where the whole thing is run — teams, schedule, results, check-in, communications, set-up. Once a tournament exists the section shows it with its dates, status and teams registered, and a Manage door back to that Dashboard. Only people who can run tournaments see the section: the head coach, and any staff member holding the Run tournaments switch on Staff (a new Team manager starts with it on). Everyone else sees the entries and nothing below them. A second tournament hits the plan’s one-slot limit. On a club-linked team the tournaments belong to your organization, so the section shows only for club admins who also coach.',
-          keywords: ['run my own tournament', 'host a tournament', 'set up a tournament', 'tournaments you run', 'exhibition weekend', 'round robin', 'tournament slot', 'one tournament', 'manage tournament', 'tournament dashboard', 'run tournaments switch', 'who can run tournaments', 'where did the tournament banner go', 'open setup'],
+          answerText: 'Yes, on a standalone Premium Coaches Portal — it includes one tournament slot. Open Tournaments: below this season’s entries is Tournaments you run. Before one exists it offers Set up a tournament, which opens the tournament set-up directly; finishing it lands you on the new tournament’s Dashboard, where the whole thing is run — teams, schedule, results, check-in, communications, set-up. Once a tournament exists the section shows it with its dates, status and teams registered, and a Manage door back to that Dashboard. Your own team in it: on the tournament’s Teams page click Add my team, pick the division, and your team is in — accepted, marked Paid (it owes its own event nothing; change it if you like), registered under the head coach whoever clicked. There is no name, coach or email to type and nothing to accept. The button disappears once your team is in and the row wears a Your team chip; on your Tournaments page the event then shows twice, as an entry under This season and under Tournaments you run, and both are true. Only people who can run tournaments see the section: the head coach, and any staff member holding the Run tournaments switch on Staff (a new Team manager starts with it on). Everyone else sees the entries and nothing below them. A second tournament hits the plan’s one-slot limit. On a club-linked team the tournaments belong to your organization, so the section shows only for club admins who also coach.',
+          keywords: ['run my own tournament', 'host a tournament', 'set up a tournament', 'tournaments you run', 'exhibition weekend', 'round robin', 'tournament slot', 'one tournament', 'manage tournament', 'tournament dashboard', 'run tournaments switch', 'who can run tournaments', 'where did the tournament banner go', 'open setup', 'add my team', 'my own team in my tournament', 'enter my team', 'register my own team', 'your team chip', 'appears twice', 'this season and tournaments you run'],
           popular: true,
           answer: (
             <>
@@ -857,9 +857,34 @@ const coachesHelp: HelpPageContent = {
               <ul>
                 <li><strong>Before one exists</strong> — <strong>Set up a tournament</strong> opens the tournament set-up directly. Finishing it lands you on the new tournament&apos;s <strong>Dashboard</strong>, where the whole thing is run: teams, schedule, results, check-in, communications, set-up.</li>
                 <li><strong>Once it exists</strong> — the section shows it with its dates, status and teams registered, and a <strong>Manage</strong> door straight back to that Dashboard.</li>
+                <li><strong>Your own team in it</strong> — on the tournament&apos;s <strong>Teams</strong> page click <strong>Add my team</strong>, pick the division, and your team is in: accepted, marked <strong>Paid</strong> (it owes its own event nothing; change it if you like), registered under the head coach whoever clicked. There is no name, coach or email to type and nothing to accept. The button disappears once your team is in and the row wears a <strong>Your team</strong> chip. On your Tournaments page the event then shows twice — as an entry under <em>This season</em> and under <em>Tournaments you run</em> — and both are true.</li>
                 <li><strong>Who sees it</strong> — only people who can run tournaments: you, and any staff member you&apos;ve handed the <strong>Run tournaments</strong> switch on Staff (a new Team manager starts with it on). Everyone else sees the entries and nothing below them.</li>
               </ul>
               <p>A second tournament hits the plan&apos;s one-slot limit. On a club-linked team the tournaments belong to your organization, so the section shows only for club admins who also coach.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-premium-register-elsewhere',
+          question: 'Registering on another organizer\'s page — which team do I pick?',
+          answerText: 'Register while signed in with this account\'s email. If the organizer\'s form asks which of your teams the entry is for, pick the one labelled "· Coaches Portal" — that is your Premium team, and the entry appears on your Tournaments page the moment you submit, with the schedule, scores and status. Creating a new team on that form instead makes a separate free team that your portal does not show. If an organizer added your team by hand with your email, their notification email is how you accept it — open it signed in and choose your portal team when asked.',
+          keywords: ['register on another page', 'which team do I pick', 'coaches portal label', 'entry not showing', 'registered but not in my portal', 'separate free team', 'accept an entry', 'organizer added my team', 'notification email'],
+          answer: (
+            <>
+              <p>Register while signed in with <strong>this account&apos;s email</strong>. If the organizer&apos;s form asks which of your teams the entry is for, pick the one labelled <strong>&middot; Coaches Portal</strong> &mdash; that is your Premium team, and the entry appears on your <strong>Tournaments</strong> page the moment you submit, with the schedule, scores and status.</p>
+              <p>Creating a <em>new</em> team on that form instead makes a separate free team that your portal does not show. If an organizer added your team by hand with your email, their notification email is how you accept it &mdash; open it signed in and choose your portal team when asked.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-premium-who-opens-entry',
+          question: 'Who on my staff can open a tournament entry?',
+          answerText: 'Anyone who can see it in the Tournaments list can open it: the head coach, and any assistant or team manager whose schedule access is View + edit. The record — schedule, scores, status, roster submission, organizer updates — reads the same for all of them, except that money stays hidden from anyone without money access. Staff who can only view the schedule see the list and nothing more. The one caveat: roster submission picks from your team\'s free-team roster, which on a portal started from scratch may be empty — that is being worked on.',
+          keywords: ['assistant open tournament', 'manager open tournament', 'tournament entry 404', 'not found tapping entry', 'who can open the record', 'staff tournament access', 'roster submission empty'],
+          answer: (
+            <>
+              <p>Anyone who can see it in the <strong>Tournaments</strong> list can open it: the head coach, and any assistant or team manager whose schedule access is <strong>View + edit</strong>. The record &mdash; schedule, scores, status, roster submission, organizer updates &mdash; reads the same for all of them, except that money stays hidden from anyone without money access. Staff who can only <em>view</em> the schedule see the list and nothing more.</p>
+              <p>One caveat: roster submission picks from your team&apos;s free-team roster, which on a portal started from scratch may be empty &mdash; that is being worked on.</p>
             </>
           ),
         },

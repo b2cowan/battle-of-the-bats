@@ -2,12 +2,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock, CalendarClock, Link2, Search } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock, CalendarClock, Link2, Search, Star } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import {
@@ -305,6 +306,14 @@ export default function UnifiedTeamsPage() {
   const [repLinkPickerId, setRepLinkPickerId] = useState<string | null>(null);
   const [repLinkSearch, setRepLinkSearch] = useState('');
   const orgHasRepTeams = useMemo(() => (currentOrg ? hasModuleEntitlement(currentOrg, 'module_rep_teams') : false), [currentOrg]);
+  // "Add my team" (2026-09-13) — a tournament run from a coaches PORTAL has exactly one team that
+  // is the host's own; the rep-link picker above is gated off for it on purpose (a one-team org
+  // needs no picker), and this is that picker collapsed to a button. `ownTeam` is null off a
+  // portal; `registrationId` set means the team is already in (button gone, row wears the chip).
+  const isHostPortal = useMemo(() => isTeamWorkspaceOrg(currentOrg), [currentOrg]);
+  const [ownTeam, setOwnTeam] = useState<{ teamName: string; registrationId: string | null } | null>(null);
+  const [showOwnTeamModal, setShowOwnTeamModal] = useState(false);
+  const [ownTeamForm, setOwnTeamForm] = useState<{ divisionId: string; paymentStatus: 'paid' | 'pending' }>({ divisionId: '', paymentStatus: 'paid' });
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
     items?: Array<{ label: string; note?: string }>;
@@ -465,9 +474,42 @@ export default function UnifiedTeamsPage() {
     }
   }, [orgHasRepTeams, currentTournament?.id, currentOrg?.slug]);
 
+  const loadOwnTeam = useCallback(async () => {
+    if (!isHostPortal || !currentTournament) { setOwnTeam(null); return; }
+    try {
+      const res = await fetch(`/api/admin/teams/own-team?tournamentId=${encodeURIComponent(currentTournament.id)}${orgParam}`, SAME_ORIGIN_FETCH);
+      if (!res.ok) { setOwnTeam(null); return; }
+      const data = await res.json().catch(() => ({ ownTeam: null }));
+      setOwnTeam(data.ownTeam ?? null);
+    } catch {
+      setOwnTeam(null);
+    }
+  }, [isHostPortal, currentTournament?.id, orgParam]);
+
+  // Email-aware Add Team (2026-09-13, Part B): when the typed address belongs to a coach who is
+  // already on the platform, the form says so and turns the notify on — that email IS how the
+  // coach accepts the entry into their portal. `known` / `new` / `unknown` (no answer, said
+  // nothing); keyed by the address it answers so a stale answer never sits under a new email.
+  const [coachAccount, setCoachAccount] = useState<{ email: string; state: 'known' | 'new' | 'unknown' } | null>(null);
+  const checkCoachAccount = useCallback(async (raw: string) => {
+    const email = raw.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setCoachAccount(null); return; }
+    if (coachAccount?.email === email) return;
+    try {
+      const res = await fetch(`/api/admin/teams/coach-account?email=${encodeURIComponent(email)}${orgParam}`, SAME_ORIGIN_FETCH);
+      const data = res.ok ? await res.json().catch(() => ({})) : {};
+      const state: 'known' | 'new' | 'unknown' = data.exists === true ? 'known' : data.exists === false ? 'new' : 'unknown';
+      setCoachAccount({ email, state });
+      if (state === 'known') setAddForm(f => ({ ...f, notifyTeam: true }));
+    } catch {
+      setCoachAccount({ email, state: 'unknown' });
+    }
+  }, [coachAccount?.email, orgParam]);
+
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPoolSlots(); }, [loadPoolSlots]);
   useEffect(() => { loadRepLinks(); }, [loadRepLinks]);
+  useEffect(() => { loadOwnTeam(); }, [loadOwnTeam]);
 
   useEffect(() => {
     setSelectedRegistrationIds(prev => {
@@ -895,6 +937,38 @@ export default function UnifiedTeamsPage() {
     }
   }
 
+  function openOwnTeamModal() {
+    setOwnTeamForm({ divisionId: selectedDivisionId || divisions[0]?.id || '', paymentStatus: 'paid' });
+    setShowOwnTeamModal(true);
+  }
+
+  async function handleAddOwnTeam(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTournament) return;
+    setWorking('own-team');
+    try {
+      const res = await fetch(`/api/admin/teams/own-team${orgQuery}`, {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tournamentId: currentTournament.id,
+          divisionId: ownTeamForm.divisionId,
+          paymentStatus: ownTeamForm.paymentStatus,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Your team could not be added.');
+      setShowOwnTeamModal(false);
+      load();
+      loadOwnTeam();
+    } catch (err: any) {
+      setFeedback({ isOpen: true, title: 'Add My Team Failed', message: err.message, type: 'danger' });
+    } finally {
+      setWorking(null);
+    }
+  }
+
   function resetAddTeamForm() {
     setAddForm({
       name: '',
@@ -908,6 +982,7 @@ export default function UnifiedTeamsPage() {
 
   function openAddTeamModal() {
     resetAddTeamForm();
+    setCoachAccount(null);
     setShowAddModal(true);
   }
 
@@ -1520,6 +1595,12 @@ export default function UnifiedTeamsPage() {
                 </button>
               ) : null}
               {orgHasRepTeams && renderRepLinkControl(team, busy)}
+              {ownTeam?.registrationId === team.id && (
+                <button type="button" className={styles.ownTeamChip} onClick={() => setFeedback({ isOpen: true, title: 'Your team', type: 'info', message: `This is ${team.name}, registered under your head coach and connected to your portal — it appears on your Tournaments page like any entry. Status, payment and seed are edited here like any other team.` })}
+                  aria-label={`${team.name} is your team — what that means`} title="Your team">
+                  <Star size={12} /><span>Your team</span>
+                </button>
+              )}
               {team.email?.trim() && (
                 <button className="btn btn-ghost btn-data" onClick={() => resendAccessLink(team)} disabled={busy || working === 'resend-access'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Resend dashboard access link to ${team.name}`} title="Resend coach access link">
                   <Mail size={12} />
@@ -1932,6 +2013,18 @@ export default function UnifiedTeamsPage() {
               >
                 <ClipboardList size={15} />
               </Link>
+            )}
+            {!isLocked && ownTeam && !ownTeam.registrationId && (
+              <button
+                className={`btn btn-ghost btn-data ${styles.ownTeamButton}`}
+                onClick={openOwnTeamModal}
+                disabled={!currentTournament}
+                aria-label={`Add ${ownTeam.teamName} to this tournament`}
+                title="Add my team"
+              >
+                <Star size={14} />
+                <span className={styles.addTeamLabel}>Add my team</span>
+              </button>
             )}
             {!isLocked && (
               <button
@@ -2684,9 +2777,16 @@ export default function UnifiedTeamsPage() {
                 <>
                   <p>No teams have registered yet.</p>
                   {!isLocked && (
-                    <button className="btn btn-lime" onClick={openAddTeamModal} style={{ marginTop: '1rem' }}>
-                      Add Team
-                    </button>
+                    <div className={styles.emptyActions}>
+                      {ownTeam && !ownTeam.registrationId && (
+                        <button className="btn btn-ghost" onClick={openOwnTeamModal}>
+                          Add my team
+                        </button>
+                      )}
+                      <button className="btn btn-lime" onClick={openAddTeamModal}>
+                        Add Team
+                      </button>
+                    </div>
                   )}
                 </>
               ) : (
@@ -2777,6 +2877,44 @@ export default function UnifiedTeamsPage() {
         </>
       )}
 
+      {/* Add my team — the host's own team, already connected to the portal (no name, coach or
+          email to type: the portal holds every one of those). The registration is written as the
+          head coach whoever clicks, and the entry lands on the coach Tournaments page at once. */}
+      {showOwnTeamModal && ownTeam && (
+        <div className="modal-overlay" onClick={() => setShowOwnTeamModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add {ownTeam.teamName} to this tournament</h3>
+              <button className="btn btn-ghost btn-data" onClick={() => setShowOwnTeamModal(false)} aria-label="Close"><X size={16} /></button>
+            </div>
+            <form onSubmit={handleAddOwnTeam}>
+              <div className="form-row form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Division *</label>
+                  <select className="form-select" value={ownTeamForm.divisionId} onChange={e => setOwnTeamForm(f => ({ ...f, divisionId: e.target.value }))} required>
+                    {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Payment Status</label>
+                  <select className="form-select" value={ownTeamForm.paymentStatus} onChange={e => setOwnTeamForm(f => ({ ...f, paymentStatus: e.target.value as 'paid' | 'pending' }))}>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Unpaid</option>
+                  </select>
+                </div>
+              </div>
+              <p className={styles.ownTeamHint}>
+                Registered under your head coach. It shows on your team&rsquo;s Tournaments page right away.
+              </p>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => setShowOwnTeamModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-lime btn-data" disabled={!!working || !ownTeamForm.divisionId}>Add my team</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Add Team modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={closeAddTeamModal}>
@@ -2789,7 +2927,20 @@ export default function UnifiedTeamsPage() {
               <div className="form-group"><label className="form-label">Team Name *</label><input className="form-input" value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} required /></div>
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
                 <div className="form-group"><label className="form-label">Coach</label><input className="form-input" value={addForm.coach} onChange={e => setAddForm(f => ({ ...f, coach: e.target.value }))} /></div>
-                <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={addForm.email} onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))} required={addForm.notifyTeam} /></div>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input className="form-input" type="email" value={addForm.email}
+                    onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
+                    onBlur={e => checkCoachAccount(e.target.value)}
+                    required={addForm.notifyTeam} />
+                  {coachAccount && coachAccount.email === addForm.email.trim().toLowerCase() && coachAccount.state !== 'unknown' && (
+                    <p className={`${styles.coachAccountLine} ${coachAccount.state === 'known' ? styles.coachAccountKnown : ''}`} role="status">
+                      {coachAccount.state === 'known'
+                        ? 'This coach is on FieldLogicHQ. The notification is on — they’ll see this entry in their portal the moment they accept.'
+                        : 'When you notify them, this email becomes their sign-in and the entry lands in their free Coaches Portal.'}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
                 <div className="form-group">

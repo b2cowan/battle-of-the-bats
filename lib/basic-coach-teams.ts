@@ -1285,32 +1285,150 @@ export async function getRegistrationGamesForTeam(
 }
 
 /**
- * Resolve the Basic-coach team id linked to a rep team's workspace — the ONLY bridge today from a
- * rep team to its tournament registration — self-healing the link (persisting it both ways) on first
- * resolve. Shared by the coaches tournament-history + tournament-games routes so the resolution AND
- * the write-back stay identical (they had drifted: one route did the self-heal, the other didn't).
+ * Resolve the Basic-coach team id linked to a rep team's workspace — the free-team SHADOW every paid
+ * portal needs, because the coach-side tournament record, roster submission and the public register
+ * form's team picker all key on it — self-healing the link (persisting it both ways) on first resolve.
+ *
+ * Three sources, in order:
+ *  1. the stored back-link (an upgrade or a claim wrote it at provisioning);
+ *  2. the workspace's source registration (a claimed tournament entry — adopt its free team);
+ *  3. **create one** (2026-09-13, "your team in your own tournament" Part C). A workspace started
+ *     from scratch — direct signup, no free team, no claimed entry — used to resolve `null` forever,
+ *     so its coach registering on ANY public page minted a separate free team the paid portal could
+ *     never see, and the hosted-tournament "Add my team" door had nothing to bridge to. The shadow is
+ *     named after the rep team, owned by the workspace's primary owner, `source: 'premium_upgrade'`
+ *     (the CHECK value that already means "exists because of a paid workspace"). Provisioning calls
+ *     this too, so a new portal has its shadow from minute one; this branch is the repair for the
+ *     ones that don't (a data-only backfill covers the stock; this covers any that slip past it).
+ *
+ * Returns `null` only when a shadow cannot exist (no primary owner to own it).
  */
 export async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
   id: string;
+  repTeamId: string;
+  primaryOwnerUserId: string | null;
   sourceTournamentTeamId: string | null;
   basicCoachTeamId: string | null;
 }): Promise<string | null> {
   if (teamWorkspace.basicCoachTeamId) return teamWorkspace.basicCoachTeamId;
-  if (!teamWorkspace.sourceTournamentTeamId) return null;
 
-  const basicCoachTeamId = await findBasicCoachTeamIdForTournamentRegistration(
-    teamWorkspace.sourceTournamentTeamId,
-  );
-  if (!basicCoachTeamId) return null;
+  const adopted = teamWorkspace.sourceTournamentTeamId
+    ? await findBasicCoachTeamIdForTournamentRegistration(teamWorkspace.sourceTournamentTeamId)
+    : null;
+  if (adopted) {
+    await Promise.all([
+      supabaseAdmin.from('team_workspaces').update({ basic_coach_team_id: adopted }).eq('id', teamWorkspace.id),
+      supabaseAdmin.from('basic_coach_teams').update({ team_workspace_id: teamWorkspace.id }).eq('id', adopted),
+    ]).then(results => {
+      for (const { error } of results) if (error) throw error;
+    });
+    return adopted;
+  }
 
-  await Promise.all([
-    supabaseAdmin.from('team_workspaces').update({ basic_coach_team_id: basicCoachTeamId }).eq('id', teamWorkspace.id),
-    supabaseAdmin.from('basic_coach_teams').update({ team_workspace_id: teamWorkspace.id }).eq('id', basicCoachTeamId),
-  ]).then(results => {
-    for (const { error } of results) if (error) throw error;
-  });
+  // Contained: this runs on READ paths (tournament history feeds the Overview tile, the Schedule
+  // chips and the Tournaments page). A hiccup minting the shadow must degrade to "no shadow yet"
+  // (the pre-2026-09-13 answer), never 500 a page load; the next read tries again.
+  try {
+    return await createWorkspaceShadowBasicCoachTeam(teamWorkspace);
+  } catch (err) {
+    console.error('[resolveBasicCoachTeamIdForWorkspace] free-team shadow not created (non-fatal, retried on next read):', err);
+    return null;
+  }
+}
 
-  return basicCoachTeamId;
+async function createWorkspaceShadowBasicCoachTeam(teamWorkspace: {
+  id: string;
+  repTeamId: string;
+  primaryOwnerUserId: string | null;
+}): Promise<string | null> {
+  const ownerUserId = teamWorkspace.primaryOwnerUserId;
+  if (!ownerUserId) return null;
+
+  // A shadow minted earlier whose back-link never landed (a crash between the insert and the
+  // claim below) is adopted, not duplicated — nothing in the schema makes team_workspace_id unique.
+  const { data: orphan, error: orphanError } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .select('id')
+    .eq('team_workspace_id', teamWorkspace.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (orphanError) throw orphanError;
+  if (orphan) {
+    const { error: relinkError } = await supabaseAdmin
+      .from('team_workspaces')
+      .update({ basic_coach_team_id: orphan.id })
+      .eq('id', teamWorkspace.id)
+      .is('basic_coach_team_id', null);
+    if (relinkError) throw relinkError;
+    await ensureOwnerMembership(orphan.id, ownerUserId);
+    return orphan.id;
+  }
+
+  const [{ data: repTeam, error: repTeamError }, ownerEmail] = await Promise.all([
+    supabaseAdmin
+      .from('rep_teams')
+      .select('name, sport, division')
+      .eq('id', teamWorkspace.repTeamId)
+      .maybeSingle<{ name: string; sport: string | null; division: string | null }>(),
+    getAuthUserEmail(ownerUserId),
+  ]);
+  if (repTeamError) throw repTeamError;
+  if (!repTeam) return null;
+  // primary_coach_email is NOT NULL: an owner with no email cannot own a shadow (never seen in
+  // practice — every account here is an email account — but the column would refuse, loudly).
+  const email = normalizeEmail(ownerEmail);
+  if (!email) return null;
+
+  const now = new Date().toISOString();
+  const { data: team, error: teamError } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .insert({
+      name: repTeam.name,
+      normalized_name: normalizeName(repTeam.name),
+      primary_coach_name: null,
+      primary_coach_email: email,
+      sport: cleanText(repTeam.sport, 80),
+      age_group: cleanText(repTeam.division, 80),
+      source: 'premium_upgrade',
+      team_workspace_id: teamWorkspace.id,
+      created_at: now,
+      updated_at: now,
+    })
+    .select('id')
+    .single<{ id: string }>();
+  if (teamError) throw teamError;
+
+  // Atomic claim on the workspace side (`WHERE basic_coach_team_id IS NULL`): two concurrent
+  // resolvers each mint a team, exactly one wins; the loser deletes its orphan and reads the winner.
+  const { data: claimed, error: claimError } = await supabaseAdmin
+    .from('team_workspaces')
+    .update({ basic_coach_team_id: team.id })
+    .eq('id', teamWorkspace.id)
+    .is('basic_coach_team_id', null)
+    .select('id');
+  if (claimError) throw claimError;
+  if ((claimed?.length ?? 0) === 0) {
+    await supabaseAdmin.from('basic_coach_teams').delete().eq('id', team.id);
+    const { data: current, error: readError } = await supabaseAdmin
+      .from('team_workspaces')
+      .select('basic_coach_team_id')
+      .eq('id', teamWorkspace.id)
+      .maybeSingle<{ basic_coach_team_id: string | null }>();
+    if (readError) throw readError;
+    return current?.basic_coach_team_id ?? null;
+  }
+
+  await ensureOwnerMembership(team.id, ownerUserId);
+  return team.id;
+}
+
+async function ensureOwnerMembership(basicCoachTeamId: string, userId: string): Promise<void> {
+  if (await userOwnsBasicCoachTeam(userId, basicCoachTeamId)) return;
+  const { error } = await supabaseAdmin
+    .from('basic_coach_team_users')
+    .insert({ basic_coach_team_id: basicCoachTeamId, user_id: userId, role: 'owner', status: 'active' });
+  if (error) throw error;
 }
 
 /**

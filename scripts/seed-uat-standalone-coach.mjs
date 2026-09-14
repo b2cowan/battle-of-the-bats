@@ -245,6 +245,9 @@ const ref = (parent, expr) => `coalesce(${map(expr)}, case when ${isPlatformRow(
 
 const out = [];
 out.push('begin;');
+// The shadow free team is SET NULL (not cascaded) when its workspace goes; delete it first or every
+// rebuild leaves a stale orphan in the owner's public-form team picker.
+if (src.target_org_id) out.push(`delete from basic_coach_teams where team_workspace_id in (select id from team_workspaces where workspace_org_id = ${lit(src.target_org_id)});`);
 if (src.target_org_id) out.push(`delete from organizations where id = ${lit(src.target_org_id)};`);
 out.push(`create temp table id_map (old uuid primary key, new uuid not null, tbl text not null, adopted boolean not null default false) on commit drop;`);
 out.push(`create temp table clone_report (k text, v text) on commit drop;`);
@@ -367,6 +370,20 @@ out.push(`insert into team_workspaces (workspace_org_id, rep_team_id, active_pro
   values (${S.newOrg}, ${newTeam}, ${src.active_year_id ? map(lit(src.active_year_id)) : 'null'}, ${S.owner}, 'platform_admin', 'independent', 'platform_override', null, ${S.owner}, null, null, 'active', null);`);
 out.push(`insert into team_entitlements (team_workspace_id, org_id, rep_team_id, source, status)
   select w.id, ${S.newOrg}, ${newTeam}, 'platform_override', 'active' from team_workspaces w where w.workspace_org_id = ${S.newOrg};`);
+// The free-team SHADOW every paid portal carries (mig 297 / Part C of "your team in your own
+// tournament"): the coach-side tournament record, roster submission and the public register form's
+// picker key on it. Provisioning mints it; this fixture mirrors the provisioner, so it mints it too —
+// otherwise the fixture is the from-scratch defect the migration exists to repair.
+out.push(`with shadow as (
+  insert into basic_coach_teams (name, normalized_name, primary_coach_name, primary_coach_email, sport, age_group, source, team_workspace_id, created_at, updated_at)
+  select t.name, lower(trim(t.name)), null, lower(u.email), left(t.sport, 80), left(t.division, 80), 'premium_upgrade', w.id, now(), now()
+    from team_workspaces w join rep_teams t on t.id = w.rep_team_id left join auth.users u on u.id = w.primary_owner_user_id
+   where w.workspace_org_id = ${S.newOrg} and u.email is not null
+  returning id, team_workspace_id
+), linked as (
+  update team_workspaces w set basic_coach_team_id = s.id from shadow s where w.id = s.team_workspace_id returning w.basic_coach_team_id
+)
+insert into basic_coach_team_users (basic_coach_team_id, user_id, role, status) select l.basic_coach_team_id, ${S.owner}, 'owner', 'active' from linked l;`);
 out.push(`insert into organization_members (organization_id, user_id, role, accepted_at)
   select ${S.newOrg}, s.user_id, 'coach', now() from rep_team_staff_memberships s
    where s.org_id = ${S.newOrg} and s.status = 'active'

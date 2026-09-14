@@ -1483,6 +1483,75 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   display: inline;
 }
 
+/* "Add my team" (2026-09-13) — the host's own team on a portal-run tournament. Ghost beside the lime
+   Add Team; collapses to its icon on a phone the same way. */
+.ownTeamButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 28px;
+}
+
+.ownTeamButton > svg {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+/* The row's "Your team" chip — the rep-link chip's slot and shape, in the host's own colour. Clickable
+   (it explains itself), so it is a button, not a span. */
+.ownTeamChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ownTeamChip:hover {
+  background: rgba(var(--logic-lime-rgb), 0.18);
+}
+
+.ownTeamHint {
+  margin: 1rem 0 0;
+  color: var(--white-70);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+/* Email-aware Add Team (2026-09-13) — one status line under the email: known coach (lime) or new.
+   Quiet on purpose; the form is otherwise unchanged. */
+.coachAccountLine {
+  margin: 0.45rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-2);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--white-70);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.coachAccountKnown {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  color: var(--logic-lime);
+}
+.emptyActions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
 @media (max-width: 760px) {
   /* 32px touch target for icon-only Add Team button (up from 28px) */
   .addTeamButton {
@@ -1497,6 +1566,16 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
 
   .addTeamLabel {
     display: none;
+  }
+
+  .ownTeamButton {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
   }
 }
 

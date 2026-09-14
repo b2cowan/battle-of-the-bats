@@ -213,6 +213,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   // name lock. Stable (set at load), so typing never flips the inputs to disabled.
   const [accountHasName, setAccountHasName] = useState(false);
   const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
+  // Teams that are a live Coaches Portal's team (the API says which) — labelled in the picker so a
+  // Premium coach picks their portal team instead of creating a stray free one.
+  const [portalTeamIds, setPortalTeamIds] = useState<Set<string>>(() => new Set());
   const [coachTeamMode, setCoachTeamMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
   const [confirmation, setConfirmation] = useState<RegistrationConfirmation | null>(null);
@@ -263,6 +266,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       const data = await res.json() as {
         user?: { email?: string; firstName?: string; lastName?: string; name?: string };
         teams?: BasicCoachTeamOption[];
+        portalTeamIds?: string[];
       };
       const userEmail = data.user?.email?.toLowerCase() ?? null;
       const apiFirst = (data.user?.firstName ?? '').trim();
@@ -273,6 +277,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       // keep the inputs editable so the coach can complete their name.
       setAccountHasName(!!(apiFirst && apiLast));
       setBasicCoachTeams(teams);
+      setPortalTeamIds(new Set(data.portalTeamIds ?? []));
       if (userEmail) {
         setForm(f => ({
           ...f,
@@ -957,7 +962,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                           >
                             <option value="" disabled>Select a team</option>
                             {basicCoachTeams.map(team => (
-                              <option key={team.id} value={team.id}>{team.name}</option>
+                              <option key={team.id} value={team.id}>{team.name}{portalTeamIds.has(team.id) ? ' · Coaches Portal' : ''}</option>
                             ))}
                           </select>
                           <ChevronDown size={16} className="select-icon" />

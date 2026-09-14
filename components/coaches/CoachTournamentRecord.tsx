@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail, getStandings } from '@/lib/db';
+import { findRepTeamAccessForRegistration } from '@/lib/coach-registration-access';
 import {
   canUserAccessTournamentRegistration,
   formatGameDateLabel,
@@ -68,6 +69,7 @@ export default async function CoachTournamentRecord({
   moneyRedacted = false,
   backHref,
   hideHeader = false,
+  allowAssignmentAccess = false,
 }: {
   registrationId: string;
   userId: string;
@@ -87,20 +89,37 @@ export default async function CoachTournamentRecord({
    * the Premium (operator-family) shell has no event header, so it keeps the in-page one.
    */
   hideHeader?: boolean;
+  /**
+   * Part D (2026-09-13): let a coach who is NOT a member of the linked free team open the record
+   * on the strength of a configuring coaching assignment on the rep team the registration belongs
+   * to. ONLY the Premium page passes true — it is the caller that computes `moneyRedacted` from
+   * that same assignment. The free-portal URL keeps membership-only access: it never computes
+   * redaction, so honouring the assignment there would show a money-off assistant the fee strip
+   * WI-5 exists to hide (adversarial review, 2026-09-13).
+   */
+  allowAssignmentAccess?: boolean;
 }) {
   // Returns the linked Basic coach team id — access and team identity are the same fact, so
   // this ONE lookup gates the page and (below) resolves the afterglow's team. B3 re-base:
   // the record can only render for a coach who owns that link, so the afterglow ask can never
   // silently vanish; the plan's "reliability fix" was for a state that isn't reachable.
-  const linkedBasicTeamId = await canUserAccessTournamentRegistration({
+  const ownedBasicTeamId = await canUserAccessTournamentRegistration({
     userId,
     email: email.toLowerCase(),
     registrationId,
   });
 
-  if (!linkedBasicTeamId) {
+  // The record follows the list (2026-09-13, plan Part D): the Tournaments page shows an entry to
+  // every staff member whose coaching assignment passes the door, and to every coach of a team the
+  // club linked from the organizer side. Neither is a MEMBER of the free team, so the check above
+  // said 404 to a row they had just tapped. Same right as the list, second. The afterglow's team
+  // stays the OWNED free team only — an assistant is not asked to start a free portal for a team
+  // they do not own.
+  const repAccess = ownedBasicTeamId || !allowAssignmentAccess ? null : await findRepTeamAccessForRegistration(userId, registrationId);
+  if (!ownedBasicTeamId && !repAccess) {
     notFound();
   }
+  const linkedBasicTeamId = ownedBasicTeamId;
 
   // The registration row id is the `teams.id` (a tournament registration is a team row).
   const teamId = registrationId;

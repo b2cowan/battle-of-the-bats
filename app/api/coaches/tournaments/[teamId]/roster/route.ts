@@ -106,7 +106,9 @@ export const GET = withObservability(async (_req: NextRequest, { params }: Route
     const { team, tournament } = ctx;
 
     const requirements = parseRosterRequirements(tournament.settings);
-    const masterPlayers = await getBasicCoachTeamPlayers(guard.basicCoachTeamId);
+    // Null = the registration is reachable by coaching assignment but the team has no free-team
+    // master roster (plan §3.D: whose roster a Premium team submits is deferred) — an empty pick list.
+    const masterPlayers = guard.basicCoachTeamId ? await getBasicCoachTeamPlayers(guard.basicCoachTeamId) : [];
 
     const { data: snapshotRows } = await supabaseAdmin
       .from('tournament_roster_players')
@@ -168,7 +170,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     const waiverAccepted = body.waiverAccepted === true;
 
     const requirements = parseRosterRequirements(tournament.settings);
-    const masterPlayers = await getBasicCoachTeamPlayers(guard.basicCoachTeamId);
+    // Null = the registration is reachable by coaching assignment but the team has no free-team
+    // master roster (plan §3.D: whose roster a Premium team submits is deferred) — an empty pick list.
+    const masterPlayers = guard.basicCoachTeamId ? await getBasicCoachTeamPlayers(guard.basicCoachTeamId) : [];
 
     const { rows, error } = buildTournamentRosterSnapshot({
       masterPlayers,
