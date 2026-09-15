@@ -22493,7 +22493,7 @@ Migration 296 to prod (order-critical after 295) + the coach demo's prod re-seed
 
 ### Owed / next
 
-- **The re-walk of the affected steps above (A · B · C)** on the artifact's 1 · Define tab; the Stage 2 session re-marks the tab's B6 as reversed. The rest of Parts A–E stand as walked.
+- **Committed `210333ae` 2026-09-14** (private index — the practices session's and the stage-0 close-out's hunks stayed in the tree). **The re-walk of the affected steps above (A · B · C)** on the artifact's 1 · Define tab; the Stage 2 session re-marks the tab's B6 as reversed. The rest of Parts A–E stand as walked.
 - **Stage 2 · Session inherits:** attempts per session on the SESSION (B9, with the "+ one more attempt" escape recommended); a test added mid-session lands OUTSIDE the session's scope snapshot; the method is a note (B10) — no "finish this test" nudge on the grid; retired tests never offered for a new scope (B11–B12). Kickoff: `docs/projects/active/COACH_DEVELOPMENT_REEVAL_STAGE2_SESSION_PROMPT.md`.
 - The definition keeps its Attempts per session field until Stage 2 moves it — the grid needs a number from somewhere.
 - Follow-up outside this stage: point the four private `.srOnly` copies (bva, staff panel, team setup, explore catalog) at the shared class.
