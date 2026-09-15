@@ -93,7 +93,7 @@ page (folded) and on the printed sheet, for whoever could see them before.
 - No practice can be added without an end; no game gains a requirement.
 - "How it went" never renders on a practice that has not started.
 
-## Stage 2 · The block — proposed (plan §5, 2026-09-14; not yet ruled, drawn or built)
+## Stage 2 · The block — RULED 2026-09-15 (all eleven as drawn) · BUILT ON DEV the same day · walk owed (§190)
 
 **What changes for a coach.** Opening a block today means eight questions, every time — minutes, rest-of-practice, description,
 goal, staff, players, coaching points, stations — so a written warm-up stands 743px tall whether or not it will ever have staff or
@@ -108,11 +108,36 @@ drill's own text. And Escape closes every sheet on the page — the one logged d
 **What does not change.** The words a coach has already typed (the two fields stay two — the "watching for" line is the one the
 field screen shows in bold at arm's length, and that stays); autosave and "emptiness discards nothing"; a drill's read-only rule;
 reorder by arrows; the printed sheet (one word: its block line says "Watch for:" as its station lines already do) and the run
-screen. No migration. Stations, the rotation and the groups grid are stage 3's; the library and drag are stage 4's. **Nine
-decisions** are put to the owner in plan §5.3, each with a recommendation; the mockups come next as a "2 · The block" tab on the
-hub, before any code.
+screen. No migration. Stations, the rotation and the groups grid are stage 3's; the library and drag are stage 4's. **Eleven
+decisions** are put to the owner in plan §5.3, each drawn before/after at true size on the hub’s "2 · The block" tab with a
+recommendation — the tenth, added when the drawings were measured, makes coaching points one field (one per line) because the
+doors alone took a written warm-up from 691px only to ~600. Two owner calls on 15 Sep are drawn in: every block says who it is for — **Whole team** until names are chosen, never a number (attendance already answers "how many are here"); and kit lives at exactly one level, the activity's (on a block with no stations; on each station once it has them — the same rule as players), with the practice's list at the top reading as the bag — everything below plus extras. Code follows the rulings.
+
+**Built, 15 September — what the coach sees now.** Open a block and it is four things: the title, one clock row, *What you're doing*,
+*What you're watching for*, and a Players line that reads **Whole team** until names are chosen. Under them one quiet line of doors —
+*+ Coaching points · + Staff · + Equipment · + Stations* — each becoming the field when pressed; whatever the block already holds is
+always shown. The clock row: quick lengths as chips (15 pressed on a new block), the minutes, *Rest of practice* as a chip that is
+simply absent while another block holds it, and "ends 7:15 p.m." / "runs to 8:30 p.m." Coaching points are one box, one per line.
+The shut row: title · first line · "3 stations" · Whole team or "6 players" — nothing else. A block placed from a drill opens straight
+onto the drill's words. Equipment lives at one level: on the block while it has no stations, and the moment a station arrives the
+coach **watches the kit move** onto it (or up into the practice's own list when the station is a drill) — nothing vanishes; the
+practice's equipment line under About is the bag (everything below, plus what the coach adds at the top). Escape closes every
+sheet and puts the coach back where they were — and fixing that surfaced a bug in the shared dialog floor that every dialog with
+an autofocused field had. **Measured on the build:** the fixture's written warm-up 682px open at desktop (drawn 579 — the
+fixture carries a Staff line the frame did not); the drill-placed block 1,033 (drawn 922). **Two things to look at on the walk:**
+the block is 240px wide on a phone, not the frame's ~290, and its title field is narrow beside the three head buttons — both stage
+1's sheet, one line each to change. The walk is the hub's "QA walk · 2" tab (34 steps, eight parts), ledger §190.
+
+## Stage 3 · Stations and the rotation — DRAWN 2026-09-15 · not ruled
+
+**The question first:** a block with one station — does it flatten into the block (the drill's words as the block's body; recommended,
+567px against 922 today) or keep its card? Then: stations side by side as columns under their block (rows on a phone), each showing
+its name, who runs it and tonight's note and opening for the rest; the rotation as **one line** (rotates · every N min · the rounds
+that makes · the draw as one control); the grid under the columns **in the same columns**, so reading down is one station's evening;
+coaching points as one field on a station and in the drill library; and people moving the way kit does when a station arrives,
+never silently deleted. The circuit block measures 4,083px on the fixture today; the drawing is 835. Eight decisions with
+recommendations on the hub's "3 · Stations and the rotation" tab.
 
 ## What comes next
 
-The stage 2 mockups on the hub; the owner's rulings on D1–D9; then the build, the walk, and stage 3 — **Stations and the
-rotation** — which opens on the one question stage 2 sends it: whether a block's only station flattens into the block.
+The stage 2 walk (§190) and its commit on the owner's word; the stage 3 rulings on the hub; then the stage 3 build in a fresh chat.

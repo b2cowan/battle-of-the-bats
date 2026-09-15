@@ -70,6 +70,15 @@ describe('collectPracticePlanTagIds — the count walks everything the merge wal
     assert.deepEqual([...ids].sort(), [STAFF_A, STAFF_B], 'STAFF_A sits on two levels and counts once');
   });
 
+  it("equipment: reaches a BLOCK's own kit (stage 2, D11 — a block with no stations carries it)", () => {
+    const plan: PracticePlan = {
+      version: 1,
+      blocks: [{ id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['kit-block'] }],
+    };
+    assert.deepEqual([...collectPracticePlanTagIds(plan, 'equipment')], ['kit-block']);
+    assert.equal(collectPracticePlanTagIds(plan, 'staff').size, 0);
+  });
+
   it('kinds never bleed: an equipment collect sees no staff ids, and vice versa', () => {
     assert.equal(collectPracticePlanTagIds(planWith(), 'equipment').has(STAFF_A), false);
     assert.equal(collectPracticePlanTagIds(planWith(), 'staff').has(KIT_A), false);

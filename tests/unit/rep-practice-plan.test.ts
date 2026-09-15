@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  blockAsksForTeaching,
   blockRotates,
   computeBlockClocks, walkBlockClocks,
   computeRotation,
@@ -11,7 +12,9 @@ import {
   drawGroups,
   formatDuration,
   isPracticePlanEmpty,
+  practiceKitBag,
   resolvePracticePlanTagNames,
+  settleBlockKit,
   sanitizePracticePlan,
   totalPlannedMinutes,
 } from '../../lib/rep-practice-plan.ts';
@@ -711,5 +714,146 @@ describe('walkBlockClocks — the walk also says where it stopped (the sheet\'s 
   });
   it('no start time → nothing, including no next start', () => {
     assert.deepEqual(walkBlockClocks([], '', null), { clocks: [], nextStartMs: null, nextStartLabel: null });
+  });
+});
+
+// ── Stage 2 · The block (owner rulings D7 and D11, 2026-09-15) ──────────────────────────────────
+
+describe('blockAsksForTeaching (D7) — a block placed from a drill has no words of its own', () => {
+  it('a block with no stations is the activity and asks', () => {
+    assert.equal(blockAsksForTeaching({ stations: [] }), true);
+    assert.equal(blockAsksForTeaching({}), true);
+  });
+  it('a block with two or more stations asks — its own line is the circuit\'s intro', () => {
+    assert.equal(blockAsksForTeaching({ stations: [station('s1', 'A'), station('s2', 'B')] }), true);
+  });
+  it('a block with EXACTLY ONE station and nothing written on itself does not ask', () => {
+    assert.equal(blockAsksForTeaching({ stations: [station('s1', 'Probe drill')] }), false);
+    assert.equal(blockAsksForTeaching({ stations: [station('s1', 'A')], description: '  ', coachingPoints: [''] }), false);
+  });
+  it('a block that HAD words before its station arrived keeps asking — content is always shown', () => {
+    assert.equal(blockAsksForTeaching({ stations: [station('s1', 'A')], goal: 'Head up' }), true);
+    assert.equal(blockAsksForTeaching({ stations: [station('s1', 'A')], description: 'Intro' }), true);
+    assert.equal(blockAsksForTeaching({ stations: [station('s1', 'A')], coachingPoints: ['Small touches'] }), true);
+  });
+});
+
+describe('sanitizePracticePlan — kit lives at exactly ONE level, and MOVES (D11)', () => {
+  it('a block with NO stations keeps its own kit', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{ title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['ladders', 'cones'] }],
+    });
+    assert.deepEqual(p?.blocks[0].equipmentTagIds, ['ladders', 'cones']);
+    assert.equal(p?.equipmentTagIds, undefined, 'nothing rises to the plan');
+  });
+
+  it('kit on a block whose first station is WRITTEN moves onto that station — its own kit first', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Circuit', rotates: false, duration: { minutes: 20 },
+        equipmentTagIds: ['ladders', 'cones'],
+        stations: [{ name: 'Tees', equipmentTagIds: ['cones', 'tees'] }, { name: 'Toss' }],
+      }],
+    });
+    assert.equal(p?.blocks[0].equipmentTagIds, undefined, 'the block-level list is gone');
+    assert.deepEqual(p?.blocks[0].stations?.[0].equipmentTagIds, ['cones', 'tees', 'ladders'], 'the first station has both, each once');
+    assert.equal(p?.blocks[0].stations?.[1].equipmentTagIds, undefined, 'the second station is untouched');
+    assert.equal(p?.equipmentTagIds, undefined, 'nothing rises to the plan');
+  });
+
+  it("kit on a block whose first station is a DRILL moves UP into the plan's list — a drill's kit is the drill's", () => {
+    const p = sanitizePracticePlan({
+      equipmentTagIds: ['water'],
+      blocks: [{
+        title: 'Probe drill', duration: { minutes: 20 },
+        equipmentTagIds: ['ladders', 'water'],
+        stations: [{ name: 'Probe drill', drillId: 'd1', equipmentTagIds: ['cones'] }],
+      }],
+    });
+    assert.equal(p?.blocks[0].equipmentTagIds, undefined, 'the block-level list is gone');
+    assert.deepEqual(p?.blocks[0].stations?.[0].equipmentTagIds, ['cones'], "the drill's own kit is untouched");
+    assert.deepEqual(p?.equipmentTagIds, ['water', 'ladders'], "the plan's own list first, then what rose, each once");
+  });
+
+  it('the move is IDEMPOTENT — a second pass finds nothing to move (it runs on read as well as write)', () => {
+    const once = sanitizePracticePlan({
+      blocks: [{
+        title: 'Circuit', duration: { minutes: 20 }, equipmentTagIds: ['ladders'],
+        stations: [{ name: 'Tees' }, { name: 'Toss' }],
+      }],
+    });
+    const twice = sanitizePracticePlan(JSON.parse(JSON.stringify(once)));
+    assert.deepEqual(twice, once);
+  });
+
+  it("a block's kit is held to the team's library like every other level", () => {
+    const p = sanitizePracticePlan(
+      { blocks: [{ title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['ladders', 'gone'] }] },
+      undefined, undefined, new Set(['ladders']),
+    );
+    assert.deepEqual(p?.blocks[0].equipmentTagIds, ['ladders']);
+  });
+
+  it('settles kit AFTER the library check — a stale id never takes a slot a live one needed (/review, 2026-09-15)', () => {
+    // A station already holding ten ids meets a block whose kit carries one stale id and two live
+    // ones: the union is capped at twelve. Settling before the check would spend a slot on the stale
+    // id and drop a live one; settling after it keeps both live ids.
+    const stationKit = Array.from({ length: 10 }, (_, i) => `k${i + 1}`);
+    const p = sanitizePracticePlan(
+      { blocks: [{ title: 'Circuit', duration: { minutes: 20 }, equipmentTagIds: ['gone', 'k11', 'k12'], stations: [{ name: 'Tees', equipmentTagIds: stationKit }, { name: 'Toss' }] }] },
+      undefined, undefined, new Set([...stationKit, 'k11', 'k12']),
+    );
+    assert.deepEqual(p?.blocks[0].stations?.[0].equipmentTagIds, [...stationKit, 'k11', 'k12']);
+  });
+
+  it('settleBlockKit is the one pass the editor and the sanitiser share — pure, and the same object when nothing moves', () => {
+    const untouched = plan({ blocks: [{ id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['ladders'] }] });
+    assert.equal(settleBlockKit(untouched), untouched, 'no stations — nothing moves, the same object');
+    const before = plan({ equipmentTagIds: ['water'], blocks: [{ id: 'b1', title: 'Drill', duration: { minutes: 20 }, equipmentTagIds: ['ladders'], stations: [{ id: 's1', name: 'Probe drill', drillId: 'd1' }] }] });
+    const snapshot = JSON.stringify(before);
+    const after = settleBlockKit(before);
+    assert.equal(JSON.stringify(before), snapshot, 'the input is untouched');
+    assert.deepEqual(after.equipmentTagIds, ['water', 'ladders']);
+    assert.equal(after.blocks[0].equipmentTagIds, undefined);
+    assert.equal(settleBlockKit(after), after, 'idempotent — a second pass finds nothing to move');
+  });
+  it("a template keeps a block's kit — it is shape, like a station's", () => {
+    const p = plan({ blocks: [{ id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['ladders'] }] });
+    const copy = copyPracticePlanForReuse(p, new Set(), () => 'new');
+    assert.deepEqual(copy.blocks[0].equipmentTagIds, ['ladders']);
+  });
+});
+
+describe('practiceKitBag (D11) — the bag is derived, never written down', () => {
+  const tags = [{ id: 'ladders', name: 'Ladders' }, { id: 'cones', name: 'Cones' }, { id: 'water', name: 'Water' }, { id: 'balls', name: 'Balls' }];
+
+  it("is the plan's own list, then every block's kit, then every station's — each name once", () => {
+    const bag = practiceKitBag(plan({
+      equipmentTagIds: ['water', 'cones'],
+      blocks: [
+        { id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['ladders', 'cones'] },
+        { id: 'b2', title: 'Circuit', duration: { minutes: 20 }, stations: [{ id: 's1', name: 'Tees', equipmentTagIds: ['balls'] }] },
+      ],
+    }), tags);
+    assert.deepEqual(bag.all, ['Water', 'Cones', 'Ladders', 'Balls']);
+    assert.deepEqual(bag.fromBlocks, ['Ladders', 'Balls'], 'only what rose from below and was not already at the top');
+  });
+
+  it('a level with no ids reads its legacy names, and a name is one name whatever its case', () => {
+    const bag = practiceKitBag(plan({
+      equipment: ['Cones', 'Bibs'],
+      blocks: [{ id: 'b1', title: 'Circuit', duration: { minutes: 20 }, stations: [{ id: 's1', name: 'Tees', equipment: ['cones', 'Spare balls'] }] }],
+    }), tags);
+    assert.deepEqual(bag.all, ['Cones', 'Bibs', 'Spare balls']);
+    assert.deepEqual(bag.fromBlocks, ['Spare balls']);
+  });
+
+  it('drops an id the library no longer holds rather than showing a blank', () => {
+    const bag = practiceKitBag(plan({ blocks: [{ id: 'b1', title: 'X', duration: { minutes: 5 }, equipmentTagIds: ['ladders', 'gone'] }] }), tags);
+    assert.deepEqual(bag.all, ['Ladders']);
+  });
+
+  it('an empty plan has an empty bag', () => {
+    assert.deepEqual(practiceKitBag(plan(), tags), { all: [], fromBlocks: [] });
   });
 });

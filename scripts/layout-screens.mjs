@@ -20,6 +20,12 @@
  *            to show the VIEW this entry measures (a report view, a grid arrangement). The runner
  *            seeds it on the page's origin, reloads, measures, then removes it. Use it for any
  *            state the URL does not carry; without it the entry measures the default view only.
+ *   interact optional async (page) => void — ONE product gesture the runner performs after the
+ *            screen is ready and before it measures, for a state the URL and device memory cannot
+ *            reach (a block opened in place on the practice sheet). Use the product's own doors —
+ *            an accessible name, a role — never a hashed class. ⚠ A gate that never opens the
+ *            thing it is meant to measure is blind inside it: the plan page's open-block fields
+ *            sat unmeasured through a whole stage because every row was shut on arrival.
  *   note     why anything unusual above is true
  *
  * ⚠ SESSION MATTERS. The coach portal resolves org context before coaching assignments, so opening
@@ -44,6 +50,20 @@
 const team = (c) => `/${c.orgSlug}/coaches/teams/${c.teamId}`;
 /** The team whose WORKING season has finished — see the block above `coach-season-end`. */
 const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
+
+/**
+ * Open the practice sheet's FIRST block in place (stage 2, 2026-09-15). A shut block is a row whose
+ * accessible name is its content behind a hidden "Open" verb; pressing it renders the block's
+ * fields, chips and doors — the surface this stage redrew and the one the gate could never see.
+ * Tolerant of a sheet with no blocks (an empty template): nothing to open, nothing to fail.
+ */
+async function openFirstBlock(page) {
+  const row = page.getByRole('button', { name: /^Open / }).first();
+  if (await row.count() === 0) return;
+  await row.click();
+  await page.getByRole('button', { name: /^Close / }).first().waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
 
 export const SCREENS = [
   // ── The portal's own front doors ────────────────────────────────────────────
@@ -149,7 +169,9 @@ export const SCREENS = [
   { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/practice?section=templates`, ready: 'h1' },
   // Two more of the six — see the block above `coach-player`.
   { id: 'coach-development-template', session: 'coach', ready: '[data-room="plan-template"][data-room-state="loaded"]',
-    path: (c) => `${team(c)}/practice/templates/${c.planTemplateId}` },
+    path: (c) => `${team(c)}/practice/templates/${c.planTemplateId}`,
+    // The template's block, open — the same block with no clock and no people (stage 2).
+    interact: openFirstBlock },
   { id: 'coach-development-session',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}` },
   // Phase 2 (2026-09-13): the scoped session — one field per attempt, Saved / Not assessed /
@@ -182,6 +204,10 @@ export const SCREENS = [
     // The sheet marks itself loaded once the plan GET has resolved (stage 1: blocks are closed
     // rows on arrival, so no input exists to wait on; the h1 renders before the load).
     ready: '[data-room="practice-plan"][data-room-state="loaded"]',
+    // Then the first block is opened in place — the probe practice's written warm-up (six players,
+    // two coaching points): the clock row's chips, the two fields, the Players line, the doors.
+    // The blind spot stage 1's review recorded; closed at stage 2.
+    interact: openFirstBlock,
   },
   {
     id: 'coach-practice-run',

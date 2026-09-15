@@ -497,6 +497,36 @@ await ensureOne(
   'plan template',
 );
 
+// ONE drill in the library, WITH WORDS (practices re-evaluation stage 2, 2026-09-15). A block
+// placed from a drill opens onto the drill's read-only text and its shut row reads the drill's
+// first line (D6 · D7) — a bare drill shows neither, so the walk could not see what the stage
+// built. The words are the hub's own frame. An existing bare row is given them once (the
+// hand-made "Probe drill" predates this seed); a named row that already has a description is
+// left as the coach wrote it.
+const PROBE_DRILL = {
+  description: 'Two lines, cones five metres apart; players carry through at pace and turn at the far cone.',
+  goal: 'Head up on the carry.',
+  coaching_points: ['Small touches into the turn', 'Accelerate out'],
+  setup: 'Two cones, five metres apart, one ball per player.',
+  equipment: ['Cones', 'Balls'],
+  usual_minutes: 20,
+};
+{
+  const found = await db.from('rep_team_drills').select('id, description').eq('team_id', team.id).eq('name', 'Probe drill').limit(1).maybeSingle();
+  if (found.error) { console.error('✗ drill lookup', found.error.message); process.exit(1); }
+  if (!found.data) {
+    const ins = await db.from('rep_team_drills').insert({ org_id: org.id, team_id: team.id, name: 'Probe drill', is_active: true, ...PROBE_DRILL });
+    if (ins.error) { console.error('✗ drill insert', ins.error.message); process.exit(1); }
+    ok('drill seeded');
+  } else if (!found.data.description) {
+    const upd = await db.from('rep_team_drills').update(PROBE_DRILL).eq('id', found.data.id);
+    if (upd.error) { console.error('✗ drill update', upd.error.message); process.exit(1); }
+    ok('drill given its words');
+  } else {
+    ok('drill already present');
+  }
+}
+
 // A lineup template with every player seated, so the editor renders the full board. The position
 // vocabulary is the schema's fixed domain (see the note above FIELD_POSITIONS) — a fixture choosing
 // a sport here would be the Sport Pack violation, not the codes themselves.

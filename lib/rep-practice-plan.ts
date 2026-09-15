@@ -45,6 +45,27 @@ export function blockRotates(block: Pick<PracticePlanBlock, 'rotates' | 'station
 }
 
 /**
+ * Does this block ask for teaching of its own — What you're doing · What you're watching for ·
+ * Coaching points? (Practices re-evaluation stage 2, owner ruling D7, 2026-09-15.)
+ *
+ * A block placed from a drill has no words of its own: the drill IS its single station, and the
+ * run screen already reads such a block through the station ("with one station the station is
+ * the block"). So a block with EXACTLY ONE station and nothing written on itself asks for none —
+ * it opens onto the station's read-only text instead. With no stations it is the activity; with
+ * two or more its own line is the circuit's intro. A block that HAD words before its station
+ * arrived keeps showing them (content is always shown).
+ *
+ * ONE predicate, read by both the closed row (its first line) and the open body (which fields it
+ * offers), so the two can never disagree about what a block is.
+ */
+export function blockAsksForTeaching(
+  block: Pick<PracticePlanBlock, 'stations' | 'description' | 'goal' | 'coachingPoints'>,
+): boolean {
+  if ((block.stations?.length ?? 0) !== 1) return true;
+  return !!(block.description?.trim() || block.goal?.trim() || block.coachingPoints?.some(p => p.trim()));
+}
+
+/**
  * Which group(s) START at a given station (round 1 of the carousel).
  *
  * Groups move forward one station per round, so in round 1 group *i* is at station *i*. With more
@@ -342,6 +363,11 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   if (points) block.coachingPoints = points;
   if (stations.length) block.stations = stations;
 
+  // The block's own kit (D11) — read structurally here like any id list; WHERE it lives is settled
+  // by `settleBlockKit` after the library check, so a stale id never takes a slot a live one needed.
+  const blockKit = strList(raw.equipmentTagIds, MAX_TAGS_PER_ITEM, 64);
+  if (blockKit) block.equipmentTagIds = blockKit;
+
   /**
    * ⚠ PEOPLE LIVE AT EXACTLY ONE LEVEL (owner ruling 2026-08-01). Enforced here rather than trusted
    * to the UI, so a stale client or a hand-rolled payload can never produce two disagreeing answers
@@ -349,6 +375,9 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
    *   · no stations        → the block's own player list
    *   · stations, separate → each station's list
    *   · stations, rotating → the rotation's groups, and nothing else
+   * ⚠ Recorded, not changed (stage 2, 2026-09-15): the block's players are DELETED here when a
+   * station arrives, where the block's kit is MOVED (`settleBlockKit`). Whether people should move
+   * the same way is stage 3's (stations and the rotation) — do not fix it on the way past.
    */
   const rotating = blockRotates(block as PracticePlanBlock);
   if (rotating) {
@@ -432,6 +461,9 @@ export function sanitizePracticePlan(
   if (validStaffTagIds || validEquipmentTagIds) {
     scoped = restrictTagIds(scoped, validStaffTagIds, validEquipmentTagIds);
   }
+  // Kit settles to the activity's level LAST (D11) — after the library check, so a stale id can
+  // never take a slot a live one needed when two capped lists meet (/review, 2026-09-15).
+  scoped = settleBlockKit(scoped);
   return isPracticePlanEmpty(scoped) ? null : scoped;
 }
 
@@ -490,6 +522,7 @@ function restrictTagIds(
     blocks: plan.blocks.map(block => ({
       ...block,
       staffTagIds: keep(block.staffTagIds, validStaffTagIds),
+      equipmentTagIds: keep(block.equipmentTagIds, validEquipmentTagIds),
       stations: block.stations?.map(s => ({
         ...s,
         staffTagIds: keep(s.staffTagIds, validStaffTagIds),
@@ -497,6 +530,45 @@ function restrictTagIds(
       })),
     })),
   };
+}
+
+/**
+ * ⚠ KIT LIVES AT EXACTLY ONE LEVEL — the activity's (stage 2, owner ruling D11, 2026-09-15), the
+ * same law as people. A block with no stations IS the activity and keeps its kit; once it has
+ * stations, each station carries its own and the block's list MOVES rather than vanishing:
+ *   · the first station is written → onto that station (its own kit first, then the block's)
+ *   · the first station is a drill → up into the plan's list, the bag (a drill's kit is the drill's)
+ * The move is the difference from `playerIds`, which the same situation silently deletes
+ * (recorded beside it in `sanitizeBlock`, not changed — people are stage 3's).
+ *
+ * ONE pure pass, run in two places so the screen and the column agree: the sanitiser runs it
+ * last (after the library check — every read and every write), and the editor runs it on every
+ * change to the blocks, so the coach SEES the kit move the moment a station arrives rather than
+ * watching it vanish until a reload (the save's response is not applied to local state; /review,
+ * 2026-09-15). Idempotent by construction: after the move the block holds no kit, so a second pass
+ * finds nothing to move. Two capped lists can exceed the cap when unioned; the tail is dropped,
+ * as any list here is. The same object comes back when nothing moved.
+ */
+export function settleBlockKit(plan: PracticePlan): PracticePlan {
+  const lifted: string[] = [];
+  let moved = false;
+  const blocks = plan.blocks.map(block => {
+    if (!block.equipmentTagIds?.length || !block.stations?.length) return block;
+    moved = true;
+    const { equipmentTagIds: kit, ...rest } = block;
+    const [first, ...others] = block.stations;
+    if (first.drillId) {
+      lifted.push(...kit);
+      return { ...rest, stations: block.stations };
+    }
+    const merged = strList([...(first.equipmentTagIds ?? []), ...kit], MAX_TAGS_PER_ITEM, 64);
+    return { ...rest, stations: [{ ...first, equipmentTagIds: merged }, ...others] };
+  });
+  if (!moved) return plan;
+  const equipmentTagIds = strList([...(plan.equipmentTagIds ?? []), ...lifted], MAX_TAGS_PER_ITEM, 64);
+  const next: PracticePlan = { ...plan, blocks };
+  if (equipmentTagIds) next.equipmentTagIds = equipmentTagIds;
+  return next;
 }
 
 /** Read a stored value back into a plan, tolerating a pre-migration `undefined`/null column. */
@@ -1093,15 +1165,59 @@ export function copyPracticePlanForReuse(
  * longer holds (merged away, retired, a stale read). The one id→name walk every display of a
  * tag list shares — the sheet's "About this practice" line, the printed sheet's practice types.
  */
-export function tagNamesById(
-  ids: readonly string[] | undefined,
-  tags: readonly { id: string; name: string }[] | ReadonlyMap<string, string>,
-): string[] {
-  if (!ids?.length) return [];
-  const byId: ReadonlyMap<string, string> = Array.isArray(tags)
+type TagLookup = readonly { id: string; name: string }[] | ReadonlyMap<string, string>;
+
+/** A tag list as its id→name map — or the map a caller already built, handed straight back. */
+function toTagMap(tags: TagLookup): ReadonlyMap<string, string> {
+  return Array.isArray(tags)
     ? new Map((tags as readonly { id: string; name: string }[]).map(t => [t.id, t.name]))
     : (tags as ReadonlyMap<string, string>);
+}
+
+export function tagNamesById(ids: readonly string[] | undefined, tags: TagLookup): string[] {
+  if (!ids?.length) return [];
+  const byId = toTagMap(tags);
   return ids.map(id => byId.get(id)).filter((n): n is string => !!n);
+}
+
+/**
+ * The BAG — what the practice needs tonight (stage 2, owner ruling D11, 2026-09-15): the plan's
+ * own list (the coach's extras — water, the first-aid kit) ∪ every block's kit ∪ every station's
+ * kit, as CURRENT names, in that order, each name once. Derived at read time and never written
+ * down: the plan's stored list stays the extras, and what rose from a block is removed on the
+ * block, not at the top — the rule the practice's tags already follow. A level with no ids reads
+ * its legacy names, exactly as `resolvePracticePlanTagNames` does.
+ *
+ * `all` is what the About line shows and the printed sheet's head prints; `fromBlocks` is the
+ * part that rose from below, so the About fold can say where it came from.
+ */
+export function practiceKitBag(
+  plan: PracticePlan,
+  equipmentTags: TagLookup,
+): { all: string[]; fromBlocks: string[] } {
+  // Built once for the whole walk, then handed to `tagNamesById` level by level.
+  const byId = toTagMap(equipmentTags);
+  const seen = new Set<string>();
+  const all: string[] = [];
+  const fromBlocks: string[] = [];
+  const add = (names: readonly string[], below: boolean) => {
+    for (const raw of names) {
+      const name = raw.trim();
+      const key = name.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      all.push(name);
+      if (below) fromBlocks.push(name);
+    }
+  };
+  const level = (ids: readonly string[] | undefined, legacy: readonly string[] | undefined, below: boolean) =>
+    add(ids?.length ? tagNamesById(ids, byId) : legacy ?? [], below);
+  level(plan.equipmentTagIds, plan.equipment, false);
+  for (const block of plan.blocks) {
+    level(block.equipmentTagIds, undefined, true);
+    for (const station of block.stations ?? []) level(station.equipmentTagIds, station.equipment, true);
+  }
+  return { all, fromBlocks };
 }
 
 export function resolvePracticePlanTagNames(
@@ -1136,8 +1252,9 @@ export function resolvePracticePlanTagNames(
  *
  * ⚠ Lives here, not beside the DB round-trips that call it, because it is pure plan-shape logic
  * and `rep-practice-plan-tag-repoint.ts` carries `server-only` — which would make the walk
- * untestable. The four surfaces it must reach are the practice’s own equipment line, each
- * block’s staff, and each station’s who-runs-it and equipment.
+ * untestable. The five surfaces it must reach are the practice’s own equipment line, each
+ * block’s staff and (while it has no stations) its kit, and each station’s who-runs-it and
+ * equipment.
  */
 
 const NESTED_KIND_FIELD: Record<'staff' | 'equipment', 'staffTagIds' | 'equipmentTagIds'> = {
@@ -1185,10 +1302,10 @@ export function repointPracticePlanTags(
 
   const nextBlock = (b: PracticePlanBlock): PracticePlanBlock => {
     let block = b;
-    if (kind === 'staff') {
-      const after = repointIds(b.staffTagIds, transform);
-      if (after !== b.staffTagIds) { changed = true; block = { ...block, staffTagIds: after }; }
-    }
+    // A block carries staff at every age and kit only while it has no stations (D11) — the walk
+    // reads whichever field the kind names, so a merged tag reaches a block's kit too.
+    const after = repointIds(b[field], transform);
+    if (after !== b[field]) { changed = true; block = { ...block, [field]: after }; }
     if (b.stations?.length) {
       const stations = b.stations.map(nextStation);
       if (stations.some((s, i) => s !== b.stations![i])) block = { ...block, stations };

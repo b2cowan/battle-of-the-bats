@@ -1516,6 +1516,16 @@ export interface PracticePlanBlock {
   staffTagIds?: string[];
   /** ⚠ Only when the block has NO stations. */
   playerIds?: string[];
+  /**
+   * The activity's kit — real 'equipment' tag ids (mig 266), ⚠ only while the block has NO
+   * stations (practices re-evaluation stage 2, owner ruling D11, 2026-09-15). Kit lives at exactly
+   * ONE level, the same law as people: a block with no stations IS the activity and carries it; once
+   * a station exists each station carries its own. Unlike `playerIds`, the sanitiser MOVES this when
+   * the first station arrives (onto a written first station, or up into the plan's list when that
+   * station is a drill) rather than deleting it — kit typed on a block never vanishes. No legacy
+   * free-text twin: the field is younger than the library.
+   */
+  equipmentTagIds?: string[];
   coachingPoints?: string[];
   stations?: PracticeStation[];
   /** Groups + the clock. Present when the block's stations rotate. */
@@ -1542,7 +1552,14 @@ export interface PracticePlan {
   practiceTypes?: string[];
   /** Legacy free-text equipment labels for the whole practice. A plan carries EITHER this OR `equipmentTagIds`. */
   equipment?: string[];
-  /** Real 'equipment' tag ids (mig 266). See `equipment` above. */
+  /**
+   * Real 'equipment' tag ids (mig 266). See `equipment` above.
+   *
+   * What is STORED here is the coach's extras — kit that belongs to no block (water, the first-aid
+   * kit). What the practice SHOWS and PRINTS is the bag: this list ∪ every block's and station's
+   * kit, derived at read time (`practiceKitBag`, stage 2 D11) and never written down. A block's
+   * kit that had to move up (its first station was a drill) lands here, once, in the sanitiser.
+   */
   equipmentTagIds?: string[];
   blocks: PracticePlanBlock[];
 

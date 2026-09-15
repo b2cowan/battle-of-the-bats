@@ -127,6 +127,22 @@ describe('repointPracticePlanTags — every surface an id sits on', () => {
     assert.deepEqual(next.blocks[0].stations![0].equipmentTagIds, [WINNER]);
   });
 
+  it("a merge re-points a BLOCK's kit — the level stage 2 added (D11, kit at the activity's level)", () => {
+    // A block with no stations carries the activity's kit; a merge must reach it or the block
+    // keeps pointing at a row the RPC deleted — the same dangling-id failure the template walk had.
+    const plan: PracticePlan = {
+      version: 1,
+      blocks: [{ id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: [OTHER, LOSER] }],
+    };
+    const merged = repointPracticePlanTags(plan, 'equipment', toWinner);
+    assert.equal(merged.changed, true);
+    assert.deepEqual(merged.plan.blocks[0].equipmentTagIds, [OTHER, WINNER]);
+    const dropped = repointPracticePlanTags(plan, 'equipment', drop);
+    assert.deepEqual(dropped.plan.blocks[0].equipmentTagIds, [OTHER]);
+    // A staff walk does not touch it.
+    assert.deepEqual(repointPracticePlanTags(plan, 'staff', toWinner).plan.blocks[0].equipmentTagIds, [OTHER, LOSER]);
+  });
+
   it('each kind leaves the other kind alone', () => {
     const eq = repointPracticePlanTags(planWith(), 'equipment', toWinner);
     assert.deepEqual(eq.plan.blocks[0].staffTagIds, [LOSER], 'staff untouched by an equipment walk');

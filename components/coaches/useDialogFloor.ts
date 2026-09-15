@@ -66,6 +66,37 @@ const EDITABLE = 'input, textarea, select, [contenteditable="true"]';
 /** Every floor currently open, oldest first. A key from the bare document is the last one's. */
 const openFloors: symbol[] = [];
 
+/**
+ * ⚠ WHAT OPENED THE PANEL IS NOT ALWAYS WHAT HAS FOCUS WHEN THE FLOOR ARMS. An `autoFocus` field
+ * inside the panel takes focus during React's commit — BEFORE any effect runs — so reading
+ * `document.activeElement` in the effect recorded the dialog's OWN input and "returned" focus to
+ * a detached node on close (found on "Save as template…", practices stage 2, 2026-09-15; every
+ * floor with an autoFocus field had it). Reading it at render time is refused by the hooks lint
+ * (refs during render), so the floor keeps a two-deep focus history from one document listener:
+ * when the panel already holds focus as it arms, the opener is the element focused just before.
+ */
+let focusedNow: HTMLElement | null = null;
+let focusedBefore: HTMLElement | null = null;
+let focusHistoryArmed = false;
+function armFocusHistory(): void {
+  if (focusHistoryArmed || typeof document === 'undefined') return;
+  focusHistoryArmed = true;
+  document.addEventListener('focusin', event => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (target === focusedNow) return;
+    focusedBefore = focusedNow;
+    focusedNow = target;
+  }, true);
+}
+function openerOf(panel: HTMLElement | null): HTMLElement | null {
+  const active = document.activeElement as HTMLElement | null;
+  if (panel && active && panel.contains(active)) return focusedBefore;
+  return active;
+}
+// Armed when the module loads in the browser — a floor that mounts only while open would
+// otherwise arm it in the same commit as its own autoFocus, one `focusin` too late.
+armFocusHistory();
+
 export function useDialogFloor(
   open: boolean,
   panelRef: RefObject<HTMLElement | null>,
@@ -80,7 +111,7 @@ export function useDialogFloor(
     if (!open) return;
     const token = Symbol('dialog-floor');
     openFloors.push(token);
-    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    restoreFocusRef.current = openerOf(panelRef.current);
 
     function onKey(event: KeyboardEvent) {
       const panel = panelRef.current;

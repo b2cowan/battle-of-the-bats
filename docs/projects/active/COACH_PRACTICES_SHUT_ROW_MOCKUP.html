@@ -1,0 +1,329 @@
+<title>Shut Row, Read Aloud</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --chrome-bg:#EEF0F3; --chrome-card:#FFFFFF; --chrome-ink:#1C2230; --chrome-ink-soft:#525A6B;
+    --chrome-line:#DADEE5; --chrome-accent:#3457D5; --chrome-accent-soft:#E8EDFC;
+    --tag-new:#B4520A; --tag-new-soft:#FCEEE0;
+    --home-paper:#F8F4ED; --home-card:#FFFFFF; --home-ink:#241E15; --home-ink-soft:#4A4235;
+    --home-dim:#615A54; --home-line:rgba(70,55,30,0.12); --home-line-strong:rgba(70,55,30,0.20);
+    --home-olive:#57651E; --home-olive-soft:rgba(87,101,30,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --chrome-bg:#14171D; --chrome-card:#1B1F27; --chrome-ink:#E7E9EE; --chrome-ink-soft:#A0A7B4;
+      --chrome-line:#2B303B; --chrome-accent:#7C94F5; --chrome-accent-soft:#232B45;
+      --tag-new:#E8A15E; --tag-new-soft:#3A2A17;
+    }
+  }
+  :root[data-theme="dark"]{
+    --chrome-bg:#14171D; --chrome-card:#1B1F27; --chrome-ink:#E7E9EE; --chrome-ink-soft:#A0A7B4;
+    --chrome-line:#2B303B; --chrome-accent:#7C94F5; --chrome-accent-soft:#232B45;
+    --tag-new:#E8A15E; --tag-new-soft:#3A2A17;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--chrome-bg); color:var(--chrome-ink);
+    font-family:'Inter',system-ui,sans-serif; line-height:1.5;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:2.5rem 1.5rem 5rem;}
+  .eyebrow{
+    font-size:0.7rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--chrome-accent); margin:0 0 0.5rem;
+  }
+  h1{font-size:1.7rem; font-weight:700; letter-spacing:-0.01em; margin:0 0 0.6rem; text-wrap:balance;}
+  .lede{color:var(--chrome-ink-soft); font-size:0.95rem; max-width:62ch; margin:0 0 2.4rem;}
+  .lede b{color:var(--chrome-ink); font-weight:600;}
+
+  h2{font-size:1.05rem; font-weight:700; margin:0 0 0.2rem;}
+  .sub{color:var(--chrome-ink-soft); font-size:0.85rem; margin:0 0 1rem;}
+  section{margin-bottom:2.8rem;}
+  .quote{
+    border-left:3px solid var(--chrome-line); padding:0.5rem 0 0.5rem 0.9rem; margin:0 0 1rem;
+    font-size:0.85rem; color:var(--chrome-ink-soft); font-style:italic;
+  }
+
+  /* ── the product frame ── */
+  .frame{
+    background:var(--home-paper); border:1px solid var(--chrome-line); border-radius:10px;
+    padding:0.6rem 1rem 0.9rem; overflow:hidden;
+  }
+  .frame-label{
+    font-size:0.7rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--chrome-ink-soft); padding:0.6rem 0 0.3rem;
+  }
+  .ppTl{display:flex; flex-direction:column;}
+  .ppTlRow{display:grid; grid-template-columns:5.2rem minmax(0,1fr); min-width:0;}
+  .ppTlGutter{
+    font-family:'IBM Plex Mono',monospace; font-size:0.75rem; line-height:1.4;
+    color:var(--home-ink-soft); font-variant-numeric:tabular-nums; text-align:right;
+    padding:0.85rem 0.6rem 0.85rem 0; border-right:2px solid var(--home-ink); white-space:nowrap;
+  }
+  .ppTlGutter small{display:block; font-size:0.6875rem; color:var(--home-dim);}
+  .ppTlClosed{
+    display:flex; flex-direction:column; gap:0.2rem; width:100%;
+    padding:0.65rem 0.5rem 0.75rem 1.1rem;
+    border-bottom:1px dotted var(--home-line-strong); color:var(--home-ink);
+  }
+  .ppTlRow:last-child .ppTlClosed{border-bottom:0;}
+  .ppTlTitle{display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; font-size:0.875rem; font-weight:700;}
+  .ppShapeTag{
+    display:inline-flex; align-items:center; gap:0.25rem; font-size:0.6875rem; font-weight:600;
+    color:var(--home-olive); background:var(--home-olive-soft); border-radius:99px; padding:0.1rem 0.5rem;
+  }
+  .ppTlDesc{font-size:0.875rem; color:var(--home-ink-soft);}
+  .ppTlWatch{font-size:0.875rem; color:var(--home-ink-soft);}
+  .ppTlWatch b{color:var(--home-dim); font-weight:600;}
+  .ppTlMeta{font-size:0.75rem; color:var(--home-dim);}
+  .newline{position:relative;}
+  .newline::before{
+    content:'NEW'; position:absolute; left:-3.7rem; top:0.15rem;
+    font-size:0.6rem; font-weight:700; letter-spacing:0.05em; color:var(--tag-new);
+    background:var(--tag-new-soft); border-radius:4px; padding:0.05rem 0.35rem;
+  }
+
+  .twocol{display:grid; grid-template-columns:1fr 1fr; gap:1.4rem;}
+  @media (max-width:720px){.twocol{grid-template-columns:1fr;}}
+  .colhead{
+    font-size:0.7rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--chrome-ink-soft); margin:0 0 0.5rem; display:flex; align-items:center; gap:0.4rem;
+  }
+  .colhead.after{color:var(--tag-new);}
+  .dot{width:6px; height:6px; border-radius:50%; background:currentColor; display:inline-block;}
+
+  .note{
+    background:var(--chrome-accent-soft); border-radius:8px; padding:0.9rem 1.1rem; margin-top:0.9rem;
+    font-size:0.85rem; color:var(--chrome-ink-soft);
+  }
+  .note b{color:var(--chrome-ink);}
+
+  /* ── flow strip for the "lands closed" section ── */
+  .flow{display:flex; align-items:stretch; gap:0.8rem; margin-top:0.8rem;}
+  .flow-step{flex:1; min-width:0;}
+  .flow-cap{font-size:0.75rem; font-weight:600; color:var(--chrome-ink-soft); margin-bottom:0.4rem;}
+  .flow-arrow{
+    display:flex; align-items:center; justify-content:center; color:var(--chrome-line);
+    font-size:1.4rem; padding-top:1.6rem;
+  }
+  .sheet-mini{
+    background:var(--home-card); border:1px solid var(--home-line-strong); border-radius:8px;
+    padding:0.7rem 0.8rem; font-size:0.8rem; color:var(--home-ink-soft);
+  }
+  .sheet-mini b{display:block; color:var(--home-ink); font-size:0.85rem; margin-bottom:0.3rem;}
+  .sheet-mini .btn{
+    display:inline-block; margin-top:0.6rem; background:#D9F99D; color:#2B3612; font-weight:700;
+    font-size:0.75rem; padding:0.3rem 0.7rem; border-radius:6px;
+  }
+  .result-open{
+    background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:8px;
+    padding:0.6rem 0.8rem; font-size:0.8rem; color:var(--home-dim);
+  }
+  .result-open .cap{font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--home-dim); margin-bottom:0.3rem;}
+  .result-open input{
+    width:100%; border:1px solid var(--home-line-strong); border-radius:5px; background:#fff;
+    padding:0.35rem 0.5rem; font-size:0.85rem; color:var(--home-dim); margin-bottom:0.4rem;
+  }
+  .result-open .fieldlabel{font-size:0.6875rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--home-dim); margin-bottom:0.15rem;}
+
+  .verdict{font-size:0.7rem; font-weight:700; text-align:center; padding:0.3rem; border-radius:6px; margin-top:0.5rem;}
+  .verdict.today{background:#F3E4D2; color:#8A5A1D;}
+  .verdict.proposed{background:var(--tag-new-soft); color:var(--tag-new);}
+
+  .ask{
+    background:var(--chrome-card); border:1px solid var(--chrome-line); border-radius:10px;
+    padding:1.2rem 1.4rem; font-size:0.88rem;
+  }
+  .ask ul{margin:0.5rem 0 0; padding-left:1.2rem;}
+  .ask li{margin-bottom:0.5rem;}
+  .foot{color:var(--chrome-ink-soft); font-size:0.78rem; margin-top:3rem; border-top:1px solid var(--chrome-line); padding-top:1rem;}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Coach Portal · Practice Plans — follow-up to Stage 2, D6</p>
+  <h1>Does the shut row say enough to skip opening it?</h1>
+  <p class="lede">
+    Two asks from today's testing: a drill added from the library should land on the plan
+    <b>already shut</b>, not pop open for another look — and the shut row itself should carry a bit
+    more of what the drill-preview sheet already showed, enough that a coach can read a whole
+    practice top-to-bottom and follow the shape of it without opening every block.
+  </p>
+
+  <section>
+    <h2>What's live right now</h2>
+    <p class="sub">Built earlier today — the shut row deliberately dropped everything but the title, the first line and a headcount.</p>
+    <div class="quote">
+      "The shut row: title · first line · &ldquo;3 stations&rdquo; or &ldquo;6 players&rdquo; when true · the Rotation tag.
+      The coaching-points count goes — a fact you get by opening the thing needs no label promising it."
+      <br>— D6, ruled 2026-09-15
+    </div>
+    <div class="frame">
+      <div class="frame-label">Tuesday practice · 3 blocks, all shut</div>
+      <div class="ppTl">
+        <div class="ppTlRow">
+          <div class="ppTlGutter">6:00<small>15 min</small></div>
+          <div class="ppTlClosed">
+            <span class="ppTlTitle">Warm-up</span>
+            <span class="ppTlDesc">Dynamic stretch, then light catch in pairs down the line.</span>
+            <span class="ppTlMeta">Whole team</span>
+          </div>
+        </div>
+        <div class="ppTlRow">
+          <div class="ppTlGutter">6:15<small>45 min</small></div>
+          <div class="ppTlClosed">
+            <span class="ppTlTitle">Skills circuit <span class="ppShapeTag">↻ Rotation</span></span>
+            <span class="ppTlDesc">Three stations, groups of four, rotate every 15.</span>
+            <span class="ppTlMeta">3 stations</span>
+          </div>
+        </div>
+        <div class="ppTlRow">
+          <div class="ppTlGutter">7:00<small>12 min</small></div>
+          <div class="ppTlClosed">
+            <span class="ppTlTitle">Probe drill</span>
+            <span class="ppTlDesc">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</span>
+            <span class="ppTlMeta">Whole team</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The tension</h2>
+    <p class="sub">Worth saying plainly before drawing the fix.</p>
+    <p style="font-size:0.88rem; color:var(--chrome-ink-soft); max-width:64ch;">
+      D6 was ruled and built <b>today</b>, and it was ruled the direction it was on purpose — the
+      written warm-up alone went from 743px to about 480px by cutting the shut row down to almost
+      nothing. Adding detail back in reopens that exact call. It's not the wrong ask, though: reading
+      a plan top-to-bottom to understand its <i>flow</i> is a different job than confirming a block
+      opened correctly, and D6 never tried to serve the first one. The fix below is deliberately
+      narrow — one line, not the whole preview — so it doesn't just walk the height back to where
+      Stage 2 started.
+    </p>
+  </section>
+
+  <section>
+    <h2>Proposed — one more line, not the whole preview</h2>
+    <p class="sub">"What you're watching for" sits right next to "what you're doing" everywhere else in this plan — the field screen, the station card, the printed sheet. The shut row is the one place that only ever said half of it.</p>
+    <div class="frame">
+      <div class="frame-label">Same practice, shut rows now carry the second line</div>
+      <div class="ppTl" style="padding-left:3.7rem;">
+        <div class="ppTlRow" style="grid-template-columns:1.5rem minmax(0,1fr); margin-left:-3.7rem;">
+          <div class="ppTlGutter" style="padding-right:0.6rem;">6:00<small>15</small></div>
+          <div class="ppTlClosed">
+            <span class="ppTlTitle">Warm-up</span>
+            <span class="ppTlDesc">Dynamic stretch, then light catch in pairs down the line.</span>
+            <span class="ppTlWatch newline"><b>Watching for:</b> Everyone moving, nobody standing still.</span>
+            <span class="ppTlMeta">Whole team</span>
+          </div>
+        </div>
+        <div class="ppTlRow" style="grid-template-columns:1.5rem minmax(0,1fr); margin-left:-3.7rem;">
+          <div class="ppTlGutter" style="padding-right:0.6rem;">6:15<small>45</small></div>
+          <div class="ppTlClosed">
+            <span class="ppTlTitle">Skills circuit <span class="ppShapeTag">↻ Rotation</span></span>
+            <span class="ppTlDesc">Three stations, groups of four, rotate every 15.</span>
+            <span class="ppTlWatch newline"><b>Watching for:</b> Quick transitions between stations.</span>
+            <span class="ppTlMeta">3 stations</span>
+          </div>
+        </div>
+        <div class="ppTlRow" style="grid-template-columns:1.5rem minmax(0,1fr); margin-left:-3.7rem;">
+          <div class="ppTlGutter" style="padding-right:0.6rem;">7:00<small>12</small></div>
+          <div class="ppTlClosed">
+            <span class="ppTlTitle">Probe drill</span>
+            <span class="ppTlDesc">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</span>
+            <span class="ppTlWatch newline"><b>Watching for:</b> Head up on the carry.</span>
+            <span class="ppTlMeta">Whole team</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note">
+      <b>Setup and Equipment stay out of the shut row.</b> They're logistics for the coach's OWN prep,
+      not the flow a reader is following — and both already have a home: Equipment on the "About this
+      practice" shelf above the timeline, Setup inside the open block once a drill's read-only detail
+      is showing. Repeating them on every row is exactly the height regression D6 was ruled to avoid.
+      Coaching-points stay dropped too, for the same reason D6 gave the first time.
+      <br><br>
+      <b>Height cost:</b> one more line only on a block that has a "watching for" written — for a
+      typical 4–5 block practice, roughly another 70–90px total. Still a fraction of the ~480px a
+      single <i>open</i> block cost before Stage 2.
+    </div>
+  </section>
+
+  <section>
+    <h2>Adding a drill lands shut, not open</h2>
+    <p class="sub">The preview sheet already showed everything — Doing, Watching for, Setup, Equipment — right before the tap. Opening the block again repeats the same read.</p>
+    <div class="twocol">
+      <div class="flow-step">
+        <div class="colhead">Today</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-cap">Preview sheet</div>
+            <div class="sheet-mini">
+              <b>Probe drill</b>
+              Doing: two lines, cones five metres apart…
+              <span class="btn">Add to the practice</span>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-cap">Lands on the plan</div>
+            <div class="result-open">
+              <div class="cap">Open block</div>
+              <div class="fieldlabel">Title</div>
+              <input value="Probe drill" readonly>
+              <div class="fieldlabel">Minutes</div>
+              <input value="12" readonly>
+              <span style="font-size:0.75rem;">…the same drill, reopened for editing.</span>
+            </div>
+          </div>
+        </div>
+        <div class="verdict today">Shows it again</div>
+      </div>
+      <div class="flow-step">
+        <div class="colhead after"><span class="dot"></span>Proposed</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-cap">Preview sheet</div>
+            <div class="sheet-mini">
+              <b>Probe drill</b>
+              Doing: two lines, cones five metres apart…
+              <span class="btn">Add to the practice</span>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-cap">Lands on the plan</div>
+            <div class="frame" style="padding:0;">
+              <div class="ppTl">
+                <div class="ppTlRow">
+                  <div class="ppTlGutter">7:00<small>12 min</small></div>
+                  <div class="ppTlClosed" style="border-bottom:0;">
+                    <span class="ppTlTitle">Probe drill</span>
+                    <span class="ppTlDesc">Two lines, cones five metres apart…</span>
+                    <span class="ppTlWatch"><b>Watching for:</b> Head up on the carry.</span>
+                    <span class="ppTlMeta">Whole team</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="verdict proposed">A shut row that's already a receipt</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ask">
+    <h2 style="margin-bottom:0.6rem;">Recommendation</h2>
+    <ul>
+      <li><b>Add "Watching for" as the shut row's second line</b>, reading through the same station/block
+        resolver the first line already uses — no new data, no migration.</li>
+      <li><b>Land a drill picked from the library shut</b>, not open — the enriched shut row above is
+        the confirmation that it landed right.</li>
+      <li><b>Leave Setup, Equipment and coaching-points off the shut row</b> — they keep the homes D6
+        and the practice's own Equipment shelf already gave them.</li>
+    </ul>
+  </section>
+
+  <p class="foot">Coach Practices Re-evaluation · follow-up to Stage 2 (D6) · drawn 2026-09-15, same day as the ruling it revisits</p>
+</div>

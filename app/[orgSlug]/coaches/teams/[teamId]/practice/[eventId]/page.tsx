@@ -25,10 +25,11 @@ import {
 import {
   MAX_RECAP_LEN,
   blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan,
-  formatDuration, isPracticePlanEmpty, newPracticePlanId, resolvePracticePlanTagNames, resolveStationTeaching,
-  tagNamesById,
+  formatDuration, isPracticePlanEmpty, newPracticePlanId, practiceKitBag, resolvePracticePlanTagNames,
+  resolveStationTeaching, tagNamesById,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateToPlan,
 } from '@/lib/rep-plan-templates';
@@ -220,6 +221,11 @@ export default function CoachPracticePlanPage({
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
   useOverlayOpen(copyOpen || saveTemplateOpen);
+  /* "Start this plan from…" stands on the portal's dialog floor (stage 2, D9) — Escape closes it
+     and focus returns to the ghost row's link. The editor's three sheets and "Save as template…"
+     take the same floor; leaving one would be two sheets on one page that close differently. */
+  const copyPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(copyOpen, copyPanelRef, { onClose: () => setCopyOpen(false) });
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   // "How it went" appears once the practice has STARTED (stage 1, D7) — a plan left open on a
@@ -573,9 +579,15 @@ export default function CoachPracticePlanPage({
     const blocks: PracticeSheetBlock[] = resolved.blocks.map(block => {
       const clock = clockByBlock.get(block.id);
       const time = clock ? `${clock.startLabel}${clock.endLabel ? `–${clock.endLabel}` : ''}` : '';
+      // One vocabulary at both levels (stage 2, D3): the block's line says "Watch for:" as its
+      // station lines below already do — the word the field screen prints in bold.
+      // The block's kit (D11) prints beside the block, where a station's already prints; the
+      // block has no legacy names field to resolve into, so its ids are named here directly.
+      const blockKit = tagNamesById(block.equipmentTagIds, equipmentTags);
       const notes = [
-        block.goal ? `Goal: ${block.goal}` : '',
+        block.goal ? `Watch for: ${block.goal}` : '',
         block.description ?? '',
+        blockKit.length ? `Equipment: ${blockKit.join(', ')}` : '',
         ...(block.coachingPoints ?? []).map((p, i) => `${i + 1}. ${p}`),
         ...(block.stations ?? []).map(s => {
           // ⚠ The SAME resolver the field screen uses. The sheet is what an assistant running the
@@ -675,7 +687,9 @@ export default function CoachPracticePlanPage({
         // what was done.
         description: plan.description ?? null,
         practiceTypes: [...tagNamesById(planTagIds, focusTags), ...(plan.practiceTypes ?? [])],
-        equipment: resolved.equipment ?? [],
+        // The head prints the BAG (stage 2, D11) — everything the blocks and stations below need
+        // plus the coach's extras — the same walk the sheet's About line reads on screen.
+        equipment: practiceKitBag(plan, equipmentTags).all,
         blocks, focus, settings,
       },
     );
@@ -1124,7 +1138,7 @@ export default function CoachPracticePlanPage({
           {data.sessions.length > 0 && (
             <div className={styles.ppRecorded}>
               <h2 className={styles.ppRecordedTitle}><Ruler size={15} aria-hidden /> Recorded here</h2>
-              <p className={styles.formHint}>Evaluation sessions whose readings were taken at this practice.</p>
+              <p className={styles.formHint}>Evaluation sessions recorded at this practice — a session here takes the practice’s date.</p>
               <ul className={styles.ppRecordedList}>
                 {data.sessions.map(session => {
                   const label = `${formatInOrgZone(`${session.sessionDate}T12:00:00Z`, { month: 'short', day: 'numeric', year: 'numeric' })}${session.note ? ` — ${session.note}` : ''}`;
@@ -1157,9 +1171,9 @@ export default function CoachPracticePlanPage({
           before C2 the only answer was to import the practice into the template library first
           (five steps, and a library permanently grown to reuse one night). */}
       {copyOpen && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Start this plan from"
-          onPointerDown={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
+          <div ref={copyPanelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Start this plan from"
+            className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Start this plan from…</h3>
               <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setCopyOpen(false)}>
@@ -1235,6 +1249,11 @@ function SaveAsTemplateDialog({
   const [name, setName] = useState(defaultName);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /* The dialog floor (stage 2, D9), busy-gated: Escape closes, never mid-save; the name field's
+     own autoFocus keeps the cursor (the floor seats focus on the panel only when nothing inside
+     took it). */
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(true, panelRef, { onClose, busy });
 
   async function submit() {
     if (!name.trim() || busy) return;
@@ -1246,9 +1265,9 @@ function SaveAsTemplateDialog({
   }
 
   return (
-    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Save as template"
-      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`${styles.modal} ${styles.modalScrollBody}`}>
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Save as template"
+        aria-busy={busy || undefined} className={`${styles.modal} ${styles.modalScrollBody}`}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Save as template</h3>
           <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>

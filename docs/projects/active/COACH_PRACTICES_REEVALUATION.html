@@ -401,6 +401,124 @@ details.call .body p{margin:0 0 6px}
 .sk .skfoot{margin-top:10px;font-size:12.5px;color:var(--muted);line-height:1.45}
 @media (max-width:760px){.sk .skrow{grid-template-columns:1fr}.sk .lib{min-height:0}}
 </style>
+<style>
+/* ── stage 2 · the open block, drawn in the portal's own materials ── */
+.pf .ob{background:#F8F4ED;border:1px solid rgba(70,55,30,.2);border-radius:8px;margin:6px 0 8px 12px;position:relative}
+.pf .obh{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(70,55,30,.12)}
+.pf .obh .ar{display:flex;flex-direction:column;gap:3px;color:#9A938B;font-size:11px;line-height:1;width:16px;text-align:center}
+.pf .obh .ti{flex:1;border:1px solid rgba(70,55,30,.25);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:600;background:#fff;color:#241E15;min-height:38px}
+.pf .obh .ti.foc{outline:2px solid #2F6FD1;outline-offset:1px}
+.pf .obh .ti i{color:#9A938B;font-style:normal;font-weight:400}
+.pf .obh .ic{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;color:#615A54;font-size:15px}
+.pf .obb{display:flex;flex-direction:column;gap:12px;padding:13px 14px 16px}
+.pf .obb .flab{margin:0 0 4px}
+.pf .obb .fin{margin:0;min-height:38px}
+.pf .obb .fin.ta{min-height:64px}
+.pf .obb .fin.v{color:#241E15}
+.pf .obb .fin.dis{opacity:.5}
+.pf .frow{display:flex;align-items:flex-end;gap:11px;flex-wrap:wrap}
+.pf .fin.num{width:80px;font-family:"IBM Plex Mono",monospace}
+.pf .chk{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#4A4235;min-height:44px}
+.pf .chk i{width:16px;height:16px;border:1px solid rgba(70,55,30,.4);border-radius:3px;background:#fff;display:inline-block;font-style:normal}
+.pf .chk.dis{opacity:.5}
+.pf .pick{border:1px solid rgba(70,55,30,.25);border-radius:8px;padding:9px 10px;color:#9A938B;font-size:14px;background:#fff;min-height:38px}
+.pf .hint{font-size:12.5px;color:#8B847B;margin-top:4px}
+.pf .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pf .chp{border:1px solid rgba(70,55,30,.2);border-radius:999px;padding:4px 10px;font-size:13px;background:#fff;color:#241E15}
+.pf .pkb{border:1px solid rgba(70,55,30,.3);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#4A4235;background:#fff;display:inline-flex;gap:6px;align-items:center;min-height:36px}
+.pf .ptr{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pf .ptr .n{width:18px;font-size:12px;color:#9A938B;text-align:right;font-family:"IBM Plex Mono",monospace}
+.pf .ptr .fin{flex:1;margin:0}
+.pf .ptr .x{color:#9A938B;font-size:13px;width:22px;text-align:center}
+.pf .addl{font-size:12.5px;font-weight:600;color:#4A4235;min-height:40px;display:inline-flex;align-items:center;gap:4px}
+.pf .sth{display:flex;align-items:center;gap:14px;position:relative}
+.pf .sth .flab{margin:0}
+.pf .stn{border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:10px;position:relative}
+.pf .stnh{display:flex;align-items:center;gap:8px}
+.pf .stnh .no{width:22px;height:22px;border-radius:50%;background:#EAE6D8;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.pf .stnh b{font-size:15px;flex:1}
+.pf .from{font-size:12.5px;color:#615A54}
+.pf .rd{font-size:14px;color:#241E15;line-height:1.5;margin:0}
+.pf .rd ol{margin:0;padding-left:1.2em}
+.pf .acts2{display:flex;gap:18px;font-size:12.5px;font-weight:600;color:#4A4235}
+/* the proposal's pieces */
+.pf .crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pf .qc{border:1px solid rgba(70,55,30,.3);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:#4A4235;background:#fff;font-variant-numeric:tabular-nums;min-height:34px;display:inline-flex;align-items:center}
+.pf .qc.on{background:#241E15;color:#fff;border-color:#241E15}
+.pf .crow .fin.num{width:64px;text-align:center;min-height:36px}
+.pf .crow .unit{font-size:13px;color:#615A54;margin-left:-3px}
+.pf .crow .sep{color:#B8B0A4}
+.pf .crow .ends{font-size:12.5px;color:#615A54;font-family:"IBM Plex Mono",monospace;margin-left:auto}
+.pf .who{font-size:14px;color:#241E15;min-height:36px;display:flex;align-items:center;gap:6px}
+.pf .who u{color:#57651E;font-weight:700;text-decoration:none}
+.pf .doorline{font-size:13px;color:#615A54;font-weight:600;padding-top:2px;position:relative}
+.pf .doorline u{color:#57651E;text-decoration:none;font-weight:700;white-space:nowrap}
+.pf .rowb{padding:10px 0 12px 18px;border-bottom:1px dotted rgba(70,55,30,.3);position:relative}
+.pf .rowb b{display:block;font-size:16px}
+.pf .rowb .l1{color:#4A4235;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf .rowb .l2{font-size:12.5px;color:#615A54}
+.pf .rowb i{color:#9A938B;font-weight:600}
+.pf .rtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;border:1px solid rgba(70,55,30,.3);border-radius:4px;padding:1px 5px;color:#615A54;margin-left:8px;vertical-align:2px}
+.pf.t768{width:768px}
+.pf.t768 .cardonly{width:768px;padding:18px}
+.pf.t768 .doc{padding:26px 28px;max-width:none;margin:0}
+.pf.t768 .fin,.pf.t768 .pick,.pf.t768 .qc,.pf.t768 .pkb,.pf.t768 .crow .fin.num{min-height:44px}
+.pf.t768 .obb .fin.ta{min-height:70px}
+.pf .doc .ob>.mk{left:-24px;top:-10px}
+.pf .doc .rowb>.mk{left:-24px;top:-6px}
+.pf .obb .an>.mk.r,.pf .doc .doorline>.mk.r,.pf .doc .sth>.mk.r,.pf .doc .stn>.mk.r,.pf .doc .hcol>.an>.mk.r{left:auto;right:-27px;top:-6px}
+.pf .doc .stn>.mk.r{right:-9px;top:-11px}
+.pf.ph .ob{margin-left:6px}
+.pf.ph .obb{padding:11px 10px 14px;gap:10px}
+.pf.ph .obh{padding:6px 6px}
+.pf.ph .fin,.pf.ph .pick,.pf.ph .qc,.pf.ph .pkb,.pf.ph .crow .fin.num{min-height:44px}
+.pf.ph .crow .ends{margin-left:0;width:100%}
+.pf.ph .doc .ob>.mk{left:-12px}
+.pf.ph .obb .an>.mk.r,.pf.ph .doc .doorline>.mk.r{right:-14px}
+.pf .hcol{display:flex;flex-direction:column;gap:14px}
+.pf .frame3{display:flex;gap:28px;align-items:flex-start}
+.pf .hpx{font-family:"IBM Plex Mono",monospace;font-size:11px;color:#B03A22;background:#fff;border:1px solid #B03A22;border-radius:3px;padding:1px 6px;position:absolute;right:8px;top:-9px}
+.pf .ob.after .hpx{color:#37570F;border-color:#57651E}
+/* stage 3 · stations as columns, the rotation strip, the grid, the draw */
+.pf .rec{font-size:11px;font-weight:700;color:#37570F;border:1px solid #57651E;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.pf .rotpanel{border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.pf .rotstrip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:#241E15;min-height:36px;position:relative}
+.pf .rotstrip .sep{color:#B8B0A4}.pf .rotstrip .fin.num.sm{width:48px;min-height:32px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.pf .rotstrip.wrap{gap:6px 8px}
+.pf .stcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;position:relative}
+.pf .stcols.one{grid-template-columns:1fr}.pf .stcols.stack{grid-template-columns:1fr}
+.pf .stcol{border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pf .stcol.open{grid-column:span 2;gap:10px}.pf .stcol.shut{opacity:.75}.pf .stcol.add{border-style:dashed;justify-content:center;align-items:flex-start;color:#615A54;font-size:13px}
+.pf .stcol.add u,.pf .stcol .sco u,.pf .grp .edit{color:#57651E;text-decoration:none;font-weight:700}.pf .stcol.add .q{font-size:12px;color:#9A938B}
+.pf .sch{display:flex;align-items:center;gap:8px}.pf .sch b{font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pf .sch .ar{font-size:10px;color:#9A938B}
+.pf .scl{font-size:13px;color:#4A4235;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pf .scl.tn{color:#8F540C}
+.pf .scq{font-size:13px;color:#615A54;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pf .sco{font-size:13px;margin-top:2px}
+.pf .rgrid{border-collapse:collapse;width:100%;font-size:13px;margin:4px 0}.pf .rgrid th,.pf .rgrid td{border:1px solid rgba(70,55,30,.2);padding:6px 8px;text-align:left;white-space:nowrap}
+.pf .rgrid th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:#615A54}.pf .rgrid th small{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:none;letter-spacing:0;color:#9A938B}
+.pf .rgrid.cols th:first-child{font-family:"IBM Plex Mono",monospace;text-transform:none;letter-spacing:0;color:#4A4235;font-size:12.5px}.pf .rgrid.cols{table-layout:fixed}.pf .rgrid.cols th:first-child{width:56px}.pf .rgrid.cols td{text-align:center;font-size:15px}
+.pf .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;padding:2px 0}.pf .grp b{min-width:60px}.pf .grp .chp{font-size:12.5px}
+.pf .stn.dim{opacity:.55}.pf .stn .more{font-size:13px;color:#9A938B;font-style:italic;padding:6px 0}
+.pf .scroll{overflow-x:auto}.pf .scroll .rgrid{min-width:300px}
+.pf .chk i.on{background:#57651E;border-color:#57651E}
+.pf .stcols>.mk.r,.pf .rotstrip>.mk.r{left:auto;right:-27px;top:-6px}
+.pf.ph .stcols>.mk.r,.pf.ph .rotstrip>.mk.r{right:-14px}
+/* stage 3 revision (15 Sep, after review) — a station opens as a modal, not inline, with the
+   fundraiser drive drawer's own stepper for "what else is running tonight" */
+.pf .moddim{background:rgba(36,30,21,.35);border-radius:6px;padding:36px 48px;display:flex;justify-content:center}
+.pf .modcard{background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(36,30,21,.28);width:100%;max-width:620px;position:relative;text-align:left}
+.pf .modhead{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(70,55,30,.14)}
+.pf .modtitle{display:flex;align-items:center;gap:10px}
+.pf .modtitle b{font-size:19px}
+.pf .modstatus{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#37570F;background:#E4EDD3;border:1px solid rgba(87,101,30,.3);border-radius:5px;padding:2px 8px}
+.pf .modx{color:#615A54;font-size:15px}
+.pf .modbody{display:flex;flex-direction:column;gap:12px;padding:18px 22px}
+.pf .modfoot{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 22px;border-top:1px solid rgba(70,55,30,.14)}
+.pf .moddel{color:#B03A22;font-size:13.5px;font-weight:600}
+.pf .modstep{border:1px solid rgba(70,55,30,.25);border-radius:999px;padding:8px 14px;font-size:13px;color:#9A938B;display:inline-flex;align-items:center;gap:8px}
+.pf .modstep b{color:#241E15;font-weight:700}
+.pf .modstepbtn{color:#B8B0A4}
+.pf .modcard>.mk{top:-11px;left:-11px}
+</style>
 
 <nav class="tabs" role="tablist" aria-label="The re-evaluation, one stage at a time">
   <span class="tabtitle">Practices · re-evaluation</span>
@@ -411,7 +529,9 @@ details.call .body p{margin:0 0 6px}
   <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">§188 complete</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
-  <span class="tab next" aria-disabled="true">2 · The block<span class="st">next — plan, then mockups</span><span class="st dim">station 4</span></span>
+  <button type="button" class="tab" role="tab" data-tab="stage2" aria-selected="false" aria-controls="tab-stage2">2 · The block<span class="st built">built 15 Sep</span><span class="st dim">station 4</span></button>
+  <button type="button" class="tab" role="tab" data-tab="qa2" aria-selected="false" aria-controls="tab-qa2">QA walk · 2<span class="st">§190 owed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="stage3" aria-selected="false" aria-controls="tab-stage3">3 · Stations and the rotation<span class="st">drawn — rule it</span></button>
 </nav>
 
 <div class="shell" id="tab-walk" role="tabpanel">
@@ -2005,9 +2125,1118 @@ details.call .body p{margin:0 0 6px}
   </section>
 </div>
 
+<div class="prop" id="tab-stage2" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">Stage 2 · The block <span class="status built">ruled 15 Sep — D1–D11 all as drawn</span> <span class="status built">built on dev 15 Sep</span> <span class="status built">three owner revisions on the build 15 Sep</span> <span class="status">walk owed — the “QA walk · 2” tab · ledger §190</span></div>
+    <h1>A block opens to four things; the rest waits at the door</h1>
+    <p class="lede">The coach opens a block. Today it asks eight questions every time — minutes, rest-of-practice, description, goal, staff, players, coaching points, stations — so a written warm-up stands <b>743px</b> tall whether or not it will ever have staff or points; a block placed from a drill opens onto three <em>empty</em> questions above the drill's own text; and the block calls the same three ideas by different names than its station does. The proposal: a block opens to its <b>title, a clock row, <em>What you're doing</em> and <em>What you're watching for</em></b>, and everything else is a quiet door at its foot that becomes a field the moment it holds something. Same words at both levels. Quick lengths and “ends 6:15 p.m.” on the clock row. Escape closes every sheet. This tab is the plan and its frames together: before and after at true size, then eleven decisions — each drawn, each with a recommendation, each with <b>Build as drawn · Change it · Not now</b> under it and a paste-back at the foot.</p>
+  </header>
+
+  <section class="psec">
+    <h2>Owner revisions on the build (15 Sep, during the walk)</h2>
+    <div class="plain">
+      <ol>
+        <li><b>The block's insides take the drawing's tones — a build miss, fixed.</b> The frames below put every field <em>white</em> on the block's cream, the names as white pills, the “6 players” button solid, and the pressed minute chip filled with ink. The build had reused the portal's standing field tone, which on the warm theme is the same cream as the card — paper on paper, a hairline apart — and the minute chips came from the dashed <em>suggestion</em> family, so a pressed 15 only firmed its border. Now as drawn, on both themes.</li>
+        <li><b>“Whole team” is one press, not twelve.</b> The picker's footer offers <b>Whole team</b> beside Done while names are chosen on a block: it clears every name and closes on the answer (note 28). A station's or a group's picker does not offer it — there is no whole team to return to. Ticking all twelve does <em>not</em> collapse into Whole team on its own: a named twelve stays those twelve when a thirteenth joins, which is what the word is there to distinguish.</li>
+        <li><b>The picker no longer prints a player's focus areas under their name</b> (reversing the August ruling that put them there). One line under twelve names read as a stray note; choosing who is at a block is a roster question, and the rail under the plan is where focus areas are read. The rail, the sheet and the Development grant are untouched.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="psec">
+    <h2>What the walk saw, and what the code says</h2>
+    <div class="plain">
+      <p>The walk's “What I'd change” list is not a checklist. Read against the code as built:</p>
+      <ul>
+        <li><b>“Add a block adds a block” — done</b> at stage 1. <b>“A block is a row on a timeline” — done</b>: the clock the walk measured as 12px grey <em>under the title</em> now sits in the gutter as the timeline's spine, beside a bold title. The finding is answered by structure; D4 asks only what the open block repeats.</li>
+        <li><b>“One notes area” — wrong on the code.</b> The <em>watching for</em> line is the one the field screen and the station screen print <b>bold</b> at arm's length — the payoff for typing it as its own line. Older plans print through a fallback that works field by field; a merged field breaks it for every one of them. And a merge changes the plan's stored shape (a version bump across plans <em>and</em> templates) for a height problem D1 solves without touching the model.</li>
+        <li><b>“One vocabulary at both levels” — right, and narrower than drawn.</b> There are not two vocabularies; there is one editor out of step. The station editor, the drill library, the drill preview, the field screen, the printed station line and the closed-season reader (for a block's fields too) all say <em>What you're doing · What you're watching for · Coaching points</em>. Only the block editor says <em>Description · Goal</em>, against a ruling from August that the goal is “what you're watching for” everywhere. D3 confirms the block joins — and it does <b>not</b> touch how a plan is stored.</li>
+        <li><b>A block placed from a drill has no teaching of its own.</b> A picked drill never becomes a block; it becomes the block's single <em>station</em>. The block takes the drill's name and usual minutes; the drill's text sits one level down, read-only, with its provenance line. The field screen already reads such a block through its station (“with one station, the station is the block”); D7 makes the editor agree with it.</li>
+        <li><b>“Escape closes every sheet” — right, and cheap.</b> The portal already has one shared floor for this (Escape closes, focus returns to the opener, a menu open inside a sheet claims its own Escape); none of the five sheets on the plan page stands on it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="psec">
+    <h2>What changes</h2>
+    <div class="twocol">
+      <div class="plain"><b>On the screen</b>
+        <ul>
+          <li><b>A block opens to four things</b> — title · the clock row · <em>What you're doing</em> (two lines) · <em>What you're watching for</em> (one line). Under them one quiet line: <em>+ Coaching points · + Staff · + Players · + Stations</em>. A field that holds something is always shown; a door opened and left empty is a door again on reload (nothing lost — today's behaviour).</li>
+          <li><b>The clock row</b>: the minutes, five quick lengths (5 · 10 · 15 · 20 · 30), <em>Rest of practice</em>, and the consequence — “ends 6:15 p.m.” The gutter stays the block's clock; the open block repeats the start nowhere.</li>
+          <li><b>One vocabulary</b>: <em>What you're doing · What you're watching for · Coaching points</em> at the block as at the station. The practice's own “Tonight:” line and its About description are a different level and keep their names.</li>
+          <li><b>The shut row</b>: title · first line · “3 stations” or “6 players” when true · the Rotation tag. The coaching-points count goes (the September ruling: a fact you get by opening the thing needs no label promising it); “Who: everyone” goes (the plan stores no “everyone”). A drill-placed row reads its drill's first line instead of nothing.</li>
+          <li><b>A block placed from a drill</b> opens to its title and clock row, then the drill's read-only text and provenance — no empty questions above it. Editing the title or minutes never detaches; editing a word of the drill's still does.</li>
+          <li><b>Escape</b> closes whichever sheet is open — Choose players · Add a block / Add a station / Swap this drill · Save to my drills · Start this plan from… · Save as template… — and hands focus back. Escape does <b>not</b> close an open block: a row is not a sheet.</li>
+          <li><b>The phone</b> gets the same block narrowed — the clock row on two lines, the doors line as phrases. <b>A template</b> is the same block without a clock and without the people doors.</li>
+        </ul>
+      </div>
+      <div class="plain"><b>What does not change</b>
+        <ul>
+          <li>How a plan is stored — no migration; the two teaching fields stay two.</li>
+          <li>Autosave and “emptiness discards nothing”; reorder by arrows; a drill's read-only rule and what detaches it.</li>
+          <li>The field screen — it already reads a block the way D7 proposes.</li>
+          <li>The printed sheet — one word: its block line says “Watch for:” as its station lines already do. Its layout is stage 5's.</li>
+          <li>Stations, the rotation and the groups grid — stage 3's, drawn under the “+ Stations” door. <b>The one question this stage sends there:</b> does a block's <em>only</em> station flatten into the block, or keep its card?</li>
+        </ul>
+        <b>Estimated, to be measured</b>
+        <ul>
+          <li>The written warm-up: 743px today → ~480px. A new block: ~600px → ~300px. The mockup measures both; the estimate is not the ruling.</li>
+          <li>Recorded for stage 5, not fixed here: the field screen never shows a <em>block's</em> staff (it reads station staff only), so “who runs this block” prints on paper and is absent on the field.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="psec">
+    <h2>Before and after, at true size</h2>
+    <p class="intro">Tuesday's practice from stage 1 (Team practice 1 · 7:00–8:30 p.m. · 90 min), the warm-up open. Amber markers are what the code does today, green ones what changes; click any marker, and every decision below lists where it is drawn. The heights on each block are measured from these drawings at true size — the build re-measures them on the real screen.</p>
+    <div class="frametools"><span>Frames:</span><span class="sw" role="group" aria-label="Frame size"><button type="button" data-fit="fit" aria-pressed="true">Fit to window</button><button type="button" data-fit="true" aria-pressed="false">True size</button></span><span>· desktop 1440 · tablet 768 · phone 390</span></div>
+
+    <p class="framecap" data-short="Before · warm-up">Before · the written warm-up, open — as built today<span class="k">1440 · the document only · title, 15 min, two sentences, six players, two coaching points</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc">
+        <div class="dhead">
+          <div><div class="dt2">Team practice 1</div><div class="dsub">Tuesday practice · <u>View on schedule</u></div></div>
+          <div class="dw"><b>Tue, May 5 · 7:00–8:30 p.m. · 90 min</b><br>15 of 90 min planned · <span style="color:#8F540C">75 unplanned</span></div>
+        </div>
+        <p class="dgoal">Tonight: Sharper decisions under pressure.</p>
+        <p class="dabout"><b>About this practice ▸</b> Skills · Small-sided · cones, 2 ladders</p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="ob an" data-measure="before-warmup"><button type="button" class="mk" aria-expanded="false" aria-label="Note 1" data-d="C1">1</button><div class="pop" hidden><b>Eight questions, every time</b>Minutes, rest-of-practice, description, goal, staff, players, coaching points, stations — every field open whether or not this block will ever have staff or points. The card is as tall written as it is empty.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Warm-up</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div class="an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 2" data-d="C5">2</button><div class="pop" hidden><b>A number box and a checkbox</b>Fifteen is what nearly every block starts as, and 5 · 10 · 20 · 30 are most of the rest; each is typed. “Rest of practice” is a checkbox that greys out with a hover title when another block holds it — invisible on a phone.</div>
+                <div class="frow"><div><div class="flab">Minutes</div><div class="fin num v">15</div></div><span class="chk"><i></i> Rest of practice</span></div>
+              </div>
+              <div class="an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 3" data-d="C3 C2">3</button><div class="pop" hidden><b>Description · Goal — the block's own words for the station's ideas</b>One level down the same two fields are “What you're doing” and “What you're watching for”; so are they in the drill library, on the field screen, on the printed station line and in the closed-season record. Only this editor says Description and Goal.</div>
+                <div class="flab">Description</div><div class="fin ta v">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div>
+              </div>
+              <div><div class="flab">Goal</div><div class="fin v">Everyone moving with the ball before the first drill.</div></div>
+              <div class="an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 4" data-d="C1">4</button><div class="pop" hidden><b>Staff, asked of a warm-up</b>A tag picker and a hint that reads like an error, on a block nobody but the head coach will ever run. It is the same size empty as it would be full.</div>
+                <div class="flab">Staff</div><div class="pick">Search your tags…</div><div class="hint">No staff yet — type a name to add your first one.</div>
+              </div>
+              <div><div class="flab">Players</div><div class="chips"><span class="chp">Avery Test</span><span class="chp">Blake Test</span><span class="chp">Casey Test</span><span class="chp">Drew Test</span><span class="chp">Emery Test</span><span class="chp">Finn Test</span><span class="pkb">👥 6 players</span></div></div>
+              <div><div class="flab">Coaching points</div>
+                <div class="ptr"><span class="n">1</span><span class="fin v">Knees over toes on the lunges</span><span class="x">✕</span></div>
+                <div class="ptr"><span class="n">2</span><span class="fin v">Talk to your partner before the pass</span><span class="x">✕</span></div>
+                <span class="addl">+ Add a point</span>
+              </div>
+              <div class="sth an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 5" data-d="C1">5</button><div class="pop" hidden><b>Stations, offered on every block</b>The hand-off to stage 3 sits at the foot of every open block as a labelled section, even on a block that will never have one.</div><span class="flab">Stations</span><span class="addl">+ Add a station</span></div>
+            </div>
+          </div>
+          <div class="tg">7:15 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span><span class="q">15 min · or <u>a drill from your library</u> · <u>what everyone's working on</u></span></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn">1</span><span><b>Eight questions, every time.</b> As tall written as empty.</span></li>
+      <li><span class="nn">2</span><span><b>A number box and a checkbox.</b> The common lengths are typed; the checkbox greys out with a hover title.</span></li>
+      <li><span class="nn">3</span><span><b>Description · Goal.</b> The one editor that names the station's ideas differently.</span></li>
+      <li><span class="nn">4</span><span><b>Staff asked of a warm-up.</b> Empty fields cost the same as full ones.</span></li>
+      <li><span class="nn">5</span><span><b>Stations offered on every block.</b></span></li>
+    </ol>
+
+    <p class="framecap" data-short="After · warm-up">After · the same warm-up, open<span class="k">1440 · the document only · D1 · D3 · D4 · D5</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc">
+        <div class="dhead">
+          <div><div class="dt2">Team practice 1</div><div class="dsub">Tuesday practice · <u>View on schedule</u></div></div>
+          <div class="dw"><b>Tue, May 5 · 7:00–8:30 p.m. · 90 min</b><br>15 of 90 min planned · <span style="color:#8F540C">75 unplanned</span></div>
+        </div>
+        <p class="dgoal">Tonight: Sharper decisions under pressure.</p>
+        <p class="dabout an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 30" data-d="C11">30</button><div class="pop" hidden><b>The bag list is the union</b>The practice's equipment line reads everything the blocks and stations below need, plus anything the coach adds here that belongs to no block (first-aid kit, water). What rose from a block is removed on the block, not here — the rule the practice's tags already follow (“from the drills in this practice”). The sheet prints the bag at its head and each block's kit beside the block.</div><b>About this practice ▸</b> Skills · Small-sided · cones, ladders, balls</p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="ob after an" data-measure="after-warmup"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 6" data-d="C1">6</button><div class="pop" hidden><b>Four things, then what the block holds</b>Title, the clock row, What you're doing, What you're watching for. Then what the block holds — the coaching points, the equipment — and its Players line, which every block carries (Whole team, or the names chosen). Staff and stations wait at the foot as doors. A field with content is always shown.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Warm-up</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 7" data-d="C5 C4">7</button><div class="pop" hidden><b>The clock row</b>Five quick lengths, the minutes for anything else, Rest of practice as the last chip in the same row, and the consequence — “ends 7:15 p.m.” — from the same arithmetic as the gutter. The open block repeats the start nowhere; the gutter has it.</div>
+                <div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span><span class="ends">ends 7:15 p.m.</span></div>
+              </div>
+              <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 8" data-d="C3 C2">8</button><div class="pop" hidden><b>One vocabulary at both levels</b>What you're doing · What you're watching for · Coaching points — the station's words, the drill library's words, the field screen's words. Two fields, not one notes area: the “watching for” line is what the field screen prints in bold at arm's length.</div>
+                <div class="flab">What you're doing</div><div class="fin ta v">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div>
+              </div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Everyone moving with the ball before the first drill.</div></div>
+              <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 27" data-d="C10">27</button><div class="pop" hidden><b>Coaching points as one field, one per line</b>Today each point is its own input row with a number, a remove button and an add link — a form inside the form. The field screen and the printed sheet already print them as a list; the coach types one per line and presses Enter for the next. Stored exactly as today (a list, capped at eight).</div><div class="flab">Coaching points</div><div class="fin ta v">Knees over toes on the lunges<br>Talk to your partner before the pass</div></div>
+              <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 28" data-d="C1 C6">28</button><div class="pop" hidden><b>Who this block is for — always said</b>Every block carries a Players line. It reads <b>Whole team</b> until the coach chooses names; clearing every name returns it to Whole team — and the picker's footer carries a <b>Whole team</b> button that does it in one press (owner, 15 Sep, on the build: unticking twelve names was the only way back). The shut row says the same word. Absent when the block has stations (people live on the stations); absent on a template. Not a number: names are what the sheet and the field screen print, and “how many are here” is attendance's question, already answered on the field screen.</div>
+                <div class="flab">Players</div><div class="chips"><span class="chp">Avery Test</span><span class="chp">Blake Test</span><span class="chp">Casey Test</span><span class="chp">Drew Test</span><span class="chp">Emery Test</span><span class="chp">Finn Test</span><span class="pkb">👥 6 players</span></div></div>
+              <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 29" data-d="C11">29</button><div class="pop" hidden><b>Equipment on the block — the activity's kit, at the activity's level</b>A written block had nowhere to say “ladders” except the bag list at the top. This block has no stations, so it is the activity and carries the kit; once it has stations, each station carries its own and this line goes — the same one-level rule as Players. What is chosen here rises into the bag above and prints beside this block on the sheet.</div>
+                <div class="flab">Equipment</div><div class="chips"><span class="chp">Ladders</span><span class="chp">Cones</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+              <div class="doorline an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 9" data-d="C1">9</button><div class="pop" hidden><b>The doors, at the foot</b>What this block does not hold yet, in the ghost row's quiet voice. Press one and it becomes the field, in its place in the order above. Coaching points and Equipment are not offered here because they are already showing; Players is never a door — it is always on the block.</div><u>+ Staff</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+          <div class="tg">7:15 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span><span class="q">15 min · or <u>a drill from your library</u> · <u>what everyone's working on</u></span></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">6</span><span><b>Four things, then what the block holds.</b> A field with content is always shown.</span></li>
+      <li><span class="nn ok">7</span><span><b>The clock row.</b> Quick lengths · minutes · Rest of practice · “ends 7:15 p.m.”</span></li>
+      <li><span class="nn ok">8</span><span><b>One vocabulary at both levels.</b> Two fields, the station's words.</span></li>
+      <li><span class="nn ok">9</span><span><b>The doors, at the foot.</b> Only what the block does not hold yet.</span></li>
+      <li><span class="nn ok">27</span><span><b>Coaching points as one field.</b> One per line; stored as today.</span></li>
+      <li><span class="nn ok">28</span><span><b>Who this block is for — always said.</b> Whole team until names are chosen; never a number.</span></li>
+      <li><span class="nn ok">29</span><span><b>Equipment on the block.</b> Typed where it is needed; rises into the bag list.</span></li>
+      <li><span class="nn ok">30</span><span><b>The bag list is the union.</b> Removed where it came from.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="After · just added">After · a block just added — the smallest a block gets<span class="k">1440 · the open block only · the title focused</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:15 p.m.<small>15 min</small></div>
+          <div class="ob after an" data-measure="after-new"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 10" data-d="C1">10</button><div class="pop" hidden><b>The minimum face</b>What the lime writes: the title ready to type, the clock row at 15, the two teaching lines, Players reading Whole team, and four doors. Nothing else on the page moves.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti foc"><i>What are we doing?</i></span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span><span class="ends">ends 7:30 p.m.</span></div>
+              </div>
+              <div><div class="flab">What you're doing</div><div class="fin ta">What happens, and how it's set up</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin">What good looks like here</div></div>
+              <div><div class="flab">Players</div><div class="who"><b>Whole team</b> · <u>Choose players…</u></div></div>
+              <div class="doorline"><u>+ Coaching points</u> · <u>+ Staff</u> · <u>+ Equipment</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+          <div class="tg">7:30 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span><span class="q">15 min · or <u>a drill from your library</u></span></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">10</span><span><b>The minimum face.</b> Title · clock row · two lines · Whole team · four doors.</span></li></ol>
+
+    <p class="framecap" data-short="Before · from a drill">Before · a block placed from a drill, open — as built today<span class="k">1440 · the open block only · “Probe drill”, 20 min</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="ob an" data-measure="before-drill"><button type="button" class="mk" aria-expanded="false" aria-label="Note 11" data-d="C7">11</button><div class="pop" hidden><b>Three empty questions above the drill's answers</b>A picked drill never becomes a block; it becomes the block's single station. The block's own Description, Goal and Coaching points are empty — and asked anyway, above the drill's text one level down.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Probe drill</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div class="frow"><div><div class="flab">Minutes</div><div class="fin num v">20</div></div><span class="chk"><i></i> Rest of practice</span></div>
+              <div><div class="flab">Description</div><div class="fin ta">What happens, and how it's set up</div></div>
+              <div><div class="flab">Goal</div><div class="fin">What this is for</div></div>
+              <div><div class="flab">Staff</div><div class="pick">Search your tags…</div><div class="hint">No staff yet — type a name to add your first one.</div></div>
+              <div><div class="flab">Coaching points</div><span class="addl">+ Add a point</span></div>
+              <div class="sth"><span class="flab">Stations</span><span class="addl">+ Add a station</span></div>
+              <div class="stn an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 12" data-d="C7">12</button><div class="pop" hidden><b>The drill, one level down</b>Read-only text with its provenance line — the settled thing. Editing a word of it detaches the station (the drill rule, unchanged). The practice half — who runs it, who's at it, tonight's note — is the station's, and stays.</div>
+                <div class="stnh"><span class="no">1</span><b>Probe drill</b><span class="ic">🗑</span></div>
+                <div class="from">📚 From your drills · Skills</div>
+                <div><div class="flab">What you're doing</div><p class="rd">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</p></div>
+                <div><div class="flab">What you're watching for</div><p class="rd">Head up on the carry.</p></div>
+                <div><div class="flab">Coaching points</div><div class="rd"><ol><li>Small touches into the turn</li><li>Accelerate out</li></ol></div></div>
+                <div><div class="flab">Setup</div><p class="rd">Two cones, five metres apart, one ball per player.</p></div>
+                <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="chp">Balls</span></div></div>
+                <div class="acts2"><span>✎ Edit just for this practice</span><span>⟳ Swap drill</span></div>
+                <div><div class="flab">Who runs it</div><div class="pick">Search your tags…</div><div class="hint">No staff yet — type a name to add your first one.</div></div>
+                <div><div class="flab">Who's at it</div><div class="chips"><span class="pkb">👥 Choose players</span></div></div>
+                <div><div class="flab">Just for tonight</div><div class="fin">A one-off note for this practice</div></div>
+                <div><div class="flab">Rotation note</div><div class="fin">Informal — e.g. swap halfway</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn">11</span><span><b>Three empty questions above the drill's answers.</b> A drill is a station; the block has no words of its own.</span></li>
+      <li><span class="nn">12</span><span><b>The drill, one level down.</b> Read-only, with its provenance — the settled thing.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="After · from a drill">After · the same drill-placed block, open<span class="k">1440 · the open block only · D7</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="ob after an" data-measure="after-drill"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 13" data-d="C7">13</button><div class="pop" hidden><b>The block stops asking what the drill already answers</b>With exactly one station and no words of its own, the block opens onto the station's read-only teaching. The title and the minutes are the block's — editable, and editing them never detaches the drill. The field screen already reads this block this way.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Probe drill</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc on">20</span><span class="qc">30</span><span class="fin num v">20</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span><span class="ends">ends 7:35 p.m.</span></div>
+              </div>
+              <div class="sth an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 14" data-d="C7">14</button><div class="pop" hidden><b>Drawn as it is today — stage 3's question</b>The “Stations · 1” head and the card under it are stage 3's to redraw. The one question this stage sends there: does a block's only station flatten into the block, or keep its card?</div><span class="flab">Stations</span><span class="addl">+ Add a station</span></div>
+              <div class="stn">
+                <div class="stnh"><span class="no">1</span><b>Probe drill</b><span class="ic">🗑</span></div>
+                <div class="from">📚 From your drills · Skills</div>
+                <div><div class="flab">What you're doing</div><p class="rd">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</p></div>
+                <div><div class="flab">What you're watching for</div><p class="rd">Head up on the carry.</p></div>
+                <div><div class="flab">Coaching points</div><div class="rd"><ol><li>Small touches into the turn</li><li>Accelerate out</li></ol></div></div>
+                <div><div class="flab">Setup</div><p class="rd">Two cones, five metres apart, one ball per player.</p></div>
+                <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="chp">Balls</span></div></div>
+                <div class="acts2"><span>✎ Edit just for this practice</span><span>⟳ Swap drill</span></div>
+                <div><div class="flab">Who runs it</div><div class="pick">Search your tags…</div><div class="hint">No staff yet — type a name to add your first one.</div></div>
+                <div><div class="flab">Who's at it</div><div class="chips"><span class="pkb">👥 Choose players</span></div></div>
+                <div><div class="flab">Just for tonight</div><div class="fin">A one-off note for this practice</div></div>
+                <div><div class="flab">Rotation note</div><div class="fin">Informal — e.g. swap halfway</div></div>
+              </div>
+              <div class="doorline"><u>+ Staff</u></div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">13</span><span><b>The block stops asking what the drill already answers.</b> Title and minutes stay the block's.</span></li>
+      <li><span class="nn ok">14</span><span><b>The station card is drawn as it is today.</b> Whether it flattens into the block is stage 3's.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="Shut rows">The shut rows — three blocks, before and after<span class="k">1440 · the timeline only · D6</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly"><div class="frame3">
+      <div class="doc" style="padding:18px 22px;flex:1">
+        <p class="dabout" style="margin-bottom:8px"><b>Before</b></p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="rowb an"><button type="button" class="mk" aria-expanded="false" aria-label="Note 15" data-d="C6">15</button><div class="pop" hidden><b>The row counts what opening it would show</b>“Coaching points: 2” is a count of lines the coach gets by opening the row — the September ruling (§133) retired exactly this. “Who: everyone” asserts something the plan does not store: an empty list is an absence, not everyone.</div><b>Warm-up</b><div class="l1">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div><div class="l2">Who: 6 players · Coaching points: 2</div></div>
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="rowb an"><button type="button" class="mk" aria-expanded="false" aria-label="Note 16" data-d="C6 C7">16</button><div class="pop" hidden><b>A drill-placed row has no first line</b>The block's own description is empty, so the row shows nothing under the title — the drill's text is one level down where the row does not look.</div><b>Probe drill</b><div class="l2">1 station</div></div>
+          <div class="tg">7:35 p.m.<small>45 min</small></div>
+          <div class="rowb"><b>Skills circuit<span class="rtag">↻ ROTATION</span></b><div class="l1">Three stations, four at each; groups move every 15 minutes.</div><div class="l2">3 stations · Coaching points: 1</div></div>
+          <div class="tg">8:20 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span></div>
+        </div>
+      </div>
+      <div class="doc" style="padding:18px 22px;flex:1">
+        <p class="dabout" style="margin-bottom:8px"><b>After</b></p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="rowb an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 17" data-d="C6">17</button><div class="pop" hidden><b>Title · first line · who, in the block's own word</b>“Whole team” or “6 players” — the block's Players line, read back. The count of points goes.</div><b>Warm-up</b><div class="l1">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div><div class="l2">6 players</div></div>
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="rowb an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 18" data-d="C6 C7">18</button><div class="pop" hidden><b>A drill-placed row reads its drill</b>The first line resolves through the sole station — the field screen's rule — so the row says what the block is. No “1 station”: with one station, the station is the block.</div><b>Probe drill</b><div class="l1">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</div></div>
+          <div class="tg">7:35 p.m.<small>45 min</small></div>
+          <div class="rowb"><b>Skills circuit<span class="rtag">↻ ROTATION</span></b><div class="l1">Three stations, four at each; groups move every 15 minutes.</div><div class="l2">3 stations</div></div>
+          <div class="tg">8:20 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span></div>
+        </div>
+      </div>
+</div></div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn">15</span><span><b>The row counts what opening it would show.</b> “Coaching points: 2”; “Who: everyone” is never stored.</span></li>
+      <li><span class="nn">16</span><span><b>A drill-placed row has no first line.</b></span></li>
+      <li><span class="nn ok">17</span><span><b>Title · first line · who, in the block's own word.</b> Whole team, or the names.</span></li>
+      <li><span class="nn ok">18</span><span><b>A drill-placed row reads its drill.</b></span></li>
+    </ol>
+
+    <p class="framecap" data-short="Clock row">The clock row, four states<span class="k">1440 · the row only · D4 · D5</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc hcol" style="padding:22px 28px">
+        <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 19" data-d="C5">19</button><div class="pop" hidden><b>A quick length, pressed</b>The chip is on because the minutes equal it; the box shows the same number. Pressing another chip changes both; typing a number turns every chip off.</div>
+          <div class="flab">A block at 15 — the chip is on</div>
+          <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span><span class="ends">ends 7:15 p.m.</span></div>
+        </div>
+        <div>
+          <div class="flab">A block at 25 — typed; no chip is on</div>
+          <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">25</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span><span class="ends">ends 7:40 p.m.</span></div>
+        </div>
+        <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 20" data-d="C5 C4">20</button><div class="pop" hidden><b>Rest of practice, pressed</b>The minutes box empties and greys; the row says where the block runs to, from the practice's end time. Un-pressing it returns the block to 15 — never to “no length”, which today stalls the clock at that block.</div>
+          <div class="flab">The last block — Rest of practice is on</div>
+          <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num dis"></span><span class="unit">min</span><span class="sep">·</span><span class="qc on">Rest of practice</span><span class="ends">runs to 8:30 p.m.</span></div>
+        </div>
+        <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 21" data-d="C5">21</button><div class="pop" hidden><b>Another block already holds the rest</b>The chip is absent, not greyed with a hover title — an inapplicable control is absent, and a hover title is invisible on a phone. The block that holds it says so in its own gutter (“rest”).</div>
+          <div class="flab">A block elsewhere in the plan, while another holds the rest</div>
+          <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="ends">ends 7:15 p.m.</span></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">19</span><span><b>A quick length, pressed.</b> The chip and the box agree.</span></li>
+      <li><span class="nn ok">20</span><span><b>Rest of practice, pressed.</b> “runs to 8:30 p.m.”; un-pressing returns 15.</span></li>
+      <li><span class="nn ok">21</span><span><b>Another block holds the rest.</b> The chip is absent, not locked.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="Phone">The phone — the warm-up open, before and after; the drill-placed block after<span class="k">390 · the 844 fold drawn · D8</span></p>
+    <div class="framewrap"><div class="frame"><div class="pair">
+<div class="pf ph tall">
+  <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span>👤</span></span></div>
+  <div class="body"><div class="main">
+    <div class="mast"><div class="team">UAT Test Team</div><div class="season">UAT Test Org · 2026 Season · 3-2-1</div></div>
+    <div class="grid"><div class="col">
+      <div class="pgback">← Practice plans</div>
+      <div class="doc">
+        <div class="dhead"><div><div class="dt2">Team practice 1</div></div><div class="dw"><b>Tue, May 5<br>7:00–8:30 p.m. · 90 min</b><br>15 of 90 planned · <span style="color:#8F540C">75 unplanned</span></div></div>
+        <p class="dgoal">Tonight: Sharper decisions under pressure.</p>
+        <p class="dabout"><b>About this practice ▸</b> Skills · Small-sided</p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="ob an" data-measure="before-phone"><button type="button" class="mk" aria-expanded="false" aria-label="Note 22" data-d="C8 C1">22</button><div class="pop" hidden><b>Today at 390: the block runs past the fold</b>The same eight questions in 290px of width — the warm-up's open card alone is taller than the phone's screen.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Warm-up</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div class="frow"><div><div class="flab">Minutes</div><div class="fin num v">15</div></div><span class="chk"><i></i> Rest of practice</span></div>
+              <div><div class="flab">Description</div><div class="fin ta v">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div></div>
+              <div><div class="flab">Goal</div><div class="fin v">Everyone moving with the ball before the first drill.</div></div>
+              <div><div class="flab">Staff</div><div class="pick">Search your tags…</div><div class="hint">No staff yet — type a name to add your first one.</div></div>
+              <div><div class="flab">Players</div><div class="chips"><span class="chp">Avery Test</span><span class="chp">Blake Test</span><span class="chp">Casey Test</span><span class="chp">Drew Test</span><span class="chp">Emery Test</span><span class="chp">Finn Test</span><span class="pkb">👥 6 players</span></div></div>
+              <div><div class="flab">Coaching points</div>
+                <div class="ptr"><span class="n">1</span><span class="fin v">Knees over toes on the lunges</span><span class="x">✕</span></div>
+                <div class="ptr"><span class="n">2</span><span class="fin v">Talk to your partner before the pass</span><span class="x">✕</span></div>
+                <span class="addl">+ Add a point</span>
+              </div>
+              <div class="sth"><span class="flab">Stations</span><span class="addl">+ Add a station</span></div>
+            </div>
+          </div>
+          <div class="tg">7:15 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div></div>
+  <div class="fold"><span>844 · fold</span></div>
+  <div class="bar"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span><b>MORE</b></span></div>
+</div>
+<div class="pf ph tall">
+  <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span>👤</span></span></div>
+  <div class="body"><div class="main">
+    <div class="mast"><div class="team">UAT Test Team</div><div class="season">UAT Test Org · 2026 Season · 3-2-1</div></div>
+    <div class="grid"><div class="col">
+      <div class="pgback">← Practice plans</div>
+      <div class="doc">
+        <div class="dhead"><div><div class="dt2">Team practice 1</div></div><div class="dw"><b>Tue, May 5<br>7:00–8:30 p.m. · 90 min</b><br>15 of 90 planned · <span style="color:#8F540C">75 unplanned</span></div></div>
+        <p class="dgoal">Tonight: Sharper decisions under pressure.</p>
+        <p class="dabout"><b>About this practice ▸</b> Skills · Small-sided</p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="ob after an" data-measure="after-phone"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 23" data-d="C8">23</button><div class="pop" hidden><b>The same block, narrowed — no new arrangement</b>The clock row wraps to two lines (the chips, then the minutes and Rest with “ends” under them); the doors wrap as whole phrases; every field keeps the 44px floor. The block's four things and the doors are on the first screen.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Warm-up</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="qc">Rest of practice</span><span class="ends">ends 7:15 p.m.</span></div>
+              </div>
+              <div><div class="flab">What you're doing</div><div class="fin ta v">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Everyone moving with the ball before the first drill.</div></div>
+              <div><div class="flab">Coaching points</div><div class="fin ta v">Knees over toes on the lunges<br>Talk to your partner before the pass</div></div>
+              <div><div class="flab">Players</div><div class="chips"><span class="chp">Avery Test</span><span class="chp">Blake Test</span><span class="chp">Casey Test</span><span class="chp">Drew Test</span><span class="chp">Emery Test</span><span class="chp">Finn Test</span><span class="pkb">👥 6 players</span></div></div>
+              <div class="doorline"><u>+ Staff</u> · <u>+ Equipment</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+          <div class="tg">7:15 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div></div>
+  <div class="fold"><span>844 · fold</span></div>
+  <div class="bar"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span><b>MORE</b></span></div>
+</div>
+<div class="pf ph tall">
+  <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span>👤</span></span></div>
+  <div class="body"><div class="main">
+    <div class="mast"><div class="team">UAT Test Team</div><div class="season">UAT Test Org · 2026 Season · 3-2-1</div></div>
+    <div class="grid"><div class="col">
+      <div class="pgback">← Practice plans</div>
+      <div class="doc">
+        <div class="dhead"><div><div class="dt2">Team practice 1</div></div><div class="dw"><b>Tue, May 5<br>7:00–8:30 p.m. · 90 min</b><br>35 of 90 planned · <span style="color:#8F540C">55 unplanned</span></div></div>
+        <p class="dgoal">Tonight: Sharper decisions under pressure.</p>
+        <p class="dabout"><b>About this practice ▸</b> Skills · Small-sided</p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="rowb"><b>Warm-up</b><div class="l1">Dynamic warm-up, then partner work at walking pace.</div><div class="l2">6 players</div></div>
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="ob after an" data-measure="after-drill-phone"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 24" data-d="C7 C8">24</button><div class="pop" hidden><b>A drill-placed block on the phone</b>Title, the clock row, then the drill's own words — the coach reads the drill, not three empty boxes above it.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Probe drill</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc on">20</span><span class="qc">30</span><span class="fin num v">20</span><span class="unit">min</span><span class="qc">Rest of practice</span><span class="ends">ends 7:35 p.m.</span></div>
+              </div>
+              <div class="sth"><span class="flab">Stations</span><span class="addl">+ Add a station</span></div>
+              <div class="stn">
+                <div class="stnh"><span class="no">1</span><b>Probe drill</b><span class="ic">🗑</span></div>
+                <div class="from">📚 From your drills · Skills</div>
+                <div><div class="flab">What you're doing</div><p class="rd">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</p></div>
+                <div><div class="flab">What you're watching for</div><p class="rd">Head up on the carry.</p></div>
+                <div><div class="flab">Coaching points</div><div class="rd"><ol><li>Small touches into the turn</li><li>Accelerate out</li></ol></div></div>
+                <div><div class="flab">Setup</div><p class="rd">Two cones, five metres apart, one ball per player.</p></div>
+                <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="chp">Balls</span></div></div>
+                <div class="acts2"><span>✎ Edit just for this practice</span><span>⟳ Swap drill</span></div>
+                <div><div class="flab">Who runs it</div><div class="pick">Search your tags…</div></div>
+                <div><div class="flab">Who's at it</div><div class="chips"><span class="pkb">👥 Choose players</span></div></div>
+                <div><div class="flab">Just for tonight</div><div class="fin">A one-off note for this practice</div></div>
+              </div>
+              <div class="doorline"><u>+ Staff</u></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div></div>
+  <div class="fold"><span>844 · fold</span></div>
+  <div class="bar"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span><b>MORE</b></span></div>
+</div>
+</div></div></div>
+    <ol class="notes">
+      <li><span class="nn">22</span><span><b>Today at 390: the block runs past the fold.</b></span></li>
+      <li><span class="nn ok">23</span><span><b>The same block, narrowed.</b> The clock row on two lines; the doors as phrases; the 44px floor.</span></li>
+      <li><span class="nn ok">24</span><span><b>A drill-placed block on the phone.</b> The drill, not three empty boxes.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="Tablet · 768">The tablet band — the warm-up open at 768<span class="k">768 · the document only · the 44px floor on chips and fields · D8</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf t768"><div class="cardonly">
+      <div class="doc">
+        <div class="dhead">
+          <div><div class="dt2">Team practice 1</div><div class="dsub">Tuesday practice · <u>View on schedule</u></div></div>
+          <div class="dw"><b>Tue, May 5 · 7:00–8:30 p.m. · 90 min</b><br>15 of 90 min planned · <span style="color:#8F540C">75 unplanned</span></div>
+        </div>
+        <p class="dgoal">Tonight: Sharper decisions under pressure.</p>
+        <p class="dabout"><b>About this practice ▸</b> Skills · Small-sided · cones, 2 ladders</p>
+        <div class="tl">
+          <div class="tg">7:00 p.m.<small>15 min</small></div>
+          <div class="ob after an" data-measure="after-768"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 25" data-d="C8">25</button><div class="pop" hidden><b>The desktop block with the touch floor</b>Between 641 and 768 every chip and field stands 44px tall (the tablet-band ruling). Nothing moves; the block is a little taller.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Warm-up</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span><span class="ends">ends 7:15 p.m.</span></div>
+              </div>
+              <div><div class="flab">What you're doing</div><div class="fin ta v">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Everyone moving with the ball before the first drill.</div></div>
+              <div><div class="flab">Coaching points</div><div class="fin ta v">Knees over toes on the lunges<br>Talk to your partner before the pass</div></div>
+              <div><div class="flab">Players</div><div class="chips"><span class="chp">Avery Test</span><span class="chp">Blake Test</span><span class="chp">Casey Test</span><span class="chp">Drew Test</span><span class="chp">Emery Test</span><span class="chp">Finn Test</span><span class="pkb">👥 6 players</span></div></div>
+              <div class="doorline"><u>+ Staff</u> · <u>+ Equipment</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+          <div class="tg">7:15 p.m.<small>next</small></div>
+          <div class="tghost"><span class="btn2">+ Add a block</span><span class="q">15 min · or <u>a drill from your library</u></span></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">25</span><span><b>The desktop block with the touch floor.</b> Nothing moves.</span></li></ol>
+
+    <p class="framecap" data-short="Template">The template room — the same block, no clock, no people<span class="k">1440 · the document only</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc">
+        <div class="dhead">
+          <div><div class="dt2">Standard Tuesday</div><div class="dsub">Skills · Small-sided</div></div>
+          <div class="dw"><b>3 blocks · 60 min</b><br>Started 2 plans</div>
+        </div>
+        <p class="dgoal">Goal: Sharper decisions under pressure.</p>
+        <p class="dabout"><b>About this template ▸</b> cones, 2 ladders</p>
+        <div class="tl">
+          <div class="tg">15 min</div>
+          <div class="ob after an" data-measure="after-template"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 26" data-d="C1 C4">26</button><div class="pop" hidden><b>A template's block</b>The same chips and the same two lines; no “ends” because a template has no clock; no Staff door and no Players line because a template carries no people — unchanged; Equipment is shape, so its door is here. Rest of practice is still allowed, and the gutter reads it as the length.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Warm-up</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div>
+                <div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">15</span><span class="unit">min</span><span class="sep">·</span><span class="qc">Rest of practice</span></div>
+              </div>
+              <div><div class="flab">What you're doing</div><div class="fin ta v">Dynamic warm-up, then partner work at walking pace. Build to three-quarter pace by the end.</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Everyone moving with the ball before the first drill.</div></div>
+              <div><div class="flab">Coaching points</div><div class="fin ta v">Knees over toes on the lunges<br>Talk to your partner before the pass</div></div>
+              <div class="doorline"><u>+ Equipment</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+          <div class="tg">20 min</div>
+          <div class="rowb"><b>Probe drill</b><div class="l1">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</div></div>
+          <div class="tg">25 min</div>
+          <div class="rowb"><b>Skills circuit<span class="rtag">↻ ROTATION</span></b><div class="l1">Three stations, four at each; groups move every 15 minutes.</div><div class="l2">3 stations</div></div>
+          <div class="tg">&nbsp;</div>
+          <div class="tghost"><span class="btn2">+ Add a block</span><span class="q">15 min · or <u>a drill from your library</u></span></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">26</span><span><b>A template's block.</b> No clock, no people doors.</span></li></ol>
+
+    <div class="plain" style="margin-top:22px"><b>Not a frame — D9, Escape.</b> Five sheets open from this page: <em>Choose players</em> · <em>Add a block / Add a station / Swap this drill</em> · <em>Save to my drills</em> · <em>Start this plan from…</em> · <em>Save as template…</em>. Today none of them closes on Escape. After: Escape closes whichever is open and hands focus back to what opened it (a tag list open inside a sheet closes itself first, not the sheet; <em>Save to my drills</em> holds while it is saving). Escape does <b>not</b> close an open block — a row is not a sheet, and a coach mid-sentence must not lose the block under their hands.</div>
+  </section>
+
+  <section class="psec">
+    <h2>The decisions — eleven, each drawn above, each with a recommendation</h2>
+
+    <div class="ask" data-q="C1" data-kind="build">
+      <div class="qn">D1</div>
+      <h3>Which fields a block opens with, and which wait behind a door.</h3>
+      <p><b>Recommendation:</b> always — title · the clock row · <em>What you're doing</em> · <em>What you're watching for</em> · <em>Players</em> (reading <b>Whole team</b> until names are chosen — owner, 15 Sep). On demand — <em>+ Coaching points · + Staff · + Equipment (while the block has no stations — D11) · + Stations</em>. A field with content is always shown. The Players line is absent when the block has stations (people live at one level — already the rule) and on a template; the teaching fields and the Coaching points door are absent when the block has exactly one station and no words of its own (D7). <b>The alternative on the table:</b> <em>Watching for</em> on demand too — one line cheaper on every block, at the cost of the field screen's own line being one tap further from the keyboard.</p>
+      <div class="rides"><b>Rides:</b> the block body's order and the doors line; “emptiness discards nothing” (kept); the layout gate's blind spot inside an open block, owed since stage 1.</div>
+    </div>
+    <div class="ask" data-q="C2" data-kind="build">
+      <div class="qn">D2</div>
+      <h3>Description and Goal — one notes area, or two fields?</h3>
+      <p><b>Recommendation: two, renamed (D3).</b> The goal is the bold line at arm's length on two field screens; older plans print through a field-by-field fallback; a merge is a versioned shape change across plans and templates. The height complaint is D1's to answer, not the model's.</p>
+      <div class="rides"><b>Rides:</b> nothing in how a plan is stored; no migration.</div>
+    </div>
+    <div class="ask" data-q="C3" data-kind="build">
+      <div class="qn">D3</div>
+      <h3>One vocabulary at both levels — which words?</h3>
+      <p><b>Recommendation:</b> <em>What you're doing · What you're watching for · Coaching points</em>, at the block as at the station. The other way round — the station adopting <em>Description · Goal</em> — is rejected: six surfaces would change instead of one, and “Goal” at the block collides with the practice's own goal one level up (three goals on one page).</p>
+      <div class="rides"><b>Rides:</b> the block editor's two labels; the printed sheet's block line (“Goal:” → “Watch for:”, the word its station lines already print; the layout untouched — stage 5); the help's block paragraph; a one-word-per-thing guard. <b>Not the stored keys</b> — those are identifiers, and renaming them is a migration nobody needs.</div>
+    </div>
+    <div class="ask" data-q="C4" data-kind="build">
+      <div class="qn">D4</div>
+      <h3>The block's clock as a first-class fact — what does the open block repeat?</h3>
+      <p><b>Recommendation: nothing of the start; the clock row shows the end</b> — “ends 6:15 p.m.” from the same arithmetic as the gutter, “runs to 8:00 p.m.” for the rest-of-practice block, nothing on a template. The gutter's size is not re-opened here: the walk measured the clock as a caption under the title, stage 1 moved it to the spine, and you walked it (§188). If the true-size frame says the gutter is still too small, that is a stage-1 revision, not a block decision.</p>
+      <div class="rides"><b>Rides:</b> one line on the clock row; no new arithmetic.</div>
+    </div>
+    <div class="ask" data-q="C5" data-kind="build">
+      <div class="qn">D5</div>
+      <h3>Quick durations, and where “Rest of practice” sits.</h3>
+      <p><b>Recommendation:</b> five chips — 5 · 10 · 15 · 20 · 30 — before the minutes box, <em>Rest of practice</em> the last chip in the same row. A chip is on when the minutes equal it; any other number is typed. Only one block may be “rest of practice”; when another block holds it the chip is <b>absent</b>, not greyed with a hover title (an inapplicable control is absent, and a hover title is invisible on a phone). Un-pressing Rest returns the block to 15, never to “no length” (today the clock stalls at that block).</p>
+      <div class="rides"><b>Rides:</b> the duration control, rebuilt; one row of chips on screen at a time (one block open).</div>
+    </div>
+    <div class="ask" data-q="C6" data-kind="build">
+      <div class="qn">D6</div>
+      <h3>The shut row's line. Today: title · first line · “Who: everyone / N players” or “N stations” · “Coaching points: N” · the Rotation tag.</h3>
+      <p><b>Recommendation:</b> title (+ Rotation tag) · first line · “3 stations” when it has them · <b>Whole team</b> or “6 players” (the block's own Players line, in its own word — owner, 15 Sep) · nothing else. Drop “Coaching points: N” (the §133 ruling). The first line reads through a sole station, so a drill-placed row reads its drill. Untitled stays “Block 2” in the quiet italic.</p>
+      <div class="rides"><b>Rides:</b> the row's one line; the help's “how many coaching points it carries” sentence.</div>
+    </div>
+    <div class="ask" data-q="C7" data-kind="build">
+      <div class="qn">D7</div>
+      <h3>A block placed from a drill, versus one written.</h3>
+      <p><b>Recommendation:</b> a block with exactly one station and no words of its own is not asked for teaching; it opens onto the station's read-only text and provenance line (<em>From your drills · Footwork · Edit just for this practice · Swap drill</em>). With two or more stations the block's <em>Doing</em> line is the circuit's intro and is offered. A block that had words before a station was added keeps showing them. Title and minutes stay the block's and never detach; the drill rule on the station is untouched. <b>Whether the sole station's card head (“Stations · 1 · name”) flattens into the block is stage 3's to draw.</b></p>
+      <div class="rides"><b>Rides:</b> which doors the block offers; nothing on the station card or the field screen.</div>
+    </div>
+    <div class="ask" data-q="C8" data-kind="build">
+      <div class="qn">D8</div>
+      <h3>The phone at 390 and the tablet band at 641–768.</h3>
+      <p><b>Recommendation: no new arrangement.</b> At 390 the block is the desktop block narrowed — the clock row wraps to two lines, the doors line wraps as phrases, the row's first line keeps its one-line ellipsis. At 768 every chip and field takes the 44px floor (the tablet-band ruling). Both drawn at true size.</p>
+      <div class="rides"><b>Rides:</b> the existing phone and tablet rules gain the chip row and the doors line; no breakpoint moves.</div>
+    </div>
+    <div class="ask" data-q="C9" data-kind="build">
+      <div class="qn">D9</div>
+      <h3>Escape closes every sheet on this page.</h3>
+      <p><b>Recommendation:</b> the portal's shared dialog floor on all five — Choose players · the drill sheet · Save to my drills (held while saving) · Start this plan from… · Save as template… (the page's two ride along, or two sheets on one page would close differently). A tag list open inside a sheet already claims its own Escape, so it closes itself, not the sheet. Escape does not close an open block.</p>
+      <div class="rides"><b>Rides:</b> five sheets take the floor; no new component.</div>
+    </div>
+    <div class="ask" data-q="C10" data-kind="build">
+      <div class="qn">D10 · added with the frames</div>
+      <h3>Coaching points as one field — one point per line — instead of a numbered row per point.</h3>
+      <p><b>Recommendation: one field.</b> Drawn at true size, the doors alone take the written warm-up from 691px to about 600 — on a block that already holds points and players, only Staff and Stations leave. The numbered rows are most of what remains: each point is an input, a number, a remove button and an add link, a form inside the form, and the walk counted 59 buttons on a three-block page. The field screen and the printed sheet already print the points as a list; a coach types one per line and presses Enter for the next. Nothing changes in what is stored (a list, capped at eight, each line capped as today). The same field on a station is stage 3’s.</p>
+      <div class="rides"><b>Rides:</b> the Coaching points control on the block; the same control on a station follows at stage 3; the drill library’s editor keeps its rows until then (two shapes for one idea for one stage — say so if that is not acceptable).</div>
+    </div>
+    <div class="ask" data-q="C11" data-kind="build">
+      <div class="qn">D11 · added 15 Sep (owner's question)</div>
+      <h3>Equipment: kit lives at exactly one level — the activity's, the same level as people — and the practice's list at the top is the bag.</h3>
+      <p><b>Recommendation: two ideas, not three layers.</b> There are two questions about kit: <em>what does this activity need</em> and <em>what do I bring tonight</em>. A block is either one activity (a written warm-up, a drill on its own) or a circuit of activities (its stations), so the activity's kit lives at whichever level the activity lives, never both: <b>on the block while it has no stations; on each station once it has them</b> — the block's own line goes the moment a station exists, exactly as its Players line does today (the August ruling: people live at exactly one level). The practice's line at the top is the <b>bag</b>: the union of every activity's kit below, plus extras that belong to no activity (water, first-aid kit, pinnies for everyone). What rose from an activity is shown at the top but removed where it came from; extras are typed and removed at the top — the rule the practice's tags already follow (“from the drills in this practice”). The sheet prints the bag at its head and each activity's kit beside it, as it prints stations' kit now. <b>The seam:</b> kit typed on a block that then gains a station never vanishes (today the block's players silently do) — it moves onto the first station when that station is written, or up into the bag when the first station is a drill (a drill's kit is the drill's). Quantities stay out (the vocabulary is names — “2 ladders” lives in the block's own sentence).</p>
+      <div class="rides"><b>Rides:</b> a block learns the station's equipment field, kept only while it has no stations (plan JSON, no migration); the sanitiser moves it rather than strips it when stations appear; the tag-restrict and repoint/merge walks add the block level; the About line derives its union; a template carries it (shape); the printed sheet's block line gains “Equipment: …”; the field screen shows a block's kit under its words (stage 5's to place). A pre-existing top-level list stays exactly as typed — nothing is moved down. Whether a block's shut row summarises its stations' kit is stage 3's.</div>
+    </div>
+
+    <div class="plain" style="margin-top:18px"><b>Two calls the plan makes without a decision (each a one-line reversal):</b> the doors sit in one line at the block's <em>foot</em>, in the ghost row's quiet voice, not as a “+” beside each label — so the fields read as a document and the doors as its margin; and the title keeps its placeholder “What are we doing?” — it already asks the Doing question in the block's own words, which is why <em>What you're doing</em> underneath is the detail, not a repeat.</div>
+  </section>
+
+  <section class="psec">
+    <div class="summary" style="padding-top:0">
+      <h2>Your decisions on this stage, to paste back</h2>
+      <p>Collects D1–D11 with your notes into one block of text.</p>
+      <button type="button" id="buildSummaryStage2">Build the stage summary</button>
+      <textarea id="summaryOutStage2" hidden aria-label="Stage summary to paste back"></textarea>
+    </div>
+  </section>
+
+  <section class="psec">
+    <div class="yours" data-notes="stage2plan"><div class="label">Your notes on this stage</div></div>
+  </section>
+</div>
+
+<div class="prop" id="tab-qa2" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">QA walk · stage 2 · The block <span class="status">built on dev 15 Sep · ledger §190 · walk owed</span></div>
+    <h1>The walk — pass it</h1>
+    <p class="lede">Thirty-four steps in eight parts, on the product as built. Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are not</strong> — the fixture's probe practice re-anchors itself to today, so its clock times drift; the block's words, the names and the shape are what you are checking. Two things to know going in: the block on a phone is 240px wide, not the frame's ~290 — that is the sheet's own padding inside the shell's (stage 1's arrangement, walked at §188), and the title field beside the three head buttons is narrow there; say if it bothers you (H3). And a block you place from a drill needs a drill with words — <b>Probe drill</b> has them now.</p>
+  </header>
+
+  <section class="psec">
+    <div class="signin">
+      <h2>Sign in as</h2>
+      <table>
+        <tr><th>Where</th><td><b>localhost:3000</b> — the dev server</td></tr>
+        <tr><th>Head coach</th><td><b>uat-coach@uat-test-org.local</b> · the standing dev password in <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>) · <b>UAT Test Team · 2026 Season</b></td></tr>
+        <tr><th>Pinned practices</th><td><b>UAT probe practice</b> (re-anchors to today; three blocks — <b>Warm-up</b> with six players and two coaching points · <b>Skills circuit</b> with three stations rotating · <b>Small-sided game</b> running the rest of the practice) — Parts A, D-read, F. <b>Practice</b> (Tue Oct 27, 6:00–8:00 p.m., <em>no plan</em> — the blank page) — Parts B, C, D, E; the last step of each part puts it back. <b>Probe plan template</b> — Part G.</td></tr>
+        <tr><th>The library</th><td><b>Probe drill</b> (20 min · “Two lines, cones five metres apart…” · Head up on the carry · two points · Cones, Balls). Equipment tags: the team has none — Part C creates <b>Ladders</b> and <b>Cones</b> through the picker's <b>+ Create</b>; leave them, they are the team's now.</td></tr>
+      </table>
+    </div>
+
+    <div class="wpart" data-part="A">
+      <h3>A · The written warm-up (D1 · D3 · D4 · D5 · D6 · D10)</h3>
+      <p class="wwho">Head coach · Practice plans → <b>UAT probe practice</b> → Open the plan.</p>
+      <div class="wstep" data-w="A1"><div class="wn">A1</div><div class="wbody"><h4>The shut rows say what a block is, and nothing else</h4><p>Three rows under their gutter times. <b>Warm-up</b> · its first line · <b>6 players</b>. <b>Skills circuit</b> with the ROTATION tag · its first line · <b>3 stations</b>. <b>Small-sided game</b> · its first line · <b>12 players</b>. No “Coaching points: 2”, no “Who:” anywhere.</p></div></div>
+      <div class="wstep" data-w="A2"><div class="wn">A2</div><div class="wbody"><h4>The warm-up opens to four things, then what it holds</h4><p>Open <b>Warm-up</b>. In order: the title · <b>Minutes</b> with five chips (<b>15</b> pressed), the minutes box reading 15, “min”, and <b>ends …</b> fifteen minutes after the gutter's time · <b>What you're doing</b> · <b>What you're watching for</b> · <b>Coaching points</b> as ONE box with “Heads up” and “Call for it early” on two lines · <b>Staff</b> (the picker) · <b>Players</b> — six white name pills and a solid <b>6 players</b> button · then one quiet line: <b>+ Equipment · + Stations</b>. No Description, no Goal, no numbered point rows, no Stations section. <b>The tones (revised 15 Sep):</b> the block is a cream card and every field on it is <em>white</em> — the title, the minutes box, the two questions, the points box, the Staff search; the minute chips are white pills with the pressed <b>15</b> filled dark.</p></div></div>
+      <div class="wstep" data-w="A3"><div class="wn">A3</div><div class="wbody"><h4>The Rest chip is absent, not greyed</h4><p>The clock row has no <b>Rest of practice</b> chip — the game block holds it — and no dot before where it would be. Nothing is greyed; nothing carries a hover title.</p></div></div>
+      <div class="wstep" data-w="A4"><div class="wn">A4</div><div class="wbody"><h4>The clock row: chips and the box agree; the consequence follows</h4><p>Press <b>30</b>: the box reads 30, only 30 is pressed, <b>ends</b> moves fifteen minutes later, and the next row's gutter time moves with it. Type <b>25</b> in the box: no chip is pressed, ends moves again. Put it back to <b>15</b>.</p></div></div>
+      <div class="wstep" data-w="A5"><div class="wn">A5</div><div class="wbody"><h4>Coaching points: one box, one per line</h4><p>Click into the box after “Call for it early”, press Enter and type a third line; the box grows a line. Delete the third line. Reload: two lines, exactly as before.</p></div></div>
+      <div class="wstep" data-w="A6"><div class="wn">A6</div><div class="wbody"><h4>Escape does not close the block</h4><p>With the cursor in <b>What you're doing</b>, press <b>Escape</b>: the block stays open, nothing moves. (Escape belongs to the sheets — Part E.)</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="B">
+      <h3>B · A new block (D1 · D4 · D5)</h3>
+      <p class="wwho">Head coach · Practice plans → the Oct 27 <b>Practice</b> row → Plan this practice. Step B7 puts it back.</p>
+      <div class="wstep" data-w="B1"><div class="wn">B1</div><div class="wbody"><h4>The smallest a block gets</h4><p>Press <b>+ Add the first block</b>. The block opens with its title focused (“What are we doing?”), and under it: <b>Minutes</b> — the chips with <b>15</b> pressed, the box at 15, “min · Rest of practice”, <b>ends 6:15 p.m.</b> · <b>What you're doing</b> (“What happens, and how it's set up”) · <b>What you're watching for</b> (“What good looks like here”) · <b>Players</b> reading <b>Whole team · Choose players…</b> · and four doors: <b>+ Coaching points · + Staff · + Equipment · + Stations</b>. Nothing else. Type a title — <b>Warm-up</b>.</p></div></div>
+      <div class="wstep" data-w="B2"><div class="wn">B2</div><div class="wbody"><h4>Rest of practice, pressed and un-pressed</h4><p>Press <b>Rest of practice</b>: the chip is pressed, the box empties and greys, the row reads <b>runs to 8:00 p.m.</b>, and the gutter's small line says <b>rest</b>. Press it again: the box reads <b>15</b>, the 15 chip is pressed, <b>ends 6:15 p.m.</b> — never an empty box with no length.</p></div></div>
+      <div class="wstep" data-w="B3"><div class="wn">B3</div><div class="wbody"><h4>Only one block may run to the end</h4><p>Press <b>Rest of practice</b> on Warm-up, then <b>+ Add a block</b>. The new block's clock row has <b>no Rest chip</b> (Warm-up holds it). Open Warm-up, un-press Rest; open block 2 again: its Rest chip is back. Delete block 2.</p></div></div>
+      <div class="wstep" data-w="B4"><div class="wn">B4</div><div class="wbody"><h4>Whole team, or the names (revised 15 Sep)</h4><p>Press <b>Choose players…</b>: the picker lists the roster with attendance (IN · LATE · OUT) and <em>nothing under a name</em> — no focus-area line — and its footer is <b>Done</b> alone. Tick two players, <b>Done</b>: two white name pills and a <b>2 players</b> button; “Whole team” is gone. Press <b>2 players</b>: the footer now reads <b>Whole team · Done</b>. Press <b>Whole team</b>: the picker closes and the line reads <b>Whole team · Choose players…</b> again — one press, no unticking. Close the block: the row reads <b>Warm-up · Whole team</b>.</p></div></div>
+      <div class="wstep" data-w="B5"><div class="wn">B5</div><div class="wbody"><h4>A door becomes the field, in its place</h4><p>Open the block. Press <b>+ Coaching points</b>: a box appears under <b>What you're watching for</b> with the cursor in it, and the door is gone from the foot. Type “Heads up”, Enter, “Call early”. Press <b>+ Staff</b>: the Staff picker appears under the points, above Players. The foot now reads <b>+ Equipment · + Stations</b>.</p></div></div>
+      <div class="wstep" data-w="B6"><div class="wn">B6</div><div class="wbody"><h4>What it holds always shows; a door left empty is a door again</h4><p>Wait for <b>Saved</b>, reload, open <b>Warm-up</b>: the two points are there in their box; the Staff picker is NOT there (nothing was chosen) — <b>+ Staff</b> is a door again at the foot beside + Equipment · + Stations.</p></div></div>
+      <div class="wstep" data-w="B7"><div class="wn">B7</div><div class="wbody"><h4>Clean up — keep the block for Part C</h4><p>Clear the two coaching points (select all in the box, delete). Leave the Warm-up block in place with its title; Part C uses it.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="C">
+      <h3>C · Kit lives at one level, and the bag (D11)</h3>
+      <p class="wwho">Head coach · the same Oct 27 practice, the Warm-up block from Part B. Step C6 puts the practice back to blank.</p>
+      <div class="wstep" data-w="C1"><div class="wn">C1</div><div class="wbody"><h4>Equipment on a block, rising into the bag</h4><p>Open Warm-up, press <b>+ Equipment</b>: the picker appears under Players. Type <b>Ladders</b> and press <b>+ Create “Ladders”</b>; a Ladders chip sits on the block. The <b>About this practice</b> line at the top now reads <b>Ladders</b>. Open About: above the Equipment picker a quiet line reads <b>Ladders — from the blocks below</b>, and the picker itself is empty (“Anything else to bring that belongs to no block…”).</p></div></div>
+      <div class="wstep" data-w="C2"><div class="wn">C2</div><div class="wbody"><h4>Extras stay at the top</h4><p>In About's Equipment picker, create <b>Water</b>. The About line reads <b>Water, Ladders</b> (the practice's own first, then what rose). Close About.</p></div></div>
+      <div class="wstep" data-w="C3"><div class="wn">C3</div><div class="wbody"><h4>The kit moves onto a written first station — you see it move</h4><p>In the Warm-up block press <b>+ Stations</b> (the section appears with <b>+ Add a station</b>), then <b>+ Add a station</b> → <b>Write one</b> → <b>Write a station</b>. Without reloading: the block's Equipment line is gone, the block's Players line is gone, and the new station card's <b>Equipment</b> shows <b>Ladders</b>. The About line still reads <b>Water, Ladders</b>. Name the station <b>Tees</b>.</p></div></div>
+      <div class="wstep" data-w="C4"><div class="wn">C4</div><div class="wbody"><h4>A drill's kit is the drill's — the block's rises instead</h4><p>Press the station's trash (<b>Remove station 1</b>): the station goes, and Ladders goes with it — a station's kit is the station's; the About line reads <b>Water</b> alone. The block's Equipment picker is showing again, empty (you opened that door earlier this session): create <b>Cones</b> in it. Then <b>+ Add a station</b> → <b>Add</b> Probe drill. Without reloading: the block has no Equipment line; open About — the picker now holds <b>Water</b> and <b>Cones</b> (Cones rose to the top because the first station is a drill), and the line reads <b>Water, Cones, Balls</b> (Balls is the drill's own).</p></div></div>
+      <div class="wstep" data-w="C5"><div class="wn">C5</div><div class="wbody"><h4>Saved, and it comes back the same</h4><p>Wait for <b>Saved</b>, reload: the About line reads <b>Water, Cones, Balls</b>; open Drill block: no Equipment line; the drill's card shows Cones, Balls.</p></div></div>
+      <div class="wstep" data-w="C6"><div class="wn">C6</div><div class="wbody"><h4>Clean up — the blank page returns</h4><p>Delete the block; open About and remove Water and Cones from the picker. With no blocks the sheet is the blank page again (the Ladders/Cones/Water tags stay in the team's library — that is fine).</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="D">
+      <h3>D · A block placed from a drill (D6 · D7)</h3>
+      <p class="wwho">Head coach · the Oct 27 practice (blank). Step D4 puts it back.</p>
+      <div class="wstep" data-w="D1"><div class="wn">D1</div><div class="wbody"><h4>The row reads its drill</h4><p>On the blank page press <b>a drill from your library</b> → <b>Add</b> Probe drill. Close the block (⌃). The row reads <b>Probe drill</b> · “Two lines, cones five metres apart; players carry through at pace…” — the drill's first line — and nothing else: no “1 station”, no “Whole team”.</p></div></div>
+      <div class="wstep" data-w="D2"><div class="wn">D2</div><div class="wbody"><h4>The block stops asking what the drill already answers</h4><p>Open it: the title (<b>Probe drill</b>) · <b>Minutes</b> with <b>20</b> pressed and <b>ends 6:20 p.m.</b> · then straight to <b>Stations</b> and the drill's card — <b>From your drills</b>, What you're doing, What you're watching for, the two coaching points, Setup, Equipment (Cones, Balls), <b>Edit just for this practice · Swap drill</b>, Who runs it, Who's at it, Just for tonight, Rotation note. No What you're doing / What you're watching for / Coaching points on the BLOCK, and the foot reads <b>+ Staff</b> alone.</p></div></div>
+      <div class="wstep" data-w="D3"><div class="wn">D3</div><div class="wbody"><h4>Title and minutes are the block's — they never detach the drill</h4><p>Rename the title to <b>Carry and turn</b> and press <b>30</b>. The card still says <b>From your drills</b>; the words are still read-only. (Pressing <b>Edit just for this practice</b> would detach it — don't.)</p></div></div>
+      <div class="wstep" data-w="D4"><div class="wn">D4</div><div class="wbody"><h4>Clean up</h4><p>Delete the block. The blank page returns.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="E">
+      <h3>E · Escape closes every sheet, and focus comes back (D9)</h3>
+      <p class="wwho">Head coach · a keyboard · the Oct 27 practice. Step E6 puts it back.</p>
+      <div class="wstep" data-w="E1"><div class="wn">E1</div><div class="wbody"><h4>Start this plan from…</h4><p>On the blank page click <b>start this plan from…</b>, press <b>Escape</b>: the picker closes and the focus ring is on that link again (press Enter — it reopens; Escape again).</p></div></div>
+      <div class="wstep" data-w="E2"><div class="wn">E2</div><div class="wbody"><h4>Choose players</h4><p>Add the first block; click <b>Choose players…</b>; <b>Escape</b>: closed, focus back on the link.</p></div></div>
+      <div class="wstep" data-w="E3"><div class="wn">E3</div><div class="wbody"><h4>The drill sheet</h4><p><b>+ Stations</b> → <b>+ Add a station</b>; <b>Escape</b>: the sheet closes and focus is back on <b>+ Add a station</b>. Open it again, switch to <b>Write one</b>, click the search box first, then Escape — same.</p></div></div>
+      <div class="wstep" data-w="E4"><div class="wn">E4</div><div class="wbody"><h4>Save to my drills</h4><p><b>+ Add a station → Write one → Write a station</b>, name it <b>Tees</b>; click <b>Save to my drills…</b>; <b>Escape</b>: closed, focus back on that link. Open it again, click into the Tags box so its list opens, press Escape ONCE: the list closes and the sheet stays; Escape again closes the sheet.</p></div></div>
+      <div class="wstep" data-w="E5"><div class="wn">E5</div><div class="wbody"><h4>Save as template…</h4><p>Press <b>Save as template…</b> in the toolbar (the name field has the cursor); <b>Escape</b>: closed, focus back on the toolbar button.</p></div></div>
+      <div class="wstep" data-w="E6"><div class="wn">E6</div><div class="wbody"><h4>Clean up</h4><p>Delete the block. The blank page returns.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="F">
+      <h3>F · The printed sheet (D3 · D11)</h3>
+      <p class="wwho">Head coach · <b>UAT probe practice</b> → <b>Print the sheet</b>.</p>
+      <div class="wstep" data-w="F1"><div class="wn">F1</div><div class="wbody"><h4>One word on the block line; the bag at the head</h4><p>Open the PDF. The Warm-up block's notes begin <b>Watch for: Everyone moving and talking…</b> — not “Goal:”. Its station lines under Skills circuit still say “Watch for:” as before. The head's Equipment line reads the practice's bag — Cones, Bibs, Spare balls (the practice's own and its stations', each once). Nothing else on the sheet has moved.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="G">
+      <h3>G · A template's block (D1 · D4)</h3>
+      <p class="wwho">Head coach · Practice plans → Templates → <b>Probe plan template</b>.</p>
+      <div class="wstep" data-w="G1"><div class="wn">G1</div><div class="wbody"><h4>The same block, no clock, no people</h4><p>Open <b>Warm-up</b>: the chips and the minutes box, <b>no “ends”</b> (a template has no clock), <b>What you're doing · What you're watching for</b>, the coaching points box, and the foot reads <b>+ Equipment · + Stations</b> — no Staff door, no Players line. (No Rest chip either: the template's own game block holds it.) The rows below read title · first line, with <b>3 stations</b> on the circuit and no “Whole team”.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="H">
+      <h3>H · The phone (390) and the tablet band (768) (D8)</h3>
+      <p class="wwho">Head coach · the browser at 390 wide, then 768 · <b>UAT probe practice</b>.</p>
+      <div class="wstep" data-w="H1"><div class="wn">H1</div><div class="wbody"><h4>390 — the same block, wrapped</h4><p>Open <b>Warm-up</b>: the five chips on one line, then the minutes box, “min” and <b>ends …</b> on the next; the two fields, the points box, Staff, the six player chips wrapping; the foot's doors wrap as whole phrases (<b>+ Equipment</b> · <b>+ Stations</b>). No sideways scroll anywhere on the page.</p></div></div>
+      <div class="wstep" data-w="H2"><div class="wn">H2</div><div class="wbody"><h4>768 — finger height on everything</h4><p>Every chip, the minutes box, the title, the fields and the doors stand 44px tall; the row arrangement is the desktop's.</p></div></div>
+      <div class="wstep" data-w="H3"><div class="wn">H3</div><div class="wbody"><h4>Stated, not a defect of this stage — say if it bothers you</h4><p>At 390 the open block is 240px wide (the sheet keeps its own padding inside the shell's — stage 1's arrangement) and the title field is squeezed to about 90px by the three head buttons (order arrows · close · delete). The frame drew ~290 and a full title. Both are stage 1's shell and head, walked at §188; a one-line reversal each if you want them — say so here.</p></div></div>
+    </div>
+
+    <div class="summary" style="padding-top:28px">
+      <h2>Your walk, to paste back</h2>
+      <p>Collects every step's Pass / Defect and note, and each part's verdict, into one block of text.</p>
+      <button type="button" id="buildWalkSummary2">Build the walk summary</button>
+      <textarea id="walkOut2" hidden aria-label="Walk summary to paste back"></textarea>
+    </div>
+  </section>
+</div>
+
+<div class="prop" id="tab-stage3" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">Stage 3 · Stations and the rotation <span class="status">drawn 15 Sep — not ruled, not built</span></div>
+    <h1>Stations stand side by side; the rotation is one line; the grid is the same columns</h1>
+    <p class="lede">The coach opens the circuit. Today the block is <b>4,083px</b> tall on the desktop and <b>4,819</b> on a phone (measured on the fixture's three-station circuit): the rotation's controls stacked above three full station cards stacked above a grid, every station's every field open whether or not it has one, and the “who starts here” answer written three times. The proposal: the rotation is <b>one line</b> under the block's words; the stations stand <b>side by side as columns</b>, each showing its name, who runs it and tonight's note, and opening as a <b>modal with a stepper</b> for the rest (revised 15 Sep — a station isn't a sequence the way a block is, and the card is deep enough to want the room a modal gives it); the grid under them uses <b>the same columns</b>, so a coach reads down a column to see one station's evening; the draw is <b>one control</b>. And first, the question stage 2 sent here: a block with <b>one</b> station — does it flatten into the block, or keep its card? This tab is the plan and its frames together: before and after at true size, then eight decisions with <b>Build as drawn · Change it · Not now</b> under each and a paste-back at the foot.</p>
+  </header>
+
+  <section class="psec">
+    <h2>What the walk saw, and what the code says</h2>
+    <div class="plain">
+      <ul>
+        <li><b>A station card is the whole block again, one level down.</b> Nine fields open on every station (what you're doing, watching for, setup, equipment, who runs it, who's at it, coaching points as numbered rows, just for tonight, rotation note) — three of them the block's own questions asked again. A drill-backed station is shorter because its drill half is text, and it is still eleven lines.</li>
+        <li><b>The rotation is a panel above the stations.</b> Every N minutes · the draw controls (a mode, a count, a button) · the group list with pickers · the computed grid — stacked, before the stations it rotates between. The station then says which group <em>starts</em> there (“Starts with: Group A”), which the grid's first row already says.</li>
+        <li><b>The grid is right, and it is far away.</b> It is the one thing on the page a shared document cannot do — rounds × stations with the clock on each round, never tidied — and it sits under three stacked cards, a screen and a half below the block's title.</li>
+        <li><b>With one station, the station IS the block — the run screen already says so.</b> The field screen reads a single-station block through its station; the closed-season record does not. Stage 2 made the editor stop asking the block for what the drill answers (D7) and left the “Stations · 1” head and its card in place for this stage to rule.</li>
+        <li><b>People are deleted where kit is moved.</b> Stage 2 made a block's kit move onto its first station (D11) and recorded, beside it, that the same moment still silently deletes the block's players. The rule for people is this stage's.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="psec">
+    <h2>Before and after, at true size</h2>
+    <p class="intro">The probe practice's <b>Skills circuit</b> (45 min · three stations · groups of four · every 15 min) and, for the sole-station question, the drill-placed block from stage 2. Amber markers are what the code does today, green ones what changes; click any marker. The after-drawings wear their measured heights; the before-figures are measured on the fixture, not drawn.</p>
+    <div class="frametools"><span>Frames:</span><span class="sw" role="group" aria-label="Frame size"><button type="button" data-fit="fit" aria-pressed="true">Fit to window</button><button type="button" data-fit="true" aria-pressed="false">True size</button></span><span>· desktop 1440 · tablet 768 · phone 390</span></div>
+
+        <p class="framecap" data-short="Sole station · today">First, the question stage 2 sent here — a block with ONE station, as built today<span class="k">1440 · the open block only · the “Stations” head and the card, drawn as stage 2 left them</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="ob an"><button type="button" class="mk" aria-expanded="false" aria-label="Note 31" data-d="D1">31</button><div class="pop" hidden><b>One station, two containers</b>The block opens to its clock row and then a “Stations” head with “+ Add a station” and a numbered card — a list of one. Everything the coach wants is inside the card, one level down from where they are.</div>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Probe drill</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc on">20</span><span class="qc">30</span><span class="fin num v">20</span><span class="unit">min</span><span class="ends">ends 7:35 p.m.</span></div></div>
+              <div class="sth"><span class="flab">Stations</span><span class="addl">+ Add a station</span></div>
+              <div class="stn">
+                <div class="stnh"><span class="no">1</span><b>Probe drill</b><span class="ic">🗑</span></div>
+                <div class="from">📚 From your drills · Skills</div>
+                <div><div class="flab">What you're doing</div><p class="rd">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</p></div>
+                <div><div class="flab">What you're watching for</div><p class="rd">Head up on the carry.</p></div>
+                <div><div class="flab">Coaching points</div><div class="rd"><ol><li>Small touches into the turn</li><li>Accelerate out</li></ol></div></div>
+                <div><div class="flab">Setup</div><p class="rd">Two cones, five metres apart, one ball per player.</p></div>
+                <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="chp">Balls</span></div></div>
+                <div class="acts2"><span>✎ Edit just for this practice</span><span>⟳ Swap drill</span></div>
+                <div><div class="flab">Who runs it</div><div class="pick">Search your tags…</div></div>
+                <div><div class="flab">Who's at it</div><div class="chips"><span class="pkb">👥 Choose players</span></div></div>
+                <div><div class="flab">Just for tonight</div><div class="fin">A one-off note for this practice</div></div>
+                <div><div class="flab">Rotation note</div><div class="fin">Informal — e.g. swap halfway</div></div>
+              </div>
+              <div class="doorline"><u>+ Staff</u></div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <p class="framecap" data-short="Sole station · A flattened">A · Flattened — the drill’s words are the block’s body <span class="rec">recommended</span><span class="k">1440 · the open block only · D1</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="ob after an" data-measure="s3-flat"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 32" data-d="D1">32</button><div class="pop" hidden><b>The station IS the block</b>No “Stations” head, no numbered card, no second trash. The provenance line and the drill's read-only words sit where the block's own words would; the practice half — who runs it, who's at it, just for tonight — are the block's own lines; the kit is the block's (one level, as stage 2 ruled). A second station un-flattens it into columns. Title and minutes never detach the drill; “Edit just for this practice” still does.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Probe drill</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc on">20</span><span class="qc">30</span><span class="fin num v">20</span><span class="unit">min</span><span class="ends">ends 7:35 p.m.</span></div></div>
+              <div class="from">📚 From your drills · Skills · <u>Edit just for this practice</u> · <u>Swap drill</u></div>
+              <div><div class="flab">What you're doing</div><p class="rd">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</p></div>
+              <div><div class="flab">What you're watching for</div><p class="rd">Head up on the carry.</p></div>
+              <div><div class="flab">Coaching points</div><div class="rd"><ol><li>Small touches into the turn</li><li>Accelerate out</li></ol></div></div>
+              <div><div class="flab">Setup</div><p class="rd">Two cones, five metres apart, one ball per player.</p></div>
+              <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="chp">Balls</span></div></div>
+              <div><div class="flab">Players</div><div class="who"><b>Whole team</b> · <u>Choose players…</u></div></div>
+              <div class="doorline"><u>+ Staff</u> · <u>+ Just for tonight</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <p class="framecap" data-short="Sole station · B the card">B · The card kept — one column, no head<span class="k">1440 · the open block only · D1</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:15 p.m.<small>20 min</small></div>
+          <div class="ob after an" data-measure="s3-card"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 33" data-d="D1">33</button><div class="pop" hidden><b>The other answer</b>The station keeps its card as a single column under the clock row — the “Stations · 1” head goes, the card stays, its own trash means “remove the drill”. Honest about the model (a station is a station), one container more than the coach needs, and the block's Players line has to live inside it.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Probe drill</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc on">20</span><span class="qc">30</span><span class="fin num v">20</span><span class="unit">min</span><span class="ends">ends 7:35 p.m.</span></div></div>
+              <div class="stcols one">
+                <div class="stcol open">
+                  <div class="sch"><b>Probe drill</b><span class="ic">🗑</span></div>
+                  <div class="from">📚 From your drills · Skills</div>
+                  <div><div class="flab">What you're doing</div><p class="rd">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</p></div>
+                  <div><div class="flab">What you're watching for</div><p class="rd">Head up on the carry.</p></div>
+                  <div><div class="flab">Coaching points</div><div class="rd"><ol><li>Small touches into the turn</li><li>Accelerate out</li></ol></div></div>
+                  <div><div class="flab">Setup</div><p class="rd">Two cones, five metres apart, one ball per player.</p></div>
+                  <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="chp">Balls</span></div></div>
+                  <div class="acts2"><span>✎ Edit just for this practice</span><span>⟳ Swap drill</span></div>
+                  <div><div class="flab">Who's at it</div><div class="who"><b>Whole team</b> · <u>Choose players…</u></div></div>
+                  <div class="doorline"><u>+ Who runs it</u> · <u>+ Just for tonight</u></div>
+                </div>
+              </div>
+              <div class="doorline"><u>+ Staff</u> · <u>+ Stations</u></div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn">31</span><span><b>One station, two containers.</b> A head and a numbered card for a list of one.</span></li>
+      <li><span class="nn ok">32</span><span><b>A · Flattened.</b> The drill's words are the block's body; the practice half is the block's own lines.</span></li>
+      <li><span class="nn ok">33</span><span><b>B · The card kept.</b> One column, no head — one container more than needed.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="Before · circuit">Before · the circuit, open — as built today (condensed; the real block is 4,083px)<span class="k">1440 · the open block only · rotation panel · three cards · the grid</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:35 p.m.<small>45 min</small></div>
+          <div class="ob an"><button type="button" class="mk" aria-expanded="false" aria-label="Note 34" data-d="D3 D5">34</button><div class="pop" hidden><b>The rotation is a panel, above what it rotates</b>Every N minutes, then the draw as three controls (a way, a number, a button), then the group list with a picker each, then the grid — all before the first station. The coach scrolls past the answer to reach the question.</div>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Skills circuit</span><span class="rtag">↻ ROTATION</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">45</span><span class="unit">min</span><span class="ends">ends 8:20 p.m.</span></div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta v">Three stations, four at each; groups move every 15 minutes.</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Each player gets a full turn at all three.</div></div>
+              <div class="rotpanel">
+                <div class="frow"><div><div class="flab">Every</div><div class="fin num v">15</div></div><span class="unit">min · 3 rounds</span></div>
+                <div class="flab">Groups</div>
+                <div class="frow"><span class="fin v" style="width:130px">3 groups</span><span class="pkb">Draw at random</span><span class="pkb">Draw again</span></div>
+                <div class="grp"><b>Group A</b><span class="chp">Avery</span><span class="chp">Blake</span><span class="chp">Casey</span><span class="chp">Devon</span><span class="pkb">👥 4</span></div>
+                <div class="grp"><b>Group B</b><span class="chp">Emerson</span><span class="chp">Frankie</span><span class="chp">Gray</span><span class="chp">Harper</span><span class="pkb">👥 4</span></div>
+                <div class="grp"><b>Group C</b><span class="chp">Indigo</span><span class="chp">Jules</span><span class="chp">Kai</span><span class="chp">Logan</span><span class="pkb">👥 4</span></div>
+                <table class="rgrid"><tr><th>Round</th><th>Group A</th><th>Group B</th><th>Group C</th></tr><tr><th>1 <small>7:35</small></th><td>Footwork ladder</td><td>Close control</td><td>Finishing</td></tr><tr><th>2 <small>7:50</small></th><td>Finishing</td><td>Footwork ladder</td><td>Close control</td></tr><tr><th>3 <small>8:05</small></th><td>Close control</td><td>Finishing</td><td>Footwork ladder</td></tr></table>
+              </div>
+              <div class="sth an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 35" data-d="D2 D4">35</button><div class="pop" hidden><b>Three cards, stacked, every field open</b>Each station is the block's form again: nine fields whether or not it has them, coaching points as numbered rows, “Starts with: Group A” repeating the grid's first row. 1,100px a station.</div><span class="flab">Stations</span><span class="chk"><i class="on"></i> Groups rotate between them</span><span class="addl">+ Add a station</span></div>
+              <div class="stn"><div class="stnh"><span class="no">1</span><span class="fin v" style="flex:1">Footwork ladder</span><span class="ic">🗑</span></div>
+                <div><div class="flab">What you're doing</div><div class="fin ta">What happens at this station</div></div>
+                <div><div class="flab">What you're watching for</div><div class="fin">What good looks like here</div></div>
+                <div><div class="flab">Setup</div><div class="fin ta v">Two ladders along the sideline, ten steps apart.</div></div>
+                <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+                <div><div class="flab">Who runs it</div><div class="chips"><span class="chp">Coach Bob</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+                <div><div class="flab">Starts with</div><div class="chips"><span class="chp">Group A <i>4</i></span></div></div>
+                <div><div class="flab">Coaching points</div><div class="ptr"><span class="n">1</span><span class="fin v">Short steps</span><span class="x">✕</span></div><div class="ptr"><span class="n">2</span><span class="fin v">Eyes up, not down</span><span class="x">✕</span></div><span class="addl">+ Add a point</span></div>
+                <div><div class="flab">Just for tonight</div><div class="fin v">Only two ladders tonight — run it in pairs.</div></div>
+                <div class="acts2"><span>📚 Save to my drills…</span></div>
+              </div>
+              <div class="stn dim"><div class="stnh"><span class="no">2</span><span class="fin v" style="flex:1">Close control</span><span class="ic">🗑</span></div><div class="more">… the same nine fields …</div></div>
+              <div class="stn dim"><div class="stnh"><span class="no">3</span><span class="fin v" style="flex:1">Finishing</span><span class="ic">🗑</span></div><div class="more">… the same nine fields …</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn">34</span><span><b>The rotation is a panel, above what it rotates.</b> The grid before the first station.</span></li>
+      <li><span class="nn">35</span><span><b>Three cards, stacked, every field open.</b> 1,100px a station.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="After · circuit">After · the circuit, open<span class="k">1440 · the open block only · D2 · D3 · D5 · D6</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding-top:18px">
+        <div class="tl">
+          <div class="tg">7:35 p.m.<small>45 min</small></div>
+          <div class="ob after an" data-measure="s3-after"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 36" data-d="D2 D3">36</button><div class="pop" hidden><b>The block's words, one line for the rotation, the stations side by side</b>Title · clock row · What you're doing (the circuit's intro) · What you're watching for. Then the rotation as ONE line: whether it rotates, how often, how many rounds that makes, and the draw. Then the three stations as columns — the whole evening in one screen.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Skills circuit</span><span class="rtag">↻ ROTATION</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">45</span><span class="unit">min</span><span class="ends">ends 8:20 p.m.</span></div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta v">Three stations, four at each; groups move every 15 minutes.</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Each player gets a full turn at all three.</div></div>
+              <div class="rotstrip an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 37" data-d="D3 D5">37</button><div class="pop" hidden><b>The rotation strip</b>“Groups rotate” as a pressed chip (off = the stations run separately, each with its own players); every N minutes typed once; the rounds it makes, computed; and the draw as ONE control — “3 groups · from who replied · Draw” — re-drawn by pressing again. The group list and the grid live under the columns, where the groups are.</div><span class="qc on">↻ Groups rotate</span><span class="sep">·</span>every <span class="fin num v sm">15</span> min<span class="sep">·</span><b>3 rounds</b> of 15 = 45 min<span class="sep">·</span><span class="pkb">👥 3 groups · from who replied · Draw ▾</span></div>
+              <div class="stcols an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 38" data-d="D4">38</button><div class="pop" hidden><b>A station column</b>Name · who runs it · tonight's note · the first line of what happens there (a drill's, when it is one). Press it and it opens for the rest — what you're doing, watching for, setup, equipment, coaching points as one field. Reorder with the arrows on the open column; “+ Add a station” is the last column.</div>
+                <div class="stcol"><div class="sch"><b>Footwork ladder</b></div><div class="scl">Coach Bob</div><div class="scl tn">Tonight: only two ladders — run it in pairs.</div><div class="scq">Two ladders along the sideline, ten steps apart.</div><div class="sco"><u>Open ›</u></div></div>
+                <div class="stcol"><div class="sch"><b>Close control</b></div><div class="scl">Sam Assistant</div><div class="scq">Ten-metre box marked with cones.</div><div class="sco"><u>Open ›</u></div></div>
+                <div class="stcol"><div class="sch"><b>Finishing</b></div><div class="scl">Jordan Helper</div><div class="scq">Work from the top of the area, one server.</div><div class="sco"><u>Open ›</u></div></div>
+                <div class="stcol add"><u>+ Add a station</u><span class="scq">a drill, or write one</span></div>
+              </div>
+              <div class="an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 39" data-d="D6">39</button><div class="pop" hidden><b>The grid's columns are the station columns</b>Rounds as rows with their clock; each cell the group at that station in that round. Reading DOWN a column is one station's evening; reading ACROSS a row is where everyone is at 7:50. The station's “Starts with” is the first row, so the column does not repeat it. The groups are listed under the grid with their pickers — the one place people live in a rotating block.</div>
+                <table class="rgrid cols"><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr><tr><th>7:35</th><td><b>A</b></td><td><b>B</b></td><td><b>C</b></td></tr><tr><th>7:50</th><td><b>C</b></td><td><b>A</b></td><td><b>B</b></td></tr><tr><th>8:05</th><td><b>B</b></td><td><b>C</b></td><td><b>A</b></td></tr></table>
+                <div class="grp"><b>A</b><span class="chp">Avery</span><span class="chp">Blake</span><span class="chp">Casey</span><span class="chp">Devon</span><u class="edit">edit</u></div>
+                <div class="grp"><b>B</b><span class="chp">Emerson</span><span class="chp">Frankie</span><span class="chp">Gray</span><span class="chp">Harper</span><u class="edit">edit</u></div>
+                <div class="grp"><b>C</b><span class="chp">Indigo</span><span class="chp">Jules</span><span class="chp">Kai</span><span class="chp">Logan</span><u class="edit">edit</u></div>
+              </div>
+              <div class="doorline"><u>+ Coaching points</u> · <u>+ Staff</u></div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">36</span><span><b>The block's words, one line for the rotation, the stations side by side.</b></span></li>
+      <li><span class="nn ok">37</span><span><b>The rotation strip.</b> Rotates · every N min · rounds · the draw as one control.</span></li>
+      <li><span class="nn ok">38</span><span><b>A station column.</b> Name · who runs it · tonight's note · the first line; opens for the rest.</span></li>
+      <li><span class="nn ok">39</span><span><b>The grid's columns are the station columns.</b> Down a column is one station's evening.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="After · a column open, inline">After · a station column, open inline — the 15 Sep draw, revised below<span class="k">1440 · the columns only · D4 · D7 · superseded by the modal, next</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="doc" style="padding:22px 28px">
+        <div class="stcols an"><button type="button" class="mk" aria-expanded="false" aria-label="Note 40" data-d="D4 D7">40</button><div class="pop" hidden><b>Open for the rest — the shape this replaces</b>The open column widened and the others folded to their heads, leaving two thin empty columns beside a card deep enough to need its own scroll. Fine for a block's row, where the neighbours are a sequence worth seeing; a station has no such relationship to the ones beside it, so there was nothing that inline layout was actually buying — see 43, next.</div>
+          <div class="stcol open">
+            <div class="sch"><span class="ar">◀ ▶</span><b class="ti">Footwork ladder</b><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div><div class="flab">What you're doing</div><div class="fin ta">What happens at this station</div></div>
+            <div><div class="flab">What you're watching for</div><div class="fin">What good looks like here</div></div>
+            <div><div class="flab">Coaching points</div><div class="fin ta v">Short steps<br>Eyes up, not down</div></div>
+            <div><div class="flab">Setup</div><div class="fin ta v">Two ladders along the sideline, ten steps apart.</div></div>
+            <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+            <div><div class="flab">Who runs it</div><div class="chips"><span class="chp">Coach Bob</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+            <div><div class="flab">Just for tonight</div><div class="fin v">Only two ladders tonight — run it in pairs.</div></div>
+            <div class="doorline"><u>📚 Save to my drills…</u></div>
+          </div>
+          <div class="stcol shut"><div class="sch"><b>Close control</b></div><div class="scl">Sam Assistant</div></div>
+          <div class="stcol shut"><div class="sch"><b>Finishing</b></div><div class="scl">Jordan Helper</div></div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn">40</span><span><b>Open for the rest — superseded.</b> Widened inline, two dead columns beside it. Kept here as the record of what 43 replaces.</span></li></ol>
+
+    <p class="framecap" data-short="After · a station in a modal">After · a station opens as a modal, with a stepper <span class="rec">recommended</span><span class="k">1440 · the modal only · D4 (revised 15 Sep)</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="moddim">
+        <div class="modcard an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 43" data-d="D4">43</button><div class="pop" hidden><b>A station isn't a sequence — a block is</b>The case for opening in place was always "you should still see where you are in the run of things." That's true for blocks, which really do run one after another, and false for stations, which just happen to be occupying the same 15 minutes in different corners of the field. Once that reason is gone, the modal is strictly better for a card this deep: no dead columns beside it, no inline scroll fighting the page's own scroll, full width to work in. What it still owes you is "what else is running tonight" — the stepper in the footer answers that the same way the fundraiser drive drawer already does, so this isn't a new pattern, it's reusing one you already have.</div>
+          <div class="modhead">
+            <div class="modtitle"><b>Footwork ladder</b><span class="modstatus">ACTIVE</span></div>
+            <span class="modx">✕</span>
+          </div>
+          <div class="modbody">
+            <div><div class="flab">What you're doing</div><div class="fin ta">What happens at this station</div></div>
+            <div><div class="flab">What you're watching for</div><div class="fin">What good looks like here</div></div>
+            <div><div class="flab">Coaching points</div><div class="fin ta v">Short steps<br>Eyes up, not down</div></div>
+            <div><div class="flab">Setup</div><div class="fin ta v">Two ladders along the sideline, ten steps apart.</div></div>
+            <div><div class="flab">Equipment</div><div class="chips"><span class="chp">Cones</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+            <div><div class="flab">Who runs it</div><div class="chips"><span class="chp">Coach Bob</span><span class="pick" style="flex:1;min-width:150px">Search your tags…</span></div></div>
+            <div><div class="flab">Just for tonight</div><div class="fin v">Only two ladders tonight — run it in pairs.</div></div>
+            <div class="doorline"><u>📚 Save to my drills…</u></div>
+          </div>
+          <div class="modfoot">
+            <span class="moddel">🗑 Delete this station</span>
+            <span class="modstep"><span class="modstepbtn">‹</span> 1 of 3 stations <b>Close control ›</b></span>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">43</span><span><b>A station isn't a sequence — a block is.</b> Modal, full width, no dead columns; the stepper (the fundraiser drive drawer's own pattern) carries "what else is running tonight" instead of the layout having to.</span></li></ol>
+
+    <p class="framecap" data-short="Phone · 390">The phone — the circuit open, after<span class="k">390 · the 844 fold drawn · D8</span></p>
+    <div class="framewrap"><div class="frame"><div class="pair">
+<div class="pf ph tall">
+  <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span>👤</span></span></div>
+  <div class="body"><div class="main">
+    <div class="mast"><div class="team">UAT Test Team</div><div class="season">UAT Test Org · 2026 Season · 3-2-1</div></div>
+    <div class="grid"><div class="col">
+      <div class="pgback">← Practice plans</div>
+      <div class="doc">
+        <div class="tl">
+          <div class="tg">7:35 p.m.<small>45 min</small></div>
+          <div class="ob after an" data-measure="s3-phone"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 41" data-d="D8">41</button><div class="pop" hidden><b>Columns become rows on a phone</b>The strip wraps to two lines; the stations stack as one row each (name · who runs it · the note), still opening in place; the grid scrolls sideways as it does today, its first column pinned. No new arrangement beyond the stacking.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Skills</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">45</span><span class="unit">min</span><span class="ends">ends 8:20 p.m.</span></div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta v">Three stations, four at each; groups move every 15 minutes.</div></div>
+              <div><div class="flab">What you're watching for</div><div class="fin v">Each player gets a full turn.</div></div>
+              <div class="rotstrip wrap"><span class="qc on">↻ Groups rotate</span> every <span class="fin num v sm">15</span> min <b>· 3 rounds</b><span class="pkb">👥 3 groups · Draw ▾</span></div>
+              <div class="stcols stack">
+                <div class="stcol"><div class="sch"><b>Footwork ladder</b></div><div class="scl">Coach Bob · Tonight: two ladders — pairs</div></div>
+                <div class="stcol"><div class="sch"><b>Close control</b></div><div class="scl">Sam Assistant</div></div>
+                <div class="stcol"><div class="sch"><b>Finishing</b></div><div class="scl">Jordan Helper</div></div>
+                <div class="stcol add"><u>+ Add a station</u></div>
+              </div>
+              <div class="scroll"><table class="rgrid cols"><tr><th></th><th>Footwork</th><th>Close c…</th><th>Finish…</th></tr><tr><th>7:35</th><td><b>A</b></td><td><b>B</b></td><td><b>C</b></td></tr><tr><th>7:50</th><td><b>C</b></td><td><b>A</b></td><td><b>B</b></td></tr><tr><th>8:05</th><td><b>B</b></td><td><b>C</b></td><td><b>A</b></td></tr></table></div>
+              <div class="grp"><b>A</b><span class="chp">Avery</span><span class="chp">Blake</span><span class="chp">Casey</span><span class="chp">Devon</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div></div>
+  <div class="fold"><span>844 · fold</span></div>
+  <div class="bar"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span><b>MORE</b></span></div>
+</div>
+</div></div></div>
+    <ol class="notes"><li><span class="nn ok">41</span><span><b>Columns become rows on a phone.</b> The grid scrolls sideways, as today.</span></li></ol>
+
+    <p class="framecap" data-short="Tablet · 768">The tablet band — three columns at 768<span class="k">768 · the document only · the 44px floor · D8</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf t768"><div class="cardonly">
+      <div class="doc">
+        <div class="tl">
+          <div class="tg">7:35 p.m.<small>45 min</small></div>
+          <div class="ob after an" data-measure="s3-768"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 42" data-d="D8">42</button><div class="pop" hidden><b>Three columns still fit at 768</b>About 190px each inside the sheet — the head, one line each for who runs it and the note, the first line clipped to one row. Four and more columns wrap to a second row of columns rather than shrinking below a tap floor.</div><span class="hpx" data-hpx></span>
+            <div class="obh"><span class="ar">▲<br>▼</span><span class="ti">Skills circuit</span><span class="rtag">↻ ROTATION</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num v">45</span><span class="unit">min</span><span class="ends">ends 8:20 p.m.</span></div></div>
+              <div class="rotstrip"><span class="qc on">↻ Groups rotate</span><span class="sep">·</span>every <span class="fin num v sm">15</span> min<span class="sep">·</span><b>3 rounds</b><span class="sep">·</span><span class="pkb">👥 3 groups · Draw ▾</span></div>
+              <div class="stcols">
+                <div class="stcol"><div class="sch"><b>Footwork ladder</b></div><div class="scl">Coach Bob</div><div class="scl tn">Tonight: two ladders — pairs.</div><div class="scq">Two ladders along the sideline…</div><div class="sco"><u>Open ›</u></div></div>
+                <div class="stcol"><div class="sch"><b>Close control</b></div><div class="scl">Sam Assistant</div><div class="scq">Ten-metre box marked with cones.</div><div class="sco"><u>Open ›</u></div></div>
+                <div class="stcol"><div class="sch"><b>Finishing</b></div><div class="scl">Jordan Helper</div><div class="scq">Work from the top of the area…</div><div class="sco"><u>Open ›</u></div></div>
+              </div>
+              <table class="rgrid cols"><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr><tr><th>7:35</th><td><b>A</b></td><td><b>B</b></td><td><b>C</b></td></tr><tr><th>7:50</th><td><b>C</b></td><td><b>A</b></td><td><b>B</b></td></tr><tr><th>8:05</th><td><b>B</b></td><td><b>C</b></td><td><b>A</b></td></tr></table>
+            </div>
+          </div>
+        </div>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">42</span><span><b>Three columns still fit at 768.</b> Four and more wrap to a second row.</span></li></ol>
+  </section>
+
+  <section class="psec">
+    <h2>The decisions — eight, each drawn above, each with a recommendation</h2>
+
+    <div class="ask" data-q="D1" data-kind="build">
+      <div class="qn">D1 · the question stage 2 sent here</div>
+      <h3>A block with ONE station — does it flatten into the block, or keep its card?</h3>
+      <p><b>Recommendation: flatten (A).</b> With one station the station IS the block — the field screen already reads it that way, and stage 2 already stopped asking the block for what the drill answers. So the “Stations” head and the numbered card go: the drill's provenance line and read-only words sit where the block's own words would, with <em>Edit just for this practice · Swap drill</em> on that line; who runs it, who's at it and tonight's note are the block's own lines (a door each until set, as stage 2 drew them); the kit is the block's. A second station un-flattens it into columns; removing back to one flattens again. Title and minutes never detach the drill; editing a word still does. <b>What it costs:</b> the closed-season reader and the printed sheet keep reading a single station as a station (they already print it once, not twice) — nothing changes there; the sanitiser's model is untouched (a station is still a station in the plan). <b>B</b> keeps one honest container the coach does not need. <b>Measured on the drawings:</b> the same drill-placed block is 922px as stage 2 left it (the head and the card), <b>567</b> flattened, 667 with the card kept; the circuit is <b>4,083px on the fixture today → 835 drawn</b>.</p>
+      <div class="rides"><b>Rides:</b> the open block's body when it has exactly one station; nothing in the model, the sheet or the field screen.</div>
+    </div>
+    <div class="ask" data-q="D2" data-kind="build">
+      <div class="qn">D2</div>
+      <h3>Stations as columns under their block on the desktop; rows on a phone.</h3>
+      <p><b>Recommendation: columns.</b> Two, three or four stations side by side, each column its name, who runs it and tonight's note with the first line of what happens there; “+ Add a station” the last column. On a phone the columns stack as rows. The sheet is 816 wide: three columns are ~230px, four ~170 — five and more wrap to a second row of columns rather than shrink under the tap floor.</p>
+      <div class="rides"><b>Rides:</b> the stations section's layout; the reorder arrows move to the open column's head; nothing in the model.</div>
+    </div>
+    <div class="ask" data-q="D3" data-kind="build">
+      <div class="qn">D3</div>
+      <h3>The rotation is one line between the block's words and the columns.</h3>
+      <p><b>Recommendation: the strip.</b> “Groups rotate” as a pressed chip (un-press it and the stations run separately, each with its own Players line), <em>every N min</em> typed once, the rounds that makes computed and stated (“3 rounds of 15 = 45 min”; “45 does not divide by 20 — 2 rounds and 5 min over”, never tidied), and the draw. The stacked rotation panel goes; the group list and the grid move under the columns.</p>
+      <div class="rides"><b>Rides:</b> the rotation panel's controls re-laid as one line; the honest-arithmetic statements keep their words.</div>
+    </div>
+    <div class="ask" data-q="D4" data-kind="build">
+      <div class="qn">D4</div>
+      <h3>A station column shows name · who runs it · tonight's note, and opens as a modal for the rest.</h3>
+      <p><b>Recommendation: a modal with a stepper — revised 15 Sep, after review.</b> Drawn first as an inline widen (the others folding to their heads); walking it against the block's own "opens in place" rule surfaced that the rule's reason doesn't transfer: a block genuinely runs in sequence, so seeing its neighbours while you edit it matters, and a station has no such relationship to the ones beside it — they're just sharing a clock. Once that reason is gone, inline-open was only costing space (two dead columns beside a nine-field card) and reopening the same inline-scroll-past-what-you-don't-need problem the sheet was built to avoid. <b>The station now opens as a modal</b>, full width to work in, showing the station's words in the block's vocabulary, coaching points as one field, Setup, Equipment, who runs it, tonight's note — and, only when the stations do not rotate, its own Players line. A footer stepper ("1 of 3 stations · Close control ›") carries "what else is running tonight" instead of the layout — the same pattern the fundraiser drive drawer already uses, not a new one. A drill-backed station shows its read-only text and provenance as the block does. “Rotation note” (the informal “swap halfway”) goes: it was the answer for a block that does not rotate, and tonight's note already holds it.</p>
+      <div class="rides"><b>Rides:</b> the station card's fields and order; the open state moves from an inline column to a modal with a prev/next stepper over the block's own stations; “rotationNote” stops being offered (the key stays readable — nothing migrates).</div>
+    </div>
+    <div class="ask" data-q="D5" data-kind="build">
+      <div class="qn">D5</div>
+      <h3>The draw is one control.</h3>
+      <p><b>Recommendation: one control on the strip.</b> “3 groups · from who replied · Draw” — the count, the pool (who replied yes, or the whole roster when attendance is unknown, as today) and the button in one place; press again to re-draw; the groups appear under the grid with an <em>edit</em> that opens the same Choose players picker (a player picked into one group leaves the other, as today). “Groups of N” is a way of saying the count and lives in the same menu. Deliberately dumb, as ruled — a shuffle and a deal.</p>
+      <div class="rides"><b>Rides:</b> the draw's three controls become one; `drawGroups` untouched.</div>
+    </div>
+    <div class="ask" data-q="D6" data-kind="build">
+      <div class="qn">D6</div>
+      <h3>The grid's columns are the station columns.</h3>
+      <p><b>Recommendation: yes.</b> Rounds as rows with their clock, stations as columns in the same order and width as the cards above, each cell the group there then. A station's “Starts with” is the first row, so the column does not repeat it. Reading down is one station's evening — the printed sheet already prints the grid inside its block; the screen finally matches the paper.</p>
+      <div class="rides"><b>Rides:</b> the grid's orientation (today groups are columns and rounds rows with station names in the cells); `computeRotation` untouched — the same cells, turned.</div>
+    </div>
+    <div class="ask" data-q="D7" data-kind="build">
+      <div class="qn">D7</div>
+      <h3>Coaching points on a station — and in the drill library — as one field, one per line.</h3>
+      <p><b>Recommendation: yes — stage 2's D10, finished.</b> The station and the drill library's editor keep numbered rows today (“two shapes for one idea for one stage”). Both take the one field; stored exactly as today.</p>
+      <div class="rides"><b>Rides:</b> the station's and the drill editor's points control; no model change.</div>
+    </div>
+    <div class="ask" data-q="D8" data-kind="build">
+      <div class="qn">D8 · recorded by stage 2</div>
+      <h3>People move the way kit does when a station arrives — never silently deleted.</h3>
+      <p><b>Recommendation: move them.</b> Today a block's players are deleted the moment it gains a station (the sanitiser's people-at-one-level rule); stage 2 made kit MOVE instead and recorded the difference. The same rule for people: the block's players move onto the first station (a drill station holds people too — people are the practice's half, never the drill's); when rotating is turned on they become the first draw's pool. Nothing typed vanishes.</p>
+      <div class="rides"><b>Rides:</b> the sanitiser's one silent delete becomes a move (the same pure pass as kit); the help's “you'll see the names move” sentence becomes true.</div>
+    </div>
+
+    <div class="plain" style="margin-top:18px"><b>Not this stage:</b> the drill library's rows and the docked panel (stage 4); drag (S.4 — the owner's call at stage 4; arrows until then); the run screen's station view and the printed grid's drawing (stage 5).</div>
+  </section>
+
+  <section class="psec">
+    <div class="summary" style="padding-top:0">
+      <h2>Your decisions on this stage, to paste back</h2>
+      <p>Collects D1–D8 with your notes into one block of text.</p>
+      <button type="button" id="buildSummaryStage3">Build the stage summary</button>
+      <textarea id="summaryOutStage3" hidden aria-label="Stage summary to paste back"></textarea>
+    </div>
+  </section>
+
+  <section class="psec">
+    <div class="yours" data-notes="stage3plan"><div class="label">Your notes on this stage</div></div>
+  </section>
+</div>
+
 <div class="prop" id="tab-plan" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">Plan <span class="status built">stage 0 built on dev 14 Sep</span></div>
+    <div class="eyebrow">Plan <span class="status built">stages 0 · 1 committed</span> <span class="status built">stage 2 built on dev 15 Sep — walk owed (§190)</span> <span class="status">stage 3 drawn — rule it</span></div>
     <h1>The stage ladder, and stage 0 in full</h1>
     <p class="lede">One proposal tab per stage, ruled and built one at a time; a later stage may depend on an earlier ruling. The record of each stage lives in <code>docs/projects/active/COACH_PRACTICES_REEVALUATION_PLAN.md</code>; this tab is the same plan, readable here.</p>
   </header>
@@ -2027,8 +3256,8 @@ details.call .body p{margin:0 0 6px}
       <tr><th>Stage</th><th>Name</th><th>What it decides</th><th>State</th></tr>
       <tr><td>0</td><td><b>Arrive</b> — the hub</td><td>The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card.</td><td><b>Ruled 14 Sep (D1–D8 as drawn) · built on dev the same day · walk §186 owed</b></td></tr>
       <tr><td>1</td><td><b>The blank page</b></td><td>The plan page as a document — when · how long; the time gutter; the first block; the rail as a fold; the sheet-shaped page (S.1 decided here). First decision: the boundary question; last, station 1's end time.</td><td><b>Ruled 14 Sep (D1–D9 as drawn) · built on dev 14 Sep · §188 walk complete 14 Sep · commit owed</b></td></tr>
-      <tr><td>2</td><td>The block</td><td>One block's anatomy as a row that opens in place.</td><td>not drawn</td></tr>
-      <tr><td>3</td><td>Stations &amp; rotation</td><td>Stations as columns under a rotating block, the grid under them, the draw as one control.</td><td>not drawn</td></tr>
+      <tr><td>2</td><td><b>The block</b></td><td>What a block asks for (four things), what waits behind a door (points · staff · players · stations), one vocabulary at both levels, the clock row with quick lengths and “ends …”, the shut row's line, a drill-placed block's face, Escape on every sheet.</td><td><b>Ruled 15 Sep (D1–D11 all as drawn) · BUILT ON DEV 15 Sep · /simplify · /review (3 fixed) · /docs done · the “QA walk · 2” tab, ledger §190 — walk owed · commit owed · no migration</b></td></tr>
+      <tr><td>3</td><td><b>Stations &amp; rotation</b></td><td>The sole-station question first (flatten, or keep the card); stations as columns under their block, rows on a phone; the rotation as one line; a station column that opens for the rest; the draw as one control; the grid in the same columns; points as one field on a station and in the library; people move like kit.</td><td><b>Drawn 15 Sep on the “3 · Stations and the rotation” tab (D1–D8 with recommendations; the circuit 4,083px on the fixture → 835 drawn) · not ruled, not built</b></td></tr>
       <tr><td>4</td><td>The library</td><td>The Templates and Drills tab rows (minutes · tags · first line), the library docked beside the plan on desktop; drag as an addition — <b>needs the owner's ruling (S.4)</b>; “reorder with buttons, never drag” stands until then.</td><td>not drawn</td></tr>
       <tr><td>5</td><td>Paper &amp; the field</td><td>The run door's window on the plan page, “everyone” chips, the printed sheet as the print of the screen.</td><td>not drawn</td></tr>
       <tr><td>6</td><td>Afterwards &amp; who sees what</td><td>“How it went” timing, the closed-season shelf, the recap's second half if not ruled earlier.</td><td>not drawn</td></tr>
@@ -2085,7 +3314,7 @@ details.call .body p{margin:0 0 6px}
 
 <div class="prop" id="tab-brief" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">PM brief <span class="status built">stage 0 built on dev 14 Sep</span></div>
+    <div class="eyebrow">PM brief <span class="status built">stages 0 · 1 built on dev 14 Sep</span> <span class="status built">stage 2 ruled 15 Sep</span></div>
     <h1>Practices: the room opens on the next practice, and becomes the home for templates and drills</h1>
     <p class="lede">A coach opens Practice plans to answer one question — <em>what do I still need to do before the next practice?</em> — and the room did not answer it. It opened on a filter chip and a list of eight rows; the chip counted practices that had already happened; a past practice was offered “Plan this practice”; and the coach's library lived in another room, where the drill library's only door had just been removed. Stage 0 fixes the front door. The wider re-evaluation found a bigger shape problem on the plan page itself — a form where a document should be — and that is stages 1–3.</p>
   </header>
@@ -2127,7 +3356,13 @@ details.call .body p{margin:0 0 6px}
       <li>Templates and Drills are reachable from Practice plans in one tap; every old link redirects; a schedule-view-only assistant sees neither tab.</li>
       <li>The Overview's card for a practice offers the plan (or the run screen on the day), not attendance, whenever the coach can act on it.</li>
     </ul>
-    <p class="plain" style="margin-top:14px"><b>Where this stands:</b> stage 1, <em>The blank page</em>, is ruled (all nine as drawn — the practice room keeps reading players' goals, now as an addition a coach puts on a plan rather than a standing fold; a practice needs an end time; Run practice left the plan page) and built on dev; its walk is the <b>QA walk · 1</b> tab. <b>What comes next:</b> the commit, then stage 2, <em>The block</em> — one block's anatomy as a row that opens in place. Its plan first, then mockups, before any code.</p>
+    <p class="plain" style="margin-top:14px"><b>Where this stands:</b> stage 1, <em>The blank page</em>, is ruled (all nine as drawn — the practice room keeps reading players' goals, now as an addition a coach puts on a plan rather than a standing fold; a practice needs an end time; Run practice left the plan page) and built on dev; its walk is the <b>QA walk · 1</b> tab. <b>What comes next:</b> the commit; then stage 2’s mockups, rulings and build.</p>
+  </section>
+
+  <section class="psec">
+    <h2>Stage 2 · The block — ruled 15 Sep (all eleven as drawn) · built on dev the same day · walk owed (§190)</h2>
+    <p class="plain"><b>What changes for a coach.</b> Opening a block today means eight questions, every time — minutes, rest-of-practice, description, goal, staff, players, coaching points, stations — so a written warm-up stands 743px tall whether or not it will ever have staff or points. The proposal: a block opens to <b>four things</b> — its title, a clock row, <em>What you’re doing</em> and <em>What you’re watching for</em> — and everything else waits as a quiet door at its foot (<em>+ Coaching points · + Staff · + Players · + Stations</em>), appearing the moment it holds something. The clock row carries five quick lengths (5 · 10 · 15 · 20 · 30), <em>Rest of practice</em>, and the consequence — “ends 6:15 p.m.” A block asks for the same three things a station does, in the same words, so the plan, the field screen and the drill library stop calling one idea two names. The shut row loses its coaching-points count and its “Who: everyone”. A block placed from a drill stops showing three empty questions above the drill’s own text. And Escape closes every sheet on the page.</p>
+    <p class="plain" style="margin-top:10px"><b>What does not change.</b> The words a coach has already typed — the two fields stay two (the “watching for” line is the one the field screen shows in bold at arm’s length); autosave and “emptiness discards nothing”; a drill’s read-only rule; reorder by arrows; the printed sheet (one word: its block line says “Watch for:” as its station lines already do) and the field screen. No migration. Stations, the rotation and the groups grid are stage 3’s; the library and drag are stage 4’s. <b>Eleven decisions</b>, each drawn before/after at true size with a recommendation, are on the <b>2 · The block</b> tab — <b>all eleven ruled Build as drawn on 15 Sep</b>; the build is next.</p>
   </section>
 </div>
 
@@ -2211,13 +3446,14 @@ details.call .body p{margin:0 0 6px}
 
   // ── tabs: the walk is the record; each stage gets a proposal tab as we reach it ──
   var tabBtns=Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
-  var panels={walk:'tab-walk',arrive:'tab-arrive',qa:'tab-qa',stage1:'tab-stage1',qa1:'tab-qa1',plan:'tab-plan',brief:'tab-brief'};
+  var panels={walk:'tab-walk',arrive:'tab-arrive',qa:'tab-qa',stage1:'tab-stage1',qa1:'tab-qa1',stage2:'tab-stage2',qa2:'tab-qa2',stage3:'tab-stage3',plan:'tab-plan',brief:'tab-brief'};
   function showTab(k){
     if(!panels[k])k='walk';
     Object.keys(panels).forEach(function(p){var el=document.getElementById(panels[p]);if(el)el.hidden=(p!==k)});
     tabBtns.forEach(function(t){t.setAttribute('aria-selected',String(t.getAttribute('data-tab')===k))});
     try{localStorage.setItem(KEY+'-tab',k)}catch(e){}
     if(k!=='walk')fitAll();
+    if((k==='stage2'||k==='stage3')&&typeof measureBlocks==='function')setTimeout(measureBlocks,0);
   }
   tabBtns.forEach(function(t){t.addEventListener('click',function(){showTab(t.getAttribute('data-tab'));history.replaceState(null,'','#tab='+t.getAttribute('data-tab'))})});
   var m=/^#tab=([a-z0-9]+)/.exec(location.hash);
@@ -2392,6 +3628,7 @@ details.call .body p{margin:0 0 6px}
   // Stage 0's keys stay 'w-'/'wn-' so the owner's 24 marks survive this edit.
   setupWalk('tab-qa','w','buildWalkSummary','walkOut','Practices — stage 0 Arrive — QA walk (ledger §186)');
   setupWalk('tab-qa1','w1','buildWalkSummary1','walkOut1','Practices — stage 1 The blank page — QA walk (ledger §188)');
+  setupWalk('tab-qa2','w2','buildWalkSummary2','walkOut2','Practices — stage 2 The block — QA walk (ledger §190)');
 
   // ── paste-back for the stage 1 tab ──
   document.getElementById('buildSummaryStage1').addEventListener('click',function(){
@@ -2404,6 +3641,39 @@ details.call .body p{margin:0 0 6px}
     });
     var out=document.getElementById('summaryOutStage1');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
   });
+
+  // ── paste-back for the stage 2 tab ──
+  document.getElementById('buildSummaryStage2').addEventListener('click',function(){
+    var lines=['Practices — stage 2 The block — decisions — '+new Date().toISOString().slice(0,10),''];
+    Array.prototype.forEach.call(document.querySelectorAll('#tab-stage2 .ask[data-q]'),function(a){
+      var q=a.getAttribute('data-q');var h=a.querySelector('h3').textContent.trim();
+      var ans=state['a-'+q];var label=ans?choicesFor(a).filter(function(c){return c[0]===ans})[0][1]:'no answer';
+      lines.push('['+(ans?'x':' ')+'] D'+q.slice(1)+' — '+h);
+      lines.push('    -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''));
+    });
+    if(state['d-stage2plan'])lines.push('','Notes: '+state['d-stage2plan'].replace(/\s+/g,' ').trim());
+    var out=document.getElementById('summaryOutStage2');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
+  });
+  // ── paste-back for the stage 3 tab ──
+  document.getElementById('buildSummaryStage3').addEventListener('click',function(){
+    var lines=['Practices — stage 3 Stations and the rotation — decisions — '+new Date().toISOString().slice(0,10),''];
+    Array.prototype.forEach.call(document.querySelectorAll('#tab-stage3 .ask[data-q]'),function(a){
+      var q=a.getAttribute('data-q');var h=a.querySelector('h3').textContent.trim();
+      var ans=state['a-'+q];var label=ans?choicesFor(a).filter(function(c){return c[0]===ans})[0][1]:'no answer';
+      lines.push('['+(ans?'x':' ')+'] D'+q.slice(1)+' — '+h);
+      lines.push('    -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''));
+    });
+    if(state['d-stage3plan'])lines.push('','Notes: '+state['d-stage3plan'].replace(/\s+/g,' ').trim());
+    var out=document.getElementById('summaryOutStage3');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
+  });
+  // ── stage 2 + 3: each drawn block wears its own true-size height (offsetHeight ignores the fit scale) ──
+  function measureBlocks(){
+    Array.prototype.forEach.call(document.querySelectorAll('#tab-stage2 [data-measure], #tab-stage3 [data-measure]'),function(el){
+      var tag=el.querySelector('[data-hpx]');if(!tag)return;var h=el.offsetHeight;if(h>0)tag.textContent=h+' px';
+    });
+  }
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(measureBlocks);
+  window.addEventListener('load',measureBlocks);
 
   // ── paste-back for the walk ──
   document.getElementById('buildSummary').addEventListener('click',function(){

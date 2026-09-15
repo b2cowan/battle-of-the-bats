@@ -933,6 +933,11 @@ for (const session of neededSessions) {
           await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
           await page.waitForTimeout(600);
         }
+        // A state neither the URL nor device memory can reach — a block opened in place on the
+        // practice sheet. One product gesture, after the screen is ready, before it is measured;
+        // see `interact` in layout-screens.mjs. A gesture that fails is a screen that did not
+        // render the state it is listed for, and is reported as such rather than measured shut.
+        if (screen.interact) await screen.interact(page);
       } catch (e) {
         navFailures.push({ label, url, why: String(e.message || e).split('\n')[0] });
         console.log(`  ✗ ${label} — did not render`);
