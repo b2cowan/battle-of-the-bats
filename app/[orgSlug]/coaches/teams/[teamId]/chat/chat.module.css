@@ -8,7 +8,12 @@
      height is published as --coach-header-h on the shared <main>, so the chat box's
      viewport calc stays honest and the composer never slips below the fold. */
   --coach-topbar-h: var(--coach-header-h, 0px);
-  --coach-bottomnav-h: 64px;
+  /* Was a hand-typed 64px, independent of the bar it was reserving room for — the same
+     64px/72px drift already caught and reconciled once in the consumer shell (see
+     UNIFIED_HOME_TOURNAMENT_NAV_MERGE_PLAN §"KNOWN DRIFT"). CoachesBottomNav enforces its own
+     min-height against --bottom-nav-height (72px), so reading that SAME token here — rather
+     than re-guessing it — keeps the composer honest by construction instead of by coincidence. */
+  --coach-bottomnav-h: var(--bottom-nav-height, 72px);
   margin: -1rem -1rem -6rem;
   min-width: 0;
 }
