@@ -101,6 +101,7 @@ export default function TagSearchCombobox({
   onAdopt,
   manage,
   onManageChanged,
+  autoFocus = false,
 }: {
   library: readonly ComboTag[];
   selectedIds: string[];
@@ -110,6 +111,11 @@ export default function TagSearchCombobox({
   placeholder?: string;
   disabled?: boolean;
   showLegend?: boolean;
+  /** Focus (and bring into view) the search box on mount — a door the coach just opened via a
+   *  quiet link elsewhere on the sheet (owner catch, 2026-09-15: opening Staff on a block already
+   *  carrying a drill left the newly-shown field off the top of the screen with no signal it had
+   *  opened at all). Only ever true on a picker's first render with nothing selected yet. */
+  autoFocus?: boolean;
   /* ⚰⚰ `addAsChip` WAS DECLARED HERE AND IS DELETED (List · Room · Question Phase C, 2026-09-04;
      mockup R1, owner-flagged 2026-09-02 — a NAMED REVERSAL of the §114 walk tweak of 2026-08-27).
      It hid this control's search box behind a `＋` chip so the bill's fields block would cost one
@@ -290,7 +296,11 @@ export default function TagSearchCombobox({
           {selected.map(tag => {
             const isOrg = tag.teamId === null;
             return (
-              <span key={tag.id} className={`${styles.tagComboChip} ${isOrg ? styles.tagComboChipOrg : ''}`}>
+              <span key={tag.id} className={styles.tagComboChip}>
+                {/* The chip itself is one flat pill regardless of whose tag it is (owner ruling
+                    2026-09-15); this dot is what used to be the chip's whole fill colour — the
+                    same dot the dropdown's own rows below already wear. */}
+                <span className={`${styles.tagComboDot} ${isOrg ? styles.tagComboDotOrg : styles.tagComboDotOwn}`} aria-hidden />
                 {tag.name}
                 {!disabled && (
                   <button type="button" className={styles.tagComboChipX} aria-label={`Remove ${tag.name}`} onClick={() => removeTag(tag.id)}>
@@ -311,6 +321,7 @@ export default function TagSearchCombobox({
             value={query}
             placeholder={placeholder}
             autoComplete="off"
+            autoFocus={autoFocus}
             onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
             onFocus={openDropdown}
             onBlur={() => setTimeout(() => setOpen(false), 150)}

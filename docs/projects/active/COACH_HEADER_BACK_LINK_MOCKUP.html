@@ -1,0 +1,599 @@
+<title>Header Back-Link Redline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F3F6F9;
+    --paper-grid:rgba(30,58,138,0.09);
+    --sheet:#FFFFFF;
+    --sheet-edge:rgba(16,28,43,0.12);
+    --ink:#101C2B;
+    --ink-soft:#51637A;
+    --ink-faint:#8497AC;
+    --accent:#1E3A8A;
+    --accent-soft:#E4ECF9;
+    --redline:#C1272D;
+    --redline-soft:#FBE4E2;
+    --ok:#2F6D4F;
+    --ok-soft:#E1F0E7;
+    --archive:#8A7A55;
+    --archive-soft:#F1EBDB;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --serif:'IBM Plex Serif',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0A121C;
+      --paper-grid:rgba(110,156,242,0.10);
+      --sheet:#101B29;
+      --sheet-edge:rgba(158,186,219,0.16);
+      --ink:#E7EEF7;
+      --ink-soft:#9FB2C8;
+      --ink-faint:#6E839C;
+      --accent:#7DA2F2;
+      --accent-soft:#182A46;
+      --redline:#FF8B7B;
+      --redline-soft:#3A1B1C;
+      --ok:#6FC496;
+      --ok-soft:#12291D;
+      --archive:#D2BE8C;
+      --archive-soft:#2A2417;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0A121C;
+    --paper-grid:rgba(110,156,242,0.10);
+    --sheet:#101B29;
+    --sheet-edge:rgba(158,186,219,0.16);
+    --ink:#E7EEF7;
+    --ink-soft:#9FB2C8;
+    --ink-faint:#6E839C;
+    --accent:#7DA2F2;
+    --accent-soft:#182A46;
+    --redline:#FF8B7B;
+    --redline-soft:#3A1B1C;
+    --ok:#6FC496;
+    --ok-soft:#12291D;
+    --archive:#D2BE8C;
+    --archive-soft:#2A2417;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:
+      linear-gradient(var(--paper-grid) 1px, transparent 1px) 0 0/24px 24px,
+      linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px) 0 0/24px 24px,
+      var(--paper);
+    color:var(--ink);
+    font-family:var(--serif);
+    line-height:1.55;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; padding:36px 20px 80px; }
+
+  /* ── Title block ─────────────────────────────────────────────── */
+  .titleblock{
+    background:var(--sheet); border:1px solid var(--sheet-edge); border-radius:3px;
+    padding:22px 26px; margin-bottom:28px;
+    display:grid; grid-template-columns:1fr auto; gap:18px 28px; align-items:end;
+  }
+  .titleblock h1{
+    font-family:var(--sans); font-weight:700; font-size:1.7rem; margin:0 0 4px;
+    letter-spacing:-0.01em; text-wrap:balance; color:var(--ink);
+  }
+  .titleblock .kicker{
+    font-family:var(--mono); font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 10px;
+  }
+  .titleblock p{ margin:0; max-width:62ch; color:var(--ink-soft); font-size:0.98rem; }
+  .stamp-grid{
+    font-family:var(--mono); font-size:0.72rem; color:var(--ink-soft);
+    display:grid; grid-template-columns:auto auto; gap:3px 14px; text-align:right; white-space:nowrap;
+  }
+  .stamp-grid b{ color:var(--ink); font-weight:600; }
+
+  /* ── Correction note ─────────────────────────────────────────── */
+  .correction{
+    background:var(--redline-soft); border:1px solid var(--redline); border-radius:3px;
+    padding:16px 20px; margin-bottom:34px; font-size:0.95rem; color:var(--ink);
+  }
+  .correction .label{
+    font-family:var(--sans); font-weight:700; font-size:0.72rem; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--redline); display:block; margin-bottom:6px;
+  }
+
+  /* ── Figure plates ───────────────────────────────────────────── */
+  .figure{ margin-bottom:44px; }
+  .figure-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .figure-num{
+    font-family:var(--mono); font-weight:600; font-size:0.78rem; color:var(--accent);
+    background:var(--accent-soft); border-radius:2px; padding:2px 7px; letter-spacing:0.04em;
+  }
+  .figure-head h2{ font-family:var(--sans); font-size:1.18rem; font-weight:700; margin:0; color:var(--ink); }
+  .figure-head .sub{ font-family:var(--sans); font-size:0.85rem; color:var(--ink-soft); }
+  .figure-body{
+    background:var(--sheet); border:1px solid var(--sheet-edge); border-radius:3px;
+    padding:22px; position:relative;
+  }
+  .plate-1to1{ position:relative; }
+  .plate-1to1 .reg{
+    position:absolute; width:14px; height:14px; opacity:0.5;
+  }
+  .plate-1to1 .reg::before, .plate-1to1 .reg::after{ content:''; position:absolute; background:var(--ink-faint); }
+  .plate-1to1 .reg::before{ width:14px; height:1px; top:6.5px; left:0; }
+  .plate-1to1 .reg::after{ width:1px; height:14px; left:6.5px; top:0; }
+  .reg-tl{ top:8px; left:8px; } .reg-tr{ top:8px; right:8px; }
+  .reg-bl{ bottom:8px; left:8px; } .reg-br{ bottom:8px; right:8px; }
+  .scale-tag{
+    position:absolute; top:10px; right:30px; font-family:var(--mono); font-size:0.65rem;
+    letter-spacing:0.08em; color:var(--ink-faint);
+  }
+
+  .filmstrip{ display:flex; gap:22px; overflow-x:auto; padding:6px 6px 14px; }
+  .frame{ flex:none; }
+  .frame-label{
+    font-family:var(--mono); font-size:0.68rem; color:var(--ink-faint); text-align:center;
+    margin-top:9px; letter-spacing:0.03em;
+  }
+  .frame-shell{
+    background:#F8F4ED; /* --home-paper, the product's real warm ground */
+    border:1px solid rgba(70,55,30,0.16);
+    border-radius:4px;
+    padding:16px 18px;
+    box-shadow:0 1px 0 rgba(16,28,43,0.04);
+  }
+
+  /* ── Real CoachPageHeader specimen, rebuilt from the shipped tokens ── */
+  .ph-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .ph-left{ display:flex; align-items:center; gap:16px; min-width:0; }
+  .ph-back{
+    display:inline-flex; align-items:center; gap:4.8px; flex:none;
+    color:#4A4235; text-decoration:none; font-family:var(--product-font,system-ui,sans-serif);
+    font-size:14px; font-weight:600; padding:6.4px 8px; margin-left:-8px; border-radius:6px;
+  }
+  .ph-rule{ width:1px; align-self:stretch; margin:2.4px 0; background:rgba(70,55,30,0.12); flex:none; }
+  .ph-icon{
+    width:34px; height:34px; border-radius:12px; flex:none;
+    background:rgba(87,101,30,0.12); border:1px solid rgba(87,101,30,0.32);
+    color:#57651E; display:flex; align-items:center; justify-content:center;
+  }
+  .ph-icon svg{ width:18px; height:18px; }
+  .ph-title{
+    font-family:var(--product-font,system-ui,sans-serif); font-size:20px; font-weight:700;
+    color:#241E15; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ph-gutter{ display:inline-flex; align-items:center; flex:none; overflow:hidden; }
+  .ph-gutter .ph-back{ margin-left:0; }
+  .ph-icon-back svg{ width:16px; height:16px; }
+
+  /* Old, retired treatment (2026-08-11 → superseded 2026-08-26) */
+  .ph-old-back{
+    display:inline-flex; align-items:center; gap:6px; color:#1D4ED8; text-decoration:underline;
+    font-family:var(--product-font,system-ui,sans-serif); font-size:14px; font-weight:500;
+    margin-bottom:10px;
+  }
+  .superseded{ position:relative; opacity:0.82; }
+  .superseded::after{
+    content:'SUPERSEDED'; position:absolute; top:-11px; right:-8px;
+    font-family:var(--mono); font-size:0.6rem; letter-spacing:0.1em; font-weight:600;
+    color:var(--archive); background:var(--archive-soft); border:1px solid var(--archive);
+    padding:2px 6px; border-radius:2px; transform:rotate(3deg);
+  }
+
+  /* ── Dimension line (the measured defect) ───────────────────── */
+  .dim-wrap{ margin-top:18px; }
+  .dim-svg{ display:block; width:100%; height:52px; }
+  .dim-caption{
+    font-family:var(--mono); font-size:0.74rem; color:var(--redline); text-align:center; margin-top:2px;
+  }
+
+  /* ── Click-to-open callouts (native details/summary — keyboard + touch safe) ── */
+  .callouts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+  .callout{
+    border:1px solid var(--sheet-edge); border-radius:3px; background:var(--paper);
+    flex:1 1 240px; min-width:220px;
+  }
+  .callout[open]{ background:var(--sheet); }
+  .callout summary{
+    cursor:pointer; list-style:none; font-family:var(--sans); font-weight:600; font-size:0.85rem;
+    padding:10px 14px; display:flex; align-items:center; gap:9px; color:var(--ink);
+  }
+  .callout summary::-webkit-details-marker{ display:none; }
+  .callout summary .bud{
+    width:19px; height:19px; border-radius:50%; border:1.5px solid var(--accent); color:var(--accent);
+    font-family:var(--mono); font-size:0.68rem; display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .callout[open] summary .bud{ background:var(--accent); color:var(--sheet); }
+  .callout .callout-body{ padding:0 14px 14px 43px; font-size:0.9rem; color:var(--ink-soft); }
+  .callout .callout-body p{ margin:0 0 8px; }
+  .callout .callout-body p:last-child{ margin-bottom:0; }
+  .callout .tag{
+    display:inline-block; font-family:var(--mono); font-size:0.62rem; letter-spacing:0.06em;
+    padding:1px 6px; border-radius:2px; margin-right:6px; font-weight:600;
+  }
+  .tag.ok{ background:var(--ok-soft); color:var(--ok); }
+  .tag.no{ background:var(--redline-soft); color:var(--redline); }
+
+  /* ── Whole-page plates ───────────────────────────────────────── */
+  .page-plate{ background:#F8F4ED; border:1px solid rgba(70,55,30,0.16); border-radius:4px; overflow:hidden; }
+  .page-shell{ display:flex; }
+  .page-sidebar{
+    width:200px; flex:none; background:#FFFFFF; border-right:1px solid rgba(70,55,30,0.10);
+    padding:16px 0; font-family:var(--product-font,system-ui,sans-serif);
+  }
+  .page-sidebar .brand{ font-size:12px; font-weight:700; letter-spacing:0.06em; color:#241E15; padding:0 16px 14px; }
+  .page-sidebar .sgroup{ font-size:10px; font-weight:700; letter-spacing:0.09em; color:#8A7F6A; padding:12px 16px 4px; }
+  .page-sidebar .sitem{ font-size:13px; color:#4A4235; padding:7px 16px; }
+  .page-sidebar .sitem.on{ background:rgba(87,101,30,0.10); color:#241E15; font-weight:600; border-left:3px solid #57651E; padding-left:13px; }
+  .page-main{ flex:1; min-width:0; padding:22px 26px; }
+  .page-crumb-team{ font-family:var(--product-font,system-ui,sans-serif); font-size:11px; color:#8A7F6A; margin-bottom:16px; letter-spacing:0.02em; }
+  .page-card{ background:#FFFFFF; border:1px solid rgba(70,55,30,0.12); border-radius:8px; padding:18px 20px; margin-top:18px; font-family:var(--product-font,system-ui,sans-serif); }
+  .page-card .pline{ font-size:13px; color:#4A4235; margin-bottom:2px; }
+  .page-card .pmeta{ font-size:12px; color:#8A7F6A; }
+  .page-card .pfold{ font-size:13px; font-weight:600; color:#57651E; margin-top:14px; }
+  .page-card hr{ border:none; border-top:1px dashed rgba(70,55,30,0.16); margin:14px 0; }
+
+  /* ── Recommendation stamp ───────────────────────────────────── */
+  .stamp{
+    border:2px solid var(--ok); border-radius:4px; padding:20px 24px; margin-top:16px;
+    background:var(--ok-soft); position:relative;
+  }
+  .stamp h3{ font-family:var(--sans); font-size:1.02rem; margin:0 0 8px; color:var(--ok); }
+  .stamp p{ margin:0 0 10px; color:var(--ink); font-size:0.95rem; }
+  .stamp p:last-child{ margin-bottom:0; }
+  .stamp .rot{
+    position:absolute; top:16px; right:20px; font-family:var(--mono); font-size:0.65rem;
+    letter-spacing:0.1em; color:var(--ok); border:1px solid var(--ok); padding:3px 8px;
+    border-radius:2px; transform:rotate(-4deg);
+  }
+
+  .scope-note{ font-family:var(--sans); font-size:0.82rem; color:var(--ink-faint); margin-top:6px; }
+
+  @media (max-width:640px){
+    .titleblock{ grid-template-columns:1fr; }
+    .stamp-grid{ text-align:left; }
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="titleblock">
+    <div>
+      <p class="kicker">Coach Portal &middot; Header Review</p>
+      <h1>Where the "way up" arrow sits</h1>
+      <p>Every drill-in screen in the coach portal carries a small arrow back to its parent. This sheet lays out how it's built today, the inconsistency that build causes across screens, and two ways to close it &mdash; all drawn at the real pixel sizes the coach sees.</p>
+    </div>
+    <div class="stamp-grid">
+      <span>Scope</span><b>12 screens, 1 shared header</b>
+      <span>Rev.</span><b>2026&#8209;09&#8209;15</b>
+      <span>Status</span><b style="color:var(--redline)">For review</b>
+    </div>
+  </div>
+
+  <div class="correction">
+    <span class="label">Correcting the last note</span>
+    I described the back link as sitting on its own row above the title &mdash; it doesn't. An owner ruling on 2026&#8209;08&#8209;26 already moved it onto the title's own line, in the leading corner, specifically because a separate row "pushed the page down and read as a stray blue link." Figure&nbsp;1 is what actually ships today; Figure&nbsp;3 is the retired row, kept here only so it isn't re-proposed by accident.
+  </div>
+
+  <!-- FIGURE 1 — AS BUILT -->
+  <div class="figure">
+    <div class="figure-head">
+      <span class="figure-num">FIG. 01</span>
+      <h2>As built &mdash; one line, shipped 2026&#8209;08&#8209;26</h2>
+      <span class="sub">practice detail header, desktop &amp; phone, true size</span>
+    </div>
+    <div class="figure-body plate-1to1">
+      <span class="reg reg-tl"></span><span class="reg reg-tr"></span><span class="reg reg-bl"></span><span class="reg reg-br"></span>
+      <span class="scale-tag">1:1</span>
+      <div class="filmstrip">
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row">
+              <div class="ph-left">
+                <a class="ph-back"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>Practice&nbsp;plans</span></a>
+                <span class="ph-rule"></span>
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">UAT probe practice</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">desktop &middot; 640px column</div>
+        </div>
+        <div class="frame">
+          <div class="frame-shell" style="width:342px;">
+            <div class="ph-row">
+              <div class="ph-left">
+                <a class="ph-back" aria-label="Back to Practice plans" style="min-width:34px; min-height:34px; justify-content:center;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></a>
+                <span class="ph-rule"></span>
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title" style="font-size:17px;">UAT probe practice</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">phone &middot; 390px &mdash; label already drops (house rule 3)</div>
+        </div>
+      </div>
+    </div>
+    <div class="callouts">
+      <details class="callout">
+        <summary><span class="bud">i</span>Why the label survives on desktop but not on phone</summary>
+        <div class="callout-body"><p>House rule 3 says words become symbols on a phone, for every header control. The arrow already carries the destination in its accessible name either way &mdash; a screen reader still says "Back to Practice plans."</p></div>
+      </details>
+      <details class="callout">
+        <summary><span class="bud">i</span>Why grey, not link-blue</summary>
+        <div class="callout-body"><p>The ruling that put this arrow here is explicit: on its own row, blue said "this is a link." Inside a row that also carries the record's name, blue would be the loudest thing in the row. The ink is the same secondary grey the header uses for quiet chrome.</p></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- FIGURE 2 — THE TELL -->
+  <div class="figure">
+    <div class="figure-head">
+      <span class="figure-num">FIG. 02</span>
+      <h2>The actual defect</h2>
+      <span class="sub">same header, same width &mdash; parent screen vs. the drill-in it links to</span>
+    </div>
+    <div class="figure-body plate-1to1">
+      <span class="reg reg-tl"></span><span class="reg reg-tr"></span><span class="reg reg-bl"></span><span class="reg reg-br"></span>
+      <span class="scale-tag">1:1</span>
+      <div class="filmstrip" style="flex-direction:column; align-items:flex-start;">
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row" id="dimA">
+              <div class="ph-left">
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">Practice plans</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">the list &mdash; no back link, nothing above it</div>
+        </div>
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row" id="dimB">
+              <div class="ph-left">
+                <a class="ph-back"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>Practice&nbsp;plans</span></a>
+                <span class="ph-rule"></span>
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">UAT probe practice</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">the very next click &mdash; icon shifts right</div>
+        </div>
+      </div>
+      <div class="dim-wrap">
+        <svg class="dim-svg" viewBox="0 0 640 52" preserveAspectRatio="none">
+          <line x1="16" y1="8" x2="16" y2="44" stroke="var(--redline)" stroke-width="1" stroke-dasharray="2 3"/>
+          <line x1="186" y1="8" x2="186" y2="44" stroke="var(--redline)" stroke-width="1" stroke-dasharray="2 3"/>
+          <line x1="16" y1="26" x2="186" y2="26" stroke="var(--redline)" stroke-width="1.5"/>
+          <path d="M16 26 l8 -4 v8 z" fill="var(--redline)"/>
+          <path d="M186 26 l-8 -4 v8 z" fill="var(--redline)"/>
+        </svg>
+        <div class="dim-caption">&#8776;170px &mdash; how much further right the icon &amp; title start once a back link is present (computed from the header's own arrow + label + two 16px gaps + the hairline)</div>
+      </div>
+    </div>
+    <div class="callouts">
+      <details class="callout">
+        <summary><span class="bud">!</span>This is the whole complaint</summary>
+        <div class="callout-body"><p>The row itself is fine &mdash; one line, nothing wraps. What reads as misaligned is that a coach clicking from Practice&nbsp;Plans into a practice sees the page's identity (icon + name) jump sideways, and it jumps back the moment they leave. Roster, Schedule and every hub landing page never move; only drill-ins do, and by a different amount depending on the label's length.</p></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- FIGURE 3 — RETIRED -->
+  <div class="figure">
+    <div class="figure-head">
+      <span class="figure-num">FIG. 03</span>
+      <h2>Retired: the arrow on its own row</h2>
+      <span class="sub">2026&#8209;08&#8209;11 &rarr; replaced 2026&#8209;08&#8209;26 &mdash; kept for the record, not a live option</span>
+    </div>
+    <div class="figure-body superseded">
+      <div class="filmstrip">
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <a class="ph-old-back"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Practice plans</a>
+            <div class="ph-row">
+              <div class="ph-left">
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">UAT probe practice</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">costs a full ~40px row before the title even starts</div>
+        </div>
+      </div>
+    </div>
+    <div class="callouts">
+      <details class="callout">
+        <summary><span class="bud">&times;</span>Why this is off the table</summary>
+        <div class="callout-body"><p><span class="tag no">RULED OUT</span>The owner's own words after walking it: it "pushes the whole page down and reads as a stray blue link." It's shown here only so a future pass doesn't rediscover the same complaint by rebuilding the same row.</p></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- FIGURE 4 — OPTION A -->
+  <div class="figure">
+    <div class="figure-head">
+      <span class="figure-num">FIG. 04</span>
+      <h2>Option A &mdash; the arrow becomes the tile</h2>
+      <span class="sub">the section icon is replaced by the back arrow; nothing else moves</span>
+    </div>
+    <div class="figure-body plate-1to1">
+      <span class="reg reg-tl"></span><span class="reg reg-tr"></span><span class="reg reg-bl"></span><span class="reg reg-br"></span>
+      <span class="scale-tag">1:1</span>
+      <div class="filmstrip">
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row">
+              <div class="ph-left">
+                <div class="ph-icon ph-icon-back" role="link" aria-label="Back to Practice plans"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></div>
+                <div class="ph-title">UAT probe practice</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">tile occupies the exact slot the clipboard used to</div>
+        </div>
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row">
+              <div class="ph-left">
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">Practice plans</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">the list, unchanged &mdash; the tile starts at the same x either way</div>
+        </div>
+      </div>
+    </div>
+    <div class="callouts">
+      <details class="callout">
+        <summary><span class="bud">+</span>What it fixes</summary>
+        <div class="callout-body"><p><span class="tag ok">GAIN</span>Every standard header's icon &amp; title starts at the identical x-position, with a back link or without. It's also just the phone treatment (icon-only, aria-label carries the name) applied at every width, so it's one idiom, not two.</p></div>
+      </details>
+      <details class="callout">
+        <summary><span class="bud">&minus;</span>What it costs</summary>
+        <div class="callout-body"><p><span class="tag no">LOSS</span>The section icon &mdash; the clipboard that says "you're in Practice Plans" at a glance &mdash; disappears on every drill-in. A coach reads "back" instead of "practice plans," and the destination word is gone on wide screens too, not just on phone.</p></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- FIGURE 5 — OPTION B -->
+  <div class="figure">
+    <div class="figure-head">
+      <span class="figure-num">FIG. 05</span>
+      <h2>Option B &mdash; a reserved gutter</h2>
+      <span class="sub">a fixed-width slot for the arrow, present or not, so the tile never moves</span>
+    </div>
+    <div class="figure-body plate-1to1">
+      <span class="reg reg-tl"></span><span class="reg reg-tr"></span><span class="reg reg-bl"></span><span class="reg reg-br"></span>
+      <span class="scale-tag">1:1</span>
+      <div class="filmstrip">
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row">
+              <div class="ph-left">
+                <div class="ph-gutter" style="width:150px;">
+                  <a class="ph-back"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>Practice&nbsp;plans</span></a>
+                </div>
+                <span class="ph-rule"></span>
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">UAT probe practice</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">label keeps its width, gutter fixed at 150px</div>
+        </div>
+        <div class="frame">
+          <div class="frame-shell" style="width:640px;">
+            <div class="ph-row">
+              <div class="ph-left">
+                <div class="ph-gutter" style="width:150px;"></div>
+                <span class="ph-rule" style="background:transparent;"></span>
+                <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                <div class="ph-title">Practice plans</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-label">the list &mdash; same gutter, held empty &mdash; icon lands on the same pixel as above</div>
+        </div>
+      </div>
+    </div>
+    <div class="callouts">
+      <details class="callout">
+        <summary><span class="bud">+</span>What it fixes</summary>
+        <div class="callout-body"><p><span class="tag ok">GAIN</span>Identical alignment everywhere, and nothing visible is lost &mdash; the destination word stays on wide screens exactly as it reads today. A label longer than the gutter truncates with an ellipsis rather than pushing the tile.</p></div>
+      </details>
+      <details class="callout">
+        <summary><span class="bud">&minus;</span>What it costs</summary>
+        <div class="callout-body"><p><span class="tag no">COST</span>Roughly 150px of permanently reserved, usually-empty space on the ~20 pages that never carry a back link &mdash; Overview, Roster, Schedule and the rest. It reads as a quiet left margin rather than a gap, but it is real space nothing else can use.</p></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- FIGURE 6 — WHOLE SCREEN BEFORE / AFTER -->
+  <div class="figure">
+    <div class="figure-head">
+      <span class="figure-num">FIG. 06</span>
+      <h2>The whole screen, before &amp; after</h2>
+      <span class="sub">Option B applied &mdash; the change a coach would actually see</span>
+    </div>
+    <div class="filmstrip">
+      <div class="frame">
+        <div class="page-plate" style="width:760px;">
+          <div class="page-shell">
+            <div class="page-sidebar">
+              <div class="brand">FIELDLOGICHQ</div>
+              <div class="sgroup">SEASON</div>
+              <div class="sitem">Schedule</div>
+              <div class="sitem on">Practice plans</div>
+              <div class="sitem">Lineups</div>
+              <div class="sitem">Tournaments</div>
+            </div>
+            <div class="page-main">
+              <div class="page-crumb-team">UAT Test Team &middot; UAT Test Org &middot; 2026 Season</div>
+              <div class="ph-row">
+                <div class="ph-left">
+                  <a class="ph-back"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>Practice&nbsp;plans</span></a>
+                  <span class="ph-rule"></span>
+                  <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                  <div class="ph-title">UAT probe practice</div>
+                </div>
+              </div>
+              <div class="page-card">
+                <div class="pline"><b>Tue, Sep 15 &middot; 8:42 a.m.&ndash;10:12 a.m. &middot; 90 min</b></div>
+                <div class="pmeta">60 of 90 min planned &middot; 30 rest of practice</div>
+                <hr>
+                <div class="pfold">About this practice &rsaquo;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">before &mdash; as built</div>
+      </div>
+      <div class="frame">
+        <div class="page-plate" style="width:760px;">
+          <div class="page-shell">
+            <div class="page-sidebar">
+              <div class="brand">FIELDLOGICHQ</div>
+              <div class="sgroup">SEASON</div>
+              <div class="sitem">Schedule</div>
+              <div class="sitem on">Practice plans</div>
+              <div class="sitem">Lineups</div>
+              <div class="sitem">Tournaments</div>
+            </div>
+            <div class="page-main">
+              <div class="page-crumb-team">UAT Test Team &middot; UAT Test Org &middot; 2026 Season</div>
+              <div class="ph-row">
+                <div class="ph-left">
+                  <div class="ph-gutter" style="width:150px;">
+                    <a class="ph-back"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>Practice&nbsp;plans</span></a>
+                  </div>
+                  <span class="ph-rule"></span>
+                  <div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></div>
+                  <div class="ph-title">UAT probe practice</div>
+                </div>
+              </div>
+              <div class="page-card">
+                <div class="pline"><b>Tue, Sep 15 &middot; 8:42 a.m.&ndash;10:12 a.m. &middot; 90 min</b></div>
+                <div class="pmeta">60 of 90 min planned &middot; 30 rest of practice</div>
+                <hr>
+                <div class="pfold">About this practice &rsaquo;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="frame-label">after &mdash; option B, same content, tile pinned</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stamp">
+    <span class="rot">RECOMMEND</span>
+    <h3>Option B</h3>
+    <p>It's the only one of the two that costs nothing a coach would notice losing &mdash; the destination word stays exactly where it reads today, and the fix is purely a spacing change to one shared component. Option A is the leaner build and worth it only if there's appetite to push the portal's "words become symbols" idiom onto desktop as well, which is a bigger call than this one screen.</p>
+    <p class="scope-note">Either one is a single change to <code style="font-family:var(--mono)">CoachPageHeader</code> &mdash; it repaints all twelve back-linked screens at once, not a per-page fix. Per this repo's own process, a change touching every drill-in header gets its own mockup sign-off before build; this sheet is that sign-off, not the build itself.</p>
+  </div>
+
+</div>

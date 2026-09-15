@@ -35,7 +35,7 @@ export interface PickableTag {
 
 export default function TagPicker({
   all, selected, onChange, onCreate, disabled, single, label, emptyHint, placeholder,
-  adoptNames, onAdopt, manage, onManageChanged,
+  adoptNames, onAdopt, manage, onManageChanged, autoFocus,
 }: {
   all: readonly PickableTag[];
   selected: readonly string[];
@@ -53,6 +53,8 @@ export default function TagPicker({
   /** The manage door + drawer (One Tag Idiom Q2 — every picker carries one quiet door). */
   manage?: TagManageConfig;
   onManageChanged?: () => void;
+  /** Passed straight through to `TagSearchCombobox` — focuses the search box on mount. */
+  autoFocus?: boolean;
 }) {
   return (
     <div className={styles.ppField}>
@@ -69,6 +71,7 @@ export default function TagPicker({
         onAdopt={onAdopt}
         manage={manage}
         onManageChanged={onManageChanged}
+        autoFocus={autoFocus}
       />
       {!disabled && all.length === 0 && (
         <span className={styles.formHint}>

@@ -24,9 +24,11 @@ import type { TagManageConfig } from './TagSearchCombobox';
  */
 export default function PracticeTagPicker({
   label, all, ids, legacyNames, onChange, onCreate, disabled, emptyHint,
-  manage, onManageChanged,
+  manage, onManageChanged, autoFocus,
 }: {
-  label: string;
+  /** Omit when a caller prints its own heading above (e.g. to slot other content between the
+      heading and this picker) — TagPicker only renders the label span when one is given. */
+  label?: string;
   all: readonly PickableTag[];
   ids: readonly string[];
   /** Free text from a record saved before this field had a real library. */
@@ -38,6 +40,8 @@ export default function PracticeTagPicker({
   /** The manage door + drawer (One Tag Idiom Q2). */
   manage?: TagManageConfig;
   onManageChanged?: () => void;
+  /** Passed straight through to `TagPicker` — focuses the search box on mount. */
+  autoFocus?: boolean;
 }) {
   const resolvedIds = useMemo(() => {
     const known = new Set(ids);
@@ -71,6 +75,7 @@ export default function PracticeTagPicker({
       }}
       manage={manage}
       onManageChanged={onManageChanged}
+      autoFocus={autoFocus}
     />
   );
 }

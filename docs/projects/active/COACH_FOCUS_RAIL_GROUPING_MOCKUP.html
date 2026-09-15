@@ -1,0 +1,341 @@
+<title>Grouped Focus Rail</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root{
+    --paper:#EEF1F3;
+    --paper-line:rgba(27,36,48,0.07);
+    --sheet:#FFFFFF;
+    --sheet-edge:rgba(27,36,48,0.12);
+    --ink:#1B2430;
+    --ink-soft:#55606C;
+    --ink-faint:#8993A0;
+    --accent:#2F6F4F;
+    --accent-soft:#E1EFE8;
+    --flag:#B5501F;
+    --flag-soft:#FBEAE0;
+    --sans:'Manrope',system-ui,sans-serif;
+    --serif:'Source Serif 4',Georgia,serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12171D;
+      --paper-line:rgba(140,160,180,0.08);
+      --sheet:#1A2129;
+      --sheet-edge:rgba(160,180,200,0.16);
+      --ink:#E8ECEF;
+      --ink-soft:#A7B1BB;
+      --ink-faint:#707B86;
+      --accent:#6FBE95;
+      --accent-soft:#173226;
+      --flag:#E8935F;
+      --flag-soft:#332019;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#12171D;
+    --paper-line:rgba(140,160,180,0.08);
+    --sheet:#1A2129;
+    --sheet-edge:rgba(160,180,200,0.16);
+    --ink:#E8ECEF;
+    --ink-soft:#A7B1BB;
+    --ink-faint:#707B86;
+    --accent:#6FBE95;
+    --accent-soft:#173226;
+    --flag:#E8935F;
+    --flag-soft:#332019;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:
+      radial-gradient(circle at 1px 1px, var(--paper-line) 1px, transparent 0) 0 0/22px 22px,
+      var(--paper);
+    color:var(--ink); font-family:var(--serif); line-height:1.6;
+  }
+  .wrap{ max-width:920px; margin:0 auto; padding:34px 20px 76px; }
+
+  .head{ margin-bottom:26px; }
+  .head .kicker{
+    font-family:var(--sans); font-weight:700; font-size:0.72rem; letter-spacing:0.13em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 8px;
+  }
+  .head h1{
+    font-family:var(--sans); font-weight:800; font-size:1.65rem; margin:0 0 12px; color:var(--ink);
+    letter-spacing:-0.01em; text-wrap:balance;
+  }
+  .head p{ margin:0 0 10px; max-width:66ch; color:var(--ink-soft); font-size:1rem; }
+  .head p:last-child{ margin-bottom:0; }
+  .head strong{ color:var(--ink); }
+
+  .plate{ margin-bottom:32px; }
+  .plate-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .plate-tag{
+    font-family:var(--sans); font-weight:700; font-size:0.68rem; letter-spacing:0.08em;
+    text-transform:uppercase; padding:2px 8px; border-radius:3px;
+  }
+  .plate-tag.before{ background:var(--flag-soft); color:var(--flag); }
+  .plate-tag.after{ background:var(--accent-soft); color:var(--accent); }
+  .plate-head h2{ font-family:var(--sans); font-weight:700; font-size:1.05rem; margin:0; color:var(--ink); }
+  .plate-sub{ font-family:var(--sans); font-size:0.85rem; color:var(--ink-soft); margin:2px 0 0; }
+
+  .frame{
+    background:var(--sheet); border:1px solid var(--sheet-edge); border-radius:6px;
+    padding:4px; box-shadow:0 1px 2px rgba(27,36,48,0.06);
+  }
+  .frame-inner{ background:#F8F4ED; border-radius:4px; padding:20px 22px; font-family:system-ui,sans-serif; }
+
+  /* ── Reproduction of the real sheet's own tokens — a specimen, not this page's own style ── */
+  .aboutHead{ display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:14px; font-weight:700; color:#57651E; }
+  .aboutHead .lbl{ font-size:11px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#8A7F6A; }
+
+  .tagRow{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+  .ptag{
+    display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 12px 5px 10px;
+    font-size:13px; font-weight:600; color:#241E15; background:#FFFFFF; border:1px solid rgba(70,55,30,0.16);
+    cursor:pointer; user-select:none; transition:box-shadow 0.12s, border-color 0.12s;
+  }
+  .ptag .dot{ width:8px; height:8px; border-radius:2px; background:rgba(87,101,30,0.6); border:1px solid rgba(87,101,30,0.75); flex:none; }
+  .ptag[data-on="1"]{ box-shadow:0 0 0 1.5px #57651E inset; border-color:#57651E; }
+  .ptag .x{ font-weight:700; color:#8A7F6A; margin-left:2px; }
+  .ptag[data-on="0"] .x{ visibility:hidden; }
+  .tagHint{ font-family:var(--sans); font-size:0.76rem; color:var(--ink-faint); margin:-14px 0 20px; }
+
+  .rail{ border-top:1px dashed rgba(70,55,30,0.18); padding-top:16px; }
+  .railTitle{ font-size:14px; font-weight:700; color:#241E15; margin-bottom:2px; }
+  .railSub{ font-size:12px; color:#8A7F6A; margin-bottom:16px; }
+
+  .prow{ display:flex; gap:16px; padding:12px 0; border-bottom:1px solid rgba(70,55,30,0.10); align-items:flex-start; }
+  .prow:last-child{ border-bottom:none; }
+  .pname{ flex:0 0 108px; font-size:14px; font-weight:700; color:#241E15; padding-top:2px; }
+  .pgoals{ flex:1; min-width:0; }
+
+  /* BEFORE: the flat wall, exactly as it renders today */
+  .flatWrap{ display:flex; flex-wrap:wrap; gap:6px; }
+  .flatChip{
+    font-size:11px; padding:2px 8px; border-radius:5px; color:#4A4235;
+    background:rgba(87,101,30,0.10); border:1px solid rgba(87,101,30,0.18);
+  }
+  .flatChip[data-off="1"]{ opacity:0.42; }
+
+  /* AFTER: category clusters */
+  .clusters{ display:flex; flex-direction:column; gap:8px; }
+  .ledCluster{ }
+  .ledCluster .catName{ font-size:12px; font-weight:800; letter-spacing:0.03em; text-transform:uppercase; color:#57651E; margin-bottom:3px; }
+  .ledCluster ul{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:2px; }
+  .ledCluster li{ font-size:13.5px; color:#241E15; padding-left:12px; position:relative; }
+  .ledCluster li::before{ content:'•'; position:absolute; left:0; color:#57651E; }
+
+  .collapsedRow{ display:flex; flex-wrap:wrap; gap:6px; }
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:#8A7F6A;
+    background:transparent; border:1px solid rgba(70,55,30,0.20); border-radius:999px; padding:3px 9px;
+    cursor:pointer; user-select:none;
+  }
+  .badge .car{ font-size:9px; transition:transform 0.12s; }
+  .badge[data-open="1"] .car{ transform:rotate(90deg); }
+  .badge:hover{ border-color:#57651E; color:#57651E; }
+  .peek{ margin:6px 0 0 2px; padding-left:12px; border-left:2px solid rgba(70,55,30,0.14); display:none; flex-direction:column; gap:2px; }
+  .peek[data-shown="1"]{ display:flex; }
+  .peek li{ font-size:12.5px; color:#4A4235; list-style:none; }
+
+  .noneSet{ font-size:13px; color:#8A7F6A; font-style:italic; padding-top:2px; }
+
+  /* ── Page prose chrome ── */
+  .note{
+    font-family:var(--sans); font-size:0.85rem; color:var(--ink-soft);
+    background:var(--sheet); border:1px solid var(--sheet-edge); border-left:3px solid var(--accent);
+    border-radius:0 4px 4px 0; padding:12px 16px; margin-top:14px;
+  }
+  .note b{ color:var(--ink); }
+
+  .callouts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .callout{ border:1px solid var(--sheet-edge); border-radius:4px; background:var(--sheet); flex:1 1 260px; min-width:220px; }
+  .callout summary{
+    cursor:pointer; list-style:none; font-family:var(--sans); font-weight:700; font-size:0.85rem;
+    padding:10px 14px; display:flex; align-items:center; gap:9px; color:var(--ink);
+  }
+  .callout summary::-webkit-details-marker{ display:none; }
+  .callout summary .bud{
+    width:19px; height:19px; border-radius:50%; border:1.5px solid var(--accent); color:var(--accent);
+    font-family:var(--sans); font-size:0.68rem; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .callout[open] summary .bud{ background:var(--accent); color:var(--sheet); }
+  .callout .cb{ padding:0 14px 14px 43px; font-size:0.88rem; color:var(--ink-soft); }
+  .callout .cb p{ margin:0 0 8px; } .callout .cb p:last-child{ margin:0; }
+
+  .closing{
+    background:var(--sheet); border:1px solid var(--sheet-edge); border-radius:6px;
+    padding:18px 20px; margin-top:8px;
+  }
+  .closing h3{ font-family:var(--sans); font-size:1rem; margin:0 0 8px; color:var(--ink); }
+  .closing p{ margin:0 0 8px; color:var(--ink-soft); font-size:0.92rem; } .closing p:last-child{ margin:0; }
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <p class="kicker">Coach Portal &middot; Practice Plans &middot; Focus Areas</p>
+    <h1>What everyone's working on, grouped by what it's about</h1>
+    <p>Today, every focus area a player has renders as its own small chip, dimmed if it doesn't match tonight's plan. That holds up fine for one or two goals per kid — it stops working once a kid is carrying several. Below: the real failure case, then a working version you can click through.</p>
+    <p><strong>The one thing this has to prove:</strong> the tags you put on tonight's practice actually change what the rail leads with — not just which chip is bold, which category is <em>expanded</em>.</p>
+  </div>
+
+  <div class="plate">
+    <div class="plate-head">
+      <span class="plate-tag before">As built today</span>
+      <h2>One player, five focus areas, one practice tag</h2>
+    </div>
+    <p class="plate-sub">Tonight's practice is tagged <b>Hitting</b>. Jordan has an area going in four different categories.</p>
+    <div class="frame"><div class="frame-inner">
+      <div class="aboutHead"><span>&rsaquo;</span> About this practice <span class="lbl" style="text-transform:none; font-weight:600; color:#4A4235;">&nbsp;hitting</span></div>
+      <div class="rail">
+        <div class="railTitle">What everyone's working on</div>
+        <div class="railSub">Tonight: hitting</div>
+        <div class="prow">
+          <div class="pname">Jordan Reyes</div>
+          <div class="pgoals">
+            <div class="flatWrap">
+              <span class="flatChip">Stay through the ball</span>
+              <span class="flatChip" data-off="1">First-pitch strikes</span>
+              <span class="flatChip" data-off="1">Hold runners at first</span>
+              <span class="flatChip" data-off="1">Double-play pivot footwork</span>
+              <span class="flatChip" data-off="1">Blocking balls in the dirt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>The problem:</b> one relevant goal, four irrelevant-looking ones sitting right next to it at equal visual weight (just fainter) &mdash; and nothing here says <i>which</i> of the four is pitching vs. infield vs. catching. A coach has to read all five to find the one that matters tonight.</div>
+  </div>
+
+  <div class="plate">
+    <div class="plate-head">
+      <span class="plate-tag after">Proposal &mdash; try it</span>
+      <h2>Grouped by category, led by tonight's tags</h2>
+    </div>
+    <p class="plate-sub">Click a tag below to add or drop it from tonight's practice &mdash; the same act as typing it into the picker above. Watch the rail react for every player at once.</p>
+    <div class="frame"><div class="frame-inner">
+      <div class="aboutHead"><span>&rsaquo;</span> About this practice</div>
+      <div class="tagRow" id="tagRow"></div>
+      <p class="tagHint">Simplified for this demo &mdash; the real field is the same search-and-pick tag box you already have.</p>
+
+      <div class="rail">
+        <div class="railTitle">What everyone's working on</div>
+        <div class="railSub" id="railSub">Tonight: hitting</div>
+        <div id="rosterRail"></div>
+      </div>
+    </div></div>
+    <div class="note"><b>Nothing ever disappears:</b> a category that isn't part of tonight's plan still shows as a small count badge on every player who has one &mdash; tap it and the actual words are right there. Only the WRITING collapses, never the fact that it exists.</div>
+  </div>
+
+  <div class="callouts">
+    <details class="callout">
+      <summary><span class="bud">i</span>Why lead with the sentence, not just the count</summary>
+      <div class="cb"><p>Tonight's own category is the one thing on this screen a coach actually needs to read and act on &mdash; the words themselves ("stay through the ball"), not just that hitting is a topic. Everything else is context worth knowing is there, not worth reading in full unless asked.</p></div>
+    </details>
+    <details class="callout">
+      <summary><span class="bud">i</span>Why every category still shows, even collapsed</summary>
+      <div class="cb"><p>This is the standing rule the whole rail is built on: a player must never look like they have nothing going on just because it isn't tonight's topic. A badge that says "Catching &middot; 1" keeps that promise at a tenth of the space a written-out chip costs.</p></div>
+    </details>
+  </div>
+
+  <div class="closing">
+    <h3>What this settles, and what's still open</h3>
+    <p><b>Settled by what's already built:</b> one tag vocabulary already drives both "what this practice is about" and every player's focus-area tag &mdash; this proposal doesn't add a new relationship, it changes how the existing one is drawn.</p>
+    <p><b>Still open, and bigger than this screen:</b> this is one view of a focus area. The player page is where a coach adds, edits and retires them, and that page needs the same category vocabulary to mean the same thing there as it does here &mdash; worth carrying into that conversation rather than settling in isolation.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CATS = ['Hitting','Pitching','Infield','Catching','Outfield'];
+  var players = [
+    { name:'Avery Chen', goals:[
+      {cat:'Hitting', text:'Load into back hip before swing'},
+      {cat:'Hitting', text:'Two-strike approach — shorten up'},
+      {cat:'Pitching', text:'Repeat arm slot on changeup'},
+    ]},
+    { name:'Jordan Reyes', goals:[
+      {cat:'Hitting', text:'Stay through the ball'},
+      {cat:'Pitching', text:'First-pitch strikes'},
+      {cat:'Pitching', text:'Hold runners at first'},
+      {cat:'Infield', text:'Double-play pivot footwork'},
+      {cat:'Catching', text:'Blocking balls in the dirt'},
+    ]},
+    { name:'Sam Okafor', goals:[
+      {cat:'Outfield', text:'Reading the ball off the bat'},
+    ]},
+    { name:'Riley Park', goals:[
+      {cat:'Hitting', text:'Keep hands inside the ball'},
+    ]},
+  ];
+  var tonight = new Set(['Hitting']);
+
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  function renderTags(){
+    var el = document.getElementById('tagRow');
+    el.innerHTML = CATS.map(function(c){
+      var on = tonight.has(c);
+      return '<span class="ptag" data-on="'+(on?1:0)+'" data-cat="'+c+'">' +
+        '<span class="dot"></span>' + c + '<span class="x">×</span></span>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.ptag'), function(chip){
+      chip.addEventListener('click', function(){
+        var c = chip.getAttribute('data-cat');
+        if (tonight.has(c)) tonight.delete(c); else tonight.add(c);
+        renderTags(); renderRail();
+      });
+    });
+  }
+
+  function renderRail(){
+    var sub = document.getElementById('railSub');
+    var list = [...tonight];
+    sub.textContent = list.length ? 'Tonight: ' + list.join(', ').toLowerCase() : 'Tonight: nothing tagged yet';
+
+    var root = document.getElementById('rosterRail');
+    root.innerHTML = players.map(function(p, pi){
+      if (p.goals.length === 0) {
+        return '<div class="prow"><div class="pname">'+esc(p.name)+'</div><div class="pgoals"><span class="noneSet">Nothing set yet</span></div></div>';
+      }
+      var byCat = {};
+      p.goals.forEach(function(g){ (byCat[g.cat] = byCat[g.cat] || []).push(g.text); });
+      var led = Object.keys(byCat).filter(function(c){ return tonight.has(c); });
+      var rest = Object.keys(byCat).filter(function(c){ return !tonight.has(c); });
+
+      var ledHtml = led.map(function(c){
+        return '<div class="ledCluster"><div class="catName">'+esc(c)+'</div><ul>' +
+          byCat[c].map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('') + '</ul></div>';
+      }).join('');
+
+      var restHtml = rest.length ? (
+        '<div class="collapsedRow">' + rest.map(function(c, ci){
+          var id = 'peek-'+pi+'-'+ci;
+          return '<span class="badge" data-target="'+id+'" data-open="0">' +
+            '<span class="car">&#9656;</span>' + esc(c) + ' &middot; ' + byCat[c].length + '</span>';
+        }).join('') + '</div>' +
+        rest.map(function(c, ci){
+          var id = 'peek-'+pi+'-'+ci;
+          return '<ul class="peek" id="'+id+'">' + byCat[c].map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('') + '</ul>';
+        }).join('')
+      ) : '';
+
+      return '<div class="prow"><div class="pname">'+esc(p.name)+'</div><div class="pgoals"><div class="clusters">' +
+        (ledHtml || '') + restHtml +
+        '</div></div></div>';
+    }).join('');
+
+    Array.prototype.forEach.call(root.querySelectorAll('.badge'), function(b){
+      b.addEventListener('click', function(){
+        var id = b.getAttribute('data-target');
+        var peek = document.getElementById(id);
+        var open = b.getAttribute('data-open') === '1';
+        b.setAttribute('data-open', open ? '0' : '1');
+        peek.setAttribute('data-shown', open ? '0' : '1');
+      });
+    });
+  }
+
+  renderTags();
+  renderRail();
+})();
+</script>

@@ -5730,15 +5730,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   color: var(--text-tertiary);
   white-space: nowrap;
 }
-/* A main cell that carries a second line (a note under the name) in a WRAPPING row: a basis, so the
-   nowrap metas wrap beneath it instead of squeezing it to a sliver (development lifecycle Phase 2 —
-   the Results and Goals rows measured 8px wide at 361 with `flex: 1 1 0%`). */
-.miniRowMainWrap { flex: 1 1 14rem; white-space: normal; }
-/* The 44px floor as a CLASS for an inline control that has no module of its own (a row's Edit ×,
-   a status pill, a name button, a form's More toggle) — sixteen inline `minHeight` copies in the
-   Development section became this one rule (/simplify, 2026-09-13). */
+/* (⚰ `.miniRowMainWrap` and `.tapFloorSquare` went with the player's mini-list rows and their row ×
+   buttons — re-evaluation stage 3, 2026-09-15: the Results view is a table on the list recipe, the
+   goal row wears its own module, and delete lives in the sheets.) */
+/* The 44px floor as a CLASS for an inline control that has no module of its own (a status pill, a
+   name button, a form's More toggle) — sixteen inline `minHeight` copies in the Development section
+   became this one rule (/simplify, 2026-09-13). */
 .tapFloor { min-height: var(--tap-min, 44px); }
-.tapFloorSquare { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 
 /* Save bar — pinned to the viewport bottom while editing, so the Save action is
    never hidden below the fold. Offset for the desktop sidebar; above the mobile
@@ -8063,25 +8061,37 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* ── Tag search combobox (Coach Tags & Player Awards, Phase 3) ──────────────
    ADO-style type-ahead: a search box + filtered dropdown of the already-loaded
    tag library; only the SELECTED tags render as chips, so a large money-tag
-   library never floods the form. Colour distinguishes org-shared (blue) from
-   the team's own (lime), with a small legend — no per-chip "ORG" stamp. */
+   library never floods the form.
+   ⚠ SELECTED CHIPS WENT FLAT WHITE/BLACK ON 2026-09-15 (owner ruling) — one plain pill recipe
+   for every chip, whichever tag it holds (the same white-card look `.ppChip` already used for a
+   read-only name). Colour used to be the whole story for org-shared (blue) vs. the team's own
+   (lime); that distinction now rides the small DOT beside the name instead — the very dot the
+   dropdown rows below already wore — so the picker gained a per-chip tell rather than losing the
+   one it had. The legend under the input still says the same thing in words. */
 .tagCombo { position: relative; }
 .tagComboChips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }
 .tagComboChip {
   display: inline-flex; align-items: center; gap: 0.35rem;
   border-radius: 999px; padding: 0.18rem 0.5rem;
   font-size: var(--type-support); font-weight: 600; white-space: nowrap;
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  color: var(--logic-lime);
-}
-.tagComboChipOrg {
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--tag-org-fg);
+  background: var(--home-card, var(--card-bg));
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  color: var(--text-primary);
 }
 .tagComboChipX { cursor: pointer; opacity: 0.7; font-weight: 700; line-height: 1; background: none; border: none; color: inherit; padding: 0; }
 .tagComboChipX:hover { opacity: 1; }
+/* ⚠ FOUND, NOT CAUSED, BY THE 2026-09-15 chip restyle: this "×" has been under the tap floor on
+   EVERY selected tag chip portal-wide since the combobox shipped — nobody had noticed because no
+   screen had put a real, checkable chip through `check:layout` until Staff's door made one visible
+   here. The tap floor runs to 768, not 640 (a control this compact needs the same width the phone
+   fix already established elsewhere in this file). The chip itself is `align-items: center`, so it
+   grows to fit this at mobile widths rather than clipping or overflowing it. */
+@media (max-width: 768px) {
+  .tagComboChipX {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px);
+  }
+}
 /* ⚰ `.tagComboAdd` STOOD HERE AND IS DELETED WITH THE `addAsChip` PROP IT DRESSED (List · Room ·
    Question Phase C, 2026-09-04; mockup R1). It was the `＋` chip that stood in for the search box
    on the bill's fields block — the only place in the product a tag picker hid its own input. Its
@@ -8971,11 +8981,16 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption { border-color: var(--home-line-strong); color: var(--text-primary); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption:hover { background: var(--home-olive-soft); }
 
-/* ── Warm coaches portal (TH-5) — org-vs-own tag/money chips ──────────────────
+/* ── Warm coaches portal (TH-5) — org-vs-own MONEY chips ──────────────────
+   ⚠ NARROWED 2026-09-15: this rescue used to cover the tag-picker chips too, back when a chip's
+   whole fill colour carried org-vs-own. Those chips are flat white/black everywhere now (see the
+   tag combobox rules above) and read ownership off a DOT instead, so they need no theme rescue —
+   the dot's own rescue below still applies unchanged. What's left here is `.moneyTagChip*`, the
+   READ-ONLY chip on an expense row, which still uses the bespoke pastel palette below.
    The bespoke chip palette uses literal pastel text (--tag-*-fg, tuned for near-black chips) that goes
    invisible on cream, and its org-chip tints ride --blueprint-blue-rgb which the warm gate remaps to
    OLIVE — collapsing the org(blue)-vs-own(lime) distinction. Restore both: legible dark text (org→warm
-   blue, own→olive) and a warm-BLUE tint for org chips so they stay distinct from the olive own chips. */
+   blue, own→olive) and a warm-BLUE tint for the org money chip so it stays distinct from the olive own chip. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachesShell {
   --tag-org-fg: var(--home-blue);
   --tag-org-active-bg: var(--home-blue);
@@ -8991,7 +9006,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      portal's accent everywhere and moving it to fix an 11px chip would repaint the product. */
   --tag-own-fg: #515e1b; /* token-exempt: AA-corrected own-tag olive on the chip's own tint */
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagComboChipOrg,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyTagChipOrg {
   background: rgba(var(--home-blue-rgb), 0.12);
   border-color: rgba(var(--home-blue-rgb), 0.40);
@@ -9799,6 +9813,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   font-size: var(--type-label); font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.05em; color: var(--text-tertiary);
 }
+/* A label with its own quiet "×" (owner ask, 2026-09-15) — only for a field that is itself an
+   ADDITION a coach opened (Coaching points · Staff · Equipment), so removing it is closing a door,
+   never deleting held data. The SAME row `.ppStationsHead` already draws (label, then a trailing
+   control, pinned apart) — composed rather than re-declared. */
+.ppFieldLabelRow { composes: ppStationsHead; }
 /* ⚰ `.ppFieldHint` deleted 2026-09-01 (cleanup tranche 6) — zero usages, and it carried a phone
    override at 640 that had never applied to anything either. */
 .ppMinutes { width: 5rem; font-variant-numeric: tabular-nums; }
@@ -9829,6 +9848,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .ppBlockBody { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.8rem 0.9rem 1rem; }
 
+/* `.ppDuration` — the drill library's usual-minutes row (stage 4's); the block's own row is
+   `.ppClockRow` below (stage 2). `.ppRestToggle` — the stations head's "Groups rotate between
+   them" (stage 3's); the block's Rest of practice is a chip now. */
 .ppDuration { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
 .ppRestToggle {
   display: inline-flex; align-items: center; gap: 0.4rem;
@@ -9836,6 +9858,40 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   font-size: var(--type-body); color: var(--text-secondary); cursor: pointer;
 }
 .ppRestToggle input { width: 1rem; height: 1rem; }
+
+/* ── The open block (practices re-evaluation stage 2 · The block, owner rulings D1–D11, 2026-09-15) ──
+   The clock row: five quick lengths as chips, the minutes box, Rest of practice as the last chip,
+   and the consequence in the quiet voice — one row that wraps (the phone takes two lines; nothing
+   re-arranges). A pressed chip is a SELECTED state, never a lime: the sheet's one lime is the
+   ghost row's. The chip is the suggest-chip recipe, so it takes that family's 768 tap floor. */
+.ppClockRow { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; min-width: 0; }
+/* The clock row's chips (5 · 10 · 15 · 20 · 30 · Rest of practice) — a CONTROL that sets the
+   block's length, so they wear the drawing's pill (white, solid edge, the pressed one filled
+   with ink), not the dashed suggestion family: a dashed chip reads as a hint, and a pressed
+   chip that only firms its border does not read as pressed (owner, 2026-09-15). */
+.ppQuickChip {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.2rem;
+  min-width: 2.4rem; padding: 0.25rem 0.7rem; border-radius: 999px; cursor: pointer;
+  font-size: var(--type-support); font-weight: 600; color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--home-line-strong, var(--border-2)); background: var(--home-card, var(--white-8));
+}
+.ppQuickChip:hover { color: var(--text-primary); border-color: var(--white-45); }
+.ppQuickChip[data-on='on'] {
+  color: var(--home-card, var(--bg)); background: var(--home-ink, var(--text-primary));
+  border-color: var(--home-ink, var(--text-primary));
+}
+.ppClockSep { color: var(--text-tertiary); padding: 0 0.1rem; }
+.ppClockEnds { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The Players line while nobody is named: "Whole team · Choose players…" — the block's own word,
+   then the door to the picker in the sheet's quiet voice. */
+.ppWhoLine { display: flex; align-items: center; gap: 0.1rem; flex-wrap: wrap; min-width: 0; font-size: var(--type-body); color: var(--text-primary); }
+/* The doors at the block's foot — what it does not hold yet, in the ghost row's quiet voice; each
+   door wraps as a whole phrase (`.ppTlQuietAlt` / `.ppTlQuietLink`). */
+.ppDoorsLine {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.1rem; min-width: 0;
+  padding-top: 0.15rem; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary);
+}
 
 
 .ppAddInline {
@@ -9857,23 +9913,25 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 /* â”€â”€ Chips (staff, players, focus areas) â”€â”€ */
 .ppChipWrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+/* A name on a block, a station or a group: a WHITE pill on the block's cream (the stage-2
+   drawing, owner 2026-09-15) — the block card is paper, so anything that is not lifted off it
+   reads as more paper. The dark theme lifts to its card tone the same way. */
 .ppChip {
   display: inline-flex; align-items: center; gap: 0.2rem;
   font-size: var(--type-support); font-weight: 600; color: var(--text-primary);
-  padding: 0.15rem 0.45rem; border-radius: 6px; border: 1px solid var(--border-2);
+  padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--home-line-strong, var(--border-2));
+  background: var(--home-card, var(--white-8));
 }
-.ppFocusChip {
-  font-size: var(--type-label); color: var(--text-secondary);
-  padding: 0.1rem 0.4rem; border-radius: 5px;
-  border: 1px solid var(--white-8); background: var(--home-olive-soft, rgba(255,255,255,0.03));
-}
+/* The "6 players" button beside the names — solid and lifted like the pills (the drawing); a
+   dashed edge is the SUGGESTION family, and this is the door to change who. */
 .ppPickBtn {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  min-height: var(--tap-min, 44px); padding: 0 0.6rem;
-  border: 1px dashed var(--border-2); border-radius: 8px; background: none;
+  min-height: var(--tap-min, 44px); padding: 0 0.7rem;
+  border: 1px solid var(--home-line-strong, var(--border-2)); border-radius: 8px;
+  background: var(--home-card, var(--white-8));
   font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); cursor: pointer;
 }
-.ppPickBtn:hover:not(:disabled) { color: var(--text-primary); border-color: var(--white-35); }
+.ppPickBtn:hover:not(:disabled) { color: var(--text-primary); border-color: var(--white-45); }
 .ppPickBtn:disabled { opacity: 0.4; cursor: default; }
 
 /* â”€â”€ Coaching points â”€â”€ */
@@ -9993,14 +10051,22 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 /* ══ THE PLAN PAGE AS A DOCUMENT (practices re-evaluation stage 1 · The blank page, owner rulings
    D2–D8 as drawn, 2026-09-14) ═══════════════════════════════════════════════════════════════════
-   The screen is the sheet: a letter-width white page (816px = 8.5in at 96dpi), a rule under its
-   head, a time gutter down the left with the spine drawn as its right edge, blocks as rows that
-   open in place on the paper ground, and two folds (About this practice · What everyone's working
-   on) shut by default. Uses the portal's breakpoints only (900 shell / 640 content); on a phone
-   the sheet goes full-bleed and the gutter narrows.
+   The screen is the sheet: a white page, a rule under its head, a time gutter down the left with
+   the spine drawn as its right edge, blocks as rows that open in place on the paper ground, and
+   two folds (About this practice · What everyone's working on) shut by default. Uses the portal's
+   breakpoints only (900 shell / 640 content); on a phone the sheet goes full-bleed and the gutter
+   narrows.
    ⚠ `.ppBlockHead`/`.ppBlockBody` and the field classes below are the SAME ones the open block
-   always used — the block's insides are stage 2's drawing, untouched here. */
-.ppSheetCol { max-width: 816px; margin-inline: auto; display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+   always used — the block's insides are stage 2's drawing, untouched here.
+   ⚠ THE COLUMN WAS 816px (8.5in at 96dpi) UNTIL 2026-09-15 — a literal letter-width sheet, capped
+   and centered INSIDE the header's own wider column. That left a gap on each side of the card
+   that the header above it does not share, so the two read as misaligned rather than one page
+   (owner catch, walking the built stage-1 screen against Sessions and the rest of the portal,
+   where the header and its content always share one edge). The sheet is a visual language — paper
+   ground, ruled head, spined gutter — not a literal print-size match: "Print the sheet" still
+   exports a true 8.5×11 page regardless of how wide this column reads on a monitor. The column now
+   fills the same width as every other coach page's header, `.page`'s own column. */
+.ppSheetCol { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
 .ppDoc {
   background: var(--card-bg);
   border: 1px solid var(--home-line-strong, var(--border-2));
@@ -10068,6 +10134,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppFoldToggle[aria-expanded='true'] .ppFoldChevron { transform: rotate(90deg); }
 .ppFoldTitle { font-weight: 700; color: var(--home-olive, var(--text-primary)); }
 .ppAboutSummary { color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The closed fold's own description line (owner catch, 2026-09-15) — same one-line-ellipsis
+   treatment a closed practice block already gives its note (`.ppTlDesc`), indented to sit under
+   the title rather than the chevron, so it reads as the head's second line, not a new field. */
+.ppAboutPreview {
+  composes: ppTlDesc;
+  margin: 0.1rem 0 0 1.35rem; min-width: 0;
+}
 /* A read-only plan's description — prose, wrapped as typed; its absence in the body's own size. */
 .ppAboutRead { margin: 0; font-size: var(--type-body); color: var(--text-primary); white-space: pre-wrap; }
 .ppAboutNone { margin: 0; font-size: var(--type-body); color: var(--text-tertiary); font-style: italic; }
@@ -10105,6 +10178,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   font-size: var(--type-body); color: var(--text-secondary); max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* The row's second line (owner ask, 2026-09-15) — same treatment as `.ppTlDesc` (one line,
+   never wraps the row taller), with a bold label so it can't be misread as more "doing" text. */
+.ppTlWatch {
+  font-size: var(--type-body); color: var(--text-secondary); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ppTlWatch b { color: var(--text-tertiary); font-weight: 600; }
 .ppTlMeta { font-size: var(--type-support); color: var(--text-tertiary); }
 /* The open block — the card it always was, on the paper ground, set in from the spine. */
 .ppTlOpen {
@@ -10112,6 +10192,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   background: var(--home-paper, var(--bg)); border: 1px solid var(--home-line-strong, var(--border-2));
   border-radius: 8px; overflow: hidden;
 }
+/* Every field on the open block sits WHITE on its cream (the stage-2 drawing; owner, 2026-09-15):
+   the portal-wide field ground on the warm theme is the paper tone, which is fine on a white
+   card and invisible on this one — the title in the head, the minutes box, the two teaching
+   fields, the coaching points, the tag searches and the station cards' fields all take the
+   card tone here. The dark theme lifts to its card tone the same way. */
+.ppTlOpen .input, .ppTlOpen .textarea, .ppTlOpen .select { background: var(--home-card, var(--white-8)); }
 /* The ghost row — the next block, not yet written. */
 .ppTlGhost { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; padding: 0.85rem 0 0.85rem 1.1rem; min-width: 0; }
 .ppTlGhost button { min-height: var(--tap-min, 44px); }
@@ -10129,11 +10215,16 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    the pickers inside the About fold and the template's title block, and the "Recorded here" links. */
 @media (max-width: 768px) {
   .ppAboutBody input, .ppDocFields input { min-height: var(--tap-min, 44px); }
-  /* The open block's own fields — Minutes, Description, Goal, the station names — had the same
-     35px debt under the old card (≈100 baseline rows); the fields are stage 2's to redraw, the
-     floor is a rule already held one card up. Chips inside the pickers keep the portal-wide
-     compact-chip decision. */
-  .ppBlockBody input:not([type='checkbox']), .ppBlockBody select, .ppBlockBody textarea { min-height: var(--tap-min, 44px); }
+  /* Every field inside an OPEN block — the title in its head, the clock row, the two fields, the
+     pickers, the station cards — takes the floor from the one wrapper that holds them all. It
+     used to be a rule on the body alone, and the title in the head sat at 35px until the gate
+     first opened a block (stage 2, 2026-09-15): naming the containers that hold fields today is
+     how the next field slips through. Chips inside the pickers keep the portal-wide compact-chip
+     decision. */
+  .ppTlOpen input:not([type='checkbox']), .ppTlOpen select, .ppTlOpen textarea { min-height: var(--tap-min, 44px); }
+  /* The block's quiet links — the doors line and "Choose players…" — take the floor the ghost
+     row's links already hold (stage 2, D8); the chips take it with the suggest-chip family. */
+  .ppDoorsLine .ppTlQuietLink, .ppWhoLine .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   .ppRecordedList a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
 }
 
@@ -10154,8 +10245,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .ppTlGhost { padding-left: 0.75rem; }
   .ppTlOpen { margin-left: 0.4rem; }
   .ppAboutBody, .ppFoldBody { padding-left: 0; }
+  .ppAboutPreview { margin-left: 0; }
   .ppRailName { flex-basis: 7.5rem; }
   .ppSheetCol { gap: 0.7rem; }
+  /* The clock row wraps to two lines on the phone (the chips, then the minutes and Rest with
+     "ends" beside them — stage 2, D8); the dot between the minutes and Rest is a desktop letter. */
+  .ppClockSep { display: none; }
 }
 
 /* 640 = CONTENT reflow: the dense control rows go to one axis so nothing is squeezed. */
@@ -10367,9 +10462,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppStUpRow span:first-child { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .ppStUpNone { margin: 0; font-size: var(--type-body); color: var(--text-tertiary); }
 
-
-.devTailLink { color: var(--text-secondary); text-decoration: underline; font-weight: 600; }
-.devTailLink:hover { color: var(--text-primary); }
+/* (⚰ `.devTailLink` — the Results row's "Session →" — went with the row, re-evaluation stage 3,
+   2026-09-15: the source is a door in the table's own module now.) */
 
 /* ⚰ `.devSessionWhen` / `.devSessionNote` / `.devSessionEventLink` STOOD HERE until the development
    re-evaluation's stage 2 (2026-09-15): the session page's Date · Taken at · Session note fields
@@ -10530,10 +10624,40 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .ppRailDerived span { font-weight: 400; color: var(--text-tertiary); }
 
-/* DIM, NEVER HIDE. An off-type focus area stays readable and stays in place -- a player whose only
-   focus areas are off-type must never vanish from a coverage list, because that is precisely the
-   child most likely to be overlooked. Nothing here removes, reorders or counts anything. */
-.ppFocusChip[data-off='off'] { opacity: 0.45; }
+/* DIM, NEVER HIDE — carried down to the CATEGORY, not just the chip (owner-approved mockup,
+   2026-09-15). A player's focus areas cluster by category; tonight's own category(ies) print in
+   full, everything else collapses to one quiet badge per category rather than one chip per goal.
+   A player whose only focus areas are off-type must never vanish from a coverage list or read as
+   empty — that is precisely the child most likely to be overlooked — so a collapsed category still
+   shows its name and count, and opens on a tap to read the actual words. Nothing here hides,
+   reorders or scores anything; it only changes which category is written out versus counted. */
+.ppRailClusters { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.ppRailLed { min-width: 0; }
+.ppRailLedCat {
+  display: block; font-size: var(--type-label); font-weight: 800; letter-spacing: 0.03em;
+  text-transform: uppercase; color: var(--home-olive, var(--logic-lime));
+}
+.ppRailLedList { margin: 0.1rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.1rem; }
+.ppRailLedList li {
+  font-size: var(--type-support); color: var(--text-primary); padding-left: 0.7rem; position: relative;
+}
+.ppRailLedList li::before { content: '•'; position: absolute; left: 0; color: var(--home-olive, var(--logic-lime)); }
+.ppRailRestRow { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ppRailBadge summary {
+  cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: var(--type-label); color: var(--text-secondary);
+  padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--white-8);
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
+}
+.ppRailBadge summary::-webkit-details-marker { display: none; }
+.ppRailBadge summary::before { content: '▸'; font-size: 0.65em; }
+.ppRailBadge[open] summary::before { content: '▾'; }
+.ppRailBadge summary:hover { color: var(--text-primary); }
+.ppRailBadge ul {
+  margin: 0.3rem 0 0 0.3rem; padding: 0 0 0 0.7rem; list-style: none;
+  border-left: 2px solid var(--white-8); display: flex; flex-direction: column; gap: 0.1rem;
+}
+.ppRailBadge li { font-size: var(--type-support); color: var(--text-secondary); }
 
 @media (max-width: 640px) {
   .ppDrillRow,
@@ -13795,7 +13919,7 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    the compact chip by the portal-wide decision. Closes the Phase 0 deferral on the Practice review
    (development lifecycle Phase 3 restyles that report). */
 @media (max-width: 768px) {
-  .ppSuggestChip { min-height: var(--tap-min, 44px); padding-top: 0.3rem; padding-bottom: 0.3rem; }
+  .ppSuggestChip, .ppQuickChip { min-height: var(--tap-min, 44px); padding-top: 0.3rem; padding-bottom: 0.3rem; }
 }
 
 /* ── Stage 1 · Define (2026-09-14) ─────────────────────────────────────────────
