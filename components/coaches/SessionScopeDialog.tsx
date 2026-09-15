@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import QuestionShell from '@/components/coaches/QuestionShell';
-import { KIND_LABELS, aimSentence } from '@/lib/measurable-definition';
+import { aimSentence } from '@/lib/measurable-definition';
 import { formatShortDate, todayLocal } from '@/lib/measurable-format';
 import { orderEventsByAnchor } from '@/lib/development-session-view';
 import type { RepTeamMeasurableType } from '@/lib/types';
@@ -106,7 +106,7 @@ export default function SessionScopeDialog({
                 <li key={t.id}>
                   <label className={css.pickRow}>
                     <input type="checkbox" checked={metricIds.has(t.id)} onChange={() => setMetricIds(s => toggle(s, t.id))} />
-                    <span>{t.name} <small>· {KIND_LABELS[t.kind]}{t.kind === 'test' ? ` · ${aimSentence(t)}` : ''}</small></span>
+                    <span>{t.name} <small>· {t.kind === 'skill' ? 'skill' : aimSentence(t)}</small></span>
                   </label>
                 </li>
               ))}

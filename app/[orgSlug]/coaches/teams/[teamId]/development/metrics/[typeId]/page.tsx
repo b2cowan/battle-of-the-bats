@@ -1,14 +1,16 @@
-'use client';
-import { use } from 'react';
-import MetricDefinitionEditor from '@/components/coaches/MetricDefinitionEditor';
+import { redirect } from 'next/navigation';
+import { skillsAndGoalsHref, parseMetricEdit } from '@/lib/development-address';
 
-/** One metric's definition (development lifecycle Phase 1, mockup screen 2) — edit, retire, restore. */
-export default function MetricPage({
+/**
+ * A metric's definition is no longer a page (re-evaluation stage 1, 2026-09-14): it is a SHEET
+ * over the Metrics tab, addressed by `?edit=<id>`. The route stays so an old link lands on the
+ * same sheet rather than a 404; an id that is not one lands on the Metrics tab alone.
+ */
+export default async function MetricRedirect({
   params,
 }: {
   params: Promise<{ orgSlug: string; teamId: string; typeId: string }>;
 }) {
-  const { orgSlug, teamId, typeId } = use(params);
-  // Fresh instance per definition — no stale draft when the coach opens a second one.
-  return <MetricDefinitionEditor key={typeId} orgSlug={orgSlug} teamId={teamId} typeId={typeId} />;
+  const { orgSlug, teamId, typeId } = await params;
+  redirect(skillsAndGoalsHref(`/${orgSlug}/coaches/teams/${teamId}`, 'metrics', { edit: parseMetricEdit(typeId) }));
 }

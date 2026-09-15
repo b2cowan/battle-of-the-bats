@@ -1508,8 +1508,8 @@ export const OFFSEASON_DEVELOPMENT_GOALS = [
 /** The team's testing library — coach-defined, as the product intends (nothing ships seeded). */
 /**
  * Each with its AIM and METHOD (development lifecycle Phase 1, 2026-09-12): a definition without
- * them reads "record only · method not recorded" on the Metrics tab, which is honest of a real
- * coach's legacy row and a poor first impression of a shop window. The dash takes THREE attempts
+ * an aim reads "record only" on the Metrics tab, which is honest of a real coach's legacy row and
+ * a poor first impression of a shop window; the method is what the shop window's coach would write. The dash takes THREE attempts
  * per session (Phase 2, 2026-09-13 — every attempt is recorded, best is the headline); the
  * showcase player is the one who runs all three on each testing day (`OFFSEASON_SHOWCASE_ATTEMPTS`).
  */

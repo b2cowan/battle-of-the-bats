@@ -64,12 +64,12 @@ export const POST = withObservability(async (req: Request,
   const types = await getRepTeamMeasurableTypes(teamId);
   const type = types.find(t => t.id === measurableTypeId);
   if (!type) {
-    return NextResponse.json({ error: 'Pick an active measurable type for this team.' }, { status: 400 });
+    return NextResponse.json({ error: 'Pick an active test for this team.' }, { status: 400 });
   }
   // A number is a TEST's record. An observed skill is a definition in Phase 1; recording an
   // observation against it is Phase 2, and a value filed under a skill would be a fabricated score.
   if (!isMeasuredTest(type)) {
-    return NextResponse.json({ error: 'An observed skill takes an observation, not a number — record one from the skill’s chip or the player’s Observations.' }, { status: 400 });
+    return NextResponse.json({ error: 'A skill takes an observation, not a number — record one from the skill’s chip on a session or the player’s Observations.' }, { status: 400 });
   }
   // The definition says how many attempts a session takes (owner ruling 2026-09-11); the reader
   // bounded the number, the definition bounds it further. A single reading is always attempt 1.

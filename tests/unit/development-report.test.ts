@@ -113,7 +113,7 @@ describe('progressSeries — one object behind the chart, the answer line and th
     assert.equal(s.earlier.length, 1);
     assert.equal(s.earlier[0].unit, 'mph');
     assert.equal(s.earlier[0].rows.length, 2);
-    assert.equal(s.unitNote, 'Units changed — 2 earlier readings in mph are listed but not drawn on this line.');
+    assert.equal(s.unitNote, 'Units changed — 2 earlier results in mph are listed but not drawn on this line.');
     assert.equal(s.change, null, 'no change is stated across a unit break');
   });
 
@@ -278,12 +278,12 @@ describe('describeSeries — the chart\'s accessible sentence', () => {
     assert.ok(d.description.includes(`${AUG25}: 8.1 seconds (3 attempts: 8.1, 8.18, 8.14); ${SEP8}: 8.05 seconds (3 attempts: 8.12, 8.05, 8.2)`), d.description);
     assert.match(d.description, /Dates are spaced by elapsed time/);
   });
-  it('the scope line counts results and attempts and states the method and the aim', () => {
+  it('the scope line counts results and attempts and states the aim — never the method (owner, 2026-09-14: a method change keeps the series, so "same method throughout" is not knowable)', () => {
     const s = progressSeries(averySprint, sprint, { show: 'headline', compare: 'season' });
-    assert.equal(scopeLine(s), '4 recorded results · 11 attempts · same method throughout · lower is the aim');
+    assert.equal(scopeLine(s), '4 recorded results · 11 attempts · lower is the aim');
     const t = progressSeries([reading(48, '2026-06-01', null, 1, 'mph'), reading(51, '2026-06-15', null, 1, 'mph')], throwSpeed, { show: 'headline', compare: 'season' });
-    assert.equal(scopeLine(t), '2 recorded results · method not recorded · higher is the aim');
+    assert.equal(scopeLine(t), '2 recorded results · higher is the aim');
     const c = progressSeries([reading(66, '2026-09-08', 'c2', 1, 'mph'), reading(70, '2026-09-08', 'c2', 2, 'mph')], changeup, { show: 'headline', compare: 'season' });
-    assert.equal(scopeLine(c), '1 recorded result · 2 attempts · same method throughout · aim: 62–68 mph · a range has no “best” · a single result is a point, not a change');
+    assert.equal(scopeLine(c), '1 recorded result · 2 attempts · aim: 62–68 mph · a range has no “best” · a single result is a point, not a change');
   });
 });

@@ -62,8 +62,8 @@ describe('F01 — splitSeriesByUnit: a series breaks wherever the recorded unit 
     assert.equal(drawable?.unit, 'km/h');
     assert.equal(drawable?.readings.length, 1);
     const note = unitSplitNote(segs);
-    assert.ok(note && /2 earlier readings in mph/.test(note), note ?? '(no note)');
-    assert.ok(/not drawn/.test(note!), 'the note must say the earlier readings are NOT drawn');
+    assert.ok(note && /2 earlier results in mph/.test(note), note ?? '(no note)');
+    assert.ok(/not drawn/.test(note!), 'the note must say the earlier results are NOT drawn');
     assert.equal(unitSplitNote(splitSeriesByUnit([reading(1, 's', '2026-07-01')])), null);
   });
 

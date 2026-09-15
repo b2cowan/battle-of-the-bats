@@ -1961,7 +1961,8 @@
    Region 3: the all-reports rail — one live line per report.
    Season-over-season comparisons retired; every signal is within-season.
    ⚠ The question-titled DOORWAY TILES that used to be region 3 are gone with the reports
-   becoming tabs; `.insightsDoors`/`.insightsDoor*` below now serve the Development hub only. */
+   becoming tabs. ⚰ `.insightsDoors`/`.insightsDoor*` served the Development hub's four door tiles
+   after that, and went with them (re-evaluation stage 0, 2026-09-14). */
 .insightsBand { display: flex; flex-wrap: wrap; gap: 0.9rem 0; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); padding: 0.9rem 0; margin-bottom: 1.2rem; }
 /* ⚠ A COLUMN FLEX CONTAINER, and that is load-bearing rather than cosmetic. Each tile became an
    <a> holding <span>s when the tiles learned to link to their report (the mockup's own
@@ -8812,6 +8813,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* A link inside a table cell or a mini row that meets the 44px tap floor without changing the row's
    rhythm: tap padding + a matching negative margin (the .lineupInsightsLink shape). Sessions,
    Players and Metrics rows (Phase 1) all wear it. */
+/* The LAST row absorbs its links' tap box: `.devCellLink` paints 44px tall on a ~37px row (its
+   negative margins keep the rhythm), which is harmless between rows and a 4–5px spill past the
+   table's bottom edge on the last one — enough for the frame (`overflow-x: auto`) to grow a
+   vertical scrollbar over a four-row list (owner, 2026-09-14). The last row's padding grows by
+   the difference instead, so nothing paints outside and nothing is clipped. */
+.devTableCard tbody tr:last-child td { padding-bottom: 0.7rem; }
 .devCellLink {
   display: inline-block;
   box-sizing: border-box;
@@ -8903,9 +8910,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .devSectionAction { align-items: center; }
 @media (max-width: 768px) {
   .devSectionAction { min-height: var(--tap-min, 44px); }
-  /* The new-test row's two fields ride with its button — a coach adding a test type types into
-     these and then presses that, and half a raised row is worse than none. */
-  .newTypeRow input { min-height: var(--tap-min, 44px); }
+  /* (The inline "+ New test…" row that once sat here is gone — re-evaluation stage 1, 2026-09-14:
+     a new test is defined in the same sheet the Metrics tab uses, which carries its own floor.) */
 }
 
 /* ── Warm portal — Stage 1 chrome overrides (gated) ─────────────────────────────
@@ -13571,3 +13577,27 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 @media (max-width: 768px) {
   .ppSuggestChip { min-height: var(--tap-min, 44px); padding-top: 0.3rem; padding-bottom: 0.3rem; }
 }
+
+/* ── Stage 1 · Define (2026-09-14) ─────────────────────────────────────────────
+   `.srOnly` — the screen-reader-only recipe for a table heading whose column holds only a control
+   (the Sessions table's delete, the Metrics table's Finish door). Referenced before it was defined
+   here; the bva panel and two components carry private copies. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* A retired metric's row is the SAME row (table standard: an item row is never tinted, and one
+   axis of difference does not license the others) — it reads a step quieter, and that is the
+   whole difference (the name's link inherits it; the hover underline still says it is a door). */
+.devRetiredRow td { color: var(--text-tertiary); }
+/* The live table and the retired table under the fold are two tables that must read as one: an
+   auto-sized first column lets each one's longest name decide where its second column starts, and
+   the two columns drift (owner, 2026-09-14). One stated width, shared. Phone cards ignore it. */
+.devMetricsTable th:first-child { width: 44%; }

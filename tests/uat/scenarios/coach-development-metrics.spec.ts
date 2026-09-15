@@ -149,10 +149,9 @@ test.describe('the definition contract, through the routes', () => {
     // Rename keeps the series.
     const renamed = await call(page, 'patch', `${api()}/${probeId}`, { name: 'Probe series (renamed)' });
     expect(renamed.status).toBe(200);
-    // Writing a method where one exists: a CHANGE → refused with the offer.
+    // A method change keeps the series (owner, 2026-09-14) — it is the coach's note, never a fork.
     const methodChange = await call(page, 'patch', `${api()}/${probeId}`, { method: 'Flying start.' });
-    expect(methodChange.status).toBe(409);
-    expect((methodChange.body.successor as { reasons: string[] }).reasons).toEqual(['method']);
+    expect(methodChange.status).toBe(200);
     // Aim and attempts never fork.
     const aimChange = await call(page, 'patch', `${api()}/${probeId}`, { aim: 'higher', attemptsPerSession: 2 });
     expect(aimChange.status).toBe(200);
@@ -185,9 +184,9 @@ test.describe('the definition contract, through the routes', () => {
 });
 
 test.describe('the three views and the exact addresses, rendered', () => {
-  test('Sessions is the landing with the tour anchor; Players shows the chosen metric with ITS date; the way back returns', async ({ page }) => {
+  test('the Sessions tab carries the tour anchor (the Overview is the landing since stage 0); Players shows the chosen metric with ITS date; the way back returns', async ({ page }) => {
     await signIn(page, COACH);
-    await page.goto(`${base()}/development`);
+    await page.goto(`${base()}/development?section=sessions`);
     await expect(page.locator('[data-sandbox-tour="development-sessions"]')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Skills and Goals views' }).getByRole('link', { name: 'Metrics' })).toBeVisible();
 
@@ -220,22 +219,48 @@ test.describe('the three views and the exact addresses, rendered', () => {
     expect(await back.getAttribute('href')).toBe(`${base()}/development?section=players&metric=${ts.id}`);
   });
 
-  test('Metrics lists every definition with what a record means; a legacy test says its method was not recorded', async ({ page }) => {
+  test('Metrics lists every definition with what a record means; the retired rows are the same table', async ({ page }) => {
     await signIn(page, COACH);
     await page.goto(`${base()}/development?section=metrics`);
     const table = page.locator('table').first();
     await expect(table).toBeVisible();
     const text = (await table.innerText()).toLowerCase();
     expect(text).toContain('throw speed');
-    expect(text).toContain('method not recorded');
+    // The method is the coach's note, never a claim on the row, and a test without one is not a to-do (owner, 2026-09-14).
+    expect(text).not.toContain('method');
+    expect(text).not.toContain('unfinished');
     expect(text).toContain('lower is the aim');
-    expect(text).toContain('observed skill');
+    // One word per kind (stage 1, B1): the row reads "Sets feet before throwing · skill".
+    expect(text).toContain('· skill');
+    expect(text).not.toContain('observed skill');
+    expect(text).not.toContain('measured test');
     expect(text).toContain('aim: 62–68 mph');
-    // The editor opens on a definition with readings and shows the rule.
+    // The retired fold opens on the SAME table — rows, not pills — each saying it is retired.
+    await page.getByText(/^Retired \(\d+\)$/).click();
+    const retiredTable = page.locator('details table');
+    await expect(retiredTable).toBeVisible();
+    const retiredText = (await retiredTable.innerText()).toLowerCase();
+    expect(retiredText).toContain('shuttle run · seconds');
+    expect(retiredText).toContain('retired');
+    // The definition is a SHEET over the Metrics tab (stage 1): the old page address redirects into
+    // `?edit=`, the sheet opens on a definition with results and shows the rule and the live read-back.
     await page.goto(`${base()}/development/metrics/${sprintId}`);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('60-yd sprint');
-    await expect(page.getByLabel('How do you run the test?')).toHaveValue(/Standing start/);
-    await expect(page.getByText(/Changing a definition later/)).toBeVisible();
+    await expect(page).toHaveURL(/section=metrics&edit=/);
+    const sheet = page.getByRole('dialog').first();
+    await expect(sheet.getByRole('heading', { name: '60-yd sprint' })).toBeVisible();
+    await expect(sheet.getByLabel('Method')).toHaveValue(/Standing start/);
+    await expect(sheet.getByText(/Changing a definition later/)).toBeVisible();
+    await expect(sheet.getByText(/Reads back as/)).toContainText('lower is the aim');
+    // Preview is a modal over the sheet, and it never promises "faster".
+    await sheet.getByRole('button', { name: 'Preview' }).click();
+    const preview = page.getByRole('dialog').nth(1);
+    await expect(preview.getByText(/seconds lower since the earlier date/)).toBeVisible();
+    await expect(preview.getByText(/never “faster”/)).toBeVisible();
+    await preview.getByRole('button', { name: 'Close' }).click();
+    // A clean Cancel lands back on the Metrics tab with no sheet.
+    await sheet.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page).toHaveURL(/section=metrics$/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 });
 

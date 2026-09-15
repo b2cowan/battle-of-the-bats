@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   parseDevelopmentAddress, safeReturnPath, playerDevelopmentHref, returnLabel,
-  skillsAndGoalsHref, insightsDevelopmentHref, insightsTagFromAddress, parseSkillsAndGoalsSection,
+  skillsAndGoalsHref, insightsDevelopmentHref, insightsTagFromAddress, parseSkillsAndGoalsSection, parseMetricEdit,
   parseInsightsDevelopmentAddress, developmentHandoutHref,
 } from '../../lib/development-address.ts';
 import { UNTAGGED_FILTER } from '../../lib/rep-drills.ts';
@@ -66,6 +66,13 @@ describe('the workspace and Insights addresses', () => {
     assert.equal(skillsAndGoalsHref(base, 'sessions'), `${base}/development?section=sessions`);
     assert.equal(skillsAndGoalsHref(base, 'players', { metric: 'M1' }), `${base}/development?section=players&metric=M1`);
     assert.equal(skillsAndGoalsHref(base, 'metrics'), `${base}/development?section=metrics`);
+    // A metric's definition is a sheet over whichever section is on screen (stage 1): `edit=new` defines, an id edits.
+    assert.equal(skillsAndGoalsHref(base, 'metrics', { edit: 'new' }), `${base}/development?section=metrics&edit=new`);
+    assert.equal(skillsAndGoalsHref(base, 'overview', { edit: 'M1' }), `${base}/development?edit=M1`);
+    assert.equal(parseMetricEdit('new'), 'new');
+    assert.equal(parseMetricEdit('M1'), 'M1');
+    assert.equal(parseMetricEdit('../x'), null);
+    assert.equal(parseMetricEdit(null), null);
     // Stage 0 (2026-09-14): the overview is the landing and the bare address — never `?section=overview`.
     assert.equal(skillsAndGoalsHref(base, 'overview'), `${base}/development`);
     assert.equal(parseSkillsAndGoalsSection('players'), 'players');

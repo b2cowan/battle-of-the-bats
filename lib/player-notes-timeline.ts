@@ -108,7 +108,7 @@ export function buildPlayerNotesTimeline(input: {
       on: o.observedOn, createdAt: o.createdAt,
       // An observation may carry only a descriptor ("With a reminder" is itself what was seen).
       body: o.note ?? '', qualifier: o.descriptor,
-      about: `Skill · ${type?.name ?? 'observed skill'}`, aboutHref: skillsHref('observations'),
+      about: `Skill · ${type?.name ?? 'skill'}`, aboutHref: skillsHref('observations'),
       authorId: o.createdBy, editable: false,
     });
   }

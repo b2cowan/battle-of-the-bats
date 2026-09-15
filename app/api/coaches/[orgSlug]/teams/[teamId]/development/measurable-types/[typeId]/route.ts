@@ -21,17 +21,18 @@ export const GET = withObservability(async (_req: Request,
   if (denied) return denied;
 
   const [type, hasReadings] = await readDefinition(typeId, teamId);
-  if (!type) return NextResponse.json({ error: 'Measurable type not found' }, { status: 404 });
+  if (!type) return NextResponse.json({ error: 'Metric not found' }, { status: 404 });
   return NextResponse.json({ type, hasReadings, canWrite: canWriteDevelopment(resolved.assignment.capabilities) });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/measurable-types/[typeId]' });
 
 /**
- * Edit a definition in place — rename, aim, range, method (where none was written), attempts,
- * headline, descriptors, retire, restore.
+ * Edit a definition in place — rename, aim, range, method, attempts, headline, descriptors,
+ * retire, restore.
  *
- * ⚠ THE SUCCESSOR RULE IS ENFORCED HERE (owner ruling 3, 2026-09-11): a unit or written-method
- * change on a test that has readings is REFUSED with a 409 that carries the offer — the reasons
- * and the merged definition the successor would take — and the editor then asks the coach and
+ * ⚠ THE SUCCESSOR RULE IS ENFORCED HERE (owner ruling 3, 2026-09-11; narrowed to the unit
+ * 2026-09-14 — the method is the coach's optional note and never forks a series): a unit
+ * change on a test that has readings is REFUSED with a 409 that carries the offer — the merged
+ * definition the successor would take — and the editor then asks the coach and
  * posts to `[typeId]/replace`. The rule is decided by `applyDefinitionPatch` (pure, tested); this
  * route only supplies "does it have readings" and turns the answer into a status.
  */
@@ -54,20 +55,20 @@ export const PATCH = withObservability(async (req: Request,
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
 
   const [current, hasReadings] = await readDefinition(typeId, teamId);
-  if (!current) return NextResponse.json({ error: 'Measurable type not found' }, { status: 404 });
+  if (!current) return NextResponse.json({ error: 'Metric not found' }, { status: 404 });
 
   const applied = applyDefinitionPatch(current, read.fields, hasReadings);
   if ('error' in applied) return NextResponse.json({ error: applied.error }, { status: 400 });
   if (applied.change.kind === 'successor') {
     return NextResponse.json({
-      error: successorSentence(applied.change.reasons, current.name),
-      successor: { reasons: applied.change.reasons, definition: applied.next },
+      error: successorSentence(current.name),
+      successor: { definition: applied.next },
     }, { status: 409 });
   }
 
   try {
     const type = await updateRepTeamMeasurableType(typeId, teamId, read.fields);
-    if (!type) return NextResponse.json({ error: 'Measurable type not found' }, { status: 404 });
+    if (!type) return NextResponse.json({ error: 'Metric not found' }, { status: 404 });
     return NextResponse.json({ type });
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505') {

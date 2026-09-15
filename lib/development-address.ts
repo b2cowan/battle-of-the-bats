@@ -97,13 +97,27 @@ export function returnLabel(returnTo: string | null, base: string): string | nul
   return null;
 }
 
-/** Skills & Goals — sections on `?section=`, the Money and Insights hubs' convention; the overview is the bare address. */
-export function skillsAndGoalsHref(base: string, section: SkillsAndGoalsSection, extra?: { metric?: string | null }): string {
+/**
+ * Skills & Goals — sections on `?section=`, the Money and Insights hubs' convention; the overview
+ * is the bare address. `metric` is the Players view's Show choice. `edit` opens a metric's
+ * DEFINITION in its sheet over whichever section is on screen (re-evaluation stage 1, 2026-09-14
+ * — a metric is a record on a list, so it opens over the list the way a player's dues do, never
+ * on a page of its own): `new` defines one, an id edits it. Back closes the sheet.
+ */
+export function skillsAndGoalsHref(base: string, section: SkillsAndGoalsSection, extra?: { metric?: string | null; edit?: MetricEdit | null }): string {
   const qp = new URLSearchParams();
   if (section !== 'overview') qp.set('section', section);
   if (extra?.metric) qp.set('metric', extra.metric);
+  if (extra?.edit) qp.set('edit', extra.edit);
   const q = qp.toString();
   return q ? `${base}/development?${q}` : `${base}/development`;
+}
+
+/** `new`, or the id of the definition to edit. Anything else is no sheet. */
+export type MetricEdit = 'new' | string;
+export function parseMetricEdit(raw: string | null | undefined): MetricEdit | null {
+  if (raw === 'new') return 'new';
+  return isRecordId(raw) ? raw : null;
 }
 
 /** An unknown or missing section lands on the overview — the landing. */

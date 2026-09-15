@@ -14,10 +14,18 @@ export const MEASURABLE_KINDS: ReadonlyArray<MeasurableKind> = ['test', 'skill']
 export const MEASURABLE_AIMS: ReadonlyArray<MeasurableAim> = ['lower', 'higher', 'range', 'record'];
 export const MEASURABLE_HEADLINES: ReadonlyArray<MeasurableHeadline> = ['best', 'average', 'last', 'in_range'];
 
-/** ONE word per value — the editor's options, the Metrics tab's Kind column, the help articles. */
+/**
+ * ONE word per value — the editor's options, the Metrics tab, the scope dialog, the help articles.
+ * ⚠ "Test" and "Skill", never "Measured test" / "Observed skill" (re-evaluation stage 1, B1,
+ * 2026-09-14): the coach met the two kinds under five labels across the product. The adjective's
+ * job is done by the sentence beneath the choice ("a number, the same way each time" / "what you
+ * saw, never a score"), not by the label. The record words are fixed the same way (B2): a test
+ * produces a RESULT, a skill an OBSERVATION, and the numbers inside a result are ATTEMPTS —
+ * "reading" is retired. `tests/unit/development-vocabulary-guard.test.ts` holds the line.
+ */
 export const KIND_LABELS: Readonly<Record<MeasurableKind, string>> = {
-  test: 'Measured test',
-  skill: 'Observed skill',
+  test: 'Test',
+  skill: 'Skill',
 };
 export const AIM_LABELS: Readonly<Record<MeasurableAim, string>> = {
   lower: 'Lower result',
@@ -81,55 +89,65 @@ export function aimSentence(t: Pick<RepTeamMeasurableType, 'aim' | 'unit' | 'ran
 const formatEdge = (v: number | null) => (v == null ? '?' : formatValue(v));
 
 /**
- * The Metrics tab's "What a record means" column — the one line that lets a coach tell a defined
- * test from a legacy one at a glance. A legacy test says its method was not recorded, because it
- * was not, and the product never guesses one.
+ * The Metrics tab's "What a record means" column. The UNIT is not here (stage 1, B3): the row says
+ * it once, beside the name — a range aim keeps it inside the band because "62–68" means nothing
+ * without it. A multi-attempt test says how its headline is read ("best attempt"); a skill says
+ * what it records and how many descriptors it offers.
+ *
+ * The method is NOT here either (owner, 2026-09-14): it is the coach's optional note on how the
+ * test is run, and a row that said "method not recorded" was a to-do wearing a fact's clothes.
  */
 export function recordMeaning(t: RepTeamMeasurableType): string {
   if (t.kind === 'skill') {
     const n = t.descriptors.length;
-    return n > 0 ? `What you saw, in a stated setting · ${n} descriptor${n === 1 ? '' : 's'}` : 'What you saw, in a stated setting';
+    return n > 0 ? `what you saw · ${n} descriptor${n === 1 ? '' : 's'}` : 'what you saw';
   }
-  const parts = [t.unit ?? '', aimSentence(t)];
-  if (!t.method) parts.push('method not recorded');
-  return parts.filter(Boolean).join(' · ');
+  const parts = [aimSentence(t)];
+  if (t.attemptsPerSession > 1) parts.push(HEADLINE_LABELS[t.headline].toLowerCase());
+  return parts.join(' · ');
 }
 
 /**
- * ═══ CHANGING A DEFINITION LATER (owner ruling 3, 2026-09-11) ═══
- * Rename fixes a typo and keeps the series. Changing the UNIT or a WRITTEN method on a test that
- * already has readings starts a NEW definition and retires this one — every saved result stays
- * under the name and unit it was recorded with, and the two are never drawn as one line (F01).
- *
- * Two deliberate softenings, both in the coach's favour:
- *   · a unit that differs only in spelling or case is the same unit (`sameUnit`);
- *   · writing a method where NONE was recorded is not a change of method — the readings' method
- *     was "not recorded", and the coach is now recording it. Only changing a written one forks —
- *     and ERASING a written one is a change too (the readings were taken under it; a definition
- *     that then read "method not recorded" would be lying about them).
- * Aim, range, attempts, headline and descriptors are interpretation, not measurement: they never
- * start a successor. Without readings there is nothing to keep honest, so every edit is an edit.
+ * The example change the editor's preview shows for a directional aim — running the way the aim
+ * runs (stage 1, B4: with a HIGHER aim the preview used to read "8.40 → 8.05 · 0.35 higher", a
+ * drop labelled a rise). Null for a range or record-only aim, which read back differently.
  */
-export type DefinitionChangeReason = 'unit' | 'method';
-export type DefinitionChange = { kind: 'keep' } | { kind: 'successor'; reasons: DefinitionChangeReason[] };
+export function previewChange(aim: MeasurableAim): { from: number; to: number; delta: number; word: 'lower' | 'higher' } | null {
+  if (aim === 'lower') return { from: 8.4, to: 8.05, delta: 0.35, word: 'lower' };
+  if (aim === 'higher') return { from: 8.05, to: 8.4, delta: 0.35, word: 'higher' };
+  return null;
+}
+
+/**
+ * ═══ CHANGING A DEFINITION LATER (owner ruling 3, 2026-09-11; narrowed 2026-09-14) ═══
+ * Rename fixes a typo and keeps the series. Changing the UNIT on a test that already has readings
+ * starts a NEW definition and retires this one — every saved result stays under the unit it was
+ * recorded with, and km/h and mph are never drawn as one line (F01). That rule is arithmetic.
+ *
+ * The METHOD no longer forks a series (owner, 2026-09-14: "I get it is recommended to enforce
+ * consistency but that is not always available to coaches, but they still want to see how things
+ * like sprint speed change over time"). It is the coach's optional note on how the test is run;
+ * writing, changing or erasing it is an edit, and the coach owns the judgment of whether the
+ * series is still one series. A unit that differs only in spelling or case is the same unit
+ * (`sameUnit`). Aim, range, attempts, headline and descriptors are interpretation, not
+ * measurement: they never start a successor. Without readings there is nothing to keep honest, so
+ * every edit is an edit.
+ */
+export type DefinitionChange = { kind: 'keep' } | { kind: 'successor' };
 
 export function definitionChange(
-  current: Pick<RepTeamMeasurableType, 'kind' | 'unit' | 'method'>,
-  next: { unit?: string | null; method?: string | null; [other: string]: unknown },
+  current: Pick<RepTeamMeasurableType, 'kind' | 'unit'>,
+  next: { unit?: string | null; [other: string]: unknown },
   hasReadings: boolean,
 ): DefinitionChange {
   if (!hasReadings || current.kind !== 'test') return { kind: 'keep' };
-  const reasons: DefinitionChangeReason[] = [];
-  if (next.unit !== undefined && next.unit != null && current.unit != null && !sameUnit(current.unit, next.unit)) reasons.push('unit');
-  if (next.method !== undefined && current.method) {
-    const written = (next.method ?? '').trim();
-    if (written !== current.method.trim()) reasons.push('method');
+  if (next.unit !== undefined && next.unit != null && current.unit != null && !sameUnit(current.unit, next.unit)) {
+    return { kind: 'successor' };
   }
-  return reasons.length ? { kind: 'successor', reasons } : { kind: 'keep' };
+  return { kind: 'keep' };
 }
 
 /** The sentence the editor and the 409 both say when the rule bites. */
-export function successorSentence(reasons: DefinitionChangeReason[], name: string): string {
-  const what = reasons.length === 2 ? 'unit and method' : reasons[0] === 'unit' ? 'unit' : 'method';
-  return `Changing the ${what} of “${name}” starts a new definition and retires this one — its saved results stay under the ${what} they were recorded with.`;
+export function successorSentence(name: string): string {
+  return `Changing the unit of “${name}” starts a new definition and retires this one — its saved results stay under the unit they were recorded with.`;
 }

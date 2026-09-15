@@ -12,11 +12,12 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { formatShortDate, formatWeekdayDate, todayLocal } from '@/lib/measurable-format';
 import { coverageCell, observationText } from '@/lib/development-report';
 import SessionScopeDialog, { type ScopeRosterRow, type ScopeEventOption } from '@/components/coaches/SessionScopeDialog';
+import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
 import { canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { playerName as rosterPlayerName } from '@/lib/coach-roster-name';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
-import { skillsAndGoalsHref, parseSkillsAndGoalsSection, playerDevelopmentHref, type SkillsAndGoalsSection } from '@/lib/development-address';
-import { activeMeasuredTests, measuredTestsWithHistory, recordMeaning, KIND_LABELS } from '@/lib/measurable-definition';
+import { skillsAndGoalsHref, parseSkillsAndGoalsSection, parseMetricEdit, playerDevelopmentHref, type SkillsAndGoalsSection } from '@/lib/development-address';
+import { activeMeasuredTests, measuredTestsWithHistory, recordMeaning } from '@/lib/measurable-definition';
 import styles from '../../../coaches.module.css';
 import ov from './overview.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
@@ -81,6 +82,10 @@ export default function DevelopmentHubPage({
  * ⚠ A coach WITHOUT the Development grant has no door at all (D5): the nav hides Skills & Goals,
  * and this page — and the rooms inside it — render the shared not-granted block. "Either they can
  * see and update everything in here or they cannot."
+ * ⚠ A metric's DEFINITION is a sheet over this page (re-evaluation stage 1, 2026-09-14), addressed
+ * by `?edit=new|<id>` on whichever section is on screen — the Overview's card and the Metrics rows
+ * open it here, and Save lands the coach back on the section they were on
+ * with the data re-read. The old `/development/metrics/…` pages redirect into this address.
  */
 function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const router = useRouter();
@@ -98,6 +103,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const searchParams = useSearchParams();
   const section = parseSkillsAndGoalsSection(searchParams.get('section'));
   const metricParam = searchParams.get('metric');
+  // The definition sheet rides the address (stage 1): `new` defines, an id edits, over this section.
+  const edit = parseMetricEdit(searchParams.get('edit'));
 
   const [sessions, setSessions] = useState<RepTeamEvaluationSession[] | null>(null);
   const [types, setTypes] = useState<RepTeamMeasurableType[] | null>(null);
@@ -207,7 +214,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
     if (busy) return;
     const ok = await confirm({
       title: 'Delete this session?',
-      message: 'Every reading collected in it stays on the players — they just lose the session grouping.',
+      message: 'Every result recorded in it stays on the players — they just lose the session grouping.',
       confirmText: 'Delete session',
       cancelText: 'Cancel',
       tone: 'danger',
@@ -242,6 +249,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
     : hasSessions ? 'running' : 'record';
   const metricsHref = skillsAndGoalsHref(base, 'metrics');
   const openScope = () => { setError(''); setScopeOpen(true); };
+  // The sheet closes onto the section it opened over — same address, minus `edit`.
+  const closeSheet = () => router.replace(skillsAndGoalsHref(base, section, { metric: metricParam }));
 
   /* ── The header's one lime action: Start session (page-level actions rule, 2026-08-13) — it
         opens the scope step (Phase 2). ABSENT while nothing can start (stage 0, D2): the old
@@ -324,6 +333,18 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
           onClose={() => { if (!busy) setScopeOpen(false); }}
         />
       )}
+      {/* Mounted per open (keyed by what it edits) so one definition's draft never leaks into the next. */}
+      {edit && canWrite && !loading && (
+        <MetricDefinitionSheet
+          key={edit}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          typeId={edit === 'new' ? null : edit}
+          initial={edit === 'new' ? null : (types?.find(t => t.id === edit) ?? null)}
+          onClose={closeSheet}
+          onSaved={() => { void load(); closeSheet(); }}
+        />
+      )}
     </div>
   );
 }
@@ -403,7 +424,7 @@ function SessionsView({
                       <td data-label="Records" className={styles.devBoardVal}>
                         {(s.playerCount ?? 0) > 0
                           ? `${plural(s.playerCount ?? 0, 'player')} · ${plural(s.typeCount ?? 0, 'test')}`
-                          : <Muted>no readings yet</Muted>}
+                          : <Muted>no results yet</Muted>}
                       </td>
                       {canWrite && (
                         <td data-label="Actions" className={styles.devBoardVal}>
@@ -427,8 +448,8 @@ function SessionsView({
             compact
             headline="No sessions yet"
             description="An evaluation session runs your tests across the whole roster in one go, usually at a practice."
-            payoff="A few a season is what turns single readings into a trend — and it's what fills the Players view and the “Is everyone getting attention?” report in Insights."
-            blocker={noTestYet ? 'A session needs a measured test to record. Define one in Metrics first.' : undefined}
+            payoff="A few a season is what turns single results into a trend — and it's what fills the Players view and the “Is everyone getting attention?” report in Insights."
+            blocker={noTestYet ? 'A session needs a test to record. Define one in Metrics first.' : undefined}
             secondaryAction={noTestYet
               ? { label: 'Open Metrics', icon: <ArrowRight size={15} aria-hidden />, href: metricsHref }
               : { label: 'How development works', icon: <HelpCircle size={15} aria-hidden />, onClick: onHelp }}
@@ -472,7 +493,9 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
   onHelp: () => void;
 }) {
   const active = types.filter(t => t.isActive);
-  const metricsNewHref = `${base}/development/metrics/new`;
+  // The definition sheet opens OVER the Overview (stage 1): the card's lime lands in it and Save
+  // lands back on the card, which has advanced by then.
+  const metricsNewHref = skillsAndGoalsHref(base, 'overview', { edit: 'new' });
 
   if (stage === 'define') {
     return (
@@ -504,7 +527,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
         <p className={styles.nowHeadline}>Run your first session</p>
         <p className={styles.nowMeta}>
           You&apos;ll record {named} across the roster in one go — usually at a practice. A few sessions a season
-          is what turns single readings into a trend.
+          is what turns single results into a trend.
         </p>
         <Arc stage="record" />
         <div className={styles.nowActions}>
@@ -849,14 +872,53 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
 /**
  * The library (mockup screen 1, RESTYLED from "Your test list"; named "Metrics" by owner ruling
  * 2026-09-11 — everything on this screen is already the coach's own, so "your" said it twice).
- * Measured tests and observed skills together, each with what a record of it means. Defining and
- * editing happen on the editor page (screen 2); retire and restore moved into it.
+ * Tests and skills together, each with what a record of it means. Defining and editing happen in
+ * the definition SHEET over this tab (stage 1); retire and restore live in it.
+ *
+ * Two columns (stage 1, B3): the row carries the exception — a test reads name · unit, a skill
+ * name · skill — and the unit is said once. The Kind column said "Test" on three rows in four.
+ * The method is not on the row (B10): it is the coach's optional note, never a to-do — the
+ * UNFINISHED chip and Finish → door B6 drew were reversed on the build (owner, 2026-09-14).
+ * Retired metrics are the SAME rows under a fold (B11), a step quieter.
  */
 function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMeasurableType[]; canWrite: boolean }) {
   const active = types.filter(t => t.isActive);
   const retired = types.filter(t => !t.isActive);
   const byId = new Map(types.map(t => [t.id, t]));
-  const editorHref = (id: string) => `${base}/development/metrics/${id}`;
+  const editorHref = (id: string) => skillsAndGoalsHref(base, 'metrics', { edit: id });
+
+  // One row shape for a live and a retired metric — the name column says the unit or the kind
+  // once (B3); the second column says what a record means, and for a retired metric, that it is
+  // retired and what replaced it. The retired rows are the SAME table (owner, 2026-09-14: the fold
+  // used to open on a pill list from an older idiom — a difference the table standard calls a bug).
+  const row = (t: RepTeamMeasurableType) => {
+    const successor = t.replacedById ? byId.get(t.replacedById) : null;
+    const meaning = t.isActive
+      ? recordMeaning(t)
+      : ['retired', successor ? `replaced by ${successor.name}` : recordMeaning(t)].join(' · ');
+    return (
+      <tr key={t.id} className={t.isActive ? undefined : styles.devRetiredRow}>
+        <td>
+          <Link href={editorHref(t.id)} className={styles.devCellLink}>{t.name}</Link>
+          {t.kind === 'skill' ? <Muted> · skill</Muted> : t.unit && <Muted> · {t.unit}</Muted>}
+        </td>
+        <td data-label="What a record means">{meaning}</td>
+      </tr>
+    );
+  };
+  const table = (rows: RepTeamMeasurableType[]) => (
+    <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
+      <table className={`${styles.devBoardTable} ${styles.devMetricsTable}`}>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>What a record means</th>
+          </tr>
+        </thead>
+        <tbody>{rows.map(row)}</tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div>
@@ -867,7 +929,7 @@ function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMe
         </p>
         {canWrite && (
           <div className={styles.panelToolbarActions}>
-            <Link href={`${base}/development/metrics/new`} className={`${styles.btnSecondary} ${styles.devSectionAction}`}>
+            <Link href={skillsAndGoalsHref(base, 'metrics', { edit: 'new' })} className={`${styles.btnSecondary} ${styles.devSectionAction}`}>
               <Plus size={14} aria-hidden /> Define a metric
             </Link>
           </div>
@@ -878,54 +940,15 @@ function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMe
         <CoachEmptyState
           compact
           headline="No metrics defined yet"
-          description="A measured test is a number you record the same way every time — a 60-yd sprint in seconds. An observed skill is what you watch for, in your own words."
+          description="A test is a number you record the same way every time — a 60-yd sprint in seconds. A skill is what you watch for, in your own words."
           payoff="Define your first test and an evaluation session can record it for the whole roster in one go."
         />
-      ) : (
-        <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
-          <table className={styles.devBoardTable}>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Kind</th>
-                <th>What a record means</th>
-              </tr>
-            </thead>
-            <tbody>
-              {active.map(t => (
-                <tr key={t.id}>
-                  <td>
-                    <Link href={editorHref(t.id)} className={styles.devCellLink}>{t.name}</Link>
-                    {t.kind === 'test' && t.unit && <Muted> · {t.unit}</Muted>}
-                  </td>
-                  <td data-label="Kind">{KIND_LABELS[t.kind]}</td>
-                  <td data-label="What a record means">{recordMeaning(t)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      ) : table(active)}
 
       {retired.length > 0 && (
         <details style={{ marginTop: '0.8rem' }}>
-          <summary className={`${styles.devCardNote} ${styles.devDisclosureSummary}`}>Retired definitions ({retired.length})</summary>
-          <ul className={styles.miniList} style={{ marginTop: '0.4rem' }}>
-            {retired.map(t => {
-              const successor = t.replacedById ? byId.get(t.replacedById) : null;
-              return (
-                <li key={t.id} className={styles.miniRow}>
-                  <span className={styles.miniRowMain}>
-                    <Link href={editorHref(t.id)} className={styles.devCellLink}>{t.name}</Link>
-                    <span className={styles.devCardNote}>
-                      {[t.unit, successor ? `replaced by ${successor.name}` : null].filter(Boolean).join(' · ')}
-                    </span>
-                  </span>
-                  <span className={styles.miniRowMeta}>{KIND_LABELS[t.kind]}</span>
-                </li>
-              );
-            })}
-          </ul>
+          <summary className={`${styles.devCardNote} ${styles.devDisclosureSummary}`}>Retired ({retired.length})</summary>
+          <div style={{ marginTop: '0.4rem' }}>{table(retired)}</div>
           <p className={styles.devCardNote} style={{ marginTop: '0.4rem' }}>
             Retiring removes a definition from new sessions only. Its saved records stay visible in the session and player history they belong to.
           </p>

@@ -7,13 +7,13 @@ import { readMeasurableTypeInput } from '@/lib/development-input';
 import { definitionChange } from '@/lib/measurable-definition';
 
 /**
- * ═══ START A NEW DEFINITION AND RETIRE THIS ONE (owner ruling 3, 2026-09-11) ═══
- * The dedicated action the editor posts to after the PATCH refused a unit or method change on a
+ * ═══ START A NEW DEFINITION AND RETIRE THIS ONE (owner ruling 3, 2026-09-11; unit only since 2026-09-14) ═══
+ * The dedicated action the editor posts to after the PATCH refused a unit change on a
  * test with readings (409 with the offer). The body is the SUCCESSOR's whole definition — the same
  * shape a create takes — and the successor takes the predecessor's kind and name unless renamed.
  *
  * ⚠ Only for what the rule is for: the predecessor must be an ACTIVE measured test WITH readings,
- * and the posted definition must actually change its unit or written method — anything else is an
+ * and the posted definition must actually change its unit — anything else is an
  * ordinary edit and this route says so (400), because a "successor" that changes nothing the
  * readings care about would be a duplicate definition wearing a rule's name.
  */
@@ -35,9 +35,9 @@ export const POST = withObservability(async (req: Request,
 
   // Independent reads, one round trip: the definition, and whether any reading points at it.
   const [current, hasReadings] = await Promise.all([getRepTeamMeasurableType(typeId, teamId), repTeamMeasurableTypeHasReadings(typeId, teamId)]);
-  if (!current) return NextResponse.json({ error: 'Measurable type not found' }, { status: 404 });
+  if (!current) return NextResponse.json({ error: 'Metric not found' }, { status: 404 });
   if (!current.isActive) return NextResponse.json({ error: 'A retired definition cannot be replaced — restore it first, or define a new metric.' }, { status: 400 });
-  if (current.kind !== 'test') return NextResponse.json({ error: 'Only a measured test starts a new definition — edit the skill directly.' }, { status: 400 });
+  if (current.kind !== 'test') return NextResponse.json({ error: 'Only a test starts a new definition — edit the skill directly.' }, { status: 400 });
 
   // The successor inherits the kind and, unless renamed, the name — so the body can be the edited
   // form as it stands, not a second copy of every field.
@@ -45,7 +45,7 @@ export const POST = withObservability(async (req: Request,
   const read = readMeasurableTypeInput({ ...raw, kind: current.kind, name: raw.name ?? current.name }, 'create');
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
 
-  const change = definitionChange(current, { unit: read.fields.unit, method: read.fields.method }, hasReadings);
+  const change = definitionChange(current, { unit: read.fields.unit }, hasReadings);
   if (change.kind !== 'successor') {
     return NextResponse.json({
       error: hasReadings

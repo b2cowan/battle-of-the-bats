@@ -29,9 +29,10 @@ export const GET = withObservability(async (req: Request,
 /**
  * Define a metric (Phase 1, mockup screen 2): a measured test — name · unit · aim (with a range's
  * edges) · method · attempts per session · headline — or an observed skill with its descriptors.
- * ⚠ A bare `{ name, unit }` still creates (the session chip's "+ New test…" and the profile's
- * quick add are the unchanged idiom): it lands as a record-only test with no method, which the
- * Metrics tab then says out loud. The reader supplies those defaults; nothing is guessed here.
+ * A bare `{ name, unit }` still creates — the reader supplies the defaults (record only, one
+ * attempt, no method) and nothing is guessed — but no screen sends one any more: since stage 1
+ * (2026-09-14) the session grid's "+ New test…" and the profile's quick add open the whole
+ * definition sheet. The method is optional (owner, 2026-09-14) and the row does not remark on it.
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {

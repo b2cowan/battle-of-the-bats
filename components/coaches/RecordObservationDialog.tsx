@@ -47,10 +47,10 @@ export default function RecordObservationDialog({
             <label className={`${styles.field} ${styles.formGridFull}`}>
               <span className={styles.label}>Skill</span>
               {editing ? (
-                <span className={styles.input} aria-readonly>{skills.find(s => s.id === editing.measurableTypeId)?.name ?? 'Observed skill'}</span>
+                <span className={styles.input} aria-readonly>{skills.find(s => s.id === editing.measurableTypeId)?.name ?? 'Skill'}</span>
               ) : (
                 <select className={styles.select} value={skillId} onChange={e => { setSkillId(e.target.value); setDescriptor(''); }} required>
-                  {skills.length === 0 && <option value="">No observed skill defined yet</option>}
+                  {skills.length === 0 && <option value="">No skill defined yet</option>}
                   {skills.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               )}

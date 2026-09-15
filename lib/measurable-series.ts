@@ -65,7 +65,7 @@ export function unitSplitNote(segments: UnitSegment[]): string | null {
   const count = earlier.reduce((n, s) => n + s.readings.length, 0);
   const units = [...new Set(earlier.map(s => s.unit.trim()))];
   const inUnits = `in ${units.length <= 1 ? units[0] : `${units.slice(0, -1).join(', ')} and ${units.at(-1)}`}`;
-  return `Units changed — ${count} earlier reading${count === 1 ? '' : 's'} ${inUnits} ${count === 1 ? 'is' : 'are'} listed but not drawn on this line.`;
+  return `Units changed — ${count} earlier result${count === 1 ? '' : 's'} ${inUnits} ${count === 1 ? 'is' : 'are'} listed but not drawn on this line.`;
 }
 
 // ── The headline (owner ruling 2026-09-11: every attempt is recorded) ─────────────────────────────

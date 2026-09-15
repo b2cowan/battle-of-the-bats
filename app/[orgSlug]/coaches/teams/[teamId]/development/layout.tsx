@@ -20,7 +20,8 @@ import styles from '../../../coaches.module.css';
  * shared-block rule exists to prevent). Same shape as `CoachTeamSeasonGate` one level up: it
  * renders `children` or it does not — never a read-only face.
  *
- * ⚠ The redirect pages in this subtree (`board`, `drills`, `templates`) are server pages that
+ * ⚠ The redirect pages in this subtree (`board`, `drills`, `templates`, and `metrics` — a
+ * definition is a sheet on the hub since stage 1, its old pages redirect into `?edit=`) are server pages that
  * `redirect()` before anything of their own renders — but under a client layout that redirect
  * reaches the browser INSIDE the streamed children, and a gate that replaces the children
  * swallows it: a coach without the grant opening an old drills bookmark was stopped at this
@@ -39,7 +40,7 @@ export default function DevelopmentLayout({ children, params }: {
   const segment = useSelectedLayoutSegment();
   const assignment = assignments.find(a => a.teamId === teamId);
   // A redirect page never renders anything of its own — see the header. Let it through.
-  const redirectsAway = segment === 'board' || segment === 'drills' || segment === 'templates';
+  const redirectsAway = segment === 'board' || segment === 'drills' || segment === 'templates' || segment === 'metrics';
   if (!redirectsAway && !loading && assignment && !canWriteDevelopment(assignment.capabilities)) {
     return (
       <div className={styles.page}>

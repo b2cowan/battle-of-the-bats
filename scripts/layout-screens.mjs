@@ -140,9 +140,12 @@ export const SCREENS = [
   // the id is kept so the baseline's keys carry over. Metrics and its editor are new screens.
   { id: 'coach-development-board',     session: 'coach', path: (c) => `${team(c)}/development?section=players`, ready: 'h1' },
   { id: 'coach-development-metrics',   session: 'coach', path: (c) => `${team(c)}/development?section=metrics`, ready: 'h1' },
-  { id: 'coach-development-metric-new', session: 'coach', path: (c) => `${team(c)}/development/metrics/new`, ready: 'h1' },
-  { id: 'coach-development-metric',    session: 'coach', ready: 'h1',
-    path: (c) => `${team(c)}/development/metrics/${c.measurableTypeId}` },
+  // A metric's definition is a SHEET over the Metrics tab (re-evaluation stage 1, 2026-09-14) — the
+  // two ids keep their names and measure the hub with the sheet open (`?edit=`); `ready` waits
+  // for the sheet's form.
+  { id: 'coach-development-metric-new', session: 'coach', path: (c) => `${team(c)}/development?section=metrics&edit=new`, ready: '[role="dialog"] form' },
+  { id: 'coach-development-metric',    session: 'coach', ready: '[role="dialog"] form',
+    path: (c) => `${team(c)}/development?section=metrics&edit=${c.measurableTypeId}` },
   { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/practice?section=templates`, ready: 'h1' },
   // Two more of the six — see the block above `coach-player`.
   { id: 'coach-development-template', session: 'coach', ready: 'h1',

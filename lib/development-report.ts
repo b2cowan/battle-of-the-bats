@@ -196,17 +196,16 @@ export function statedChange(first: ProgressPoint, latest: ProgressPoint, def: R
 }
 
 /**
- * The scope line under the answer: how many results and attempts the window holds, whether the
- * method is the same throughout (one definition = one method by Phase 1's successor rule — or "not
- * recorded" for a legacy test, in which case no direction is ever claimed of the change), and the
- * aim in the Metrics tab's own words. One result adds the reminder that a point is not a change.
+ * The scope line under the answer: how many results and attempts the window holds, and the aim in
+ * the Metrics tab's own words. One result adds the reminder that a point is not a change. The
+ * METHOD is not claimed here (owner, 2026-09-14): a method change no longer forks the series, so
+ * "same method throughout" is not something the product can know.
  */
 export function scopeLine(series: ProgressSeries): string {
   const n = series.points.length;
   const attempts = series.points.reduce((sum, p) => sum + p.row.values.length, 0);
   const parts = [`${n} recorded result${n === 1 ? '' : 's'}`];
   if (attempts > n) parts.push(`${attempts} attempts`);
-  parts.push(series.def.method ? 'same method throughout' : 'method not recorded');
   parts.push(aimSentence(series.def));
   if (isRange(series.def)) parts.push('a range has no “best”');
   if (n === 1) parts.push('a single result is a point, not a change');

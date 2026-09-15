@@ -14,7 +14,7 @@ import Sparkline from '@/components/charts/Sparkline';
 import {
   splitSeriesByUnit, drawableSegment, unitSplitNote, groupBySession, latestSessionResult, headlineLabel, headlineMethod, type SessionResult,
 } from '@/lib/measurable-series';
-import { NewTypeFields } from '@/components/coaches/NewTypeFields';
+import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
 import { activeMeasuredTests, measuredTestsWithHistory } from '@/lib/measurable-definition';
 import { skillsAndGoalsHref } from '@/lib/development-address';
 import { goalTimeline, originSentence, GOAL_STATUS_LABELS } from '@/lib/development-goal-history';
@@ -97,7 +97,6 @@ export default function PlayerDevelopmentSection({
   const router = useRouter();
   const portalBase = `/${orgSlug}/coaches/teams/${teamId}`;
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/development`;
-  const typesBase = `/api/coaches/${orgSlug}/teams/${teamId}/development/measurable-types`;
   // The library's ONE editor (Phase 1): the Metrics tab. "Test types" used to open a dialog here.
   const metricsHref = skillsAndGoalsHref(portalBase, 'metrics');
   const confirm = useConfirm();
@@ -148,9 +147,9 @@ export default function PlayerDevelopmentSection({
   const [logValue, setLogValue] = useState('');
   const [logDate, setLogDate] = useState(todayLocal());
   const [logNote, setLogNote] = useState('');
-  const [newTypeOpen, setNewTypeOpen] = useState(false);
-  const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeUnit, setNewTypeUnit] = useState('');
+  // "+ New test…" opens the SAME definition sheet the Metrics tab uses (re-evaluation stage 1,
+  // 2026-09-14) — a whole definition, never the name-and-unit shortcut.
+  const [defineOpen, setDefineOpen] = useState(false);
   const [expandedTypeId, setExpandedTypeId] = useState<string | null>(arrival.view === 'results' ? arrival.metricId : null);
 
   /**
@@ -473,37 +472,17 @@ export default function PlayerDevelopmentSection({
   }
 
   // ── results ──
-  async function createType(onErr: (msg: string) => void): Promise<RepTeamMeasurableType | null> {
-    if (busy) return null;
-    setBusy(true);
-    try {
-      const res = await fetch(typesBase, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTypeName, unit: newTypeUnit }),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok || !json) {
-        onErr(json?.error ?? 'Could not add the test — try again.');
-        return null;
-      }
-      setNewTypeName('');
-      setNewTypeUnit('');
-      setNewTypeOpen(false);
-      setData(d => d ? {
-        ...d,
-        types: [...d.types, json.type].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
-      } : d);
-      return json.type;
-    } catch {
-      onErr('Could not add the test — try again.');
-      return null;
-    } finally {
-      setBusy(false);
-    }
+  function typeDefined(type: RepTeamMeasurableType) {
+    setDefineOpen(false);
+    setLogErr('');
+    setData(d => d ? {
+      ...d,
+      types: [...d.types, type].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+    } : d);
+    setLogTypeId(type.id);
   }
 
-  /** "Record a result" (F20 — the old label is gone) — the single dated reading, no session; feeds the same rows. */
+  /** "Record a result" (F20 — the old label is gone) — a single dated result outside any session; feeds the same rows. */
   async function recordResult() {
     if (busy) return;
     if (logValue.trim() === '') { setLogErr('Enter the result first.'); return; }
@@ -542,7 +521,7 @@ export default function PlayerDevelopmentSection({
   async function deleteEntry(entryId: string) {
     if (busy) return;
     const ok = await confirm({
-      title: 'Remove this reading?',
+      title: 'Remove this result?',
       message: 'This deletes the saved value — for fixing a mis-entry.',
       confirmText: 'Remove',
       cancelText: 'Cancel',
@@ -556,7 +535,7 @@ export default function PlayerDevelopmentSection({
       setData(d => d ? { ...d, measurables: d.measurables.filter(e => e.id !== entryId) } : d);
       clearFlashFor(entryId);
     } catch {
-      setError("Couldn't remove the reading — try again.");
+      setError("Couldn't remove the result — try again.");
     } finally {
       setBusy(false);
     }
@@ -622,7 +601,6 @@ export default function PlayerDevelopmentSection({
   const activeTypes = activeMeasuredTests(data.types);
   const activeSkills = data.types.filter(t => t.kind === 'skill' && t.isActive);
   const selectedLogType = activeTypes.find(t => t.id === logTypeId) ?? null;
-  const newTypeFormOpen = newTypeOpen || activeTypes.length === 0;
   const typeRows = derived.typeRows;
 
   const goalPill = (status: RepDevelopmentGoalStatus) =>
@@ -674,7 +652,7 @@ export default function PlayerDevelopmentSection({
             <b>Returning player — bring forward the {data.carry.workingCount} goal{data.carry.workingCount === 1 ? '' : 's'} they were working on in {data.carry.priorSeasonLabel}?</b>
           </p>
           <p className={styles.devCardNote} style={{ marginTop: '0.25rem' }}>
-            They&apos;ll join this season as &ldquo;Working on it&rdquo;. Readings never carry over — last season&apos;s stay in Previous seasons. You can look first.
+            They&apos;ll join this season as &ldquo;Working on it&rdquo;. Results never carry over — last season&apos;s stay in Previous seasons. You can look first.
           </p>
           <div className={styles.devCarryActions}>
             <button type="button" className="btn btn-ghost" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
@@ -884,7 +862,7 @@ export default function PlayerDevelopmentSection({
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.6rem 0' }}>
                   <button type="button" className={`btn btn-lime ${styles.tapFloor}`} style={{ fontSize: '0.8rem' }} onClick={() => { setReviewErr(''); setReviewingGoal(selectedGoal); }}>Review goal</button>
                   <button type="button" className={`btn btn-ghost ${styles.tapFloor}`} style={{ fontSize: '0.8rem' }} disabled={activeSkills.length === 0}
-                    title={activeSkills.length === 0 ? 'Define an observed skill in Metrics first' : undefined}
+                    title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
                     onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: selectedGoal.id }); }}>Record an observation</button>
                   <button type="button" className={`btn btn-ghost ${styles.tapFloor}`} style={{ fontSize: '0.8rem' }} onClick={() => openGoalForm(selectedGoal)}>Edit wording</button>
                 </div>
@@ -929,7 +907,7 @@ export default function PlayerDevelopmentSection({
             )}
           </div>
           <p className={styles.devCardNote} style={{ marginBottom: '0.5rem' }}>
-            A single dated reading from a notebook — no session needed. Feeds the same records a session does.
+            A single dated result — no session needed. It feeds the same records a session does.
           </p>
           {typeRows.length === 0 && !logOpen && (
             <p className={styles.detailPlaceholder}>
@@ -992,29 +970,13 @@ export default function PlayerDevelopmentSection({
                       {t.name}
                     </button>
                   ))}
-                  {activeTypes.length > 0 && (
-                    <button type="button" className={`${styles.badge} ${styles.badgeDraft} ${styles.tapFloor}`} style={{ cursor: 'pointer' }}
-                      onClick={() => setNewTypeOpen(o => !o)}>
-                      + New test…
-                    </button>
-                  )}
+                  <button type="button" className={`${styles.badge} ${styles.badgeDraft} ${styles.tapFloor}`} style={{ cursor: 'pointer' }}
+                    onClick={() => setDefineOpen(true)}>
+                    + New test…
+                  </button>
                 </div>
+                {activeTypes.length === 0 && <p className={styles.devCardNote}>No active test to record — define one with “+ New test…”.</p>}
               </div>
-              {newTypeFormOpen && (
-                <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <NewTypeFields idPrefix="dev-newtype" name={newTypeName} unit={newTypeUnit}
-                    onName={setNewTypeName} onUnit={setNewTypeUnit} metricsHref={metricsHref}
-                    onAdd={async () => {
-                      if (!newTypeName.trim() || !newTypeUnit.trim()) {
-                        setLogErr('Give the test a name and a unit (like seconds).');
-                        return;
-                      }
-                      setLogErr('');
-                      const created = await createType(setLogErr);
-                      if (created) setLogTypeId(created.id);
-                    }} />
-                </div>
-              )}
               {selectedLogType ? (
                 <>
                   <div className={styles.field}>
@@ -1077,7 +1039,7 @@ export default function PlayerDevelopmentSection({
               <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
                 style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                 disabled={activeSkills.length === 0}
-                title={activeSkills.length === 0 ? 'Define an observed skill in Metrics first' : undefined}
+                title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
                 onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: null }); }}>
                 <Plus size={13} /> Record an observation
               </button>
@@ -1089,7 +1051,7 @@ export default function PlayerDevelopmentSection({
           {data.observations.length === 0 ? (
             <p className={styles.detailPlaceholder}>
               {activeSkills.length === 0
-                ? (canWrite ? 'No observed skill is defined yet — define one in Metrics, then record what you see.' : 'No observed skill is defined yet.')
+                ? (canWrite ? 'No skill is defined yet — define one in Metrics, then record what you see.' : 'No skill is defined yet.')
                 : canWriteGoals ? 'No observations yet — record the first thing you saw.' : 'No observations yet.'}
             </p>
           ) : (
@@ -1233,11 +1195,14 @@ export default function PlayerDevelopmentSection({
         <RecordObservationDialog skills={activeSkills} goals={data.goals} editing={obsDialog.editing} presetGoalId={obsDialog.goalId}
           busy={busy} error={obsErr} onSubmit={submitObservation} onClose={() => { if (!busy) setObsDialog(null); }} />
       )}
+      {defineOpen && (
+        <MetricDefinitionSheet orgSlug={orgSlug} teamId={teamId} typeId={null} onClose={() => setDefineOpen(false)} onSaved={typeDefined} />
+      )}
     </>
   );
 }
 
-/** One result row: a session (every attempt, best/average or k of N in range) or a single reading. */
+/** One result row: a session (every attempt, best/average or k of N in range) or a result outside one. */
 function ResultRow({ row, type, portalBase, author, canWrite, onDelete }: {
   row: SessionResult<RepPlayerMeasurable>;
   type: RepTeamMeasurableType;
@@ -1263,12 +1228,12 @@ function ResultRow({ row, type, portalBase, author, canWrite, onDelete }: {
       <span className={styles.miniRowMeta}>
         {/* The session is a room inside Skills & Goals, which opens with the Development grant only
             (stage 0, D5) — a coach without it reads the result here and gets no door that 403s. */}
-        {row.sessionId ? (canWrite ? <Link href={`${portalBase}/development/sessions/${row.sessionId}`} className={`${styles.devTailLink} ${styles.tapFloor}`} style={{ display: 'inline-flex', alignItems: 'center' }}>Session →</Link> : 'In a session') : 'Single reading'}
+        {row.sessionId ? (canWrite ? <Link href={`${portalBase}/development/sessions/${row.sessionId}`} className={`${styles.devTailLink} ${styles.tapFloor}`} style={{ display: 'inline-flex', alignItems: 'center' }}>Session →</Link> : 'In a session') : 'Outside a session'}
         {by ? ` · entered by ${by}` : ''}
       </span>
       {canWrite && single && (
         <button type="button" className={`btn btn-ghost ${styles.tapFloorSquare}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem' }}
-          aria-label="Remove this reading" onClick={() => onDelete(first.id)}>
+          aria-label="Remove this result" onClick={() => onDelete(first.id)}>
           <X size={11} />
         </button>
       )}

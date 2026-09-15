@@ -85,7 +85,7 @@ describe('buildPlayerNotesTimeline', () => {
       notes: [], moments: [], observations: [observation('o1', '2026-09-05', { measurableTypeId: 'gone' })],
       reviews: [{ ...review('r1', '2026-09-04'), goalId: 'gone' }], goals, types, events, playerBase, teamBase,
     });
-    assert.equal(rows[0].about, 'Skill · observed skill');
+    assert.equal(rows[0].about, 'Skill · skill');
     assert.equal(rows[1].about, 'Goal · a goal no longer on record');
   });
 

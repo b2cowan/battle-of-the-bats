@@ -6,7 +6,7 @@ import { ClipboardCheck } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { NewTypeFields } from '@/components/coaches/NewTypeFields';
+import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
 import SessionScopeDialog from '@/components/coaches/SessionScopeDialog';
 import SessionRecordGrid, {
   emptyDraft, emptyObservationDraft, type GridRow, type RowDraft, type ObservationDraft,
@@ -90,9 +90,11 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const [obsDrafts, setObsDrafts] = useState<Record<string, ObservationDraft>>({});
   const [rowErr, setRowErr] = useState('');
 
-  const [newTypeOpen, setNewTypeOpen] = useState(false);
-  const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeUnit, setNewTypeUnit] = useState('');
+  // "+ New test…" opens the SAME definition sheet the Metrics tab uses (re-evaluation stage 1,
+  // 2026-09-14): a test defined at the fence is a whole test, never the name-and-unit shortcut
+  // that used to leave "method not recorded" in every report. Saved, it becomes this session's
+  // next chip.
+  const [defineOpen, setDefineOpen] = useState(false);
   // The date input's own value while the coach is mid-edit. Null = show the saved date, so a
   // cancelled confirm snaps straight back to the truth rather than leaving a phantom date on screen.
   const [dateDraft, setDateDraft] = useState<string | null>(null);
@@ -407,9 +409,9 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
    */
   async function saveSessionDate(nextDate: string) {
     if (!nextDate || nextDate === session.sessionDate) { setDateDraft(null); return; }
-    const readingCount = entries.length;
-    if (readingCount > 0) {
-      const moving = `${readingCount} reading${readingCount === 1 ? '' : 's'}`;
+    const attemptCount = entries.length;
+    if (attemptCount > 0) {
+      const moving = `${attemptCount} attempt${attemptCount === 1 ? '' : 's'}`;
       const ok = await confirm({
         title: 'Move this session?',
         message: `Move this session to ${formatWeekdayDate(nextDate)}? The ${moving} already entered here move with it.`,
@@ -448,27 +450,11 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     if (ok) setScopeOpen(false);
   }
 
-  async function addType() {
-    if (!newTypeName.trim() || !newTypeUnit.trim()) {
-      setRowErr('Give the test a name and a unit (like seconds).');
-      return;
-    }
+  function typeDefined(type: RepTeamMeasurableType) {
+    setDefineOpen(false);
     setRowErr('');
-    const res = await fetch(`${apiBase}/development/measurable-types`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newTypeName, unit: newTypeUnit }),
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok || !json) {
-      setRowErr(json?.error ?? 'Could not add the test — try again.');
-      return;
-    }
-    setNewTypeName('');
-    setNewTypeUnit('');
-    setNewTypeOpen(false);
-    setData(d => d ? { ...d, types: [...d.types, json.type] } : d);
-    setSelectedTypeId(json.type.id);
+    setData(d => d ? { ...d, types: [...d.types, type] } : d);
+    setSelectedTypeId(type.id);
   }
 
   const scopeLine = session.scopePlayerIds && session.scopeMetricIds
@@ -573,17 +559,16 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         {canWrite && (
           <button type="button" className={`${styles.badge} ${styles.badgeDraft}`}
             style={{ cursor: 'pointer', minHeight: 'var(--tap-min, 44px)' }}
-            onClick={() => setNewTypeOpen(o => !o)}>
+            onClick={() => setDefineOpen(true)}>
             + New test…
           </button>
         )}
       </div>
-      {canWrite && (newTypeOpen || activeTests.length === 0) && (
-        <div style={{ margin: '0 0 0.8rem' }}>
-          <NewTypeFields idPrefix="dev-session-newtype" name={newTypeName} unit={newTypeUnit}
-            onName={setNewTypeName} onUnit={setNewTypeUnit} onAdd={addType}
-            metricsHref={skillsAndGoalsHref(base, 'metrics')} />
-        </div>
+      {canWrite && activeTests.length === 0 && (
+        <p className={styles.devCardNote} style={{ margin: '0 0 0.8rem' }}>No active test to record — define one with “+ New test…”.</p>
+      )}
+      {defineOpen && (
+        <MetricDefinitionSheet orgSlug={orgSlug} teamId={teamId} typeId={null} onClose={() => setDefineOpen(false)} onSaved={typeDefined} />
       )}
 
       {selectedType ? (

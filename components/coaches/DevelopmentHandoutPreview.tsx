@@ -267,7 +267,7 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
                     <input type="checkbox" checked={chosenObservationIds.has(o.id)} onChange={e => setObservationIds(toggle(chosenObservationIds, o.id, e.target.checked))} />
                     <span>
                       {formatShortDate(o.observedOn)} · {observationText(o) || 'Observed'}
-                      <span className={css.choiceMeta}>{skillById.get(o.measurableTypeId)?.name ?? 'Observed skill'}</span>
+                      <span className={css.choiceMeta}>{skillById.get(o.measurableTypeId)?.name ?? 'Skill'}</span>
                     </span>
                   </label>
                 ))}

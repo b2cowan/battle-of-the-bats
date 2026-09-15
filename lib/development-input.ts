@@ -146,7 +146,7 @@ export function readMeasurableTypeInput(raw: unknown, mode: 'create' | 'patch'):
   if (body.kind !== undefined) {
     if (mode === 'patch') return { error: 'The kind of a metric cannot be changed — define a new one.' };
     if (typeof body.kind !== 'string' || !MEASURABLE_KINDS.includes(body.kind as MeasurableKind)) {
-      return { error: 'Kind must be a measured test or an observed skill.' };
+      return { error: 'Kind must be a test or a skill.' };
     }
     kind = body.kind as MeasurableKind;
   }
@@ -244,11 +244,11 @@ export function readMeasurableTypeInput(raw: unknown, mode: 'create' | 'patch'):
  */
 export function validateDefinitionShape(d: MeasurableTypeCreateFields): string | null {
   if (d.kind === 'test' && !d.unit) return UNIT_ERROR;
-  if (d.kind === 'skill' && d.unit) return 'An observed skill has no unit — it records what you saw, not a number.';
+  if (d.kind === 'skill' && d.unit) return 'A skill has no unit — it records what you saw, not a number.';
   if (d.kind === 'skill' && (d.aim !== 'record' || d.rangeFrom != null || d.rangeTo != null || d.attemptsPerSession !== 1 || d.headline !== 'last')) {
-    return 'An observed skill has no aim, range, attempts or headline — those belong to a measured test.';
+    return 'A skill has no aim, range, attempts or headline — those belong to a test.';
   }
-  if (d.kind === 'test' && d.descriptors.length > 0) return 'Descriptors belong to an observed skill; a measured test records a number.';
+  if (d.kind === 'test' && d.descriptors.length > 0) return 'Descriptors belong to a skill; a test records a number.';
   if (d.aim === 'range') {
     if (d.rangeFrom == null || d.rangeTo == null) return 'A range needs both edges — From and To, in the unit.';
     if (!(d.rangeFrom < d.rangeTo)) return 'From must be lower than To.';
@@ -265,14 +265,21 @@ export function validateDefinitionShape(d: MeasurableTypeCreateFields): string |
 
 /**
  * A patch applied to the definition it names: merge, re-validate the whole, and answer the
- * "changing a definition later" rule (owner ruling 3) for the route to enforce — a unit or method
- * change on a test with readings is a SUCCESSOR, never an in-place edit.
+ * "changing a definition later" rule (owner ruling 3, unit-only since 2026-09-14) for the route to
+ * enforce — a unit change on a test with readings is a SUCCESSOR, never an in-place edit.
+ *
+ * ⚠ A RETIRED definition is a record (owner, 2026-09-14, B12): only its name and its retired flag
+ * may change. The sheet shows every other field as a value, and this is where that is HELD — a
+ * direct call that re-aims a retired test would silently reinterpret every result it holds.
  *
  * Two conveniences, both so the editor does not have to send three fields to change one:
  *   · moving to or from a range aim re-points a headline the new aim does not admit onto the
  *     ruled default, and clears the edges when the aim stops being a range;
  *   · restore is refused on a definition that was REPLACED — the successor carries its name.
  */
+const RETIRED_EDITABLE: ReadonlySet<keyof MeasurableTypeFields> = new Set(['name', 'isActive']);
+export const RETIRED_EDIT_MESSAGE = 'A retired metric is a record — restore it to change anything but its name.';
+
 export function applyDefinitionPatch(
   current: RepTeamMeasurableType,
   fields: MeasurableTypeFields,
@@ -280,6 +287,9 @@ export function applyDefinitionPatch(
 ): { next: MeasurableTypeCreateFields & { isActive: boolean }; change: DefinitionChange } | { error: string } {
   if (fields.isActive === true && current.replacedById) {
     return { error: 'This definition was replaced by a newer one, which carries its name. Edit that one instead.' };
+  }
+  if (!current.isActive && (Object.keys(fields) as (keyof MeasurableTypeFields)[]).some(k => fields[k] !== undefined && !RETIRED_EDITABLE.has(k))) {
+    return { error: RETIRED_EDIT_MESSAGE };
   }
   const aim = fields.aim ?? current.aim;
   const aimChanged = aim !== current.aim;
@@ -301,7 +311,7 @@ export function applyDefinitionPatch(
   };
   const shape = validateDefinitionShape(next);
   if (shape) return { error: shape };
-  return { next, change: definitionChange(current, { unit: fields.unit, method: fields.method }, hasReadings) };
+  return { next, change: definitionChange(current, { unit: fields.unit }, hasReadings) };
 }
 
 // ── Goals ────────────────────────────────────────────────────────────────────────────────────────
@@ -566,7 +576,7 @@ export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields>
     if (typeof a !== 'number' || !Number.isInteger(a) || a < 1 || a > MAX_ATTEMPTS) {
       return { error: `Attempt must be a whole number from 1 to ${MAX_ATTEMPTS}.` };
     }
-    if (a > 1 && !sessionId) return { error: 'A second attempt belongs to a session — a single reading is one attempt.' };
+    if (a > 1 && !sessionId) return { error: 'A second attempt belongs to a session — a result outside one is a single attempt.' };
     attemptNo = a;
   }
   return { fields: { measurableTypeId, value, recordedOn, note: note || null, sessionId, attemptNo } };

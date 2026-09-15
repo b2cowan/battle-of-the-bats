@@ -30,8 +30,8 @@ export const POST = withObservability(async (req: Request,
     getRepTeamMeasurableType(measurableTypeId, teamId),
     assertGoalBelongsToPlayer(teamId, playerId, goalId),
   ]);
-  if (!skill || !skill.isActive) return NextResponse.json({ error: 'Pick an active observed skill for this team.' }, { status: 400 });
-  if (skill.kind !== 'skill') return NextResponse.json({ error: 'A measured test takes a number — record a result instead.' }, { status: 400 });
+  if (!skill || !skill.isActive) return NextResponse.json({ error: 'Pick an active skill for this team.' }, { status: 400 });
+  if (skill.kind !== 'skill') return NextResponse.json({ error: 'A test takes a number — record a result instead.' }, { status: 400 });
   // The descriptor is one of the skill's own words, as written on the definition right now — the
   // text is snapshotted onto the observation so a later edit to the list never rewrites it.
   if (descriptor && !skill.descriptors.includes(descriptor)) {

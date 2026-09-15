@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   isMeasuredTest, headlineOptionsFor, defaultHeadlineFor, recordMeaning, aimSentence, definitionChange,
-  KIND_LABELS, AIM_LABELS, HEADLINE_LABELS,
+  previewChange, KIND_LABELS, AIM_LABELS, HEADLINE_LABELS,
 } from '../../lib/measurable-definition.ts';
 import { sessionHeadline, attemptAgainstRange, describeHeadline } from '../../lib/measurable-series.ts';
-import { readMeasurableTypeInput, applyDefinitionPatch } from '../../lib/development-input.ts';
+import { readMeasurableTypeInput, applyDefinitionPatch, RETIRED_EDIT_MESSAGE } from '../../lib/development-input.ts';
 import type { RepTeamMeasurableType } from '../../lib/types.ts';
 
 /**
@@ -28,8 +28,9 @@ describe('the vocabulary — one word per kind, aim and headline', () => {
     assert.deepEqual(Object.keys(KIND_LABELS).sort(), ['skill', 'test']);
     assert.deepEqual(Object.keys(AIM_LABELS).sort(), ['higher', 'lower', 'range', 'record']);
     assert.deepEqual(Object.keys(HEADLINE_LABELS).sort(), ['average', 'best', 'in_range', 'last']);
-    assert.equal(KIND_LABELS.test, 'Measured test');
-    assert.equal(KIND_LABELS.skill, 'Observed skill');
+    // One word per kind (re-evaluation stage 1, B1): the adjective's job is done by the sentence beneath the choice.
+    assert.equal(KIND_LABELS.test, 'Test');
+    assert.equal(KIND_LABELS.skill, 'Skill');
   });
 
   it('a range test never offers "best"; a directional test never offers "in range"; record-only has no best', () => {
@@ -48,19 +49,31 @@ describe('the vocabulary — one word per kind, aim and headline', () => {
   });
 });
 
-describe('what a record means — the Metrics tab column', () => {
-  it('a legacy test says record only and that its method was not recorded', () => {
+describe('what a record means — the Metrics tab column (the unit is said once, beside the name — stage 1, B3)', () => {
+  it('a legacy test says record only — the method is the coach\'s note, never a claim on the row (owner, 2026-09-14)', () => {
     const legacy = def({ aim: 'record', method: null, headline: 'last', attemptsPerSession: 1 });
-    assert.equal(recordMeaning(legacy), 'seconds · record only · method not recorded');
+    assert.equal(recordMeaning(legacy), 'record only');
+    assert.equal(recordMeaning(def({ method: null })), 'lower is the aim · best attempt');
   });
-  it('a defined test names its aim; a range test names the band in the unit', () => {
-    assert.equal(recordMeaning(base), 'seconds · lower is the aim');
+  it('a defined test names its aim and, with more than one attempt, how its headline is read; a range test keeps the unit inside the band', () => {
+    assert.equal(recordMeaning(base), 'lower is the aim · best attempt');
+    assert.equal(recordMeaning(def({ attemptsPerSession: 1 })), 'lower is the aim');
+    assert.equal(recordMeaning(def({ unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, headline: 'in_range' })), 'aim: 62–68 mph · attempts in range');
     assert.equal(aimSentence(def({ unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, headline: 'in_range' })), 'aim: 62–68 mph');
   });
   it('a skill says what it records and how many descriptors it offers', () => {
     const skill = def({ kind: 'skill', unit: null, aim: 'record', headline: 'last', descriptors: ['With support', 'With a reminder', 'Independently'] });
-    assert.equal(recordMeaning(skill), 'What you saw, in a stated setting · 3 descriptors');
-    assert.equal(recordMeaning(def({ kind: 'skill', unit: null, aim: 'record', headline: 'last' })), 'What you saw, in a stated setting');
+    assert.equal(recordMeaning(skill), 'what you saw · 3 descriptors');
+    assert.equal(recordMeaning(def({ kind: 'skill', unit: null, aim: 'record', headline: 'last' })), 'what you saw');
+  });
+});
+
+describe('the preview runs the way the aim runs (B4)', () => {
+  it('a lower aim falls, a higher aim rises, and the change is the same size either way; a range or record-only aim has no change example', () => {
+    assert.deepEqual(previewChange('lower'), { from: 8.4, to: 8.05, delta: 0.35, word: 'lower' });
+    assert.deepEqual(previewChange('higher'), { from: 8.05, to: 8.4, delta: 0.35, word: 'higher' });
+    assert.equal(previewChange('range'), null);
+    assert.equal(previewChange('record'), null);
   });
 });
 
@@ -156,20 +169,18 @@ describe('changing a definition later (ruling 3) — the successor rule', () => 
     assert.deepEqual(definitionChange(base, { name: '60-yard sprint' }, true), { kind: 'keep' });
   });
   it('a unit change on a test WITH readings starts a successor; without readings it is just an edit', () => {
-    assert.deepEqual(definitionChange(base, { unit: 's' }, true), { kind: 'successor', reasons: ['unit'] });
+    assert.deepEqual(definitionChange(base, { unit: 's' }, true), { kind: 'successor' });
     assert.deepEqual(definitionChange(base, { unit: 's' }, false), { kind: 'keep' });
     // "Seconds" is the same unit as "seconds" — no successor for a spelling.
     assert.deepEqual(definitionChange(base, { unit: ' Seconds ' }, true), { kind: 'keep' });
   });
-  it('changing a WRITTEN method starts a successor; writing one where none was recorded keeps the series', () => {
-    assert.deepEqual(definitionChange(base, { method: 'Flying start.' }, true), { kind: 'successor', reasons: ['method'] });
-    assert.deepEqual(definitionChange(base, { method: ' Standing start, same course. ' }, true), { kind: 'keep' });
+  it('the method never starts a successor (owner, 2026-09-14) — writing, changing or erasing it keeps the series', () => {
+    assert.deepEqual(definitionChange(base, { method: 'Flying start.' }, true), { kind: 'keep' });
+    assert.deepEqual(definitionChange(base, { method: null }, true), { kind: 'keep' });
     const legacy = def({ method: null, aim: 'record', headline: 'last' });
     assert.deepEqual(definitionChange(legacy, { method: 'Standing start.' }, true), { kind: 'keep' });
-    // Erasing a written method is a change of method too — the readings were taken under it.
-    assert.deepEqual(definitionChange(base, { method: null }, true), { kind: 'successor', reasons: ['method'] });
-    assert.deepEqual(definitionChange(base, { method: null }, false), { kind: 'keep' });
-    assert.deepEqual(definitionChange(base, { unit: 's', method: 'Flying start.' }, true), { kind: 'successor', reasons: ['unit', 'method'] });
+    // With the unit, only the unit is the reason.
+    assert.deepEqual(definitionChange(base, { unit: 's', method: 'Flying start.' }, true), { kind: 'successor' });
   });
   it('aim, range, attempts, headline and descriptors never start a successor', () => {
     assert.deepEqual(definitionChange(base, { aim: 'higher', attemptsPerSession: 5, headline: 'average' }, true), { kind: 'keep' });
@@ -198,5 +209,15 @@ describe('applyDefinitionPatch — the merged definition stays valid, and the su
     assert.ok('next' in retire && retire.next.isActive === false && retire.change.kind === 'keep');
     const replaced = def({ isActive: false, replacedById: 't2' });
     assert.ok('error' in applyDefinitionPatch(replaced, { isActive: true }, true));
+  });
+  it('a RETIRED definition is a record (B12): only its name and its retired flag may change — the server holds it, not just the sheet', () => {
+    const retired = def({ isActive: false });
+    const rename = applyDefinitionPatch(retired, { name: '60-yd sprint (hand-timed)' }, true);
+    assert.ok('next' in rename && rename.next.name === '60-yd sprint (hand-timed)' && rename.next.isActive === false);
+    assert.ok('next' in applyDefinitionPatch(retired, { isActive: true }, true));
+    for (const fields of [{ aim: 'higher' as const }, { headline: 'average' as const }, { attemptsPerSession: 3 }, { method: 'Flying start.' }, { unit: 'ms' }, { descriptors: ['x'] }]) {
+      const r = applyDefinitionPatch(retired, fields, true);
+      assert.ok('error' in r && r.error === RETIRED_EDIT_MESSAGE, JSON.stringify(fields));
+    }
   });
 });

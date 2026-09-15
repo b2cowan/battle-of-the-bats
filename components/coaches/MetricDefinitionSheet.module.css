@@ -1,0 +1,89 @@
+/* MetricDefinitionSheet — "Define a metric" (development lifecycle Phase 1, mockup screen 2;
+   re-evaluation stage 1, 2026-09-14: a SHEET over the screen it was opened from, one column, the
+   live read-back under the fields that change it, the full preview in a modal over the sheet).
+   Tokens only, no colour literals; warm-gate safe (--home-* with the portal's dark fallbacks).
+   The shell (overlay, header, scroll, footer, the 44px floor at touch widths) is QuestionShell's
+   and the shared modal classes'; this module draws only what is particular to the form. */
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.help { margin: -0.4rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The kind of an existing definition — fixed once a definition exists, so a value where the select would be. */
+.value { font-size: var(--type-body); color: var(--text-primary); margin: 0; }
+
+/* The consequence, where the change is made: the same lime-edged strip the rule below uses, in the mono face. */
+.readLine {
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-left: 3px solid var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border-radius: 0 var(--radius-sm, 7px) var(--radius-sm, 7px) 0;
+  font-family: var(--font-data, monospace);
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.readLine strong { color: var(--text-primary); font-weight: 700; }
+
+/* "Changing a definition later" — the rule said where it bites, not only in the help guide. */
+.rule {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border-radius: 0 var(--radius-sm, 7px) var(--radius-sm, 7px) 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.rule strong { color: var(--text-primary); }
+
+/* The footer: Preview and Retire/Restore on the left, Cancel and Save on the right. */
+.foot { flex-wrap: wrap; }
+.footSpacer { flex: 1; }
+
+/* ── The preview modal's body ─────────────────────────────────────────────── */
+.preview { gap: 0.45rem; padding-bottom: 0.5rem; }
+.big {
+  margin: 0.2rem 0 0;
+  font-size: var(--type-display, 2rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.big small { font-size: var(--type-body); font-weight: 500; color: var(--text-secondary); margin-left: 0.3rem; }
+.meta { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
+.previewRule { height: 1px; background: var(--border-2); margin: 0.5rem 0; }
+.previewHead { margin: 0; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.readBack { margin: 0; font-size: var(--type-body); color: var(--text-primary); }
+.readBack strong { color: var(--logic-lime); }
+.hint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.tag {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: var(--type-label);
+  font-weight: 600;
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .pair { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The 44px floor on every control the sheet draws, at touch widths — the shared .input / .select /
+   .btn* classes render 33–37px there portal-wide (a standing ratchet item), and a NEW form does not
+   get to inherit that debt. Scoped to this sheet's form and footer. */
+@media (max-width: 900px) {
+  .form input, .form select, .form textarea, .foot button { min-height: var(--tap-min, 44px); }
+}
+
+/* A retired metric's written fields (the method, a skill's descriptors) read back as they were typed. */
+.valueText { white-space: pre-wrap; color: var(--text-secondary); }

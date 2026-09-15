@@ -354,13 +354,8 @@ const SITES: Site[] = [
     },
   },
   /* The team board's page is a REDIRECT into the Players view now (Phase 1) — no header. */
-  {
-    // Define a metric / one metric's definition (Phase 1, mockup screen 2) — ONE component draws
-    // both routes (`metrics/new`, `metrics/[typeId]`). The way back is the arrow to Metrics; the
-    // form's actions are the form's, not the header's.
-    file: 'components/coaches/MetricDefinitionEditor.tsx', occurrence: 0,
-    screen: 'Define a metric · a metric definition', variant: 'standard', helpHost: 'masthead', actions: null,
-  },
+  /* A metric's definition is a SHEET over the hub since re-evaluation stage 1 (2026-09-14) — no
+     header of its own; the two `metrics/…` routes redirect into `?edit=`. */
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/sessions/[sessionId]/page.tsx', occurrence: 0,
     screen: 'Evaluation session', variant: 'standard', helpHost: 'masthead', actions: null,

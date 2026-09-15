@@ -138,9 +138,9 @@ export function DevelopmentPanel({
 
 /** The board's wire shape, named the way every roster surface names a player (one home, defensive of stray "null"s). */
 const playerName = (r: { firstName: string; lastName: string | null }) => rosterName({ playerFirstName: r.firstName, playerLastName: r.lastName });
-/** "60-yd sprint · test" · "Changeup speed · test with a range" · "Sets feet before throwing · observation". */
+/** "60-yd sprint · test" · "Changeup speed · test with a range" · "Sets feet before throwing · skill". */
 const metricOptionLabel = (t: RepTeamMeasurableType) =>
-  `${t.name} · ${t.kind === 'skill' ? 'observation' : t.aim === 'range' ? 'test with a range' : 'test'}${t.isActive ? '' : ' (retired)'}`;
+  `${t.name} · ${t.kind === 'skill' ? 'skill' : t.aim === 'range' ? 'test with a range' : 'test'}${t.isActive ? '' : ' (retired)'}`;
 
 function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -613,7 +613,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         {head}
         <div className={styles.devReportHead}>
           <h2 style={{ fontSize: 'var(--type-body)' }}>{metric.name}</h2>
-          <span className={styles.tagRead}>Observed skill</span>
+          <span className={styles.tagRead}>Skill</span>
         </div>
         {observations.length === 0 ? (
           <CoachEmptyState quiet compact icon={<TrendingUp size={18} aria-hidden />}
@@ -718,7 +718,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         <td data-label="Source" className={styles.devBoardVal}>
           {row.sessionId
             ? (dev.canWrite ? <Link href={`${base}/development/sessions/${row.sessionId}`} className={styles.devReportRowLink}>Session →</Link> : 'In a session')
-            : 'Single reading'}
+            : 'Outside a session'}
           {by ? <span className={styles.devCardNote}>entered by {by}</span> : null}
         </td>
       </tr>
