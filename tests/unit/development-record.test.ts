@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   readMeasurableInput, readMeasurableCorrectionInput, readSessionCreateInput, readSessionPatchInput,
-  readNotAssessedInput, readObservationInput, readGoalReviewInput, readGoalPatchInput, readGoalExtrasInput,
+  readNotAssessedInput, readObservationInput, observationEditPatch, readGoalReviewInput, readGoalPatchInput, readGoalExtrasInput,
 } from '../../lib/development-input.ts';
 import {
   groupBySession, latestSessionResult, sessionHeadline, describeHeadline, describeAttempts, headlineLabel, headlineMethod, type AttemptReading,
@@ -64,7 +64,7 @@ describe('readSessionCreateInput — Start session asks for the scope first', ()
   it('a scope is both lists — at least one metric and one player', () => {
     const r = readSessionCreateInput({ sessionDate: '2026-09-11', note: 'Autumn', eventId: 'ev', scope: { metricIds: ['m1', 'm2'], playerIds: ['p1'] } });
     assert.ok('fields' in r);
-    assert.deepEqual(r.fields.scope, { metricIds: ['m1', 'm2'], playerIds: ['p1'] });
+    assert.deepEqual(r.fields.scope, { metricIds: ['m1', 'm2'], playerIds: ['p1'], attempts: null });
     assert.equal(r.fields.eventId, 'ev');
     assert.ok('error' in readSessionCreateInput({ sessionDate: '2026-09-11', scope: { metricIds: [], playerIds: ['p1'] } }));
     assert.ok('error' in readSessionCreateInput({ sessionDate: '2026-09-11', scope: { metricIds: ['m1'], playerIds: [] } }));
@@ -110,6 +110,17 @@ describe('readObservationInput — what was seen, in a stated setting', () => {
     assert.ok('error' in readObservationInput({ measurableTypeId: 'other' }, 'patch'));
     const clear = readObservationInput({ goalId: null }, 'patch');
     assert.ok('fields' in clear && clear.fields.goalId === null);
+  });
+  // C12 (/review 2026-09-15): an edit sends ONLY what changed — a descriptor the skill has since
+  // dropped is never re-sent untouched (the route would refuse it by name), and nothing changed is
+  // no request at all.
+  it('an edit sends only what changed, and nothing changed is null', () => {
+    const existing = { observedOn: '2026-06-10', note: 'One cue was enough.', descriptor: 'With a reminder', goalId: 'g' };
+    assert.equal(observationEditPatch(existing, { observedOn: '2026-06-10', note: 'One cue was enough.', descriptor: 'With a reminder', goalId: 'g' }), null);
+    assert.equal(observationEditPatch(existing, { observedOn: '2026-06-10', note: '  One cue was enough. ', descriptor: 'With a reminder', goalId: 'g' }), null, 'the form\'s whitespace is not a change');
+    assert.deepEqual(observationEditPatch(existing, { observedOn: '2026-06-10', note: 'Two cues.', descriptor: 'With a reminder', goalId: 'g' }), { note: 'Two cues.' }, 'the untouched descriptor is not re-sent');
+    assert.deepEqual(observationEditPatch(existing, { observedOn: '2026-06-10', note: '', descriptor: '', goalId: null }), { note: null, descriptor: null, goalId: null }, 'a cleared field is sent as null');
+    assert.deepEqual(observationEditPatch({ ...existing, note: null, goalId: null }, { observedOn: '2026-06-11', note: '', descriptor: 'With a reminder', goalId: null }), { observedOn: '2026-06-11' });
   });
 });
 
@@ -226,11 +237,11 @@ describe('sessionRows — one row per player with EVERY attempt, in attempt orde
 });
 
 describe('sessionScopeCounts — never a zero invented, never rows counted as people', () => {
-  it('no scope: "N of M entered" against the active roster (Phase 0)', () => {
+  it('no scope: "N of M recorded — the whole roster" against the active roster (Phase 0)', () => {
     const rows = sessionRows([player('a'), player('b'), player('c')], [player('gone')], [entry('a', 'sprint', 'e1', 1), entry('a', 'sprint', 'e2', 2), entry('gone', 'sprint')], 'sprint');
     const c = sessionScopeCounts(rows, null);
     assert.deepEqual(c, { scoped: false, recorded: 1, notAssessed: 0, notRecorded: 2, total: 3 });
-    assert.equal(scopeSentence(c), '1 of 3 entered');
+    assert.equal(scopeSentence(c), '1 of 3 recorded — the whole roster');
   });
   it('a scoped session counts recorded · not assessed · not recorded of those in scope', () => {
     const rows = sessionRows([player('a'), player('b'), player('c'), player('d')], [], [entry('a', 'sprint', 'e1', 1), entry('a', 'sprint', 'e2', 2), entry('d', 'sprint')], 'sprint',
@@ -244,7 +255,7 @@ describe('sessionScopeCounts — never a zero invented, never rows counted as pe
     assert.equal(describeAttempts([66], range, 3), '66 (in) · 1 of 3 run');
     assert.equal(describeAttempts([8.5, 8.4], lower, 3), 'Best of 2 attempts · 8.5 · 8.4 · average 8.45 · 2 of 3 run');
     assert.equal(describeAttempts([8.5, 8.4], lower, 2), 'Best of 2 attempts · 8.5 · 8.4 · average 8.45');
-    assert.equal(describeAttempts([8.4], lower, 1), 'One attempt');
+    assert.equal(describeAttempts([8.4], lower, 1), '8.4', 'one attempt reads as its value — the box already holds it');
   });
   it('"Taken at" options: practices first, then nearest the chosen date — one rule for the picker and the scope step', () => {
     const ordered = orderEventsByAnchor([
@@ -305,6 +316,21 @@ describe('the surfaces read through the one home', () => {
     assert.match(session, /sessionScopeCounts\(/);
     const grid = read('components', 'coaches', 'SessionRecordGrid.tsx');
     assert.match(grid, /rowState\(/, 'the per-row state machine has ONE home — the grid reads it, never re-derives it');
+    // C12 (owner ruling 2026-09-15, B): a skill row never saves on its own — it is a DOOR into the
+    // observation sheet; the only field-level saver on the grid is an attempt box.
+    assert.match(grid, /onRecordObservation\(/, 'a blank skill row opens the observation sheet');
+    assert.doesNotMatch(grid, /<select/, 'no dropdown saves on the grid — the descriptor is asked in the sheet');
+    assert.doesNotMatch(grid, /onObservationCommit|observationDraftFor/, 'the row holds no observation draft');
+    const dialog = read('components', 'coaches', 'RecordObservationDialog.tsx');
+    assert.match(dialog, /fixed\?\.skill/, 'the sheet takes the skill and the date from a session row');
+    assert.match(dialog, /useDiscardGuard\(/, 'typed work is guarded on Escape, X and Cancel');
+    for (const surface of [session, read('components', 'coaches', 'PlayerDevelopmentSection.tsx')]) {
+      assert.match(surface, /observationEditPatch\(/, 'an edit sends only what changed, from both doors');
+    }
+    const obsRoute = read('app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'roster', '[playerId]', 'development', 'observations', 'route.ts');
+    assert.match(obsRoute, /status: 409/, 'one observation per player per skill per session — a twin is a 409, never a second row');
+    const move = read('lib', 'development-session-move.ts');
+    assert.match(move, /restampRepSessionObservations\(session\.id, teamId, sessionDate\)/, 'an observation dated by the session moves with it');
     assert.doesNotMatch(session, /['"]not_recorded['"]|['"]not_assessed['"]/, 'the page never spells a row state itself');
     assert.doesNotMatch(section, /Log a measurable/, 'F20 — the profile says "Record a result"');
     assert.match(read('lib', 'marketing-shots.ts'), /Record a result/, 'the marketing-shot harness follows the label in the same commit');

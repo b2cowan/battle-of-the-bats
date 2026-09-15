@@ -1509,12 +1509,16 @@ export const OFFSEASON_DEVELOPMENT_GOALS = [
 /**
  * Each with its AIM and METHOD (development lifecycle Phase 1, 2026-09-12): a definition without
  * an aim reads "record only" on the Metrics tab, which is honest of a real coach's legacy row and
- * a poor first impression of a shop window; the method is what the shop window's coach would write. The dash takes THREE attempts
- * per session (Phase 2, 2026-09-13 — every attempt is recorded, best is the headline); the
- * showcase player is the one who runs all three on each testing day (`OFFSEASON_SHOWCASE_ATTEMPTS`).
+ * a poor first impression of a shop window; the method is what the shop window's coach would write.
+ * `attempts` is the SESSION's plan for each test on both testing days (development re-evaluation
+ * stage 2, C1, 2026-09-15 — the count moved off the definition onto the session, mig 298): every
+ * test once. The showcase player runs the dash THREE times on each testing day anyway — the row's
+ * "+" story the tour narrates ("every attempt kept, the best leading"): the plan is a floor, never a
+ * ceiling, and a demo that planned three would list ten names as "fewer than planned" in the
+ * review. The stored `attempts_per_session` on the definition is written to the same value.
  */
 export const OFFSEASON_MEASURABLE_TYPES = [
-  { name: '60-yard dash',  unit: 'seconds', aim: 'lower',  attempts: 3, method: 'Standing start on the same marked 60-yard line, after warm-up. Hand-timed from first movement. Three runs; the best counts.' },
+  { name: '60-yard dash',  unit: 'seconds', aim: 'lower',  attempts: 1, method: 'Standing start on the same marked 60-yard line, after warm-up. Hand-timed from first movement. The best run counts.' },
   { name: 'Exit velocity', unit: 'mph',     aim: 'higher', attempts: 1, method: 'Off the tee, radar gun behind the plate. Five swings; the coach records the best.' },
   { name: 'Home to first', unit: 'seconds', aim: 'lower',  attempts: 1, method: 'Full swing on a coach pitch, timed from contact to the bag.' },
 ] as const;

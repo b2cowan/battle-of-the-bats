@@ -44,7 +44,6 @@ export interface ReportDefinition extends HeadlineDefinition {
   unit: string | null;
   /** How the test is run, in the coach's words; null = not recorded (legacy). */
   method: string | null;
-  attemptsPerSession: number;
 }
 
 const round3 = (v: number) => Number(v.toFixed(3));

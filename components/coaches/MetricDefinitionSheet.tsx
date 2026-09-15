@@ -10,7 +10,7 @@ import {
 import { describeHeadline, sessionHeadline } from '@/lib/measurable-series';
 import { formatValue } from '@/lib/measurable-format';
 import {
-  MAX_TYPE_NAME_LEN, MAX_UNIT_LEN, MAX_METHOD_LEN, MAX_DESCRIPTORS, MAX_DESCRIPTOR_LEN, MAX_ATTEMPTS,
+  MAX_TYPE_NAME_LEN, MAX_UNIT_LEN, MAX_METHOD_LEN, MAX_DESCRIPTORS, MAX_DESCRIPTOR_LEN,
 } from '@/lib/development-input';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './MetricDefinitionSheet.module.css';
@@ -41,6 +41,11 @@ import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepTeamMeasurab
  * results starts a new definition and retires this one. The PATCH answers 409 with the offer, the
  * coach is asked, and only a yes posts to `replace`. Retire and Restore live in the footer.
  *
+ * ⚠ NO ATTEMPTS FIELD (re-evaluation stage 2, C1, 2026-09-15): how many times a test is run is a
+ * fact about the SESSION, set per test on the session sheet ("× 2 attempts"). The definition keeps
+ * the HEADLINE — best · average · last — because that is how a result is READ, not how many were
+ * run. The stored column is never written from here.
+ *
  * ⚠ THE DOOR IS THE GRANT (stage 0, D5): every host offers this sheet only to a coach who holds
  * the Development grant, so there is no read-only face for a LIVE metric. A RETIRED metric's sheet
  * reads as a record (owner, 2026-09-14): every field shown, only the name editable (a retired
@@ -58,16 +63,16 @@ type Draft = {
   rangeFrom: string;
   rangeTo: string;
   method: string;
-  attemptsPerSession: number;
   headline: MeasurableHeadline;
   descriptors: string;
 };
 
-const ATTEMPT_WORDS = ['One', 'Two', 'Three', 'Four', 'Five'];
+/** The preview's example session runs three attempts — enough to show how a headline is read. */
+const PREVIEW_ATTEMPTS = 3;
 
 const EMPTY: Draft = {
   kind: 'test', name: '', unit: '', aim: 'lower', rangeFrom: '', rangeTo: '', method: '',
-  attemptsPerSession: 1, headline: 'best', descriptors: '',
+  headline: 'best', descriptors: '',
 };
 
 function draftFrom(t: RepTeamMeasurableType): Draft {
@@ -79,7 +84,6 @@ function draftFrom(t: RepTeamMeasurableType): Draft {
     rangeFrom: t.rangeFrom == null ? '' : String(t.rangeFrom),
     rangeTo: t.rangeTo == null ? '' : String(t.rangeTo),
     method: t.method ?? '',
-    attemptsPerSession: t.attemptsPerSession,
     headline: t.headline,
     descriptors: t.descriptors.join('\n'),
   };
@@ -97,7 +101,6 @@ function bodyFrom(d: Draft): Record<string, unknown> {
     rangeFrom: isTest && d.aim === 'range' ? num(d.rangeFrom) : null,
     rangeTo: isTest && d.aim === 'range' ? num(d.rangeTo) : null,
     method: isTest ? d.method : null,
-    attemptsPerSession: isTest ? d.attemptsPerSession : 1,
     headline: isTest ? d.headline : 'last',
     descriptors: isTest ? [] : d.descriptors.split('\n').map(s => s.trim()).filter(Boolean),
   };
@@ -110,10 +113,10 @@ function sampleAttempts(d: Draft): number[] {
     if (Number.isFinite(from) && Number.isFinite(to) && from < to) {
       const mid = (from + to) / 2;
       const step = Math.max((to - from) / 2, 0.5);
-      return [Number((from - step / 2).toFixed(1)), Number(mid.toFixed(1)), Number((to + step / 2).toFixed(1))].slice(0, Math.max(1, d.attemptsPerSession));
+      return [Number((from - step / 2).toFixed(1)), Number(mid.toFixed(1)), Number((to + step / 2).toFixed(1))].slice(0, PREVIEW_ATTEMPTS);
     }
   }
-  return [8.12, 8.05, 8.2, 8.16, 8.09].slice(0, Math.max(1, d.attemptsPerSession));
+  return [8.12, 8.05, 8.2, 8.16, 8.09].slice(0, PREVIEW_ATTEMPTS);
 }
 
 export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial = null, onClose, onSaved }: {
@@ -202,7 +205,7 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
     return { attempts, headline, line: describeHeadline(attempts, previewDef), def: previewDef };
     // Only the fields the preview reads — a keystroke in Name or Method must not recompute it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.aim, draft.headline, draft.rangeFrom, draft.rangeTo, draft.attemptsPerSession]);
+  }, [draft.aim, draft.headline, draft.rangeFrom, draft.rangeTo]);
   const unitWord = draft.unit.trim() || 'unit';
   const headlineFigure = preview.headline == null
     ? '—'
@@ -338,24 +341,6 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
             {isTest && (
               <>
                 <div className={css.pair}>
-                  {field('Attempts per session', 'metric-attempts',
-                    <select id="metric-attempts" className={shared.select} value={draft.attemptsPerSession} onChange={e => set('attemptsPerSession', Number(e.target.value))}>
-                      {Array.from({ length: MAX_ATTEMPTS }, (_, i) => i + 1).map(n => (
-                        <option key={n} value={n}>{ATTEMPT_WORDS[n - 1]}</option>
-                      ))}
-                    </select>,
-                    { locked: ATTEMPT_WORDS[draft.attemptsPerSession - 1] ?? String(draft.attemptsPerSession) },
-                  )}
-                  {field('Headline result', 'metric-headline',
-                    <select id="metric-headline" className={shared.select} value={draft.headline} onChange={e => set('headline', e.target.value as MeasurableHeadline)}>
-                      {headlineOptions.map(h => <option key={h} value={h}>{HEADLINE_LABELS[h]}</option>)}
-                    </select>,
-                    { locked: HEADLINE_LABELS[draft.headline] },
-                  )}
-                </div>
-                {!retired && <p className={css.help}>Every attempt is kept. The headline is what rows and charts lead with; the average and the spread are always behind it.</p>}
-
-                <div className={css.pair}>
                   {field('Unit', 'metric-unit',
                     <input id="metric-unit" className={shared.input} type="text" value={draft.unit} maxLength={MAX_UNIT_LEN} required
                       onChange={e => set('unit', e.target.value)} placeholder="seconds" />,
@@ -389,10 +374,19 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
                   <p className={css.help}>Record only claims no direction — the reports will never say “faster” or “better” about this test.</p>
                 )}
 
+                {/* How a result is READ when a session ran the test more than once — the count itself is
+                    the session's fact ("What are we running? · × 2 attempts"), set when the session starts. */}
+                {field('Headline result', 'metric-headline',
+                  <select id="metric-headline" className={shared.select} value={draft.headline} onChange={e => set('headline', e.target.value as MeasurableHeadline)}>
+                    {headlineOptions.map(h => <option key={h} value={h}>{HEADLINE_LABELS[h]}</option>)}
+                  </select>,
+                  { locked: HEADLINE_LABELS[draft.headline], help: 'What a row leads with when a session ran this test more than once. Every attempt is kept; the average and the spread are always behind it. How many attempts is set on each session.' },
+                )}
+
                 {/* The consequence, where the change is made: one live line under the four fields it depends on. */}
                 <p className={css.readLine} aria-live="polite">
                   Reads back as <strong>{headlineFigure}</strong>
-                  {draft.attemptsPerSession > 1 && draft.aim !== 'range' ? ` · ${HEADLINE_LABELS[draft.headline].toLowerCase()}` : ''}
+                  {draft.aim !== 'range' ? ` · ${HEADLINE_LABELS[draft.headline].toLowerCase()}` : ''}
                   {` · ${readBackAim}`}
                 </p>
 

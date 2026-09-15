@@ -1910,7 +1910,12 @@ export interface RepTeamMeasurableType {
   rangeTo: number | null;
   /** How the test is run, in the coach's words. null = not recorded (legacy). */
   method: string | null;
-  /** 1–5. Every attempt is recorded (owner ruling 2026-09-11); Phase 2 records them. */
+  /**
+   * 1–5 — NO LONGER THE DEFINITION'S FACT (re-evaluation stage 2, C1, 2026-09-15): the count is
+   * planned on the SESSION, per test (`RepTeamEvaluationSession.scopeAttempts`). The sheet stops
+   * writing this (a new test writes 1); it is read only as the seed for a session's pre-fill when
+   * no session has run the test since the count moved. Do not build on it.
+   */
   attemptsPerSession: number;
   headline: MeasurableHeadline;
   /** A skill's coach-written descriptors, in the coach's order. Empty on a test. */
@@ -2093,11 +2098,14 @@ export interface RepTeamEvaluationSession {
   programYearId: string;
   sessionDate: string;
   /**
-   * D10 (mig 213) — the scheduled event these readings were collected at, or null.
+   * D10 (mig 213) — the practice (any scheduled event) this session was taken at, or null.
    *
-   * ⚠ The link and the date are TWO SEPARATE FACTS. Picking a practice PRE-FILLS `sessionDate`;
-   * it never derives it. A rescheduled practice must NOT move the session's date (and so must not
-   * re-stamp its readings) — the measurements happened when they happened.
+   * ⚠ A LINKED SESSION'S DATE IS THE PRACTICE'S DATE (re-evaluation stage 2, C10, 2026-09-15 —
+   * reversing Practice Plans §10.2 ruling 1 on its reason). "When?" is one question: at a practice
+   * (the date is derived from the event on every write) or on a date (no event; typed). A session
+   * is created AT the practice, so a practice whose day changes after results were taken is a date
+   * correction and the results follow — with one confirm on the practice side, and the re-stamp.
+   * A deleted practice leaves the session on the date it had (SET NULL): "on a date".
    */
   eventId: string | null;
   note: string | null;
@@ -2117,6 +2125,8 @@ export interface RepTeamEvaluationSession {
   playerCount?: number;
   typeCount?: number;
   entryCount?: number;
+  /** Derived by the sessions reader (never stored): the linked event's name, for "at Team practice 5 ›". */
+  eventName?: string | null;
   /**
    * Derived (never stored) — the in-scope (player, metric) cells that hold NOTHING: no reading, no
    * "not assessed" mark, no observation — over `scopeCellCount`, the cells that COUNT. Both null when
@@ -2127,6 +2137,14 @@ export interface RepTeamEvaluationSession {
    * who has since left the active roster is listed on the session but never counted, so the
    * Overview and the session page agree on "N of M" (/simplify, 2026-09-14).
    */
+  /**
+   * The attempts PLANNED per test in this session — metric id → 1..5 (mig 298, re-evaluation stage 2,
+   * C1). Null on every session from before the count existed: it claims only what was recorded (as
+   * many boxes as a row holds, no "of N run", no "fewer than planned"). A skill has no count. ⚠ A
+   * FLOOR, never a ceiling (C2): a row may hold more attempts than planned, up to five, and a
+   * lowered count never hides a saved attempt. Keys ⊆ `scopeMetricIds` — the route proves it.
+   */
+  scopeAttempts: Record<string, number> | null;
   unrecordedCount?: number | null;
   scopeCellCount?: number | null;
 }

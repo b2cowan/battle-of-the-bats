@@ -4622,6 +4622,11 @@ a.oneChip:hover { border-color: currentColor; }
    centered for consistency — previously this one docked right to sit over the event detail
    slide-over, which read as modals "jumping" between center and right). */
 .eventFormModal { max-width: 600px; }
+/* modalWide — a QuestionShell that carries two columns or a control beside a long label (the
+   session sheet's roster in two columns, its steppers beside "60-yd sprint · seconds · lower is the
+   aim"; drawn at 640 in the development lifecycle re-evaluation, stage 2). Width only — everything
+   else is the one modal. ≤640 the overlay is a full-screen sheet and the width is moot. */
+.modalWide { max-width: 640px; }
 /* Rounded (pill) footer actions — scoped to the event modal so the rest of the app's square
    buttons are untouched. */
 .eventFormModal .modalFooter .btnPrimary,
@@ -8824,6 +8829,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .devListLede strong { color: var(--text-secondary); }
 /* The table's ground — `.tableWrap` draws the neutral frame; the card ground is the standard's. */
 .devTableCard { background: var(--card-bg, var(--surface)); }
+/* The LAST row absorbs its links' tap box: `.devCellLink` paints 44px tall on a ~37px row (its
+   negative margins keep the rhythm), which is harmless between rows and a 4–5px spill past the
+   table's bottom edge on the last one — enough for the frame (`overflow-x: auto`) to grow a
+   vertical scrollbar over a four-row list (owner, 2026-09-14). The last row's padding grows by
+   the difference instead, so nothing paints outside and nothing is clipped. */
+.devTableCard tbody tr:last-child td { padding-bottom: 0.7rem; }
 
 .devCardHeadRow {
   display: flex;
@@ -8836,12 +8847,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* A link inside a table cell or a mini row that meets the 44px tap floor without changing the row's
    rhythm: tap padding + a matching negative margin (the .lineupInsightsLink shape). Sessions,
    Players and Metrics rows (Phase 1) all wear it. */
-/* The LAST row absorbs its links' tap box: `.devCellLink` paints 44px tall on a ~37px row (its
-   negative margins keep the rhythm), which is harmless between rows and a 4–5px spill past the
-   table's bottom edge on the last one — enough for the frame (`overflow-x: auto`) to grow a
-   vertical scrollbar over a four-row list (owner, 2026-09-14). The last row's padding grows by
-   the difference instead, so nothing paints outside and nothing is clipped. */
-.devTableCard tbody tr:last-child td { padding-bottom: 0.7rem; }
 .devCellLink {
   display: inline-block;
   box-sizing: border-box;
@@ -8865,13 +8870,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 /* Session run screen — the grid moved to components/coaches/DevelopmentSession.module.css
    (development lifecycle Phase 2, 2026-09-13: one field per attempt, a state per row). What stays
-   here is what the Players view and the profile still read: the number, the value, the dash. */
+   here is what the Players view and the profile still read: the number and the dash. (⚰ `.devRowVal`
+   went with stage 2, 2026-09-15 — the grid's not-assessed dash wears its own module's class now.) */
 .devRowNum { color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
-.devRowVal {
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--type-body);
-}
 .devRowDash { color: var(--text-tertiary); }
 
 /* Team board — desktop data-face table; phones reflow to per-player cards. */
@@ -10370,37 +10371,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .devTailLink { color: var(--text-secondary); text-decoration: underline; font-weight: 600; }
 .devTailLink:hover { color: var(--text-primary); }
 
-/* Evaluation session — when + where the readings were taken (D10). Two separate facts, side by
-   side on a desktop, stacked on a phone via the shared 640 content reflow. */
-.devSessionWhen {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem;
-  margin: 0 0 0.8rem;
-}
-.devSessionWhen .field { min-width: 0; }
-/* The event picker takes its intrinsic width from its LONGEST option — a date plus an event name —
-   which at 361px spilled past the column. The option list is data, so the select must never be
-   wider than the field that holds it. */
-.devSessionWhen .field select { max-width: 100%; }
-/* An evaluation session's identity fields — what it is called, which event it belongs to, and the
-   note that names the session. Scoped to this screen's own wrappers rather than to `.input` /
-   `.select`, which are the portal's shared primitives (same reasoning as the lineup toolbar above).
-   ⚠ `.devSessionNote` is a SEPARATE selector rather than a third line in the one above, because
-   the note sits OUTSIDE `.devSessionWhen` — it was missed on the first pass for exactly that
-   reason, and survived a run that closed 309 of 318 findings. Two fields that read as one group on
-   screen are not necessarily one group in the markup. */
-@media (max-width: 768px) {
-  .devSessionWhen .field input,
-  .devSessionWhen .field select,
-  .devSessionNote input { min-height: var(--tap-min, 44px); }
-}
-.devSessionEventLink {
-  font-size: var(--type-support); color: var(--text-secondary); text-decoration: underline;
-  min-height: var(--tap-min, 44px); display: inline-flex; align-items: center;
-}
-.devSessionEventLink:hover { color: var(--text-primary); }
-@media (max-width: 640px) {
-  .devSessionWhen { flex-direction: column; align-items: stretch; }
-}
+/* ⚰ `.devSessionWhen` / `.devSessionNote` / `.devSessionEventLink` STOOD HERE until the development
+   re-evaluation's stage 2 (2026-09-15): the session page's Date · Taken at · Session note fields
+   are gone — a session's facts are one SHEET (`components/coaches/SessionSheet.tsx`, its own
+   module), and the practice reads as a door in the when-line. The list's caption link is
+   `.devSessionAt` at the end of this file. */
 
 /* Practice plan — a count inside a chip (a group's size beside its name). */
 .ppChipCount {
@@ -13846,3 +13821,39 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    auto-sized first column lets each one's longest name decide where its second column starts, and
    the two columns drift (owner, 2026-09-14). One stated width, shared. Phone cards ignore it. */
 .devMetricsTable th:first-child { width: 44%; }
+
+/* ── Stage 2 · Session (2026-09-15) — the Sessions list to the table standard; round 2 the same day
+   ("starting to look crowded" — the owner's read of the built list): the row gets a HIERARCHY.
+   The date and the note are the row's ink; everything else steps back to the secondary ink; the
+   state is said once. The crowding was volume, not geometry — five columns are fine when four of
+   them are quiet.
+   `.devSessionDate` — the date is the row's name AND its real link (the standard's "name as the
+   link"; the row's click is only the pointer shortcut): semibold, no underline, on `.devCellLink`.
+   `.devSessionAt` — "at <practice> ›", the door to the practice a session was taken at, in the
+   secondary ink; the name inside underlined as a hairline, so it is a door you can find rather
+   than the loudest line on the row. The link keeps the tap floor the `.devCellLink` way (vertical
+   padding, a matching negative margin) so the compact row keeps its rhythm.
+   `.devSessionRan` — the plan ("5 players · 3 tests · 1 skill"): a figure ABOUT the session, in the
+   secondary ink, tabular, one line (card mode re-flows it).
+   `.devSessionState` · `.devSessionOpen` · `.devSessionDone` — the State cell says its state ONCE:
+   "15 of 20 to record" in the amber ink IS unfinished; "Complete" in the quiet green; a dash where
+   there is no plan to measure. The amber chip went from this table — the Overview's chip counts
+   sessions, a different fact. */
+.devSessionDate { font-weight: 600; }
+.devSessionAt { color: var(--text-secondary); white-space: nowrap; }
+.devSessionAt a {
+  display: inline-block;
+  min-height: var(--tap-min, 44px);
+  padding: 0.7rem 0;
+  margin: -0.7rem 0;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--home-line-strong, var(--border-2));
+  text-underline-offset: 3px;
+}
+.devSessionAt a:hover { color: var(--text-primary); text-decoration-color: currentColor; }
+.devSessionRan { color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.devSessionState { color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.devSessionOpen { color: var(--badge-warning-ink, var(--warning)); font-weight: 600; }
+.devSessionDone { color: var(--badge-success-ink, var(--success)); }
+@media (max-width: 640px) { .devSessionRan, .devSessionState, .devSessionAt { white-space: normal; } }

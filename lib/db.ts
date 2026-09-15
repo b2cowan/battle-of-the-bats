@@ -2,6 +2,7 @@ import { seasonDuesBand, type DuesCreditKind } from './coach-dues-actual';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import type { MeasurableTypeCreateFields } from './development-input';
+import { accountedCellKeys, scopeCompleteness } from './development-session-view';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
@@ -8640,6 +8641,8 @@ function mapRepTeamEvaluationSession(r: any): RepTeamEvaluationSession {
     // The scope (mig 295) — null on every session created before it: no scope was stated.
     scopeMetricIds: Array.isArray(r.scope_metric_ids) ? r.scope_metric_ids : null,
     scopePlayerIds: Array.isArray(r.scope_player_ids) ? r.scope_player_ids : null,
+    // The count per test (mig 298) — null on every session created before it: no count claimed.
+    scopeAttempts: r.scope_attempts && typeof r.scope_attempts === 'object' && !Array.isArray(r.scope_attempts) ? r.scope_attempts : null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -8660,62 +8663,66 @@ export async function getRepTeamEvaluationSessions(programYearId: string): Promi
   if (sessions.length === 0) return sessions;
 
   const ids = sessions.map(s => s.id);
-  // Four reads: one per kind of record a cell can hold — a reading, a "not assessed" mark, an
-  // observation — and the ACTIVE roster. The counts come from the first; the derived completeness
-  // needs all three record reads, because an in-scope cell is "unrecorded" only when it holds NONE
-  // of them (the review dialog's rule), and the roster because a scoped player who has since left
-  // the team is never counted — `sessionScopeCounts` in lib/development-session-view.ts is the
-  // rule the session page reads by, and this reader must produce the same "N of M".
-  const [{ data: entryRows, error: entriesError }, { data: naRows, error: naError }, { data: obsRows, error: obsError }, { data: activeRows, error: activeError }] = await Promise.all([
+  const eventIds = [...new Set(sessions.map(s => s.eventId).filter((id): id is string => !!id))];
+  // Five reads: one per kind of record a cell can hold — a result, a "not assessed" mark, an
+  // observation — the ACTIVE roster, and the linked events' names (the list's "at Team practice 5 ›"
+  // caption, C5/C10). The counts come from the first; the derived completeness needs all three
+  // record reads, because an in-scope cell is "unrecorded" only when it holds NONE of them — and
+  // the roster because a scoped player who has since left the team is never counted. ⚠ The rule
+  // itself lives in lib/development-session-view.ts (`accountedCellKeys` + `scopeCompleteness`),
+  // where the session page, the chips and the review read it — this reader must never grow a
+  // second copy of what counts as a record (stage 2 closed exactly that defect).
+  const [{ data: entryRows, error: entriesError }, { data: naRows, error: naError }, { data: obsRows, error: obsError }, { data: activeRows, error: activeError }, { data: eventRows, error: eventsError }] = await Promise.all([
     supabaseAdmin.from('rep_player_measurables').select('session_id, player_id, measurable_type_id').in('session_id', ids),
     supabaseAdmin.from('rep_evaluation_not_assessed').select('session_id, player_id, measurable_type_id').in('session_id', ids),
     supabaseAdmin.from('rep_player_observations').select('session_id, player_id, measurable_type_id').in('session_id', ids),
     supabaseAdmin.from('rep_roster_players').select('id').eq('program_year_id', programYearId).eq('status', 'active'),
+    eventIds.length > 0
+      ? supabaseAdmin.from('rep_team_events').select('id, name').in('id', eventIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
   ]);
   if (entriesError) throw entriesError;
   if (naError) throw naError;
   if (obsError) throw obsError;
   if (activeError) throw activeError;
+  if (eventsError) throw eventsError;
   const activeIds = new Set((activeRows ?? []).map((r: { id: string }) => r.id));
+  const eventName = new Map((eventRows ?? []).map((e: { id: string; name: string }) => [e.id, e.name]));
 
-  const agg = new Map<string, { players: Set<string>; types: Set<string>; entries: number; cells: Set<string> }>();
-  const cellOf = (row: { player_id: string; measurable_type_id: string }) => `${row.player_id}|${row.measurable_type_id}`;
-  const bucket = (sessionId: string) => {
-    let a = agg.get(sessionId);
-    if (!a) { a = { players: new Set(), types: new Set(), entries: 0, cells: new Set() }; agg.set(sessionId, a); }
-    return a;
-  };
-  for (const row of entryRows ?? []) {
-    if (!row.session_id) continue;
-    const a = bucket(row.session_id);
-    a.players.add(row.player_id);
-    a.types.add(row.measurable_type_id);
-    a.entries += 1;
-    a.cells.add(cellOf(row));
-  }
-  for (const row of [...(naRows ?? []), ...(obsRows ?? [])]) {
-    if (!row.session_id) continue;
-    bucket(row.session_id).cells.add(cellOf(row));
-  }
-  return sessions.map(s => {
-    const a = agg.get(s.id);
-    let unrecordedCount: number | null = null;
-    let scopeCellCount: number | null = null;
-    if (s.scopePlayerIds && s.scopeMetricIds) {
-      const counted = s.scopePlayerIds.filter(p => activeIds.has(p));
-      scopeCellCount = counted.length * s.scopeMetricIds.length;
-      unrecordedCount = 0;
-      for (const p of counted) for (const m of s.scopeMetricIds) if (!a?.cells.has(`${p}|${m}`)) unrecordedCount += 1;
+  type CellRow = { session_id: string | null; player_id: string; measurable_type_id: string };
+  const bySession = <R extends CellRow>(rows: R[] | null) => {
+    const m = new Map<string, R[]>();
+    for (const row of rows ?? []) {
+      if (!row.session_id) continue;
+      const list = m.get(row.session_id) ?? [];
+      list.push(row);
+      m.set(row.session_id, list);
     }
-    return { ...s, playerCount: a?.players.size ?? 0, typeCount: a?.types.size ?? 0, entryCount: a?.entries ?? 0, unrecordedCount, scopeCellCount };
+    return m;
+  };
+  const asCell = (r: CellRow) => ({ playerId: r.player_id, measurableTypeId: r.measurable_type_id });
+  const entriesBy = bySession(entryRows), marksBy = bySession(naRows), obsBy = bySession(obsRows);
+  return sessions.map(s => {
+    const entries = entriesBy.get(s.id) ?? [];
+    const accounted = accountedCellKeys(entries.map(asCell), (marksBy.get(s.id) ?? []).map(asCell), (obsBy.get(s.id) ?? []).map(asCell));
+    const done = scopeCompleteness(s, accounted, activeIds);
+    return {
+      ...s,
+      eventName: s.eventId ? (eventName.get(s.eventId) ?? null) : null,
+      playerCount: new Set(entries.map(e => e.player_id)).size,
+      typeCount: new Set(entries.map(e => e.measurable_type_id)).size,
+      entryCount: entries.length,
+      unrecordedCount: done?.unrecorded ?? null,
+      scopeCellCount: done?.total ?? null,
+    };
   });
 }
 
 export async function createRepTeamEvaluationSession(fields: {
   orgId: string; teamId: string; programYearId: string; sessionDate: string;
   note?: string | null; createdBy?: string | null; eventId?: string | null;
-  /** Both or neither (the table's CHECK) — the route has already proved every id is this team's. */
-  scope?: { metricIds: string[]; playerIds: string[] } | null;
+  /** Both or neither (the table's CHECK) — the route has already proved every id is this team's, and every count 1..5 on a test in the plan. */
+  scope?: { metricIds: string[]; playerIds: string[]; attempts?: Record<string, number> | null } | null;
 }): Promise<RepTeamEvaluationSession> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
@@ -8728,6 +8735,7 @@ export async function createRepTeamEvaluationSession(fields: {
       note: fields.note?.trim() || null,
       scope_metric_ids: fields.scope ? fields.scope.metricIds : null,
       scope_player_ids: fields.scope ? fields.scope.playerIds : null,
+      scope_attempts: fields.scope ? (fields.scope.attempts ?? null) : null,
       created_by: fields.createdBy ?? null,
     })
     .select()
@@ -8764,8 +8772,8 @@ export async function updateRepTeamEvaluationSession(
   id: string, teamId: string, programYearId: string,
   fields: {
     sessionDate?: string; note?: string | null; eventId?: string | null;
-    /** "Change scope" — a whole scope replaces the whole scope (both lists; the CHECK). */
-    scope?: { metricIds: string[]; playerIds: string[] };
+    /** A whole plan replaces the whole plan (both lists and the counts; the CHECKs). */
+    scope?: { metricIds: string[]; playerIds: string[]; attempts?: Record<string, number> | null };
   },
 ): Promise<RepTeamEvaluationSession | null> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -8775,6 +8783,7 @@ export async function updateRepTeamEvaluationSession(
   if (fields.scope !== undefined) {
     patch.scope_metric_ids = fields.scope.metricIds;
     patch.scope_player_ids = fields.scope.playerIds;
+    patch.scope_attempts = fields.scope.attempts ?? null;
   }
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
@@ -8799,16 +8808,18 @@ export async function updateRepTeamEvaluationSession(
  * its own contents, and the per-player trend lines would plot on the wrong date — precisely the
  * failure this whole feature exists to prevent.
  *
- * Safe and honest: a session's readings are by definition all from that one sitting. Readings
+ * Safe and honest: a session's results are by definition all from that one sitting. Results
  * logged individually from a player profile carry no `session_id` and are never touched by this
  * (the `.eq('session_id', …)` filter is what guarantees it). Setting the date back moves them
  * back, so the operation is fully reversible.
  *
- * ⚠ Deliberately NOT called when a linked EVENT is rescheduled (§10.2 ruling 1) — the measurements
- * happened when they happened, and moving them to keep a foreign key tidy would be the same
- * dishonesty arriving through a different door.
+ * ⚠ ALSO called when a linked PRACTICE's day changes (re-evaluation stage 2, C10, 2026-09-15 —
+ * reversing §10.2 ruling 1 on its reason): a session is created AT the practice, so a practice
+ * whose date changes after results were taken is a date correction, and the results follow. The
+ * two-statement move lives in `lib/development-session-move.ts`; both the session PATCH and the
+ * events PATCH call it, never this alone.
  *
- * @returns how many readings moved.
+ * @returns how many results moved.
  */
 export async function restampRepSessionMeasurables(
   sessionId: string, teamId: string, recordedOn: string,
@@ -8816,6 +8827,20 @@ export async function restampRepSessionMeasurables(
   const { data, error } = await supabaseAdmin
     .from('rep_player_measurables')
     .update({ recorded_on: recordedOn, updated_at: new Date().toISOString() })
+    .eq('session_id', sessionId)
+    .eq('team_id', teamId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length;
+}
+
+/** The observations recorded in a session are dated by it too — they move with the results (C12 /review, 2026-09-15). */
+export async function restampRepSessionObservations(
+  sessionId: string, teamId: string, observedOn: string,
+): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_observations')
+    .update({ observed_on: observedOn, updated_at: new Date().toISOString() })
     .eq('session_id', sessionId)
     .eq('team_id', teamId)
     .select('id');
@@ -8857,7 +8882,40 @@ export async function deleteRepTeamEvaluationSession(
   return (data ?? []).length > 0;
 }
 
-/** Every reading collected in one session (the run screen's resume state). team_id scoping
+/**
+ * Drop a test from a session's plan AND its results (re-evaluation stage 2, C9 — the coach chose
+ * "delete them too" over keep, which is the default): every result and every not-assessed mark
+ * saved in THIS session under the named metrics. Observations are never deleted this way (a
+ * written note about a child stays with the player — it may be evidence on a goal review). The
+ * route has already proved the ids are outside the new plan. Returns how many results went.
+ */
+export async function deleteRepSessionRecordsForMetrics(sessionId: string, teamId: string, metricIds: string[]): Promise<number> {
+  if (metricIds.length === 0) return 0;
+  // Two tables, no dependency between the deletes — one round trip.
+  const [{ data, error }, { error: markError }] = await Promise.all([
+    supabaseAdmin.from('rep_player_measurables').delete().eq('session_id', sessionId).eq('team_id', teamId).in('measurable_type_id', metricIds).select('id'),
+    supabaseAdmin.from('rep_evaluation_not_assessed').delete().eq('session_id', sessionId).eq('team_id', teamId).in('measurable_type_id', metricIds),
+  ]);
+  if (error) throw error;
+  if (markError) throw markError;
+  return (data ?? []).length;
+}
+
+/** How many results each of these sessions holds — one grouped read, for a confirm that names the count. */
+export async function countRepSessionMeasurables(sessionIds: string[], teamId: string): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (sessionIds.length === 0) return counts;
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .select('session_id')
+    .eq('team_id', teamId)
+    .in('session_id', sessionIds);
+  if (error) throw error;
+  for (const r of data ?? []) if (r.session_id) counts.set(r.session_id, (counts.get(r.session_id) ?? 0) + 1);
+  return counts;
+}
+
+/** Every result collected in one session (the run screen's resume state). team_id scoping
  *  is belt-and-suspenders on top of the composite FK — the file's own cross-team rule. */
 export async function getRepSessionMeasurables(sessionId: string, teamId: string): Promise<RepPlayerMeasurable[]> {
   const { data, error } = await supabaseAdmin

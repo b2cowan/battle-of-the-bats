@@ -466,10 +466,15 @@ console.log('\nOff-season — Riverdale Ridge 14U');
     }
     /* THE HEADLINE MOMENT (Phase 2, 2026-09-13): the showcase player ran the dash THREE times on
        each testing day — every attempt kept, and the best is the headline. A seeded moment can be
-       designed, documented and ABSENT (the 2026-09-10 lesson); this is the row the tour points at. */
+       designed, documented and ABSENT (the 2026-09-10 lesson); this is the row the tour points at.
+       Since stage 2 (2026-09-15, mig 298) the count is the SESSION's plan: each testing day plans
+       the dash ONCE, and the showcase player's three are the row's "+" — the plan is a floor. */
     const sprintType = (await db.from('rep_team_measurable_types')
       .select('id, name, attempts_per_session').eq('team_id', teamId)).data?.find(t => t.name === OFFSEASON_MEASURABLE_TYPES[0].name);
-    check(sprintType?.attempts_per_session === 3, `the ${OFFSEASON_MEASURABLE_TYPES[0].name} is defined as three attempts per session`);
+    const { data: sessionPlans } = await db.from('rep_team_evaluation_sessions').select('id, scope_attempts').in('id', sessionRows.map(r => r.id));
+    check(!!sprintType && (sessionPlans ?? []).length === sessionRows.length
+      && (sessionPlans ?? []).every(p => p.scope_attempts && p.scope_attempts[sprintType.id] === OFFSEASON_MEASURABLE_TYPES[0].attempts),
+      `each testing day plans the ${OFFSEASON_MEASURABLE_TYPES[0].name} ${OFFSEASON_MEASURABLE_TYPES[0].attempts === 1 ? 'once' : `${OFFSEASON_MEASURABLE_TYPES[0].attempts} times`} — the count is the session's, and the showcase player's extra runs are the row's "+"`);
     const showcaseId = (await db.from('rep_roster_players').select('id, display_order').eq('program_year_id', py.id).eq('status', 'active')
       .order('display_order', { ascending: true })).data?.[OFFSEASON_SHOWCASE_ROSTER_INDEX]?.id;
     for (const [sessionIndex, declared] of OFFSEASON_TESTING_SESSIONS.entries()) {

@@ -13446,6 +13446,15 @@
     "ordinal_position": 12
   },
   {
+    "table_name": "rep_team_evaluation_sessions",
+    "column_name": "scope_attempts",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
     "table_name": "rep_team_event_attendance",
     "column_name": "id",
     "data_type": "uuid",

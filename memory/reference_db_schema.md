@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-14 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-15 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-14
+# DB Schema Reference — 2026-09-15
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -264,7 +264,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_team_drills_org_idx, rep_team_drills_org_shared_name_uniq, rep_team_drills_team_idx, rep_team_drills_team_name_uniq
 
 ### rep_team_evaluation_sessions
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, session_date NOT NULL, note, created_by (uuid), created_at, updated_at, event_id (uuid) → rep_team_events.id, scope_metric_ids, scope_player_ids
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, session_date NOT NULL, note, created_by (uuid), created_at, updated_at, event_id (uuid) → rep_team_events.id, scope_metric_ids, scope_player_ids, scope_attempts (jsonb)
 - Indexes: rep_team_eval_sessions_event_idx, rep_team_evaluation_sessions_id_team_uniq, rep_team_evaluation_sessions_org_idx, rep_team_evaluation_sessions_py_idx, rep_team_evaluation_sessions_team_idx
 
 ### rep_team_event_attendance

@@ -13448,6 +13448,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 13,
+        "column_name": "scope_attempts",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_event_attendance",
         "pos": 1,
         "column_name": "id",
@@ -28747,6 +28756,18 @@
         "table_name": "rep_team_evaluation_sessions",
         "detail": "rep_team_evaluation_sessions_note_check",
         "check_clause": "((note IS NULL) OR (char_length(note) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_evaluation_sessions",
+        "detail": "rep_team_evaluation_sessions_scope_attempts_needs_scope_check",
+        "check_clause": "((scope_attempts IS NULL) OR (scope_metric_ids IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_evaluation_sessions",
+        "detail": "rep_team_evaluation_sessions_scope_attempts_object_check",
+        "check_clause": "((scope_attempts IS NULL) OR (jsonb_typeof(scope_attempts) = 'object'::text))"
       },
       {
         "kind": "CHECK",

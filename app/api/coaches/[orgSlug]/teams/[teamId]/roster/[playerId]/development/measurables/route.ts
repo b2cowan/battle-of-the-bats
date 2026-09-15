@@ -71,11 +71,10 @@ export const POST = withObservability(async (req: Request,
   if (!isMeasuredTest(type)) {
     return NextResponse.json({ error: 'A skill takes an observation, not a number — record one from the skill’s chip on a session or the player’s Observations.' }, { status: 400 });
   }
-  // The definition says how many attempts a session takes (owner ruling 2026-09-11); the reader
-  // bounded the number, the definition bounds it further. A single reading is always attempt 1.
-  if (attemptNo > type.attemptsPerSession) {
-    return NextResponse.json({ error: `${type.name} takes ${type.attemptsPerSession} attempt${type.attemptsPerSession === 1 ? '' : 's'} per session.` }, { status: 400 });
-  }
+  // How many attempts a row takes is the SESSION's plan, and the plan is a floor, never a ceiling
+  // (re-evaluation stage 2, C1/C2, 2026-09-15): a row may run one more with the "+", up to five.
+  // The reader holds the five; the definition's stored count no longer bounds anything. A single
+  // result outside a session is always attempt 1 (the reader).
 
   // Optional evaluation-session tag (3B) — must be THIS team's session AND the same season
   // as the player row (a prior-season session id must not attach to a current reading; the

@@ -106,22 +106,41 @@ describe('the routes read through the shared readers', () => {
 });
 
 /**
- * The re-stamp (D10). A reading is stamped with the session's date when typed, so moving the
- * session MUST move its readings — before the session row moves, and put back if the move fails.
- * Pinned at source because the two writes are not in one transaction.
+ * The re-stamp (D10). A result is stamped with the session's date when typed, so moving the
+ * session MUST move its results — before the session row moves, and put back if the move fails.
+ * Pinned at source because the two writes are not in one transaction. Since re-evaluation stage 2
+ * (C10, 2026-09-15) the two-statement move is ONE shared operation (`lib/development-session-move.ts`)
+ * that both the session PATCH and the events PATCH (a practice's day change moves its session)
+ * call — neither route may re-stamp on its own.
  */
-describe('session PATCH — the re-stamp moves the readings before the session, and back on failure', () => {
-  const src = api('development', 'sessions', '[sessionId]', 'route.ts');
+describe('the session move — the re-stamp moves the results before the session, and back on failure', () => {
+  const move = readFileSync(join(process.cwd(), 'lib', 'development-session-move.ts'), 'utf8');
+  const sessionRoute = api('development', 'sessions', '[sessionId]', 'route.ts');
+  const eventsRoute = api('events', '[eventId]', 'route.ts');
   it('re-stamps before updating the session row', () => {
-    const restamp = src.indexOf('await restampRepSessionMeasurables(sessionId, teamId, fields.sessionDate!)');
-    const update = src.indexOf('await updateRepTeamEvaluationSession(');
-    assert.ok(restamp > 0 && update > restamp, 'the readings must move first so a failure leaves both sides on the old date');
+    const restamp = move.indexOf('await restampRepSessionMeasurables(session.id, teamId, sessionDate)');
+    const update = move.indexOf('await updateRepTeamEvaluationSession(');
+    assert.ok(restamp > 0 && update > restamp, 'the results must move first so a failure leaves both sides on the old date');
   });
-  it('puts the readings back when the session row did not move', () => {
-    assert.match(src, /if \(!session\) \{[\s\S]{0,400}restampRepSessionMeasurables\(sessionId, teamId, previousDate\)/);
+  it('puts the results back when the session row did not move', () => {
+    assert.match(move, /if \(updated\) return[\s\S]{0,400}restampRepSessionMeasurables\(session\.id, teamId, previousDate\)/);
+  });
+  it('both doors call the shared move and never re-stamp alone', () => {
+    assert.match(sessionRoute, /moveRepSessionDate\(/);
+    assert.match(eventsRoute, /moveRepSessionDate\(/);
+    assert.doesNotMatch(sessionRoute, /restampRepSessionMeasurables\(/);
+    assert.doesNotMatch(eventsRoute, /restampRepSessionMeasurables\(/);
+  });
+  it('a practice’s day change asks before it moves a session — 409 with the linked sessions unless the body says moveSessions', () => {
+    assert.match(eventsRoute, /moveSessions !== true/);
+    assert.match(eventsRoute, /linkedSessions/);
+  });
+  it('a session at a practice takes the practice’s day — the link derives the date, a disagreeing date is refused', () => {
+    assert.match(sessionRoute, /fields\.sessionDate = orgDayKey\(event\.startsAt\)/);
+    assert.match(sessionRoute, /takes the practice’s date/);
   });
   it('the session is found INSIDE the working season — a finished season’s session is not addressable here', () => {
-    assert.match(src, /getRepTeamEvaluationSession\(sessionId, teamId, programYear\.id\)/);
+    assert.match(sessionRoute, /getRepTeamEvaluationSession\(sessionId, teamId, programYear\.id\)/);
   });
 });
 

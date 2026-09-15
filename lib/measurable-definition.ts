@@ -91,8 +91,10 @@ const formatEdge = (v: number | null) => (v == null ? '?' : formatValue(v));
 /**
  * The Metrics tab's "What a record means" column. The UNIT is not here (stage 1, B3): the row says
  * it once, beside the name — a range aim keeps it inside the band because "62–68" means nothing
- * without it. A multi-attempt test says how its headline is read ("best attempt"); a skill says
- * what it records and how many descriptors it offers.
+ * without it. A test says how its headline is read ("average of attempts") when that is not the
+ * aim's own default — the count per session is the SESSION's fact now (stage 2, C1), so "is this
+ * a multi-attempt test" is not a question the definition can answer; the exception is what is
+ * said. A skill says what it records and how many descriptors it offers.
  *
  * The method is NOT here either (owner, 2026-09-14): it is the coach's optional note on how the
  * test is run, and a row that said "method not recorded" was a to-do wearing a fact's clothes.
@@ -103,7 +105,7 @@ export function recordMeaning(t: RepTeamMeasurableType): string {
     return n > 0 ? `what you saw · ${n} descriptor${n === 1 ? '' : 's'}` : 'what you saw';
   }
   const parts = [aimSentence(t)];
-  if (t.attemptsPerSession > 1) parts.push(HEADLINE_LABELS[t.headline].toLowerCase());
+  if (t.headline !== defaultHeadlineFor(t.aim)) parts.push(HEADLINE_LABELS[t.headline].toLowerCase());
   return parts.join(' · ');
 }
 

@@ -357,8 +357,10 @@ const SITES: Site[] = [
   /* A metric's definition is a SHEET over the hub since re-evaluation stage 1 (2026-09-14) — no
      header of its own; the two `metrics/…` routes redirect into `?edit=`. */
   {
+    // Titled by the SESSION ("Wed, Jun 10 — Phase 2 probe — scoped") since re-evaluation stage 2
+    // (C6, 2026-09-15) — the list row's own text; the three-field form left the page for the sheet.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/sessions/[sessionId]/page.tsx', occurrence: 0,
-    screen: 'Evaluation session', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'A session (titled by the session)', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
     // Preview development handout (Phase 3, mockup screen 6) — ONE component draws the page. The way

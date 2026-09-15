@@ -1,79 +1,194 @@
-/* ═══ The evaluation session's RECORD screen (development lifecycle Phase 2, mockup screen 3) ═══
-   One field per attempt, a state per row, a scope the counts are measured against. A new
+/* ═══ The evaluation session's RECORD screen (development lifecycle Phase 2, mockup screen 3;
+   re-evaluation stage 2, 2026-09-15: the when-line, the chips as the scope, the grid on white,
+   one language per row, the phone composition, the session sheet's lists, the review table) ═══
+   One box per attempt, a state per row, a plan the counts are measured against. A new
    component's 44px floor lives in its OWN module (the repo rule): every control here — an attempt
-   field, a descriptor select, a row link, a checkbox row in the scope dialog — clears
-   `--tap-min` on its own, which is what retires the layout baseline's DEFERRED rows for this grid
-   (the remove button at 16×24 and the 35px input, recorded 2026-09-11 "TOUCH DEBT ON CONTROLS THAT
-   PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD"). Tokens only. */
+   box, the observation door, a row link, a stepper, a checkbox row in the sheet — clears `--tap-min`
+   on its own (the sheet's controls at touch widths, where the floor applies — see its block).
+   Tokens only. */
 
-/* ── the scope line ── */
-.scopeLine {
+/* ── the when-line (C6): the day or the practice as a door · the plan · Change › ── */
+.whenLine {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem 0.75rem;
-  margin: 0.2rem 0 0.6rem;
+  margin: 0 0 0.7rem;
   font-size: var(--type-body);
   color: var(--text-secondary);
 }
-.scopeLine strong { color: var(--text-primary); }
+.whenLine strong { color: var(--text-primary); font-weight: 600; }
+/* The plan's figures ("5 players · 4 tests") on the primary face, as drawn. */
+.whenLine b { color: var(--text-primary); font-weight: 600; }
+.whenSep { color: var(--text-tertiary); }
+/* The line's two doors — the practice and Change › — in the accent ink, bold, no underline (the
+   frame's `.when u`); the practice link sits inside a line of text, so it takes the tap floor with
+   vertical padding and a matching negative margin (the .devCellLink shape) rather than a taller line. */
+.whenLink {
+  display: inline-block;
+  min-height: var(--tap-min, 44px);
+  padding: 0.7rem 0;
+  margin: -0.7rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--logic-lime);
+  text-decoration: none;
+  cursor: pointer;
+}
+.whenLink:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-/* ── the method note under the chips ── */
-.method {
+/* ── the chips: the scope, each with its done-count (C3); a dropdown on a phone (C7) ──
+   The pill itself is the portal's shared badge recipe (`.badge` + `.badgeActive` / `.badgeDraft` in
+   coaches.module.css — one on/off pill everywhere); this modifier adds only what a chip that is a
+   CONTROL needs: the tap floor, the gap before its count, and the count's face. */
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin: 0 0 0.7rem; }
+.chip { display: inline-flex; align-items: center; gap: 0.45rem; min-height: var(--tap-min, 44px); padding-left: 0.75rem; padding-right: 0.75rem; cursor: pointer; }
+.chip small { font-family: var(--font-data); font-size: var(--type-support); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-tertiary); }
+.chipPlus { border-style: dashed; }
+.chipSelect { display: none; }
+
+/* ── the method, one line, with the how-to behind the ? (C6) ── */
+.methodLine {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem 1rem;
   margin: 0 0 0.6rem;
-  padding: 0.55rem 0.75rem;
-  border-left: 3px solid var(--home-line-strong, var(--border-2));
-  background: var(--home-card, rgba(255, 255, 255, 0.04));
-  border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
   font-size: var(--type-body);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
-.method strong { display: block; color: var(--text-primary); margin-bottom: 0.15rem; }
-.method p { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.methodLine > span:first-child { min-width: 0; flex: 1 1 24rem; }
+.methodHelp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--tap-min, 44px);
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.methodHelp:hover { color: var(--text-primary); }
+.methodHelpMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: 50%;
+  font-size: var(--type-label);
+}
 
-/* ── the grid ── */
+/* ── the grid — on the white card ground the list tabs took in stage 0 (C6) ── */
+.gridCard {
+  background: var(--card-bg, var(--surface));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+  padding: 0 0.75rem;
+}
 .grid { display: flex; flex-direction: column; }
 .labels {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.8fr) minmax(0, 1fr);
   gap: 0.75rem;
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.4rem;
+  font-family: var(--font-display);
   font-size: var(--type-support);
-  color: var(--text-tertiary);
-  border-bottom: 1px solid var(--home-line, var(--border-2));
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--home-line-strong, var(--border-2));
 }
 .row {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.8fr) minmax(0, 1fr);
   gap: 0.5rem 0.75rem;
   align-items: center;
-  min-height: var(--tap-min, 44px);
-  padding: 0.4rem 0.6rem;
-  border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  min-height: 2.5rem;
+  padding: var(--table-pad-comfortable, 0.7rem) 0.4rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
 }
-.row:first-child { border-top: none; }
+.labels + .row { border-top: none; }
 .rowOutsideScope { opacity: 0.85; }
 .name { min-width: 0; }
-.name strong { display: block; font-size: var(--type-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.name span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.name strong { display: block; font-size: var(--type-body); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The row's note ("outside the scope") under the name — a DIRECT child: the number sits inside the
+   `<strong>` and must stay on the name's line (a bare `.name span` once caught it and put "#1" on its
+   own line in every row — owner review, 2026-09-15). */
+.name > span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .num { color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
 
 .attempts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+/* ONE box for a saved attempt and an empty one (C7): the same width, height, face and alignment
+   whether it is an input or its read-only face. */
 .attempt {
-  width: 5.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  width: 4.5rem;
   max-width: 100%;
-  min-height: var(--tap-min, 44px);
+  min-height: 2.5rem;
+  padding: 0 0.6rem;
   text-align: right;
   font-family: var(--font-data);
+  font-size: var(--type-body);
   font-variant-numeric: tabular-nums;
 }
-.attemptSaved { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: var(--type-body); }
+.attemptSaved {
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: var(--radius-sm, 6px);
+  background: var(--home-fill, transparent);
+  color: var(--text-primary);
+}
+.attemptPlus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px dashed var(--home-line-strong, var(--border-2));
+  border-radius: var(--radius-sm, 6px);
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.attemptPlus:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
 .headline { flex-basis: 100%; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .obs { display: flex; flex-wrap: wrap; gap: 0.35rem; min-width: 0; }
-.obs select { min-height: var(--tap-min, 44px); flex: 0 1 12rem; max-width: 100%; }
-.obs input { min-height: var(--tap-min, 44px); flex: 1 1 10rem; min-width: 0; }
+/* A blank skill row's one door (C12): dashed like the row's "+", in the accent ink, drawn-size at pointer widths. */
+.obsDoor {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  border: 1px dashed var(--home-line-strong, var(--border-2));
+  border-radius: var(--radius-sm, 6px);
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--logic-lime);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.obsDoor:hover { border-color: var(--text-tertiary); background: var(--home-fill, transparent); }
 .obsSaved { font-size: var(--type-body); }
 .obsSaved em { color: var(--text-secondary); font-style: normal; }
+/* The not-assessed row's record: a dash and the reason, in the data face. */
+.recordDash { font-family: var(--font-data); font-size: var(--type-body); color: var(--text-tertiary); }
 
 .state {
   display: flex;
@@ -86,18 +201,19 @@
 .stateSaved { color: var(--badge-success-ink); }
 .stateError { color: var(--danger); }
 .stateQuiet { color: var(--text-tertiary); }
-/* Row links (Edit · Retry · Mark not assessed · Undo): inline-block with VERTICAL padding only —
-   a sideways negative margin overflows at 361px. */
+/* Row links on the grid (Edit · Retry · Mark not assessed · Undo — the sheet's links are `.pickLink`): inline-block
+   with VERTICAL padding only — a sideways negative margin overflows at 361px. */
 .rowLink {
   display: inline-block;
-  min-height: var(--tap-min, 44px);
-  padding: 0.7rem 0;
+  min-height: 2.5rem;
+  padding: 0.5rem 0;
   border: 0;
   background: none;
   font: inherit;
   font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-secondary);
+  text-align: left;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -114,32 +230,178 @@
   margin-top: 0.8rem;
 }
 
-/* ── the scope dialog's lists ── */
+/* ── the session sheet's lists (C1 · C4 · C10) ──
+   Four plain labelled groups on the sheet's white (the definition sheet's shape) — no boxes, no
+   tint. ⚠ SIZED AS DRAWN AT POINTER WIDTHS, FLOORED AT TOUCH WIDTHS: the frame draws 40px rows,
+   36px roster rows and a 32px stepper on a desktop, and the tap floor is a TOUCH rule (owner,
+   2026-08-19 — `.listRowToggle` is the precedent). The `@media (max-width: 768px)` block at the
+   foot raises every control here to `--tap-min`; nothing above it may claim the floor on its own,
+   or the desktop sheet grows back into the 44px-everywhere build the owner sent back. */
+.group { min-width: 0; }
+.when { display: inline-flex; align-self: flex-start; border: 1px solid var(--home-line-strong, var(--border-2)); border-radius: var(--radius-sm, 6px); overflow: hidden; margin: 0 0 0.15rem; }
+.whenChoice {
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border: 0;
+  background: var(--card-bg, transparent);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.whenChoice + .whenChoice { border-left: 1px solid var(--home-line-strong, var(--border-2)); }
+.whenChoiceOn { background: rgba(var(--success-rgb), 0.14); color: var(--text-primary); }
 .pickList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .pickRow {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  min-height: var(--tap-min, 44px);
-  padding: 0.35rem 0;
-  border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  min-height: 2.5rem;
+  padding: 0.15rem 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
   font-size: var(--type-body);
-  cursor: pointer;
 }
 .pickRow:first-child { border-top: none; }
-.pickRow input { width: 1.15rem; height: 1.15rem; margin: 0; accent-color: var(--logic-lime); flex-shrink: 0; }
-.pickRow span { min-width: 0; }
-.pickRow small { color: var(--text-tertiary); font-size: var(--type-support); }
-.pickAll { display: flex; gap: 0.75rem; margin: 0 0 0.35rem; }
+.pickMain { display: flex; align-items: center; gap: 0.6rem; flex: 1 1 auto; min-width: 0; min-height: 2.5rem; cursor: pointer; }
+.pickMain input { width: 1.15rem; height: 1.15rem; margin: 0; accent-color: var(--logic-lime); flex-shrink: 0; }
+.pickMain > span { min-width: 0; }
+/* A plan row's name (C11) — the row is not a checkbox any more, so its name is not a label. */
+.pickName { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; min-height: 2.5rem; }
+.pickName > span { min-width: 0; }
+.pickRow small, .pickAside { color: var(--text-tertiary); font-size: var(--type-support); }
+.pickAside { white-space: nowrap; }
+/* The unit and aim beside a test's name, and the word beside a count — trimmed on a phone (see the block at the foot). */
+.pickDetail { display: inline; }
+.stepWord { display: inline; }
+/* The sheet's quiet links — + New test… · Everyone · No one — in the accent ink, as drawn. */
+.pickLink {
+  display: inline-block;
+  min-height: 2.5rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--logic-lime);
+  cursor: pointer;
+}
+.pickLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--home-line-strong, var(--border-2)); border-radius: var(--radius-sm, 6px); overflow: hidden; flex-shrink: 0; }
+.stepBtn {
+  width: 1.9rem;
+  min-height: 2rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.stepBtn:disabled { opacity: 0.45; cursor: default; }
+.stepValue { padding: 0 0.5rem; font-family: var(--font-data); font-size: var(--type-support); font-variant-numeric: tabular-nums; white-space: nowrap; border-left: 1px solid var(--home-line, var(--border-2)); border-right: 1px solid var(--home-line, var(--border-2)); min-height: 2rem; display: inline-flex; align-items: center; }
+/* ── The plan is a list you BUILD (C11) — a row's ✕, and the add-a-test field's list ──
+   A row is on tonight's plan because it is listed; ✕ is how it leaves (the way a tag chip leaves a
+   field). The field is the plan's last row; its list wears the tag fields' dropdown chrome
+   (`.tagComboDropdown` in coaches.module.css) with metric rows — a name and its unit · aim, a group
+   head per kind, and the "last run" caption on the right. */
+.pickRemove {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.pickRemove:hover { background: var(--home-paper, var(--surface-2)); color: var(--text-primary); }
+.addRow { padding-top: 0.5rem; border-top: 1px solid var(--home-line, var(--border-2)); }
+.pickList > .addRow:first-child { border-top: none; padding-top: 0; }
+.addMenu { max-height: 21rem; }
+.addGroup {
+  padding: 0.45rem 0.6rem 0.2rem;
+  font-family: var(--font-heading, inherit);
+  font-size: var(--type-label, 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: var(--home-paper, var(--surface-2));
+}
+.addOpt { min-height: 2.5rem; }
+.addOpt small { color: var(--text-tertiary); font-size: var(--type-support); }
+.addOptName { min-width: 0; }
+.addOptLast { flex-shrink: 0; font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+/* Already on tonight's plan: listed so the coach sees why it is not offered; not a row to pick. */
+.addOptHave { color: var(--text-tertiary); cursor: default; }
+.addOpt.addOptHave:hover { background: none; }
+.addOptHave .addOptLast { color: var(--logic-lime); }
+.addMenu .addDoor { font-weight: 700; color: var(--logic-lime); }
+/* "Who's here?" with Everyone · No one beside it — one line, the links in the accent ink. */
+.whoHead { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.pickAll { display: inline-flex; align-items: baseline; gap: 0.4rem; color: var(--text-tertiary); }
+.pickAll .pickLink { min-height: 0; padding: 0; font-size: var(--type-support); }
+.pickColumns { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.25rem; align-items: start; }
+.pickColumns .pickRow, .pickColumns .pickMain { min-height: 2.25rem; }
+.sheetFoot { display: flex; align-items: center; gap: 0.5rem; }
+.footSpacer { flex: 1; }
+/* The touch floor (≤768): every control on the grid and in the sheet clears `--tap-min` on a finger.
+   Above it, the boxes, the "+", the observation door and the row links are drawn-size (40px). */
+@media (max-width: 768px) {
+  .row, .attempt, .attemptPlus, .obsDoor, .rowLink,
+  .whenChoice, .pickRow, .pickMain, .pickName, .pickColumns .pickRow, .pickColumns .pickMain, .stepValue { min-height: var(--tap-min, 44px); }
+  .attemptPlus { width: var(--tap-min, 44px); }
+  .rowLink { padding: 0.7rem 0; }
+  .stepBtn { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  .pickRemove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .addOpt { min-height: var(--tap-min, 44px); }
+  .pickLink { min-height: var(--tap-min, 44px); padding: 0.7rem 0; }
+  .pickAll .pickLink { min-height: var(--tap-min, 44px); padding: 0.7rem 0; }
+}
 
-/* ── the review dialog ── */
-.reviewCounts { margin: 0 0 0.6rem; font-size: var(--type-body); }
-.reviewList { margin: 0; padding: 0; list-style: none; font-size: var(--type-support); color: var(--text-secondary); }
-.reviewList li { padding: 0.25rem 0; border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1)); }
-.reviewList li:first-child { border-top: none; }
+/* ── the review (C8): the portal's list recipe (`.table` / `.th` / `.td` / `.thNum` / `.tdNum`), the
+   names as the row's caption (`.listRowSub`). Only the roles this table alone has live here. ── */
+.reviewTest { font-weight: 600; }
+.reviewTest small { font-weight: 400; color: var(--text-tertiary); }
+.reviewNames b { color: var(--text-secondary); font-weight: 600; }
+/* Every category ("Not assessed:", "Not recorded:", the drop-it link) is its own line — joining
+   them inline with a middot separator let the separator land alone at a wrap point on a long
+   roster (owner screenshot, 2026-09-15: a stray "." floating between two lines). */
+.reviewNameLine { display: block; margin-top: 0.25rem; }
+.reviewNameLine:first-child { margin-top: 0; }
+.reviewLegend { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.reviewLegend b { color: var(--text-secondary); font-weight: 600; }
+/* The lead cell's name list can run to a dozen players — several lines taller than the sibling
+   numeric cells. `.td`'s shared `vertical-align: middle` (right, for every OTHER list table, whose
+   cells are one line) would drag this row's counts down to the middle of that block, stranding
+   them well below the header that names them (owner screenshot, 2026-09-15: "0 0 12" floating with
+   no visible column heading). Top-aligning keeps every row's counts beside its test name, where the
+   pinned header above still reads. The element selector outranks the shared `.td` class rule
+   regardless of the two CSS Modules' build-time order. */
+.reviewTable td { vertical-align: top; }
+.reviewTable thead th { position: sticky; top: 0; z-index: 1; }
 
 @media (max-width: 640px) {
   .labels { display: none; }
-  .row { grid-template-columns: 1fr; gap: 0.35rem; }
-  .state { grid-column: 1 / -1; }
+  /* The phone composition (C7): the name and the state on the first line, the boxes on the second. */
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem 0.6rem; align-items: baseline; }
+  .name { grid-column: 1; grid-row: 1; }
+  .state { grid-column: 2; grid-row: 1; justify-content: flex-end; }
+  .attempts, .obs, .row > .obsSaved, .row > .recordDash { grid-column: 1 / -1; grid-row: 2; }
+  .rowError { grid-row: 3; }
+  .attempt { width: 4.4rem; }
+  /* The tests are a dropdown, always (C7 — the owner's read): one line, the open list carries every count. */
+  .chips { display: none; }
+  .chipSelect { display: block; margin: 0 0 0.7rem; }
+  .chipSelect select { min-height: var(--tap-min, 44px); width: 100%; font-weight: 600; }
+  .pickColumns { grid-template-columns: 1fr; }
+  /* The phone frame trims a test row to its name and "× 2": the unit and aim, the word "attempts"
+     and the skill's "one observation" are desktop text (the definition is one tap away). */
+  .pickDetail, .stepWord, .pickAside { display: none; }
+  .pickColumns > .pickList + .pickList .pickRow:first-child { border-top: 1px solid var(--home-line, var(--border-2)); }
 }

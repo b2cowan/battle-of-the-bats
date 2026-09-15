@@ -1162,13 +1162,17 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     note: testing.note, created_by: coach.id,
     // The SCOPE (Phase 2): every test and the skill, and the players who were there — so the
     // session reads "N recorded · 0 not assessed · 0 not recorded — of M in scope" and the two who
-    // missed are outside it, exactly as a coach would have set it up.
+    // missed are outside it, exactly as a coach would have set it up. The PLAN's count per test
+    // (stage 2, C1, mig 298): each test once — the showcase player's three sprints are the row's
+    // "+", never a plan the rest of the roster fell short of.
     scope_metric_ids: [...typeIds, skillTypeId],
     scope_player_ids: playerIds.filter((_, i) => !testing.absent.includes(i)),
+    scope_attempts: Object.fromEntries(typeIds.map((id, t) => [id, OFFSEASON_MEASURABLE_TYPES[t].attempts])),
   })));
-  // Readings only for whoever was there. The showcase player runs the dash THREE times on each
+  // Results only for whoever was there. The showcase player runs the dash THREE times on each
   // testing day (Phase 2: every attempt is recorded — best is the headline, and the attempts show
-  // the spread); everyone else runs it once. Three sprints are one player everywhere that counts.
+  // the spread; stage 2: more than the plan, kept by the row's "+"); everyone else runs it once.
+  // Three sprints are one player everywhere that counts.
   const readings = state.testingSessions.flatMap((testing, sessionIndex) =>
     playerIds.flatMap((pid, i) => testing.absent.includes(i) ? [] :
       OFFSEASON_MEASURABLE_TYPES.flatMap((type, t) => {

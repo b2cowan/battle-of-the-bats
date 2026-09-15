@@ -58,6 +58,7 @@ import { budgetLineKindForItem } from '../lib/coach-budget-totals.ts';
 /* ⚠ THE PURE HALF — `coach-budget-items.ts` holds the same rule behind a `supabase-admin`
    import. Read that file's header before changing this import. */
 import { budgetItemSourceForCategory } from '../lib/coach-budget-item-tiers.ts';
+import { orgDayKey } from '../lib/timezone.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -517,18 +518,39 @@ await ensureOne(
   'lineup template',
 );
 
-// An evaluation session hung off the seeded practice — which is what the screen is for: readings
-// taken AT a practice, with the practice named on the page.
-await ensureOne(
-  'rep_team_evaluation_sessions',
-  { team_id: team.id, event_id: eventId },
-  {
-    org_id: org.id, team_id: team.id, program_year_id: py.id, event_id: eventId,
-    session_date: startsAt.slice(0, 10),
-    note: 'Probe session — readings taken at the seeded practice.',
-  },
-  'evaluation session',
-);
+// An evaluation session hung off the seeded practice — which is what the screen is for: results
+// recorded AT a practice, with the practice named on the page.
+// ⚠ A SESSION AT A PRACTICE TAKES THE PRACTICE'S DATE (development re-evaluation stage 2, C10,
+// 2026-09-15). The practice above is re-dated to "tonight" on every run, so the session — and every
+// result in it, the re-stamp — follows it here, the way the product moves them when a practice's
+// day changes. The fixture decision (kickoff, 2026-09-15): MOVE, not unlink — "Recorded here" on the
+// practice page and "at UAT probe practice ›" on the Sessions list both need the link.
+{
+  const probeDay = orgDayKey(startsAt);
+  const probeSessionId = await ensureOne(
+    'rep_team_evaluation_sessions',
+    { team_id: team.id, event_id: eventId },
+    {
+      org_id: org.id, team_id: team.id, program_year_id: py.id, event_id: eventId,
+      session_date: probeDay,
+      note: 'Probe session — results recorded at the seeded practice.',
+    },
+    'evaluation session',
+  );
+  const named = await db.from('rep_team_evaluation_sessions').update({ note: 'Probe session — results recorded at the seeded practice.' }).eq('id', probeSessionId);
+  if (named.error) { console.error('✗ probe session note', named.error.message); process.exit(1); }
+  // The product's own order (lib/development-session-move.ts — a script cannot import it, the module is
+  // server-only): the RESULTS move first, then the session row, so a failure between the two leaves a
+  // session that still agrees with its own contents rather than a moved header over stale results.
+  const { data: stale } = await db.from('rep_team_evaluation_sessions').select('id').eq('id', probeSessionId).neq('session_date', probeDay).limit(1);
+  if (stale?.length) {
+    const rs = await db.from('rep_player_measurables').update({ recorded_on: probeDay }).eq('session_id', probeSessionId).select('id');
+    if (rs.error) { console.error('✗ probe session re-stamp', rs.error.message); process.exit(1); }
+    const moved = await db.from('rep_team_evaluation_sessions').update({ session_date: probeDay }).eq('id', probeSessionId);
+    if (moved.error) { console.error('✗ probe session re-date', moved.error.message); process.exit(1); }
+    ok(`probe session moved to the practice's day (${probeDay}) with ${rs.data?.length ?? 0} result(s) re-stamped — C10`);
+  }
+}
 
 // ── 12. Attendance on the game, so "Who's here" opens onto something true ────
 const { data: gAtt } = await db.from('rep_team_event_attendance').select('id').eq('event_id', gameId).limit(1);
@@ -2876,6 +2898,27 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
       row(devonId, '60-yd sprint', 8.62, 'seconds', on(5, 6)),
       row(devonId, '60-yd sprint', 8.41, 'seconds', on(5, 20)),
       row(devonId, '60-yd sprint', 8.28, 'seconds', probeSession.session_date, probeSession.id),
+  /* ⚠ RESULTS STRANDED UNDER A RETIRED TWIN (stage 2 kickoff, 2026-09-15). A manual successor walk
+     replaced the 60-yd sprint once, so the rows seeded under the ORIGINAL definition sat under a
+     retired "60-yd sprint" while the live one was in the scoped session's plan with nothing — the
+     Before frame drew it honestly. The fixture pins its identities by NAME, so on every run the
+     team's sprint results and not-assessed marks are re-homed onto the live definition (the unit is
+     the same: seconds). A product replacement keeps its results under the retired definition on
+     purpose (a unit change); this is a fixture repair, not a product rule. */
+  {
+    const liveSprintId = typeByName.get('60-yd sprint');
+    const { data: twins } = await db.from('rep_team_measurable_types').select('id')
+      .eq('team_id', team.id).ilike('name', '60-yd sprint').eq('is_active', false).neq('id', liveSprintId);
+    const twinIds = (twins ?? []).map(t => t.id);
+    if (twinIds.length) {
+      const rs = await db.from('rep_player_measurables').update({ measurable_type_id: liveSprintId }).eq('team_id', team.id).in('measurable_type_id', twinIds).select('id');
+      if (rs.error) { console.error('✗ sprint results re-home', rs.error.message); process.exit(1); }
+      const na = await db.from('rep_evaluation_not_assessed').update({ measurable_type_id: liveSprintId }).eq('team_id', team.id).in('measurable_type_id', twinIds).select('id');
+      if (na.error) { console.error('✗ sprint marks re-home', na.error.message); process.exit(1); }
+      if (rs.data?.length || na.data?.length) ok(`sprint records re-homed onto the live definition (${rs.data?.length ?? 0} result(s), ${na.data?.length ?? 0} mark(s)) — a successor walk had stranded them`);
+    }
+  }
+
       // Throw speed: two in mph, then the unit changed — the km/h reading must not join their line (F01).
       row(devonId, 'Throw speed', 48, 'mph', on(5, 6)),
       row(devonId, 'Throw speed', 51, 'mph', on(5, 20)),
@@ -2965,10 +3008,11 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
 
   /* ── Phase 2 (2026-09-13): record and review both kinds — what the walk opens ─────────────────
      · A SCOPED session ("Phase 2 probe — scoped"): every active metric, and the first five active
-       players in scope; Devon runs the sprint TWICE (the definition says two attempts) — one row,
-       two entries, never two players; Casey is marked NOT ASSESSED on the sprint; Blake is in the
-       scope with nothing recorded ("Not recorded"); Emerson is outside the scope with a reading
-       (listed, flagged, not counted). One correction on Devon's first attempt (the original kept).
+       players in scope; the PLAN says sprint × 2 and changeup × 3 (stage 2, C1 — the count is the
+       session's fact, mig 298); Devon runs the sprint TWICE — one row, two entries, never two
+       players; Casey is marked NOT ASSESSED on the sprint; Blake is in the scope with nothing
+       recorded ("Not recorded"); Emerson is outside the scope with a result (listed, flagged, not
+       counted). One correction on Devon's first attempt (the original kept).
      · One OBSERVATION on Devon against "Sets feet before throwing", taken in that session, as
        evidence for his goal.
      · One REVIEW on Devon's goal (status kept at working, a note, a next review date) — and the
@@ -2986,12 +3030,14 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     if (!scoped) {
       const ins = await db.from('rep_team_evaluation_sessions').insert({
         org_id: org.id, team_id: team.id, program_year_id: py.id, session_date: scopedDate, note: 'Phase 2 probe — scoped',
-        scope_metric_ids: scopeMetricIds, scope_player_ids: inScope, created_by: user.id,
+        scope_metric_ids: scopeMetricIds, scope_player_ids: inScope, scope_attempts: scopeAttempts, created_by: user.id,
       }).select('id').single();
       if (ins.error) { console.error('✗ scoped session insert', ins.error.message); process.exit(1); }
       scoped = ins.data;
     } else {
-      await db.from('rep_team_evaluation_sessions').update({ session_date: scopedDate, scope_metric_ids: scopeMetricIds, scope_player_ids: inScope }).eq('id', scoped.id);
+      // The date, the plan AND its counts are the fixture — a re-run restores them (a walk may have
+      // changed a count or dropped a test from the plan).
+      await db.from('rep_team_evaluation_sessions').update({ session_date: scopedDate, scope_metric_ids: scopeMetricIds, scope_player_ids: inScope, scope_attempts: scopeAttempts, event_id: null }).eq('id', scoped.id);
     }
     const { data: scopedRows } = await db.from('rep_player_measurables').select('id').eq('session_id', scoped.id).limit(1);
     if (!scopedRows?.length) {
@@ -3000,7 +3046,7 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
         value, unit, recorded_on: scopedDate, session_id: scoped.id, attempt_no: attempt, created_by: user.id, ...extra,
       });
       const ins = await db.from('rep_player_measurables').insert([
-        // Devon: two attempts (the sprint is defined as two); the first was corrected from 8.51.
+        // Devon: two attempts (the plan says two); the first was corrected from 8.51.
         row(devonId, sprintId, 8.31, 'seconds', 1, { corrected_from: 8.51, corrected_at: new Date().toISOString(), corrected_by: user.id }),
         row(devonId, sprintId, 8.24, 'seconds', 2),
         // Avery: one attempt of two — recorded with fewer, nothing filled in.
@@ -3008,6 +3054,8 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
         // Emerson: OUTSIDE the scope, with a reading — listed and flagged, never counted.
         row(ids[4], sprintId, 8.55, 'seconds', 1),
       ]);
+    // The count per test (mig 298): sprint × 2 · changeup × 3 · throw × 1; a skill has none.
+    const scopeAttempts = { [sprintId]: 2, [typeByName.get('Throw speed')]: 1, [typeByName.get('Changeup speed')]: 3 };
       if (ins.error) { console.error('✗ scoped readings insert', ins.error.message); process.exit(1); }
     }
     const { data: mark } = await db.from('rep_evaluation_not_assessed').select('id').eq('session_id', scoped.id).eq('player_id', ids[2]).limit(1).maybeSingle();
@@ -3060,7 +3108,7 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     if (!rangeSession) {
       const ins = await db.from('rep_team_evaluation_sessions').insert({
         org_id: org.id, team_id: team.id, program_year_id: py.id, session_date: earlierDate, note: 'Phase 3 probe — range',
-        scope_metric_ids: [changeupId], scope_player_ids: [devonId], created_by: user.id,
+        scope_metric_ids: [changeupId], scope_player_ids: [devonId], scope_attempts: { [changeupId]: 3 }, created_by: user.id,
       }).select('id').single();
       if (ins.error) { console.error('✗ range session insert', ins.error.message); process.exit(1); }
       rangeSession = ins.data;
@@ -3094,6 +3142,8 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
    is present. */
 
 console.log(`\n✓ UAT coach fixture is whole.\n`);
+    } else {
+      await db.from('rep_team_evaluation_sessions').update({ scope_attempts: { [changeupId]: 3 } }).eq('id', rangeSession.id);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);
 console.log(`  Between    : /${org.slug}/coaches/teams/${pastTeam.id}/season-end`);

@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { formatValue } from '@/lib/measurable-format';
 import { describeAttempts } from '@/lib/measurable-series';
-import { rowState, ROW_STATE_LABELS, type SessionRow, type SessionRowState } from '@/lib/development-session-view';
+import { rowState, attemptBoxes, ROW_STATE_LABELS, type SessionRow, type SessionRowState } from '@/lib/development-session-view';
 import type { RepEvaluationNotAssessed, RepPlayerMeasurable, RepPlayerObservation, RepTeamMeasurableType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './DevelopmentSession.module.css';
 
 export interface GridPlayer { id: string; playerFirstName: string; playerLastName: string | null; playerNumber: string | null }
-export type GridRow = SessionRow<GridPlayer, RepPlayerMeasurable, RepEvaluationNotAssessed>;
+export type GridRow = SessionRow<GridPlayer, RepPlayerMeasurable, RepEvaluationNotAssessed, RepPlayerObservation>;
 
 /** The client's own knowledge of a row: drafts per attempt, what is in flight, what failed. */
 export interface RowDraft {
@@ -19,39 +19,46 @@ export interface RowDraft {
   error: string | null;
   /** "Edit" on a saved row: fields open, saved values pre-filled. */
   editing: boolean;
+  /** Boxes the coach added with the row's "+" — one more attempt for THIS player (C2). */
+  extra: number;
 }
-export const emptyDraft = (): RowDraft => ({ values: [], saving: new Set(), error: null, editing: false });
-
-export interface ObservationDraft { descriptor: string; note: string; saving: boolean; error: string | null; editing: boolean }
-export const emptyObservationDraft = (): ObservationDraft => ({ descriptor: '', note: '', saving: false, error: null, editing: false });
+export const emptyDraft = (): RowDraft => ({ values: [], saving: new Set(), error: null, editing: false, extra: 0 });
 
 const authorLine = (authors: Record<string, string>, id: string | null) => (id ? (authors[id] ?? 'a coach') : null);
 
 /**
- * The session's grid for ONE metric (development lifecycle Phase 2, mockup screen 3). ROSTER
- * ORDER ONLY (binding). A measured test: one field per attempt, as many as the definition says;
- * Enter moves to the next attempt, then the next player; the headline updates as attempts are
- * typed; a blank attempt was not run. An observed skill: a descriptor and/or what was seen.
- * Per-row state (Saved · Saving · Not saved — retry · Not recorded · Not assessed) with Edit and
- * Retry on the row; a failed value survives on screen beside its error; "Mark not assessed" on
- * BLANK rows only. "Entered by" on every saved row.
+ * The session's grid for ONE metric (development lifecycle Phase 2, mockup screen 3; re-evaluation
+ * stage 2, C1 · C2 · C7, 2026-09-15). ROSTER ORDER ONLY (binding). A test: one box per attempt —
+ * as many as the SESSION planned for it tonight, never fewer than a row already holds, plus a "+"
+ * after the last box for one more (the plan is a floor, never a ceiling; five is the most any row
+ * takes); Enter moves to the next attempt, then the next player; the headline reads under the boxes
+ * as attempts are typed; a blank attempt was not run. A skill (C12, the sheet for everything — owner
+ * ruling 2026-09-15): nothing on the row writes — a blank row is one door, "Record an observation ›",
+ * into the observation sheet (`RecordObservationDialog` with the skill and the date fixed by the
+ * session); a saved row reads the whole observation on its face, and Edit opens the same sheet.
+ *
+ * ONE LANGUAGE PER ROW (C7): a saved attempt sits in the same box as an empty one; the correction
+ * mark stays; "entered by" is off the row (it reads on Edit and in the review). Per-row state
+ * (Saved · Saving · Not saved — retry · Not recorded · Not assessed) with Edit and Retry on the
+ * row; a failed value survives on screen beside its error; "Mark not assessed" on BLANK rows only.
+ * On a phone the row is the name and the state on the first line, the boxes on the second, the
+ * headline under (the module's ≤640 rule).
  *
  * ⚠ Pure of network: the page owns the fetches. This component draws rows from the view module
  * and the drafts it is handed, and reports what the coach did.
  */
 export default function SessionRecordGrid({
-  type, rows, draftFor, observationDraftFor, observations, authors,
+  type, planned, rows, draftFor, authors,
   canWrite, canWriteObservations, retired,
-  onAttemptChange, onAttemptCommit, onEdit, onRetry, onMarkNotAssessed, onUnmarkNotAssessed,
-  onObservationChange, onObservationCommit, onObservationEdit,
+  onAttemptChange, onAttemptCommit, onAddAttempt, onEdit, onRetry, onMarkNotAssessed, onUnmarkNotAssessed,
+  onRecordObservation, onObservationEdit,
 }: {
   type: RepTeamMeasurableType;
+  /** The session's planned count for this test (C1); null on a session from before the count existed. */
+  planned: number | null;
   rows: GridRow[];
   /** The page owns the drafts (keyed by player AND metric); the grid asks for a row's by player id. */
   draftFor: (playerId: string) => RowDraft;
-  observationDraftFor: (playerId: string) => ObservationDraft;
-  /** This session's observations (all skills) — the rows pick theirs by player + skill. */
-  observations: RepPlayerObservation[];
   authors: Record<string, string>;
   canWrite: boolean;
   canWriteObservations: boolean;
@@ -59,24 +66,19 @@ export default function SessionRecordGrid({
   retired: boolean;
   onAttemptChange: (playerId: string, attemptNo: number, value: string) => void;
   onAttemptCommit: (playerId: string, attemptNo: number) => void;
+  /** The row's "+": one more box for this player. */
+  onAddAttempt: (playerId: string) => void;
   onEdit: (playerId: string) => void;
   onRetry: (playerId: string) => void;
   onMarkNotAssessed: (playerId: string) => void;
   onUnmarkNotAssessed: (playerId: string) => void;
-  onObservationChange: (playerId: string, patch: Partial<Pick<ObservationDraft, 'descriptor' | 'note'>>) => void;
-  onObservationCommit: (playerId: string) => void;
+  /** A blank skill row's door: opens the observation sheet for this player. */
+  onRecordObservation: (playerId: string) => void;
+  /** Edit on a saved skill row: the same sheet, filled. */
   onObservationEdit: (playerId: string) => void;
 }) {
   const isSkill = type.kind === 'skill';
-  // The definition says how many fields to offer; a row that already holds MORE (the count was
-  // lowered after this session recorded them) keeps every saved attempt reachable — a reading
-  // that cannot be seen cannot be corrected or removed.
-  const attempts = isSkill ? 0 : Math.max(1, type.attemptsPerSession, ...rows.map(r => r.entries.reduce((m, e) => Math.max(m, e.attemptNo), 0)));
   const def = { aim: type.aim, headline: type.headline, rangeFrom: type.rangeFrom, rangeTo: type.rangeTo };
-  // This metric's observation per player, once — not a scan of the session's list per row per render.
-  const observationByPlayer = isSkill
-    ? new Map(observations.filter(o => o.measurableTypeId === type.id).map(o => [o.playerId, o]))
-    : new Map<string, RepPlayerObservation>();
   // Enter → the next attempt field, then the next player's first. DOM order is roster order.
   const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
   function focusNext(current: HTMLElement) {
@@ -85,12 +87,16 @@ export default function SessionRecordGrid({
     const i = fields.indexOf(current);
     fields[i + 1]?.focus();
   }
+  // "Attempts · seconds · 2 planned"; a session from before plans existed has no count to say.
+  const columnLabel = isSkill
+    ? 'Observation'
+    : `Attempts · ${type.unit}${planned === null ? '' : ` · ${planned} planned`}`;
 
   return (
     <div className={css.grid} ref={setGridEl}>
       <div className={css.labels} aria-hidden>
-        <span>Player · roster order · entered by</span>
-        <span>{isSkill ? 'Observation' : `Attempts · ${type.unit} · ${attempts === 1 ? 'one attempt' : `${attempts} attempts`}`}</span>
+        <span>Player · roster order</span>
+        <span>{columnLabel}</span>
         <span>State</span>
       </div>
       {rows.map(row => {
@@ -98,67 +104,61 @@ export default function SessionRecordGrid({
         const name = [p.playerFirstName, p.playerLastName].filter(Boolean).join(' ');
         const readOnly = !canWrite || retired || row.pastParticipant || (isSkill && !canWriteObservations);
         const draft = draftFor(p.id);
-        const obsDraft = observationDraftFor(p.id);
-        const observation = observationByPlayer.get(p.id) ?? null;
+        const observation = row.observation;
         const hasEntries = isSkill ? !!observation : row.entries.length > 0;
-        const saving = isSkill ? obsDraft.saving : draft.saving.size > 0;
-        const error = isSkill ? obsDraft.error : draft.error;
+        // A skill row never saves, so it is never saving, failed or editing — the sheet holds those (C12).
+        const saving = isSkill ? false : draft.saving.size > 0;
+        const error = isSkill ? null : draft.error;
         const state: SessionRowState = rowState({ hasEntries, notAssessed: !!row.notAssessed, saving, error: !!error });
-        const editing = isSkill ? obsDraft.editing : draft.editing;
+        const editing = isSkill ? false : draft.editing;
         const enteredBy = isSkill ? authorLine(authors, observation?.createdBy ?? null) : authorLine(authors, row.entries[0]?.createdBy ?? null);
         const savedValues = row.entries.map(e => e.value);
         const typedValues = draft.values.map(v => Number(v)).filter((v, i) => draft.values[i]?.trim() !== '' && Number.isFinite(v));
         const liveValues = editing || savedValues.length === 0 ? typedValues : savedValues;
+        const savedMax = row.entries.reduce((m, e) => Math.max(m, e.attemptNo), 0);
+        const { boxes, canAddMore } = attemptBoxes({ planned, savedMax, extra: draft.extra });
+        // The headline under the boxes — unless it would only repeat the one box above it (a single
+        // attempt with no plan to read it against says "8.75" under "8.75"; that line is noise).
+        const headline = liveValues.length > 0 ? describeAttempts(liveValues, def, planned) : null;
+        const showHeadline = headline !== null && !(liveValues.length === 1 && headline === formatValue(liveValues[0]));
 
         const stateCls = state === 'saved' ? css.stateSaved : state === 'error' ? css.stateError : state === 'saving' ? '' : css.stateQuiet;
-        const inScopeNote = row.inScope ? null : ' · outside the scope';
+        const rowNote = row.pastParticipant ? 'no longer on the roster' : row.inScope ? null : 'outside the scope';
 
         return (
-          <div key={p.id} className={`${css.row}${row.inScope ? '' : ` ${css.rowOutsideScope}`}`}>
+          <div key={p.id} className={`${css.row}${row.inScope ? '' : ` ${css.rowOutsideScope}`}`} data-player-row={p.id}>
             <div className={css.name}>
               <strong>{p.playerNumber && <span className={css.num}>#{p.playerNumber} </span>}{name}</strong>
-              <span>
-                {row.pastParticipant ? 'no longer on the roster' : enteredBy ? `entered by ${enteredBy}` : ''}
-                {inScopeNote}
-              </span>
+              {rowNote && <span>{rowNote}</span>}
             </div>
 
             {/* ── the record ── */}
             {row.notAssessed && !hasEntries ? (
-              <span className={`${styles.devRowVal} ${styles.devRowDash}`}>—{row.notAssessed.reason ? ` ${row.notAssessed.reason}` : ''}</span>
+              <span className={css.recordDash}>—{row.notAssessed.reason ? ` ${row.notAssessed.reason}` : ''}</span>
             ) : isSkill ? (
-              readOnly || (observation && !editing) ? (
+              readOnly || observation ? (
+                // The whole observation on the row's face — the descriptor, then the sentence, wrapping as it needs to.
                 <span className={css.obsSaved}>
                   {observation ? <>{observation.descriptor && <em>{observation.descriptor}</em>}{observation.descriptor && observation.note ? ' — ' : ''}{observation.note}</> : <span className={styles.devRowDash}>—</span>}
                 </span>
               ) : (
-                <div className={css.obs}>
-                  {type.descriptors.length > 0 && (
-                    <select className={styles.select} value={obsDraft.descriptor} aria-label={`${name} — ${type.name} descriptor`}
-                      disabled={obsDraft.saving}
-                      onChange={e => onObservationChange(p.id, { descriptor: e.target.value })}
-                      onBlur={() => onObservationCommit(p.id)}>
-                      <option value="">Choose…</option>
-                      {type.descriptors.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  )}
-                  <input className={styles.input} type="text" maxLength={600} value={obsDraft.note}
-                    placeholder="What you saw" aria-label={`${name} — ${type.name}, what you saw`}
-                    disabled={obsDraft.saving} data-attempt-field
-                    onChange={e => onObservationChange(p.id, { note: e.target.value })}
-                    onBlur={() => onObservationCommit(p.id)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); focusNext(e.target as HTMLElement); } }} />
-                </div>
+                // A blank row is a door, and only a door (C12): the sheet asks the descriptor and the sentence.
+                <span className={css.obs}>
+                  <button type="button" className={css.obsDoor} aria-label={`Record an observation — ${name}, ${type.name}`}
+                    data-observation-door onClick={() => onRecordObservation(p.id)}>Record an observation ›</button>
+                </span>
               )
             ) : (
               <div className={css.attempts}>
-                {Array.from({ length: attempts }, (_, i) => i + 1).map(k => {
+                {Array.from({ length: boxes }, (_, i) => i + 1).map(k => {
                   const saved = row.entries.find(e => e.attemptNo === k) ?? null;
                   const editable = !readOnly && (editing || !saved);
                   if (!editable) {
+                    // A saved attempt in the SAME box as an empty one (C7) — a read-only face of the field.
                     return (
-                      <span key={k} className={css.attemptSaved} title={saved?.correctedFrom != null ? `corrected — was ${formatValue(saved.correctedFrom)}` : undefined}>
-                        {saved ? formatValue(saved.value) : <span className={styles.devRowDash}>·</span>}
+                      <span key={k} className={`${css.attempt} ${css.attemptSaved}`}
+                        title={saved?.correctedFrom != null ? `corrected — was ${formatValue(saved.correctedFrom)}` : undefined}>
+                        {saved ? formatValue(saved.value) : <span className={styles.devRowDash}>{k}</span>}
                         {saved?.correctedFrom != null && <span className={styles.devRowDash}>*</span>}
                       </span>
                     );
@@ -172,9 +172,11 @@ export default function SessionRecordGrid({
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); focusNext(e.target as HTMLElement); } }} />
                   );
                 })}
-                {liveValues.length > 0 && (
-                  <span className={css.headline}>{describeAttempts(liveValues, def, attempts)}</span>
+                {/* "+" — one more attempt for this player alone, up to five (C2). */}
+                {!readOnly && canAddMore && (
+                  <button type="button" className={css.attemptPlus} aria-label={`One more attempt for ${name}`} onClick={() => onAddAttempt(p.id)}>+</button>
                 )}
+                {showHeadline && <span className={css.headline}>{headline}</span>}
               </div>
             )}
 
@@ -193,7 +195,10 @@ export default function SessionRecordGrid({
               {!readOnly && state === 'saved' && !editing && (
                 <button type="button" className={css.rowLink} onClick={() => (isSkill ? onObservationEdit(p.id) : onEdit(p.id))}>Edit</button>
               )}
-              {!readOnly && editing && state === 'saved' && <span className={css.stateQuiet}>editing — leave a field to save</span>}
+              {/* Who typed it is Edit's fact (C7) — said here, where a correction is being made. */}
+              {!readOnly && editing && state === 'saved' && (
+                <span className={css.stateQuiet}>editing{enteredBy ? ` — entered by ${enteredBy}` : ''} · leave a field to save</span>
+              )}
             </span>
             {error && <p className={css.rowError} role="alert">{error}</p>}
           </div>
@@ -202,4 +207,3 @@ export default function SessionRecordGrid({
     </div>
   );
 }
-

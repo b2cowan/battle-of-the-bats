@@ -701,10 +701,9 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
       <tr key={row.key}>
         <td data-label="Date" className={styles.devBoardVal}>{formatShortDate(row.recordedOn)}</td>
         <td data-label={`Attempts · ${unit}`} className={styles.devBoardVal} style={{ whiteSpace: 'normal' }}>
+          {/* Every attempt the row holds — the plan it was run against is the session's own fact
+              (re-evaluation stage 2, C1) and is reported there ("fewer than planned"), not here. */}
           {row.values.map(formatValue).join(' · ')}
-          {row.values.length > 1 && row.values.length < def.attemptsPerSession && (
-            <span className={styles.devCardNote}>{row.values.length} of {def.attemptsPerSession} run</span>
-          )}
           {corrected.length > 0 && (
             <span className={styles.devCardNote}>corrected — was {corrected.map(a => formatValue(a.correctedFrom!)).join(' · ')}</span>
           )}

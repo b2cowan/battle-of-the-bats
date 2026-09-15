@@ -123,18 +123,22 @@ export function rangeSign(value: number, from: number, to: number): string {
 }
 
 /**
- * The LIVE read-back under a session row's fields — `describeHeadline` with the definition's
- * attempt count, so a row that has fewer attempts than the test asks for says so ("· 1 of 3 run")
- * and a single attempt of several shows its value (with its range sign) rather than "One attempt".
+ * The LIVE read-back under a session row's fields — `describeHeadline` with the SESSION's planned
+ * count for the test (stage 2, C1 — never the definition's), so a row that has fewer attempts than
+ * tonight's plan says so ("· 1 of 3 run") and a single attempt of several shows its value (with its
+ * range sign) rather than "One attempt". `expected` is null on a session from before the count
+ * existed: it claims only what was recorded, so the line never says "of N run".
  */
-export function describeAttempts(values: number[], def: HeadlineDefinition, expected: number): string {
-  if (values.length === 1 && expected > 1) {
-    const v = values[0];
-    const sign = def.aim === 'range' && def.rangeFrom != null && def.rangeTo != null ? ` (${rangeSign(v, def.rangeFrom, def.rangeTo)})` : '';
-    return `${format(v)}${sign} · 1 of ${expected} run`;
-  }
+export function describeAttempts(values: number[], def: HeadlineDefinition, expected: number | null): string {
+  // One attempt reads as its value (the box beside it already holds it — "One attempt" would say nothing).
+  if (values.length === 1) return `${describeSingle(values[0], def)}${expected !== null && expected > 1 ? ` · 1 of ${expected} run` : ''}`;
   const line = describeHeadline(values, def);
-  return values.length > 0 && values.length < expected ? `${line} · ${values.length} of ${expected} run` : line;
+  return expected !== null && values.length > 0 && values.length < expected ? `${line} · ${values.length} of ${expected} run` : line;
+}
+/** One attempt on its own: the value (with its range sign) — a saved 8.5 reads "8.5", never "One attempt". */
+function describeSingle(v: number, def: HeadlineDefinition): string {
+  const sign = def.aim === 'range' && def.rangeFrom != null && def.rangeTo != null ? ` (${rangeSign(v, def.rangeFrom, def.rangeTo)})` : '';
+  return `${format(v)}${sign}`;
 }
 
 /**

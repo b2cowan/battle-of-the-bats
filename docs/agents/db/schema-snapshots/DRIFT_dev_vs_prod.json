@@ -1,12 +1,25 @@
 {
-  "generated": "2026-09-14",
-  "total": 0,
+  "generated": "2026-09-15",
+  "total": 3,
   "counts": {
     "tables": 0,
-    "columns": 0,
+    "columns": 1,
     "indexes": 0,
     "constraints": 0,
-    "rls": 0
+    "rls": 2
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_needs_scope_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_object_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_evaluation_sessions.scope_attempts",
+      "sig": ""
+    }
+  ]
 }

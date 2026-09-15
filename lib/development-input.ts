@@ -497,6 +497,28 @@ export function readObservationInput(raw: unknown, mode: 'create' | 'patch'): In
   return { fields };
 }
 
+/**
+ * The PATCH an edit should send — ONLY the fields the coach changed, or null when nothing did.
+ * Both observation sheets (the player's page and the session grid) read it before writing, so an
+ * unchanged edit closes without a request and a saved descriptor the skill has since dropped is
+ * never re-sent by accident (the route refuses a word not on the list — the coach did not touch it,
+ * and the refusal named it; /review 2026-09-15). Empty strings are the form's blanks: they compare
+ * as null against the record and are sent as null.
+ */
+export function observationEditPatch(
+  existing: { observedOn: string; note: string | null; descriptor: string | null; goalId: string | null },
+  next: { observedOn: string; note: string; descriptor: string; goalId: string | null },
+): ObservationPatchFields | null {
+  const patch: ObservationPatchFields = {};
+  const note = next.note.trim() || null;
+  const descriptor = next.descriptor || null;
+  if (next.observedOn !== existing.observedOn) patch.observedOn = next.observedOn;
+  if (note !== existing.note) patch.note = note;
+  if (descriptor !== existing.descriptor) patch.descriptor = descriptor;
+  if ((next.goalId ?? null) !== existing.goalId) patch.goalId = next.goalId ?? null;
+  return Object.keys(patch).length === 0 ? null : patch;
+}
+
 // ── Not assessed (a state with a neutral reason, never a value) ─────────────────────────────────
 
 export interface NotAssessedFields { playerId: string; measurableTypeId: string; reason: string | null }
@@ -568,8 +590,10 @@ export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields>
     sessionId = body.sessionId;
   }
   // The attempt within its session — absent = 1. A second attempt needs a session to belong to:
-  // a single reading is one reading, and "attempt 2 of nothing" would be a row the screens cannot
-  // place. The definition's attempts-per-session ceiling is the route's check (it has the definition).
+  // a single result is one attempt, and "attempt 2 of nothing" would be a row the screens cannot
+  // place. The bound here (1..MAX_ATTEMPTS) is the ONLY server-side ceiling: the session's plan is a
+  // floor the row may run past with its "+" (re-evaluation stage 2, C2), and the definition no
+  // longer bounds anything.
   let attemptNo = 1;
   if (body.attemptNo !== undefined) {
     const a = body.attemptNo;
@@ -584,8 +608,14 @@ export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields>
 
 // ── Sessions ─────────────────────────────────────────────────────────────────────────────────────
 
-/** The session's scope — both lists, each at least one id (the table's CHECK is both-or-neither). */
-export interface SessionScopeFields { metricIds: string[]; playerIds: string[] }
+/**
+ * The session's scope — both lists, each at least one id (the table's CHECK is both-or-neither) —
+ * and, since the count moved onto the session (re-evaluation stage 2, C1), the attempts PLANNED per
+ * test: a map of metric id → 1..5 whose keys are all in `metricIds` (a count for a metric that is
+ * not in the plan is a contradiction, refused). Absent = no count claimed, which is what a session
+ * from before the count says and what a client that never learned the count still sends.
+ */
+export interface SessionScopeFields { metricIds: string[]; playerIds: string[]; attempts: Record<string, number> | null }
 function readScope(raw: unknown): InputResult<SessionScopeFields> {
   const body = obj(raw);
   const metricIds = readIdList(body.metricIds);
@@ -593,7 +623,23 @@ function readScope(raw: unknown): InputResult<SessionScopeFields> {
   if (!metricIds || !playerIds) return { error: 'A scope names the metrics and the players — both as lists of ids.' };
   if (metricIds.length === 0) return { error: 'Choose at least one metric to record.' };
   if (playerIds.length === 0) return { error: 'Choose at least one player who is here.' };
-  return { fields: { metricIds, playerIds } };
+  let attempts: Record<string, number> | null = null;
+  if (body.attempts != null) {
+    if (typeof body.attempts !== 'object' || Array.isArray(body.attempts)) return { error: 'Attempts per test must be a map of metric id → count.' };
+    const inScope = new Set(metricIds);
+    attempts = {};
+    for (const [id, n] of Object.entries(body.attempts as Record<string, unknown>)) {
+      if (!inScope.has(id)) return { error: 'A count belongs to a test in the plan — add the test first.' };
+      if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > MAX_ATTEMPTS) {
+        return { error: `Attempts must be a whole number from 1 to ${MAX_ATTEMPTS}.` };
+      }
+      attempts[id] = n;
+    }
+    // A plan of skills alone claims no count — stored as null, the same as a session that never
+    // planned one, so "null = no count claimed" stays one meaning (/review 2026-09-15).
+    if (Object.keys(attempts).length === 0) attempts = null;
+  }
+  return { fields: { metricIds, playerIds, attempts } };
 }
 
 export interface SessionCreateFields {
@@ -626,7 +672,20 @@ export function readSessionCreateInput(raw: unknown): InputResult<SessionCreateF
   return { fields: { sessionDate: d.fields, note: note.fields, eventId, scope } };
 }
 
-export interface SessionPatchFields { sessionDate?: string; note?: string | null; eventId?: string | null; scope?: SessionScopeFields }
+export interface SessionPatchFields {
+  sessionDate?: string;
+  note?: string | null;
+  eventId?: string | null;
+  scope?: SessionScopeFields;
+  /**
+   * With a scope change that DROPS a test the session already holds results for (C9): the metric
+   * ids whose results in this session are deleted too. Absent = keep them (the default the confirm
+   * offers — deleting a whole session keeps its results, and a plan change is never more
+   * destructive than that). Only ids OUTSIDE the new scope qualify; observations are never deleted
+   * this way (a written note about a child stays with the player).
+   */
+  dropResultsFor?: string[];
+}
 
 /** The event id is named, not verified — the route proves it sits on this team's season schedule. */
 export function readSessionPatchInput(raw: unknown): InputResult<SessionPatchFields> {
@@ -636,6 +695,13 @@ export function readSessionPatchInput(raw: unknown): InputResult<SessionPatchFie
     const sc = readScope(body.scope);
     if ('error' in sc) return sc;
     fields.scope = sc.fields;
+  }
+  if (body.dropResultsFor !== undefined) {
+    const ids = readIdList(body.dropResultsFor);
+    if (!ids) return { error: 'dropResultsFor must be a list of metric ids.' };
+    if (!fields.scope) return { error: 'Results are dropped with the plan change that removes their test.' };
+    if (ids.some(id => fields.scope!.metricIds.includes(id))) return { error: 'A test still in the plan keeps its results.' };
+    fields.dropResultsFor = ids;
   }
   if (body.sessionDate !== undefined) {
     const date = typeof body.sessionDate === 'string' ? body.sessionDate : '';

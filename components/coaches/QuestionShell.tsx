@@ -30,7 +30,8 @@ import { useDialogFloor } from './useDialogFloor';
  * and does not use this shell.
  *
  * `scroll` is the tall-form variant (`modalScrollBody`): the header and footer pin while the
- * fields scroll between them. A compact question leaves it off.
+ * fields scroll between them. A compact question leaves it off. `wide` is the 640px variant
+ * (`modalWide`) for a form that needs the room — two columns, a stepper beside a long label.
  */
 export default function QuestionShell({
   open,
@@ -40,6 +41,7 @@ export default function QuestionShell({
   subtitle,
   busy = false,
   scroll = false,
+  wide = false,
   leaveGuard,
   children,
 }: {
@@ -52,6 +54,8 @@ export default function QuestionShell({
   subtitle?: ReactNode;
   busy?: boolean;
   scroll?: boolean;
+  /** The 640px variant (`modalWide`) — for a form with two columns or a control beside a long label. */
+  wide?: boolean;
   /** Typed work the ROUTE guard protects (a link, a reload) — `dirty` from the consumer's own
    *  baseline, the message in its own words. Link clicks are intercepted only while the tab is on
    *  screen (see UnsavedChangesGuard's `interceptClicks`). */
@@ -90,7 +94,7 @@ export default function QuestionShell({
           aria-modal="true"
           aria-label={ariaLabel}
           aria-busy={busy || undefined}
-          className={`${coach.modal} ${scroll ? coach.modalScrollBody : ''}`}
+          className={`${coach.modal} ${scroll ? coach.modalScrollBody : ''} ${wide ? coach.modalWide : ''}`}
           onClick={event => event.stopPropagation()}
         >
           <CoachModalHeader

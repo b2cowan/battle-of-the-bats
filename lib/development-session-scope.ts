@@ -1,5 +1,6 @@
 import 'server-only';
 import { getRepRosterPlayers, getRepTeamEventById } from './db';
+import { orgDayKey } from './timezone';
 import type { RepTeamMeasurableType } from './types';
 import type { SessionScopeFields } from './development-input';
 
@@ -12,7 +13,10 @@ import type { SessionScopeFields } from './development-input';
  * definitions (a test or an observed skill — never a retired one: retire means "not for new
  * sessions"), every player a row of this season's ACTIVE roster (a departed player's saved rows
  * stay on the session read-only; a scope can never re-admit them), and the event — when named —
- * sits on this team's season schedule (the PATCH's rule, reused).
+ * sits on this team's season schedule (the PATCH's rule, reused). The counts per test (stage 2,
+ * C1) ride the scope: the reader has already held every key to the plan and every value to 1..5.
+ * `eventDay` is the linked event's day in the org's zone — a session at a practice takes it as its
+ * date (C10), so the create never has to read the event twice.
  */
 export async function verifySessionScope(args: {
   teamId: string;
@@ -20,20 +24,22 @@ export async function verifySessionScope(args: {
   scope: SessionScopeFields | null;
   eventId: string | null;
   activeTypes: RepTeamMeasurableType[];
-}): Promise<{ scope: SessionScopeFields | null; eventId: string | null } | { error: string }> {
+}): Promise<{ scope: SessionScopeFields | null; eventId: string | null; eventDay: string | null } | { error: string }> {
   // The event and the roster are independent reads — one round trip, not two.
   const [event, roster] = await Promise.all([
     args.eventId ? getRepTeamEventById(args.eventId) : Promise.resolve(null),
     args.scope ? getRepRosterPlayers(args.programYearId) : Promise.resolve([]),
   ]);
   let eventId: string | null = null;
+  let eventDay: string | null = null;
   if (args.eventId) {
     if (!event || event.teamId !== args.teamId || event.programYearId !== args.programYearId) {
       return { error: 'That event isn’t on this team’s schedule for this season.' };
     }
     eventId = event.id;
+    eventDay = orgDayKey(event.startsAt);
   }
-  if (!args.scope) return { scope: null, eventId };
+  if (!args.scope) return { scope: null, eventId, eventDay };
 
   const activeIds = new Set(args.activeTypes.filter(t => t.isActive).map(t => t.id));
   if (args.scope.metricIds.some(id => !activeIds.has(id))) {
@@ -43,5 +49,5 @@ export async function verifySessionScope(args: {
   if (args.scope.playerIds.some(id => !activePlayers.has(id))) {
     return { error: 'Choose players from this season’s active roster.' };
   }
-  return { scope: args.scope, eventId };
+  return { scope: args.scope, eventId, eventDay };
 }

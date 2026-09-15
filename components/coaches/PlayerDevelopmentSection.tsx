@@ -22,6 +22,7 @@ import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
 import ReviewGoalDialog from '@/components/coaches/ReviewGoalDialog';
 import RecordObservationDialog from '@/components/coaches/RecordObservationDialog';
+import { observationEditPatch } from '@/lib/development-input';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
 import type {
@@ -424,15 +425,19 @@ export default function PlayerDevelopmentSection({
   // ── observations ──
   async function submitObservation(v: { measurableTypeId: string; observedOn: string; note: string; descriptor: string; goalId: string | null }) {
     if (!obsDialog || busy) return;
+    const editing = obsDialog.editing;
+    // An edit sends ONLY what changed (a descriptor the skill has since dropped is never re-sent
+    // untouched); nothing changed closes without a request (/review 2026-09-15).
+    const patch = editing ? observationEditPatch(editing, v) : null;
+    if (editing && !patch) { setObsDialog(null); return; }
     setBusy(true);
     setObsErr('');
     try {
-      const editing = obsDialog.editing;
       const res = await fetch(editing ? `${base}/observations/${editing.id}` : `${base}/observations`, {
         method: editing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editing
-          ? { observedOn: v.observedOn, note: v.note || null, descriptor: v.descriptor || null, goalId: v.goalId }
+          ? patch
           : { measurableTypeId: v.measurableTypeId, observedOn: v.observedOn, note: v.note || null, descriptor: v.descriptor || null, goalId: v.goalId }),
       });
       const json = await res.json().catch(() => null);

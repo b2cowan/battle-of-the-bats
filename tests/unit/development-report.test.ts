@@ -20,23 +20,23 @@ const AUG4 = d('2026-08-04'), AUG25 = d('2026-08-25'), SEP8 = d('2026-09-08'), A
 
 const sprint: ReportDefinition = {
   name: '60-yd sprint', kind: 'test', unit: 'seconds', aim: 'lower', headline: 'best',
-  rangeFrom: null, rangeTo: null, method: 'Standing start on the same marked course.', attemptsPerSession: 3,
+  rangeFrom: null, rangeTo: null, method: 'Standing start on the same marked course.',
 };
 const throwSpeed: ReportDefinition = {
   name: 'Throw speed', kind: 'test', unit: 'mph', aim: 'higher', headline: 'best',
-  rangeFrom: null, rangeTo: null, method: null, attemptsPerSession: 1,
+  rangeFrom: null, rangeTo: null, method: null,
 };
 const legacy: ReportDefinition = {
   name: 'Legacy', kind: 'test', unit: 'reps', aim: 'record', headline: 'last',
-  rangeFrom: null, rangeTo: null, method: null, attemptsPerSession: 1,
+  rangeFrom: null, rangeTo: null, method: null,
 };
 const changeup: ReportDefinition = {
   name: 'Changeup speed', kind: 'test', unit: 'mph', aim: 'range', headline: 'in_range',
-  rangeFrom: 62, rangeTo: 68, method: 'Radar gun behind the plate.', attemptsPerSession: 3,
+  rangeFrom: 62, rangeTo: 68, method: 'Radar gun behind the plate.',
 };
 const skill: ReportDefinition = {
   name: 'Sets feet before throwing', kind: 'skill', unit: null, aim: 'record', headline: 'last',
-  rangeFrom: null, rangeTo: null, method: null, attemptsPerSession: 1,
+  rangeFrom: null, rangeTo: null, method: null,
 };
 
 let seq = 0;

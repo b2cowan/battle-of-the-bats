@@ -2,16 +2,16 @@
 import { use, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TrendingUp, Plus, X, HelpCircle, ArrowRight } from 'lucide-react';
+import { TrendingUp, Plus, HelpCircle, ArrowRight, ChevronRight } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachTabBar from '@/components/coaches/CoachTabBar';
-import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { formatShortDate, formatWeekdayDate, todayLocal } from '@/lib/measurable-format';
 import { coverageCell, observationText } from '@/lib/development-report';
-import SessionScopeDialog, { type ScopeRosterRow, type ScopeEventOption } from '@/components/coaches/SessionScopeDialog';
+import { lastPlanMetricIds, lastPlannedCounts, lastRunDates, planCandidates, scopeSummary, sessionState, sessionTitle } from '@/lib/development-session-view';
+import SessionSheet, { type SessionRosterRow, type SessionEventOption, type SessionFacts } from '@/components/coaches/SessionSheet';
 import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
 import { canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { playerName as rosterPlayerName } from '@/lib/coach-roster-name';
@@ -22,9 +22,9 @@ import styles from '../../../coaches.module.css';
 import ov from './overview.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
 
-const formatSessionDate = (iso: string) => formatWeekdayDate(iso, 'short');
-
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+/** The Sessions list grows a search once it is long enough to need finding (round 2, owner 2026-09-15). */
+const SEARCH_FROM = 9;
 /** The quiet cell — a dash, "none yet", "not recorded". */
 const Muted = ({ children }: { children: React.ReactNode }) => <span className={styles.devBoardMuted}>{children}</span>;
 
@@ -68,8 +68,10 @@ export default function DevelopmentHubPage({
  * is read by the readers the Insights reports use, and each tile is a door to the room that holds
  * the detail, never a fourth reading of Coverage.
  *
- * Sessions is the list (Phase 1's "date — note" table, a search box). Players is the team board's
- * job, in place. Metrics is the library, with its editor on a page of its own.
+ * Sessions is the list — to the table standard since re-evaluation stage 2 (C5, 2026-09-15): a
+ * Date column is the door, Session holds the note and the practice, Ran says the plan, State is derived, the
+ * chevron last; Delete lives in the session's sheet, never on a row. Players is the team board's
+ * job, in place. Metrics is the library, with its sheet over the tab.
  *
  * ⚠ The header's lime action follows the stage: absent while nothing can start (a switched-off
  * primary was the first thing on the old landing), "+ Start session" once a test exists.
@@ -89,7 +91,6 @@ export default function DevelopmentHubPage({
  */
 function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const router = useRouter();
-  const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
   // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
   // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
@@ -108,9 +109,9 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
   const [sessions, setSessions] = useState<RepTeamEvaluationSession[] | null>(null);
   const [types, setTypes] = useState<RepTeamMeasurableType[] | null>(null);
-  // The scope step's lists (Phase 2) — the active roster and the season's events, from the same fetch.
-  const [scopeRoster, setScopeRoster] = useState<ScopeRosterRow[]>([]);
-  const [scopeEvents, setScopeEvents] = useState<ScopeEventOption[]>([]);
+  // The session sheet's lists (Phase 2) — the active roster and the season's events, from the same fetch.
+  const [scopeRoster, setScopeRoster] = useState<SessionRosterRow[]>([]);
+  const [scopeEvents, setScopeEvents] = useState<SessionEventOption[]>([]);
   const [scopeOpen, setScopeOpen] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -183,11 +184,11 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   }, [apiBase, canSeeBoard]);
 
   /**
-   * "+ Start session" asks for the SCOPE first (Phase 2, mockup screen 3): date, "Taken at", which
-   * metrics — tests AND skills — and who is here. The session is created with its scope and opens
-   * on the grid. (Phase 1 created a session instantly and landed the coach on an empty grid.)
+   * "+ Start session" asks for the session's facts first (Phase 2; the one sheet since stage 2, C4):
+   * when — at a practice or on a date — a note, what we are running with a count per test, and who
+   * is here. The session is created with its plan and opens on the grid.
    */
-  async function startSession(v: { sessionDate: string; eventId: string | null; note: string; scope: { metricIds: string[]; playerIds: string[] } }) {
+  async function startSession(v: SessionFacts) {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -206,28 +207,6 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
     } finally {
       // Released in every outcome: a Back-navigation can hand this same instance back with its state
       // intact, and a lock left on after a successful push would stay on until a hard reload.
-      setBusy(false);
-    }
-  }
-
-  async function deleteSession(session: RepTeamEvaluationSession) {
-    if (busy) return;
-    const ok = await confirm({
-      title: 'Delete this session?',
-      message: 'Every result recorded in it stays on the players — they just lose the session grouping.',
-      confirmText: 'Delete session',
-      cancelText: 'Cancel',
-      tone: 'danger',
-    });
-    if (!ok) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`${apiBase}/sessions/${session.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error();
-      setSessions(list => (list ?? []).filter(s => s.id !== session.id));
-    } catch {
-      setError("Couldn't delete the session — try again.");
-    } finally {
       setBusy(false);
     }
   }
@@ -304,12 +283,10 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
             <SessionsView
               base={base}
               sessions={sessions ?? []}
-              canWrite={canWrite}
-              busy={busy}
+              types={types ?? []}
               noTestYet={stage === 'define'}
               metricsHref={metricsHref}
               hasSessions={hasSessions}
-              onDelete={deleteSession}
               onHelp={() => openHelp(helpRequest)}
             />
           )}
@@ -322,15 +299,24 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
         </div>
       )}
       {scopeOpen && (
-        <SessionScopeDialog
+        <SessionSheet
           mode="start"
-          types={(types ?? []).filter(t => t.isActive)}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          types={planCandidates(types ?? [])}
           roster={scopeRoster}
           events={scopeEvents}
+          // The pre-fill per test (C1): last time's count, else the definition's, else one.
+          defaultCounts={lastPlannedCounts(sessions ?? [], planCandidates(types ?? []))}
+          // Tonight starts as last time (C11): the team's last plan (null → the whole library), and
+          // when each metric last ran, for the add field's captions — both from the list already here.
+          lastPlanIds={lastPlanMetricIds(sessions ?? [], planCandidates(types ?? []))}
+          lastRun={lastRunDates(sessions ?? [], planCandidates(types ?? []))}
           busy={busy}
           error={error}
           onSubmit={startSession}
           onClose={() => { if (!busy) setScopeOpen(false); }}
+          onTypeDefined={t => setTypes(list => [...(list ?? []), t])}
         />
       )}
       {/* Mounted per open (keyed by what it edits) so one definition's draft never leaks into the next. */}
@@ -351,30 +337,45 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
 // ── Sessions ──────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The Sessions list, to the table standard (stage 2, C5; revised on the owner's read of the build,
+ * 2026-09-15): DATE is its own column and the door (the date is the link, never a row-level click),
+ * SESSION holds the note and "at <practice> ›" on the same line — so a row is ONE line at the compact
+ * height (the frame drew the note as a caption under the date, a comfortable two-line row; the owner
+ * asked for the ledger's shape instead, a chronological list reads that way and the Ledger and
+ * Schedule tables already do). RAN says the plan ("5 players · 3 tests · 1 skill" — a session from
+ * before plans says what was recorded), STATE is derived by the Overview's rule (unfinished · N of M
+ * to record · Complete · a dash with no plan), the chevron last. No × — Delete session lives in the
+ * session's sheet. On a phone the card is the row: the date as its title, the note under it, one
+ * line each for Ran and State, a corner chevron.
+ */
 function SessionsView({
-  base, sessions, canWrite, busy, noTestYet, metricsHref, hasSessions, onDelete, onHelp,
+  base, sessions, types, noTestYet, metricsHref, hasSessions, onHelp,
 }: {
   base: string;
   sessions: RepTeamEvaluationSession[];
-  canWrite: boolean;
-  busy: boolean;
+  types: RepTeamMeasurableType[];
   /** No active measured test — a session cannot start, and the empty state says where to go. */
   noTestYet: boolean;
   metricsHref: string;
   hasSessions: boolean;
-  onDelete: (s: RepTeamEvaluationSession) => void;
   onHelp: () => void;
 }) {
+  const router = useRouter();
   // The search is this view's own state — a keystroke must not re-render the hub around it.
   const [query, setQuery] = useState('');
-  // A session row is its date and note (as today); the search box finds either. The searchable
+  // A session row is its date, its note and its practice; the search box finds any. The searchable
   // text is built once per list, not once per keystroke (date formatting is an Intl call).
   const searchable = useMemo(
-    () => sessions.map(s => ({ s, text: `${formatSessionDate(s.sessionDate)} ${s.sessionDate} ${s.note ?? ''}`.toLowerCase() })),
+    () => sessions.map(s => ({ s, text: `${sessionTitle(s)} ${s.sessionDate} ${s.eventName ?? ''}`.toLowerCase() })),
     [sessions],
   );
   const needle = query.trim().toLowerCase();
   const shown = needle ? searchable.filter(x => x.text.includes(needle)).map(x => x.s) : sessions;
+  const href = (s: RepTeamEvaluationSession) => `${base}/development/sessions/${s.id}`;
+  /** Ran — the plan, or what was recorded on a session from before plans existed. */
+  const ran = (s: RepTeamEvaluationSession) =>
+    scopeSummary(s, types) ?? ((s.playerCount ?? 0) > 0 ? `${plural(s.playerCount ?? 0, 'player')} · ${plural(s.typeCount ?? 0, 'test')}` : null);
 
   return (
     <>
@@ -382,18 +383,25 @@ function SessionsView({
           eleven of thirteen were tested and the other two read as a dash. Inert off a demo org.
           Money's list-tab grammar (2026-09-14): the toolbar on the paper, the table on white. */}
       <div data-sandbox-tour="development-sessions">
+        {/* ONE line above the table (round 2, owner 2026-09-15): the count. The lesson ("run your
+            tests for the whole roster in one go…") lives on the empty state and the Overview's
+            first-run card, where a coach who has not run a session reads it; a list that has
+            sessions has learned it. The search waits for a list long enough to need finding
+            (nine sessions or more) and is a bare field when it comes — no label band. */}
         {hasSessions && (
           <div className={styles.panelToolbar}>
             <p className={styles.devListLede}>
-              {plural(sessions.length, 'session')} this season · run your tests for the whole roster in one go — a few a season is what makes the trend lines real.
+              <strong>{sessions.length}</strong> {sessions.length === 1 ? 'session' : 'sessions'} this season
             </p>
-            <div className={styles.panelToolbarActions}>
-              <label className={styles.field} style={{ minWidth: 200, flex: '0 1 260px' }}>
-                <span className={styles.label}>Find a session</span>
-                <input type="search" className={`${styles.input} ${styles.devToolbarControl}`} value={query} placeholder="Date or session note"
-                  onChange={e => setQuery(e.target.value)} />
-              </label>
-            </div>
+            {sessions.length >= SEARCH_FROM && (
+              <div className={styles.panelToolbarActions}>
+                <label className={styles.field} style={{ flex: '0 1 240px' }}>
+                  <span className={styles.srOnly}>Find a session</span>
+                  <input type="search" className={`${styles.input} ${styles.devToolbarControl}`} value={query} placeholder="Find a session…"
+                    onChange={e => setQuery(e.target.value)} />
+                </label>
+              </div>
+            )}
           </div>
         )}
 
@@ -401,41 +409,78 @@ function SessionsView({
           shown.length === 0 ? (
             <p className={styles.detailPlaceholder}>No session matches “{query.trim()}”.</p>
           ) : (
-            /* ONE table — the .tableAsCards primitive reflows rows to cards @640 (the session cell has
-               no label: it renders as the card title). Rows go inert while a delete is in flight —
-               tapping into a session that's mid-delete would land on a jarring 404. */
-            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`} style={busy ? { pointerEvents: 'none', opacity: 0.6 } : undefined}>
-              <table className={styles.devBoardTable}>
+            /* ONE table on the list recipe — the .tableAsCards primitive reflows rows to cards @640
+               (the lead cell has no label: it renders as the card title; the chevron pins to the
+               card's corner). ⚠ The shared card recipe tints an item card on a phone; the table
+               standard says an item row is never tinted — flagged to the standard, not forked here. */
+            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
+              <table className={styles.table} aria-label="Sessions">
                 <thead>
                   <tr>
-                    <th>Session</th>
-                    <th>Records</th>
-                    {canWrite && <th><span className={styles.srOnly}>Actions</span></th>}
+                    <th className={`${styles.th} ${styles.tdShrink}`}>Date</th>
+                    <th className={styles.th}>Session</th>
+                    <th className={`${styles.th} ${styles.tdShrink}`}>Ran</th>
+                    <th className={`${styles.th} ${styles.tdShrink}`}>State</th>
+                    <th className={styles.th} aria-label="Open" />
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map(s => (
-                    <tr key={s.id}>
-                      <td>
-                        <Link href={`${base}/development/sessions/${s.id}`} className={styles.devCellLink}>
-                          {formatSessionDate(s.sessionDate)}{s.note ? ` — ${s.note}` : ''}
-                        </Link>
-                      </td>
-                      <td data-label="Records" className={styles.devBoardVal}>
-                        {(s.playerCount ?? 0) > 0
-                          ? `${plural(s.playerCount ?? 0, 'player')} · ${plural(s.typeCount ?? 0, 'test')}`
-                          : <Muted>no results yet</Muted>}
-                      </td>
-                      {canWrite && (
-                        <td data-label="Actions" className={styles.devBoardVal}>
-                          <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem', minHeight: 'var(--tap-min, 44px)', minWidth: 'var(--tap-min, 44px)' }}
-                            aria-label="Delete this session" onClick={() => onDelete(s)}>
-                            <X size={11} aria-hidden />
-                          </button>
+                  {shown.map(s => {
+                    const state = sessionState(s);
+                    return (
+                      <tr key={s.id} className={`${styles.tr} ${styles.rowTappable}`} onClick={() => router.push(href(s))}>
+                        {/* The DATE is the door and the card's title (a lead cell takes no `data-label`).
+                            It READS as the row's name — semibold, no underline — and stays a real link
+                            underneath (the standard's "name as the link"): the row's click is the pointer
+                            shortcut on top, and cannot be tabbed to, announced, or opened in a new tab. */}
+                        <td className={`${styles.td} ${styles.tdShrink} ${styles.cardStackCell}`}>
+                          <Link href={href(s)} className={`${styles.devCellLink} ${styles.devSessionDate}`} onClick={e => e.stopPropagation()}>{formatWeekdayDate(s.sessionDate, 'short')}</Link>
                         </td>
-                      )}
-                    </tr>
-                  ))}
+                        {/* SESSION — the note and "at <practice> ›" on one line, in its own column, so the
+                            row is one line (owner, 2026-09-15). No caption class: a caption would ask the
+                            row for the comfortable height this column exists to give back. On a phone it
+                            is the line under the date's title, with no label of its own; a session with
+                            neither a note nor a practice leaves the cell empty, and the card hides it. */}
+                        <td className={`${styles.td} ${styles.cardStackCell}`}>
+                          {/* ONE span: the card stacks each child of this cell on its own line, and the
+                              note, the practice link and its › are one sentence. */}
+                          {(s.note || s.eventName) && (
+                            <span>
+                              {s.note}
+                              {/* The practice door steps back to the secondary ink — a door you can find,
+                                  not the row's loudest line (round 2). */}
+                              {s.eventName && (
+                                <span className={styles.devSessionAt}>
+                                  {s.note ? ' · ' : ''}at <Link href={`${base}/practice/${s.eventId}`} onClick={e => e.stopPropagation()}>{s.eventName}</Link> ›
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </td>
+                        {/* The plan on one line, in the secondary ink — a figure about the session, not the session. */}
+                        <td className={`${styles.td} ${styles.tdShrink} ${styles.devSessionRan}`} data-label="Ran">
+                          {ran(s) ?? <Muted>nothing yet</Muted>}
+                        </td>
+                        {/* State says its state ONCE (round 2): the figure in amber IS "unfinished"; Complete
+                            in the quiet green; a dash where there is no plan to measure. No chip here — the
+                            Overview's chip counts sessions, a different fact. */}
+                        <td className={`${styles.td} ${styles.tdShrink} ${styles.devSessionState}`} data-label="State">
+                          {state === 'unfinished' ? (
+                            <span className={styles.devSessionOpen}>{s.unrecordedCount} of {s.scopeCellCount} to record</span>
+                          ) : state === 'complete' ? <span className={styles.devSessionDone}>Complete</span> : <Muted>—</Muted>}
+                        </td>
+                        <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
+                          <span className={styles.listRowActions}>
+                            {/* A REAL BUTTON — the row's accessible door; one glyph on every row. */}
+                            <button type="button" className={`${styles.linkBtn} ${styles.listRowToggle}`} aria-label={`Open ${sessionTitle(s)}`}
+                              onClick={e => { e.stopPropagation(); router.push(href(s)); }}>
+                              <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+                            </button>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

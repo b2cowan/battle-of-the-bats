@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getRepTeamMeasurableType, getRepTeamEvaluationSession, createRepPlayerObservation } from '@/lib/db';
+import { getRepTeamMeasurableType, getRepTeamEvaluationSession, getRepSessionObservations, createRepPlayerObservation } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { readObservationInput } from '@/lib/development-input';
 import { resolveDevelopmentPlayerContext, assertGoalBelongsToPlayer } from '@/lib/development-player-route';
@@ -44,6 +44,12 @@ export const POST = withObservability(async (req: Request,
     const session = await getRepTeamEvaluationSession(requestedSessionId, teamId, player.programYearId);
     if (!session) return NextResponse.json({ error: 'Session not found for this team and season.' }, { status: 400 });
     sessionId = session.id;
+    // ONE observation per player per skill per session (the grid's row IS that cell). A second —
+    // another coach or device recorded it meanwhile — is a 409 the sheet answers by re-reading,
+    // never a twin row the grid would hide behind the first (/review 2026-09-15).
+    const twin = (await getRepSessionObservations(session.id, teamId))
+      .find(o => o.playerId === playerId && o.measurableTypeId === measurableTypeId);
+    if (twin) return NextResponse.json({ error: 'An observation for this player is already recorded in this session — reload to see it.', observation: twin }, { status: 409 });
   }
 
   const observation = await createRepPlayerObservation({

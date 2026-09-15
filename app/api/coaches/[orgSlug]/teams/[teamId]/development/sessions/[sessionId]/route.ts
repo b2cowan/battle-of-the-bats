@@ -6,16 +6,18 @@ import {
   getRepTeamEvaluationSession,
   updateRepTeamEvaluationSession,
   deleteRepTeamEvaluationSession,
+  deleteRepSessionRecordsForMetrics,
   getRepSessionMeasurables,
   getRepTeamMeasurableTypes,
   getRepRosterPlayers,
   getRepTeamEvents,
   getRepTeamEventById,
-  restampRepSessionMeasurables,
   getRepSessionNotAssessed,
   getRepSessionObservations,
   getOrgMemberDisplayNames,
 } from '@/lib/db';
+import { orgDayKey } from '@/lib/timezone';
+import { moveRepSessionDate } from '@/lib/development-session-move';
 import { withObservability } from '@/lib/observability';
 import {
   denyUnless, canViewMeasurables, canViewDevelopmentGoals, canWriteDevelopment, canWriteDevelopmentGoals, redactRoster,
@@ -80,15 +82,15 @@ export const GET = withObservability(async (_req: Request,
     getRepRosterPlayers(programYear.id),
     getRepTeamMeasurableTypes(teamId, { includeRetired: true }),
     getRepSessionMeasurables(sessionId, teamId),
-    // D10 — the event picker's options. ANY event in the season qualifies (§10.2 ruling 2):
-    // restricting to practices creates a dead end for the coach who tested at a Saturday
-    // scrimmage warm-up, and the link is descriptive, not structural. The client orders them
-    // practices-first and by proximity to the session's current date.
+    // The "At a practice" options. ANY event in the season qualifies (§10.2 ruling 2): restricting
+    // to practices creates a dead end for the coach who tested at a Saturday scrimmage warm-up.
+    // The sheet orders them practices-first and by proximity to the session's current date.
     canWriteDevelopment(caps) ? getRepTeamEvents(programYear.id) : Promise.resolve([]),
     getRepSessionNotAssessed(sessionId, teamId),
     showObservations ? getRepSessionObservations(sessionId, teamId) : Promise.resolve([]),
   ]);
-  // "Entered by" on every saved row (owner ruling 2026-09-11: every record names who wrote it).
+  // "Entered by" — on Edit and in the review (owner ruling 2026-09-11: every record names who wrote
+  // it; re-evaluation stage 2, C7: off the row, where it was a second line on every saved card).
   const authors = await getOrgMemberDisplayNames(resolved.ctx.org.id, [
     ...entries.map(e => e.createdBy ?? ''), ...observations.map(o => o.createdBy ?? ''), ...notAssessed.map(n => n.createdBy ?? ''),
   ]);
@@ -155,9 +157,11 @@ export const PATCH = withObservability(async (req: Request,
   const read = readSessionPatchInput(body);
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
   const { fields } = read;
-  // "Change scope" — the ids are proved against this team's active definitions and this season's
-  // active roster, like the create. A retired definition or a departed player cannot be re-admitted
-  // to a scope (their saved rows stay, read-only, whatever the scope says).
+  const current = resolved.session;
+  // The plan ("What are we running?" · "Who's here?" · the counts) — the ids are proved against this
+  // team's active definitions and this season's active roster, like the create. A retired definition
+  // or a departed player cannot be re-admitted to a plan (their saved rows stay, read-only, whatever
+  // the plan says).
   if (fields.scope) {
     const verified = await verifySessionScope({
       teamId, programYearId: resolved.programYear.id, scope: fields.scope, eventId: null,
@@ -166,55 +170,54 @@ export const PATCH = withObservability(async (req: Request,
     if ('error' in verified) return NextResponse.json({ error: verified.error }, { status: 400 });
     fields.scope = verified.scope!;
   }
-  // D10 — link this session to the event its readings were taken at. Any event in THIS season
-  // qualifies (§10.2 ruling 2); `null` unlinks. The reader shaped the id; proving it sits on this
-  // team's season schedule is the route's job. The link never derives the date — see below.
+  /**
+   * ⚠ "WHEN?" IS ONE QUESTION (re-evaluation stage 2, C10, 2026-09-15 — reversing Practice Plans
+   * §10.2 ruling 1 on its reason). A session is AT a practice — and then its date IS the practice's
+   * day, derived here on the write, never typed — or ON a date the coach types, with no practice.
+   * Linking derives the date; a date sent beside a standing link that disagrees with it is refused,
+   * so "taken at Tuesday's practice, on Thursday" can no longer be saved. Any event in THIS season
+   * qualifies (§10.2 ruling 2); `null` unlinks and leaves the date as it is ("on a date").
+   */
   if (fields.eventId) {
     const event = await getRepTeamEventById(fields.eventId);
-    if (!event || event.teamId !== teamId || event.programYearId !== resolved.session.programYearId) {
+    if (!event || event.teamId !== teamId || event.programYearId !== current.programYearId) {
       return NextResponse.json({ error: 'That event isn’t on this team’s schedule for this season.' }, { status: 400 });
     }
     fields.eventId = event.id;
-  }
-
-  /**
-   * ⚠ THE RE-STAMP (plan §10.1). A reading is stamped with the session's date at the moment it is
-   * typed. So moving the session's date MUST move the readings collected in it — otherwise the
-   * session silently disagrees with its own contents and every trend line plots on the wrong day.
-   *
-   * Done BEFORE the session row is updated so a failure here leaves both sides on the old date
-   * (consistent), rather than a moved header over stale readings (the exact corruption above).
-   * The client has already confirmed the count with the coach; this is the write that honours it.
-   *
-   * Readings logged individually from a player profile carry no session id and are untouched.
-   */
-  const previousDate = resolved.session.sessionDate;
-  const movingDate = !!fields.sessionDate && fields.sessionDate !== previousDate;
-  let restampedCount = 0;
-  if (movingDate) {
-    restampedCount = await restampRepSessionMeasurables(sessionId, teamId, fields.sessionDate!);
-  }
-
-  const session = await updateRepTeamEvaluationSession(sessionId, teamId, resolved.programYear.id, fields);
-
-  // ⚠ There is no transaction spanning the two writes above, so the failure direction has to be
-  // handled by hand: if the readings moved but the session row did NOT (a concurrent delete, or
-  // any transient error), the session would silently disagree with its own contents — the exact
-  // corruption the re-stamp exists to prevent, arriving from the other side. Put the readings
-  // back where they were, and say plainly if even that fails.
-  if (!session) {
-    if (movingDate && restampedCount > 0) {
-      try {
-        await restampRepSessionMeasurables(sessionId, teamId, previousDate);
-      } catch {
-        return NextResponse.json({
-          error: `The session could not be moved, and ${restampedCount} reading${restampedCount === 1 ? '' : 's'} may now carry the wrong date. Reload and check the date on this session before entering anything else.`,
-        }, { status: 500 });
-      }
+    fields.sessionDate = orgDayKey(event.startsAt);
+  } else if (fields.sessionDate !== undefined && fields.eventId === undefined && current.eventId) {
+    const event = await getRepTeamEventById(current.eventId);
+    if (event && orgDayKey(event.startsAt) !== fields.sessionDate) {
+      return NextResponse.json({ error: 'This session is at a practice, so it takes the practice’s date. Choose “On a date” to set one yourself.' }, { status: 400 });
     }
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
-  return NextResponse.json({ session, restampedCount });
+
+  // ⚠ THE RE-STAMP (plan §10.1) rides the date: a result is stamped with the session's date at the
+  // moment it is typed, so moving the session moves what it holds — the shared two-statement move
+  // (results first, then the row; a failed row write puts the results back). The client has already
+  // confirmed the count with the coach; this is the write that honours it. With no date change the
+  // update is the plain one.
+  const { sessionDate, dropResultsFor, ...rest } = fields;
+  let session: typeof current | null;
+  let restampedCount = 0;
+  if (sessionDate !== undefined) {
+    const moved = await moveRepSessionDate({ session: current, teamId, programYearId: resolved.programYear.id, sessionDate, fields: rest });
+    if ('error' in moved) return NextResponse.json({ error: moved.error }, { status: moved.status });
+    session = moved.session;
+    restampedCount = moved.restampedCount;
+  } else {
+    session = await updateRepTeamEvaluationSession(sessionId, teamId, resolved.programYear.id, rest);
+    if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+  }
+
+  // C9 — a test dropped from the plan WITH its results, on the coach's say-so (keep is the default
+  // and needs nothing here). After the plan is saved, so a failure leaves the results readable as
+  // "outside the scope" rather than a plan that still names a test whose results are gone.
+  let deletedResults = 0;
+  if (dropResultsFor && dropResultsFor.length > 0) {
+    deletedResults = await deleteRepSessionRecordsForMetrics(sessionId, teamId, dropResultsFor);
+  }
+  return NextResponse.json({ session, restampedCount, deletedResults });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/sessions/[sessionId]' });
 
 export const DELETE = withObservability(async (_req: Request,

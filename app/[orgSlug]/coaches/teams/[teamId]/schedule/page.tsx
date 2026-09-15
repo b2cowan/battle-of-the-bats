@@ -14,6 +14,7 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { sessionTitle } from '@/lib/development-session-view';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { scheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
@@ -1496,20 +1497,39 @@ export default function CoachesSchedulePage({
         resources: form.resources,
         tagIds: needsOpponent(form.eventType) ? validFormTagIds : undefined,
       };
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}?scope=${scope}`, {
+      const payload = editingMirrored ? coachOwned : {
+        ...coachOwned,
+        name: eventNameForSave(form),
+        startsAt: form.startsAt || null,
+        endsAt: form.endsAt || null,
+        location: form.location.trim() || null,
+        locationAddress: form.locationAddress.trim() || null,
+        opponent: form.opponent.trim() || null,
+        homeAway: form.homeAway || null,
+      };
+      const send = (extra: Record<string, unknown> = {}) => fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}?scope=${scope}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingMirrored ? coachOwned : {
-          ...coachOwned,
-          name: eventNameForSave(form),
-          startsAt: form.startsAt || null,
-          endsAt: form.endsAt || null,
-          location: form.location.trim() || null,
-          locationAddress: form.locationAddress.trim() || null,
-          opponent: form.opponent.trim() || null,
-          homeAway: form.homeAway || null,
-        }),
+        body: JSON.stringify({ ...payload, ...extra }),
       });
+      let res = await send();
+      if (res.status === 409) {
+        // A session was recorded at this practice (development re-evaluation stage 2, C10): moving the
+        // practice's day moves the session and every attempt in it — the route says so with the
+        // count, the coach confirms with it in front of them, and the save goes again with the answer.
+        const d = await res.json().catch(() => null) as { error?: string; linkedSessions?: { note: string | null; sessionDate: string; attemptCount: number }[] } | null;
+        if (!d?.linkedSessions?.length) throw new Error(d?.error ?? 'Save failed');
+        const lines = d.linkedSessions.map(s => `${sessionTitle(s)} (${s.attemptCount} attempt${s.attemptCount === 1 ? '' : 's'})`);
+        const ok = await confirm({
+          title: d.linkedSessions.length === 1 ? 'Move the session too?' : 'Move the sessions too?',
+          message: `${d.linkedSessions.length === 1 ? 'A session was recorded at this practice' : `${d.linkedSessions.length} sessions were recorded at this practice`}: ${lines.join(' · ')}. Moving the practice moves ${d.linkedSessions.length === 1 ? 'it' : 'them'} to the new day, and every attempt with ${d.linkedSessions.length === 1 ? 'it' : 'them'}.`,
+          confirmText: 'Move the practice and the session',
+          cancelText: 'Keep the date',
+          tone: 'warning',
+        });
+        if (!ok) return;
+        res = await send({ moveSessions: true });
+      }
       if (!res.ok) {
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Save failed');

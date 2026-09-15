@@ -116,9 +116,10 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
-  // The scope's ids are NAMED by the client and PROVED here (/dba Finding #41 item 3): every metric
-  // is one of this team's active definitions, every player a row of this season's active roster.
-  // The event, likewise, must sit on this team's season schedule (the PATCH's rule, reused).
+  // The plan's ids are NAMED by the client and PROVED here (/dba Finding #41 item 3): every metric
+  // is one of this team's active definitions, every player a row of this season's active roster,
+  // every count 1..5 on a test in the plan. The event, likewise, must sit on this team's season
+  // schedule (the PATCH's rule, reused).
   const verified = await verifySessionScope({ teamId, programYearId: programYear.id, scope, eventId, activeTypes });
   if ('error' in verified) return NextResponse.json({ error: verified.error }, { status: 400 });
 
@@ -126,7 +127,9 @@ export const POST = withObservability(async (req: Request,
     orgId: ctx.org.id,
     teamId,
     programYearId: programYear.id,
-    sessionDate,
+    // "When?" is one question (re-evaluation stage 2, C10): at a practice, the session's date IS the
+    // practice's day — derived here, whatever the client sent beside the link; on a date, the typed one.
+    sessionDate: verified.eventDay ?? sessionDate,
     note,
     eventId: verified.eventId,
     scope: verified.scope,

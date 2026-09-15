@@ -10,11 +10,15 @@ import {
   deleteRepTeamEvent,
   deleteRepTeamEventsByRecurrenceParent,
   setRepTeamEventTagsOfKind,
+  getRepTeamEvaluationSessionsForEvent,
+  countRepSessionMeasurables,
 } from '@/lib/db';
+import { orgDayKey } from '@/lib/timezone';
+import { moveRepSessionDate } from '@/lib/development-session-move';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
+import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
 import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
@@ -210,6 +214,59 @@ export const PATCH = withObservability(async (req: Request,
     tagIds = await resolveValidTagIds(teamId, ctx.org.id, 'game', body.tagIds);
     if (tagIds === null) {
       return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
+    }
+  }
+
+  /**
+   * ⚠ A SESSION TAKEN AT THIS PRACTICE MOVES WITH ITS DAY (development re-evaluation stage 2, C10,
+   * 2026-09-15 — reversing Practice Plans §10.2 ruling 1 on its reason). A session is created AT
+   * the practice, so a practice whose DAY changes after results were taken is a date correction and
+   * the results follow — every attempt re-stamped, the session moved. Check-then-act: the route
+   * answers 409 with the linked sessions (id, note, attempt count) unless the body carries
+   * `moveSessions: true`, so the coach confirms with the count in front of them — the same handshake
+   * the definition sheet's successor rule uses. Sessions move FIRST, then the event: a failure
+   * between the two leaves the sessions on the new day and the event on the old, which the next save
+   * repairs (the sessions already on the new day are not asked about again). A time change on the
+   * same day moves nothing. Only a single-occurrence write — a series edit keeps every occurrence's
+   * date.
+   */
+  const nextDay = fields.startsAt ? orgDayKey(fields.startsAt) : null;
+  const dayChanges = !!nextDay && nextDay !== orgDayKey(event.startsAt);
+  if (dayChanges) {
+    const linked = await getRepTeamEvaluationSessionsForEvent(eventId, teamId, programYear.id);
+    const moving = linked.filter(s => s.sessionDate !== nextDay);
+    if (moving.length > 0) {
+      // ⚠ Moving the session is a DEVELOPMENT write — a session's date and every result's date — and
+      // the schedule capability alone never opens one (/review, 2026-09-15: the events route would
+      // otherwise have let a schedule-only helper re-stamp results by rescheduling). A coach without
+      // the Development switch is refused the day change in words, rather than the session being
+      // moved for them or silently unlinked behind the coach who recorded it.
+      if (!canWriteDevelopment(assignment.capabilities)) {
+        return NextResponse.json({
+          error: 'A session was recorded at this practice, and moving the practice moves the session and every result in it — that needs the Development switch. Ask your head coach to move it.',
+        }, { status: 403 });
+      }
+      if (body.moveSessions !== true) {
+        const counts = await countRepSessionMeasurables(moving.map(s => s.id), teamId);
+        return NextResponse.json({
+          error: 'A session was recorded at this practice — moving the practice moves the session and every attempt in it.',
+          linkedSessions: moving.map(s => ({ id: s.id, note: s.note, sessionDate: s.sessionDate, attemptCount: counts.get(s.id) ?? 0 })),
+        }, { status: 409 });
+      }
+      // One at a time, so a failure leaves at most the sessions before it moved — and those are put
+      // back (best effort) before the answer, so the practice and every session at it still share one
+      // day rather than one session sitting on a day the practice never reached (/review 2026-09-15).
+      const movedSoFar: typeof moving = [];
+      for (const s of moving) {
+        const moved = await moveRepSessionDate({ session: s, teamId, programYearId: programYear.id, sessionDate: nextDay! });
+        if ('error' in moved) {
+          for (const back of movedSoFar) {
+            await moveRepSessionDate({ session: { ...back, sessionDate: nextDay! }, teamId, programYearId: programYear.id, sessionDate: back.sessionDate });
+          }
+          return NextResponse.json({ error: moved.error }, { status: moved.status });
+        }
+        movedSoFar.push(s);
+      }
     }
   }
 

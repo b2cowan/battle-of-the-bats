@@ -53,12 +53,14 @@ describe('what a record means — the Metrics tab column (the unit is said once,
   it('a legacy test says record only — the method is the coach\'s note, never a claim on the row (owner, 2026-09-14)', () => {
     const legacy = def({ aim: 'record', method: null, headline: 'last', attemptsPerSession: 1 });
     assert.equal(recordMeaning(legacy), 'record only');
-    assert.equal(recordMeaning(def({ method: null })), 'lower is the aim · best attempt');
+    assert.equal(recordMeaning(def({ method: null })), 'lower is the aim');
   });
-  it('a defined test names its aim and, with more than one attempt, how its headline is read; a range test keeps the unit inside the band', () => {
-    assert.equal(recordMeaning(base), 'lower is the aim · best attempt');
+  it('a defined test names its aim and, when its headline is not the aim\'s default, how it is read (the count is the session\'s fact — stage 2, C1); a range test keeps the unit inside the band', () => {
+    assert.equal(recordMeaning(base), 'lower is the aim');
+    assert.equal(recordMeaning(def({ headline: 'average' })), 'lower is the aim · average of attempts');
     assert.equal(recordMeaning(def({ attemptsPerSession: 1 })), 'lower is the aim');
-    assert.equal(recordMeaning(def({ unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, headline: 'in_range' })), 'aim: 62–68 mph · attempts in range');
+    assert.equal(recordMeaning(def({ unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, headline: 'in_range' })), 'aim: 62–68 mph');
+    assert.equal(recordMeaning(def({ unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, headline: 'average' })), 'aim: 62–68 mph · average of attempts');
     assert.equal(aimSentence(def({ unit: 'mph', aim: 'range', rangeFrom: 62, rangeTo: 68, headline: 'in_range' })), 'aim: 62–68 mph');
   });
   it('a skill says what it records and how many descriptors it offers', () => {
