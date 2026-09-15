@@ -589,18 +589,18 @@ export function readMeasurableInput(raw: unknown): InputResult<MeasurableFields>
     if (typeof body.sessionId !== 'string' || !body.sessionId) return { error: 'Invalid sessionId' };
     sessionId = body.sessionId;
   }
-  // The attempt within its session — absent = 1. A second attempt needs a session to belong to:
-  // a single result is one attempt, and "attempt 2 of nothing" would be a row the screens cannot
-  // place. The bound here (1..MAX_ATTEMPTS) is the ONLY server-side ceiling: the session's plan is a
-  // floor the row may run past with its "+" (re-evaluation stage 2, C2), and the definition no
-  // longer bounds anything.
+  // The attempt within its result — absent = 1. Inside a session the attempts are the session's;
+  // outside one they are the DAY's (re-evaluation stage 3, E7: the bench-side sheet records up to
+  // five attempts on a date and the reader groups them by that date, so a result is the same thing
+  // through both doors — until then "attempt 2 of nothing" was refused here). The bound
+  // (1..MAX_ATTEMPTS) is the ONLY server-side ceiling: the session's plan is a floor the row may
+  // run past with its "+" (stage 2, C2), and the definition no longer bounds anything.
   let attemptNo = 1;
   if (body.attemptNo !== undefined) {
     const a = body.attemptNo;
     if (typeof a !== 'number' || !Number.isInteger(a) || a < 1 || a > MAX_ATTEMPTS) {
       return { error: `Attempt must be a whole number from 1 to ${MAX_ATTEMPTS}.` };
     }
-    if (a > 1 && !sessionId) return { error: 'A second attempt belongs to a session — a result outside one is a single attempt.' };
     attemptNo = a;
   }
   return { fields: { measurableTypeId, value, recordedOn, note: note || null, sessionId, attemptNo } };

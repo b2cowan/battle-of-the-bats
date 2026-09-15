@@ -17,6 +17,7 @@ import { canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilitie
 import { playerName as rosterPlayerName } from '@/lib/coach-roster-name';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { skillsAndGoalsHref, parseSkillsAndGoalsSection, parseMetricEdit, playerDevelopmentHref, type SkillsAndGoalsSection } from '@/lib/development-address';
+import { playerTabHref } from '@/lib/coach-player-tabs';
 import { activeMeasuredTests, measuredTestsWithHistory, recordMeaning } from '@/lib/measurable-definition';
 import styles from '../../../coaches.module.css';
 import ov from './overview.module.css';
@@ -856,9 +857,13 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
                 const latestObs = chosenType && chosenIsSkill ? r.latestObservation?.[chosenType.id] : undefined;
                 // The ONE cell spelling Insights → Coverage reads too: the headline, "Not assessed" dated by its session, or an absence.
                 const cell = coverageCell({ latest: latest ?? null, latestObservation: null, notAssessedOn: chosenType ? (r.notAssessedOn?.[chosenType.id] ?? null) : null }, chosenType ?? { kind: 'test', aim: 'record' });
-                const href = playerDevelopmentHref(base, r.playerId, chosenType
-                  ? { view: chosenIsSkill ? 'observations' : 'results', metricId: chosenType.id, returnTo: here }
-                  : { view: 'goals', returnTo: here });
+                // A test opens the player's Results row; a skill's observations live on the player's
+                // NOTES tab (re-evaluation stage 3, E1/E2 — the Observations view is gone).
+                const href = chosenType && chosenIsSkill
+                  ? playerTabHref(`${base}/roster/${r.playerId}`, 'notes', { returnTo: here })
+                  : playerDevelopmentHref(base, r.playerId, chosenType
+                    ? { view: 'results', metricId: chosenType.id, returnTo: here }
+                    : { view: 'goals', returnTo: here });
                 return (
                   <tr key={r.playerId}>
                     <td>

@@ -4,9 +4,10 @@
  *
  * ⚠ ONE mechanism, extended — never a new one. The player record already answers
  * `?section=development` (`CoachCollapseSection` opens the section and scrolls to it); this module
- * adds the VIEW (goals | results | observations | archive — the four views of Phase 2), the metric or
- * the goal to focus, and a way back to the report that sent the coach, carrying that report's own
- * filters. The Insights hub keeps `?section=` and gains its filter state on the same convention.
+ * adds the VIEW (goals | results — the two views of re-evaluation stage 3; Phase 2's four shrank
+ * there), the metric, the goal or the observation to focus, the archive fold, and a way back to the
+ * report that sent the coach, carrying that report's own filters. The Insights hub keeps `?section=`
+ * and gains its filter state on the same convention.
  *
  * ⚠ NEVER A YEAR. The look-back layer is the closed-season page and the routes it calls
  * (`HISTORY_ENDPOINTS` in tests/unit/coach-history-endpoint-guard.test.ts); a development address
@@ -21,9 +22,17 @@
 import { insightsSectionHref } from './coach-insights-links.ts';
 import { UNTAGGED_FILTER } from './rep-drills.ts';
 
-/** The four views inside the Development section (mockup screen 4; Phase 2 added observations + archive). */
-export type DevelopmentView = 'goals' | 'results' | 'observations' | 'archive';
-export const DEVELOPMENT_VIEWS: ReadonlyArray<DevelopmentView> = ['goals', 'results', 'observations', 'archive'];
+/**
+ * The two views inside the player's Skills & Goals tab (re-evaluation stage 3, owner ruling E1,
+ * 2026-09-15). Phase 2's `observations` and `archive` views are RETIRED, and their addresses still
+ * land somewhere honest (`parseDevelopmentAddress`, `developmentAddressTab`): an observation's home
+ * is the Notes tab, and the archive is a fold at the foot of this tab, opened by the address.
+ */
+export type DevelopmentView = 'goals' | 'results';
+export const DEVELOPMENT_VIEWS: ReadonlyArray<DevelopmentView> = ['goals', 'results'];
+/** The two Phase 2 views that no longer exist — kept ONLY so an old link lands, never offered. */
+const RETIRED_VIEW_OBSERVATIONS = 'observations';
+const RETIRED_VIEW_ARCHIVE = 'archive';
 
 /**
  * Skills & Goals — four views on one screen. `overview` is the LANDING (re-evaluation stage 0,
@@ -38,6 +47,10 @@ export interface DevelopmentAddress {
   view: DevelopmentView | null;
   metricId: string | null;
   goalId: string | null;
+  /** An observation to open in its sheet on arrival (Player progress's "Open →", E2). */
+  observationId: string | null;
+  /** Open the Previous-seasons fold at the tab's foot on arrival (an old `view=archive` link, E1). */
+  archive: boolean;
   /** A safe internal path, already validated — or null. */
   returnTo: string | null;
 }
@@ -63,25 +76,46 @@ export function safeReturnPath(raw: string | null | undefined, base: string): st
 
 export function parseDevelopmentAddress(params: ParamReader, base: string): DevelopmentAddress {
   const rawView = params.get('view');
+  const goalId = id(params.get('goal'));
+  // A retired address lands on the home (E1): `view=observations&goal=<id>` is the goal (its history
+  // is the door to the observation); a bare `view=observations` is the Notes tab — the page's tab
+  // resolution reads that through `developmentAddressTab`, so this parse says no view at all.
+  const view: DevelopmentView | null = DEVELOPMENT_VIEWS.includes(rawView as DevelopmentView) ? (rawView as DevelopmentView)
+    : rawView === RETIRED_VIEW_OBSERVATIONS && goalId ? 'goals'
+    : null;
   return {
-    view: DEVELOPMENT_VIEWS.includes(rawView as DevelopmentView) ? (rawView as DevelopmentView) : null,
+    view,
     metricId: id(params.get('metric')),
-    goalId: id(params.get('goal')),
+    goalId,
+    observationId: id(params.get('observation')),
+    archive: rawView === RETIRED_VIEW_ARCHIVE,
     returnTo: safeReturnPath(params.get('return'), base),
   };
+}
+
+/**
+ * The tab a development address lands on when it is NOT the Skills & Goals tab: a bare
+ * `view=observations` (no goal) is the observation's home, the Notes tab (E1/E2). Read by the
+ * player page's tab resolution (`resolvePlayerTab`); null for every address this tab answers.
+ */
+export function developmentAddressTab(params: ParamReader): 'notes' | null {
+  return params.get('section') === 'development' && params.get('view') === RETIRED_VIEW_OBSERVATIONS && !id(params.get('goal'))
+    ? 'notes'
+    : null;
 }
 
 /** The player record, opened on Development — with the view, the metric or goal, and the way back. */
 export function playerDevelopmentHref(
   base: string,
   playerId: string,
-  opts: { view?: DevelopmentView; metricId?: string | null; goalId?: string | null; returnTo?: string | null } = {},
+  opts: { view?: DevelopmentView; metricId?: string | null; goalId?: string | null; observationId?: string | null; returnTo?: string | null } = {},
 ): string {
   const qp = new URLSearchParams();
   qp.set('section', 'development');
   if (opts.view) qp.set('view', opts.view);
   if (opts.metricId) qp.set('metric', opts.metricId);
   if (opts.goalId) qp.set('goal', opts.goalId);
+  if (opts.observationId) qp.set('observation', opts.observationId);
   const back = safeReturnPath(opts.returnTo ?? null, base);
   if (back) qp.set('return', back);
   return `${base}/roster/${playerId}?${qp.toString()}`;

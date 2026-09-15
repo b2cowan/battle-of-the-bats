@@ -77,6 +77,11 @@ export const GET = withObservability(async (_req: Request,
     // The "about" pickers on the Add-a-note form — only for a coach who can open that form.
     goals: canWrite ? goals.map(g => ({ id: g.id, focusArea: g.focusArea })) : [],
     events: canWrite ? events.map(e => ({ id: e.id, name: e.name, startsAt: e.startsAt })) : [],
+    // This tab is the observation's HOME (re-evaluation stage 3, E2): a row opens its sheet here, so
+    // a writer gets the records behind the rows and the skills the sheet names (the observed skill
+    // stays listed after it is retired — the sheet must still name what is stored).
+    observations: canWrite ? observations : [],
+    skills: canWrite ? types.filter(t => t.kind === 'skill' && (t.isActive || observations.some(o => o.measurableTypeId === t.id))) : [],
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/notes' });
 

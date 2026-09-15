@@ -178,15 +178,16 @@ export const SCREENS = [
   // Not recorded rows, a player outside the scope, a corrected attempt — every state the grid has.
   { id: 'coach-development-session-scoped', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.scopedSessionId}` },
-  // The player record's Development section, opened on each of its four views by the address
-  // (the sweep cannot click; `?section=development&view=` is the product's own door). Devon holds
-  // goals with a review, results with attempts, an observation and a linked prior season.
+  // The player's Skills & Goals tab, opened on each of its TWO views by the address (the sweep
+  // cannot click; `?section=development&view=` is the product's own door) — re-evaluation stage 3
+  // (2026-09-15): Goals with the one goal open in place (it opens by itself), Results with the
+  // sprint's row opened by the address, and the Previous-seasons fold opened by the old `archive`
+  // address (Devon is linked to his 2025 row). The Observations view is gone — a `view=observations`
+  // address lands on the Notes tab, which `coach-player-notes` already measures.
   { id: 'coach-player-development-goals', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=goals` },
   { id: 'coach-player-development-results', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=results&metric=${c.measurableTypeId}` },
-  { id: 'coach-player-development-observations', session: 'coach', ready: 'h1',
-    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=observations` },
   { id: 'coach-player-development-archive', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?section=development&view=archive` },
   { id: 'coach-development-handout', session: 'coach', ready: 'h1',

@@ -5,17 +5,24 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { todayLocal } from '@/lib/measurable-format';
 import { MAX_OBSERVATION_NOTE_LEN } from '@/lib/development-input';
 import type { RepPlayerDevelopmentGoal, RepPlayerObservation, RepTeamMeasurableType } from '@/lib/types';
+import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
  * "Record an observation" (development lifecycle Phase 2, mockup screen 4; re-evaluation stage 2,
  * C12 — the sheet for everything, owner ruling 2026-09-15): what the coach saw against a SKILL,
  * dated, with an optional descriptor (one of the skill's own words) and optionally as evidence for
- * a goal. ONE form for one record, from every door: the player's Observations view and a goal
- * (which pre-selects itself as the evidence link) ask for the skill and the date; a SESSION's grid
- * opens the same sheet with both FIXED (`fixed`) — the skill is the chip, the date is the
- * session's — so it asks only the descriptor and the sentence. Editing reuses the form; the skill
- * it names is fixed. Nothing saves until Save. Visible to coaches with Internal notes.
+ * a goal. ONE form for one record, from every door: the Goals toolbar and a goal (which pre-selects
+ * itself as the evidence link) ask for the skill and the date; a SESSION's grid opens the same
+ * sheet with both FIXED (`fixed`) — the skill is the chip, the date is the session's — so it asks
+ * only the descriptor and the sentence. Editing reuses the form; the skill it names is fixed.
+ * Nothing saves until Save. Visible to coaches with Internal notes.
+ *
+ * ⚠ THE SHEET TAKES REMOVE (re-evaluation stage 3, owner ruling E2, 2026-09-15). An observation's
+ * home is the Notes tab; the goal's history, Player progress and the session row are its doors; and
+ * it opens in THIS sheet from every one of them. The Observations view — the only place one could
+ * be deleted — is gone, so `Remove observation` sits at the footer's left in edit mode (the host
+ * confirms and deletes, as Delete session's host does). Delete is never a row action.
  *
  * `onSubmit` hands back every field; the caller decides what to write (the session page sends only
  * what changed, so a descriptor the skill no longer offers is never re-sent by accident — /review
@@ -23,22 +30,25 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * see it and clear it.
  */
 export default function RecordObservationDialog({
-  skills, goals, editing, presetGoalId, fixed, busy, error, onSubmit, onClose,
+  skills, goals, editing, presetGoalId, fixed, busy, error, onSubmit, onClose, onRemove,
 }: {
   /** Active skills. In `fixed` mode, the one the session's chip is on. */
   skills: RepTeamMeasurableType[];
-  goals: RepPlayerDevelopmentGoal[];
+  goals: Pick<RepPlayerDevelopmentGoal, 'id' | 'focusArea'>[];
   editing?: RepPlayerObservation | null;
   presetGoalId?: string | null;
   /**
-   * Opened from a session's grid: the skill and the date come from the row, not the coach. The title
-   * names the player; the subtitle says which session dates it.
+   * Opened from a session's grid (or the goal's history, for an observation a session dates): the
+   * skill and the date come from the record, not the coach. The title names the player; the
+   * subtitle says which session dates it.
    */
   fixed?: { skill: RepTeamMeasurableType; observedOn: string; playerName: string; subtitle: string; enteredBy?: string | null } | null;
   busy: boolean;
   error: string;
   onSubmit: (v: { measurableTypeId: string; observedOn: string; note: string; descriptor: string; goalId: string | null }) => void;
   onClose: () => void;
+  /** Edit mode: the footer's Remove observation (the host confirms and deletes). */
+  onRemove?: () => void;
 }) {
   const initialSkillId = fixed?.skill.id ?? editing?.measurableTypeId ?? skills[0]?.id ?? '';
   const initialObservedOn = fixed?.observedOn ?? editing?.observedOn ?? todayLocal();
@@ -122,12 +132,15 @@ export default function RecordObservationDialog({
               </label>
             )}
           </div>
+          {/* The one line that answers "whose record is it?" (E8): the record is the coach's, read behind
+              Internal notes; the paper is chosen line by line on the handout page. */}
           <p className={styles.formHint}>
             {fixed?.enteredBy && editing ? `Entered by ${fixed.enteredBy} · ` : ''}
-            One observation, not an overall grade. Visible to coaches with Internal notes.
+            One observation, not an overall grade. Visible to coaches with Internal notes · on a handout only if you choose it.
           </p>
           {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
           <div className={styles.modalFooter}>
+            {editing && onRemove && <SheetRemoveButton label="Remove observation" busy={busy} onRemove={onRemove} />}
             <button type="button" className={styles.btnSecondary} disabled={busy} onClick={() => void close()}>Cancel</button>
             <button type="submit" className={styles.btnPrimary} disabled={busy || !skillId}>{busy ? 'Saving…' : editing ? 'Save' : 'Save observation'}</button>
           </div>

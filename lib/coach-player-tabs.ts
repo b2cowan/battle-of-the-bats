@@ -16,6 +16,8 @@
  *
  * Framework-free so the roster row, the tab bar and a unit test all read one table.
  */
+import { developmentAddressTab } from './development-address.ts';
+
 export type PlayerTab = 'details' | 'season' | 'skills' | 'notes' | 'family';
 
 /** `short` only where the phone needs a shorter word — a label that already fits carries none. */
@@ -45,11 +47,15 @@ export function tabForSection(section: string | null | undefined): PlayerTab | n
   return section ? (SECTION_TAB[section] ?? null) : null;
 }
 
-/** The tab an address opens: `?tab=` first, then the tab that holds its `?section=`, then the default. */
+/**
+ * The tab an address opens: `?tab=` first, then the tab a RETIRED development view now lives on
+ * (a bare `view=observations` is the Notes tab — re-evaluation stage 3, E1; the address module
+ * owns that mapping), then the tab that holds its `?section=`, then the default.
+ */
 export function resolvePlayerTab(params: { get(name: string): string | null }): PlayerTab {
   const tab = params.get('tab');
   if (isPlayerTab(tab)) return tab;
-  return tabForSection(params.get('section')) ?? DEFAULT_PLAYER_TAB;
+  return developmentAddressTab(params) ?? tabForSection(params.get('section')) ?? DEFAULT_PLAYER_TAB;
 }
 
 /**

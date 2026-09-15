@@ -1,0 +1,217 @@
+/* ═══ The player's SKILLS & GOALS tab (development lifecycle re-evaluation stage 3 · Player, owner
+   rulings E1–E8, 2026-09-15): two views, a goal row that opens in place, a status PICK, the history's
+   quiet status lines, a Results TABLE on the list recipe, a bench-side result sheet with the grid's
+   attempt boxes, and the Previous-seasons fold at the tab's foot. ═══
+   The table recipe (`.table` / `.th` / `.td`, `.tableAsCards`, `.listRowToggle`, `.listRowSub`) and
+   the sheet chrome are coaches.module.css's; only the roles this tab alone has live here. A new
+   component's 44px floor lives in its OWN module (the repo rule): every control here clears
+   `--tap-min` at touch widths in the block at the foot. Tokens only. */
+
+/* ── the toolbar: the view switch, and the handout door beside it (E1) ── */
+.handoutLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* The line above a list: the count in the quiet ink, the view's write door(s) at its right. */
+.countLine { font-size: var(--type-body); color: var(--text-tertiary); margin: 0; }
+.countLine b { color: var(--text-primary); font-weight: 600; }
+.writeDoors { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+/* A write door or a goal's action — the global ghost button at the tab's support size, an icon beside
+   its word (six of these on the tab; one rule, not six inline styles). */
+.door { gap: 0.35rem; font-size: var(--type-support); }
+
+/* ── the goal row — the row is the panel (E3) ── */
+.goalList { list-style: none; margin: 0; padding: 0; }
+.goalRow { border-top: 1px solid var(--home-line, var(--border-2)); }
+.goalRow:first-child { border-top: none; }
+.goalHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  padding: var(--table-pad-comfortable, 0.7rem) 0;
+  cursor: pointer;
+}
+.goalHead:hover .goalName { text-decoration: underline; text-underline-offset: 3px; }
+/* The NAME is the real button (aria-expanded); the head is the pointer shortcut over it. */
+.goalName {
+  flex: 1 1 14rem;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.goalName small { display: block; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); margin-top: 0.1rem; }
+.goalTag { margin-left: 0.4rem; vertical-align: 1px; }
+.goalBody { padding: 0 0 var(--table-pad-comfortable, 0.7rem); }
+/* The two quiet facts — Success looks like · Next review — as sentences, absent when unwritten. */
+.goalFacts { display: flex; flex-direction: column; gap: 0.2rem; margin: 0 0 0.7rem; font-size: var(--type-body); color: var(--text-secondary); }
+.goalFacts b { color: var(--text-primary); font-weight: 600; }
+.goalActions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.9rem; }
+.chev { display: inline-flex; align-items: center; justify-content: center; color: var(--text-tertiary); flex-shrink: 0; }
+
+/* ── the status PICK — a native select wearing the badge (E4; never a cycle) ── */
+.statusPickWrap { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
+.statusPick {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 2.25rem;
+  padding: 0.15rem 1.6rem 0.15rem 0.6rem;
+  border-radius: 4px;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.statusPick:disabled { cursor: default; opacity: 0.7; }
+.statusPickCaret { position: absolute; right: 0.4rem; pointer-events: none; opacity: 0.8; }
+
+/* ── the history: one entry per line; a wordless status change in the quiet ink (E4) ── */
+.history { list-style: none; margin: 0; padding: 0; }
+.historyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.15rem 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  font-size: var(--type-body);
+}
+.historyRow:first-child { border-top: none; }
+.historyMain { flex: 1 1 16rem; min-width: 0; }
+.historyMain strong { font-weight: 600; color: var(--text-primary); }
+.historyMain small { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.historyMeta { flex-shrink: 0; font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.historyQuiet .historyMain strong { color: var(--text-secondary); font-weight: 500; }
+/* A history row that is a DOOR (an observation opens its sheet): the same face, a real button. */
+.historyDoor { border: 0; background: none; padding: 0; font: inherit; text-align: left; cursor: pointer; color: inherit; }
+.historyDoor:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+/* The row's quiet links — "in a session ›", "show ›" — in the secondary ink, underlined. */
+.historyLink {
+  display: inline-block;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.historyLink:hover { color: var(--text-primary); }
+/* A folded day's rows, opened: one line each, one step in. */
+.statusRows { flex-basis: 100%; list-style: none; margin: 0.15rem 0 0; padding: 0 0 0 0.9rem; }
+.statusRows li { display: flex; justify-content: space-between; gap: 1rem; font-size: var(--type-support); color: var(--text-secondary); padding: 0.15rem 0; }
+.statusRows li span:last-child { color: var(--text-tertiary); white-space: nowrap; }
+
+/* ── the Results table — the roles beyond the recipe (E6) ── */
+/* The test's name is the row's button (aria-expanded). It wears `.devCellLink` (coaches.module.css)
+   for the tap shape — a link's box on a ~37px row — and this only for what a BUTTON needs on top. */
+.testName { border: 0; background: none; font: inherit; font-size: var(--type-body); font-weight: 600; text-align: left; cursor: pointer; }
+.latest { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trendCell { white-space: nowrap; }
+/* An opened test's rows: the inner heading a step quieter, the rows in the body ink, indented once. */
+.innerHead td {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+}
+.innerRow td { font-size: var(--type-support); color: var(--text-secondary); }
+.innerRow td:first-child, .innerHead td:first-child { padding-left: 1.6rem; }
+.innerResult { font-variant-numeric: tabular-nums; color: var(--text-primary); white-space: nowrap; }
+.attemptsCell { font-variant-numeric: tabular-nums; }
+/* The source — Session › as a link, "Outside a session ›" as the sheet's door — `.devCellLink` for the
+   tap shape, this for the quiet underlined face (a button and a link alike). */
+.sourceDoor { border: 0; background: none; font: inherit; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
+.sourceDoor:hover { color: var(--text-primary); text-decoration: underline; }
+/* The phone's one line under a card's title ("8.28 seconds · 15 Sept"; "10 Jun · 8.24 seconds") —
+   hidden at pointer widths, where the columns say it. */
+.phoneLine { display: none; }
+/* The never-run caption under the table, in caption type. */
+.captionLine { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.captionLine b { color: var(--text-secondary); font-weight: 600; }
+
+/* ── the sheets: the footer's Remove at the left (the attempt boxes are the session grid's own —
+   `DevelopmentSession.module.css`, imported by the result sheet; one idiom, one module) ── */
+.footRemove { margin-right: auto; }
+.defineLink { display: inline-block; padding: 0; border: 0; background: none; font: inherit; font-size: var(--type-support); font-weight: 700; color: var(--logic-lime); cursor: pointer; }
+.defineLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── the Previous-seasons fold at the tab's foot (E1): shut, one line; titled by the season's name ── */
+.archive { margin-top: 1rem; border-top: 1px solid var(--home-line, var(--border-2)); }
+.archiveHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.4rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.archiveHead b { font-weight: 600; }
+.archiveHead:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.archiveHint { flex: 1 1 auto; min-width: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.archiveBody { padding: 0 0 0.8rem; }
+.archiveLabel { margin: 0.6rem 0 0.2rem; font-size: var(--type-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+.archiveRow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.2rem 1rem; padding: 0.4rem 0; border-top: 1px solid var(--home-line, var(--border-2)); font-size: var(--type-body); }
+.archiveRow:first-child { border-top: none; }
+.archiveRow small { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.archiveVals { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: var(--type-support); }
+
+/* ── the touch floor (≤768): every control clears `--tap-min` on a finger ── */
+@media (max-width: 768px) {
+  .goalName, .statusPick, .chev, .archiveHead, .historyLink, .historyDoor { min-height: var(--tap-min, 44px); }
+  .historyLink { padding: 0.7rem 0; }
+  .goalActions > * { min-height: var(--tap-min, 44px); }
+}
+
+/* ── the phone (≤640): the table is cards; the title's one line says what the hidden columns said ──
+   ⚠ A third way to trim a card-reflowed table on a phone (beside `.tableAsCards`' own `data-label`
+   lines and `.rosterTable`'s hidden columns): the frame draws ONE line ("8.28 seconds · 15 Sept") where
+   the recipe would draw two labelled ones, so the three figure cells are hidden and the lead cell
+   carries the line. If a second table wants this density, promote the pair into the `.tableAsCards`
+   family in coaches.module.css rather than copying it. */
+@media (max-width: 640px) {
+  .desktopCell { display: none !important; }
+  .phoneLine { display: block; font-size: var(--type-support); color: var(--text-secondary); margin-top: 0.15rem; }
+  .phoneLine b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .innerRow td:first-child { padding-left: 0.6rem; }
+  /* An opened test's rows sit inside its card's list as quieter cards. */
+  .innerRow { margin-left: 0.6rem; }
+  .goalActions { flex-direction: column; align-items: stretch; }
+  .goalActions > * { justify-content: center; }
+  .writeDoors { width: 100%; }
+  .writeDoors > * { flex: 1 1 auto; justify-content: center; }
+  .handoutLink { width: 100%; justify-content: center; min-height: var(--tap-min, 44px); }
+  .historyMeta { white-space: normal; }
+  /* the toolbar: the switch spans the width, the handout a full-width row under it */
+  .viewSwitch { display: flex; width: 100%; }
+  .viewSwitch > * { flex: 1; text-align: center; }
+  .toolbarEnd { width: 100%; margin-left: 0; }
+}

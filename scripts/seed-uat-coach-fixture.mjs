@@ -2898,6 +2898,27 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     .select('id, session_date').eq('team_id', team.id).eq('event_id', eventId).limit(1).maybeSingle();
   if (!probeSession) { console.error('✗ the probe evaluation session is missing — section 11 did not run'); process.exit(1); }
 
+  /* ⚠ RESULTS STRANDED UNDER A RETIRED TWIN (stage 2 kickoff, 2026-09-15). A manual successor walk
+     replaced the 60-yd sprint once, so the rows seeded under the ORIGINAL definition sat under a
+     retired "60-yd sprint" while the live one was in the scoped session's plan with nothing — the
+     Before frame drew it honestly. The fixture pins its identities by NAME, so on every run the
+     team's sprint results and not-assessed marks are re-homed onto the live definition (the unit is
+     the same: seconds). A product replacement keeps its results under the retired definition on
+     purpose (a unit change); this is a fixture repair, not a product rule. */
+  {
+    const liveSprintId = typeByName.get('60-yd sprint');
+    const { data: twins } = await db.from('rep_team_measurable_types').select('id')
+      .eq('team_id', team.id).ilike('name', '60-yd sprint').eq('is_active', false).neq('id', liveSprintId);
+    const twinIds = (twins ?? []).map(t => t.id);
+    if (twinIds.length) {
+      const rs = await db.from('rep_player_measurables').update({ measurable_type_id: liveSprintId }).eq('team_id', team.id).in('measurable_type_id', twinIds).select('id');
+      if (rs.error) { console.error('✗ sprint results re-home', rs.error.message); process.exit(1); }
+      const na = await db.from('rep_evaluation_not_assessed').update({ measurable_type_id: liveSprintId }).eq('team_id', team.id).in('measurable_type_id', twinIds).select('id');
+      if (na.error) { console.error('✗ sprint marks re-home', na.error.message); process.exit(1); }
+      if (rs.data?.length || na.data?.length) ok(`sprint records re-homed onto the live definition (${rs.data?.length ?? 0} result(s), ${na.data?.length ?? 0} mark(s)) — a successor walk had stranded them`);
+    }
+  }
+
   // An INACTIVE player with a saved reading in the probe session (F02). Not counted anywhere the
   // active roster is — that is the point.
   let { data: leftPlayer } = await db.from('rep_roster_players').select('id')
@@ -2928,27 +2949,6 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
       row(devonId, '60-yd sprint', 8.62, 'seconds', on(5, 6)),
       row(devonId, '60-yd sprint', 8.41, 'seconds', on(5, 20)),
       row(devonId, '60-yd sprint', 8.28, 'seconds', probeSession.session_date, probeSession.id),
-  /* ⚠ RESULTS STRANDED UNDER A RETIRED TWIN (stage 2 kickoff, 2026-09-15). A manual successor walk
-     replaced the 60-yd sprint once, so the rows seeded under the ORIGINAL definition sat under a
-     retired "60-yd sprint" while the live one was in the scoped session's plan with nothing — the
-     Before frame drew it honestly. The fixture pins its identities by NAME, so on every run the
-     team's sprint results and not-assessed marks are re-homed onto the live definition (the unit is
-     the same: seconds). A product replacement keeps its results under the retired definition on
-     purpose (a unit change); this is a fixture repair, not a product rule. */
-  {
-    const liveSprintId = typeByName.get('60-yd sprint');
-    const { data: twins } = await db.from('rep_team_measurable_types').select('id')
-      .eq('team_id', team.id).ilike('name', '60-yd sprint').eq('is_active', false).neq('id', liveSprintId);
-    const twinIds = (twins ?? []).map(t => t.id);
-    if (twinIds.length) {
-      const rs = await db.from('rep_player_measurables').update({ measurable_type_id: liveSprintId }).eq('team_id', team.id).in('measurable_type_id', twinIds).select('id');
-      if (rs.error) { console.error('✗ sprint results re-home', rs.error.message); process.exit(1); }
-      const na = await db.from('rep_evaluation_not_assessed').update({ measurable_type_id: liveSprintId }).eq('team_id', team.id).in('measurable_type_id', twinIds).select('id');
-      if (na.error) { console.error('✗ sprint marks re-home', na.error.message); process.exit(1); }
-      if (rs.data?.length || na.data?.length) ok(`sprint records re-homed onto the live definition (${rs.data?.length ?? 0} result(s), ${na.data?.length ?? 0} mark(s)) — a successor walk had stranded them`);
-    }
-  }
-
       // Throw speed: two in mph, then the unit changed — the km/h reading must not join their line (F01).
       row(devonId, 'Throw speed', 48, 'mph', on(5, 6)),
       row(devonId, 'Throw speed', 51, 'mph', on(5, 20)),
@@ -3052,6 +3052,8 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     const skillId = typeByName.get('Sets feet before throwing');
     const sprintId = typeByName.get('60-yd sprint');
     const scopeMetricIds = TYPES.filter(t => t.is_active).map(t => typeByName.get(t.name));
+    // The count per test (mig 298): sprint × 2 · changeup × 3 · throw × 1; a skill has none.
+    const scopeAttempts = { [sprintId]: 2, [typeByName.get('Throw speed')]: 1, [typeByName.get('Changeup speed')]: 3 };
     const inScope = [ids[0], ids[1], ids[2], ids[3], ids[5]]; // Avery · Blake · Casey · Devon · Frankie
     const y = py.year;
     const scopedDate = `${y}-06-10`;
@@ -3084,8 +3086,6 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
         // Emerson: OUTSIDE the scope, with a reading — listed and flagged, never counted.
         row(ids[4], sprintId, 8.55, 'seconds', 1),
       ]);
-    // The count per test (mig 298): sprint × 2 · changeup × 3 · throw × 1; a skill has none.
-    const scopeAttempts = { [sprintId]: 2, [typeByName.get('Throw speed')]: 1, [typeByName.get('Changeup speed')]: 3 };
       if (ins.error) { console.error('✗ scoped readings insert', ins.error.message); process.exit(1); }
     }
     const { data: mark } = await db.from('rep_evaluation_not_assessed').select('id').eq('session_id', scoped.id).eq('player_id', ids[2]).limit(1).maybeSingle();
@@ -3142,6 +3142,8 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
       }).select('id').single();
       if (ins.error) { console.error('✗ range session insert', ins.error.message); process.exit(1); }
       rangeSession = ins.data;
+    } else {
+      await db.from('rep_team_evaluation_sessions').update({ scope_attempts: { [changeupId]: 3 } }).eq('id', rangeSession.id);
     }
     const { data: scoped } = await db.from('rep_team_evaluation_sessions').select('id')
       .eq('team_id', team.id).eq('note', 'Phase 2 probe — scoped').limit(1).maybeSingle();
@@ -3162,6 +3164,68 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     }
     ok(`Phase 3 records present — Changeup speed on Devon in two sessions (May 27: 0 of 3 in range · Jun 10: 2 of 3 in range — the band, the filled marks, the dashed average, "moved into the range")`);
   }
+
+  /* ── Re-evaluation stage 3 · Player (2026-09-15): the record the frames draw, and a linked season ──
+     · WALK ARTEFACTS CLEARED. The seed adds and never removes, so a status pick made during a walk
+       (a WORDLESS review — three sat on Devon's goal from 14 Sept and read "Reviewed · Achieved"
+       about a goal he never achieved) and a test a walk defined ("walk test") stayed on the fixture
+       for good. Now every wordless review on the fixture goal is deleted on each run (the seed's own
+       review has words), and any ACTIVE test on the team that is not in TYPES is RETIRED — never
+       deleted: its results, if a walk recorded any, stay in the history they belong to.
+     · A LINKED SEASON, so the Previous-seasons fold can be walked. Devon Test ↔ "Devon Prior" on the
+       live team's OWN finished season (`priorYear` — a continuity link is same-team by its composite
+       keys, so the finished "UAT Between Seasons" team the plan named cannot be the other side):
+       confirmed, the carry-forward already answered ("fresh", so no banner), with one achieved goal
+       and one result on the prior row. The fold reads "2025 Season" on his record — the season's own
+       name, as the frame draws it. A walk's "Not the same player — unlink" leaves a rejected
+       tombstone on the pair; the seed re-asserts the fixture on it rather than minting a twin. */
+  {
+    const { data: devonGoal } = await db.from('rep_player_development_goals').select('id')
+      .eq('team_id', team.id).eq('player_id', devonId).eq('focus_area', 'First-step quickness off the bag').limit(1).maybeSingle();
+    if (devonGoal) {
+      const del = await db.from('rep_development_goal_reviews').delete().eq('goal_id', devonGoal.id).is('note', null).select('id');
+      if (del.error) { console.error('✗ wordless review clear', del.error.message); process.exit(1); }
+      if (del.data?.length) ok(`cleared ${del.data.length} wordless status review(s) a walk left on Devon's goal`);
+    }
+    const { data: liveTypes } = await db.from('rep_team_measurable_types').select('id, name')
+      .eq('team_id', team.id).eq('is_active', true);
+    const strays = (liveTypes ?? []).filter(t => !TYPES.some(x => x.name.toLowerCase() === t.name.toLowerCase()));
+    if (strays.length) {
+      const up = await db.from('rep_team_measurable_types').update({ is_active: false }).in('id', strays.map(t => t.id));
+      if (up.error) { console.error('✗ stray test retire', up.error.message); process.exit(1); }
+      ok(`retired ${strays.length} test(s) a walk defined (${strays.map(t => t.name).join(', ')}) — their results stay`);
+    }
+
+    const { data: devonPrior } = await db.from('rep_roster_players').select('id')
+      .eq('program_year_id', priorYear.id).eq('player_first_name', 'Devon').limit(1).maybeSingle();
+    if (devonPrior) {
+      await ensureOne('rep_player_development_goals', { player_id: devonPrior.id }, {
+        org_id: org.id, team_id: team.id, player_id: devonPrior.id,
+        focus_area: 'Prior season — reads the pitcher before the pitch', status: 'achieved', origin: 'coach', created_by: user.id,
+      }, "Devon Prior's goal");
+      await ensureOne('rep_player_measurables', { player_id: devonPrior.id }, {
+        org_id: org.id, team_id: team.id, player_id: devonPrior.id, measurable_type_id: typeByName.get('60-yd sprint'),
+        value: 8.9, unit: 'seconds', recorded_on: `${priorYear.year}-06-15`, created_by: user.id,
+      }, "Devon Prior's sprint result");
+      const now = new Date().toISOString();
+      const linkRow = {
+        status: 'confirmed', confidence: 'high', decided_by: user.id, decided_at: now,
+        carry_status: 'fresh', carry_decided_by: user.id, carry_decided_at: now,
+      };
+      const { data: link } = await db.from('rep_player_continuity_links').select('id, status, carry_status')
+        .eq('team_id', team.id).eq('current_roster_id', devonId).eq('prior_roster_id', devonPrior.id).limit(1).maybeSingle();
+      if (!link) {
+        const ins = await db.from('rep_player_continuity_links').insert({
+          org_id: org.id, team_id: team.id, current_roster_id: devonId, prior_roster_id: devonPrior.id, ...linkRow,
+        });
+        if (ins.error) { console.error('✗ continuity link insert', ins.error.message); process.exit(1); }
+      } else if (link.status !== 'confirmed' || link.carry_status !== 'fresh') {
+        const up = await db.from('rep_player_continuity_links').update(linkRow).eq('id', link.id);
+        if (up.error) { console.error('✗ continuity link re-assert', up.error.message); process.exit(1); }
+      }
+      ok(`Devon Test linked to Devon Prior (${priorYear.year} Season — confirmed, carry answered): one achieved goal and one sprint result behind the Previous-seasons fold`);
+    }
+  }
 }
 
 /* ⚖ THE END-OF-RUN BACKFILL IS GONE (Payables Rebuild P2). It derived installments and payments
@@ -3172,8 +3236,6 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
    is present. */
 
 console.log(`\n✓ UAT coach fixture is whole.\n`);
-    } else {
-      await db.from('rep_team_evaluation_sessions').update({ scope_attempts: { [changeupId]: 3 } }).eq('id', rangeSession.id);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);
 console.log(`  Between    : /${org.slug}/coaches/teams/${pastTeam.id}/season-end`);

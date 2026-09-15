@@ -321,7 +321,7 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
             {data.showMeasurables && tests.length > 0 && (
               <label className={css.choice}>
                 <input type="checkbox" checked={includeLog} onChange={e => setIncludeLog(e.target.checked)} />
-                <span>Include the full dated result log<span className={css.choiceMeta}>An appendix — one line per session, every attempt listed.</span></span>
+                <span>Include the full dated result log<span className={css.choiceMeta}>An appendix — one line per result, every attempt listed.</span></span>
               </label>
             )}
 

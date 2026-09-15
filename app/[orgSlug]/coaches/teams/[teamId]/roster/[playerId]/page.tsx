@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { parseDevelopmentAddress, returnLabel } from '@/lib/development-address';
 import { Users, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import { stripTeamNamePrefix } from '@/lib/coach-season-label';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
 import CoachTabBar from '@/components/coaches/CoachTabBar';
@@ -859,11 +858,8 @@ export default function PlayerDetailPage({
             teamId={teamId}
             playerId={playerId}
             playerName={fullName}
-            playerNumber={player.playerNumber ? cleanNamePart(player.playerNumber) : null}
-            teamName={assignment.teamName}
-            seasonName={stripTeamNamePrefix(assignment.programYearName, assignment.teamName) || null}
             arrival={arrival}
-            onArrived={() => setArrival(a => ({ ...a, view: null, metricId: null, goalId: null }))}
+            onArrived={() => setArrival(a => ({ ...a, view: null, metricId: null, goalId: null, observationId: null, archive: false }))}
           />
         </CoachPageSection>
       )}

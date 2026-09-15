@@ -7766,8 +7766,10 @@ export async function createRepPlayerMeasurable(fields: {
       recorded_on: fields.recordedOn,
       note: fields.note?.trim() || null,
       session_id: fields.sessionId ?? null,
-      // A single reading is always attempt 1; a session reading names its attempt (mig 295).
-      attempt_no: fields.sessionId ? (fields.attemptNo ?? 1) : 1,
+      // The attempt within its result — a session's, or the day's outside one (re-evaluation stage 3
+      // E7, 2026-09-15: the bench-side sheet writes attempts 1..N on one date; until then a
+      // session-less row was forced to 1 here, which is why "the route accepts it" was not enough).
+      attempt_no: fields.attemptNo ?? 1,
       created_by: fields.createdBy ?? null,
     })
     .select()

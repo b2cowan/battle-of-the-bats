@@ -33,6 +33,11 @@ describe('resolvePlayerTab', () => {
     // playerDevelopmentHref (Skills & Goals hub, Insights, help, marketing shots) — always section=development
     assert.equal(resolvePlayerTab(params({ section: 'development', view: 'results' })), 'skills');
     assert.equal(tabForSection('development'), 'skills');
+    // the retired Observations view (re-evaluation stage 3, E1): a bare link is the Notes tab — the
+    // observation's home; one that named its goal stays on Skills & Goals; an explicit ?tab= still wins
+    assert.equal(resolvePlayerTab(params({ section: 'development', view: 'observations' })), 'notes');
+    assert.equal(resolvePlayerTab(params({ section: 'development', view: 'observations', goal: 'G1' })), 'skills');
+    assert.equal(resolvePlayerTab(params({ tab: 'skills', section: 'development', view: 'observations' })), 'skills');
     // the roster's prompts
     assert.equal(resolvePlayerTab(params({ section: 'guardian' })), 'family');
     assert.equal(resolvePlayerTab(params({ section: 'player' })), 'details');

@@ -7,12 +7,12 @@ import {
   readNotAssessedInput, readObservationInput, observationEditPatch, readGoalReviewInput, readGoalPatchInput, readGoalExtrasInput,
 } from '../../lib/development-input.ts';
 import {
-  groupBySession, latestSessionResult, sessionHeadline, describeHeadline, describeAttempts, headlineLabel, headlineMethod, type AttemptReading,
+  groupBySession, latestSessionResult, sessionHeadline, describeHeadline, describeAttempts, headlineLabel, headlineMethod, planResultEdit, type AttemptReading,
 } from '../../lib/measurable-series.ts';
 import {
   sessionRows, sessionScopeCounts, rowState, scopeSentence, orderEventsByAnchor,
 } from '../../lib/development-session-view.ts';
-import { originSentence, goalTimeline } from '../../lib/development-goal-history.ts';
+import { originSentence, goalTimeline, isStatusOnlyReview, nextReviewSuggestion, reviewGapWords } from '../../lib/development-goal-history.ts';
 import type { RepDevelopmentGoalReview, RepPlayerObservation } from '../../lib/types.ts';
 
 /**
@@ -37,10 +37,16 @@ describe('readMeasurableInput — an attempt number rides a session reading', ()
       assert.ok('error' in readMeasurableInput({ measurableTypeId: 't', value: 8.1, recordedOn: '2026-09-08', sessionId: 's', attemptNo: bad }));
     }
   });
-  it('a single reading (no session) is always attempt 1 — a second attempt needs a session to belong to', () => {
-    assert.ok('error' in readMeasurableInput({ measurableTypeId: 't', value: 8.1, recordedOn: '2026-09-08', attemptNo: 2 }));
+  // Re-evaluation stage 3, E7 (2026-09-15): a result outside a session carries attempts too — the
+  // bench-side sheet records up to five on a date, and the reader groups them by that day. Until
+  // then "attempt 2 of nothing" was refused here (the plan's "the route already accepts it" was
+  // wrong; the database always allowed it — the per-attempt uniqueness applies inside a session).
+  it('a result outside a session takes attempts 1..5 on its day, as a session\'s row does', () => {
     const r = readMeasurableInput({ measurableTypeId: 't', value: 8.1, recordedOn: '2026-09-08', attemptNo: 1 });
     assert.ok('fields' in r && r.fields.attemptNo === 1 && r.fields.sessionId === null);
+    const r2 = readMeasurableInput({ measurableTypeId: 't', value: 8.1, recordedOn: '2026-09-08', attemptNo: 2 });
+    assert.ok('fields' in r2 && r2.fields.attemptNo === 2 && r2.fields.sessionId === null);
+    assert.ok('error' in readMeasurableInput({ measurableTypeId: 't', value: 8.1, recordedOn: '2026-09-08', attemptNo: 6 }), 'five is still the ceiling');
   });
 });
 
@@ -169,7 +175,7 @@ const reading = (id: string, value: number, recordedOn: string, sessionId: strin
 });
 
 describe('groupBySession — one row per session, every attempt listed, the headline computed', () => {
-  it('groups a session\'s attempts (in attempt order), and each single reading is its own row', () => {
+  it('groups a session\'s attempts (in attempt order), and a bench-side reading is its own row', () => {
     const rows = groupBySession([
       reading('c', 8.2, '2026-09-08', 's2', 3), reading('a', 8.12, '2026-09-08', 's2', 1), reading('b', 8.05, '2026-09-08', 's2', 2),
       reading('x', 8.4, '2026-08-04', null),
@@ -182,6 +188,21 @@ describe('groupBySession — one row per session, every attempt listed, the head
     ]);
     assert.equal(rows[0].average, 8.123);
     assert.equal(rows[0].value, 8.05, 'a session row satisfies SeriesReading with its headline as the value, so the line follows the headline');
+  });
+  // Re-evaluation stage 3, E7 (2026-09-15): a result is the same thing through both doors. The
+  // bench-side sheet records up to five attempts on a date with no session; the reader groups them
+  // by that DAY — one result, one headline, one point on the line — as it groups a session's.
+  it('bench-side attempts on ONE day are ONE result; on different days they stay two', () => {
+    const rows = groupBySession([
+      reading('p', 8.62, '2026-05-06', null, 1),
+      reading('q3', 8.19, '2026-05-20', null, 3), reading('q1', 8.41, '2026-05-20', null, 1), reading('q2', 8.35, '2026-05-20', null, 2),
+    ], lower);
+    assert.deepEqual(rows.map(r => [r.key, r.attempts.map(a => a.id), r.headline]), [
+      ['single:2026-05-20', ['q1', 'q2', 'q3'], 8.19],
+      ['single:2026-05-06', ['p'], 8.62],
+    ]);
+    assert.equal(rows[0].readBack, 'Best of 3 attempts · 8.41 · 8.35 · 8.19 · average 8.317');
+    assert.equal(latestSessionResult(rows)?.value, 8.19, 'the line draws the day\'s headline, not three points');
   });
   it('a range test leads with attempts in range and draws its AVERAGE on the line — never a "best"', () => {
     const [row] = groupBySession([reading('a', 66, '2026-09-08', 's', 1, 'mph'), reading('b', 70, '2026-09-08', 's', 2, 'mph'), reading('c', 64, '2026-09-08', 's', 3, 'mph')], range);
@@ -295,12 +316,117 @@ describe('goalTimeline — set → observed → reviewed, dated, with an author;
   });
   it('lists the set event, the linked observations and every review, newest first, nothing overwritten', () => {
     const goal = { id: 'g', createdAt: '2026-08-18T10:00:00Z', createdBy: 'u1', origin: 'coach' as const };
-    const events = goalTimeline(goal, [review('r2', '2026-09-11', 'achieved'), review('r1', '2026-08-25', 'working', 'One cue.')], [obs('o1', '2026-09-08', 'g'), obs('o2', '2026-09-09', null)]);
+    const events = goalTimeline(goal, [review('r2', '2026-09-11', 'achieved', 'Done, three games running.'), review('r1', '2026-08-25', 'working', 'One cue.')], [obs('o1', '2026-09-08', 'g'), obs('o2', '2026-09-09', null)]);
     assert.deepEqual(events.map(e => [e.kind, e.on, e.by]), [
       ['review', '2026-09-11', 'u2'], ['observation', '2026-09-08', 'u1'], ['review', '2026-08-25', 'u2'], ['set', '2026-08-18', 'u1'],
     ]);
     assert.equal(events.find(e => e.kind === 'review' && e.on === '2026-09-11')?.title, 'Reviewed · Achieved');
     assert.equal(events.find(e => e.kind === 'set')?.title, 'Set with the player');
+    assert.equal(events.find(e => e.kind === 'observation')?.sessionId, null, 'an observation event carries its session for the "in a session ›" door');
+  });
+  // Re-evaluation stage 3, E4 (2026-09-15): a wordless review — the pill's pick — is a STATUS
+  // line, and several on one day fold into one; the record stays append-only and complete.
+  it('a wordless review is one quiet status line; a day of them is ONE event that opens to its rows', () => {
+    const goal = { id: 'g', createdAt: '2026-08-18T10:00:00Z', createdBy: 'u1', origin: 'coach' as const };
+    const events = goalTimeline(goal, [
+      { ...review('p3', '2026-09-14', 'parked'), createdAt: '2026-09-14T15:03:00Z' },
+      { ...review('p2', '2026-09-14', 'achieved'), createdAt: '2026-09-14T15:02:00Z' },
+      { ...review('p1', '2026-09-14', 'working'), createdAt: '2026-09-14T15:01:00Z' },
+      review('r1', '2026-06-10', 'working', 'Reads the pitcher now.'),
+      review('s1', '2026-05-01', 'parked'),
+    ], []);
+    assert.deepEqual(events.map(e => [e.kind, e.on, e.title]), [
+      ['status', '2026-09-14', 'Status changed 3 times'],
+      ['review', '2026-06-10', 'Reviewed · Working on it'],
+      ['status', '2026-05-01', 'Status → Parked'],
+      ['set', '2026-08-18', 'Set with the player'],
+    ].sort((a, b) => b[1].localeCompare(a[1])), 'three pill presses on one afternoon read as one line, never as three reviews');
+    const day = events.find(e => e.kind === 'status' && e.on === '2026-09-14')!;
+    assert.deepEqual(day.changes?.map(c => [c.reviewId, c.status]), [['p3', 'parked'], ['p2', 'achieved'], ['p1', 'working']], 'the rows behind the line, newest first');
+    assert.equal(day.status, 'parked', 'the day\'s event carries where the status ended up');
+    assert.equal(isStatusOnlyReview({ note: '  ' }), true);
+    assert.equal(isStatusOnlyReview({ note: 'Keep going.' }), false);
+  });
+});
+
+// ── a bench-side result's edit, planned before a byte moves (re-evaluation stage 3, E7) ──────────
+describe('planResultEdit — the boxes against the saved attempts BY POSITION: correct, remove, add; the note rides the first', () => {
+  const saved = (id: string, attemptNo: number, value: number, note: string | null = null) => ({
+    id, value, unit: 'seconds', recordedOn: '2026-09-15', createdAt: `2026-09-15T12:00:0${attemptNo}Z`, sessionId: null, attemptNo, note,
+  });
+  it('a new result: one row per typed box, the first carrying the note, a blank box skipped (the numbers run on)', () => {
+    assert.deepEqual(planResultEdit([], [8.41, null, 8.19], 'after warm-up'), {
+      post: [{ attemptNo: 1, value: 8.41, note: 'after warm-up' }, { attemptNo: 2, value: 8.19, note: null }], patch: [], remove: [],
+    });
+  });
+  // /review 2026-09-15: every session-less row from before stage 3 is attempt 1, so a day that held two
+  // singles has two rows with one number — keyed on the number, one of them could never be edited.
+  it('two legacy rows with the SAME attempt number are two boxes; a new box takes the next number after the highest', () => {
+    const twins = [saved('a', 1, 8.6), saved('b', 1, 8.4)];
+    assert.deepEqual(planResultEdit(twins, [8.6, 8.35], null).patch, [{ id: 'b', value: 8.35 }]);
+    assert.deepEqual(planResultEdit(twins, [8.6, null], null).remove, [{ id: 'b' }]);
+    assert.deepEqual(planResultEdit(twins, [8.6, 8.4, 8.2], null).post, [{ attemptNo: 2, value: 8.2, note: null }]);
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.6), saved('c', 3, 8.2)], [8.6, 8.2, 8.1], null).post, [{ attemptNo: 4, value: 8.1, note: null }], 'a gap in the numbers is not a slot');
+  });
+  it('an edit: a changed value is a correction, a cleared box a removal, a new box an addition; untouched attempts move nothing', () => {
+    const plan = planResultEdit([saved('a', 1, 8.41), saved('b', 2, 8.35), saved('c', 3, 8.19)], [8.41, 8.3, null, 8.25], null);
+    assert.deepEqual(plan, {
+      post: [{ attemptNo: 4, value: 8.25, note: null }],
+      patch: [{ id: 'b', value: 8.3 }],
+      remove: [{ id: 'c' }],
+    });
+  });
+  it('the note: sent on attempt 1 only when it changed, with its value; unchanged note, unchanged value — nothing', () => {
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.41, 'turf')], [8.41], 'turf'), { post: [], patch: [], remove: [] });
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.41, 'turf')], [8.41], null).patch, [{ id: 'a', value: 8.41, note: null }]);
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.41, null)], [8.41, 8.3], 'turf'), {
+      post: [{ attemptNo: 2, value: 8.3, note: null }], patch: [{ id: 'a', value: 8.41, note: 'turf' }], remove: [],
+    });
+  });
+  it('a saved attempt beyond the boxes is removed — the sheet shrank the result', () => {
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.41), saved('b', 2, 8.35)], [8.41], null).remove, [{ id: 'b' }]);
+  });
+  // /review 2026-09-15: the note rode attempt 1 only, so clearing box 1 while box 2 survived
+  // deleted the note with the row the coach never meant to touch.
+  it('the note MOVES to the first surviving attempt when the row that held it is cleared, and lands on a later new box on a new result', () => {
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.41, 'cold day'), saved('b', 2, 8.35)], [null, 8.35], 'cold day'), {
+      post: [], patch: [{ id: 'b', value: 8.35, note: 'cold day' }], remove: [{ id: 'a' }],
+    });
+    assert.deepEqual(planResultEdit([], [null, 8.35, 8.2], 'turf'), {
+      post: [{ attemptNo: 1, value: 8.35, note: 'turf' }, { attemptNo: 2, value: 8.2, note: null }], patch: [], remove: [],
+    });
+    assert.deepEqual(planResultEdit([saved('a', 1, 8.41, 'cold day'), saved('b', 2, 8.35)], [null, 8.35], null).patch, [{ id: 'b', value: 8.35, note: null }].filter(p => p.note !== null), 'no note to carry = the survivor is left alone');
+  });
+});
+
+// ── the next review, on the goal's own cadence (re-evaluation stage 3, E5) ───────────────────────
+describe('nextReviewSuggestion — today plus the gap the last review set, never a past date', () => {
+  const r = (id: string, reviewedOn: string, nextReviewOn: string | null, note: string | null = 'A note.'): RepDevelopmentGoalReview => ({
+    id, goalId: 'g', playerId: 'p', reviewedOn, status: 'working', note, nextReviewOn,
+    evidenceMeasurableIds: [], evidenceObservationIds: [], createdBy: 'u', createdAt: `${reviewedOn}T10:00:00Z`,
+  });
+  const goal = { id: 'g' };
+  it('the fixture: 10 Jun → 24 Jun is fourteen days, so a review on 15 Sept offers 29 Sept', () => {
+    assert.equal(nextReviewSuggestion(goal, [r('a', '2026-06-10', '2026-06-24')], '2026-09-15'), '2026-09-29');
+    assert.equal(reviewGapWords('2026-09-15', '2026-09-29'), 'Two weeks on');
+  });
+  it('blank with no review, with a last review that named no next date, or with a backwards gap', () => {
+    assert.equal(nextReviewSuggestion(goal, [], '2026-09-15'), null);
+    assert.equal(nextReviewSuggestion(goal, [r('a', '2026-06-10', null)], '2026-09-15'), null);
+    assert.equal(nextReviewSuggestion(goal, [r('a', '2026-06-10', '2026-06-01')], '2026-09-15'), null);
+    assert.equal(nextReviewSuggestion(goal, [{ ...r('a', '2026-06-10', '2026-06-24'), goalId: 'other' }], '2026-09-15'), null, 'another goal\'s review is not this goal\'s cadence');
+  });
+  it('reads the LAST sitting-down review — a wordless status pick after it does not erase the cadence', () => {
+    const reviews = [r('pick', '2026-09-14', null, null), r('a', '2026-06-10', '2026-06-24'), r('old', '2026-05-01', '2026-05-08')];
+    assert.equal(nextReviewSuggestion(goal, reviews, '2026-09-15'), '2026-09-29', 'the 10 Jun review set the cadence; the 14 Sept pick is a status line (E4)');
+    assert.equal(nextReviewSuggestion(goal, [r('later', '2026-08-01', null, 'No next date, on purpose.'), r('a', '2026-06-10', '2026-06-24')], '2026-09-15'), null, 'a later real review that cleared the next date is the last word');
+  });
+  it('the words beside the field', () => {
+    assert.equal(reviewGapWords('2026-09-15', '2026-09-22'), 'A week on');
+    assert.equal(reviewGapWords('2026-09-15', '2026-10-06'), '3 weeks on');
+    assert.equal(reviewGapWords('2026-09-15', '2026-09-25'), '10 days on');
+    assert.equal(reviewGapWords('2026-09-15', '2026-10-15'), 'A month on');
+    assert.equal(reviewGapWords('2026-09-15', '2026-09-15'), null);
   });
 });
 
@@ -324,8 +450,14 @@ describe('the surfaces read through the one home', () => {
     const dialog = read('components', 'coaches', 'RecordObservationDialog.tsx');
     assert.match(dialog, /fixed\?\.skill/, 'the sheet takes the skill and the date from a session row');
     assert.match(dialog, /useDiscardGuard\(/, 'typed work is guarded on Escape, X and Cancel');
-    for (const surface of [session, read('components', 'coaches', 'PlayerDevelopmentSection.tsx')]) {
-      assert.match(surface, /observationEditPatch\(/, 'an edit sends only what changed, from both doors');
+    // The session page sends only what changed itself; the two player-page hosts (Skills & Goals, Notes)
+    // go through ONE module that does (re-evaluation stage 3).
+    assert.match(session, /observationEditPatch\(/, 'an edit sends only what changed, from the session');
+    const host = read('components', 'coaches', 'observation-sheet-host.ts');
+    assert.match(host, /observationEditPatch\(/, 'the player-page hosts\' one module sends only what changed');
+    for (const surface of [read('components', 'coaches', 'PlayerDevelopmentSection.tsx'), read('components', 'coaches', 'PlayerNotesTab.tsx')]) {
+      assert.match(surface, /patchObservation\(/, 'both player-page hosts save through the one module');
+      assert.match(surface, /REMOVE_OBSERVATION_CONFIRM/, 'and ask the one confirm before Remove');
     }
     const obsRoute = read('app', 'api', 'coaches', '[orgSlug]', 'teams', '[teamId]', 'roster', '[playerId]', 'development', 'observations', 'route.ts');
     assert.match(obsRoute, /status: 409/, 'one observation per player per skill per session — a twin is a 409, never a second row');

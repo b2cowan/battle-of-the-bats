@@ -105,7 +105,7 @@ export const GET = withObservability(async (_req: Request,
   // notes gate with goals (Phase 2). The Context lines (innings) left the section (F16) — the
   // lineups-gated innings quote is no longer fetched here; playing time has its own home.
   const [types, measurables, goals, observations, reviews, links, tryoutBaseline] = await Promise.all([
-    // The library is read for goals too now: the Observations view names its skill by definition.
+    // The library is read for goals too now: an observation names its skill by definition.
     (showMeasurables || showGoals) ? getRepTeamMeasurableTypes(teamId, { includeRetired: true }) : Promise.resolve([]),
     showMeasurables ? getRepPlayerMeasurablesForPlayer(playerId) : Promise.resolve([]),
     showGoals ? getRepPlayerDevelopmentGoalsForPlayer(playerId) : Promise.resolve([]),

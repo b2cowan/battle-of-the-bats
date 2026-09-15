@@ -274,7 +274,7 @@ describe('describeSeries — the chart\'s accessible sentence', () => {
   it('names the player, the test, what the line follows and every point', () => {
     const s = progressSeries(averySprint, sprint, { show: 'headline', compare: 'last-two' });
     const d = describeSeries(s, 'Avery');
-    assert.equal(d.title, 'Avery’s 60-yd sprint, best attempt per session, in seconds');
+    assert.equal(d.title, 'Avery’s 60-yd sprint, best attempt per result, in seconds');
     assert.ok(d.description.includes(`${AUG25}: 8.1 seconds (3 attempts: 8.1, 8.18, 8.14); ${SEP8}: 8.05 seconds (3 attempts: 8.12, 8.05, 8.2)`), d.description);
     assert.match(d.description, /Dates are spaced by elapsed time/);
   });

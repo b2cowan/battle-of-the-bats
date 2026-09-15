@@ -5,12 +5,13 @@ import {
   getRepRosterPlayer,
   getRepTeamMeasurableTypes,
   getRepTeamEvaluationSession,
+  getRepPlayerMeasurablesForPlayer,
   createRepPlayerMeasurable,
   unmarkRepSessionNotAssessed,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
-import { readMeasurableInput } from '@/lib/development-input';
+import { readMeasurableInput, MAX_ATTEMPTS } from '@/lib/development-input';
 import { isMeasuredTest } from '@/lib/measurable-definition';
 import { pastSeasonRefusal } from '@/lib/development-season-guard';
 
@@ -69,7 +70,7 @@ export const POST = withObservability(async (req: Request,
   // A number is a TEST's record. An observed skill is a definition in Phase 1; recording an
   // observation against it is Phase 2, and a value filed under a skill would be a fabricated score.
   if (!isMeasuredTest(type)) {
-    return NextResponse.json({ error: 'A skill takes an observation, not a number — record one from the skill’s chip on a session or the player’s Observations.' }, { status: 400 });
+    return NextResponse.json({ error: 'A skill takes an observation, not a number — record one from the skill’s chip on a session, or from a goal on the player’s record.' }, { status: 400 });
   }
   // How many attempts a row takes is the SESSION's plan, and the plan is a floor, never a ceiling
   // (re-evaluation stage 2, C1/C2, 2026-09-15): a row may run one more with the "+", up to five.
@@ -91,6 +92,28 @@ export const POST = withObservability(async (req: Request,
     sessionId = session.id;
   }
 
+  // Outside a session the attempts are the DAY's (re-evaluation stage 3, E7): a result recorded
+  // later the same day for the same test JOINS that day's result — the attempt takes the next free
+  // number rather than a twin of one already there (the database's per-attempt uniqueness covers
+  // sessions only; mig 295's index is partial), and a day already holding five refuses. The reader
+  // sorts a day's attempts by this number, so it must stay unique; the sheet reads them by their
+  // order, so a legacy day with two "attempt 1" singles still shows both. Two coaches inside the
+  // same second can still pass this read (/review 2026-09-15 — a partial unique index would close
+  // it for good; the row lists, and Remove result takes it with the rest).
+  let dayAttemptNo = attemptNo;
+  if (!sessionId) {
+    const taken = (await getRepPlayerMeasurablesForPlayer(playerId))
+      .filter(m => m.sessionId === null && m.measurableTypeId === measurableTypeId && m.recordedOn === recordedOn)
+      .map(m => m.attemptNo);
+    if (taken.includes(attemptNo)) {
+      const next = Math.max(...taken) + 1;
+      if (next > MAX_ATTEMPTS) {
+        return NextResponse.json({ error: `That day already holds ${MAX_ATTEMPTS} attempts for this test — open the result and edit it there.` }, { status: 400 });
+      }
+      dayAttemptNo = next;
+    }
+  }
+
   try {
     const entry = await createRepPlayerMeasurable({
       orgId: ctx.org.id,
@@ -104,7 +127,7 @@ export const POST = withObservability(async (req: Request,
       recordedOn,
       note,
       sessionId,
-      attemptNo,
+      attemptNo: dayAttemptNo,
       createdBy: ctx.user.id,
     });
     // A value on the cell IS the assessment — a "not assessed" mark left beside it (marked on

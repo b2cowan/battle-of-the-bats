@@ -38,6 +38,14 @@ const SURFACES = [
   'components/coaches/DevelopmentHandoutPreview.tsx',
   'components/coaches/ReviewGoalDialog.tsx',
   'components/coaches/RecordObservationDialog.tsx',
+  // Re-evaluation stage 3 · Player (2026-09-15): the result sheet, the goal sheet, and the Notes tab
+  // (which now hosts the observation sheet) with its route.
+  'components/coaches/RecordResultSheet.tsx',
+  'components/coaches/GoalSheet.tsx',
+  'components/coaches/SheetRemoveButton.tsx',
+  'components/coaches/observation-sheet-host.ts',
+  'components/coaches/PlayerNotesTab.tsx',
+  'app/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/notes/route.ts',
   'lib/measurable-definition.ts',
   'lib/measurable-series.ts',
   'lib/development-report.ts',

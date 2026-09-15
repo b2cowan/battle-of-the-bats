@@ -12,6 +12,7 @@
  * anything that decides ORDER — see `sortMomentsNewestFirst`'s history).
  */
 import { orgDayKey } from './timezone';
+import { isStatusOnlyReview } from './development-goal-history';
 import type {
   RepDevelopmentGoalReview, RepPlayerDevelopmentGoal, RepPlayerNote, RepPlayerObservation,
   RepTeamEvent, RepTeamGameMoment, RepTeamMeasurableType,
@@ -37,7 +38,11 @@ export interface PlayerNoteEntry {
   /** Where the chip opens — a section on this player's page, or the schedule. Null = nowhere. */
   aboutHref: string | null;
   authorId: string | null;
-  /** Only a general note can be edited or deleted here; everything else is edited at its source. */
+  /**
+   * A general note is edited or deleted HERE (the tab's own form); an OBSERVATION opens in its sheet
+   * wherever it is read (re-evaluation stage 3, E2 — this tab is its home, the tab hosts the sheet);
+   * a moment and a review are edited at their source, never here.
+   */
   editable: boolean;
 }
 
@@ -72,7 +77,7 @@ export function buildPlayerNotesTimeline(input: {
   const goalById = new Map(input.goals.map(g => [g.id, g]));
   const typeById = new Map(input.types.map(t => [t.id, t]));
   const eventById = new Map(input.events.map(e => [e.id, e]));
-  const skillsHref = (view: 'goals' | 'observations') => `${input.playerBase}?tab=skills&section=development&view=${view}`;
+  const goalsHref = `${input.playerBase}?tab=skills&section=development&view=goals`;
 
   const out: PlayerNoteEntry[] = [];
 
@@ -85,7 +90,7 @@ export function buildPlayerNotesTimeline(input: {
       about: goal ? chip('Note', goal.focusArea) : chip('Note', evName(ev)),
       // The schedule's own deep-link param (every other jump-to-a-game link in the portal uses
       // it) opens straight into that game/practice's detail rather than landing on the bare list.
-      aboutHref: goal ? skillsHref('goals') : ev ? `${input.teamBase}/schedule?event=${ev.id}` : null,
+      aboutHref: goal ? goalsHref : ev ? `${input.teamBase}/schedule?event=${ev.id}` : null,
       authorId: n.createdBy, editable: true,
     });
   }
@@ -108,17 +113,21 @@ export function buildPlayerNotesTimeline(input: {
       on: o.observedOn, createdAt: o.createdAt,
       // An observation may carry only a descriptor ("With a reminder" is itself what was seen).
       body: o.note ?? '', qualifier: o.descriptor,
-      about: `Skill · ${type?.name ?? 'skill'}`, aboutHref: skillsHref('observations'),
-      authorId: o.createdBy, editable: false,
+      // This tab IS the observation's home (E2): the chip opens nowhere, the row opens the sheet.
+      about: `Skill · ${type?.name ?? 'skill'}`, aboutHref: null,
+      authorId: o.createdBy, editable: true,
     });
   }
   for (const r of input.reviews) {
+    // A pill press is not a note (E4): a wordless status change is a line in the goal's history,
+    // never an entry here. The reviews with words are what a coach wrote about the child.
+    if (isStatusOnlyReview(r)) continue;
     const goal = goalById.get(r.goalId);
     out.push({
       key: `review:${r.id}`, source: 'review', id: r.id,
       on: r.reviewedOn, createdAt: r.createdAt,
       body: r.note ?? '', qualifier: STATUS_WORD[r.status] ?? r.status,
-      about: `Goal · ${goal?.focusArea ?? 'a goal no longer on record'}`, aboutHref: skillsHref('goals'),
+      about: `Goal · ${goal?.focusArea ?? 'a goal no longer on record'}`, aboutHref: goalsHref,
       authorId: r.createdBy, editable: false,
     });
   }

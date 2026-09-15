@@ -3,15 +3,16 @@ import { describe, it } from 'node:test';
 import {
   parseDevelopmentAddress, safeReturnPath, playerDevelopmentHref, returnLabel,
   skillsAndGoalsHref, insightsDevelopmentHref, insightsTagFromAddress, parseSkillsAndGoalsSection, parseMetricEdit,
-  parseInsightsDevelopmentAddress, developmentHandoutHref,
+  parseInsightsDevelopmentAddress, developmentHandoutHref, developmentAddressTab,
 } from '../../lib/development-address.ts';
 import { UNTAGGED_FILTER } from '../../lib/rep-drills.ts';
 
 /**
  * Exact addresses (development lifecycle Phase 1, F09): the profile answers `?section=development`
- * and now also carries the VIEW (goals | results — the other two are Phase 2), the metric or the
- * goal, and a safe INTERNAL way back to the report that sent the coach. Insights keeps `?section=`
- * and gains its filter state on the same convention. Never a new mechanism; never a year.
+ * and now also carries the VIEW (goals | results — Phase 2's other two are RETIRED, re-evaluation
+ * stage 3 E1, and their addresses land on the home), the metric, the goal or the observation, the
+ * archive fold, and a safe INTERNAL way back to the report that sent the coach. Insights keeps
+ * `?section=` and gains its filter state on the same convention. Never a new mechanism; never a year.
  */
 
 const base = '/uat-test-org/coaches/teams/T1';
@@ -20,13 +21,29 @@ const params = (q: string) => new URLSearchParams(q);
 describe('the profile address', () => {
   it('reads view · metric · goal · return, and ignores what it does not know', () => {
     const a = parseDevelopmentAddress(params('section=development&view=results&metric=M1&return=%2Fuat-test-org%2Fcoaches%2Fteams%2FT1%2Fdevelopment%3Fsection%3Dplayers%26metric%3DM1'), base);
-    assert.deepEqual(a, { view: 'results', metricId: 'M1', goalId: null, returnTo: `${base}/development?section=players&metric=M1` });
+    assert.deepEqual(a, { view: 'results', metricId: 'M1', goalId: null, observationId: null, archive: false, returnTo: `${base}/development?section=players&metric=M1` });
     const g = parseDevelopmentAddress(params('section=development&view=goals&goal=G9'), base);
-    assert.deepEqual(g, { view: 'goals', metricId: null, goalId: 'G9', returnTo: null });
-    assert.deepEqual(parseDevelopmentAddress(params('view=observations'), base).view, 'observations', 'Phase 2: the four views');
-    assert.deepEqual(parseDevelopmentAddress(params('view=archive'), base).view, 'archive');
+    assert.deepEqual(g, { view: 'goals', metricId: null, goalId: 'G9', observationId: null, archive: false, returnTo: null });
     assert.deepEqual(parseDevelopmentAddress(params('view=history'), base).view, null, 'an unknown view is not a view');
-    assert.deepEqual(parseDevelopmentAddress(params(''), base), { view: null, metricId: null, goalId: null, returnTo: null });
+    assert.deepEqual(parseDevelopmentAddress(params(''), base), { view: null, metricId: null, goalId: null, observationId: null, archive: false, returnTo: null });
+  });
+
+  // Re-evaluation stage 3 (E1/E2, 2026-09-15): the Observations and Previous-seasons VIEWS are gone;
+  // every old link still lands — on the goal, on the Notes tab, or on the fold.
+  it('a retired view lands on the home: the goal when one is named, the Notes tab otherwise, the fold for the archive', () => {
+    const onGoal = parseDevelopmentAddress(params('section=development&view=observations&goal=G9'), base);
+    assert.deepEqual([onGoal.view, onGoal.goalId], ['goals', 'G9'], 'an observation link that named its goal opens the goal (its history is the door)');
+    assert.equal(developmentAddressTab(params('section=development&view=observations&goal=G9')), null, 'and stays on Skills & Goals');
+    const bare = parseDevelopmentAddress(params('section=development&view=observations&metric=S1'), base);
+    assert.equal(bare.view, null);
+    assert.equal(developmentAddressTab(params('section=development&view=observations&metric=S1')), 'notes', 'a bare observations link is the Notes tab — the observation’s home');
+    assert.equal(developmentAddressTab(params('section=development&view=results')), null);
+    assert.equal(developmentAddressTab(params('view=observations')), null, 'only a development address');
+    const arch = parseDevelopmentAddress(params('section=development&view=archive'), base);
+    assert.deepEqual([arch.view, arch.archive], [null, true], 'the old archive view opens the fold at the tab’s foot');
+    const obs = parseDevelopmentAddress(params('section=development&view=goals&goal=G9&observation=O1'), base);
+    assert.deepEqual([obs.goalId, obs.observationId], ['G9', 'O1'], 'Player progress’s Open → names the observation whose sheet opens on arrival');
+    assert.equal(playerDevelopmentHref(base, 'P1', { view: 'goals', goalId: 'G9', observationId: 'O1' }), `${base}/roster/P1?section=development&view=goals&goal=G9&observation=O1`);
   });
 
   it('only returns INSIDE this team’s portal — anything else is dropped, never followed', () => {

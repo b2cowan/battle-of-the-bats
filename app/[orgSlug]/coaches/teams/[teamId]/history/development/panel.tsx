@@ -11,6 +11,7 @@ import {
   showOptions, type ProgressSeries, type ProgressPoint, type ReportDefinition,
 } from '@/lib/development-report';
 import { goalTimeline } from '@/lib/development-goal-history';
+import { playerTabHref } from '@/lib/coach-player-tabs';
 import { headlineLabel } from '@/lib/measurable-series';
 import DevelopmentProgressChart from '@/components/charts/DevelopmentProgressChart';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -593,8 +594,11 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
   const author = (id: string | null) => (id ? (dev.authors[id] ?? 'a coach') : null);
   const def: ReportDefinition = metric;
   const isSkill = metric.kind === 'skill';
-  const openView = isSkill ? 'observations' : 'results';
-  const openHref = playerDevelopmentHref(base, player.playerId, { view: openView, metricId: metric.id, returnTo: here });
+  // A test's home on the player is its Results row; a skill's observations live on the NOTES tab
+  // (re-evaluation stage 3, E1/E2 — the Observations view is gone), read with the way back.
+  const openHref = isSkill
+    ? playerTabHref(`${base}/roster/${player.playerId}`, 'notes', { returnTo: here })
+    : playerDevelopmentHref(base, player.playerId, { view: 'results', metricId: metric.id, returnTo: here });
 
   const head = (
     <div className={styles.devReportHead}>
@@ -618,7 +622,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         {observations.length === 0 ? (
           <CoachEmptyState quiet compact icon={<TrendingUp size={18} aria-hidden />}
             headline={`No observation recorded for ${name} in this skill this season`}
-            description="Stated as an absence of records, never as a judgement. Record one from a session or from the player’s Observations."
+            description="Stated as an absence of records, never as a judgement. Record one from a session or from a goal on the player’s record."
             primaryAction={{ href: openHref, label: `Open ${first}’s development →`, variant: 'ghost' }} />
         ) : (
           <>
@@ -633,7 +637,10 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
                     {o.note && <p>{o.note}</p>}
                     {(o.sessionId || goal) && (
                       <p className={styles.devCardNote}>
-                        {o.sessionId ? 'in an evaluation session' : ''}
+                        {/* The session it was taken in is a DOOR (stage 3 housekeeping — "in an evaluation session" had none). */}
+                        {o.sessionId && (dev.canWrite
+                          ? <Link href={`${base}/development/sessions/${o.sessionId}`} className={styles.devReportRowLink}>in a session ›</Link>
+                          : 'in a session')}
                         {o.sessionId && goal ? ' · ' : ''}
                         {goal ? `Evidence for: ${goal.focusArea}` : ''}
                       </p>
@@ -658,8 +665,9 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
                         <p><strong>{ev.title}</strong></p>
                         {ev.text && <p>{ev.text}</p>}
                         {ev.nextReviewOn && <p className={styles.devCardNote}>Next review: {formatShortDate(ev.nextReviewOn)}</p>}
+                        {/* Opens the record on this goal — and, for an observation, its sheet (E2). */}
                         {(ev.reviewId || ev.observationId) && (
-                          <Link href={playerDevelopmentHref(base, player.playerId, { view: ev.observationId ? 'observations' : 'goals', goalId: g.id, returnTo: here })} className={styles.devReportRowLink}>
+                          <Link href={playerDevelopmentHref(base, player.playerId, { view: 'goals', goalId: g.id, observationId: ev.observationId ?? null, returnTo: here })} className={styles.devReportRowLink}>
                             Open →
                           </Link>
                         )}

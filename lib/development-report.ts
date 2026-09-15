@@ -18,7 +18,7 @@
  * tests read it.
  */
 import {
-  groupBySession, splitSeriesByUnit, drawableSegment, unitSplitNote, attemptAgainstRange, headlineLabel,
+  groupBySession, splitSeriesByUnit, drawableSegment, unitSplitNote, attemptAgainstRange, headlineLabel, headlineLead,
   type AttemptReading, type SessionResult, type HeadlineDefinition,
 } from './measurable-series';
 import { HEADLINE_LABELS, aimSentence } from './measurable-definition';
@@ -49,15 +49,8 @@ export interface ReportDefinition extends HeadlineDefinition {
 const round3 = (v: number) => Number(v.toFixed(3));
 const isRange = (def: HeadlineDefinition) => def.aim === 'range' && def.rangeFrom != null && def.rangeTo != null;
 
-/**
- * Which attempt the line leads with — `sessionHeadline`'s own resolution of "best": a range or
- * record-only test has no best, so a "best" headline there reads the last attempt.
- */
-function effectiveHeadline(def: HeadlineDefinition): 'best' | 'average' | 'last' {
-  if (def.headline === 'average') return 'average';
-  if (def.headline === 'last' || def.aim === 'record' || def.aim === 'range') return 'last';
-  return 'best';
-}
+/** Which attempt the line leads with — the one resolution, `headlineLead` (the series module's). */
+const effectiveHeadline = headlineLead;
 const HEADLINE_WORDS: Readonly<Record<'best' | 'average' | 'last', string>> = {
   best: 'best attempt', average: 'average of attempts', last: 'last attempt',
 };
@@ -217,7 +210,7 @@ export function describeSeries(series: ProgressSeries, playerName: string): { ti
   const range = isRange(def);
   const title = range
     ? `${playerName}’s ${def.name}, attempts against the ${formatValue(def.rangeFrom!)}–${formatValue(def.rangeTo!)} ${unit} aim`
-    : `${playerName}’s ${def.name}, ${series.lineWord} per session, in ${unit}`;
+    : `${playerName}’s ${def.name}, ${series.lineWord} per result, in ${unit}`;
   const items = series.points.map(p => {
     const n = p.row.values.length;
     const attempts = `${n} attempt${n === 1 ? '' : 's'}: ${p.marks.map(m => formatValue(m.value)).join(', ')}`;

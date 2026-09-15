@@ -5,8 +5,11 @@ import { Plus } from 'lucide-react';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import RecordObservationDialog from '@/components/coaches/RecordObservationDialog';
+import { REMOVE_OBSERVATION_CONFIRM, fixedObservation, patchObservation, deleteObservation } from '@/components/coaches/observation-sheet-host';
 import { groupPlayerNotesByMonth, type PlayerNoteEntry } from '@/lib/player-notes-timeline';
 import { MAX_PLAYER_NOTE_LEN } from '@/lib/development-input';
+import type { RepPlayerObservation, RepTeamMeasurableType } from '@/lib/types';
 import { todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -23,9 +26,11 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *      No tags, no categories, no attachments (Q10).
  *   3. The TIMELINE: every dated entry about this player — bench moments, skill observations,
  *      goal reviews, general notes — newest first, grouped by month, each marked with where it
- *      came from and who wrote it, the chip opening its source. Written once, read here. Only a
- *      general note can be edited or removed on this tab; everything else is edited where it was
- *      written.
+ *      came from and who wrote it, the chip opening its source. Written once, read here. A general
+ *      note is edited or removed on this tab's own form; an OBSERVATION opens in its sheet from its
+ *      row — this tab is its home (re-evaluation stage 3, E2, 2026-09-15; the Observations view on
+ *      Skills & Goals is gone) — and the sheet carries Remove; a moment and a review are edited
+ *      where they were written.
  *
  * Who can read it: coaches with Internal notes, the same as goals (the route 403s the rest and
  * the page never draws the tab for them). Families never see it; the season recap never reads it.
@@ -40,6 +45,9 @@ interface TimelinePayload {
   authors: Record<string, string>;
   goals: { id: string; focusArea: string }[];
   events: { id: string; name: string; startsAt: string }[];
+  /** The records behind the observation rows and the skills they name — a writer's, for the sheet. */
+  observations: RepPlayerObservation[];
+  skills: RepTeamMeasurableType[];
 }
 
 /** "goal:ID" | "event:ID" | "" — one picker for what a note is about. */
@@ -63,8 +71,13 @@ export default function PlayerNotesTab({
   const [draft, setDraft] = useState({ notedOn: todayLocal(), body: '', about: '' as AboutKey });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  // The observation sheet (E2) — the same sheet the goal's history and the session grid open.
+  const [obs, setObs] = useState<RepPlayerObservation | null>(null);
+  const [obsBusy, setObsBusy] = useState(false);
+  const [obsErr, setObsErr] = useState('');
 
   const api = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/notes`;
+  const devApi = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/development`;
 
   const load = useCallback(async () => {
     setError('');
@@ -131,6 +144,47 @@ export default function PlayerNotesTab({
       setSaving(false);
     }
   }
+  /** An observation row's door (E2): the record behind it, in the sheet the session grid and the goal use. */
+  function openObservation(entry: PlayerNoteEntry) {
+    const record = data?.observations.find(o => o.id === entry.id) ?? null;
+    if (!record) return;
+    setObsErr('');
+    setObs(record);
+  }
+  // The save and the remove are the host module's (shared with the Skills & Goals tab); the timeline
+  // is re-read after either because the server shapes its entries (labels, month groups) — the same
+  // reason the general note's form reloads.
+  async function submitObservation(v: { measurableTypeId: string; observedOn: string; note: string; descriptor: string; goalId: string | null }) {
+    if (!obs || obsBusy) return;
+    setObsBusy(true); setObsErr('');
+    try {
+      const patched = await patchObservation(devApi, obs, v);
+      setObs(null);
+      if (patched) await load();
+    } catch (e) {
+      setObsErr(e instanceof Error ? e.message : 'Could not save the observation — try again.');
+    } finally {
+      setObsBusy(false);
+    }
+  }
+  async function removeObservation() {
+    if (!obs || obsBusy) return;
+    if (!(await confirm(REMOVE_OBSERVATION_CONFIRM))) return;
+    setObsBusy(true); setObsErr('');
+    try {
+      await deleteObservation(devApi, obs.id);
+      setObs(null);
+      await load();
+    } catch (e) {
+      setObsErr(e instanceof Error ? e.message : "Couldn't remove the observation — try again.");
+    } finally {
+      setObsBusy(false);
+    }
+  }
+  /** A session-dated observation opens with its skill and date fixed by the session (the same sheet, C12's mode). */
+  const obsSkill = obs ? data?.skills.find(s => s.id === obs.measurableTypeId) ?? null : null;
+  const obsFixed = obs ? fixedObservation(obs, obsSkill, first, authorName(obs.createdBy)) : null;
+
   async function remove(entry: PlayerNoteEntry) {
     const ok = await confirm({
       title: 'Remove this note?',
@@ -264,11 +318,15 @@ export default function PlayerNotesTab({
                       </span>
                       <span className={styles.noteSide}>
                         {authorName(e.authorId)}
-                        {e.editable && data.canWrite && (
+                        {e.editable && data.canWrite && e.source === 'note' && (
                           <>
                             <button type="button" className={styles.noteAction} onClick={() => openEdit(e)}>Edit</button>
                             <button type="button" className={styles.noteAction} onClick={() => remove(e)}>Remove</button>
                           </>
+                        )}
+                        {/* An observation is edited in its sheet, wherever it is read (E2) — Remove lives in the sheet's footer. */}
+                        {e.editable && data.canWrite && e.source === 'observation' && (
+                          <button type="button" className={styles.noteAction} onClick={() => openObservation(e)}>Edit</button>
                         )}
                       </span>
                     </li>
@@ -281,6 +339,10 @@ export default function PlayerNotesTab({
           <p className={styles.notesFoot}>
             Who can read this: coaches with Internal notes, the same as goals. Families never see the Notes tab, and the season recap does not draw from it.
           </p>
+          {obs && (
+            <RecordObservationDialog key={obs.id} skills={obsSkill ? [obsSkill] : data.skills} goals={data.goals} editing={obs} fixed={obsFixed}
+              busy={obsBusy} error={obsErr} onSubmit={submitObservation} onClose={() => { if (!obsBusy) setObs(null); }} onRemove={removeObservation} />
+          )}
         </>
       )}
     </>

@@ -66,18 +66,30 @@ describe('buildPlayerNotesTimeline', () => {
     assert.equal(by['note:n3'].aboutHref, null);
     assert.equal(by['moment:m1'].about, 'Game · vs Milton');
     assert.equal(by['observation:o1'].about, 'Skill · Sets feet before throwing');
+    assert.equal(by['observation:o1'].aboutHref, null, 'this tab IS the observation’s home (stage 3, E2) — the chip opens nowhere; the row opens the sheet');
     assert.equal(by['observation:o1'].qualifier, 'With a reminder');
     assert.equal(by['review:r1'].about, 'Goal · First-step quickness');
     assert.equal(by['review:r1'].qualifier, 'Working on it');
   });
 
-  it('only a general note is editable here — every other entry is edited at its source', () => {
+  it('a general note and an observation are editable here (the note on the form, the observation in its sheet); a moment and a review at their source', () => {
     const rows = buildPlayerNotesTimeline({
       notes: [note('n1', '2026-09-09', 'x')], moments: [moment('m1', '2026-09-06T19:40:00Z', 'm')],
       observations: [observation('o1', '2026-09-05')], reviews: [review('r1', '2026-09-04')],
       goals, types, events, playerBase, teamBase,
     });
-    assert.deepEqual(rows.map(r => [r.source, r.editable]), [['note', true], ['moment', false], ['observation', false], ['review', false]]);
+    assert.deepEqual(rows.map(r => [r.source, r.editable]), [['note', true], ['moment', false], ['observation', true], ['review', false]]);
+  });
+
+  // Re-evaluation stage 3, E4 (2026-09-15): a pill press is not a note. The three wordless status
+  // reviews of one afternoon read as one line in the goal's history — and nowhere here.
+  it('lists only reviews with words — a wordless status change is never an entry', () => {
+    const rows = buildPlayerNotesTimeline({
+      notes: [], moments: [], observations: [],
+      reviews: [{ ...review('r1', '2026-09-14'), note: null }, { ...review('r2', '2026-09-14'), note: '   ' }, review('r3', '2026-06-10')],
+      goals, types, events, playerBase, teamBase,
+    });
+    assert.deepEqual(rows.map(r => r.key), ['review:r3']);
   });
 
   it('a deleted goal or an unknown skill reads as absent, never as a crash', () => {

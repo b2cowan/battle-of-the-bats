@@ -764,7 +764,7 @@ details.call .body p{margin:0 0 6px}
   <button type="button" class="tab" role="tab" data-tab="arrive" aria-selected="false" aria-controls="tab-arrive">0 · Arrive<span class="st built">built · passed 18/18</span></button>
   <button type="button" class="tab" role="tab" data-tab="define" aria-selected="false" aria-controls="tab-define">1 · Define<span class="st built">built · walk owed</span></button>
   <button type="button" class="tab" role="tab" data-tab="session" aria-selected="false" aria-controls="tab-session">2 · Session<span class="st built">built · walk complete · committed</span></button>
-  <button type="button" class="tab" role="tab" data-tab="player" aria-selected="false" aria-controls="tab-player">3 · Player<span class="st">proposal</span></button>
+  <button type="button" class="tab" role="tab" data-tab="player" aria-selected="false" aria-controls="tab-player">3 · Player<span class="st built">built · walk owed</span></button>
   <span class="tab next" aria-disabled="true">4 · Reports &amp; handout<span class="st">next</span></span>
 </nav>
 
@@ -3615,9 +3615,10 @@ Independently — without a cue</div><div class="fhelp">One per line, in your or
 
 <div class="prop" id="tab-player" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">Stage 3 · Player <span class="status">proposal · 2026-09-15 · not built</span></div>
+    <div class="eyebrow">Stage 3 · Player <span class="status" style="color:var(--accent-ink);background:var(--accent-soft)">built on dev 2026-09-15 · walk owed (ledger §191 · plan §20)</span></div>
     <h1>A player’s record is two lists and a fold: a goal that opens where it sits, results as a table, and one sheet for anything written.</h1>
-    <div class="plain" style="margin:0 0 14px;padding:12px 16px;border:1px solid var(--rule);border-radius:8px;background:var(--surface)"><b>Which of the two, per station.</b> Station 5 (the record) is <b>formatting</b> — nothing new goes on the record; what changes is how many views hold it, where an observation is read, and the shape of a row. One exception, and it is S3: a result recorded from the bench learns to carry attempts, so it is the same record as a session’s (E7). Station 6 (review a goal) is <b>what goes in</b> for Q 6.1 and Q 6.2 — a status change stays a review but stops passing through a status the child never reached, and the record is the focus and the status — and <b>formatting</b> for the sheet’s words and its dates. The sheet/page test holds throughout: a review, an observation, a result and a new goal are sheets; the record is the page under them. Decisions are lettered <b>E</b> (D is Arrive’s). Nothing here is built.</div>
+    <div class="plain" style="margin:0 0 14px;padding:12px 16px;border:1px solid var(--rule);border-radius:8px;background:var(--surface)"><b>Built on dev, 2026-09-15.</b> All eight — E1–E8 — as drawn (your paste-back the same day); the walk is at the foot of this tab (<a href="#player-walk">23 steps in seven parts</a>). Four things the plan got wrong that the build settled, all in plan §20’s “Built as” table: the measurables route did <em>not</em> already take an attempt number without a session (two rules changed, no migration — the database always allowed it); Devon’s linked season is the live team’s <em>own</em> finished 2025 season, not the “UAT Between Seasons” team (a link is same-team by its keys — the fold still reads “2025 Season”, as drawn); the cadence pre-fill reads the goal’s last <em>sitting-down</em> review, so a pill pick after a real review does not blank it; and Player progress’s “Open →” on an observation names the observation in the address so the sheet opens on arrival. The seed now clears the three pill presses of 14 Sept and retires the walk test on every run. The controls below stay so a change of mind has somewhere to land.</div>
+    <div class="plain" style="margin:0 0 14px;padding:12px 16px;border:1px solid var(--rule);border-radius:8px;background:var(--surface)"><b>Which of the two, per station.</b> Station 5 (the record) is <b>formatting</b> — nothing new goes on the record; what changes is how many views hold it, where an observation is read, and the shape of a row. One exception, and it is S3: a result recorded from the bench learns to carry attempts, so it is the same record as a session’s (E7). Station 6 (review a goal) is <b>what goes in</b> for Q 6.1 and Q 6.2 — a status change stays a review but stops passing through a status the child never reached, and the record is the focus and the status — and <b>formatting</b> for the sheet’s words and its dates. The sheet/page test holds throughout: a review, an observation, a result and a new goal are sheets; the record is the page under them. Decisions are lettered <b>E</b> (D is Arrive’s). Nothing here is built yet.</div>
     <p class="lede">The walk rated Results the calmest reading in the lifecycle and the goal’s history a story — both stay. What it found wrong sits around them: five tabs → four views → a list → a “Selected goal” panel → the history; the goal’s title and its status pill twice within 100px, the second status control 200px from the first; one observation read in three places; the door to the family conversation a grey button under everything; a Metrics door where an action on <em>this player</em> is expected. And one thing the walk could not see, because it happened after: on the fixture today the status pill was cycled three times on one afternoon, and the record now says <strong>“Reviewed · Achieved”</strong> about a goal Devon never achieved — in his history, on his Notes tab and in Player progress. Amber markers are what is wrong today, green ones are what changes. Click any marker.</p>
     <div class="frametools"><span>Frames:</span><span class="sw" role="group" aria-label="Frame size"><button type="button" data-fit="fit" aria-pressed="true">Fit to window</button><button type="button" data-fit="true" aria-pressed="false">True size</button></span><span>· desktop 1440 · phone 390</span></div>
   </header>
@@ -4157,7 +4158,7 @@ Independently — without a cue</div><div class="fhelp">One per line, in your or
 
   <section class="psec" id="player-decisions">
     <h2>Decisions</h2>
-    <p class="intro">Eight calls, lettered E. Each says which of the two it is — what goes in, or formatting — and where I’d push if you disagree. Q 5.1, Q 5.2, Q 5.3, Q 6.1, Q 6.2 and S3 are each answered by one of them; S2 needed no drawing (above). Answer <em>Build as drawn</em>, <em>Change it</em> or <em>Not now</em>; <em>Build summary</em> at the foot gives you the text.</p>
+    <p class="intro"><b>Ruled 2026-09-15 — all eight “Build as drawn”</b> (paste-back in chat); the controls stay. Eight calls, lettered E. Each says which of the two it is — what goes in, or formatting — and where I’d push if you disagree. Q 5.1, Q 5.2, Q 5.3, Q 6.1, Q 6.2 and S3 are each answered by one of them; S2 needed no drawing (above). Answer <em>Build as drawn</em>, <em>Change it</em> or <em>Not now</em>; <em>Build summary</em> at the foot gives you the text.</p>
 
   <div class="ask" data-q="E1" data-kind="build">
     <div class="qn">E 1 · formatting · Q 5.1 answered</div>
@@ -4209,12 +4210,68 @@ Independently — without a cue</div><div class="fhelp">One per line, in your or
   </div>
   </section>
 
+  <section class="psec" id="player-walk">
+    <h2>The walk — pass it</h2>
+    <p class="intro">Twenty-three steps in seven parts, on the product as built. Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; the summary at the foot carries the walk with your decisions. Sign in as the UAT head coach · UAT Test Team · 2026 Season · Roster → <b>Devon Test</b> → Skills &amp; Goals. The seed now clears the three pill presses of 14 Sept, retires the walk test, and links Devon to his 2025 row — so the record opens as the After frames draw it. Where a step writes, it says what to undo.</p>
+
+    <div class="wpart">
+      <h3>A · The tab (E1)</h3>
+      <div class="wstep" data-w="E-A1"><div class="wn">A1</div><div class="wbody"><h4>Two views, and the handout beside them</h4><p>The switch reads <b>Goals · Results</b> and nothing else — no Observations, no Previous seasons. At its right, <b>Preview development handout</b>; no Metrics door anywhere on the tab. Above the switch: “Linked to your 2025 Season record — confirmed …” with its unlink button (leave it).</p></div></div>
+      <div class="wstep" data-w="E-A2"><div class="wn">A2</div><div class="wbody"><h4>One line above the list</h4><p>On Goals: “<b>1</b> goal this season” at the left, <b>+ Add goal</b> and <b>+ Record an observation</b> at the right. No uppercase GOALS label. Switch to Results: “<b>4</b> tests with a result this season” and <b>+ Record a result</b>.</p></div></div>
+      <div class="wstep" data-w="E-A3"><div class="wn">A3</div><div class="wbody"><h4>An old link lands on the home</h4><p>Edit the address to end <span class="u">?section=development&amp;view=observations</span>: the page opens on the <b>Notes</b> tab. Change it to <span class="u">?section=development&amp;view=archive</span>: Skills &amp; Goals with the <b>2025 Season</b> fold open at the foot.</p></div></div>
+    </div>
+
+    <div class="wpart">
+      <h3>B · The goal row (E3 · E4)</h3>
+      <div class="wstep" data-w="E-B1"><div class="wn">B1</div><div class="wbody"><h4>The row is the panel — and the one goal opens by itself</h4><p><b>First-step quickness off the bag</b> is open on arrival (a player with one goal): the caption “Set with the player · UAT Coach” under the name, the status at the right, a chevron after it. Inside: <b>Success looks like:</b> Leaves on the pitcher’s first move, three games running. · <b>Next review:</b> 24 Jun — two lines, no mini-table; then <b>Review goal</b> (lime) · Record an observation · Edit wording; then “How this goal has developed”. No “Selected goal”, no second Status row, no “Every review is a dated event…” sentence. Press the name: the row shuts; press it again: it opens.</p></div></div>
+      <div class="wstep" data-w="E-B2"><div class="wn">B2</div><div class="wbody"><h4>The pill is a pick, never a cycle</h4><p>Press the status on the row: a menu of three — Working on it · Achieved · Parked — nothing changes until you choose. Choose <b>Parked</b>: the pill reads Parked and the history gains one quiet line, “<b>Status → Parked</b> · today · UAT Coach”, in the secondary ink — no “Reviewed · Achieved” anywhere. Choose <b>Working on it</b>: the two picks fold into “<b>Status changed 2 times</b> · today · <u>show ›</u>”; show › opens the two rows. (Undo: nothing to undo — the seed clears wordless picks on its next run; or leave them, the line is the point.)</p></div></div>
+      <div class="wstep" data-w="E-B3"><div class="wn">B3</div><div class="wbody"><h4>Not a note</h4><p>Notes tab: no entry for today’s picks. The 10 Jun review with words (“Reads the pitcher now…”) is still there under June.</p></div></div>
+      <div class="wstep" data-w="E-B4"><div class="wn">B4</div><div class="wbody"><h4>Add goal is a sheet; Edit wording is the same sheet</h4><p><b>+ Add goal</b> opens “Add a goal”: Focus area · Note · <em>More — success, review date, tag</em>. Type a focus, press Escape: “Discard this goal?” — Keep editing; Cancel → Discard. <b>Edit wording</b> on the open goal opens “Edit the goal” filled, with <b>Remove goal</b> at the footer’s left. Cancel.</p></div></div>
+    </div>
+
+    <div class="wpart">
+      <h3>C · The review sheet (E5)</h3>
+      <div class="wstep" data-w="E-C1"><div class="wn">C1</div><div class="wbody"><h4>Three words, and a future date</h4><p><b>Review goal</b>: the status pre-selected to the row’s; “Reviewed on” today; the note is <b>How it’s going (optional)</b> with the placeholder “What you’re seeing, and what to try next”; <b>Next review</b> pre-filled to <b>today + 14 days</b> (10 Jun → 24 Jun set the gap) with “Two weeks on — the gap your last review set. Change it, or clear it.” under it. Type a word in the note, press Escape: “Discard this review?” Keep editing; clear it; Cancel.</p></div></div>
+      <div class="wstep" data-w="E-C2"><div class="wn">C2</div><div class="wbody"><h4>A review with words</h4><p>Review goal again; write “Walk — keeps the first step honest.”; Save review. The history gains “<b>Reviewed · Working on it</b>” with the sentence and “Next review <i>today + 14</i>”; the row’s <b>Next review:</b> line reads the new date; the Notes tab lists it. (Leave it — a review is never deleted; the record is append-only. Say so in the note here if you would rather the seed cleared walk reviews with words too.)</p></div></div>
+    </div>
+
+    <div class="wpart">
+      <h3>D · The observation, from every door (E2)</h3>
+      <div class="wstep" data-w="E-D1"><div class="wn">D1</div><div class="wbody"><h4>The history row is a door; “in a session ›” is another</h4><p>In the goal’s history, “<b>Observed · With a reminder — one verbal cue</b> · One cue was enough during partner work.” · 10 Jun · UAT Coach · <u>in a session ›</u>. The link opens the 10 Jun session. Back; press the row: the sheet “<b>Devon Test — Sets feet before throwing</b>” with “Sets feet before throwing · 10 Jun · dated by the session it was taken in” under the title — no Skill or date field (the session fixes both), the descriptor, the sentence with its count, <b>Evidence for</b> the goal, the hint ending “<b>on a handout only if you choose it</b>”, and <b>Remove observation</b> at the footer’s left. Cancel.</p></div></div>
+      <div class="wstep" data-w="E-D2"><div class="wn">D2</div><div class="wbody"><h4>From the toolbar, with no goal</h4><p><b>+ Record an observation</b> on the Goals toolbar: the sheet asks Skill · Observed on · Descriptor · What did you see? · Evidence for (“No goal” first). Record one (“Walk — feet set without a cue”, Independently). It does not appear in the goal’s history (no goal); it appears on the <b>Notes</b> tab as “Skill · Sets feet before throwing”.</p></div></div>
+      <div class="wstep" data-w="E-D3"><div class="wn">D3</div><div class="wbody"><h4>Notes is the home — and the sheet takes Remove</h4><p>Notes tab: the “Skill · …” chip is plain text (no link to a view that is gone); the row carries <b>Edit</b>. Edit opens the same sheet; change nothing, Save: it closes with no write. Edit again → <b>Remove observation</b> → “Remove this observation?” → Remove: the row is gone from Notes. (That undoes D2.)</p></div></div>
+      <div class="wstep" data-w="E-D4"><div class="wn">D4</div><div class="wbody"><h4>From Player progress</h4><p>Insights → Development → Player progress · Devon · <b>Sets feet before throwing</b>: the observation reads “<u>in a session ›</u> · Evidence for: First-step quickness off the bag” (the link opens the session). Under the goal’s history there, the observation’s <b>Open →</b> lands on Devon’s Skills &amp; Goals with the goal open <em>and the observation’s sheet open</em>. “Open Devon’s development →” at the foot lands on the <b>Notes</b> tab.</p></div></div>
+    </div>
+
+    <div class="wpart">
+      <h3>E · Results — the table (E6)</h3>
+      <div class="wstep" data-w="E-E1"><div class="wn">E1</div><div class="wbody"><h4>To the table standard</h4><p>Results: a white table — <b>Test · Latest · Trend · Date</b> and a chevron column. 60-yd sprint “seconds · lower is the aim · 4 results · 5 attempts” · 8.28 seconds · a spark · 15 Sept; Throw speed with “units changed — 2 earlier results in mph are listed but not drawn…” in its caption and a <b>dash</b> for the trend; Changeup speed “0 of 3 in range” · a dash; <b>Shuttle run last, in the quiet ink, “· retired”</b>. No tinted rows, no ×, no “entered by”, no “trend shows after a second result”, no “no results yet”.</p></div></div>
+      <div class="wstep" data-w="E-E2"><div class="wn">E2</div><div class="wbody"><h4>A test opens to its dated rows</h4><p>Press <b>60-yd sprint</b> (the name, or the row, or the chevron): Date · Result · Attempts · Source, then 15 Sept · 8.28 seconds · — · <u>Session ›</u>; 10 Jun · 8.24 seconds · <b>best of 2 · 8.31* · 8.24 · average 8.275</b> (hover the *: “corrected — was 8.51”) · Session ›; 20 May · 8.41 · — · <u>Outside a session ›</u>; 6 May · 8.62 · — · Outside a session ›. Session › opens the session. Press the name again: the rows fold.</p></div></div>
+      <div class="wstep" data-w="E-E3"><div class="wn">E3</div><div class="wbody"><h4>A never-run test is a caption</h4><p>Under the table nothing reads “Not yet recorded for Devon” — every active test has a result (the seed retired the walk test). Define one from <b>+ Record a result → + New test…</b> (“Walk test · seconds · lower”), Cancel the result sheet: the caption appears — “<b>Not yet recorded for Devon:</b> Walk test.” — and no row. (Retire it on Metrics at the end, or let the seed.)</p></div></div>
+    </div>
+
+    <div class="wpart">
+      <h3>F · A result from the bench (E7)</h3>
+      <div class="wstep" data-w="E-F1"><div class="wn">F1</div><div class="wbody"><h4>The sheet records what a session records</h4><p><b>+ Record a result</b>: “Record a result · Devon Test · outside a session” — Test (60-yd sprint pre-picked when its row is open), Date (today), <b>Attempts · seconds</b> as one box with a dashed <b>+</b>, Note, and the hint “Outside a session — it reads exactly as a session’s result would…”. Type 8.41, +, 8.35, +, 8.19: under the boxes “Best of 3 attempts · 8.41 · 8.35 · 8.19 · average 8.317”; the + stops after five. Save result.</p></div></div>
+      <div class="wstep" data-w="E-F2"><div class="wn">F2</div><div class="wbody"><h4>Three attempts are ONE result</h4><p>The sprint’s row now reads 8.19 seconds · today, “5 results · 8 attempts” in its caption, and the opened list has <b>one</b> new row: today · 8.19 seconds · best of 3 · 8.41 · 8.35 · 8.19 · average 8.317 · Outside a session › — not three rows, and one point more on the spark, not three. The Player progress chart draws it as one point.</p></div></div>
+      <div class="wstep" data-w="E-F3"><div class="wn">F3</div><div class="wbody"><h4>Edit: a correction, a cleared box, a new box</h4><p>Press today’s <b>Outside a session ›</b>: “Edit the result” filled — Test and Date read as facts, three boxes, the note. Change 8.35 to 8.30, clear 8.19, Save: the row reads best of 2 · 8.41 · 8.30* · average 8.355 (the * says 8.30 was corrected). Open it again, press + and add 8.25, Save: best of 3 again.</p></div></div>
+      <div class="wstep" data-w="E-F4"><div class="wn">F4</div><div class="wbody"><h4>Remove result takes every attempt</h4><p>Open it, <b>Remove result</b> → “Remove this result? Every attempt in it (3) comes off the record…” → Remove: today’s row is gone, the caption is back to “4 results · 5 attempts”. (That undoes F1–F3.) The 20 May row’s sheet also carries Remove result; Cancel it.</p></div></div>
+    </div>
+
+    <div class="wpart">
+      <h3>G · The fold, and the phone (E1)</h3>
+      <div class="wstep" data-w="E-G1"><div class="wn">G1</div><div class="wbody"><h4>Previous seasons is one shut line, titled by the season</h4><p>At the foot of either view: <b>2025 Season</b> · Archive · “1 goal, 1 result and attendance from that season” · a chevron. Open it: <b>Goals that season</b> — “Prior season — reads the pitcher before the pitch” · Achieved; <b>Results that season</b> — 60-yd sprint · 8.9 seconds (15 Jun); “Attendance that season: …%” when the record holds one. Nothing computed across seasons, no “better than last year”. Open <b>Avery Test</b>: no fold at all, and no “No previous season is linked” sentence.</p></div></div>
+      <div class="wstep" data-w="E-G2"><div class="wn">G2</div><div class="wbody"><h4>Goals on a phone (390)</h4><p>One row of two — Goals | Results — the handout a full-width row under it, the count line and the two doors, then the goal <b>open, above the fold</b>: the title, the pick and the chevron, the two fact lines, the three actions full-width, the history one entry per line. Nothing scrolls sideways.</p></div></div>
+      <div class="wstep" data-w="E-G3"><div class="wn">G3</div><div class="wbody"><h4>Results on a phone</h4><p>Cards: the test as the title, “seconds · lower is the aim · 4 results · 5 attempts” under it, “<b>8.28 seconds</b> · 15 Sept” on one line, the chevron in the corner; Shuttle run last in the quiet ink. Open the sprint: each result a quieter card — “10 Jun · 8.24 seconds”, its attempts line, Session › — the dash rows carry no attempts line. The result sheet is full-height with the boxes and the footer pinned.</p></div></div>
+    </div>
+  </section>
+
   <section class="summary">
     <h2>Build summary — Player</h2>
-    <p>Your eight answers with their notes, as text to paste back. The walk for this stage is written after you rule.</p>
+    <p>Your eight answers, and the walk’s twenty-three steps with their notes, as text.</p>
     <button type="button" id="buildSummaryPlayer">Build summary</button>
     <textarea id="summaryOutPlayer" hidden aria-label="Player summary text"></textarea>
-    <p class="foot">The Before frames are Devon Test’s record as it rendered on dev on 2026-09-15 (UAT head coach, 1440 and 390) — including the three status-only reviews of 14 Sept and the live “walk test”, which a stage-2 walk left behind and the seed does not remove. The After frames draw the same identities; the one figure not on the record is the review sheet’s 29 Sept, which is 15 Sept plus the fourteen days the goal’s last review set. The archive fold is drawn without figures because no player on the fixture is linked to a previous season today.</p>
+    <p class="foot">The Before frames are Devon Test’s record as it rendered on dev on 2026-09-15 (UAT head coach, 1440 and 390) — including the three status-only reviews of 14 Sept and the live “walk test”, which a stage-2 walk left behind and the seed does not remove. The After frames draw the same identities; the one figure not on the record is the review sheet’s 29 Sept, which is 15 Sept plus the fourteen days the goal’s last review set. The archive fold was drawn without figures because no player on the fixture was linked to a previous season then; the seed now links Devon to his 2025 row, and the walk reads the fold with that season’s one goal and one result.</p>
   </section>
 </div>
 
@@ -4398,7 +4455,7 @@ Independently — without a cue</div><div class="fhelp">One per line, in your or
     });
     var out=document.getElementById('summaryOutSession');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
   });
-  // ── paste-back for the Player tab (no walk yet — it is written after the owner rules) ──
+  // ── paste-back for the Player tab (decisions + the walk) ──
   document.getElementById('buildSummaryPlayer').addEventListener('click',function(){
     var lines=['Development lifecycle — stage 3 Player — decisions — '+new Date().toISOString().slice(0,10),''];
     Array.prototype.forEach.call(document.querySelectorAll('#tab-player .ask[data-q]'),function(a){
@@ -4406,6 +4463,11 @@ Independently — without a cue</div><div class="fhelp">One per line, in your or
       var ans=state['a-'+q];var label=ans?choicesFor(a).filter(function(c){return c[0]===ans})[0][1]:'no answer';
       lines.push('['+(ans?'x':' ')+'] '+q+' — '+h);
       lines.push('    -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''));
+    });
+    lines.push('','The walk (ledger §191):');
+    Array.prototype.forEach.call(document.querySelectorAll('#tab-player .wstep[data-w]'),function(st){
+      var k=st.getAttribute('data-w');var v=state['w-'+k];var h=st.querySelector('h4').textContent.trim();
+      lines.push('  ['+(v==='pass'?'x':v==='defect'?'!':' ')+'] '+k.slice(2)+' — '+h+(v?'  -> '+(v==='pass'?'PASS':'DEFECT'):'')+(state['wn-'+k]?' — '+state['wn-'+k].replace(/\s+/g,' ').trim():''));
     });
     var out=document.getElementById('summaryOutPlayer');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
   });
@@ -4430,7 +4492,7 @@ Independently — without a cue</div><div class="fhelp">One per line, in your or
     note.addEventListener('input',function(){state['wn-'+k]=note.value;if(!note.value)delete state['wn-'+k];save()});
     body.appendChild(ctl);body.appendChild(note);
   });
-  ['arrive-walk','define-walk','session-walk'].forEach(function(id){var walkSec=document.getElementById(id);if(walkSec){var tally=document.createElement('p');tally.className='wtally';tally.setAttribute('data-walk',id);walkSec.appendChild(tally)}});
+  ['arrive-walk','define-walk','session-walk','player-walk'].forEach(function(id){var walkSec=document.getElementById(id);if(walkSec){var tally=document.createElement('p');tally.className='wtally';tally.setAttribute('data-walk',id);walkSec.appendChild(tally)}});
   paintWalk();
 
 
