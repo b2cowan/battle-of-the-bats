@@ -290,9 +290,17 @@ export default function CoachPastPracticePlanPage({
             <p className={styles.detailPlaceholder}>No plan was written for this practice.</p>
           ) : (
             <>
-              {plan.goal && (
+              {/* The record reads what the sheet printed: the goal, the coach's description
+                  (2026-09-14) and the equipment. The focus section is not here by design — the
+                  read route never fetches goals for a finished season. */}
+              {(plan.goal || plan.description || plan.equipment?.length) ? (
                 <div className={styles.ppHeaderCard}>
-                  <ReadField label="What this practice was for"><p className={styles.ppReadTxt}>{plan.goal}</p></ReadField>
+                  {plan.goal && (
+                    <ReadField label="What this practice was for"><p className={styles.ppReadTxt}>{plan.goal}</p></ReadField>
+                  )}
+                  {plan.description && (
+                    <ReadField label="About this practice"><p className={`${styles.ppReadTxt} ${styles.ppReadPre}`}>{plan.description}</p></ReadField>
+                  )}
                   {plan.equipment?.length ? (
                     <ReadField label="Equipment">
                       <div className={styles.ppChipWrap}>
@@ -301,7 +309,7 @@ export default function CoachPastPracticePlanPage({
                     </ReadField>
                   ) : null}
                 </div>
-              )}
+              ) : null}
 
               {plan.blocks.map((block, i) => {
                 const clock = clocks[i];

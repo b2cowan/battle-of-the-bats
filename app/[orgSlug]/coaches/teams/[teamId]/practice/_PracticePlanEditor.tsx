@@ -1,13 +1,13 @@
 'use client';
 import { useMemo, useState } from 'react';
 import {
-  ChevronDown, ChevronUp, Library, Pencil, Plus, Repeat, Shuffle, Trash2, Users, X,
+  ChevronDown, ChevronRight, ChevronUp, Library, Pencil, Plus, Repeat, Shuffle, Trash2, Users, X,
 } from 'lucide-react';
 import {
-  MAX_BLOCKS, MAX_COACHING_POINTS, MAX_GROUPS, MAX_SHORT_TEXT_LEN,
+  MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_GROUPS, MAX_SHORT_TEXT_LEN,
   MAX_STATIONS_PER_BLOCK, MAX_TEXT_LEN, MAX_TITLE_LEN,
-  blockRotates, computeBlockClocks, computeRotation, defaultIntervalMinutes, describeSplit, drawGroups, groupLabel,
-  newPracticePlanId, startingGroupsForStation,
+  blockRotates, computeRotation, defaultIntervalMinutes, describeSplit, drawGroups, formatDuration, groupLabel,
+  newPracticePlanId, startingGroupsForStation, tagNamesById, walkBlockClocks,
   type BlockClock, type DrawMode, type PracticeGroup, type PracticePlan, type PracticePlanBlock,
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
@@ -82,6 +82,47 @@ const REPLIED_YES: RepAttendanceStatus[] = ['attending', 'late'];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <span className={styles.ppFieldLabel}>{children}</span>;
+}
+
+/**
+ * A fold's head on the sheet — "About this practice", "What everyone's working on".
+ *
+ * A controlled toggle BUTTON (chevron · title · summary) with the trash as its SIBLING, never a
+ * button inside a native <summary>: two interactive controls nested is invalid content, and the
+ * preventDefault/stopPropagation it forces would have to be copied for every icon the head ever
+ * gains (/simplify, 2026-09-14). `onToggle` absent = a static line (the template room's stub).
+ * One head for both rooms, so the title, the count and the trash can never drift apart.
+ */
+function FoldHead({
+  title, summary, summaryClassName, open, onToggle, onRemove, removeLabel,
+}: {
+  title: string;
+  summary?: string;
+  summaryClassName?: string;
+  open?: boolean;
+  onToggle?: () => void;
+  onRemove?: () => void;
+  removeLabel?: string;
+}) {
+  const inner = (
+    <>
+      {onToggle && <ChevronRight size={14} aria-hidden className={styles.ppFoldChevron} />}
+      <span className={styles.ppFoldTitle}>{title}</span>
+      {summary && <span className={summaryClassName ?? styles.ppFoldCount}>{summary}</span>}
+    </>
+  );
+  return (
+    <div className={styles.ppFoldHead}>
+      {onToggle
+        ? <button type="button" className={styles.ppFoldToggle} aria-expanded={open} onClick={onToggle}>{inner}</button>
+        : <span className={styles.ppFoldToggle} data-static>{inner}</span>}
+      {onRemove && (
+        <button type="button" className={`${styles.ppIconBtn} ${styles.ppFoldRemove}`} aria-label={removeLabel} onClick={onRemove}>
+          <Trash2 size={15} />
+        </button>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -769,12 +810,19 @@ function PromoteDrillDialog({
   );
 }
 
+/**
+ * ONE block on the timeline (practices re-evaluation stage 1 · The blank page, owner ruling D2,
+ * 2026-09-14): its gutter cell — the start time, and its length in small — and beside it either a
+ * ROW (title · first line · who · points, a button that opens it) or the block OPEN IN PLACE (the
+ * same head and body the card always had, on the paper ground). One block is open at a time; the
+ * editor owns which. ⚠ Nothing INSIDE the block changes here — its anatomy is stage 2's drawing.
+ */
 function BlockCard({
-  block, index, blockCount, clock, blockStartMs, collapsed, readOnly, withoutPeople,
+  block, index, blockCount, clock, blockStartMs, open, focusTitle, readOnly, withoutPeople,
   restTakenElsewhere, drawPool, notReplied,
   showNotReplied, staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag, nameOf,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
-  onToggleCollapse, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation, onSwapStation,
+  onOpen, onClose, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation, onSwapStation,
   onPromoteStation,
 }: {
   block: PracticePlanBlock;
@@ -782,7 +830,9 @@ function BlockCard({
   blockCount: number;
   clock?: BlockClock;
   blockStartMs?: number;
-  collapsed: boolean;
+  open: boolean;
+  /** A block the coach JUST added lands with its title focused; a row they opened to read does not. */
+  focusTitle: boolean;
   readOnly: boolean;
   /** A TEMPLATE has no roster and no staff — the practice supplies both. */
   withoutPeople: boolean;
@@ -800,7 +850,8 @@ function BlockCard({
   equipmentManage?: TagManageConfig;
   onEquipmentTagsChanged?: () => void;
   nameOf: (playerId: string) => string;
-  onToggleCollapse: () => void;
+  onOpen: () => void;
+  onClose: () => void;
   onMove: (delta: number) => void;
   onDelete: () => void;
   onPatch: (patch: Partial<PracticePlanBlock>) => void;
@@ -811,7 +862,6 @@ function BlockCard({
   onSwapStation: (stationId: string) => void;
   onPromoteStation: (stationId: string) => void;
 }) {
-  const isOpen = !collapsed;
   const stationCount = block.stations?.length ?? 0;
   // ONE answer to "does this rotate", shared with the sanitiser, the grid and the printed sheet.
   const isRotation = blockRotates(block);
@@ -821,14 +871,58 @@ function BlockCard({
      which is what they just typed, and leaves the interval blank so the grid asks for it rather
      than inventing a round length. */
   const rotation: PracticeRotation = block.rotation ?? { intervalMinutes: null, groups: [], groupSource: 'manual' };
-  const label = block.title || `block ${index + 1}`;
+  const label = block.title || `Block ${index + 1}`;
   const stations = block.stations ?? [];
 
   const patchStation = (stationId: string, patch: Partial<PracticeStation>) =>
     onPatch({ stations: stations.map(s => (s.id === stationId ? { ...s, ...patch } : s)) });
 
+  // The closed row's one meta line: who is in it, and how much teaching is written. With stations
+  // the people live on the stations (people-at-one-level), so the row counts stations instead;
+  // a template has no people, so it counts stations or says nothing.
+  const pointCount = block.coachingPoints?.filter(p => p.trim()).length ?? 0;
+  const stationLabel = stationCount > 0 ? `${stationCount} station${stationCount === 1 ? '' : 's'}` : null;
+  const whoLabel = block.playerIds?.length ? `${block.playerIds.length} player${block.playerIds.length === 1 ? '' : 's'}` : 'everyone';
+  const rowMeta = [
+    stationLabel ?? (withoutPeople ? null : `Who: ${whoLabel}`),
+    pointCount > 0 ? `Coaching points: ${pointCount}` : null,
+  ].filter(Boolean).join(' · ');
+
+  /* The gutter — the block's start in the org's clock, its length in small. A template has no
+     clock (no start), so the gutter carries the length alone. Read aloud: it is the only place the
+     block's time lives now that the head has given it up. */
+  const gutterLength = formatDuration(block.duration);
+  const gutter = (
+    <div className={styles.ppTlGutter}>
+      {clock ? clock.startLabel : gutterLength || '—'}
+      {clock && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
+    </div>
+  );
+
+  if (!open) {
+    return (
+      <div className={styles.ppTlRow}>
+        {gutter}
+        {/* The row's accessible name is its CONTENT — title, first line, who, points — with a
+            hidden "Open" verb in front; an aria-label would replace all of that with the title
+            alone (/review, 2026-09-14). The gutter before it carries the time. */}
+        <button type="button" className={styles.ppTlClosed} aria-expanded={false} onClick={onOpen}>
+          <span className="sr-only">Open </span>
+          <span className={styles.ppTlTitle}>
+            {block.title || <span className={styles.ppTlUntitled}>{label}</span>}
+            {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
+          </span>
+          {block.description && <span className={styles.ppTlDesc}>{block.description}</span>}
+          {rowMeta && <span className={styles.ppTlMeta}>{rowMeta}</span>}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.ppBlock}>
+    <div className={styles.ppTlRow}>
+      {gutter}
+      <div className={styles.ppTlOpen}>
       <div className={styles.ppBlockHead}>
         {/* Reorder with BUTTONS, never drag — gloves and phones defeat drag (the Roster lesson). */}
         <div className={styles.ppBlockOrder}>
@@ -842,21 +936,19 @@ function BlockCard({
           <input className={`${styles.input} ${styles.ppBlockTitle}`} value={block.title} disabled={readOnly}
             maxLength={MAX_TITLE_LEN}
             placeholder="What are we doing?"
+            autoFocus={focusTitle}
             aria-label={`Block ${index + 1} title`} onChange={e => onPatch({ title: e.target.value })} />
-          <span className={styles.ppBlockClock}>
-            {clock && (
-              <>
-                {clock.startLabel}
-                {clock.endLabel ? `–${clock.endLabel}` : ''}
-              </>
-            )}
-            {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
-          </span>
+          {/* The clock left this line for the gutter (stage 1); the shape tag stays with the title. */}
+          {isRotation && (
+            <span className={styles.ppBlockClock}>
+              <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>
+            </span>
+          )}
         </div>
 
-        <button type="button" className={styles.ppIconBtn} aria-expanded={isOpen}
-          aria-label={isOpen ? `Collapse ${label}` : `Expand ${label}`} onClick={onToggleCollapse}>
-          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <button type="button" className={styles.ppIconBtn} aria-expanded
+          aria-label={`Close ${label}`} onClick={onClose}>
+          <ChevronUp size={16} />
         </button>
         {!readOnly && (
           <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
@@ -865,138 +957,137 @@ function BlockCard({
         )}
       </div>
 
-      {isOpen && (
-        <div className={styles.ppBlockBody}>
-          {/* ── How long the block runs (D13): a number, or 'rest of practice'. ──
-              ⚠ RANGES WERE REMOVED (owner, 2026-08-01). A block that might run 25 or 35 minutes
-              makes the next block's start time unknowable — the one question this running clock
-              exists to answer. A coach who wants slack types one number with the slack in it. */}
-          <div className={styles.ppDuration}>
-            <label className={styles.ppField}>
-              <FieldLabel>Minutes</FieldLabel>
-              <input className={`${styles.input} ${styles.ppMinutes}`} type="number" min={1} max={600}
-                inputMode="numeric" disabled={readOnly || !!block.duration.restOfPractice}
-                value={block.duration.minutes ?? ''} aria-label="Minutes"
-                onChange={e => onPatch({
-                  duration: { ...block.duration, minutes: e.target.value ? Number(e.target.value) : null },
-                })} />
-            </label>
-            {/* Only ONE block per plan may be "rest of practice" (D13). The server enforces it,
-                so without this the coach could tick a second box and watch autosave silently
-                revert it a second later with no explanation. Say why instead. */}
-            <label className={styles.ppRestToggle}
-              title={restTakenElsewhere ? 'Another block is already set to run for the rest of practice.' : undefined}>
-              <input type="checkbox" checked={!!block.duration.restOfPractice}
-                disabled={readOnly || restTakenElsewhere}
-                onChange={e => onPatch({
-                  duration: e.target.checked ? { minutes: null, restOfPractice: true } : { minutes: null },
-                })} />
-              <span>Rest of practice</span>
-            </label>
-          </div>
-
+      <div className={styles.ppBlockBody}>
+        {/* ── How long the block runs (D13): a number, or 'rest of practice'. ──
+            ⚠ RANGES WERE REMOVED (owner, 2026-08-01). A block that might run 25 or 35 minutes
+            makes the next block's start time unknowable — the one question this running clock
+            exists to answer. A coach who wants slack types one number with the slack in it. */}
+        <div className={styles.ppDuration}>
           <label className={styles.ppField}>
-            <FieldLabel>Description</FieldLabel>
-            <textarea className={styles.textarea} rows={2} value={block.description ?? ''} disabled={readOnly}
-              maxLength={MAX_TEXT_LEN} placeholder="What happens, and how it's set up"
-              onChange={e => onPatch({ description: e.target.value })} />
+            <FieldLabel>Minutes</FieldLabel>
+            <input className={`${styles.input} ${styles.ppMinutes}`} type="number" min={1} max={600}
+              inputMode="numeric" disabled={readOnly || !!block.duration.restOfPractice}
+              value={block.duration.minutes ?? ''} aria-label="Minutes"
+              onChange={e => onPatch({
+                duration: { ...block.duration, minutes: e.target.value ? Number(e.target.value) : null },
+              })} />
           </label>
-          <label className={styles.ppField}>
-            <FieldLabel>Goal</FieldLabel>
-            <input className={styles.input} value={block.goal ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
-              placeholder="What this is for" onChange={e => onPatch({ goal: e.target.value })} />
+          {/* Only ONE block per plan may be "rest of practice" (D13). The server enforces it,
+              so without this the coach could tick a second box and watch autosave silently
+              revert it a second later with no explanation. Say why instead. */}
+          <label className={styles.ppRestToggle}
+            title={restTakenElsewhere ? 'Another block is already set to run for the rest of practice.' : undefined}>
+            <input type="checkbox" checked={!!block.duration.restOfPractice}
+              disabled={readOnly || restTakenElsewhere}
+              onChange={e => onPatch({
+                duration: e.target.checked ? { minutes: null, restOfPractice: true } : { minutes: null },
+              })} />
+            <span>Rest of practice</span>
           </label>
+        </div>
 
-          {!withoutPeople && (
-            <PracticeTagPicker label="Staff" all={staffTags} ids={block.staffTagIds ?? []}
-              legacyNames={block.staff} disabled={readOnly} onCreate={onCreateStaffTag}
-              manage={staffManage} onManageChanged={onStaffTagsChanged}
-              onChange={next => onPatch({ staffTagIds: next })}
-              emptyHint="No staff yet — type a name to add your first one." />
-          )}
+        <label className={styles.ppField}>
+          <FieldLabel>Description</FieldLabel>
+          <textarea className={styles.textarea} rows={2} value={block.description ?? ''} disabled={readOnly}
+            maxLength={MAX_TEXT_LEN} placeholder="What happens, and how it's set up"
+            onChange={e => onPatch({ description: e.target.value })} />
+        </label>
+        <label className={styles.ppField}>
+          <FieldLabel>Goal</FieldLabel>
+          <input className={styles.input} value={block.goal ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
+            placeholder="What this is for" onChange={e => onPatch({ goal: e.target.value })} />
+        </label>
 
-          {/* People live at exactly ONE level. With stations, they belong to the stations (or to
-              the rotation's groups) — so the block-level list disappears rather than offering a
-              second answer nobody can reconcile. */}
-          {stationCount === 0 && !withoutPeople && (
-            <div className={styles.ppFieldRow}>
-              <FieldLabel>Players</FieldLabel>
-              <div className={styles.ppChipWrap}>
-                {(block.playerIds ?? []).map(pid => <span key={pid} className={styles.ppChip}>{nameOf(pid)}</span>)}
-                <PlayerPickerButton count={block.playerIds?.length ?? 0} readOnly={readOnly}
-                  onOpen={() => onOpenPicker({ kind: 'block', blockId: block.id })} />
-              </div>
+        {!withoutPeople && (
+          <PracticeTagPicker label="Staff" all={staffTags} ids={block.staffTagIds ?? []}
+            legacyNames={block.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+            manage={staffManage} onManageChanged={onStaffTagsChanged}
+            onChange={next => onPatch({ staffTagIds: next })}
+            emptyHint="No staff yet — type a name to add your first one." />
+        )}
+
+        {/* People live at exactly ONE level. With stations, they belong to the stations (or to
+            the rotation's groups) — so the block-level list disappears rather than offering a
+            second answer nobody can reconcile. */}
+        {stationCount === 0 && !withoutPeople && (
+          <div className={styles.ppFieldRow}>
+            <FieldLabel>Players</FieldLabel>
+            <div className={styles.ppChipWrap}>
+              {(block.playerIds ?? []).map(pid => <span key={pid} className={styles.ppChip}>{nameOf(pid)}</span>)}
+              <PlayerPickerButton count={block.playerIds?.length ?? 0} readOnly={readOnly}
+                onOpen={() => onOpenPicker({ kind: 'block', blockId: block.id })} />
             </div>
-          )}
+          </div>
+        )}
 
-          <CoachingPoints points={block.coachingPoints} readOnly={readOnly}
-            onSet={next => onPatch({ coachingPoints: next })} />
+        <CoachingPoints points={block.coachingPoints} readOnly={readOnly}
+          onSet={next => onPatch({ coachingPoints: next })} />
 
-          {isRotation && (
-            <RotationPanel
-              rotation={rotation}
-              stations={block.stations}
-              blockMinutes={block.duration.minutes ?? null}
-              stationCount={stationCount}
-              blockStartMs={blockStartMs}
-              drawPool={drawPool}
-              notReplied={notReplied}
-              showNotReplied={showNotReplied}
+        {isRotation && (
+          <RotationPanel
+            rotation={rotation}
+            stations={block.stations}
+            blockMinutes={block.duration.minutes ?? null}
+            stationCount={stationCount}
+            blockStartMs={blockStartMs}
+            drawPool={drawPool}
+            notReplied={notReplied}
+            showNotReplied={showNotReplied}
+            readOnly={readOnly}
+            withoutPeople={withoutPeople}
+            nameOf={nameOf}
+            onSetRotation={patch => onPatch({ rotation: { ...rotation, ...patch } })}
+            onOpenGroupPicker={groupId => onOpenPicker({ kind: 'group', blockId: block.id, groupId })}
+          />
+        )}
+
+        <div className={styles.ppStations}>
+          <div className={styles.ppStationsHead}>
+            <FieldLabel>Stations</FieldLabel>
+            {/* One toggle instead of two kinds of block. It only appears once there are two
+                stations to move between — one station with groups queued behind it is a queue,
+                not a rotation. Rotation is the DEFAULT because that is how the reference
+                practice actually runs. */}
+            {stationCount >= 2 && (
+              <label className={styles.ppRestToggle}>
+                <input type="checkbox" checked={isRotation} disabled={readOnly}
+                  onChange={e => onPatch({ rotates: e.target.checked })} />
+                <span>Groups rotate between them</span>
+              </label>
+            )}
+            {/* ⚠ Adding a SECOND station is how a rotation gets made — the picker is therefore
+                also the carousel builder, with no second kind of block anywhere in the model. */}
+            {!readOnly && stations.length < MAX_STATIONS_PER_BLOCK && (
+              <button type="button" className={styles.ppAddInline} onClick={() => onAddStation()}>
+                <Plus size={13} aria-hidden /> Add a station
+              </button>
+            )}
+          </div>
+          {stations.map((station, i) => (
+            <StationCard
+              key={station.id}
+              station={station}
+              index={i}
+              isRotation={isRotation}
+              startingGroups={startingGroupsForStation(block.rotation, stationCount, i)}
               readOnly={readOnly}
               withoutPeople={withoutPeople}
+              staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+              equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
+              staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
+              equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
               nameOf={nameOf}
-              onSetRotation={patch => onPatch({ rotation: { ...rotation, ...patch } })}
-              onOpenGroupPicker={groupId => onOpenPicker({ kind: 'group', blockId: block.id, groupId })}
+              onPatch={patch => patchStation(station.id, patch)}
+              onRemove={() => onPatch({ stations: stations.filter(s => s.id !== station.id) })}
+              onOpenPicker={() => onOpenPicker({ kind: 'station', blockId: block.id, stationId: station.id })}
+              onDetach={() => onDetachStation(station.id)}
+              onSwapDrill={() => onSwapStation(station.id)}
+              onPromote={() => onPromoteStation(station.id)}
             />
-          )}
-
-          <div className={styles.ppStations}>
-            <div className={styles.ppStationsHead}>
-              <FieldLabel>Stations</FieldLabel>
-              {/* One toggle instead of two kinds of block. It only appears once there are two
-                  stations to move between — one station with groups queued behind it is a queue,
-                  not a rotation. Rotation is the DEFAULT because that is how the reference
-                  practice actually runs. */}
-              {stationCount >= 2 && (
-                <label className={styles.ppRestToggle}>
-                  <input type="checkbox" checked={isRotation} disabled={readOnly}
-                    onChange={e => onPatch({ rotates: e.target.checked })} />
-                  <span>Groups rotate between them</span>
-                </label>
-              )}
-              {/* ⚠ Adding a SECOND station is how a rotation gets made — the picker is therefore
-                  also the carousel builder, with no second kind of block anywhere in the model. */}
-              {!readOnly && stations.length < MAX_STATIONS_PER_BLOCK && (
-                <button type="button" className={styles.ppAddInline} onClick={() => onAddStation()}>
-                  <Plus size={13} aria-hidden /> Add a station
-                </button>
-              )}
-            </div>
-            {stations.map((station, i) => (
-              <StationCard
-                key={station.id}
-                station={station}
-                index={i}
-                isRotation={isRotation}
-                startingGroups={startingGroupsForStation(block.rotation, stationCount, i)}
-                readOnly={readOnly}
-                withoutPeople={withoutPeople}
-                staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
-                equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
-                staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
-                equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
-                nameOf={nameOf}
-                onPatch={patch => patchStation(station.id, patch)}
-                onRemove={() => onPatch({ stations: stations.filter(s => s.id !== station.id) })}
-                onOpenPicker={() => onOpenPicker({ kind: 'station', blockId: block.id, stationId: station.id })}
-                onDetach={() => onDetachStation(station.id)}
-                onSwapDrill={() => onSwapStation(station.id)}
-                onPromote={() => onPromoteStation(station.id)}
-              />
-            ))}
-          </div>
+          ))}
         </div>
-      )}
+      </div>
+      </div>
     </div>
   );
 }
@@ -1062,7 +1153,16 @@ interface Props {
    * The controls are ABSENT, not disabled — see the module header.
    */
   withoutPeople?: boolean;
+  /**
+   * "Start this plan from…" — the blank page's quiet alternative beside the first block (stage 1,
+   * D5). The PAGE owns the picker; the editor only offers the door, and only while there is no
+   * block: once a coach has written one, copying a template over it is no longer a start.
+   */
+  onStartFrom?: () => void;
 }
+
+/** A new block's length until the coach types one — the ghost row promises it ("15 min"). */
+const DEFAULT_BLOCK_MINUTES = 15;
 
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
@@ -1071,10 +1171,27 @@ export default function PracticePlanEditor({
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   focusManage, onFocusTagsChanged,
-  eventStartsAt, eventEndsAt, readOnly, withoutPeople = false,
+  eventStartsAt, eventEndsAt, readOnly, withoutPeople = false, onStartFrom,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  /**
+   * ONE block open at a time (stage 1, D2) — the rest read as rows. Nothing is open on arrival:
+   * the page reads as the sheet, and the coach opens the block they are working on. A block the
+   * coach just ADDED opens with its title focused (`freshId`); one they opened to read does not
+   * grab the keyboard.
+   */
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [freshId, setFreshId] = useState<string | null>(null);
+  /**
+   * The two folds' bodies are not rendered while shut: the rail is a roster's worth of rows and
+   * chips, rebuilt on every keystroke otherwise for content nobody is looking at (the file's own
+   * rule for its dialogs). Controlled state carries the disclosure (`FoldHead` — a toggle button
+   * with the trash as a sibling), and whether to build what is inside. "About" is shut by default
+   * (stage 1, D4); the rail is OPEN whenever it
+   * renders — it is only on the sheet because the coach put it there (2026-09-14).
+   */
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(true);
   /**
    * Which drill sheet is open, and what it will do with the pick.
    *   · `{ kind: 'block' }`                → a new block whose single station is that drill
@@ -1097,12 +1214,14 @@ export default function PracticePlanEditor({
   // but changes no block, and re-running this would rebuild an Intl formatter per block per
   // keystroke. The rotation grid's round times come from the SAME walk (clock.startMs) rather
   // than a second hand-maintained copy of it — an earlier duplicate had already drifted on how
-  // "rest of practice" advances the cursor.
-  const clocks = useMemo(
-    () => computeBlockClocks(plan.blocks, eventStartsAt, eventEndsAt),
+  // "rest of practice" advances the cursor. The walk also says where it stopped, which is the
+  // "+ Add a block" row's gutter — when the next block would start.
+  const walk = useMemo(
+    () => walkBlockClocks(plan.blocks, eventStartsAt, eventEndsAt),
     [plan.blocks, eventStartsAt, eventEndsAt],
   );
-  const clockByBlock = useMemo(() => new Map(clocks.map(c => [c.blockId, c])), [clocks]);
+  const clockByBlock = useMemo(() => new Map(walk.clocks.map(c => [c.blockId, c])), [walk]);
+  const nextStartLabel = walk.nextStartLabel;
 
   /** Which block (if any) already claims "rest of practice" — D13 allows exactly one per plan. */
   const restBlockId = plan.blocks.find(b => b.duration.restOfPractice)?.id ?? null;
@@ -1203,11 +1322,15 @@ export default function PracticePlanEditor({
    */
   function addBlock() {
     if (plan.blocks.length >= MAX_BLOCKS) return;
+    const id = newPracticePlanId();
     setBlocks([...plan.blocks, {
-      id: newPracticePlanId(),
+      id,
       title: '',
-      duration: { minutes: 15 },
+      duration: { minutes: DEFAULT_BLOCK_MINUTES },
     }]);
+    // The ghost row becomes the block: it opens in place, title ready to type into (stage 1, D5).
+    setOpenId(id);
+    setFreshId(id);
   }
 
 
@@ -1220,13 +1343,19 @@ export default function PracticePlanEditor({
    * second drill to the same block is what turns it into a carousel.
    */
   function addBlockFromDrill(drill: RepTeamDrill) {
-    if (plan.blocks.length >= MAX_BLOCKS) return;
+    // A plan that filled up under the open sheet (another tab's autosave) closes it rather than
+    // leaving a picker whose every pick does nothing.
+    if (plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
+    const id = newPracticePlanId();
     setBlocks([...plan.blocks, {
-      id: newPracticePlanId(),
+      id,
       title: drill.name,
-      duration: { minutes: drill.usualMinutes ?? 15 },
+      duration: { minutes: drill.usualMinutes ?? DEFAULT_BLOCK_MINUTES },
       stations: [drillToStation(drill, newPracticePlanId)],
     }]);
+    // Opens in place like a written block, but the title came from the drill — no focus grab.
+    setOpenId(id);
+    setFreshId(null);
     setDrillSheet(null);
   }
 
@@ -1383,16 +1512,90 @@ export default function PracticePlanEditor({
     return map;
   }, [pickerTarget, plan.blocks]);
 
+  /* "About this practice" — the fold's closed line says what is inside it: the practice's tags
+     (the same resolver the printed sheet uses, plus a pre-tags plan's legacy words), then its
+     equipment (ids first; a pre-library plan's legacy text when it has none — the display rule
+     `resolvePracticePlanTagNames` applies, on the plan's own field so a block keystroke does not
+     re-walk the stations). When nothing is set yet the line is EMPTY — the "tags · equipment"
+     placeholder went with the owner's 2026-09-14 pass; the fold's title says what it holds. The
+     description is deliberately not summarised: a paragraph does not belong on a one-line head. */
+  const { practiceTypes, equipmentTagIds, equipment } = plan;
+  const aboutSummary = useMemo(() => {
+    const tags = [...tagNamesById(planTagIds, focusTags), ...(practiceTypes ?? [])];
+    const equipmentNames = equipmentTagIds?.length ? tagNamesById(equipmentTagIds, equipmentTags) : equipment ?? [];
+    return [tags.join(' · '), equipmentNames.join(', ')].filter(Boolean).join(' · ');
+  }, [planTagIds, focusTags, practiceTypes, equipmentTagIds, equipment, equipmentTags]);
+
+  /* The rail's closed line — "1 of 12 has a focus area". Nobody is hidden by the fold: the count
+     is the roster, and the word for zero is a sentence rather than a figure. */
+  const railCountLine = useMemo(() => {
+    const withFocus = roster.filter(p => (goalsByPlayer.get(p.id)?.length ?? 0) > 0).length;
+    return roster.length === 0 ? 'no players on the roster yet'
+      : withFocus === 0 ? 'nobody has a focus area yet'
+        : `${withFocus} of ${roster.length} ${withFocus === 1 ? 'has' : 'have'} a focus area`;
+  }, [roster, goalsByPlayer]);
+
+  const firstBlock = plan.blocks.length === 0;
+  /* "What everyone's working on" is an ADDITION to a plan, never a standing part of the sheet
+     (owner ruling 2026-09-14, revising stage 1's D1/D6 shut fold): a team that never uses goals
+     never sees a "nobody has a focus area yet" line on every practice. The flag is shape — a
+     template carries it, and offers it — so the template room offers the addition without
+     reading anyone's goals; the plan room offers it only to a coach who may read them. */
+  const focusIncluded = plan.includeFocusAreas === true;
+  const canOfferFocus = !readOnly && !focusIncluded && (withoutPeople || canViewFocus);
+  /* The ghost row's quiet alternatives: "start this plan from…" on the blank page only (D5); the
+     drill library whenever the team has one (stage 4 rules where the library lives after this);
+     the focus section until the plan carries it. */
+  const ghostAlternatives = [
+    firstBlock && onStartFrom ? { label: 'start this plan from…', onClick: onStartFrom } : null,
+    drills.length > 0 ? { label: 'a drill from your library', onClick: () => setDrillSheet({ kind: 'block' }) } : null,
+    // Open on arrival EVERY time it is added — `railOpen` outlives a remove, so a section shut,
+    // removed and added again would otherwise come back shut (/review, 2026-09-14).
+    canOfferFocus ? { label: "what everyone's working on", onClick: () => { setRailOpen(true); onChange({ ...plan, includeFocusAreas: true }); } } : null,
+  ].filter((a): a is { label: string; onClick: () => void } => !!a);
+  const removeFocus = () => {
+    const next = { ...plan };
+    delete next.includeFocusAreas;
+    onChange(next);
+  };
+
   return (
-    <div className={styles.ppLayout}>
-      <div className={styles.ppMain}>
-        <div className={styles.ppHeaderCard}>
-          <label className={styles.ppField}>
-            <FieldLabel>Tonight&apos;s goal</FieldLabel>
-            <input className={styles.input} value={plan.goal ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
-              placeholder="What the whole practice is for"
-              onChange={e => onChange({ ...plan, goal: e.target.value })} />
-          </label>
+    <div className={styles.ppDocBody}>
+      {/* ── The goal, one line above the timeline (stage 1, D4) ──
+          The one thing worth saying about the whole practice, where the sheet prints it. A
+          template's is "Goal:" — there is no tonight for it. */}
+      <div className={styles.ppGoalLine}>
+        <span className={styles.ppGoalKicker}>{withoutPeople ? 'Goal:' : 'Tonight:'}</span>
+        {readOnly ? (
+          <span className={plan.goal ? styles.ppGoalRead : styles.ppGoalNone}>{plan.goal || 'No goal written'}</span>
+        ) : (
+          <input className={styles.ppGoalInput} value={plan.goal ?? ''} maxLength={MAX_TEXT_LEN}
+            placeholder="What the whole practice is for"
+            aria-label={withoutPeople ? 'Goal' : "Tonight's goal"}
+            onChange={e => onChange({ ...plan, goal: e.target.value })} />
+        )}
+      </div>
+
+      {/* ── "About this practice" — tags and equipment, folded (stage 1, D4) ──
+          Order and weight, not removal: the sheet prints both and the rail softens by tag, so they
+          stay; they are simply no longer the first thing a coach is asked before writing a minute. */}
+      <div className={styles.ppAbout}>
+        <FoldHead title="About this practice" summary={aboutSummary || undefined} summaryClassName={styles.ppAboutSummary}
+          open={aboutOpen} onToggle={() => setAboutOpen(o => !o)} />
+        {aboutOpen && <div className={styles.ppAboutBody}>
+          {/* The paragraph under the goal's headline (owner ask 2026-09-14): what the practice is,
+              in the coach's own words. Shape — a template keeps it, the sheet prints it. */}
+          <div className={styles.ppFieldRow}>
+            <FieldLabel>Description</FieldLabel>
+            {readOnly ? (
+              <p className={plan.description ? styles.ppAboutRead : styles.ppAboutNone}>{plan.description || 'No description written'}</p>
+            ) : (
+              <textarea className={styles.textarea} rows={3} value={plan.description ?? ''}
+                maxLength={MAX_DESCRIPTION_LEN} aria-label="Description"
+                placeholder={withoutPeople ? 'What this template is, and when to reach for it' : "What tonight's practice is, in your own words"}
+                onChange={e => onChange({ ...plan, description: e.target.value })} />
+            )}
+          </div>
           {/**
            * ⚠ **What this practice is about — TAGS, replacing slice 1a's free-text "Kind of
            * practice"** (owner ruling 2026-08-01: categories became tags).
@@ -1414,6 +1617,8 @@ export default function PracticePlanEditor({
                 selected={planTagIds ?? []}
                 onChange={onChangePlanTags}
                 onCreate={readOnly ? undefined : onCreateFocusTag}
+                // The same quiet manage door Equipment carries below — two tag groups, one grammar.
+                manage={focusManage} onManageChanged={onFocusTagsChanged}
                 disabled={readOnly}
                 emptyHint="No tags yet — type a word to make your first one."
               />
@@ -1435,8 +1640,14 @@ export default function PracticePlanEditor({
             manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
             onChange={next => onChange({ ...plan, equipmentTagIds: next })}
             emptyHint="No equipment yet — type an item to add your first one." />
-        </div>
+        </div>}
+      </div>
 
+      {/* ── The timeline (stage 1, D2 · D5) ──
+          A gutter of start times down the left, blocks as rows beside it, and after the last one
+          the ghost row: the page's ONE lime while the plan is blank ("+ Add the first block"),
+          a quiet "+ Add a block" after that. */}
+      <div className={styles.ppTl}>
         {plan.blocks.map((block, i) => (
           <BlockCard
             key={block.id}
@@ -1444,9 +1655,10 @@ export default function PracticePlanEditor({
             index={i}
             blockCount={plan.blocks.length}
             clock={clockByBlock.get(block.id)}
-            // From the SAME clock walk as the block header — never a second copy of the arithmetic.
+            // From the SAME clock walk as the gutter — never a second copy of the arithmetic.
             blockStartMs={clockByBlock.get(block.id)?.startMs}
-            collapsed={!!collapsed[block.id]}
+            open={openId === block.id}
+            focusTitle={freshId === block.id}
             readOnly={readOnly}
             withoutPeople={withoutPeople}
             restTakenElsewhere={restBlockId != null && restBlockId !== block.id}
@@ -1458,7 +1670,8 @@ export default function PracticePlanEditor({
             staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
             equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
             nameOf={nameOf}
-            onToggleCollapse={() => setCollapsed(c => ({ ...c, [block.id]: !c[block.id] }))}
+            onOpen={() => { setOpenId(block.id); setFreshId(null); }}
+            onClose={() => { setOpenId(null); setFreshId(null); }}
             onMove={delta => moveBlock(i, delta)}
             onDelete={() => setBlocks(plan.blocks.filter(b => b.id !== block.id))}
             onPatch={patch => patchBlock(block.id, patch)}
@@ -1474,22 +1687,57 @@ export default function PracticePlanEditor({
         ))}
 
         {!readOnly && plan.blocks.length < MAX_BLOCKS && (
-          <div className={styles.ppAddRow}>
-            <button type="button" className={styles.btnSecondary} onClick={() => setDrillSheet({ kind: 'block' })}>
-              <Plus size={14} aria-hidden /> Add a block
-            </button>
+          <div className={styles.ppTlRow}>
+            <div className={styles.ppTlGutter}>
+              {nextStartLabel ?? ''}
+              {nextStartLabel && <small>{firstBlock ? 'start' : 'next'}</small>}
+            </div>
+            <div className={styles.ppTlGhost}>
+              {/* The ghost row IS the next block: pressing it writes one at the time in the gutter,
+                  open in place, its title ready to type. The lime rule — one earned action per
+                  screen — is why the first block is lime and every later one is not. */}
+              <button type="button" className={firstBlock ? styles.btnPrimary : styles.btnSecondary} onClick={addBlock}>
+                <Plus size={14} aria-hidden /> {firstBlock ? 'Add the first block' : 'Add a block'}
+              </button>
+              <span className={styles.ppTlQuiet}>
+                {DEFAULT_BLOCK_MINUTES} min
+                {ghostAlternatives.map((alt, i) => (
+                  <span key={alt.label} className={styles.ppTlQuietAlt}>
+                    {/* A no-break space leads the separator: the span is an inline-block (so the
+                        phrase wraps as a unit) and an ordinary leading space would collapse. */}
+                    {'\u00A0· '}{i === 0 ? 'or ' : ''}
+                    <button type="button" className={styles.ppTlQuietLink} onClick={alt.onClick}>{alt.label}</button>
+                  </span>
+                ))}
+              </span>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ── The focus rail — the reason this beats a blank form (§4.1) ──
-          Roster ORDER, always. No sort control, ever. Focus areas are quoted verbatim from the
-          shipped development records — never recomputed, never scored, never re-ordered, and no
-          per-player figure is ever rendered beside another child's. */}
-      {canViewFocus && (
-        <aside className={styles.ppRail} aria-label="Focus areas">
-          <div className={styles.ppRailInner}>
-            <h2 className={styles.ppRailTitle}>What everyone&apos;s working on</h2>
+      {/* ── The focus rail, an ADDITION to the plan (owner ruling 2026-09-14) ──
+          On the sheet only once the coach put it there (the ghost row's quiet link), open on
+          arrival, collapsible, with one quiet way off again. In the template room it is a stub —
+          a template carries the shape, and the people belong to the practice. On a plan it is the
+          same rail as ever — roster ORDER, always, no sort control, ever; focus areas quoted
+          verbatim from the shipped development records, never recomputed, never scored, never
+          re-ordered, and no per-player figure ever rendered beside another child's. A coach who
+          may not read goals sees nothing here even when the plan carries the section. */}
+      {focusIncluded && withoutPeople && (
+        <div className={styles.ppFold}>
+          <FoldHead title="What everyone's working on"
+            summary="· plans started from this template list everyone's focus areas"
+            onRemove={readOnly ? undefined : removeFocus}
+            removeLabel="Remove What everyone's working on from this template" />
+        </div>
+      )}
+      {focusIncluded && !withoutPeople && canViewFocus && (
+        <div className={styles.ppFold}>
+          <FoldHead title="What everyone's working on" summary={`· ${railCountLine}`}
+            open={railOpen} onToggle={() => setRailOpen(o => !o)}
+            onRemove={readOnly ? undefined : removeFocus}
+            removeLabel="Remove What everyone's working on from this plan" />
+          {railOpen && <div className={styles.ppFoldBody} aria-label="Focus areas">
             {/* The derived line, so it is obvious WHY some chips are softened — and obvious that
                 the answer came from the practice rather than from a judgement about a child. */}
             {derivedCategories.length > 0 && (
@@ -1526,8 +1774,8 @@ export default function PracticePlanEditor({
                 })}
               </ul>
             )}
-          </div>
-        </aside>
+          </div>}
+        </div>
       )}
 
       {/* ── The roster picker — roster order, focus areas inline, attendance as context ── */}

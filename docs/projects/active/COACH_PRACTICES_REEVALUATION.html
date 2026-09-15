@@ -407,10 +407,11 @@ details.call .body p{margin:0 0 6px}
   <button type="button" class="tab" role="tab" data-tab="walk" aria-selected="true" aria-controls="tab-walk">The walk<span class="st">11 stations</span></button>
   <button type="button" class="tab" role="tab" data-tab="arrive" aria-selected="false" aria-controls="tab-arrive">0 · Arrive<span class="st built">built</span><span class="st dim">stations 0 · 2 · 6</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa" aria-selected="false" aria-controls="tab-qa">QA walk<span class="st built">§186 passed 24/24</span></button>
-  <button type="button" class="tab" role="tab" data-tab="stage1" aria-selected="false" aria-controls="tab-stage1">1 · The blank page<span class="st">proposal</span><span class="st dim">stations 1 · 3</span></button>
+  <button type="button" class="tab" role="tab" data-tab="stage1" aria-selected="false" aria-controls="tab-stage1">1 · The blank page<span class="st built">built</span><span class="st dim">stations 1 · 3</span></button>
+  <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">§188 complete</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
-  <span class="tab next" aria-disabled="true">2 · The block<span class="st">after stage 1</span><span class="st dim">station 4</span></span>
+  <span class="tab next" aria-disabled="true">2 · The block<span class="st">next — plan, then mockups</span><span class="st dim">station 4</span></span>
 </nav>
 
 <div class="shell" id="tab-walk" role="tabpanel">
@@ -1636,13 +1637,123 @@ details.call .body p{margin:0 0 6px}
   </section>
 </div>
 
+<div class="prop" id="tab-qa1" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">QA walk · stage 1 · The blank page <span class="status">built on dev 14 Sep · ledger §188 · walk complete 14 Sep (seven revisions folded in)</span></div>
+    <h1>The walk — pass it</h1>
+    <p class="lede">Twenty-six steps in eight parts, on the product as built. Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are not</strong> — the fixture's counts and dates drift as sessions add to it; read “Oct 27” as “the fixture's blank practice”. Each part reports its own verdict as you go.</p>
+  </header>
+
+  <section class="psec">
+    <div class="signin">
+      <h2>Sign in as</h2>
+      <table>
+        <tr><th>Where</th><td><b>localhost:3000</b> — the dev server</td></tr>
+        <tr><th>Head coach</th><td><b>uat-coach@uat-test-org.local</b> · the standing dev password in <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>) · <b>UAT Test Team · 2026 Season</b></td></tr>
+        <tr><th>View-only assistant</th><td><b>uat-asst-nomoney@uat-test-org.local</b> · same password · schedule view without edit — Part G, in a second window or a private one</td></tr>
+        <tr><th>Pinned practices</th><td><b>Practice</b> (Tue Oct 27, 6:00–8:00 p.m., <em>no plan</em> — the blank page; Part B writes on it and step B8 cleans it up) · <b>Practice review — written up</b> (Thu May 14, one block, a recap, <em>no end time</em>) · <b>UAT probe practice</b> (Sun Sep 13, three blocks, one rotation, has an end) · <b>Probe plan template</b></td></tr>
+      </table>
+    </div>
+
+    <div class="wpart" data-part="A">
+      <h3>A · The blank page (D2 · D3 · D4 · D5 · D6 · D7 · D8)</h3>
+      <p class="wwho">Head coach · Practice plans → the Oct 27 <b>Practice</b> row → Plan this practice.</p>
+      <div class="wstep" data-w="A1"><div class="wn">A1</div><div class="wbody"><h4>The page is a sheet, and the way back is Practice plans</h4><p>Under the page title (“Practice” with the clipboard tile) sits one white, letter-wide sheet with a dark rule under its head. The header's back arrow reads <b>Practice plans</b> and returns to the hub. <b>No toolbar</b> — no Print, no Run, no Start from — sits above the sheet.</p></div></div>
+      <div class="wstep" data-w="A2"><div class="wn">A2</div><div class="wbody"><h4>The first line is when, and how long</h4><p>The sheet's first line reads <b>Tue, Oct 27 · 6:00 p.m.–8:00 p.m. · 120 min</b>, and under it <b>0 of 120 min planned · 120 unplanned</b> with the unplanned figure in amber. <b>View on schedule</b> sits at the right of the head and opens the Schedule's panel on this practice.</p></div></div>
+      <div class="wstep" data-w="A3"><div class="wn">A3</div><div class="wbody"><h4>The goal is one line; tags and equipment are folded</h4><p>Under the rule: <b>Tonight:</b> and an underlined field (“What the whole practice is for”). Under that, one quiet line — <b>About this practice</b> and nothing after it (the “tags · equipment” placeholder is gone, 14 Sep) — folded shut. No pickers, no “No tags yet” hints on the blank page. Open it: the first field is <b>Description</b>, a three-line box (“What tonight's practice is, in your own words”), above the two pickers; both pickers behave the same — focus into <b>What this practice is about</b> and the dropdown carries a <b>Manage tags…</b> row at its right, exactly as <b>Equipment</b> carries <b>Manage equipment…</b> (fixed 14 Sep: the tags picker had no manage door).</p></div></div>
+      <div class="wstep" data-w="A4"><div class="wn">A4</div><div class="wbody"><h4>One lime: the first block, at the start time</h4><p>The timeline: a gutter on the left reading <b>6:00 p.m. / start</b> against a dark spine, and beside it the only lime on the page — <b>+ Add the first block</b> — with the quiet line “15 min · or <b>start this plan from…</b> · <b>a drill from your library</b> · <b>what everyone's working on</b>”.</p></div></div>
+      <div class="wstep" data-w="A5"><div class="wn">A5</div><div class="wbody"><h4>“start this plan from…” is the same one door</h4><p>Click it: the <b>Start this plan from…</b> picker opens with its three tabs (A template · A previous practice · A past season) and the same “copies, changes nothing” sentence. Close it without choosing.</p></div></div>
+      <div class="wstep" data-w="A6"><div class="wn">A6</div><div class="wbody"><h4>The rail is an addition, not a standing line (revised 14 Sep)</h4><p>Under the timeline there is <b>no “What everyone's working on” line</b> — a plan carries it only once the coach adds it. Click <b>what everyone's working on</b> beside the lime: the section lands under the timeline, <em>open</em> — <b>What everyone's working on · 1 of 12 has a focus area</b>, every player in roster order, Devon's <b>First-step quickness</b> chip, “Nothing set yet” on the rest — one line per player, name then chips — and the block head's <b>trash icon</b> at the far right of its heading (no “Open ›”; the chevron is the disclosure). The ghost row's quiet line no longer offers it. Its chevron shuts and reopens it. Reload: it is still there (it saves with the plan). Press the trash: it is gone without the fold toggling, and the ghost row offers it again.</p></div></div>
+      <div class="wstep" data-w="A7"><div class="wn">A7</div><div class="wbody"><h4>“How it went” is not here yet</h4><p>The sheet ends with one italic line: “How it went” appears here once the practice has started. There is no recap box on this (future) practice.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="B">
+      <h3>B · Writing on the sheet (D2 · D3 · D5)</h3>
+      <p class="wwho">Head coach · the same Oct 27 practice. Step B8 puts it back the way it was.</p>
+      <div class="wstep" data-w="B1"><div class="wn">B1</div><div class="wbody"><h4>The lime writes the first block, in place</h4><p>Press <b>+ Add the first block</b>. The ghost row becomes a block, open on the paper ground with its title field focused (no drill picker first). The gutter beside it reads <b>6:00 p.m. / 15 min</b>; the ghost moves down to <b>6:15 p.m. / next</b> and is now a quiet <b>+ Add a block</b> with “15 min · or a drill from your library” — “start this plan from…” is gone. The first line now reads <b>15 of 120 min planned · 105 unplanned</b>, and the toolbar (<b>Save as template… · Print the sheet</b>) has appeared above the sheet — <b>no Run practice</b> (removed 14 Sep: the field door lives on the hub card and the Overview card inside the run window; whether the plan page earns one back is stage 5's).</p></div></div>
+      <div class="wstep" data-w="B2"><div class="wn">B2</div><div class="wbody"><h4>A second block closes the first into a row</h4><p>Type a title (“Warm up”) and a description, then press <b>+ Add a block</b>. Block 1 collapses to a row under its gutter time — bold title, the description on one line, “Who: everyone” — and block 2 is the one open. Change block 2's minutes to 30: the gutter and the first line follow (<b>45 of 120 min planned · 75 unplanned</b>).</p></div></div>
+      <div class="wstep" data-w="B3"><div class="wn">B3</div><div class="wbody"><h4>One open at a time</h4><p>Click the <b>Warm up</b> row: it opens in place and block 2 becomes a row. Press the row's <b>⌃</b> (Close) at its top right: nothing is open, both read as rows. The move-up/down and delete controls live inside an open block only.</p></div></div>
+      <div class="wstep" data-w="B4"><div class="wn">B4</div><div class="wbody"><h4>About this practice opens to the description and the pickers, and its line says what is inside</h4><p>Open <b>About this practice</b>: <b>Description</b>, then the <b>What this practice is about</b> tag picker and the <b>Equipment</b> picker. Type a sentence in Description; pick or type one tag and one piece of equipment; shut the fold: its line reads the tag and the equipment (“Hitting · cones”) — <b>not</b> the description. Reload: the description is still there. Print the sheet: the description prints as <b>ABOUT</b> under GOAL. Remove the tag and the equipment again; leave the description for B8.</p></div></div>
+      <div class="wstep" data-w="B5"><div class="wn">B5</div><div class="wbody"><h4>The drill door still works from the ghost row</h4><p>Click <b>a drill from your library</b> on the ghost row: the drill picker opens (From your drills · Write one) with <b>Probe drill</b>. Close it.</p></div></div>
+      <div class="wstep" data-w="B6"><div class="wn">B6</div><div class="wbody"><h4>Save as template… asks one question, and the About travels</h4><p>Press <b>Save as template…</b>: the dialog has <b>Name</b> (pre-filled “Practice”) and nothing else — no Tags field (14 Sep: the practice's own tags go with it unasked). Save it as “Walk template”. On the Templates tab, open it: its <b>About this practice</b> holds your B4 description and Equipment; its Tags are whatever the practice carried. Retire “Walk template” afterwards.</p></div></div>
+      <div class="wstep" data-w="B7"><div class="wn">B7</div><div class="wbody"><h4>Saved, and it comes back as a sheet</h4><p>The docked status reads <b>Saved</b>. Reload the page: both blocks are rows (nothing open), the gutter times and the first line are as you left them.</p></div></div>
+      <div class="wstep" data-w="B8"><div class="wn">B8</div><div class="wbody"><h4>Clean up — the blank page returns</h4><p>Open each block and press its <b>Delete</b>; clear the Description and remove <b>What everyone's working on</b> if it is still on the plan. With no blocks the sheet is the blank page of Part A again: the lime, “start this plan from…”, no toolbar, <b>0 of 120 min planned · 120 unplanned</b>. Wait for <b>Saved</b>.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="C">
+      <h3>C · A practice without an end (D3)</h3>
+      <p class="wwho">Head coach · Practice plans → Recent → <b>Practice review — written up</b> → Open the plan.</p>
+      <div class="wstep" data-w="C1"><div class="wn">C1</div><div class="wbody"><h4>The line says so, quietly, and points at the Schedule</h4><p>The first line reads <b>Thu, May 14 · 7:00 p.m.</b> and under it <b>20 min planned · no end set · Set it on the schedule ›</b>. The gutter reads <b>7:00 p.m. / 20 min</b> beside the <b>Partner throwing</b> row; the ghost reads <b>7:20 p.m. / next</b>. No “of”, no “unplanned”.</p></div></div>
+      <div class="wstep" data-w="C2"><div class="wn">C2</div><div class="wbody"><h4>The link lands on the practice</h4><p><b>Set it on the schedule ›</b> opens the Schedule with this practice's panel open. Do not set an end — the fixture's row is used by Part D.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="D">
+      <h3>D · Afterwards (D7)</h3>
+      <p class="wwho">Head coach.</p>
+      <div class="wstep" data-w="D1"><div class="wn">D1</div><div class="wbody"><h4>On a practice that has started, “How it went” is at the sheet's foot</h4><p>Still on <b>Practice review — written up</b> (May): the sheet ends with <b>How it went</b> — its box holds the recap (“The shorter distance helped players repeat the setup…”), under the rail fold, inside the sheet. The italic “appears here once…” line is absent.</p></div></div>
+      <div class="wstep" data-w="D2"><div class="wn">D2</div><div class="wbody"><h4>…and on one that has not, it is the line</h4><p>Back on the Oct 27 practice the box is absent and the italic line is there (A7). <em>Expected for now:</em> a past practice's sheet is still today's editor — the lime, the ghost row — until stage 6 draws the record's face.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="E">
+      <h3>E · A practice needs an end time (D9)</h3>
+      <p class="wwho">Head coach · Schedule → + Add Event → Practice.</p>
+      <div class="wstep" data-w="E1"><div class="wn">E1</div><div class="wbody"><h4>Ends is required, and pre-filled</h4><p>The form opens with <b>Starts *</b> and <b>Ends *</b> (two hours later, already filled). Clear Ends: the line “A practice needs an end time.” appears under it and <b>Save Event</b> goes grey. Put it back: both go.</p></div></div>
+      <div class="wstep" data-w="E2"><div class="wn">E2</div><div class="wbody"><h4>An end before the start is refused in words</h4><p>Set Ends to an hour <em>before</em> Starts: the line “The end needs to be after the start.” appears under it and Save stays grey. Fix it.</p></div></div>
+      <div class="wstep" data-w="E3"><div class="wn">E3</div><div class="wbody"><h4>A repeating series asks for an end time too</h4><p>Tick <b>Repeat weekly</b>: the label reads <b>End time *</b>; empty, “A practice needs an end time.” and the Add button is grey; an end time earlier than the start time shows “The end needs to be after the start.” Untick. Cancel the form.</p></div></div>
+      <div class="wstep" data-w="E4"><div class="wn">E4</div><div class="wbody"><h4>Games are untouched</h4><p>Switch the type to <b>League Game</b>: the label reads <b>Ends</b> without a star, and clearing it does not grey the button. Cancel.</p></div></div>
+      <div class="wstep" data-w="E5"><div class="wn">E5</div><div class="wbody"><h4>An older practice without an end opens ready to save</h4><p>On the Schedule open <b>Practice review — written up</b> (May 14) and press <b>Edit</b>: <b>Ends *</b> is already filled two hours after the start and <b>Save changes</b> is live — a coach changing the venue is not held for a field they never touched. <b>Cancel</b> without saving (Parts C and D need this practice without an end).</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="F">
+      <h3>F · A template is the same sheet, with no people and no clock (D2)</h3>
+      <p class="wwho">Head coach · Practice plans → Templates → <b>Probe plan template</b>.</p>
+      <div class="wstep" data-w="F1"><div class="wn">F1</div><div class="wbody"><h4>The template's sheet</h4><p>The same white sheet: its head is the facts line (“N blocks · Started N plans” or “Not started a plan yet”), then <b>Name</b>, <b>Tags</b> and the one-sentence note, then <b>Goal:</b> (not “Tonight:”), <b>About this practice</b> holding <b>Description</b> (“What this template is, and when to reach for it”) and Equipment — no tag picker, the template's tags live above — and the timeline — each block's gutter reads its <b>length only</b> (no clock, no start time); the ghost row's gutter is empty. The back arrow reads <b>Templates</b>. Edit nothing.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="G">
+      <h3>G · Who sees what</h3>
+      <p class="wwho">Second window · <b>uat-asst-nomoney</b> (schedule view, no edit) · UAT Test Team · Practice plans → <b>UAT probe practice</b> → Open the plan.</p>
+      <div class="wstep" data-w="G1"><div class="wn">G1</div><div class="wbody"><h4>The sheet, read-only</h4><p>The same sheet: the first line with “of 90 min”, the goal as plain text, the three rows under their gutter times. <b>No ghost row</b>, <b>no Save as template…</b>, <b>no Run practice</b>; <b>Print the sheet</b> is there. A row opens to read (its fields are greyed, not hidden) and closes again. If the head coach added <b>What everyone's working on</b> to this plan, it is on the sheet here too, open, with no trash icon.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="H">
+      <h3>H · The phone (390)</h3>
+      <p class="wwho">Head coach · a phone, or the browser at 390 wide · the Oct 27 practice.</p>
+      <div class="wstep" data-w="H1"><div class="wn">H1</div><div class="wbody"><h4>Above the fold: when, how long, the goal, the first block</h4><p>The sheet fills the width with no frame; the date and the clock stack (<b>Tue, Oct 27</b> / <b>6:00 p.m.–8:00 p.m. · 120 min</b>); the goal line, the About line, the gutter and the lime are all on the first screen; the quiet alternatives wrap under the lime as whole phrases; the rail is one line. No sideways scroll.</p></div></div>
+      <div class="wstep" data-w="H2"><div class="wn">H2</div><div class="wbody"><h4>A block opens in place on the phone</h4><p>Press the lime: the block opens under its gutter time, the title focused; the fields are finger-height. Delete it afterwards and wait for <b>Saved</b>.</p></div></div>
+    </div>
+
+    <div class="summary" style="padding-top:28px">
+      <h2>Your walk, to paste back</h2>
+      <p>Collects every step's Pass / Defect and note, and each part's verdict, into one block of text.</p>
+      <button type="button" id="buildWalkSummary1">Build the walk summary</button>
+      <textarea id="walkOut1" hidden aria-label="Walk summary to paste back"></textarea>
+    </div>
+  </section>
+</div>
+
 <div class="prop" id="tab-stage1" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">Stage 1 · The blank page <span class="status">proposed 14 Sep · not built · mockups before any code</span></div>
+    <div class="eyebrow">Stage 1 · The blank page <span class="status built">ruled 14 Sep (D1–D9 as drawn) · built on dev 14 Sep · walk complete 14 Sep</span></div>
     <h1>The plan page is a document</h1>
     <p class="lede">The coach opens Tuesday's practice for the first time. Today the page is a form: three questions about the practice before a minute of it is written, no sign of how long the practice is, a rail of twelve “Nothing set yet”, a box for how it went before it went, and no primary action. The proposal — <strong>S.1, decided here</strong> — is that the screen becomes the sheet: a letter-shaped page whose first line is <em>when and how long</em>, the goal one line under it, a time gutter down the side, and the first block as the page's one lime. Blocks are rows that open in place. The players' goals stay readable but folded shut. Stages 2 and 3 draw the block and the stations on this page; this stage draws the page. It covers walk stations <b>1</b> (Put a practice on the calendar — its one question, the end time, is the frame this page is built on: D9) and <b>3</b> (The blank page). Amber markers are what is wrong today, green ones are what changes. Click any marker; every decision below lists where it is drawn.</p>
     <div class="frametools"><span>Frames:</span><span class="sw" role="group" aria-label="Frame size"><button type="button" data-fit="fit" aria-pressed="true">Fit to window</button><button type="button" data-fit="true" aria-pressed="false">True size</button></span><span>· desktop 1440 · phone 390</span></div>
   </header>
+
+  <section class="psec">
+    <h2>Built as drawn — and five calls the frames left open, built on the recommendation</h2>
+    <div class="plain">
+      <ol>
+        <li><b>The title stays in the page header, not inside the sheet.</b> The frame drew “← Practice plans” as a bare link with the title in the document; the house rule is one page header per page with the back arrow in it (the page-actions guard enumerates this site; a fourth bare back-link is drift). The sheet's head opens on the when-line — the ruling's own home for a framing line.</li>
+        <li><b>The lime writes a block directly</b> — the ghost row becomes the open block, title focused. Today's “Add a block” opened the drill sheet first (two taps for a coach with no drills). The drill sheet stays as the quiet “a drill from your library” whenever the team has drills; stage 4 rules where the library lives.</li>
+        <li><b>“Start this plan from…” lives on the blank page only</b> (as drawn). It sat in the toolbar at all times and silently REPLACED whatever was written; once a block exists a copy is no longer a start.</li>
+        <li><b>The toolbar exists only once there is a block</b> (Save as template… · Print the sheet). The blank page has no toolbar and no disabled Print. A goal typed alone is a savable row, not something to print. <b>Run practice left the plan page (owner, 14 Sep):</b> the builder offered it at any date and the run screen then counted the days; the door lives where the day is known — the hub card and the Overview card, in the run window. Stage 5 rules whether the plan page earns one back.</li>
+        <li><b>“What everyone's working on” is an addition, not a standing fold (owner, 14 Sep — revising D1/D6's shut fold).</b> A team that never uses goals no longer reads “nobody has a focus area yet” on every practice. The ghost row offers it; once added it sits under the timeline open, saves with the plan, prints on the sheet, and carries through a template (a template saved from a plan that has it keeps it; a plan started from that template inherits it — set it on Standard Tuesday once). The section still renders and prints only for a coach who may read goals.</li>
+        <li><b>“Started” means the start time has passed.</b> Stage 6 owns anything finer, and the record's face for a past practice (the sheet still offers the lime on May's practice).</li>
+      </ol>
+      <p style="margin-top:10px">Also built: the sheet's fields take the touch floor to 768 (the 35px inputs inside the old card were ≈100 baseline rows; the block's fields are stage 2's to redraw, the floor is a rule); the “Needs a plan” chip family's floor moved from 640 to 768 with the tablet-band ruling; the Add Practice form refuses an end at or before the start, in words.</p>
+    </div>
+  </section>
 
   <section class="psec">
     <h2>What changes</h2>
@@ -1732,7 +1843,7 @@ details.call .body p{margin:0 0 6px}
           <div class="dw an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 2" data-d="B3">2</button><div class="pop" hidden><b>When, and how long — the frame</b>“7:00–8:30 p.m. · 90 min”, then what is planned against it. This is the number every block is built into, and it is the first line. A practice without an end reads “7:00 p.m. · no end set” with a quiet link to the Schedule.</div><b>Tue, May 5 · 7:00–8:30 p.m. · 90 min</b><br>0 of 90 min planned · <span style="color:#8F540C">90 unplanned</span></div>
         </div>
         <p class="dgoal an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 3" data-d="B4">3</button><div class="pop" hidden><b>The goal is one line</b>“Tonight: …” above the timeline — the one thing worth saying about the whole practice, where the sheet prints it. Tags and equipment fold into “About this practice”; they are useful later and not what the coach came to do.</div>Tonight: <i>What the whole practice is for</i></p>
-        <p class="dabout"><b>About this practice ▸</b> tags · equipment</p>
+        <p class="dabout"><b>About this practice ▸</b></p>
         <div class="tl">
           <div class="tg">7:00<small>start</small></div>
           <div class="tghost an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 4" data-d="B5">4</button><div class="pop" hidden><b>One lime: the first block</b>A ghost row at the start time. The page's only lime; “Start this plan from…” — a template, a previous practice, a past season — is the quiet alternative beside it, one door with three sources, unchanged.</div><span class="lime">+ Add the first block</span><span class="q">15 min · or <u>start this plan from…</u></span></div>
@@ -1915,7 +2026,7 @@ details.call .body p{margin:0 0 6px}
     <div class="meas"><table>
       <tr><th>Stage</th><th>Name</th><th>What it decides</th><th>State</th></tr>
       <tr><td>0</td><td><b>Arrive</b> — the hub</td><td>The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card.</td><td><b>Ruled 14 Sep (D1–D8 as drawn) · built on dev the same day · walk §186 owed</b></td></tr>
-      <tr><td>1</td><td><b>The blank page</b></td><td>The plan page as a document — when · how long; the time gutter; the first block; the rail as a fold; the sheet-shaped page (S.1 decided here). First decision: the boundary question.</td><td>Tab open · proposed · mockups before any code</td></tr>
+      <tr><td>1</td><td><b>The blank page</b></td><td>The plan page as a document — when · how long; the time gutter; the first block; the rail as a fold; the sheet-shaped page (S.1 decided here). First decision: the boundary question; last, station 1's end time.</td><td><b>Ruled 14 Sep (D1–D9 as drawn) · built on dev 14 Sep · §188 walk complete 14 Sep · commit owed</b></td></tr>
       <tr><td>2</td><td>The block</td><td>One block's anatomy as a row that opens in place.</td><td>not drawn</td></tr>
       <tr><td>3</td><td>Stations &amp; rotation</td><td>Stations as columns under a rotating block, the grid under them, the draw as one control.</td><td>not drawn</td></tr>
       <tr><td>4</td><td>The library</td><td>The Templates and Drills tab rows (minutes · tags · first line), the library docked beside the plan on desktop; drag as an addition — <b>needs the owner's ruling (S.4)</b>; “reorder with buttons, never drag” stands until then.</td><td>not drawn</td></tr>
@@ -2016,7 +2127,7 @@ details.call .body p{margin:0 0 6px}
       <li>Templates and Drills are reachable from Practice plans in one tap; every old link redirects; a schedule-view-only assistant sees neither tab.</li>
       <li>The Overview's card for a practice offers the plan (or the run screen on the day), not attendance, whenever the coach can act on it.</li>
     </ul>
-    <p class="plain" style="margin-top:14px"><b>What comes next:</b> stage 1, <em>The blank page</em> — the plan page as a document. Its first decision is whether the plan page and the printed sheet keep reading the players' goals now that goals live in Skills &amp; Goals. Mockups before any code — the tab is open.</p>
+    <p class="plain" style="margin-top:14px"><b>Where this stands:</b> stage 1, <em>The blank page</em>, is ruled (all nine as drawn — the practice room keeps reading players' goals, now as an addition a coach puts on a plan rather than a standing fold; a practice needs an end time; Run practice left the plan page) and built on dev; its walk is the <b>QA walk · 1</b> tab. <b>What comes next:</b> the commit, then stage 2, <em>The block</em> — one block's anatomy as a row that opens in place. Its plan first, then mockups, before any code.</p>
   </section>
 </div>
 
@@ -2100,7 +2211,7 @@ details.call .body p{margin:0 0 6px}
 
   // ── tabs: the walk is the record; each stage gets a proposal tab as we reach it ──
   var tabBtns=Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
-  var panels={walk:'tab-walk',arrive:'tab-arrive',qa:'tab-qa',stage1:'tab-stage1',plan:'tab-plan',brief:'tab-brief'};
+  var panels={walk:'tab-walk',arrive:'tab-arrive',qa:'tab-qa',stage1:'tab-stage1',qa1:'tab-qa1',plan:'tab-plan',brief:'tab-brief'};
   function showTab(k){
     if(!panels[k])k='walk';
     Object.keys(panels).forEach(function(p){var el=document.getElementById(panels[p]);if(el)el.hidden=(p!==k)});
@@ -2234,46 +2345,53 @@ details.call .body p{margin:0 0 6px}
   });
 
 
-  // ── the QA walk: Pass / Defect + a note per step, a verdict per part, a paste-back ──
-  var wsteps=Array.prototype.slice.call(document.querySelectorAll('#tab-qa .wstep[data-w]'));
-  function paintWalk(){
-    var pass=0,defect=0;
-    wsteps.forEach(function(st){var k=st.getAttribute('data-w');var v=state['w-'+k]||'';st.setAttribute('data-state',v);if(v==='pass')pass++;if(v==='defect')defect++;
-      Array.prototype.forEach.call(st.querySelectorAll('.wctl button'),function(b){b.setAttribute('aria-pressed',String(b.className===v))});});
-    Array.prototype.forEach.call(document.querySelectorAll('#tab-qa .wpart'),function(part){
-      var steps=Array.prototype.slice.call(part.querySelectorAll('.wstep[data-w]'));
-      var p=0,d=0;steps.forEach(function(st){var v=state['w-'+st.getAttribute('data-w')];if(v==='pass')p++;if(v==='defect')d++});
-      var el=part.querySelector('.wverdict');if(!el){el=document.createElement('p');el.className='wverdict';part.appendChild(el)}
-      var verdict=d>0?'defect':(p===steps.length&&steps.length>0?'pass':'');
-      el.setAttribute('data-v',verdict);
-      el.innerHTML='Part '+part.getAttribute('data-part')+' — <b>'+(verdict==='pass'?'PASSED':verdict==='defect'?d+' defect'+(d===1?'':'s'):(p+d)+' of '+steps.length+' walked')+'</b>'+(verdict===''&&p>0?' · '+p+' passed':'');
-    });
-    var t=document.getElementById('wtally');if(t)t.innerHTML='<strong>'+pass+'</strong> passed · <strong>'+defect+'</strong> defect'+(defect===1?'':'s')+' · '+(wsteps.length-pass-defect)+' to walk';
-  }
-  wsteps.forEach(function(st){
-    var k=st.getAttribute('data-w');var body=st.querySelector('.wbody');
-    var ctl=document.createElement('div');ctl.className='wctl';
-    [['pass','Pass'],['defect','Defect']].forEach(function(c){var b=document.createElement('button');b.type='button';b.className=c[0];b.textContent=c[1];
-      b.addEventListener('click',function(){state['w-'+k]=state['w-'+k]===c[0]?undefined:c[0];if(state['w-'+k]===undefined)delete state['w-'+k];save();paintWalk()});ctl.appendChild(b)});
-    var note=document.createElement('textarea');note.className='note';note.rows=1;note.placeholder='What you saw — a defect, or a note';note.value=state['wn-'+k]||'';
-    note.addEventListener('input',function(){state['wn-'+k]=note.value;if(!note.value)delete state['wn-'+k];save()});
-    body.appendChild(ctl);body.appendChild(note);
-  });
-  (function(){var sec=document.querySelector('#tab-qa .signin');if(sec){var tally=document.createElement('p');tally.className='wtally';tally.id='wtally';sec.parentNode.insertBefore(tally,sec.nextSibling)}})();
-  paintWalk();
-  document.getElementById('buildWalkSummary').addEventListener('click',function(){
-    var lines=['Practices — stage 0 Arrive — QA walk (ledger §186) — '+new Date().toISOString().slice(0,10),''];
-    Array.prototype.forEach.call(document.querySelectorAll('#tab-qa .wpart'),function(part){
-      lines.push(part.querySelector('h3').textContent.trim());
-      Array.prototype.forEach.call(part.querySelectorAll('.wstep[data-w]'),function(st){
-        var k=st.getAttribute('data-w');var v=state['w-'+k];var h=st.querySelector('h4').textContent.trim();
-        lines.push('  ['+(v==='pass'?'x':v==='defect'?'!':' ')+'] '+k+' — '+h+(v?'  -> '+(v==='pass'?'PASS':'DEFECT'):'')+(state['wn-'+k]?' — '+state['wn-'+k].replace(/\s+/g,' ').trim():''));
+  // ── the QA walks: Pass / Defect + a note per step, a verdict per part, a paste-back — ONE
+  //    function per tab, each with its own state prefix so a stage 1 mark never lands on stage 0 ──
+  function setupWalk(tabId, prefix, btnId, outId, title){
+    var wsteps=Array.prototype.slice.call(document.querySelectorAll('#'+tabId+' .wstep[data-w]'));
+    var K=function(k){return prefix+'-'+k}, KN=function(k){return prefix+'n-'+k};
+    function paintWalk(){
+      var pass=0,defect=0;
+      wsteps.forEach(function(st){var k=st.getAttribute('data-w');var v=state[K(k)]||'';st.setAttribute('data-state',v);if(v==='pass')pass++;if(v==='defect')defect++;
+        Array.prototype.forEach.call(st.querySelectorAll('.wctl button'),function(b){b.setAttribute('aria-pressed',String(b.className===v))});});
+      Array.prototype.forEach.call(document.querySelectorAll('#'+tabId+' .wpart'),function(part){
+        var steps=Array.prototype.slice.call(part.querySelectorAll('.wstep[data-w]'));
+        var p=0,d=0;steps.forEach(function(st){var v=state[K(st.getAttribute('data-w'))];if(v==='pass')p++;if(v==='defect')d++});
+        var el=part.querySelector('.wverdict');if(!el){el=document.createElement('p');el.className='wverdict';part.appendChild(el)}
+        var verdict=d>0?'defect':(p===steps.length&&steps.length>0?'pass':'');
+        el.setAttribute('data-v',verdict);
+        el.innerHTML='Part '+part.getAttribute('data-part')+' — <b>'+(verdict==='pass'?'PASSED':verdict==='defect'?d+' defect'+(d===1?'':'s'):(p+d)+' of '+steps.length+' walked')+'</b>'+(verdict===''&&p>0?' · '+p+' passed':'');
       });
-      var v=part.querySelector('.wverdict');if(v)lines.push('  '+v.textContent.trim());
-      lines.push('');
+      var t=document.getElementById(tabId+'-tally');if(t)t.innerHTML='<strong>'+pass+'</strong> passed · <strong>'+defect+'</strong> defect'+(defect===1?'':'s')+' · '+(wsteps.length-pass-defect)+' to walk';
+    }
+    wsteps.forEach(function(st){
+      var k=st.getAttribute('data-w');var body=st.querySelector('.wbody');
+      var ctl=document.createElement('div');ctl.className='wctl';
+      [['pass','Pass'],['defect','Defect']].forEach(function(c){var b=document.createElement('button');b.type='button';b.className=c[0];b.textContent=c[1];
+        b.addEventListener('click',function(){state[K(k)]=state[K(k)]===c[0]?undefined:c[0];if(state[K(k)]===undefined)delete state[K(k)];save();paintWalk()});ctl.appendChild(b)});
+      var note=document.createElement('textarea');note.className='note';note.rows=1;note.placeholder='What you saw — a defect, or a note';note.value=state[KN(k)]||'';
+      note.addEventListener('input',function(){state[KN(k)]=note.value;if(!note.value)delete state[KN(k)];save()});
+      body.appendChild(ctl);body.appendChild(note);
     });
-    var out=document.getElementById('walkOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
-  });
+    (function(){var sec=document.querySelector('#'+tabId+' .signin');if(sec){var tally=document.createElement('p');tally.className='wtally';tally.id=tabId+'-tally';sec.parentNode.insertBefore(tally,sec.nextSibling)}})();
+    paintWalk();
+    document.getElementById(btnId).addEventListener('click',function(){
+      var lines=[title+' — '+new Date().toISOString().slice(0,10),''];
+      Array.prototype.forEach.call(document.querySelectorAll('#'+tabId+' .wpart'),function(part){
+        lines.push(part.querySelector('h3').textContent.trim());
+        Array.prototype.forEach.call(part.querySelectorAll('.wstep[data-w]'),function(st){
+          var k=st.getAttribute('data-w');var v=state[K(k)];var h=st.querySelector('h4').textContent.trim();
+          lines.push('  ['+(v==='pass'?'x':v==='defect'?'!':' ')+'] '+k+' — '+h+(v?'  -> '+(v==='pass'?'PASS':'DEFECT'):'')+(state[KN(k)]?' — '+state[KN(k)].replace(/\s+/g,' ').trim():''));
+        });
+        var v=part.querySelector('.wverdict');if(v)lines.push('  '+v.textContent.trim());
+        lines.push('');
+      });
+      var out=document.getElementById(outId);out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
+    });
+  }
+  // Stage 0's keys stay 'w-'/'wn-' so the owner's 24 marks survive this edit.
+  setupWalk('tab-qa','w','buildWalkSummary','walkOut','Practices — stage 0 Arrive — QA walk (ledger §186)');
+  setupWalk('tab-qa1','w1','buildWalkSummary1','walkOut1','Practices — stage 1 The blank page — QA walk (ledger §188)');
 
   // ── paste-back for the stage 1 tab ──
   document.getElementById('buildSummaryStage1').addEventListener('click',function(){

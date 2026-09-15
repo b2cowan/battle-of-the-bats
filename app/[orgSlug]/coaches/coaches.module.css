@@ -400,6 +400,14 @@
 
 /* ── Shell ──────────────────────────────────────────────────────────────── */
 .coachesShell {
+  /* The desktop sidebar's width, and what a viewport-pinned foot must clear on a phone (the
+     bottom nav plus the home indicator). ONE owner each (/simplify, 2026-09-14): `.sidebar`,
+     `.saveBar`, the lineup builder's docked bar and the floating save pill all read these —
+     the sidebar's 220px had been hand-copied into three rules, and the nav formula into two. */
+  --coach-sidebar-w: 220px;
+  --coach-foot-clear: 0px;
+  /* The floating save pill's height — the pill sizes to it and a page carrying one clears it. */
+  --save-pill-h: 2.25rem;
   /* Stage H.1 (Nav Unification, D2 2026-07-31): the fixed CoachTopStrip's height — the
      shell pads down by it on desktop; zeroed ≤900px where the strip never renders.
      Derived from the shared --chrome-bar-h (Stage G) — the ONE platform chrome-bar height, worn
@@ -444,7 +452,11 @@
 
 @media (max-width: 900px) {
   /* Zeroing the var alone collapses the shell's padding-top (it reads the var). */
-  .coachesShell { flex-direction: column; --coach-topstrip-h: 0px; }
+  .coachesShell {
+    flex-direction: column; --coach-topstrip-h: 0px;
+    /* The bottom nav plus the home indicator — everything pinned to the foot clears this. */
+    --coach-foot-clear: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+  }
   /* The coaches shell nests its own <main> inside the app layout's <main>, and BOTH were
      reserving for the 72px fixed bottom nav: the outer one via `main { padding-bottom:
      var(--bottom-nav-height) }` in globals.css (correct — that IS the nav's height), and this
@@ -810,7 +822,7 @@
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
 .sidebar {
-  width: 220px;
+  width: var(--coach-sidebar-w, 220px);
   flex-shrink: 0;
   background: var(--card-bg);
   border-right: 1px solid var(--home-line, rgba(255,255,255,0.07));
@@ -2256,9 +2268,18 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
      widths (a portal-wide decision with ~25 accepted baseline entries across drills, templates,
      fundraisers and Lineups), and touch is where the floor earns its keep. */
   .lineupTabs .segBtn { min-height: 40px; }
-  .lineupFilterChip { min-height: var(--tap-min, 44px); padding: 0.3rem 0.72rem; }
+  /* ⚠ The chip's tap floor moved UP to the 768 block below (practices re-evaluation stage 1,
+     2026-09-14): the Practice plans hub's "Needs a plan" chip measured 30px at 768, and the
+     tablet-band ruling (§115) holds the touch arrangement to 768, not 640. Same rule, one
+     breakpoint up, for the whole chip family — Lineups and the Insights tabs included. */
   /* Insights scoreboard band wraps to a 2-up grid of stat blocks on phones. */
   .insightsStat { flex: 1 1 45%; border-right: 0; padding: 0.45rem 0.8rem; }
+}
+/* The chip family's tap floor — 768, not 640 (tablet-band ruling §115; see the note in the 640
+   block above). Compact at desktop widths by the portal-wide decision; touch is where the floor
+   earns its keep. */
+@media (max-width: 768px) {
+  .lineupFilterChip { min-height: var(--tap-min, 44px); padding: 0.3rem 0.72rem; }
 }
 
 /* ══ THE ONE THING (Chunk I) ═══════════════════════════════════════════════
@@ -2425,7 +2446,10 @@ a.oneChip:hover { border-color: currentColor; }
   align-items: center;
   gap: 0.4rem 1.1rem;
   flex-wrap: wrap;
-  flex: none;
+  /* Shrinkable: `flex: none` sized this group at max-content, so a long state chip beside a
+     quiet link (the hub's run-window card: "Plan set · 3 blocks · 60 of 90 min · 1 rotation" +
+     "Open the plan") could not wrap and pushed the phone sideways (/review, 2026-09-14). */
+  flex: 0 1 auto; min-width: 0; max-width: 100%;
 }
 .oneAnswer,
 .oneAnswerMuted {
@@ -5716,7 +5740,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    bottom nav. A matching spacer reserves scroll room so it never covers the last card. */
 .saveBar {
   position: fixed;
-  left: 220px;            /* clear the desktop sidebar */
+  left: var(--coach-sidebar-w, 220px);   /* clear the desktop sidebar */
   right: 0;
   bottom: 0;
   z-index: 40;
@@ -5767,10 +5791,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .saveBar {
     left: 0;
     padding: 0.75rem 1rem 0.85rem;
-    /* Reads the nav's height from the token rather than restating it. `4.5rem` was the same 72px,
-       hand-copied — correct today, and silently wrong the day the nav changes. No behaviour change;
-       this is the same drift class that broke the lineup popovers when the docked bar arrived. */
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+    /* Reads the nav's height from the shell's token rather than restating it. `4.5rem` was the
+       same 72px, hand-copied — correct today, and silently wrong the day the nav changes. */
+    bottom: var(--coach-foot-clear);
   }
 }
 
@@ -9625,15 +9648,41 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    the very bottom. On the portal's most tap-heavy screen that put Undo out of reach at the
    moment a coach needs it.
 
-   Only the LINEUP BUILDER opts in. The schedule slide-over uses the same base class inside its
-   own scrolling panel, where sticky genuinely works — it is deliberately untouched. */
-@media (max-width: 900px) {
-  /* ONE OWNER for the docked bar's height. The bar is FORCED to this value below, and every
-     element that has to clear it is offset BY it — so the bar's height and the things dodging
-     it can never drift apart. (The comment under `.lineupDockedPage` used to carry "~56px" as
-     a prose estimate, which is exactly the kind of second, unenforced copy that drifts.) */
-  .lineupDockedPage { --lineup-dock-h: 3.5rem; }
+   Only the LINEUP BUILDER opts in — it is the one screen whose foot carries controls (Undo ·
+   Redo · Print). The practice plan and the plan-template editor used to share it for a bare
+   "Saved" and now float `.savePill` instead (owner, 2026-09-14: a bar with one word in it is
+   furniture); the schedule slide-over's attendance list does the same.
 
+   ⚠ Docked at EVERY width since 2026-09-14. The fix above was scoped to ≤900px, which left
+   desktop on the sticky that never engages — the practice plan's "Saved" sat under the Windows
+   taskbar until the page was scrolled to its very end. Desktop pins the bar to the viewport's
+   foot, offset by the sidebar; the phone block below keeps it above the bottom nav. The page
+   clears the bar's height at both. */
+/* ONE OWNER for the docked bar's height. The bar is FORCED to this value below, and every
+   element that has to clear it is offset BY it — so the bar's height and the things dodging
+   it can never drift apart. (The comment under `.lineupDockedPage` used to carry "~56px" as
+   a prose estimate, which is exactly the kind of second, unenforced copy that drifts.) */
+.lineupDockedPage { --lineup-dock-h: 3.5rem; }
+/* The page scrolls clear of the docked bar — its own height plus the page's breathing room.
+   Anything less and the last row hides behind it at the bottom of the scroll. */
+.lineupDockedPage { padding-bottom: calc(var(--lineup-dock-h, 0rem) + 1rem); }
+@media (min-width: 901px) {
+  .lineupDockedFooter {
+    position: fixed;
+    /* The bar spans the working area, not the nav. */
+    left: var(--coach-sidebar-w, 220px);
+    right: 0;
+    bottom: 0;
+    min-height: var(--lineup-dock-h, 3.5rem);
+    z-index: 250;
+    margin: 0;
+    padding: 0.5rem 2rem;
+    border-top: 1px solid var(--home-line, rgba(255,255,255,0.08));
+    background: var(--card-bg);
+    box-shadow: 0 -6px 14px -10px rgba(0,0,0,0.5);
+  }
+}
+@media (max-width: 900px) {
   .lineupDockedFooter {
     position: fixed;
     left: 0;
@@ -9646,7 +9695,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
        the bar — Undo out of reach on the portal's most tap-heavy screen, which is the exact
        defect docking this bar was meant to fix. It was only ever correct on phones with no
        home indicator. Both terms, every time. */
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+    bottom: var(--coach-foot-clear);
     z-index: 250;   /* under the nav (300) — the nav always wins a tap */
     margin: 0;
     padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px) * 0);
@@ -9654,32 +9703,82 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
     background: var(--card-bg);
     box-shadow: 0 -6px 14px -10px rgba(0,0,0,0.5);
   }
-  /* The grid scrolls clear of the docked bar — its own height plus the page's breathing room.
-     Anything less and the last player row hides behind it at the bottom of the scroll. */
-  .lineupDockedPage { padding-bottom: calc(var(--lineup-dock-h, 0rem) + 1rem); }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   PRACTICE PLANS (slice 1a) â€” the builder on a practice event.
+/* ── The floating save pill (2026-09-14) ─────────────────────────────────────
+   The autosave word alone, at the window's foot: bottom-right on desktop, above the bottom nav
+   on a phone. Fixed to the VIEWPORT on purpose — inside a scrolling slide-over a sticky foot
+   only ever showed at the end of the list, and on the desktop page the sticky never engaged.
+   `.saveStatus` inside it is the same span every autosave surface renders, so the words, the
+   tick and the Retry button read identically everywhere. */
+.savePill {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1rem;
+  z-index: 250;   /* under the bottom nav (300), over the sheet and the slide-over */
+  display: inline-flex;
+  align-items: center;
+  /* Sized to the shell's `--save-pill-h`, which `.savePillPage` clears — one owner (the
+     `--lineup-dock-h` rule, applied here too). */
+  min-height: var(--save-pill-h, 2.25rem);
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.1));
+  background: var(--card-bg);
+  box-shadow: 0 6px 18px -8px rgba(0,0,0,0.45);
+  pointer-events: none;   /* the word never blocks a tap on what is under it… */
+}
+.savePill .saveStatus { margin-left: 0; }
+.savePill[data-state='error'] { pointer-events: auto; border-color: var(--danger); }   /* …but Retry is a button */
+/* A page carrying the pill leaves it a corner to sit in, so the sheet's last line is never under it. */
+.savePillPage { padding-bottom: calc(var(--save-pill-h, 2.25rem) + 1.25rem); }
+@media (max-width: 900px) {
+  .savePill { right: 0.75rem; bottom: calc(var(--coach-foot-clear) + 0.6rem); }
+}
+
+/* A slide-over's head (type chip · back · ✕) stays put while the panel scrolls, so ✕ is never
+   below a long list (owner, 2026-09-14, met on the schedule's attendance). A property of EVERY
+   slide-over whose first child is the modal header — not a class one page opts into, which is
+   how `.modalFlushFooter` had to be generalised after eight panels missed it. Bleeds to the
+   panel's edges the way `.modalFooter` does at its foot; the panel's 1.5rem padding is the
+   number cancelled. */
+.slideOver > .modalHeader:first-child {
+  position: sticky;
+  top: -1.5rem;
+  z-index: 3;
+  margin: -1.5rem -1.5rem 1.25rem;
+  padding: 1rem 1.5rem 0.6rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
+}
+/* The phone sheet trims its side gutters to 0.9rem (the `.modalOverlay:not(…) > *` block); the
+   head's bleed follows, or it would stop 10px short of each edge. */
+@media (max-width: 640px) {
+  .slideOver > .modalHeader:first-child { margin-left: -0.9rem; margin-right: -0.9rem; padding-left: 0.9rem; padding-right: 0.9rem; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRACTICE PLANS (slice 1a) — the builder on a practice event.
 
    Uses the portal's TWO breakpoints only (900 shell / 640 content) and the
    44px --tap-min floor. No third standard, and no bespoke @640 rule that a
    primitive in the header already covers.
 
-   The layout is one grid: the block list, and the focus rail beside it on a
-   desktop. The rail is sticky INSIDE the grid, which gives it a containing
-   block taller than itself â€” the Chunk C lesson (a sticky element whose
-   container ends where it does has no travel and never sticks).
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-.ppLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 1.25rem;
-  align-items: start;
-}
-.ppMain { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+   ⚰ `.ppLayout` / `.ppMain` — the two-column grid with the focus rail sticky
+   beside the block list — went with the plan page becoming a DOCUMENT
+   (re-evaluation stage 1, 2026-09-14): the rail is a fold under the timeline
+   now (`.ppFold`, further down), and the sheet is `.ppDoc`.
+   ══════════════════════════════════════════════════════════════════════════ */
 
 .ppToolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+/* The toolbar directly above the thing it acts on (the sheet; the Schedule's practice panel) —
+   the column's own gap is the spacing, so the margin goes. */
+.ppToolbarFlush { margin-bottom: 0; }
+/* The toolbar's buttons take the touch floor to 768 (tablet-band ruling §115) — they sat at 35px
+   in nine baseline rows until stage 1 re-ran the screen (2026-09-14). */
+@media (max-width: 768px) {
+  .ppToolbar > a, .ppToolbar > button { min-height: var(--tap-min, 44px); }
+}
 
 .ppHeaderCard {
   display: flex; flex-direction: column; gap: 0.7rem;
@@ -9737,13 +9836,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .ppRestToggle input { width: 1rem; height: 1rem; }
 
-.ppAddRow { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem; }
-/* "Add a block" — a plan template is BUILT out of this button, so it is the one control on the
-   screen a coach presses repeatedly. Its sibling `.ppAddInline` already carries the floor; this
-   row never got one. */
-@media (max-width: 768px) {
-  .ppAddRow button { min-height: var(--tap-min, 44px); }
-}
+
 .ppAddInline {
   display: inline-flex; align-items: center; gap: 0.3rem;
   align-self: flex-start; min-height: var(--tap-min, 44px);
@@ -9847,25 +9940,16 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppNotes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .ppNotes li { font-size: var(--type-support); color: var(--text-tertiary); }
 
-/* â”€â”€ The focus rail â”€â”€ */
-.ppRail { min-width: 0; }
-.ppRailInner {
-  /* Clears the fixed top strip + pinned team header now that document scrolling makes
-     sticky real (2026-08-01) — at the old `top: 1rem` it would pin occluded behind them. */
-  position: sticky; top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 1rem);
-  display: flex; flex-direction: column; gap: 0.5rem;
-  padding: 0.85rem 0.9rem; border-radius: 12px;
-  border: 1px solid var(--border-2); background: var(--card-bg);
-  max-height: calc(100vh - 2rem); overflow-y: auto;
+/* ⚰ The rail's own column card (`.ppRail` / `.ppRailInner` / `.ppRailTitle`) went with stage 1
+   (2026-09-14) — the rail lives inside `.ppFold` now; the list below is unchanged. */
+/* One line per player (owner, 2026-09-14 — the stacked rows ran past a screen for one roster):
+   the name in a fixed column, the chips beside it, no rule between rows. Roster order, always. */
+.ppRailList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.ppRailRow { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; padding: 0.1rem 0; }
+.ppRailName {
+  flex: 0 0 11rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--type-support); font-weight: 600; color: var(--text-primary);
 }
-.ppRailTitle { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-.ppRailList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.ppRailRow {
-  display: flex; flex-direction: column; gap: 0.25rem;
-  padding: 0.5rem 0; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
-}
-.ppRailRow:last-child { border-bottom: none; }
-.ppRailName { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 .ppRailNone { font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* â”€â”€ The roster / copy picker â”€â”€ */
@@ -9906,11 +9990,171 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppRecordedList a { font-size: var(--type-body); color: var(--text-secondary); text-decoration: underline; }
 .ppRecordedList a:hover { color: var(--text-primary); }
 
-/* 900 = SHELL reflow: the rail stops being a column and becomes a section under the plan.
-   It drops its own scroll and stickiness so the page scrolls as one. */
-@media (max-width: 900px) {
-  .ppLayout { grid-template-columns: minmax(0, 1fr); }
-  .ppRailInner { position: static; max-height: none; overflow: visible; }
+/* ══ THE PLAN PAGE AS A DOCUMENT (practices re-evaluation stage 1 · The blank page, owner rulings
+   D2–D8 as drawn, 2026-09-14) ═══════════════════════════════════════════════════════════════════
+   The screen is the sheet: a letter-width white page (816px = 8.5in at 96dpi), a rule under its
+   head, a time gutter down the left with the spine drawn as its right edge, blocks as rows that
+   open in place on the paper ground, and two folds (About this practice · What everyone's working
+   on) shut by default. Uses the portal's breakpoints only (900 shell / 640 content); on a phone
+   the sheet goes full-bleed and the gutter narrows.
+   ⚠ `.ppBlockHead`/`.ppBlockBody` and the field classes below are the SAME ones the open block
+   always used — the block's insides are stage 2's drawing, untouched here. */
+.ppSheetCol { max-width: 816px; margin-inline: auto; display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+.ppDoc {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: 6px;
+  box-shadow: var(--home-shadow, var(--shadow-sm));
+  padding: 1.9rem 2.5rem 1.75rem;
+  min-width: 0;
+}
+/* The head — WHEN and HOW LONG is the first line (D3), the way to the schedule beside it. */
+.ppDocHead {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 1.25rem;
+  border-bottom: 2px solid var(--home-ink, var(--text-primary));
+  padding-bottom: 0.6rem; margin-bottom: 0.9rem;
+}
+.ppDocWhen {
+  font-family: var(--font-data); font-size: var(--type-support); line-height: 1.55;
+  color: var(--text-secondary); font-variant-numeric: tabular-nums; min-width: 0;
+}
+/* The first line — when, and how long. */
+.ppDocWhenLine { display: block; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.ppDocWhenAmber { color: var(--warning); }
+/* The day and the clock share one line on a desktop; the phone stacks them (the frame's 390). */
+.ppDocWhenDay, .ppDocWhenSep { display: inline; }
+/* ONE quiet olive link recipe for the sheet — the when-line's schedule link, the head's "View on
+   schedule", the ghost row's alternatives — composed, never re-typed. */
+.ppQuietLink { color: var(--home-olive, var(--blueprint-light)); font-weight: 700; text-decoration: none; }
+.ppQuietLink:hover { text-decoration: underline; }
+.ppDocWhenLink { composes: ppQuietLink; font-family: var(--font-body, inherit); }
+/* The header's schedule link, as Lineups draws it, in the sheet's voice and at the tap floor. */
+.ppDocHeadLink {
+  composes: lineupOnScheduleLink ppQuietLink;
+  flex: none; font-size: var(--type-support); min-height: var(--tap-min, 44px);
+}
+/* The template's head is a line of facts (shape · use) in the same voice, no link beside it. */
+.ppDocHeadFacts { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.ppDocBody { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+/* The template's name and tags — the sheet's title block, above its goal line. */
+.ppDocFields { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.6rem; }
+
+/* ── The goal, one line (D4) ── */
+.ppGoalLine { display: flex; align-items: baseline; gap: 0.4rem; min-width: 0; }
+.ppGoalKicker { flex: none; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.ppGoalInput {
+  flex: 1 1 auto; min-width: 0; min-height: var(--tap-min, 44px);
+  background: none; border: 0; border-bottom: 1px dashed var(--home-line-strong, var(--border-2));
+  border-radius: 0; padding: 0.2rem 0; font: inherit; font-size: var(--type-heading); color: var(--text-primary);
+}
+.ppGoalInput::placeholder { color: var(--text-tertiary); font-style: italic; }
+.ppGoalInput:focus { outline: none; border-bottom-color: var(--home-olive, var(--logic-lime)); }
+.ppGoalRead { font-size: var(--type-heading); color: var(--text-primary); }
+.ppGoalNone { font-size: var(--type-heading); color: var(--text-tertiary); font-style: italic; }
+
+/* ── The two folds: "About this practice" and the rail (`FoldHead`). The head is a row: a
+   toggle BUTTON that is the whole line and carries the tap floor, then the trash as its sibling.
+   The chevron turns when open. ── */
+.ppAbout, .ppFold { min-width: 0; }
+.ppFoldHead { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+.ppFoldToggle {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;
+  min-height: var(--tap-min, 44px); padding: 0.35rem 0; margin: 0; cursor: pointer; text-align: left;
+  background: none; border: 0; font: inherit; font-size: var(--type-body); color: var(--text-secondary);
+}
+.ppFoldToggle[data-static] { cursor: default; }
+.ppFoldChevron { flex: none; color: var(--text-tertiary); transition: transform 0.15s; }
+.ppFoldToggle[aria-expanded='true'] .ppFoldChevron { transform: rotate(90deg); }
+.ppFoldTitle { font-weight: 700; color: var(--home-olive, var(--text-primary)); }
+.ppAboutSummary { color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A read-only plan's description — prose, wrapped as typed; its absence in the body's own size. */
+.ppAboutRead { margin: 0; font-size: var(--type-body); color: var(--text-primary); white-space: pre-wrap; }
+.ppAboutNone { margin: 0; font-size: var(--type-body); color: var(--text-tertiary); font-style: italic; }
+.ppAboutBody { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.2rem 0 0.9rem 1.35rem; }
+.ppFold { border-top: 1px solid var(--home-line, var(--border-2)); margin-top: 0.6rem; }
+.ppFoldCount { color: var(--text-secondary); }
+.ppFoldBody { display: flex; flex-direction: column; gap: 0.5rem; padding: 0 0 0.6rem 1.35rem; }
+/* The rail is an addition (2026-09-14): both rooms carry the block head's trash at the head's far right. */
+.ppFoldRemove { flex: none; margin-left: auto; }
+
+/* ── The timeline (D2 · D5) ──
+   Each row is a grid: the gutter cell, then the block. The gutter's right border is the spine;
+   rows stack with no gap so it reads as one line down the page. */
+.ppTl { display: flex; flex-direction: column; min-width: 0; margin-top: 0.4rem; }
+.ppTlRow { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); min-width: 0; }
+.ppTlGutter {
+  font-family: var(--font-data); font-size: var(--type-support); line-height: 1.4;
+  color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right;
+  padding: 0.85rem 0.6rem 0.85rem 0; border-right: 2px solid var(--home-ink, var(--text-primary));
+  white-space: nowrap;
+}
+.ppTlGutter small { display: block; font-size: var(--type-label); color: var(--text-tertiary); }
+/* A closed block is a ROW — the whole row is the button that opens it. */
+.ppTlClosed {
+  display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start; width: 100%;
+  min-width: 0; min-height: var(--tap-min, 44px); text-align: left;
+  padding: 0.65rem 0.5rem 0.75rem 1.1rem; margin: 0;
+  background: none; border: 0; border-bottom: 1px dotted var(--home-line-strong, var(--border-2));
+  border-radius: 0; cursor: pointer; color: var(--text-primary); font: inherit;
+}
+.ppTlClosed:hover { background: var(--home-olive-soft, var(--white-8)); }
+.ppTlTitle { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: var(--type-body); font-weight: 700; }
+.ppTlUntitled { color: var(--text-tertiary); font-weight: 600; font-style: italic; }
+.ppTlDesc {
+  font-size: var(--type-body); color: var(--text-secondary); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ppTlMeta { font-size: var(--type-support); color: var(--text-tertiary); }
+/* The open block — the card it always was, on the paper ground, set in from the spine. */
+.ppTlOpen {
+  min-width: 0; margin: 0.4rem 0 0.5rem 0.75rem;
+  background: var(--home-paper, var(--bg)); border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: 8px; overflow: hidden;
+}
+/* The ghost row — the next block, not yet written. */
+.ppTlGhost { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; padding: 0.85rem 0 0.85rem 1.1rem; min-width: 0; }
+.ppTlGhost button { min-height: var(--tap-min, 44px); }
+.ppTlQuiet { font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }
+/* Each alternative wraps as a unit, so a phone never breaks a line after the separator. */
+.ppTlQuietAlt { display: inline-block; }
+/* A bare-button link (the portal's `.linkBtn` reset) in the sheet's quiet voice. */
+.ppTlQuietLink { composes: linkBtn ppQuietLink; margin: 0; font: inherit; }
+
+/* The foot — "How it went" waits for the practice (D7); the line says so. */
+.ppDocNote { margin: 0.9rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
+.ppDocFoot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--home-line, var(--border-2)); }
+
+/* 768 = the touch band (tablet-band ruling §115): every field on the sheet takes the tap floor —
+   the pickers inside the About fold and the template's title block, and the "Recorded here" links. */
+@media (max-width: 768px) {
+  .ppAboutBody input, .ppDocFields input { min-height: var(--tap-min, 44px); }
+  /* The open block's own fields — Minutes, Description, Goal, the station names — had the same
+     35px debt under the old card (≈100 baseline rows); the fields are stage 2's to redraw, the
+     floor is a rule already held one card up. Chips inside the pickers keep the portal-wide
+     compact-chip decision. */
+  .ppBlockBody input:not([type='checkbox']), .ppBlockBody select, .ppBlockBody textarea { min-height: var(--tap-min, 44px); }
+  .ppRecordedList a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
+
+/* 640 = CONTENT reflow: the sheet drops its frame on the phone (the frame's own 390 — no border, no
+   shadow, the shell's 1rem gutter is the margin; a negative-margin bleed reads as an overflow to the
+   layout gate and buys 16px a side), the head
+   stacks, the gutter narrows to the clock. The 900 shell block that used to sit here reflowed the
+   rail from a column to a section; there is no column now, so there is nothing to reflow at 900. */
+@media (max-width: 640px) {
+  .ppDoc { padding: 1rem 1rem 1.25rem; border: 0; border-radius: 0; box-shadow: none; }
+  .ppDocHead { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+  .ppDocWhenDay { display: block; }
+  .ppDocWhenSep { display: none; }
+  /* 5rem: "12:00 p.m." at the label size measures 66px; 4.6rem left 65 (/review, 2026-09-14). */
+  .ppTlRow { grid-template-columns: 5rem minmax(0, 1fr); }
+  .ppTlGutter { font-size: var(--type-label); padding: 0.75rem 0.4rem 0.75rem 0; }
+  .ppTlClosed { padding-left: 0.75rem; }
+  .ppTlGhost { padding-left: 0.75rem; }
+  .ppTlOpen { margin-left: 0.4rem; }
+  .ppAboutBody, .ppFoldBody { padding-left: 0; }
+  .ppRailName { flex-basis: 7.5rem; }
+  .ppSheetCol { gap: 0.7rem; }
 }
 
 /* 640 = CONTENT reflow: the dense control rows go to one axis so nothing is squeezed. */
@@ -10223,6 +10467,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    boxes reads as broken on a phone, and plain text makes a picked drill visibly a different,
    shorter shape from a station the coach typed. */
 .ppReadTxt { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.ppReadPre { white-space: pre-wrap; }   /* a paragraph typed with line breaks keeps them */
 .ppReadPoints {
   margin: 0; padding-left: 1.1rem;
   font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary);

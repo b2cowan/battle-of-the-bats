@@ -19,6 +19,7 @@ import {
   practiceLengthMinutes,
 } from '@/lib/practice-state';
 import { calendarDaysBetween, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
+import { useMinuteClock } from '@/lib/use-minute-clock';
 import PracticePlansTabs from './_PracticePlansTabs';
 import DrillsView from './_DrillsView';
 import PlanTemplatesView from './_PlanTemplatesView';
@@ -83,15 +84,10 @@ export default function CoachesPracticePlansPage({
   const { openHelp } = useHelpDrawer();
   const page = useCoachSeasonPage(orgSlug, teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  // The clock: snapshotted in state so the render body stays pure (same rule as Lineups), and
-  // re-read once a minute — the card's lime is decided by the run window, and a tab left open
-  // through an afternoon must not keep offering "Run practice" for a practice that ended, or miss
-  // it for one that started (/review, 2026-09-14; the Overview's game-day clock does the same).
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNowMs(Date.now()), 60_000);
-    return () => clearInterval(t);
-  }, []);
+  // The card's lime is decided by the run window, so the clock is re-read once a minute — a tab
+  // left open through an afternoon must not keep offering "Run practice" for a practice that
+  // ended, or miss it for one that started (/review, 2026-09-14).
+  const nowMs = useMinuteClock();
 
   const [upcoming, setUpcoming] = useState<RepTeamEvent[]>([]);
   const [recent, setRecent] = useState<RepTeamEvent[]>([]);

@@ -1,10 +1,11 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-import { BookMarked, Check } from 'lucide-react';
+import { BookMarked } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -177,7 +178,7 @@ export default function CoachPlanTemplateEditorPage({
   const canWrite = data?.canWrite ?? false;
 
   return (
-    <div className={`${styles.page} ${styles.pageWide} ${styles.lineupDockedPage}`}>
+    <div className={`${styles.page} ${styles.savePillPage}`}>
       <UnsavedChangesGuard active={dirty} />
 
       <CoachPageHeader
@@ -188,88 +189,85 @@ export default function CoachPlanTemplateEditorPage({
         backTo={{ href: practicePlansHref(base, 'templates'), label: 'Templates' }}
       />
 
-      {/* Page-header ruling 2026-08-11: shape and use are facts ABOUT this template, so they lead
-          the body that edits it instead of sitting under the title.
-          ⚠ "Started N plans", never "used N×" — and zero in words, so an unused template never
-          reads as a failing score. */}
-      {data && (
-        <p className={styles.pageSummaryStrip}>
-          {templateShapeLabel(plan)} · {templateUseLabel(data.template.planCount)}
-        </p>
-      )}
-
       {loadError && <p className={styles.errorText} role="alert">{loadError}</p>}
 
       {loading ? (
         <div className={styles.loadingState}>Loading this template…</div>
       ) : !data ? null : (
-        <>
-          <div className={styles.ppHeaderCard}>
-            <label className={styles.ppField}>
-              <span className={styles.ppFieldLabel}>Name</span>
-              <input className={styles.input} value={name} disabled={!canWrite} maxLength={MAX_TEMPLATE_NAME_LEN}
-                placeholder="What would you call this practice?"
-                onChange={e => { setName(e.target.value); touch(); }} />
-            </label>
-            <TagPicker
-              label="Tags"
-              all={focusTags}
-              selected={tagIds}
-              onChange={next => { setTagIds(next); touch(); }}
-              onCreate={canWrite ? createFocusTag : undefined}
-              manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
-              onManageChanged={reloadFocusTags}
-              disabled={!canWrite}
-              emptyHint="No tags yet — type a word to make your first one."
-            />
-            {/* Says what a template is NOT, which is the thing coaches ask about first. */}
-            <p className={styles.formHint}>
-              A template is the shape and the teaching. Players, staff and &ldquo;just for
-              tonight&rdquo; notes belong to a practice — so the same template works in April with
-              twelve and July with nine.
-            </p>
-          </div>
+        <div className={styles.ppSheetCol}>
+          {/* ── The SAME sheet the practice page is (stage 1, D2 — "a template becomes a sheet with
+              no people"). Its head is the template's facts: shape and use lead the body that edits
+              it (page-header ruling 2026-08-11 — never under the title).
+              ⚠ "Started N plans", never "used N×" — and zero in words, so an unused template never
+              reads as a failing score. */}
+          <div className={styles.ppDoc} data-room="plan-template" data-room-state="loaded">
+            <div className={styles.ppDocHead}>
+              <span className={styles.ppDocHeadFacts}>
+                {templateShapeLabel(plan)} · {templateUseLabel(data.template.planCount)}
+              </span>
+            </div>
 
-          {/* ⚠ The SAME editor the practice uses. `withoutPeople` removes the roster, staff and
-              group controls — it never disables them, because a control that exists only to refuse
-              should not exist. Drill-backed stations stay read-only in here too, so a template's
-              stations keep their identity all the way onto the practice. */}
-          <PracticePlanEditor
-            plan={plan}
-            onChange={next => { setPlan(next); touch(); }}
-            withoutPeople
-            roster={[]}
-            goals={[]}
-            canViewFocus={false}
-            attendance={[]}
-            canViewAttendance={false}
-            equipmentTags={equipmentTags}
-            onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
-            equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
-            onEquipmentTagsChanged={reloadEquipmentTags}
-            focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
-            onFocusTagsChanged={reloadFocusTags}
-            drills={drills}
-            focusTags={focusTags}
-            // A template has no date, so there is no running clock and no block start times —
-            // computeBlockClocks returns nothing for an empty start, which is the honest answer.
-            eventStartsAt=""
-            eventEndsAt={null}
-            readOnly={!canWrite}
-          />
-        </>
+            <div className={styles.ppDocFields}>
+              <label className={styles.ppField}>
+                <span className={styles.ppFieldLabel}>Name</span>
+                <input className={styles.input} value={name} disabled={!canWrite} maxLength={MAX_TEMPLATE_NAME_LEN}
+                  placeholder="What would you call this practice?"
+                  onChange={e => { setName(e.target.value); touch(); }} />
+              </label>
+              <TagPicker
+                label="Tags"
+                all={focusTags}
+                selected={tagIds}
+                onChange={next => { setTagIds(next); touch(); }}
+                onCreate={canWrite ? createFocusTag : undefined}
+                manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+                onManageChanged={reloadFocusTags}
+                disabled={!canWrite}
+                emptyHint="No tags yet — type a word to make your first one."
+              />
+              {/* Says what a template is NOT, which is the thing coaches ask about first. */}
+              <p className={styles.formHint}>
+                A template is the shape and the teaching. Players, staff and &ldquo;just for
+                tonight&rdquo; notes belong to a practice — so the same template works in April with
+                twelve and July with nine.
+              </p>
+            </div>
+
+            {/* ⚠ The SAME editor the practice uses. `withoutPeople` removes the roster, staff and
+                group controls — it never disables them, because a control that exists only to refuse
+                should not exist. Drill-backed stations stay read-only in here too, so a template's
+                stations keep their identity all the way onto the practice. */}
+            <PracticePlanEditor
+              key={templateId}
+              plan={plan}
+              onChange={next => { setPlan(next); touch(); }}
+              withoutPeople
+              roster={[]}
+              goals={[]}
+              canViewFocus={false}
+              attendance={[]}
+              canViewAttendance={false}
+              equipmentTags={equipmentTags}
+              onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
+              equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
+              onEquipmentTagsChanged={reloadEquipmentTags}
+              focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+              onFocusTagsChanged={reloadFocusTags}
+              drills={drills}
+              focusTags={focusTags}
+              // A template has no date, so there is no running clock and no block start times —
+              // computeBlockClocks returns nothing for an empty start, which is the honest answer:
+              // the gutter carries each block's length alone.
+              eventStartsAt=""
+              eventEndsAt={null}
+              readOnly={!canWrite}
+            />
+          </div>
+        </div>
       )}
 
       {canWrite && !loading && !loadError && (
-        <div className={`${styles.attendanceFooter} ${styles.lineupDockedFooter}`}>
-          <span className={styles.saveStatus} aria-live="polite">
-            {saveError
-              ? <button type="button" className={styles.saveRetry} disabled={saving} onClick={handleSave}>Couldn’t save · Retry</button>
-              : saving ? 'Saving…'
-                : dirty ? 'Unsaved changes'
-                  : <><Check size={13} /> Saved</>}
-          </span>
-        </div>
+        <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
       )}
     </div>
   );

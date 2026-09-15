@@ -134,6 +134,22 @@ describe('templateToPlan — copy-on-load, fully editable, provenance stamped', 
     assert.deepEqual(plan.blocks[0].rotation?.groups, []);
     assert.equal(plan.blocks[0].stations![0].note, undefined);
   });
+
+  it('carries the description both ways — a template keeps the paragraph, a plan started from it inherits it', () => {
+    const shape = planToTemplateShape(planWith({ description: 'When to reach for this one.' }));
+    assert.equal(shape.description, 'When to reach for this one.');
+    assert.equal(templateToPlan({ id: 't-3', name: 'Described', plan: shape }, seq()).description, 'When to reach for this one.');
+  });
+
+  it('carries "What everyone\'s working on" both ways — a template keeps the section, a plan started from it inherits it', () => {
+    // Owner ruling 2026-09-14: the section is SHAPE (whether the sheet lists focus areas), not
+    // people (whose). A team that uses goals sets it on Standard Tuesday once.
+    const shape = planToTemplateShape(planWith({ includeFocusAreas: true }));
+    assert.equal(shape.includeFocusAreas, true);
+    const started = templateToPlan({ id: 't-2', name: 'Goals night', plan: shape }, seq());
+    assert.equal(started.includeFocusAreas, true);
+    assert.equal('includeFocusAreas' in templateToPlan(template, seq()), false, 'absent stays absent');
+  });
 });
 
 describe('countTemplateUses — PLANS started, never practices run', () => {

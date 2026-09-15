@@ -1526,6 +1526,11 @@ export interface PracticePlan {
   version: number;
   goal?: string;
   /**
+   * Free text about the practice, under the goal — the paragraph where the goal is the headline
+   * (owner ask 2026-09-14). Shape, like the goal: a template keeps it, the sheet prints it.
+   */
+  description?: string;
+  /**
    * What kind of practice this is ("Hitting", "Fielding" …) — COACH-TYPED tags, never a fixed
    * list, because the vocabulary is sport-specific and this platform is not.
    *
@@ -1562,6 +1567,15 @@ export interface PracticePlan {
    * dependency on the template table.
    */
   templateName?: string;
+  /**
+   * Whether this plan carries "What everyone's working on" — the roster's focus areas, read from
+   * Skills & Goals — as a section of the sheet (owner ruling 2026-09-14: the rail is an ADDITION
+   * a coach puts on a plan, not a standing part of every sheet; a team that never uses goals
+   * never sees it). Stored only when true. It is SHAPE, so a template keeps it and a plan started
+   * from that template inherits it; the section itself still renders and prints only for a coach
+   * who may read goals.
+   */
+  includeFocusAreas?: boolean;
 }
 
 export interface RepTeamEvent {

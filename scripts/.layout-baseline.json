@@ -341,10 +341,6 @@
       "reason": null,
       "detail": "31px tall (floor 44)"
     },
-    "coach-schedule|768|tap-floor|button·Apr 28 · 6:00 p.m.vs Westbrook8–2WIN": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "coach-schedule|768|tap-floor|button·May 4 · 6:00 p.m.vs Ridgeview1–2LOSS": {
       "reason": null,
       "detail": "31px tall (floor 44)"
@@ -371,14 +367,6 @@
     },
     "coach-schedule|768|tap-floor|button·May 29 · 7:00 p.m.Team practice 5": {
       "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Sep 12 · 12:06 p.m.UAT probe practice": {
-      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Sep 19 · 12:27 p.m.Practice review — nex": {
-      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once.",
       "detail": "31px tall (floor 44)"
     },
     "coach-history-development|361|control-width|button·Scroll tabs right": {
@@ -2721,41 +2709,21 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-lineups|361|tap-floor|button·All": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
-      "detail": "36px tall (floor 44)"
-    },
     "coach-lineups|361|tap-floor|button·Games": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|361|tap-floor|button·League": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
-      "detail": "36px tall (floor 44)"
     },
     "coach-lineups|361|tap-floor|button·Templates": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-lineups|390|tap-floor|button·All": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
-      "detail": "36px tall (floor 44)"
-    },
     "coach-lineups|390|tap-floor|button·Games": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-lineups|390|tap-floor|button·League": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
-      "detail": "36px tall (floor 44)"
-    },
     "coach-lineups|390|tap-floor|button·Templates": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|768|tap-floor|button·All": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
-      "detail": "30px tall (floor 44)"
     },
     "coach-lineups|768|tap-floor|button·Games": {
       "reason": null,
@@ -2764,10 +2732,6 @@
     "coach-lineups|768|tap-floor|button·Help: Lineups": {
       "reason": null,
       "detail": "34px tall (floor 44)"
-    },
-    "coach-lineups|768|tap-floor|button·League": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
-      "detail": "30px tall (floor 44)"
     },
     "coach-lineups|768|tap-floor|button·Templates": {
       "reason": null,
@@ -2813,457 +2777,9 @@
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "24px tall (floor 44)"
     },
-    "coach-practice-plan|361|tap-floor|a·Run practice": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|a·View on schedule": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Add a block": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Add a group": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Draw again": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Print the sheet": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Bibs": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Cones": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Jordan Helper": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Sam Assistant": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Spare balls": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove UAT Coach": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Save as template…": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Start this plan from…": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·UAT Coach": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·A one-off note for this practice": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Block 1 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Block 2 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Block 3 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Coaching point 1": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Coaching point 2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Equipment": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Group name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Minutes": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Minutes between moves": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Number for the draw": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Search or add a tag": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Staff": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Station 1 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Station 2 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Station 3 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·What good looks like here": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·What the whole practice is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·What this is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Who runs it": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|select·Draw by": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|a·Run practice": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|a·View on schedule": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Add a block": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Add a group": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Draw again": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Print the sheet": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Bibs": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Cones": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Jordan Helper": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Sam Assistant": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Spare balls": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove UAT Coach": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Save as template…": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Start this plan from…": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·UAT Coach": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·A one-off note for this practice": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Block 1 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Block 2 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Block 3 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Coaching point 1": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Coaching point 2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Equipment": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Group name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Minutes": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Minutes between moves": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Number for the draw": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Search or add a tag": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Staff": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Station 1 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Station 2 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Station 3 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·What good looks like here": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·What the whole practice is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·What this is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Who runs it": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|select·Draw by": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|a·Run practice": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|a·View on schedule": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Add a block": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Add a group": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Draw again": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
     "coach-practice-plan|768|tap-floor|button·Help: Practice plan": {
       "reason": null,
       "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Print the sheet": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Remove Bibs": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Remove Cones": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Remove Jordan Helper": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Remove Sam Assistant": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Remove Spare balls": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Remove UAT Coach": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Save as template…": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·Start this plan from…": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|button·UAT Coach": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·A one-off note for this practice": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Block 1 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Block 2 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Block 3 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Coaching point 1": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Coaching point 2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Equipment": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Group name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Minutes": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Minutes between moves": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Number for the draw": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Search or add a tag": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Staff": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Station 1 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Station 2 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Station 3 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·What good looks like here": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·What the whole practice is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·What this is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|input·Who runs it": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|768|tap-floor|select·Draw by": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
     },
     "coach-practice-plans|768|tap-floor|button·Help: Practice plans": {
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
@@ -3700,6 +3216,30 @@
     "coach-development-template|768|control-width|button·Help: Plan templates": {
       "key": "coach-development-template|768|control-width|button·Help: Plan templates",
       "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-plan|768|control-width|button·Help: Practice plan": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on the plan page, surfaced 2026-09-14 when stage 1 (the sheet) re-ran this screen; its tap-floor twin was already on this list.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 28 · 6:00 p.m.vs Westbrook🏆 18–2WIN": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once. — the same row under a name the fixture has since moved (a re-anchored probe practice, a re-scored game, a newer practice), surfaced 2026-09-14 when stage 1 re-ran this screen; same debt, same closer.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Oct 27 · 6:00 p.m.Practice": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once. — the same row under a name the fixture has since moved (a re-anchored probe practice, a re-scored game, a newer practice), surfaced 2026-09-14 when stage 1 re-ran this screen; same debt, same closer.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Sep 14 · 3:48 p.m.UAT probe practice": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once. — the same row under a name the fixture has since moved (a re-anchored probe practice, a re-scored game, a newer practice), surfaced 2026-09-14 when stage 1 re-ran this screen; same debt, same closer.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Sep 21 · 4:08 p.m.Practice review — next": {
+      "reason": "RECORDED DEBT, same as its 17 sibling rows: every event button on the schedule measures 31px at 768 (the tablet band). This key exists because the UAT fixture gained a practice (development lifecycle Phase 0, 2026-09-12) or because a seeded event's label changed; the control itself is the schedule row, owned by the portal-wide touch-debt project, not by the fixture. Closes when the schedule row is raised, for all rows at once. — the same row under a name the fixture has since moved (a re-anchored probe practice, a re-scored game, a newer practice), surfaced 2026-09-14 when stage 1 re-ran this screen; same debt, same closer.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-lineup-builder|768|control-width|button·Help: Lineup builder": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE — the same masthead \"?\" recorded as tap-floor debt on this screen and as control-width debt on coach-practice-plan / coach-practice-plans (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN); its control-width twin here was never written. Surfaced 2026-09-14 when the stage-1 review re-ran the lineup builder (the docked bar's shell tokens). DEFERRED, not accepted — the shared header lands on every screen id at once or it is not the fix. Do NOT raise it here.",
       "detail": "34px wide (floor 44) — icon-only control"
     }
   }

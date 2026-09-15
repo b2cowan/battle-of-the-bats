@@ -3,8 +3,9 @@ import { describe, it } from 'node:test';
 import {
   RUN_WINDOW_MS, practiceHasPlan, isInRunWindow, practicePlanState,
   practiceFitLabel, practiceLengthMinutes, practiceRecapLine,
+  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted,
 } from '../../lib/practice-state.ts';
-import { sanitizePracticePlan, summarizePracticePlan, type PracticePlan } from '../../lib/rep-practice-plan.ts';
+import { emptyPracticePlan, sanitizePracticePlan, summarizePracticePlan, type PracticePlan } from '../../lib/rep-practice-plan.ts';
 
 /**
  * A practice's state and the one action it earns (practices re-evaluation stage 0 · Arrive,
@@ -101,5 +102,56 @@ describe('practiceRecapLine (D3) — the first line the coach wrote', () => {
     assert.equal(practiceRecapLine(null), null);
     assert.equal(practiceRecapLine(''), null);
     assert.equal(practiceRecapLine('  \n \n'), null);
+  });
+});
+
+describe('practicePlanFit — the sheet\'s "N of 90 min planned · K unplanned" (stage 1, D3)', () => {
+  it('a blank plan against a 90-minute practice: 0 of 90 planned, 90 unplanned', () => {
+    const fit = practicePlanFit(emptyPracticePlan(), 90);
+    assert.deepEqual(fit, { planned: 0, length: 90, remainder: { kind: 'unplanned', minutes: 90 } });
+    assert.equal(practicePlannedLabel(fit), '0 of 90 min planned');
+    assert.equal(practiceRemainderLabel(fit), '90 unplanned');
+  });
+  it('one 15-minute block: 15 of 90, 75 unplanned', () => {
+    const fit = practicePlanFit(planOf([{ title: 'Warm-up', duration: { minutes: 15 } }]), 90);
+    assert.equal(practicePlannedLabel(fit), '15 of 90 min planned');
+    assert.equal(practiceRemainderLabel(fit), '75 unplanned');
+  });
+  it('a plan that fills the practice exactly has no second half', () => {
+    const fit = practicePlanFit(planOf([{ title: 'A', duration: { minutes: 60 } }, { title: 'B', duration: { minutes: 30 } }]), 90);
+    assert.equal(practicePlannedLabel(fit), '90 of 90 min planned');
+    assert.equal(practiceRemainderLabel(fit), null);
+  });
+  it('a plan that overruns says "over" — honest, and the reason the line exists', () => {
+    const fit = practicePlanFit(planOf([{ title: 'A', duration: { minutes: 100 } }]), 90);
+    assert.equal(practicePlannedLabel(fit), '100 of 90 min planned');
+    assert.equal(practiceRemainderLabel(fit), '10 over');
+  });
+  it('a "rest of practice" block claims the remainder rather than leaving it "unplanned"', () => {
+    const fit = practicePlanFit(planOf([
+      { title: 'Warm-up', duration: { minutes: 30 } },
+      { title: 'Scrimmage', duration: { restOfPractice: true } },
+    ]), 90);
+    assert.equal(practicePlannedLabel(fit), '30 of 90 min planned', 'timed minutes only — never an invented figure for the rest block');
+    assert.equal(practiceRemainderLabel(fit), '60 rest of practice');
+  });
+  it('with no end time the line has no "of" and no remainder', () => {
+    assert.equal(practicePlannedLabel(practicePlanFit(planOf([{ title: 'A', duration: { minutes: 15 } }]), null)), '15 min planned');
+    assert.equal(practiceRemainderLabel(practicePlanFit(planOf([{ title: 'A', duration: { minutes: 15 } }]), null)), null);
+    assert.equal(practicePlannedLabel(practicePlanFit(emptyPracticePlan(), null)), 'Nothing planned yet');
+  });
+});
+
+describe('practiceStarted — the start time has passed (stage 1, D7)', () => {
+  it('true from the start instant on; false before; false with no start', () => {
+    assert.equal(practiceStarted(at(0), NOW), true);
+    assert.equal(practiceStarted(at(-60_000), NOW), true);
+    assert.equal(practiceStarted(at(60_000), NOW), false);
+    assert.equal(practiceStarted(null, NOW), false);
+    assert.equal(practiceStarted('not a date', NOW), false);
+  });
+  it('is not the run window — three hours early is inside the window but not started', () => {
+    assert.equal(isInRunWindow(at(2 * H), NOW), true);
+    assert.equal(practiceStarted(at(2 * H), NOW), false);
   });
 });

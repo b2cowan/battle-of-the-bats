@@ -148,7 +148,7 @@ export const SCREENS = [
     path: (c) => `${team(c)}/development?section=metrics&edit=${c.measurableTypeId}` },
   { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/practice?section=templates`, ready: 'h1' },
   // Two more of the six — see the block above `coach-player`.
-  { id: 'coach-development-template', session: 'coach', ready: 'h1',
+  { id: 'coach-development-template', session: 'coach', ready: '[data-room="plan-template"][data-room-state="loaded"]',
     path: (c) => `${team(c)}/practice/templates/${c.planTemplateId}` },
   { id: 'coach-development-session',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}` },
@@ -179,8 +179,9 @@ export const SCREENS = [
     id: 'coach-practice-plan',
     session: 'coach',
     path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
-    // The builder loads its world in one fetch; a block title existing proves the plan resolved.
-    ready: 'textarea, input[aria-label*="Block 1 title"], h1',
+    // The sheet marks itself loaded once the plan GET has resolved (stage 1: blocks are closed
+    // rows on arrival, so no input exists to wait on; the h1 renders before the load).
+    ready: '[data-room="practice-plan"][data-room-state="loaded"]',
   },
   {
     id: 'coach-practice-run',

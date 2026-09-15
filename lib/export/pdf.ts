@@ -976,6 +976,8 @@ export interface PracticeSheetOptions {
   /** "6:00 PM · Arrive 5:45 PM · Sherwood Park, Diamond 2" — assembled by the caller. */
   whereLabel?: string | null;
   goal?: string | null;
+  /** The coach's paragraph about the practice, under the goal (2026-09-14). */
+  description?: string | null;
   /**
    * What the practice is ABOUT ("Hitting", "Fielding"…) — coach-typed, never a fixed,
    * sport-specific list.
@@ -1152,6 +1154,7 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
   const facts: [string, string][] = [
     ['Practice', (opts.practiceTypes ?? []).join(', ')],
     ['Goal', opts.goal ?? ''],
+    ['About', opts.description ?? ''],
     ['Equipment', (opts.equipment ?? []).join('  ·  ')],
   ];
   const labelW = 26;
@@ -1160,7 +1163,10 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     const lines: string[] = doc.splitTextToSize(value, contentWidth - labelW);
-    ensureRoom(lines.length * RUN_LINE_H + 2);
+    // The label stays with the first line; the rest breaks between whole lines, the way a
+    // block's notes do — "About" is a paragraph (2,000 characters, line breaks allowed), and a
+    // one-shot room check for the whole block could paint past the page's foot (/review 2026-09-14).
+    ensureRoom(RUN_LINE_H + 2);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(...RUN_MUTED);
@@ -1168,8 +1174,15 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...RUN_PROSE);
-    doc.text(lines, MARGIN + labelW, y);
-    y += lines.length * RUN_LINE_H + 2.2;
+    for (const [i, line] of lines.entries()) {
+      if (i > 0) ensureRoom(RUN_LINE_H);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...RUN_PROSE);
+      doc.text(line, MARGIN + labelW, y);
+      y += RUN_LINE_H;
+    }
+    y += 2.2;
   }
   if (facts.some(([, v]) => v)) y += 1;
 

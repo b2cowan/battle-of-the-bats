@@ -27,8 +27,9 @@ test.describe('Practice plan — autosave', () => {
 
     await page.goto(`/${SLUG}/coaches/teams/${TEAM}/practice/${EVENT}`, { waitUntil: 'domcontentloaded' });
 
-    // A fresh practice has no blocks — add one, then type into it.
-    const addBlock = page.getByRole('button', { name: 'Add a block' });
+    // A fresh practice has no blocks — add one, then type into it. The blank sheet's one lime is
+    // "Add the first block" (stage 1, 2026-09-14); a plan with blocks offers a quiet "Add a block".
+    const addBlock = page.getByRole('button', { name: /^Add (the first|a) block$/ });
     await expect(addBlock).toBeVisible({ timeout: 60_000 });
     await addBlock.click();
 

@@ -1,6 +1,6 @@
 # Practices — holistic re-evaluation: the stage ladder, and stage 0 · Arrive
 
-**Plan · 14 September 2026 · stage 0 ruled 2026-09-14 (D1–D8 all "Build as drawn") · stage 0 BUILT ON DEV and WALKED the same day (§186 passed 24/24) · committed `b3c97830` 2026-09-14**
+**Plan · 14 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled 2026-09-14 (D1–D9 all "Build as drawn") and BUILT ON DEV the same day · seven owner revisions on the build (§4.1 items 4, 6–10) · §188 WALK COMPLETE (owner, 2026-09-14) · commit owed · stage 2 · The block PLAN WRITTEN 2026-09-14 (§5) · NEXT: stage 2 mockups on the hub, then rulings**
 Companions: [PM brief](COACH_PRACTICES_REEVALUATION_PM_BRIEF.md) · the walk + every stage's proposal on ONE artifact:
 https://claude.ai/code/artifact/5c3d2f1b-5159-4d99-bad7-c48b2820da28 (source `COACH_PRACTICES_REEVALUATION.html` — republish the
 SAME path / `url`) · kickoff prompt used for this stage: [COACH_PRACTICES_STAGE0_BUILD_PROMPT.md](COACH_PRACTICES_STAGE0_BUILD_PROMPT.md)
@@ -24,9 +24,9 @@ be (a three-block practice is 6,627px and 59 inputs on desktop; the printed run 
 
 | Stage | Name | What it decides | State |
 |---|---|---|---|
-| 0 | **Arrive** — the Practice plans hub | The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card | **Ruled 2026-09-14 (D1–D8 as drawn) · built on dev and walked the same day (§186 passed 24/24, zero defects) · committed `b3c97830`** — §3 below |
-| 1 | **The blank page** — the plan page as a document (walk stations 1 · 3) | S.1 is decided here: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page. **First decision: the boundary question** (§2). **Last decision (D9): station 1's question — a practice needs an end time, the Add Practice form asks for it** — this page is built on it | Tab open on the artifact; nine decisions; mockups before any code |
-| 2 | **The block** | One block's anatomy — description, goal, duration, people, coaching points — as a row that opens in place | not drawn |
+| 0 | **Arrive** — the Practice plans hub | The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card | **Ruled 2026-09-14 (D1–D8 as drawn) · built, walked (§186 passed 24/24) and committed `b3c97830`** — §3 below |
+| 1 | **The blank page** — the plan page as a document (walk stations 1 · 3) | S.1 is decided here: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page. **First decision: the boundary question** (§2). **Last decision (D9): station 1's question — a practice needs an end time, the Add Practice form asks for it** — this page is built on it | **Ruled 2026-09-14 (D1–D9 as drawn) · built on dev the same day · seven owner revisions on the build · §188 walk COMPLETE 2026-09-14 · commit owed** — §4 below |
+| 2 | **The block** | One block's anatomy as the row stage 1 made open in place: what a block asks for (four things), what waits behind a door (points · staff · players · stations), one vocabulary at both levels (*What you're doing · What you're watching for · Coaching points*), the clock row with quick durations and "ends …", the shut row's line, a drill-placed block's face, Escape on every sheet | **Plan written 2026-09-14 (§5, D1–D9 with recommendations) · mockups next (the "2 · The block" tab), then rulings, then code · no migration** |
 | 3 | **Stations & rotation** | Stations as columns under a rotating block, the grid under them | not drawn |
 | 4 | **The library** | The Templates and Drills tab ROWS (minutes · tags · first line), the library docked beside the plan on desktop, drag as an addition — **drag needs the owner's ruling (S.4)**; "reorder with buttons, never drag" stands until then | not drawn |
 | 5 | **Paper & the field** | The run door's window on the plan page, "everyone" chips, the printed sheet | not drawn |
@@ -37,14 +37,13 @@ to later stages are NOT fixed on the way past (the walk's "Across the walk" sect
 any date and the run screen then counts the days; "How it went" renders before the practice; the builder's sheets do not close on
 Escape; empty (0-block) templates are offered in "Start this plan from…".
 
-## 2. The open boundary question — OPEN, ruled at the top of the stage 1 tab
+## 2. The boundary question — CLOSED (stage 1, D1, 2026-09-14): the reads stay
 
 The practice room reads goals in two places — the focus rail beside the plan, and the printed sheet's last section — and Insights
 reads plans for coverage. With Skills & Goals now "metrics, goals and sessions only", do those reads stay?
 
-**Recommendation on record: keep the reads** (the rail folded shut by default; managing goals stays in Skills & Goals). The clean-cut
-alternative (rail → one-line link, the sheet loses its last section) is drawn at stage 1 for comparison. **Stage 0 does not touch the
-rail, the sheet or Insights.**
+**Ruled: keep the reads** (the rail folded shut by default; managing goals stays in Skills & Goals; the sheet's last section and
+Insights' coverage read are unchanged). The clean-cut alternative was drawn at stage 1 for the comparison and not chosen.
 
 ## 3. Stage 0 · Arrive — in full
 
@@ -179,8 +178,410 @@ walk" tab on the artifact.
   `check:demos` green · the two moved-page Playwright specs 21 pass / 1 skip (4 Insights-report cases red from the peer's committed
   Phase 3 rename — theirs). Ledger §186. Dev server restarted with this build.
 
-## 4. Stage 1 — "The blank page" (opened on the artifact after stage 0's walk; no code in this chat)
+## 4. Stage 1 · The blank page — in full
 
-The plan page as a document: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page (S.1 is
-decided here). Before/after at true size in the portal's tokens, desktop 1440 and phone 390 with the 844 fold, clickable markers,
-decisions with Build-as-drawn / Change-it / Not-now and a paste-back. Its first decision is §2's boundary question.
+**Ruled 2026-09-14 (D1–D9 all "Build as drawn") · built on dev the same day · seven owner revisions folded in (§4.1 items 4, 6–10) · §188 walk COMPLETE (owner, 2026-09-14) · commit owed.**
+The plan page as a document: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page (S.1
+decided here); and walk station 1's question — a practice needs an end time. No migration, no new API.
+
+### 4.1 The rulings (owner, 2026-09-14, pasted from the artifact)
+
+| | Decision | Ruling |
+|---|---|---|
+| D1 | The practice room keeps reading players' goals — the rail as a shut fold on the plan page, and the sheet's last section — while managing goals stays in Skills & Goals. (The boundary question of §2 — closed.) | Build as drawn |
+| D2 | The plan page is a document — letter proportions, a time gutter, blocks as rows that open in place, one open at a time. Print is this page. | Build as drawn |
+| D3 | The first line is when and how long — "Tue, May 5 · 7:00–8:30 p.m. · 90 min" — and under it "N of 90 min planned · K unplanned". | Build as drawn |
+| D4 | The goal is one line above the timeline; tags and equipment fold into a quiet "About this practice". | Build as drawn |
+| D5 | The first block is the page's one lime — a ghost row at the start time, "+ Add the first block" — with "Start this plan from…" as the quiet alternative beside it. | Build as drawn |
+| D6 | The rail is a fold, shut by default — one line when nobody has a focus area — and opens to the same rail. | Build as drawn |
+| D7 | "How it went" is absent from the blank page; it appears once the practice has started. | Build as drawn |
+| D8 | The way back is Practice plans, not the Schedule. | Build as drawn |
+| D9 | A practice needs an end time — the Add Practice form asks for it (Ends required for practices; games untouched). "Yes, the practice needs a start and end time." | Build as drawn |
+
+**Five calls the frames left open — raised before the build, built on the recommendation (each a one-line reversal):**
+1. **The title stays in the page header, not inside the sheet.** The frame drew "← Practice plans" as a bare link with the title
+   in the document; the house rule (`CoachPageHeader`, 2026-08-25) is one page header per page with the back arrow IN it, and the
+   page-actions guard enumerates this site — a fourth bare `CoachBackLink` is drift. The sheet's head therefore opens on the
+   when-line, which the page-header ruling names as the home of a framing line ("the card it frames").
+2. **The lime writes a block directly** — the ghost row becomes the open block with its title focused. Today's "Add a block" opened
+   the drill sheet first (two taps for a coach with no drills). The drill sheet stays reachable as the quiet "a drill from your
+   library" whenever the team has drills; stage 4 rules where the library lives.
+3. **"Start this plan from…" is offered on the blank page only** (as drawn). It used to sit in the toolbar at all times and silently
+   REPLACED whatever was written; once a block exists, a copy is no longer a start. A coach who wants a template after writing a
+   block deletes the block.
+4. **The toolbar (Save as template… · Print the sheet) exists only once a block exists.** The blank page has no toolbar and no
+   disabled Print. The gate is BLOCKS, the hub's own definition of "has a plan" — a goal typed alone is a savable row, not something
+   to print. **Run practice left the plan page (owner, 2026-09-14):** the builder offered it at ANY date and the run screen then
+   counted the days; the door lives where the day is known — the hub card and the Overview card, inside the run window. Whether the
+   plan page earns one back, and where, is stage 5's ruling. (The Schedule's slide-over still offers it at any date — stage 5's too.)
+5. **"Started" = the start time has passed.** Stage 6 owns anything finer, and the record's face for a past practice — stage 0 said a
+   past "No plan written" row still opens today's editor; stage 1 drew no read-only face, so May's practice still offers the lime.
+6. **"What everyone's working on" is an ADDITION to a plan, not a standing fold (owner, 2026-09-14 — revising D1/D6).** As ruled
+   the rail was a shut fold on every sheet, which on a team that never uses goals read "nobody has a focus area yet" on every
+   practice for ever. Now the ghost row's quiet line offers *what everyone's working on*; once added it sits under the timeline
+   open (collapsible), with the block head's trash icon on its heading (a text link at the foot was tried and replaced the same
+   evening — one remove idiom on the sheet); it saves with the plan (`includeFocusAreas`, plan JSON — no
+   migration); the printed sheet prints focus areas only when the plan carries the section (paper follows screen); and it is SHAPE,
+   so a template saved from a plan that has it keeps it (a stub line in the template room, with its own Remove) and every plan
+   started from that template inherits it. The section still renders and prints only for a coach who may read goals; the read
+   itself is unchanged (§2 holds). Two follow-ups the same evening: the fold's "Open ›" went (the chevron already says it opens;
+   About never had one), and the rail is ONE LINE per player — name in a fixed column, chips beside it, no rule between rows —
+   because the stacked rows ran past a screen for a twelve-player roster.
+7. **The tags picker carries the manage door.** "What this practice is about" had no *Manage tags…* row in its dropdown while
+   *Equipment* had *Manage equipment…* — the one tag picker in the portal without it. Fixed on the way past (2026-09-14).
+8. **"Save as template…" asks ONE question — the name (owner, 2026-09-14).** The dialog re-asked the practice's tags, pre-filled;
+   that was the same question twice and the coach would press Save through it. The practice's tags now travel unasked; the
+   Templates room is where a template's tags are edited when one should read broader than tonight.
+9. **A Description on the plan (owner ask, 2026-09-14).** Free text under the goal's headline, inside About — `description` on
+   the plan JSON (no migration; capped at 2,000 characters; counts as non-empty). Shape: `planToTemplateShape` keeps it, the
+   template room's About shows it, `templateToPlan` and `copyPracticePlanForReuse` hand it on, the printed sheet prints it as
+   ABOUT under GOAL. The About head's "tags · equipment" placeholder went with it — the line reads tags and equipment once set and
+   is otherwise just the title; the description is deliberately not summarised there.
+10. **The autosave word is a floating PILL, not a docked bar (owner, 2026-09-14).** The plan page shared the lineup builder's
+   docked footer for one word — "Saved" — and on desktop the bar was on a sticky that never engaged (visible only at the page's
+   very end, under the Windows taskbar). Fixed first as a desktop dock, then replaced on the owner's ask: `SaveStatusPill`
+   (`components/coaches/SaveStatusPill.tsx`) floats bottom-right of the WINDOW (above the bottom nav on a phone), three states
+   plus Retry, shared by the plan page, the template editor and the schedule slide-over's attendance list. The lineup builder
+   keeps its bar — Undo · Redo · Print earn it. The slide-over's head (type chip · back · ✕) is pinned while the panel scrolls.
+
+### 4.2 What a coach sees and does differently
+
+- **Opening a practice lands on a sheet** — one white, letter-wide page under the page title (which keeps its back arrow, now to
+  **Practice plans**). Its first line is when and how long: "Tue, Oct 27 · 6:00 p.m.–8:00 p.m. · 120 min", then "0 of 120 min
+  planned · 120 unplanned" with the unplanned figure in amber ("10 over" when the plan overruns; "60 rest of practice" when a
+  rest-of-practice block claims the remainder; "20 min planned · no end set · Set it on the schedule ›" when the practice has no
+  end). "View on schedule" sits at the right of the head.
+- **"Tonight:" is one underlined line**; "About this practice" is a shut fold whose line reads the tags and equipment once set
+  (nothing after the title until then — the placeholder went 2026-09-14). Inside: **Description** (free text, a paragraph
+  under the goal's headline — prints on the sheet as ABOUT, a template keeps it), then the same two pickers.
+- **The timeline**: a gutter of start times down the left (the block's start, its length in small — "rest" for the rest-of-practice
+  block), each block a **row** (bold title · the description on one line · "Who: everyone / N players" or "N stations" · "Coaching
+  points: N" · the Rotation tag) that **opens in place** on the paper ground with the block's existing head and body. One open at a
+  time; nothing is open on arrival. A block the coach just added opens with its title focused.
+- **The ghost row** after the last block: the next start time in the gutter ("start" on a blank page, "next" after that); the only
+  lime on a blank page, **+ Add the first block**, with "15 min · or start this plan from… · a drill from your library" beside it; a
+  quiet **+ Add a block** with "15 min · or a drill from your library" once a block exists.
+- **What everyone's working on** is not on the sheet until the coach adds it — *what everyone's working on* beside "Add a block".
+  Added, it sits under the timeline open — "· 1 of 12 has a focus area" ("nobody has a focus area yet" at zero), the same rail
+  (roster order, dim-never-hide, the "Tonight: … — from the drills in this practice" line), one line per player — with the block
+  head's trash icon on its heading. It saves with the plan, prints on the sheet, and a template carries it.
+- **"How it went"** is absent until the start time has passed; the sheet's foot says so in one italic line. Once started, the box
+  sits at the sheet's foot, under the rail fold. "Recorded here" (evaluation sessions) stays below the sheet, unchanged.
+- **The toolbar** (Save as template… · Print the sheet) appears above the sheet once a block exists. No Run practice here.
+- **A template** is the same sheet: the facts line ("N blocks · Started N plans") as its head, Name · Tags · the one-sentence note,
+  "Goal:" rather than "Tonight:", About holding Description and Equipment (its tags live above), the gutter carrying each
+  block's length alone (no clock).
+- **A read-only coach** (schedule view, no edit) gets the sheet with the goal as text, rows that open to read, no ghost row, no "Save
+  as template…", no Run practice; Print the sheet stays, and the focus section if the plan carries it (no Remove).
+- **The Add Practice form**: "Ends \*" is required for a practice (pre-filled two hours after the start, as before) and "End time \*"
+  on a repeating practice series; an end at or before the start shows "The end needs to be after the start." and holds the button.
+  Games, scrimmages, tournaments and team events are untouched.
+- **The phone (390)**: the sheet fills the width without its frame; the date and the clock stack; the goal line, the About line, the
+  gutter and the lime are on the first screen; the quiet alternatives wrap as whole phrases; the rail is one line.
+
+### 4.3 Build design (technical)
+
+- **`lib/practice-state.ts` — `practicePlanFit(plan, lengthMinutes)` → `{ planned, length, remainder }`**, with
+  `practicePlannedLabel` ("15 of 90 min planned" · "15 min planned" · "Nothing planned yet") and `practiceRemainderLabel` ("75
+  unplanned" · "10 over" · "60 rest of practice" · null). `planned` is TIMED minutes only (`totalPlannedMinutes`, exactly as the
+  hub's "60 of 90"); a rest-of-practice block is reported as the remainder's own kind rather than as "unplanned". Pure; the page
+  paints the amber. Length comes from `practiceLengthMinutes` — the hub's helper — so the two lines cannot disagree. Unit-tested.
+- **`_PracticePlanEditor.tsx`** — the render is the sheet's body: the goal line (`ppGoalLine`, "Tonight:" / "Goal:" by
+  `withoutPeople`), the About fold (`<details>`, its summary computed from the plan's tags + legacy `practiceTypes` + equipment
+  names), the timeline (`ppTl`), the rail fold (`<details>` around the unchanged rail). `openId` (ONE open block) replaces the
+  per-block `collapsed` map; `freshId` focuses a just-added block's title (`autoFocus`). `addBlock` / `addBlockFromDrill` open the
+  new block. The ghost pseudo-block (`GHOST_BLOCK_ID`) rides `computeBlockClocks`'s walk LAST so the ghost row's gutter says when the
+  next block starts — one walk, no second copy of the arithmetic. New prop `onStartFrom` (the page owns the picker; the editor
+  offers the door only while `plan.blocks.length === 0`).
+- **`BlockCard`** renders one `ppTlRow` — the gutter cell (`clock.startLabel` + `formatDuration` small; length alone for a
+  template) and either the closed row (a `<button aria-expanded=false aria-label="Open {title}">` — `ppTlClosed`) or the open card
+  (`ppTlOpen` wrapping the SAME `ppBlockHead` + `ppBlockBody`; the head loses its clock text — the gutter has it — and its toggle is
+  Close). The block's insides are stage 2's and untouched. The reader page
+  (`history/development/practices/[eventId]`) keeps `ppHeaderCard` / `ppBlock*` — those classes stay.
+- **`practice/[eventId]/page.tsx`** — `backTo` → `${base}/practice` "Practice plans" (D8); the summary strip is gone; the render is
+  `ppSheetCol` (816px, centred) → the scouting bridge · the empty states · the toolbar (`hasBlocks`) · `ppDoc` (`data-room=
+  "practice-plan" data-room-state="loaded"`) → `ppDocHead` (the when-line: `fmtDay` + `fmtTime`–`fmtTime` + `practiceLength`;
+  `practicePlannedLabel` / `practiceRemainderLabel` with `ppDocWhenAmber`; the "Set it on the schedule ›" link; "View on
+  schedule") · the provenance line · the editor (`onStartFrom` = the picker's opener when any source exists) · the recap section
+  (`practiceStarted` — `nowMs` re-read once a minute, the hub's idiom) or the italic `ppDocNote` · then "Recorded here" outside the
+  sheet. The page narrows from `pageWide` to `page`. `Copy` icon import dropped.
+- **`practice/templates/[templateId]/page.tsx`** — the same `ppSheetCol` / `ppDoc` (`data-room="plan-template"`); the facts line
+  is the head (`ppDocHeadFacts`); name + tags + note in `ppDocFields`; the editor under them.
+- **`schedule/page.tsx` (D9)** — `practiceEndMissing` / `practiceEndBeforeStart` / `practiceEndInvalid` beside `formHasStart`; the
+  labels read "Ends \*" / "End time \*" for a practice; the hint `role="alert"` under the field; the submit button adds
+  `practiceEndInvalid` to its disabled expression. Server unchanged (imports and existing rows may still carry no end).
+- **CSS (`coaches.module.css`)** — the document block (`ppSheetCol` · `ppDoc` · `ppDocHead` · `ppDocWhen*` · `ppDocHeadLink` ·
+  `ppDocHeadFacts` · `ppDocBody` · `ppDocFields` · `ppGoal*` · `ppAbout*` · `ppFold*` · `ppTl*` · `ppDocNote` · `ppDocFoot`), a 768
+  block (the sheet's fields, the open block's fields except checkboxes, the "Recorded here" links take the 44px floor — the
+  tablet-band ruling) and a 640 block (the sheet drops its frame, the head stacks, the gutter narrows). ⚰ `ppLayout` · `ppMain` ·
+  `ppAddRow` · `ppRail` · `ppRailInner` · `ppRailTitle` and the 900 shell reflow deleted (the dead-selector gate). The toolbar's
+  buttons and the `.lineupFilterChip` family take the floor to 768 (the chip's rule moved out of the 640 block).
+  `globals.css`: `--home-shadow` declared in the coaches warm block (the consumer warm theme's value) — the sheet's shadow.
+- **Gates** — `scripts/layout-screens.mjs`: the plan page and the template editor wait on their `data-room-state="loaded"` marker
+  (the h1 renders before the load; no input exists to wait on with the blocks shut). `scripts/.layout-baseline.json`: 118 rows
+  retired (`--prune --only=` the four screens), one appended (the plan page's masthead "?" at 768, with its sibling's reason).
+  `tests/uat/scenarios/practice-plan-save.spec.ts` accepts "Add the first block". No page-actions-guard change (both sites still
+  render `CoachPageHeader` with `actions: null`); no history-endpoint change (no route learned a year).
+
+### 4.4 Verification (this stage)
+
+Unit: `practice-state` (+6). Static: `verify:changed` green (spelling, tokens, CSS purity, dead selectors, dictionary, demos);
+`typecheck` clean; `check:layout --only=coach-practice-plan,coach-development-template,coach-practice-plans,coach-lineups` — no
+new findings. Rendered (Playwright, `tests/uat/.auth/coach.json`, localhost): the blank page, the planned page (rows · open block
+· folds), the template editor and the Add Practice form at 1440; the blank and planned pages at 390 (no sideways scroll); a
+behavioural probe on the blank fixture practice (the first line's arithmetic through 0 → 15 → 45 of 120, the picker door, the lime
+→ open block with focus, the ghost's clock, one-open-at-a-time, the folds, autosave Unsaved → Saving… → Saved with one PUT 200),
+restoring the practice to blank afterwards. The owner's QA walk: ledger §188, the artifact's "QA walk · 1" tab (23 steps, 8 parts).
+
+### 4.5 Build record (2026-09-14)
+
+- Built and rendered in one session. Dev server: no restart needed — no file moved, no shared module changed shape; hot
+  reload took every edit. A peer's restart of the shared server (their component deletion) caught the first screenshot pass;
+  re-run clean.
+- **/simplify (four lenses, owner's go-ahead) — applied:** the clock walk reports where it ends (`walkBlockClocks` →
+  `nextStartMs/nextStartLabel`; `computeBlockClocks` is the same walk, clocks only) so the ghost row no longer smuggles a fake
+  block through it; ONE minute clock (`lib/use-minute-clock.ts`) shared by the sheet and the hub; `tagNamesById` in
+  `lib/rep-practice-plan.ts` is the one id→name walk (the About line and the printed sheet's practice types); the toolbar reads
+  `practiceHasPlan` (the hub's definition) instead of a third inline copy; `practiceStarted(startsAt, nowMs)` lives beside
+  `isInRunWindow` (tested — three hours early is inside the window and not started); the two folds do NOT build their bodies
+  while shut (`open` + `onToggle` — the rail is a roster's worth of chips rebuilt per keystroke otherwise); the About line
+  and the rail count are memoised on their inputs, not the whole plan; the gutter is read aloud and the closed row's name
+  carries the block's start time ("Open Warm up, 6:00 p.m." — the head gave the clock up, so a screen reader had lost it);
+  the when-line is a flat `renderWhenLine()` (the `renderPickList` idiom) with a `.ppDocWhenLine` class instead of a
+  `<b>` tag selector; one `.ppQuietLink` recipe composed into the three sheet links (`.ppTlQuietLink` composes the
+  portal's `.linkBtn` reset; `.ppDocHeadLink` composes Lineups' `.lineupOnScheduleLink`); `.ppToolbarFlush` replaces the
+  inline `marginBottom: 0` at both sites (the Schedule's pre-existing one too); `DEFAULT_BLOCK_MINUTES` is the one 15; the
+  station-count label is built once; the always-true body wrapper and the inert `data-open`/`data-ghost` attributes are gone.
+  **Skipped, with reasons:** the phone's day/clock stacking keeps its two spans + 640 rule rather than the ghost row's
+  inline-block idiom — the frame's phone line 2 has NO leading separator, and only the toggle produces that; the "or" before
+  a single alternative is the frame's own letter ("15 min · or a drill from your library"); D9 stays FORM-ONLY by the ruling's
+  wording ("the Add Practice form asks for it") and because the sheet degrades honestly without an end while imports, the
+  recurring-series occurrences and every existing row carry none — a server rule would refuse those; `React.memo` on the
+  editor for the once-a-minute tick (negligible, and `updatePlan` is not stable); a portal-wide input tap floor (the
+  per-selector rule is the stylesheet's working convention — ~90 sites; `.tapFloor` exists with zero callers).
+- **/review (high-risk: shared lib, the shared stylesheet, globals.css; five lenses — correctness · security/tenancy ·
+  regression · concurrency · business rules/a11y; 14 findings → 14 after dedup → 11 confirmed and FIXED, 3 confirmed and
+  recorded, 0 refuted; the consequential ones adjudicated in the main loop against the code and re-rendered):**
+  TWO LIMES on a new team's first practice (the roster prompt's "Go to the roster" beside the sheet's "Add the first block" —
+  the prompt is now the quiet variant with a secondary button; the sheet keeps the lime) · the closed row's `aria-label`
+  replaced its accessible name (a screen reader lost the description and "Who: everyone" — the name is now the row's content
+  behind a hidden "Open") · EDITING an older practice with no end greyed Save for an unrelated change (the edit form now
+  pre-fills two hours on, exactly as the Add form does; the seed is on screen and saved with the row) · "no end set" was a lie
+  for an end AT OR BEFORE the start (the line now reads "the end is before the start · Fix it on the schedule ›") · a blank End
+  time greyed Save with only an asterisk ("A practice needs an end time." now says why, both forms) · the repeating-series
+  scope buttons (This event only · This & future · All) saved past every gate (they hold to the same one as Save changes now —
+  the pre-existing start/resource gaps closed with it) · the phone gutter was ONE PIXEL narrower than "12:00 p.m." (measured
+  66px in its 11px mono face against 65.2 usable — 5rem now, `white-space: nowrap`) · **stage 0's hub card in the RUN window
+  pushed the phone sideways** (the fixture's probe practice drifted into today's ±3h window and the sweep saw it for the first
+  time: the answers group sat at max-content, so "Plan set · 3 blocks · 60 of 90 min · 1 rotation" beside "Open the plan"
+  could not wrap — `.oneAnswers` is shrinkable now; the Overview, which shares it, re-swept clean) · "Block 1" vs "block 1"
+  (one spelling) · the drill picker stayed open on the full-plan path · the editor is `key`ed per event / per template so its
+  state reset is by design rather than the loading branch's accident. **Recorded, not changed:** D9 stays form-only (by the
+  ruling's wording, and the sheet degrades honestly — the create/update routes still accept a practice with no end, which
+  imports and series occurrences rely on); the layout gate is BLIND inside a shut block (the open block's fields — stage 2's
+  to redraw — need an interaction hook in the sweep when that stage lands); the chip family's floor moved to 768 portal-wide
+  (the tablet-band ruling over the 08-11 "KEPT compact" reason — a one-line reversal if the owner wants Lineups' chips back at
+  30px in the 641–768 band). **Gate wobble noted:** the schedule's 768 row-height debt is baselined per row NAME, and the
+  fixture's probe practice re-anchors to now, so two schedule rows re-appear as "new" whenever it moves — re-baselined with
+  the recorded-debt reason each time it drifts, until the schedule's rows take the floor. The deterministic gate was red on
+  the PEER's in-flight Define work (a test importing a symbol their library no longer exports) — every other gate green on
+  this diff; typecheck clean on these files; `check:layout` clean on the plan page, the template editor, the hub, the
+  Overview, the Schedule and Lineups.
+- **/docs:** the Practice plans article follows the sheet — "The sheet: when, how long, and the first block" (was "The shape
+  of the night: blocks"), the rail as a fold under the timeline, the tags under "About this practice", "start this plan
+  from…" beside the first block on a blank plan only, the toolbar appearing with the first block, "How it went" at the sheet's
+  foot once the practice has started; the schedule guide's add-event step asks for an end for a practice; a new FAQ
+  `faq-practice-end-time` ("no end set" / why a practice won't save without an end / Edit pre-fills it); the templates
+  guide's "Using one" follows the door; search terms for every new phrase (the sheet, first block, unplanned, over, no end
+  set, one block open…). No new section, no anchor renamed, no hub card change. Hot reload — no restart.
+- **Stated on the way in, for the walk:** a past practice with no plan still opens today's editor (stage 6); "Print the sheet" is
+  still the PDF (stage 5); the gutter reads "6:00 p.m." not "6:00" — the clock rule has no dense-column carve-out, so the gutter
+  is 5.5rem (4.6rem on the phone, at the label size).
+
+## 5. Stage 2 · The block — the plan (written 2026-09-14; mockups next, then rulings, then code)
+
+**Not ruled, not drawn, not built.** One block's anatomy as the row stage 1 made open in place: what a block asks for, in what
+order, and what waits until asked. Stage 1 decided the row exists, folds, and carries its clock in the gutter; it left the
+block's insides untouched (`BlockCard`'s head and body are the card's as they always were, set on the paper ground). This
+section decides those insides and nothing further down: **stations, the rotation and the groups grid are stage 3's** (§5.6 names
+the one place a block hands off to them); the drill library, drag and the Add-a-block dialog's remaining role are stage 4's; the
+run screen and the printed sheet are READERS here — §5.7 states what they read after the change and restyles neither.
+
+### 5.1 What the walk saw, and what the code says
+
+The walk (station 4, Q4.1–4.2) measured a written warm-up — title, 15 minutes, two sentences, six players, two coaching points —
+at **743px tall with eight questions open** (minutes · rest-of-practice · description · goal · staff · players · coaching points ·
+stations), whether or not the block will ever have staff or points; the block's clock as its smallest text; three questions asked
+again one level down under different names. Its "What I'd change" list is not a checklist. Read against the code as built:
+
+- **"Add a block adds a block" — done** (stage 1, §4.1 item 2). The dialog's remaining role is stage 4's.
+- **"A block is a row on a timeline" — done** (stage 1, D2/D5): the gutter carries the start and the length, rows open in place,
+  one at a time. What the walk measured at 12px grey *under the title* now sits in the gutter at the same 12px in the data face,
+  beside a 14px bold title — the finding is answered by STRUCTURE (the clock is the timeline's spine, not a caption). §5.3 D4 asks
+  what, if anything, the open block repeats; it does not re-open the gutter.
+- **"One notes area (what we're doing, what to watch for)" — wrong on the code.** `goal` is the line the run screen
+  (`.ppRunGoal`, weight 600) and the station screen (`_PracticeStationView`, weight 700 — "the direct answer to 'what am I
+  watching for' — the reason this screen exists") print BOLD at arm's length; that is the payoff for typing it as its own line.
+  `resolveStationTeaching` falls back field by field (`station.goal ?? block.goal`) so a plan written before the drill library
+  still prints; a merged field breaks the fallback for every one of those plans. And a merge is a JSON shape change — a
+  `PRACTICE_PLAN_VERSION` bump with a read-time migration across `rep_team_events.practice_plan` AND the templates table, for a
+  height problem the on-demand rule (D1) solves without touching the model. §5.3 D2 recommends the two fields stay.
+- **"One vocabulary at both levels" — right, and narrower than the walk drew it.** There are not two vocabularies; there is ONE
+  editor out of step. The station editor, `DrillFacts`, the drill library's editor (`_DrillsView`), the drill picker's preview
+  ("Doing:" / "Watching for:"), the field screen, the printed STATION line ("Watch for:") and the closed-season reader
+  (`history/development/practices/[eventId]` — for a BLOCK'S fields too) all say *What you're doing · What you're watching for ·
+  Coaching points*. `BlockCard` alone says *Description · Goal*, and the 2026-08-01 ruling recorded on `CoachingPoints` already
+  says "the goal is 'what you're watching for' everywhere". D3 confirms the block joins; §5.5 lists what that touches — the
+  sanitiser is NOT on the list.
+- **"Blocks fold to rows" — done.** "Quick durations" — D5. "Escape closes every sheet" — D9: the portal has ONE shared floor for
+  this (`useDialogFloor`: Escape closes, Tab is trapped, focus returns to the opener; in-panel menus claim their own Escape via
+  `escapeOwnership.ts`), and none of the five sheets on the plan page stands on it.
+- **"Staff, players and coaching points on demand" — right,** and the code shows one more thing the walk did not: **a block placed
+  from a drill has no teaching of its own.** `addBlockFromDrill` makes a block whose title and minutes are the drill's and whose
+  SINGLE STATION is the drill (`drillToStation` — `drillId`, tags snapshotted, description/goal/points/setup/equipment copied). The
+  block's own `description`/`goal`/`coachingPoints` are empty, so today it opens onto three empty questions above the drill's
+  answers. The run screen already reads such a block through the station ("with a single station the station IS the block") —
+  D7 makes the editor read it the same way.
+
+### 5.2 What a coach sees and does differently (the proposal)
+
+- **A block opens to four things:** its title, the clock row, *What you're doing* (two lines), *What you're watching for* (one
+  line). **Everything else is a door at the block's foot** — "+ Coaching points · + Staff · + Players · + Stations" — one quiet
+  line in the ghost row's voice. A field that HOLDS something is always shown (a saved plan reopens with what it has); a door
+  opened and left empty stays open this session and is a door again on reload (the sanitiser stores no empty list — today's
+  behaviour, nothing lost). The written warm-up the walk measured at 743px is estimated at ~480px (title · clock row · two
+  sentences · one line · two points · six chips · the doors line); a NEW block at ~300px against ~600 today. The mockup measures
+  both; the estimate is not the ruling.
+- **The clock row** reads as one line: the minutes, five quick durations (5 · 10 · 15 · 20 · 30), *Rest of practice*, and the
+  consequence — "ends 6:15 p.m." — so a coach changing the number sees what it did without reading the next row's gutter. The
+  gutter stays the block's clock; the open block repeats the START nowhere.
+- **One vocabulary:** a block asks *What you're doing · What you're watching for · Coaching points* — the station's words, the
+  drill library's words, the field screen's words. "Description" and "Goal" leave the block (the practice's own *Tonight:* line
+  and its About *Description* are a different level and keep their names — owner rulings 2026-09-14).
+- **The shut row** reads title · first line · the block's shape when it has one ("3 stations", the Rotation tag) · who, only when
+  it is not everyone ("6 players"). The count of coaching points goes (owner ruling 2026-09-04, §133: a fact the coach gets by
+  opening the thing needs no label promising it); "Who: everyone" goes (the model stores no "everyone" — an empty list is an
+  absence, and whether the product says "everyone" is stage 5's "everyone chips" ruling). A drill-placed block's row reads its
+  drill's first line (resolved through its sole station, the run screen's rule) instead of nothing.
+- **A block placed from a drill** opens to its title (the block's own name, seeded from the drill, editable), the clock row
+  (minutes seeded from the drill's usual length, editable), and then the station's read-only teaching with its provenance line —
+  *From your drills · Footwork · Edit just for this practice · Swap drill* — exactly as the station card renders it today. No
+  empty Doing/Watching for/Points above it. Editing the title or the minutes never detaches (they are the block's, not the
+  drill's); editing a word of the drill's detaches the STATION — D20, unchanged, not softened. Whether that sole station's card
+  loses its "Stations · 1" head and flattens into the block is drawn at stage 3 (§5.6).
+- **Escape** closes whichever sheet is open — Choose players, Add a block / Add a station / Swap this drill, Save to my drills,
+  Start this plan from…, Save as template… — and hands focus back to what opened it. Escape does NOT close an open block: a row
+  is not a sheet, and a coach mid-sentence in a textarea must not lose the block under their hands.
+- **The phone (390)** gets the same block at ~290px wide inside the 5rem gutter: the clock row wraps to two lines (the chips, then
+  the input and Rest), the doors line wraps as whole phrases, fields keep the 44px floor. **The tablet band (641–768)** is the
+  desktop block with the floor (already so for every field; the chips take it with the chip family, moved to 768 at stage 1).
+- **A template** is the same block without a clock — the same chips, no "ends", no Staff and no Players doors (a template
+  carries no people — unchanged), *Rest of practice* still allowed (the gutter reads it as the length).
+- **A read-only coach** gets the open block as text under the same labels, no doors, no chips.
+
+### 5.3 Decisions for the owner (D-numbered; each with a recommendation and what rides on it)
+
+| | Decision | Recommendation | What rides on it |
+|---|---|---|---|
+| **D1** | **Always shown vs on demand.** Which fields a block opens with, and which wait behind a door. | **Always: title · the clock row · What you're doing · What you're watching for. On demand: + Coaching points · + Staff · + Players · + Stations.** A field with content is always shown. The Players door is absent when the block has stations (people at one level — already the code's rule); the teaching fields and the Coaching points door are absent when the block has EXACTLY ONE station and no words of its own (D7). Alternative on the table: *Watching for* on demand too — one line cheaper on every block, at the cost of the line the field screen exists for being one tap further from the keyboard. | The block body's render order and the doors line (new CSS, no model change); the "emptiness discards nothing" rule (kept — a door opened is a field once it holds something); the layout gate's blind spot inside an open block (an interaction hook in `scripts/layout-screens.mjs`, owed since stage 1's review). |
+| **D2** | **Description and Goal — one notes area or two fields?** | **Two, renamed (D3).** The goal is the bold line at arm's length on two field screens; the resolver falls back per field for pre-library plans; a merge is a versioned shape change across plans and templates. The height complaint is D1's to answer, not the model's. | Nothing changes in `lib/rep-practice-plan.ts`, `lib/types.ts` or the templates; `PRACTICE_PLAN_VERSION` stays 1; no migration. |
+| **D3** | **One vocabulary at both levels — which words?** | ***What you're doing · What you're watching for · Coaching points*, at the block as at the station.** The alternative — the station adopting *Description · Goal* — is rejected: six surfaces would change instead of one, and "Goal" at the block collides with the practice's own goal one level up (three goals on one page). | The block editor's two labels and placeholders; the printed sheet's block prefix — "Goal: …" becomes "Watch for: …", the word its own station line already prints (one word per idea on one page; the sheet's LAYOUT is untouched — stage 5); the help's block paragraph ("description, goal" → the three phrases) and its search terms; a one-word-per-thing guard over the practice editor in the `development-vocabulary-guard` idiom (retires "Goal"/"Description" as a BLOCK field label — the plan-level About "Description" is a different thing and stays). **The sanitiser is untouched:** `description` and `goal` are stored KEYS, identifiers, not prose — a rename there is a migration and is not proposed. |
+| **D4** | **The block's clock as a first-class fact — what does the open block repeat?** | **Nothing of the start; the clock row shows the END** — "ends 6:15 p.m." from the same walk (`clock.endLabel`, already computed, formatted in the org's zone by the walk itself), "runs to 8:00 p.m." for the rest-of-practice block, nothing for a template. The gutter's size is not re-opened: the walk measured the clock as a caption under the title, and stage 1 moved it to the spine, where the owner walked it (§188). If the true-size mockup says the gutter is still too small, that is a stage-1 CSS revision, not a block decision. | `BlockCard` reads `clock.endLabel` (a prop it already receives); no new arithmetic. |
+| **D5** | **Quick durations, and where "Rest of practice" sits.** | **Five chips — 5 · 10 · 15 · 20 · 30 — before the minutes input, *Rest of practice* as the last chip in the same row.** A chip is on when the minutes equal it; any other number is typed. The Rest chip is offered only while no OTHER block holds it (the sanitiser allows exactly one — D13); when another block holds it the chip is ABSENT, not disabled with a hover title (an inapplicable control is absent, not locked; a hover title is invisible on a phone). Un-pressing Rest returns the block to the default 15, never to "no length" (today's unchecking leaves the minutes null, and the clock stalls at that block). | The duration control (`.ppDuration`) rebuilt as a chip row + input; `DEFAULT_BLOCK_MINUTES` reused; the number input keeps `1–600`. The one-open-block rule means only one row of chips renders at a time. |
+| **D6** | **The shut row's line.** Today: title · first line · "Who: everyone / N players" or "N stations" · "Coaching points: N" · the Rotation tag. | **Title (+ Rotation tag) · first line · "3 stations" when it has them · "6 players" when a subset is named · nothing else.** Drop "Coaching points: N" (§133 ruling) and "Who: everyone" (an inference — stage 5's word). The first line resolves through a sole station so a drill-placed row reads its drill. Untitled stays "Block 2" in the quiet italic. | `rowMeta` in `BlockCard`; the row's accessible name (its content behind the sr-only "Open" — unchanged idiom); the help's "how many coaching points it carries" sentence. |
+| **D7** | **A block placed from a drill, versus written.** | **The block's own teaching is not asked when it has exactly one station and no words of its own; the block opens onto the station's read-only teaching and provenance line.** With two or more stations the block's Doing line is the circuit's intro (the run screen shows the block's own when stations differ) and is offered. A block that HAD words before a station was added keeps showing them (content always shows). Title and minutes stay the block's and never detach; the D20 idiom on the station is untouched. **The sole station's card head ("Stations · 1 · name · trash") is stage 3's to flatten or keep** — §5.6. | `BlockCard`'s door rules read `stationCount`; `StationCard` unchanged; `resolveStationTeaching` unchanged (it already answers this for the run screen). |
+| **D8** | **The phone at 390 and the tablet band at 641–768.** | **No new arrangement.** The block at 390 is the desktop block narrowed: the clock row wraps to two lines, the doors line wraps as phrases, the row's first line keeps its one-line ellipsis. At 768 every chip and field takes the 44px floor (the tablet-band ruling; the chip family already moved to 768). The mockup draws both at true size; the layout gate measures both once its open-block hook exists (D1). | The existing 768 and 640 blocks in `coaches.module.css` gain the chip row and the doors line; nothing moves breakpoints. |
+| **D9** | **Escape closes every sheet on this page.** A logged defect (the walk's "Across the walk"), cheap, and this stage touches the block's three sheets. | **Adopt `useDialogFloor` on all five:** Choose players · the drill sheet (Add a block / Add a station / Swap this drill) · Save to my drills (busy-gated while saving) · Start this plan from… · Save as template… (the page's two ride along — leaving them would be two sheets on one page that close differently). The tag picker inside Save to my drills (and every tag combobox in an open block) already claims Escape while its list is open (`escape-owner-guard`), so a stacked list closes itself, not the sheet. Escape does not close an open block. | Five `modalOverlay` mounts take a panel ref and the hook; no new component; the escape-owner guard already covers the comboboxes. |
+
+**Two calls the plan makes without a D (each a one-line reversal):** the doors line sits at the block's FOOT, after the fields,
+in the ghost row's quiet voice ("+ Coaching points · + Staff · + Players · + Stations") — not a "+" beside each label — so the
+fields read as a document and the doors as the margin; and the title keeps its placeholder "What are we doing?" (it already asks
+the Doing question in the block's own words, which is why *What you're doing* underneath is the detail, not a repeat).
+
+### 5.4 Constraints that stand (checked against this stage)
+
+One lime per screen — the ghost row's; a chip that is "on" is a selected state, not a lime, and the doors line is quiet. Emptiness
+discards nothing — a block, a station and a just-opened door survive autosave; only an empty STRING in a list is dropped, as today.
+Reorder with buttons, never drag — the head keeps its arrows. A drill-backed station stays read-only and loses its provenance the
+moment it is edited — D7 does not touch `detachStationFromDrill` or `DrillFacts`. One spelling everywhere a customer reads it —
+"Coaching points", "What you're watching for" (the curly apostrophe the code already renders), "Rest of practice"; `check:spelling`
+runs on the editor. `formatTime()` / `formatInOrgZone` for every clock the block shows — "ends 6:15 p.m." comes from the walk that
+already formats the gutter. **No migration:** the plan JSON's keys, caps and version are unchanged; D2 and D3 are label and
+render decisions; the dictionary and the snapshots are not touched.
+
+### 5.5 Build design (technical — for the build session, after the rulings)
+
+- **`_PracticePlanEditor.tsx` — `BlockCard`'s open body only.** Render order: the clock row (`ppClockRow`: chips ×5 → the
+  minutes input → the Rest chip when offered → the quiet "ends …" from `clock.endLabel`) · *What you're doing* (`textarea`,
+  `rows={2}`, the existing `description` field) · *What you're watching for* (`input`, the existing `goal` field) · the
+  content-bearing on-demand sections in a fixed order (Coaching points · Staff · Players · Stations) · the doors line
+  (`ppDoorsLine`, `.ppTlQuietLink` links, each absent when its section is showing or its rule says so). Local state per block:
+  `openDoors: Set<'points' | 'staff' | 'players' | 'stations'>` — shown = has content ∨ door opened this session; reset when the
+  block closes (a block that reopens shows what it holds). D7's rules are one predicate, `blockAsksForTeaching(block)` =
+  `stationCount !== 1 || hasOwnTeaching`, next to `blockRotates` in `lib/rep-practice-plan.ts` so the closed row (D6) and the
+  open body cannot disagree. `rowMeta` per D6; the first line via `resolveStationTeaching(soleStation ?? {}, block).description`.
+- **`StationCard`, `RotationPanel`, `DrillPickerSheet` — untouched** (stage 3 · 4), except the sheets taking the floor (D9).
+- **The five sheets** — `useDialogFloor(panelRef, { onClose, busy })` on the roster picker, the drill sheet and the promote dialog
+  in the editor, and the start-from picker and the save-as-template dialog in `practice/[eventId]/page.tsx`. The `onPointerDown`
+  overlay-close stays.
+- **`lib/export/pdf.ts` caller (`handlePrint`)** — the block line's prefix `Goal:` → `Watch for:` (one word; the sheet's drawing
+  untouched). **`lib/help-content/coaches.tsx`** — the block paragraph and search terms (/docs). **`tests/unit`** — a
+  practice-vocabulary guard (the `development-vocabulary-guard` idiom, scoped to the editor's block labels); `rep-practice-plan`
+  tests unchanged (the sanitiser is unchanged) plus one for `blockAsksForTeaching`.
+- **CSS (`coaches.module.css`)** — `.ppClockRow` / `.ppQuickChip` (the `ppSuggestChip` recipe, on-state via `data-on`) /
+  `.ppClockEnds` / `.ppDoorsLine`; the 768 block gives the chips the floor; the 640 block lets the clock row wrap. ⚰ `.ppDuration`
+  and `.ppRestToggle`'s block use retire (the stations head's "Groups rotate between them" still uses `ppRestToggle` — stage 3's).
+- **Gates** — `scripts/layout-screens.mjs`: the plan-page screen gains an interaction step that opens the first block before
+  measuring (the blind spot recorded in §4.5); `.layout-baseline.json` re-baselined for that screen only (`--prune --only=`).
+
+### 5.6 Where the block hands off to stage 3 — and the one question it sends there
+
+The "+ Stations" door opens today's Stations section (its head with *Groups rotate between them* once there are two, and *+ Add a
+station* → the drill sheet). Stage 2 draws the door and nothing under it. **The question stage 3 must answer first:** does a
+block's SOLE station flatten into the block — the drill's text and the practice half (who runs it · who's at it · just for
+tonight) reading as the block's own body, no "Stations · 1" head — or keep its card? The run screen already answers "the station
+IS the block" for one station; the closed-season reader does not. Stage 2's D7 rules only what the BLOCK stops asking.
+
+### 5.7 What the readers read after this stage (stated, not restyled)
+
+- **The run screen** — unchanged. It reads `description`, `goal` and the points through `resolveStationTeaching`, unlabelled, the
+  goal bold; D7 makes the editor agree with it rather than the other way round. **Recorded, not fixed (stage 5):** a plain stop
+  never shows the BLOCK'S staff — the run page reads `station.staff` only, so "who runs this block" prints on paper and is absent
+  on the field; the Staff door (D1) does not change that.
+- **The printed sheet** — one word changes on the block line: `Goal:` → `Watch for:`. Otherwise identical: the staff and players
+  line, the description, the numbered points, the station lines, the grid inside its block. The sheet keeps printing a block's
+  own words even when D7 hides them from the open block (they exist only if the coach wrote them).
+- **The closed-season reader** — unchanged; it already labels a block's fields *What you're doing · What you're watching for ·
+  Coaching points*.
+- **Templates** — the same editor, the same doors, no clock; `planToTemplateShape` / `templateToPlan` unchanged.
+- **The drill library and the picker's preview** — unchanged; they already speak the vocabulary.
+
+### 5.8 Verification (this stage, once built)
+
+Unit: the vocabulary guard; `blockAsksForTeaching`; `rep-practice-plan` unchanged and green. Static: `verify:changed`
+(spelling — the new labels; dead selectors — the retired duration rules); `typecheck`. Layout: `check:layout
+--only=coach-practice-plan,coach-development-template` with the open-block hook, at 1440 · 768 · 390. Rendered (Playwright on the
+UAT fixture): the written warm-up open before/after (height measured, not estimated); a drill-placed block open; the shut rows;
+the clock row through 15 → chip 30 → Rest → un-Rest → 15; Escape on each of the five sheets with focus returning to the opener;
+the template room's block. The owner's QA walk: a "QA walk · 2" tab on the hub, ledger § to be numbered at build time.
+
+### 5.9 The mockup session's frames (named here, drawn on the hub as a "2 · The block" tab — before/after, true size, clickable markers)
+
+1. **Before · 1440 · the written warm-up, open** — today's card as built (the 743px measurement re-taken on the fixture).
+2. **After · 1440 · the written warm-up, open** — D1 · D3 · D4 · D5: the four always-shown things, the two points and six chips it
+   holds, the doors line.
+3. **After · 1440 · a block just added** — the minimum face (title focused · clock row · Doing · Watching for · doors).
+4. **Before · 1440 · a drill-placed block, open** — three empty questions above the drill's text.
+5. **After · 1440 · a drill-placed block, open** — D7: title · clock row · the station's read-only teaching and provenance line ·
+   *Edit just for this practice · Swap drill*; the "Stations · 1" head drawn as-is with a marker saying it is stage 3's.
+6. **After · 1440 · three shut rows** — D6: a written row, a drill-placed row reading its drill's first line, a rotating row.
+7. **The clock row, detail** — chips · input · Rest · "ends 6:15 p.m."; the Rest-taken-elsewhere state (chip absent); the
+   rest-of-practice block's own row ("runs to 8:00 p.m."); a template's row (no "ends").
+8. **Before / After · 390 · the written warm-up, open** — D8: the clock row on two lines, the doors line as phrases.
+9. **After · 390 · a drill-placed block, open.**
+10. **After · 768 · the written warm-up, open** — the tablet band's floor on chips and fields.
+11. **After · 1440 · the template room** — the same block without a clock, no people doors.
+12. **A note, not a frame — D9:** the five sheets and what Escape does on each; that an open block is not a sheet.
+
+Every marker clickable (owner rule 2026-09-11); amber for what the code does today, green for what changes; each frame names the
+D it draws; the hub's Plan and PM brief tabs re-rendered from this section.

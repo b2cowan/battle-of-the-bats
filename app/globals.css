@@ -858,6 +858,10 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-fill:        rgba(70, 55, 30, 0.08);
   --home-line-rgb:    70, 55, 30;
   --home-paper-rgb:   248, 244, 237;
+  /* A card lifted off the paper — the practice plan SHEET (re-evaluation stage 1, 2026-09-14).
+     The same warm shadow the consumer shell's warmTheme.module.css ratified; the dark gate below
+     declares its own, so a sheet reads as paper on paper here and as a dark card there. */
+  --home-shadow:      0 1px 2px rgba(70, 55, 30, 0.05), 0 6px 18px rgba(70, 55, 30, 0.07);
   /* True lime kept for the few LIME FILLS that survive on paper (CTAs / "on" toggles) with
      dark ink on top — the ratified ink-on-lime CTA. Sourced from --logic-lime-fixed, NOT
      var(--logic-lime), which this very block remaps to olive. */

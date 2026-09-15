@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   blockRotates,
-  computeBlockClocks,
+  computeBlockClocks, walkBlockClocks,
   computeRotation,
   defaultIntervalMinutes,
   startingGroupsForStation,
@@ -240,6 +240,24 @@ describe('sanitizePracticePlan', () => {
 
   it('keeps a plan that only has practice types on it', () => {
     assert.deepEqual(sanitizePracticePlan({ practiceTypes: ['Hitting'], blocks: [] })?.practiceTypes, ['Hitting']);
+  });
+
+  it('keeps the description — a paragraph under the goal — trimmed, capped, and alone it is a plan worth keeping', () => {
+    const p = sanitizePracticePlan({ description: '  Bring the machine; parents on the gate.  ', blocks: [] });
+    assert.equal(p?.description, 'Bring the machine; parents on the gate.');
+    assert.equal(sanitizePracticePlan({ description: '   ', blocks: [] }), null, 'whitespace is no description');
+    assert.equal(sanitizePracticePlan({ description: 'x'.repeat(5000), blocks: [] })?.description?.length, 2000);
+  });
+
+  it('"What everyone\'s working on" is an ADDITION: stored only when true, and alone it is a plan worth keeping', () => {
+    // Owner ruling 2026-09-14 — the rail is on a sheet because the coach put it there. A coach
+    // who adds it and saves must find it on reload, so the flag alone is not "empty".
+    assert.equal(sanitizePracticePlan({ includeFocusAreas: true, blocks: [] })?.includeFocusAreas, true);
+    assert.equal(isPracticePlanEmpty({ version: 1, includeFocusAreas: true, blocks: [] }), false);
+    // Anything but a literal true is the absence of the section — never a stored false.
+    const off = sanitizePracticePlan({ includeFocusAreas: 'yes', goal: 'Contact', blocks: [] })!;
+    assert.equal('includeFocusAreas' in off, false);
+    assert.equal(sanitizePracticePlan({ includeFocusAreas: false, blocks: [] }), null);
   });
 
   it('de-duplicates a staff name repeated on one item', () => {
@@ -641,6 +659,18 @@ describe('copyPracticePlanForReuse (D7 — a copy, never a series write)', () =>
     assert.notEqual(copy.blocks[0].id, source.blocks[0].id);
     assert.deepEqual(copy.blocks[0].rotation?.groups[0].playerIds, ['p1']);
   });
+
+  it('carries the description forward — the paragraph is shape, like the goal', () => {
+    const src = sanitizePracticePlan({ description: 'Our standard Tuesday.', blocks: [{ title: 'A', duration: { minutes: 10 } }] })!;
+    assert.equal(copyPracticePlanForReuse(src, new Set<string>(), () => 'x').description, 'Our standard Tuesday.');
+  });
+
+  it('carries the focus section forward like kit — it is shape, not people', () => {
+    const on = sanitizePracticePlan({ includeFocusAreas: true, blocks: [{ title: 'A', duration: { minutes: 10 } }] })!;
+    assert.equal(copyPracticePlanForReuse(on, new Set<string>(), () => 'x').includeFocusAreas, true);
+    const off = sanitizePracticePlan({ blocks: [{ title: 'A', duration: { minutes: 10 } }] })!;
+    assert.equal('includeFocusAreas' in copyPracticePlanForReuse(off, new Set<string>(), () => 'x'), false);
+  });
 });
 
 describe('isPracticePlanEmpty', () => {
@@ -652,5 +682,34 @@ describe('isPracticePlanEmpty', () => {
 
   it('a plan holding only equipmentTagIds (mig 266) is not empty', () => {
     assert.equal(isPracticePlanEmpty(plan({ equipmentTagIds: ['eq-1'] })), false);
+  });
+});
+
+describe('walkBlockClocks — the walk also says where it stopped (the sheet\'s ghost row)', () => {
+  const start = '2026-08-04T22:00:00.000Z'; // 6:00 p.m. Toronto (EDT)
+  it('with no blocks the next block starts at the practice start', () => {
+    const walk = walkBlockClocks([], start, null);
+    assert.deepEqual(walk.clocks, []);
+    assert.equal(walk.nextStartLabel, '6:00 p.m.');
+  });
+  it('after two timed blocks the next start is their sum; a block with no length does not move it', () => {
+    const walk = walkBlockClocks([
+      { id: 'b1', rotates: false, title: 'Warm up', duration: { minutes: 15 } },
+      { id: 'b2', rotates: false, title: 'Untimed', duration: { minutes: null } },
+      { id: 'b3', rotates: false, title: 'Hitting', duration: { minutes: 30 } },
+    ], start, null);
+    assert.equal(walk.clocks.length, 3);
+    assert.equal(walk.nextStartLabel, '6:45 p.m.');
+  });
+  it('a rest-of-practice block with an end runs the cursor to the end; without one it stays put', () => {
+    const blocks = [
+      { id: 'b1', rotates: false, title: 'Warm up', duration: { minutes: 15 } },
+      { id: 'b2', rotates: false, title: 'Scrimmage', duration: { minutes: null, restOfPractice: true } },
+    ];
+    assert.equal(walkBlockClocks(blocks, start, '2026-08-04T23:30:00.000Z').nextStartLabel, '7:30 p.m.');
+    assert.equal(walkBlockClocks(blocks, start, null).nextStartLabel, '6:15 p.m.');
+  });
+  it('no start time → nothing, including no next start', () => {
+    assert.deepEqual(walkBlockClocks([], '', null), { clocks: [], nextStartMs: null, nextStartLabel: null });
   });
 });

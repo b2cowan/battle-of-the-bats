@@ -16,7 +16,7 @@
  * ⚠ Nothing here records what HAPPENED. `run` means "the window is open and there is a plan to
  * run", never "the practice was run" — "planned, never done" (`lib/rep-practice-plan.ts` rule 2).
  */
-import { summarizePracticePlan } from './rep-practice-plan';
+import { summarizePracticePlan, totalPlannedMinutes } from './rep-practice-plan';
 import type { PracticePlan, RepTeamEvent } from './types';
 
 /** Three hours either side of the start. The only run window in the product. */
@@ -35,6 +35,17 @@ export function practiceHasPlan(e: Pick<RepTeamEvent, 'practicePlan'>): boolean 
 
 export function isInRunWindow(startsAt: string, nowMs: number): boolean {
   return Math.abs(new Date(startsAt).getTime() - nowMs) <= RUN_WINDOW_MS;
+}
+
+/**
+ * Has the practice STARTED — the start time has passed (stage 1, D7: "How it went" appears once
+ * it has). A different fact from the run window, which opens three hours early. Stage 6 owns
+ * anything finer (from the end? the next morning?) and will refine this in one place.
+ */
+export function practiceStarted(startsAt: string | null | undefined, nowMs: number): boolean {
+  if (!startsAt) return false;
+  const ms = new Date(startsAt).getTime();
+  return Number.isFinite(ms) && ms <= nowMs;
 }
 
 export function practicePlanState(e: Pick<RepTeamEvent, 'practicePlan' | 'startsAt'>, nowMs: number): PracticePlanState {
@@ -80,4 +91,46 @@ export function practiceRecapLine(recap: string | null | undefined): string | nu
   if (!recap) return null;
   const line = recap.split(/\r?\n/).map(l => l.trim()).find(Boolean);
   return line ?? null;
+}
+
+/**
+ * How the plan FILLS the practice — the sheet's first line, under "when and how long" (practices
+ * re-evaluation stage 1 · The blank page, owner ruling D3, 2026-09-14): "0 of 90 min planned ·
+ * 90 unplanned" · "15 of 90 min planned · 75 unplanned" · "100 of 90 min planned · 10 over" ·
+ * "90 of 90 min planned" · with no end, "15 min planned" / "Nothing planned yet".
+ *
+ * `planned` counts TIMED minutes only, exactly as `totalPlannedMinutes` and the hub's "60 of 90"
+ * do — a "rest of practice" block is unbounded by definition and gets no invented figure. It is
+ * reported as the remainder's own kind instead ("60 rest of practice"), so a plan that ends on a
+ * rest block never reads as "60 unplanned" when those sixty minutes are spoken for.
+ *
+ * Pure: the page renders the amber on `remainder` itself.
+ */
+export type PracticePlanFit = {
+  planned: number;
+  length: number | null;
+  remainder: { kind: 'unplanned' | 'over' | 'rest'; minutes: number } | null;
+};
+
+export function practicePlanFit(plan: PracticePlan, lengthMinutes: number | null): PracticePlanFit {
+  const planned = totalPlannedMinutes(plan);
+  const hasRest = plan.blocks.some(b => b.duration.restOfPractice);
+  if (lengthMinutes == null) return { planned, length: null, remainder: null };
+  const left = lengthMinutes - planned;
+  if (left < 0) return { planned, length: lengthMinutes, remainder: { kind: 'over', minutes: -left } };
+  if (left === 0) return { planned, length: lengthMinutes, remainder: null };
+  return { planned, length: lengthMinutes, remainder: { kind: hasRest ? 'rest' : 'unplanned', minutes: left } };
+}
+
+/** The first half of the line — "15 of 90 min planned" · "15 min planned" · "Nothing planned yet". */
+export function practicePlannedLabel(fit: PracticePlanFit): string {
+  if (fit.length != null) return `${fit.planned} of ${fit.length} min planned`;
+  return fit.planned > 0 ? `${fit.planned} min planned` : 'Nothing planned yet';
+}
+
+/** The second half — "90 unplanned" · "10 over" · "60 rest of practice" — or null when the plan fits. */
+export function practiceRemainderLabel(fit: PracticePlanFit): string | null {
+  if (!fit.remainder) return null;
+  const { kind, minutes } = fit.remainder;
+  return kind === 'over' ? `${minutes} over` : kind === 'rest' ? `${minutes} rest of practice` : `${minutes} unplanned`;
 }

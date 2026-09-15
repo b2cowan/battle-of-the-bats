@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, Telescope, X } from 'lucide-react';
+import { BookMarked, CalendarDays, ClipboardList, NotebookPen, Printer, Ruler, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -9,6 +9,7 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import {
   buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS,
   type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetRotation,
@@ -16,19 +17,24 @@ import {
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { canWriteDevelopment } from '@/lib/coach-capabilities';
 import { formatInOrgZone } from '@/lib/timezone';
+import { useMinuteClock } from '@/lib/use-minute-clock';
+import {
+  practiceHasPlan, practiceLengthMinutes, practicePlanFit, practicePlannedLabel, practiceRemainderLabel,
+  practiceStarted,
+} from '@/lib/practice-state';
 import {
   MAX_RECAP_LEN,
   blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan,
   formatDuration, isPracticePlanEmpty, newPracticePlanId, resolvePracticePlanTagNames, resolveStationTeaching,
+  tagNamesById,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateToPlan,
 } from '@/lib/rep-plan-templates';
 import { filterTagged } from '@/lib/rep-drills';
-import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags, useStaffTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
-import { FOCUS_TAG_MANAGE, STAFF_TAG_MANAGE, EQUIPMENT_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
+import { FOCUS_TAG_MANAGE, STAFF_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
@@ -135,9 +141,12 @@ const COPY_SOURCES: ReadonlyArray<{ id: CopySource; label: string; hint: string 
 /** A save that hasn't landed by now is reported as a failure rather than spinning for ever. */
 const SAVE_TIMEOUT_MS = 15_000;
 
+/** "Tue, May 5, 2026" — the picker rows and the printed sheet, where the year matters. */
 const fmtDate = (iso: string) =>
   formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 const fmtTime = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit', hour12: true });
+/** "Tue, May 5" — the sheet's first line, which is about THIS week, not a year. */
+const fmtDay = (iso: string) => formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' });
 
 export default function CoachPracticePlanPage({
   params: paramsPromise,
@@ -212,6 +221,10 @@ export default function CoachPracticePlanPage({
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
   useOverlayOpen(copyOpen || saveTemplateOpen);
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+
+  // "How it went" appears once the practice has STARTED (stage 1, D7) — a plan left open on a
+  // laptop through the evening grows the box at the start, not on the next reload.
+  const nowMs = useMinuteClock();
 
   // Team-resolved PDF settings (D4: team look → club look → defaults) — optional; the
   // sheet falls back to defaults. Cleanup-guarded so a slow response for a previous team
@@ -511,11 +524,14 @@ export default function CoachPracticePlanPage({
    * nothing about the practice changes under the coach's hands the moment they save it. Editing
    * this plan later cannot change the template, and editing the template cannot change this plan.
    */
-  async function createTemplate(name: string, tagIds: string[]): Promise<{ ok: boolean; error?: string }> {
+  async function createTemplate(name: string): Promise<{ ok: boolean; error?: string }> {
     try {
+      // The practice's own tags travel with it, unasked (owner ruling 2026-09-14): the dialog
+      // used to re-ask them pre-filled, which was the same question twice — the Templates room
+      // is where a template's tags are edited when one should read broader than tonight.
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/plan-templates`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, tagIds, plan }),
+        body: JSON.stringify({ name, tagIds: planTagIds, plan }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) return { ok: false, error: json.error ?? 'Could not save that template.' };
@@ -626,10 +642,11 @@ export default function CoachPracticePlanPage({
       };
     });
 
-    // ⚠ Focus areas print ONLY when the person generating the sheet can see them. An assistant
-    // without `notes` gets the same sheet with the section absent — and the data never reached
-    // their browser in the first place, so there is nothing here to forget to hide.
-    const focus = canViewFocus
+    // ⚠ Focus areas print ONLY when the plan carries the section (the paper follows the screen —
+    // 2026-09-14) AND the person generating the sheet can see them. An assistant without `notes`
+    // gets the same sheet with the section absent — and the data never reached their browser in
+    // the first place, so there is nothing here to forget to hide.
+    const focus = plan.includeFocusAreas && canViewFocus
       ? roster.map(p => ({
           player: playerDisplayName(p),
           // Separated by a middot, not a comma: a focus area is a SENTENCE ("Backhand pickups —
@@ -656,10 +673,8 @@ export default function CoachPracticePlanPage({
         // written before Phase 3 still carries. ⚠ The sheet is subject to the same vocabulary
         // rule as the screen — these describe what was PLANNED, and the sheet says nothing about
         // what was done.
-        practiceTypes: [
-          ...planTagIds.map(id => focusTags.find(t => t.id === id)?.name).filter((n): n is string => !!n),
-          ...(plan.practiceTypes ?? []),
-        ],
+        description: plan.description ?? null,
+        practiceTypes: [...tagNamesById(planTagIds, focusTags), ...(plan.practiceTypes ?? [])],
         equipment: resolved.equipment ?? [],
         blocks, focus, settings,
       },
@@ -673,28 +688,19 @@ export default function CoachPracticePlanPage({
   }
 
   const event = data?.event;
+  /* ⚠ THE TITLE STAYS IN THE PAGE HEADER (stage 1 build call 1). The frame drew "← Practice plans"
+     as a bare link with the title inside the sheet; the house rule is ONE page header per page
+     with the back arrow in it (a fourth bare back-link is drift, and the page-actions guard
+     enumerates this site). The sheet's head therefore opens on the WHEN line — the ruling's own
+     home for a framing line is the card it frames. D8: the way back is Practice plans. */
   const header = (
-    <>
-      {/* Page-header ruling 2026-08-11: the meta row is BODY content — below the header block,
-          not inside it (its lineup-builder twin now reads identically). */}
-      <CoachPageHeader
-        icon={ClipboardList}
-        title={event?.name || 'Practice plan'}
-        helpLabel="Practice plan"
-        help={practiceHelpRequest}
-        backTo={{ href: `${base}/schedule${event ? `?event=${eventId}` : ''}`, label: 'Schedule' }}
-      />
-      <div className={styles.pageSummaryStrip}>
-        <span className={styles.lineupMetaText}>
-          {event?.startsAt ? `${fmtDate(event.startsAt)} · ${fmtTime(event.startsAt)}` : 'Plan this practice.'}
-        </span>
-        {event && (
-          <Link href={`${base}/schedule?event=${eventId}`} className={styles.lineupOnScheduleLink}>
-            <CalendarDays size={12} aria-hidden /> View on schedule
-          </Link>
-        )}
-      </div>
-    </>
+    <CoachPageHeader
+      icon={ClipboardList}
+      title={event?.name || 'Practice plan'}
+      helpLabel="Practice plan"
+      help={practiceHelpRequest}
+      backTo={{ href: `${base}/practice`, label: 'Practice plans' }}
+    />
   );
 
   if (!canSchedule) {
@@ -721,6 +727,62 @@ export default function CoachPracticePlanPage({
   // ONE definition of "is there a plan here", shared with the save path — otherwise a
   // whitespace-only goal reads as a plan on screen while the save path nulls the column.
   const hasPlan = !isPracticePlanEmpty(plan);
+  // The toolbar (stage 1, D5) reads the hub's definition of "has a plan" — at least one block. A
+  // goal typed and nothing else is a savable row (`hasPlan` above), not something to run or print.
+  const hasBlocks = practiceHasPlan({ practicePlan: plan });
+
+  /* The sheet's first line (stage 1, D3): how long the practice is, and how the plan fills it.
+     The length comes from the same helper the hub's "60 of 90 min" reads, so the two cannot
+     disagree; the fill is timed minutes only, with a rest-of-practice block named as such. */
+  const practiceLength = event?.startsAt ? practiceLengthMinutes(event.startsAt, event.endsAt) : null;
+  const fit = practicePlanFit(plan, practiceLength);
+  const remainderLabel = practiceRemainderLabel(fit);
+  // Unplanned time and an overrun are both worth a coach's eye; the rest block is spoken for.
+  const remainderTone = fit.remainder?.kind === 'rest' ? undefined : styles.ppDocWhenAmber;
+  const started = practiceStarted(event?.startsAt, nowMs);
+
+  /**
+   * The sheet's first line — three shapes, one flat function (the `renderPickList` idiom: a
+   * called function, never a component declared in the render body).
+   *   · no start (should not happen for a loaded practice) → "Plan this practice."
+   *   · no end → "20 min planned · no end set · Set it on the schedule ›"
+   *   · an end → "0 of 120 min planned · 120 unplanned" (the remainder in amber)
+   */
+  function renderWhenLine() {
+    if (!event?.startsAt) return <span className={styles.ppDocWhenLine}>Plan this practice.</span>;
+    const scheduleHref = `${base}/schedule?event=${eventId}`;
+    // The day and the clock share one line on a desktop; the phone stacks them (the frame's 390).
+    const when = (
+      <span className={styles.ppDocWhenLine}>
+        <span className={styles.ppDocWhenDay}>{fmtDay(event.startsAt)}</span>
+        <span className={styles.ppDocWhenSep}> · </span>
+        {fmtTime(event.startsAt)}
+        {practiceLength != null && event.endsAt ? `–${fmtTime(event.endsAt)} · ${practiceLength} min` : ''}
+      </span>
+    );
+    if (practiceLength == null) {
+      // Without an end the frame cannot be drawn; the fix is on the schedule. An end that IS set
+      // but sits at or before the start is said so — "no end set" would be a lie about a field
+      // the coach can see filled (/review, 2026-09-14).
+      const why = event.endsAt ? 'the end is before the start' : 'no end set';
+      return (
+        <>
+          {when}
+          {practicePlannedLabel(fit)} · {why} ·{' '}
+          <Link href={scheduleHref} className={styles.ppDocWhenLink}>
+            {event.endsAt ? 'Fix it on the schedule ›' : 'Set it on the schedule ›'}
+          </Link>
+        </>
+      );
+    }
+    return (
+      <>
+        {when}
+        {practicePlannedLabel(fit)}
+        {remainderLabel && <> · <span className={remainderTone}>{remainderLabel}</span></>}
+      </>
+    );
+  }
 
   /** The picker's name search, shared by the two practice sources so they cannot drift. */
   const matchesQuery = (name: string) => {
@@ -822,7 +884,7 @@ export default function CoachPracticePlanPage({
   }
 
   return (
-    <div className={`${styles.page} ${styles.pageWide} ${styles.lineupDockedPage}`}>
+    <div className={`${styles.page} ${styles.savePillPage}`}>
       {header}
       <UnsavedChangesGuard active={dirty} />
 
@@ -831,9 +893,9 @@ export default function CoachPracticePlanPage({
       ) : loadError ? (
         <p className={styles.errorText}>{loadError}</p>
       ) : !data ? null : (
-        <>
+        <div className={styles.ppSheetCol}>
           {/* ── The practice-week bridge (Scouting Book P3, plan §4.9) ──
-              One quiet line above the blocks: Saturday's intelligence while Tuesday's plan is
+              One quiet line above the sheet: Saturday's intelligence while Tuesday's plan is
               being built. Read-only glance — capture and curation stay on the book's own
               surfaces. Absent when the week has no booked opponent with book content, absent
               in archives (this screen is the LIVE planner; the read-only past-plan door is a
@@ -881,150 +943,178 @@ export default function CoachPracticePlanPage({
             />
           )}
 
+          {/* A nudge, not the page's action: the sheet under it carries the one lime (stage 1,
+              D5), so the roster door is the quiet variant with a secondary button — two limes on
+              a new team's first practice was the /review catch (2026-09-14). */}
           {!hasPlan && canWrite && data.roster.length === 0 && (
             <CoachEmptyState
+              quiet
               icon={<ClipboardList size={22} />}
               headline="Add your roster first"
               description="A practice plan puts your players into blocks, stations and groups."
               payoff="With a roster in place you can draw groups at random and print a sheet for whoever's running each station."
-              primaryAction={{ href: `${base}/roster`, label: 'Go to the roster' }}
+              secondaryAction={{ href: `${base}/roster`, label: 'Go to the roster' }}
             />
           )}
 
           {(hasPlan || canWrite) && (
             <>
-              <div className={styles.ppToolbar}>
-                {/* The door to the field screen (1b). Rides `schedule` like the rest of this page,
-                    so the assistant who runs the tee station reaches it too. ABSENT rather than
-                    disabled until there is something to run — a control that exists only to refuse
-                    is the shape 1a shipped three corrections for. */}
-                {hasPlan && (
-                  <Link href={`${base}/practice/${eventId}/run`} className={styles.btnSecondary}>
-                    <Play size={14} aria-hidden /> Run practice
-                  </Link>
-                )}
-                {/* ⚠ ONE control, now THREE sources (frame 05; P3 C2 added the third) — never a
-                    second door. Offered when there is anything at all to start from, which from
-                    P3 C2 includes a past season: without that clause the coach planning the first
-                    practice of a brand-new season, with no templates yet, saw no button at all —
-                    and they are precisely who the third source exists for. */}
-                {canWrite && (previousWithPlans.length > 0 || templates.length > 0 || hasPastSeasonPlans) && (
-                  <button type="button" className={styles.btnSecondary}
-                    onClick={() => {
-                      setCopyOpen(true);
-                      // Land on the fullest source the coach has, in order of nearness to tonight.
-                      openCopySource(
-                        templates.length > 0 ? 'template'
-                          : previousWithPlans.length > 0 ? 'previous'
-                            : 'past',
-                      );
-                    }}>
-                    <Copy size={14} aria-hidden /> Start this plan from…
+              {/* ── The toolbar — only once there is a plan (stage 1, D5) ──
+                  The blank page has no toolbar and no disabled Print: its one action is the
+                  first block, inside the sheet. "Start this plan from…" moved into the sheet
+                  too, as the ghost row's quiet alternative. What stays up here is what a
+                  written plan earns: the promotion and the paper.
+                  ⚠ NO "Run practice" here (owner ruling 2026-09-14). The builder offered the
+                  field door at ANY date and the run screen then counted the days; the door lives
+                  where the day is known — the hub card and the Overview card, inside the run
+                  window. Whether the plan page earns one back, and where, is stage 5's ruling. */}
+              {hasBlocks && (
+                <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
+                  {/* Explicit promotion, never automatic — the "Save to my drills…" bargain, one
+                      level up. */}
+                  {canWrite && (
+                    <button type="button" className={styles.btnSecondary} onClick={() => setSaveTemplateOpen(true)}>
+                      <BookMarked size={14} aria-hidden /> Save as template…
+                    </button>
+                  )}
+                  <button type="button" className={styles.btnSecondary} onClick={handlePrint}>
+                    <Printer size={14} aria-hidden /> Print the sheet
                   </button>
-                )}
-                {/* Explicit promotion, never automatic — the "Save to my drills…" bargain, one
-                    level up. Absent until there is something worth saving. */}
-                {canWrite && hasPlan && (
-                  <button type="button" className={styles.btnSecondary} onClick={() => setSaveTemplateOpen(true)}>
-                    <BookMarked size={14} aria-hidden /> Save as template…
-                  </button>
-                )}
-                <button type="button" className={styles.btnSecondary} disabled={!hasPlan} onClick={handlePrint}>
-                  <Printer size={14} aria-hidden /> Print the sheet
-                </button>
-              </div>
-
-              {/* ── The provenance line (D14, frame 05) ──
-                  ⚠ It is doing real work, not decoration: without it a coach reasonably fears that
-                  fixing tonight's warm-up rewrites the template for every future Tuesday. It says
-                  the quiet part out loud — every edit here is THIS practice's. It survives every
-                  edit, because "this plan started from Standard Tuesday" stays true however much
-                  they change; that is the opposite of a drill's provenance, and deliberately so. */}
-              {plan.templateName && (
-                <p className={styles.ppProvenance}>
-                  <BookMarked size={14} aria-hidden />
-                  <span>
-                    Started from <strong>{plan.templateName}</strong>. This plan is yours now —{' '}
-                    <strong>edit anything</strong>. Changes here won&apos;t change the template.
-                  </span>
-                </p>
+                </div>
               )}
 
-              <PracticePlanEditor
-                plan={plan}
-                onChange={updatePlan}
-                roster={data.roster}
-                goals={data.goals}
-                canViewFocus={data.canViewFocus}
-                attendance={data.attendance}
-                canViewAttendance={data.canViewAttendance}
-                focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
-                onFocusTagsChanged={reloadFocusTags}
-                staffManage={{ ...STAFF_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/staff-tags` }}
-                onStaffTagsChanged={reloadStaffTags}
-                equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
-                onEquipmentTagsChanged={reloadEquipmentTags}
-                drills={data.drills}
-                // Absent for a viewer who can't write drills, which removes "Save to my drills…"
-                // entirely rather than offering a control that only exists to refuse.
-                onCreateDrill={canWrite ? createDrill : undefined}
-                focusTags={focusTags}
-                onCreateFocusTag={canWrite ? createFocusTag : undefined}
-                staffTags={staffTags}
-                onCreateStaffTag={canWrite ? createStaffTag : undefined}
-                equipmentTags={equipmentTags}
-                onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
-                planTagIds={planTagIds}
-                onChangePlanTags={savePlanTags}
-                eventStartsAt={event?.startsAt ?? ''}
-                eventEndsAt={event?.endsAt ?? null}
-                readOnly={!canWrite}
-              />
+              {/* ── THE SHEET (stage 1, D2) — the page is a document. Its first line is when and
+                  how long (D3); the goal, the folds and the timeline are the editor's. */}
+              <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded">
+                <div className={styles.ppDocHead}>
+                  <div className={styles.ppDocWhen}>{renderWhenLine()}</div>
+                  {event && (
+                    <Link href={`${base}/schedule?event=${eventId}`} className={styles.ppDocHeadLink}>
+                      <CalendarDays size={12} aria-hidden /> View on schedule
+                    </Link>
+                  )}
+                </div>
+
+                {/* ── The provenance line (D14, frame 05) ──
+                    ⚠ It is doing real work, not decoration: without it a coach reasonably fears that
+                    fixing tonight's warm-up rewrites the template for every future Tuesday. It says
+                    the quiet part out loud — every edit here is THIS practice's. It survives every
+                    edit, because "this plan started from Standard Tuesday" stays true however much
+                    they change; that is the opposite of a drill's provenance, and deliberately so. */}
+                {plan.templateName && (
+                  <p className={styles.ppProvenance}>
+                    <BookMarked size={14} aria-hidden />
+                    <span>
+                      Started from <strong>{plan.templateName}</strong>. This plan is yours now —{' '}
+                      <strong>edit anything</strong>. Changes here won&apos;t change the template.
+                    </span>
+                  </p>
+                )}
+
+                <PracticePlanEditor
+                  // Keyed per practice so the editor's own state (which block is open, the folds)
+                  // resets on a same-leaf event switch BY DESIGN, not by the loading branch's
+                  // accident of unmounting it (/review, 2026-09-14).
+                  key={eventId}
+                  plan={plan}
+                  onChange={updatePlan}
+                  roster={data.roster}
+                  goals={data.goals}
+                  canViewFocus={data.canViewFocus}
+                  attendance={data.attendance}
+                  canViewAttendance={data.canViewAttendance}
+                  focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+                  onFocusTagsChanged={reloadFocusTags}
+                  staffManage={{ ...STAFF_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/staff-tags` }}
+                  onStaffTagsChanged={reloadStaffTags}
+                  equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
+                  onEquipmentTagsChanged={reloadEquipmentTags}
+                  drills={data.drills}
+                  // Absent for a viewer who can't write drills, which removes "Save to my drills…"
+                  // entirely rather than offering a control that only exists to refuse.
+                  onCreateDrill={canWrite ? createDrill : undefined}
+                  focusTags={focusTags}
+                  onCreateFocusTag={canWrite ? createFocusTag : undefined}
+                  staffTags={staffTags}
+                  onCreateStaffTag={canWrite ? createStaffTag : undefined}
+                  equipmentTags={equipmentTags}
+                  onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
+                  planTagIds={planTagIds}
+                  onChangePlanTags={savePlanTags}
+                  eventStartsAt={event?.startsAt ?? ''}
+                  eventEndsAt={event?.endsAt ?? null}
+                  readOnly={!canWrite}
+                  // ⚠ ONE control, THREE sources (frame 05; P3 C2 added the third) — never a
+                  // second door. Offered on the blank page when there is anything at all to
+                  // start from, which from P3 C2 includes a past season: without that clause the
+                  // coach planning the first practice of a brand-new season, with no templates
+                  // yet, saw no door at all — and they are precisely who the third source exists
+                  // for. The editor hides it the moment a block exists (stage 1, D5).
+                  onStartFrom={
+                    canWrite && (previousWithPlans.length > 0 || templates.length > 0 || hasPastSeasonPlans)
+                      ? () => {
+                          setCopyOpen(true);
+                          // Land on the fullest source the coach has, in order of nearness to tonight.
+                          openCopySource(
+                            templates.length > 0 ? 'template'
+                              : previousWithPlans.length > 0 ? 'previous'
+                                : 'past',
+                          );
+                        }
+                      : undefined
+                  }
+                />
+
+                {/* ── "How it went" (D17, frame 07) — ABSENT until the practice has started
+                    (stage 1, D7; stage 6 owns anything finer than "the start has passed") ──
+                    A SECOND, SEPARATE section under the plan, on the same principle as "Recorded
+                    here" below: the plan is what you INTENDED, this is what you thought afterwards.
+                    It is one of only two things on this screen allowed to describe reality, and it
+                    earns that because a coach sat down at home and typed it.
+
+                    ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** — D17's hard guardrail. The
+                    placeholder and the helper line both steer away from names, there is
+                    deliberately no per-player equivalent, and none may be added: per-child
+                    commentary would drift into behavioural profiling on minors.
+
+                    ⚠ This does NOT reopen D4. An unhurried note written at home is a different act
+                    from an abandoned tick-box mid-drill — nothing at the field records anything,
+                    and there are still no per-block "we ran it" ticks. */}
+                {!started ? (
+                  <p className={styles.ppDocNote}>&ldquo;How it went&rdquo; appears here once the practice has started.</p>
+                ) : (
+                  <div className={styles.ppDocFoot}>
+                    <h2 className={styles.ppRecordedTitle}><NotebookPen size={15} aria-hidden /> How it went</h2>
+                    <p className={styles.formHint}>For you and your staff. Families never see this.</p>
+                    {canWrite ? (
+                      <label className={styles.ppField}>
+                        <span className="sr-only">How it went</span>
+                        <textarea
+                          className={styles.textarea}
+                          rows={4}
+                          value={recap}
+                          maxLength={MAX_RECAP_LEN}
+                          placeholder="What would you do differently next time?"
+                          aria-label="How it went"
+                          onChange={e => { setRecap(e.target.value); setRecapDirty(true); setRecapSaved(false); }}
+                        />
+                        <span className={styles.formHint} aria-live="polite">
+                          {recapDirty ? 'Saving…' : recapSaved ? 'Saved · about the practice, not about a player'
+                            : 'About the practice, not about a player'}
+                        </span>
+                      </label>
+                    ) : recap ? (
+                      <p className={styles.ppReadTxt}>{recap}</p>
+                    ) : (
+                      // ⚠ Silence is stated, never rendered blank — a practice with nothing written
+                      // must not read as a practice where nothing happened.
+                      <p className={styles.ppRecapNone}>Nothing written down for this one.</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </>
           )}
-
-          {/* ── "How it went" (D17, frame 07) ──
-              A SECOND, SEPARATE section beside the plan, on the same principle as "Recorded here"
-              below: the plan is what you INTENDED, this is what you thought afterwards. It is one
-              of only two things on this screen allowed to describe reality, and it earns that
-              because a coach sat down at home and typed it.
-
-              ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** — D17's hard guardrail. The placeholder
-              and the helper line both steer away from names, there is deliberately no per-player
-              equivalent, and none may be added: per-child commentary would drift into behavioural
-              profiling on minors.
-
-              ⚠ This does NOT reopen D4. An unhurried note written at home is a different act from
-              an abandoned tick-box mid-drill — nothing at the field records anything, and there
-              are still no per-block "we ran it" ticks. */}
-          <div className={styles.ppRecorded}>
-            <h2 className={styles.ppRecordedTitle}><NotebookPen size={15} aria-hidden /> How it went</h2>
-            <p className={styles.formHint}>For you and your staff. Families never see this.</p>
-            {canWrite ? (
-              <label className={styles.ppField}>
-                <span className="sr-only">How it went</span>
-                <textarea
-                  className={styles.textarea}
-                  rows={4}
-                  value={recap}
-                  maxLength={MAX_RECAP_LEN}
-                  placeholder="What would you do differently next time?"
-                  aria-label="How it went"
-                  onChange={e => { setRecap(e.target.value); setRecapDirty(true); setRecapSaved(false); }}
-                />
-                <span className={styles.formHint} aria-live="polite">
-                  {recapDirty ? 'Saving…' : recapSaved ? 'Saved · about the practice, not about a player'
-                    : 'About the practice, not about a player'}
-                </span>
-              </label>
-            ) : recap ? (
-              <p className={styles.ppReadTxt}>{recap}</p>
-            ) : (
-              // ⚠ Silence is stated, never rendered blank — a practice with nothing written must
-              // not read as a practice where nothing happened.
-              <p className={styles.ppRecapNone}>Nothing written down for this one.</p>
-            )}
-          </div>
 
           {/* ── "Recorded here" (§10.2) ──
               A SECOND, SEPARATE section beside the plan, deliberately: the plan is what you
@@ -1049,24 +1139,13 @@ export default function CoachPracticePlanPage({
               </ul>
             </div>
           )}
-        </>
+        </div>
       )}
 
-      {/* Save status — docked above the bottom nav on phones, same as the lineup builder. */}
+      {/* The autosave word, floating at the window's foot (owner, 2026-09-14) — the bar it
+          replaced held nothing else. */}
       {canWrite && !loading && !loadError && (
-        <div className={`${styles.attendanceFooter} ${styles.lineupDockedFooter}`}>
-          {/* ⚠ THREE states, not two. Lumping "there are unsaved edits" in with "a request is in
-              flight" meant the pill said "Saving…" whenever anything was pending — so a coach had
-              no way to tell working from stuck, and the word was often simply untrue. Now
-              "Saving…" means a request really is open, and anything waiting says so plainly. */}
-          <span className={styles.saveStatus} aria-live="polite">
-            {saveError
-              ? <button type="button" className={styles.saveRetry} disabled={saving} onClick={handleSave}>Couldn’t save · Retry</button>
-              : saving ? 'Saving…'
-                : dirty ? 'Unsaved changes'
-                  : <><Check size={13} /> Saved</>}
-          </span>
-        </div>
+        <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
       )}
 
       {/* ── "Start this plan from…" — ONE picker, THREE sources (frame 05; P3 C2) ──
@@ -1121,15 +1200,10 @@ export default function CoachPracticePlanPage({
         </div>
       )}
 
-      {/* ── "Save as template…" (frame 04) — exactly ONE question, and it's optional ── */}
+      {/* ── "Save as template…" (frame 04) — exactly ONE question: the name ── */}
       {saveTemplateOpen && (
         <SaveAsTemplateDialog
           defaultName={event?.name ?? ''}
-          tags={focusTags}
-          initialTagIds={planTagIds}
-          onCreateTag={canWrite ? createFocusTag : undefined}
-          manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
-          onManageChanged={reloadFocusTags}
           onSave={createTemplate}
           onClose={() => setSaveTemplateOpen(false)}
         />
@@ -1152,28 +1226,20 @@ export default function CoachPracticePlanPage({
  * every keystroke.
  */
 function SaveAsTemplateDialog({
-  defaultName, tags, initialTagIds, onCreateTag, onSave, onClose, manage, onManageChanged,
+  defaultName, onSave, onClose,
 }: {
   defaultName: string;
-  tags: PickableTag[];
-  initialTagIds: string[];
-  onCreateTag?: (name: string) => Promise<PickableTag | null>;
-  onSave: (name: string, tagIds: string[]) => Promise<{ ok: boolean; error?: string }>;
+  onSave: (name: string) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
-  manage?: TagManageConfig;
-  onManageChanged?: () => void;
 }) {
   const [name, setName] = useState(defaultName);
-  // Pre-filled from what the practice is already about — the coach has answered this once tonight
-  // and should not be made to answer it again. Still editable: a template is a broader thing.
-  const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   async function submit() {
     if (!name.trim() || busy) return;
     setBusy(true); setError('');
-    const result = await onSave(name.trim(), tagIds);
+    const result = await onSave(name.trim());
     setBusy(false);
     if (!result.ok) { setError(result.error ?? 'Could not save that template.'); return; }
     onClose();
@@ -1197,26 +1263,13 @@ function SaveAsTemplateDialog({
               onChange={e => setName(e.target.value)} />
           </label>
 
-          <TagPicker
-            label="Tags — optional"
-            all={tags}
-            selected={tagIds}
-            onChange={setTagIds}
-            onCreate={onCreateTag}
-            manage={manage} onManageChanged={onManageChanged}
-            emptyHint="No tags yet — type a word to make your first one."
-          />
-          <p className={styles.formHint}>
-            Your own words, shared with your drills and your players&apos; focus areas — so tagging a
-            template &ldquo;Hitting&rdquo; is the same &ldquo;Hitting&rdquo; everywhere.
-          </p>
-
           {/* ⚠ Says what does NOT happen, on purpose. A coach saving a template mid-plan needs to
               know tonight is untouched and that later edits won't leak either way. */}
           <p className={styles.formHint}>
-            Saves the blocks, stations and timings as they are now. <strong>It does not change
-            tonight&apos;s practice</strong>, and editing this plan later won&apos;t change the template.
-            Players and staff aren&apos;t saved — the practice supplies those.
+            Saves the blocks, stations, timings and what this practice is about, as they are now.{' '}
+            <strong>It does not change tonight&apos;s practice</strong>, and editing this plan later
+            won&apos;t change the template. Players and staff aren&apos;t saved — the practice
+            supplies those. You can change the template&apos;s name and tags on the Templates tab.
           </p>
 
           {error && <p className={styles.errorText} role="alert">{error}</p>}

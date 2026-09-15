@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -23,7 +24,7 @@ import {
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
@@ -1176,6 +1177,11 @@ export default function CoachesSchedulePage({
 
   function openEditForm(event: RepTeamEvent) {
     const f = { ...eventToForm(event), tagIds: tagsByEventId[event.id] ?? [] };
+    // A practice needs an end (stage 1, D9). A practice from before that rule opens with its end
+    // pre-filled two hours on — the same seed the Add form gives — so a coach changing the
+    // location is not held at a greyed Save for a field they never touched; the seed is on
+    // screen, editable, and part of what they save (/review, 2026-09-14).
+    if (event.eventType === 'practice' && !f.endsAt && f.startsAt) f.endsAt = addHoursLocal(f.startsAt, 2);
     setForm(f);
     setOccurrenceOpponents({});
     setRemovedDates(new Set());
@@ -1249,6 +1255,18 @@ export default function CoachesSchedulePage({
   const formHasStart = recurringSeries
     ? Boolean(form.startTime && form.startDate && form.endDate && keptDates.length)
     : Boolean(form.startsAt);
+  /**
+   * A PRACTICE needs an end time (practices re-evaluation stage 1, owner ruling D9, 2026-09-14):
+   * the plan page's first line, its unplanned-time figure and the hub's "60 of 90 min" are all
+   * built on it. Games are untouched. An end at or before the start is not an end — the plan page
+   * would read "no end set" on a practice that has one — so it is refused here, in words, rather
+   * than saved and discovered on the sheet.
+   */
+  const practiceEndMissing = form.eventType === 'practice'
+    && (recurringSeries ? !form.endTime : !form.endsAt);
+  const practiceEndBeforeStart = form.eventType === 'practice' && !practiceEndMissing
+    && (recurringSeries ? form.endTime <= form.startTime : form.endsAt <= form.startsAt);
+  const practiceEndInvalid = practiceEndMissing || practiceEndBeforeStart;
   // A resource row blocks save only if it has content but is incomplete/has a bad URL; fully-empty
   // rows are fine (dropped on save).
   const resourcesInvalid = form.resources.some(r => {
@@ -2692,7 +2710,7 @@ export default function CoachesSchedulePage({
                       {summarizePracticePlan(selectedEvent.practicePlan)}
                       {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
                     </p>
-                    <div className={styles.ppToolbar} style={{ marginBottom: 0 }}>
+                    <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
                       <Link href={`${base}/practice/${selectedEvent.id}/run`} className={styles.btnSecondary}>
                         Run practice →
                       </Link>
@@ -2989,16 +3007,11 @@ export default function CoachesSchedulePage({
                 </div>
               )}
 
+              {/* The autosave word floats at the window's foot (owner, 2026-09-14) — the bar
+                  it replaced held nothing else, and inside a scrolling panel it only showed at
+                  the very end of the list. */}
               {attendanceRows.length > 0 && (
-                <div className={styles.attendanceFooter}>
-                  <span className={styles.saveStatus} aria-live="polite">
-                    {attendanceError
-                      ? <button type="button" className={styles.saveRetry} onClick={handleAttendanceSave}>Couldn’t save · Retry</button>
-                      : (attendanceSaving || attendanceDirty)
-                        ? 'Saving…'
-                        : <><Check size={13} /> Saved</>}
-                  </span>
-                </div>
+                <SaveStatusPill saving={attendanceSaving} dirty={attendanceDirty} error={attendanceError} onRetry={handleAttendanceSave} />
               )}
             </div>
             );
@@ -3253,8 +3266,16 @@ export default function CoachesSchedulePage({
                         <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>End time</label>
+                        {/* A practice needs an end (stage 1, D9) — every occurrence carries this one. */}
+                        <label className={styles.label}>End time{form.eventType === 'practice' ? ' *' : ''}</label>
                         <input className={styles.input} type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
+                        {/* Say why Save is grey, both ways — a bare asterisk is not a reason. */}
+                        {practiceEndMissing && (
+                          <p className={styles.formHint} role="alert">A practice needs an end time.</p>
+                        )}
+                        {practiceEndBeforeStart && (
+                          <p className={styles.formHint} role="alert">The end needs to be after the start.</p>
+                        )}
                       </div>
                       <div className={styles.field}>
                         <label className={styles.label}>Arrival time</label>
@@ -3330,8 +3351,16 @@ export default function CoachesSchedulePage({
                         <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Ends</label>
+                        {/* A practice needs an end (stage 1, D9) — the plan is built against it. */}
+                        <label className={styles.label}>Ends{form.eventType === 'practice' ? ' *' : ''}</label>
                         <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
+                        {/* Say why Save is grey, both ways — a bare asterisk is not a reason. */}
+                        {practiceEndMissing && (
+                          <p className={styles.formHint} role="alert">A practice needs an end time.</p>
+                        )}
+                        {practiceEndBeforeStart && (
+                          <p className={styles.formHint} role="alert">The end needs to be after the start.</p>
+                        )}
                       </div>
                     </div>
                     <div className={styles.field}>
@@ -3555,9 +3584,11 @@ export default function CoachesSchedulePage({
               <div className={styles.editScope}>
                 <p className={styles.editScopeMsg}>Apply your changes to:</p>
                 <div className={styles.editScopeBtns}>
-                  <button className={styles.btnSecondary} disabled={saving} onClick={() => handleUpdate('one')}>This event only</button>
-                  <button className={styles.btnSecondary} disabled={saving} onClick={() => handleUpdate('remaining')}>This &amp; future</button>
-                  <button className={styles.btnSecondary} disabled={saving} onClick={() => handleUpdate('all')}>All events</button>
+                  {/* The scope buttons SAVE — they hold to the same gate as Save changes, or a
+                      field edited after the chooser opened would slip past it (/review, 2026-09-14). */}
+                  <button className={styles.btnSecondary} disabled={saving || !formHasStart || resourcesInvalid || practiceEndInvalid} onClick={() => handleUpdate('one')}>This event only</button>
+                  <button className={styles.btnSecondary} disabled={saving || !formHasStart || resourcesInvalid || practiceEndInvalid} onClick={() => handleUpdate('remaining')}>This &amp; future</button>
+                  <button className={styles.btnSecondary} disabled={saving || !formHasStart || resourcesInvalid || practiceEndInvalid} onClick={() => handleUpdate('all')}>All events</button>
                   <button className={styles.btnGhost} disabled={saving} onClick={() => setEditScopeOpen(false)}>Back</button>
                 </div>
                 <p className={styles.formHint}>Repeating series — &ldquo;This &amp; future&rdquo; and &ldquo;All&rdquo; keep each event&apos;s own date and shift the rest.</p>
@@ -3568,7 +3599,7 @@ export default function CoachesSchedulePage({
                 <button className={styles.btnGhost} onClick={requestDiscardForm}>Cancel</button>
                 <button
                   className={styles.btnPrimary}
-                  disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid}
+                  disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid || practiceEndInvalid}
                   onClick={editingEventId && editingRecurring ? () => setEditScopeOpen(true) : handleSave}
                 >
                   {saving

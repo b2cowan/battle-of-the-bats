@@ -69,6 +69,8 @@ export const MAX_TAGS_PER_ITEM = 12;
 export const MAX_COACHING_POINTS = 8;
 export const MAX_TITLE_LEN = 120;
 export const MAX_TEXT_LEN = 600;
+/** The plan's free-text description — a paragraph, not a line. */
+export const MAX_DESCRIPTION_LEN = 2000;
 export const MAX_SHORT_TEXT_LEN = 200;
 export const MAX_MINUTES = 600;
 /** "How it went" — matched to the CHECK constraint in mig 221. */
@@ -91,8 +93,14 @@ export function emptyPracticePlan(): PracticePlan {
 /** True when a plan holds nothing worth storing (so the column goes back to NULL). */
 export function isPracticePlanEmpty(plan: PracticePlan | null | undefined): boolean {
   if (!plan) return true;
-  return !plan.goal?.trim() && !plan.equipment?.length && !plan.equipmentTagIds?.length
-    && !plan.practiceTypes?.length && plan.blocks.length === 0;
+  // Every plan-level field that counts as content, one per line — appending the next one is one
+  // entry, not a `!` and an `&&` in the right place. The focus section counts: a coach who adds it
+  // and saves must find it there on reload.
+  const hasContent = [
+    plan.goal?.trim(), plan.description?.trim(), plan.practiceTypes?.length,
+    plan.equipment?.length, plan.equipmentTagIds?.length, plan.includeFocusAreas,
+  ].some(Boolean);
+  return !hasContent && plan.blocks.length === 0;
 }
 
 // ── Sanitiser ────────────────────────────────────────────────────────────────
@@ -408,6 +416,8 @@ export function sanitizePracticePlan(
   if (templateName) plan.templateName = templateName;
   const goal = optionalStr(raw.goal, MAX_TEXT_LEN);
   if (goal) plan.goal = goal;
+  const description = optionalStr(raw.description, MAX_DESCRIPTION_LEN);
+  if (description) plan.description = description;
   const practiceTypes = tagList(raw.practiceTypes, MAX_TAGS_PER_ITEM, MAX_TITLE_LEN);
   if (practiceTypes) plan.practiceTypes = practiceTypes;
   // "kit" was the pre-2026-08-01 free-text spelling of the same idea.
@@ -415,6 +425,8 @@ export function sanitizePracticePlan(
   if (equipment) plan.equipment = equipment;
   const equipmentTagIds = strList(raw.equipmentTagIds, MAX_TAGS_PER_ITEM, 64);
   if (equipmentTagIds) plan.equipmentTagIds = equipmentTagIds;
+  // "What everyone's working on" — a shape flag, stored only when true (see PracticePlan).
+  if (raw.includeFocusAreas === true) plan.includeFocusAreas = true;
 
   let scoped = rosterPlayerIds ? restrictToRoster(plan, rosterPlayerIds) : plan;
   if (validStaffTagIds || validEquipmentTagIds) {
@@ -515,6 +527,14 @@ export interface BlockClock {
 
 const CLOCK_FORMAT: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
 
+/** The clock walk's whole answer: one clock per block, and where the walk STOPPED. */
+export type BlockClockWalk = {
+  clocks: BlockClock[];
+  /** Where the next block would start — the cursor after the last block. Null with no start time. */
+  nextStartMs: number | null;
+  nextStartLabel: string | null;
+};
+
 /**
  * The running time column: the coach types minutes, the product does the clock.
  *
@@ -524,20 +544,26 @@ const CLOCK_FORMAT: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-d
  *
  * A "rest of practice" block runs from its start to the event's end time; with no end time set,
  * its end is honestly unknown and renders as null rather than a guess.
+ *
+ * `walkBlockClocks` also reports where the walk ENDED (`nextStartMs`) — the sheet's ghost row
+ * says when the next block would start, and that answer belongs to the one walk rather than to a
+ * caller smuggling a fake block through it (/simplify, 2026-09-14). `computeBlockClocks` is the
+ * same walk, clocks only.
  */
-export function computeBlockClocks(
+export function walkBlockClocks(
   blocks: readonly PracticePlanBlock[],
   eventStartsAt: string | null | undefined,
   eventEndsAt: string | null | undefined,
-): BlockClock[] {
-  if (!eventStartsAt) return [];
+): BlockClockWalk {
+  const none: BlockClockWalk = { clocks: [], nextStartMs: null, nextStartLabel: null };
+  if (!eventStartsAt) return none;
   const startMs = new Date(eventStartsAt).getTime();
-  if (Number.isNaN(startMs)) return [];
+  if (Number.isNaN(startMs)) return none;
   const endMs = eventEndsAt ? new Date(eventEndsAt).getTime() : NaN;
   const at = (ms: number) => formatInOrgZone(new Date(ms).toISOString(), CLOCK_FORMAT);
 
   let cursor = startMs;
-  return blocks.map(block => {
+  const clocks = blocks.map(block => {
     const blockStart = cursor;
     if (block.duration.restOfPractice) {
       const hasEnd = !Number.isNaN(endMs) && endMs > blockStart;
@@ -561,6 +587,15 @@ export function computeBlockClocks(
       restOfPractice: false,
     };
   });
+  return { clocks, nextStartMs: cursor, nextStartLabel: at(cursor) };
+}
+
+export function computeBlockClocks(
+  blocks: readonly PracticePlanBlock[],
+  eventStartsAt: string | null | undefined,
+  eventEndsAt: string | null | undefined,
+): BlockClock[] {
+  return walkBlockClocks(blocks, eventStartsAt, eventEndsAt).clocks;
 }
 
 /** "25 min" · "Rest of practice" · "" — the one duration phrasing, used by the
@@ -583,6 +618,11 @@ export function formatDuration(duration: PracticeDuration): string {
  * "6 blocks · 60 min · 1 rotation" when it is not ("of 90" says what "planned" said, better; the
  * frame reads "60 min" without it). One builder for the parts, so the two readings cannot drift.
  * With zero timed minutes the fit is unknowable and the line falls back to the count.
+ *
+ * ⚠ Deliberately says nothing about a "rest of practice" block — a row is one line. The SHEET's
+ * own line (`practicePlanFit` in lib/practice-state.ts) has the room to name the remainder ("30
+ * of 90 min planned · 60 rest of practice"); both count the same timed minutes, so the figures
+ * agree even where the phrasing differs.
  */
 export function summarizePracticePlan(
   plan: PracticePlan,
@@ -1014,11 +1054,15 @@ export function copyPracticePlanForReuse(
   return {
     version: PRACTICE_PLAN_VERSION,
     ...(scoped.goal ? { goal: scoped.goal } : {}),
+    ...(scoped.description ? { description: scoped.description } : {}),
     ...(scoped.practiceTypes ? { practiceTypes: scoped.practiceTypes } : {}),
     ...(scoped.equipment ? { equipment: scoped.equipment } : {}),
     // ⚠ Real tag ids (mig 266) carry forward too — `...block`/`...s` below already copy
     // `staffTagIds`/`equipmentTagIds` at the block/station level for the same reason.
     ...(scoped.equipmentTagIds ? { equipmentTagIds: scoped.equipmentTagIds } : {}),
+    // Shape, like kit: a template that carries the focus section hands it to every plan started
+    // from it (owner ruling 2026-09-14). The section still reads only for those who may see goals.
+    ...(scoped.includeFocusAreas ? { includeFocusAreas: true } : {}),
     blocks: scoped.blocks.map(block => ({
       ...block,
       id: newId(),
@@ -1044,15 +1088,33 @@ export function copyPracticePlanForReuse(
  * the distinction between "no ids, legacy text" and "ids, resolved text" that the sanitiser and the
  * editor still need.
  */
+/**
+ * The CURRENT names for a list of tag ids, in the list's order, dropping any id the library no
+ * longer holds (merged away, retired, a stale read). The one id→name walk every display of a
+ * tag list shares — the sheet's "About this practice" line, the printed sheet's practice types.
+ */
+export function tagNamesById(
+  ids: readonly string[] | undefined,
+  tags: readonly { id: string; name: string }[] | ReadonlyMap<string, string>,
+): string[] {
+  if (!ids?.length) return [];
+  const byId: ReadonlyMap<string, string> = Array.isArray(tags)
+    ? new Map((tags as readonly { id: string; name: string }[]).map(t => [t.id, t.name]))
+    : (tags as ReadonlyMap<string, string>);
+  return ids.map(id => byId.get(id)).filter((n): n is string => !!n);
+}
+
 export function resolvePracticePlanTagNames(
   plan: PracticePlan,
   staffTags: readonly { id: string; name: string }[],
   equipmentTags: readonly { id: string; name: string }[],
 ): PracticePlan {
+  // The maps are built once and handed to the ONE id→name walk (`tagNamesById`), which used to
+  // have a private twin here (/simplify, 2026-09-14).
   const staffById = new Map(staffTags.map(t => [t.id, t.name]));
   const equipmentById = new Map(equipmentTags.map(t => [t.id, t.name]));
   const resolve = (ids: string[] | undefined, byId: Map<string, string>, fallback: string[] | undefined) =>
-    ids?.length ? ids.map(id => byId.get(id)).filter((n): n is string => !!n) : fallback;
+    ids?.length ? tagNamesById(ids, byId) : fallback;
 
   return {
     ...plan,
