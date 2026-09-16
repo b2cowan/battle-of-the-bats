@@ -13,6 +13,7 @@ import {
   getRepTeamStaffForYear,
   getRepTeamDevelopmentGoalsForPlayers,
   getDrillsForTeam,
+  getRepTeamCircuits,
   getRepTeamPlanTemplates,
   getRepTeamTagLibrary,
   getRepTeamEventTagsMap,
@@ -130,7 +131,7 @@ export const GET = withObservability(async (_req: Request,
   const playersPromise = getRepRosterPlayers(programYear.id)
     .then(all => all.filter(p => p.status === 'active'));
   const [
-    players, goals, attendance, previousEvents, sessions, staff, drills,
+    players, goals, attendance, previousEvents, sessions, staff, drills, circuits,
     templates, focusTags, staffTags, equipmentTags, eventTagMap, scoutingBridge, hasPastSeasonPlans,
   ] = await Promise.all([
     playersPromise,
@@ -159,6 +160,9 @@ export const GET = withObservability(async (_req: Request,
     // as the previous-plans read above: on a database without migration 218 the table doesn't
     // exist, and losing the picker must not take the whole plan screen down with it.
     getDrillsForTeam(ctx.org.id, teamId).catch(() => []),
+    // The circuit library (stage 4, L9) — the docked panel's second face and the picker's third
+    // tab. Active only, non-fatal, exactly as the drills.
+    getRepTeamCircuits(teamId).catch(() => []),
     // The plan library (Phase 3) — the other half of "Start this plan from…". Active only: a
     // retired template must never be offered while building a practice. Non-fatal for the same
     // reason as the reads above.
@@ -279,6 +283,8 @@ export const GET = withObservability(async (_req: Request,
     // nothing while breaking the preview. Drills carry no player data of any kind (D20), so there
     // is no PII here to gate — unlike focus areas, which stay behind `notes` above.
     drills,
+    // The same read gate as `drills`, for the same reason: a circuit carries no people (L9).
+    circuits,
     viewerName,
     canWrite: canWritePracticePlans(caps),
     canViewFocus: showFocus,

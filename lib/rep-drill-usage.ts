@@ -17,7 +17,7 @@
  * one that ranks people.
  */
 import type { PracticePlan, PracticeStation } from './rep-practice-plan';
-import type { DrillInput } from './rep-drills';
+import { blockToDrillInput, stationToDrillInput, type DrillInput } from './rep-drills';
 
 /** Every station in a plan, flattened — one place that knows where stations live. */
 function stationsOf(plan: PracticePlan | null | undefined): PracticeStation[] {
@@ -80,6 +80,17 @@ export interface ImportableDrill {
  * ⚠ A station that was ITSELF picked from a drill is skipped. It came out of a library, so offering
  * to import it back in is a loop that produces duplicates of drills the coach already has.
  *
+ * ⚠ **A BARE WRITTEN BLOCK is offered too** (practices re-evaluation stage 4, owner ruling L1,
+ * 2026-09-16) — a titled block with NO stations is the activity (stage 3's D13), and last year's
+ * written warm-up was the one thing this list could not see. It arrives with its minutes as the
+ * drill's "usually" (`blockToDrillInput`). The blocks and the stations share ONE name key: a
+ * warm-up written as a block one night and as a station another is one row, the newest wording
+ * kept, never two texts merged. Kit on a past block is tag IDS (D11) and this walk has no library
+ * to resolve them against, so it carries none — the coach's tags are asked for on the save anyway.
+ * A block WITH stations is a circuit's shape, not a drill's: only its written stations are offered
+ * here (the Circuits tab's own import takes the whole block), and the block's intro words — the
+ * circuit's, not any one station's — are not offered as a drill.
+ *
  * @param plans past-season plans ONLY — the caller excludes the live season, because a station in
  *   this season's plan is reachable through "Save to my drills…" on the plan itself.
  * @param existingNames active drill names already in the library, for the greyed-out state.
@@ -94,34 +105,29 @@ export function collectImportableDrills(
   // Newest first, so the FIRST time a name is seen carries the words worth keeping.
   const ordered = [...plans].sort((a, b) => (b.startsAt ?? '').localeCompare(a.startsAt ?? ''));
 
+  const offer = (name: string, drill: DrillInput, startsAt: string | null) => {
+    const key = name.toLowerCase();
+    const seen = byName.get(key);
+    if (seen) { seen.planCount += 1; return; }
+    byName.set(key, { key, drill, planCount: 1, lastPlannedAt: startsAt, alreadyInLibrary: have.has(key) });
+  };
+
   for (const { plan, startsAt } of ordered) {
-    for (const station of stationsOf(plan)) {
-      if (station.drillId) continue; // already came from the library
-      const name = station.name.trim();
-      if (!name) continue;
-      const key = name.toLowerCase();
-
-      const seen = byName.get(key);
-      if (seen) { seen.planCount += 1; continue; }
-
-      byName.set(key, {
-        key,
-        drill: {
-          name,
-          // ⚠ NOT inferred. A past station carries no tags, and guessing them from keywords is the
-          // confident lie §4 forbids — the coach is asked when they save it.
-          tagIds: [],
-          usualMinutes: null,
-          description: station.description ?? null,
-          goal: station.goal ?? null,
-          coachingPoints: station.coachingPoints ?? [],
-          setup: station.setup ?? null,
-          equipment: station.equipment ?? [],
-        },
-        planCount: 1,
-        lastPlannedAt: startsAt,
-        alreadyInLibrary: have.has(key),
-      });
+    for (const block of plan?.blocks ?? []) {
+      if ((block.stations?.length ?? 0) === 0) {
+        const name = block.title.trim();
+        if (!name) continue;
+        // ⚠ NOT inferred. A past block carries no tags, and guessing them from keywords is the
+        // confident lie §4 forbids — the coach is asked when they save it.
+        offer(name, blockToDrillInput(block, []), startsAt);
+        continue;
+      }
+      for (const station of block.stations ?? []) {
+        if (station.drillId) continue; // already came from the library
+        const name = station.name.trim();
+        if (!name) continue;
+        offer(name, stationToDrillInput({ ...station, name }), startsAt);
+      }
     }
   }
 

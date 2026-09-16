@@ -1553,6 +1553,17 @@ export interface PracticePlanBlock {
   stations?: PracticeStation[];
   /** Groups + the clock. Present when the block's stations rotate. */
   rotation?: PracticeRotation | null;
+  /**
+   * PROVENANCE ONLY — which CIRCUIT this block was placed from (practices re-evaluation stage 4,
+   * owner ruling L9, 2026-09-16; mig 302), plus its name snapshotted at placement so the line
+   * keeps reading after a rename or a retire. The template's idiom (`PracticePlan.templateId`)
+   * one level down, and it follows the TEMPLATE's rule, not the drill's: a placed circuit is
+   * SCAFFOLDING — fully editable, and the id SURVIVES every edit, because "started from Skills
+   * circuit" stays true however much the coach then changes it. Nothing renders from the circuit
+   * row itself. Optional and whitelisted by the sanitiser; no plan version bump.
+   */
+  circuitId?: string;
+  circuitName?: string;
 }
 
 export interface PracticePlan {
@@ -2020,6 +2031,43 @@ export interface RepTeamPlanTemplateWithUsage extends RepTeamPlanTemplate {
   // `plan` at render time by `templateShapeLabel`, which every surface shares — sending them as
   // numbers alongside the plan they come from would be the second source of truth this row's
   // original note already warned against.
+}
+
+/**
+ * A CIRCUIT — a saved block WITH STATIONS, the third size of reusable thing (practices
+ * re-evaluation stage 4, owner ruling L9, 2026-09-16; mig 302). A drill is one station's worth
+ * and an identity; a template is a whole practice and scaffolding; a circuit sits between them
+ * and follows the TEMPLATE's rule one level down: placed on a practice it is copied, fully
+ * editable, and carries `circuitId` + `circuitName` as provenance. Rules live in
+ * `lib/rep-circuits.ts`.
+ *
+ * ⚠ It carries NO PEOPLE: `blockToCircuitShape` strips staff, players, groups, "just for tonight"
+ * notes and any hand-arranged grid on every write and every read. The drill-backed stations
+ * INSIDE it keep their `drillId` (the template's own rule — stripping them would silently break
+ * every drill's count).
+ */
+export interface RepTeamCircuit {
+  id: string;
+  orgId: string;
+  /** NOT nullable: club-wide circuits were never asked for and are not built. See mig 302. */
+  teamId: string;
+  name: string;
+  /** Several, from the same 'focus' vocabulary as drills, templates, plans and focus areas. */
+  tags: RepTeamTag[];
+  /** ONE block's shape — the same structure as an entry of `PracticePlan.blocks`. Copied on placement. */
+  block: PracticePlanBlock;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A circuit plus its honest usage figures. */
+export interface RepTeamCircuitWithUsage extends RepTeamCircuit {
+  /** ⚠ Plans this circuit was PLACED on — never practices run ("Started N plans"). */
+  planCount: number;
+  /** ISO date of the most recent plan it was placed on, or null. ⚠ "last planned", never "last run". */
+  lastPlannedAt: string | null;
 }
 
 /**

@@ -1,15 +1,26 @@
 'use client';
 import { X } from 'lucide-react';
+import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
+import type { PickableTag } from '@/components/coaches/TagPicker';
+import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * The two field pieces the practice editor, the station modal and the drill library's editor
- * share (practices re-evaluation stage 3, owner ruling D7, 2026-09-15 — stage 2's D10 finished):
- * a field's small-caps label, and Coaching points as ONE field, one point per line.
+ * The field pieces the practice editor, the station modal and the drill library's sheet share
+ * (practices re-evaluation stage 3, owner ruling D7, 2026-09-15 — stage 2's D10 finished; grown
+ * to the FIVE teaching fields at stage 4, owner ruling L6, 2026-09-16): a field's small-caps
+ * label, Coaching points as ONE field, and `TeachingFields` — what you're doing · what you're
+ * watching for · coaching points · setup · equipment, in that order and those words, rendered from
+ * a station or from a drill.
  *
- * Three surfaces, one recipe. The block took the single field at stage 2 while the station and the
- * drill editor kept numbered rows "for one stage" — two shapes for one idea. This is the one shape,
- * moved out of the plan editor so the drill library can read it without importing the editor.
+ * ⚠ ONE FIELD LIST, TWO FACES — NOT one component. A station is rendered from a plan under autosave
+ * (its fields follow the block's door idiom when flattened, and its foot is Delete this station
+ * and a stepper); a drill from a library row under an explicit Save (every field simply shown, and
+ * its foot Retire · Cancel · Save). What they share is the LIST — the same five things in the same
+ * order with the same placeholders — so a coach who learns the station modal knows the drill
+ * sheet. The practice half a station has and a drill never does (who runs it, who's at it, just
+ * for tonight) and the library half a drill has and a station never does (tags, usually) are each
+ * caller's own.
  */
 
 export function FieldLabel({ children, onRemove, removeLabel }: {
@@ -90,5 +101,105 @@ export function CoachingPointsField({
         </span>
       )}
     </div>
+  );
+}
+
+/** The five teaching fields' values — a station's or a drill's, read through one shape. */
+export interface TeachingValues {
+  description?: string | null;
+  goal?: string | null;
+  coachingPoints?: string[] | null;
+  setup?: string | null;
+  /** Legacy free-text kit names (shown as adopt rows by the picker; never written back). */
+  equipment?: string[] | null;
+  /** Real 'equipment' tag ids — the live storage. */
+  equipmentTagIds?: string[] | null;
+}
+
+/** An optional field's door state where the caller folds fields behind doors (the flattened
+ *  station); `{ show: true }` everywhere else. */
+export interface TeachingDoor {
+  show: boolean;
+  onRemove?: () => void;
+  removeLabel?: string;
+  autoFocus?: boolean;
+}
+/** The door state of a field that is simply shown — every field of the station modal and the drill sheet. */
+export const OPEN_DOOR: TeachingDoor = { show: true };
+
+/**
+ * What you're doing · what you're watching for · coaching points · setup · equipment — the one list.
+ *
+ * `doors` lets the flattened station keep its door idiom (an empty optional field waits at the
+ * block's foot); absent, every field shows. The caps are the CALLER's — the plan's and the
+ * library's happen to agree today, and each keeps naming its own so a change to one cannot
+ * silently move the other.
+ */
+export function TeachingFields({
+  values, readOnly, noun, doingPlaceholder, doors, maxText, maxPoints, maxPointLen,
+  equipmentTags, onCreateEquipmentTag, equipmentManage, onEquipmentTagsChanged, onPatch,
+}: {
+  values: TeachingValues;
+  readOnly?: boolean;
+  /** The noun the points cap names — "station", "drill". */
+  noun: string;
+  /** What you're doing asks in the caller's own words ("What happens at this station"). */
+  doingPlaceholder: string;
+  doors?: (door: 'points' | 'setup' | 'equipment') => TeachingDoor;
+  maxText: number;
+  maxPoints: number;
+  maxPointLen: number;
+  equipmentTags: PickableTag[];
+  onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
+  equipmentManage?: TagManageConfig;
+  onEquipmentTagsChanged?: () => void;
+  onPatch: (patch: Partial<TeachingValues>) => void;
+}) {
+  const door = (id: 'points' | 'setup' | 'equipment'): TeachingDoor => (doors ? doors(id) : OPEN_DOOR);
+  const points = door('points'), setup = door('setup'), equipment = door('equipment');
+  return (
+    <>
+      <label className={styles.ppField}>
+        <FieldLabel>What you&apos;re doing</FieldLabel>
+        <textarea className={styles.textarea} rows={2} value={values.description ?? ''} disabled={readOnly}
+          maxLength={maxText} placeholder={doingPlaceholder}
+          onChange={e => onPatch({ description: e.target.value })} />
+      </label>
+      <label className={styles.ppField}>
+        <FieldLabel>What you&apos;re watching for</FieldLabel>
+        <input className={styles.input} value={values.goal ?? ''} disabled={readOnly}
+          maxLength={maxText} placeholder="What good looks like here"
+          onChange={e => onPatch({ goal: e.target.value })} />
+      </label>
+      {points.show && (
+        <CoachingPointsField points={values.coachingPoints ?? undefined} readOnly={readOnly}
+          maxPoints={maxPoints} maxLen={maxPointLen} noun={noun}
+          onSet={next => onPatch({ coachingPoints: next })}
+          onRemove={points.onRemove} removeLabel={points.removeLabel} autoFocus={points.autoFocus} />
+      )}
+      {setup.show && (
+        <div className={styles.ppField}>
+          <FieldLabel onRemove={setup.onRemove} removeLabel={setup.removeLabel}>Setup</FieldLabel>
+          <textarea className={styles.textarea} rows={2} value={values.setup ?? ''} disabled={readOnly}
+            maxLength={maxText} aria-label="Setup" autoFocus={setup.autoFocus}
+            placeholder="How it's laid out — where things go, and how far apart"
+            onChange={e => onPatch({ setup: e.target.value })} />
+        </div>
+      )}
+      {equipment.show && (
+        <div className={styles.ppField}>
+          <FieldLabel onRemove={equipment.onRemove} removeLabel={equipment.removeLabel}>Equipment</FieldLabel>
+          {/* One Tag Idiom P3 (mig 272): the kit is the real 'equipment' library — the SAME field a
+              station and a drill use, so "L-screen" is one word wherever it appears. Old free-text
+              names render as one-press adopt rows in the dropdown; never a silent import. */}
+          <PracticeTagPicker all={equipmentTags} ids={values.equipmentTagIds ?? []}
+            legacyNames={values.equipment ?? undefined} disabled={readOnly} onCreate={onCreateEquipmentTag}
+            manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
+            onChange={next => onPatch({ equipmentTagIds: next })}
+            emptyHint="No equipment yet — type an item to add your first one."
+            autoFocus={equipment.autoFocus} />
+        </div>
+      )}
+    </>
   );
 }

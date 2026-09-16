@@ -168,7 +168,7 @@ then ruled, then built** (kickoff prompt `COACH_PRACTICES_STAGE4_PLANNING_PROMPT
 templates, the library beside the plan on desktop, the owner's ruling on drag (S.4 — ruled together with the groups board's
 D10, one reason at two scales), empty templates no longer offered as starts, and the drill editor's shape.
 
-## Stage 4 · The library — DRAWN 2026-09-16 on the hub · to rule · no code
+## Stage 4 · The library — RULED 2026-09-16 (L1–L8 as drawn; L9 in words) · BUILT ON DEV 2026-09-16 · walk owed (§195) · commit owed
 
 **What a coach sees and does differently.** The Drills and Templates tabs become tables you can actually browse: a drill row
 reads its name, its tags, how long it usually runs, "In 8 plans" and the first line of what you're doing; a template row
@@ -208,5 +208,22 @@ circuits…* on one with stations); the save asks two optional questions — tag
 (the saved circuit then points at those drills; tonight's block is left exactly as it is); a fourth tab, **Practices ·
 Templates · Circuits · Drills** (a size ladder); the docked panel switches Drills · Circuits; a circuit drags into a gap and
 lands as a whole, editable block — its stations and rotation, never its people — with "Started from Skills circuit · changes
-here stay here". A circuit follows the template's rule (scaffolding), not the drill's. It is the stage's one migration. **Next:
-build from the stage-4 build prompt; the walk follows.**
+here stay here". A circuit follows the template's rule (scaffolding), not the drill's. It is the stage's one migration.
+
+**Built on dev 2026-09-16, as ruled.** What a coach has now: the three library tabs are tables where the row is the door
+(a drill row: name · tags · the first line · how long it usually runs · which plans; a template row: name · tags · its
+blocks' titles · length · how many plans it started; a circuit row: name · tags · its stations' names · usually · plans),
+with retired things under "Show retired" and Retire moved into the drill's sheet and the template's and circuit's own
+header; the drill sheet is the station's shape; a written block keeps as a drill with its minutes, a block with stations
+keeps as a circuit with two optional questions (the tick makes the drills first and points the circuit at them; tonight's
+block is untouched); on a wide desktop a **Library** button beside the plan docks the drills and circuits next to the sheet
+(remembered on that computer) and, with a mouse, a row drags into a gap or onto the open block's stations and a block
+drags by its start-time cell — while every drop has a button that does the same, and nothing lifts on a phone; a circuit
+placed on a plan is editable and says where it started; an empty template is not offered as a start; the provenance line
+is one sentence; the hub's past list is six with "Every practice this season ›" under it. **Measured against the frames:**
+the docked pair at 1440 is the sheet 816 · a 20px gap · the panel 320 — exactly the header's 1,156 column; the library
+rows 88–89px on desktop, phone cards 97–116px against the 267px rows they replace; the drill sheet 640 × 744. Simplified,
+reviewed (five lenses; the one High — a press on a reorder arrow that drifted became a drag — fixed and proven) and the
+help synced (a new Circuits article; the drills article no longer promises "four taps"). **What is owed:** the owner's
+walk on the hub's "QA walk · 4" tab (32 steps; ledger §195), then the commit on the owner's word, and migration 302 on
+prod before the code that reads it.

@@ -5,6 +5,7 @@ import {
   collectTags,
   filterTagged,
   UNTAGGED_FILTER,
+  blockToDrillInput,
   detachStationFromDrill,
   drillToStation,
   sortDrillsForPicker,
@@ -288,6 +289,71 @@ describe('importing from a past season', () => {
       [],
     );
     assert.equal(rows.length, 0);
+  });
+
+  /* Stage 4, L1 — the bare written BLOCK is the activity (D13) and is offered too. */
+  const bare = (blocks: unknown[]) => sanitizePracticePlan({ blocks });
+
+  it('offers a bare written block, with its minutes as the drill’s usually', () => {
+    const rows = collectImportableDrills(
+      [{ plan: bare([{ title: 'Warm-up', duration: { minutes: 10 }, description: 'Dynamic, then partners.', coachingPoints: ['Heads up'] }]), startsAt: '2025-05-01T00:00:00Z' }],
+      [],
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].drill.name, 'Warm-up');
+    assert.equal(rows[0].drill.usualMinutes, 10);
+    assert.equal(rows[0].drill.description, 'Dynamic, then partners.');
+    assert.deepEqual(rows[0].drill.coachingPoints, ['Heads up']);
+    assert.equal(rows[0].drill.setup, null, 'a block has no setup field');
+  });
+
+  it('a block WITH stations is not a drill — only its written stations are offered', () => {
+    const rows = collectImportableDrills(
+      [{ plan: bare([{ title: 'Circuit', duration: { minutes: 45 }, stations: [{ name: 'Ladder' }, { name: 'Finishing' }] }]), startsAt: '2025-05-01T00:00:00Z' }],
+      [],
+    );
+    assert.deepEqual(rows.map(r => r.drill.name).sort(), ['Finishing', 'Ladder']);
+  });
+
+  it('a block and a station share ONE name key — the newest wording wins, two texts never merge', () => {
+    const rows = collectImportableDrills([
+      { plan: bare([{ title: 'Warm-up', duration: { minutes: 10 }, description: 'as a block' }]), startsAt: '2025-08-01T00:00:00Z' },
+      { plan: plan([{ name: 'warm-up', description: 'as a station' }]), startsAt: '2025-05-01T00:00:00Z' },
+    ], []);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].drill.description, 'as a block');
+    assert.equal(rows[0].drill.usualMinutes, 10);
+    assert.equal(rows[0].planCount, 2);
+  });
+
+  it('an untitled bare block is not offered', () => {
+    const rows = collectImportableDrills(
+      [{ plan: bare([{ title: '', duration: { minutes: 10 }, description: 'words' }]), startsAt: '2025-05-01T00:00:00Z' }],
+      [],
+    );
+    assert.equal(rows.length, 0);
+  });
+});
+
+describe('blockToDrillInput — the bare written block as a drill (stage 4, L1)', () => {
+  it('mirrors stationToDrillInput, with the title as the name and the minutes as usually', () => {
+    const d = blockToDrillInput(
+      { title: '  Warm-up ', duration: { minutes: 10 }, description: 'Doing', goal: 'Watching', coachingPoints: ['A', 'B'] },
+      ['Cones', 'Balls'], ['tg1'],
+    );
+    assert.equal(d.name, 'Warm-up');
+    assert.equal(d.usualMinutes, 10);
+    assert.equal(d.description, 'Doing');
+    assert.equal(d.goal, 'Watching');
+    assert.deepEqual(d.coachingPoints, ['A', 'B']);
+    assert.deepEqual(d.equipment, ['Cones', 'Balls']);
+    assert.equal(d.setup, null);
+    assert.deepEqual(d.tagIds, [], 'ids are shape-checked as uuids — a stray label is dropped');
+  });
+
+  it('a rest-of-practice block has no number to give', () => {
+    const d = blockToDrillInput({ title: 'Game', duration: { minutes: null, restOfPractice: true } }, []);
+    assert.equal(d.usualMinutes, null);
   });
 });
 

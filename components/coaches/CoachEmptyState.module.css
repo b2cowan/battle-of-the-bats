@@ -158,6 +158,18 @@
   }
 }
 
+/* The same floor through the TABLET BAND (641–768; owner ruling 2026-08-27, §115 — every control a
+   coach taps on a tablet meets it), and on a caller's OWN button in the row as well as the
+   component's: the three library tabs pass their create as a child (practices re-evaluation
+   stage 4, 2026-09-16 — the first rendered sweep of a library empty state measured it at 31px). */
+@media (max-width: 768px) {
+  .actions :global(.btn),
+  .actions > button,
+  .actions > a {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 /* Quiet / "waiting" variant (COACH_SURFACE_DESIGN_ADDENDUM §iii — the tier between Compact and
    a text-only <p>). For a NO-ACTION empty where the coach can only check back (unpublished /
    no-games schedule): a calm flat panel, not a glowing illustration. Drops the radial lime wash,

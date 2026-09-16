@@ -151,7 +151,8 @@ test.describe('plan templates — the room', () => {
     // The header paints before the library loads: wait for the list OR the empty state before
     // deciding which one is on screen, or the count is taken from a page that has neither.
     await page.getByPlaceholder('Search templates…').or(page.locator('[class*="state"]').filter({ hasText: 'template' })).first().waitFor({ timeout: 30_000 });
-    const hasTemplates = await page.locator('[class*="ppDrillCard"]').count() > 0;
+    // The tab is a TABLE on the list recipe since stage 4 (2026-09-16): a row per template.
+    const hasTemplates = await page.locator('table[aria-label="Templates"] tbody tr').count() > 0;
     test.skip(hasTemplates, 'this team already has templates — the empty state is not on screen');
     // ⚠ "New template" is offered at ZERO as well as at one: refusing at zero while allowing it at
     // one is an arbitrary rule rather than a principle.
@@ -177,7 +178,8 @@ test.describe('plan templates — the room', () => {
 async function ensureTemplate(page: Page): Promise<void> {
   await page.goto(templatesUrl());
   await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible({ timeout: 30_000 });
-  if (await page.locator('[class*="ppTemplateLink"]').count() > 0) return;
+  // A row is the door since stage 4 (L3) — the table's rows, not a link class.
+  if (await page.locator('table[aria-label="Templates"] tbody tr').count() > 0) return;
   // "New template" is offered at ZERO as well as at one, and lands straight in the editor.
   // ⚠ TWO TAPS SINCE PHASE 3 (2026-08-25): the header's create opens a MENU — "Start from blank" or
   // "Bring one forward from a past season" — because the two ways to make a template folded into
@@ -196,7 +198,8 @@ test.describe('the template editor — a template carries no people', () => {
     await ensureTemplate(page);
     await page.goto(templatesUrl());
     await expect(page.getByRole('heading', { name: 'Practice plans' })).toBeVisible({ timeout: 30_000 });
-    await page.locator('[class*="ppTemplateLink"]').first().click();
+    // The row IS the door (stage 4, L3): its name is the button that opens the editor.
+    await page.locator('table[aria-label="Templates"] tbody tr').first().getByRole('button', { name: /^Open / }).click();
 
     await expect(page.getByRole('textbox', { name: 'Name' })).toBeVisible({ timeout: 30_000 });
     expect(await pageRenderedWithStyles(page), 'the editor rendered with its CSS module resolved').toBe(true);

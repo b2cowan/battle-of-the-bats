@@ -3121,6 +3121,38 @@
     "coach-history-development-progress-sheet|768|control-width|button·Help: Development": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-plan-docked|768|tap-floor|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-plan-docked|768|control-width|button·Help: Practice plan": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-drills|768|tap-floor|button·Help: Drills": {
+      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-drills|768|control-width|button·Help: Drills": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-templates|768|tap-floor|button·Help: Plan templates": {
+      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-templates|768|control-width|button·Help: Plan templates": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-circuits|768|tap-floor|button·Help: Circuits": {
+      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-circuits|768|control-width|button·Help: Circuits": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
+      "detail": "34px wide (floor 44) — icon-only control"
     }
   }
 }

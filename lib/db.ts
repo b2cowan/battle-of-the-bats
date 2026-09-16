@@ -20,9 +20,10 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
-import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
+import { blockToCircuitShape } from './rep-circuits';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -8650,6 +8651,167 @@ export async function updateRepTeamPlanTemplate(
     .from('rep_team_plan_templates').select(PLAN_TEMPLATE_SELECT).eq('id', data.id).single();
   if (readErr) throw readErr;
   return mapRepTeamPlanTemplate(full);
+}
+
+// ── Circuits (practices re-evaluation stage 4 · L9 — migration 302) ──
+//
+// A saved block WITH STATIONS — the third size of reusable thing, shaped like the plan-template
+// table one block down: team-scoped and NOT year-scoped (the archive ruling), team_id NOT NULL,
+// ONE block's jsonb, retire never delete, one active name per team. Rules live in
+// `lib/rep-circuits.ts`; the seam with drills and templates is the design (its header).
+
+/** ONE select for every circuit read, so no surface can fetch a circuit without its tags. */
+const CIRCUIT_SELECT = '*, rep_team_circuit_tags(rep_team_tags(id, name))';
+
+function mapRepTeamCircuit(r: any): RepTeamCircuit {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    name: r.name,
+    // ⚠ `blockToCircuitShape` on READ as well as on write — the template's two-layer rule: the
+    // stricter invariant (NO PEOPLE) is enforced where the row is read, not only where this app
+    // writes it. Idempotent, and it runs the sanitiser first.
+    block: blockToCircuitShape(r.block),
+    tags: Array.isArray(r.rep_team_circuit_tags)
+      ? r.rep_team_circuit_tags.map((l: any) => l?.rep_team_tags).filter((t: any) => t && t.id && t.name)
+      : [],
+    isActive: r.is_active,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamCircuits(
+  teamId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamCircuit[]> {
+  let q = supabaseAdmin.from('rep_team_circuits').select(CIRCUIT_SELECT).eq('team_id', teamId);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  // ⚠ By NAME, never by use — the library must not quietly rank a coach's own ideas.
+  const { data, error } = await q.order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamCircuit);
+}
+
+export async function getRepTeamCircuitById(
+  id: string, teamId: string,
+): Promise<RepTeamCircuit | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_circuits')
+    .select(CIRCUIT_SELECT)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .maybeSingle();
+  // ⚠ Check `error` before believing an empty result — a select naming a column that does not
+  // exist returns {data: null}, which reads exactly like "no such circuit".
+  if (error) throw error;
+  return data ? mapRepTeamCircuit(data) : null;
+}
+
+/**
+ * How many plans ONE circuit has been placed on, and when the most recent was — a targeted read
+ * (the template's `getRepTeamPlanTemplateUsage` idiom), not the library-wide walk the list route
+ * uses. The provenance is a key on a BLOCK inside the plan's jsonb, so the filter is a containment
+ * on `blocks`; the id is a uuid this caller already resolved, never raw client input.
+ */
+export async function getRepTeamCircuitUsage(
+  circuitId: string, teamId: string,
+): Promise<{ planCount: number; lastPlannedAt: string | null }> {
+  const { data, error, count } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('starts_at', { count: 'exact', head: false })
+    .eq('team_id', teamId)
+    .contains('practice_plan', { blocks: [{ circuitId }] })
+    .order('starts_at', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return { planCount: count ?? 0, lastPlannedAt: data?.[0]?.starts_at ?? null };
+}
+
+/**
+ * Replace a circuit's tag links. ⚠ The tag ids are PROVED to belong to this org's 'focus'
+ * vocabulary and to THIS team (or the club's shared set) rather than trusted — the same hole
+ * `syncPlanTemplateTags` closes for templates, for the same reason.
+ */
+async function syncCircuitTags(
+  circuitId: string, orgId: string, teamId: string, tagIds: string[],
+): Promise<void> {
+  await supabaseAdmin.from('rep_team_circuit_tags').delete().eq('circuit_id', circuitId);
+  if (!tagIds.length) return;
+  const { data: valid, error: tagErr } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('id, team_id')
+    .eq('org_id', orgId)
+    .eq('kind', 'focus')
+    .in('id', tagIds);
+  if (tagErr) throw tagErr;
+  const rows = (valid ?? [])
+    .filter(t => t.team_id === null || t.team_id === teamId)
+    .map(t => ({ circuit_id: circuitId, tag_id: t.id }));
+  if (!rows.length) return;
+  const { error } = await supabaseAdmin.from('rep_team_circuit_tags').insert(rows);
+  if (error) throw error;
+}
+
+export async function createRepTeamCircuit(fields: {
+  orgId: string;
+  teamId: string;
+  name: string;
+  block: PracticePlanBlock;
+  tagIds?: string[] | null;
+  createdBy?: string | null;
+}): Promise<RepTeamCircuit> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_circuits')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      name: fields.name.trim(),
+      block: fields.block,
+      created_by: fields.createdBy ?? null,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  await syncCircuitTags(data.id, fields.orgId, fields.teamId, fields.tagIds ?? []);
+  // Re-read so the caller gets the tags it just wrote, rather than a row that claims none.
+  const { data: full, error: readErr } = await supabaseAdmin
+    .from('rep_team_circuits').select(CIRCUIT_SELECT).eq('id', data.id).single();
+  if (readErr) throw readErr;
+  return mapRepTeamCircuit(full);
+}
+
+/** Scoped update — rename, re-tag, rewrite the shape, retire or restore. */
+export async function updateRepTeamCircuit(
+  id: string,
+  scope: { orgId: string; teamId: string },
+  fields: { name?: string; block?: PracticePlanBlock; tagIds?: string[] | null; isActive?: boolean },
+): Promise<RepTeamCircuit | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.block !== undefined) patch.block = fields.block;
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_circuits')
+    .update(patch)
+    .eq('id', id)
+    .eq('org_id', scope.orgId)
+    .eq('team_id', scope.teamId)
+    .select('id')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  // ⚠ Only when the caller actually said so. `undefined` means "not editing tags" — a retire or a
+  // rename must not silently strip a circuit's vocabulary.
+  if (fields.tagIds !== undefined) await syncCircuitTags(data.id, scope.orgId, scope.teamId, fields.tagIds ?? []);
+
+  const { data: full, error: readErr } = await supabaseAdmin
+    .from('rep_team_circuits').select(CIRCUIT_SELECT).eq('id', data.id).single();
+  if (readErr) throw readErr;
+  return mapRepTeamCircuit(full);
 }
 
 // ── Evaluation Sessions (slice 3B — migration 190) ──

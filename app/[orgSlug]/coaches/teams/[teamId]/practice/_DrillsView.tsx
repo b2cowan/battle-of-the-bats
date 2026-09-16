@@ -1,31 +1,31 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, History, Library, NotebookPen, Plus, RotateCcw, X } from 'lucide-react';
+import { History, Library, NotebookPen, Plus } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
-  MAX_DRILL_MINUTES, MAX_DRILL_NAME_LEN, MAX_DRILL_POINTS,
-  MAX_DRILL_POINT_LEN, MAX_DRILL_TEXT_LEN, UNTAGGED_FILTER, collectTags,
-  filterTagged, sortDrillsForPicker,
+  emptyDrillDraft, filterTagged, sortDrillsForPicker,
   type DrillInput, type RepTeamDrillWithUsage,
 } from '@/lib/rep-drills';
-import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
-import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
-import { CoachingPointsField, FieldLabel } from '@/components/coaches/PracticeFields';
+import { LibraryFilterBar, LibraryTable, LibraryTableRow, drillCardLine, drillUseLabel } from '@/components/coaches/LibraryRow';
+import { PastSeasonImportDialog, usePastSeasonImport, type PastSeasonRow } from '@/components/coaches/PastSeasonImport';
+import DrillSheet from '@/components/coaches/DrillSheet';
 import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
-import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
+import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import PracticePlansTabs from './_PracticePlansTabs';
 import styles from '../../../coaches.module.css';
 
 /**
  * The drill library — the DRILLS TAB of the Practice plans room (practices re-evaluation stage 0,
- * owner ruling D5, 2026-09-14). It lived at `/development/drills` under Skills & Goals until then;
- * moved WHOLE — the same rows, search, chips, dialogs and header create — with only the address,
- * the room's title and the tab bar new, and the back arrow to Skills & Goals gone. Stage 4 of the
- * re-evaluation redraws the rows; this move does not. The old address redirects here.
+ * owner ruling D5, 2026-09-14; redrawn at stage 4, owner rulings L3 · L6, 2026-09-16). A TABLE on
+ * the portal's list recipe: Drill (the name, its tags beside it, the first line of *what you're
+ * doing* under it — one line, cut short, absent when unwritten) · Usually (a dash when never set) ·
+ * Plans (in words) · a chevron. **The row is the door** — it opens the drill's SHEET, the station
+ * modal's shape, where Retire now lives; there are no actions on a row. On a phone the table
+ * reflows to a card as tall as its words.
  *
  * ⚠ A VIEW, not a page: the hub (`practice/page.tsx`) resolves the team, the season and the
  * capability gates before this mounts, and decides whether the tab exists at all (absent for a
@@ -51,185 +51,16 @@ import styles from '../../../coaches.module.css';
 
 type LoadState = { drills: RepTeamDrillWithUsage[]; canWrite: boolean };
 
-type ImportRow = {
-  key: string;
-  drill: DrillInput;
-  planCount: number;
-  lastPlannedAt: string | null;
-  alreadyInLibrary: boolean;
-};
+type ImportRow = PastSeasonRow & { drill: DrillInput; planCount: number; lastPlannedAt: string | null };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
-const emptyDraft = (): DrillInput => ({
-  name: '', tagIds: [], usualMinutes: null, description: '', goal: '',
-  coachingPoints: [], setup: '', equipment: [], equipmentTagIds: [],
+const draftOf = (drill: RepTeamDrillWithUsage): DrillInput => ({
+  name: drill.name, tagIds: drill.tags.map(t => t.id), usualMinutes: drill.usualMinutes,
+  description: drill.description ?? '', goal: drill.goal ?? '',
+  coachingPoints: drill.coachingPoints, setup: drill.setup ?? '', equipment: drill.equipment,
+  equipmentTagIds: drill.equipmentTagIds,
 });
-
-// ── Sub-components at MODULE level (never in a render body — a component declared inside one is a
-// new type every render, so React remounts its subtree and a form loses focus every keystroke). ──
-
-function DrillForm({
-  draft, tags, onCreateTag, equipmentTags, onCreateEquipmentTag,
-  focusManage, onFocusTagsChanged, equipmentManage, onEquipmentTagsChanged,
-  busy, error, submitLabel, onChange, onSubmit, onCancel,
-}: {
-  draft: DrillInput;
-  tags: PickableTag[];
-  onCreateTag: (name: string) => Promise<PickableTag | null>;
-  equipmentTags: PickableTag[];
-  onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
-  focusManage?: TagManageConfig;
-  onFocusTagsChanged?: () => void;
-  equipmentManage?: TagManageConfig;
-  onEquipmentTagsChanged?: () => void;
-  busy: boolean;
-  error: string;
-  submitLabel: string;
-  onChange: (next: DrillInput) => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className={styles.ppDrillWrite}>
-      <label className={styles.ppField}>
-        <FieldLabel>Name</FieldLabel>
-        <input className={styles.input} value={draft.name} maxLength={MAX_DRILL_NAME_LEN} autoFocus
-          placeholder="What do you call it?"
-          onChange={e => onChange({ ...draft, name: e.target.value })} />
-      </label>
-
-      {/* Coach-typed vocabulary, offered from what they've already used — never a fixed list. The
-          SAME tags a focus area can carry, which is what lets the two actually match. */}
-      <TagPicker
-        label="Tags"
-        all={tags}
-        selected={draft.tagIds ?? []}
-        onChange={next => onChange({ ...draft, tagIds: next })}
-        onCreate={onCreateTag}
-        manage={focusManage} onManageChanged={onFocusTagsChanged}
-        emptyHint="No tags yet — type a word to make your first one."
-      />
-
-      <div className={styles.ppDuration}>
-        <label className={styles.ppField}>
-          {/* ONE number. Ranges were removed at owner QA and are not returning via the library. */}
-          <FieldLabel>Usually</FieldLabel>
-          <input className={`${styles.input} ${styles.ppMinutes}`} type="number" min={1} max={MAX_DRILL_MINUTES}
-            inputMode="numeric" value={draft.usualMinutes ?? ''} aria-label="Usual minutes"
-            onChange={e => onChange({ ...draft, usualMinutes: e.target.value ? Number(e.target.value) : null })} />
-        </label>
-      </div>
-
-      <label className={styles.ppField}>
-        <FieldLabel>What you&apos;re doing</FieldLabel>
-        <textarea className={styles.textarea} rows={2} value={draft.description ?? ''} maxLength={MAX_DRILL_TEXT_LEN}
-          placeholder="How it runs"
-          onChange={e => onChange({ ...draft, description: e.target.value })} />
-      </label>
-
-      <label className={styles.ppField}>
-        <FieldLabel>What you&apos;re watching for</FieldLabel>
-        <textarea className={styles.textarea} rows={2} value={draft.goal ?? ''} maxLength={MAX_DRILL_TEXT_LEN}
-          placeholder="What good looks like"
-          onChange={e => onChange({ ...draft, goal: e.target.value })} />
-      </label>
-
-      {/* ONE field, one point per line — the same field the block and the station use (practices
-          re-evaluation stage 3, owner ruling D7, 2026-09-15; the numbered rows were the last of
-          the three shapes). Stored exactly as before: a capped list. */}
-      <CoachingPointsField points={draft.coachingPoints ?? undefined} maxPoints={MAX_DRILL_POINTS} maxLen={MAX_DRILL_POINT_LEN} noun="drill"
-        onSet={next => onChange({ ...draft, coachingPoints: next })} />
-
-      <label className={styles.ppField}>
-        <FieldLabel>Setup</FieldLabel>
-        <textarea className={styles.textarea} rows={2} value={draft.setup ?? ''} maxLength={MAX_DRILL_TEXT_LEN}
-          placeholder="How it's laid out — where things go, and how far apart"
-          onChange={e => onChange({ ...draft, setup: e.target.value })} />
-      </label>
-
-      {/* One Tag Idiom P3 (mig 272): the kit joins the real 'equipment' library — the SAME field a
-          station uses, so "L-screen" is one word wherever it appears. Old free-text names render
-          as one-press adopt rows in the dropdown; never a silent import. */}
-      <PracticeTagPicker
-        label="Equipment"
-        all={equipmentTags}
-        ids={draft.equipmentTagIds ?? []}
-        legacyNames={draft.equipment ?? []}
-        onChange={next => onChange({ ...draft, equipmentTagIds: next })}
-        onCreate={onCreateEquipmentTag}
-        manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
-        emptyHint="No equipment yet — type an item to add your first one."
-      />
-
-      {error && <p className={styles.errorText} role="alert">{error}</p>}
-
-      <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnGhost} onClick={onCancel}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} disabled={busy || !draft.name.trim()} onClick={onSubmit}>
-          {busy ? 'Saving…' : submitLabel}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function DrillRow({
-  drill, canWrite, busy, onEdit, onRetire, onRestore,
-}: {
-  drill: RepTeamDrillWithUsage;
-  canWrite: boolean;
-  busy: boolean;
-  onEdit: () => void;
-  onRetire: () => void;
-  onRestore: () => void;
-}) {
-  const shared = drill.teamId === null;
-  return (
-    <div className={styles.ppDrillCard} data-retired={drill.isActive ? undefined : 'retired'}>
-      <div className={styles.ppDrillRowMain}>
-        <span className={styles.ppDrillRowName}>
-          {drill.name}
-          {shared && <span className={styles.ppSharedChip}>Club</span>}
-          {drill.tags.length > 0 && (
-            <span className={styles.tagReadRow}>
-              {drill.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
-            </span>
-          )}
-        </span>
-        <span className={styles.ppDrillRowMeta}>
-          {[
-            drill.usualMinutes ? `${drill.usualMinutes} min` : null,
-            // ⚠ PLANS, never practices (D4) — and written out, never a bare 0, so an unused drill
-            // is not made to read as a failing score.
-            drill.planCount > 0
-              ? `In ${drill.planCount} plan${drill.planCount === 1 ? '' : 's'}`
-              : 'Not in a plan yet',
-          ].filter(Boolean).join(' · ')}
-        </span>
-        {drill.description && <p className={styles.ppReadTxt}>{drill.description}</p>}
-      </div>
-      {/* ⚠ A club drill offers a coach NO controls at all — absent, not disabled. Only an org
-          admin manages the shared set, and a disabled button would imply otherwise. */}
-      {canWrite && !shared && (
-        <div className={styles.ppDrillRowActions}>
-          {drill.isActive ? (
-            <>
-              <button type="button" className={styles.ppAddInline} disabled={busy} onClick={onEdit}>Edit</button>
-              <button type="button" className={styles.ppAddInline} disabled={busy} onClick={onRetire}>
-                <Archive size={12} aria-hidden /> Retire
-              </button>
-            </>
-          ) : (
-            <button type="button" className={styles.ppAddInline} disabled={busy} onClick={onRestore}>
-              <RotateCcw size={12} aria-hidden /> Restore
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -243,17 +74,11 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [showRetired, setShowRetired] = useState(false);
 
-  const [editing, setEditing] = useState<{ id: string | null; draft: DrillInput } | null>(null);
+  /** The sheet: a new drill (`id: null`), or one row's — with whether it is retired, for the foot. */
+  const [editing, setEditing] = useState<{ id: string | null; draft: DrillInput; isActive: boolean; shared: boolean } | null>(null);
   const [formBusy, setFormBusy] = useState(false);
   const [formError, setFormError] = useState('');
-  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const [importOpen, setImportOpen] = useState(false);
-  const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
-  const [importError, setImportError] = useState('');
-  const [importingKey, setImportingKey] = useState<string | null>(null);
-
-  useOverlayOpen(!!editing || importOpen);
 
   const load = useCallback(async () => {
     setLoading(true); setLoadError('');
@@ -269,10 +94,15 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
     }
   }, [apiBase]);
   useEffect(() => { load(); }, [load]);
+  /* "Bring one forward from a past season" — the shared dialog; since stage 4 (L1) the read offers
+     last year's bare written BLOCKS beside its written stations, each with its minutes. */
+  const importer = usePastSeasonImport<ImportRow>({
+    readUrl: `${apiBase}/past-seasons`, rowsKey: 'drills', createUrl: apiBase, bodyOf: row => row.drill, onAdded: load, noun: 'drill',
+  });
+  useOverlayOpen(!!editing || importer.open);
 
   // Memoised because `?? []` mints a NEW array on every render, which would make every memo below
-  // it (the chips, active, retired, the filtered list) recompute on every keystroke in the search
-  // box — the walk of the whole library repeated per character.
+  // it recompute on every keystroke in the search box.
   const drills = useMemo(() => data?.drills ?? [], [data]);
   const canWrite = !!data?.canWrite;
 
@@ -282,19 +112,15 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
    * ⚠ Deliberately a separate fetch from the drills. The picker must offer every tag the team has,
    * including ones only a focus area or a template uses; deriving the list from the drills on screen
    * would quietly hide vocabulary the coach has already created and invite them to mint a duplicate.
-   * The filter CHIPS below are derived from what is on screen, which is a different question.
+   * The filter CHIPS are derived from what is on screen, which is a different question.
    */
-  // One hook per vocabulary — the shared fetch/create/merge routine this page used to hand-roll
-  // (the hook's own header names this exact copy as the reason it exists).
   const { tags, createTag, reload: reloadFocusTags } = useFocusTags(orgSlug, teamId);
   const { tags: equipmentTags, createTag: createEquipmentTag, reload: reloadEquipmentTags } = useEquipmentTags(orgSlug, teamId);
-
-  const chipTags = useMemo(() => collectTags(drills), [drills]);
 
   const active = useMemo(() => drills.filter(d => d.isActive), [drills]);
   const retired = useMemo(() => drills.filter(d => !d.isActive), [drills]);
 
-  // The SAME predicate the in-plan picker uses — one rule, so the two lists can't drift.
+  // The SAME predicate the in-plan picker and the docked panel use — one rule, so the lists can't drift.
   const shown = useMemo(
     () => filterTagged(sortDrillsForPicker(active), query, tagFilter),
     [active, query, tagFilter],
@@ -319,52 +145,24 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
     }
   }
 
+  /** Retire / restore from the sheet's foot (L6) — one-tap, then the sheet closes on the answer. */
   async function setActive(id: string, isActive: boolean) {
-    setBusyId(id);
+    setFormBusy(true); setFormError('');
     try {
       const res = await fetch(`${apiBase}/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'That didn’t work.');
+      setEditing(null);
       await load();
     } catch (e) {
-      setLoadError(errorMessage(e, 'That didn’t work.'));
+      setFormError(errorMessage(e, 'That didn’t work.'));
     } finally {
-      setBusyId(null);
+      setFormBusy(false);
     }
   }
 
-  async function openImport() {
-    setImportOpen(true); setImportError(''); setImportRows(null);
-    try {
-      const res = await fetch(`${apiBase}/past-seasons`);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not read your past seasons.');
-      const json = await res.json();
-      setImportRows(json.drills ?? []);
-    } catch (e) {
-      setImportError(errorMessage(e, 'Could not read your past seasons.'));
-    }
-  }
-
-  async function importDrill(row: ImportRow) {
-    setImportingKey(row.key); setImportError('');
-    try {
-      const res = await fetch(apiBase, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(row.drill),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not add that drill.');
-      // Mark it in place rather than removing the row — a list that reshuffles under a coach's
-      // thumb while they add three drills is how the wrong one gets tapped.
-      setImportRows(rows => rows?.map(r => (r.key === row.key ? { ...r, alreadyInLibrary: true } : r)) ?? null);
-      await load();
-    } catch (e) {
-      setImportError(errorMessage(e, 'Could not add that drill.'));
-    } finally {
-      setImportingKey(null);
-    }
-  }
 
   const helpRequest = {
     module: 'coaches' as const,
@@ -373,15 +171,43 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
     fullGuideHref: `/${orgSlug}/coaches/help#premium-drill-library`,
   };
 
+  /* ⚠ A club drill opens READ-ONLY for a coach — it is the club's answer; only an org admin
+     manages the shared set. The sheet shows it as a retired one shows (no Save, no Retire). */
+  const openRow = (drill: RepTeamDrillWithUsage) => {
+    setFormError('');
+    setEditing({ id: drill.id, draft: draftOf(drill), isActive: drill.isActive, shared: drill.teamId === null });
+  };
+
+  const row = (drill: RepTeamDrillWithUsage) => {
+    // "20 min" in the data face (a dash when never given a length); the one count in words — never a
+    // bare 0, never "used". Each read ONCE, for the desktop cells and the phone card's one line alike.
+    const usually = drill.usualMinutes ? `${drill.usualMinutes} min` : null;
+    const plans = drillUseLabel(drill.planCount);
+    return (
+      <LibraryTableRow
+        key={drill.id}
+        name={drill.name}
+        tags={drill.tags}
+        shared={drill.teamId === null}
+        retired={!drill.isActive}
+        line={drillCardLine(drill)}
+        facts={[usually, plans].filter(Boolean).join(' · ')}
+        cells={[
+          { label: 'Usually', value: usually ?? <span className={styles.devRowDash}>—</span>, shrink: true, data: true },
+          { label: 'Plans', value: plans, shrink: true },
+        ]}
+        onOpen={() => openRow(drill)}
+        openLabel={`Open ${drill.name}`}
+      />
+    );
+  };
+
   const header = (
     <>
-      {/* Page-header ruling 2026-08-11: the blurb's promise ("write it once, four taps after
-          that") is already the empty state's description, where a coach with no drills reads it. */}
       {/* ⚠ THE CREATE MOVED TO THE HEADER AND THE TWO CREATES BECAME ONE (Phase 3, 2026-08-25) —
           the same fold as Plan templates, for the same reason: "New drill" and "Add from a past
-          season" make the same thing two ways, and they sat competing in the filter row while the
-          page header was empty. House rule 6 folds them into one; house rule 4 puts it in the
-          header, where a phone collapses it to the bare "+" in the title-line corner. */}
+          season" make the same thing two ways. House rule 6 folds them into one; house rule 4 puts
+          it in the header, where a phone collapses it to the bare "+" in the title-line corner. */}
       <CoachPageHeader
         icon={NotebookPen}
         title="Practice plans"
@@ -396,13 +222,13 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
               icon={<Plus size={15} aria-hidden />}
               label="Start from blank"
               hint="Write a new drill yourself"
-              onSelect={() => { setFormError(''); setEditing({ id: null, draft: emptyDraft() }); }}
+              onSelect={() => { setFormError(''); setEditing({ id: null, draft: emptyDrillDraft(), isActive: true, shared: false }); }}
             />
             <CoachToolbarMenuItem
               icon={<History size={15} aria-hidden />}
               label="Bring one forward from a past season"
               hint="Copy a drill you already use"
-              onSelect={openImport}
+              onSelect={importer.openImport}
             />
           </CoachToolbarMenu>
         ) : undefined}
@@ -424,175 +250,102 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
       {loading ? (
         <div className={styles.loadingState}>Loading your drills…</div>
       ) : drills.length === 0 ? (
+        /* The empty state keeps its shape and loses "four taps" (stage 4 — the promise was the
+           problem; the shape that made it untrue is the fix). */
         <CoachEmptyState
           icon={<Library size={22} />}
           headline="No drills yet"
-          description="Save a drill once — the setup, what you're watching for, the coaching points — and adding it to a practice becomes four taps."
+          description="Write one here, or save a block you like from a plan — it's there next time."
           blocker={canWrite ? undefined : 'Managing drills comes with Schedule: View + edit — ask your head coach.'}
-          secondaryAction={canWrite ? { label: 'Add from a past season', onClick: openImport } : undefined}
+          secondaryAction={canWrite ? { label: 'Add from a past season', onClick: importer.openImport } : undefined}
         >
           {canWrite && (
             <button type="button" className={styles.btnPrimary}
-              onClick={() => { setFormError(''); setEditing({ id: null, draft: emptyDraft() }); }}>
+              onClick={() => { setFormError(''); setEditing({ id: null, draft: emptyDrillDraft(), isActive: true, shared: false }); }}>
               <Plus size={14} aria-hidden /> New drill
             </button>
           )}
         </CoachEmptyState>
       ) : (
         <>
-          <div className={styles.ppDrillFilters}>
-            <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Search drills…" aria-label="Search drills" />
-            {/* ⚠ Both creates moved into the page header and became one (Phase 3, 2026-08-25), so
-                this row is the search box alone. ⚠ Unlike Plan templates, Drills has NO tag
-                control to leave behind — the plan's §4.5 said "the tag control stays with the
-                search row" and there has never been one on this screen. */}
-          </div>
-
-          <div className={styles.ppSuggestWrap}>
-            <button type="button" className={styles.ppSuggestChip} data-on={tagFilter == null ? 'on' : undefined}
-              onClick={() => setTagFilter(null)}>All <span>{active.length}</span></button>
-            {chipTags.map(t => (
-              <button key={t.id} type="button" className={styles.ppSuggestChip}
-                data-on={tagFilter === t.id ? 'on' : undefined} onClick={() => setTagFilter(t.id)}>
-                {t.name} <span>{active.filter(d => d.tags.some(x => x.id === t.id)).length}</span>
-              </button>
-            ))}
-            {/* ⚠ Always offered when it applies — a drill must never become unreachable simply by
-                carrying no tags. */}
-            {active.some(d => d.tags.length === 0) && (
-              <button type="button" className={styles.ppSuggestChip}
-                data-on={tagFilter === UNTAGGED_FILTER ? 'on' : undefined}
-                onClick={() => setTagFilter(UNTAGGED_FILTER)}>
-                No tags <span>{active.filter(d => d.tags.length === 0).length}</span>
-              </button>
-            )}
-          </div>
+          <LibraryFilterBar items={active} noun="drills" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} />
 
           {shown.length === 0 ? (
             <p className={styles.formHint}>No drills match that.</p>
-          ) : shown.map(drill => (
-            <DrillRow key={drill.id} drill={drill} canWrite={canWrite} busy={busyId === drill.id}
-              onEdit={() => {
-                setFormError('');
-                setEditing({
-                  id: drill.id,
-                  draft: {
-                    name: drill.name, tagIds: drill.tags.map(t => t.id), usualMinutes: drill.usualMinutes,
-                    description: drill.description ?? '', goal: drill.goal ?? '',
-                    coachingPoints: drill.coachingPoints, setup: drill.setup ?? '', equipment: drill.equipment,
-                    equipmentTagIds: drill.equipmentTagIds,
-                  },
-                });
-              }}
-              onRetire={() => setActive(drill.id, false)}
-              onRestore={() => setActive(drill.id, true)}
-            />
-          ))}
+          ) : (
+            <LibraryTable label="Drills" head={(
+              <>
+                <th className={styles.th}>Drill</th>
+                <th className={`${styles.th} ${styles.tdShrink}`}>Usually</th>
+                <th className={`${styles.th} ${styles.tdShrink}`}>Plans</th>
+              </>
+            )}>
+              {shown.map(row)}
+            </LibraryTable>
+          )}
 
+          {/* Retired rows read dim, under the table; opening one shows the same sheet with Restore. */}
           {retired.length > 0 && (
             <div className={styles.ppRetiredWrap}>
               <button type="button" className={styles.ppAddInline} onClick={() => setShowRetired(s => !s)}>
                 {showRetired ? 'Hide' : 'Show'} retired ({retired.length})
               </button>
-              {showRetired && retired.map(drill => (
-                <DrillRow key={drill.id} drill={drill} canWrite={canWrite} busy={busyId === drill.id}
-                  onEdit={() => {}} onRetire={() => {}} onRestore={() => setActive(drill.id, true)} />
-              ))}
+              {showRetired && (
+                <LibraryTable label="Retired drills" head={(
+                  <>
+                    <th className={styles.th}>Drill</th>
+                    <th className={`${styles.th} ${styles.tdShrink}`}>Usually</th>
+                    <th className={`${styles.th} ${styles.tdShrink}`}>Plans</th>
+                  </>
+                )}>
+                  {sortDrillsForPicker(retired).map(row)}
+                </LibraryTable>
+              )}
             </div>
           )}
         </>
       )}
 
-      {/* ── New / edit ── */}
+      {/* ── The drill sheet (L6) — new, or a row's; Retire / Restore in its foot ── */}
       {editing && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true"
-          aria-label={editing.id ? 'Edit drill' : 'New drill'}
-          onPointerDown={e => { if (e.target === e.currentTarget) setEditing(null); }}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editing.id ? 'Edit drill' : 'New drill'}</h3>
-              <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setEditing(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <DrillForm
-              draft={editing.draft}
-              tags={tags}
-              onCreateTag={createTag}
-              equipmentTags={equipmentTags}
-              onCreateEquipmentTag={createEquipmentTag}
-              focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
-              onFocusTagsChanged={reloadFocusTags}
-              equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
-              onEquipmentTagsChanged={reloadEquipmentTags}
-              busy={formBusy}
-              error={formError}
-              submitLabel={editing.id ? 'Save' : 'Add drill'}
-              onChange={draft => setEditing(e => (e ? { ...e, draft } : e))}
-              onSubmit={saveDrill}
-              onCancel={() => setEditing(null)}
-            />
-          </div>
-        </div>
+        <DrillSheet
+          draft={editing.draft}
+          isNew={editing.id === null}
+          isActive={editing.isActive}
+          readOnly={editing.shared || !canWrite}
+          tags={tags}
+          onCreateTag={createTag}
+          equipmentTags={equipmentTags}
+          onCreateEquipmentTag={createEquipmentTag}
+          focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+          onFocusTagsChanged={reloadFocusTags}
+          equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
+          onEquipmentTagsChanged={reloadEquipmentTags}
+          busy={formBusy}
+          error={formError}
+          onChange={draft => setEditing(e => (e ? { ...e, draft } : e))}
+          onSubmit={saveDrill}
+          onClose={() => setEditing(null)}
+          onRetire={canWrite && editing.id && !editing.shared ? () => setActive(editing.id!, false) : undefined}
+          onRestore={canWrite && editing.id && !editing.shared ? () => setActive(editing.id!, true) : undefined}
+        />
       )}
 
-      {/* ── "Add from a past season" — the owner's archive ruling made concrete ── */}
-      {importOpen && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Add from a past season"
-          onPointerDown={e => { if (e.target === e.currentTarget) setImportOpen(false); }}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add from a past season</h3>
-              <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setImportOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className={styles.ppDrillWrite}>
-              <p className={styles.formHint}>
-                What you ran before, ready to become a drill. Adding one copies it into your library —
-                nothing in the old practice changes.
-              </p>
-              {importError && <p className={styles.errorText} role="alert">{importError}</p>}
-              {importRows === null && !importError && <p className={styles.formHint}>Looking…</p>}
-              {importRows?.length === 0 && (
-                <p className={styles.formHint}>
-                  Nothing to bring forward — this team has no practice plans from a past season yet.
-                </p>
-              )}
-              {importRows?.map(row => (
-                <div key={row.key} className={styles.ppDrillCard} data-retired={row.alreadyInLibrary ? 'retired' : undefined}>
-                  <div className={styles.ppDrillRowMain}>
-                    <span className={styles.ppDrillRowName}>{row.drill.name}</span>
-                    {/* ⚠ "planned", never "ran" — see the module header. */}
-                    <span className={styles.ppDrillRowMeta}>
-                      In {row.planCount} plan{row.planCount === 1 ? '' : 's'}
-                      {row.lastPlannedAt
-                        ? ` · last planned ${formatInOrgZone(row.lastPlannedAt, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`
-                        : ''}
-                    </span>
-                  </div>
-                  <div className={styles.ppDrillRowActions}>
-                    {/* ⚠ Shown and greyed, never hidden — a coach scanning for a drill they
-                        remember should find it and see WHY it isn't offered. */}
-                    {row.alreadyInLibrary
-                      ? <span className={styles.ppDrillRowMeta}>Already in your library</span>
-                      : (
-                        <button type="button" className={styles.btnSecondary} disabled={importingKey === row.key}
-                          onClick={() => importDrill(row)}>
-                          {importingKey === row.key ? 'Adding…' : 'Add'}
-                        </button>
-                      )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnPrimary} onClick={() => setImportOpen(false)}>Done</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PastSeasonImportDialog
+        state={importer}
+        hint="What you ran before, ready to become a drill. Adding one copies it into your library — nothing in the old practice changes."
+        emptyText="Nothing to bring forward — this team has no practice plans from a past season yet."
+        describe={row => ({
+          name: row.drill.name,
+          // ⚠ "planned", never "ran" — see the module header.
+          facts: [
+            row.drill.usualMinutes ? `${row.drill.usualMinutes} min` : null,
+            drillUseLabel(row.planCount),
+            row.lastPlannedAt ? `last planned ${formatInOrgZone(row.lastPlannedAt, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}` : null,
+          ].filter(Boolean).join(' · '),
+          line: row.drill.description?.trim() || null,
+        })}
+      />
     </div>
   );
 }

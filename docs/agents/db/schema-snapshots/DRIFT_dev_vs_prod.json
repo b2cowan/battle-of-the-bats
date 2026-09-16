@@ -1,14 +1,22 @@
 {
   "generated": "2026-09-16",
-  "total": 7,
+  "total": 36,
   "counts": {
-    "tables": 0,
-    "columns": 2,
-    "indexes": 1,
-    "constraints": 1,
-    "rls": 3
+    "tables": 2,
+    "columns": 14,
+    "indexes": 7,
+    "constraints": 8,
+    "rls": 5
   },
   "items": [
+    {
+      "key": "check:only-dev:rep_team_circuits.rep_team_circuits_block_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_circuits.rep_team_circuits_name_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_needs_scope_check",
       "sig": ""
@@ -22,6 +30,54 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_circuit_tags.circuit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuit_tags.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuit_tags.tag_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.block",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.is_active",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_circuits.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_evaluation_sessions.scope_attempts",
       "sig": ""
     },
@@ -30,11 +86,71 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_circuit_tags.rep_team_circuit_tags_circuit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_circuit_tags.rep_team_circuit_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_circuit_tags.rep_team_circuit_tags_tag_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_circuits.rep_team_circuits_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_circuits.rep_team_circuits_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_circuits.rep_team_circuits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_circuits.rep_team_circuits_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-prod:rep_team_measurable_types.rep_team_measurable_types_replaced_by_id_fkey",
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_team_circuit_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_circuit_tags_tag_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_circuits_name_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_circuits_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_circuits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_circuits_team_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:rep_team_measurable_types_replaced_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_circuit_tags",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_circuits",
       "sig": ""
     }
   ]

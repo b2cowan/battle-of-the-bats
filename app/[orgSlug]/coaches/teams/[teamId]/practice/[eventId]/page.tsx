@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, CalendarDays, ClipboardList, NotebookPen, Printer, Ruler, Telescope, X } from 'lucide-react';
+import { BookMarked, CalendarDays, ClipboardList, Library, NotebookPen, Printer, Ruler, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -31,15 +31,17 @@ import {
 } from '@/lib/rep-practice-plan';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import {
-  MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateToPlan,
+  MAX_TEMPLATE_NAME_LEN, templateBlocksLine, templateShapeLabel, templateToPlan,
 } from '@/lib/rep-plan-templates';
 import { filterTagged } from '@/lib/rep-drills';
+import { practicePlansHref } from '@/lib/practice-plans-address';
 import { useFocusTags, useStaffTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import { FOCUS_TAG_MANAGE, STAFF_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
 import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
+import type { CircuitInput, RepTeamCircuit } from '@/lib/rep-circuits';
 import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../coaches.module.css';
@@ -102,12 +104,23 @@ type LoadState = {
   equipmentSuggestions: string[];
   /** This team's own drills plus the club's shared set — the picker's source (Phase 2). */
   drills: RepTeamDrill[];
+  /** The team's circuits (stage 4, L9) — the panel's second face, the picker's third tab. */
+  circuits: RepTeamCircuit[];
   canWrite: boolean;
   canViewFocus: boolean;
   canViewAttendance: boolean;
 };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
+
+/** Where the coach's dock choice is remembered (L5) — this browser, every plan. */
+const LIBRARY_DOCK_KEY = 'coach-practice-library-dock';
+/**
+ * The working column the docked pair needs, in px: the sheet at its 816 letter width + a 20px gap
+ * + the 320 panel = the header's column at 1440 exactly (plan §7.2, input 5). Measured on the
+ * column, never the viewport — a 1,366 laptop's column is narrower than this and keeps the sheet.
+ */
+const LIBRARY_DOCK_MIN_COLUMN = 1156;
 
 /** The three places a plan can start from (frame 05; "past" added by P3 C2). */
 type CopySource = 'template' | 'previous' | 'past';
@@ -221,6 +234,48 @@ export default function CoachPracticePlanPage({
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
   useOverlayOpen(copyOpen || saveTemplateOpen);
+  /**
+   * THE DOCKED LIBRARY (practices re-evaluation stage 4, owner ruling L5, 2026-09-16 — A).
+   *
+   * Two facts, kept apart on purpose. `canDock` is a WIDTH decision, made once from the WORKING
+   * COLUMN — the space the page's column actually has, measured, never the viewport: from 1,156px
+   * up (a 1440 display; the 220 sidebar and the main area's padding taken off) the sheet returns to
+   * stage 1's 816 letter width and a 320 panel takes the rest, so the pair is exactly the header's
+   * column; below it (a 1,366 laptop, a 1,280 display) the toggle is ABSENT, not disabled, and the
+   * sheet stays the path. `docked` is the coach's choice — the ghost row's "a drill from your
+   * library" docks it on the blank page, the toolbar's quiet Library toggle after that —
+   * remembered in this browser so a coach who likes it docked finds it docked on every plan.
+   * Rendered correctly with no stored value (a private window, cleared site data): undocked.
+   */
+  const [docked, setDocked] = useState(false);
+  const [canDock, setCanDock] = useState(false);
+  const [panelHost, setPanelHost] = useState<HTMLElement | null>(null);
+  const columnRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    try { setDocked(localStorage.getItem(LIBRARY_DOCK_KEY) === 'docked'); } catch { /* no storage — undocked */ }
+  }, []);
+  const dock = (next: boolean) => {
+    setDocked(next);
+    try { localStorage.setItem(LIBRARY_DOCK_KEY, next ? 'docked' : 'sheet'); } catch { /* per-viewer convenience only */ }
+  };
+  useEffect(() => {
+    const column = columnRef.current;
+    if (!column || typeof ResizeObserver === 'undefined') return;
+    // The working column is the main area's content box — the parent's, because this column
+    // itself is capped by `.page`/`.pageWide` and would report its own cap, not the room it has.
+    const target = column.parentElement ?? column;
+    const contentWidth = () => {
+      const cs = getComputedStyle(target);
+      return target.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    };
+    setCanDock(contentWidth() >= LIBRARY_DOCK_MIN_COLUMN);
+    const ro = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width ?? contentWidth();
+      setCanDock(width >= LIBRARY_DOCK_MIN_COLUMN);
+    });
+    ro.observe(target);
+    return () => ro.disconnect();
+  }, [loading]);
   /* "Start this plan from…" stands on the portal's dialog floor (stage 2, D9) — Escape closes it
      and focus returns to the ghost row's link. The editor's three sheets and "Save as template…"
      take the same floor; leaving one would be two sheets on one page that close differently. */
@@ -347,7 +402,7 @@ export default function CoachPracticePlanPage({
    * drill-backed, so it does not turn read-only under the coach's hands the moment they save it.
    * The new drill joins the picker for NEXT time, which is the whole point.
    */
-  async function createDrill(input: DrillInput): Promise<{ ok: boolean; error?: string }> {
+  async function createDrill(input: DrillInput): Promise<{ ok: boolean; error?: string; drill?: RepTeamDrill }> {
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/drills`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
@@ -357,9 +412,28 @@ export default function CoachPracticePlanPage({
       // Fold it into the picker immediately — a coach who saves a drill and then adds a second
       // station should find it there, without a reload they have no reason to expect.
       setData(d => (d ? { ...d, drills: [...d.drills, json.drill] } : d));
-      return { ok: true };
+      return { ok: true, drill: json.drill };
     } catch (e) {
       return { ok: false, error: errorMessage(e, 'Could not save that drill.') };
+    }
+  }
+
+  /**
+   * "Save to my circuits…" (stage 4, L9) — the same bargain one size up: a copy, tonight's block
+   * untouched, the circuit in the panel and the picker for NEXT time. The editor has already
+   * created the tick's drills through `createDrill` above and pointed the shape at them.
+   */
+  async function createCircuit(input: CircuitInput): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/circuits`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: json.error ?? 'Could not save that circuit.' };
+      setData(d => (d ? { ...d, circuits: [...d.circuits, json.circuit] } : d));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e, 'Could not save that circuit.') };
     }
   }
 
@@ -741,6 +815,9 @@ export default function CoachPracticePlanPage({
   }
 
   const canWrite = data?.canWrite ?? false;
+  // The pair renders only when the width allows AND the coach chose it — the blank page docks
+  // through its ghost row, which sets `docked` first.
+  const isDocked = canWrite && canDock && docked;
   const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
   const hasPastSeasonPlans = data?.hasPastSeasonPlans ?? false;
   // Read once here so the picker below (which renders outside the `!data` guard) never has to
@@ -832,7 +909,12 @@ export default function CoachPracticePlanPage({
       }
       // The SAME predicate the drill library and the template room use — one rule, so the three
       // lists can never drift on what the search box looks at.
-      return filterTagged(templates, copyQuery, null).map(template => (
+      // ⚠ Only a template that HOLDS A BLOCK is offered as a start (stage 4, L4): an empty one is
+      // listed on its tab reading "Nothing in it yet", one click from the editor that finishes it,
+      // and never here. "Start from blank" stays where it was.
+      const startable = filterTagged(templates.filter(t => t.plan.blocks.length > 0), copyQuery, null);
+      if (startable.length === 0) return <p className={styles.formHint}>No template with a block in it matches that.</p>;
+      return startable.map(template => (
         <button key={template.id} type="button" className={styles.ppPickRow}
           onClick={() => applyTemplate(template)}>
           <span className={styles.ppPickBody}>
@@ -840,7 +922,8 @@ export default function CoachPracticePlanPage({
               {template.name}
               {template.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
             </span>
-            <span className={styles.ppPickMeta}>{templateShapeLabel(template.plan)}</span>
+            {/* The blocks' titles under the name, as the tab reads them (L3); the shape beside. */}
+            <span className={styles.ppPickMeta}>{templateBlocksLine(template.plan)} · {templateShapeLabel(template.plan)}</span>
           </span>
         </button>
       ));
@@ -906,7 +989,9 @@ export default function CoachPracticePlanPage({
   }
 
   return (
-    <div className={`${styles.page} ${styles.savePillPage}`}>
+    /* Docked (L5), the page takes the wide column so the pair — the sheet at 816 and the 320 panel —
+       fills exactly what the header fills; undocked it is `.page`'s own 960, the sheet alone. */
+    <div ref={columnRef} className={`${styles.page} ${styles.savePillPage}${isDocked ? ` ${styles.pageWide}` : ''}`}>
       {header}
       <UnsavedChangesGuard active={dirty} />
 
@@ -1002,8 +1087,24 @@ export default function CoachPracticePlanPage({
                   <button type="button" className={styles.btnSecondary} onClick={handlePrint}>
                     <Printer size={14} aria-hidden /> Print the sheet
                   </button>
+                  {/* The docked library's quiet toggle (stage 4, L5), at the toolbar's right end — pressed
+                      while docked. ABSENT below a 1,156px working column, not disabled: a 1,366 laptop
+                      never sees it and keeps the sheet. On the blank page (no toolbar yet) the ghost
+                      row's own words do this job. */}
+                  {canWrite && canDock && (
+                    <button type="button" className={`${styles.btnSecondary} ${styles.ppToolbarEnd}`} aria-pressed={docked}
+                      data-on={docked ? 'on' : undefined} data-testid="library-toggle" onClick={() => dock(!docked)}>
+                      <Library size={14} aria-hidden /> Library
+                    </button>
+                  )}
                 </div>
               )}
+
+              {/* ── THE PAIR (L5): the sheet, and beside it — docked, on a wide desktop — the library
+                  panel's HOST. The editor renders the panel into it through a portal, so the page
+                  owns the layout and the editor owns the one drag context over both. Undocked, the
+                  host is empty and the sheet fills the column as it always did. ── */}
+              <div className={`${styles.ppSheetPair}${isDocked ? ` ${styles.ppSheetPairDocked}` : ''}`}>
 
               {/* ── THE SHEET (stage 1, D2) — the page is a document. Its first line is when and
                   how long (D3); the goal, the folds and the timeline are the editor's. */}
@@ -1026,9 +1127,11 @@ export default function CoachPracticePlanPage({
                 {plan.templateName && (
                   <p className={styles.ppProvenance}>
                     <BookMarked size={14} aria-hidden />
+                    {/* One sentence (stage 4, L7): the two halves that do the work — "edit anything"
+                        and "the template won't change" — and the template's name bold, because it is
+                        the fact. Survives every edit, as it always has. */}
                     <span>
-                      Started from <strong>{plan.templateName}</strong>. This plan is yours now —{' '}
-                      <strong>edit anything</strong>. Changes here won&apos;t change the template.
+                      Started from <strong>{plan.templateName}</strong> — edit anything here; the template won&apos;t change.
                     </span>
                   </p>
                 )}
@@ -1052,6 +1155,9 @@ export default function CoachPracticePlanPage({
                   equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
                   onEquipmentTagsChanged={reloadEquipmentTags}
                   drills={data.drills}
+                  circuits={data.circuits}
+                  onCreateCircuit={canWrite ? createCircuit : undefined}
+                  library={canWrite ? { canDock, docked: isDocked, onDock: dock, panelHost, circuitsHref: practicePlansHref(base, 'circuits') } : undefined}
                   // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                   // entirely rather than offering a control that only exists to refuse.
                   onCreateDrill={canWrite ? createDrill : undefined}
@@ -1134,6 +1240,8 @@ export default function CoachPracticePlanPage({
                     )}
                   </div>
                 )}
+              </div>
+              {isDocked && <div ref={setPanelHost} className={styles.ppLibraryHost} />}
               </div>
             </>
           )}

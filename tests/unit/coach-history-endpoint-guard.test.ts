@@ -220,12 +220,15 @@ const CROSS_SEASON_READERS = [
  * which is the failure mode this file has a whole test about.
  */
 const CROSS_SEASON_PLAN_READERS = [
-  // The two imports — a coach's own history becomes their starting library (owner, 2026-08-01).
+  // The three imports — a coach's own history becomes their starting library (owner, 2026-08-01;
+  // the third size, circuits, added at practices re-evaluation stage 4 · L9, 2026-09-16).
   'development/drills/past-seasons',
   'development/plan-templates/past-seasons',
-  // The two libraries — "used 8×" counts what the team has actually run, across every season.
+  'development/circuits/past-seasons',
+  // The three libraries — "in 8 plans" / "started 8 plans" count across every season.
   'development/drills',
   'development/plan-templates',
+  'development/circuits',
   // The picker's third source (P3 C2) — the rows a coach copies one past night's words from.
   'practice-plans/past-seasons',
   /**

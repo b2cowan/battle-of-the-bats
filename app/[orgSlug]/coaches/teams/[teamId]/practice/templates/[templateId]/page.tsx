@@ -1,11 +1,12 @@
 'use client';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
-import { BookMarked } from 'lucide-react';
+import { use, useCallback, useEffect, useState } from 'react';
+import { Archive, BookMarked, RotateCcw } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
+import { useRecordAutosave, useRetireRestore } from '@/components/coaches/useRecordAutosave';
 import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -16,6 +17,7 @@ import { emptyPracticePlan, type PracticePlan } from '@/lib/rep-practice-plan';
 import PracticePlanEditor from '../../_PracticePlanEditor';
 import { practicePlansHref } from '@/lib/practice-plans-address';
 import type { RepTeamDrill } from '@/lib/rep-drills';
+import type { RepTeamCircuit } from '@/lib/rep-circuits';
 import styles from '../../../../../coaches.module.css';
 
 /**
@@ -35,6 +37,11 @@ import styles from '../../../../../coaches.module.css';
  *
  * ⚠ Re-homed under Practice plans with its library (practices re-evaluation stage 0, D5,
  * 2026-09-14): `/practice/templates/{id}`, the way back is the Templates tab. The old address redirects.
+ *
+ * ⚠ **"Retire this template" lives in this header** (stage 4, owner ruling L3, 2026-09-16): the tab's
+ * row lost its actions — the row is the door, Rename is the Name field here, and Retire follows Edit
+ * into the thing itself. A retired template opens READ-ONLY with Restore in its place; retired, never
+ * deleted, so plans it started keep reading.
  */
 
 type LoadState = {
@@ -47,8 +54,6 @@ type LoadState = {
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
-/** A save that hasn't landed by now is reported as a failure rather than spinning for ever. */
-const SAVE_TIMEOUT_MS = 15_000;
 
 export default function CoachPlanTemplateEditorPage({
   params,
@@ -65,9 +70,26 @@ export default function CoachPlanTemplateEditorPage({
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [saveError, setSaveError] = useState('');
+
+  // ⚠ The signature covers the WHOLE editable state, not just the plan: renaming and then closing
+  // the tab must be as safe as adding a block and closing the tab.
+  const sig = JSON.stringify({ plan, name, tagIds });
+  const write = useCallback(async (signal: AbortSignal) => {
+    const res = await fetch(apiBase, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim(), tagIds, plan }),
+      signal,
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save the template.');
+    await res.json().catch(() => ({}));
+  }, [apiBase, name, tagIds, plan]);
+  const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
+    enabled: !!data?.canWrite, loading, sig, write,
+    // An explicit submit rejects an empty name; autosave must NOT, because the coach is mid-typing —
+    // a blank name simply doesn't save yet, nothing is discarded, and the status pill says why.
+    blocked: name.trim() ? null : 'Give the template a name to save it.',
+    failText: 'Could not save the template.',
+  });
 
   const load = useCallback(async () => {
     setLoading(true); setLoadError('');
@@ -79,13 +101,13 @@ export default function CoachPlanTemplateEditorPage({
       setPlan(body.template.plan ?? emptyPracticePlan());
       setName(body.template.name);
       setTagIds(body.template.tags.map(t => t.id));
-      setDirty(false);
+      settle();
     } catch (e) {
       setLoadError(errorMessage(e, 'Could not load this template.'));
     } finally {
       setLoading(false);
     }
-  }, [apiBase]);
+  }, [apiBase, settle]);
   useEffect(() => { load(); }, [load]);
 
   /**
@@ -94,12 +116,18 @@ export default function CoachPlanTemplateEditorPage({
    * still read-only and still counted.
    */
   const [drills, setDrills] = useState<RepTeamDrill[]>([]);
+  // …and its circuits (stage 4, L9), so a template can hold a whole circuit as one block.
+  const [circuits, setCircuits] = useState<RepTeamCircuit[]>([]);
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/drills`).catch(() => null);
-      if (cancelled || !res?.ok) return;
-      setDrills((await res.json()).drills ?? []);
+      const [d, c] = await Promise.all([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/drills`).catch(() => null),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/circuits`).catch(() => null),
+      ]);
+      if (cancelled) return;
+      if (d?.ok) setDrills((await d.json()).drills ?? []);
+      if (c?.ok) setCircuits((await c.json()).circuits ?? []);
     })();
     return () => { cancelled = true; };
   }, [orgSlug, teamId]);
@@ -111,57 +139,8 @@ export default function CoachPlanTemplateEditorPage({
   // template still carries its own kit list ("the shape and the teaching" includes what to bring).
   const { tags: equipmentTags, createTag: createEquipmentTag, reload: reloadEquipmentTags } = useEquipmentTags(orgSlug, teamId);
 
-  // ⚠ The signature covers the WHOLE editable state, not just the plan: renaming a template and
-  // then closing the tab must be as safe as adding a block and closing the tab.
-  const sig = JSON.stringify({ plan, name, tagIds });
-  const sigRef = useRef(sig);
-  useEffect(() => { sigRef.current = sig; }, [sig]);
-
-  const handleSave = useCallback(async (): Promise<boolean> => {
-    if (!data?.canWrite) return true;
-    // ⚠ An explicit submit rejects an empty name; autosave must NOT, because the coach is
-    // mid-typing. So a blank name simply doesn't save yet — nothing is discarded, and the status
-    // pill says why.
-    if (!name.trim()) {
-      setSaveError('Give the template a name to save it.');
-      return false;
-    }
-    const sigAtSave = sigRef.current;
-    setSaving(true); setSaveError('');
-    const abort = new AbortController();
-    const timeout = setTimeout(() => abort.abort(), SAVE_TIMEOUT_MS);
-    try {
-      const res = await fetch(apiBase, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), tagIds, plan }),
-        signal: abort.signal,
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save the template.');
-      await res.json().catch(() => ({}));
-      if (sigRef.current === sigAtSave) setDirty(false);
-      return true;
-    } catch (e: unknown) {
-      setSaveError(
-        e instanceof DOMException && e.name === 'AbortError'
-          ? 'Saving is taking too long — check your connection.'
-          : errorMessage(e, 'Could not save the template.'),
-      );
-      return false;
-    } finally {
-      clearTimeout(timeout);
-      setSaving(false);
-    }
-  }, [data?.canWrite, apiBase, name, tagIds, plan]);
-
-  // Autosave ~0.9s after the last change, and STOP after a failure rather than retrying for ever —
-  // the same posture, and the same reasoning, as the practice plan's editor.
-  useEffect(() => {
-    if (!dirty || saving || loading || saveError || !data?.canWrite) return;
-    const t = setTimeout(() => { void handleSave(); }, 900);
-    return () => clearTimeout(t);
-  }, [dirty, saving, loading, saveError, data?.canWrite, sig, handleSave]);
-
-  function touch() { setDirty(true); setSaveError(''); }
+  /** Retire / restore from the header — one tap; the page re-reads and the editor locks or unlocks. */
+  const { busy: retireBusy, setActive } = useRetireRestore(apiBase, load, setLoadError, { dirty, saving, handleSave });
 
   const helpRequest = {
     module: 'coaches' as const,
@@ -175,7 +154,14 @@ export default function CoachPlanTemplateEditorPage({
     return <CoachNotOnTeam />;
   }
 
-  const canWrite = data?.canWrite ?? false;
+  // A retired template opens read-only: the row said "Retired", and Restore is the header's one door back.
+  const isRetired = data ? !data.template.isActive : false;
+  const canWrite = (data?.canWrite ?? false) && !isRetired;
+  const retireAction = data?.canWrite ? (
+    <button type="button" className={styles.btnSecondary} disabled={retireBusy} onClick={() => setActive(isRetired)}>
+      {isRetired ? <><RotateCcw size={14} aria-hidden /> Restore this template</> : <><Archive size={14} aria-hidden /> Retire this template</>}
+    </button>
+  ) : undefined;
 
   return (
     <div className={`${styles.page} ${styles.savePillPage}`}>
@@ -183,10 +169,13 @@ export default function CoachPlanTemplateEditorPage({
 
       <CoachPageHeader
         icon={BookMarked}
-        title={data?.template.name || 'Template'}
+        // The LIVE name — a rename autosaves, and the title above it must not wait for a reload.
+        title={name.trim() || data?.template.name || 'Template'}
         helpLabel="Plan templates"
         help={helpRequest}
         backTo={{ href: practicePlansHref(base, 'templates'), label: 'Templates' }}
+        actions={retireAction}
+        actionsPhoneHidden={!data?.canWrite}
       />
 
       {loadError && <p className={styles.errorText} role="alert">{loadError}</p>}
@@ -203,7 +192,7 @@ export default function CoachPlanTemplateEditorPage({
           <div className={styles.ppDoc} data-room="plan-template" data-room-state="loaded">
             <div className={styles.ppDocHead}>
               <span className={styles.ppDocHeadFacts}>
-                {templateShapeLabel(plan)} · {templateUseLabel(data.template.planCount)}
+                {templateShapeLabel(plan)} · {templateUseLabel(data.template.planCount)}{isRetired ? ' · Retired' : ''}
               </span>
             </div>
 
@@ -254,6 +243,7 @@ export default function CoachPlanTemplateEditorPage({
               focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
               onFocusTagsChanged={reloadFocusTags}
               drills={drills}
+              circuits={circuits}
               focusTags={focusTags}
               // A template has no date, so there is no running clock and no block start times —
               // computeBlockClocks returns nothing for an empty start, which is the honest answer:

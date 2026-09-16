@@ -75,7 +75,10 @@ async function horizontalOverflow(page: Page): Promise<number> {
 async function shortDrillControlHeights(page: Page): Promise<{ text: string; height: number }[]> {
   return page.evaluate(() => {
     const out: { text: string; height: number }[] = [];
-    const sel = '[class*="ppAddInline"], [class*="ppIconBtn"], [class*="ppDrillTab"], [class*="ppDrillRowActions"] button, [class*="ppDrillFilters"] input';
+    // The row actions LEFT the row for the drill sheet's foot at stage 4 (L3 · L6, 2026-09-16): the
+    // sheet's own controls are measured when it is open (`[class*="modalFooter"] button`), the card's
+    // Add and the panel's grip when a card is on screen.
+    const sel = '[class*="ppAddInline"], [class*="ppIconBtn"], [class*="ppDrillTab"], [class*="modalFooter"] button, [class*="libCardActions"] button, [class*="libCardGrip"], [class*="ppDrillFilters"] input';
     for (const el of Array.from(document.querySelectorAll(sel))) {
       const rect = el.getBoundingClientRect();
       // Skip anything not actually on screen — a collapsed section is not a tap target.

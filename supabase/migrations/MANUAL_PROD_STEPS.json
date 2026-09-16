@@ -126,6 +126,10 @@
     "301_development_writers_can_delete_a_definition.sql": {
       "prod": "pending",
       "note": "Policy-only (no schema change): adds the DELETE RLS policy on rep_team_measurable_types on the development-writer predicate (mig 292's), because since mig 300 the product deletes a definition nothing points at and the table's policy set said nobody may (a /review finding on 300's build, 2026-09-15). RLS is not the portal's enforcement layer (service-role routes gate on canWriteDevelopment; the three RESTRICT FKs refuse a delete of a definition with records from any path), so nothing 500s without it — the policy set just lies. ORDER: none; apply with 300. Applied to dev 2026-09-15 and verified by query: pg_policies shows DELETE ×1, INSERT ×1, SELECT ×2, UPDATE ×1 on the table. Verify on prod with the query at the foot of the migration file."
+    },
+    "302_a_circuit_is_the_third_size_of_reusable_thing.sql": {
+      "prod": "pending",
+      "note": "Two new tables (rep_team_circuits, rep_team_circuit_tags — visible to check:migrations) PLUS one schema-invisible piece: CREATE OR REPLACE merge_rep_team_tags with its seventh lane (circuit tags), copied from the highest-numbered definition (239) per that function's own rule. Without the function change on prod, merging two focus tags would CASCADE-delete every circuit's link to the loser instead of re-pointing it, while the merge reports success. The [data] flag is the gate reading INSERT…SELECT inside the function body — there is no data change. Practices re-evaluation stage 4, owner ruling L9 (2026-09-16). ORDER: apply to prod BEFORE promoting the code that reads rep_team_circuits (the migration-040 lesson); independent of 297–301. Applied to dev 2026-09-16 via apply-migration-api.mjs; snapshots refreshed the same day. Verify on prod with the two queries at the foot of the migration file (pg_policies on both tables; pg_proc prosrc contains rep_team_circuit_tags)."
     }
   }
 }

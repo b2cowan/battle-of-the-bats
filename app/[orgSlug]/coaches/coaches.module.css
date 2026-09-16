@@ -196,6 +196,22 @@
   .cardActionLabel { display: inline; }
 }
 
+/* cardPhoneLine / cardDesktopCell — A PHONE CARD IS NAME · ONE LINE · CHEVRON, NOT A LABELLED ROW
+   PER COLUMN (the library tabs, practices re-evaluation stage 4, 2026-09-16). Where a table's data
+   columns are a few short facts ("20 min · Not in a plan yet"), the card reflow's label/value row per
+   cell is most of a card's height for nothing; these two mark the cells that HIDE at ≤640 and the
+   one line inside the lead cell that SHOWS there instead, composed by the row from the same facts.
+   Promoted here from the Results table's own `phoneLine` / `desktopCell` pair
+   (`PlayerDevelopment.module.css`), whose comment asked for exactly this the day a second table
+   wanted it; that table and the peer's records cards still wear their own copies — S6 (the shared
+   stylings close-out) points them here. Same order rule as `.cardActionLabel` above: base first,
+   media after. */
+.cardPhoneLine { display: none; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .cardPhoneLine { display: block; }
+  .tableAsCards td.cardDesktopCell { display: none; }
+}
+
 /* scrollX — controlled horizontal scroll for a genuine 2-D grid (lineup
    rows×innings, the 7-day week). .scrollXSticky additionally pins the first
    column so the row label stays visible. ALWAYS pair with a visible "swipe →"
@@ -9840,10 +9856,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .ppBlockBody { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.8rem 0.9rem 1rem; }
 
-/* `.ppDuration` — the drill library's usual-minutes row (stage 4's); the block's own row is
-   `.ppClockRow` below (stage 2). ⚰ `.ppRestToggle` went with stage 3 (2026-09-15): "Groups rotate"
-   is a pressed chip on the rotation strip now (D3), the block's Rest of practice a chip since stage 2. */
-.ppDuration { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
+/* ⚰ `.ppDuration` — the drill library's usual-minutes row — went with stage 4 (2026-09-16, L6): the
+   drill sheet is the station modal's shape and its Usually row is the block's own `.ppClockRow`.
+   ⚰ `.ppRestToggle` went with stage 3 (2026-09-15): "Groups rotate" is a pressed chip on the
+   rotation strip now (D3), the block's Rest of practice a chip since stage 2. */
 
 /* ── The open block (practices re-evaluation stage 2 · The block, owner rulings D1–D11, 2026-09-15) ──
    The clock row: five quick lengths as chips, the minutes box, Rest of practice as the last chip,
@@ -10211,6 +10227,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* The template's name and tags — the sheet's title block, above its goal line. */
 .ppDocFields { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.6rem; }
 
+/* The hub's one quiet door under Recent practices (stage 4, L8) — words, never a count. */
+.ppEveryPractice { margin: 0.5rem 0 0; padding-left: 0.25rem; font-size: var(--type-support); font-weight: 600; }
+
 /* ── The goal, one line (D4) ── */
 .ppGoalLine { display: flex; align-items: baseline; gap: 0.4rem; min-width: 0; }
 .ppGoalKicker { flex: none; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
@@ -10317,6 +10336,94 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppTlQuietAlt { display: inline-block; }
 /* A bare-button link (the portal's `.linkBtn` reset) in the sheet's quiet voice. */
 .ppTlQuietLink { composes: linkBtn ppQuietLink; margin: 0; font: inherit; }
+
+/* ── DRAG (stage 4, owner ruling L2, 2026-09-16 — "buttons everywhere; drag as an addition on
+   desktop, with a mouse — never the only way") ──
+   The GAP between two rows, and under the last: nothing at all until something is lifted; then a
+   band the pointer can find (the row that holds it is a grid like every other row, so the band
+   sits beside the spine, not across it), a line inside it while it is a legal target, and the
+   words — "▸ New block here · 5:11 p.m." — while the pointer is over it. `data-lifting` on the
+   sheet's body says something is being carried; `data-target` on the gap says this gap could take
+   it; `data-over` that the pointer is over it. Nothing in the PLAN changes until the drop. */
+.ppTlGap { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); min-width: 0; height: 0; overflow: hidden; }
+.ppTlGapGutter { border-right: 2px solid var(--home-ink, var(--text-primary)); }
+.ppTlGapLine { min-width: 0; display: flex; align-items: center; padding-left: 1.1rem; }
+.ppDocBody[data-lifting] .ppTlGap[data-target='on'] { height: 2.25rem; overflow: visible; }
+.ppTlGap[data-target='on'] .ppTlGapLine::before {
+  content: ''; flex: 1 1 auto; height: 0; border-top: 2px dashed var(--home-olive, var(--logic-lime)); opacity: 0.45;
+}
+.ppTlGap[data-over='on'] .ppTlGapLine::before { border-top-style: solid; opacity: 1; }
+.ppTlGap[data-over='on'] .ppTlGapLine { background: var(--home-olive-soft, rgba(255,255,255,0.05)); border-radius: 6px; }
+.ppTlGapWords {
+  order: -1; flex: none; margin-right: 0.6rem; font-size: var(--type-support); font-weight: 700;
+  color: var(--home-olive, var(--logic-lime)); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* The gutter as the block's HANDLE — press and drag the clock cell with a mouse; the pair keeps
+   working (the kit lifts only after six pixels). `data-lifted` fades the row being carried. */
+.ppTlGutterHandle { cursor: grab; touch-action: auto; }
+.ppTlGutterHandle:active { cursor: grabbing; }
+.ppTlRow:has(> .ppTlGutter[data-lifted='on']) { opacity: 0.45; }
+/* The open block's station door as a drop target: "+ Add a station" (a circuit) or "+ Stations"
+   (a block with none or one). Dashed while a DRILL is lifted; filled while the pointer is over it. */
+/* A real box always (a droppable measured with `display: contents` has no rect), a grid item like
+   the button was; the button fills it. */
+.ppStColAddWrap { display: flex; min-width: 0; border-radius: 10px; }
+.ppStColAddWrap > .ppStColAdd { flex: 1 1 auto; width: 100%; }
+.ppStColAddWrap[data-target='on'] { outline: 1.5px dashed rgba(var(--blueprint-blue-rgb), 0.45); outline-offset: 2px; }
+.ppStColAddWrap[data-over='on'] { outline: 2px solid var(--home-olive, var(--logic-lime)); }
+.ppStColAddWrap[data-over='on'] > .ppStColAdd { background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
+.ppDoorTarget { display: inline-block; border-radius: 6px; }
+.ppDoorTarget[data-target='on'] { outline: 1.5px dashed rgba(var(--blueprint-blue-rgb), 0.45); outline-offset: 3px; }
+.ppDoorTarget[data-over='on'] { outline: 2px solid var(--home-olive, var(--logic-lime)); background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
+/* The carried thing under the pointer — a chip, portaled to the body so no sheet clips it. */
+.ppDragGhost {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.35rem 0.7rem 0.35rem 0.5rem;
+  border-radius: 999px; border: 1px solid var(--home-olive, var(--logic-lime)); background: var(--card-bg);
+  color: var(--text-primary); font-size: var(--type-support); font-weight: 700;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25); cursor: grabbing; transform: rotate(-2deg); white-space: nowrap;
+}
+.ppDragGhost svg { color: var(--text-tertiary); }
+
+/* The library door at the right end of the doors line — the word by shape (L1 · L9). */
+.ppDoorsLibrary { margin-left: auto; }
+.ppDoorsLibrary .ppTlQuietLink { display: inline-flex; align-items: center; gap: 0.3rem; }
+/* A block placed from a circuit says so — one quiet line at the top of its open body (L9), the
+   drill's "From your drills" voice, and it stays through every edit (the template's rule). */
+.ppFromCircuit {
+  display: inline-flex; align-items: center; gap: 0.35rem; margin: 0;
+  font-size: var(--type-support); color: var(--text-tertiary);
+}
+.ppFromCircuit strong { color: var(--text-secondary); font-weight: 700; }
+/* The circuit save's second question — one tick, its stations named beside it (L9). */
+.ppTickRow { display: flex; align-items: flex-start; gap: 0.55rem; font-size: var(--type-body); color: var(--text-primary); min-height: var(--tap-min, 44px); cursor: pointer; }
+.ppTickRow input { margin-top: 0.3rem; width: 1.1rem; height: 1.1rem; flex: none; }
+.ppTickNames { color: var(--text-tertiary); }
+
+/* ── THE DOCKED LIBRARY (stage 4, owner ruling L5 — A, 2026-09-16) ──
+   The pair: the sheet at stage 1's 816 letter width, a 20px gap, the 320 panel — 1,156 in all,
+   which is the header's working column at 1440 exactly, so the header and the content share
+   edges (the owner's 2026-09-15 catch). Undocked the pair is the sheet alone at the column's full
+   width, as it always was; the page decides the width once (`canDock`) and the toggle is absent
+   below it. The panel is sticky so the rows stay beside the block being built on a long sheet. */
+.ppSheetPair { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+.ppSheetPair > .ppDoc { flex: 1 1 auto; min-width: 0; }
+.ppSheetPairDocked { flex-direction: row; align-items: flex-start; gap: 20px; }
+.ppSheetPairDocked > .ppDoc { flex: 1 1 816px; min-width: 0; }
+.ppLibraryHost { flex: 0 0 320px; width: 320px; min-width: 0; position: sticky; top: 0.75rem; align-self: flex-start; max-height: calc(100vh - 1.5rem); display: flex; }
+.ppToolbarEnd { margin-left: auto; }
+.ppToolbarEnd[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
+.ppLibrary {
+  display: flex; flex-direction: column; min-width: 0; width: 100%; max-height: 100%;
+  background: var(--card-bg); border: 1px solid var(--home-line-strong, var(--border-2)); border-radius: 6px;
+  box-shadow: var(--home-shadow, var(--shadow-sm));
+}
+.ppLibraryHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.6rem 0.5rem 0.4rem 0.9rem; border-bottom: 1px solid var(--home-line, var(--border-2)); }
+.ppLibraryTitle { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.ppLibraryCount { color: var(--text-tertiary); font-weight: 400; font-variant-numeric: tabular-nums; margin-left: 0.25rem; }
+.ppLibraryBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 0.6rem 0.6rem; }
+.ppLibraryBody .ppDrillFilters { padding-top: 0.5rem; }
+.ppLibraryFoot { padding: 0.4rem 0.6rem 0.5rem; border-top: 1px solid var(--home-line, var(--border-2)); }
+.ppLibraryFoot .ppAddInline { display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; min-height: var(--tap-min, 44px); }
 
 /* The foot — "How it went" waits for the practice (D7); the line says so. */
 .ppDocNote { margin: 0.9rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
@@ -10712,34 +10819,87 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    locally. Deliberately scoped to these classes — changing the shared primitives to satisfy one
    feature would be a portal-wide visual change nobody asked for. */
 .ppDrillFilters .input { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-min, 44px); }
-.ppDrillFilters button,
-.ppDrillRowActions button { min-height: var(--tap-min, 44px); }
+.ppDrillFilters button { min-height: var(--tap-min, 44px); }
 
 .ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
 
-.ppDrillRow,
-.ppDrillCard {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem;
-  flex-wrap: wrap; min-width: 0;
-  padding: 0.6rem 0.7rem; margin-bottom: 0.45rem;
-  border: 1px solid var(--border-2); border-radius: 10px; background: var(--card-bg);
+/* ⚰ THE OLD ROW FAMILY — `.ppDrillRow` · `.ppDrillCard` · `.ppDrillRowMain` · `.ppDrillRowName` ·
+   `.ppDrillRowMeta` · `.ppDrillRowActions` · `.ppDrillPreview` · `.ppDrillPreviewName` — WENT WITH
+   STAGE 4 (2026-09-16, owner ruling L3). It carried the 267px phone row: `.ppDrillRowMain` said
+   `flex: 1 1 12rem`, a WIDTH basis that became a HEIGHT once `.ppDrillCard` went
+   `flex-direction: column` at ≤640, so every library row — a drill with four lines, a template with
+   nothing in it — was 267px tall (the Templates tab at 390 was 5,300px of scroll for twenty names,
+   the picker's rows the same 267). The tabs are tables on the list recipe now; the picker, the
+   docked panel and the import dialogs share ONE card, `.libCard`, content-tall by construction.
+
+   ── The library CARD (`components/coaches/LibraryRow.tsx`) — one card, three homes: the docked
+   panel beside the plan, the picker sheet's rows, and (as the table's own reflow) the tab at 390.
+   Name and tags · the two facts on one line · the first line · a chevron; the whole row the door.
+   The grip leads the row where the row can be carried (the panel, with a mouse). ── */
+.libList { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+.libCard {
+  min-width: 0; border: 1px solid var(--border-2); border-radius: 10px; background: var(--card-bg);
 }
-/* Retired, and "already in your library" on the import list: shown and softened, never hidden --
+/* Retired, and "already in your library" on the import list: shown and softened, never hidden —
    a coach scanning for something they remember should find it and see why it isn't offered. */
-.ppDrillCard[data-retired='retired'] { opacity: 0.55; }
-.ppDrillRowMain { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 12rem; min-width: 0; }
-.ppDrillRowName {
-  display: inline-flex; align-items: center; flex-wrap: wrap;
+.libCard[data-retired='retired'] { opacity: 0.55; }
+.libCard[data-open='on'] { border-color: var(--white-45); }
+/* Lifted (a drag in flight): the row stays where it is, faded — the overlay under the pointer is
+   the thing that moves; nothing here shifts on hover. */
+.libCard[data-lifted='on'] { opacity: 0.45; }
+.libCardRow { display: flex; align-items: flex-start; gap: 0.4rem; min-width: 0; padding: 0.45rem 0.55rem 0.45rem 0.4rem; }
+.libCardGrip {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 1.5rem; min-height: var(--tap-min, 44px); color: var(--text-tertiary); cursor: grab; touch-action: none;
+}
+.libCardGrip:active { cursor: grabbing; }
+/* The card's body is the door — a real button, on the tap floor, with the chevron as its glyph. */
+.libCardMain {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; position: relative;
+  text-align: left; padding: 0.15rem 1.6rem 0.15rem 0; margin: 0; min-height: var(--tap-min, 44px);
+  background: none; border: 0; color: inherit; font: inherit; cursor: pointer; justify-content: center;
+}
+span.libCardMain { cursor: default; }
+.libCardName {
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0 0.35rem;
   font-size: var(--type-body); font-weight: 700; color: var(--text-primary); min-width: 0;
 }
-.ppDrillRowMeta { font-size: var(--type-support); color: var(--text-tertiary); }
-.ppDrillRowActions { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-
-.ppDrillPreview {
-  display: flex; flex-direction: column; gap: 0.5rem;
-  padding: 0.9rem; min-width: 0;
+.libCardFacts { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+/* The first line, clamped — never the paragraph: a forty-drill library is forty lines. */
+.libCardLine {
+  font-size: var(--type-support); color: var(--text-secondary); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ppDrillPreviewName { margin: 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* "Nothing in it yet" — words in the quiet italic, never "0 blocks". */
+.libCardQuiet { font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
+.libCardChevron { position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); display: inline-flex; }
+.libCardActions { flex: none; display: flex; align-items: center; gap: 0.4rem; align-self: center; }
+.libCardActions button { min-height: var(--tap-min, 44px); }
+/* Opened in place — the sheet's Preview without the sheet. */
+.libCardBody { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.2rem 0.7rem 0.6rem 2.3rem; min-width: 0; }
+.libCard:not(:has(.libCardGrip)) .libCardBody { padding-left: 0.7rem; }
+.libCardBody .ppReadTxt b { color: var(--text-tertiary); font-weight: 600; }
+.libCardFrom { color: var(--text-tertiary); font-weight: 400; }
+.libCardFoot { display: flex; justify-content: flex-end; padding: 0 0.7rem 0.7rem; }
+.libCardFoot button { min-height: var(--tap-min, 44px); }
+
+/* ── The library TABLE ROW (the tabs) — on the list recipe, with the name as the door. ── */
+/* The tap box is `.devCellLink`'s (composed on the same button) — this adds only the cosmetics. */
+.libRowName {
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0 0.35rem;
+  background: none; border: 0; font: inherit; font-weight: 600; cursor: pointer; text-align: left;
+}
+.libRowLine { display: block; max-width: 60ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+.libRowQuiet { font-style: italic; }
+.libRowData { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  /* The card reflow: the line wraps under the title rather than clipping to one line, and the
+     stacked lines sit close, so a card is as tall as its words and no taller (the title keeps
+     `.devCellLink`'s 44px tap box, whose negative margins hand the height back). */
+  .libRowLine { white-space: normal; max-width: none; }
+  .tableAsCards td.libRowLead { gap: 0.15rem; }
+  .libRowLead .listRowSub { margin-top: 0; }
+}
 
 .ppRetiredWrap { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; }
 
@@ -10787,9 +10947,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppRailBadge li { font-size: var(--type-support); color: var(--text-secondary); }
 
 @media (max-width: 640px) {
-  .ppDrillRow,
-  .ppDrillCard { flex-direction: column; align-items: stretch; }
-  .ppDrillRowActions { justify-content: flex-end; }
   .ppDrillFilters .input { flex-basis: 100%; }
 }
 
@@ -10875,9 +11032,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppSourceTab:hover { color: var(--text-secondary); }
 .ppSourceTab[data-on='on'] { color: var(--text-primary); border-bottom-color: var(--blueprint-blue); }
 
-/* A template's name in the room — the row's own link into its editor. */
-.ppTemplateLink { color: inherit; text-decoration: none; }
-.ppTemplateLink:hover { text-decoration: underline; }
+/* ⚰ `.ppTemplateLink` — the template row's own link into its editor — went with stage 4 (L3): the
+   whole row is the door now (`.libRowName`). */
 
 /* "Nothing written down for this one." Silence is STATED, never rendered blank —
    a practice with no recap must not read as a practice where nothing happened. */

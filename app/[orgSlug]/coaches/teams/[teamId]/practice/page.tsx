@@ -23,6 +23,7 @@ import { useMinuteClock } from '@/lib/use-minute-clock';
 import PracticePlansTabs from './_PracticePlansTabs';
 import DrillsView from './_DrillsView';
 import PlanTemplatesView from './_PlanTemplatesView';
+import CircuitsView from './_CircuitsView';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent } from '@/lib/types';
 
@@ -36,8 +37,9 @@ import type { RepTeamEvent } from '@/lib/types';
  * This is that treatment applied to the more frequent tool.
  *
  * **Stage 0 · Arrive (owner rulings D1–D8, all "build as drawn", 2026-09-14).** The room is the
- * HUB for three things — the season's practices, plan templates and the drill library — as tabs
- * (Practices · Templates · Drills; Practices the landing; `?section=`), and it opens on the NEXT
+ * HUB for four things — the season's practices, plan templates, circuits (stage 4, L9) and the
+ * drill library — as tabs (Practices · Templates · Circuits · Drills; Practices the landing;
+ * `?section=`), and it opens on the NEXT
  * PRACTICE as one card carrying the room's one lime by state: Plan this practice · Open the plan ·
  * Run practice (inside the run window). "Needs a plan" counts upcoming practices only (it used to
  * count May in September). Below the line the past reads as a record — "No plan written · Open",
@@ -71,6 +73,8 @@ function rowMeta(startsAt: string) {
   return `${formatInOrgZone(startsAt, { weekday: 'short' })} · ${clock(startsAt)}`;
 }
 const clock = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' });
+/** The past list's cap by design — six — behind which "Every practice this season ›" waits (L8). */
+const RECENT_CAP = 6;
 
 export default function CoachesPracticePlansPage({
   params: paramsPromise,
@@ -91,6 +95,17 @@ export default function CoachesPracticePlansPage({
 
   const [upcoming, setUpcoming] = useState<RepTeamEvent[]>([]);
   const [recent, setRecent] = useState<RepTeamEvent[]>([]);
+  /**
+   * "Every practice this season ›" (stage 4, owner ruling L8, 2026-09-16): the past list is the six
+   * most recent by design, and the one thing it lacked against Insights' Practice review was the
+   * cap. One quiet door under Recent practices opens the rest IN PLACE — words, never a count, and
+   * absent at six or fewer. No tag chips here and no truth label: those are Insights' reasons to
+   * exist beside Coverage, and a second list of practices is what the plan forbids.
+   */
+  // Keyed by TEAM, not a bare boolean: this page does not unmount on a team switch (see `load`),
+  // and a door opened on team A must not leave team B's list uncapped with no door to close it.
+  const [showAllFor, setShowAllFor] = useState<string | null>(null);
+  const showAllRecent = showAllFor === teamId;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [needsOnly, setNeedsOnly] = useState(false);
@@ -135,7 +150,8 @@ export default function CoachesPracticePlansPage({
       const practices = (data.events ?? []).filter(e => e.eventType === 'practice');
       // Split here rather than during render, so Date.now() never runs in a render body. Shared
       // with the Lineups hub, so the recent cap and the "upcoming" rule have one definition.
-      const split = splitUpcomingAndRecent(practices, { now: Date.now() });
+      // Uncapped here (L8): the page shows six and offers the rest behind one door.
+      const split = splitUpcomingAndRecent(practices, { now: Date.now(), recentCap: Infinity });
       if (isStale()) return;
       setUpcoming(split.upcoming);
       setRecent(split.recent);
@@ -202,6 +218,7 @@ export default function CoachesPracticePlansPage({
   // action and help, and the tab bar under it.
   if (activeSection === 'drills') return <DrillsView orgSlug={orgSlug} teamId={teamId} />;
   if (activeSection === 'templates') return <PlanTemplatesView orgSlug={orgSlug} teamId={teamId} />;
+  if (activeSection === 'circuits') return <CircuitsView orgSlug={orgSlug} teamId={teamId} />;
 
   /**
    * ⚠ **THE BETWEEN-SEASONS SCREEN THAT STOOD HERE IS DELETED** (2026-08-18). It explained that the
@@ -226,7 +243,9 @@ export default function CoachesPracticePlansPage({
   // rows shown plus the card, if it needs one, are exactly the number on the chip.
   const notCard = (list: RepTeamEvent[]) => list.filter(e => e.id !== cardEvent?.id);
   const upcomingShown = notCard(needsOnly ? upcoming.filter(e => !practiceHasPlan(e)) : upcoming);
-  const recentShown = needsOnly ? [] : notCard(recent);
+  const recentAll = needsOnly ? [] : notCard(recent);
+  const recentShown = showAllRecent ? recentAll : recentAll.slice(0, RECENT_CAP);
+  const moreRecent = recentAll.length > RECENT_CAP && !showAllRecent;
 
   const noPractices = !loading && !error && all.length === 0;
   // "All caught up" only when the filter finds nothing AND the card is not itself the match.
@@ -401,6 +420,15 @@ export default function CoachesPracticePlansPage({
             <section aria-labelledby="practices-recent">
               <p className={styles.sectionKicker} id="practices-recent">Recent practices</p>
               <div className={styles.lineupFrontList}>{recentShown.map(e => renderRow(e, true))}</div>
+              {/* The one quiet door (L8) — words, never "All 23"; gone once opened, and absent at
+                  six or fewer. Practice review under Insights → Development is unchanged. */}
+              {moreRecent && (
+                <p className={styles.ppEveryPractice}>
+                  <button type="button" className={styles.ppTlQuietLink} onClick={() => setShowAllFor(teamId)}>
+                    Every practice this season ›
+                  </button>
+                </p>
+              )}
             </section>
           )}
           {noMatches && (

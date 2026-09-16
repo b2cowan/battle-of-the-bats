@@ -401,8 +401,35 @@ const SITES: Site[] = [
     },
   },
   {
+    // The fourth tab — circuits, the third size of reusable thing (practices re-evaluation stage 4,
+    // owner ruling L9, 2026-09-16). The same one create with two ways inside it as its siblings.
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/_CircuitsView.tsx', occurrence: 0,
+    screen: 'Practice plans → Circuits',
+    variant: 'standard', helpHost: 'masthead',
+    actions: {
+      from: 'headerCreate', slot: 'action', holds: 'New circuit — one create with two ways inside it (stage 4, L9)',
+      phoneHidden: '!canWrite', phoneInTitleRow: 'true',
+    },
+  },
+  {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/templates/[templateId]/page.tsx', occurrence: 0,
-    screen: 'Practice plans → Templates → one template', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'Practice plans → Templates → one template', variant: 'standard', helpHost: 'masthead',
+    actions: {
+      // ⚠ A RETIRE, NOT A CREATE (stage 4, owner ruling L3, 2026-09-16): the tab's row lost its
+      // actions — the row is the door — so Retire followed Edit into the thing itself, as the drill
+      // sheet's foot did. Restore on a retired one. Hidden on a phone for a viewer who cannot write.
+      from: 'retireAction', slot: 'action', holds: 'Retire this template / Restore this template',
+      phoneHidden: '!data?.canWrite', phoneInTitleRow: null,
+    },
+  },
+  {
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/practice/circuits/[circuitId]/page.tsx', occurrence: 0,
+    screen: 'Practice plans → Circuits → one circuit', variant: 'standard', helpHost: 'masthead',
+    actions: {
+      // The template editor's idiom, one size down (L9): Retire in the header, Restore on a retired one.
+      from: 'retireAction', slot: 'action', holds: 'Retire this circuit / Restore this circuit',
+      phoneHidden: '!data?.canWrite', phoneInTitleRow: null,
+    },
   },
 
   // ── Practice, lineups, insights, season's end ────────────────────────────────────────────────

@@ -34,7 +34,7 @@
  * orders or compares a child, and the library is sorted by NAME — never by use — so the product
  * never quietly tells a coach which of their own ideas is best.
  */
-import { newPracticePlanId, type PracticeStation } from './rep-practice-plan';
+import { newPracticePlanId, type PracticePlanBlock, type PracticeStation } from './rep-practice-plan';
 import type { RepTeamDrill } from './types';
 
 export type { RepTeamDrill, RepTeamDrillWithUsage } from './types';
@@ -73,6 +73,12 @@ export interface DrillInput {
   /** Ids from the team's 'equipment' library (mig 272). Ids, not names — same rule as `tagIds`. */
   equipmentTagIds?: string[] | null;
 }
+
+/** A blank drill for a "New drill" sheet — ONE definition, read by the Drills tab and the docked panel. */
+export const emptyDrillDraft = (): DrillInput => ({
+  name: '', tagIds: [], usualMinutes: null, description: '', goal: '',
+  coachingPoints: [], setup: '', equipment: [], equipmentTagIds: [],
+});
 
 function text(v: unknown, max: number): string {
   return typeof v === 'string' ? v.trim().slice(0, max) : '';
@@ -240,6 +246,35 @@ export function stationToDrillInput(station: PracticeStation, tagIds?: string[] 
     coachingPoints: station.coachingPoints ?? [],
     setup: station.setup ?? null,
     equipment: station.equipment ?? [],
+  };
+}
+
+/**
+ * The drill fields a BARE WRITTEN BLOCK carries, for "Save to my drills…" on a block with no
+ * stations (practices re-evaluation stage 4, owner ruling L1, 2026-09-16 — the §192 walk's F2
+ * finding, ruled with stage 3's D13: *the bare written block IS the activity*).
+ *
+ * Mirrors `stationToDrillInput` with the two things a block has that a station never does: its
+ * TITLE as the drill's name, and its MINUTES as how long the drill usually runs — so the row reads
+ * "10 min" without the coach ever opening the drill to type it. A "rest of practice" block has no
+ * number to give. The block has no setup field; the kit is resolved to NAMES by the caller (a
+ * drill's own `equipment` field is the legacy string list — the station's promote does the same).
+ * The people on the block are dropped here — the same D20 split pointing the other way.
+ */
+export function blockToDrillInput(
+  block: Pick<PracticePlanBlock, 'title' | 'duration' | 'description' | 'goal' | 'coachingPoints'>,
+  equipmentNames: readonly string[],
+  tagIds?: string[] | null,
+): DrillInput {
+  return {
+    name: block.title.trim(),
+    tagIds: uniqueIds(tagIds, MAX_TAGS_PER_ITEM),
+    usualMinutes: block.duration.restOfPractice ? null : (block.duration.minutes ?? null),
+    description: block.description ?? null,
+    goal: block.goal ?? null,
+    coachingPoints: block.coachingPoints ?? [],
+    setup: null,
+    equipment: [...equipmentNames],
   };
 }
 

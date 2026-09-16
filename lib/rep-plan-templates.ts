@@ -27,7 +27,7 @@
  * tell a coach which of their own ideas is best. Nothing here counts, scores or orders a child.
  */
 import {
-  MAX_TITLE_LEN, PRACTICE_PLAN_VERSION, newPracticePlanId, sanitizePracticePlan,
+  MAX_TITLE_LEN, PRACTICE_PLAN_VERSION, forgetArrangement, newPracticePlanId, sanitizePracticePlan,
   totalPlannedMinutes,
   type PracticePlan, type PracticePlanBlock, type PracticeStation,
 } from './rep-practice-plan';
@@ -77,8 +77,12 @@ export function validatePlanTemplateInput(input: unknown): { template: PlanTempl
   };
 }
 
-/** Strip a station down to what a TEMPLATE may carry. The drill half rides along untouched. */
-function stationForTemplate(station: PracticeStation): PracticeStation {
+/**
+ * Strip a station down to what a TEMPLATE may carry. The drill half rides along untouched.
+ * ⚠ Exported for ONE other caller — `blockToCircuitShape` (stage 4, L9): a circuit is a template
+ * one size down, and the "people, not shape" line is drawn HERE, once, for both.
+ */
+export function stationForTemplate(station: PracticeStation): PracticeStation {
   const next: PracticeStation = { ...station };
   // ── The PRACTICE half — the people and the moment, which belong to a practice, never here ──
   delete next.staff;
@@ -97,16 +101,23 @@ function stationForTemplate(station: PracticeStation): PracticeStation {
   return next;
 }
 
-/** Strip a block down to what a TEMPLATE may carry. */
-function blockForTemplate(block: PracticePlanBlock): PracticePlanBlock {
+/**
+ * Strip a block down to what a TEMPLATE may carry. Exported for `blockToCircuitShape` (stage 4,
+ * L9) — the circuit is this strip on ONE block, so the two can never disagree about what travels.
+ * ⚠ `circuitId`/`circuitName` deliberately SURVIVE here, as `drillId` does: a template saved from
+ * a plan whose block was placed from a circuit keeps that block's provenance (plan §7.7).
+ */
+export function blockForTemplate(block: PracticePlanBlock): PracticePlanBlock {
   const next: PracticePlanBlock = { ...block };
   delete next.staff;
   delete next.staffTagIds;  // see stationForTemplate — same "people, not shape" reasoning
   delete next.playerIds;
   if (next.stations) next.stations = next.stations.map(stationForTemplate);
   // A rotation's SHAPE is worth keeping — how often groups move is part of how the practice runs.
-  // Its GROUPS are people, so they go, and the plan the template produces draws fresh ones.
-  if (next.rotation) next.rotation = { ...next.rotation, groups: [], groupSource: 'manual' };
+  // Its GROUPS are people, so they go, and the plan the template produces draws fresh ones. A
+  // hand-arranged grid (D14) names those groups by id, so it goes with them — the practice deals
+  // its own rotation from the groups it draws.
+  if (next.rotation) next.rotation = forgetArrangement({ ...next.rotation, groups: [], groupSource: 'manual' });
   return next;
 }
 
@@ -207,6 +218,15 @@ export function templateUseLabel(planCount: number): string {
   return planCount > 0
     ? `Started ${planCount} plan${planCount === 1 ? '' : 's'}`
     : 'Not started a plan yet';
+}
+
+/**
+ * The browsable fact about a template is its SHAPE IN WORDS — "Warm-up · Skills circuit ·
+ * Small-sided game" (stage 4, L3). Empty when it holds no block; the row then reads "Nothing in
+ * it yet" in words, never "0 blocks" (L4).
+ */
+export function templateBlocksLine(plan: Pick<PracticePlan, 'blocks'>): string {
+  return plan.blocks.map((b, i) => b.title.trim() || `Block ${i + 1}`).join(' · ');
 }
 
 /**

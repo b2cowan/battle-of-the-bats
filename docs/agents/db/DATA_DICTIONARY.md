@@ -2984,6 +2984,51 @@ moment it lands.
 <!-- dict:col:rep_team_plan_template_tags.tag_id -->
 **`tag_id`** (FK → `rep_team_tags.id`, NOT NULL, CASCADE) — the other half.
 
+### `rep_team_circuits`
+<!-- dict:table:rep_team_circuits -->
+
+**Purpose:** a **saved block WITH STATIONS** — a circuit, the third size of reusable thing between a drill (one station's worth) and a template (a whole practice). Added by migration 302 (practices re-evaluation stage 4, owner ruling L9, 2026-09-16). **Applied to dev 2026-09-16; ⚠ PROD-OWED — apply BEFORE promoting the code that reads it** (the migration also REPLACES `merge_rep_team_tags`, which `check:migrations` cannot see — see MANUAL_PROD_STEPS.json).
+
+**Gotchas (read first):**
+1. **Shaped like `rep_team_plan_templates`, deliberately** — TEAM-scoped and NOT program-year-scoped (a team is permanent; the library crosses a rollover with nothing to import), `team_id` NOT NULL (club-wide circuits were never asked for), one ACTIVE name per team case-insensitively (partial unique index), retire never delete, head-coach-only write policies (mig 222's correction applied from the start).
+2. **A CIRCUIT IS SCAFFOLDING, LIKE A TEMPLATE — NOT A DRILL.** Placed on a practice it is COPIED (`circuitToBlock` — fresh ids), **fully editable**, and the block carries `circuitId` + `circuitName` as provenance that SURVIVES every edit ("Started from Skills circuit · changes here stay here"). The drill-backed stations INSIDE it keep the drill rule — `drillId` survives the strip, exactly as a template's do; stripping it would silently break every drill's count. Rules: `lib/rep-circuits.ts`.
+3. **`block` carries NO PEOPLE.** `blockToCircuitShape` runs the plan sanitiser on a one-block plan, then the TEMPLATE's own strip (`blockForTemplate`): staff, `staffTagIds`, players, groups, "just for tonight", the rotation note and any hand-arranged grid (D14) go on **every write AND every read** (`mapRepTeamCircuit`); the stations, their teaching, the kit and the rotation's clock stay. A "rest of practice" length becomes no length.
+4. **Counts say PLANS STARTED, once per plan** (`countCircuitUses` over `practice_plan->'blocks'[*].circuitId`; the record route's targeted read is a jsonb containment on `blocks`). On screen "Started 8 plans" / "Not started a plan yet" — never "used".
+5. **The plan JSON gained two optional keys on a block — `circuitId`, `circuitName`** — read by the sanitiser like `templateId`/`templateName` on the plan. No version bump, no column. `copyPracticePlanForReuse` DROPS them (the coach copied a night, not the circuit — the `templateId` rule); `planToTemplateShape` KEEPS them (a template saved from a plan keeps its block's provenance, as it keeps `drillId`s).
+6. **The save dialog's tick creates drills FIRST, then points.** "Also save its N written stations as drills" creates the drills through the drill create route and rewrites the saved shape's station `drillId`s (`pointStationsAtDrills`, by name) BEFORE the circuit row is stored; tonight's block on the practice is untouched. A same-name active drill is never duplicated.
+7. **Live-season only, no archive door** — an *instrument*, like the other two libraries. The list route's cross-season read (`getRepTeamPracticePlansAcrossSeasons`, for the counts) and the past-seasons import are ENUMERATED in `coach-history-endpoint-guard.test.ts` (`CROSS_SEASON_PLAN_READERS`).
+
+<!-- dict:col:rep_team_circuits.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL, CASCADE) — tenant scope.
+
+<!-- dict:col:rep_team_circuits.team_id -->
+**`team_id`** (FK → `rep_teams.id`, **NOT NULL**, CASCADE) — the owning team (gotcha 1).
+
+<!-- dict:col:rep_team_circuits.name -->
+**`name`** (text, NOT NULL; CHECK `1–120` chars) — unique per team, case-insensitive, while active.
+
+<!-- dict:col:rep_team_circuits.block -->
+**`block`** (jsonb, NOT NULL, default `{}`; CHECK object) — ONE block's shape, the same structure as an entry of `rep_team_events.practice_plan->'blocks'` (gotchas 2–3).
+
+<!-- dict:col:rep_team_circuits.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — retire/restore flag.
+
+<!-- dict:col:rep_team_circuits.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — who saved it.
+
+### `rep_team_circuit_tags`
+<!-- dict:table:rep_team_circuit_tags -->
+
+**Purpose:** join table — the several `kind='focus'` tags a circuit carries. Added by migration 302. **⚠ PROD-OWED with its parent.**
+
+**Gotchas:** same shape and same cautions as `rep_team_plan_template_tags` — tenancy is reached through the CIRCUIT (`syncCircuitTags` proves the ids belong to this team's or the club's shared 'focus' vocabulary), and `merge_rep_team_tags` re-points these rows atomically — mig 302 gave the function its seventh lane; **an eighth surface edits the highest-numbered definition (302), never an older one.**
+
+<!-- dict:col:rep_team_circuit_tags.circuit_id -->
+**`circuit_id`** (FK → `rep_team_circuits.id`, NOT NULL, CASCADE) — half of the composite PK.
+
+<!-- dict:col:rep_team_circuit_tags.tag_id -->
+**`tag_id`** (FK → `rep_team_tags.id`, NOT NULL, CASCADE) — the other half.
+
 ### `rep_player_measurables`
 <!-- dict:table:rep_player_measurables -->
 

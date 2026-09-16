@@ -484,6 +484,14 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   const blockKit = strList(raw.equipmentTagIds, MAX_TAGS_PER_ITEM, 64);
   if (blockKit) block.equipmentTagIds = blockKit;
 
+  // Provenance only — which CIRCUIT this block was placed from, and its name snapshotted then
+  // (stage 4, L9). The template's `templateId`/`templateName` idiom one level down, and like them
+  // it SURVIVES editing: a circuit is scaffolding. Kept opaque and capped like `station.drillId`.
+  const circuitId = optionalStr(raw.circuitId, 64);
+  if (circuitId) block.circuitId = circuitId;
+  const circuitName = optionalStr(raw.circuitName, MAX_TITLE_LEN);
+  if (circuitName) block.circuitName = circuitName;
+
   /**
    * People are read STRUCTURALLY here, at every level they arrive on — the block's list, each
    * station's, the rotation's groups. WHERE they live is settled by `settleBlockPeople` after the
@@ -1600,7 +1608,8 @@ export function formatRunClock(seconds: number): string {
  * ⚠ **`templateId` is deliberately NOT carried forward** (Phase 3). Provenance records the
  * IMMEDIATE source, and this coach started from a PRACTICE, not from a template. Carrying it would
  * inflate "Started 8 plans" with plans nobody started from that template, and the provenance line
- * would claim a template the coach never opened.
+ * would claim a template the coach never opened. **A block's `circuitId` follows the same rule**
+ * (stage 4, L9): the coach copied a night, they did not place the circuit.
  */
 export function copyPracticePlanForReuse(
   plan: PracticePlan,
@@ -1608,6 +1617,12 @@ export function copyPracticePlanForReuse(
   newId: () => string,
 ): PracticePlan {
   const scoped = restrictToRoster(plan, rosterPlayerIds);
+  const withoutCircuit = (block: PracticePlanBlock): PracticePlanBlock => {
+    const next = { ...block };
+    delete next.circuitId;
+    delete next.circuitName;
+    return next;
+  };
   return {
     version: PRACTICE_PLAN_VERSION,
     ...(scoped.goal ? { goal: scoped.goal } : {}),
@@ -1621,7 +1636,7 @@ export function copyPracticePlanForReuse(
     // from it (owner ruling 2026-09-14). The section still reads only for those who may see goals.
     ...(scoped.includeFocusAreas ? { includeFocusAreas: true } : {}),
     blocks: scoped.blocks.map(block => ({
-      ...block,
+      ...withoutCircuit(block),
       id: newId(),
       stations: block.stations?.map(s => ({ ...s, id: newId() })),
       rotation: block.rotation

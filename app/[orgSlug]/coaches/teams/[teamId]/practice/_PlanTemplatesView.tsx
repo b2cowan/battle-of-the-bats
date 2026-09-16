@@ -1,32 +1,33 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Archive, BookMarked, History, NotebookPen, Plus, RotateCcw, X } from 'lucide-react';
+import { BookMarked, History, NotebookPen, Plus } from 'lucide-react';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { FOCUS_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
-import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
-import { useFocusTags } from '@/components/coaches/use-focus-tags';
 import { formatInOrgZone } from '@/lib/timezone';
-import { UNTAGGED_FILTER, collectTags, filterTagged } from '@/lib/rep-drills';
+import { filterTagged } from '@/lib/rep-drills';
 import {
-  MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateUseLabel,
+  templateBlocksLine, templateShapeLabel, templateUseLabel,
   type RepTeamPlanTemplateWithUsage,
 } from '@/lib/rep-plan-templates';
+import { LibraryFilterBar, LibraryTable, LibraryTableRow } from '@/components/coaches/LibraryRow';
+import { PastSeasonImportDialog, usePastSeasonImport, type PastSeasonRow } from '@/components/coaches/PastSeasonImport';
 import { planTemplateHref } from '@/lib/practice-plans-address';
 import PracticePlansTabs from './_PracticePlansTabs';
 import styles from '../../../coaches.module.css';
 
 /**
  * The plan-template library — the TEMPLATES TAB of the Practice plans room (practices
- * re-evaluation stage 0, owner ruling D5, 2026-09-14). It lived at `/development/templates` under
- * Skills & Goals until then; moved WHOLE — the same rows, search, chips, dialogs and header create —
- * with only the address, the room's title and the tab bar new, and the back arrow to Skills & Goals
- * gone. Stage 4 redraws the rows; this move does not. The old address redirects here. Still the ONE
- * home for rename / retire / import — moved, never duplicated.
+ * re-evaluation stage 0, owner ruling D5, 2026-09-14; redrawn at stage 4, owner rulings L3 · L4,
+ * 2026-09-16). A TABLE on the portal's list recipe: Template (the name, its tags beside it, and
+ * the BLOCKS' TITLES as its line — "Warm-up · Skills circuit · Small-sided game") · Length
+ * ("60 min · 3 blocks", because it is what makes a template pickable without opening it) ·
+ * Started · a chevron. **The row is the door** to the template's editor; Rename is the editor's own
+ * Name field and Retire follows it into the editor's header — there are no actions on a row. An
+ * empty template reads "Nothing in it yet" in the quiet italic — words, never "0 blocks" — and is
+ * NOT offered in *Start this plan from…* (L4); "Start from blank" stays.
  *
  * ⚠ A VIEW, not a page: the hub (`practice/page.tsx`) resolves the team, the season and the
  * capability gates before this mounts, and decides whether the tab exists at all. It renders its
@@ -44,134 +45,22 @@ import styles from '../../../coaches.module.css';
  * produced, and nothing records what was actually run (D4). Zero renders as "Not started a plan
  * yet" in words, so an unused template never reads as a failing score.
  *
- * ⚠ **Retired, not deleted**, and a retired template dims in place rather than disappearing —
- * plans it already started keep reading exactly as written.
+ * ⚠ **Retired, not deleted**, and a retired template dims under "Show retired" rather than
+ * disappearing — plans it already started keep reading exactly as written.
  *
  * ⚠ **No archive door.** This room is live-season only (owner ruling 2026-08-01) — a template
  * library is a reusable INSTRUMENT, and the Development hub hides its door in a completed season.
  * A coach loses nothing: templates are keyed by TEAM, so they cross a rollover on their own.
  *
- * ⚠ **An assistant with read access sees no Rename, Retire, New or Save controls at all** — absent,
- * not disabled.
+ * ⚠ **An assistant with read access sees no New or Save controls at all** — absent, not disabled.
  */
 
-type ImportRow = {
-  key: string;
-  name: string;
-  plan: unknown;
-  shapeLabel: string;
-  planCount: number;
-  lastPlannedAt: string | null;
-  alreadyInLibrary: boolean;
-};
+type ImportRow = PastSeasonRow & { name: string; plan: unknown; shapeLabel: string; planCount: number; lastPlannedAt: string | null };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
 const fmtDate = (iso: string) =>
   formatInOrgZone(iso, { day: 'numeric', month: 'short', year: 'numeric' });
-
-// ── Sub-components at MODULE level (never in a render body — a component declared inside one is a
-// new type every render, so React remounts its subtree and a form loses focus every keystroke). ──
-
-function TemplateRow({
-  template, canWrite, busy, onRename, onRetire, onRestore, href,
-}: {
-  template: RepTeamPlanTemplateWithUsage;
-  canWrite: boolean;
-  busy: boolean;
-  onRename: () => void;
-  onRetire: () => void;
-  onRestore: () => void;
-  href: string;
-}) {
-  return (
-    <div className={styles.ppDrillCard} data-retired={template.isActive ? undefined : 'retired'}>
-      <div className={styles.ppDrillRowMain}>
-        <span className={styles.ppDrillRowName}>
-          <Link href={href} className={styles.ppTemplateLink}>{template.name}</Link>
-          {!template.isActive && <span className={styles.ppSharedChip}>Retired</span>}
-          {template.tags.length > 0 && (
-            <span className={styles.tagReadRow}>
-              {template.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
-            </span>
-          )}
-        </span>
-        <span className={styles.ppDrillRowMeta}>
-          {[
-            templateShapeLabel(template.plan),
-            // ⚠ PLANS, never practices (D4) — and written out, never a bare 0.
-            templateUseLabel(template.planCount),
-            template.lastPlannedAt ? `last planned ${fmtDate(template.lastPlannedAt)}` : null,
-          ].filter(Boolean).join(' · ')}
-        </span>
-      </div>
-      {canWrite && (
-        <div className={styles.ppDrillRowActions}>
-          {template.isActive ? (
-            <>
-              <button type="button" className={styles.ppAddInline} disabled={busy} onClick={onRename}>Rename</button>
-              <button type="button" className={styles.ppAddInline} disabled={busy} onClick={onRetire}>
-                <Archive size={12} aria-hidden /> Retire
-              </button>
-            </>
-          ) : (
-            <button type="button" className={styles.ppAddInline} disabled={busy} onClick={onRestore}>
-              <RotateCcw size={12} aria-hidden /> Restore
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RenameDialog({
-  template, tags, onCreateTag, busy, error, onSave, onClose, manage, onManageChanged,
-}: {
-  template: RepTeamPlanTemplateWithUsage;
-  tags: PickableTag[];
-  onCreateTag: (name: string) => Promise<PickableTag | null>;
-  manage?: TagManageConfig;
-  onManageChanged?: () => void;
-  busy: boolean;
-  error: string;
-  onSave: (name: string, tagIds: string[]) => void;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState(template.name);
-  const [tagIds, setTagIds] = useState<string[]>(template.tags.map(t => t.id));
-  return (
-    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Rename template"
-      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Rename template</h3>
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-        <div className={styles.ppDrillWrite}>
-          <label className={styles.ppField}>
-            <span className={styles.ppFieldLabel}>Name</span>
-            <input className={styles.input} value={name} maxLength={MAX_TEMPLATE_NAME_LEN} autoFocus
-              onChange={e => setName(e.target.value)} />
-          </label>
-          <TagPicker label="Tags" all={tags} selected={tagIds} onChange={setTagIds} onCreate={onCreateTag}
-            manage={manage} onManageChanged={onManageChanged}
-            emptyHint="No tags yet — type a word to make your first one." />
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
-          <div className={styles.modalFooter}>
-            <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-            <button type="button" className={styles.btnPrimary} disabled={busy || !name.trim()}
-              onClick={() => onSave(name.trim(), tagIds)}>
-              {busy ? 'Saving…' : 'Save'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const router = useRouter();
@@ -185,20 +74,8 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
   const [query, setQuery] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [showRetired, setShowRetired] = useState(false);
-
-  const [renaming, setRenaming] = useState<RepTeamPlanTemplateWithUsage | null>(null);
-  const [formBusy, setFormBusy] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const [importOpen, setImportOpen] = useState(false);
-  const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
-  const [importError, setImportError] = useState('');
-  const [importingKey, setImportingKey] = useState<string | null>(null);
-
-
-  useOverlayOpen(!!renaming || importOpen); // the tag drawer registers its own overlay unit
 
   const load = useCallback(async () => {
     setLoading(true); setLoadError('');
@@ -214,31 +91,25 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
     }
   }, [apiBase]);
   useEffect(() => { load(); }, [load]);
+  const importer = usePastSeasonImport<ImportRow>({
+    readUrl: `${apiBase}/past-seasons`, rowsKey: 'templates', createUrl: apiBase,
+    bodyOf: row => ({ name: row.name, plan: row.plan, tagIds: [] }), onAdded: load, noun: 'template',
+  });
+  useOverlayOpen(importer.open);
 
   // Memoised because `?? []` mints a NEW array on every render, which would make every memo below
   // recompute on every keystroke in the search box.
   const templates = useMemo(() => data?.templates ?? [], [data]);
   const canWrite = !!data?.canWrite;
 
-  /**
-   * The team's whole 'focus' vocabulary — NOT just the tags in use here.
-   *
-   * ⚠ Deliberately a separate fetch. The picker must offer every tag the team has, including ones
-   * only a drill or a focus area uses; deriving it from what is on screen would hide vocabulary the
-   * coach already created and invite them to mint a duplicate. The filter CHIPS below ARE derived
-   * from what is on screen, which is a different question.
-   */
-  const { tags, createTag, reload: loadTags } = useFocusTags(orgSlug, teamId);
-
   const active = useMemo(() => templates.filter(t => t.isActive), [templates]);
   const retired = useMemo(() => templates.filter(t => !t.isActive), [templates]);
-  const chipTags = useMemo(() => collectTags(active), [active]);
 
   // The SAME predicate the drill library and the in-plan picker use — one rule, three lists.
   const shown = useMemo(() => filterTagged(active, query, tagFilter), [active, query, tagFilter]);
 
   /**
-   * "New template" is offered at ZERO as well as at one (owner ruling, frame 03).
+   * "New template" is offered at ZERO as well as at one (owner ruling, frame 03; L4 keeps it).
    *
    * ⚠ The cost, accepted: the room owns a full block-and-station editor rather than a rename box,
    * because a template built from scratch has no practice to inherit a shape from. It creates the
@@ -267,70 +138,6 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
     }
   }
 
-  async function saveRename(name: string, tagIds: string[]) {
-    if (!renaming) return;
-    setFormBusy(true); setFormError('');
-    try {
-      const res = await fetch(`${apiBase}/${renaming.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, tagIds }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save that.');
-      setRenaming(null);
-      await load();
-    } catch (e) {
-      setFormError(errorMessage(e, 'Could not save that.'));
-    } finally {
-      setFormBusy(false);
-    }
-  }
-
-  async function setActiveState(id: string, isActive: boolean) {
-    setBusyId(id);
-    try {
-      const res = await fetch(`${apiBase}/${id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'That didn’t work.');
-      await load();
-    } catch (e) {
-      setLoadError(errorMessage(e, 'That didn’t work.'));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function openImport() {
-    setImportOpen(true); setImportError(''); setImportRows(null);
-    try {
-      const res = await fetch(`${apiBase}/past-seasons`);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not read your past seasons.');
-      const json = await res.json();
-      setImportRows(json.templates ?? []);
-    } catch (e) {
-      setImportError(errorMessage(e, 'Could not read your past seasons.'));
-    }
-  }
-
-  async function importTemplate(row: ImportRow) {
-    setImportingKey(row.key); setImportError('');
-    try {
-      const res = await fetch(apiBase, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: row.name, plan: row.plan, tagIds: [] }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not add that template.');
-      // Marked in place rather than removed — a list that reshuffles under a coach's thumb while
-      // they add three templates is how the wrong one gets tapped.
-      setImportRows(rows => rows?.map(r => (r.key === row.key ? { ...r, alreadyInLibrary: true } : r)) ?? null);
-      await load();
-    } catch (e) {
-      setImportError(errorMessage(e, 'Could not add that template.'));
-    } finally {
-      setImportingKey(null);
-    }
-  }
 
   const helpRequest = {
     module: 'coaches' as const,
@@ -341,32 +148,18 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
 
   /**
    * ⚠ THE CREATE MOVED TO THE HEADER AND THE TWO CREATES BECAME ONE (Phase 3, 2026-08-25).
-   *
-   * "New template" and "Add from a past season" are two ways to make the same thing, and they were
-   * drawn as two competing buttons in the filter row while the page header sat empty above them.
    * House rule 6 — one verb, one button, with the choice inside it; house rule 4 — the create sits
-   * in the page header. On a phone it collapses to the bare "+" in the title-line corner, like
-   * every other coach screen.
-   *
-   * "Manage tags" (né "Your tags", renamed under the one-door-name ruling 2026-09-01) stays down in the list row on purpose (rule 2, nearest label wins): it manages a
-   * vocabulary that outlives this page, and it belongs beside the list it filters — the same call
-   * Expenses' "Manage tags" got.
+   * in the page header. On a phone it collapses to the bare "+" in the title-line corner.
    */
   const headerCreate = canWrite && (
     <CoachToolbarMenu
-      /* ⚠ A STATIC NAME (/review, 2026-08-25 — Low). The label used to flip to "Starting…" while a
-         template was being created, which put a shape-shifting accessible name on something
-         announced as a menu — a screen reader heard "Starting…, menu". The busy state belongs to
-         the item doing the work, one line down, not to the door that opens onto both routes. */
+      /* ⚠ A STATIC NAME (/review, 2026-08-25 — Low): the busy state belongs to the item doing the
+         work, one line down, not to the door that opens onto both routes. */
       label="New template"
       icon={<Plus size={15} aria-hidden />}
       variant="primary"
       collapseOnPhone
     >
-      {/* ⚠ The BUSY GUARD is on this item, not on the trigger (/review, 2026-08-25 — Low).
-          Disabling the whole menu while a blank template is being created would also lock the
-          import route, which the two separate buttons this replaced never did — folding two
-          controls into one must not fold their disabled states together with them. */}
       <CoachToolbarMenuItem
         icon={<Plus size={15} aria-hidden />}
         label={creating ? 'Starting…' : 'Start from blank'}
@@ -378,15 +171,46 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
         icon={<History size={15} aria-hidden />}
         label="Bring one forward from a past season"
         hint="Copy a plan you already ran"
-        onSelect={openImport}
+        onSelect={importer.openImport}
       />
     </CoachToolbarMenu>
   );
 
+  const row = (template: RepTeamPlanTemplateWithUsage) => {
+    // The blocks' titles are the browsable fact (L3); an empty one says so in words (L4). Length
+    // and the count — ⚠ PLANS, never practices (D4), written out, never a bare 0 — each read ONCE
+    // for the desktop cells and the phone card's one line alike.
+    const blocks = templateBlocksLine(template.plan);
+    const length = blocks ? templateShapeLabel(template.plan) : null;
+    const started = templateUseLabel(template.planCount);
+    return (
+      <LibraryTableRow
+        key={template.id}
+        name={template.name}
+        tags={template.tags}
+        retired={!template.isActive}
+        line={blocks || 'Nothing in it yet'}
+        quietLine={!blocks}
+        facts={[length, started].filter(Boolean).join(' · ')}
+        cells={[
+          { label: 'Length', value: length ?? <span className={styles.devRowDash}>—</span>, shrink: true, data: true },
+          { label: 'Started', value: template.lastPlannedAt ? `${started} · last ${fmtDate(template.lastPlannedAt)}` : started, shrink: true },
+        ]}
+        onOpen={() => router.push(planTemplateHref(base, template.id))}
+        openLabel={`Open ${template.name}`}
+      />
+    );
+  };
+  const head = (
+    <>
+      <th className={styles.th}>Template</th>
+      <th className={`${styles.th} ${styles.tdShrink}`}>Length</th>
+      <th className={`${styles.th} ${styles.tdShrink}`}>Started</th>
+    </>
+  );
+
   return (
     <div className={styles.page}>
-      {/* Page-header ruling 2026-08-11: the blurb's promise ("next Tuesday starts from it") is
-          already the empty state's description, where a coach with no templates reads it. */}
       <CoachPageHeader
         icon={NotebookPen}
         title="Practice plans"
@@ -406,14 +230,13 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
         <div className={styles.loadingState}>Loading your templates…</div>
       ) : templates.length === 0 ? (
         /* ⚠ The empty state offers all THREE routes (owner ruling, frame 03): build one, pull one
-           forward from a past season, or save one from a practice. Refusing to let a coach create
-           one at zero while allowing it at one is an arbitrary rule rather than a principle. */
+           forward from a past season, or save one from a practice. */
         <CoachEmptyState
           icon={<BookMarked size={22} />}
           headline="No templates yet"
           description="Build one here, or save a practice that went well as a template from the plan itself — then next Tuesday starts from it instead of an empty page."
           blocker={canWrite ? undefined : 'Managing templates comes with Schedule: View + edit — ask your head coach.'}
-          secondaryAction={canWrite ? { label: 'Add from a past season', onClick: openImport } : undefined}
+          secondaryAction={canWrite ? { label: 'Add from a past season', onClick: importer.openImport } : undefined}
         >
           {canWrite && (
             <button type="button" className={styles.btnPrimary} disabled={creating} onClick={newTemplate}>
@@ -423,128 +246,35 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
         </CoachEmptyState>
       ) : (
         <>
-          <div className={styles.ppDrillFilters}>
-            <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Search templates…" aria-label="Search templates" />
-          </div>
-
-          {/* ⚠ ONE flat list narrowed by chips, never category headings — several tags per template
-              would print the same template twice. */}
-          <div className={styles.ppSuggestWrap}>
-            <button type="button" className={styles.ppSuggestChip} data-on={tagFilter == null ? 'on' : undefined}
-              onClick={() => setTagFilter(null)}>All <span>{active.length}</span></button>
-            {chipTags.map(t => (
-              <button key={t.id} type="button" className={styles.ppSuggestChip}
-                data-on={tagFilter === t.id ? 'on' : undefined} onClick={() => setTagFilter(t.id)}>
-                {t.name} <span>{active.filter(x => x.tags.some(tag => tag.id === t.id)).length}</span>
-              </button>
-            ))}
-            {/* ⚠ Always offered when it applies — a template must never become unreachable simply
-                by carrying no tags. */}
-            {active.some(t => t.tags.length === 0) && (
-              <button type="button" className={styles.ppSuggestChip}
-                data-on={tagFilter === UNTAGGED_FILTER ? 'on' : undefined}
-                onClick={() => setTagFilter(UNTAGGED_FILTER)}>
-                No tags <span>{active.filter(t => t.tags.length === 0).length}</span>
-              </button>
-            )}
-          </div>
+          <LibraryFilterBar items={active} noun="templates" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} />
 
           {shown.length === 0 ? (
             <p className={styles.formHint}>No templates match that.</p>
-          ) : shown.map(template => (
-            <TemplateRow key={template.id} template={template} canWrite={canWrite}
-              busy={busyId === template.id}
-              href={planTemplateHref(base, template.id)}
-              onRename={() => { setFormError(''); setRenaming(template); }}
-              onRetire={() => setActiveState(template.id, false)}
-              onRestore={() => setActiveState(template.id, true)}
-            />
-          ))}
+          ) : (
+            <LibraryTable label="Templates" head={head}>{shown.map(row)}</LibraryTable>
+          )}
 
           {retired.length > 0 && (
             <div className={styles.ppRetiredWrap}>
               <button type="button" className={styles.ppAddInline} onClick={() => setShowRetired(s => !s)}>
                 {showRetired ? 'Hide' : 'Show'} retired ({retired.length})
               </button>
-              {showRetired && retired.map(template => (
-                <TemplateRow key={template.id} template={template} canWrite={canWrite}
-                  busy={busyId === template.id}
-                  href={planTemplateHref(base, template.id)}
-                  onRename={() => {}} onRetire={() => {}}
-                  onRestore={() => setActiveState(template.id, true)}
-                />
-              ))}
+              {showRetired && <LibraryTable label="Retired templates" head={head}>{retired.map(row)}</LibraryTable>}
             </div>
           )}
         </>
       )}
 
-      {renaming && (
-        <RenameDialog template={renaming} tags={tags} onCreateTag={createTag}
-          manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
-          onManageChanged={loadTags}
-          busy={formBusy} error={formError}
-          onSave={saveRename} onClose={() => setRenaming(null)} />
-      )}
-
-      {/* ── "Add from a past season" — the archive ruling made concrete ── */}
-      {importOpen && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Add from a past season"
-          onPointerDown={e => { if (e.target === e.currentTarget) setImportOpen(false); }}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add from a past season</h3>
-              <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setImportOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className={styles.ppDrillWrite}>
-              <p className={styles.formHint}>
-                Practices you ran before, ready to become templates. Adding one copies its shape into
-                your library — nothing in the old practice changes, and no players come with it.
-              </p>
-              {importError && <p className={styles.errorText} role="alert">{importError}</p>}
-              {importRows === null && !importError && <p className={styles.formHint}>Looking…</p>}
-              {importRows?.length === 0 && (
-                <p className={styles.formHint}>
-                  Nothing to bring forward — this team has no practice plans from a past season yet.
-                </p>
-              )}
-              {importRows?.map(row => (
-                <div key={row.key} className={styles.ppDrillCard} data-retired={row.alreadyInLibrary ? 'retired' : undefined}>
-                  <div className={styles.ppDrillRowMain}>
-                    <span className={styles.ppDrillRowName}>{row.name}</span>
-                    {/* ⚠ "planned", never "ran" — nothing records what actually happened. */}
-                    <span className={styles.ppDrillRowMeta}>
-                      {[
-                        row.shapeLabel,
-                        `In ${row.planCount} plan${row.planCount === 1 ? '' : 's'}`,
-                        row.lastPlannedAt ? `last planned ${fmtDate(row.lastPlannedAt)}` : null,
-                      ].filter(Boolean).join(' · ')}
-                    </span>
-                  </div>
-                  <div className={styles.ppDrillRowActions}>
-                    {/* ⚠ Shown and greyed, never hidden — a coach scanning for a practice they
-                        remember should find it and see WHY it isn't offered. */}
-                    {row.alreadyInLibrary
-                      ? <span className={styles.ppDrillRowMeta}>Already in your library</span>
-                      : (
-                        <button type="button" className={styles.btnSecondary} disabled={importingKey === row.key}
-                          onClick={() => importTemplate(row)}>
-                          {importingKey === row.key ? 'Adding…' : 'Add'}
-                        </button>
-                      )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnPrimary} onClick={() => setImportOpen(false)}>Done</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PastSeasonImportDialog
+        state={importer}
+        hint="Practices you ran before, ready to become templates. Adding one copies its shape into your library — nothing in the old practice changes, and no players come with it."
+        emptyText="Nothing to bring forward — this team has no practice plans from a past season yet."
+        describe={row => ({
+          name: row.name,
+          // ⚠ "planned", never "ran" — nothing records what actually happened.
+          facts: [row.shapeLabel, `In ${row.planCount} plan${row.planCount === 1 ? '' : 's'}`, row.lastPlannedAt ? `last planned ${fmtDate(row.lastPlannedAt)}` : null].filter(Boolean).join(' · '),
+        })}
+      />
     </div>
   );
 }

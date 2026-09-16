@@ -1,6 +1,6 @@
 # Practices — holistic re-evaluation: the stage ladder, and stage 0 · Arrive
 
-**Plan · 15 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled, built, walked (§188 complete) and committed `6cff92e8` · stage 2 · The block RULED 2026-09-15 (D1–D11 all as drawn, §5.0) and BUILT ON DEV the same day (§5.10) · §190 WALK COMPLETE (§5.11) and COMMITTED `d52085a2` · stage 3 · Stations and the rotation RULED 2026-09-15 (D1–D3 · D5–D8 as drawn, D4 revised — §6.0) · BUILT ON DEV 2026-09-15 (§6.7 · §6.8) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · COMMITTED `7e2af89d` 2026-09-16 (stage 3 + the groups room + D13/D14, one commit) · the groups-board revision (§6.9, D9–D12) drawn, RULED B 2026-09-16 and BUILT ON DEV the same evening (the Groups ROOM — WALKED by the owner 2026-09-16 — hub QA walk · 3 part J) · D13–D14 (§6.11: the split on "+ Stations", the grid as a starting point) drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (parts K · L) · stage 4 · The library **DRAWN 2026-09-16 on the hub ("4 · The library" tab) · RULED 2026-09-16 (owner, in chat: "I approve everything as designed" — L1–L8 as drawn, §7.0) · L9 · Circuits added on the ruling and ruled in words the same day (§7.7) · BUILD NEXT — kickoff prompt [COACH_PRACTICES_STAGE4_BUILD_PROMPT.md](COACH_PRACTICES_STAGE4_BUILD_PROMPT.md) · no code yet** (drag drawn on D10's ruling; the planning prompt: [COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md](COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md)) (stage 3's build prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md))**
+**Plan · 15 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled, built, walked (§188 complete) and committed `6cff92e8` · stage 2 · The block RULED 2026-09-15 (D1–D11 all as drawn, §5.0) and BUILT ON DEV the same day (§5.10) · §190 WALK COMPLETE (§5.11) and COMMITTED `d52085a2` · stage 3 · Stations and the rotation RULED 2026-09-15 (D1–D3 · D5–D8 as drawn, D4 revised — §6.0) · BUILT ON DEV 2026-09-15 (§6.7 · §6.8) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · COMMITTED `7e2af89d` 2026-09-16 (stage 3 + the groups room + D13/D14, one commit) · the groups-board revision (§6.9, D9–D12) drawn, RULED B 2026-09-16 and BUILT ON DEV the same evening (the Groups ROOM — WALKED by the owner 2026-09-16 — hub QA walk · 3 part J) · D13–D14 (§6.11: the split on "+ Stations", the grid as a starting point) drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (parts K · L) · stage 4 · The library **DRAWN 2026-09-16 on the hub ("4 · The library" tab) · RULED 2026-09-16 (owner, in chat: "I approve everything as designed" — L1–L8 as drawn, §7.0) · L9 · Circuits added on the ruling and ruled in words the same day (§7.7) · BUILT ON DEV 2026-09-16 (§7.8 — L1–L8 as drawn, L9 in words; ONE migration, 302, prod-owed) · §195 WALK OWED · commit owed on the owner's word** (drag drawn on D10's ruling; the two stage-4 prompts deleted with the build) (stage 3's build prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md))**
 Companions: [PM brief](COACH_PRACTICES_REEVALUATION_PM_BRIEF.md) · the walk + every stage's proposal on ONE artifact:
 https://claude.ai/code/artifact/5c3d2f1b-5159-4d99-bad7-c48b2820da28 (source `COACH_PRACTICES_REEVALUATION.html` — republish the
 SAME path / `url`) · kickoff prompt used for this stage: [COACH_PRACTICES_STAGE0_BUILD_PROMPT.md](COACH_PRACTICES_STAGE0_BUILD_PROMPT.md)
@@ -28,7 +28,7 @@ be (a three-block practice is 6,627px and 59 inputs on desktop; the printed run 
 | 1 | **The blank page** — the plan page as a document (walk stations 1 · 3) | S.1 is decided here: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page. **First decision: the boundary question** (§2). **Last decision (D9): station 1's question — a practice needs an end time, the Add Practice form asks for it** — this page is built on it | **Ruled 2026-09-14 (D1–D9 as drawn) · built on dev the same day · seven owner revisions on the build · §188 walk COMPLETE 2026-09-14 · commit owed** — §4 below |
 | 2 | **The block** | One block's anatomy as the row stage 1 made open in place: four things always (title · clock row · Doing · Watching for) plus Players (Whole team or names), the rest behind doors; one vocabulary at both levels; the clock row with quick lengths and "ends …"; the shut row's line; a drill-placed block's face; coaching points as one field; kit at one level with the top list as the bag; Escape on every sheet | **RULED 2026-09-15 (D1–D11 all as drawn) · BUILT ON DEV the same day · /simplify · /review (3 confirmed + fixed) · /docs done · §190 walk owed · commit owed · no migration** — §5 below |
 | 3 | **Stations & rotation** | The sole-station question first (flatten, or keep the card); stations as columns under their block, rows on a phone; the rotation as one line; a station column that opens for the rest; the draw as one control; the grid in the same columns; points as one field on a station and in the library; people MOVE like kit | **Drawn 2026-09-15 on the hub ("3 · Stations and the rotation", D1–D8 with recommendations, notes 31–42, live heights: the circuit 4,083px on the fixture → 835 drawn; the sole station 922 → 567 flattened) · RULED 2026-09-15 (D4 as REVISED — a modal with a stepper) · BUILT ON DEV 2026-09-15 (§6.7: the circuit 1,140 built at 1440 with the grid and the groups on the block, the drill-placed block 618) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · commit owed · the groups-board revision (§6.9, D9–D12) drawn 2026-09-15 · RULED B 2026-09-16 · BUILT ON DEV 2026-09-16 (the Groups ROOM; walked by the owner 2026-09-16, part J) · D13–D14 drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (§6.11; parts K · L)** |
-| 4 | **The library** | The Templates and Drills tab rows on the list recipe (the row is the door; a drill row reads its first line, a template row its blocks; a phone card as tall as its words); the library docked beside the plan on a wide desktop (the sheet back at 816, the panel in the rest — the header's column); drag as an addition on desktop with a mouse — a drill onto the page, a block by its gutter — buttons everywhere; *Save to my drills…* on the bare written block (and the import reads bare blocks); an empty template not offered as a start; the drill sheet as the station modal's shape with Retire in its foot; the provenance line as one sentence; the hub's past list uncapped behind one door, Practice review left under Insights | **DRAWN 2026-09-16 · RULED 2026-09-16 (L1–L8 as drawn — §7.0) · L9 · Circuits added on the ruling (a saved block with stations: the word circuit, a fourth tab, a two-question save, with stage 4 — §7.7) · BUILD NEXT** (prompt [COACH_PRACTICES_STAGE4_BUILD_PROMPT.md](COACH_PRACTICES_STAGE4_BUILD_PROMPT.md)); step zero — D9–D12 ruled B / yes / as drawn 2026-09-15 before any drag was drawn · no code yet |
+| 4 | **The library** | The Templates and Drills tab rows on the list recipe (the row is the door; a drill row reads its first line, a template row its blocks; a phone card as tall as its words); the library docked beside the plan on a wide desktop (the sheet back at 816, the panel in the rest — the header's column); drag as an addition on desktop with a mouse — a drill onto the page, a block by its gutter — buttons everywhere; *Save to my drills…* on the bare written block (and the import reads bare blocks); an empty template not offered as a start; the drill sheet as the station modal's shape with Retire in its foot; the provenance line as one sentence; the hub's past list uncapped behind one door, Practice review left under Insights | **DRAWN 2026-09-16 · RULED 2026-09-16 (L1–L8 as drawn — §7.0) · L9 · Circuits added on the ruling (a saved block with stations: the word circuit, a fourth tab, a two-question save, with stage 4 — §7.7) · BUILT ON DEV 2026-09-16 (§7.8; migration 302 prod-owed) · §195 WALK OWED · commit owed**; step zero — D9–D12 ruled B / yes / as drawn 2026-09-15 before any drag was drawn |
 | 5 | **Paper & the field** | The run door's window on the plan page, "everyone" chips, the printed sheet — **including turning the printed rotation grid to STATION columns to match the screen (owner, 2026-09-16, deferred here from D14: groups in the cells, stacked when they share; a "Sitting out" column when a group sits a round out; the sideways fallback kept for too many stations to fit across the page)**; the field screen's "Rotation due" reads a hand-arranged grid (a sitting-out group already named on its due-moves line) | not drawn |
 | 6 | **Afterwards & who sees what** | "How it went" timing (renders before the practice today), the closed-season shelf, the recap line's second half if not ruled at stage 0 | not drawn |
 
@@ -1144,7 +1144,7 @@ takes a drill IS that drill).
 
 ## 7. Stage 4 · The library — DRAWN and RULED 2026-09-16 (L1–L8 as drawn; L9 Circuits added on the ruling); the inputs carried in, and answered
 
-**DRAWN 2026-09-16 on the hub's "4 · The library" tab (fifteen frames at true size, notes 54–79 and 86–90, decisions L1–L9 with a paste-back) · RULED 2026-09-16 (§7.0) · NO CODE — build prompt [COACH_PRACTICES_STAGE4_BUILD_PROMPT.md](COACH_PRACTICES_STAGE4_BUILD_PROMPT.md). Kickoff prompt (planning + mockups only): [COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md](COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md).** The stage's scope is the ladder's
+**DRAWN 2026-09-16 on the hub's "4 · The library" tab (fifteen frames at true size, notes 54–79 and 86–90, decisions L1–L9 with a paste-back) · RULED 2026-09-16 (§7.0) · BUILT ON DEV 2026-09-16 (§7.8) · the walk is the hub's "QA walk · 4" tab, ledger §195 · commit owed. The two stage-4 prompts (planning, build) were deleted with the build.** The stage's scope is the ladder's
 row 4 — the Templates and Drills tab rows, the library docked beside the plan on desktop, drag as an addition (S.4) — and the
 walk's station 6 ("Reuse — drills, templates, and starting from something") with Q 6.1 (dock + drag) and S.4. Everything
 below was an INPUT the planning session had to answer from the code before drawing; §7.2 answers each, §7.3 carries the decisions. None of it is ruled here.
@@ -1350,3 +1350,108 @@ count. Layout — the Circuits tab at 361/390/768/1440 and the panel's switch at
 circuit (with and without the tick), place it on the Oct 27 practice by drag and by Add, open it (three columns, rotation as
 saved, "Draw" offered), Escape and focus on the save dialog; the past-season import offering a multi-station block. Dictionary
 + snapshots refreshed; `check:dictionary` green.
+
+### 7.8 Build record (2026-09-16)
+
+- **Step zero was clean.** Stage 3, the groups room and D13–D14 were on dev as `7e2af89d` + `e508ab50` before a line of
+  stage 4 was written; the peer's Development stage-4 hunks sit beside this work in the same tree (`coaches.module.css`,
+  `lib/types.ts`, `lib/db.ts`, `layout-screens.mjs`, the layout baseline, the dictionary, TODO, the ledger,
+  `PlayerDevelopment.module.css`) and are staged by hunk from a private index, as before. A third session
+  (§194, the table standard) retired `.devTableCard` and edited the untracked `LibraryRow.tsx` to drop it — the shared
+  frame paints the card ground now; that hunk lands with this commit because a new file has no hunks.
+- **Built in one session, L1–L8 as drawn and L9 in words.** ONE migration — **302** (`rep_team_circuits` +
+  `rep_team_circuit_tags`, RLS on the template tables' pattern, `merge_rep_team_tags` gains its circuit lane; applied to
+  dev 2026-09-16, **prod-owed** — registered in `MANUAL_PROD_STEPS.json` because the function is invisible to
+  `check:migrations`); no plan version bump; **two new keys on a block** (`circuitId` · `circuitName`), whitelisted by the
+  sanitiser, kept by a template saved from the plan (as `drillId` is), dropped by a practice copied from it (as
+  `templateId` is). Three new routes (`development/circuits`, `/[circuitId]`, `/past-seasons`); the plan GET serves the
+  circuits with the drills. The run screen, the printed sheet and the closed-season reader read a block as a block.
+- **L3 · L6 as built — one row, three faces.** `LibraryRow.tsx`: `LibraryTableRow` (the tab's table row — the name a
+  `devCellLink` button, the tags, the first line clamped, the data columns as cells on desktop and ONE phone line
+  under the title — `cardPhoneLine` / `cardDesktopCell` in the `tableAsCards` family), `LibraryCard` (the picker's and
+  the panel's card — name · facts · first line · grip · Add; opens in place as the Preview), `LibraryFilterBar` (the tag
+  chips with counts, No tags always offered). **Measured: desktop rows 88–89px (drawn 88); phone cards 97 (templates) /
+  116 (drills) against the 267px rows they replace; the tablet table 734 wide at 768.** Retire left the row: *Retire this
+  drill* in the sheet's foot (`DrillSheet.tsx` — the station modal's shape: Tags · Usually · Doing · Watching for ·
+  Coaching points · Setup · Equipment; **640 × 744 measured**, drawn 560 × 653 — the extra is the tags box and the
+  equipment picker at their real heights), *Retire this template* / *Retire this circuit* in the editors' headers; retired
+  rows under "Show retired (N)". A retired drill opens with every field greyed and Restore in the foot. The old
+  `.ppDrillRow` family is retired in the stylesheet with ⚰ notes.
+- **L1 as built.** `blockToDrillInput(block, kit, tagIds)` beside `stationToDrillInput` — title → name, the minutes →
+  usually (a rest-of-practice length → none), setup none; the door at the foot of a titled block with no stations reads
+  *Save to my drills…*, the dialog's sentence names the minutes ("…and 10 min as how long it usually runs"); the past-season
+  import walks bare blocks and stations on ONE name key (the fixture offers "Warm-up (15 min)"). **Probe: Warm-up saved
+  as a drill with 10 min; tonight's block untouched and still editable.**
+- **L9 as built — the circuit is a template one size down.** `lib/rep-circuits.ts`: `blockToCircuitShape` = the plan
+  sanitiser → `blockForTemplate` (people, notes, groups and the hand-arranged grid gone — `forgetArrangement` now runs
+  inside `blockForTemplate`, so a template stops carrying a grid that names groups it no longer has) → drop the
+  provenance → a rest-of-practice length → none; run on WRITE and again on READ (`mapRepTeamCircuit`), so a row that
+  somehow held people would still come back empty of them. `circuitToBlock` mints fresh ids, titles the block by the
+  circuit, stamps `circuitId` + `circuitName`, empties the groups. The door reads by shape — drills door at 0 stations +
+  a title, circuits door at ≥ 2, none on a block that came from a circuit. The tick ("Also save its N written stations as
+  drills, with these tags") creates the drills FIRST — the name map is seeded from the active library before creating,
+  so a retry after a failure part-way neither duplicates nor skips — then `pointStationsAtDrills` by lowercased name,
+  then the circuit. **Probe: saved with and without the tick (six stations became six drill-backed stations; tonight's
+  block stayed 0-of-6 drill-backed); placed by drag and by Add — "Started from Skills circuit · changes here stay here",
+  its columns as saved, the rotation every 15 min, "No groups yet · Draw the groups ›", no circuits door on it; the
+  circuit editor read "45 min · 6 stations · Started 1 plan" from the jsonb containment count.** The Circuits tab is the
+  third mount of the row; *New circuit ▾ → Start from blank · Bring one forward from a past season* (multi-station
+  blocks by title); the editor at `practice/circuits/[id]` mounts the plan editor with `soloBlock` + `withoutPeople` —
+  no clock, no goal, no folds, no ghost row, no drag, no library door.
+- **L5 as built — the dock is a WIDTH decision, measured, remembered.** The plan page observes its column's parent
+  content box; at **1,156px or more** (816 + 20 + 320) a *Library* toggle sits at the toolbar's end and the blank page's
+  "a drill from your library" docks instead of opening the sheet; the choice is `localStorage`
+  (`coach-practice-library-dock`); below the width the same words open the picker sheet. **Measured at 1440: sheet 816
+  (x 252–1068), gap 20, panel 320 (1088–1408), the page column 1,156 — header edges shared; the toggle absent at 1280.**
+  The panel is a portal into a sticky host beside the sheet; its head switches Drills · Circuits; *+ New drill* opens
+  the sheet in place, *+ New circuit* links to the tab. A read-only coach has no `library` prop at all.
+- **L2 as built — `@dnd-kit` with ONE sensor (mouse, six pixels), `pointerWithin`, the overlay portaled to body.** The
+  gaps (`GapTarget`) exist only while something is lifted and read ONE sentence from the carried thing — "▸ New block
+  here · 6:00 p.m. · Warm-up · 10 min" / "Move Warm-up here · 6:10 p.m."; the two gaps beside a moving block do not
+  apply. The open block's "+ Stations" / "+ Add a station" is a droppable for a DRILL only (`StationDropTarget`, a real
+  flex box — a droppable measured with `display: contents` has no rect); a filled column and a shut block never light.
+  A drop is the ONE place a drag changes the plan (`onDragEnd` → `addBlockFromDrill` / `addBlockFromCircuit` /
+  `moveBlockTo` / `addStationFromDrill`, the last through D13's `splitBlockIntoStations`); every target is found by ID
+  at the drop. The gutter is the block's handle; **the ▲▼ pair inside it is shielded** (the review's one High — a press on
+  an arrow that drifted six pixels had become a drag and swallowed the click; the pair stops the mousedown at its edge).
+  On touch nothing lifts (no touch sensor). **Probe: drill into the first gap (a shut row, the clocks recomputed), onto
+  a written block (station 1 the words, station 2 the drill), onto a filled column (unchanged), onto "+ Add a station"
+  (a third column), a circuit into the last gap (whole, with its provenance), panel Add appends, the last block by its
+  clock cell to the top, ▼ steps it, a ten-pixel press on ▲ steps and lifts nothing.**
+- **L4 · L7 · L8 as built.** *Start this plan from… → A template* lists only templates with a block and reads the
+  blocks' titles under the name; the provenance line is one sentence ("Started from **X** — edit anything here; the
+  template won't change."); the hub's past list is six with "Every practice this season ›" beneath (words, no count;
+  absent at six or fewer; keyed by team so a switch never carries the state) — **probe: 6 → 7 rows, the door gone**;
+  Practice review stays under Insights.
+- **/simplify** (four lenses): one row component with three faces instead of three; one block-or-station → drill reader;
+  the templates' shape/strip/load trio reused for circuits rather than copied; the three tabs' load + past-season-import
+  scaffolding as `usePastSeasonImport` + `PastSeasonImportDialog`; the two editor pages' autosave and retire as
+  `useRecordAutosave` + `useRetireRestore`; the promote dialog's "usually" fragment hoisted; display strings computed
+  once per row.
+- **/review** (high-risk funnel, five lenses — security/tenant · data & contract · regression · UI logic ·
+  correctness/state): **15 findings → 13 applied, 1 refuted, 3 accepted as-is.** Applied: the arrows' shield (High);
+  two UAT specs still naming the retired row classes (High); `moveBlockTo` by id; the tick's retry seeding; Retire/Restore
+  FLUSHES a pending autosave and holds while one is in flight (a rename typed inside the 900ms debounce was discarded by
+  the re-read; a save in flight could land after the retire); live editor titles; the hub's "every practice" state keyed
+  by team; the circuits route's capability comment (it claimed `schedule`; the gate is Schedule: View + edit like the
+  other two libraries); an import doc gap; a `groupSource` assertion; a dead CSS rule. Refuted: "the template room's
+  promote doors are dead code" — the template room never had library hooks and the rulings place the door on the plan's
+  block; the editor's comment was the error. Accepted: the list count walks the 400 most-recent practices while the
+  record page asks the DB (the templates' documented trade-off); the strip runs the sanitiser without roster/tag
+  validation (pre-existing, shared with templates); no Escape mid-drag (never sticks).
+- **/docs** (⚠ already on dev — the Development stage-4 commit `bd7a632f` took `lib/help-content/coaches.tsx` WHOLE, so these edits are in that commit under its message; nothing to undo, the content is self-contained)**:** the practice-plans article gains "Your library beside the plan — and dragging with a mouse" and the
+  reorder sentence no longer says "rather than dragging"; the drills article is re-headed ("write it once, use it every
+  Tuesday" — "four taps" stays a search term only), the row, Retire in the sheet, the bare block as a drill, the dock;
+  a **new Circuits article** (what it keeps · saving one, the tick · placing one · building, retiring, seasons; one FAQ —
+  drill, circuit or template?) that the Circuits tab and the circuit editor point their "?" at; the templates article
+  gains "three sizes", the one-sentence provenance line, the not-offered rule, Retire in the header.
+- **Gates:** `verify:changed` (4,093 unit, 0 fail; spelling · dictionary · demos · CSS selectors) · `typecheck` · lint
+  (0 errors) · `check:layout --only=` the six practice screens (plan · station · **plan-docked** · drills · templates ·
+  circuits) at 361/390/768/1440 — no new findings (the four new screens' masthead "?" baselined with the standing reason;
+  the empty-state buttons gained the tablet-band tap floor in `CoachEmptyState.module.css`) · `check:migrations` — prod
+  behind dev by 302, as registered · parity baseline re-inited · snapshots refreshed (watermark #302) · the probe re-run
+  after the review fixes, both plans restored, its drills and circuits removed, the script deleted.
+- **Hub:** the "4 · The library" tab marked built; **"QA walk · 4"** — 32 steps in nine parts (A the Drills table ·
+  B Retire in the sheet · C Templates and the not-offered rule · D a block kept as a drill · E a circuit kept, the tick ·
+  F the dock · G drag, with the button beside every drop · H the picker's sheet and touch · I provenance and the one door);
+  ledger **§195**; **commit owed on the owner's word**.

@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors,
+  DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors,
   type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import {
@@ -21,14 +21,23 @@ import {
 import PracticeGroupsRoom from '@/components/coaches/PracticeGroupsRoom';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import {
-  UNTAGGED_FILTER, collectTags, detachStationFromDrill,
-  drillToStation, filterTagged, sortDrillsForPicker, stationToDrillInput,
+  blockToDrillInput, detachStationFromDrill, drillToStation, emptyDrillDraft, filterTagged, sortDrillsForPicker,
+  stationToDrillInput,
   type DrillInput, type RepTeamDrill,
 } from '@/lib/rep-drills';
+import {
+  circuitToBlock, pointStationsAtDrills, stationsToPromote, blockToCircuitShape,
+  type CircuitInput, type RepTeamCircuit,
+} from '@/lib/rep-circuits';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
-import { CoachingPointsField, FieldLabel } from '@/components/coaches/PracticeFields';
+import { CoachingPointsField, FieldLabel, OPEN_DOOR, TeachingFields, type TeachingDoor } from '@/components/coaches/PracticeFields';
+import {
+  LibraryList, LibraryCard, LibraryFilterBar, drillCardFacts, circuitCardFacts, drillCardLine, circuitCardLine,
+  DrillPreviewBody, CircuitPreviewBody,
+} from '@/components/coaches/LibraryRow';
+import DrillSheet from '@/components/coaches/DrillSheet';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { RoomWalkNav } from '@/components/coaches/RoomShell';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -48,16 +57,33 @@ import styles from '../../../coaches.module.css';
  *
  * Two rules from the plan doc show up as UI constraints rather than data ones:
  *  • Roster ORDER, everywhere, with no sort control offered anywhere, ever (§4).
- *  • Reorder with buttons, never drag — gloves and phones defeat drag (the Roster lesson).
+ *  • **Buttons everywhere; drag as an addition on desktop, with a mouse — never the only way.**
+ *    (Practices re-evaluation stage 4, owner ruling L2, 2026-09-16 — the rule reworded once for the
+ *    groups room, the rotation grid and the library. It was "reorder with buttons, never drag":
+ *    gloves and phones defeat drag, and they still do — on touch nothing lifts, the ▲▼ pair and
+ *    the sheets stay. A plan is written at a desk; the field and the phone keep their buttons.)
  *
- * ⚠ **ONE editor, two callers** (Phase 3). The practice page passes a roster; the plan-template
- * room passes `withoutPeople`, because a template carries the shape and the teaching and the
- * practice supplies the people. Building a second editor for the template room would have split
- * the behaviour of every block, station, rotation and drill-picker control in two — which is why
- * frame 03's "New template at zero" ruling was the biggest reuse decision in this phase.
+ * ⚠ **ONE editor, three callers** (Phase 3; stage 4). The practice page passes a roster; the
+ * plan-template room passes `withoutPeople`, because a template carries the shape and the teaching
+ * and the practice supplies the people; the circuit editor passes `soloBlock` too — the block
+ * alone on a sheet, no clock, no people. Building a second editor for either would have split the
+ * behaviour of every block, station, rotation and drill-picker control in two — which is why
+ * frame 03's "New template at zero" ruling was the biggest reuse decision in Phase 3.
  *
  * ⚠ `withoutPeople` REMOVES the people controls; it never disables them. A control that exists
  * only to refuse should not exist.
+ *
+ * ── Drag (stage 4, L2) — ONE `DndContext` over the sheet and the docked library panel ──
+ *  · A drill row from the panel lifts (mouse only, after six pixels). Its targets: the GAPS
+ *    between rows and under the last one (a new block at that index — titled by the drill, its
+ *    usual minutes or 15, shut), and the OPEN block's station door ("+ Add a station" on a circuit,
+ *    "+ Stations" on a block with none or one) — the drop follows D13 exactly as the sheet's pick
+ *    does. A filled column is never a target (no silent swap); a shut block is never a target.
+ *  · A circuit row lifts the same way and lands in a GAP only — a circuit is a block, never a
+ *    station of one.
+ *  · A block lifts by its GUTTER (the clock cell is the handle; the ▲▼ pair stays) and lands in a
+ *    gap. The plan changes on the DROP and never on hover; a drop anywhere that is not a target
+ *    snaps back and changes nothing (`pointerWithin` — the target is what the pointer is over).
  */
 
 export type PracticeRosterPlayer = {
@@ -275,10 +301,10 @@ function DrillFacts({ station, equipmentTags }: { station: PracticeStation; equi
 
 /** The optional fields a station offers behind a door when it is flattened into its block (D1). */
 type StationDoor = 'points' | 'setup' | 'equipment' | 'staff' | 'note';
-type DoorProps = { onRemove?: () => void; removeLabel?: string; autoFocus?: boolean };
-/** One answer per optional station field: whether it is on screen, and its label's quiet x / autofocus. */
-type StationDoorState = DoorProps & { show: boolean };
-const SHOWN: StationDoorState = { show: true };
+/** One answer per optional station field — the shared module's own door shape (`TeachingDoor`:
+ *  whether it is on screen, and its label's quiet × / autofocus), so the station's five and the
+ *  block's own doors read one type. */
+type DoorProps = Omit<TeachingDoor, 'show'>;
 
 /**
  * A station's FIELDS — the one body both places a station is edited share (practices re-evaluation
@@ -314,7 +340,7 @@ function StationFields({
   withoutPeople: boolean;
   /** The block's door idiom when flattened: which optional fields are on screen, and each label's
    *  quiet × / autofocus. Absent in the modal, where every field shows. */
-  doors?: (door: StationDoor) => StationDoorState;
+  doors?: (door: StationDoor) => TeachingDoor;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
   equipmentTags: PickableTag[];
@@ -333,8 +359,8 @@ function StationFields({
   onPromote?: () => void;
 }) {
   const fromDrill = !!station.drillId;
-  const door = (id: StationDoor): StationDoorState => (doors ? doors(id) : SHOWN);
-  const points = door('points'), setup = door('setup'), equipment = door('equipment'), staff = door('staff'), note = door('note');
+  const door = (id: StationDoor): TeachingDoor => (doors ? doors(id) : OPEN_DOOR);
+  const staff = door('staff'), note = door('note');
   const playerCount = station.playerIds?.length ?? 0;
   /* The block's own staff line, when it holds one, already reads "Staff" above a flattened station
      — so this line, the sole station's who-runs-it, is the one the block's Staff door opens only
@@ -376,46 +402,16 @@ function StationFields({
           {!sole && drillActions && <div className={styles.ppDrillActions}>{drillActions}</div>}
         </>
       ) : (
-        <>
-          <label className={styles.ppField}>
-            <FieldLabel>What you&apos;re doing</FieldLabel>
-            <textarea className={styles.textarea} rows={2} value={station.description ?? ''} disabled={readOnly}
-              maxLength={MAX_TEXT_LEN}
-              placeholder="What happens at this station"
-              onChange={e => onPatch({ description: e.target.value })} />
-          </label>
-          <label className={styles.ppField}>
-            <FieldLabel>What you&apos;re watching for</FieldLabel>
-            <input className={styles.input} value={station.goal ?? ''} disabled={readOnly}
-              maxLength={MAX_TEXT_LEN} placeholder="What good looks like here"
-              onChange={e => onPatch({ goal: e.target.value })} />
-          </label>
-          {points.show && (
-            <CoachingPointsField points={station.coachingPoints} readOnly={readOnly}
-              maxPoints={MAX_COACHING_POINTS} maxLen={MAX_SHORT_TEXT_LEN} noun="station"
-              onSet={next => onPatch({ coachingPoints: next })} onRemove={points.onRemove} removeLabel={points.removeLabel} autoFocus={points.autoFocus} />
-          )}
-          {setup.show && (
-            <div className={styles.ppField}>
-              <FieldLabel onRemove={setup.onRemove} removeLabel={setup.removeLabel}>Setup</FieldLabel>
-              <textarea className={styles.textarea} rows={2} value={station.setup ?? ''} disabled={readOnly}
-                maxLength={MAX_TEXT_LEN} aria-label="Setup" autoFocus={setup.autoFocus}
-                placeholder="How it's laid out — where things go, and how far apart"
-                onChange={e => onPatch({ setup: e.target.value })} />
-            </div>
-          )}
-          {equipment.show && (
-            <div className={styles.ppField}>
-              <FieldLabel onRemove={equipment.onRemove} removeLabel={equipment.removeLabel}>Equipment</FieldLabel>
-              <PracticeTagPicker all={equipmentTags} ids={station.equipmentTagIds ?? []}
-                legacyNames={station.equipment} disabled={readOnly} onCreate={onCreateEquipmentTag}
-                manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
-                onChange={next => onPatch({ equipmentTagIds: next })}
-                emptyHint="No equipment yet — type an item to add your first one."
-                autoFocus={equipment.autoFocus} />
-            </div>
-          )}
-        </>
+        /* The five teaching fields from the shared module (stage 4, L6 — the drill sheet reads the
+           same list, so the two shapes cannot drift on order or words); the block's door idiom
+           rides in through `doors` when the station is flattened. */
+        <TeachingFields
+          values={station} readOnly={readOnly} noun="station" doingPlaceholder="What happens at this station"
+          doors={door} maxText={MAX_TEXT_LEN} maxPoints={MAX_COACHING_POINTS} maxPointLen={MAX_SHORT_TEXT_LEN}
+          equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
+          equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
+          onPatch={patch => onPatch(patch as Partial<PracticeStation>)}
+        />
       )}
 
       {/* ⚠ A template stores no staff and no players — the practice supplies both, which is what
@@ -509,8 +505,9 @@ function StationFields({
  * arrow can't sit inside the door, because a button can't hold a button.
  */
 function StationColumns({
-  stations, readOnly, staffTags, onOpen, onMove, onAdd,
+  blockId, stations, readOnly, staffTags, onOpen, onMove, onAdd,
 }: {
+  blockId: string;
   stations: PracticeStation[];
   readOnly: boolean;
   staffTags: PickableTag[];
@@ -548,11 +545,85 @@ function StationColumns({
         );
       })}
       {!readOnly && stations.length < MAX_STATIONS_PER_BLOCK && (
-        <button type="button" className={styles.ppStColAdd} onClick={onAdd}>
-          <span className={styles.ppStColOpen}>+ Add a station</span>
-          <span className={styles.ppStColFirst}>a drill, or write one</span>
-        </button>
+        /* The one drop target inside an open circuit (stage 4, L2): a drill carried over it fills
+           it green and lands as the next column. The written columns beside it are never targets
+           — a drop that replaced one would be a silent swap, and Swap drill stays a door. */
+        <StationDropTarget blockId={blockId} className={styles.ppStColAddWrap}>
+          {over => (
+            <button type="button" className={styles.ppStColAdd} onClick={onAdd}>
+              <span className={styles.ppStColOpen}>+ Add a station</span>
+              <span className={styles.ppStColFirst}>{over ? 'drop to add it here' : 'a drill, or write one'}</span>
+            </button>
+          )}
+        </StationDropTarget>
       )}
+    </div>
+  );
+}
+
+/**
+ * The open block's station door as a DROP TARGET for a drill (stage 4, L2): "+ Add a station" on a
+ * circuit, the "+ Stations" door on a block with none or one. Lit only while a DRILL is lifted — a
+ * circuit is a block and never a station of one, so it does not light this. The drop follows
+ * D13 exactly as the sheet's pick does (`addStationFromDrill`).
+ */
+function StationDropTarget({ blockId, className, children }: {
+  blockId: string;
+  className?: string;
+  children: (over: boolean) => ReactNode;
+}) {
+  const { setNodeRef, isOver, active } = useDroppable({ id: `station:${blockId}`, data: { kind: 'station', blockId } });
+  const lifted = (active?.data.current as DragData | undefined)?.kind === 'drill';
+  return (
+    <div ref={setNodeRef} className={className} data-target={lifted ? 'on' : undefined} data-over={lifted && isOver ? 'on' : undefined}>
+      {children(lifted && isOver)}
+    </div>
+  );
+}
+
+/** What is being carried — a panel row (a drill or a circuit) or a block by its gutter. */
+type DragData =
+  | { kind: 'drill'; drill: RepTeamDrill }
+  | { kind: 'circuit'; circuit: RepTeamCircuit }
+  | { kind: 'block'; blockId: string; index: number; label: string };
+/** Where it can land — a gap between rows (index = the position the new or moved block takes),
+ *  or the open block's station door. */
+type DropData =
+  | { kind: 'gap'; index: number }
+  | { kind: 'station'; blockId: string };
+
+/**
+ * A GAP between two rows — and under the last one — as a drop target (stage 4, L2). Collapsed to
+ * nothing until something compatible is lifted; then a band the pointer can find, with a line
+ * that says where the block would land and when it would start. A block dragged by its gutter
+ * lights every gap but its own two (dropping there is no move). Nothing here mutates the plan —
+ * the editor's `onDragEnd` does, on the drop.
+ */
+function GapTarget({ index, startLabel, blockCount }: { index: number; startLabel: string | null; blockCount: number }) {
+  const { setNodeRef, isOver, active } = useDroppable({ id: `gap:${index}`, data: { kind: 'gap', index } });
+  const lifted = active?.data.current as DragData | undefined;
+  // One reading of what is carried: does this gap take it, and what the line would say.
+  const carried = !lifted ? null
+    : lifted.kind === 'block'
+      ? { applies: index !== lifted.index && index !== lifted.index + 1, words: [`Move ${lifted.label} here`] }
+      : {
+        applies: blockCount < MAX_BLOCKS,
+        words: [
+          'New block here',
+          lifted.kind === 'drill' ? lifted.drill.name : lifted.circuit.name,
+          `${(lifted.kind === 'drill' ? lifted.drill.usualMinutes : lifted.circuit.block.duration.minutes) ?? DEFAULT_BLOCK_MINUTES} min`,
+        ],
+      };
+  const applies = !!carried?.applies;
+  return (
+    <div ref={setNodeRef} className={styles.ppTlGap} data-target={applies ? 'on' : undefined} data-over={applies && isOver ? 'on' : undefined} aria-hidden>
+      <span className={styles.ppTlGapGutter} />
+      <span className={styles.ppTlGapLine}>
+        {/* "▸ New block here · 5:11 p.m. · Probe drill · 20 min" — the start after the verb. */}
+        {carried && applies && isOver && (
+          <span className={styles.ppTlGapWords}>▸ {[carried.words[0], startLabel, ...carried.words.slice(1)].filter(Boolean).join(' · ')}</span>
+        )}
+      </span>
     </div>
   );
 }
@@ -735,7 +806,7 @@ function RotationStrip({
  * cells, re-keyed (`rotationByStation`).
  */
 function RotationBoard({
-  rotation, stations, blockMinutes, blockStartMs, readOnly, withoutPeople, roster, notRepliedIds,
+  rotation, stations, blockMinutes, blockStartMs, readOnly, withoutPeople, shapeNoun = 'a template', roster, notRepliedIds,
   nameOf, onOpenGroups, onSetRotation,
 }: {
   rotation: PracticeRotation;
@@ -744,6 +815,8 @@ function RotationBoard({
   blockStartMs?: number;
   readOnly: boolean;
   withoutPeople: boolean;
+  /** The word for what carries no people — "a template", or "a circuit" in the circuit editor (L9). */
+  shapeNoun?: string;
   /** Tonight's roster in roster order — the read-out's "Not in a group" line is roster minus groups. */
   roster: PracticeRosterPlayer[];
   /** Who has NOT replied yes, when attendance is known — named as such, never silently dropped (D21). */
@@ -807,7 +880,7 @@ function RotationBoard({
      template supplies no children — the plan it starts draws its own groups from that night's
      roster, which is exactly what lets one template work in April with twelve and July with nine. */
   if (withoutPeople) {
-    return <p className={styles.formHint}>Groups are drawn on the practice itself — a template keeps the shape, not the players.</p>;
+    return <p className={styles.formHint}>Groups are drawn on the practice itself — {shapeNoun} keeps the shape, not the players.</p>;
   }
 
   const gridTable = (
@@ -999,40 +1072,40 @@ function GridPill({ round, group, at, stations, onArrange }: {
 // ── The drill picker (Phase 2) ────────────────────────────────────────────────
 
 /**
- * "From your drills" / "Write one" — the sheet that turns authoring into four taps.
+ * "From your drills" / "From your circuits" / "Write one" — the sheet that puts a library thing on
+ * the page for anyone without a mouse on a wide desktop: the phone, the tablet, the keyboard, and
+ * "+ Stations" / "Swap drill" at every width (stage 4, L5 keeps it whole).
  *
  * ⚠ **Preview before adding earns its place BECAUSE the drill arrives read-only.** A coach cannot
  * quietly fix the words afterwards (they would have to detach), so being able to read the whole
- * thing before committing is the difference between four taps and an undo.
+ * thing before committing is the difference between four taps and an undo. Since stage 4 (L3) the
+ * row opens IN PLACE as the Preview — the same card the docked panel and the tab's phone reflow
+ * use — with "Add to the practice" under it.
  *
  * ⚠ **"Write one" is byte-for-byte the old behaviour.** A coach who never touches the library
  * loses nothing and is never nagged toward it — and on an EMPTY library this sheet opens straight
  * onto "Write one", so a new coach never meets a blank list first.
+ *
+ * ⚠ "From your circuits" is offered for a BLOCK only (stage 4, L9): a circuit is a block, never a
+ * station of one, so "Add a station" and "Swap drill" keep their two tabs.
  */
 function DrillPickerSheet({
-  drills, title, writeLabel, onPick, onWriteOne, onClose,
+  drills, circuits, title, writeLabel, equipmentTags, onPick, onPickCircuit, onWriteOne, onClose,
 }: {
   drills: RepTeamDrill[];
+  /** Offered only when this pick makes a BLOCK; absent for a station or a swap. */
+  circuits?: RepTeamCircuit[];
   title: string;
   writeLabel: string;
+  equipmentTags: PickableTag[];
   onPick: (drill: RepTeamDrill) => void;
+  onPickCircuit?: (circuit: RepTeamCircuit) => void;
   onWriteOne: () => void;
   onClose: () => void;
 }) {
   const hasDrills = drills.length > 0;
-  const [tab, setTab] = useState<'drills' | 'write'>(hasDrills ? 'drills' : 'write');
-  const [query, setQuery] = useState('');
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [previewId, setPreviewId] = useState<string | null>(null);
-
-  const drillTags = useMemo(() => collectTags(drills), [drills]);
-  // The SAME predicate the library room uses — one rule, so the two lists can't drift.
-  const shown = useMemo(
-    () => filterTagged(sortDrillsForPicker(drills), query, tagFilter),
-    [drills, query, tagFilter],
-  );
-
-  const preview = previewId ? drills.find(d => d.id === previewId) ?? null : null;
+  const hasCircuits = !!circuits && circuits.length > 0 && !!onPickCircuit;
+  const [tab, setTab] = useState<'drills' | 'circuits' | 'write'>(hasDrills ? 'drills' : hasCircuits ? 'circuits' : 'write');
 
   /* The portal's dialog floor (stage 2, D9): Escape closes, Tab stays inside, focus returns to the
      link that opened this. Mounted only while open, so the floor is armed for its whole life. */
@@ -1050,98 +1123,37 @@ function DrillPickerSheet({
           </button>
         </div>
 
-        {preview ? (
-          <div className={styles.ppDrillPreview}>
-            <p className={styles.ppFieldLabel}>Preview — nothing added yet</p>
-            <p className={styles.ppDrillPreviewName}>{preview.name}</p>
-            {preview.description && <p className={styles.ppReadTxt}><b>Doing:</b> {preview.description}</p>}
-            {preview.goal && <p className={styles.ppReadTxt}><b>Watching for:</b> {preview.goal}</p>}
-            {preview.coachingPoints.length > 0 && (
-              <ol className={styles.ppReadPoints}>
-                {preview.coachingPoints.map((p, i) => <li key={i}>{p}</li>)}
-              </ol>
-            )}
-            {preview.setup && <p className={styles.ppReadTxt}><b>Setup:</b> {preview.setup}</p>}
-            {preview.equipment.length > 0 && (
-              <p className={styles.ppReadTxt}><b>Equipment:</b> {preview.equipment.join(' · ')}</p>
-            )}
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnGhost} onClick={() => setPreviewId(null)}>Back</button>
-              <button type="button" className={styles.btnPrimary} onClick={() => onPick(preview)}>
-                Add to the practice
-              </button>
-            </div>
+        <div className={styles.ppDrillTabs} role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
+            className={styles.ppDrillTab} data-on={tab === 'drills' ? 'on' : undefined}
+            onClick={() => setTab('drills')}>From your drills</button>
+          {circuits && onPickCircuit && (
+            <button type="button" role="tab" aria-selected={tab === 'circuits'} disabled={!hasCircuits}
+              className={styles.ppDrillTab} data-on={tab === 'circuits' ? 'on' : undefined}
+              onClick={() => setTab('circuits')}>From your circuits</button>
+          )}
+          <button type="button" role="tab" aria-selected={tab === 'write'}
+            className={styles.ppDrillTab} data-on={tab === 'write' ? 'on' : undefined}
+            onClick={() => setTab('write')}>Write one</button>
+        </div>
+
+        {tab === 'write' ? (
+          <div className={styles.ppDrillWrite}>
+            <p className={styles.formHint}>
+              {hasDrills
+                ? 'Write it here and it stays with this practice. You can save it to your drills afterwards.'
+                : 'You haven’t saved any drills yet. Write this one here — you can save it to your drills afterwards, and it’s there next time.'}
+            </p>
+            <button type="button" className={styles.btnPrimary} onClick={onWriteOne}>{writeLabel}</button>
+          </div>
+        ) : tab === 'circuits' && circuits && onPickCircuit ? (
+          <div className={styles.ppPickList}>
+            <LibraryBrowser kind="circuits" circuits={circuits} equipmentTags={equipmentTags} addLabel="Add" onAddCircuit={onPickCircuit} />
           </div>
         ) : (
-          <>
-            <div className={styles.ppDrillTabs} role="tablist">
-              <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
-                className={styles.ppDrillTab} data-on={tab === 'drills' ? 'on' : undefined}
-                onClick={() => setTab('drills')}>From your drills</button>
-              <button type="button" role="tab" aria-selected={tab === 'write'}
-                className={styles.ppDrillTab} data-on={tab === 'write' ? 'on' : undefined}
-                onClick={() => setTab('write')}>Write one</button>
-            </div>
-
-            {tab === 'write' ? (
-              <div className={styles.ppDrillWrite}>
-                <p className={styles.formHint}>
-                  {hasDrills
-                    ? 'Write it here and it stays with this practice. You can save it to your drills afterwards.'
-                    : 'You haven’t saved any drills yet. Write this one here — you can save it to your drills afterwards, and picking it next time takes four taps.'}
-                </p>
-                <button type="button" className={styles.btnPrimary} onClick={onWriteOne}>{writeLabel}</button>
-              </div>
-            ) : (
-              <>
-                <div className={styles.ppDrillFilters}>
-                  <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
-                    placeholder="Search…" aria-label="Search drills" />
-                  <div className={styles.ppSuggestWrap}>
-                    <button type="button" className={styles.ppSuggestChip} data-on={tagFilter == null ? 'on' : undefined}
-                      onClick={() => setTagFilter(null)}>All</button>
-                    {drillTags.map(t => (
-                      <button key={t.id} type="button" className={styles.ppSuggestChip}
-                        data-on={tagFilter === t.id ? 'on' : undefined} onClick={() => setTagFilter(t.id)}>{t.name}</button>
-                    ))}
-                    {/* ⚠ Always offered when it applies, so a drill can never become unreachable
-                        simply by carrying no tags. */}
-                    {drills.some(d => d.tags.length === 0) && (
-                      <button type="button" className={styles.ppSuggestChip}
-                        data-on={tagFilter === UNTAGGED_FILTER ? 'on' : undefined}
-                        onClick={() => setTagFilter(UNTAGGED_FILTER)}>No tags</button>
-                    )}
-                  </div>
-                </div>
-
-                <div className={styles.ppPickList}>
-                  {shown.length === 0 && <p className={styles.formHint}>No drills match that.</p>}
-                  {shown.map(drill => (
-                    <div key={drill.id} className={styles.ppDrillRow}>
-                      <div className={styles.ppDrillRowMain}>
-                        <span className={styles.ppDrillRowName}>
-                          {drill.name}
-                          {/* Shared club drills are marked and lead — a coach should meet the
-                              club's answer before their own variation. */}
-                          {drill.teamId === null && <span className={styles.ppSharedChip}>Club</span>}
-                        </span>
-                        <span className={styles.ppDrillRowMeta}>
-                          {[drill.tags.map(t => t.name).join(' · ') || null, drill.usualMinutes ? `${drill.usualMinutes} min` : null]
-                            .filter(Boolean).join(' · ')}
-                        </span>
-                      </div>
-                      <div className={styles.ppDrillRowActions}>
-                        <button type="button" className={styles.ppAddInline} onClick={() => setPreviewId(drill.id)}>
-                          Preview
-                        </button>
-                        <button type="button" className={styles.btnSecondary} onClick={() => onPick(drill)}>Add</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </>
+          <div className={styles.ppPickList}>
+            <LibraryBrowser kind="drills" drills={drills} equipmentTags={equipmentTags} addLabel="Add" onAddDrill={onPick} />
+          </div>
         )}
       </div>
     </div>
@@ -1149,59 +1161,245 @@ function DrillPickerSheet({
 }
 
 /**
- * "Save to my drills…" (D18) — asks EXACTLY ONE question, and even that one is optional.
- *
- * Anything more and a coach mid-plan simply won't do it. The sentence names what does NOT travel,
- * because that is the one thing that could surprise someone at this moment.
+ * The card LIST with its search box and tag chips — the one browser the picker sheet and the
+ * docked panel share (stage 4, L3 · L5: "one card, three homes" — the tab's phone reflow is the
+ * third). The same search-and-filter predicate as the tabs (`filterTagged`), the same sort
+ * (`sortDrillsForPicker`: club first, then A–Z; circuits A–Z), so no two lists can drift. A row
+ * opens in place as the Preview; `handle` wires the grip when the caller can drag (the panel, with
+ * a mouse). Nothing here mutates the plan — Add and the drop are the caller's.
  */
-function PromoteDrillDialog({
-  stationName, tags, onCreateTag, busy, error, onSave, onClose, manage, onManageChanged,
+function LibraryBrowser({
+  kind, drills = [], circuits = [], equipmentTags, addLabel, onAddDrill, onAddCircuit, draggable,
 }: {
-  stationName: string;
+  kind: 'drills' | 'circuits';
+  /** Only the face being shown needs its list and its Add — the picker sheet shows one at a time. */
+  drills?: RepTeamDrill[];
+  circuits?: RepTeamCircuit[];
+  equipmentTags: PickableTag[];
+  addLabel: string;
+  onAddDrill?: (drill: RepTeamDrill) => void;
+  onAddCircuit?: (circuit: RepTeamCircuit) => void;
+  /** The docked panel's rows lift (mouse only); the picker's never do. */
+  draggable?: boolean;
+}) {
+  const [query, setQuery] = useState('');
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const items: readonly { tags: { id: string; name: string }[] }[] = kind === 'drills' ? drills : circuits;
+  const shownDrills = useMemo(
+    () => (kind === 'drills' ? filterTagged(sortDrillsForPicker(drills), query, tagFilter) : []),
+    [kind, drills, query, tagFilter],
+  );
+  const shownCircuits = useMemo(
+    () => (kind === 'circuits' ? filterTagged([...circuits].sort((a, b) => a.name.localeCompare(b.name)), query, tagFilter) : []),
+    [kind, circuits, query, tagFilter],
+  );
+  const noun = kind === 'drills' ? 'drills' : 'circuits';
+  return (
+    <>
+      <LibraryFilterBar items={items} noun={noun} query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} />
+      <LibraryList>
+        {shownDrills.length === 0 && shownCircuits.length === 0 && <p className={styles.formHint}>No {noun} match that.</p>}
+        {shownDrills.map(drill => (
+          <LibraryPanelRow key={drill.id} kind="drill" drill={drill} equipmentTags={equipmentTags}
+            open={openId === drill.id} onToggle={() => setOpenId(id => (id === drill.id ? null : drill.id))}
+            addLabel={addLabel} onAdd={() => onAddDrill?.(drill)} draggable={!!draggable} />
+        ))}
+        {shownCircuits.map(circuit => (
+          <LibraryPanelRow key={circuit.id} kind="circuit" circuit={circuit} equipmentTags={equipmentTags}
+            open={openId === circuit.id} onToggle={() => setOpenId(id => (id === circuit.id ? null : circuit.id))}
+            addLabel={addLabel} onAdd={() => onAddCircuit?.(circuit)} draggable={!!draggable} />
+        ))}
+      </LibraryList>
+    </>
+  );
+}
+
+/**
+ * The DOCKED LIBRARY panel (stage 4, L5) — beside the sheet on a wide desktop, on demand and
+ * remembered. Not a second library: the same rows the Drills tab shows, in the card face the tab
+ * uses at 390 — search, the tag chips, a row per drill with a grip and an Add, a row that opens in
+ * place as the Preview, "+ New drill" at its foot. Its head switches Drills · Circuits once the
+ * team has a circuit (L9); a circuit row drags into a gap only. Templates are not in it.
+ */
+function LibraryPanel({
+  drills, circuits, equipmentTags, canWrite, circuitsHref, onAddDrill, onAddCircuit, onNewDrill, onClose,
+}: {
+  drills: RepTeamDrill[];
+  circuits: RepTeamCircuit[];
+  equipmentTags: PickableTag[];
+  canWrite: boolean;
+  circuitsHref: string;
+  onAddDrill: (drill: RepTeamDrill) => void;
+  onAddCircuit: (circuit: RepTeamCircuit) => void;
+  onNewDrill: () => void;
+  onClose: () => void;
+}) {
+  const hasCircuits = circuits.length > 0;
+  const [face, setFace] = useState<'drills' | 'circuits'>('drills');
+  const shown = hasCircuits ? face : 'drills';
+  return (
+    <aside className={styles.ppLibrary} aria-label="Your library" data-testid="library-panel">
+      <div className={styles.ppLibraryHead}>
+        <span className={styles.ppLibraryTitle}>{hasCircuits ? 'Your library' : 'Your drills'}</span>
+        <button type="button" className={styles.ppIconBtn} aria-label="Close the library" onClick={onClose}>
+          <X size={16} />
+        </button>
+      </div>
+      {hasCircuits && (
+        <div className={styles.ppDrillTabs} role="tablist" aria-label="Drills or circuits">
+          <button type="button" role="tab" aria-selected={shown === 'drills'} className={styles.ppDrillTab}
+            data-on={shown === 'drills' ? 'on' : undefined} onClick={() => setFace('drills')}>
+            Drills <span className={styles.ppLibraryCount}>{drills.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={shown === 'circuits'} className={styles.ppDrillTab}
+            data-on={shown === 'circuits' ? 'on' : undefined} onClick={() => setFace('circuits')}>
+            Circuits <span className={styles.ppLibraryCount}>{circuits.length}</span>
+          </button>
+        </div>
+      )}
+      <div className={styles.ppLibraryBody}>
+        {shown === 'drills' && drills.length === 0 ? (
+          <p className={styles.formHint}>No drills yet — write one here, or save a block you like from the plan.</p>
+        ) : (
+          <LibraryBrowser kind={shown} drills={drills} circuits={circuits} equipmentTags={equipmentTags}
+            addLabel="Add" onAddDrill={onAddDrill} onAddCircuit={onAddCircuit} draggable />
+        )}
+      </div>
+      {canWrite && (
+        <div className={styles.ppLibraryFoot}>
+          {shown === 'drills' ? (
+            <button type="button" className={styles.ppAddInline} onClick={onNewDrill}><Plus size={13} aria-hidden /> New drill</button>
+          ) : (
+            <a className={styles.ppAddInline} href={circuitsHref}><Plus size={13} aria-hidden /> New circuit</a>
+          )}
+        </div>
+      )}
+    </aside>
+  );
+}
+
+/** One row of the browser — a drill's or a circuit's card, with its grip when it can be carried. */
+function LibraryPanelRow({
+  kind, drill, circuit, equipmentTags, open, onToggle, addLabel, onAdd, draggable,
+}: {
+  kind: 'drill' | 'circuit';
+  drill?: RepTeamDrill;
+  circuit?: RepTeamCircuit;
+  equipmentTags: PickableTag[];
+  open: boolean;
+  onToggle: () => void;
+  addLabel: string;
+  onAdd: () => void;
+  draggable: boolean;
+}) {
+  const id = kind === 'drill' ? `drill:${drill!.id}` : `circuit:${circuit!.id}`;
+  const name = kind === 'drill' ? drill!.name : circuit!.name;
+  const data: DragData = kind === 'drill' ? { kind: 'drill', drill: drill! } : { kind: 'circuit', circuit: circuit! };
+  const { setNodeRef, listeners, isDragging } = useDraggable({ id, data, disabled: !draggable });
+  const line = kind === 'drill' ? { text: drillCardLine(drill!), quiet: false } : circuitCardLine(circuit!);
+  return (
+    <LibraryCard
+      name={name}
+      tags={kind === 'drill' ? drill!.tags : circuit!.tags}
+      shared={kind === 'drill' && drill!.teamId === null}
+      facts={kind === 'drill' ? drillCardFacts(drill!) : circuitCardFacts(circuit!)}
+      line={line.text} quietLine={line.quiet}
+      lifted={isDragging}
+      grip={draggable ? (
+        <span ref={setNodeRef} {...listeners} className={styles.libCardGrip} aria-label={`Drag ${name}`} title={`Drag ${name}`}>
+          <GripVertical size={14} aria-hidden />
+        </span>
+      ) : undefined}
+      open={open} onToggle={onToggle}
+      actions={<button type="button" className={styles.btnSecondary} onClick={onAdd}>{addLabel}</button>}
+    >
+      {kind === 'drill' ? <DrillPreviewBody drill={drill!} equipmentTags={equipmentTags} /> : <CircuitPreviewBody circuit={circuit!} />}
+      <div className={styles.libCardFoot}>
+        <button type="button" className={styles.btnPrimary} onClick={onAdd}>Add to the practice</button>
+      </div>
+    </LibraryCard>
+  );
+}
+
+/**
+ * "Save to my drills…" (D18; a bare written block too since stage 4's L1) and "Save to my
+ * circuits…" (stage 4, L9) — ONE dialog, the word by shape. It asks EXACTLY ONE question — the
+ * tags — and even that one is optional; a circuit's save asks a second, also optional: the tick.
+ *
+ * Anything more and a coach mid-plan simply won't do it. The sentence names what travels and what
+ * does NOT, because that is the one thing that could surprise someone at this moment.
+ *
+ * ⚠ The TICK is the owner's scenario (L9): "also save its N written stations as drills" — ticked,
+ * the drills are created FIRST and the saved circuit's stations point at them; tonight's block is
+ * left exactly as it is. Off by default. A station already in the library by name is not offered
+ * (the label names how many it would add); when none would be added the tick is absent, not
+ * disabled.
+ */
+function PromoteDialog({
+  kind, name, sentence, tags, onCreateTag, tick, busy, error, onSave, onClose, manage, onManageChanged,
+}: {
+  kind: 'drill' | 'circuit';
+  name: string;
+  /** What travels and what stays — the caller's, because a station, a bare block and a circuit
+   *  each give a different thing (a block its minutes; a circuit its stations and the groups). */
+  sentence: string;
   tags: PickableTag[];
   onCreateTag: (name: string) => Promise<PickableTag | null>;
+  /** The circuit's second question — the written stations it would also save as drills. */
+  tick?: { stations: PracticeStation[] };
   busy: boolean;
   error: string;
-  onSave: (tagIds: string[]) => void;
+  /** The tags chosen, and the block's minutes as "usually" for a drill (named in the sentence). */
+  onSave: (tagIds: string[], alsoDrills: boolean) => void;
   onClose: () => void;
   manage?: TagManageConfig;
   onManageChanged?: () => void;
 }) {
   const [tagIds, setTagIds] = useState<string[]>([]);
-  /* The dialog floor (D9), busy-gated: while the drill is saving the sheet holds, so a write is
+  const [alsoDrills, setAlsoDrills] = useState(false);
+  /* The dialog floor (D9), busy-gated: while the save is in flight the sheet holds, so a write is
      never torn down under its own request. The tag list inside claims its own Escape while open
      (`escapeOwnership.ts`) — it closes itself, not the sheet. */
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogFloor(true, panelRef, { onClose, busy });
+  const noun = kind === 'drill' ? 'drills' : 'circuits';
+  const tickStations = tick?.stations ?? [];
   return (
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Save to my drills"
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Save to my ${noun}`}
         aria-busy={busy || undefined} className={styles.modal}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Save &ldquo;{stationName}&rdquo; to your drills</h3>
+          <h3 className={styles.modalTitle}>Save &ldquo;{name}&rdquo; to your {noun}</h3>
           <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
             <X size={18} />
           </button>
         </div>
         <div className={styles.ppDrillWrite}>
           <TagPicker
-            label="Tags — one question, and it's optional"
+            label={kind === 'drill' ? "Tags — one question, and it's optional" : 'Tags — optional'}
             all={tags}
             selected={tagIds}
             onChange={setTagIds}
             onCreate={onCreateTag}
             manage={manage} onManageChanged={onManageChanged}
           />
-          <p className={styles.formHint}>
-            The setup, coaching points and equipment come with it. Who ran it and who was at it stay
-            with tonight&apos;s practice.
-          </p>
+          {kind === 'circuit' && tickStations.length > 0 && (
+            <label className={styles.ppTickRow}>
+              <input type="checkbox" checked={alsoDrills} onChange={e => setAlsoDrills(e.target.checked)} />
+              <span>
+                Also save {tickStations.length === 1 ? 'its 1 written station' : `its ${tickStations.length} written stations`} as drills, with these tags
+                <span className={styles.ppTickNames}> — {tickStations.map(s => s.name.trim()).join(' · ')}</span>
+              </span>
+            </label>
+          )}
+          <p className={styles.formHint}>{sentence}</p>
           {error && <p className={styles.errorText}>{error}</p>}
         </div>
         <div className={styles.modalFooter}>
           <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(tagIds)}>
-            {busy ? 'Saving…' : 'Save to my drills'}
+          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(tagIds, alsoDrills)}>
+            {busy ? 'Saving…' : `Save to my ${noun}`}
           </button>
         </div>
       </div>
@@ -1229,12 +1427,12 @@ function PromoteDrillDialog({
  *     untouched here.
  */
 function BlockCard({
-  block, index, blockCount, clock, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople,
+  block, index, blockCount, clock, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
   restTakenElsewhere, roster, notRepliedIds,
   staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag, nameOf,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   onOpen, onClose, onOpenDoor, onCloseDoor, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation,
-  onSwapStation, onPromoteStation, onOpenStation, onPatchStation, onMoveStation, onOpenGroups,
+  onSwapStation, onPromoteStation, onPromoteBlock, onPromoteCircuit, onOpenStation, onPatchStation, onMoveStation, onOpenGroups,
 }: {
   block: PracticePlanBlock;
   index: number;
@@ -1242,6 +1440,9 @@ function BlockCard({
   clock?: BlockClock;
   blockStartMs?: number;
   open: boolean;
+  /** The circuit editor: the block ALONE on a sheet — no collapse, no bin, no clock, no drag; the
+   *  header's Retire is the only way out (stage 4, L9). */
+  solo?: boolean;
   /** A block the coach JUST added lands with its title focused; a row they opened to read does not. */
   focusTitle: boolean;
   /** The doors standing open on THIS block while it is open — the editor owns the set (D1). */
@@ -1278,6 +1479,11 @@ function BlockCard({
   onDetachStation: (stationId: string) => void;
   onSwapStation: (stationId: string) => void;
   onPromoteStation: (stationId: string) => void;
+  /** "Save to my drills…" on a BARE WRITTEN block (stage 4, L1) — absent for a viewer who can't
+   *  write drills, or in a room with no library to save to. */
+  onPromoteBlock?: () => void;
+  /** "Save to my circuits…" on a block WITH stations (stage 4, L9) — the same door, the word by shape. */
+  onPromoteCircuit?: () => void;
   /** Opens a station as a modal (D4) — the editor owns which one is open. */
   onOpenStation: (stationId: string) => void;
   /** The editor's one station patch (the modal writes through it too). */
@@ -1309,12 +1515,24 @@ function BlockCard({
      (gloves and phones defeat drag — the Roster lesson). Absent, not disabled, on a read-only plan
      and while there is one block: nothing to reorder is not a locked control. */
   const gutterLength = formatDuration(block.duration);
+  /* The gutter is also the block's DRAG HANDLE (stage 4, L2): press and drag anywhere on the clock
+     cell with a mouse and the row lifts; it lands in a gap. The pair under it is SHIELDED from
+     the handle (/review, 2026-09-16): the kit lifts after six pixels of movement, so a press on
+     an arrow that drifted would have become a drag and swallowed the click — the arrows stop the
+     mousedown at their edge, and a press on an arrow is only ever a step. Absent on a read-only
+     plan, with one block, and on the circuit editor's lone block (nothing to move it among). */
+  const canDrag = !readOnly && !solo && blockCount > 1;
+  const { setNodeRef: setHandleRef, listeners: handleListeners, isDragging } = useDraggable({
+    id: `block:${block.id}`, data: { kind: 'block', blockId: block.id, index, label } satisfies DragData, disabled: !canDrag,
+  });
   const gutter = (
-    <div className={styles.ppTlGutter}>
+    <div ref={setHandleRef} {...(canDrag ? handleListeners : {})}
+      className={`${styles.ppTlGutter}${canDrag ? ` ${styles.ppTlGutterHandle}` : ''}`}
+      data-lifted={isDragging ? 'on' : undefined}>
       {clock ? clock.startLabel : gutterLength || '—'}
       {clock && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
-      {!readOnly && blockCount > 1 && (
-        <span className={styles.ppTlMove}>
+      {canDrag && (
+        <span className={styles.ppTlMove} onMouseDown={e => e.stopPropagation()}>
           <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} up`}
             disabled={index === 0} onClick={() => onMove(-1)}><ChevronUp size={15} /></button>
           <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} down`}
@@ -1323,6 +1541,13 @@ function BlockCard({
       )}
     </div>
   );
+  /* A block placed from a circuit says so — one quiet line that stays through every edit (the
+     template's rule, one level down; stage 4, L9). The name is the snapshot taken at placement. */
+  const provenance = block.circuitName ? (
+    <p className={styles.ppFromCircuit}>
+      <Library size={12} aria-hidden /> Started from <strong>{block.circuitName}</strong> · changes here stay here
+    </p>
+  ) : null;
 
   if (!open) {
     /* The shut row (D6): the first line reads THROUGH a sole station — the run screen's rule, "with
@@ -1425,7 +1650,7 @@ function BlockCard({
     removeLabel: `Remove ${DOOR_LABELS[door]}`,
     autoFocus: openDoors.has(door) && !held[door],
   });
-  const stationDoor = (door: StationDoor): StationDoorState => ({ show: showing[door], ...doorProps(door) });
+  const stationDoor = (door: StationDoor): TeachingDoor => ({ show: showing[door], ...doorProps(door) });
   const pointsDoor = doorProps('points');
   const staffDoor = doorProps('staff');
   const equipmentDoor = doorProps('equipment');
@@ -1433,6 +1658,13 @@ function BlockCard({
      door and the sheet are one tap; the door stays mounted while the pick is made, so Escape has
      something to return focus to. */
   const openDoor = (door: BlockDoor) => (door === 'stations' ? onAddStation() : onOpenDoor(door));
+  /* The library door by shape (L1 · L9) — see the doors line below. */
+  const promoteDoor = (() => {
+    if (block.circuitId) return null;                                   // placed from a circuit — it is one already
+    if (stationCount === 0) return block.title.trim() && onPromoteBlock ? { label: 'Save to my drills…', onClick: onPromoteBlock } : null;
+    if (stationCount >= 2) return onPromoteCircuit ? { label: 'Save to my circuits…', onClick: onPromoteCircuit } : null;
+    return null;                                                        // one station: the station's own door (D1)
+  })();
 
   return (
     <div className={styles.ppTlRow}>
@@ -1453,11 +1685,13 @@ function BlockCard({
               The shut row keeps it (D6). */}
         </div>
 
-        <button type="button" className={styles.ppIconBtn} aria-expanded
-          aria-label={`Close ${label}`} onClick={onClose}>
-          <ChevronUp size={16} />
-        </button>
-        {!readOnly && (
+        {!solo && (
+          <button type="button" className={styles.ppIconBtn} aria-expanded
+            aria-label={`Close ${label}`} onClick={onClose}>
+            <ChevronUp size={16} />
+          </button>
+        )}
+        {!readOnly && !solo && (
           <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
             <Trash2 size={15} />
           </button>
@@ -1465,6 +1699,7 @@ function BlockCard({
       </div>
 
       <div className={styles.ppBlockBody}>
+        {provenance}
         {/* ── The clock row (D4 · D5): quick lengths · the minutes · Rest of practice · "ends …" ──
             ⚠ RANGES WERE REMOVED (owner, 2026-08-01). A block that might run 25 or 35 minutes
             makes the next block's start time unknowable — the one question this running clock
@@ -1648,6 +1883,7 @@ function BlockCard({
               onSetRotation={patch => onPatch({ rotation: { ...rotation, ...patch } })}
             />
             <StationColumns
+              blockId={block.id}
               stations={stations}
               readOnly={readOnly}
               staffTags={staffTags}
@@ -1663,6 +1899,7 @@ function BlockCard({
                 blockStartMs={blockStartMs}
                 readOnly={readOnly}
                 withoutPeople={withoutPeople}
+                shapeNoun={solo ? 'a circuit' : 'a template'}
                 roster={roster}
                 notRepliedIds={notRepliedIds}
                 nameOf={nameOf}
@@ -1676,16 +1913,37 @@ function BlockCard({
         {/* ── The doors, at the foot (D1) — one quiet line in the ghost row's voice, not a "+"
             beside each label, so the fields read as a document and the doors as its margin.
             Only what the block does not hold yet; a viewer who cannot write gets no doors. */}
-        {!readOnly && doors.length > 0 && (
+        {!readOnly && (doors.length > 0 || promoteDoor) && (
           <div className={styles.ppDoorsLine}>
-            {doors.map((door, i) => (
-              <span key={door.id} className={styles.ppTlQuietAlt}>
-                {i > 0 ? ' · ' : ''}
+            {doors.map((door, i) => {
+              const button = (
                 <button type="button" className={styles.ppTlQuietLink} onClick={() => openDoor(door.id)}>
                   + {door.label}
                 </button>
+              );
+              return (
+                <span key={door.id} className={styles.ppTlQuietAlt}>
+                  {i > 0 ? '\u00A0· ' : ''}
+                  {/* "+ Stations" is the drop target for a drill on a block with none or one (L2 —
+                      the drop follows D13 exactly as the door's sheet does). */}
+                  {door.id === 'stations'
+                    ? <StationDropTarget blockId={block.id} className={styles.ppDoorTarget}>{() => button}</StationDropTarget>
+                    : button}
+                </span>
+              );
+            })}
+            {/* The library door, at the right end of the line, the word by SHAPE (stage 4, L1 · L9):
+                "Save to my drills…" on a titled block with no stations — the activity (D13 made it
+                the only written shape below a circuit); "Save to my circuits…" on a block with
+                stations. Never on a block placed from a circuit (it is one already), and a block
+                with ONE station keeps the station's own door (the station IS the block, D1). */}
+            {promoteDoor && (
+              <span className={`${styles.ppTlQuietAlt} ${styles.ppDoorsLibrary}`}>
+                <button type="button" className={styles.ppTlQuietLink} onClick={promoteDoor.onClick}>
+                  <Library size={12} aria-hidden /> {promoteDoor.label}
+                </button>
               </span>
-            ))}
+            )}
           </div>
         )}
       </div>
@@ -1728,8 +1986,33 @@ interface Props {
   onFocusTagsChanged?: () => void;
   /** This team's own drills PLUS the club's shared set, already merged by the API. */
   drills: RepTeamDrill[];
-  /** Saves a promoted station to the library (D18). Absent for a viewer who can't write drills. */
-  onCreateDrill?: (input: DrillInput) => Promise<{ ok: boolean; error?: string }>;
+  /** Saves a promoted station — or a bare written block (L1) — to the library (D18). Absent for a
+   *  viewer who can't write drills. Resolves with the drill it made, so a circuit's tick can point
+   *  its stations at the drills it just created. */
+  onCreateDrill?: (input: DrillInput) => Promise<{ ok: boolean; error?: string; drill?: RepTeamDrill }>;
+  /** The team's circuits (stage 4, L9) — the panel's second face and the picker's third tab. */
+  circuits?: RepTeamCircuit[];
+  /** Saves a circuit (L9). Absent for a viewer who can't write, and in the circuit editor itself. */
+  onCreateCircuit?: (input: CircuitInput) => Promise<{ ok: boolean; error?: string }>;
+  /**
+   * The DOCKED LIBRARY (stage 4, L5) — the plan page's, and only there: `canDock` is the page's
+   * width decision (a working column of 1,156px or more), `docked` the coach's remembered choice,
+   * and `panelHost` the element beside the sheet the panel renders into (a portal — the page owns
+   * the pair's layout, the editor owns the one drag context over both). Absent in the template
+   * room and the circuit editor, where the ghost row's link opens the sheet as it always did.
+   */
+  library?: {
+    /** The page's width decision — a working column of 1,156px or more. */
+    canDock: boolean;
+    /** Docked NOW — the page's one answer (its width, the coach's remembered choice, its own gates). */
+    docked: boolean;
+    onDock: (docked: boolean) => void;
+    panelHost: HTMLElement | null;
+    /** The Circuits tab, for the panel's "+ New circuit" — a circuit is made in its own editor. */
+    circuitsHref: string;
+  };
+  /** The circuit editor (L9): ONE block, always open, on its own — no goal, no folds, no ghost row. */
+  soloBlock?: boolean;
   /**
    * The team's whole 'focus' vocabulary — owned by the page, like `drills`, not fetched here.
    *
@@ -1766,7 +2049,7 @@ interface Props {
 
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
-  drills, onCreateDrill,
+  drills, onCreateDrill, circuits = [], onCreateCircuit, library, soloBlock = false,
   focusTags = [], onCreateFocusTag, planTagIds, onChangePlanTags,
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
@@ -1774,6 +2057,25 @@ export default function PracticePlanEditor({
   eventStartsAt, eventEndsAt, readOnly, withoutPeople = false, onStartFrom,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
+  /**
+   * The THREE callers' shapes, decided once (stage 4): the practice (everything), the template
+   * (`withoutPeople` — no roster, staff, groups, "just for tonight") and the circuit editor
+   * (`soloBlock`, always with `withoutPeople` — ONE block alone on a sheet, no goal, no folds, no
+   * ghost row, no drag, no "Rest of practice", and no library door: a circuit is not saved from
+   * itself). Every render site below reads these, never the raw flags.
+   */
+  const layout = {
+    /** The goal line, the About fold, the focus rail's offer — a practice's or a template's. */
+    sheet: !soloBlock,
+    /** The ghost row, the gaps a drag lands in, the gutter as a handle. */
+    timeline: !readOnly && !soloBlock,
+    /** "Rest of practice" is a length only a practice can promise. */
+    restOffered: !soloBlock,
+    /** The library door by shape (L1 · L9). In practice the plan page's alone: the template room
+        passes no library hooks (a template is scaffolding already — its blocks are saved from the
+        plan they start), and the circuit editor is the one block itself. */
+    promote: !soloBlock,
+  };
   /**
    * ONE block open at a time (stage 1, D2) — the rest read as rows. Nothing is open on arrival:
    * the page reads as the sheet, and the coach opens the block they are working on. A block the
@@ -1829,9 +2131,29 @@ export default function PracticePlanEditor({
     | { kind: 'station'; blockId: string; swapId?: string }
     | null
   >(null);
-  const [promoting, setPromoting] = useState<{ blockId: string; stationId: string } | null>(null);
+  /**
+   * What the library door is saving (D18 · L1 · L9): a written STATION, a bare written BLOCK (as a
+   * drill), or a block with stations (as a CIRCUIT). One dialog, the word by shape.
+   */
+  const [promoting, setPromoting] = useState<
+    | { kind: 'station'; blockId: string; stationId: string }
+    | { kind: 'block'; blockId: string }
+    | { kind: 'circuit'; blockId: string }
+    | null
+  >(null);
   const [promoteBusy, setPromoteBusy] = useState(false);
   const [promoteError, setPromoteError] = useState('');
+  /** The docked panel's "+ New drill" — the same sheet the Drills tab opens (L5 · L6). */
+  const [newDrill, setNewDrill] = useState<DrillInput | null>(null);
+  const [newDrillBusy, setNewDrillBusy] = useState(false);
+  const [newDrillError, setNewDrillError] = useState('');
+  /**
+   * What is being carried (stage 4, L2) — for the overlay under the pointer. Mouse only, lifting
+   * after six pixels: a click on a panel row still opens it, a click on an arrow in the gutter is
+   * still a click, and on touch nothing lifts at all (the sheet and the pair are the path).
+   */
+  const [lifted, setLifted] = useState<DragData | null>(null);
+  const dragSensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }));
   /**
    * The station OPEN as a modal (stage 3, D4) — one at a time, the editor's to say which, so the
    * stepper in its foot can swap the station while the modal stays mounted (the room's own idiom).
@@ -2063,7 +2385,7 @@ export default function PracticePlanEditor({
    * `blockRotates` is false, so a single picked drill is simply a stretch of practice; adding a
    * second drill to the same block is what turns it into a carousel.
    */
-  function addBlockFromDrill(drill: RepTeamDrill) {
+  function addBlockFromDrill(drill: RepTeamDrill, at: number = plan.blocks.length) {
     // A plan that filled up under the open sheet (another tab's autosave) closes it rather than
     // leaving a picker whose every pick does nothing.
     if (plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
@@ -2073,7 +2395,25 @@ export default function PracticePlanEditor({
       duration: { minutes: drill.usualMinutes ?? DEFAULT_BLOCK_MINUTES },
       stations: [drillToStation(drill, newPracticePlanId)],
     };
-    setBlocks([...plan.blocks, block]);
+    insertBlock(block, at);
+  }
+
+  /**
+   * A circuit becomes a whole BLOCK (stage 4, L9): titled by the circuit, its minutes, its station
+   * columns, the rotation's clock as saved, the groups EMPTY (people never travel) — and, opened,
+   * fully editable with the provenance line. `circuitToBlock` mints the ids and stamps the id and
+   * name; a station that came from a drill still reads "From your drills" inside it.
+   */
+  function addBlockFromCircuit(circuit: RepTeamCircuit, at: number = plan.blocks.length) {
+    if (plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
+    insertBlock(circuitToBlock(circuit, newPracticePlanId), at);
+  }
+
+  /** A library thing lands at `at` — the end for the panel's Add and the sheet, a gap for a drop. */
+  function insertBlock(block: PracticePlanBlock, at: number) {
+    const next = plan.blocks.slice();
+    next.splice(Math.max(0, Math.min(at, next.length)), 0, block);
+    setBlocks(next);
     /* Lands SHUT (owner ask, 2026-09-15, revising the earlier "opens in place" call) — the sheet
        the coach just closed showed the drill's full teaching, setup and equipment a breath ago;
        reopening the same block here would only show it all again. The shut row's own "Watching
@@ -2081,6 +2421,40 @@ export default function PracticePlanEditor({
     openBlock(null);
     setDrillSheet(null);
   }
+
+  /** A block dropped in a gap (L2) — `gap` is the position it takes among the OTHER blocks. The
+      block is found by ID at the drop, never by the index the lift captured — the file's rule for
+      every target (a plan can change shape under a pointer). */
+  function moveBlockTo(blockId: string, gap: number) {
+    const from = plan.blocks.findIndex(b => b.id === blockId);
+    if (from < 0) return;
+    const to = gap > from ? gap - 1 : gap;
+    if (to === from) return;
+    const next = plan.blocks.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setBlocks(next);
+  }
+
+  /* ── The drop (L2): the ONE place a drag changes the plan. Every target is exact — a gap takes a
+     new block at that index (a drill's, a circuit's) or the moved block; the open block's station
+     door takes a DRILL by D13's rule through the same path the sheet's pick takes. A drop with no
+     target under the pointer does nothing at all. ── */
+  const onDragStart = (e: DragStartEvent) => setLifted((e.active.data.current as DragData | undefined) ?? null);
+  const onDragEnd = (e: DragEndEvent) => {
+    setLifted(null);
+    const what = e.active.data.current as DragData | undefined;
+    const where = e.over?.data.current as DropData | undefined;
+    if (!what || !where) return;
+    if (where.kind === 'gap') {
+      if (what.kind === 'drill') addBlockFromDrill(what.drill, where.index);
+      else if (what.kind === 'circuit') addBlockFromCircuit(what.circuit, where.index);
+      else moveBlockTo(what.blockId, where.index);
+      return;
+    }
+    // The station door: a drill only, and only the open block's (the target renders there alone).
+    if (what.kind === 'drill') addStationFromDrill(where.blockId, what.drill);
+  };
 
   /** Append a drill as another station — or replace one in place when swapping. */
   function addStationFromDrill(blockId: string, drill: RepTeamDrill, swapId?: string) {
@@ -2143,29 +2517,90 @@ export default function PracticePlanEditor({
     return station.name.trim() || (soleStationOf(block) === station ? block.title.trim() : '');
   }
 
-  async function promoteStation(tagIds: string[]) {
-    if (!promoting || !onCreateDrill) return;
+  /**
+   * Kit resolved to NAMES for a drill's own equipment field (the legacy string list). A drill's
+   * field is separate from mig 266's library and only reads the string; resolving current tag
+   * names first is what stops a station or block edited under the new picker promoting with its
+   * equipment silently gone. Legacy names already on the row ride along.
+   */
+  const kitNamesOf = (o: { equipment?: string[]; equipmentTagIds?: string[] }): string[] =>
+    mergedTagNames(o.equipment, o.equipmentTagIds, equipmentTags);
+  /** The names the circuit's tick must not duplicate — the library's ACTIVE drills. */
+  const activeDrillNames = useMemo(() => drills.filter(d => d.isActive).map(d => d.name), [drills]);
+
+  /** The drill a written STATION or a bare written BLOCK would become — one reader per shape. */
+  function drillInputFor(block: PracticePlanBlock, station: PracticeStation | null, tagIds: string[]): DrillInput {
+    if (station) {
+      return stationToDrillInput({ ...station, name: promoteName(block, station), equipment: kitNamesOf(station) }, tagIds);
+    }
+    // L1: title → name, the words and points, the kit, and the block's MINUTES as "usually".
+    return blockToDrillInput(block, kitNamesOf(block), tagIds);
+  }
+
+  async function promoteToDrill(tagIds: string[]) {
+    if (!promoting || promoting.kind === 'circuit' || !onCreateDrill) return;
     const block = plan.blocks.find(b => b.id === promoting.blockId);
-    const station = block?.stations?.find(s => s.id === promoting.stationId);
-    if (!block || !station) { setPromoting(null); return; }
+    const station = promoting.kind === 'station' ? block?.stations?.find(s => s.id === promoting.stationId) ?? null : null;
+    if (!block || (promoting.kind === 'station' && !station)) { setPromoting(null); return; }
     setPromoteBusy(true); setPromoteError('');
-    // A drill's own equipment field is separate from mig 266's library (drills never adopted it —
-    // see the plan doc's scope) and only reads the legacy string. Resolve current tag names onto
-    // it first, or a station edited under the new picker would promote with equipment silently gone.
-    const equipmentByIdForPromote = new Map(equipmentTags.map(t => [t.id, t.name]));
-    const resolvedStation: PracticeStation = {
-      ...station,
-      name: promoteName(block, station),
-      ...(station.equipmentTagIds?.length
-        ? { equipment: station.equipmentTagIds.map(id => equipmentByIdForPromote.get(id)).filter((n): n is string => !!n) }
-        : {}),
-    };
-    const result = await onCreateDrill(stationToDrillInput(resolvedStation, tagIds));
+    const result = await onCreateDrill(drillInputFor(block, station, tagIds));
     setPromoteBusy(false);
     if (!result.ok) { setPromoteError(result.error ?? 'Could not save that drill.'); return; }
-    // ⚠ Promotion COPIES. Tonight's station is deliberately left exactly as it is — it does not
-    // become drill-backed and therefore does not become read-only under the coach's hands.
+    // ⚠ Promotion COPIES. Tonight's station or block is deliberately left exactly as it is — it
+    // does not become drill-backed and therefore does not become read-only under the coach's hands.
     setPromoting(null);
+  }
+
+  /**
+   * "Save to my circuits…" (L9). The TICK creates the written stations as drills FIRST, through the
+   * same create the station's promote uses, and only then is the circuit stored with its stations
+   * pointing at them — so the drills' counts work, and next time the circuit is placed its stations
+   * arrive drill-backed. A station whose create fails stops the save with the error; nothing on
+   * tonight's plan changes either way. A same-name active drill is never duplicated
+   * (`stationsToPromote` left it out of the tick).
+   */
+  async function promoteToCircuit(tagIds: string[], alsoDrills: boolean) {
+    if (!promoting || promoting.kind !== 'circuit' || !onCreateCircuit) return;
+    const block = plan.blocks.find(b => b.id === promoting.blockId);
+    if (!block) { setPromoting(null); return; }
+    setPromoteBusy(true); setPromoteError('');
+    let shape = blockToCircuitShape(block);
+    if (alsoDrills && onCreateDrill) {
+      /* Every written station points at its same-name drill — the ones this save CREATES and the
+         ones the library already HOLDS (the tick names only what it would add, but a station whose
+         drill is already there must not be the one left unlinked; and a save that failed midway
+         has already created some — the retry finds them here rather than leaving them behind). */
+      const made = new Map<string, { id: string; tagNames: readonly string[] }>(
+        drills.filter(d => d.isActive).map(d => [d.name.trim().toLowerCase(), { id: d.id, tagNames: d.tags.map(t => t.name) }]),
+      );
+      const tagNames = tagNamesById(tagIds, focusTags);
+      for (const station of stationsToPromote(block, activeDrillNames)) {
+        const result = await onCreateDrill(stationToDrillInput({ ...station, equipment: kitNamesOf(station) }, tagIds));
+        if (!result.ok || !result.drill) {
+          setPromoteBusy(false);
+          setPromoteError(result.error ?? `Could not save “${station.name}” as a drill.`);
+          return;
+        }
+        made.set(station.name.trim().toLowerCase(), { id: result.drill.id, tagNames });
+      }
+      shape = pointStationsAtDrills(shape, made);
+    }
+    const result = await onCreateCircuit({ name: block.title.trim(), tagIds, block: shape });
+    setPromoteBusy(false);
+    if (!result.ok) { setPromoteError(result.error ?? 'Could not save that circuit.'); return; }
+    // ⚠ Copies. Tonight's block stays exactly as it was — its stations do not become drill-backed
+    // on the page, and it does not become a placed circuit.
+    setPromoting(null);
+  }
+
+  /** "+ New drill" at the docked panel's foot — the one sheet the Drills tab opens (L5 · L6). */
+  async function saveNewDrill() {
+    if (!newDrill || !onCreateDrill) return;
+    setNewDrillBusy(true); setNewDrillError('');
+    const result = await onCreateDrill(newDrill);
+    setNewDrillBusy(false);
+    if (!result.ok) { setNewDrillError(result.error ?? 'Could not save that drill.'); return; }
+    setNewDrill(null);
   }
 
   function moveBlock(index: number, delta: number) {
@@ -2237,7 +2672,7 @@ export default function PracticePlanEditor({
   // mis-tap can't land on a nav tab underneath it) and locks the page behind it. Read the RESOLVED
   // targets, not the raw state: a station or a picker target that vanished under its dialog
   // (another tab's autosave) unmounts the dialog, and the lock must go with it (/review, 2026-09-15).
-  useOverlayOpen(!!pickerTarget || !!drillSheet || !!promoting || !!openStationRow || !!openGroupsBlock);
+  useOverlayOpen(!!pickerTarget || !!drillSheet || !!promoting || !!openStationRow || !!openGroupsBlock || !!newDrill);
   /* The roster picker's dialog floor (stage 2, D9) — armed while it is open; Escape closes it
      and hands focus back to the "Choose players…" that opened it. ⚠ Escape never closes an open
      BLOCK: a row is not a sheet, and the floor is mounted on the sheets alone. */
@@ -2282,8 +2717,8 @@ export default function PracticePlanEditor({
      never sees a "nobody has a focus area yet" line on every practice. The flag is shape — a
      template carries it, and offers it — so the template room offers the addition without
      reading anyone's goals; the plan room offers it only to a coach who may read them. */
-  const focusIncluded = plan.includeFocusAreas === true;
-  const canOfferFocus = !readOnly && !focusIncluded && (withoutPeople || canViewFocus);
+  const focusIncluded = plan.includeFocusAreas === true && layout.sheet;
+  const canOfferFocus = !readOnly && layout.sheet && !focusIncluded && (withoutPeople || canViewFocus);
   // Open on arrival EVERY time it is added — `railOpen` outlives a remove, so a section shut,
   // removed and added again would otherwise come back shut (/review, 2026-09-14).
   const addFocus = () => { setRailOpen(true); onChange({ ...plan, includeFocusAreas: true }); };
@@ -2294,9 +2729,18 @@ export default function PracticePlanEditor({
      section that renders nowhere near that block, so bundling it here put the invitation and the
      thing it opens in two different places on the sheet. It now sits in its own row, where the
      section itself appears once added — see the quiet "+" beside the focus rail's spot below. */
+  /* "a drill from your library" DOCKS the library on a wide desktop (stage 4, L5 — the ghost row's
+     own words do the toggle's job on the blank page, which has no toolbar yet) and opens the
+     sheet everywhere else, so one link means one thing. Kept while docked: it is the keyboard's
+     path to a new block, and one door too many is cheaper than a missing one. */
+  const docked = !!library?.docked;
+  const openLibrary = () => {
+    if (library?.canDock) library.onDock(true);
+    else setDrillSheet({ kind: 'block' });
+  };
   const ghostAlternatives = [
     firstBlock && onStartFrom ? { label: 'start this plan from…', onClick: onStartFrom } : null,
-    drills.length > 0 ? { label: 'a drill from your library', onClick: () => setDrillSheet({ kind: 'block' }) } : null,
+    drills.length > 0 || circuits.length > 0 ? { label: 'a drill from your library', onClick: openLibrary } : null,
   ].filter((a): a is { label: string; onClick: () => void } => !!a);
   const removeFocus = () => {
     const next = { ...plan };
@@ -2305,7 +2749,13 @@ export default function PracticePlanEditor({
   };
 
   return (
-    <div className={styles.ppDocBody}>
+    /* ONE drag context over the sheet AND the docked panel (which portals into the page's host
+       beside the sheet — React context crosses a portal). `pointerWithin`: the target is what the
+       pointer is over, so a drop on a block row, a column or the page is a drop on nothing. */
+    <DndContext sensors={dragSensors} collisionDetection={pointerWithin}
+      onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setLifted(null)}>
+    <div className={styles.ppDocBody} data-lifting={lifted ? lifted.kind : undefined}>
+      {layout.sheet && (<>
       {/* ── The goal, one line above the timeline (stage 1, D4) ──
           The one thing worth saying about the whole practice, where the sheet prints it. A
           template's is "Goal:" — there is no tonight for it. */}
@@ -2410,27 +2860,33 @@ export default function PracticePlanEditor({
           </div>
         </div>}
       </div>
+      </>)}
 
       {/* ── The timeline (stage 1, D2 · D5) ──
           A gutter of start times down the left, blocks as rows beside it, and after the last one
           the ghost row: the page's ONE lime while the plan is blank ("+ Add the first block"),
-          a quiet "+ Add a block" after that. */}
+          a quiet "+ Add a block" after that. Between the rows, and under the last, the GAPS a
+          drag lands in (stage 4, L2) — nothing until something is lifted. */}
       <div className={styles.ppTl}>
         {plan.blocks.map((block, i) => (
+          <Fragment key={block.id}>
+          {layout.timeline && (
+            <GapTarget index={i} startLabel={clockByBlock.get(block.id)?.startLabel ?? null} blockCount={plan.blocks.length} />
+          )}
           <BlockCard
-            key={block.id}
             block={block}
             index={i}
             blockCount={plan.blocks.length}
             clock={clockByBlock.get(block.id)}
             // From the SAME clock walk as the gutter — never a second copy of the arithmetic.
             blockStartMs={clockByBlock.get(block.id)?.startMs}
-            open={openId === block.id}
+            open={soloBlock || openId === block.id}
+            solo={soloBlock}
             focusTitle={freshId === block.id}
-            openDoors={openId === block.id ? openDoors : NO_DOORS}
+            openDoors={soloBlock || openId === block.id ? openDoors : NO_DOORS}
             readOnly={readOnly}
             withoutPeople={withoutPeople}
-            restTakenElsewhere={restBlockId != null && restBlockId !== block.id}
+            restTakenElsewhere={!layout.restOffered || (restBlockId != null && restBlockId !== block.id)}
             roster={roster}
             notRepliedIds={notRepliedIds}
             staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
@@ -2451,16 +2907,24 @@ export default function PracticePlanEditor({
             onSwapStation={stationId => setDrillSheet({ kind: 'station', blockId: block.id, swapId: stationId })}
             onPromoteStation={stationId => {
               setPromoteError('');
-              setPromoting({ blockId: block.id, stationId });
+              setPromoting({ kind: 'station', blockId: block.id, stationId });
             }}
+            // The library door by shape (L1 · L9) — absent for a viewer who can't write to the
+            // library, and inside the circuit editor (a circuit is not saved from itself).
+            onPromoteBlock={onCreateDrill && layout.promote ? () => { setPromoteError(''); setPromoting({ kind: 'block', blockId: block.id }); } : undefined}
+            onPromoteCircuit={onCreateCircuit && layout.promote ? () => { setPromoteError(''); setPromoting({ kind: 'circuit', blockId: block.id }); } : undefined}
             onOpenStation={stationId => setOpenStation({ blockId: block.id, stationId })}
             onPatchStation={(stationId, patch) => patchStation(block.id, stationId, patch)}
             onMoveStation={(stationId, delta) => moveStation(block.id, stationId, delta)}
             onOpenGroups={() => setOpenGroups({ blockId: block.id })}
           />
+          </Fragment>
         ))}
+        {layout.timeline && (
+          <GapTarget index={plan.blocks.length} startLabel={nextStartLabel ?? null} blockCount={plan.blocks.length} />
+        )}
 
-        {!readOnly && plan.blocks.length < MAX_BLOCKS && (
+        {layout.timeline && plan.blocks.length < MAX_BLOCKS && (
           <div className={styles.ppTlRow}>
             <div className={styles.ppTlGutter}>
               {nextStartLabel ?? ''}
@@ -2609,7 +3073,7 @@ export default function PracticePlanEditor({
           onOpenPicker={() => setAttach({ kind: 'station', blockId: openStation.blockId, stationId: openStation.stationId })}
           onDetach={() => detachStation(openStation.blockId, openStation.stationId)}
           onSwapDrill={() => setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId })}
-          onPromote={() => { setPromoteError(''); setPromoting({ blockId: openStation.blockId, stationId: openStation.stationId }); }}
+          onPromote={() => { setPromoteError(''); setPromoting({ kind: 'station', blockId: openStation.blockId, stationId: openStation.stationId }); }}
         />
       )}
 
@@ -2693,10 +3157,12 @@ export default function PracticePlanEditor({
         </div>
       )}
 
-      {/* ── The drill picker (Phase 2) ── */}
+      {/* ── The drill picker (Phase 2; the circuits tab at stage 4) ── */}
       {drillSheet && (
         <DrillPickerSheet
           drills={drills}
+          circuits={drillSheet.kind === 'block' ? circuits : undefined}
+          equipmentTags={equipmentTags}
           title={
             drillSheet.kind === 'block' ? 'Add a block'
               : drillSheet.swapId ? 'Swap this drill'
@@ -2711,6 +3177,7 @@ export default function PracticePlanEditor({
             if (drillSheet.kind === 'block') addBlockFromDrill(drill);
             else addStationFromDrill(drillSheet.blockId, drill, drillSheet.swapId);
           }}
+          onPickCircuit={drillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit) : undefined}
           onWriteOne={() => {
             if (drillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
             else addBlankStation(drillSheet.blockId, drillSheet.swapId);
@@ -2719,26 +3186,94 @@ export default function PracticePlanEditor({
         />
       )}
 
-      {/* ── "Save to my drills…" (D18) ── */}
+      {/* ── "Save to my drills…" / "Save to my circuits…" (D18 · L1 · L9) ── */}
       {promoting && (() => {
         const block = plan.blocks.find(b => b.id === promoting.blockId);
-        const station = block?.stations?.find(s => s.id === promoting.stationId);
-        // Deleting the station while its dialog is open would otherwise leave a dead end — the
-        // same self-closing rule `attachTargetExists` applies to the roster picker.
-        if (!block || !station) return null;
+        // Deleting the block or station while its dialog is open would otherwise leave a dead end
+        // — the same self-closing rule `attachTargetExists` applies to the roster picker.
+        if (!block) return null;
+        // The block's minutes as "usually", named in the sentence — none for a rest-of-practice block.
+        const usually = block.duration.restOfPractice || !block.duration.minutes ? '' : `, and ${block.duration.minutes} min as how long it usually runs`;
+        if (promoting.kind === 'station') {
+          const station = block.stations?.find(s => s.id === promoting.stationId);
+          if (!station) return null;
+          return (
+            <PromoteDialog kind="drill" name={promoteName(block, station)}
+              sentence="The setup, coaching points and equipment come with it. Who ran it and who was at it stay with tonight’s practice."
+              tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
+              manage={focusManage} onManageChanged={onFocusTagsChanged}
+              busy={promoteBusy} error={promoteError}
+              onSave={tagIds => promoteToDrill(tagIds)} onClose={() => setPromoting(null)} />
+          );
+        }
+        if (promoting.kind === 'block') {
+          if ((block.stations?.length ?? 0) > 0) return null;
+          return (
+            <PromoteDialog kind="drill" name={block.title.trim()}
+              sentence={`The coaching points and equipment come with it${usually}. Who was at it stays with tonight’s practice.`}
+              tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
+              manage={focusManage} onManageChanged={onFocusTagsChanged}
+              busy={promoteBusy} error={promoteError}
+              onSave={tagIds => promoteToDrill(tagIds)} onClose={() => setPromoting(null)} />
+          );
+        }
+        if ((block.stations?.length ?? 0) < 2) return null;
         return (
-          <PromoteDrillDialog
-            stationName={promoteName(block, station)}
-            tags={focusTags}
-            onCreateTag={onCreateFocusTag ?? (async () => null)}
+          <PromoteDialog kind="circuit" name={block.title.trim() || `Block ${plan.blocks.indexOf(block) + 1}`}
+            sentence={`The stations, their setup, points and kit come with it${usually}. Who runs each station, who’s at it and the groups stay with tonight’s practice.`}
+            tick={onCreateDrill ? { stations: stationsToPromote(block, activeDrillNames) } : undefined}
+            tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
             manage={focusManage} onManageChanged={onFocusTagsChanged}
-            busy={promoteBusy}
-            error={promoteError}
-            onSave={promoteStation}
-            onClose={() => setPromoting(null)}
-          />
+            busy={promoteBusy} error={promoteError}
+            onSave={promoteToCircuit} onClose={() => setPromoting(null)} />
         );
       })()}
+
+      {/* ── "+ New drill" from the docked panel — the one drill sheet (L5 · L6) ── */}
+      {newDrill && (
+        <DrillSheet
+          draft={newDrill} isNew
+          tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
+          equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
+          focusManage={focusManage} onFocusTagsChanged={onFocusTagsChanged}
+          equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
+          busy={newDrillBusy} error={newDrillError}
+          onChange={setNewDrill} onSubmit={saveNewDrill} onClose={() => setNewDrill(null)}
+        />
+      )}
+
+      {/* ── The DOCKED LIBRARY (stage 4, L5) — the phone's card list beside the sheet, rendered into
+          the page's host through a portal so the page keeps the pair's layout and this editor
+          keeps the one drag context. Drills · Circuits as its head once circuits exist; no
+          templates in it (a template applies to a blank plan — "start this plan from…" is one
+          link away on the ghost row). ── */}
+      {docked && library?.panelHost && createPortal(
+        <LibraryPanel
+          drills={drills} circuits={circuits} equipmentTags={equipmentTags}
+          canWrite={!!onCreateDrill}
+          circuitsHref={library.circuitsHref}
+          onAddDrill={drill => addBlockFromDrill(drill)}
+          onAddCircuit={circuit => addBlockFromCircuit(circuit)}
+          onNewDrill={() => { setNewDrillError(''); setNewDrill(emptyDrillDraft()); }}
+          onClose={() => library.onDock(false)}
+        />,
+        library.panelHost,
+      )}
+
+      {/* The carried thing, under the pointer — portaled to the body so the sheet's own clipping
+          cannot cut it (the standing `modalScrollBody` trap). */}
+      {typeof document !== 'undefined' && createPortal(
+        <DragOverlay dropAnimation={null} zIndex={1200}>
+          {lifted && (
+            <span className={styles.ppDragGhost}>
+              <GripVertical size={13} aria-hidden />
+              {lifted.kind === 'drill' ? lifted.drill.name : lifted.kind === 'circuit' ? lifted.circuit.name : lifted.label}
+            </span>
+          )}
+        </DragOverlay>,
+        document.body,
+      )}
     </div>
+    </DndContext>
   );
 }

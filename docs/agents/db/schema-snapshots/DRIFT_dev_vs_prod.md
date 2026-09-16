@@ -2,25 +2,38 @@
 
 **Generated:** 2026-09-16 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 7 divergence(s)** across dev/prod.
+**⚠️ 36 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 1 | 1 | 0 |
-| Indexes | 0 | 1 | 0 |
-| Constraints | 0 | 1 | — |
-| RLS / CHECK | 2 | 1 | 0 (RLS state) |
+| Tables | 2 | 0 | — |
+| Columns | 13 | 1 | 0 |
+| Indexes | 6 | 1 | 0 |
+| Constraints | 7 | 1 | — |
+| RLS / CHECK | 4 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (2)
+- `rep_team_circuit_tags`
+- `rep_team_circuits`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (1)
+### Only in DEV (13)
+- `rep_team_circuit_tags.circuit_id`
+- `rep_team_circuit_tags.created_at`
+- `rep_team_circuit_tags.tag_id`
+- `rep_team_circuits.block`
+- `rep_team_circuits.created_at`
+- `rep_team_circuits.created_by`
+- `rep_team_circuits.id`
+- `rep_team_circuits.is_active`
+- `rep_team_circuits.name`
+- `rep_team_circuits.org_id`
+- `rep_team_circuits.team_id`
+- `rep_team_circuits.updated_at`
 - `rep_team_evaluation_sessions.scope_attempts`
 
 ### Only in PROD (1)
@@ -30,8 +43,13 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (0)
-_none_
+### Only in DEV (6)
+- `rep_team_circuit_tags_pkey`
+- `rep_team_circuit_tags_tag_idx`
+- `rep_team_circuits_name_uniq`
+- `rep_team_circuits_org_idx`
+- `rep_team_circuits_pkey`
+- `rep_team_circuits_team_idx`
 
 ### Only in PROD (1)
 - `rep_team_measurable_types_replaced_by_idx`
@@ -40,8 +58,14 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (0)
-_none_
+### Only in DEV (7)
+- `rep_team_circuit_tags.rep_team_circuit_tags_circuit_id_fkey`
+- `rep_team_circuit_tags.rep_team_circuit_tags_pkey`
+- `rep_team_circuit_tags.rep_team_circuit_tags_tag_id_fkey`
+- `rep_team_circuits.rep_team_circuits_created_by_fkey`
+- `rep_team_circuits.rep_team_circuits_org_id_fkey`
+- `rep_team_circuits.rep_team_circuits_pkey`
+- `rep_team_circuits.rep_team_circuits_team_id_fkey`
 
 ### Only in PROD (1)
 - `rep_team_measurable_types.rep_team_measurable_types_replaced_by_id_fkey`
@@ -50,7 +74,9 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (2)
+### CHECK only in DEV (4)
+- `rep_team_circuits.rep_team_circuits_block_check`
+- `rep_team_circuits.rep_team_circuits_name_check`
 - `rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_needs_scope_check`
 - `rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_object_check`
 

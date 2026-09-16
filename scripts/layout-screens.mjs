@@ -101,6 +101,21 @@ async function openCircuitStation(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * DOCK the library beside the sheet (stage 4, L5, 2026-09-16) — the toolbar's quiet "Library" toggle,
+ * rendered only from a 1,156px working column up (1440 here) and only once blocks exist. At every
+ * narrower width the toggle is absent by design, so the gesture is a no-op and the entry measures
+ * the sheet alone — which is the honest answer at those widths. Docked, the pair is the sheet at
+ * 816 and the panel at 320: its search box, chips, rows with a grip and Add, and "+ New drill".
+ */
+async function dockLibrary(page) {
+  const toggle = page.getByTestId('library-toggle');
+  if (await toggle.count() === 0 || !(await toggle.isVisible())) return;
+  if ((await toggle.getAttribute('aria-pressed')) !== 'true') await toggle.click();
+  await page.getByTestId('library-panel').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
 /** The circuit open and its GROUPS ROOM up (stage 3 revision, D9): the draw row, the pool column,
  *  the group columns with their chips, name boxes and bins, the foot's "+ Add a group" and Done. */
 async function openCircuitGroups(page) {
@@ -278,6 +293,21 @@ export const SCREENS = [
     ready: '[data-room="practice-plan"][data-room-state="loaded"]',
     interact: openCircuitGroups,
   },
+  {
+    // The same sheet with the LIBRARY DOCKED beside it (stage 4, L5): the pair at 1440 — the sheet
+    // at its letter width, the panel's rows with their grips — and the sheet alone at every
+    // narrower width, where the toggle is absent by design.
+    id: 'coach-practice-plan-docked',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
+    ready: '[data-room="practice-plan"][data-room-state="loaded"]',
+    interact: dockLibrary,
+  },
+  // The three library tabs (stage 4, L3 · L9): tables on the list recipe, cards at ≤640 — the 267px
+  // phone row was this stage's own defect, so the tabs are measured at every width.
+  { id: 'coach-practice-drills', session: 'coach', path: (c) => `${team(c)}/practice?section=drills`, ready: 'h1' },
+  { id: 'coach-practice-templates', session: 'coach', path: (c) => `${team(c)}/practice?section=templates`, ready: 'h1' },
+  { id: 'coach-practice-circuits', session: 'coach', path: (c) => `${team(c)}/practice?section=circuits`, ready: 'h1' },
   {
     id: 'coach-practice-run',
     session: 'coach',
