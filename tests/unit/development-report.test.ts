@@ -61,7 +61,6 @@ describe('progressSeries — one object behind the chart, the answer line and th
     assert.deepEqual(s.points[0].marks.map(m => m.value), [8.40, 8.52, 8.47]);
     assert.equal(s.points[0].marks[0].inRange, null, 'a directional test has no band');
     assert.equal(s.unit, 'seconds');
-    assert.equal(s.unitNote, null);
   });
 
   it('switched to the average, the line follows the average and the marks do not move', () => {
@@ -100,21 +99,6 @@ describe('progressSeries — one object behind the chart, the answer line and th
     assert.equal(s.answer?.value, '8.41 seconds');
     assert.match(scopeLine(s), /1 recorded result/);
     assert.match(scopeLine(s), /a single result is a point, not a change/);
-  });
-
-  it('a changed unit is a BREAK: the earlier unit is listed, never drawn, and the note says so (F01)', () => {
-    const rows = [
-      reading(48, '2026-06-01', null, 1, 'mph'), reading(51, '2026-06-15', null, 1, 'mph'),
-      reading(84, '2026-08-01', null, 1, 'km/h'),
-    ];
-    const s = progressSeries(rows, throwSpeed, { show: 'headline', compare: 'season' });
-    assert.equal(s.unit, 'km/h');
-    assert.equal(s.points.length, 1);
-    assert.equal(s.earlier.length, 1);
-    assert.equal(s.earlier[0].unit, 'mph');
-    assert.equal(s.earlier[0].rows.length, 2);
-    assert.equal(s.unitNote, 'Units changed — 2 earlier results in mph are listed but not drawn on this line.');
-    assert.equal(s.change, null, 'no change is stated across a unit break');
   });
 
   it('with nothing recorded the series is empty and says nothing', () => {

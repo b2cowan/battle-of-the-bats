@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, use, useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { use, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -687,7 +687,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
   // ── A measured test: the answer in words, the chart, the records behind it ──
   const readings = dev.measurables.filter(m => m.measurableTypeId === metric.id);
   const series: ProgressSeries<RepPlayerMeasurable> = progressSeries(readings, def, { show, compare });
-  if (series.points.length === 0 && series.earlier.length === 0) {
+  if (series.points.length === 0) {
     return (
       <>
         {head}
@@ -701,14 +701,14 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
   const isRange = series.band != null;
   const unitHead = `Attempts · ${series.unit}`;
   const newestFirst = [...series.points].reverse();
-  /** One row of "Records behind the chart" — the current unit's rows and an earlier unit's rows alike. */
-  const recordRow = (row: ProgressPoint<RepPlayerMeasurable>['row'], unit: string) => {
+  /** One row of "Records behind the chart". */
+  const recordRow = (row: ProgressPoint<RepPlayerMeasurable>['row']) => {
     const corrected = row.attempts.filter(a => a.correctedFrom != null);
     const by = author(row.attempts[0]?.createdBy ?? null);
     return (
       <tr key={row.key}>
         <td data-label="Date" className={styles.devBoardVal}>{formatShortDate(row.recordedOn)}</td>
-        <td data-label={`Attempts · ${unit}`} className={styles.devBoardVal} style={{ whiteSpace: 'normal' }}>
+        <td data-label={unitHead} className={styles.devBoardVal} style={{ whiteSpace: 'normal' }}>
           {/* Every attempt the row holds — the plan it was run against is the session's own fact
               (re-evaluation stage 2, C1) and is reported there ("fewer than planned"), not here. */}
           {row.values.map(formatValue).join(' · ')}
@@ -745,13 +745,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         </p>
       )}
       <p className={styles.formHint}>{scopeLine(series)}</p>
-      {series.unitNote && (
-        <p className={styles.reportFinding} style={{ marginTop: '0.6rem' }}>
-          <Info size={15} aria-hidden />
-          <span>{series.unitNote}</span>
-        </p>
-      )}
-      {series.points.length > 0 && <DevelopmentProgressChart series={series} playerName={first} />}
+      <DevelopmentProgressChart series={series} playerName={first} />
 
       <p className={styles.reportSectionTitle}>Records behind the chart</p>
       <p className={styles.reportSectionSub}>Current season only · every attempt, exactly as recorded · newest first</p>
@@ -767,18 +761,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
             </tr>
           </thead>
           <tbody>
-            {newestFirst.map(p => recordRow(p.row, series.unit))}
-            {/* Earlier units — listed, never drawn (F01). Each keeps its own unit. */}
-            {[...series.earlier].reverse().map((seg, si) => (
-              <Fragment key={`seg-${si}-${seg.unit}`}>
-                <tr>
-                  <td colSpan={5} className={styles.devBoardMuted} style={{ fontSize: 'var(--type-support)' }}>
-                    Recorded in {seg.unit} — listed, not drawn on the line above
-                  </td>
-                </tr>
-                {[...seg.rows].reverse().map(row => recordRow(row, seg.unit))}
-              </Fragment>
-            ))}
+            {newestFirst.map(p => recordRow(p.row))}
           </tbody>
         </table>
       </div>

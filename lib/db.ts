@@ -7578,7 +7578,6 @@ function mapRepTeamMeasurableType(r: any): RepTeamMeasurableType {
     attemptsPerSession: r.attempts_per_session ?? 1,
     headline: r.headline ?? 'last',
     descriptors: Array.isArray(r.descriptors) ? r.descriptors : [],
-    replacedById: r.replaced_by_id ?? null,
     sortOrder: r.sort_order,
     isActive: r.is_active,
     createdBy: r.created_by ?? null,
@@ -7587,7 +7586,7 @@ function mapRepTeamMeasurableType(r: any): RepTeamMeasurableType {
   };
 }
 
-/** The definition's columns, from the reader's shape — one mapping for create, update and replace. */
+/** The definition's columns, from the reader's shape — one mapping for create and update. */
 function measurableDefinitionColumns(fields: Partial<MeasurableTypeCreateFields>): Record<string, unknown> {
   const cols: Record<string, unknown> = {};
   if (fields.kind !== undefined) cols.kind = fields.kind;
@@ -7640,8 +7639,8 @@ export async function getRepTeamMeasurableType(id: string, teamId: string): Prom
   return data ? mapRepTeamMeasurableType(data) : null;
 }
 
-/** Does any reading point at this definition? The successor rule (ruling 3) turns on it. Team-scoped
- *  like every sibling read, so a foreign id can never answer — even from a caller that forgot to check. */
+/** Does any result point at this definition? The unit is fixed once one does. Team-scoped like
+ *  every sibling read, so a foreign id can never answer — even from a caller that forgot to check. */
 export async function repTeamMeasurableTypeHasReadings(typeId: string, teamId: string): Promise<boolean> {
   const { count, error } = await supabaseAdmin
     .from('rep_player_measurables').select('id', { count: 'exact', head: true })
@@ -7650,10 +7649,25 @@ export async function repTeamMeasurableTypeHasReadings(typeId: string, teamId: s
   return (count ?? 0) > 0;
 }
 
+/**
+ * Does ANY record point at this definition — a result, an observation, or a session's not-assessed
+ * mark? Delete is offered only when nothing does (the three RESTRICT FKs refuse it otherwise, but
+ * the sheet must know before it draws the button).
+ */
+export async function repTeamMeasurableTypeHasRecords(typeId: string, teamId: string): Promise<boolean> {
+  const counts = await Promise.all((['rep_player_measurables', 'rep_player_observations', 'rep_evaluation_not_assessed'] as const).map(async table => {
+    const { count, error } = await supabaseAdmin
+      .from(table).select('id', { count: 'exact', head: true })
+      .eq('measurable_type_id', typeId).eq('team_id', teamId);
+    if (error) throw error;
+    return count ?? 0;
+  }));
+  return counts.some(n => n > 0);
+}
+
 /** Scoped update — any field of the definition, retire/restore. team_id guards cross-team edits
- *  even if RLS is bypassed. Never a delete — types are only ever soft-retired (migration 189). A
- *  unit edit only affects FUTURE entries (each entry carries its own unit snapshot) — and on a test
- *  WITH readings the route refuses it in favour of `replaceRepTeamMeasurableType` (ruling 3). */
+ *  even if RLS is bypassed. A unit edit reaches here only on a test WITHOUT results (the route
+ *  refuses it otherwise — once a result exists the unit is fixed, and a new unit is a new test). */
 export async function updateRepTeamMeasurableType(
   id: string, teamId: string,
   fields: Partial<MeasurableTypeCreateFields> & { isActive?: boolean },
@@ -7672,45 +7686,54 @@ export async function updateRepTeamMeasurableType(
 }
 
 /**
- * ═══ THE SUCCESSOR (owner ruling 3, 2026-09-11) ═══
- * A unit or method change on a test that already has readings starts a NEW definition and retires
- * this one: the predecessor keeps its name, unit and every reading under it (marked retired,
- * pointing at its successor); the successor takes the name and the new definition, with no
- * readings. The two are never drawn as one line (F01 — the unit split already guarantees that).
+ * Delete a definition nothing points at (owner, 2026-09-15: a test defined by mistake, with no
+ * results, is simply gone — one that HAS records is retired, never deleted). The three RESTRICT
+ * FKs (results, observations, not-assessed marks) refuse a delete of one with records: that
+ * surfaces as 23503 for the route to map, so a record landing between the route's check and this
+ * delete is never lost. Returns false when no row matched on this team.
  *
- * ⚠ ONE TRANSACTION, in the database (`replace_rep_team_measurable_type`, mig 294): retire →
- * insert under the same name → link, with the predecessor row locked for the duration. The
- * partial unique index on active names dictates that order; a first draft did the three steps
- * from here with compensation and two reviewers found the window it left (a reading landing on
- * the successor makes its compensating delete impossible, and the predecessor's restore then
- * collides on the name). A name collision surfaces as 23505 and the route maps it to 409; the
- * function's own refusals (not found / not active / not a test) are re-checked by the route first
- * and would only fire on a race, so they are surfaced as errors here.
+ * A session that PLANNED the test (`scope_metric_ids` / `scope_attempts` — a snapshot of intent,
+ * not a FK) drops it from its plan: nothing was recorded against it, and a plan that kept naming
+ * a test that no longer exists would count it "unrecorded" for ever.
+ *
+ * ⚠ THE PLANS GO FIRST, AND EACH WRITE IS A COMPARE-AND-SWAP (/review 2026-09-15). Two deletes
+ * touching the same plan in the same instant would otherwise read the same list and the second
+ * write would put the first's test back — a dangling id nothing could ever remove. The update is
+ * predicated on the list as it was read; a miss re-reads and tries again. And the plans are
+ * stripped BEFORE the row goes: a strip that fails leaves the definition standing and the request
+ * failing loudly, where a delete that succeeded and a strip that failed would leave the phantom
+ * behind a 500 nobody can retry (the next attempt reads "not found").
  */
-export async function replaceRepTeamMeasurableType(fields: MeasurableTypeCreateFields & {
-  predecessorId: string; orgId: string; teamId: string; createdBy?: string | null;
-}): Promise<{ predecessor: RepTeamMeasurableType; successor: RepTeamMeasurableType }> {
-  const { data: successorId, error } = await supabaseAdmin.rpc('replace_rep_team_measurable_type', {
-    p_predecessor: fields.predecessorId,
-    p_team: fields.teamId,
-    p_org: fields.orgId,
-    p_created_by: fields.createdBy ?? null,
-    p_name: fields.name,
-    p_unit: fields.unit,
-    p_aim: fields.aim,
-    p_range_from: fields.rangeFrom,
-    p_range_to: fields.rangeTo,
-    p_method: fields.method,
-    p_attempts: fields.attemptsPerSession,
-    p_headline: fields.headline,
-  });
+export const PLAN_CHANGED_WHILE_DELETING = 'plan_changed_while_deleting';
+
+export async function deleteRepTeamMeasurableType(id: string, teamId: string): Promise<boolean> {
+  let settled = false;
+  for (let round = 0; round < 5 && !settled; round += 1) {
+    const { data: sessions, error } = await supabaseAdmin
+      .from('rep_team_evaluation_sessions').select('id, scope_metric_ids, scope_attempts')
+      .eq('team_id', teamId).contains('scope_metric_ids', [id]);
+    if (error) throw error;
+    settled = true;
+    for (const s of sessions ?? []) {
+      const before = s.scope_metric_ids as string[];
+      const attempts = s.scope_attempts && typeof s.scope_attempts === 'object' ? { ...(s.scope_attempts as Record<string, unknown>) } : null;
+      if (attempts) delete attempts[id];
+      const { data: hit, error: writeError } = await supabaseAdmin
+        .from('rep_team_evaluation_sessions')
+        .update({ scope_metric_ids: before.filter(m => m !== id), scope_attempts: attempts, updated_at: new Date().toISOString() })
+        .eq('id', s.id).eq('team_id', teamId)
+        .filter('scope_metric_ids', 'eq', `{${before.join(',')}}`)
+        .select('id');
+      if (writeError) throw writeError;
+      if (!hit || hit.length === 0) settled = false;
+    }
+  }
+  if (!settled) throw new Error(PLAN_CHANGED_WHILE_DELETING);
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_measurable_types').delete().eq('id', id).eq('team_id', teamId).select('id');
   if (error) throw error;
-  const [predecessor, successor] = await Promise.all([
-    getRepTeamMeasurableType(fields.predecessorId, fields.teamId),
-    getRepTeamMeasurableType(successorId as string, fields.teamId),
-  ]);
-  if (!predecessor || !successor) throw new Error('Measurable type not found');
-  return { predecessor, successor };
+  return !!data && data.length > 0;
 }
 
 function mapRepPlayerMeasurable(r: any): RepPlayerMeasurable {

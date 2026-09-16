@@ -22,7 +22,7 @@ import type { RepTeamMeasurableType } from '../../lib/types.ts';
 const P = (id: string) => ({ id });
 const T = (id: string, over: Partial<RepTeamMeasurableType> = {}): RepTeamMeasurableType => ({
   id, orgId: 'o', teamId: 't', name: id, kind: 'test', unit: 'seconds', aim: 'lower', rangeFrom: null, rangeTo: null,
-  method: null, attemptsPerSession: 1, headline: 'best', descriptors: [], replacedById: null, sortOrder: 0, isActive: true,
+  method: null, attemptsPerSession: 1, headline: 'best', descriptors: [], sortOrder: 0, isActive: true,
   createdBy: null, createdAt: '', updatedAt: '', ...over,
 });
 const E = (playerId: string, measurableTypeId: string, attemptNo = 1) => ({ id: `${playerId}-${measurableTypeId}-${attemptNo}`, playerId, measurableTypeId, attemptNo });

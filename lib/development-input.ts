@@ -16,8 +16,7 @@ import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepDevelopmentG
 import { isValidRecordDate } from './measurable-format';
 import { isRecordId as isId } from './development-address';
 import {
-  MEASURABLE_AIMS, MEASURABLE_HEADLINES, MEASURABLE_KINDS, defaultHeadlineFor, definitionChange, headlineOptionsFor,
-  type DefinitionChange,
+  MEASURABLE_AIMS, MEASURABLE_HEADLINES, MEASURABLE_KINDS, UNIT_FIXED_MESSAGE, defaultHeadlineFor, headlineOptionsFor, unitIsFixed,
 } from './measurable-definition';
 
 export type InputResult<F> = { fields: F } | { error: string };
@@ -264,18 +263,18 @@ export function validateDefinitionShape(d: MeasurableTypeCreateFields): string |
 }
 
 /**
- * A patch applied to the definition it names: merge, re-validate the whole, and answer the
- * "changing a definition later" rule (owner ruling 3, unit-only since 2026-09-14) for the route to
- * enforce — a unit change on a test with readings is a SUCCESSOR, never an in-place edit.
+ * A patch applied to the definition it names: merge, re-validate the whole, and hold the
+ * "changing a definition later" rule (owner, 2026-09-15) — the UNIT of a test with readings is
+ * fixed; a patch that changes it is refused, never quietly applied and never forked into a
+ * linked successor.
  *
  * ⚠ A RETIRED definition is a record (owner, 2026-09-14, B12): only its name and its retired flag
  * may change. The sheet shows every other field as a value, and this is where that is HELD — a
  * direct call that re-aims a retired test would silently reinterpret every result it holds.
  *
- * Two conveniences, both so the editor does not have to send three fields to change one:
- *   · moving to or from a range aim re-points a headline the new aim does not admit onto the
- *     ruled default, and clears the edges when the aim stops being a range;
- *   · restore is refused on a definition that was REPLACED — the successor carries its name.
+ * One convenience, so the editor does not have to send three fields to change one: moving to or
+ * from a range aim re-points a headline the new aim does not admit onto the ruled default, and
+ * clears the edges when the aim stops being a range.
  */
 const RETIRED_EDITABLE: ReadonlySet<keyof MeasurableTypeFields> = new Set(['name', 'isActive']);
 export const RETIRED_EDIT_MESSAGE = 'A retired metric is a record — restore it to change anything but its name.';
@@ -284,13 +283,11 @@ export function applyDefinitionPatch(
   current: RepTeamMeasurableType,
   fields: MeasurableTypeFields,
   hasReadings: boolean,
-): { next: MeasurableTypeCreateFields & { isActive: boolean }; change: DefinitionChange } | { error: string } {
-  if (fields.isActive === true && current.replacedById) {
-    return { error: 'This definition was replaced by a newer one, which carries its name. Edit that one instead.' };
-  }
+): { next: MeasurableTypeCreateFields & { isActive: boolean } } | { error: string } {
   if (!current.isActive && (Object.keys(fields) as (keyof MeasurableTypeFields)[]).some(k => fields[k] !== undefined && !RETIRED_EDITABLE.has(k))) {
     return { error: RETIRED_EDIT_MESSAGE };
   }
+  if (unitIsFixed(current, fields.unit, hasReadings)) return { error: UNIT_FIXED_MESSAGE };
   const aim = fields.aim ?? current.aim;
   const aimChanged = aim !== current.aim;
   let headline = fields.headline ?? current.headline;
@@ -311,7 +308,7 @@ export function applyDefinitionPatch(
   };
   const shape = validateDefinitionShape(next);
   if (shape) return { error: shape };
-  return { next, change: definitionChange(current, { unit: fields.unit }, hasReadings) };
+  return { next };
 }
 
 // ── Goals ────────────────────────────────────────────────────────────────────────────────────────

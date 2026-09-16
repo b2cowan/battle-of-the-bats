@@ -934,18 +934,14 @@ function PlayersView({ base, board, boardError, types, metricParam }: {
 function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMeasurableType[]; canWrite: boolean }) {
   const active = types.filter(t => t.isActive);
   const retired = types.filter(t => !t.isActive);
-  const byId = new Map(types.map(t => [t.id, t]));
   const editorHref = (id: string) => skillsAndGoalsHref(base, 'metrics', { edit: id });
 
   // One row shape for a live and a retired metric — the name column says the unit or the kind
   // once (B3); the second column says what a record means, and for a retired metric, that it is
-  // retired and what replaced it. The retired rows are the SAME table (owner, 2026-09-14: the fold
-  // used to open on a pill list from an older idiom — a difference the table standard calls a bug).
+  // retired. The retired rows are the SAME table (owner, 2026-09-14: the fold used to open on a
+  // pill list from an older idiom — a difference the table standard calls a bug).
   const row = (t: RepTeamMeasurableType) => {
-    const successor = t.replacedById ? byId.get(t.replacedById) : null;
-    const meaning = t.isActive
-      ? recordMeaning(t)
-      : ['retired', successor ? `replaced by ${successor.name}` : recordMeaning(t)].join(' · ');
+    const meaning = t.isActive ? recordMeaning(t) : `retired · ${recordMeaning(t)}`;
     return (
       <tr key={t.id} className={t.isActive ? undefined : styles.devRetiredRow}>
         <td>

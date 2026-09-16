@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  isMeasuredTest, headlineOptionsFor, defaultHeadlineFor, recordMeaning, aimSentence, definitionChange,
+  isMeasuredTest, headlineOptionsFor, defaultHeadlineFor, recordMeaning, aimSentence, unitIsFixed, UNIT_FIXED_MESSAGE,
   previewChange, KIND_LABELS, AIM_LABELS, HEADLINE_LABELS,
 } from '../../lib/measurable-definition.ts';
 import { sessionHeadline, attemptAgainstRange, describeHeadline } from '../../lib/measurable-series.ts';
@@ -10,15 +10,15 @@ import type { RepTeamMeasurableType } from '../../lib/types.ts';
 
 /**
  * Development lifecycle Phase 1 — a metric is DEFINED once (plan §7; owner rulings §16: every
- * attempt is recorded, the range aim is kept, "Metrics"; ruling 3: rename keeps the series, a unit
- * or method change on a test with readings starts a successor). These pin the definition's
- * contracts before any screen draws them.
+ * attempt is recorded, the range aim is kept, "Metrics"; owner 2026-09-15: rename, aim, headline
+ * and method keep the series, and the UNIT is fixed once a result exists — a new unit is a new
+ * test). These pin the definition's contracts before any screen draws them.
  */
 
 const base: RepTeamMeasurableType = {
   id: 't1', orgId: 'o', teamId: 'tm', name: '60-yd sprint', kind: 'test', unit: 'seconds',
   aim: 'lower', rangeFrom: null, rangeTo: null, method: 'Standing start, same course.',
-  attemptsPerSession: 3, headline: 'best', descriptors: [], replacedById: null,
+  attemptsPerSession: 3, headline: 'best', descriptors: [],
   sortOrder: 0, isActive: true, createdBy: null, createdAt: '2026-05-01T00:00:00Z', updatedAt: '2026-05-01T00:00:00Z',
 };
 const def = (over: Partial<RepTeamMeasurableType>): RepTeamMeasurableType => ({ ...base, ...over });
@@ -166,35 +166,32 @@ describe('readMeasurableTypeInput — a definition, whole', () => {
   });
 });
 
-describe('changing a definition later (ruling 3) — the successor rule', () => {
-  it('a rename keeps the series, readings or not', () => {
-    assert.deepEqual(definitionChange(base, { name: '60-yard sprint' }, true), { kind: 'keep' });
+describe('changing a definition later — the unit is fixed once a result exists (owner, 2026-09-15)', () => {
+  it('a unit change on a test WITH readings is fixed; without readings it is just an edit', () => {
+    assert.equal(unitIsFixed(base, 's', true), true);
+    assert.equal(unitIsFixed(base, 's', false), false);
+    assert.equal(unitIsFixed(base, undefined, true), false, 'a patch that does not name the unit is not a unit change');
+    // "Seconds" is the same unit as "seconds" — a spelling is not a change.
+    assert.equal(unitIsFixed(base, ' Seconds ', true), false);
   });
-  it('a unit change on a test WITH readings starts a successor; without readings it is just an edit', () => {
-    assert.deepEqual(definitionChange(base, { unit: 's' }, true), { kind: 'successor' });
-    assert.deepEqual(definitionChange(base, { unit: 's' }, false), { kind: 'keep' });
-    // "Seconds" is the same unit as "seconds" — no successor for a spelling.
-    assert.deepEqual(definitionChange(base, { unit: ' Seconds ' }, true), { kind: 'keep' });
-  });
-  it('the method never starts a successor (owner, 2026-09-14) — writing, changing or erasing it keeps the series', () => {
-    assert.deepEqual(definitionChange(base, { method: 'Flying start.' }, true), { kind: 'keep' });
-    assert.deepEqual(definitionChange(base, { method: null }, true), { kind: 'keep' });
-    const legacy = def({ method: null, aim: 'record', headline: 'last' });
-    assert.deepEqual(definitionChange(legacy, { method: 'Standing start.' }, true), { kind: 'keep' });
-    // With the unit, only the unit is the reason.
-    assert.deepEqual(definitionChange(base, { unit: 's', method: 'Flying start.' }, true), { kind: 'successor' });
-  });
-  it('aim, range, attempts, headline and descriptors never start a successor', () => {
-    assert.deepEqual(definitionChange(base, { aim: 'higher', attemptsPerSession: 5, headline: 'average' }, true), { kind: 'keep' });
+  it('a skill has no unit to fix', () => {
+    assert.equal(unitIsFixed(def({ kind: 'skill', unit: null }), 'x', true), false);
   });
 });
 
-describe('applyDefinitionPatch — the merged definition stays valid, and the successor rule is answered', () => {
+describe('applyDefinitionPatch — the merged definition stays valid, and the fixed unit is held', () => {
   it('merges and re-validates: a range aim without edges is refused on the merged shape', () => {
     const r = applyDefinitionPatch(base, { aim: 'range' }, false);
     assert.ok('error' in r);
     const ok = applyDefinitionPatch(base, { aim: 'range', rangeFrom: 7, rangeTo: 9, headline: 'in_range' }, false);
-    assert.ok('next' in ok && ok.next.aim === 'range' && ok.change.kind === 'keep');
+    assert.ok('next' in ok && ok.next.aim === 'range');
+  });
+  it('rename, method, aim and headline ride through with readings — they keep the series', () => {
+    for (const fields of [{ name: '60-yard sprint' }, { method: 'Flying start.' }, { method: null }, { aim: 'higher' as const }, { headline: 'average' as const }]) {
+      assert.ok('next' in applyDefinitionPatch(base, fields, true), JSON.stringify(fields));
+    }
+    const legacy = def({ method: null, aim: 'record', headline: 'last' });
+    assert.ok('next' in applyDefinitionPatch(legacy, { method: 'Standing start.' }, true));
   });
   it('moving to a range aim re-points a "best" headline to the ruled one rather than refusing', () => {
     const r = applyDefinitionPatch(base, { aim: 'range', rangeFrom: 7, rangeTo: 9 }, false);
@@ -202,15 +199,19 @@ describe('applyDefinitionPatch — the merged definition stays valid, and the su
     const back = applyDefinitionPatch(def({ aim: 'range', rangeFrom: 7, rangeTo: 9, headline: 'in_range' }), { aim: 'lower' }, false);
     assert.ok('next' in back && back.next.headline === 'best' && back.next.rangeFrom === null);
   });
-  it('a unit change with readings answers "successor" with the merged next definition', () => {
+  it('a unit change with readings is REFUSED with the one sentence — never applied, never forked', () => {
     const r = applyDefinitionPatch(base, { unit: 's' }, true);
-    assert.ok('next' in r && r.change.kind === 'successor' && r.next.unit === 's' && r.next.name === base.name);
+    assert.ok('error' in r && r.error === UNIT_FIXED_MESSAGE);
+    // Alongside other fields the unit is still the reason.
+    assert.ok('error' in applyDefinitionPatch(base, { unit: 's', method: 'Flying start.' }, true));
+    // Without readings the unit is an ordinary edit.
+    const edit = applyDefinitionPatch(base, { unit: 's' }, false);
+    assert.ok('next' in edit && edit.next.unit === 's');
   });
-  it('retire and restore ride through untouched; restoring a REPLACED definition is refused', () => {
+  it('retire and restore ride through untouched', () => {
     const retire = applyDefinitionPatch(base, { isActive: false }, true);
-    assert.ok('next' in retire && retire.next.isActive === false && retire.change.kind === 'keep');
-    const replaced = def({ isActive: false, replacedById: 't2' });
-    assert.ok('error' in applyDefinitionPatch(replaced, { isActive: true }, true));
+    assert.ok('next' in retire && retire.next.isActive === false);
+    assert.ok('next' in applyDefinitionPatch(def({ isActive: false }), { isActive: true }, true));
   });
   it('a RETIRED definition is a record (B12): only its name and its retired flag may change — the server holds it, not just the sheet', () => {
     const retired = def({ isActive: false });

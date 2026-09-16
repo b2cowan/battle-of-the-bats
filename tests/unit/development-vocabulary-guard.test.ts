@@ -27,7 +27,6 @@ const SURFACES = [
   'app/[orgSlug]/coaches/teams/[teamId]/history/development/panel.tsx',
   'app/api/coaches/[orgSlug]/teams/[teamId]/development/measurable-types/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/development/measurable-types/[typeId]/route.ts',
-  'app/api/coaches/[orgSlug]/teams/[teamId]/development/measurable-types/[typeId]/replace/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/development/measurables/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/development/observations/route.ts',
   'components/coaches/MetricDefinitionSheet.tsx',

@@ -40,6 +40,14 @@ A code walk of every finding and of the surfaces around them — the demo sandbo
 
 Two calls were made while reviewing: the library is called **Metrics**, and **every attempt is recorded** — a test says how many attempts a session takes and which one is the headline, and averages and spread are computed from the stored attempts. A third call kept the “within a stated range” aim, drawn properly: a test whose target is a band (a changeup between 62 and 68 mph) sets From and To, each attempt reads in or out against it, and its headline is attempts in range rather than best. **Ten calls are yours** and sit on the hub’s Decisions tab with a recommendation each: whether tabs replace the hub’s band layout; which attempt is the headline by default; whether the “no your” rule also renames the existing “Your drills” door; how a changed test definition is handled; (delegation was ruled: one Development grant on the staff card;) whether a goal review needs written text; where “Not assessed” lives; whether a finished season’s development record is in scope (recommended: named, not built here); re-narrating the demo tour; delegated recording; and how four development views fit the three-tab player record.
 
+## What changed on the stage-3 walk (15 September)
+
+**A test keeps its unit.** Once a test has a result, its unit is fixed — the definition sheet shows it as plain text with one line under it ("retire this test and start a new one"). A coach who wants to measure in a new unit defines a new test; the old one keeps its results under its own name. Nothing links the two, so no row ever needs to explain a join, and the Results table never reads "units changed — earlier results are listed but not drawn". Rename, aim, headline and method stay editable — they never break a series.
+
+**Delete, only when nothing is behind it.** A metric with no result, observation or session mark can be deleted from its sheet (a test defined by mistake is simply gone). A metric with records is retired, never deleted — its results stay on every player who holds them. This was argued down from a wider first ask (no edits at all; delete wipes every result) because a wipe would erase years of every player's history and rewrite finished seasons, and any staff member holding the Development grant could do it.
+
+**Prod:** one migration (300) removes the old "replaced by" link; it must go on production with the release that carries this change.
+
 ## Success criteria
 
 Use a small coach usability study to establish the baseline, then aim for:

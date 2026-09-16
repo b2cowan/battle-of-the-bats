@@ -3,6 +3,10 @@
   "accepted": {
     "check:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_needs_scope_check": "",
     "check:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_object_check": "",
-    "column:only-dev:rep_team_evaluation_sessions.scope_attempts": ""
+    "check:only-prod:rep_team_measurable_types.rep_team_measurable_types_replaced_is_retired_check": "",
+    "column:only-dev:rep_team_evaluation_sessions.scope_attempts": "",
+    "column:only-prod:rep_team_measurable_types.replaced_by_id": "",
+    "constraint:only-prod:rep_team_measurable_types.rep_team_measurable_types_replaced_by_id_fkey": "",
+    "index:only-prod:rep_team_measurable_types_replaced_by_idx": ""
   }
 }

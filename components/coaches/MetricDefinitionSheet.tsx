@@ -4,8 +4,8 @@ import QuestionShell from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import {
-  KIND_LABELS, AIM_LABELS, HEADLINE_LABELS, MEASURABLE_AIMS, MEASURABLE_KINDS,
-  headlineOptionsFor, defaultHeadlineFor, aimSentence, successorSentence, previewChange,
+  KIND_LABELS, AIM_LABELS, HEADLINE_LABELS, MEASURABLE_AIMS, MEASURABLE_KINDS, UNIT_FIXED_MESSAGE,
+  headlineOptionsFor, defaultHeadlineFor, aimSentence, previewChange,
 } from '@/lib/measurable-definition';
 import { describeHeadline, sessionHeadline } from '@/lib/measurable-series';
 import { formatValue } from '@/lib/measurable-format';
@@ -35,11 +35,15 @@ import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepTeamMeasurab
  * the reports' truth (B4): arithmetic in the unit, dated, the aim stated; never "faster",
  * "stronger" or "better".
  *
- * ⚠ THE RULE FOR LATER is enforced by the server and OFFERED here (owner ruling 3, narrowed
- * 2026-09-14): a rename keeps the series, and so does the METHOD — it is the coach's optional note
- * on how the test is run, never required and never a fork; changing the UNIT on a test that has
- * results starts a new definition and retires this one. The PATCH answers 409 with the offer, the
- * coach is asked, and only a yes posts to `replace`. Retire and Restore live in the footer.
+ * ⚠ THE RULE FOR LATER is enforced by the server and SHOWN here (owner, 2026-09-15): a rename, a
+ * new aim, a new headline and a new method all keep the series — the method is the coach's
+ * optional note on how the test is run, never required and never a fork. The UNIT is fixed once a
+ * result exists: the field reads as its value with one line under it ("retire this test and start
+ * a new one"), and a coach who wants a new unit defines a new test — nothing links the two. (This
+ * replaced the successor flow, which retired the old definition and started a linked one under its
+ * name; the join then had to be explained on every row it touched.) Retire and Restore live in the
+ * footer; DELETE is offered only while nothing points at the definition — a test defined by
+ * mistake is simply gone, one with records is retired.
  *
  * ⚠ NO ATTEMPTS FIELD (re-evaluation stage 2, C1, 2026-09-15): how many times a test is run is a
  * fact about the SESSION, set per test on the session sheet ("× 2 attempts"). The definition keeps
@@ -49,10 +53,9 @@ import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepTeamMeasurab
  * ⚠ THE DOOR IS THE GRANT (stage 0, D5): every host offers this sheet only to a coach who holds
  * the Development grant, so there is no read-only face for a LIVE metric. A RETIRED metric's sheet
  * reads as a record (owner, 2026-09-14): every field shown, only the name editable (a retired
- * "60-yd sprint" replaced by a live one needs to be able to say "60-yd sprint (hand-timed)"), and
- * Restore in the footer — the server already refuses to fork a retired definition, so the sheet
- * stops offering doors that end in "restore it first". The sheet is mounted PER OPEN (the host
- * keys it by what it edits), so its state never leaks from one definition to the next.
+ * "60-yd sprint" beside a live one needs to be able to say "60-yd sprint (hand-timed)"), and
+ * Restore in the footer. The sheet is mounted PER OPEN (the host keys it by what it edits), so its
+ * state never leaks from one definition to the next.
  */
 
 type Draft = {
@@ -89,7 +92,7 @@ function draftFrom(t: RepTeamMeasurableType): Draft {
   };
 }
 
-/** The body a create, a patch and a replace all take — the reader supplies the rest. */
+/** The body a create and a patch both take — the reader supplies the rest. */
 function bodyFrom(d: Draft): Record<string, unknown> {
   const num = (s: string) => (s.trim() === '' ? null : Number(s));
   const isTest = d.kind === 'test';
@@ -133,8 +136,9 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
   /** The host closes the sheet (after the discard guard has had its say). */
   onClose: () => void;
   /**
-   * A definition was created, edited, replaced (the SUCCESSOR is handed over), retired or
-   * restored — the host re-reads what it shows and closes the sheet.
+   * A definition was created, edited, retired or restored — the host re-reads what it shows and
+   * closes the sheet. A DELETED one hands over the record as it was, so the host can re-read the
+   * same way (it is gone from the list it re-reads).
    */
   onSaved: (type: RepTeamMeasurableType) => void;
 }) {
@@ -143,6 +147,8 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
 
   const [current, setCurrent] = useState<RepTeamMeasurableType | null>(initial);
   const [hasReadings, setHasReadings] = useState(false);
+  // Until the read answers, nothing is known to point at it — so Delete is not drawn until it does.
+  const [hasRecords, setHasRecords] = useState(true);
   const [loading, setLoading] = useState(typeId !== null && !initial);
   const [draft, setDraft] = useState<Draft>(initial ? draftFrom(initial) : EMPTY);
   // What the host's copy said at mount — so the read can tell a field the coach TYPED from one
@@ -164,11 +170,17 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
         if (!ok || !json?.type) throw new Error(json?.error ?? 'Could not load this metric — try again.');
         setCurrent(json.type);
         setHasReadings(!!json.hasReadings);
+        setHasRecords(!!json.hasRecords);
         // Reconcile against the host's seed: an untouched field takes the server's value (a stale
-        // host copy must not read as "dirty", nor be SENT), a typed one is kept.
+        // host copy must not read as "dirty", nor be SENT), a typed one is kept — except the UNIT
+        // on a test with results, which is fixed: a keystroke made in the window before this read
+        // answered would otherwise survive under the locked field and go out with the patch.
         const fresh = draftFrom(json.type);
         const was = seed.current;
-        setDraft(d => (was ? (Object.fromEntries((Object.keys(fresh) as (keyof Draft)[]).map(k => [k, d[k] === was[k] ? fresh[k] : d[k]])) as Draft) : fresh));
+        setDraft(d => {
+          const next = was ? (Object.fromEntries((Object.keys(fresh) as (keyof Draft)[]).map(k => [k, d[k] === was[k] ? fresh[k] : d[k]])) as Draft) : fresh;
+          return json.hasReadings ? { ...next, unit: fresh.unit } : next;
+        });
         setLoading(false);
       })
       .catch(e => { if (!cancelled) { setError(e instanceof Error ? e.message : 'Could not load this metric — try again.'); setLoading(false); } });
@@ -241,19 +253,6 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
       if (Object.keys(patch).length === 0) { onClose(); return; }
       const res = await fetch(`${apiBase}/${typeId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
       const json = await res.json().catch(() => null);
-      if (res.status === 409 && json?.successor) {
-        const ok = await confirm({
-          title: `Start a new definition of “${baseline.name}”?`,
-          message: `${successorSentence(baseline.name)} New results will record under the new definition; the retired one stays listed with its results.`,
-          confirmText: 'Start a new definition', cancelText: 'Keep editing', tone: 'warning',
-        });
-        if (!ok) return;
-        const rep = await fetch(`${apiBase}/${typeId}/replace`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        const repJson = await rep.json().catch(() => null);
-        if (!rep.ok || !repJson?.successor) throw new Error(repJson?.error ?? 'Could not start the new definition — try again.');
-        onSaved(repJson.successor);
-        return;
-      }
       if (!res.ok || !json?.type) throw new Error(json?.error ?? 'Could not save the definition — try again.');
       onSaved(json.type);
     } catch (e) {
@@ -286,10 +285,32 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
     }
   }
 
+  async function remove() {
+    if (busy || !typeId || !current) return;
+    const ok = await confirm({
+      title: `Delete “${baseline.name}”?`,
+      message: 'Nothing points at it — no result, observation or session mark — so nothing is lost. A session that planned it drops it from its plan.',
+      confirmText: 'Delete', cancelText: 'Cancel', tone: 'danger',
+    });
+    if (!ok) return;
+    setBusy(true); setError('');
+    try {
+      const res = await fetch(`${apiBase}/${typeId}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error ?? 'Could not delete the definition — try again.');
+      onSaved(current);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not delete the definition — try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // ── render ────────────────────────────────────────────────────────────────
   const title = isNew ? 'Define a metric' : (current?.name ?? 'Metric');
   const retired = current ? !current.isActive : false;
-  const replaced = !!current?.replacedById;
+  // The unit is the measurement: fixed once a result exists (a live test reads it as its value).
+  const unitFixed = !isNew && hasReadings;
   // ONE decision for the whole form: on a retired metric a field with a `locked` text reads as
   // that VALUE, not its control, and carries no help — the record of what its results were taken
   // under. A field without one (the name) stays a control. The label keeps its `htmlFor` so the
@@ -311,7 +332,7 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
         onClose={requestClose}
         ariaLabel={isNew ? 'Define a metric' : `Edit ${title}`}
         title={title}
-        subtitle={retired ? `Retired${replaced ? ' — replaced by a newer definition that carries this name' : ''}. Its saved results stay where they were recorded.` : undefined}
+        subtitle={retired ? 'Retired. Its saved results stay where they were recorded.' : undefined}
         busy={busy}
         scroll
         leaveGuard={{ dirty, message: 'You have unsaved changes to this definition. Leave without saving them?' }}
@@ -342,9 +363,11 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
               <>
                 <div className={css.pair}>
                   {field('Unit', 'metric-unit',
-                    <input id="metric-unit" className={shared.input} type="text" value={draft.unit} maxLength={MAX_UNIT_LEN} required
-                      onChange={e => set('unit', e.target.value)} placeholder="seconds" />,
-                    { locked: draft.unit },
+                    unitFixed
+                      ? <p id="metric-unit" className={css.value}>{draft.unit}</p>
+                      : <input id="metric-unit" className={shared.input} type="text" value={draft.unit} maxLength={MAX_UNIT_LEN} required
+                          onChange={e => set('unit', e.target.value)} placeholder="seconds" />,
+                    { locked: draft.unit, help: unitFixed ? UNIT_FIXED_MESSAGE : undefined },
                   )}
                   {field('What is the aim?', 'metric-aim',
                     <select id="metric-aim" className={shared.select} value={draft.aim} onChange={e => set('aim', e.target.value as MeasurableAim)}>
@@ -412,14 +435,11 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
 
             {retired ? (
               <p className={css.rule}>
-                <strong>A retired metric is a record.</strong> Its saved results were taken under this definition, so only the name can change here
-                {replaced ? '.' : ' — restore it to change anything else.'}
+                <strong>A retired metric is a record.</strong> Its saved results were taken under this definition, so only the name can change here — restore it to change anything else.
               </p>
             ) : isTest && (
               <p className={css.rule}>
-                <strong>Changing a definition later.</strong> Rename, a new aim or a new method keeps the series. Changing the unit
-                {hasReadings ? ' starts a new definition and retires this one' : ' — once results exist — starts a new definition and retires this one'} — every saved result stays
-                under the unit it was recorded with, and the two are never drawn as one line.
+                <strong>Changing a definition later.</strong> Rename, a new aim, a new headline or a new method keeps the series. The unit is fixed once a result exists — to measure in a new unit, retire this test and start a new one.
               </p>
             )}
 
@@ -433,8 +453,11 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
             {!isNew && !retired && (
               <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void setActive(false)}>Retire</button>
             )}
-            {!isNew && retired && !replaced && (
+            {!isNew && retired && (
               <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void setActive(true)}>Restore</button>
+            )}
+            {!isNew && !hasRecords && (
+              <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void remove()}>Delete</button>
             )}
             <span className={css.footSpacer} />
             <button type="button" className={shared.btnSecondary} disabled={busy} onClick={() => void requestClose()}>Cancel</button>

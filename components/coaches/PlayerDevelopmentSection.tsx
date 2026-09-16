@@ -11,7 +11,7 @@ import css from './PlayerDevelopment.module.css';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import {
-  splitSeriesByUnit, drawableSegment, unitSplitNote, groupBySession, latestSessionResult, headlineLabel, headlineLead, rangeSign, planResultEdit,
+  chronological, groupBySession, latestSessionResult, headlineLabel, headlineLead, rangeSign, planResultEdit,
   type SessionResult,
 } from '@/lib/measurable-series';
 import { activeMeasuredTests, measuredTestsWithHistory } from '@/lib/measurable-definition';
@@ -167,8 +167,8 @@ export default function PlayerDevelopmentSection({
    * (busy flags, drafts), and regrouping every attempt into result rows each time is wasted work.
    * Results rows are in library order (roster-order principle: stable, never sorted by result), the
    * RETIRED tests last (E6); each test's attempts become ONE row per session — or per bench-side
-   * DAY (E7) — through the one home (`groupBySession`). F01: the line is drawn from the CURRENT
-   * unit's run of result rows only; every attempt stays in the opened list beneath.
+   * DAY (E7) — through the one home (`groupBySession`). The line is drawn through every result
+   * row, oldest → newest, in the test's one unit (fixed once a result exists).
    */
   const derived = useMemo(() => {
     const entriesByType = new Map<string, RepPlayerMeasurable[]>();
@@ -180,12 +180,9 @@ export default function PlayerDevelopmentSection({
     const typeRows = measuredTestsWithHistory(data?.types ?? [], id => entriesByType.has(id))
       .map(t => {
         const sessions = groupBySession(entriesByType.get(t.id) ?? [], t);
-        const segments = splitSeriesByUnit(sessions);
-        const drawable = drawableSegment(segments);
         return {
           type: t, sessions, latest: latestSessionResult(sessions),
-          chronoDrawable: drawable ? drawable.readings.map(r => r.value) : [],
-          splitNote: unitSplitNote(segments),
+          chronoValues: chronological(sessions).map(r => r.value),
         };
       })
       .filter(r => r.sessions.length > 0)
@@ -738,7 +735,7 @@ export default function PlayerDevelopmentSection({
                   </tr>
                 </thead>
                 <tbody>
-                  {typeRows.map(({ type, sessions, latest, chronoDrawable, splitNote }) => {
+                  {typeRows.map(({ type, sessions, latest, chronoValues }) => {
                     const expanded = expandedTypeId === type.id;
                     const attempts = sessions.reduce((n, s) => n + s.attempts.length, 0);
                     const caption = [
@@ -747,7 +744,6 @@ export default function PlayerDevelopmentSection({
                       `${sessions.length} ${sessions.length === 1 ? 'result' : 'results'}`,
                       attempts > sessions.length ? `${attempts} attempts` : null,
                       type.isActive ? null : 'retired',
-                      splitNote ? splitNote.replace(/\.$/, '').replace(/^Units changed — /, 'units changed — ') : null,
                     ].filter(Boolean).join(' · ');
                     const headline = latest ? headlineLabel(latest, type) : '—';
                     const toggle = () => setExpandedTypeId(id => (id === type.id ? null : type.id));
@@ -763,7 +759,7 @@ export default function PlayerDevelopmentSection({
                           </td>
                           <td className={`${styles.td} ${css.desktopCell} ${css.latest}`} data-label="Latest">{headline}</td>
                           <td className={`${styles.td} ${css.desktopCell} ${css.trendCell}`} data-label="Trend">
-                            {chronoDrawable.length >= 2 ? <Sparkline values={chronoDrawable.slice(-10)} /> : <span className={styles.devRowDash}>—</span>}
+                            {chronoValues.length >= 2 ? <Sparkline values={chronoValues.slice(-10)} /> : <span className={styles.devRowDash}>—</span>}
                           </td>
                           <td className={`${styles.td} ${styles.tdShrink} ${css.desktopCell}`} data-label="Date">{latest ? formatShortDate(latest.recordedOn) : <span className={styles.devRowDash}>—</span>}</td>
                           <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>

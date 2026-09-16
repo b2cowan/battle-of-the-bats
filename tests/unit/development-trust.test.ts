@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { splitSeriesByUnit, drawableSegment, unitSplitNote } from '../../lib/measurable-series.ts';
+import { chronological, sameUnit } from '../../lib/measurable-series.ts';
 import { sessionMetricChips, sessionRows, sessionScopeCounts, defaultSessionChip } from '../../lib/development-session-view.ts';
 import { practiceTruth, PRACTICE_TRUTH_LABELS } from '../../lib/practice-truth.ts';
 import { pastSeasonRefusal, PAST_SEASON_MESSAGE } from '../../lib/development-season-guard.ts';
@@ -12,71 +12,30 @@ import { sectionState } from '../../lib/report-section-state.ts';
  * Development lifecycle Phase 0 — trust in existing records (COACH_DEVELOPMENT_LIFECYCLE_PLAN §4,
  * F01–F05). Each block below was written RED before its fix, per F21: nothing exercised this area
  * before, and every finding here was verified on the code, not hypothesised.
+ *
+ * F01 (a line never joins two units) is now held one level up: the UNIT IS FIXED once a result
+ * exists (owner, 2026-09-15 — `unitIsFixed`, tests/unit/development-definitions.test.ts), so one
+ * test never holds two units and there is no split to draw. What remains here is the order a line
+ * is drawn in and the one spelling of "the same unit".
  */
 
 const reading = (value: number, unit: string, recordedOn: string, createdAt = `${recordedOn}T12:00:00Z`) =>
   ({ value, unit, recordedOn, createdAt });
 
-// ── F01 — a line never joins two units ───────────────────────────────────────────────────────────
-describe('F01 — splitSeriesByUnit: a series breaks wherever the recorded unit changes', () => {
-  it('one unit throughout is one segment, oldest → newest', () => {
-    const segs = splitSeriesByUnit([
+// ── F01 — the order a line is drawn in ───────────────────────────────────────────────────────────
+describe('F01 — chronological: oldest → newest, same-day rows in the order they were typed', () => {
+  it('sorts by the recorded date, then entry time', () => {
+    const rows = chronological([
       reading(8.4, 'seconds', '2026-09-08'),
       reading(8.6, 'seconds', '2026-08-01'),
+      reading(8.5, 'seconds', '2026-08-01', '2026-08-01T09:00:00Z'),
     ]);
-    assert.equal(segs.length, 1);
-    assert.deepEqual(segs[0].readings.map(r => r.value), [8.6, 8.4]);
+    assert.deepEqual(rows.map(r => r.value), [8.5, 8.6, 8.4]);
   });
 
-  it('mph then km/h is TWO segments — 50 and 80 are never one rising line', () => {
-    const segs = splitSeriesByUnit([
-      reading(50, 'mph', '2026-07-01'),
-      reading(52, 'mph', '2026-07-15'),
-      reading(80, 'km/h', '2026-08-01'),
-      reading(84, 'km/h', '2026-08-15'),
-    ]);
-    assert.deepEqual(segs.map(s => [s.unit, s.readings.length]), [['mph', 2], ['km/h', 2]]);
-  });
-
-  it('a unit that changes and changes back splits at EVERY change, not by unit', () => {
-    const segs = splitSeriesByUnit([
-      reading(50, 'mph', '2026-07-01'),
-      reading(80, 'km/h', '2026-07-15'),
-      reading(52, 'mph', '2026-08-01'),
-    ]);
-    assert.deepEqual(segs.map(s => s.unit), ['mph', 'km/h', 'mph']);
-  });
-
-  it('case and whitespace differences in the unit are the same unit', () => {
-    const segs = splitSeriesByUnit([reading(1, 'Seconds ', '2026-07-01'), reading(2, 'seconds', '2026-07-02')]);
-    assert.equal(segs.length, 1);
-  });
-
-  it('the drawable segment is the CURRENT one — the latest reading’s unit — and the note names what is not drawn', () => {
-    const segs = splitSeriesByUnit([
-      reading(50, 'mph', '2026-07-01'),
-      reading(52, 'mph', '2026-07-15'),
-      reading(80, 'km/h', '2026-08-01'),
-    ]);
-    const drawable = drawableSegment(segs);
-    assert.equal(drawable?.unit, 'km/h');
-    assert.equal(drawable?.readings.length, 1);
-    const note = unitSplitNote(segs);
-    assert.ok(note && /2 earlier results in mph/.test(note), note ?? '(no note)');
-    assert.ok(/not drawn/.test(note!), 'the note must say the earlier results are NOT drawn');
-    assert.equal(unitSplitNote(splitSeriesByUnit([reading(1, 's', '2026-07-01')])), null);
-  });
-
-  it('every reading is kept — a split never drops one', () => {
-    const rows = [reading(1, 'a', '2026-01-01'), reading(2, 'b', '2026-01-02'), reading(3, 'a', '2026-01-03')];
-    const total = splitSeriesByUnit(rows).reduce((n, s) => n + s.readings.length, 0);
-    assert.equal(total, rows.length);
-  });
-
-  it('the profile row draws through the split, never the raw values', () => {
-    const src = readFileSync(join(process.cwd(), 'components', 'coaches', 'PlayerDevelopmentSection.tsx'), 'utf8');
-    assert.match(src, /splitSeriesByUnit\(/, 'the profile must split a series by unit before drawing it');
-    assert.doesNotMatch(src, /chronoValues/, 'the old unit-blind value list must be gone');
+  it('case and whitespace differences in the unit are the same unit; "s" and "seconds" are not', () => {
+    assert.equal(sameUnit('Seconds ', 'seconds'), true);
+    assert.equal(sameUnit('s', 'seconds'), false);
   });
 });
 
@@ -231,16 +190,12 @@ describe('F05 — sectionState: available · empty · incomplete · failed', () 
 });
 
 // ── /review 2026-09-12 follow-ups ────────────────────────────────────────────────────────────────
-describe('review follow-ups — where a session opens, and three earlier units', () => {
+describe('review follow-ups — where a session opens', () => {
   it('a session opens on the first test it holds rows for — a retired one included — else the first active test', () => {
     const chips = sessionMetricChips([type('sprint', true, 1), type('throw', true, 2), type('shuttle', false)], [entry('p1', 'shuttle')]);
     assert.equal(defaultSessionChip(chips)?.type.id, 'shuttle');
     assert.equal(defaultSessionChip(sessionMetricChips([type('sprint', true, 1), type('throw', true, 2)], []))?.type.id, 'sprint');
     assert.equal(defaultSessionChip(sessionMetricChips([type('sprint', true, 1), type('throw', true, 2)], [entry('p1', 'throw')]))?.type.id, 'throw');
     assert.equal(defaultSessionChip([]), null);
-  });
-  it('three earlier units read as a list', () => {
-    const note = unitSplitNote(splitSeriesByUnit([reading(1, 'mph', '2026-01-01'), reading(2, 'km/h', '2026-01-02'), reading(3, 'm/s', '2026-01-03'), reading(4, 'kn', '2026-01-04')]));
-    assert.ok(note && /in mph, km\/h and m\/s/.test(note), note ?? '');
   });
 });

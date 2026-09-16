@@ -627,3 +627,43 @@ and "until the coach answers" (both corrected). **One open call for the owner, n
 holder of the delegable grant. The recommendation is to refuse it (400) until the team-level surface
 exists and re-enable it with that build; left reachable for now because the plan names it as that
 page's read and the gate is unchanged from before E9.
+
+### 20.2 E10 — the unit is fixed once a result exists; the successor rule is gone (owner ruling 2026-09-15, on the §191 walk)
+
+The owner read the Results table's Throw speed row on the fixture — *"km/h · record only · 3 results
+· units changed — 2 earlier results in mph are listed but not drawn on this line"* — and asked why
+the sentence existed at all, given that a unit is not something the coach should change. The
+answer was that the successor rule (ruling 3, 2026-09-11; mig 293/294) still let a coach change it
+and quietly started a linked second definition under the same name, so one row carried two units
+and every reader of it had to explain the join. The owner's first instinct was wider — no definition
+edits at all, and a delete that wipes every result behind it — and was argued down on two grounds
+(rename/aim/method edits never break a series and are how a typo is fixed; a wipe erases years of
+history for every player on the roster and rewrites finished seasons, and any holder of the
+Development grant could do it). The ruling that stands: **"ok I agree, go for it."**
+
+**What changed (built 2026-09-15, mig 300):**
+- **The unit is fixed once a result exists.** The sheet shows it as plain text with one line under
+  it — *"The unit can't change once results exist — retire this test and start a new one."* — and
+  the route refuses a unit change on a test with results (400, the same sentence). Rename, aim,
+  headline and method stay editable; nothing forks.
+- **A new unit is a new test.** Nothing links the two. The successor flow — the 409 with the offer,
+  the confirm, the `replace` route, the `replace_rep_team_measurable_type` function, the
+  `replaced_by_id` column, its CHECK and index, "replaced by …" on the Metrics tab, "cannot be
+  restored; its successor carries the name" — is deleted whole.
+- **One test, one unit, one line.** `splitSeriesByUnit` / `drawableSegment` / `unitSplitNote`, the
+  `earlier` segments and `unitNote` on the progress series, the "Recorded in mph — listed, not
+  drawn" rows under the report table and the Results row's caption are all gone; the line is drawn
+  through every result row, oldest → newest. Mig 300's header records the counts on both databases
+  (prod: nothing linked, nothing mixed); the UAT fixture's F01 shape (two mph then a km/h reading)
+  was the only mixed data anywhere and now seeds one unit.
+- **Delete, for a definition nothing points at.** `DELETE …/measurable-types/[typeId]` refuses
+  (409) when a result, an observation or a not-assessed mark points at it — the three RESTRICT FKs
+  hold that line against a record landing in between — and drops the id from any session's plan
+  afterwards. The sheet offers **Delete** only when its read says `hasRecords: false`; a metric with
+  records is retired, never deleted. Retire and Restore are unchanged.
+
+**Artifact:** the stage-3 walk step E1 now pins "no 'units changed' caption anywhere"; the stage-1
+station carries the reversal note; the older stage-1 frames still show the previous sheet copy.
+**Prod:** mig 300 is PROD-OWED and ORDER-CRITICAL with the promote; **mig 301** (the DELETE RLS policy the table lacked — a /review finding) rides with it (MANUAL_PROD_STEPS.json).
+
+**/review (2026-09-15, high-risk tier — four lenses: correctness · security/tenancy · data/contract · regression):** deterministic gate green (typecheck, verify:changed 4,042 unit, focused lint, layout on five screens); 6 findings → 4 after dedup → 3 fixed, 1 advisory kept, 2 refuted on read. Fixed: the delete stripped session plans AFTER the row went and with a plain read-modify-write — two deletes touching one plan in the same instant could put each other's test back, and a strip failing after the delete left a phantom behind a 500 nobody could retry (now: plans first, each write a compare-and-swap on the list as read, the row last; proven on the fixture by planning the probe test on a probe session and deleting it — the plan keeps the sprint and loses the probe); the sheet showed the unit as an input for the moment before its read answered, and a keystroke made there survived under the locked field (the read now resets the unit on a test with results); the report's unit read the OLDEST row where the definition says it (now the definition, then the latest row). The table had no DELETE RLS policy (mig 301). Advisory, kept: deleting the only planned test leaves a session with an empty plan (`[]`, never null — the whole-or-neither CHECK holds "who was there"), which reads as a plan with no tests until the coach adds one; a rare edge of an edge.

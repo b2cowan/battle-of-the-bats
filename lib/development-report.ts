@@ -4,10 +4,10 @@
  *
  * ⚠ ONE SERIES OBJECT. The progress chart, its answer line, the "Records behind the chart" table and
  * the handout's result lines all read `progressSeries(...)` — the rows come from `groupBySession`
- * (Phase 2's one home for "three sprints are one row"), the unit split from Phase 0's
- * `splitSeriesByUnit` (a changed unit is a BREAK, never an implied conversion), and nothing here
- * computes a second headline. Changing the show or the window changes the chart, the summary and
- * the table together (chart rule 8).
+ * (Phase 2's one home for "three sprints are one row"), in the test's one unit (fixed once a
+ * result exists — a new unit is a new test), and nothing here computes a second headline.
+ * Changing the show or the window changes the chart, the summary and the table together (chart
+ * rule 8).
  *
  * ⚠ WORDS, NEVER A VERDICT. "0.35 seconds lower since Aug 4" is arithmetic in the unit. A range test
  * says "moved into the range" or "2 mph above the range" — never faster, slower or better. Two
@@ -18,7 +18,7 @@
  * tests read it.
  */
 import {
-  groupBySession, splitSeriesByUnit, drawableSegment, unitSplitNote, attemptAgainstRange, headlineLabel, headlineLead,
+  groupBySession, chronological, attemptAgainstRange, headlineLabel, headlineLead,
   type AttemptReading, type SessionResult, type HeadlineDefinition,
 } from './measurable-series';
 import { HEADLINE_LABELS, aimSentence } from './measurable-definition';
@@ -94,13 +94,10 @@ export interface ProgressSeries<R extends AttemptReading = AttemptReading> {
   def: ReportDefinition;
   show: ProgressShow;
   compare: CompareWindow;
-  /** The unit the line is drawn in — the CURRENT one, which the latest reading belongs to. */
+  /** The unit the line is drawn in — the test's. */
   unit: string;
   /** The points in the compare window, oldest → newest. */
   points: ProgressPoint<R>[];
-  /** Earlier segments under another unit — listed, never drawn (F01). Oldest → newest. */
-  earlier: { unit: string; rows: SessionResult<R>[] }[];
-  unitNote: string | null;
   band: { from: number; to: number } | null;
   /** What the line follows, in words. */
   lineWord: string;
@@ -112,8 +109,8 @@ export interface ProgressSeries<R extends AttemptReading = AttemptReading> {
 
 /**
  * The series for ONE player and ONE definition. `readings` is the player's every reading under the
- * definition (any order). The rows are grouped per session through the one home, split at every
- * unit change, and the CURRENT unit's rows become the points — narrowed to the compare window.
+ * definition (any order). The rows are grouped per session through the one home and become the
+ * points, oldest → newest — narrowed to the compare window.
  */
 export function progressSeries<R extends AttemptReading>(
   readings: R[], def: ReportDefinition, opts: { show: ProgressShow; compare: CompareWindow },
@@ -121,10 +118,7 @@ export function progressSeries<R extends AttemptReading>(
   const range = isRange(def);
   // A range test's line is always the average (its "headline" is a count, not a value in the unit).
   const show: ProgressShow = range || def.headline === 'average' ? 'average' : opts.show;
-  const rows = groupBySession(readings, def); // newest first
-  const segments = splitSeriesByUnit(rows);
-  const current = drawableSegment(segments);
-  const earlier = segments.slice(0, -1).map(s => ({ unit: s.unit, rows: [...s.readings].reverse() }));
+  const rows = chronological(groupBySession(readings, def));
   const band = range ? { from: def.rangeFrom!, to: def.rangeTo! } : null;
 
   const toPoint = (row: SessionResult<R>): ProgressPoint<R> => {
@@ -136,14 +130,15 @@ export function progressSeries<R extends AttemptReading>(
       marks: row.values.map(v => ({ value: v, inRange: band ? attemptAgainstRange(v, band.from, band.to).inRange : null })),
     };
   };
-  const points = compareWindow(current ? current.readings.map(toPoint) : [], opts.compare);
+  const points = compareWindow(rows.map(toPoint), opts.compare);
   const latest = points[points.length - 1] ?? null;
   const first = points[0] ?? null;
-  const unit = current?.unit ?? def.unit ?? '';
+  // The test's unit — fixed once a result exists, so the definition says it; a legacy row from
+  // before that rule could differ, and then the LATEST result's unit is the one new results share.
+  const unit = def.unit ?? rows[rows.length - 1]?.unit ?? '';
 
   return {
-    def, show, compare: opts.compare, unit, points, earlier, band,
-    unitNote: unitSplitNote(segments),
+    def, show, compare: opts.compare, unit, points, band,
     lineWord: show === 'average' ? HEADLINE_WORDS.average : HEADLINE_WORDS[effectiveHeadline(def)],
     answer: latest ? { value: headlineLabel(latest.row, def), on: latest.row.recordedOn } : null,
     change: first && latest ? statedChange(first, latest, def, unit) : null,

@@ -1918,8 +1918,9 @@ export interface RepTeamMeasurableType {
   teamId: string;
   name: string;
   kind: MeasurableKind;
-  // Free-text unit ("seconds", "mph") — snapshotted onto each entry at log time, so editing
-  // the type's unit never rewrites logged history. NULL on a skill (`isMeasuredTest` narrows).
+  // Free-text unit ("seconds", "mph") — snapshotted onto each entry at log time, and FIXED once a
+  // result exists (the route refuses a change; a new unit is a new test). NULL on a skill
+  // (`isMeasuredTest` narrows).
   unit: string | null;
   aim: MeasurableAim;
   /** The band, in the unit, when `aim === 'range'`; null otherwise. */
@@ -1937,8 +1938,6 @@ export interface RepTeamMeasurableType {
   headline: MeasurableHeadline;
   /** A skill's coach-written descriptors, in the coach's order. Empty on a test. */
   descriptors: string[];
-  /** Set on a RETIRED definition a unit/method change replaced — the successor's id. */
-  replacedById: string | null;
   sortOrder: number;
   isActive: boolean;
   createdBy: string | null;

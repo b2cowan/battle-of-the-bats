@@ -223,8 +223,8 @@ export const PATCH = withObservability(async (req: Request,
    * the practice, so a practice whose DAY changes after results were taken is a date correction and
    * the results follow — every attempt re-stamped, the session moved. Check-then-act: the route
    * answers 409 with the linked sessions (id, note, attempt count) unless the body carries
-   * `moveSessions: true`, so the coach confirms with the count in front of them — the same handshake
-   * the definition sheet's successor rule uses. Sessions move FIRST, then the event: a failure
+   * `moveSessions: true`, so the coach confirms with the count in front of them. Sessions move
+   * FIRST, then the event: a failure
    * between the two leaves the sessions on the new day and the event on the old, which the next save
    * repairs (the sessions already on the new day are not asked about again). A time change on the
    * same day moves nothing. Only a single-occurrence write — a series edit keeps every occurrence's

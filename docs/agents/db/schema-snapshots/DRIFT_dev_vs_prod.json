@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-15",
-  "total": 3,
+  "generated": "2026-09-16",
+  "total": 7,
   "counts": {
     "tables": 0,
-    "columns": 1,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 2
+    "columns": 2,
+    "indexes": 1,
+    "constraints": 1,
+    "rls": 3
   },
   "items": [
     {
@@ -18,7 +18,23 @@
       "sig": ""
     },
     {
+      "key": "check:only-prod:rep_team_measurable_types.rep_team_measurable_types_replaced_is_retired_check",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_evaluation_sessions.scope_attempts",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_measurable_types.replaced_by_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:rep_team_measurable_types.rep_team_measurable_types_replaced_by_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:rep_team_measurable_types_replaced_by_idx",
       "sig": ""
     }
   ]

@@ -394,7 +394,7 @@ export async function resolveUatContext() {
     evalSessionId: evalSession.data.id,
     /** The scoped session — every row state of the Phase 2 grid on one screen. */
     scopedSessionId: scopedSession.data.id,
-    /** The active "60-yd sprint" — a defined test WITH readings, so the editor's successor rule shows. */
+    /** The active "60-yd sprint" — a defined test WITH readings, so the editor shows its unit as fixed. */
     measurableTypeId: measurableType.data.id,
     /** The range test and the observed skill the progress report draws (Phase 3). */
     rangeTypeId: rangeType.data.id,

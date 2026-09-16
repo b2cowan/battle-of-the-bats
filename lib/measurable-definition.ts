@@ -121,35 +121,26 @@ export function previewChange(aim: MeasurableAim): { from: number; to: number; d
 }
 
 /**
- * ═══ CHANGING A DEFINITION LATER (owner ruling 3, 2026-09-11; narrowed 2026-09-14) ═══
- * Rename fixes a typo and keeps the series. Changing the UNIT on a test that already has readings
- * starts a NEW definition and retires this one — every saved result stays under the unit it was
- * recorded with, and km/h and mph are never drawn as one line (F01). That rule is arithmetic.
+ * ═══ CHANGING A DEFINITION LATER (owner ruling on the §191 walk, 2026-09-15) ═══
+ * Rename fixes a typo and keeps the series; so do the aim, the range, the headline and the method
+ * (the coach's optional note on how the test is run — owner, 2026-09-14) — they are interpretation,
+ * not measurement. The UNIT is the measurement: once a result exists it is FIXED. A coach who wants
+ * a new unit retires this test and defines a new one, and nothing links the two — two units are
+ * two tests, and one name carried over two units invited the coach to read 100 mph → 155 km/h as
+ * a rise. (That replaced the successor rule of 2026-09-11, which retired the old definition and
+ * started a linked one under its name; the join had to be explained on every row it touched.)
  *
- * The METHOD no longer forks a series (owner, 2026-09-14: "I get it is recommended to enforce
- * consistency but that is not always available to coaches, but they still want to see how things
- * like sprint speed change over time"). It is the coach's optional note on how the test is run;
- * writing, changing or erasing it is an edit, and the coach owns the judgment of whether the
- * series is still one series. A unit that differs only in spelling or case is the same unit
- * (`sameUnit`). Aim, range, attempts, headline and descriptors are interpretation, not
- * measurement: they never start a successor. Without readings there is nothing to keep honest, so
- * every edit is an edit.
+ * A unit that differs only in spelling or case is the same unit (`sameUnit`). Without readings
+ * there is nothing to keep honest, so every edit is an edit.
  */
-export type DefinitionChange = { kind: 'keep' } | { kind: 'successor' };
-
-export function definitionChange(
+export function unitIsFixed(
   current: Pick<RepTeamMeasurableType, 'kind' | 'unit'>,
-  next: { unit?: string | null; [other: string]: unknown },
+  nextUnit: string | null | undefined,
   hasReadings: boolean,
-): DefinitionChange {
-  if (!hasReadings || current.kind !== 'test') return { kind: 'keep' };
-  if (next.unit !== undefined && next.unit != null && current.unit != null && !sameUnit(current.unit, next.unit)) {
-    return { kind: 'successor' };
-  }
-  return { kind: 'keep' };
+): boolean {
+  if (!hasReadings || current.kind !== 'test') return false;
+  return nextUnit !== undefined && nextUnit != null && current.unit != null && !sameUnit(current.unit, nextUnit);
 }
 
-/** The sentence the editor and the 409 both say when the rule bites. */
-export function successorSentence(name: string): string {
-  return `Changing the unit of “${name}” starts a new definition and retires this one — its saved results stay under the unit they were recorded with.`;
-}
+/** The sentence the sheet shows under a fixed unit and the route answers when a change is sent anyway. */
+export const UNIT_FIXED_MESSAGE = 'The unit can’t change once results exist — retire this test and start a new one.';

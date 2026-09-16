@@ -14,9 +14,10 @@ import path from 'path';
  * applies `text-transform`, so both sides of a text comparison are lower-cased.
  *
  * ⚠ WRITES ONLY WHAT IT TAKES BACK. The definitions this file creates are named "Probe …" and
- * removed at the end (their probe readings taken back first, so the RESTRICT FK cannot object), and the successor
- * walk is run on a probe test of its own (never on the fixture's sprint, whose readings the owner
- * walk pins). A leftover "Probe" definition from a crashed run is reported, not worked around.
+ * removed at the end (their probe readings taken back first, so the RESTRICT FK cannot object), and
+ * the fixed-unit walk is run on a probe test of its own (never on the fixture's sprint, whose
+ * readings the owner walk pins). A leftover "Probe" definition from a crashed run is reported, not
+ * worked around.
  *
  * Runs on the shared UAT fixture (`uat-test-org`). By file path, never `-g`:
  *   npx playwright test --config playwright.config.ts tests/uat/scenarios/coach-development-metrics.spec.ts
@@ -133,19 +134,30 @@ test.describe('the definition contract, through the routes', () => {
     expect(reading.status).toBe(400);
   });
 
-  test('the successor rule: rename keeps the series; a unit change on a test with readings is refused with the offer, and replace starts a successor', async ({ page }) => {
+  test('the unit is fixed once a result exists (owner, 2026-09-15): rename, method and aim keep the series; a unit change is refused; delete is for a definition nothing points at', async ({ page }) => {
     await signIn(page, COACH);
     // A probe test WITH a reading of its own — the fixture's sprint is the owner's, never the probe's.
     const made = await call(page, 'post', api(), { name: 'Probe series', unit: 'seconds', aim: 'lower', method: 'Standing start.' });
     expect(made.status).toBe(201);
     const probeId = (made.body.type as Record<string, unknown>).id as string;
     created.push(probeId);
+    // Without a result the unit is an ordinary edit.
+    const earlyUnit = await call(page, 'patch', `${api()}/${probeId}`, { unit: 's' });
+    expect(earlyUnit.status).toBe(200);
+    expect((earlyUnit.body.type as Record<string, unknown>).unit).toBe('s');
+    const backAgain = await call(page, 'patch', `${api()}/${probeId}`, { unit: 'seconds' });
+    expect(backAgain.status).toBe(200);
+
     const today = new Date().toISOString().slice(0, 10); // utc-intentional: any valid date will do for a probe reading
     const read = await call(page, 'post', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development/measurables`,
       { measurableTypeId: probeId, value: 9.1, recordedOn: today, note: 'metrics probe' });
     expect(read.status).toBe(201);
     const entryId = (read.body.entry as { id: string }).id;
 
+    // The editor's read says so.
+    const editorRead = await call(page, 'get', `${api()}/${probeId}`);
+    expect(editorRead.body.hasReadings).toBe(true);
+    expect(editorRead.body.hasRecords).toBe(true);
     // Rename keeps the series.
     const renamed = await call(page, 'patch', `${api()}/${probeId}`, { name: 'Probe series (renamed)' });
     expect(renamed.status).toBe(200);
@@ -155,31 +167,50 @@ test.describe('the definition contract, through the routes', () => {
     // Aim and attempts never fork.
     const aimChange = await call(page, 'patch', `${api()}/${probeId}`, { aim: 'higher', attemptsPerSession: 2 });
     expect(aimChange.status).toBe(200);
-    // A unit change is refused …
+    // A unit change is refused, in the one sentence, and nothing changed — no successor, no retire.
     const unitChange = await call(page, 'patch', `${api()}/${probeId}`, { unit: 'ms' });
-    expect(unitChange.status).toBe(409);
-    // … and the dedicated action starts the successor and retires the predecessor.
-    const replaced = await call(page, 'post', `${api()}/${probeId}/replace`, { unit: 'ms', aim: 'lower', method: 'Standing start.' });
-    expect(replaced.status).toBe(201);
-    const successor = replaced.body.successor as Record<string, unknown>;
-    const predecessor = replaced.body.predecessor as Record<string, unknown>;
-    created.push(successor.id as string);
-    expect(predecessor.isActive).toBe(false);
-    expect(predecessor.replacedById).toBe(successor.id);
-    expect(successor.unit).toBe('ms');
-    expect(successor.name).toBe('Probe series (renamed)');
-    // The retired predecessor cannot be restored — its name lives on the successor.
-    const restore = await call(page, 'patch', `${api()}/${probeId}`, { isActive: true });
-    expect(restore.status).toBe(400);
-    // The reading stays under the predecessor, in its unit.
+    expect(unitChange.status).toBe(400);
+    expect(unitChange.body.error).toContain('retire this test and start a new one');
+    const after = await call(page, 'get', `${api()}/${probeId}`);
+    expect((after.body.type as Record<string, unknown>).unit).toBe('seconds');
+    expect((after.body.type as Record<string, unknown>).isActive).toBe(true);
+    // A definition with a record cannot be deleted — it is retired instead.
+    const refused = await call(page, 'delete', `${api()}/${probeId}`);
+    expect(refused.status).toBe(409);
+    // The reading stays where it was, in its unit.
     const profile = await call(page, 'get', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development`);
     const entry = (profile.body.measurables as Array<{ id: string; unit: string; measurableTypeId: string }>).find(m => m.id === entryId)!;
     expect(entry.unit).toBe('seconds');
     expect(entry.measurableTypeId).toBe(probeId);
 
-    // Take the probe reading back (the routes, never the database).
+    // Take the probe reading back (the routes, never the database) — and now nothing points at it,
+    // so the route deletes it.
     const gone = await call(page, 'delete', `/api/coaches/${ORG_SLUG}/teams/${teamId}/roster/${devonId}/development/measurables/${entryId}`);
     expect(gone.status).toBe(200);
+    const emptied = await call(page, 'get', `${api()}/${probeId}`);
+    expect(emptied.body.hasRecords).toBe(false);
+
+    // PLAN it on a probe session first (the sprint beside it, nothing recorded against either), so
+    // the delete has a plan to drop it from — and the session must not keep naming a test that is gone.
+    const sessionsApi = `/api/coaches/${ORG_SLUG}/teams/${teamId}/development/sessions`;
+    const session = await call(page, 'post', sessionsApi, {
+      sessionDate: today, note: 'metrics probe session',
+      scope: { metricIds: [sprintId, probeId], playerIds: [devonId], attempts: { [sprintId]: 1, [probeId]: 2 } },
+    });
+    expect(session.status).toBe(201);
+    const sessionId = (session.body.session as { id: string }).id;
+    try {
+      const deleted = await call(page, 'delete', `${api()}/${probeId}`);
+      expect(deleted.status).toBe(200);
+      expect((await call(page, 'get', `${api()}/${probeId}`)).status).toBe(404);
+      created.splice(created.indexOf(probeId), 1);
+      const { data: planAfter } = await admin.from('rep_team_evaluation_sessions').select('scope_metric_ids, scope_attempts').eq('id', sessionId).single();
+      expect(planAfter!.scope_metric_ids).toEqual([sprintId]);
+      expect(planAfter!.scope_attempts).toEqual({ [sprintId]: 1 });
+    } finally {
+      // The probe session goes through its own route (a session with nothing recorded deletes clean).
+      expect((await call(page, 'delete', `${sessionsApi}/${sessionId}`)).status).toBe(200);
+    }
   });
 });
 
@@ -265,13 +296,9 @@ test.describe('the three views and the exact addresses, rendered', () => {
 });
 
 test.afterAll(async () => {
-  // Remove every probe definition this file created. Definitions are never hard-deleted APP-side
-  // (a coach's saved readings point at them), but a probe's readings were taken back above, so the
-  // RESTRICT FK cannot object — and leaving them retired would put five "Probe …" rows in the
-  // Retired disclosure the owner walks. The successor link is cleared first (it points within the set).
-  for (const id of created) {
-    await admin.from('rep_team_measurable_types').update({ replaced_by_id: null }).eq('id', id).eq('team_id', teamId);
-  }
+  // Remove every probe definition this file created. A probe's readings were taken back above, so
+  // the RESTRICT FK cannot object — and leaving them retired would put four "Probe …" rows in the
+  // Retired disclosure the owner walks.
   for (const id of created) {
     const del = await admin.from('rep_team_measurable_types').delete().eq('id', id).eq('team_id', teamId);
     expect(del.error, ).toBeNull();

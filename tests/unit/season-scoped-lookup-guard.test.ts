@@ -62,7 +62,16 @@ const SEASON_KEYED_TABLES = seasonKeyedTables();
  * live-season route" is not one, because that is the arrangement this guard exists to stop relying
  * on.
  */
-const CROSS_SEASON_BY_DESIGN: Array<{ fn: string; reason: string }> = [];
+const CROSS_SEASON_BY_DESIGN: Array<{ fn: string; reason: string }> = [
+  {
+    fn: 'deleteRepTeamMeasurableType',
+    reason: 'A metric definition is TEAM-level, not season-keyed, and only one nothing points at can be '
+      + 'deleted. A session that PLANNED it (scope_metric_ids — a snapshot of intent, not a FK) may sit in '
+      + 'any season the team has had, and a plan that kept naming a test that no longer exists would count '
+      + 'it "unrecorded" for ever. The write removes the dangling reference and nothing else — never a '
+      + 'result, never a date — so it must reach every season the definition ever reached.',
+  },
+];
 
 /**
  * Every `supabaseAdmin.from('<table>')…;` chain in the data layer, with the enclosing function's

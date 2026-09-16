@@ -2821,8 +2821,10 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
    wrongly. A fixture that cannot show the defect cannot show the fix.
 
    What the shape below produces, each line load-bearing for one finding:
-     · F01 — Devon's "Throw speed" has two readings in mph and a later one in km/h, so the profile
-       row must DRAW only the km/h run and SAY the two mph readings are listed, not drawn.
+     · F01 — Devon's "Throw speed" is a three-reading series in ONE unit (km/h). It used to hold
+       two mph readings before a km/h one, to prove the line broke at the unit change; since the
+       unit is FIXED once a result exists (owner, 2026-09-15) one test cannot hold two units, so
+       the fixture no longer seeds a shape the product refuses to create.
      · F02 — "Shuttle run" is RETIRED and holds a reading in the probe session; "Morgan Left" is
        INACTIVE and holds a sprint reading in that session. Both must still show on the session,
        labelled and read-only, while the "N of M entered" count keeps counting the active roster.
@@ -2841,14 +2843,13 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
    * LEGACY one (Throw speed: record only, no method — exactly what an un-edited row reads), a
    * retired one, a RANGE test (Changeup speed, 62–68 mph — the owner kept the range aim) and an
    * observed SKILL with descriptors (defined in Phase 1; recorded against in Phase 2).
-   * `definition` columns are re-asserted on every run; the seeder never touches a row a coach's
-   * successor walk retired and replaced (`replaced_by_id`), and prefers the ACTIVE row of a name.
+   * `definition` columns are re-asserted on every run; the seeder prefers the ACTIVE row of a name.
    */
   const TYPES = [
     { name: '60-yd sprint', unit: 'seconds', sort_order: 0, is_active: true,
       definition: { kind: 'test', aim: 'lower', attempts_per_session: 2, headline: 'best',
         method: 'Standing start on the same marked 60-yd course, after warm-up. Hand-timed from first movement.' } },
-    // readings began in mph (F01); LEGACY definition on purpose — record only, method not recorded
+    // LEGACY definition on purpose — record only, method not recorded
     { name: 'Throw speed', unit: 'km/h', sort_order: 1, is_active: true,
       definition: { kind: 'test', aim: 'record', attempts_per_session: 1, headline: 'last', method: null } },
     // retired, with rows (F02)
@@ -2864,8 +2865,8 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
         descriptors: ['With support — coach guides the setup', 'With a reminder — one verbal cue', 'Independently — without a cue'] } },
   ];
   for (const t of TYPES) {
-    const found = await db.from('rep_team_measurable_types').select('id, unit, is_active, replaced_by_id, kind, aim, attempts_per_session, headline, method, range_from, range_to, descriptors')
-      .eq('team_id', team.id).ilike('name', t.name).is('replaced_by_id', null)
+    const found = await db.from('rep_team_measurable_types').select('id, unit, is_active, kind, aim, attempts_per_session, headline, method, range_from, range_to, descriptors')
+      .eq('team_id', team.id).ilike('name', t.name)
       .order('is_active', { ascending: false }).limit(1).maybeSingle();
     if (found.error) { console.error('✗ measurable type lookup', found.error.message); process.exit(1); }
     let id = found.data?.id;
@@ -2891,20 +2892,20 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     }
     typeByName.set(t.name, id);
   }
-  ok('metrics present (60-yd sprint [defined] · Throw speed [km/h, was mph; legacy] · Shuttle run [retired] · Changeup speed [range 62–68 mph] · Sets feet before throwing [skill])');
+  ok('metrics present (60-yd sprint [defined] · Throw speed [km/h; legacy] · Shuttle run [retired] · Changeup speed [range 62–68 mph] · Sets feet before throwing [skill])');
 
   // The probe session (section 11) — readings taken at the seeded practice.
   const { data: probeSession } = await db.from('rep_team_evaluation_sessions')
     .select('id, session_date').eq('team_id', team.id).eq('event_id', eventId).limit(1).maybeSingle();
   if (!probeSession) { console.error('✗ the probe evaluation session is missing — section 11 did not run'); process.exit(1); }
 
-  /* ⚠ RESULTS STRANDED UNDER A RETIRED TWIN (stage 2 kickoff, 2026-09-15). A manual successor walk
-     replaced the 60-yd sprint once, so the rows seeded under the ORIGINAL definition sat under a
-     retired "60-yd sprint" while the live one was in the scoped session's plan with nothing — the
-     Before frame drew it honestly. The fixture pins its identities by NAME, so on every run the
-     team's sprint results and not-assessed marks are re-homed onto the live definition (the unit is
-     the same: seconds). A product replacement keeps its results under the retired definition on
-     purpose (a unit change); this is a fixture repair, not a product rule. */
+  /* ⚠ RESULTS STRANDED UNDER A RETIRED TWIN (stage 2 kickoff, 2026-09-15). A manual walk of the
+     since-removed successor flow replaced the 60-yd sprint once, so the rows seeded under the
+     ORIGINAL definition sat under a retired "60-yd sprint" while the live one was in the scoped
+     session's plan with nothing — the Before frame drew it honestly. The fixture pins its
+     identities by NAME, so on every run the team's sprint results and not-assessed marks are
+     re-homed onto the live definition (the unit is the same: seconds). A fixture repair, not a
+     product rule. */
   {
     const liveSprintId = typeByName.get('60-yd sprint');
     const { data: twins } = await db.from('rep_team_measurable_types').select('id')
@@ -2949,10 +2950,10 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
       row(devonId, '60-yd sprint', 8.62, 'seconds', on(5, 6)),
       row(devonId, '60-yd sprint', 8.41, 'seconds', on(5, 20)),
       row(devonId, '60-yd sprint', 8.28, 'seconds', probeSession.session_date, probeSession.id),
-      // Throw speed: two in mph, then the unit changed — the km/h reading must not join their line (F01).
-      row(devonId, 'Throw speed', 48, 'mph', on(5, 6)),
-      row(devonId, 'Throw speed', 51, 'mph', on(5, 20)),
-      row(devonId, 'Throw speed', 84, 'km/h', on(6, 3), null, 'unit changed to km/h'),
+      // Throw speed: a three-reading series in the test's one unit (F01 — see the block comment).
+      row(devonId, 'Throw speed', 77, 'km/h', on(5, 6)),
+      row(devonId, 'Throw speed', 82, 'km/h', on(5, 20)),
+      row(devonId, 'Throw speed', 84, 'km/h', on(6, 3)),
       // Shuttle run: a reading in the probe session on a test since RETIRED (F02).
       row(devonId, 'Shuttle run', 10.4, 'seconds', probeSession.session_date, probeSession.id),
       row(ids[0], 'Shuttle run', 10.9, 'seconds', probeSession.session_date, probeSession.id),
