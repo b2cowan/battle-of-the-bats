@@ -68,8 +68,15 @@ export function CoachToolbarMenu({
    * `primary` wears the header's lime create geometry — for the ONE create a page offers when
    * that create has a choice inside it (house rule 6: two ways to make the same thing is one
    * button with a choice, not two buttons competing). Everything else stays `secondary`.
+   *
+   * `chip` is the trigger as a NAME PILL — the practice plan's groups room (stage 3 revision,
+   * owner ruling D10, 2026-09-16), where a player's chip opens "Move to Group B · Not in a group".
+   * The pill is the portal's `.ppChip` recipe with the tap floor on the touch widths; it drops
+   * the chevron because a row of pills wearing chevrons reads as a row of selects. The keyboard
+   * pattern above is the whole reason the chip is THIS component and not a second menu: Enter on
+   * the chip is the phone-and-keyboard path to everything drag does.
    */
-  variant?: 'secondary' | 'primary';
+  variant?: 'secondary' | 'primary' | 'chip';
   /**
    * House rule 3 — on a phone the words go and the symbol stays, with the label surviving as the
    * accessible name. Only for a trigger sitting in a page header, where the title one line above
@@ -208,7 +215,7 @@ export function CoachToolbarMenu({
         ref={triggerRef}
         type="button"
         className={
-          `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : ''}` +
+          `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : variant === 'chip' ? ` ${styles.triggerChip}` : ''}` +
           `${open ? ` ${styles.triggerOpen}` : ''}`
         }
         disabled={disabled}
@@ -221,7 +228,7 @@ export function CoachToolbarMenu({
       >
         {icon}
         {collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
-        <ChevronDown size={14} aria-hidden />
+        {variant !== 'chip' && <ChevronDown size={14} aria-hidden />}
       </button>
       {open && (
         <div

@@ -21,15 +21,16 @@
  * Clock arithmetic runs through `lib/timezone.ts` (binding guardrail — never raw UTC date math).
  */
 import { formatInOrgZone } from './timezone';
+import { roomNeighbours, type RoomNeighbours } from './room-neighbours';
 import type {
   PracticeDuration, PracticeGroup, PracticeGroupSource,
-  PracticePlan, PracticePlanBlock, PracticeRotation, PracticeStation,
+  PracticePlan, PracticePlanBlock, PracticeRotation, PracticeRotationArrangement, PracticeStation,
 } from './types';
 
 // Re-exported so a caller can take the model and its types from one place.
 export type {
   PracticeDuration, PracticeGroup, PracticeGroupSource,
-  PracticePlan, PracticePlanBlock, PracticeRotation, PracticeStation,
+  PracticePlan, PracticePlanBlock, PracticeRotation, PracticeRotationArrangement, PracticeStation,
 } from './types';
 
 /**
@@ -62,7 +63,92 @@ export function blockAsksForTeaching(
   block: Pick<PracticePlanBlock, 'stations' | 'description' | 'goal' | 'coachingPoints'>,
 ): boolean {
   if ((block.stations?.length ?? 0) !== 1) return true;
+  return blockHasOwnWords(block);
+}
+
+/** Does the block hold teaching of its OWN — a Doing line, a Watching-for line or a coaching point?
+ *  The one predicate behind "the block is the activity" (D1, D13): a written block with words and
+ *  no stations is one activity; the same block with words AND a circuit has an intro. */
+export function blockHasOwnWords(
+  block: Pick<PracticePlanBlock, 'description' | 'goal' | 'coachingPoints'>,
+): boolean {
   return !!(block.description?.trim() || block.goal?.trim() || block.coachingPoints?.some(p => p.trim()));
+}
+
+/**
+ * D13 (owner ruling 2026-09-16) — "+ Stations" on a WRITTEN block with no stations makes TWO.
+ * The activity the coach wrote becomes station 1 — its Doing, Watching-for and coaching points
+ * move down, and it takes the block's title as its name — and `second` (the blank or drill
+ * station just added) stands beside it. The block keeps the high-level things: title, minutes,
+ * staff, and an intro line that is now empty. Kit and people are NOT moved here: `settlePlanLevels`
+ * already moves both onto a first station the moment one exists (D8 · D11), and one pass owning
+ * that move is the whole point of the pass.
+ *
+ * ⚠ "+ Stations" ALWAYS makes two (owner, on the built split, 2026-09-16 — twice: a titled block
+ * with nothing typed under it folded its first station in and the form doubled; then "why can't an
+ * empty block split into stations? I should be able to open a block, split stations, then start
+ * typing details including title"). So: a block with a title or words → its activity is station 1
+ * and `second` stands beside it; a block with NOTHING of its own → `second` is station 1 and a
+ * blank station 2 stands beside it, ready to type into. The one-station shape is never made here.
+ * (A drill that should BE the block arrives through the ghost row's "a drill from your library",
+ * which builds that shape directly — D7 — not through this door.)
+ */
+export function splitBlockIntoStations(
+  block: PracticePlanBlock,
+  second: PracticeStation,
+  newId: () => string = newPracticePlanId,
+): PracticePlanBlock {
+  if ((block.stations?.length ?? 0) > 0) {
+    return { ...block, stations: [...(block.stations ?? []), second] };
+  }
+  const isActivity = block.title.trim().length > 0 || blockHasOwnWords(block);
+  if (!isActivity) {
+    return { ...block, stations: [second, { id: newId(), name: '' }] };
+  }
+  const first: PracticeStation = { id: newId(), name: block.title.trim() };
+  if (block.description?.trim()) first.description = block.description;
+  if (block.goal?.trim()) first.goal = block.goal;
+  const points = (block.coachingPoints ?? []).filter(p => p.trim());
+  if (points.length) first.coachingPoints = points;
+  const rest: PracticePlanBlock = { ...block };
+  delete rest.description; delete rest.goal; delete rest.coachingPoints;
+  return { ...rest, stations: [first, second] };
+}
+
+/**
+ * D13's reverse — the block is down to ONE written station and has no words of its own: the
+ * station's words come back up and the station goes, so the coach is where they started (the
+ * activity, no stations). Nothing merges and nothing is dropped: if the block has intro words of
+ * its own, or the survivor is a drill (its words are the drill's, read-only), or the survivor
+ * holds something the block has no field for (a setup, a "just for tonight" note, a rotation
+ * note), the station STAYS as the block's one station — D1's shape. "Nothing typed vanishes"
+ * (D8) decides it, not tidiness. Kit and people are carried up here so the settle pass finds
+ * them at home, as it does whenever the last station goes.
+ */
+export function collapseSoleStation(block: PracticePlanBlock): PracticePlanBlock {
+  const stations = block.stations ?? [];
+  if (stations.length !== 1) return block;
+  const [s] = stations;
+  if (s.drillId || blockHasOwnWords(block)) return block;
+  // A setup, a "just for tonight" note, a rotation note or pre-tag kit NAMES have no field on the
+  // block — the station stays rather than lose a word of them.
+  if (s.setup?.trim() || s.note?.trim() || s.rotationNote?.trim() || s.equipment?.length) return block;
+  const next: PracticePlanBlock = { ...block };
+  delete next.stations;
+  if (s.description?.trim()) next.description = s.description;
+  if (s.goal?.trim()) next.goal = s.goal;
+  const points = (s.coachingPoints ?? []).filter(p => p.trim());
+  if (points.length) next.coachingPoints = points;
+  // Who ran the station runs the block — the block has the same two staff fields.
+  const staff = unionIds(block.staff, s.staff);
+  const staffTagIds = unionIds(block.staffTagIds, s.staffTagIds);
+  if (staff) next.staff = staff;
+  if (staffTagIds) next.staffTagIds = staffTagIds;
+  const kitIds = strList([...(block.equipmentTagIds ?? []), ...(s.equipmentTagIds ?? [])], MAX_TAGS_PER_ITEM, 64);
+  if (kitIds) next.equipmentTagIds = kitIds;
+  const people = unionIds(block.playerIds, s.playerIds);
+  if (people) next.playerIds = people;
+  return next;
 }
 
 /**
@@ -88,6 +174,8 @@ export const MAX_GROUPS = 12;
 export const MAX_STAFF_PER_ITEM = 8;
 export const MAX_TAGS_PER_ITEM = 12;
 export const MAX_COACHING_POINTS = 8;
+/** A player list (a block's, a station's, a group's) holds at most one roster's worth. */
+export const MAX_PLAYERS_PER_LIST = 60;
 export const MAX_TITLE_LEN = 120;
 export const MAX_TEXT_LEN = 600;
 /** The plan's free-text description — a paragraph, not a line. */
@@ -236,7 +324,7 @@ function sanitizeStation(v: unknown, index: number): PracticeStation | null {
   if (staff) station.staff = staff;
   const staffTagIds = strList(raw.staffTagIds, MAX_STAFF_PER_ITEM, 64);
   if (staffTagIds) station.staffTagIds = staffTagIds;
-  const playerIds = strList(raw.playerIds, 60, 64);
+  const playerIds = strList(raw.playerIds, MAX_PLAYERS_PER_LIST, 64);
   if (playerIds) station.playerIds = playerIds;
   const rotationNote = optionalStr(raw.rotationNote, MAX_SHORT_TEXT_LEN);
   if (rotationNote) station.rotationNote = rotationNote;
@@ -296,7 +384,7 @@ function sanitizeRotation(v: unknown): PracticeRotation | null {
   if (Array.isArray(raw.groups)) {
     for (const g of raw.groups) {
       const gr = (g && typeof g === 'object' ? g : {}) as Record<string, unknown>;
-      const playerIds = (strList(gr.playerIds, 60, 64) ?? []).filter(pid => {
+      const playerIds = (strList(gr.playerIds, MAX_PLAYERS_PER_LIST, 64) ?? []).filter(pid => {
         if (placed.has(pid)) return false;
         placed.add(pid);
         return true;
@@ -312,11 +400,39 @@ function sanitizeRotation(v: unknown): PracticeRotation | null {
   const source = typeof raw.groupSource === 'string' && GROUP_SOURCES.includes(raw.groupSource as PracticeGroupSource)
     ? raw.groupSource as PracticeGroupSource
     : 'manual';
-  return {
+  const rotation: PracticeRotation = {
     intervalMinutes: posInt(raw.intervalMinutes, MAX_MINUTES),
     groups,
     groupSource: source,
   };
+  // A hand-arranged grid (D14): its SHAPE is read here; whether it still FITS the block's
+  // stations and clock is the block sanitiser's question (`settleArrangements`, once the stations
+  // and minutes are known). Anything malformed is simply not an arrangement.
+  const arrangement = sanitizeArrangement(raw.arrangement, new Set(groups.map(g => g.id)));
+  if (arrangement) rotation.arrangement = arrangement;
+  return rotation;
+}
+
+function sanitizeArrangement(v: unknown, groupIds: ReadonlySet<string>): PracticeRotationArrangement | null {
+  if (!v || typeof v !== 'object') return null;
+  const raw = v as Record<string, unknown>;
+  const stationIds = strList(raw.stationIds, MAX_STATIONS_PER_BLOCK, 64);
+  const groupIdsListed = strList(raw.groupIds, MAX_GROUPS, 64);
+  const rounds = posInt(raw.rounds, 200);
+  if (!stationIds || !groupIdsListed || !rounds || !Array.isArray(raw.placements)) return null;
+  if (raw.placements.length !== rounds) return null;
+  const placements: Record<string, string | null>[] = [];
+  for (const row of raw.placements) {
+    if (!row || typeof row !== 'object') return null;
+    const clean: Record<string, string | null> = {};
+    for (const [gid, sid] of Object.entries(row as Record<string, unknown>)) {
+      if (!groupIds.has(gid)) continue;
+      if (sid === null) clean[gid] = null;
+      else if (typeof sid === 'string' && sid.length <= 64) clean[gid] = sid;
+    }
+    placements.push(clean);
+  }
+  return { stationIds, groupIds: groupIdsListed, rounds, placements };
 }
 
 /**
@@ -357,7 +473,7 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   if (staff) block.staff = staff;
   const staffTagIds = strList(raw.staffTagIds, MAX_STAFF_PER_ITEM, 64);
   if (staffTagIds) block.staffTagIds = staffTagIds;
-  const playerIds = strList(raw.playerIds, 60, 64);
+  const playerIds = strList(raw.playerIds, MAX_PLAYERS_PER_LIST, 64);
   if (playerIds) block.playerIds = playerIds;
   const points = strList(raw.coachingPoints, MAX_COACHING_POINTS, MAX_SHORT_TEXT_LEN);
   if (points) block.coachingPoints = points;
@@ -369,28 +485,17 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   if (blockKit) block.equipmentTagIds = blockKit;
 
   /**
-   * ⚠ PEOPLE LIVE AT EXACTLY ONE LEVEL (owner ruling 2026-08-01). Enforced here rather than trusted
-   * to the UI, so a stale client or a hand-rolled payload can never produce two disagreeing answers
-   * to "who is at this station?" — and so the printed sheet can render one list without choosing.
-   *   · no stations        → the block's own player list
-   *   · stations, separate → each station's list
-   *   · stations, rotating → the rotation's groups, and nothing else
-   * ⚠ Recorded, not changed (stage 2, 2026-09-15): the block's players are DELETED here when a
-   * station arrives, where the block's kit is MOVED (`settleBlockKit`). Whether people should move
-   * the same way is stage 3's (stations and the rotation) — do not fix it on the way past.
+   * People are read STRUCTURALLY here, at every level they arrive on — the block's list, each
+   * station's, the rotation's groups. WHERE they live is settled by `settleBlockPeople` after the
+   * roster check (stage 3, D8): a list at the wrong level for the block's shape is MOVED to the
+   * right one, never deleted. The rotation is therefore read whenever it is present (its groups
+   * hold people even on a block that has stopped rotating); a rotating block with none stored gets
+   * the empty shape so the editor's controls have something to hold.
    */
-  const rotating = blockRotates(block as PracticePlanBlock);
-  if (rotating) {
-    block.rotation = sanitizeRotation(raw.rotation)
-      ?? { intervalMinutes: null, groups: [], groupSource: 'manual' };
-  }
-  if (stations.length > 0) delete block.playerIds;
-  if (rotating && block.stations) {
-    block.stations = block.stations.map((station) => {
-      const stripped = { ...station };
-      delete stripped.playerIds;
-      return stripped;
-    });
+  const rotation = sanitizeRotation(raw.rotation);
+  if (rotation) block.rotation = rotation;
+  else if (blockRotates(block as PracticePlanBlock)) {
+    block.rotation = { intervalMinutes: null, groups: [], groupSource: 'manual' };
   }
 
   // Kept even when nothing has been typed yet — the coach pressed "Add a block". See isRowLike.
@@ -461,9 +566,10 @@ export function sanitizePracticePlan(
   if (validStaffTagIds || validEquipmentTagIds) {
     scoped = restrictTagIds(scoped, validStaffTagIds, validEquipmentTagIds);
   }
-  // Kit settles to the activity's level LAST (D11) — after the library check, so a stale id can
-  // never take a slot a live one needed when two capped lists meet (/review, 2026-09-15).
-  scoped = settleBlockKit(scoped);
+  // Kit and people settle to the activity's level LAST (D11 · D8) — after the roster and library
+  // checks, so a stale id can never take a slot a live one needed when two capped lists meet
+  // (/review, 2026-09-15).
+  scoped = settlePlanLevels(scoped);
   return isPracticePlanEmpty(scoped) ? null : scoped;
 }
 
@@ -538,8 +644,8 @@ function restrictTagIds(
  * stations, each station carries its own and the block's list MOVES rather than vanishing:
  *   · the first station is written → onto that station (its own kit first, then the block's)
  *   · the first station is a drill → up into the plan's list, the bag (a drill's kit is the drill's)
- * The move is the difference from `playerIds`, which the same situation silently deletes
- * (recorded beside it in `sanitizeBlock`, not changed — people are stage 3's).
+ * People follow the same law one pass over (`settleBlockPeople`, stage 3 D8); `settlePlanLevels`
+ * runs the two together.
  *
  * ONE pure pass, run in two places so the screen and the column agree: the sanitiser runs it
  * last (after the library check — every read and every write), and the editor runs it on every
@@ -569,6 +675,146 @@ export function settleBlockKit(plan: PracticePlan): PracticePlan {
   const next: PracticePlan = { ...plan, blocks };
   if (equipmentTagIds) next.equipmentTagIds = equipmentTagIds;
   return next;
+}
+
+/** The station without its people — the level they are leaving. */
+function withoutPlayers(station: PracticeStation): PracticeStation {
+  const copy = { ...station };
+  delete copy.playerIds;
+  return copy;
+}
+const unionIds =(...lists: (readonly string[] | undefined)[]): string[] | undefined =>
+  strList(lists.flatMap(l => l ?? []), MAX_PLAYERS_PER_LIST, 64);
+
+/**
+ * ⚠ PEOPLE LIVE AT EXACTLY ONE LEVEL (owner ruling 2026-08-01) — AND THEY MOVE WHEN THE LEVEL
+ * MOVES (practices re-evaluation stage 3, owner ruling D8, 2026-09-15). The block's shape says
+ * where its people live, and every other level is emptied INTO that one, never deleted:
+ *   · no stations        → the block's own list
+ *   · stations, separate → each station's list
+ *   · stations, rotating → the rotation's groups, and nothing else
+ * Enforced here rather than trusted to the UI, so a stale client or a hand-rolled payload can
+ * never produce two disagreeing answers to "who is at this station?" — and so the printed sheet
+ * renders one list without choosing. Until this stage the sanitiser enforced it by DELETING what
+ * sat at the wrong level: six names chosen on a block vanished the moment a station arrived.
+ * Now they follow the level, the way kit does (D11):
+ *   · a station arrives      → the block's names land on the FIRST station (a drill station holds
+ *                              people too — people are the practice's half, never the drill's)
+ *   · rotating turns on      → every name on the block or a station becomes the FIRST DRAW: dealt
+ *                              in stored order into one group per station (fewer when there are
+ *                              fewer names); with groups already standing, a stray name joins them
+ *                              round-robin from the first. Not shuffled — a deal the coach did not
+ *                              ask for should at least be one they can read; Draw shuffles.
+ *   · rotating turns off     → each group lands on the station it started at (group i → station i)
+ *   · the last station goes  → everyone comes back to the block's own list
+ * A player belongs to exactly one group and is listed once at the level they land on; a
+ * rotation on a block that does not rotate is dropped once its people have moved (the shape a
+ * reader expects — `blockRotates` decides, not the key's presence).
+ *
+ * ONE pure pass, run in two places so the screen and the column agree: the sanitiser runs it
+ * last (after the roster check — every read and every write) and the editor runs it on every
+ * change to the blocks, so the coach SEES the names move rather than watching them vanish until
+ * a reload. Idempotent by construction: after the move nothing sits at a wrong level, so a
+ * second pass finds nothing to move and hands the same object back. Deterministic on purpose
+ * (no shuffle, fixed group ids) — a sanitiser that rolled dice would save a different plan than
+ * the one it was shown.
+ */
+export function settleBlockPeople(plan: PracticePlan): PracticePlan {
+  let moved = false;
+  const blocks = plan.blocks.map(block => {
+    const stations = block.stations ?? [];
+    const rotating = blockRotates(block);
+    const strayOnBlock = block.playerIds !== undefined && stations.length > 0;
+    const strayOnStations = rotating && stations.some(s => s.playerIds !== undefined);
+    const strayRotation = block.rotation !== undefined && !rotating;
+    if (!strayOnBlock && !strayOnStations && !strayRotation) return block;
+    moved = true;
+
+    const { playerIds: blockNames, rotation, ...rest } = block;
+    const groups = rotation?.groups ?? [];
+    const next: PracticePlanBlock = { ...rest };
+
+    if (stations.length === 0) {
+      // The block is the activity again (its stations were removed): the groups come home.
+      const home = unionIds(blockNames, ...groups.map(g => g.playerIds));
+      if (home) next.playerIds = home;
+      return next;
+    }
+
+    if (!rotating) {
+      // Separate stations: the block's names onto the first; each group onto the station it
+      // STARTED at (the grid's own first row — `startingGroupsForStation`, so the two answers
+      // agree). The rotation itself goes with its people. What a station already holds is the
+      // coach's own placement and stands first; a name that moves lands on ONE station — the
+      // first it is due at — never on two (a stale rotation beside a hand-placed list must not
+      // book one child at two stations of a block that does not rotate — /review, 2026-09-15).
+      const placed = new Set(stations.flatMap(s => s.playerIds ?? []));
+      next.stations = stations.map((s, i) => {
+        const station = withoutPlayers(s);
+        const arriving = (unionIds(
+          i === 0 ? blockNames : undefined,
+          ...startingGroupsForStation(rotation, stations.length, i).map(g => g.playerIds),
+        ) ?? []).filter(pid => !placed.has(pid));
+        arriving.forEach(pid => placed.add(pid));
+        const settled = unionIds(s.playerIds, arriving);
+        return settled ? { ...station, playerIds: settled } : station;
+      });
+      return next;
+    }
+
+    // Rotating: everyone named on the block or a station joins the groups — the first draw.
+    const placed = new Set(groups.flatMap(g => g.playerIds));
+    const strays = (unionIds(blockNames, ...stations.map(s => s.playerIds)) ?? []).filter(pid => !placed.has(pid));
+    next.stations = stations.map(withoutPlayers);
+    const base: PracticeRotation = rotation ?? { intervalMinutes: null, groups: [], groupSource: 'manual' };
+    if (strays.length === 0) {
+      next.rotation = base;
+    } else if (groups.length === 0) {
+      next.rotation = { ...base, groups: dealGroups(strays, stations.length), groupSource: 'manual' };
+    } else {
+      // Standing groups keep their source — a stray joining them is the sanitiser's move, not a
+      // coach's hand on a drawn group (which is what turns 'random' into 'manual' in the editor).
+      // Capped as every list here is, so a read after the write sees exactly what was written.
+      const joined = groups.map(g => ({ ...g, playerIds: g.playerIds.slice() }));
+      strays.forEach((pid, i) => { joined[i % joined.length].playerIds.push(pid); });
+      next.rotation = { ...base, groups: joined.map(g => ({ ...g, playerIds: unionIds(g.playerIds) ?? [] })) };
+    }
+    return next;
+  });
+  return moved ? { ...plan, blocks } : plan;
+}
+
+/**
+ * Everything that lives at "the activity's level" — kit (D11) then people (D8) — settled in one
+ * call, so the sanitiser and the editor cannot run one pass and forget the other.
+ */
+export function settlePlanLevels(plan: PracticePlan): PracticePlan {
+  return settleArrangements(settleBlockPeople(settleBlockKit(plan)));
+}
+
+/**
+ * D14's one rule: a hand-arranged grid that no longer FITS — a station or a group added or
+ * removed, the clock changed so the round count moved — goes back to the standard rotation.
+ * Dropped here (the same pure pass the sanitiser and the editor both run) so the two agree; the
+ * editor notices the drop and SAYS SO under the grid. A block whose minutes are not known here
+ * (rest of practice — its length is the clock walk's) is checked on stations and groups only;
+ * `computeRotation` re-checks the round count with the real minutes at read time.
+ */
+export function settleArrangements(plan: PracticePlan): PracticePlan {
+  let dropped = false;
+  const blocks = plan.blocks.map(block => {
+    const rotation = block.rotation;
+    if (!rotation?.arrangement) return block;
+    const { stops, groups, rounds } = rotationShape(rotation, block.stations, block.duration.minutes ?? null);
+    const minutesKnown = block.duration.minutes != null;
+    const fits = minutesKnown
+      ? arrangementFits(rotation.arrangement, stops, groups, rounds)
+      : arrangementFits(rotation.arrangement, stops, groups, rotation.arrangement.rounds);
+    if (fits) return block;
+    dropped = true;
+    return { ...block, rotation: forgetArrangement(rotation) };
+  });
+  return dropped ? { ...plan, blocks } : plan;
 }
 
 /** Read a stored value back into a plan, tolerating a pre-migration `undefined`/null column. */
@@ -762,19 +1008,23 @@ export function drawGroups(
     : Math.ceil(players.length / Math.floor(n));
   const count = Math.max(1, Math.min(groupCount, MAX_GROUPS, players.length));
 
-  const shuffled = shuffle(players, rng);
-  const base = Math.floor(shuffled.length / count);
-  const remainder = shuffled.length % count;
+  return dealGroups(shuffle(players, rng), count);
+}
 
+/**
+ * The DEAL: names into `count` groups in the order given — consecutive runs, the first groups one
+ * larger when it does not divide (an uneven split produced honestly, never rounded away). The one
+ * step `drawGroups` (after its shuffle) and `settleBlockPeople` (in stored order, no shuffle) share.
+ */
+function dealGroups(playerIds: readonly string[], count: number): PracticeGroup[] {
+  const n = Math.max(1, Math.min(count, MAX_GROUPS, playerIds.length));
+  const base = Math.floor(playerIds.length / n);
+  const remainder = playerIds.length % n;
   const groups: PracticeGroup[] = [];
   let cursor = 0;
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < n; i++) {
     const size = base + (i < remainder ? 1 : 0);
-    groups.push({
-      id: `grp-${i}-${cursor}`,
-      name: groupLabel(i),
-      playerIds: shuffled.slice(cursor, cursor + size),
-    });
+    groups.push({ id: `grp-${i}-${cursor}`, name: groupLabel(i), playerIds: playerIds.slice(cursor, cursor + size) });
     cursor += size;
   }
   return groups;
@@ -793,6 +1043,52 @@ export function describeSplit(groups: readonly PracticeGroup[]): string {
   return `${groups.length} group${groups.length === 1 ? '' : 's'} from ${total} — ${parts.join(', ')}.`;
 }
 
+/**
+ * The groups room (stage 3 revision — owner rulings D9 · D10 · D11, 2026-09-16): ONE player lands
+ * in ONE group, or in none when `groupId` is null. A player belongs to exactly one group (the
+ * sanitiser's rule too), so landing in a group leaves every other; the landing position is
+ * ROSTER order, never where the chip was let go (§4 — no list anywhere may imply a ranking).
+ * Placing by hand makes the groups chosen (`groupSource: 'manual'`), as the picker did.
+ * Returns the same object when nothing would change — an unknown target, or a player already
+ * where they were asked to go — so a caller can skip the write.
+ */
+export function movePlayerToGroup(
+  rotation: PracticeRotation,
+  playerId: string,
+  groupId: string | null,
+  rosterOrder: readonly string[],
+): PracticeRotation {
+  if (groupId !== null && !rotation.groups.some(g => g.id === groupId)) return rotation;
+  const holder = rotation.groups.find(g => g.playerIds.includes(playerId));
+  if ((holder?.id ?? null) === groupId) return rotation;
+  // A stale id (a player since removed from the roster) sorts last, in the order it already had.
+  const rank = new Map(rosterOrder.map((id, i) => [id, i] as const));
+  const inRosterOrder = (ids: readonly string[]) =>
+    [...ids].sort((a, b) => (rank.get(a) ?? rosterOrder.length) - (rank.get(b) ?? rosterOrder.length));
+  return {
+    ...rotation,
+    groupSource: 'manual',
+    groups: rotation.groups.map(g => {
+      if (g.id === groupId) return { ...g, playerIds: inRosterOrder([...g.playerIds, playerId]) };
+      return g.playerIds.includes(playerId) ? { ...g, playerIds: g.playerIds.filter(p => p !== playerId) } : g;
+    }),
+  };
+}
+
+/**
+ * Who is on tonight's roster and in NO group — the room's "Not in a group" column and the block's
+ * read-out line (D11): computed from the roster and the groups, never stored, in roster order.
+ * It is where a binned group's players reappear, which is what keeps D21's "named, never silently
+ * dropped" true for the bin as well as the draw.
+ */
+export function unplacedPlayers<T extends { id: string }>(
+  roster: readonly T[],
+  groups: readonly PracticeGroup[],
+): T[] {
+  const placed = new Set(groups.flatMap(g => g.playerIds));
+  return roster.filter(p => !placed.has(p.id));
+}
+
 // ── The rotation grid (D22–D26) ──────────────────────────────────────────────
 
 export interface RotationCell {
@@ -808,6 +1104,8 @@ export interface RotationRound {
   /** Clock label for the round's start, when the block's start time is known. */
   startLabel?: string;
   cells: RotationCell[];
+  /** Groups SITTING THIS ROUND OUT (D14) — a hand-arranged grid only; empty for the carousel. */
+  out: { groupId: string; groupName: string }[];
 }
 
 export interface RotationGrid {
@@ -817,12 +1115,22 @@ export interface RotationGrid {
   /** Minutes left over after whole rounds — STATED, never silently rounded away (D24). */
   spareMinutes: number;
   roundsList: RotationRound[];
+  /** True when the cells came from the coach's own arrangement (D14), not the carousel. */
+  arranged: boolean;
   /**
    * Plain-language statements about what this rotation does and doesn't cover (D25).
    * Every one of these is a fact about the arithmetic, never a suggestion to change it —
    * the product NEVER invents a round or drops a station to make the numbers tidy.
    */
   notes: string[];
+  /**
+   * The first of the `notes` — the rounds line ("3 rounds of 15 min.") — named on its own so a
+   * surface that already states the clock elsewhere (the editor's rotation strip, stage 3 D3)
+   * can leave it out of the list by identity rather than by guessing its words. Still IN `notes`:
+   * the printed sheet and the run screen read the list whole and are untouched. Null when the
+   * rotation could not be computed.
+   */
+  roundsNote: string | null;
   /** True when there isn't enough information yet to compute anything. */
   incomplete: boolean;
 }
@@ -845,23 +1153,105 @@ function listNames(names: string[]): string {
  *   twice only let the two numbers disagree.
  * @param blockStartMs the block's start instant, so each round can carry a clock label.
  */
+/**
+ * The four facts a rotation is computed from — the named stops, the groups with anyone in them,
+ * the interval (derived when unset) and the round count — in ONE place, so `computeRotation`, the
+ * fit check on a hand-arranged grid (D14) and the sanitiser cannot count rounds three ways.
+ * `rounds` is 0 when any fact is missing.
+ */
+export function rotationShape(
+  rotation: PracticeRotation | null | undefined,
+  stations: readonly PracticeStation[] | undefined,
+  blockMinutes: number | null | undefined,
+): { stops: PracticeStation[]; groups: PracticeGroup[]; intervalMinutes: number | null; totalMinutes: number | null; rounds: number } {
+  const stops = (stations ?? []).filter(s => s.name.trim().length > 0);
+  // Unset means "one turn each" — see defaultIntervalMinutes.
+  const intervalMinutes = rotation?.intervalMinutes ?? defaultIntervalMinutes(blockMinutes, stops.length);
+  const totalMinutes = blockMinutes ?? null;
+  const groups = rotation?.groups.filter(g => g.playerIds.length > 0 || g.name.trim()) ?? [];
+  const rounds = stops.length && groups.length && totalMinutes && intervalMinutes ? Math.floor(totalMinutes / intervalMinutes) : 0;
+  return { stops, groups, intervalMinutes, totalMinutes, rounds };
+}
+
+const sortedIds = (items: readonly { id: string }[]) => items.map(i => i.id).sort();
+const sameIds = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((id, i) => id === b[i]);
+
+/**
+ * Does a hand-arranged grid (D14) still describe THIS rotation? The same named stations (by id —
+ * a rename or a reorder keeps it), the same groups, the same round count, and every placement a
+ * station that exists or "sits out". Anything else and the arrangement is dropped, by the
+ * sanitiser and the editor alike, and the editor says so.
+ */
+export function arrangementFits(
+  arrangement: PracticeRotationArrangement | null | undefined,
+  stops: readonly PracticeStation[],
+  groups: readonly PracticeGroup[],
+  rounds: number,
+): arrangement is PracticeRotationArrangement {
+  if (!arrangement || rounds <= 0) return false;
+  if (!sameIds([...arrangement.stationIds].sort(), sortedIds(stops))) return false;
+  if (!sameIds([...arrangement.groupIds].sort(), sortedIds(groups))) return false;
+  if (arrangement.rounds !== rounds || arrangement.placements.length !== rounds) return false;
+  const stopIds = new Set(stops.map(s => s.id));
+  return arrangement.placements.every(row =>
+    Object.values(row).every(stationId => stationId === null || stopIds.has(stationId)));
+}
+
+/** The carousel's own answer for one cell — group `i` in round `r` stands at station `(i + r) mod S`. */
+const standardStop = (stops: readonly PracticeStation[], groupIndex: number, round: number) =>
+  stops[(groupIndex + round) % stops.length];
+
+/**
+ * D14 (owner ruling 2026-09-16) — one hand move on the grid: group `groupId` stands at
+ * `stationId` in round `round` (1-based), or sits that round out when `stationId` is null. The
+ * first move turns the carousel into a remembered arrangement (every other cell keeps its
+ * standard place); later moves edit it. Returns the same rotation when the move changes nothing
+ * or names a round, group or station the rotation does not have.
+ */
+export function arrangeGroup(
+  rotation: PracticeRotation,
+  stations: readonly PracticeStation[] | undefined,
+  blockMinutes: number | null | undefined,
+  round: number,
+  groupId: string,
+  stationId: string | null,
+): PracticeRotation {
+  const { stops, groups, rounds } = rotationShape(rotation, stations, blockMinutes);
+  if (rounds <= 0 || round < 1 || round > rounds) return rotation;
+  if (!groups.some(g => g.id === groupId)) return rotation;
+  if (stationId !== null && !stops.some(s => s.id === stationId)) return rotation;
+  const base: PracticeRotationArrangement = arrangementFits(rotation.arrangement, stops, groups, rounds)
+    ? rotation.arrangement
+    : {
+      stationIds: sortedIds(stops), groupIds: sortedIds(groups), rounds,
+      placements: Array.from({ length: rounds }, (_, r) =>
+        Object.fromEntries(groups.map((g, i) => [g.id, standardStop(stops, i, r).id]))),
+    };
+  if (base.placements[round - 1][groupId] === stationId) return rotation;
+  const placements = base.placements.map((row, r) => (r === round - 1 ? { ...row, [groupId]: stationId } : row));
+  return { ...rotation, arrangement: { ...base, placements } };
+}
+
+/** "Back to the standard rotation ›" — the carousel again. The same object back when there was nothing to forget. */
+export function forgetArrangement(rotation: PracticeRotation): PracticeRotation {
+  if (rotation.arrangement == null) return rotation;
+  const rest: PracticeRotation = { ...rotation };
+  delete rest.arrangement;
+  return rest;
+}
+
 export function computeRotation(
   rotation: PracticeRotation | null | undefined,
   stations: readonly PracticeStation[] | undefined,
   blockMinutes: number | null | undefined,
   blockStartMs?: number,
 ): RotationGrid {
-  const stops = (stations ?? []).filter(s => s.name.trim().length > 0);
-  // Unset means "one turn each" — see defaultIntervalMinutes.
-  const intervalMinutes = rotation?.intervalMinutes ?? defaultIntervalMinutes(blockMinutes, stops.length);
-  const totalMinutes = blockMinutes ?? null;
+  const { stops, groups, intervalMinutes, totalMinutes, rounds } = rotationShape(rotation, stations, blockMinutes);
   const empty: RotationGrid = {
     rounds: 0, intervalMinutes, totalMinutes,
-    spareMinutes: 0, roundsList: [], notes: [], incomplete: true,
+    spareMinutes: 0, roundsList: [], arranged: false, notes: [], roundsNote: null, incomplete: true,
   };
   if (!rotation) return empty;
-
-  const groups = rotation.groups.filter(g => g.playerIds.length > 0 || g.name.trim());
 
   const notes: string[] = [];
   if (stops.length === 0 || groups.length === 0 || !totalMinutes || !intervalMinutes) {
@@ -873,22 +1263,28 @@ export function computeRotation(
     return { ...empty, notes: [`Add ${listNames(missing)} to see the rotation.`] };
   }
 
-  const rounds = Math.floor(totalMinutes / intervalMinutes);
   const spareMinutes = totalMinutes - rounds * intervalMinutes;
 
   if (rounds === 0) {
     return {
-      rounds: 0, intervalMinutes, totalMinutes, spareMinutes: totalMinutes, roundsList: [], incomplete: true,
+      rounds: 0, intervalMinutes, totalMinutes, spareMinutes: totalMinutes, roundsList: [], arranged: false, incomplete: true, roundsNote: null,
       notes: [`${totalMinutes} minutes doesn't fit a single ${intervalMinutes}-minute round. Lower the interval or lengthen the block.`],
     };
   }
 
+  // The coach's own arrangement (D14) is read INSTEAD of the carousel while it still fits — a
+  // cell it does not name keeps its standard place; null is a round sat out.
+  const arranged = arrangementFits(rotation.arrangement, stops, groups, rounds) ? rotation.arrangement : null;
   const S = stops.length;
   const roundsList: RotationRound[] = [];
   for (let r = 0; r < rounds; r++) {
-    const cells: RotationCell[] = groups.map((g, i) => {
-      const stop = stops[(i + r) % S];
-      return { groupId: g.id, groupName: g.name, stationId: stop.id, stationName: stop.name };
+    const cells: RotationCell[] = [];
+    const out: RotationRound['out'] = [];
+    groups.forEach((g, i) => {
+      const placed = arranged ? arranged.placements[r][g.id] : undefined;
+      if (placed === null) { out.push({ groupId: g.id, groupName: g.name }); return; }
+      const stop = (placed !== undefined ? stops.find(s => s.id === placed) : undefined) ?? standardStop(stops, i, r);
+      cells.push({ groupId: g.id, groupName: g.name, stationId: stop.id, stationName: stop.name });
     });
     roundsList.push({
       round: r + 1,
@@ -896,16 +1292,16 @@ export function computeRotation(
         ? formatInOrgZone(new Date(blockStartMs + r * intervalMinutes * 60_000).toISOString(), CLOCK_FORMAT)
         : undefined,
       cells,
+      out,
     });
   }
 
-  // ── The statements (D25) ──
-  notes.push(
-    `${rounds} round${rounds === 1 ? '' : 's'} of ${intervalMinutes} min`
-    + (spareMinutes > 0 ? `, with ${spareMinutes} min spare.` : '.'),
-  );
+  // ── The statements (D25) — facts about THESE cells, dealt or arranged; never a suggestion ──
+  const roundsNote = `${rounds} round${rounds === 1 ? '' : 's'} of ${intervalMinutes} min`
+    + (spareMinutes > 0 ? `, with ${spareMinutes} min spare.` : '.');
+  notes.push(roundsNote);
 
-  // More groups than stations ⇒ two share. Say which, and when.
+  // Two groups at one station ⇒ they share. A station with nobody, a group sitting out ⇒ said.
   for (const round of roundsList) {
     const byStation = new Map<string, string[]>();
     for (const cell of round.cells) {
@@ -919,23 +1315,112 @@ export function computeRotation(
         notes.push(`${listNames(names)} share ${stationName} in round ${round.round}.`);
       }
     }
-  }
-
-  // Fewer rounds than stations ⇒ some groups never reach some stations. Name them.
-  if (rounds < S) {
-    for (let i = 0; i < groups.length; i++) {
-      const visited = new Set<string>();
-      for (let r = 0; r < rounds; r++) visited.add(stops[(i + r) % S].id);
-      const missed = stops.filter(s => !visited.has(s.id)).map(s => s.name);
-      if (missed.length > 0) notes.push(`${groups[i].name} won't reach ${listNames(missed)}.`);
+    if (arranged) {
+      const idle = stops.filter(s => !byStation.has(s.id)).map(s => s.name);
+      if (idle.length > 0) notes.push(`${listNames(idle)} ${idle.length === 1 ? 'has' : 'have'} nobody in round ${round.round}.`);
+      if (round.out.length > 0) {
+        notes.push(`${listNames(round.out.map(o => o.groupName))} ${round.out.length === 1 ? 'sits' : 'sit'} round ${round.round} out.`);
+      }
     }
-  } else if (rounds > S) {
-    notes.push(`Everyone does everything, then starts round ${S + 1} again at their first station.`);
-  } else {
-    notes.push('Everyone does everything.');
   }
 
-  return { rounds, intervalMinutes, totalMinutes, spareMinutes, roundsList, notes, incomplete: false };
+  // A group that never reaches a station — because there are fewer rounds than stations, or
+  // because the coach arranged it so. Named either way.
+  const visited = new Map<string, Set<string>>(groups.map(g => [g.id, new Set<string>()]));
+  for (const round of roundsList) for (const cell of round.cells) visited.get(cell.groupId)?.add(cell.stationId);
+  let everyoneEverything = true;
+  for (const g of groups) {
+    const missed = stops.filter(s => !visited.get(g.id)?.has(s.id)).map(s => s.name);
+    if (missed.length > 0) { notes.push(`${g.name} won't reach ${listNames(missed)}.`); everyoneEverything = false; }
+  }
+  if (everyoneEverything) {
+    notes.push(!arranged && rounds > S
+      ? `Everyone does everything, then starts round ${S + 1} again at their first station.`
+      : 'Everyone does everything.');
+  }
+
+  return { rounds, intervalMinutes, totalMinutes, spareMinutes, roundsList, arranged: !!arranged, notes, roundsNote, incomplete: false };
+}
+
+// ── The rotation as the editor lays it out (practices re-evaluation stage 3, 2026-09-15) ────
+// Presentation over `computeRotation`'s cells — the same arithmetic, said on one line and turned
+// to the station columns. Nothing here recomputes a round.
+
+/**
+ * The strip's one honest line about the clock (D3): "3 rounds of 15 = 45 min", or, when the
+ * block's length does not divide, "45 does not divide by 20 — 2 rounds and 5 min over". Never
+ * tidied: a spare five minutes is stated, not rounded into a fourth round or out of existence.
+ * Empty until both numbers exist (the notes under the grid say what is missing).
+ *
+ * ⚠ The two lines of arithmetic deliberately MIRROR `computeRotation`'s (`rounds` · `spareMinutes`)
+ * rather than read them off a grid: the strip says the clock before a single group exists, and
+ * the grid does not compute past "add at least one group". Change the rounding in one, change it
+ * in both.
+ */
+export function describeRounds(totalMinutes: number | null | undefined, intervalMinutes: number | null | undefined): string {
+  if (!totalMinutes || !intervalMinutes) return '';
+  const rounds = Math.floor(totalMinutes / intervalMinutes);
+  const spare = totalMinutes - rounds * intervalMinutes;
+  if (rounds === 0) return `${totalMinutes} min is less than one ${intervalMinutes}-min round`;
+  if (spare === 0) return `${rounds} round${rounds === 1 ? '' : 's'} of ${intervalMinutes} = ${totalMinutes} min`;
+  return `${totalMinutes} does not divide by ${intervalMinutes} — ${rounds} round${rounds === 1 ? '' : 's'} and ${spare} min over`;
+}
+
+export interface StationRoundRow {
+  round: number;
+  startLabel?: string;
+  /** One cell per station column, in station order: the group(s) there that round. */
+  cells: string[][];
+  /** The same cells with the groups' ids — what the editor's pills move by (D14). */
+  cellGroups: { id: string; name: string }[][];
+  /** Groups sitting this round out (D14). */
+  out: { id: string; name: string }[];
+}
+
+/**
+ * The grid TURNED to the station columns (D6): rounds as rows, the block's named stations as
+ * columns in their own order, each cell the group name(s) at that station in that round — two
+ * when more groups than stations share one, none when a station sits idle that round. Reading
+ * down a column is one station's evening; the first row is who starts there, so a station never
+ * repeats it. The same cells `computeRotation` produced, re-keyed; an unnamed station is not a
+ * stop in the arithmetic and has no column here either.
+ */
+export function rotationByStation(grid: RotationGrid, stations: readonly PracticeStation[] | undefined): {
+  stations: { id: string; name: string }[];
+  rows: StationRoundRow[];
+} {
+  const stops = (stations ?? []).filter(s => s.name.trim().length > 0).map(s => ({ id: s.id, name: s.name }));
+  const rows = grid.roundsList.map(round => {
+    const byStation = new Map<string, { id: string; name: string }[]>();
+    for (const cell of round.cells) {
+      const here = byStation.get(cell.stationId) ?? [];
+      here.push({ id: cell.groupId, name: cell.groupName });
+      byStation.set(cell.stationId, here);
+    }
+    const cellGroups = stops.map(s => byStation.get(s.id) ?? []);
+    return {
+      round: round.round, startLabel: round.startLabel,
+      cells: cellGroups.map(cell => cell.map(g => g.name)),
+      cellGroups,
+      out: round.out.map(o => ({ id: o.groupId, name: o.groupName })),
+    };
+  });
+  return { stations: stops, rows };
+}
+
+/** A station's name as the sheet reads it aloud — "Station 2" in the quiet voice until it has one. */
+export function stationLabel(station: Pick<PracticeStation, 'name'>, index: number): string {
+  return station.name.trim() || `Station ${index + 1}`;
+}
+
+/**
+ * The station modal's stepper (D4) — the room's own Prev / Next answer over the block's stations
+ * in their order (`roomNeighbours`, so the two walks can never disagree on what an edge does): at
+ * the first station there is no previous and at the last no next — the arrows STOP, they do not
+ * wrap. Named destinations, and a position count.
+ */
+export function stationWalk(stations: readonly PracticeStation[], stationId: string | null): RoomNeighbours {
+  return roomNeighbours(stations, stationId, s => s.id, (s) => stationLabel(s, stations.indexOf(s)));
 }
 
 // ── The field run (slice 1b) ─────────────────────────────────────────────────
@@ -1178,6 +1663,22 @@ export function tagNamesById(ids: readonly string[] | undefined, tags: TagLookup
   if (!ids?.length) return [];
   const byId = toTagMap(tags);
   return ids.map(id => byId.get(id)).filter((n): n is string => !!n);
+}
+
+/**
+ * A station's staff or kit AS THE EDITOR SHOWS IT: the legacy names it still carries ∪ the
+ * library ids resolved to current names, each once — a station can be pre-library (names only),
+ * post-library (ids only), or mid-migration (both, until the picker's adopt rows are taken), and
+ * the editor shows everything the coach has said rather than choosing (the printed sheet, which
+ * must print one list, prefers ids and falls back — `resolvePracticePlanTagNames`). Read-only:
+ * never written back.
+ */
+export function mergedTagNames(
+  legacy: readonly string[] | undefined,
+  ids: readonly string[] | undefined,
+  tags: TagLookup,
+): string[] {
+  return [...new Set([...(legacy ?? []), ...tagNamesById(ids, tags)])];
 }
 
 /**

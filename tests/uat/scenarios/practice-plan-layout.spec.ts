@@ -139,10 +139,11 @@ test.describe('Practice plan builder — layout', () => {
   test('the block clock renders real times from the practice start (not raw UTC)', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openPlan(page);
-    // Practice starts 22:00Z = 6:00 p.m. Toronto. Block 1 runs 15 minutes.
+    // Practice starts 22:00Z = 6:00 p.m. Toronto. Block 1 runs 15 minutes. The block's clock is
+    // the timeline's GUTTER since stage 1 (2026-09-14): the first row's start, then the next row's
+    // (or the ghost row's) — never a caption inside the block.
     const clockText = await page.evaluate(() => {
-      const el = document.querySelector('[class*="ppBlockClock"]');
-      return el?.textContent?.trim() ?? '';
+      return Array.from(document.querySelectorAll('[class*="ppTlGutter"]')).map(el => el.textContent?.trim() ?? '').join(' | ');
     });
     expect(clockText).toContain('6:00');
     expect(clockText).toContain('6:15');

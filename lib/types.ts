@@ -1486,6 +1486,29 @@ export interface PracticeRotation {
   intervalMinutes: number | null;
   groups: PracticeGroup[];
   groupSource: PracticeGroupSource;
+  /**
+   * A HAND-ARRANGED rotation (practices re-evaluation stage 3, owner ruling D14, 2026-09-16) —
+   * absent for the standard carousel (every group forward one station a round). When present it
+   * is read INSTEAD of the carousel by `computeRotation`, but only while it still FITS: the same
+   * named stations, the same groups and the same round count it was made for. A change to any of
+   * those drops it (the sanitiser and the editor's settle pass both do) and the editor says so —
+   * reset and stated, never half-kept. The clock is never in here: WHERE each group stands, not WHEN.
+   */
+  arrangement?: PracticeRotationArrangement | null;
+}
+
+/**
+ * Which group stands where, round by round. `placements[r][groupId]` is a station id, or `null`
+ * for a group that SITS THAT ROUND OUT; a group missing from a round takes its standard place.
+ * `stationIds` / `groupIds` are the sorted ids the arrangement was made for and `rounds` the
+ * round count — the fit check (`arrangementFits`), so a renamed or reordered station keeps the
+ * arrangement and an added or removed one does not.
+ */
+export interface PracticeRotationArrangement {
+  stationIds: string[];
+  groupIds: string[];
+  rounds: number;
+  placements: Record<string, string | null>[];
 }
 
 /**

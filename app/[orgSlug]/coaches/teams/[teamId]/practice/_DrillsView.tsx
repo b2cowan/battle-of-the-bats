@@ -14,6 +14,7 @@ import {
 } from '@/lib/rep-drills';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
+import { CoachingPointsField, FieldLabel } from '@/components/coaches/PracticeFields';
 import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import PracticePlansTabs from './_PracticePlansTabs';
@@ -68,10 +69,6 @@ const emptyDraft = (): DrillInput => ({
 // ── Sub-components at MODULE level (never in a render body — a component declared inside one is a
 // new type every render, so React remounts its subtree and a form loses focus every keystroke). ──
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <span className={styles.ppFieldLabel}>{children}</span>;
-}
-
 function DrillForm({
   draft, tags, onCreateTag, equipmentTags, onCreateEquipmentTag,
   focusManage, onFocusTagsChanged, equipmentManage, onEquipmentTagsChanged,
@@ -93,8 +90,6 @@ function DrillForm({
   onSubmit: () => void;
   onCancel: () => void;
 }) {
-  const points = draft.coachingPoints ?? [];
-
   return (
     <div className={styles.ppDrillWrite}>
       <label className={styles.ppField}>
@@ -140,27 +135,11 @@ function DrillForm({
           onChange={e => onChange({ ...draft, goal: e.target.value })} />
       </label>
 
-      <div className={styles.ppField}>
-        <FieldLabel>Coaching points</FieldLabel>
-        {points.map((point, i) => (
-          <div key={i} className={styles.ppPointRow}>
-            <span className={styles.ppPointNum}>{i + 1}</span>
-            <input className={styles.input} value={point} maxLength={MAX_DRILL_POINT_LEN}
-              aria-label={`Coaching point ${i + 1}`}
-              onChange={e => onChange({ ...draft, coachingPoints: points.map((p, j) => (j === i ? e.target.value : p)) })} />
-            <button type="button" className={styles.ppIconBtn} aria-label={`Remove point ${i + 1}`}
-              onClick={() => onChange({ ...draft, coachingPoints: points.filter((_, j) => j !== i) })}>
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-        {points.length < MAX_DRILL_POINTS && (
-          <button type="button" className={styles.ppAddInline}
-            onClick={() => onChange({ ...draft, coachingPoints: [...points, ''] })}>
-            <Plus size={13} aria-hidden /> Add a point
-          </button>
-        )}
-      </div>
+      {/* ONE field, one point per line — the same field the block and the station use (practices
+          re-evaluation stage 3, owner ruling D7, 2026-09-15; the numbered rows were the last of
+          the three shapes). Stored exactly as before: a capped list. */}
+      <CoachingPointsField points={draft.coachingPoints ?? undefined} maxPoints={MAX_DRILL_POINTS} maxLen={MAX_DRILL_POINT_LEN} noun="drill"
+        onSet={next => onChange({ ...draft, coachingPoints: next })} />
 
       <label className={styles.ppField}>
         <FieldLabel>Setup</FieldLabel>

@@ -318,9 +318,13 @@ export default function CoachPracticeRunPage({
   const dueMoves = useMemo(() => {
     if (!rotationDue || !grid || stepRound == null) return '';
     // `stepRound` is 1-based, so it indexes the NEXT round's cells — where everyone is going.
-    return (grid.roundsList[stepRound]?.cells ?? [])
-      .map(c => `${shortGroupLabel(c.groupName)} → ${c.stationName || 'a station'}`)
-      .join(' · ');
+    // A group the coach arranged to SIT the next round out (D14) has no cell; it is named too,
+    // never left off the list as if it had been forgotten.
+    const next = grid.roundsList[stepRound];
+    return [
+      ...(next?.cells ?? []).map(c => `${shortGroupLabel(c.groupName)} → ${c.stationName || 'a station'}`),
+      ...(next?.out ?? []).map(o => `${shortGroupLabel(o.groupName)} sits out`),
+    ].join(' · ');
   }, [rotationDue, grid, stepRound]);
 
   // ── Render ──

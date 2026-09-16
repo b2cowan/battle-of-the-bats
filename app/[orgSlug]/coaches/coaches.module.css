@@ -9808,10 +9808,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   letter-spacing: 0.05em; color: var(--text-tertiary);
 }
 /* A label with its own quiet "×" (owner ask, 2026-09-15) — only for a field that is itself an
-   ADDITION a coach opened (Coaching points · Staff · Equipment), so removing it is closing a door,
-   never deleting held data. The SAME row `.ppStationsHead` already draws (label, then a trailing
-   control, pinned apart) — composed rather than re-declared. */
-.ppFieldLabelRow { composes: ppStationsHead; }
+   ADDITION a coach opened (Coaching points · Staff · Equipment · Setup · Just for tonight), so
+   removing it is closing a door, never deleting held data: the label, then a trailing control,
+   pinned apart. (It composed the stations section's head until stage 3 retired that head — D1.) */
+.ppFieldLabelRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
 /* ⚰ `.ppFieldHint` deleted 2026-09-01 (cleanup tranche 6) — zero usages, and it carried a phone
    override at 640 that had never applied to anything either. */
 .ppMinutes { width: 5rem; font-variant-numeric: tabular-nums; }
@@ -9827,9 +9827,14 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   padding: 0.5rem 0.6rem;
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
 }
-.ppBlockOrder { display: flex; flex-direction: column; gap: 0.1rem; flex-shrink: 0; }
+/* .ppBlockOrder retired 2026-09-15 — the open head's reorder pair moved to the gutter (`.ppTlMove`). */
 .ppBlockTitleWrap { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
 .ppBlockTitle { font-weight: 600; }
+/* The closed-season reader's block line — "15 min · 6:00 p.m.–6:15 p.m." under a finished
+   practice's block title (`history/development/practices/[eventId]`). The EDITOR's open head
+   stopped using it at stage 3 (2026-09-15): the clock had already moved to the gutter at stage 1
+   and the ROTATION tag it still carried is said by the strip's pressed "Groups rotate" chip a
+   line down. The reader is not this stage's; the rule stays for it. */
 .ppBlockClock {
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
   font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums;
@@ -9843,15 +9848,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppBlockBody { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.8rem 0.9rem 1rem; }
 
 /* `.ppDuration` — the drill library's usual-minutes row (stage 4's); the block's own row is
-   `.ppClockRow` below (stage 2). `.ppRestToggle` — the stations head's "Groups rotate between
-   them" (stage 3's); the block's Rest of practice is a chip now. */
+   `.ppClockRow` below (stage 2). ⚰ `.ppRestToggle` went with stage 3 (2026-09-15): "Groups rotate"
+   is a pressed chip on the rotation strip now (D3), the block's Rest of practice a chip since stage 2. */
 .ppDuration { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
-.ppRestToggle {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  min-height: var(--tap-min, 44px);
-  font-size: var(--type-body); color: var(--text-secondary); cursor: pointer;
-}
-.ppRestToggle input { width: 1rem; height: 1rem; }
 
 /* ── The open block (practices re-evaluation stage 2 · The block, owner rulings D1–D11, 2026-09-15) ──
    The clock row: five quick lengths as chips, the minutes box, Rest of practice as the last chip,
@@ -9904,6 +9903,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .ppIconBtn:hover:not(:disabled) { color: var(--text-primary); background: var(--white-8); }
 .ppIconBtn:disabled { opacity: 0.3; cursor: default; }
+/* The reorder pair's button — the timeline gutter's up/down and the station column's earlier/later
+   (owner, 2026-09-15). `.ppIconBtn`'s look at a COMPACT size where a mouse is pointing (the gutter
+   is 5.5rem wide; the 44px floor is a finger rule — owner decision 2026-08-19) and at the tap floor
+   on the touch widths, where the 768 block below restores it. */
+.ppMoveBtn { composes: ppIconBtn; min-width: 1.75rem; min-height: 1.75rem; border-radius: 6px; }
 
 /* â”€â”€ Chips (staff, players, focus areas) â”€â”€ */
 .ppChipWrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
@@ -9928,16 +9932,14 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppPickBtn:hover:not(:disabled) { color: var(--text-primary); border-color: var(--white-45); }
 .ppPickBtn:disabled { opacity: 0.4; cursor: default; }
 
-/* â”€â”€ Coaching points â”€â”€ */
-.ppPointRow { display: flex; align-items: center; gap: 0.4rem; }
-.ppPointNum {
-  min-width: 1.2rem; text-align: center; flex-shrink: 0;
-  font-size: var(--type-support); font-weight: 700; color: var(--text-tertiary); font-variant-numeric: tabular-nums;
-}
+/* ⚰ Coaching points as numbered rows (`.ppPointRow` / `.ppPointNum`) went 2026-09-15 — stage 2's
+   D10 made the block's points ONE field, stage 3's D7 finished the same on the station and in the
+   drill library (`components/coaches/PracticeFields.tsx`). */
 
-/* â”€â”€ Stations â”€â”€ */
-.ppStations { display: flex; flex-direction: column; gap: 0.6rem; }
-.ppStationsHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+/* ── Stations ──
+   The station CARD below is the closed-season reader's (`history/development/practices/[eventId]`)
+   — the practice editor stopped drawing cards at stage 3 (2026-09-15): one station flattens into
+   its block (D1), two or more stand as COLUMNS (`.ppStCol`, below) and open as a modal (D4). */
 .ppStation {
   border: 1px solid var(--white-8); border-radius: 10px;
   background: var(--home-olive-soft, rgba(255,255,255,0.02));
@@ -9947,32 +9949,115 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   padding: 0.45rem 0.55rem;
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
 }
-.ppStationNum {
-  min-width: 1.4rem; text-align: center; flex-shrink: 0;
-  font-size: var(--type-support); font-weight: 700; color: var(--text-tertiary); font-variant-numeric: tabular-nums;
-}
-.ppStationName { flex: 1 1 auto; min-width: 0; }
 .ppStationBody { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.7rem 0.8rem; }
 
-/* â”€â”€ Rotation â”€â”€ */
-.ppRotation {
-  display: flex; flex-direction: column; gap: 0.75rem;
-  padding: 0.75rem 0.8rem; border-radius: 10px;
-  border: 1px solid var(--white-8); background: var(--home-olive-soft, rgba(255,255,255,0.02));
+/* ── Stations as COLUMNS under their block (practices re-evaluation stage 3, owner ruling D2,
+   2026-09-15) ── each its name · who runs it · tonight's note · the first line of what happens
+   there, and an "Open ›"; "+ Add a station" the last column. A column is a FRAME (`.ppStCol`)
+   around the DOOR — a button that opens the station's modal, the whole face of the card, the tap
+   floor its own height — and the reorder pair (`.ppStColMove`, owner 2026-09-15) sitting on the
+   "Open ›" row at the foot's right. The pair is absolutely placed: it cannot live inside the door
+   (a button in a button), and a foot row outside the door would take "Open ›" out of the door's
+   name. The "Open ›" row is as tall as the pair and leaves its width free, so an arrow never sits
+   over a content line. Columns fit as many as keep ~10rem each and wrap the rest to a second row
+   rather than shrink under a finger (three ≈ 230px, four ≈ 170px on the letter-wide sheet); on a
+   phone they stack as rows and the pair turns to point up and down. */
+.ppStCols { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.6rem; min-width: 0; }
+.ppStCol {
+  position: relative; display: flex; flex-direction: column; align-items: stretch; min-width: 0;
+  border-radius: 10px; text-align: left;
+  border: 1px solid var(--home-line-strong, var(--border-2)); background: var(--home-card, var(--white-8));
+  color: var(--text-primary); font: inherit;
 }
-.ppRotationTimes { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
-.ppGroupsHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
-/* ⚰ `.ppGroupTools` (+ its `select` child rule and both 640 overrides) deleted 2026-09-01, cleanup
-   tranche 6 — zero usages. The rotation's group controls render through `.ppGroupWays` below. */
-.ppSplitNote { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
-.ppGroupList { display: flex; flex-direction: column; gap: 0.5rem; }
-.ppGroup { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.5rem 0.6rem; border: 1px solid var(--white-8); border-radius: 8px; }
-.ppGroupHead { display: flex; align-items: center; gap: 0.4rem; }
-.ppGroupName { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+.ppStCol:hover { border-color: var(--white-45); }
+.ppStColDoor {
+  display: flex; flex-direction: column; align-items: stretch; gap: 0.25rem; flex: 1 1 auto; min-width: 0;
+  padding: 0.6rem 0.75rem; margin: 0; border: 0; border-radius: inherit; background: none;
+  cursor: pointer; text-align: left; color: inherit; font: inherit;
+}
+.ppStColAdd {
+  composes: ppStCol; gap: 0.25rem; padding: 0.6rem 0.75rem; cursor: pointer;
+  border-style: dashed; background: none; justify-content: center;
+}
+.ppStColName { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ppStColLine { font-size: var(--type-support); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ppStColNote { composes: ppStColLine; color: var(--home-amber, var(--warning)); }
+.ppStColFirst { composes: ppStColLine; color: var(--text-tertiary); }
+/* The door's word in the sheet's quiet-link voice; pinned to the column's foot so three columns'
+   "Open ›" sit on one line however their lines above wrap. As tall as the reorder pair beside it
+   and clear of its width (two 1.75rem buttons and the inset), so the pair overlays only this row. */
+.ppStColOpen {
+  composes: ppQuietLink; display: flex; align-items: center; margin-top: auto; padding-top: 0.2rem;
+  min-height: 1.75rem; padding-right: 4rem; font-size: var(--type-support);
+}
+.ppStColAdd .ppStColOpen { min-height: 0; padding-right: 0; }
+.ppStColMove { position: absolute; right: 0.5rem; bottom: 0.6rem; display: inline-flex; align-items: center; }
 
-/* The computed group Ã— round grid â€” a genuine 2-D comparison, so it scrolls sideways with a
+/* ── The rotation as ONE line between the block's words and its columns (stage 3, D3) ──
+   the "Groups rotate" chip · every N min · the honest rounds line. The draw left the line for
+   the groups room (stage 3 revision, D9 · D12, 2026-09-16). */
+.ppRotStrip { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.45rem; min-width: 0; font-size: var(--type-support); color: var(--text-secondary); }
+.ppRotEvery { display: inline-flex; align-items: center; gap: 0.3rem; }
+.ppRotMinutes { width: 3.6rem; }
+.ppRotRounds { color: var(--text-primary); font-weight: 600; }
+.ppRotQuiet { color: var(--text-tertiary); }
+
+/* ── Under the columns: the grid TURNED to them (D6), the statements, the groups READ BACK (D9 ·
+   D11) — one quiet line each, the names in no group on their own line, "Edit groups ›" the one
+   door. A read, not an editor: no name boxes, no chips, no bins. ── */
+.ppRotBoard { display: flex; flex-direction: column; gap: 0.5rem; }
+.ppSplitNote { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
+.ppGroupRead { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.ppGroupReadLine { margin: 0; font-size: var(--type-support); color: var(--text-primary); line-height: 1.5; overflow-wrap: anywhere; }
+.ppGroupReadLine b { font-weight: 600; }
+.ppGroupReadQuiet { color: var(--text-secondary); }
+.ppGroupReadQuiet i { color: var(--text-tertiary); }
+.ppGroupReadLine .ppTlQuietLink { font-size: var(--type-support); }
+
+/* ── The GROUPS ROOM (stage 3 revision, D9 · D10 · D11 · D12, 2026-09-16) — a modal on the shared
+   floor: the draw as a row (the way as two pressed chips, the number, the pool word, the button),
+   then the columns — a dashed "Not in a group" pool and one card per group (its name, its chips,
+   its bin). A chip is the shared action menu's `chip` trigger AND a drag handle; the column under
+   a lifted chip fills, and every column shows its edge while anything is lifted. Columns fit as
+   many as keep ~9rem and wrap the rest; on a phone they stack as rows (the 640 block). ── */
+/* Wider than the standing wide modal: the pool and three groups side by side at ~9rem each (the
+   drawing's 760); a fourth and more wrap to a second row rather than shrink under a finger. */
+.ppGroupsRoom { max-width: 800px; }
+.ppGroupsBody { display: flex; flex-direction: column; gap: 0.8rem; padding: 0.7rem 0.8rem 0.9rem; }
+.ppDrawRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
+.ppDrawWay { display: inline-flex; gap: 0.25rem; }
+/* The count as a menu — the native select in the row's own size. */
+.ppDrawSelect { width: auto; min-height: 2rem; padding: 0.2rem 1.6rem 0.2rem 0.5rem; font-size: var(--type-support); font-weight: 600; }
+.ppDrawBtn { composes: btnSecondary; min-height: 2rem; padding: 0.2rem 0.7rem; font-size: var(--type-support); }
+.ppGroupCols { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; min-width: 0; }
+.ppGroupCol {
+  display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; min-height: 8rem;
+  padding: 0.55rem 0.6rem 0.5rem; border-radius: 10px;
+  border: 1px solid var(--home-line-strong, var(--border-2)); background: var(--home-paper, var(--white-05));
+}
+.ppGroupColPool { border-style: dashed; background: var(--home-card, var(--white-05)); }
+/* While a chip is lifted every column shows its edge; the one under the pointer fills. */
+.ppGroupCols[data-lifting='on'] .ppGroupCol { border-style: dashed; border-color: var(--text-tertiary); }
+.ppGroupCol[data-over='on'] { border-style: solid; border-color: var(--home-olive, var(--primary)); background: var(--home-olive-soft, var(--white-8)); }
+.ppGroupColHead { display: flex; align-items: center; min-width: 0; }
+.ppGroupName { width: 100%; min-width: 0; font-weight: 600; }
+.ppGroupPoolName { font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); min-height: 2.2rem; display: inline-flex; align-items: center; }
+/* `align-content: flex-start`: a wrapped flex box that is taller than its lines would otherwise
+   SPREAD the lines over the spare height (the pool column, stretched to its row, showed two chips
+   a hand apart). */
+.ppGroupChips { display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 0.35rem; flex: 1 1 auto; min-width: 0; }
+.ppGroupColFoot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 0.2rem; }
+.ppGroupColHint { font-size: var(--type-label); color: var(--text-tertiary); font-style: italic; }
+/* The chip's wrapper carries the drag listeners around the menu's own trigger. A name that has
+   not replied yes wears a dashed edge wherever it stands; the one being carried leaves a ghost. */
+.ppGroupChip { display: inline-flex; min-width: 0; touch-action: manipulation; }
+.ppGroupChip[data-lifted='on'] { opacity: 0.35; }
+.ppGroupChip[data-reply='no'] > button, .ppChip[data-reply='no'] { border-style: dashed; color: var(--text-secondary); background: var(--home-paper, var(--white-05)); }
+/* The lifted copy, drawn in the overlay: the chip with a shadow. */
+.ppGroupChipLifted { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28); border-color: var(--home-olive, var(--primary)); cursor: grabbing; }
+
+/* The computed round × station grid — a genuine 2-D comparison, so it scrolls sideways with a
    sticky first column rather than becoming cards (the .tableAsCards / CoachScrollX rule). */
-.ppGridWrap { display: flex; flex-direction: column; gap: 0.4rem; }
 .ppGridScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .ppGrid { border-collapse: collapse; width: 100%; min-width: 22rem; font-size: var(--type-support); }
 .ppGrid th, .ppGrid td {
@@ -9988,8 +10073,41 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums;
   position: sticky; left: 0; background: var(--card-bg);
 }
-.ppGridTime { display: block; font-size: var(--type-label); font-weight: 500; color: var(--text-tertiary); }
 .ppGrid tbody td { color: var(--text-secondary); }
+/* Turned to the station columns (stage 3, D6): the stations head the columns in the order and
+   widths of the cards above (fixed layout, so they share the width evenly as the columns do), a
+   round's clock is its row head, and each cell — the group there then — reads centred. */
+.ppGridCols { table-layout: fixed; }
+.ppGridCols thead th:first-child { width: 4.5rem; }
+.ppGridCols th, .ppGridCols td { white-space: normal; overflow-wrap: anywhere; }
+/* A round's row head is a CLOCK — "5:16 p.m." in the gutter's own face, never the global `th`
+   rule's small caps (which would print "5:16 P.M.", a third spelling of the clock the product
+   forbids everywhere a customer reads a time). */
+.ppGridCols tbody th {
+  font-family: var(--font-data); text-transform: none; letter-spacing: 0; color: var(--text-secondary);
+}
+.ppGridCols tbody td { text-align: center; font-weight: 600; color: var(--text-primary); }
+/* ── The grid as a starting point (stage 3 revision, D14, 2026-09-16) ──
+   A group in a cell is the shared menu's chip (a pill with a grip) that also drags along its row;
+   a cell is a drop target — every cell of the lifted pill's row shows a dashed edge while it is
+   up, the one under the pointer fills; a cell with nobody reads "—"; a "Sitting out" column
+   appears only while someone sits a round out. Padding tightens so a pill sits in the cell
+   rather than floating in it. */
+/* With pills in the cells the columns can no longer share the width evenly (a pill does not wrap
+   the way a name did): the table sizes to its pills and grows past the sheet when it must, and
+   `.ppGridScroll` owns the sideways scroll — the layout gate's rule, "a scroller owns it". */
+.ppGridPills { table-layout: auto; width: max-content; min-width: 100%; }
+.ppGridPills thead th:first-child { width: auto; }
+.ppGridCols tbody td[data-target='on'] { outline: 1.5px dashed var(--text-tertiary); outline-offset: -3px; }
+.ppGridCols tbody td[data-over='on'] { outline: 2px solid var(--home-olive, var(--primary)); outline-offset: -2px; background: var(--home-olive-soft, var(--white-8)); }
+/* Two groups sharing a station STACK in the cell (owner, 2026-09-16 — side by side, one shared
+   cell doubled its column and pushed a six-station grid off the sheet); a column is never wider
+   than one pill. */
+.ppGridCellWrap { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; max-width: 100%; }
+.ppGridName { font-weight: 600; }
+.ppGridName + .ppGridName::before { content: '+'; margin-right: 0.25rem; color: var(--text-tertiary); font-weight: 400; }
+.ppGridNone { color: var(--text-tertiary); font-weight: 400; }
+.ppGridCols th.ppGridOutHead, .ppGridCols td.ppGridOutCell { border-left-style: dashed; color: var(--text-tertiary); }
 .ppNotes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .ppNotes li { font-size: var(--type-support); color: var(--text-tertiary); }
 
@@ -10157,6 +10275,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   white-space: nowrap;
 }
 .ppTlGutter small { display: block; font-size: var(--type-label); color: var(--text-tertiary); }
+/* The reorder pair under the time (owner, 2026-09-15 — it had been the open head's, so a shut row
+   could not be moved without opening it). Right-aligned with the clock; the negative right margin
+   sets the glyphs, not the buttons' boxes, on the clock's right edge; the negative bottom margin
+   gives back most of the pair's height to the gutter's padding so a two-line row grows by ~half a
+   line, not a whole one. */
+.ppTlMove { display: flex; justify-content: flex-end; margin: 0.1rem -0.4rem -0.45rem 0; }
 /* A closed block is a ROW — the whole row is the button that opens it. */
 .ppTlClosed {
   display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start; width: 100%;
@@ -10220,6 +10344,22 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      row's links already hold (stage 2, D8); the chips take it with the suggest-chip family. */
   .ppDoorsLine .ppTlQuietLink, .ppWhoLine .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   .ppRecordedList a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  /* The groups read-out's door (stage 3 revision) takes the floor; the room's draw row, its name
+     boxes and its bins take it from the room's own wrapper, which sits outside the open block. */
+  .ppGroupReadLine .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .ppGroupsRoom .ppDrawSelect, .ppGroupsRoom .ppDrawBtn, .ppGroupsRoom .ppGroupName { min-height: var(--tap-min, 44px); }
+  .ppGroupsRoom .ppIconBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  /* The station MODAL's fields (stage 3, D4) sit outside the open block, so the block's one floor
+     rule above cannot reach them — the same floor from the modal's own wrapper (the sweep's
+     first look at the modal found the name, the goal, the pickers and the note at 35–37px). */
+  .ppStationModal input:not([type='checkbox']), .ppStationModal select, .ppStationModal textarea { min-height: var(--tap-min, 44px); }
+  /* The reorder pairs (owner, 2026-09-15) take the floor — both ways, they are icon-only. Two
+     finger-wide buttons side by side are 88px, so the gutter widens to hold them (5.5rem held the
+     clock alone), and the station column's "Open ›" row grows to the pair's height and clears its
+     width, so the pair never sits over a content line. */
+  .ppMoveBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  .ppTlRow { grid-template-columns: 6.25rem minmax(0, 1fr); }
+  .ppStColOpen { min-height: var(--tap-min, 44px); padding-right: 6rem; }
 }
 
 /* 640 = CONTENT reflow: the sheet drops its frame on the phone (the frame's own 390 — no border, no
@@ -10232,12 +10372,23 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .ppDocHead { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
   .ppDocWhenDay { display: block; }
   .ppDocWhenSep { display: none; }
-  /* 5rem: "12:00 p.m." at the label size measures 66px; 4.6rem left 65 (/review, 2026-09-14). */
-  .ppTlRow { grid-template-columns: 5rem minmax(0, 1fr); }
+  /* 5.75rem: the reorder pair at the tap floor is 88px wide and sits flush to the spine (its
+     negative right margin cancels the gutter's padding); "12:00 p.m." at the label size measures
+     66px and had 5rem until the pair arrived (owner, 2026-09-15) — the block gives up 12px for it
+     rather than stacking the pair, which would have made every row ~75px taller. */
+  .ppTlRow { grid-template-columns: 5.75rem minmax(0, 1fr); }
   .ppTlGutter { font-size: var(--type-label); padding: 0.75rem 0.4rem 0.75rem 0; }
   .ppTlClosed { padding-left: 0.75rem; }
   .ppTlGhost { padding-left: 0.75rem; }
   .ppTlOpen { margin-left: 0.4rem; }
+  /* Columns become rows on a phone (stage 3, D2): one station per row, nothing else re-arranges —
+     except the reorder pair, which turns to point up and down, the way the rows now run. */
+  .ppStCols { grid-template-columns: minmax(0, 1fr); }
+  .ppStColMove svg { transform: rotate(90deg); }
+  /* The groups room's columns stack as rows on a phone too (stage 3 revision, D10 · D11): the
+     name box on its own line, the chips under it at the floor, the bin at the foot. */
+  .ppGroupCols { grid-template-columns: minmax(0, 1fr); }
+  .ppGroupCol { min-height: 0; }
   .ppAboutBody, .ppFoldBody { padding-left: 0; }
   .ppAboutPreview { margin-left: 0; }
   .ppRailName { flex-basis: 7.5rem; }
@@ -10465,11 +10616,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    module), and the practice reads as a door in the when-line. The list's caption link is
    `.devSessionAt` at the end of this file. */
 
-/* Practice plan — a count inside a chip (a group's size beside its name). */
-.ppChipCount {
-  font-size: var(--type-label); font-weight: 700; color: var(--text-tertiary);
-  border-left: 1px solid var(--border-2); padding-left: 0.3rem; margin-left: 0.1rem;
-}
 /* An inline correction the coach must see before autosave silently drops what they typed. */
 /* ⚠⚠ `--warn` WAS A GHOST TOKEN — defined nowhere in the codebase, so this warning has rendered as
    ordinary body text for its entire life while looking, in source, like it was amber. That is
@@ -10481,29 +10627,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    whole reason the ghost-token ban exists, and because "it looked amber in source" is exactly how
    this rule survived long enough to also become dead. */
 
-/* The optional range: its box and the control that clears it sit as one unit. */
-.ppRangeWrap { display: inline-flex; align-items: center; gap: 0.15rem; }
-
-/* The two ways to make groups, stated separately. Cramming "how many / draw / add" into one row
-   left nothing to explain which control belonged to which choice. */
-.ppGroupWays { display: flex; flex-direction: column; gap: 0.5rem; }
-.ppGroupWay {
-  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
-  padding: 0.5rem 0.6rem; border: 1px solid var(--white-8); border-radius: 8px;
-}
-.ppGroupWayLabel {
-  font-size: var(--type-support); font-weight: 600; color: var(--text-secondary);
-  min-width: 9.5rem;
-}
-.ppGroupWayControls { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.ppGroupWayControls select { width: auto; min-width: 9.5rem; }
+/* ⚰ `.ppRangeWrap` and the two-way group builder (`.ppGroupWays` family) went with stage 3
+   (2026-09-15): the draw became ONE control on the rotation strip (D5, `.ppDrawCtl`) — and that
+   went in turn with the stage 3 revision (2026-09-16), when the draw moved into the groups room
+   (`.ppDrawRow`) and the group rows (`.ppGroupRow` / `.ppGroupList`) became the read-out. */
 /* A unit sitting tight against its own box, rather than floating after two of them. */
 .ppUnit { font-size: var(--type-support); color: var(--text-tertiary); }
-@media (max-width: 640px) {
-  .ppGroupWay { flex-direction: column; align-items: stretch; }
-  .ppGroupWayLabel { min-width: 0; }
-  .ppGroupWayControls select { flex: 1 1 auto; min-width: 0; }
-}
 
 /* Previously-used labels, offered as tappable chips. A datalist alone is invisible until you
    type, so the control read as free text — these make it obviously a picker. */
@@ -10550,6 +10679,17 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 
 .ppDrillActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* Flattened into its block (stage 3, D1), the provenance line also carries "Edit just for this
+   practice · Swap drill" — the doors sit where the block's own words would, on one wrapping line. */
+.ppFromDrillLine { flex-wrap: wrap; gap: 0.3rem 0.6rem; }
+.ppFromDrillLine .ppAddInline { min-height: 0; font-size: var(--type-label); }
+
+/* ── A station OPEN as a modal (stage 3, D4 as revised 2026-09-15) ── the portal's own modal at the
+   wide width, its head the station's name (typeable for a written station) and nothing else — the
+   reorder arrows it first carried left for the column's foot (`.ppStColMove`) the same day — its
+   foot Delete this station and the room's Prev / Next stepper. */
+.ppStationModal .modalTitle { flex: 1 1 auto; min-width: 0; margin-right: 0.5rem; }
+.ppStationTitle { font-size: var(--type-heading); font-weight: 700; }
 
 /* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
 .ppSharedChip {

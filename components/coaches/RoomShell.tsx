@@ -64,6 +64,43 @@ export interface RoomNav {
   onSelect: (id: string) => void;
 }
 
+/**
+ * The room's named Prev / Next — "‹ Bottle drive · 2 of 3 drives · Car wash ›". ONE control, two
+ * hosts: the money rooms' foot below, and the practice sheet's station modal (practices
+ * re-evaluation stage 3, owner ruling D4, 2026-09-15 — "the same pattern the fundraiser drive
+ * drawer already uses", so it is the same component rather than a second drawing of it). The
+ * arrows STOP at the ends — disabled, reading "Start" / "End" — they never wrap; the position
+ * count sits between them; `busy` freezes both while a write is in flight. The keys (← / →) are
+ * the dialog floor's (`useDialogFloor`'s `walk`), which every host wires beside this.
+ */
+export function RoomWalkNav({ nav, busy = false }: { nav: RoomNav; busy?: boolean }) {
+  return (
+    <nav className={s.nav} aria-label={`Other ${nav.noun}`}>
+      <button
+        type="button"
+        className={s.navBtn}
+        disabled={!nav.prev || busy}
+        aria-label={nav.prev ? `Previous: ${nav.prev.label}` : 'No previous record'}
+        onClick={() => { if (nav.prev) nav.onSelect(nav.prev.id); }}
+      >
+        <ChevronLeft size={16} aria-hidden />
+        <span className={s.navLabel}>{nav.prev?.label ?? 'Start'}</span>
+      </button>
+      <span className={s.navCount}>{nav.index} of {nav.total} {nav.noun}</span>
+      <button
+        type="button"
+        className={s.navBtn}
+        disabled={!nav.next || busy}
+        aria-label={nav.next ? `Next: ${nav.next.label}` : 'No next record'}
+        onClick={() => { if (nav.next) nav.onSelect(nav.next.id); }}
+      >
+        <span className={s.navLabel}>{nav.next?.label ?? 'End'}</span>
+        <ChevronRight size={16} aria-hidden />
+      </button>
+    </nav>
+  );
+}
+
 export interface RoomHistory {
   /** The figures the closed fold carries beside its title ("$1,250.00 received · 1 payout"). */
   meta?: ReactNode;
@@ -238,31 +275,7 @@ export default function RoomShell({
         {hasFoot && (
           <div className={s.foot}>
             <div className={s.footDoors}>{footer}</div>
-            {nav && (
-              <nav className={s.nav} aria-label={`Other ${nav.noun}`}>
-                <button
-                  type="button"
-                  className={s.navBtn}
-                  disabled={!nav.prev || busy}
-                  aria-label={nav.prev ? `Previous: ${nav.prev.label}` : 'No previous record'}
-                  onClick={() => { if (nav.prev) nav.onSelect(nav.prev.id); }}
-                >
-                  <ChevronLeft size={16} aria-hidden />
-                  <span className={s.navLabel}>{nav.prev?.label ?? 'Start'}</span>
-                </button>
-                <span className={s.navCount}>{nav.index} of {nav.total} {nav.noun}</span>
-                <button
-                  type="button"
-                  className={s.navBtn}
-                  disabled={!nav.next || busy}
-                  aria-label={nav.next ? `Next: ${nav.next.label}` : 'No next record'}
-                  onClick={() => { if (nav.next) nav.onSelect(nav.next.id); }}
-                >
-                  <span className={s.navLabel}>{nav.next?.label ?? 'End'}</span>
-                  <ChevronRight size={16} aria-hidden />
-                </button>
-              </nav>
-            )}
+            {nav && <RoomWalkNav nav={nav} busy={busy} />}
           </div>
         )}
       </div>

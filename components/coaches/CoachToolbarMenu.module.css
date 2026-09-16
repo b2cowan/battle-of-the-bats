@@ -130,3 +130,25 @@
   background: rgba(var(--home-lime-rgb), 0.82);
   opacity: 1;
 }
+
+/* The trigger as a NAME PILL (`variant="chip"`) — the groups room's player chip (stage 3
+   revision, D10). The portal's `.ppChip` recipe: a white pill lifted off the block's cream, the
+   support size, the name in the primary ink; the grip glyph the caller passes as `icon` is the
+   drag hint. Open = the pressed look the quick chips wear. The tap floor arrives at ≤768 with the
+   rest of the portal's chips (the tablet-band ruling), not at every width — a mouse row of 44px
+   pills is a row of buttons. */
+.triggerChip {
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.4rem;
+  border-radius: 999px;
+  font-size: var(--type-support);
+  color: var(--text-primary);
+  background: var(--home-card, rgba(255, 255, 255, 0.07));
+  cursor: grab;
+}
+.triggerChip:hover:not(:disabled) { background: var(--home-card, rgba(255, 255, 255, 0.07)); border-color: var(--white-45); }
+.triggerChip.triggerOpen { background: var(--home-olive-soft, rgba(255, 255, 255, 0.11)); border-color: var(--text-primary); }
+.triggerChip > svg { color: var(--text-tertiary); }
+@media (max-width: 768px) {
+  .triggerChip { min-height: var(--tap-min, 44px); }
+}

@@ -128,16 +128,85 @@ fixture carries a Staff line the frame did not); the drill-placed block 1,033 (d
 the block is 240px wide on a phone, not the frame's ~290, and its title field is narrow beside the three head buttons — both stage
 1's sheet, one line each to change. The walk is the hub's "QA walk · 2" tab (34 steps, eight parts), ledger §190.
 
-## Stage 3 · Stations and the rotation — DRAWN 2026-09-15 · not ruled
+## Stage 3 · Stations and the rotation — RULED 2026-09-15 (D4 as revised) · BUILT ON DEV 2026-09-15 · §192 walk COMPLETE 2026-09-15 · commit owed
 
-**The question first:** a block with one station — does it flatten into the block (the drill's words as the block's body; recommended,
-567px against 922 today) or keep its card? Then: stations side by side as columns under their block (rows on a phone), each showing
-its name, who runs it and tonight's note and opening for the rest; the rotation as **one line** (rotates · every N min · the rounds
-that makes · the draw as one control); the grid under the columns **in the same columns**, so reading down is one station's evening;
-coaching points as one field on a station and in the drill library; and people moving the way kit does when a station arrives,
-never silently deleted. The circuit block measures 4,083px on the fixture today; the drawing is 835. Eight decisions with
-recommendations on the hub's "3 · Stations and the rotation" tab.
+**What a coach sees now.** A block with **one** station stops being a list of one: the drill's words sit right under the clock
+row with *Edit just for this practice · Swap drill* beside the provenance line, Players reads *Whole team · Choose players…*, and
+Staff, Just for tonight and Stations wait as doors — no "Stations" heading, no numbered card, no second bin. A circuit's stations
+stand **side by side as columns** (name · who runs it · an amber "Tonight: …" · the first line · *Open ›*), with "+ Add a station" the
+last column; three fit at a glance, the rest wrap, and on a phone they stack as rows. Above them the rotation is **one line** — a
+pressed **Groups rotate** chip, *every 15 min*, and the honest arithmetic ("3 rounds of 15 = 45 min", or "45 does not divide by 20 —
+2 rounds and 5 min over") — with the draw as **one control**: "3 groups ▾ · from who replied · Draw". Under the columns the grid
+**turned**: rounds as rows with their clock, the stations as columns, so reading down a column is that station's whole evening;
+the groups are listed under it with an *edit* into the same picker. **Tap a column and the station opens as a modal** (the D4
+revision — the owner's read of the built draw showed that "see where you are in the sequence" is a reason that holds for blocks,
+which run in order, and not for stations, which only share a clock), with every field on one sheet and a **stepper in the foot** —
+"‹ Footwork ladder · 2 of 3 stations · Finishing ›" — the money room's own Prev/Next, stopping at the ends; ← / → step too; Escape
+closes and puts the coach back on the column. Coaching points are **one field** on a station and in the drill library, as on the
+block. And **nothing typed vanishes**: name six players on a block and add a station — they move onto it; turn rotating on — they are
+dealt into the first groups; turn it off — each group lands on the station it started at; remove the last station — they come home.
+
+**Why it matters.** The circuit's open block was 4,083px tall on the fixture — a panel of controls above three stacked cards above a
+grid nobody scrolled to. It is 1,140 now with the grid AND the groups on the block, and the whole evening reads in one screen. The
+one silent delete the sanitiser still had is gone.
+
+**Measured on the build:** the drill-placed block 618px open (drawn 567); four 180px columns at desktop, three 168px at 768 with the
+add column wrapping, stacked rows at 390; the modal 640 wide on a desktop and a full-screen sheet on a phone. **Two things for the
+walk:** a block's only station cannot be removed on its own (as ruled — the block's bin is the bin; say if it should keep a quiet
+Remove after all), and the strip wraps onto several lines on the phone's 240px block. The walk is the hub's "QA walk · 3" tab
+(30 steps, nine parts), ledger §192; no migration, no new key on the plan.
 
 ## What comes next
 
-The stage 2 walk (§190) and its commit on the owner's word; the stage 3 rulings on the hub; then the stage 3 build in a fresh chat.
+The stage 3 commit on the owner's word. **The §192 walk is complete (2026-09-15) and sent one thing forward:** a block the
+coach wrote without stations — a title, what you're doing, what you're watching for, coaching points, equipment; the most
+common kind — has no *Save to my drills…* door, because the door lives on a station. That block is a drill in everything but
+name, so the library stage decides whether the door comes to it (recommended: yes). Also open: the groups board drawn on the
+stage-3 tab after the build (where groups are edited, drag between groups, a "Not in a group" row, one draw menu — D9–D12,
+to rule), and whether a lone station keeps a quiet Remove (G1). **Next: stage 4 · The library — planned and drawn first,
+then ruled, then built** (kickoff prompt `COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md`): browsable rows for drills and
+templates, the library beside the plan on desktop, the owner's ruling on drag (S.4 — ruled together with the groups board's
+D10, one reason at two scales), empty templates no longer offered as starts, and the drill editor's shape.
+
+## Stage 4 · The library — DRAWN 2026-09-16 on the hub · to rule · no code
+
+**What a coach sees and does differently.** The Drills and Templates tabs become tables you can actually browse: a drill row
+reads its name, its tags, how long it usually runs, "In 8 plans" and the first line of what you're doing; a template row
+reads its name, its tags, the titles of its blocks and its length. Click a row and the thing opens — there are no Edit and
+Retire buttons on every row any more; Retire lives inside the drill's sheet, beside Cancel and Save. On a phone a row is as
+tall as its words (today every row is 267px, even an empty template — twenty templates are 5,300px of scroll). On a wide
+desktop the library sits beside the plan: the sheet returns to its letter width, the panel takes the rest, and a drill is
+dragged onto the page — between two blocks to become a new block, or onto the open block's "+ Add a station" to become a
+station — while "Add" on every row and the sheet still do the same for a keyboard, a tablet or a phone. A block the coach
+wrote can be kept: *Save to my drills…* appears at the foot of a written block with no stations, and the drill takes the
+block's minutes as how long it usually runs. An empty template is no longer offered as a start (making one is still
+allowed — the template editor is a good blank page). The drill sheet is the station modal's shape with the library's two
+facts first. The provenance line is one sentence. The hub's past list loses its six-row cap behind one quiet door;
+Practice review stays under Insights.
+
+**Why.** Week three: Tuesday should start from last Tuesday, and the ladder drill written once should be there next time.
+The library moved under Practice plans at stage 0; this stage makes it readable, reachable from the page, and complete —
+the §192 walk's finding (the bare block with no door) was a coach doing the most ordinary thing and finding the product
+had no answer. Drag was ruled first, on the groups board (D10 — people between groups, in the Groups room) — one question
+at two scales, one reason: a plan is written at a desk; the field and the phone keep their buttons.
+
+**Measured (true size on the hub).** The Drills table of five rows 285px against 88px per card today; the Templates table
+309px; the docked pair at 1440 — the sheet 816 wide at 576px, the panel 320 wide at 738px (the pair is exactly the
+header's 1,156 column); the drill sheet 653px against 867 today; the bare Warm-up block open with its door 507px; five phone
+cards 395px against 267px per row today.
+
+**Decisions to rule (L1–L8, printed D1–D8 in the paste-back).** The bare block's door · drag as an addition on desktop ·
+the rows as tables (with the row-actions call inside it) · empty templates kept but not offered · the docked panel (A
+recommended; B, a drawer, drawn) · the drill sheet's shape · the one-sentence provenance line · no fourth tab, the past list
+uncapped. Then the build prompt, then the build.
+
+**Ruled 2026-09-16 (owner, in chat: "so this mockup looks great, I approve everything as designed thus far") — L1–L8 as
+drawn.** On the ruling the owner asked for the one thing still missing between a drill and a template: **a saved circuit** — a
+block with stations a coach can keep and drag onto another practice, alongside each station saved as a drill. Drawn as L9
+the same day and ruled in words: the block's foot door reads by shape (*Save to my drills…* on a plain block, *Save to my
+circuits…* on one with stations); the save asks two optional questions — tags, and "also save its written stations as drills"
+(the saved circuit then points at those drills; tonight's block is left exactly as it is); a fourth tab, **Practices ·
+Templates · Circuits · Drills** (a size ladder); the docked panel switches Drills · Circuits; a circuit drags into a gap and
+lands as a whole, editable block — its stations and rotation, never its people — with "Started from Skills circuit · changes
+here stay here". A circuit follows the template's rule (scaffolding), not the drill's. It is the stage's one migration. **Next:
+build from the stage-4 build prompt; the walk follows.**

@@ -14,11 +14,15 @@ import {
   isPracticePlanEmpty,
   practiceKitBag,
   resolvePracticePlanTagNames,
-  settleBlockKit,
+  settleBlockKit, settleBlockPeople, settlePlanLevels,
+  describeRounds, rotationByStation, stationWalk,
+  movePlayerToGroup, unplacedPlayers,
+  splitBlockIntoStations, collapseSoleStation,
+  arrangeGroup, forgetArrangement, settleArrangements,
   sanitizePracticePlan,
   totalPlannedMinutes,
 } from '../../lib/rep-practice-plan.ts';
-import type { PracticePlan, PracticeStation } from '../../lib/types.ts';
+import type { PracticePlan, PracticeRotation, PracticeStation } from '../../lib/types.ts';
 
 /** A deterministic rng for the draw — sequence repeats, so shuffles are reproducible. */
 function seededRng(seed: number): () => number {
@@ -118,7 +122,7 @@ describe('sanitizePracticePlan', () => {
     assert.deepEqual(p?.blocks[0].playerIds, ['p1', 'p2']);
   });
 
-  it('adding stations moves people off the block — one level answers "who is here"', () => {
+  it('adding stations moves people off the block ONTO the first station — one level answers "who is here" (D8)', () => {
     const p = sanitizePracticePlan({
       blocks: [{
         title: 'Stations', rotates: false, duration: { minutes: 20 },
@@ -127,10 +131,11 @@ describe('sanitizePracticePlan', () => {
       }],
     });
     assert.equal(p?.blocks[0].playerIds, undefined, 'the block-level list is gone');
-    assert.deepEqual(p?.blocks[0].stations?.[0].playerIds, ['p1'], 'the stations keep theirs');
+    assert.deepEqual(p?.blocks[0].stations?.[0].playerIds, ['p1'], 'the first station took the block\'s names — p2 already stood at Toss, so it stays there and lands nowhere else');
+    assert.deepEqual(p?.blocks[0].stations?.[1].playerIds, ['p2'], 'the other stations keep theirs');
   });
 
-  it('a ROTATING block keeps people only in its groups — not on the block, not on the stations', () => {
+  it('a ROTATING block keeps people only in its groups — a name on the block or a station JOINS them (D8)', () => {
     const p = sanitizePracticePlan({
       blocks: [{
         title: 'Carousel', duration: { minutes: 45 },
@@ -141,7 +146,7 @@ describe('sanitizePracticePlan', () => {
     });
     assert.equal(p?.blocks[0].playerIds, undefined);
     assert.equal(p?.blocks[0].stations?.[0].playerIds, undefined);
-    assert.deepEqual(p?.blocks[0].rotation?.groups[0].playerIds, ['p1']);
+    assert.deepEqual(p?.blocks[0].rotation?.groups[0].playerIds, ['p1', 'p2'], 'p2 was a stray and joined the standing group');
   });
 
   it('drops a legacy range entirely — ranges were removed (owner 2026-08-01)', () => {
@@ -394,6 +399,221 @@ describe('drawGroups (D21 — deliberately dumb)', () => {
     const a = drawGroups(players, 'groups', 3, seededRng(1)).map(g => g.playerIds.join(','));
     const b = drawGroups(players, 'groups', 3, seededRng(999)).map(g => g.playerIds.join(','));
     assert.notDeepEqual(a, b);
+  });
+});
+
+describe('the groups room — movePlayerToGroup / unplacedPlayers (stage 3 revision, D10 · D11)', () => {
+  const roster = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
+  const rotation = (): PracticeRotation => ({
+    intervalMinutes: 15,
+    groupSource: 'random',
+    groups: [
+      { id: 'a', name: 'Group A', playerIds: ['p1', 'p2'] },
+      { id: 'b', name: 'Group B', playerIds: ['p4', 'p5'] },
+    ],
+  });
+
+  it('a player lands in ONE group and leaves the other — in roster order, never where let go', () => {
+    const next = movePlayerToGroup(rotation(), 'p1', 'b', roster);
+    assert.deepEqual(next.groups.map(g => g.playerIds), [['p2'], ['p1', 'p4', 'p5']]);
+    assert.equal(next.groupSource, 'manual', 'placing by hand makes the groups chosen');
+  });
+
+  it('null takes a player out of every group', () => {
+    const next = movePlayerToGroup(rotation(), 'p4', null, roster);
+    assert.deepEqual(next.groups.map(g => g.playerIds), [['p1', 'p2'], ['p5']]);
+  });
+
+  it('a player from nowhere joins a group in roster order', () => {
+    const next = movePlayerToGroup(rotation(), 'p3', 'a', roster);
+    assert.deepEqual(next.groups[0].playerIds, ['p1', 'p2', 'p3']);
+    assert.deepEqual(movePlayerToGroup(rotation(), 'p6', 'a', roster).groups[0].playerIds, ['p1', 'p2', 'p6']);
+    assert.deepEqual(movePlayerToGroup(rotation(), 'p3', 'b', roster).groups[1].playerIds, ['p3', 'p4', 'p5']);
+  });
+
+  it('returns the SAME object when nothing would change — already there, already out, unknown target', () => {
+    const r = rotation();
+    assert.equal(movePlayerToGroup(r, 'p1', 'a', roster), r);
+    assert.equal(movePlayerToGroup(r, 'p3', null, roster), r);
+    assert.equal(movePlayerToGroup(r, 'p1', 'nope', roster), r);
+    assert.equal(r.groupSource, 'random', 'and the source is untouched');
+  });
+
+  it('a stale id (off the roster) sorts last and is never dropped', () => {
+    const r: PracticeRotation = { ...rotation(), groups: [{ id: 'a', name: 'Group A', playerIds: ['gone', 'p2'] }] };
+    assert.deepEqual(movePlayerToGroup(r, 'p1', 'a', roster).groups[0].playerIds, ['p1', 'p2', 'gone']);
+  });
+
+  it('unplacedPlayers is the roster minus every group, in roster order — where a binned group lands', () => {
+    const people = roster.map(id => ({ id }));
+    assert.deepEqual(unplacedPlayers(people, rotation().groups).map(p => p.id), ['p3', 'p6']);
+    const binned = rotation().groups.filter(g => g.id !== 'b');
+    assert.deepEqual(unplacedPlayers(people, binned).map(p => p.id), ['p3', 'p4', 'p5', 'p6']);
+    assert.deepEqual(unplacedPlayers(people, []).map(p => p.id), roster);
+  });
+});
+
+describe('D13 — "+ Stations" on a written block makes TWO; binning back to one comes home', () => {
+  const written = (): PracticePlan['blocks'][number] => ({
+    id: 'b1', title: 'Passing drill', duration: { minutes: 15 },
+    description: 'Two lines facing.', goal: 'Weight of pass.', coachingPoints: ['Head up', 'Follow your pass'],
+    equipmentTagIds: ['cones'], playerIds: ['p1', 'p2'], staffTagIds: ['coach-bob'],
+  });
+  let n = 0;
+  const ids = () => `s${++n}`;
+
+  it('the words move into station 1, named after the block; the block keeps title, minutes, staff, kit and people for the settle pass', () => {
+    const out = splitBlockIntoStations(written(), { id: 'new', name: '' }, ids);
+    assert.equal(out.stations?.length, 2);
+    const [first, second] = out.stations!;
+    assert.equal(first.name, 'Passing drill');
+    assert.equal(first.description, 'Two lines facing.');
+    assert.equal(first.goal, 'Weight of pass.');
+    assert.deepEqual(first.coachingPoints, ['Head up', 'Follow your pass']);
+    assert.equal(second.id, 'new');
+    assert.equal(out.description, undefined);
+    assert.equal(out.goal, undefined);
+    assert.equal(out.coachingPoints, undefined);
+    assert.equal(out.title, 'Passing drill');
+    assert.deepEqual(out.staffTagIds, ['coach-bob']);
+    // kit and people are the settle pass's to move — they are still on the block here
+    assert.deepEqual(out.equipmentTagIds, ['cones']);
+    assert.deepEqual(out.playerIds, ['p1', 'p2']);
+    // and the settle pass moves them onto station 1 / into the first draw
+    const settled = settlePlanLevels({ version: 3, blocks: [out] }).blocks[0];
+    assert.deepEqual(settled.stations?.[0].equipmentTagIds, ['cones']);
+    assert.equal(settled.playerIds, undefined);
+    assert.equal(settled.rotation?.groups.flatMap(g => g.playerIds).length, 2);
+  });
+
+  it('an EMPTY block — no title, no words — splits too: what arrives is station 1 and a blank station 2 stands beside it (owner, 2026-09-16)', () => {
+    const empty = { ...written(), title: '', description: undefined, goal: undefined, coachingPoints: undefined };
+    const out = splitBlockIntoStations(empty, { id: 'new', name: 'Drill', drillId: 'd1' }, ids);
+    assert.equal(out.stations?.length, 2);
+    assert.equal(out.stations?.[0].id, 'new', 'the drill is station 1');
+    assert.equal(out.stations?.[1].name, '', 'a blank station 2 to type into');
+    const blank = splitBlockIntoStations(empty, { id: 'w', name: '' }, ids);
+    assert.equal(blank.stations?.length, 2, 'two blank stations when you write one');
+    // and binning one of two blanks comes home to an empty block again
+    assert.equal(collapseSoleStation({ ...blank, stations: [blank.stations![0]] }).stations, undefined);
+  });
+
+  it('a TITLE alone is an activity — "Warm-up" with nothing typed under it still splits (owner, 2026-09-16)', () => {
+    const titled = { ...written(), description: undefined, goal: undefined, coachingPoints: undefined };
+    const out = splitBlockIntoStations(titled, { id: 'new', name: '' }, ids);
+    assert.equal(out.stations?.length, 2);
+    assert.equal(out.stations?.[0].name, 'Passing drill');
+    assert.equal(out.stations?.[0].description, undefined);
+    assert.equal(out.stations?.[1].id, 'new');
+    // and it comes home when the second is binned — a nameless survivor with no words goes quietly
+    const back = collapseSoleStation({ ...out, stations: [out.stations![0]] });
+    assert.equal(back.stations, undefined);
+    assert.equal(back.title, 'Passing drill');
+  });
+
+  it('a block that already has stations just gains one', () => {
+    const circuit = { ...written(), stations: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }] };
+    const out = splitBlockIntoStations(circuit, { id: 'c', name: 'C' }, ids);
+    assert.deepEqual(out.stations?.map(s => s.id), ['a', 'b', 'c']);
+    assert.equal(out.description, 'Two lines facing.', 'the intro stays the intro');
+  });
+
+  it('the reverse: one written station left and no block words → the words come back up, the station goes', () => {
+    const block: PracticePlan['blocks'][number] = {
+      id: 'b1', title: 'Passing drill', duration: { minutes: 15 },
+      stations: [{ id: 's1', name: 'Passing drill', description: 'Two lines facing.', goal: 'Weight of pass.', coachingPoints: ['Head up'], staffTagIds: ['bob'], equipmentTagIds: ['cones'], playerIds: ['p1'] }],
+    };
+    const out = collapseSoleStation(block);
+    assert.equal(out.stations, undefined);
+    assert.equal(out.description, 'Two lines facing.');
+    assert.equal(out.goal, 'Weight of pass.');
+    assert.deepEqual(out.coachingPoints, ['Head up']);
+    assert.deepEqual(out.staffTagIds, ['bob']);
+    assert.deepEqual(out.equipmentTagIds, ['cones']);
+    assert.deepEqual(out.playerIds, ['p1']);
+  });
+
+  it('…but NOTHING merges or drops: intro words on the block, a drill, a setup or a note keep the station', () => {
+    const base: PracticePlan['blocks'][number] = { id: 'b1', title: 'X', duration: { minutes: 15 }, stations: [{ id: 's1', name: 'S', description: 'words' }] };
+    assert.equal(collapseSoleStation({ ...base, goal: 'intro' }).stations?.length, 1);
+    assert.equal(collapseSoleStation({ ...base, stations: [{ ...base.stations![0], drillId: 'd1' }] }).stations?.length, 1);
+    assert.equal(collapseSoleStation({ ...base, stations: [{ ...base.stations![0], setup: 'cones' }] }).stations?.length, 1);
+    assert.equal(collapseSoleStation({ ...base, stations: [{ ...base.stations![0], note: 'tonight' }] }).stations?.length, 1);
+    assert.equal(collapseSoleStation({ ...base, stations: [base.stations![0], { id: 's2', name: 'T' }] }).stations?.length, 2, 'two stations are not a collapse');
+  });
+});
+
+describe('D14 — the rotation grid is a starting point the coach can arrange', () => {
+  const stations: PracticeStation[] = [{ id: 'test', name: 'test' }, { id: 'test2', name: 'test2' }];
+  const rotation = (): PracticeRotation => ({
+    intervalMinutes: 15, groupSource: 'random',
+    groups: [{ id: 'A', name: 'Group A', playerIds: ['p1'] }, { id: 'B', name: 'Group B', playerIds: ['p2'] }],
+  });
+
+  it('the first move remembers the carousel and changes one cell; the grid reads it', () => {
+    const r = arrangeGroup(rotation(), stations, 30, 1, 'B', 'test');
+    assert.ok(r.arrangement, 'an arrangement now exists');
+    assert.deepEqual(r.arrangement!.placements, [{ A: 'test', B: 'test' }, { A: 'test2', B: 'test' }]);
+    const grid = computeRotation(r, stations, 30);
+    assert.equal(grid.arranged, true);
+    assert.deepEqual(grid.roundsList[0].cells.map(c => `${c.groupName}@${c.stationName}`), ['Group A@test', 'Group B@test']);
+    assert.ok(grid.notes.includes('Group A and Group B share test in round 1.'));
+    assert.ok(grid.notes.includes('test2 has nobody in round 1.'));
+    assert.ok(grid.notes.includes("Group B won't reach test2."));
+    assert.ok(!grid.notes.includes('Everyone does everything.'));
+  });
+
+  it('null sits a group out: no cell, named in `out`, said in the notes', () => {
+    const r = arrangeGroup(rotation(), stations, 30, 2, 'A', null);
+    const grid = computeRotation(r, stations, 30);
+    assert.deepEqual(grid.roundsList[1].cells.map(c => c.groupName), ['Group B']);
+    assert.deepEqual(grid.roundsList[1].out.map(o => o.groupName), ['Group A']);
+    assert.ok(grid.notes.includes('Group A sits round 2 out.'));
+    const turned = rotationByStation(grid, stations);
+    assert.deepEqual(turned.rows[1].out.map(o => o.name), ['Group A']);
+    assert.deepEqual(turned.rows[1].cellGroups.map(c => c.map(g => g.id)), [['B'], []], 'B keeps its standard round-2 place at test');
+  });
+
+  it('a move that changes nothing, or names what the rotation lacks, hands the same object back', () => {
+    const r = rotation();
+    assert.equal(arrangeGroup(r, stations, 30, 1, 'A', 'test'), r, 'A already stands at test in round 1');
+    assert.equal(arrangeGroup(r, stations, 30, 3, 'A', 'test2'), r, 'no round 3');
+    assert.equal(arrangeGroup(r, stations, 30, 1, 'Z', 'test'), r, 'no group Z');
+    assert.equal(arrangeGroup(r, stations, 30, 1, 'A', 'nowhere'), r, 'no such station');
+  });
+
+  it('"Back to the standard rotation" forgets it; the carousel reads exactly as before', () => {
+    const r = forgetArrangement(arrangeGroup(rotation(), stations, 30, 1, 'B', 'test'));
+    assert.equal(r.arrangement, undefined);
+    const grid = computeRotation(r, stations, 30);
+    assert.equal(grid.arranged, false);
+    assert.ok(grid.notes.includes('Everyone does everything.'));
+  });
+
+  it('a station or group added, or the clock changed, RESETS it — the settle pass drops what no longer fits', () => {
+    const arranged = arrangeGroup(rotation(), stations, 30, 1, 'B', 'test');
+    const block = (over: Partial<PracticePlan['blocks'][number]>): PracticePlan => ({
+      version: 3, blocks: [{ id: 'b', title: 'Circuit', duration: { minutes: 30 }, stations, rotation: arranged, ...over }],
+    });
+    assert.ok(settleArrangements(block({})).blocks[0].rotation?.arrangement, 'unchanged facts keep it');
+    assert.equal(settleArrangements(block({ stations: [...stations, { id: 'x', name: 'X' }] })).blocks[0].rotation?.arrangement, undefined, 'a station added');
+    assert.equal(settleArrangements(block({ duration: { minutes: 45 } })).blocks[0].rotation?.arrangement, undefined, 'three rounds now');
+    assert.equal(settleArrangements(block({ rotation: { ...arranged, groups: [...arranged.groups, { id: 'C', name: 'Group C', playerIds: ['p3'] }] } })).blocks[0].rotation?.arrangement, undefined, 'a group added');
+    // a rename or reorder of the same stations keeps it
+    assert.ok(settleArrangements(block({ stations: [{ id: 'test2', name: 'Renamed' }, { id: 'test', name: 'test' }] })).blocks[0].rotation?.arrangement, 'same ids, new names and order');
+    // computeRotation makes the same call at read time when it does not fit
+    assert.equal(computeRotation(arranged, [...stations, { id: 'x', name: 'X' }], 30).arranged, false);
+  });
+
+  it('the sanitiser keeps a well-formed arrangement and drops a malformed or unfitting one', () => {
+    const arranged = arrangeGroup(rotation(), stations, 30, 1, 'B', 'test');
+    const plan: PracticePlan = { version: 3, blocks: [{ id: 'b', title: 'Circuit', duration: { minutes: 30 }, stations, rotation: arranged }] };
+    const clean = sanitizePracticePlan(plan);
+    assert.deepEqual(clean!.blocks[0].rotation?.arrangement?.placements, arranged.arrangement!.placements);
+    const junk = sanitizePracticePlan({ ...plan, blocks: [{ ...plan.blocks[0], rotation: { ...arranged, arrangement: { rounds: 'two', placements: 'no' } } }] });
+    assert.equal(junk!.blocks[0].rotation?.arrangement, undefined);
+    const stale = sanitizePracticePlan({ ...plan, blocks: [{ ...plan.blocks[0], duration: { minutes: 45 } }] });
+    assert.equal(stale!.blocks[0].rotation?.arrangement, undefined, 'the clock moved — dropped on the way in');
   });
 });
 
@@ -821,6 +1041,204 @@ describe('sanitizePracticePlan — kit lives at exactly ONE level, and MOVES (D1
     const p = plan({ blocks: [{ id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, equipmentTagIds: ['ladders'] }] });
     const copy = copyPracticePlanForReuse(p, new Set(), () => 'new');
     assert.deepEqual(copy.blocks[0].equipmentTagIds, ['ladders']);
+  });
+});
+
+describe('sanitizePracticePlan — people live at exactly ONE level, and MOVE with it (stage 3, D8)', () => {
+  const six = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
+
+  it('a block with NO stations keeps its own names', () => {
+    const p = sanitizePracticePlan({ blocks: [{ title: 'Warm-up', duration: { minutes: 15 }, playerIds: six }] });
+    assert.deepEqual(p?.blocks[0].playerIds, six);
+    assert.equal(p?.blocks[0].rotation, undefined);
+  });
+
+  it('the block\'s names land on the FIRST station when one arrives — a drill station holds people too', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Probe drill', duration: { minutes: 20 }, playerIds: six,
+        stations: [{ name: 'Probe drill', drillId: 'd1' }],
+      }],
+    });
+    assert.equal(p?.blocks[0].playerIds, undefined, 'the block-level list is gone');
+    assert.deepEqual(p?.blocks[0].stations?.[0].playerIds, six, 'the drill station holds them — people are the practice\'s half');
+  });
+
+  it('rotating turns ON with names and no groups → the FIRST DRAW: dealt in stored order, one group per station, not shuffled', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Circuit', duration: { minutes: 45 },
+        stations: [{ name: 'Tees', playerIds: six }, { name: 'Toss' }, { name: 'Bunt' }],
+      }],
+    });
+    const groups = p?.blocks[0].rotation?.groups ?? [];
+    assert.deepEqual(groups.map(g => g.name), ['Group A', 'Group B', 'Group C']);
+    assert.deepEqual(groups.map(g => g.playerIds), [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6']], 'consecutive runs in stored order');
+    assert.equal(p?.blocks[0].rotation?.groupSource, 'manual', 'not a shuffle — Draw is the shuffle');
+    assert.ok(p?.blocks[0].stations?.every(s => s.playerIds === undefined), 'no station holds people in a rotation');
+  });
+
+  it('fewer names than stations → fewer groups, never an empty one; stray names join standing groups round-robin', () => {
+    const two = sanitizePracticePlan({
+      blocks: [{ title: 'Circuit', duration: { minutes: 45 }, playerIds: ['p1', 'p2'], stations: [{ name: 'A' }, { name: 'B' }, { name: 'C' }] }],
+    });
+    assert.deepEqual(two?.blocks[0].rotation?.groups.map(g => g.playerIds), [['p1'], ['p2']]);
+    const standing = sanitizePracticePlan({
+      blocks: [{
+        title: 'Circuit', duration: { minutes: 45 }, playerIds: ['p5', 'p6', 'p7'],
+        stations: [{ name: 'A' }, { name: 'B' }],
+        rotation: { intervalMinutes: 15, groupSource: 'random', groups: [{ name: 'Group A', playerIds: ['p1', 'p2'] }, { name: 'Group B', playerIds: ['p3', 'p4'] }] },
+      }],
+    });
+    assert.deepEqual(standing?.blocks[0].rotation?.groups.map(g => g.playerIds), [['p1', 'p2', 'p5', 'p7'], ['p3', 'p4', 'p6']]);
+    assert.equal(standing?.blocks[0].rotation?.groupSource, 'random', 'the sanitiser joining a stray is not a coach\'s hand on a drawn group — the source stands (/review, 2026-09-15)');
+  });
+
+  it('a stale rotation beside a hand-placed station list never books one child at two stations (/review, 2026-09-15)', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Separate', rotates: false, duration: { minutes: 45 },
+        stations: [{ name: 'A' }, { name: 'B', playerIds: ['p1'] }],
+        rotation: { intervalMinutes: 15, groups: [{ name: 'Group A', playerIds: ['p1', 'p2'] }] },
+      }],
+    });
+    assert.deepEqual(p?.blocks[0].stations?.[0].playerIds, ['p2'], 'p1 already stands at B — only p2 lands on A');
+    assert.deepEqual(p?.blocks[0].stations?.[1].playerIds, ['p1']);
+  });
+
+  it('a stray joining standing groups is capped like every list — a read after the write sees what was written (/review, 2026-09-15)', () => {
+    const many = Array.from({ length: 59 }, (_, i) => `p${i + 1}`);
+    const strays = Array.from({ length: 5 }, (_, i) => `s${i + 1}`);
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Circuit', duration: { minutes: 45 }, playerIds: strays,
+        stations: [{ name: 'A' }, { name: 'B' }],
+        rotation: { intervalMinutes: 15, groups: [{ name: 'Group A', playerIds: many }] },
+      }],
+    });
+    assert.equal(p?.blocks[0].rotation?.groups[0].playerIds.length, 60, 'the cap holds on the way in');
+    assert.deepEqual(sanitizePracticePlan(JSON.parse(JSON.stringify(p))), p, 'and the read returns the same plan');
+  });
+
+  it('rotating turns OFF → each group lands on the station it STARTED at (the grid\'s own first row), and the rotation goes', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Circuit', rotates: false, duration: { minutes: 45 },
+        stations: [{ name: 'A' }, { name: 'B' }],
+        rotation: { intervalMinutes: 15, groups: [
+          { name: 'Group A', playerIds: ['p1', 'p2'] }, { name: 'Group B', playerIds: ['p3', 'p4'] }, { name: 'Group C', playerIds: ['p5', 'p6'] },
+        ] },
+      }],
+    });
+    assert.equal(p?.blocks[0].rotation, undefined, 'a block that does not rotate carries no rotation');
+    assert.deepEqual(p?.blocks[0].stations?.[0].playerIds, ['p1', 'p2', 'p5', 'p6'], 'groups A and C both started at the first station');
+    assert.deepEqual(p?.blocks[0].stations?.[1].playerIds, ['p3', 'p4']);
+  });
+
+  it('the last station goes → everyone comes back to the block\'s own list', () => {
+    const p = sanitizePracticePlan({
+      blocks: [{
+        title: 'Was a circuit', duration: { minutes: 45 }, stations: [],
+        rotation: { intervalMinutes: 15, groups: [{ name: 'Group A', playerIds: ['p1', 'p2'] }, { name: 'Group B', playerIds: ['p3'] }] },
+      }],
+    });
+    assert.deepEqual(p?.blocks[0].playerIds, ['p1', 'p2', 'p3']);
+    assert.equal(p?.blocks[0].rotation, undefined);
+  });
+
+  it('a name outside the roster never moves anywhere — the roster check runs first', () => {
+    const p = sanitizePracticePlan(
+      { blocks: [{ title: 'Drill', duration: { minutes: 20 }, playerIds: ['p1', 'gone'], stations: [{ name: 'S' }] }] },
+      new Set(['p1']),
+    );
+    assert.deepEqual(p?.blocks[0].stations?.[0].playerIds, ['p1']);
+  });
+
+  it('the move is IDEMPOTENT and DETERMINISTIC — a second pass finds nothing to move (it runs on read as well as write)', () => {
+    const once = sanitizePracticePlan({
+      blocks: [{ title: 'Circuit', duration: { minutes: 45 }, playerIds: six, stations: [{ name: 'A' }, { name: 'B' }] }],
+    });
+    const twice = sanitizePracticePlan(JSON.parse(JSON.stringify(once)));
+    assert.deepEqual(twice, once);
+    const again = sanitizePracticePlan({
+      blocks: [{ title: 'Circuit', duration: { minutes: 45 }, playerIds: six, stations: [{ name: 'A' }, { name: 'B' }] }],
+    });
+    assert.deepEqual(again, once, 'the same input deals the same hand — no dice in the sanitiser');
+  });
+
+  it('settleBlockPeople is the one pass the editor and the sanitiser share — pure, and the same object when nothing moves', () => {
+    const untouched = plan({ blocks: [{ id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, playerIds: six }] });
+    assert.equal(settleBlockPeople(untouched), untouched, 'no stations — nothing moves, the same object');
+    const before = plan({ blocks: [{ id: 'b1', title: 'Drill', duration: { minutes: 20 }, playerIds: six, stations: [{ id: 's1', name: 'Probe drill', drillId: 'd1' }] }] });
+    const snapshot = JSON.stringify(before);
+    const after = settleBlockPeople(before);
+    assert.equal(JSON.stringify(before), snapshot, 'the input is untouched');
+    assert.deepEqual(after.blocks[0].stations?.[0].playerIds, six);
+    assert.equal(after.blocks[0].playerIds, undefined);
+    assert.equal(settleBlockPeople(after), after, 'idempotent — a second pass finds nothing to move');
+  });
+
+  it('settlePlanLevels runs kit then people — one call, so neither pass can be forgotten', () => {
+    const before = plan({ blocks: [{ id: 'b1', title: 'Drill', duration: { minutes: 20 }, playerIds: ['p1'], equipmentTagIds: ['ladders'], stations: [{ id: 's1', name: 'Tees' }] }] });
+    const after = settlePlanLevels(before);
+    assert.deepEqual(after.blocks[0].stations?.[0].playerIds, ['p1']);
+    assert.deepEqual(after.blocks[0].stations?.[0].equipmentTagIds, ['ladders']);
+    assert.equal(after.blocks[0].playerIds, undefined);
+    assert.equal(after.blocks[0].equipmentTagIds, undefined);
+  });
+});
+
+describe('the rotation as the editor lays it out (stage 3 — presentation over computeRotation)', () => {
+  it('describeRounds states the clock honestly and never tidies a spare minute', () => {
+    assert.equal(describeRounds(45, 15), '3 rounds of 15 = 45 min');
+    assert.equal(describeRounds(45, 20), '45 does not divide by 20 — 2 rounds and 5 min over');
+    assert.equal(describeRounds(20, 20), '1 round of 20 = 20 min');
+    assert.equal(describeRounds(10, 15), '10 min is less than one 15-min round');
+    assert.equal(describeRounds(null, 15), '', 'nothing to say until both numbers exist');
+    assert.equal(describeRounds(45, null), '');
+  });
+
+  it('rotationByStation turns the same cells to the station columns — down a column is one station\'s evening', () => {
+    const stations: PracticeStation[] = [{ id: 's1', name: 'Ladder' }, { id: 's2', name: 'Control' }, { id: 's3', name: 'Finishing' }];
+    const rotation = { intervalMinutes: 15, groupSource: 'manual' as const, groups: [
+      { id: 'a', name: 'Group A', playerIds: ['p1'] }, { id: 'b', name: 'Group B', playerIds: ['p2'] }, { id: 'c', name: 'Group C', playerIds: ['p3'] },
+    ] };
+    const grid = computeRotation(rotation, stations, 45);
+    const turned = rotationByStation(grid, stations);
+    assert.deepEqual(turned.stations.map(s => s.name), ['Ladder', 'Control', 'Finishing']);
+    assert.deepEqual(turned.rows.map(r => r.cells.map(c => c.join('+'))), [
+      ['Group A', 'Group B', 'Group C'],
+      ['Group C', 'Group A', 'Group B'],
+      ['Group B', 'Group C', 'Group A'],
+    ]);
+    // Down the first column is the Ladder's whole evening — the same cells `computeRotation` gave the groups.
+    assert.deepEqual(grid.roundsList.map(r => r.cells[0].stationName), ['Ladder', 'Control', 'Finishing'], 'group A\'s own row, unchanged');
+  });
+
+  it('rotationByStation — two groups sharing a station sit in one cell; an idle station is an empty cell; an unnamed station has no column', () => {
+    const stations: PracticeStation[] = [{ id: 's1', name: 'Ladder' }, { id: 's2', name: 'Control' }, { id: 's3', name: '   ' }];
+    const four = computeRotation({ intervalMinutes: 15, groupSource: 'manual', groups: [
+      { id: 'a', name: 'A', playerIds: ['p1'] }, { id: 'b', name: 'B', playerIds: ['p2'] }, { id: 'c', name: 'C', playerIds: ['p3'] },
+    ] }, stations, 30);
+    const turned = rotationByStation(four, stations);
+    assert.equal(turned.stations.length, 2, 'the blank station is not a stop');
+    assert.deepEqual(turned.rows[0].cells, [['A', 'C'], ['B']], 'A and C share the Ladder in round 1');
+    const one = computeRotation({ intervalMinutes: 15, groupSource: 'manual', groups: [{ id: 'a', name: 'A', playerIds: ['p1'] }] }, stations, 30);
+    assert.deepEqual(rotationByStation(one, stations).rows[0].cells, [['A'], []], 'Control sits idle in round 1');
+  });
+
+  it('stationWalk — the stepper STOPS at both ends (the room\'s rule), names its destinations, and reads "Station N" for an unnamed one', () => {
+    const stations: PracticeStation[] = [{ id: 's1', name: 'Ladder' }, { id: 's2', name: '' }, { id: 's3', name: 'Finishing' }];
+    const first = stationWalk(stations, 's1');
+    assert.equal(first.prev, null, 'no wrap from the first to the last');
+    assert.deepEqual(first.next, { id: 's2', label: 'Station 2' });
+    assert.deepEqual([first.index, first.total], [1, 3]);
+    const last = stationWalk(stations, 's3');
+    assert.equal(last.next, null, 'no wrap from the last to the first');
+    assert.deepEqual(last.prev, { id: 's2', label: 'Station 2' });
+    const middle = stationWalk(stations, 's2');
+    assert.deepEqual([middle.prev?.label, middle.next?.label], ['Ladder', 'Finishing']);
+    assert.deepEqual(stationWalk(stations, 'gone'), { prev: null, next: null, index: 0, total: 3 });
   });
 });
 

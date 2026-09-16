@@ -24,7 +24,7 @@ import {
 } from '@/lib/practice-state';
 import {
   MAX_RECAP_LEN,
-  blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan,
+  blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan, rotationShape,
   formatDuration, isPracticePlanEmpty, newPracticePlanId, practiceKitBag, resolvePracticePlanTagNames,
   resolveStationTeaching, tagNamesById,
   type PracticePlan,
@@ -629,12 +629,20 @@ export default function CoachPracticePlanPage({
         const grid = computeRotation(
           block.rotation, block.stations, block.duration.minutes ?? null, clock?.startMs,
         );
+        // Columns are the groups in the rotation's own order; each round's row reads that group's
+        // station by ID — never by cell position, because a hand-arranged grid (D14) can put a
+        // group anywhere in a round or sit it out, and the paper must say which.
+        const { groups: printed } = rotationShape(block.rotation, block.stations, block.duration.minutes ?? null);
         rotation = {
-          groupNames: grid.roundsList[0]?.cells.map(c => c.groupName) ?? [],
-          rounds: grid.roundsList.map(r => ({
-            round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
-            stations: r.cells.map(c => c.stationName || '—'),
-          })),
+          groupNames: printed.map(g => g.name),
+          rounds: grid.roundsList.map(r => {
+            const at = new Map(r.cells.map(c => [c.groupId, c.stationName || '—']));
+            const out = new Set(r.out.map(o => o.groupId));
+            return {
+              round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
+              stations: printed.map(g => at.get(g.id) ?? (out.has(g.id) ? 'sits out' : '—')),
+            };
+          }),
           notes: grid.notes,
           groups: block.rotation.groups.map(g => ({
             name: g.name,

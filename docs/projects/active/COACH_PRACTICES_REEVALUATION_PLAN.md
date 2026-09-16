@@ -1,6 +1,6 @@
 # Practices — holistic re-evaluation: the stage ladder, and stage 0 · Arrive
 
-**Plan · 15 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled, built, walked (§188 complete) and committed `6cff92e8` · stage 2 · The block RULED 2026-09-15 (D1–D11 all as drawn, §5.0) and BUILT ON DEV the same day (§5.10) · §190 WALK COMPLETE (§5.11) and COMMITTED `d52085a2` · stage 3 · Stations and the rotation RULED 2026-09-15 (D1–D3 · D5–D8 as drawn, D4 revised — §6.0) · NOT BUILT · kickoff prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md)**
+**Plan · 15 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled, built, walked (§188 complete) and committed `6cff92e8` · stage 2 · The block RULED 2026-09-15 (D1–D11 all as drawn, §5.0) and BUILT ON DEV the same day (§5.10) · §190 WALK COMPLETE (§5.11) and COMMITTED `d52085a2` · stage 3 · Stations and the rotation RULED 2026-09-15 (D1–D3 · D5–D8 as drawn, D4 revised — §6.0) · BUILT ON DEV 2026-09-15 (§6.7 · §6.8) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · commit owed on the owner's word · the groups-board revision (§6.9, D9–D12) drawn, RULED B 2026-09-16 and BUILT ON DEV the same evening (the Groups ROOM — WALKED by the owner 2026-09-16 — hub QA walk · 3 part J) · D13–D14 (§6.11: the split on "+ Stations", the grid as a starting point) drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (parts K · L) · stage 4 · The library **DRAWN 2026-09-16 on the hub ("4 · The library" tab) · RULED 2026-09-16 (owner, in chat: "I approve everything as designed" — L1–L8 as drawn, §7.0) · L9 · Circuits added on the ruling and ruled in words the same day (§7.7) · BUILD NEXT — kickoff prompt [COACH_PRACTICES_STAGE4_BUILD_PROMPT.md](COACH_PRACTICES_STAGE4_BUILD_PROMPT.md) · no code yet** (drag drawn on D10's ruling; the planning prompt: [COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md](COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md)) (stage 3's build prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md))**
 Companions: [PM brief](COACH_PRACTICES_REEVALUATION_PM_BRIEF.md) · the walk + every stage's proposal on ONE artifact:
 https://claude.ai/code/artifact/5c3d2f1b-5159-4d99-bad7-c48b2820da28 (source `COACH_PRACTICES_REEVALUATION.html` — republish the
 SAME path / `url`) · kickoff prompt used for this stage: [COACH_PRACTICES_STAGE0_BUILD_PROMPT.md](COACH_PRACTICES_STAGE0_BUILD_PROMPT.md)
@@ -27,9 +27,9 @@ be (a three-block practice is 6,627px and 59 inputs on desktop; the printed run 
 | 0 | **Arrive** — the Practice plans hub | The room opens on the next practice; the count means what is still to come; the past reads as a record; the room becomes the hub for templates and drills (tabs); the fresh-team empty state; the Overview's next-event card | **Ruled 2026-09-14 (D1–D8 as drawn) · built, walked (§186 passed 24/24) and committed `b3c97830`** — §3 below |
 | 1 | **The blank page** — the plan page as a document (walk stations 1 · 3) | S.1 is decided here: date · time · length; the timeline; the first block; the rail as a fold; the sheet-shaped page. **First decision: the boundary question** (§2). **Last decision (D9): station 1's question — a practice needs an end time, the Add Practice form asks for it** — this page is built on it | **Ruled 2026-09-14 (D1–D9 as drawn) · built on dev the same day · seven owner revisions on the build · §188 walk COMPLETE 2026-09-14 · commit owed** — §4 below |
 | 2 | **The block** | One block's anatomy as the row stage 1 made open in place: four things always (title · clock row · Doing · Watching for) plus Players (Whole team or names), the rest behind doors; one vocabulary at both levels; the clock row with quick lengths and "ends …"; the shut row's line; a drill-placed block's face; coaching points as one field; kit at one level with the top list as the bag; Escape on every sheet | **RULED 2026-09-15 (D1–D11 all as drawn) · BUILT ON DEV the same day · /simplify · /review (3 confirmed + fixed) · /docs done · §190 walk owed · commit owed · no migration** — §5 below |
-| 3 | **Stations & rotation** | The sole-station question first (flatten, or keep the card); stations as columns under their block, rows on a phone; the rotation as one line; a station column that opens for the rest; the draw as one control; the grid in the same columns; points as one field on a station and in the library; people MOVE like kit | **Drawn 2026-09-15 on the hub ("3 · Stations and the rotation", D1–D8 with recommendations, notes 31–42, live heights: the circuit 4,083px on the fixture → 835 drawn; the sole station 922 → 567 flattened) · not ruled, not built** |
-| 4 | **The library** | The Templates and Drills tab ROWS (minutes · tags · first line), the library docked beside the plan on desktop, drag as an addition — **drag needs the owner's ruling (S.4)**; "reorder with buttons, never drag" stands until then | not drawn |
-| 5 | **Paper & the field** | The run door's window on the plan page, "everyone" chips, the printed sheet | not drawn |
+| 3 | **Stations & rotation** | The sole-station question first (flatten, or keep the card); stations as columns under their block, rows on a phone; the rotation as one line; a station column that opens for the rest; the draw as one control; the grid in the same columns; points as one field on a station and in the library; people MOVE like kit | **Drawn 2026-09-15 on the hub ("3 · Stations and the rotation", D1–D8 with recommendations, notes 31–42, live heights: the circuit 4,083px on the fixture → 835 drawn; the sole station 922 → 567 flattened) · RULED 2026-09-15 (D4 as REVISED — a modal with a stepper) · BUILT ON DEV 2026-09-15 (§6.7: the circuit 1,140 built at 1440 with the grid and the groups on the block, the drill-placed block 618) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · commit owed · the groups-board revision (§6.9, D9–D12) drawn 2026-09-15 · RULED B 2026-09-16 · BUILT ON DEV 2026-09-16 (the Groups ROOM; walked by the owner 2026-09-16, part J) · D13–D14 drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (§6.11; parts K · L)** |
+| 4 | **The library** | The Templates and Drills tab rows on the list recipe (the row is the door; a drill row reads its first line, a template row its blocks; a phone card as tall as its words); the library docked beside the plan on a wide desktop (the sheet back at 816, the panel in the rest — the header's column); drag as an addition on desktop with a mouse — a drill onto the page, a block by its gutter — buttons everywhere; *Save to my drills…* on the bare written block (and the import reads bare blocks); an empty template not offered as a start; the drill sheet as the station modal's shape with Retire in its foot; the provenance line as one sentence; the hub's past list uncapped behind one door, Practice review left under Insights | **DRAWN 2026-09-16 · RULED 2026-09-16 (L1–L8 as drawn — §7.0) · L9 · Circuits added on the ruling (a saved block with stations: the word circuit, a fourth tab, a two-question save, with stage 4 — §7.7) · BUILD NEXT** (prompt [COACH_PRACTICES_STAGE4_BUILD_PROMPT.md](COACH_PRACTICES_STAGE4_BUILD_PROMPT.md)); step zero — D9–D12 ruled B / yes / as drawn 2026-09-15 before any drag was drawn · no code yet |
+| 5 | **Paper & the field** | The run door's window on the plan page, "everyone" chips, the printed sheet — **including turning the printed rotation grid to STATION columns to match the screen (owner, 2026-09-16, deferred here from D14: groups in the cells, stacked when they share; a "Sitting out" column when a group sits a round out; the sideways fallback kept for too many stations to fit across the page)**; the field screen's "Rotation due" reads a hand-arranged grid (a sitting-out group already named on its due-moves line) | not drawn |
 | 6 | **Afterwards & who sees what** | "How it went" timing (renders before the practice today), the closed-season shelf, the recap line's second half if not ruled at stage 0 | not drawn |
 
 **Two ladders, two numberings:** the walk's arc counts the eleven SCREENS (stations 0–10); the tabs count the STAGES built. Each tab names the stations it covers — Arrive took 0, 2 and 6 (the first screen, the list, the libraries as tabs); The blank page takes 1 and 3. Station 1 (Put a practice on the calendar) had no stage of its own until the owner asked why (2026-09-14): its one question is the end time, which stage 1 depends on, so it is stage 1's D9. A later stage may depend on an earlier ruling, which is why the tabs are added one at a time. Defects the walk logged that belong
@@ -710,7 +710,7 @@ stage-2 tab carries the three under "Owner revisions on the build".
 
 ## 6. Stage 3 · Stations and the rotation — in full
 
-**RULED 2026-09-15 (owner, in chat: "I did [review the mockup] and I want you to build those as you mocked up. I only mentioned D4 because that was the only one that I wanted changed" — D1–D3 · D5–D8 all Build as drawn, D4 REVISED) · drawn at true size on the hub's "3 · Stations and the rotation" tab · NOT BUILT · kickoff prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md)**
+**RULED 2026-09-15 (owner, in chat: "I did [review the mockup] and I want you to build those as you mocked up. I only mentioned D4 because that was the only one that I wanted changed" — D1–D3 · D5–D8 all Build as drawn, D4 REVISED) · drawn at true size on the hub's "3 · Stations and the rotation" tab · BUILT ON DEV 2026-09-15 (§6.7 · §6.8) · §192 WALK COMPLETE 2026-09-15 (§6.10) · commit owed on the owner's word · the groups-board revision drawn, to rule (§6.9) · kickoff prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md)**
 
 ### 6.0 The rulings (owner, 2026-09-15)
 
@@ -738,7 +738,7 @@ The circuit's title, clock row and two teaching lines stay exactly as stage 2 bu
 ### 6.3 Decisions for the owner — with what rides on each (as ruled 2026-09-15)
 
 - **D1** rides: the open block's body when it has exactly one station; nothing in the model, the sheet or the field screen. Measured: the drill-placed block is 922px as stage 2 left it (head + card), 567px flattened; the circuit is 4,083px today → 835px drawn (before D4's revision).
-- **D2** rides: the stations section's layout; the reorder arrows move to the open station's own head; nothing in the model.
+- **D2** rides: the stations section's layout; the reorder arrows move to the open station's own head (**revised the same day — to the column's own foot; see §6.8**); nothing in the model.
 - **D3** rides: the rotation panel's controls re-laid as one line; the honest-arithmetic statements keep their exact words.
 - **D4** rides: the station card's fields and order; **the open state moves from an inline column to a modal with a prev/next stepper over the block's own stations** (this is the one place this stage's build differs from the frame drawn on 15 Sep — build the modal, not the widening column); "rotationNote" (the informal "swap halfway") stops being offered — it was the answer for a block that does not rotate, and tonight's note already holds it; the key stays readable, nothing migrates.
 - **D5** rides: the draw's three controls become one; `drawGroups` untouched.
@@ -758,6 +758,595 @@ Drawn on 15 September, D4 read the same way every other "open in place" moment o
 
 Eleven frames at true size (the sole-station question in three shapes — today · flattened · card kept; before/after of the circuit open at 1440; the station column open — first as drawn [now marked superseded], then as revised into a modal with a stepper; the phone at 390; the tablet at 768), each with clickable markers carrying the ruling for that element. Markers continue the hub's running numbers (stage 2 used 1–30; this stage's original draw used 31–42; the D4 revision added 43). Source file `docs/projects/active/COACH_PRACTICES_REEVALUATION.html` — republish the SAME path (or pass its `url`) so the version history threads.
 
-### 6.7 Build record
+### 6.7 Build record (2026-09-15)
 
-*(filled in by the build session — see [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md))*
+- **Step zero was NOT clean, and was reconciled first.** `d52085a2` (the §190 walk) had committed the stage-2 editor
+  and its CSS without the module they import from — `blockAsksForTeaching`, `settleBlockKit` and `practiceKitBag` did
+  not exist in the committed `lib/rep-practice-plan.ts`, so a clean checkout of dev did not typecheck. Everything that
+  made it build sat uncommitted beside a peer's Development stage-3 work. Committed on the owner's word as `bcef9af9`
+  (19 practices files; the four shared with the peer — `lib/types.ts`, `layout-screens.mjs`, the seed, the dictionary —
+  staged by hunk from a private index, the peer's hunks left in the working copy untouched). Stage 3 was then built on
+  a base that builds.
+- **Built in one session, D1–D3 · D5–D8 as drawn and D4 as REVISED (the modal, not the widening column);** no migration,
+  no version bump, no new route, no new key on the plan JSON. Dev server: hot reload served every edit including the new
+  shared file and the two shared modules; the restart rule still applies before the owner's browser walk.
+- **D1 as built — the station IS the block.** `BlockCard`'s body has three shapes: no stations (the block is the
+  activity), ONE station (flattened: `StationFields` with `sole` — the drill's provenance line carries *Edit just for
+  this practice · Swap drill*, its read-only words, Setup and Equipment follow, then *Players* reading **Whole team ·
+  Choose players…** (the station's list, read as the block's own line; the roster picker's Whole team button is offered
+  for a sole station), then the doors *+ Staff · + Just for tonight · + Stations*; a WRITTEN sole station's Doing ·
+  Watching for are always asked, its points · setup · equipment · staff · note are doors), two or more (columns). The
+  door set reads THROUGH the sole station (`blockHolds`), every optional field is one row of a table — *applies* and
+  *showing* — so a door and its field can never both be absent or both present; the four doors whose field changes
+  identity with the block's shape (`points` · `setup` · `equipment` · `staff`) are re-seeded when a station arrives
+  or leaves, the rest keep the coach's own open/shut. The sole station's name is not asked (the block's title is its
+  name; *Save to my drills…* promotes under the block's title when the station has none). The old "Stations" head,
+  the numbered card, its trash and `StationCard` are gone. "+ Stations" opens the drill sheet directly — there is no
+  section head left to open — and the door stays mounted while the pick is made, so Escape has its opener.
+- **D2 as built — `StationColumns`.** A column is a `<button>` (the whole card is the door) carrying the name
+  (`stationLabel` — "Station 2" in the quiet italic until named), who runs it (`mergedTagNames`: legacy names ∪ resolved
+  ids, the same resolver `DrillFacts` now uses for kit), an amber *Tonight: …* note, the station's own first line, and
+  *Open ›*; "+ Add a station · a drill, or write one" is the dashed last column. `repeat(auto-fit, minmax(10rem, 1fr))`:
+  **measured 1440 · four 180px columns (three stations + add) on the 778px block; 768 · three 168px columns with the add
+  column wrapping to a second row; 390 · stacked as 209px rows** (the block is 240 wide there — stage 1's H3).
+  The reorder arrows moved to the open station's head (the modal's) — **and then to the column's own foot (§6.8)**.
+- **D3 · D5 as built — `RotationStrip`.** One wrapping line: a pressed **Groups rotate** chip (`ppQuickChip`,
+  `aria-pressed`; un-pressing sets `rotates: false`), *every [N] min*, `describeRounds` — "3 rounds of 15 = 45 min" /
+  "45 does not divide by 20 — 2 rounds and 5 min over" (its two lines of arithmetic deliberately mirror
+  `computeRotation`'s, because the strip states the clock before a single group exists), and the draw as ONE control: a
+  native `<select>` with two groups of options ("2 groups … 12 groups" · "groups of 2 … groups of 8"), the pool in words
+  ("from who replied" / "from the whole roster" — the same pool as before), and **Draw / Draw again**. No separator
+  before the draw (it is the first thing to wrap). A template keeps the chip and the clock and drops the draw.
+  `drawGroups` is untouched; it now shares its deal step (`dealGroups`) with the people pass.
+- **D6 as built — `RotationBoard`.** `rotationByStation` turns `computeRotation`'s cells (the arithmetic untouched)
+  to the station columns: rounds as rows headed by their clock in the gutter's data face ("5:16 p.m." — the global
+  `th` small-caps rule would have printed "5:16 P.M.", a third spelling of the clock; `.ppGridCols tbody th` says no),
+  the named stations as fixed-width columns in station order, each cell the group name(s) there then ("A + C" when two
+  share, "—" when idle); an unnamed station has no column, as it has no stop. "Starts with" left the station. Under the
+  grid: `computeRotation`'s statements minus the rounds line — `RotationGrid` gained `roundsNote` (the first note,
+  named on its own and STILL in `notes`, so the printed sheet and the run screen read the list whole and unchanged;
+  the board filters by identity, never by words) — then the split, the not-in-the-draw names, and the group rows
+  (name · names · **edit** into the same picker · bin) with a quiet *+ Add a group*.
+- **D4 as built (REVISED) — `StationModal`.** The portal's own modal at the wide width (`modalWide`, measured **640 ×
+  805 at 1440; a full-screen sheet with the back arrow at 390**), the shared dialog floor (`useDialogFloor` with
+  `walk` — ← / → step, never while typing — and `focusKey` re-seating focus when the station swaps; Escape closes and
+  returns focus to the column that opened it, **verified**), the head the station's NAME (a typeable box for a written
+  station, text for a drill — `CoachModalHeader` with the reorder arrows ← → as its children, named "Move X
+  earlier/later"), the body `StationFields` with every field shown (Doing · Watching for · Coaching points as one field
+  · Setup · Equipment · Who runs it · Players only when the stations do not rotate · Just for tonight · Save to my
+  drills…), the foot **Delete this station** (closes the modal — a room closes on its record's delete; no confirm, as
+  the card's bin never asked) and the stepper. **The stepper is `RoomWalkNav`, lifted out of `RoomShell` and exported
+  from it** — the money room's own foot, byte-identical there — over `stationWalk` (`roomNeighbours` over the block's
+  stations): "‹ Start · 1 of 3 stations · Close control ›", the arrows disabled at the ends reading Start / End, **no
+  wrap** (the precedent's rule, pinned by a unit test). The modal mounts before the roster picker, the drill sheet and
+  the promote dialog in the tree so each opens over it; `useOverlayOpen` counts it. "Rotation note" is no longer
+  offered (the key stays readable). The open head's ROTATION tag is gone: an open rotating block carries the pressed
+  chip a line down, so it said the same thing twice (and overflowed the head at 361 — the sweep found it the first
+  time it opened the circuit).
+- **D7 as built — `components/coaches/PracticeFields.tsx`.** `FieldLabel` (with its quiet ×) and `CoachingPointsField`
+  (one box, one per line, `splitPoints` at patch time, the caller's own caps, the cap hint naming its noun — block ·
+  station · drill) moved out of the editor; the block, the station and the drill library's editor (`_DrillsView`) all
+  use it; the two local `FieldLabel`s and the numbered rows (`CoachingPoints`, `.ppPointRow` / `.ppPointNum`) are gone.
+- **D8 as built — `settleBlockPeople`, the kit rule one field over.** `sanitizeBlock` no longer deletes anything: it
+  reads people structurally at every level and reads `rotation` whenever present; `settleBlockPeople` (pure, exported,
+  run LAST via `settlePlanLevels` — kit then people — after the roster and library checks, and on every block change in
+  the editor's `setBlocks`) moves them to the level the block's shape dictates: a station arrives → the block's names
+  land on the first station (a drill station holds people too); rotating turns on → every name on the block or a
+  station becomes the FIRST DRAW, dealt in stored (roster) order into one group per station, fewer when fewer names,
+  `groupSource: 'manual'` (Draw is the shuffle); strays with groups already standing join round-robin; rotating turns
+  off → each group lands on the station it STARTED at (`startingGroupsForStation` — the grid's own first row) and the
+  rotation is dropped; the last station goes → everyone comes back to the block's list. Idempotent and deterministic
+  (fixed group ids, no dice — a sanitiser that rolled dice would save a different plan than the one it was shown); the
+  same object back when nothing moved. `MAX_PLAYERS_PER_LIST` names the cap the three bare 60s used. **Verified in the
+  browser:** the Warm-up's six moved onto a new station without a reload; un-pressing Groups rotate put Group A's four
+  on Footwork ladder, B's on Close control, C's on Finishing; pressing it again dealt all twelve back into three groups.
+- **/simplify (four lenses) — applied:** one deal shared by `drawGroups` and the people pass; `mergedTagNames` for the
+  two "legacy ∪ ids" displays; the rounds line named on the grid instead of prefix-matched; the ROTATION tag deleted
+  from the open head rather than hidden at one width; the door re-seed narrowed to the shape-dependent doors; the door
+  table; `soleWrittenStationOf`; one accessor per station door; `StationModal` derives its index and rotation from the
+  block; the editor's station-lookup triple became one line; `BlockCard` delegates its station patch to the editor's;
+  `on` → `noun`; guard-first order in the people pass; the player cap named. **Skipped, with reasons:** a shared skeleton
+  for the two settle passes (small, and the passes are genuinely different); composing the money grid's row-head reset
+  (a descendant selector — not composable); one portal-wide field floor rule (house convention is per-container);
+  `RoomWalkNav` in its own file (until a third caller); folding the two passes into one map (clarity over ~24
+  comparisons per keystroke).
+- **/review (high-risk funnel, five lenses — correctness · security/tenancy/contract · regression · concurrency/state ·
+  business rules + a11y; 19 → 14 → 13 confirmed and FIXED, 2 refuted, 2 advisory):** the closed-season reader's block line
+  lost its rule when /simplify retired `.ppBlockClock` as dead (the reader was its other user — restored, documented as the
+  reader's); the strip's rounds sentence counted every station where the grid counts NAMED stops — a freshly added unnamed
+  station made the two disagree (the strip counts stops now); the un-press landing could book one child at TWO stations of a
+  non-rotating block when a stale rotation sat beside a hand-placed list (a hand placement stands first, a moving name lands on
+  one station); a stray joining standing groups was pushed uncapped (a read after the write truncated — capped, write == read
+  pinned) and flipped a drawn rotation to 'manual' (the "Not in the draw" note vanished — the sanitiser's join keeps the
+  source); the flattened block could show a points field AND a "+ Coaching points" door (the station's door is offered only
+  while the block holds none of its own — the staff rule); a drill added to a written block had its name nowhere on screen (the
+  provenance line reads it); delete-from-modal dropped focus on the page body (the modal steps to a neighbour; closes only when
+  one station is left); a station that vanished under its modal left the page scroll-locked (the overlay counts the RESOLVED
+  target — the roster picker too); the block-clock UAT assertion had read a class the editor stopped using at stage 1 (reads the
+  gutter). Refuted: the group-name input under the floor (the open block's one rule covers it); `[]` on a block that gains a
+  station churning identity (one pass, then the same object). Advisory, stated: the first draw deals level-by-level, not by
+  roster position across levels (a deal, not a ranking); "edit" lowercase as drawn.
+- **The gate learned the modal:** `scripts/layout-screens.mjs` gained `coach-practice-station` — the probe practice
+  with the circuit open and its first station's modal up (`openCircuitStation`). Its first run found the modal's fields
+  at 35–37px on the touch widths (the block's one floor rule cannot reach a modal) → the modal's own floor rule; and
+  the open head's tag overflowing at 361 → the tag deleted (above). No baseline rows added.
+- **Gates at hand-off:** 4,049 unit (the D8 suite: block → first station, drill station holds people, the first draw,
+  strays round-robin, un-press lands groups on their stations, the last station goes home, non-roster names never move,
+  idempotent and deterministic, the shared pass; `describeRounds`; `rotationByStation` incl. sharing, idle and unnamed
+  stations; `stationWalk` stops at both ends) · `typecheck` clean · focused lint (0 errors) · `verify:changed` green on
+  this stage's files (the one red — two `devCarry*` classes — is a peer's in-flight Development change, not this diff)
+  · `check:layout --only=coach-practice-plan,coach-practice-station,coach-development-template` at 361/390/768/1440 —
+  no new findings · `check:demos` green · a Playwright probe on the fixture (desktop, drill, phone passes; both plans
+  restored) · the printed sheet untouched (the rotation's `notes` list is unchanged; `handlePrint` unread by this diff).
+- **Calls made without a ruling, each a one-line reversal:** the stepper does not wrap (the room's rule); the modal's
+  head is the station's name and carries the reorder arrows (**reversed by the owner on the built draw — §6.8**); the frame's "ACTIVE" chip is not built (a drive-room
+  facsimile); D5's count is a native dropdown; "+ Add a group" survives quietly; grid cells print the full group name
+  (the frame abbreviated to letters); a template shows the strip and "groups are drawn on the practice" with no empty
+  grid; "the first draw's pool" is an immediate deal in roster order, not a shuffle; the same law runs in every
+  direction (un-press, last station removed); a sole station has NO removal control (D1 as ruled — the block's bin is
+  the bin; **the walk's G1 sends this back as the one open question**); a written sole station's name is the block's
+  title (not asked, promotes under it).
+- **Stated for the walk:** a written block that gains one written station shows both sets of teaching fields
+  (stage 2's "content always shows"), separated by the station's own Doing line; the strip wraps onto several lines at
+  390 (the block is 240px there — stage 1's H3); the printed sheet keeps its own grid orientation.
+
+### 6.8 The reorder pairs — where they live (owner, on the built draw, 2026-09-15)
+
+The owner read the built stage 3 in the browser and sent two things back before the §192 walk. Both were calls this
+stage had made without a ruling; both reversed, built the same day, no migration.
+
+- **The station's arrows leave the modal's head for the column's foot.** "It was not clear to me what these arrows
+  were doing when I click them." The cause is structural, not a glyph: the modal held TWO pairs of horizontal arrows —
+  ← → in the head that MOVED the station and ‹ › in the foot that moved the COACH to the next one — and nothing can
+  tell those apart in one dialog. On the column the pair (`.ppStColMove`, ‹ › beside "Open ›") sits on the thing that
+  moves and the coach watches it swap with its neighbour; the grid's columns follow. The column is now a FRAME
+  (`.ppStCol`, a div) around the DOOR (`.ppStColDoor`, the button named by its content — the layout probe reads the
+  first door by its trailing "Open ›") and the absolutely-placed pair; the "Open ›" row is as tall as the pair and
+  clears its width, so an arrow never sits over a content line. On a phone the columns stack as rows and the pair
+  turns to point up and down (a CSS rotation; the names stay "earlier / later"). The modal's head is the name and ×,
+  nothing else; `StationModal` lost `onMove`; `BlockCard` gained `onMoveStation`.
+- **The block's arrows leave the open head for the gutter.** "Move the block up/down toggles to a subtle place under
+  the times so users can move those while those drawers are closed." The gutter (`.ppTlMove` under the clock and
+  length) is the one thing a block has whether shut or open, so the pair is there on every row; the open head is the
+  title, the collapse and the bin. Absent — not disabled — on a read-only plan and while the plan has one block.
+- **One button for both (`.ppMoveBtn`):** `.ppIconBtn`'s look at 1.75rem where a mouse is pointing (the gutter is
+  5.5rem wide; the 44px floor is a finger rule — owner decision 2026-08-19) and the tap floor at ≤768, both ways,
+  since the pair is icon-only. **The phone cost, stated:** two finger-wide buttons side by side are 88px, so the
+  gutter widens — 5rem → 5.75rem at ≤640 (the block gives up 12px at 390), 5.5rem → 6.25rem at 641–768 — rather
+  than stacking the pair, which would have made every row ~75px taller. Measured after: at 1440 the pair is 28×28
+  under the clock and no shut row grew (rows are content-tall at 117); at 390 the pair is 44×44, the gutter 92px.
+- **Gates:** typecheck clean · focused lint 0 · `verify:changed` green · `check:layout
+  --only=coach-practice-plan,coach-practice-station` at 361/390/768/1440 — no new findings (the station probe now
+  opens the FIRST column rather than naming "Footwork ladder" at station 1: the fixture's stations had been
+  reordered under the owner's hands within the day, which is what the probe existed to survive) · a Playwright
+  probe: move-later swaps the columns and the grid head, focus stays on the moved button; move-down swaps the rows
+  and the clocks recompute; both moved back. Help article updated (blocks: "under each block's start time in the
+  left margin"; stations: "the ‹ › beside its Open ›"; the modal sentence about its arrows removed).
+- **Still owed:** this session's commit alongside stage 3's (the §192 walk is complete — §6.10).
+
+### 6.9 The groups board — an owner revision on the built draw, DRAWN 2026-09-15 · RULED B 2026-09-16 · BUILT ON DEV 2026-09-16 · WALKED 2026-09-16 (part J)
+
+The owner, on the built strip and group list: *"I don't think this is the best UX for adding/creating groups … a
+'create groups' that opens a modal with the randomization options (broken out into 'groups of x' and 'x groups') …
+drag and drop players between the groups so the selections feel more connected."* Read against the code as built
+(`RotationStrip` + `RotationBoard` + the group picker), three things are true and the third is wider than the ask:
+the draw (on the strip) and its result (under the grid) are two screens apart; editing a group is the Choose-players
+checklist for a job that is one move (a partition wants a move, not a tick); and the trash on a group drops its
+players out of the rotation with nothing naming them — D21's "never silently dropped" is kept for the draw and not
+for the bin.
+
+**Drawn on the hub's "3 · Stations and the rotation" tab** (section "Revision on the build · the groups board",
+notes 44–51, live-measured, republished 2026-09-15 — same URL): the list as built · **A** the board in place under
+the grid (recommended) · mid-drag · the chip's tap menu · **B** the Groups room (the owner's ask, drawn honestly) ·
+the phone. Four calls, wired into the stage-3 paste-back:
+
+| | Decision | Recommendation |
+|---|---|---|
+| D9 | Where groups are edited — in place under the grid (A) or in a Groups room (B) | **A.** The draw stays one press on the line (D5's reason still holds — it defaults to the station count); a room puts a door before it and hides the grid while you arrange. B gives space and a shorter block; if height matters on the walk, a fold is cheaper than a room. |
+| D10 | A chip is dragged onto another row, AND tapped for the same choices as a menu (the other groups, then "Not in a group") | **Yes, both ways, one chip.** Drag only after a few pixels so a tap is never a lift; the tap is the whole path on a phone and for a keyboard. Drop lands in roster order, never where let go; the grid updates on the drop; nothing sorts by ability; the group's "edit" door goes. The lineup builder's drag kit reused. **The first drag in the practice editor — ruled narrowly (people between groups); S.4 (drills/blocks) stays stage 4's.** |
+| D11 | A "Not in a group" row is the board's first row | **Yes.** The draw's leftovers as plain chips, the not-replied names as dashed chips with the row saying so; replaces the "Not in the draw" sentence; the pool to drag from; the target for taking out; where a binned group's players land. Reads "nobody" when everyone is placed — the row stays. Computed (roster minus groups); nothing in the model. |
+| D12 | The draw's control — one menu with two sections, or two controls | **One menu, on the line, as built.** A way-plus-a-number can name a split the pool can't honour. In a room there is space to split it; on the line, one control. Rides nothing if D9 is A. |
+
+**Not decided by this, and not built on the way past:** nothing in the model (groups are stored as today); the
+strip and the grid untouched under A; the Choose-players picker keeps serving blocks and stations.
+
+**Owner, on the drawings, later 2026-09-15 — a lean, not yet the ruling:** *"I honestly like B better, seems cleaner.
+Once leaving the modal do we have a view of the groups in the drill?"* As B was first drawn, no — only the split line.
+**Frame 52 (hub, same section, "B · after Done") answers it:** once the room closes the block reads its groups back as
+one quiet line each ("Group A · Avery, Blake, Casey, Devon"), the not-replied names on their own line (D21's naming kept
+in place), and "Edit groups ›" as the one door — a read, not an editor; before any groups exist the same spot reads
+"No groups yet · Draw the groups ›". Under B the strip keeps only its clock (rotates · every N · rounds); the count, the
+pool word and Draw live in the room, so a first draw is open · Draw · Done rather than one press on the line — the
+trade, named once. Live-measured on the hub: B after Done **860px**, the in-place board 1,048, the list as built
+1,002. The printed sheet (prints each group's names beside its block) and the field screen (group → station each
+round, never names) are untouched either way. **If B is the ruling:** D12 as drawn in the room (the way as a switch,
+the number beside it); D10 and D11 hold as drawn *inside* the room; the read-out is the block's face. D9–D12 stay
+"to rule" until the paste-back says so.
+
+**RULED B by the owner 2026-09-16 — "looks good, go ahead and build it" — and BUILT ON DEV the same evening (one session,
+no migration, no new stored key). D9 = B (the Groups ROOM); D10 as drawn inside it (drag AND a tap menu, one chip); D11 as
+drawn inside it (the "Not in a group" pool column); D12 as drawn in the room (the way as a two-way switch, the number
+beside it); the block's face after Done = frame 52's read-out. Walk owed — part J on the hub's "QA walk · 3" tab.**
+
+*What was built, where:*
+- **`components/coaches/PracticeGroupsRoom.tsx` (NEW)** — the room: `modal modalWide modalScrollBody ppGroupsRoom` on
+  `useDialogFloor` (Escape closes, focus returns to the door), `CoachModalHeader` "Groups"; the draw row (two
+  `ppQuickChip` pills with `aria-pressed` for the way · a native select of the valid counts for that way — 2–12 groups
+  or 2–8 per group · the pool word · Draw / Draw again over `drawGroups`); `ppGroupCols` — the pool column
+  (`ppGroupColPool`, dashed, "N haven't replied yes" under it) and a card per group (name input · chips · bin), each a
+  dnd-kit `useDroppable`; the foot "+ Add a group" (capped at `MAX_GROUPS`) · Done. The draw's default count follows the
+  named-station count until the coach picks (as the strip did).
+- **The chip is `CoachToolbarMenu` with a NEW `variant="chip"`** (the `.ppChip` recipe as the trigger, no chevron, the
+  grip glyph as its icon, the tap floor at ≤768 with the portal's chips) — so the tap path inherits the menu's whole
+  keyboard pattern (arrows rove, Home/End, Tab leaves, Escape returns focus). Its items: "Move to <each other group>", a
+  separator, "Not in a group" (only while in one). A chip with nowhere to go — no groups yet, already in the pool — is a
+  plain pill (a control that exists only to refuse should not exist). The drag listeners (`useDraggable`) sit on a
+  wrapper span around the menu's button; `MouseSensor` (distance 6) + `TouchSensor` (delay 250, tolerance 6) so a click
+  is a click, a scroll is a scroll, and once a drag activates dnd-kit's own capture-phase click swallow keeps the drop
+  from opening the menu. `DragOverlay` is portaled to `document.body` (the modal's scroll pane clips — the standing
+  `modalScrollBody` trap). Every column shows a dashed edge while anything is lifted (`data-lifting`); the one under the
+  pointer fills (`data-over`). A moved chip re-mounts in its new column, so it takes focus there in a layout effect
+  (before the menu's one-frame focus rescue, which yields to it) — a keyboard coach moving several names never falls to
+  the page body.
+- **`lib/rep-practice-plan.ts`** — `movePlayerToGroup(rotation, playerId, groupId | null, rosterOrder)`: one player into
+  one group (leaving every other) or out of all, landing in ROSTER order never where let go, `groupSource: 'manual'`,
+  the same object back when nothing changes (unknown target, already there); `unplacedPlayers(roster, groups)`: roster
+  minus the groups, in roster order — the pool and the read-out line are COMPUTED, never stored, which is what makes the
+  bin name its players instead of dropping them. Six unit tests (`rep-practice-plan.test.ts`).
+- **The editor** — `RotationStrip` keeps only its clock (the draw, `DrawChoice`, the select and the button are gone;
+  `Shuffle`, `drawGroups`, `groupLabel`, `MAX_GROUPS`, `DrawMode` no longer imported); `RotationBoard` renders the
+  READ-OUT (`ppGroupRead`: the split line · one `ppGroupReadLine` per group, "nobody yet" for an empty one · "Not in a
+  group · <replied, unplaced> · <not replied> (haven't replied yes)" only when someone is unplaced · the door "Edit
+  groups ›", or "No groups yet · Draw the groups ›" with no groups; absent for a read-only plan); the group PICKER path
+  is gone (`AttachTarget` is block | station; `togglePlayer`, `selectedIdsFor`, `attachTargetExists` lost their group
+  branch; `otherGroupByPlayer` and the picker's "in Group B" status deleted); `openGroups` state beside `openStation`,
+  resolved to a block that still rotates with ≥2 stations (a station deleted under the room closes it), registered with
+  `useOverlayOpen`; `notRepliedIds` (empty while attendance is unknown) replaces `notReplied`/`showNotReplied` on
+  `BlockCard`, which gained `roster` and `onOpenGroups` and lost `drawPool`/`attendanceKnown`. A template
+  (`withoutPeople`) never offers the door — its board still says groups are drawn on the practice.
+- **CSS** — `.ppGroupRead*` (the read-out), `.ppGroupsRoom` (max-width 800), `.ppDrawRow`/`.ppDrawWay`, `.ppGroupCols`
+  (`repeat(auto-fit, minmax(9rem, 1fr))`, rows at ≤640), `.ppGroupCol`/`.ppGroupColPool`/`[data-over]`/`[data-lifting]`,
+  `.ppGroupChips` (`align-content: flex-start` — a stretched wrapped flex box otherwise spreads its lines), `.ppGroupChip`
+  (`[data-reply='no']` dashed, `[data-lifted]` faded), `.ppGroupChipLifted`; the 768 floor on the room's select, button,
+  name boxes and bins; `.ppDrawCtl`/`.ppGroupRow`/`.ppGroupList`/`.ppGroupName`'s old row recipe retired (the ⚰ note
+  beside `.ppRangeWrap` names the lineage); `CoachToolbarMenu.module.css` gained `.triggerChip`.
+- **The layout gate** opens the room (`coach-practice-groups` in `scripts/layout-screens.mjs`, `openCircuitGroups`).
+
+*Gates:* `tsc` clean · focused eslint clean · `verify:changed` green (4,048 unit) · `check:spelling` clean ·
+`check:layout --only=coach-practice-plan,coach-practice-station,coach-practice-groups` at 361/390/768/1440 — no new
+findings · a Playwright probe on the fixture's Skills circuit (restoring the plan after): the room opens from the door;
+Draw with "How many groups · 3" deals three cards; the tap menu on a chip reads "Move to Group B | Move to Group C | Not in
+a group" and moving lands the chip in roster order with focus on it; a real mouse drag lifts (overlay drawn, every column
+dashed, the target filled), drops in roster order and opens no menu; at 768 every control in the room is 44px; at 390 no
+sideways overflow; Done returns focus to "Edit groups ›" and the read-out matches the room.
+
+*Not changed:* the model and the sanitiser (groups are stored exactly as before; a player still belongs to one group);
+the printed sheet and the field screen; the block/station "Choose players" picker; the "buttons, never drag" line for
+blocks and stations (S.4 is still stage 4's — D10 ruled drag NARROWLY, people between groups, inside the room).
+
+*Stated for the walk:* the strip's "every N" number is an input, so a copy of the line reads "every min" in a text dump —
+not a bug; the SaveStatusPill floats over the room's foot at 390 (it floats over every sheet's foot — pre-existing);
+the dev server was NOT restarted for the new file (shared with peers mid-session; hot reload served it for the probe) —
+restart before the owner's walk if anything looks stale.
+
+### 6.10 The §192 walk — marked complete (owner, 2026-09-15)
+
+The owner walked the hub's "QA walk · 3" tab on the build and marked the walk complete the same evening. **One finding,
+carried to stage 4 rather than fixed on the way past** (the ladder's rule — defects that belong to a later stage wait for it):
+
+- **Walk step F2 — a written block with NO stations has no *Save to my drills…* door.** The owner opened a block, typed
+  *What you're doing* and two coaching points, and asked where the door was. It is on a written STATION only (Phase 2's
+  D18: "offered only on a station the coach typed themselves"); F2 leans on F1's "+ Stations → Write one → Write a
+  station", and without that station the block is the zero-station shape (its foot reads *+ Equipment · + Staff ·
+  + Stations*). The walk step stands as written — it tests the station case — but the gap is real: that block is a drill
+  in everything but name (title · Doing · Watching for · points · equipment; everything a drill holds except Setup), and
+  the only way to earn the door is to add a station and retype the words into it. D18 predates stage 3's D1 ("a block
+  with no stations IS the activity") and did not follow it; the two shapes are nearly identical on screen. **Carried to
+  §7 with the recommendation:** offer *Save to my drills…* on the bare written block under its own title, the same one
+  optional question.
+- **Open, not ruled on the walk:** G1 — should a sole station keep a quiet *Remove*? (stands); and **§6.9's groups board
+  (D9–D12)**, drawn after the build and not ruled — stage 4's planning session asks for that ruling first (see §7).
+- **Owed:** the stage-3 commit on the owner's word (private index — the peer's Development hunks in the shared files).
+
+### 6.11 Two more model calls on the built screens — D13 · D14, DRAWN · RULED · BUILT ON DEV · WALKED 2026-09-16 (parts K · L)
+
+The owner, on the built groups room (2026-09-16): *"why is it that when I add my first station it looks like nothing
+changes? … a drill should be treated like a single station … if I add a station the drill becomes 2 stations, high level
+details at the top and station level details in the 2 stations"* — and *"shouldn't I be able to manually enter the group
+rotation rather than it being forced? … create a rotation and allow me after to manually move around in case I want a group
+to double up on a station or skip another."* Read against the code: (1) D1 folds the first station into the block and the
+block KEEPS its words (`addBlankStation` appends an empty station; `settlePlanLevels` moves kit and people — D8 · D11 — but
+never the teaching), so on a written block both sets of teaching fields render (`blockAsksForTeaching` is true) and the form
+doubles; the §192 walk recorded the state. (2) The grid is `computeRotation`'s output from four facts — rounds from the
+minutes and the interval, every group forward one station a round; nothing per cell is stored; the sheet, the field
+screen's "Rotation due → Move the groups on" and the D25 statements all read the one computation.
+
+**Drawn on the hub's stage-3 tab** (section "Revision on the build · two more model calls", notes 80–85, live heights;
+asks `D13` · `D14` in the stage-3 paste-back). Both are the groups room's law applied again — the computed thing is a
+starting point, hand edits are honoured, the truth is stated:
+
+| | Decision | Recommendation |
+|---|---|---|
+| D13 | "+ Stations" on a written block makes TWO stations — the block's words (Doing · Watching for · points · setup · kit · players) MOVE into station 1, which takes the block's title as its name; station 2 stands empty; the block keeps the high-level things (title · minutes · an intro line · the rotation · the groups). The one-written-station state stops being reachable. | **Yes.** The bare written block IS the activity (stage 4's L1 found the same from the other side — rule them together, one reason). Reverse move, one rule: bin down to one station → if the block has no words of its own the survivor's words come back up and the station goes; if the block has intro words too, nothing merges and nothing is dropped — the station stays (today's D1 state). A drill-placed station never collapses. No migration (words move within the plan document). |
+| D14 | The rotation grid is a STARTING POINT you can change — a group in a cell is a pill: tap for "Move to <other stations this round> · Sits this round out" (the phone and keyboard path, the groups room's menu), or drag along its row on a desktop; rows stay the clock's (WHERE, not WHEN); the D25 statements read the cells and say what the grid does (shared · empty · never reaches · sits out); a "Hand-arranged" line offers "Back to the standard rotation ›". | **Yes.** Cost, said once: the grid becomes a second stored fact in the plan document beside the groups (no DB change); every reader follows through the one computation ("remembered or dealt"); the sanitiser checks the remembered cells name real stations, groups and rounds. **The one rule to decide:** a change to the stations, the groups or the interval under a hand-arranged grid RESETS it to the standard rotation and SAYS SO (recommended) rather than keeping what still fits, silently. Not in it: editing WHEN; per-player moves inside a round (the groups room's). The field screen's own restyle stays stage 5's — it reads the cells unchanged. |
+
+**Rides on D14 that stage 5 should know:** the run screen's "Move the groups on" reads `grid.roundsList[n].cells` — a
+remembered grid flows through unchanged; a group that SITS OUT a round is in `round.out`, and the field screen's due-moves
+line now names it ("D sits out") — its own restyle is still stage 5's. **And the PAPER (owner, 2026-09-16 — "is there a
+reason we chose to put groups in columns on the printout but drills in columns on the screen?"):** the printed grid still
+reads groups across the top and stations in the cells (the owner's 2026-08-22/23 exhibits — "this round, who is where",
+with the sideways fallback); the screen turned to station columns at D6 (2026-09-15) and stage 3 left the paper to stage 5.
+No reason for them to differ now: **stage 5 turns the paper to match the screen** — stations across the top, groups in the
+cells (stacked when they share), a "Sitting out" column when a group sits a round out, the sideways fallback kept for too
+many stations to fit — deferred there on the owner's word rather than fixed on the way past (the ladder's rule).
+
+**RULED by the owner 2026-09-16 ("I agree with your recommendations, go ahead") and BUILT ON DEV the same day (one
+session; no migration, no DB change — the arrangement is a key inside the plan document). WALKED by the owner the same
+day — "looks good"; the whole of QA walk · 3 (A–L) marked complete 2026-09-16. Two corrections on the owner's first tries
+folded in before the walk: a titled-but-empty block splits, and an EMPTY block splits ("+ Stations" always makes two).**
+
+*What was built, where:*
+- **D13 — `lib/rep-practice-plan.ts`:** `blockHasOwnWords` (the one predicate; `blockAsksForTeaching` now reads it);
+  `splitBlockIntoStations(block, second)` — a block with no stations and something of its own — **a TITLE or words** (revised on the owner's first try, 2026-09-16: a block titled "warm up" with nothing typed under it folded its first station in and the form doubled again; a title alone is the coach's activity) — becomes two stations:
+  station 1 named after the block with its Doing · Watching-for · coaching points; `second` beside it; the block's words
+  cleared (its intro is empty); kit and people are NOT moved here — `settlePlanLevels` moves both onto a first station
+  the moment one exists (D8 · D11), one pass owning that move; an EMPTY block — neither title nor words — splits too (owner, same evening: "I should be able to open a block, split stations, then start typing details including title"): what arrives is station 1 and a blank station 2 stands beside it; only a block that already has stations simply gains one. The one-station shape is never made through "+ Stations" — a drill that should BE the block arrives through the ghost row's "a drill from your library" (D7), which builds that shape directly.
+  `collapseSoleStation(block)` — one written station left and no block words: the words, staff, kit and people come back
+  up and the station goes; a drill station, block intro words, or a station holding a setup / a "just for tonight" note /
+  a rotation note / pre-tag kit names keep the station (nothing merges, nothing drops). **The editor:** `addBlankStation`
+  and `addStationFromDrill` (append path) go through `splitBlockIntoStations` via `setBlocks`; `deleteStation` goes
+  through `collapseSoleStation`. 5 unit tests.
+- **D14 — the model:** `PracticeRotation.arrangement?: PracticeRotationArrangement` (`lib/types.ts`) = `{ stationIds,
+  groupIds, rounds, placements[round][groupId] = stationId | null }` — null is "sits this round out"; `rotationShape()` (the
+  four facts and the round count, ONE place — `computeRotation`, the fit check and the sanitiser all count rounds through
+  it); `arrangementFits()` (same named stations and groups BY ID — a rename or reorder keeps it — same round count, every
+  placement a real station or null); `arrangeGroup(rotation, stations, minutes, round, groupId, stationId | null)` (the
+  first move remembers the carousel and changes one cell; the same object back when nothing changes or the target does not
+  exist); `forgetArrangement()`; `computeRotation` reads the arrangement INSTEAD of the carousel while it fits (a cell it
+  does not name keeps its standard place), each `RotationRound` gains `out[]`, the grid `arranged`; the D25 statements
+  read THE CELLS now, dealt or arranged — share · "X has nobody in round N" · "X sits round N out" · "won't reach" · "Everyone
+  does everything." (the carousel's own sentences are unchanged for a carousel); `rotationByStation` rows gain `cellGroups`
+  (ids) and `out`; the sanitiser parses `arrangement` (`sanitizeArrangement`) and `settleArrangements` — third step of
+  `settlePlanLevels`, run by the sanitiser and the editor alike — DROPS an arrangement that no longer fits (a rest-of-practice
+  block, whose minutes the sanitiser does not know, is checked on stations and groups only; `computeRotation` re-checks the
+  round count with the real minutes at read time). 6 unit tests.
+- **D14 — the editor (`RotationBoard`):** a group in a cell is `GridPill` — `CoachToolbarMenu` `variant="chip"` with
+  "Move to <each other station this round>" · a separator · "Sits this round out" (absent in the Sitting-out column), and a
+  dnd-kit draggable (`MouseSensor` distance 6 · `TouchSensor` delay 250 — the groups room's sensors); `GridCell` is a
+  droppable keyed `round:stationId` — a drop on another round's cell is not a target (`data-target` only lights the lifted
+  pill's own row); `DragOverlay` portaled to the body; a "Sitting out" column appears only while someone sits a round out;
+  `.ppGridPills` (`table-layout: auto; width: max-content; min-width: 100%`) so the pills size the columns, two groups sharing a cell STACK (`.ppGridCellWrap` is a column — owner, 2026-09-16: side by side, one shared cell pushed the six-station grid off the sheet; stacked, 747px in the 747px column at 1440) and
+  `.ppGridScroll` owns the sideways scroll (the layout gate found 102 pill spills at 361/390/768 under the fixed layout —
+  fixed by this); the "Hand-arranged — … · Back to the standard rotation ›" line while `grid.arranged`; and the RESET
+  NOTICE — the board watches the arrangement vanish under it (a ref of its last presence; the coach's own "Back to
+  standard" is excluded) and shows "Back to the standard rotation — the stations, groups or timing changed under your
+  arrangement. · OK" as a `role="status"` line until dismissed or re-arranged. Read-only plans and templates render the
+  names as before.
+- **The readers:** the field screen's due-moves line names a sitting-out group ("D sits out"); the printed sheet's rotation
+  table reads each group's station BY ID in the rotation's group order (`rotationShape`) — "sits out" / "—" where it has
+  none — rather than by cell position (a hand-arranged round can put a group anywhere or nowhere).
+
+*Gates:* `tsc` clean · focused eslint 0 warnings in the touched files · 4,059 unit (120 in the practice-plan file) ·
+`verify:changed` green · `check:layout --only=coach-practice-plan,coach-practice-station,coach-practice-groups` at
+361/390/768/1440 — no new findings after `.ppGridPills` · a Playwright probe on the fixture (plan restored after): the
+written Warm-up + "+ Stations → Write one → Write a station" → two columns ("Warm-up" carrying "Dynamic warm-up, then
+partner work…", "Station 2"), the block's Doing empty, the strip up; open station 1 → its name and words; bin station 2 →
+zero columns and the words back on the block; the circuit's grid → a pill's menu ("Move to Footwork ladder | … | Sits this
+round out"), a move → "Group A and Group B share Footwork ladder in round 1." · "Close control has nobody in round 1." and
+the Hand-arranged line; "Sits this round out" → the Sitting-out column and "Group F sits round 2 out."; a real drag along
+row 2 (row 1's cells never targeted) landing on Close control, no menu on the drop; interval 15 → 10 → the arrangement gone
+and the reset line shown; arrange again → "Back to the standard rotation ›" → gone, no reset line; 390: pills 44px, no
+sideways overflow.
+
+*Not changed:* WHEN (the clock and the interval are the strip's); per-player moves (the groups room's); the sanitiser's
+people-in-one-group rule; the run screen's shape (stage 5); a drill-placed block's first station (D7 — a wordless block that
+takes a drill IS that drill).
+
+## 7. Stage 4 · The library — DRAWN and RULED 2026-09-16 (L1–L8 as drawn; L9 Circuits added on the ruling); the inputs carried in, and answered
+
+**DRAWN 2026-09-16 on the hub's "4 · The library" tab (fifteen frames at true size, notes 54–79 and 86–90, decisions L1–L9 with a paste-back) · RULED 2026-09-16 (§7.0) · NO CODE — build prompt [COACH_PRACTICES_STAGE4_BUILD_PROMPT.md](COACH_PRACTICES_STAGE4_BUILD_PROMPT.md). Kickoff prompt (planning + mockups only): [COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md](COACH_PRACTICES_STAGE4_PLANNING_PROMPT.md).** The stage's scope is the ladder's
+row 4 — the Templates and Drills tab rows, the library docked beside the plan on desktop, drag as an addition (S.4) — and the
+walk's station 6 ("Reuse — drills, templates, and starting from something") with Q 6.1 (dock + drag) and S.4. Everything
+below was an INPUT the planning session had to answer from the code before drawing; §7.2 answers each, §7.3 carries the decisions. None of it is ruled here.
+
+### 7.0 The rulings (owner, 2026-09-16, in chat: "so this mockup looks great, I approve everything as designed thus far")
+
+| | Decision (as drawn) | Ruling |
+|---|---|---|
+| L1 | *Save to my drills…* on a written block with no stations; the block's minutes become the drill's "usually"; the past-season import reads bare blocks too | Build as drawn (rests on D13, ruled the same day) |
+| L2 | Drag as an addition on desktop, with a mouse — a drill from the docked library into a gap (a new block) or onto the open block's stations (following D13), a block by its gutter; buttons everywhere; the rule reworded once for the groups room, the grid and the library | Build as drawn |
+| L3 | Both tabs as tables on the list recipe; the row is the door; a drill row's first line, a template row's blocks; Retire moves into the sheet; a phone card as tall as its words (the 267px row fixed) | Build as drawn |
+| L4 | Keep "Start from blank"; an empty template is not offered as a start and reads "Nothing in it yet" | Build as drawn |
+| L5 | The docked pair (A): the sheet back at 816, the panel 320, on demand and remembered, from a 1,156 working column up; the sheet below | Build as drawn (A) |
+| L6 | The drill sheet as the station modal's shape — Tags · Usually first, the five teaching fields, Retire in its foot | Build as drawn |
+| L7 | "Started from **X** — edit anything here; the template won't change." | Build as drawn |
+| L8 | No fourth tab for Practice review; "Every practice this season ›" uncaps the hub's past list; Practice review stays under Insights | Build as drawn |
+| **L9** | **Circuits** — a block with stations is the third size of reusable thing (added on the ruling; §7.7) | **Ruled in words the same day, as recommended: the word is *circuit* · a fourth tab, Practices · Templates · Circuits · Drills · the save asks two optional questions (tags, and "also save its written stations as drills") · built with stage 4.** The three frames drawn afterwards are to confirm on sight. |
+
+**One ruling revised by L9:** the tab-bar comment's "no fourth tab" (stage 0, D8) refused an overview tab and a tile row; a
+fourth *library* tab is a size, not a dashboard, and D8's reason — the room's state is the next-practice card and the
+"Needs a plan" chip — is untouched.
+
+| # | Input | Where it came from | What it asks |
+|---|---|---|---|
+| 1 | **A written block with no stations cannot be saved to the library.** | §192 walk, step F2 (§6.10) | Offer *Save to my drills…* on the bare written block under its own title (recommended) — or say why the door stays on a station. Rides: the promote dialog reads a station today; a block holds everything a drill does except Setup. |
+| 2 | **Drag — S.4 and D10 are one question at two scales.** | The walk's S.4 · Q 6.1 · §6.9 D10 | S.4 asks about drills onto the page and blocks by a handle; D10 (drawn, not ruled) asks about people between groups, using the lineup builder's own kit. **If D9–D12 are still unruled when the session starts, ask for that ruling first**; whatever is decided must share one reason, and "reorder with buttons, never drag" stays the rule until it is revised in words. |
+| 3 | **The rows show nothing.** | Walk station 6 | A drill row is a name and a count; a template row is a name, "N blocks" and a count. The ask: minutes · tags · the first line — browsable. Still sorted by NAME, never by use (a ranking of the coach's own ideas is refused; the count is the one number allowed). |
+| 4 | **Empty templates are offered as starts.** | Walk station 6 · stage 1 §4's "across the walk" list | "New template" at zero blocks makes a row, and *Start this plan from…* lists it at "0 blocks". Decide whether a template is made only from a plan (*Save as template…* — one question, the name) and a blank "New template" goes, or whether an empty template is simply not offered as a start. |
+| 5 | **The docked panel on desktop, the sheet on a phone.** | Walk station 6 · Q 6.1 | The plan page is an 816px sheet inside a 1200px column (stage 1); say honestly what fits beside it at 1440 and at the 768 band, and whether the Add-a-block / Add-a-station sheet ("From your drills · Write one") becomes the phone's path or stays everyone's. |
+| 6 | **The drill editor is the station form again.** | Walk station 6 | D7 already made coaching points one field there; the rest of the drill dialog is still nine fields on a page. The station modal (D4) is the shape a drill now has on the plan — ask whether the library's editor is the same sheet. |
+| 7 | **The provenance line's promise, shorter.** | Walk "across the walk" (keep list) | "Started from Probe plan template. This plan is yours now — edit anything. Changes here won't change the template." — two sentences the walk would keep and shorten. |
+| 8 | **The help's "four taps".** | Walk station 6 | The drills article is headed "write it once, then it's four taps"; the walk called the promise the problem. Whatever the shape, the article changes with it (/docs). |
+| 9 | **Practice review — a fourth tab on Practice plans?** | The Development re-evaluation's stage-4 tab, decision G2 (hand-off from that session, 2026-09-15) | Insights → Development → Practice review is the only whole-season list of practices by tag (the Practice plans hub caps its past list at the six most recent). That session recommended leaving it under Insights and named the question as THIS project's to answer. Answer it here — a tab, a door, or nothing — from what the hub already shows. |
+
+**Binding constraints the stage inherits (do not re-open):** the hub is Practice plans with tabs (stage 0 D5 — the libraries
+moved WHOLE, stage 4 redraws the rows); a drill is an identity claim (D20 — read-only on the plan, *Edit just for this
+practice* detaches, *Save to my drills…* is explicit and asks one question); nothing is seeded and no tag is supplied;
+retired, never deleted; live-season only (the library is an instrument — *Bring one forward from a past season* is the
+import, and there is no archive door); templates strip people and carry the description, the tags and the focus-areas
+section; *Save as template…* asks one question; the plan page is a document (stage 1) and a block opens in place (stage 2);
+one lime per screen; the tablet band's touch floor at 768; the quiet empty-state rule.
+
+### 7.1 Step zero — D9–D12 ruled first (owner, 2026-09-15, in chat)
+
+The kickoff prompt's rule: drag on the library is not drawn while drag of people between groups is undecided, because
+S.4 and D10 are one question at two scales and must share one reason. Asked first, before any frame: **D9 = B, the
+Groups room · D10 = yes, drag and a tap menu on one chip · D11 and D12 as drawn** (the same ruling reached the ab
+session the same evening, which built the room — §6.9). The reason that travels: *a plan is written at a desk; the field
+and the phone keep their buttons.* Stage 4's drag (L2) is drawn on that reason with the same kit — the lineup builder's,
+a pointer sensor that lifts after six pixels, a keyboard sensor, the arrows kept — and revises the standing rule in
+words: **"buttons everywhere; drag as an addition on desktop, with a mouse — never the only way."**
+
+### 7.2 What the code says — the nine inputs, answered before drawing
+
+Measured on the fixture at 1440 · 768 · 390 (a read-only Playwright probe, deleted afterwards), read against the code:
+
+1. **The bare written block cannot be kept — in two places.** *Save to my drills…* is gated on a written STATION
+   (`StationFields`, D18); the past-season import (`collectImportableDrills`) walks a plan's stations and never its bare
+   blocks. Both predate stage 3's D1. A block holds everything a drill does except Setup — and its minutes, which a
+   station never has and which become the drill's *usually* for free.
+2. **Drag** — ruled at one scale (7.1); the reason travels to the other.
+3. **"The rows show nothing" is wrong on the code and right on the fixture.** The drill row has printed tags, "20 min",
+   "In N plans" and the description since Phase 2; the walk read Probe drill on the day it was bare. What is true: the
+   WHOLE description prints (a forty-word drill is a four-line row); a drill saved from a station arrives with no minutes
+   and no tags (the promote sets `usualMinutes: null`; tags are the one optional question), so most of a new coach's
+   library is name · "Not in a plan yet"; Edit and Retire sit on every row; and on a phone **every row is 267px tall** —
+   `.ppDrillRowMain { flex: 1 1 12rem }` is a width basis that becomes a HEIGHT when the card stacks at ≤640, so the
+   Templates tab at 390 is 5,300px of scroll for twenty names and the picker sheet's rows are the same 267.
+4. **Empty templates**: "Start from blank" makes a "New template N" row at 0 blocks; `renderPickList` offers it in
+   *Start this plan from…*; the tab lists it among real ones. Twenty rows on the fixture, nineteen empty. The blank
+   start itself opens the plan sheet (stage 1's good blank page) — the defect is the offer, not the making.
+5. **The sheet is 960, not 816.** On 2026-09-15 the plan page's column was widened to `.page`'s own 960 (the sheet and
+   the header had different edges); the working column at 1440 is 1,156 (a 220 sidebar, 32px main padding). A 320
+   panel does not fit beside 960; it fits beside 816 exactly (816 + 20 + 320 = 1,156), so a docked library means the
+   sheet returns to stage 1's letter width and the pair shares the header's edges. Offered from a 1,156 working column
+   up (1440 · 1536); absent below (1,366 · 1,280 keep the sheet). At 768 and 390 the picker sheet is the path.
+6. **The drill editor** is eight fields in a 520 × 867 dialog (Name · Tags · Usually · Doing · Watching for · Points as one
+   field since D7 · Setup · Equipment) — the station modal's five plus the library's three, with Retire on the row and
+   not in the sheet. Stated, not this stage's: a drill whose kit was written before the equipment library reads as
+   having none until the tag dropdown opens (the tag idiom's adopt rows).
+7. **The provenance line** is two sentences today; one carries the promise.
+8. **"Four taps"** is promised three times: the help heading, the Drills tab's empty state (`CoachEmptyState`
+   description), the picker's "Write one" hint.
+9. **Practice review**: the hub's past list is `splitUpcomingAndRecent`'s six (`recentCap`); Insights → Development →
+   Practice review reads up to 200 with a tag filter and the truth label. A fourth tab is refused by stage 0's D8 and
+   by "no second list of practices without saying what the first lacks" — the first lacks the cap, nothing else.
+
+Also read: the coach demo's tour has no stop on either tab and the demo seeds no drills or templates (the tabs show
+their empty states to a prospect); the closed-season reader, the printed sheet and the run screen read a plan's stored
+words and snapshotted tag names, never the library; the lineup builder's kit is `@dnd-kit` (PointerSensor distance 6,
+KeyboardSensor, a `GripVertical` handle, arrows kept, drag disabled on the grid's touch view and allowed on its plain list).
+
+### 7.3 The decisions (L1–L8 on the hub, printed D1–D8 in the paste-back — the letter keeps their state and ids from colliding with stages 2 and 3, which both used D1…)
+
+| | Decision | Recommendation | What rides on it |
+|---|---|---|---|
+| **L1** | *Save to my drills…* on a written block with no stations; the past-season import reads bare blocks too | **Yes** — at the foot beside the doors, on a block with a title and no stations, never on a drill-placed block; one optional question; the drill takes title · words · points · kit · **the minutes as usually**; a copy, the block unlinked | a block→drill reader beside `stationToDrillInput`; the promote sentence names the minutes; `collectImportableDrills` walks blocks as well as stations (dedup by name); nothing in the model |
+| **L2** | Drag as an addition on desktop, with a mouse — a drill from the docked library onto the page (a gap → a new block, shut, titled by the drill, its usual minutes; the open block's stations → a station, following D13 — a written block's words become station 1 and the drill station 2, a wordless block takes it as its sole station, a circuit gains a column; never a filled column, never a shut block), a block by its gutter; buttons everywhere | **Yes**, on D10's reason and kit; the rule reworded | one `DndContext` over the sheet and the panel; droppable gaps and the add-station column; the gutter as the block handle; the panel row's Add and the ghost row's link as the keyboard path; the design memory's rule sentence |
+| **L3** | Both tabs as tables on the list recipe — Drill (name · tags · the first line of *what you're doing*, clamped, absent when unwritten) · Usually · Plans (in words) · ›; Template (name · tags · the blocks' titles) · Length · Started · ›; the row is the door; Edit and Retire leave the row for the sheet; a phone card as tall as its words | **Build as drawn** (the row-actions call is named inside it — say "Change it" to keep Retire on the row) | one table row + one card shared by the tab, the picker and the panel; `filterTagged`/`sortDrillsForPicker` untouched; the 267px phone fix (`flex-basis: auto` in the ≤640 rule); the template editor gains a quiet "Retire this template" header action |
+| **L4** | Empty templates | **Keep "Start from blank"; stop offering an empty one** — the picker's template tab lists only templates with a block; the row reads "Nothing in it yet" | a filter in `renderPickList`; the row caption; nothing retired, nothing in the model. Alternative (not recommended): templates only ever made from a plan or brought forward |
+| **L5** | The docked library | **A** — docked, the sheet is 816 and the panel 320 (the pair = the header's 1,156 column at 1440); on demand (the ghost row's "a drill from your library" docks it on a wide desktop and opens the sheet elsewhere; a quiet *Library* toggle in the toolbar once blocks exist); remembered in the browser; absent below a 1,156 working column; the panel is the phone's card list (search · chips · grip · Add · a row opens in place as the Preview · "+ New drill"); no templates in it. **B drawn**: the Schedule's slide-over holding the same panel at any desktop width, covering 230px of the sheet at 1440 — choose B if the 1,366 laptop matters more; A above 1440 and B below is one CSS line | the plan page's column (the pair at ≥1,156); the panel as the card list's third mount; the toggle + its memory; the picker sheet kept whole; the layout gate learns the docked state |
+| **L6** | The drill editor | **One field list, two faces** — the station modal's shape from a drill: the name in the head, Tags · Usually first, the same five teaching fields in the same words, *Retire this drill* in the foot (Restore on a retired one); not one component (a plan under autosave vs a library row under Save; different feet) | `components/coaches/PracticeFields.tsx` grows from two fields to the five, read by `StationFields` and the drill sheet; the dialog floor as today; the row's actions gone (L3) |
+| **L7** | The provenance line | "Started from **Probe plan template** — edit anything here; the template won't change." | one string; the help's quote |
+| **L8** | Practice review | **No fourth tab**; "Every practice this season ›" under Recent practices uncaps the hub's list in place (words, never a count; absent at six or fewer); Insights → Development → Practice review unchanged | the recent cap becomes a fold; the Development session's G2 holds |
+
+**L1 follows §6.11's D13, ruled 2026-09-16** ("+ Stations" on a written block makes two, the words moving into station 1):
+one sentence carries both — *the bare written block IS the activity* — and D13 makes that block the only written shape below a
+circuit, so L1's door sits on exactly the shape D13 names. **L2's drop into a block follows D13 too:** onto a written block with
+no stations the words become station 1 and the drill station 2; onto a wordless block the drill folds in as its sole station; onto
+a circuit it is one more column. The reworded drag rule is written once for the groups room, the rotation grid (D14) and the
+library.
+
+**Calls made without a decision (one-liners to reverse):** no "Start tonight from this" on a template row (a plan is written
+on a practice; the reverse needs a second picker; "Needs a plan" is one tab over); the ghost row keeps "a drill from your
+library" while docked; "Bring one forward from a past season" stays under the header's create menus; the Drills empty
+state keeps its shape and loses "four taps"; the panel's empty state is one line and "+ New drill"; no invented caption
+for a drill with no words.
+
+### 7.4 The frames — DRAWN 2026-09-16 on the hub's "4 · The library" tab, at true size, notes 54–79
+
+Twelve frames, live-measured on the tab (`[data-measure]` + `[data-hpx]`): **the Drills tab** before (the fixture's one row,
+960 × 88) and after — a table of five rows (Probe drill and the four rows *Save to my drills…* would make from the probe
+practice's own words) **285px**; **the Templates tab** before (twenty rows, nineteen empty) and after **309px**; **the
+docked pair at 1440** — the sheet 816 wide at **576px** (the probe practice's three shut rows), the panel 320 wide at
+**738px** with one row open as the Preview; **a drag onto the page** (the drop line between Warm-up and the circuit) and
+**into the open block** (the "+ Add a station" column lit; the written columns not targets); **B, the drawer**; **the drill
+sheet** 560 wide at **653px** (today 520 × 867); **the bare Warm-up block** open with the door at its foot, **507px**, and
+the promote dialog's sentence; **the phone** — three 267px rows today beside five content-tall cards at **395px**; **the
+tablet** — the table at 736 wide, **294px**. Identities pinned from the fixture (Probe drill's words, the probe practice's
+blocks and stations, Coach Bob · Sam Assistant · Jordan Helper, the "Skills" tag); the four saved-station rows are
+labelled as what the promote would make, and three of them honestly carry no first line.
+
+### 7.5 Where else it touches (stated on the tab, not restyled)
+
+The picker sheet keeps its two tabs and Preview with the content-tall card; *Start this plan from…* lists only templates
+with a block and reads the blocks' titles; the template editor gains "Retire this template"; the help — the drills
+article re-headed ("write it once, then it's there next time"), "Using one in a practice" gains the dock, drag and the
+row's Add, "Wrote something good in the plan instead?" says block or station, both empty-state/hint sentences lose
+"four taps" (kept as keywords), the templates article gains the not-offered rule and the blocks line; the demo tour is
+untouched (no stop on either tab); the readers are untouched; **no migration, no new key on the plan JSON**.
+
+### 7.6 Verification (for the build session, after the rulings)
+
+`verify:changed` · `typecheck` · the unit suite (new: a block→drill reader mirrors `stationToDrillInput` with the minutes;
+the import collector offers a bare block and dedups against a same-named station; the picker's template filter; the
+dock-or-sheet decision by width as a pure function) · `check:layout --only=coach-practice-plan,coach-practice-station`
+plus a new screen for the docked state at 1440 (the panel's rows on the tap floor at 768 are the sheet's — measure the
+picker) and the Drills/Templates tabs at 361/390/768/1440 (the 267px row must read content-tall) · `check:spelling` on
+the new copy · `check:demos` (no tour destination changes) · a Playwright probe on the fixture: drag a panel row into
+the gap (the block lands shut at the right index, the clocks recompute), drag onto "+ Add a station" (a fourth station), onto
+a written block with no stations (D13: its words become station 1, the drill station 2) and onto a wordless block (the drill
+folds in as its sole station), a drop on a filled column does nothing, Add on a row appends at the end, Escape and
+focus on the drill sheet, *Save to my drills…* on the bare Warm-up block (the drill row reads "10 min"), the
+past-season import offering a bare block — both plans restored afterwards. `/docs` for the two articles.
+
+### 7.7 Circuits — L9, added on the ruling (owner, 2026-09-16) and ruled in words the same day
+
+**The gap, from the code.** A drill is one station's worth and an identity (`rep-drills.ts` rules 1–3: copied never linked,
+read-only on the plan, detached on edit, counted by `countDrillUses` over drill-backed stations). A template is a whole practice
+and scaffolding (`rep-plan-templates.ts`: copy-on-load, fully editable, `templateId` kept as provenance, `countTemplateUses`
+over plans). A block with stations — a circuit — is neither, and nothing keeps one: with L1 + D13 a plain block saves as a
+drill and returns as a block; *Start this plan from… a previous practice* copies a whole plan; the past-season importers walk
+stations (drills) and plans (templates), never blocks. The owner's scenario — four tee stations saved singly AND as the
+circuit, then either dragged onto another practice — is exactly the missing size.
+
+**What a coach sees and does.** The block's foot door reads by shape — *Save to my drills…* on a plain written block (L1),
+*Save to my circuits…* on one with stations; D13 makes those the only two written shapes. The save asks two optional questions:
+tags, and one tick, *"Also save its N written stations as drills"* — ticked, the written stations are created as drills first
+and the saved circuit's stations point at them (so their counts work and the circuit later places them as drill-backed
+stations); tonight's block is left exactly as it is (promotion copies; nothing turns read-only under the coach's hands). A
+fourth tab, **Practices · Templates · Circuits · Drills** (a size ladder), on the same table: Circuit (name · tags · the
+stations' names then "rotates every N min") · Usually · "Started N plans" · ›; the row opens the circuit's editor — the block
+alone on a sheet, no clock, no people, Retire in the header (the template editor's idiom); "New circuit ▾" holds *Start from
+blank* and *Bring one forward from a past season* (past plans' multi-station blocks by title). The docked panel's head switches
+**Drills · Circuits**; a circuit row drags into a **gap only** and lands as a whole block — titled by the circuit, its minutes,
+its station columns, "Groups rotate · every N" as saved, groups EMPTY (people never travel; "N groups · from who replied · Draw"),
+shut — and opened, fully editable with one quiet line, *"Started from Skills circuit · changes here stay here"*, that stays
+through every edit (the template's rule, one level down). Drill-backed stations inside it keep the drill rule. "Add a block"
+gains a *From your circuits* tab beside *From your drills · Write one*; "Add a station" does not.
+
+**What travels / what stays.** Travels: title → name, minutes → usually, the block's own two lines, `rotation.rotates` and
+`intervalMinutes`, each station's name · description · goal · points · setup · equipment · `drillId` + `drillTags` (the
+template's `stationForTemplate` strip, reused). Stays: staff, players, groups, tonight's notes, and any hand-arranged grid (D14)
+— the groups are drawn fresh on the practice.
+
+**Build design.** A `rep_team_circuits` table shaped like `rep_team_plan_templates` (org · team · name · tag ids · one block's
+JSON · is_active · unique active name per team) — **the stage's one migration; dictionary + snapshots in the same unit of work**;
+routes under `development/circuits` mirroring the templates' (list · create · patch · retire · past-seasons import); a
+`blockToCircuitShape` (sanitise → strip people, like `planToTemplateShape` on one block) and a `circuitToBlock` (fresh ids,
+`circuitId` + `circuitName` on the block — two optional keys on the plan JSON's block, whitelisted, no version bump; the
+sanitiser keeps them as it keeps `templateId`); `countCircuitUses` over plans' blocks by `circuitId`; the save dialog's tick
+creates drills through the existing create and rewrites the saved circuit's station `drillId`s before the circuit is stored (a
+station already in the library by name is not duplicated — the tick names how many it would add); the block door's word from
+`(block.stations?.length ?? 0) >= 2`; the fourth tab in `PracticePlansTabs` (`section=circuits`; the "no fourth tab"
+comment revised); the Circuits view as a third mount of the L3 table/card; the panel's switch; the picker's third tab (block
+kind only); the drop target rule; the editor page `practice/circuits/[id]` reusing `BlockCard` with `withoutPeople` and no
+clock; a template saved from a plan whose block came from a circuit keeps the block's `circuitId` (as it keeps `drillId`s).
+The closed-season reader, the printed sheet and the run screen read a block as a block — untouched.
+
+**Verification, added to §7.6:** unit — `blockToCircuitShape` strips people and keeps drill links; `circuitToBlock` mints
+fresh ids and empty groups; the tick creates N drills and points the shape at them, skipping same-name library drills; the
+count. Layout — the Circuits tab at 361/390/768/1440 and the panel's switch at 1440. Probe — save the fixture's Skills
+circuit (with and without the tick), place it on the Oct 27 practice by drag and by Add, open it (three columns, rotation as
+saved, "Draw" offered), Escape and focus on the save dialog; the past-season import offering a multi-station block. Dictionary
++ snapshots refreshed; `check:dictionary` green.

@@ -65,6 +65,42 @@ async function openFirstBlock(page) {
   await page.waitForTimeout(300);
 }
 
+
+/**
+ * Open the probe practice's CIRCUIT and then its first STATION (stage 3, 2026-09-15): the block
+ * with stations renders the rotation strip, the station columns and the turned grid, and a column
+ * opens the station as a modal with a stepper — an overlay this page's sweep had never measured.
+ * The column's door is a button named by its content, ending in its "Open ›" — the one thing on
+ * the page that does (a shut block row STARTS with "Open"; "+ Add a station" ends in its hint) —
+ * so the probe takes the FIRST door, whichever station it is: it first named "Footwork ladder"
+ * and expected it at station 1, and the fixture's stations were reordered under the owner's
+ * hands within the day (the reorder pair on the columns, 2026-09-15). The modal names itself
+ * "<station> — station N of M".
+ */
+async function openCircuitStation(page) {
+  const row = page.getByRole('button', { name: /^Open Skills circuit/ }).first();
+  if (await row.count() === 0) return;
+  await row.click();
+  const column = page.getByRole('button', { name: /Open ›$/ }).first();
+  await column.waitFor({ state: 'attached', timeout: 15_000 });
+  await column.click();
+  await page.getByRole('dialog', { name: /station 1 of/ }).waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
+/** The circuit open and its GROUPS ROOM up (stage 3 revision, D9): the draw row, the pool column,
+ *  the group columns with their chips, name boxes and bins, the foot's "+ Add a group" and Done. */
+async function openCircuitGroups(page) {
+  const row = page.getByRole('button', { name: /^Open Skills circuit/ }).first();
+  if (await row.count() === 0) return;
+  await row.click();
+  const door = page.getByRole('button', { name: /^(Edit groups|Draw the groups) ›$/ }).first();
+  await door.waitFor({ state: 'attached', timeout: 15_000 });
+  await door.click();
+  await page.getByRole('dialog', { name: /^Groups — / }).waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
 export const SCREENS = [
   // ── The portal's own front doors ────────────────────────────────────────────
   {
@@ -209,6 +245,24 @@ export const SCREENS = [
     // two coaching points): the clock row's chips, the two fields, the Players line, the doors.
     // The blind spot stage 1's review recorded; closed at stage 2.
     interact: openFirstBlock,
+  },
+  {
+    // The same sheet with the CIRCUIT open and its first station's modal up (stage 3): the strip,
+    // the columns and the turned grid behind it, the stepper's foot in front.
+    id: 'coach-practice-station',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
+    ready: '[data-room="practice-plan"][data-room-state="loaded"]',
+    interact: openCircuitStation,
+  },
+  {
+    // The same sheet with the circuit's GROUPS ROOM up (stage 3 revision, D9–D12): the draw row's
+    // chips and select, the pool column, the group name boxes, the player chips and the bins.
+    id: 'coach-practice-groups',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
+    ready: '[data-room="practice-plan"][data-room-state="loaded"]',
+    interact: openCircuitGroups,
   },
   {
     id: 'coach-practice-run',
