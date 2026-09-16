@@ -1,0 +1,398 @@
+<title>The Evidence Door</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,420;9..144,560;9..144,680&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#15171B; --bg-2:#1B1E23; --bg-3:#21252B;
+    --line: rgba(237,235,230,0.10); --line-strong: rgba(237,235,230,0.18);
+    --ink:#EDEBE6; --ink-dim:#E4E1DA; --dim:#9B968D; --dim-2:#6E6A62;
+    --amber:#E3A339; --amber-ink:#241a06;
+    --red:#E2604F; --red-soft: rgba(226,96,79,0.14);
+    --green:#7FB56B; --green-soft: rgba(127,181,107,0.14);
+    /* real FieldLogicHQ warm-portal tokens, used only inside the embedded product frames */
+    --p-paper:#F8F4ED; --p-card:#FFFFFF; --p-ink:#241E15; --p-ink-soft:#4A4235; --p-dim:#615A54;
+    --p-lime:#D9F99D; --p-olive:#57651E; --p-line: rgba(70,55,30,0.20); --p-fill: rgba(70,55,30,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, sans-serif;
+    line-height:1.5;
+  }
+  ::selection{ background: rgba(227,163,57,0.35); }
+
+  .wrap{ max-width: 1040px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+
+  /* ── Top bar ─────────────────────────────────────────── */
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace; font-size:0.72rem; letter-spacing:0.11em; text-transform:uppercase;
+    color: var(--dim-2); display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;
+  }
+  .eyebrow .dot{ width:5px; height:5px; border-radius:50%; background: var(--amber); }
+  h1{
+    font-family:"Fraunces", Georgia, serif; font-optical-sizing:auto; font-weight:620;
+    font-size: clamp(2.1rem, 4.2vw, 3rem); letter-spacing: -0.01em; margin: 0.5rem 0 0.9rem;
+    text-wrap: balance; color: var(--ink);
+  }
+  .lede{ font-size:1.05rem; color: var(--dim); max-width: 62ch; margin: 0 0 1.1rem; }
+  .status{
+    display:inline-flex; align-items:center; gap:0.5rem;
+    font-family:"IBM Plex Mono", monospace; font-size:0.74rem; letter-spacing:0.02em;
+    color: var(--amber); background: rgba(227,163,57,0.10); border:1px solid rgba(227,163,57,0.30);
+    padding: 0.35rem 0.7rem; border-radius:999px;
+  }
+
+  section{ margin-top: 3.6rem; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:1.1rem; flex-wrap:wrap; }
+  h2{
+    font-family:"Fraunces", Georgia, serif; font-weight:560; font-size:1.5rem; margin:0; color: var(--ink);
+  }
+  .section-note{ font-size:0.86rem; color: var(--dim-2); max-width: 40ch; text-align:right; }
+
+  /* ── Frame chrome (the "workshop light table" the specimens sit on) ── */
+  .bench{
+    background: var(--bg-2); border:1px solid var(--line); border-radius:16px;
+    padding: 1.6rem; position:relative;
+  }
+  .bench-label{
+    font-family:"IBM Plex Mono", monospace; font-size:0.72rem; letter-spacing:0.04em; color: var(--dim);
+    margin: 0 0 0.9rem; display:flex; align-items:center; gap:0.5rem;
+  }
+  .bench-label b{ color: var(--ink); font-weight:500; }
+
+  /* ── The embedded product frame itself — real tokens ────────────── */
+  .frame{
+    background: var(--p-paper);
+    border-radius: 10px;
+    padding: 1.4rem;
+    background-image:
+      linear-gradient(rgba(70,55,30,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(70,55,30,0.045) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .modal{
+    background: var(--p-card); border-radius:14px; max-width: 420px; margin: 0 auto;
+    padding: 1.15rem 1.15rem 1rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 18px 40px rgba(20,14,4,0.28);
+  }
+  .m-head{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:0.9rem; }
+  .m-title{ font-size:0.98rem; font-weight:700; color: var(--p-ink); margin:0; }
+  .m-sub{ font-size:0.78rem; color: var(--p-dim); margin:0.15rem 0 0; }
+  .m-x{ color: var(--p-dim); font-size:1rem; line-height:1; }
+  .f-label{ font-size:0.66rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color: var(--p-dim); display:block; margin-bottom:0.3rem; }
+  .field{ margin-bottom:0.85rem; }
+  .m-select, .m-input{
+    width:100%; background: var(--p-fill); border:1px solid var(--p-line); border-radius:8px;
+    padding:0.55rem 0.7rem; font-size:0.82rem; color: var(--p-ink);
+  }
+  .m-textarea{
+    width:100%; min-height:64px; background: var(--p-fill); border:1px solid var(--p-line); border-radius:8px;
+    padding:0.6rem 0.7rem; font-size:0.82rem; color: var(--p-ink); line-height:1.4;
+  }
+  .m-hint{ font-size:0.72rem; color: var(--p-dim); line-height:1.4; margin: 0.6rem 0 0; }
+  .m-foot{ display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; padding-top:0.85rem; border-top:1px solid var(--p-line); }
+  .m-btn{ font-size:0.8rem; font-weight:600; border-radius:8px; padding:0.5rem 0.9rem; border:1px solid var(--p-line); background:#fff; color: var(--p-ink); }
+  .m-btn.primary{ background: var(--p-lime); border-color: var(--p-lime); color:#1c2607; }
+  .m-link{ color: var(--p-olive); font-weight:600; font-size:0.8rem; cursor:default; }
+
+  /* highlighted / new elements inside a frame */
+  .m-new{ outline: 2px solid rgba(127,181,107,0.55); outline-offset:3px; border-radius:9px; }
+  .m-disc{
+    width:100%; text-align:left; font-size:0.8rem; font-weight:600; color: var(--p-olive);
+    background:transparent; border:1px dashed var(--p-line); border-radius:8px; padding:0.55rem 0.7rem;
+    display:flex; align-items:center; gap:0.4rem;
+  }
+
+  /* session grid row specimen (option B) */
+  .grid-row{ background:#fff; border:1px solid var(--p-line); border-radius:10px; padding:0.85rem 1rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .gr-top{ display:flex; justify-content:space-between; gap:0.75rem; font-size:0.72rem; color:var(--p-dim); margin-bottom:0.4rem; }
+  .gr-name{ font-weight:700; color:var(--p-ink); font-size:0.86rem; }
+  .gr-note{ font-size:0.82rem; color:var(--p-ink-soft); line-height:1.45; }
+  .gr-link{ display:inline-flex; align-items:center; gap:0.3rem; margin-top:0.55rem; font-size:0.78rem; font-weight:600; color:var(--p-olive); }
+
+  /* ── Flags / fix chips — clickable ───────────────────── */
+  .marker{
+    font-family:"IBM Plex Mono", monospace; font-size:0.68rem; font-weight:600; letter-spacing:0.02em;
+    border:none; border-radius:999px; padding:0.3rem 0.65rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;
+  }
+  .marker:hover{ filter:brightness(1.08); }
+  .marker:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .flag{ background: var(--red-soft); color:#ffb3a6; border:1px solid rgba(226,96,79,0.4); }
+  .flag::before{ content:"⚑"; }
+  .fix{ background: var(--green-soft); color:#c9e8bd; border:1px solid rgba(127,181,107,0.4); }
+  .fix::before{ content:"✓"; }
+  .flag-row, .fix-row{ margin-top:0.85rem; display:flex; justify-content:center; }
+
+  /* ── Section 1: the two-trip sequence ────────────────── */
+  .two-trip{ display:grid; grid-template-columns: 1fr auto 1fr; gap:1.2rem; align-items:start; }
+  .arrow-col{ display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding-top:5rem; color: var(--dim-2); }
+  .arrow-col svg{ width:28px; height:28px; }
+  .arrow-col span{ font-family:"IBM Plex Mono", monospace; font-size:0.68rem; text-align:center; max-width:9ch; line-height:1.3; }
+  .caption{ font-size:0.86rem; color: var(--dim); text-align:center; margin-top:1.4rem; max-width:58ch; margin-left:auto; margin-right:auto; line-height:1.55; }
+  .caption b{ color: var(--ink); font-weight:600; }
+
+  /* ── Section 2: three option cards ───────────────────── */
+  .options{ display:grid; grid-template-columns: repeat(3, 1fr); gap:1.2rem; }
+  .card{
+    background: var(--bg-2); border:1px solid var(--line); border-radius:16px; position:relative;
+    padding: 1.6rem 1.4rem 1.5rem; display:flex; flex-direction:column;
+  }
+  .tab{
+    position:absolute; top:-14px; left:1.4rem; width:34px; height:26px;
+    background: var(--bg-3); border:1px solid var(--line); border-bottom:none;
+    border-radius:6px 6px 0 0; display:flex; align-items:center; justify-content:center;
+    font-family:"IBM Plex Mono", monospace; font-weight:600; font-size:0.85rem; color: var(--amber);
+  }
+  .card h3{ font-family:"Fraunces", Georgia, serif; font-size:1.18rem; font-weight:560; margin:0.6rem 0 0.3rem; color: var(--ink); }
+  .card .what{ font-size:0.84rem; color: var(--dim); margin: 0 0 1.1rem; line-height:1.5; }
+  .card .frame{ padding: 1rem; margin-bottom:1rem; }
+  .card .tradeoff{ font-size:0.8rem; color: var(--dim-2); line-height:1.5; margin: 0.9rem 0 1rem; flex:1; }
+  .verdict{
+    align-self:flex-start; font-family:"IBM Plex Mono", monospace; font-size:0.68rem; letter-spacing:0.03em;
+    border-radius:999px; padding:0.32rem 0.7rem; cursor:pointer; border:1px solid;
+  }
+  .verdict.rec{ background: rgba(227,163,57,0.14); border-color: rgba(227,163,57,0.45); color: var(--amber); }
+  .verdict.consider{ background: var(--bg-3); border-color: var(--line-strong); color: var(--dim); }
+
+  /* ── Section 3: recommendation callout ───────────────── */
+  .rec-block{
+    background: linear-gradient(155deg, rgba(227,163,57,0.10), rgba(227,163,57,0.03));
+    border:1px solid rgba(227,163,57,0.30); border-radius:16px; padding: 1.6rem 1.8rem;
+    display:flex; gap:1.2rem; align-items:flex-start;
+  }
+  .rec-mark{ font-family:"IBM Plex Mono", monospace; font-size:0.75rem; color: var(--amber); border:1px solid rgba(227,163,57,0.4); border-radius:999px; padding:0.35rem 0.6rem; flex-shrink:0; }
+  .rec-block p{ margin:0 0 0.7rem; font-size:0.94rem; color: var(--ink-dim, var(--ink)); line-height:1.65; }
+  .rec-block p:last-child{ margin-bottom:0; }
+  .rec-block b{ color: var(--amber); font-weight:600; }
+
+  footer{ margin-top:3.5rem; padding-top:1.4rem; border-top:1px solid var(--line); font-family:"IBM Plex Mono", monospace; font-size:0.72rem; color: var(--dim-2); }
+
+  /* ── Side panel (clickable annotations) ──────────────── */
+  .panel-overlay{
+    position:fixed; inset:0; background: rgba(10,10,10,0.55); backdrop-filter: blur(2px);
+    display:flex; justify-content:flex-end; z-index:100; opacity:0; pointer-events:none; transition: opacity 0.18s ease;
+  }
+  .panel-overlay.open{ opacity:1; pointer-events:auto; }
+  .panel{
+    width: min(420px, 92vw); height:100%; background: var(--bg-3); border-left:1px solid var(--line-strong);
+    padding: 1.6rem 1.5rem; overflow-y:auto; transform: translateX(16px); transition: transform 0.2s ease;
+  }
+  .panel-overlay.open .panel{ transform: translateX(0); }
+  .panel-kind{ font-family:"IBM Plex Mono", monospace; font-size:0.7rem; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:0.6rem; }
+  .panel-kind.p-flag{ color:#ffb3a6; } .panel-kind.p-fix{ color:#c9e8bd; } .panel-kind.p-verdict{ color: var(--amber); }
+  .panel h4{ font-family:"Fraunces", Georgia, serif; font-size:1.25rem; margin:0 0 0.9rem; color: var(--ink); }
+  .panel p{ font-size:0.9rem; color: var(--dim); line-height:1.6; margin: 0 0 0.9rem; }
+  .panel-close{ position:absolute; top:1.3rem; right:1.3rem; background:none; border:none; color: var(--dim); font-size:1.2rem; cursor:pointer; }
+  .panel-close:hover{ color: var(--ink); }
+
+  @media (max-width: 860px){
+    .two-trip{ grid-template-columns: 1fr; }
+    .arrow-col{ flex-direction:row; padding-top:0; justify-content:center; }
+    .arrow-col svg{ transform: rotate(90deg); }
+    .options{ grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="eyebrow"><span class="dot"></span>FieldLogicHQ · Coach Development · Design decision</div>
+  <h1>The Evidence Door</h1>
+  <p class="lede">A goal and a session only ever connect through one note — and right now, a coach can't make that connection from inside the session where the note gets written. Three ways to close it, drawn to scale.</p>
+  <span class="status">● Not yet built — awaiting a pick</span>
+
+  <section>
+    <div class="section-head">
+      <h2>What's true today</h2>
+      <div class="section-note">Traced from the live build, not the plan — Devon Test's own goal and session.</div>
+    </div>
+    <div class="bench">
+      <div class="two-trip">
+        <div>
+          <div class="bench-label">Frame 1 · <b>recording, live</b> — the session's own door</div>
+          <div class="frame">
+            <div class="modal">
+              <div class="m-head">
+                <div><p class="m-title">Devon Test — Sets feet before throwing</p><p class="m-sub">UAT probe practice · dated by the session</p></div>
+                <span class="m-x">✕</span>
+              </div>
+              <div class="field"><span class="f-label">Descriptor</span><div class="m-select">No descriptor</div></div>
+              <div class="field"><span class="f-label">What did you see?</span>
+                <div class="m-textarea">Set his back foot before the crow hop — held it through two reps without a cue.</div>
+              </div>
+              <p class="m-hint">One observation, not an overall grade. Visible to coaches with Internal notes.</p>
+              <div class="m-foot"><span class="m-btn">Cancel</span><span class="m-btn primary">Save observation</span></div>
+            </div>
+          </div>
+          <div class="flag-row"><button class="marker flag" data-note="flag-1">no Evidence for field, anywhere on this screen</button></div>
+        </div>
+
+        <div class="arrow-col">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+          <span>a second, separate trip</span>
+        </div>
+
+        <div>
+          <div class="bench-label">Frame 2 · <b>linking it</b> — only reachable afterward, via Edit</div>
+          <div class="frame">
+            <div class="modal">
+              <div class="m-head">
+                <div><p class="m-title">Edit the observation</p><p class="m-sub">Devon Test · Sets feet before throwing</p></div>
+                <span class="m-x">✕</span>
+              </div>
+              <div class="field"><span class="f-label">Descriptor</span><div class="m-select">No descriptor</div></div>
+              <div class="field"><span class="f-label">What did you see?</span>
+                <div class="m-textarea">Set his back foot before the crow hop — held it through two reps without a cue.</div>
+              </div>
+              <div class="field"><span class="f-label">Evidence for</span><div class="m-select">First-step quickness off the bag</div></div>
+              <div class="m-foot"><span class="m-link">Remove observation</span><span style="flex:1"></span><span class="m-btn">Cancel</span><span class="m-btn primary">Save</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="caption">The only path from Frame 1 to Frame 2 is <b>leaving the session</b>, finding this exact note again on the goal's own history or the player's Notes tab, and opening <b>Edit</b> — where the same field has been sitting the whole time.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Three ways to close it</h2>
+      <div class="section-note">Same note, same session — what changes is where the goal question gets asked.</div>
+    </div>
+    <div class="options">
+
+      <div class="card">
+        <div class="tab">A</div>
+        <h3>Ask it right there</h3>
+        <p class="what">The same "Evidence for" dropdown Frame 2 already has, added to the live sheet too — no new control, just handed the player's real goal list instead of none.</p>
+        <div class="frame">
+          <div class="modal" style="max-width:100%">
+            <div class="m-head"><div><p class="m-title">Devon Test — Sets feet…</p><p class="m-sub">This session · dated by the session</p></div><span class="m-x">✕</span></div>
+            <div class="field"><span class="f-label">Descriptor</span><div class="m-select">No descriptor</div></div>
+            <div class="field"><span class="f-label">What did you see?</span><div class="m-textarea" style="min-height:44px">Set his back foot before the crow hop…</div></div>
+            <div class="field m-new"><span class="f-label">Evidence for</span><div class="m-select">No goal</div></div>
+            <div class="m-foot"><span class="m-btn">Cancel</span><span class="m-btn primary">Save</span></div>
+          </div>
+        </div>
+        <div class="fix-row"><button class="marker fix" data-note="fix-a">same field, same door as everywhere else</button></div>
+        <p class="tradeoff">One more read on the fastest screen in the app — though it's a single dropdown defaulting to "No goal," so a coach who doesn't care never has to touch it.</p>
+        <button class="verdict rec" data-note="verdict-a">Recommended ›</button>
+      </div>
+
+      <div class="card">
+        <div class="tab">B</div>
+        <h3>Offer it after you save</h3>
+        <p class="what">The recording sheet stays pixel-for-pixel what it is today. Once the note is saved, the session's own grid offers the link right on the row.</p>
+        <div class="frame">
+          <div class="grid-row">
+            <div class="gr-top"><span class="gr-name">Devon Test</span><span>Sets feet before throwing</span></div>
+            <div class="gr-note">Set his back foot before the crow hop — held it through two reps without a cue.</div>
+            <div class="gr-link m-new">＋ Evidence for a goal? Link it ›</div>
+          </div>
+        </div>
+        <div class="fix-row"><button class="marker fix" data-note="fix-b">the recording sheet itself: zero change</button></div>
+        <p class="tradeoff">A new persistent line on every saved row, and a second click — but it meets the coach with full context, right on the note, for as long as it stays unlinked.</p>
+        <button class="verdict consider" data-note="verdict-b">Worth it if speed comes first ›</button>
+      </div>
+
+      <div class="card">
+        <div class="tab">C</div>
+        <h3>Tuck it behind a "+"</h3>
+        <p class="what">The same field as A, collapsed by default behind the disclosure pattern already approved for Add a goal earlier today — opens only if a coach asks for it.</p>
+        <div class="frame">
+          <div class="modal" style="max-width:100%">
+            <div class="m-head"><div><p class="m-title">Devon Test — Sets feet…</p><p class="m-sub">This session · dated by the session</p></div><span class="m-x">✕</span></div>
+            <div class="field"><span class="f-label">Descriptor</span><div class="m-select">No descriptor</div></div>
+            <div class="field"><span class="f-label">What did you see?</span><div class="m-textarea" style="min-height:44px">Set his back foot before the crow hop…</div></div>
+            <button class="m-disc m-new">＋ Evidence for a goal</button>
+            <div class="m-foot"><span class="m-btn">Cancel</span><span class="m-btn primary">Save</span></div>
+          </div>
+        </div>
+        <div class="fix-row"><button class="marker fix" data-note="fix-c">reuses today's own "+ More" pattern</button></div>
+        <p class="tradeoff">The sheet looks identical until opened — but a coach has to already know the option exists to go looking for the "+," which is close to today's actual problem.</p>
+        <button class="verdict consider" data-note="verdict-c">Consistent, but softest fix ›</button>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:1rem;">My recommendation</h2>
+    <div class="rec-block">
+      <span class="rec-mark">A</span>
+      <div>
+        <p><b>Ask it right there.</b> The field already exists, tested and live on two of the three doors today — this is the third door catching up, not new product. It costs an uninterested coach nothing to skip, the same way the descriptor and the note already do.</p>
+        <p>B solves the same problem with more surface area to maintain — a new grid-row state, a second interaction, a second thing that can go stale — for a smaller discoverability win than just asking once, in the moment, the way the other two doors already do. C actively works against the point of this fix: the whole failure today is that a coach doesn't know the option exists, and hiding it behind a "+" is a milder version of the same problem.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    docs/projects/active/COACH_DEVELOPMENT_GOAL_SESSION_LINK_MOCKUP.html · coach development lifecycle re-evaluation · not yet built
+  </footer>
+</div>
+
+<div class="panel-overlay" id="panelOverlay">
+  <div class="panel">
+    <button class="panel-close" id="panelClose" aria-label="Close">✕</button>
+    <div class="panel-kind" id="panelKind"></div>
+    <h4 id="panelTitle"></h4>
+    <div id="panelBody"></div>
+  </div>
+</div>
+
+<script>
+  const NOTES = {
+    "flag-1": { kind:"flag", title:"No way to link this note to a goal", body:[
+      "The sheet you see when recording live inside a session only ever asks for the descriptor and the sentence — the skill and the date are fixed by the session, so there's nothing else to fill in.",
+      "The code has an “Evidence for” field ready to go (it's the exact same component used everywhere else), but the session page currently hands it an empty goal list, so the field never renders here at all."
+    ]},
+    "fix-a": { kind:"fix", title:"Option A — same field, same door", body:[
+      "This isn't a new control. It's the identical “Evidence for” dropdown already live on the other two doors — a coach who has seen it once has seen it everywhere.",
+      "Technically the cheapest of the three: the field already exists and already behaves correctly; the session page just needs to hand it the player's real goals instead of none."
+    ]},
+    "fix-b": { kind:"fix", title:"Option B — the sheet doesn't change at all", body:[
+      "Nothing about the fast, in-the-moment recording flow is touched. The offer to link only shows up afterward, on the session's own grid, once the note already exists.",
+      "That protects the exact thing the session sheet was built to protect — nothing on that screen slows down or gains a decision to make before Save."
+    ]},
+    "fix-c": { kind:"fix", title:"Option C — the same “+” pattern from today", body:[
+      "This is the identical progressive-disclosure control just approved for Add a goal's optional fields — a dashed “+” pill that opens into a small titled panel.",
+      "Reusing it here means a coach who's already learned that pattern elsewhere in the portal recognizes it immediately."
+    ]},
+    "verdict-a": { kind:"verdict", title:"Why this is the pick", body:[
+      "Lowest cost to build (the field and its behavior already exist), zero cost to a coach who ignores it, and it makes all three recording doors finally consistent with each other.",
+      "The only real objection is “one more line on the fastest screen” — but that screen already asks a Descriptor question with the same shape, defaulting to “No descriptor,” with no complaints on record."
+    ]},
+    "verdict-b": { kind:"verdict", title:"When this wins instead", body:[
+      "If keeping the recording sheet at literally zero net change matters more than build cost, this is the safer pick — nothing about today's fastest screen is touched.",
+      "The trade is a new, permanent piece of UI on every saved row, and a second click for a coach who does want to link it — more surface for a smaller discoverability gain than just asking once."
+    ]},
+    "verdict-c": { kind:"verdict", title:"Why this is the softest fix", body:[
+      "It's visually the least disruptive option, but the actual problem today isn't that the field takes an extra tap — it's that a coach standing at the fence has no idea the option exists at all.",
+      "A collapsed “+” only helps a coach who already knows to look for it, which is close to today's failure mode, just with a slightly shorter walk back if they remember later."
+    ]}
+  };
+
+  const overlay = document.getElementById('panelOverlay');
+  const kindEl = document.getElementById('panelKind');
+  const titleEl = document.getElementById('panelTitle');
+  const bodyEl = document.getElementById('panelBody');
+  const KIND_LABEL = { flag: "Problem", fix: "Proposed fix", verdict: "My take" };
+
+  function openNote(id){
+    const n = NOTES[id];
+    if(!n) return;
+    kindEl.textContent = KIND_LABEL[n.kind] || '';
+    kindEl.className = 'panel-kind p-' + n.kind;
+    titleEl.textContent = n.title;
+    bodyEl.innerHTML = n.body.map(p => `<p>${p}</p>`).join('');
+    overlay.classList.add('open');
+  }
+  function closeNote(){ overlay.classList.remove('open'); }
+
+  document.querySelectorAll('[data-note]').forEach(el => {
+    el.addEventListener('click', () => openNote(el.getAttribute('data-note')));
+  });
+  document.getElementById('panelClose').addEventListener('click', closeNote);
+  overlay.addEventListener('click', e => { if(e.target === overlay) closeNote(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeNote(); });
+</script>

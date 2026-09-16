@@ -551,7 +551,7 @@ the player, the Results row IS the home of a result and every other reading alre
 | E8 | Build (a ruling in words) | **The record is the coach's; the paper is chosen.** The gate is unchanged (goals · observations · reviews · Notes behind Internal notes; results on any record duty). The observation sheet's hint says "on a handout only if you choose it" (E2). Two pushes on station 8, NOT built here: the handout's chooser should say the observation goes to the family; the printed "We'll look at this together again on <date>" must not print a past date (E5 stops the record holding one; the printed line is station 8's). |
 
 **⚠ E2's "the session's skill row (C12, unchanged)" is now WRONG (owner ruling 2026-09-16, "The
-Evidence Door" — mockup `docs/projects/active/COACH_DEVELOPMENT_GOAL_SESSION_LINK_MOCKUP.html`,
+Evidence Door" — mockup `docs/projects/archive/COACH_DEVELOPMENT_GOAL_SESSION_LINK_MOCKUP.html`,
 option A chosen over a post-save nudge and a collapsed "+"): a goal and a session only ever
 connected through one observation that happened to carry both a `sessionId` and a `goalId`, and
 the session's own recording door — the moment a coach is most likely to have both in mind — never
@@ -682,7 +682,7 @@ station carries the reversal note; the older stage-1 frames still show the previ
 
 **/review (2026-09-15, high-risk tier — four lenses: correctness · security/tenancy · data/contract · regression):** deterministic gate green (typecheck, verify:changed 4,042 unit, focused lint, layout on five screens); 6 findings → 4 after dedup → 3 fixed, 1 advisory kept, 2 refuted on read. Fixed: the delete stripped session plans AFTER the row went and with a plain read-modify-write — two deletes touching one plan in the same instant could put each other's test back, and a strip failing after the delete left a phantom behind a 500 nobody could retry (now: plans first, each write a compare-and-swap on the list as read, the row last; proven on the fixture by planning the probe test on a probe session and deleting it — the plan keeps the sprint and loses the probe); the sheet showed the unit as an input for the moment before its read answered, and a keystroke made there survived under the locked field (the read now resets the unit on a test with results); the report's unit read the OLDEST row where the definition says it (now the definition, then the latest row). The table had no DELETE RLS policy (mig 301). Advisory, kept: deleting the only planned test leaves a session with an empty plan (`[]`, never null — the whole-or-neither CHECK holds "who was there"), which reads as a plan with no tests until the coach adds one; a rare edge of an edge.
 
-## 21. The re-evaluation — stage 4 · Reports & handout (ruled 2026-09-16 · built on dev 2026-09-16 · walk owed, ledger §193)
+## 21. The re-evaluation — stage 4 · Reports & handout (ruled 2026-09-16 · built on dev 2026-09-16 and committed `bd7a632f` — ledger §193, walk COMPLETE 2026-09-16, 24/25, E1 logged as an out-of-scope follow-up)
 
 **Stage 4 — Reports & handout.** The walk's stations 7 (the three reports), 8 (the handout) and 9
 (who sees what), and the Standing-back questions that land on them (S2 six doors to one figure, S4
@@ -753,7 +753,7 @@ not built). Q 9.1 stays as ruled (§178).
 
 **The fixture (build decisions, not product ones):** the frames pin Devon's sprint at 8.28 s · 15 Sept (0.34 s lower since 6 May), the changeup 0 of 3 in range on 27 May (the 10 Jun changeup result is gone — a walk step took it; the seed may put it back so the range chart draws a change), Throw speed 84 km/h · 3 Jun (E10 converted the earlier rows), the one observation of 10 Jun. The recap walk needs a player with a parked goal to prove the status rule — a seed row, or a walk step that parks and un-parks Devon's goal. Every figure the walk pins must come from the seed.
 
-**Built as (2026-09-16 — all seven on dev the same day; NO migration, no new route; walk owed on the artifact's "4 · Reports & handout" tab, ledger §193).** Where the code disagreed with the sentences above, the build followed the code and says so here:
+**Built as (2026-09-16 — all seven on dev the same day; NO migration, no new route; walked on the artifact's "4 · Reports & handout" tab, ledger §193).** Where the code disagreed with the sentences above, the build followed the code and says so here:
 
 | # | Built as | Where it departs from the frame or the plan, and why |
 |---|----------|------------------------------------------------------|
@@ -768,3 +768,19 @@ not built). Q 9.1 stays as ruled (§178).
 **The fixture (2026-09-16):** the seed now re-asserts Devon's changeup rows PER SESSION (a stage-3 walk step had removed the 10 Jun result and the old "any row exists" check never put it back — the range chart drew one point), and adds one **parked** goal on Devon ("Two-strike approach") so the recap rule can be walked from the seed; Devon's Goals view therefore lists two goals (three while a peer walk's "test" goal stands). ⚠ Applied to the dev fixture with a targeted script, NOT the full seed: the seed also rewrites the probe practice's plan, which the practices session's groups-room walk was on that evening.
 
 **Verification at hand-off:** typecheck clean; `verify:changed` green (4,070 unit — the new averageOf / developmentReports / handoutNextReview tests, the recap suite rewritten around the series, the address and page-actions guards taught the three tabs, the vocabulary guard green with its five new surfaces); `check:pdf` 23 documents; `check:demos` presentable; `check:layout --only=` the eleven changed screens clean at 361 · 390 · 768 · 1440 (the new sheet's Done raised to the floor on its first run); a rendered probe of 100 checks at 1440 / 390 / 361 as the head coach, `uat-asst-nomoney` and `uat-asst-development` (the count line, the Show choices, the dash and legend, the doors by grant, the legend caption following Show, 63.7, the observation once, "still to come" once, the one-line phone rows at 38px with the 44px name link and chevron, the summary control and its sheet (open · change · Done · closed by a history gesture and not re-opened on return), the 12px phone labels and the legend visible on the phone, the record cards, the handout's four lines and the absent Next step, the recap's lines and the parked goal absent); the metrics UAT spec's Players-tab test rewritten to walk Coverage; the dev server restarted after the build. **/simplify** (four lenses; 9 applied — `progressAxis`/`xFractions` computed once for both drawings, `workingByRow` once for the count and the rows, the handout's group note on the shared form hint, `formatAverage` deleted, `COVERAGE_LEGEND` → `coverageLegend()`, the `Muted` hoist, the recap's def type and guard trimmed, the chart legend off `.secondary`; 2 skipped and said so — the attempts-line helper in a peer-edited file, the dormant history option). **/review** (high-risk funnel, five lenses; 2 High confirmed and fixed — the Coverage legend on a team with no metric, the phone sheet's `open` — plus four stale comments; 0 refuted; the help drift it found went to /docs). **/docs** (twelve articles and FAQs; the two rewritten sub-topics measured back under 350 words). **/strategy**: the G7 entry the ruling session had already logged, anchored to the build.
+
+### 21.1 §193 walk — MARKED COMPLETE by the owner (2026-09-16)
+
+24 of 25 steps PASS. One DEFECT: **E1 — "Worked on this season," in the paper's words.** The owner
+does not like the family season-end recap card's format, how it exports, or how it opens below the
+screen. Ruled **out of this project's scope** — logged as a follow-up for its own short owner
+session rather than fixed on the way past (TODO.md, Deferred Enhancements). Nothing else on the walk
+changed a ruling. **Committed `bd7a632f` 2026-09-16** (a private index, folded with the §191
+walk-rulings E9/E10 work).
+
+**Stage 4 is the re-evaluation's last built stage.** The project's feature work — the seven stages
+Arrive → Define → Session → Player → Reports & handout — is closed. Two things stand open on their
+own terms, not as unfinished stages: **S6, the shared-stylings close-out** (§17.1 — the owner's own
+standing ask, "let's make sure this is discussed when this project is over"; not yet held, and this
+is that moment), and **D8, team-level progress** (§17 — deferred until the refusals question was
+settled; it was, at G7, and D8 stays parked rather than becoming its own stage).

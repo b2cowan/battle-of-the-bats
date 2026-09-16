@@ -1,6 +1,7 @@
 # Skills & Goals: make development useful between assessments
 
 **Product brief · 11 September 2026 · Proposal for review · mockup round 2 the same day**  
+**CLOSED 2026-09-16** — every stage below shipped, walked and archived; see [the plan](COACH_DEVELOPMENT_LIFECYCLE_PLAN.md) §17–§21 for the as-built record. Two items raised along the way now run as their own projects: a coach-portal shared style kit, and a team-level (never player-ranked) progress view.  
 Companions: [assessment and implementation plan](COACH_DEVELOPMENT_LIFECYCLE_PLAN.md) · [project hub](COACH_DEVELOPMENT_LIFECYCLE_HUB.html) (mockup, brief, plan and decisions on one artifact)
 
 The portal can collect test results and keep player focus areas, but it does not yet give a head coach a complete development workflow. Definitions are thin, goals have little review history, and Development in Insights mostly reports coverage. The next investment should help a coach answer **“What are we working on, what did I observe, and what should we do next?”**
