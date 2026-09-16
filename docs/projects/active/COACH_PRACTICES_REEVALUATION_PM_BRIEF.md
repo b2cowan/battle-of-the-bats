@@ -168,7 +168,7 @@ then ruled, then built** (kickoff prompt `COACH_PRACTICES_STAGE4_PLANNING_PROMPT
 templates, the library beside the plan on desktop, the owner's ruling on drag (S.4 — ruled together with the groups board's
 D10, one reason at two scales), empty templates no longer offered as starts, and the drill editor's shape.
 
-## Stage 4 · The library — RULED 2026-09-16 (L1–L8 as drawn; L9 in words) · BUILT ON DEV 2026-09-16 · walk owed (§195) · commit owed
+## Stage 4 · The library — RULED 2026-09-16 (L1–L8 as drawn; L9 in words) · BUILT ON DEV 2026-09-16 · COMMITTED `34bb88f5` · walk owed (§195)
 
 **What a coach sees and does differently.** The Drills and Templates tabs become tables you can actually browse: a drill row
 reads its name, its tags, how long it usually runs, "In 8 plans" and the first line of what you're doing; a template row
@@ -225,5 +225,5 @@ the docked pair at 1440 is the sheet 816 · a 20px gap · the panel 320 — exac
 rows 88–89px on desktop, phone cards 97–116px against the 267px rows they replace; the drill sheet 640 × 744. Simplified,
 reviewed (five lenses; the one High — a press on a reorder arrow that drifted became a drag — fixed and proven) and the
 help synced (a new Circuits article; the drills article no longer promises "four taps"). **What is owed:** the owner's
-walk on the hub's "QA walk · 4" tab (32 steps; ledger §195), then the commit on the owner's word, and migration 302 on
-prod before the code that reads it.
+walk on the hub's "QA walk · 4" tab (32 steps; ledger §195) — the build is committed (`34bb88f5`, 2026-09-16) — and
+migration 302 on prod before the code that reads it.
