@@ -7,7 +7,7 @@
    component's 44px floor lives in its OWN module (the repo rule): every control here clears
    `--tap-min` at touch widths in the block at the foot. Tokens only. */
 
-/* ── the toolbar: the view switch, and the handout door beside it (E1) ── */
+/* ── the toolbar: the view switch, and every write door for whichever view is open (E1) ── */
 .handoutLink {
   display: inline-flex;
   align-items: center;
@@ -16,10 +16,6 @@
   font-weight: 600;
   white-space: nowrap;
 }
-/* The line above a list: the count in the quiet ink, the view's write door(s) at its right. */
-.countLine { font-size: var(--type-body); color: var(--text-tertiary); margin: 0; }
-.countLine b { color: var(--text-primary); font-weight: 600; }
-.writeDoors { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 /* A write door or a goal's action — the global ghost button at the tab's support size, an icon beside
    its word (six of these on the tab; one rule, not six inline styles). */
 .door { gap: 0.35rem; font-size: var(--type-support); }
@@ -117,6 +113,9 @@
 .statusRows { flex-basis: 100%; list-style: none; margin: 0.15rem 0 0; padding: 0 0 0 0.9rem; }
 .statusRows li { display: flex; justify-content: space-between; gap: 1rem; font-size: var(--type-support); color: var(--text-secondary); padding: 0.15rem 0; }
 .statusRows li span:last-child { color: var(--text-tertiary); white-space: nowrap; }
+/* A folded row's own door has no `<strong>` for `.historyDoor:hover` to underline — a plain line
+   of text, so the door itself carries the hover cue. */
+.statusRows .historyDoor:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── the Results table — the roles beyond the recipe (E6) ── */
 /* The test's name is the row's button (aria-expanded). It wears `.devCellLink` (coaches.module.css)
@@ -206,12 +205,14 @@
   .innerRow { margin-left: 0.6rem; }
   .goalActions { flex-direction: column; align-items: stretch; }
   .goalActions > * { justify-content: center; }
-  .writeDoors { width: 100%; }
-  .writeDoors > * { flex: 1 1 auto; justify-content: center; }
   .handoutLink { width: 100%; justify-content: center; min-height: var(--tap-min, 44px); }
   .historyMeta { white-space: normal; }
-  /* the toolbar: the switch spans the width, the handout a full-width row under it */
+  /* the toolbar: the switch spans the width, its write doors stack full-width under it. The shared
+     `.listToolbarEnd` forces its slot to a single non-wrapping line at this width (it is built for
+     Roster's one toggle + one export); this slot can hold up to three write doors, so it opts back
+     into wrapping and stretches each one to its own row rather than squeezing them onto one. */
   .viewSwitch { display: flex; width: 100%; }
   .viewSwitch > * { flex: 1; text-align: center; }
-  .toolbarEnd { width: 100%; margin-left: 0; }
+  .toolbarEnd { width: 100%; margin-left: 0; flex-wrap: wrap; }
+  .toolbarEnd > * { flex: 1 1 auto; justify-content: center; }
 }

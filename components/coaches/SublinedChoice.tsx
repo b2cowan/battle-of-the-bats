@@ -29,8 +29,16 @@
  * wearing a field's clothes. Folding a two-answer question into it would grow this component five
  * props to serve one caller. The two share their CSS (`convWhat*`, below), which is what keeps them
  * looking like one control; if the conversation chooser is ever simplified, this is where it lands.
+ *
+ * ⚠ `variant="toolbar"` (added for the Skills & Goals report toolbar, 2026-09-16) is the one other
+ * shape this DOES absorb: a compact filter field that must sit in a row beside plain `<select>`s and
+ * look like one of them, rather than the bold olive "answer this" field the money conversation uses.
+ * `group` on an option draws the SAME grey caps-label the money picker's groups use (`.convWhatGroup`)
+ * — read it as "no header" by default (an ungrouped run of options, e.g. every live metric) and only
+ * a NEW group value opens a fresh header (so "Retired" appears once, above its run, never repeated
+ * per-option the way a native `<option>` had to say "(retired)" on every single row).
  */
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { claimEscape } from './escapeOwnership';
@@ -38,7 +46,10 @@ import { claimEscape } from './escapeOwnership';
 export interface SublinedOption<T extends string> {
   value: T;
   name: string;
+  /** The muted second line in the open list ("latest result", "test with a range"). Empty string renders no second line (e.g. "Current focus"). */
   sub: string;
+  /** Draws a `.convWhatGroup` header above this option when it differs from the option before it. Omit for an ungrouped run. */
+  group?: string;
 }
 
 export default function SublinedChoice<T extends string>({
@@ -49,6 +60,8 @@ export default function SublinedChoice<T extends string>({
   placeholder = 'Choose…',
   disabled = false,
   id,
+  variant = 'field',
+  showClosedSub = false,
 }: {
   /**
    * ⚠⚠ THE ACCESSIBLE NAME ONLY — THIS RENDERS NO VISIBLE TEXT. Every caller draws its own
@@ -65,6 +78,10 @@ export default function SublinedChoice<T extends string>({
   placeholder?: string;
   disabled?: boolean;
   id: string;
+  /** 'field' (default) is the bold olive "answer this" money-conversation look. 'toolbar' matches a plain `.select` sitting in a row of report filters. */
+  variant?: 'field' | 'toolbar';
+  /** Toolbar filters name their qualifier in the closed state too ("Changeup speed · latest result"), muted, so the field says what it's showing without opening the list. */
+  showClosedSub?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -83,10 +100,20 @@ export default function SublinedChoice<T extends string>({
 
   /* ⚠ A LIST ANCHORED TO A RECT MEASURED WHEN IT OPENED MUST CLOSE WHEN THE PAGE MOVES UNDER IT,
      or it hangs in space beside the field it belongs to. Cheaper and more honest than re-measuring
-     on every scroll frame, and the coach's next tap re-opens it in the right place. */
+     on every scroll frame, and the coach's next tap re-opens it in the right place.
+     ⚠ THE LIST ITSELF SCROLLS (`.convWhatList` is `overflow-y: auto` once its options overrun
+     `max-height`), and a capture-phase `scroll` listener on `window` sees that scroll too — it is
+     an ancestor in the capturing chain regardless of the event's own (non-)bubbling. Closing on
+     every scroll made the list close on the coach's own scroll wheel. `wrapRef` contains the list
+     (it renders inside the same wrapper as the button, `position: fixed` only changes where it
+     paints), so a target inside it is the list scrolling, not the page — the same guard the money
+     conversation's hand-rolled copy of this control already carries. */
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
+    const close = (e: Event) => {
+      if (e.target instanceof Node && wrapRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
     window.addEventListener('resize', close);
     window.addEventListener('scroll', close, true);
     return () => {
@@ -112,7 +139,9 @@ export default function SublinedChoice<T extends string>({
       <button
         type="button"
         id={id}
-        className={`${styles.convWhatField} ${chosen ? '' : styles.convWhatFieldEmpty}`}
+        className={variant === 'toolbar'
+          ? `${styles.select} ${styles.devToolbarControl} ${styles.convChoiceToolbarField}`
+          : `${styles.convWhatField} ${chosen ? '' : styles.convWhatFieldEmpty}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={label}
@@ -125,8 +154,11 @@ export default function SublinedChoice<T extends string>({
           setOpen(o => !o);
         }}
       >
-        <span>{chosen ? chosen.name : placeholder}</span>
-        <ChevronDown size={15} className={styles.convWhatCaret} aria-hidden />
+        <span>
+          {chosen ? chosen.name : placeholder}
+          {chosen && showClosedSub && chosen.sub && <span className={styles.convChoiceClosedSub}> · {chosen.sub}</span>}
+        </span>
+        <ChevronDown size={15} className={variant === 'toolbar' ? styles.convChoiceToolbarCaret : styles.convWhatCaret} aria-hidden />
       </button>
       {open && rect && (
         <div
@@ -135,21 +167,30 @@ export default function SublinedChoice<T extends string>({
           role="listbox"
           aria-label={label}
         >
-          {options.map(o => (
-            <button
-              key={o.value}
-              type="button"
-              role="option"
-              aria-selected={value === o.value}
-              className={styles.convWhatOpt}
-              onClick={() => { onChange(o.value); setOpen(false); }}
-            >
-              <span>
-                <span className={styles.convWhatOptName}>{o.name}</span>
-                <span className={styles.convWhatOptSub}>{o.sub}</span>
-              </span>
-            </button>
-          ))}
+          {(() => {
+            let lastGroup: string | undefined;
+            return options.map(o => {
+              const header = o.group && o.group !== lastGroup ? o.group : null;
+              lastGroup = o.group ?? lastGroup;
+              return (
+                <Fragment key={o.value}>
+                  {header && <div className={styles.convWhatGroup}>{header}</div>}
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={value === o.value}
+                    className={styles.convWhatOpt}
+                    onClick={() => { onChange(o.value); setOpen(false); }}
+                  >
+                    <span>
+                      <span className={styles.convWhatOptName}>{o.name}</span>
+                      {o.sub && <span className={styles.convWhatOptSub}>{o.sub}</span>}
+                    </span>
+                  </button>
+                </Fragment>
+              );
+            });
+          })()}
         </div>
       )}
     </div>

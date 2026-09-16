@@ -163,7 +163,7 @@
 .railDot { width: 8px; height: 8px; border-radius: 50%; }
 .dotPlum  { background: var(--home-plum, var(--warning)); }
 .dotGood  { background: var(--success); }
-.dotRust  { background: var(--home-rust, var(--warning)); }
+/* ⚰ `.dotRust` — the Players row's dot — went with the row (stage 4, G1, 2026-09-16). */
 .dotOlive { background: var(--home-olive, var(--success)); }
 .railName {
   font-size: var(--type-body); font-weight: 650; color: var(--white-90);

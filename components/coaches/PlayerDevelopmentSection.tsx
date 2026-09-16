@@ -78,6 +78,23 @@ type ResultGroup = SessionResult<RepPlayerMeasurable>;
 const NO_GOAL_OPEN = 'none' as const;
 
 /**
+ * Previous seasons' fold defaults SHUT — it is a scrapbook, not the point of the tab — but a coach
+ * who opened it once shouldn't have to re-open it every time this section remounts (a tab switch
+ * away and back unmounts it). Session-scoped, per player, and it remembers the fold's last state
+ * exactly (closing it again is remembered too, not just "was opened once").
+ */
+function archiveOpenKey(playerId: string): string { return `flhq.development.archiveOpen.${playerId}`; }
+function readArchiveOpenPref(playerId: string): string | null {
+  try { return sessionStorage.getItem(archiveOpenKey(playerId)); } catch { return null; }
+}
+function writeArchiveOpenPref(playerId: string, seasonId: string | null): void {
+  try {
+    if (seasonId) sessionStorage.setItem(archiveOpenKey(playerId), seasonId);
+    else sessionStorage.removeItem(archiveOpenKey(playerId));
+  } catch { /* private mode — the session just forgets */ }
+}
+
+/**
  * ═══ THE PLAYER'S SKILLS & GOALS TAB — two views and a fold (development lifecycle re-evaluation
  * stage 3 · Player, owner rulings E1–E8, 2026-09-15) ═══
  * Goals · Results as ONE segmented control with the handout door beside it; the goal row IS the
@@ -125,7 +142,10 @@ export default function PlayerDevelopmentSection({
   // ONE goal open at a time (E3): the goal the address named, else the only goal, else none.
   const [openGoalId, setOpenGoalId] = useState<string | typeof NO_GOAL_OPEN | null>(arrival.goalId);
   const [openStatusKey, setOpenStatusKey] = useState<string | null>(null);
-  const [reviewingGoal, setReviewingGoal] = useState<RepPlayerDevelopmentGoal | null>(null);
+  // A new review (`editing: null`) or an existing one opened back up for a correction or a
+  // removal (owner ruling 2026-09-16) — one sheet, the create/edit-sheet pattern every other
+  // record on this tab already uses.
+  const [reviewSheet, setReviewSheet] = useState<{ goal: RepPlayerDevelopmentGoal; editing: RepDevelopmentGoalReview | null } | null>(null);
   const [reviewErr, setReviewErr] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -139,7 +159,16 @@ export default function PlayerDevelopmentSection({
   const [expandedTypeId, setExpandedTypeId] = useState<string | null>(arrival.view === 'results' ? arrival.metricId : null);
 
   // ── 3D: previous-seasons archive (the fold) ──
-  const [expandedSeasonId, setExpandedSeasonId] = useState<string | null>(null);
+  // Defaults shut; remembers this player's last state for the rest of the session (see
+  // `readArchiveOpenPref`) so a tab switch away and back doesn't re-shut it on the coach.
+  const [expandedSeasonId, setExpandedSeasonIdRaw] = useState<string | null>(() => readArchiveOpenPref(playerId));
+  const setExpandedSeasonId = useCallback((next: string | null | ((id: string | null) => string | null)) => {
+    setExpandedSeasonIdRaw(prev => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      writeArchiveOpenPref(playerId, resolved);
+      return resolved;
+    });
+  }, [playerId]);
   // Sequenced like the session screen's: every status pick re-reads, and two in quick succession
   // can resolve out of order — the OLDER read must never land over the newer one.
   const loadSeqRef = useRef(0);
@@ -307,12 +336,13 @@ export default function PlayerDevelopmentSection({
   }
 
   async function submitReview(v: { status: RepDevelopmentGoalStatus; reviewedOn: string; note: string; nextReviewOn: string | null; evidenceObservationIds: string[] }) {
-    if (!reviewingGoal || busy) return;
+    if (!reviewSheet || busy) return;
+    const { goal, editing } = reviewSheet;
     setBusy(true);
     setReviewErr('');
     try {
-      const res = await fetch(`${base}/goals/${reviewingGoal.id}/reviews`, {
-        method: 'POST',
+      const res = await fetch(editing ? `${base}/goals/${goal.id}/reviews/${editing.id}` : `${base}/goals/${goal.id}/reviews`, {
+        method: editing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...v, note: v.note || null }),
       });
@@ -320,12 +350,42 @@ export default function PlayerDevelopmentSection({
       if (!res.ok || !json) throw new Error(json?.error ?? 'Could not save the review — try again.');
       setData(d => d ? {
         ...d,
-        reviews: [json.review, ...d.reviews],
-        goals: d.goals.map(g => g.id === reviewingGoal.id ? (json.goal ?? { ...g, status: v.status, reviewOn: v.nextReviewOn ?? g.reviewOn }) : g),
+        reviews: editing ? d.reviews.map(r => r.id === editing.id ? json.review : r) : [json.review, ...d.reviews],
+        goals: d.goals.map(g => g.id === goal.id ? (json.goal ?? { ...g, status: v.status, reviewOn: v.nextReviewOn ?? g.reviewOn }) : g),
       } : d);
-      setReviewingGoal(null);
+      setReviewSheet(null);
     } catch (e) {
       setReviewErr(e instanceof Error ? e.message : 'Could not save the review — try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Remove a mistaken review (owner ruling 2026-09-16) — the goal's status pill recomputes from
+   *  whichever review is now latest, same as every other write to this table. */
+  async function deleteReview(goalId: string, reviewId: string) {
+    if (busy) return;
+    const ok = await confirm({
+      title: 'Remove this review?',
+      message: 'The status and note it recorded go with it. The goal’s status pill will reflect whichever review is now the most recent.',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`${base}/goals/${goalId}/reviews/${reviewId}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error();
+      setReviewSheet(null);
+      setData(d => d ? {
+        ...d,
+        reviews: d.reviews.filter(r => r.id !== reviewId),
+        goals: d.goals.map(g => g.id === goalId ? (json?.goal ?? g) : g),
+      } : d);
+    } catch {
+      setReviewErr("Couldn't remove it — try again.");
     } finally {
       setBusy(false);
     }
@@ -411,6 +471,14 @@ export default function PlayerDevelopmentSection({
   function openObservation(o: RepPlayerObservation) {
     setObsErr('');
     setObsDialog({ editing: o, goalId: o.goalId });
+  }
+  /** Every door to a review or a status change opens the same sheet, on that review's own facts
+   *  (owner ruling 2026-09-16) — a mistaken entry the coach can now open back up, not just answer. */
+  function openReview(goal: RepPlayerDevelopmentGoal, reviewId: string) {
+    const review = data?.reviews.find(r => r.id === reviewId);
+    if (!review) return;
+    setReviewErr('');
+    setReviewSheet({ goal, editing: review });
   }
 
   // ── results ──
@@ -561,7 +629,6 @@ export default function PlayerDevelopmentSection({
   // goal the record no longer holds = the only goal opens; the coach's own close = every row shut.
   const chosenGoal = openGoalId && openGoalId !== NO_GOAL_OPEN ? data.goals.find(g => g.id === openGoalId) ?? null : null;
   const openGoal = openGoalId === NO_GOAL_OPEN ? null : chosenGoal ?? (data.goals.length === 1 ? data.goals[0] : null);
-  const withResult = typeRows.length;
   const hasRecords = data.goals.length > 0 || data.measurables.length > 0 || data.observations.length > 0;
 
   const obsSkills = obsDialog?.editing
@@ -572,9 +639,11 @@ export default function PlayerDevelopmentSection({
     <>
       {error && <p className={styles.errorText} role="alert">{error}</p>}
 
-      {/* ── The view switch, and the handout door beside it (E1) — the one thing on this tab a coach
-          opens with a purpose beyond reading, where the Metrics door used to sit. Roster's List /
-          Depth-chart shape (owner ruling 2026-09-13, hub R2-4). ── */}
+      {/* ── The view switch, and every write door for whichever view is open, ONE row (E1 — the
+          count line each view carried told the coach nothing they couldn't see in the list below
+          it, and its buttons had nowhere to sit but a second row under an empty-feeling left edge
+          once it was gone; folding them up here reads as one toolbar instead of two). Roster's
+          List/Depth-chart shape (owner ruling 2026-09-13, hub R2-4). ── */}
       <div className={styles.listToolbar}>
         <div className={`${styles.segChoice} ${css.viewSwitch}`} role="group" aria-label="Development views">
           {views.map(v => (
@@ -585,12 +654,34 @@ export default function PlayerDevelopmentSection({
             </button>
           ))}
         </div>
-        {hasRecords && (
+        {(hasRecords || (activeView === 'goals' && canWriteGoals) || (activeView === 'results' && canWrite)) && (
           <span className={`${styles.listToolbarEnd} ${css.toolbarEnd}`}>
-            <Link href={developmentHandoutHref(portalBase, playerId, { returnTo: playerDevelopmentHref(portalBase, playerId, { view: activeView, returnTo: arrival.returnTo }) })}
-              className={`btn btn-ghost ${styles.tapFloor} ${css.handoutLink}`}>
-              <Printer size={13} aria-hidden /> Preview development handout
-            </Link>
+            {hasRecords && (
+              <Link href={developmentHandoutHref(portalBase, playerId, { returnTo: playerDevelopmentHref(portalBase, playerId, { view: activeView, returnTo: arrival.returnTo }) })}
+                className={`btn btn-ghost ${styles.tapFloor} ${css.handoutLink}`}>
+                <Printer size={13} aria-hidden /> Preview development handout
+              </Link>
+            )}
+            {activeView === 'goals' && canWriteGoals && (
+              <>
+                <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${styles.devSectionAction} ${css.door}`}
+                  onClick={() => { setGoalErr(''); setGoalSheet({ editing: null }); }}>
+                  <Plus size={13} aria-hidden /> Add goal
+                </button>
+                <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${styles.devSectionAction} ${css.door}`}
+                  disabled={activeSkills.length === 0}
+                  title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
+                  onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: null }); }}>
+                  <Plus size={13} aria-hidden /> Record an observation
+                </button>
+              </>
+            )}
+            {activeView === 'results' && canWrite && (
+              <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${styles.devSectionAction} ${css.door}`}
+                onClick={() => { setResultErr(''); setResultSheet({ editing: null }); }}>
+                <Plus size={13} aria-hidden /> Record a result
+              </button>
+            )}
           </span>
         )}
       </div>
@@ -601,25 +692,6 @@ export default function PlayerDevelopmentSection({
           {/* Tryout snapshot — where the season started, above the goals (it is what they were chosen from; R4). */}
           {data.tryoutBaseline && <TryoutSnapshotCard snapshot={data.tryoutBaseline} variant="card" />}
 
-          {/* One line above the list: the count, and the two things a coach writes from here — a goal,
-              or an observation with no goal behind it (the sheet's "Evidence for" can still name one). */}
-          <div className={styles.devCardHeadRow}>
-            <p className={css.countLine}><b>{data.goals.length}</b> {data.goals.length === 1 ? 'goal' : 'goals'} this season</p>
-            {canWriteGoals && (
-              <span className={css.writeDoors}>
-                <button type="button" className={`btn btn-ghost ${styles.devSectionAction} ${css.door}`}
-                  onClick={() => { setGoalErr(''); setGoalSheet({ editing: null }); }}>
-                  <Plus size={13} aria-hidden /> Add goal
-                </button>
-                <button type="button" className={`btn btn-ghost ${styles.devSectionAction} ${css.door}`}
-                  disabled={activeSkills.length === 0}
-                  title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
-                  onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: null }); }}>
-                  <Plus size={13} aria-hidden /> Record an observation
-                </button>
-              </span>
-            )}
-          </div>
           {data.goals.length === 0 && (
             <p className={styles.detailPlaceholder}>
               {canWriteGoals ? `No goals yet — add the first thing ${firstName} is working on.` : 'No goals yet.'}
@@ -669,7 +741,7 @@ export default function PlayerDevelopmentSection({
                         {canWriteGoals && (
                           <div className={css.goalActions}>
                             <button type="button" className={`btn btn-lime ${styles.tapFloor} ${css.door}`}
-                              onClick={() => { setReviewErr(''); setReviewingGoal(g); }}>Review goal</button>
+                              onClick={() => { setReviewErr(''); setReviewSheet({ goal: g, editing: null }); }}>Review goal</button>
                             <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${css.door}`} disabled={activeSkills.length === 0}
                               title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
                               onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: g.id }); }}>Record an observation</button>
@@ -683,6 +755,7 @@ export default function PlayerDevelopmentSection({
                             <HistoryRow key={`${ev.kind}-${ev.reviewId ?? ev.observationId ?? i}`} ev={ev} author={author} portalBase={portalBase} canWrite={canWrite}
                               observation={ev.observationId ? data.observations.find(o => o.id === ev.observationId) ?? null : null}
                               onOpenObservation={canWriteGoals ? openObservation : null}
+                              onOpenReview={canWriteGoals ? (reviewId => openReview(g, reviewId)) : null}
                               statusOpen={openStatusKey === `${g.id}:${ev.on}`}
                               onToggleStatus={() => setOpenStatusKey(k => (k === `${g.id}:${ev.on}` ? null : `${g.id}:${ev.on}`))} />
                           ))}
@@ -700,17 +773,6 @@ export default function PlayerDevelopmentSection({
       {/* ══ RESULTS ══ */}
       {activeView === 'results' && data.showMeasurables && (
         <>
-          <div className={styles.devCardHeadRow}>
-            <p className={css.countLine}><b>{withResult}</b> {withResult === 1 ? 'test' : 'tests'} with a result this season</p>
-            {canWrite && (
-              <span className={css.writeDoors}>
-                <button type="button" className={`btn btn-ghost ${styles.devSectionAction} ${css.door}`}
-                  onClick={() => { setResultErr(''); setResultSheet({ editing: null }); }}>
-                  <Plus size={13} aria-hidden /> Record a result
-                </button>
-              </span>
-            )}
-          </div>
           {typeRows.length === 0 && (
             <p className={styles.detailPlaceholder}>
               {canWrite
@@ -885,9 +947,18 @@ export default function PlayerDevelopmentSection({
           busy={busy} error={goalErr} onSubmit={saveGoal} onClose={() => { if (!busy) setGoalSheet(null); }}
           onRemove={goalSheet.editing ? () => deleteGoal(goalSheet.editing!.id) : undefined} />
       )}
-      {reviewingGoal && (
-        <ReviewGoalDialog goal={reviewingGoal} reviews={data.reviews} linkedObservations={data.observations.filter(o => o.goalId === reviewingGoal.id)}
-          busy={busy} error={reviewErr} onSubmit={submitReview} onClose={() => { if (!busy) setReviewingGoal(null); }} />
+      {reviewSheet && (
+        <ReviewGoalDialog key={reviewSheet.editing?.id ?? 'new'} goal={reviewSheet.goal} editing={reviewSheet.editing}
+          reviews={data.reviews}
+          // A NEW review auto-links every observation the goal currently holds (unchanged). An
+          // EXISTING one re-submits its OWN evidence — the goal's live observation list is the
+          // wrong source here, or fixing an unrelated typo on an old review would silently swap
+          // in whatever's been recorded since (/review 2026-09-16).
+          linkedObservations={reviewSheet.editing
+            ? data.observations.filter(o => reviewSheet.editing!.evidenceObservationIds.includes(o.id))
+            : data.observations.filter(o => o.goalId === reviewSheet.goal.id)}
+          busy={busy} error={reviewErr} onSubmit={submitReview} onClose={() => { if (!busy) setReviewSheet(null); }}
+          onRemove={reviewSheet.editing ? () => deleteReview(reviewSheet.goal.id, reviewSheet.editing!.id) : undefined} />
       )}
       {obsDialog && (
         <RecordObservationDialog key={obsDialog.editing?.id ?? 'new'} skills={obsSkills} goals={data.goals} editing={obsDialog.editing} presetGoalId={obsDialog.goalId}
@@ -935,13 +1006,16 @@ function attemptsLine(row: ResultGroup, type: RepTeamMeasurableType): string | n
  * with "in a session ›" when a session dates it — E2), the set event, or a wordless status change
  * in the quiet ink — several on one day folded into one line that opens to the rows (E4).
  */
-function HistoryRow({ ev, author, portalBase, canWrite, observation, onOpenObservation, statusOpen, onToggleStatus }: {
+function HistoryRow({ ev, author, portalBase, canWrite, observation, onOpenObservation, onOpenReview, statusOpen, onToggleStatus }: {
   ev: GoalEvent;
   author: (id: string | null) => string | null;
   portalBase: string;
   canWrite: boolean;
   observation: RepPlayerObservation | null;
   onOpenObservation: ((o: RepPlayerObservation) => void) | null;
+  /** A review or a single (unfolded) status change is a door onto its own sheet, same as an
+   *  observation (owner ruling 2026-09-16); a folded day's ROWS get their own door each, below. */
+  onOpenReview: ((reviewId: string) => void) | null;
   statusOpen: boolean;
   onToggleStatus: () => void;
 }) {
@@ -959,7 +1033,9 @@ function HistoryRow({ ev, author, portalBase, canWrite, observation, onOpenObser
       <span className={css.historyMain}>
         {ev.kind === 'observation' && observation && onOpenObservation
           ? <button type="button" className={css.historyDoor} onClick={() => onOpenObservation(observation)}>{face}</button>
-          : face}
+          : (ev.kind === 'review' || (ev.kind === 'status' && !folded)) && onOpenReview && ev.reviewId
+            ? <button type="button" className={css.historyDoor} onClick={() => onOpenReview(ev.reviewId!)}>{face}</button>
+            : face}
       </span>
       <span className={css.historyMeta}>
         {formatShortDate(ev.on)}{by ? ` · ${by}` : ''}
@@ -974,7 +1050,13 @@ function HistoryRow({ ev, author, portalBase, canWrite, observation, onOpenObser
         <ul className={css.statusRows}>
           {ev.changes.map(c => (
             <li key={c.reviewId}>
-              <span>Status → {GOAL_STATUS_LABELS[c.status]}{c.nextReviewOn ? ` · next review ${formatShortDate(c.nextReviewOn)}` : ''}</span>
+              {onOpenReview ? (
+                <button type="button" className={css.historyDoor} onClick={() => onOpenReview(c.reviewId)}>
+                  Status → {GOAL_STATUS_LABELS[c.status]}{c.nextReviewOn ? ` · next review ${formatShortDate(c.nextReviewOn)}` : ''}
+                </button>
+              ) : (
+                <span>Status → {GOAL_STATUS_LABELS[c.status]}{c.nextReviewOn ? ` · next review ${formatShortDate(c.nextReviewOn)}` : ''}</span>
+              )}
               <span>{author(c.by) ?? ''}</span>
             </li>
           ))}

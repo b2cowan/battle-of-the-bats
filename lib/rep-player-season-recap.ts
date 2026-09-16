@@ -89,8 +89,20 @@ export async function assemblePlayerSeasonRecap(
   // of "wrong player" or "wrong season" it was.
   if (!player) return null;
 
-  const typeNameById = new Map(measurableTypes.map(t => [t.id, t.name]));
+  const typeById = new Map(measurableTypes.map(t => [t.id, t]));
   const awardTypeById = new Map(awardTypes.map(t => [t.id, t]));
+  // One test per definition the player has results under — the definition decides what the line
+  // follows (its aim, headline and range), and the readings are every attempt, any order (G6: the
+  // recap reads the one series the chart and the handout read). A result whose type was
+  // hard-deleted has no name to show, and "8.2 → 7.6 of what?" is worse than silence — dropped.
+  const readingsByType = new Map<string, typeof measurables>();
+  for (const m of measurables) {
+    if (!typeById.has(m.measurableTypeId)) continue;
+    const list = readingsByType.get(m.measurableTypeId) ?? [];
+    list.push(m);
+    readingsByType.set(m.measurableTypeId, list);
+  }
+  const tests = [...readingsByType].map(([typeId, readings]) => ({ def: typeById.get(typeId)!, readings }));
 
   const attendance = attendanceByPlayer.get(playerId);
   const blank = { attended: 0, known: 0, recorded: 0 };
@@ -144,20 +156,7 @@ export async function assemblePlayerSeasonRecap(
       ? { ...attendance.practices }
       : blank,
     goals: goals.map(g => ({ focusArea: g.focusArea, status: g.status })),
-    // A reading whose type was hard-deleted has no name to show, and "8.2 → 7.6 of what?" is
-    // worse than silence. Dropped rather than labelled with a placeholder.
-    measurables: measurables
-      .filter(m => typeNameById.has(m.measurableTypeId))
-      .map(m => ({
-        // The ID is the grouping key; the name is display only. Two retired-and-recreated
-        // tests share a name but never an id — see RecapMeasurableInput.
-        typeId: m.measurableTypeId,
-        typeName: typeNameById.get(m.measurableTypeId) as string,
-        value: m.value,
-        // The reading carries its own unit snapshot — render THIS, never re-join to the type.
-        unit: m.unit,
-        recordedOn: m.recordedOn,
-      })),
+    tests,
     awards: playerAwards,
     playingTime: mine
       ? {

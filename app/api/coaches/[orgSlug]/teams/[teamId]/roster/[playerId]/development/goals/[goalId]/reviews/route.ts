@@ -5,11 +5,10 @@ import { readGoalReviewInput } from '@/lib/development-input';
 import { resolveDevelopmentPlayerContext, assertGoalBelongsToPlayer, assertEvidenceBelongsToPlayer } from '@/lib/development-player-route';
 
 /**
- * Review a goal — APPEND a dated event (development lifecycle Phase 2, plan §7; F08: a review never
- * overwrites the previous one; F19: the status is the required choice, the note is optional). The
- * goal's status (and its next review date) move in the same step, so the list and the history
- * never disagree. There is no PATCH and no DELETE on a review, by design — a mistaken review is
- * answered by another review.
+ * Review a goal — APPEND a dated event (development lifecycle Phase 2, plan §7; F08; F19: the
+ * status is the required choice, the note is optional). The goal's status (and its next review
+ * date) move in the same step, so the list and the history never disagree. An existing review is
+ * corrected or removed at `[reviewId]`, not here (owner ruling 2026-09-16).
  *
  * Gate: the goals predicate (the grant AND Internal notes) — the same resolver observations use.
  */

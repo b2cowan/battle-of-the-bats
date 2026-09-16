@@ -9,16 +9,15 @@ import CoachTabBar from '@/components/coaches/CoachTabBar';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { formatShortDate, formatWeekdayDate, todayLocal } from '@/lib/measurable-format';
-import { coverageCell, observationText } from '@/lib/development-report';
+import { developmentReports } from '@/lib/development-report';
 import { lastPlanMetricIds, lastPlannedCounts, lastRunDates, planCandidates, scopeSummary, sessionState, sessionTitle } from '@/lib/development-session-view';
 import SessionSheet, { type SessionRosterRow, type SessionEventOption, type SessionFacts } from '@/components/coaches/SessionSheet';
 import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
-import { canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { canManageSchedule, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { playerName as rosterPlayerName } from '@/lib/coach-roster-name';
-import { insightsSectionHref } from '@/lib/coach-insights-links';
-import { skillsAndGoalsHref, parseSkillsAndGoalsSection, parseMetricEdit, playerDevelopmentHref, type SkillsAndGoalsSection } from '@/lib/development-address';
-import { playerTabHref } from '@/lib/coach-player-tabs';
-import { activeMeasuredTests, measuredTestsWithHistory, recordMeaning } from '@/lib/measurable-definition';
+import { skillsAndGoalsHref, parseSkillsAndGoalsSection, parseMetricEdit, playerDevelopmentHref, insightsDevelopmentHref, COVERAGE_FOCUS, type SkillsAndGoalsSection } from '@/lib/development-address';
+import { activeMeasuredTests, recordMeaning } from '@/lib/measurable-definition';
+import Muted from '@/components/coaches/Muted';
 import styles from '../../../coaches.module.css';
 import ov from './overview.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
@@ -26,10 +25,8 @@ import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/type
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** The Sessions list grows a search once it is long enough to need finding (round 2, owner 2026-09-15). */
 const SEARCH_FROM = 9;
-/** The quiet cell — a dash, "none yet", "not recorded". */
-const Muted = ({ children }: { children: React.ReactNode }) => <span className={styles.devBoardMuted}>{children}</span>;
 
-/** The board read, as the Players tab and the door softening read it (the route is unchanged). */
+/** The board read, as the Overview's counts read it (the route is unchanged; Coverage in Insights reads the same rows). */
 interface BoardRow {
   playerId: string;
   firstName: string;
@@ -55,24 +52,32 @@ export default function DevelopmentHubPage({
 }
 
 /**
- * ═══ SKILLS & GOALS — four views on one screen ═══
+ * ═══ SKILLS & GOALS — three views on one screen ═══
  *
- * Overview · Sessions · Players · Metrics. `?section=` addresses the view, the Money and Insights
- * hubs' convention (`CoachTabBar`), so a tab is a real, shareable address; the bare address is
- * the Overview.
+ * Overview · Sessions · Metrics. `?section=` addresses the view, the Money and Insights hubs'
+ * convention (`CoachTabBar`), so a tab is a real, shareable address; the bare address is the
+ * Overview.
  *
  * **Overview is the LANDING (re-evaluation stage 0, owner ruling 2026-09-14) — Money's shape in
  * full.** While the team has no measured test it is ONE card ("Start by deciding what this team
  * measures", the lime into the metric editor); with tests but no session, the same card says "Run
- * your first session"; once a session exists it is the season's dashboard — four counts, what
+ * your first session"; once a session exists it is the season's dashboard — three counts, what
  * needs attention, the rooms behind the tabs with a status each. State, not analysis: every figure
  * is read by the readers the Insights reports use, and each tile is a door to the room that holds
  * the detail, never a fourth reading of Coverage.
  *
  * Sessions is the list — to the table standard since re-evaluation stage 2 (C5, 2026-09-15): a
  * Date column is the door, Session holds the note and the practice, Ran says the plan, State is derived, the
- * chevron last; Delete lives in the session's sheet, never on a row. Players is the team board's
- * job, in place. Metrics is the library, with its sheet over the tab.
+ * chevron last; Delete lives in the session's sheet, never on a row. Metrics is the library, with
+ * its sheet over the tab.
+ *
+ * ⚠ THE PLAYERS TAB IS GONE (re-evaluation stage 4, owner ruling G1, 2026-09-16). It drew the same
+ * cell from the same board read as Insights → Coverage — one table in two sets of chrome — and the
+ * gate decided which copy stays: this hub is all-or-nothing behind the Development grant (D5),
+ * while Insights is read by every coach with record access. A read must not move behind a write
+ * grant, so Coverage is the home (it took the one thing Players had — Current focus as a Show
+ * choice) and this tab left. The Overview's doors to the roster open Coverage; `?section=players`
+ * lands on the Overview.
  *
  * ⚠ The header's lime action follows the stage: absent while nothing can start (a switched-off
  * primary was the first thing on the old landing), "+ Start session" once a test exists.
@@ -80,8 +85,8 @@ export default function DevelopmentHubPage({
  * tour ("Find the two blanks" lands on it) — the tour's destination is the Sessions TAB now that
  * the landing is the Overview. It stays on the Sessions view's card.
  * ⚠ The four door tiles (Insights · Drills · Plan templates · Players) and the "practice plans live
- * in your Schedule" line are GONE (stage 0): Insights and Players have their own doors, and the
- * practice instruments belong to the practice-plans work. The drill library keeps no door here.
+ * in your Schedule" line are GONE (stage 0): Insights has its own door, and the practice
+ * instruments belong to the practice-plans work. The drill library keeps no door here.
  * ⚠ A coach WITHOUT the Development grant has no door at all (D5): the nav hides Skills & Goals,
  * and this page — and the rooms inside it — render the shared not-granted block. "Either they can
  * see and update everything in here or they cannot."
@@ -104,7 +109,6 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
   const searchParams = useSearchParams();
   const section = parseSkillsAndGoalsSection(searchParams.get('section'));
-  const metricParam = searchParams.get('metric');
   // The definition sheet rides the address (stage 1): `new` defines, an id edits, over this section.
   const edit = parseMetricEdit(searchParams.get('edit'));
 
@@ -158,12 +162,11 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   useEffect(() => { load(); }, [load]);
 
   /**
-   * The board read — ONE dataset, two jobs: the Players view draws it, and the two doors on the
-   * Sessions view soften when there is genuinely nothing behind them (the treatment the Insights
-   * hub already applies to the same doors). Off the first-paint path on purpose: the hub renders
-   * at the speed of the sessions GET and the Players view / door labels fill in a moment later.
-   * Failure is quiet and safe — the doors render unsoftened and the Players view says it couldn't
-   * load, which never hides a door from a coach who has data.
+   * The board read — the Overview's counts (players measured, goals working, reviews due). Off the
+   * first-paint path on purpose: the hub renders at the speed of the sessions GET and the cards
+   * fill in a moment later. Failure is quiet and safe — the cards say they couldn't load, which
+   * never hides a door from a coach who has data. (The Players view that drew these rows is gone,
+   * stage 4 — Insights → Coverage reads the same route.)
    */
   const [board, setBoard] = useState<BoardData | null>(null);
   const [boardError, setBoardError] = useState('');
@@ -230,7 +233,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const metricsHref = skillsAndGoalsHref(base, 'metrics');
   const openScope = () => { setError(''); setScopeOpen(true); };
   // The sheet closes onto the section it opened over — same address, minus `edit`.
-  const closeSheet = () => router.replace(skillsAndGoalsHref(base, section, { metric: metricParam }));
+  const closeSheet = () => router.replace(skillsAndGoalsHref(base, section));
 
   /* ── The header's one lime action: Start session (page-level actions rule, 2026-08-13) — it
         opens the scope step (Phase 2). ABSENT while nothing can start (stage 0, D2): the old
@@ -245,7 +248,6 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const tabs: { id: SkillsAndGoalsSection; label: string; href: string }[] = [
     { id: 'overview', label: 'Overview', href: skillsAndGoalsHref(base, 'overview') },
     { id: 'sessions', label: 'Sessions', href: skillsAndGoalsHref(base, 'sessions') },
-    { id: 'players', label: 'Players', href: skillsAndGoalsHref(base, 'players', { metric: metricParam }) },
     { id: 'metrics', label: 'Metrics', href: metricsHref },
   ];
 
@@ -276,6 +278,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
               sessions={sessions ?? []}
               board={board}
               boardError={boardError}
+              // Practice review is offered with the schedule grant — the rail's report count says what THIS coach can open.
+              reportCount={developmentReports(caps ? canManageSchedule(caps) : false).length}
               onStart={openScope}
               onHelp={() => openHelp(helpRequest)}
             />
@@ -290,9 +294,6 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
               hasSessions={hasSessions}
               onHelp={() => openHelp(helpRequest)}
             />
-          )}
-          {section === 'players' && (
-            <PlayersView base={base} board={board} boardError={boardError} types={types ?? []} metricParam={metricParam} />
           )}
           {section === 'metrics' && (
             <MetricsView base={base} types={types ?? []} canWrite={canWrite} />
@@ -493,8 +494,8 @@ function SessionsView({
           <CoachEmptyState
             compact
             headline="No sessions yet"
-            description="An evaluation session runs your tests across the whole roster in one go, usually at a practice."
-            payoff="A few a season is what turns single results into a trend — and it's what fills the Players view and the “Is everyone getting attention?” report in Insights."
+            description="A session runs your tests across the whole roster in one go, usually at a practice."
+            payoff="A few a season is what turns single results into a trend — and it's what fills the Coverage report in Insights."
             blocker={noTestYet ? 'A session needs a test to record. Define one in Metrics first.' : undefined}
             secondaryAction={noTestYet
               ? { label: 'Open Metrics', icon: <ArrowRight size={15} aria-hidden />, href: metricsHref }
@@ -526,15 +527,18 @@ function Arc({ stage }: { stage: OverviewStage }) {
  * The landing (stage 0, 2026-09-14) — Money's Overview, for development. Two shapes the page
  * picks between by STAGE, both ending in the same tab bar: the getting-started card while there
  * is nothing to count, the dashboard once there is. Nothing here is a fourth reading of a report:
- * every figure is the same reader the Players view and Insights use, and every tile is a door.
+ * every figure is the same reader Insights → Coverage uses, and every tile is a door — the roster
+ * doors open Coverage (stage 4, G1), the Goals card's on Current focus.
  */
-function OverviewView({ base, stage, types, sessions, board, boardError, onStart, onHelp }: {
+function OverviewView({ base, stage, types, sessions, board, boardError, reportCount, onStart, onHelp }: {
   base: string;
   stage: OverviewStage;
   types: RepTeamMeasurableType[];
   sessions: RepTeamEvaluationSession[];
   board: BoardData | null;
   boardError: string;
+  /** How many reports Insights → Development offers THIS coach — computed, never typed. */
+  reportCount: number;
   onStart: () => void;
   onHelp: () => void;
 }) {
@@ -585,9 +589,12 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
   }
 
   // ── running: the dashboard — Money's grammar (owner, 2026-09-14): three story cards, then
-  //    "Needs attention" beside the rail. Every figure is the same reader the Players view and
-  //    Insights use; nothing here is a fourth reading of Coverage. ──
+  //    "Needs attention" beside the rail. Every figure is the same reader Insights → Coverage
+  //    uses; nothing here is a fourth reading of Coverage. ──
   const latest = sessions[0] ?? null; // newest-first from the reader
+  const coverageHref = insightsDevelopmentHref(base);
+  // Coverage opened on its first Show choice — the goals as words (the Players view's "Current focus", moved there).
+  const focusHref = insightsDevelopmentHref(base, { metricId: COVERAGE_FOCUS });
   const rows = board?.rows ?? [];
   const measured: BoardRow[] = [], unmeasured: BoardRow[] = [];
   for (const r of rows) (Object.keys(r.latest).length > 0 || Object.keys(r.latestObservation ?? {}).length > 0 ? measured : unmeasured).push(r);
@@ -653,8 +660,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
             </>
           )}
           <div className={ov.foot}>
-            <Link href={insightsSectionHref(base, 'development')} className={ov.footLink}>Coverage →</Link>
-            <Link href={skillsAndGoalsHref(base, 'players')} className={ov.footLink}>Players →</Link>
+            <Link href={coverageHref} className={ov.footLink}>Coverage →</Link>
           </div>
         </div>
 
@@ -662,10 +668,12 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
         <div className={`${ov.card} ${reviewsDue.length > 0 ? ov.cardAlert : ''}`}>
           <div className={ov.eyeRow}>
             <span className={ov.eye}>Goals</span>
+            {/* ⚠ "no reviews due" — never "on track" (chart rule 6; stage 4, G7): the product states what
+                the record holds and does not grade a child's progress against a schedule. */}
             {boardReady && (reviewsDue.length > 0
               ? <span className={`${ov.chip} ${ov.chipDanger}`}>{plural(reviewsDue.length, 'review')} due</span>
               : working.length > 0
-                ? <span className={`${ov.chip} ${ov.chipGood}`}>on track</span>
+                ? <span className={`${ov.chip} ${ov.chipGood}`}>no reviews due</span>
                 : null)}
           </div>
           <div className={ov.big}>{boardReady ? <>{working.length} <small>working</small></> : dash}</div>
@@ -676,7 +684,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
               : working.length > 0 ? 'No review dates set' : 'No goals set yet'}
           </p>
           <div className={ov.foot}>
-            <Link href={skillsAndGoalsHref(base, 'players')} className={ov.footLink}>Players →</Link>
+            <Link href={focusHref} className={ov.footLink}>Coverage →</Link>
           </div>
         </div>
       </div>
@@ -723,14 +731,15 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
                     <b>{unmeasured.length === 1 ? '1 player has' : `${unmeasured.length} players have`} no result this season</b>
                     <small>{unmeasured.slice(0, 4).map(playerName).join(', ')}{unmeasured.length > 4 ? ` and ${unmeasured.length - 4} more` : ''}</small>
                   </span>
-                  <Link href={insightsSectionHref(base, 'development')} className={ov.attnLink}>Coverage →</Link>
+                  <Link href={coverageHref} className={ov.attnLink}>Coverage →</Link>
                 </li>
               )}
             </ul>
           )}
         </div>
 
-        {/* Everything in Skills & Goals — Money's rail: the rooms in the arc's order, a figure each. */}
+        {/* Everything in Skills & Goals — Money's rail: the rooms in the arc's order, a figure each.
+            (The Players row went with the tab, stage 4 — the roster is read in Insights.) */}
         <div className={ov.card}>
           <div className={ov.eyeRow}><span className={ov.eye}>Everything in Skills &amp; Goals</span></div>
           <div className={ov.rail}>
@@ -742,178 +751,14 @@ function OverviewView({ base, stage, types, sessions, board, boardError, onStart
               <span className={`${ov.railDot} ${ov.dotGood}`} aria-hidden /><span className={ov.railName}>Sessions</span>
               <span className={ov.railStat}><b>{sessions.length}</b> this season</span><span className={ov.railChev} aria-hidden>›</span>
             </Link>
-            <Link href={skillsAndGoalsHref(base, 'players')} className={ov.railRow}>
-              <span className={`${ov.railDot} ${ov.dotRust}`} aria-hidden /><span className={ov.railName}>Players</span>
-              <span className={ov.railStat}>{boardReady ? <><b>{working.length}</b> {working.length === 1 ? 'goal' : 'goals'} · <b>{measured.length}</b> measured</> : '…'}</span><span className={ov.railChev} aria-hidden>›</span>
-            </Link>
-            <Link href={insightsSectionHref(base, 'development')} className={ov.railRow}>
+            <Link href={coverageHref} className={ov.railRow}>
               <span className={`${ov.railDot} ${ov.dotOlive}`} aria-hidden /><span className={ov.railName}>Reports <span className={ov.railNote}>in Insights</span></span>
-              <span className={ov.railStat}><b>3</b> reports</span><span className={ov.railChev} aria-hidden>›</span>
+              <span className={ov.railStat}><b>{reportCount}</b> {reportCount === 1 ? 'report' : 'reports'}</span><span className={ov.railChev} aria-hidden>›</span>
             </Link>
           </div>
         </div>
       </div>
     </>
-  );
-}
-
-// ── Players ───────────────────────────────────────────────────────────────────────────────────
-
-/**
- * The team board's job, in place (mockup screen 1, RESTYLED): every active player in ROSTER ORDER
- * — never a ranking, no sort control — with a Show selector. "Current focus" shows the working
- * focus areas; a test shows THAT test's latest result and ITS date (F09, F12: the board used to
- * pick its three or four most-used tests by usage and show one "last eval" for everything).
- * The choice rides `?metric=` so a link keeps it. Names link to the record, opened on the right
- * view, carrying the way back (the exact addresses of F09).
- */
-function PlayersView({ base, board, boardError, types, metricParam }: {
-  base: string;
-  board: BoardData | null;
-  boardError: string;
-  types: RepTeamMeasurableType[];
-  metricParam: string | null;
-}) {
-  const router = useRouter();
-  // Metrics a coach can pick: active measured tests, plus a retired one that still carries a latest
-  // result for someone (its readings are records; hiding them would be F02 again) — and, with
-  // notes, the observed skills (Phase 2: "latest observation").
-  const showGoals = board?.showGoals ?? false;
-  const pickable = useMemo(() => {
-    const withLatest = new Set<string>();
-    for (const r of board?.rows ?? []) {
-      for (const id of Object.keys(r.latest)) withLatest.add(id);
-      for (const id of Object.keys(r.latestObservation ?? {})) withLatest.add(id);
-    }
-    const tests = measuredTestsWithHistory(types, id => withLatest.has(id));
-    const skills = showGoals ? types.filter(t => t.kind === 'skill' && (t.isActive || withLatest.has(t.id))) : [];
-    return [...tests, ...skills];
-  }, [board, types, showGoals]);
-  const chosen = metricParam && pickable.some(t => t.id === metricParam)
-    ? metricParam
-    : showGoals ? 'focus' : (pickable[0]?.id ?? 'focus');
-  const chosenType = pickable.find(t => t.id === chosen) ?? null;
-  const chosenIsSkill = chosenType?.kind === 'skill';
-  const here = skillsAndGoalsHref(base, 'players', { metric: chosenType ? chosenType.id : null });
-
-  const choose = (value: string) => {
-    router.replace(skillsAndGoalsHref(base, 'players', { metric: value === 'focus' ? null : value }), { scroll: false });
-  };
-
-  if (boardError) {
-    return <p className={styles.detailPlaceholder}>{boardError}</p>;
-  }
-  if (!board) {
-    return <div className={styles.loadingState}>Loading the players…</div>;
-  }
-  const rows = board.rows;
-  const anyData = rows.some(r => r.goals.length > 0 || Object.keys(r.latest).length > 0);
-
-  return (
-    <div>
-      {/* Money's list-tab grammar (2026-09-14): the toolbar on the paper, the table on white. */}
-      <div className={styles.panelToolbar}>
-        {/* REQUIRED coverage framing (binding coverage ruling): roster order, a coverage view, not a ranking. */}
-        <p className={styles.devListLede}>
-          Roster order · {plural(rows.length, 'player')} · a coverage view, not a ranking. The date belongs to the metric you chose.
-        </p>
-        {(showGoals || pickable.length > 0) && (
-          <div className={styles.panelToolbarActions}>
-            <label className={styles.field} style={{ minWidth: 200, flex: '0 1 300px' }}>
-              <span className={styles.label}>Show</span>
-              <select className={`${styles.select} ${styles.devToolbarControl}`} value={chosen} onChange={e => choose(e.target.value)}>
-                {showGoals && <option value="focus">Current focus</option>}
-                {pickable.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} · {t.kind === 'skill' ? 'latest observation' : 'latest result'}{t.isActive ? '' : ' (retired)'}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
-      </div>
-
-      {rows.length === 0 ? (
-        <p className={styles.detailPlaceholder}>No active roster for this season yet — add players from the Roster page first.</p>
-      ) : !anyData ? (
-        <p className={styles.detailPlaceholder}>
-          Nothing recorded yet — run an evaluation session or add a focus area from any player&apos;s record.
-        </p>
-      ) : (
-        <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
-          <table className={styles.devBoardTable}>
-            <thead>
-              <tr>
-                {/* ⚠ NO sort affordance on any column, ever. Roster order is the only order. */}
-                <th>Player</th>
-                <th>{chosenType ? chosenType.name : 'Current focus'}</th>
-                <th>{chosenType ? (chosenIsSkill ? 'Observed' : 'Recorded') : 'Status'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(r => {
-                const name = [r.firstName, r.lastName].filter(Boolean).join(' ');
-                const working = r.goals.filter(g => g.status === 'working').map(g => g.focusArea);
-                const latest = chosenType && !chosenIsSkill ? r.latest[chosenType.id] : undefined;
-                const latestObs = chosenType && chosenIsSkill ? r.latestObservation?.[chosenType.id] : undefined;
-                // The ONE cell spelling Insights → Coverage reads too: the headline, "Not assessed" dated by its session, or an absence.
-                const cell = coverageCell({ latest: latest ?? null, latestObservation: null, notAssessedOn: chosenType ? (r.notAssessedOn?.[chosenType.id] ?? null) : null }, chosenType ?? { kind: 'test', aim: 'record' });
-                // A test opens the player's Results row; a skill's observations live on the player's
-                // NOTES tab (re-evaluation stage 3, E1/E2 — the Observations view is gone).
-                const href = chosenType && chosenIsSkill
-                  ? playerTabHref(`${base}/roster/${r.playerId}`, 'notes', { returnTo: here })
-                  : playerDevelopmentHref(base, r.playerId, chosenType
-                    ? { view: 'results', metricId: chosenType.id, returnTo: here }
-                    : { view: 'goals', returnTo: here });
-                return (
-                  <tr key={r.playerId}>
-                    <td>
-                      <Link href={href} className={styles.devCellLink}>
-                        {r.number ? <span className={styles.devRowNum}>#{r.number} </span> : null}{name}
-                      </Link>
-                    </td>
-                    {chosenType && chosenIsSkill ? (
-                      <>
-                        <td data-label={chosenType.name}>
-                          {latestObs ? observationText(latestObs) : <Muted>—</Muted>}
-                        </td>
-                        <td data-label="Observed" className={styles.devBoardVal}>
-                          {latestObs ? formatShortDate(latestObs.observedOn) : <Muted>not observed</Muted>}
-                        </td>
-                      </>
-                    ) : chosenType ? (
-                      <>
-                        <td data-label={chosenType.name} className={styles.devBoardVal}>
-                          {/* The headline of the latest session — "8.05 seconds (of 3)" · "2 of 3 in range" — in the
-                              coverage cell's one spelling (Phase 3: Insights → Coverage reads the same helper). */}
-                          {cell.state === 'recorded' ? cell.text : cell.state === 'not_assessed' ? <Muted>{cell.text}</Muted> : <Muted>—</Muted>}
-                        </td>
-                        {/* The date belongs to the metric chosen — never one "last eval" for everything (F12). */}
-                        <td data-label="Recorded" className={styles.devBoardVal}>
-                          {cell.on ? formatShortDate(cell.on) : <Muted>not recorded</Muted>}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td data-label="Current focus">
-                          {working.length > 0
-                            ? working.join(' · ')
-                            : r.goals.length > 0
-                              ? <Muted>{r.goals.length} achieved/parked</Muted>
-                              : <Muted>none yet</Muted>}
-                        </td>
-                        <td data-label="Status" className={styles.devBoardVal}>
-                          {working.length > 0 ? `${plural(working.length, 'active focus area')}` : <Muted>—</Muted>}
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -987,7 +832,7 @@ function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMe
           compact
           headline="No metrics defined yet"
           description="A test is a number you record the same way every time — a 60-yd sprint in seconds. A skill is what you watch for, in your own words."
-          payoff="Define your first test and an evaluation session can record it for the whole roster in one go."
+          payoff="Define your first test and a session can record it for the whole roster in one go."
         />
       ) : table(active)}
 

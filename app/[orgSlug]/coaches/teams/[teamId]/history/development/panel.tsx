@@ -2,20 +2,20 @@
 import { use, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronRight, Info, TrendingUp } from 'lucide-react';
 import {
-  insightsDevelopmentHref, parseInsightsDevelopmentAddress, playerDevelopmentHref,
+  insightsDevelopmentHref, parseInsightsDevelopmentAddress, playerDevelopmentHref, COVERAGE_FOCUS,
   type InsightsDevelopmentAddress, type DevelopmentReport, type ProgressShow, type CompareWindow,
 } from '@/lib/development-address';
 import {
-  REPORT_LABELS, COMPARE_LABELS, progressSeries, scopeLine, coverageCell, coverageDenominator, COVERAGE_DENOMINATOR_NOTE,
-  showOptions, type ProgressSeries, type ProgressPoint, type ReportDefinition,
+  REPORT_LABELS, COMPARE_LABELS, progressSeries, scopeLine, coverageCell, coverageDenominator, COVERAGE_ORDER_NOTE, coverageLegend, COVERAGE_IN_PLAN_LEGEND,
+  COVERAGE_DASH, developmentReports, showOptions, type ProgressSeries, type ProgressPoint, type ReportDefinition,
 } from '@/lib/development-report';
-import { goalTimeline } from '@/lib/development-goal-history';
 import { playerTabHref } from '@/lib/coach-player-tabs';
-import { headlineLabel } from '@/lib/measurable-series';
+import { headlineLabel, headlineLead } from '@/lib/measurable-series';
 import DevelopmentProgressChart from '@/components/charts/DevelopmentProgressChart';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import { Info, TrendingUp } from 'lucide-react';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import { formatShortDate, formatValue } from '@/lib/measurable-format';
 import { playerName as rosterName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -25,6 +25,8 @@ import type { SectionRead } from '@/lib/report-section-state';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepPlayerObservation, RepDevelopmentGoalReview,
 } from '@/lib/types';
+import Muted from '@/components/coaches/Muted';
+import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import styles from '../../../../coaches.module.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,6 +40,16 @@ import styles from '../../../../coaches.module.css';
 // the hub's own `?section=development` address (report · player · metric · show
 // · compare · tag), read on EVERY render, so Back/Forward and a fresh link move
 // the selectors with them.
+//
+// ⚠ COVERAGE IS THE ONE ROSTER TABLE (re-evaluation stage 4, owner ruling G1,
+// 2026-09-16). The Skills & Goals Players tab drew the same cell from the same
+// board read; the gate decided which copy stays — that hub is all-or-nothing
+// behind the Development grant, this report is read by every coach with record
+// access, and a read must not move behind a write grant. So Coverage took the one
+// thing Players had (Current focus — the goals as words — as its first Show
+// choice), lost the Active-focus count and the Returning-player column (an
+// identity fact, E9), and opens on its count line: the heading, the description
+// and the disclaimer live in the help. An absence is a dash with one legend.
 //
 // Practice Plans Phase 3 added three sections (frames 08–09), and this is the
 // surface where §4's no-ranking rules are sharpest, because it is the one that
@@ -66,6 +78,11 @@ import styles from '../../../../coaches.module.css';
 // ⚠ READS STAY BOUNDED (plan §10): Coverage reads the board once (it already
 // carries the latest per metric); Player progress reads ONE player's development.
 // Never every player's full history to draw one chart.
+//
+// ⚠ ONE DISCLAIMER PER SCREEN (G3): Player progress keeps "A change in this test
+// does not explain why it happened." — the one sentence a coach reading a
+// falling line might otherwise forget. Everything else the reports used to say
+// about themselves is in the help article the page's "?" opens.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ReportRow {
@@ -82,7 +99,6 @@ interface ReportRow {
   /** metric id → the date of the latest session that marked this player not assessed on it. */
   notAssessedOn: Record<string, string>;
   lastRecordedOn: string | null;
-  historyLinked: string | null;
   /** ⚠ ONE boolean, or null when the question can't be answered. Never a count. */
   inPlan: boolean | null;
 }
@@ -102,6 +118,8 @@ interface PracticeRow {
 interface ReportData {
   showGoals: boolean;
   showMeasurables: boolean;
+  /** The Development grant — the only key that opens Skills & Goals (stage 0, D5); decided by the server. */
+  canWrite: boolean;
   types: RepTeamMeasurableType[];
   rows: ReportRow[];
   showPlans: boolean;
@@ -139,9 +157,13 @@ export function DevelopmentPanel({
 
 /** The board's wire shape, named the way every roster surface names a player (one home, defensive of stray "null"s). */
 const playerName = (r: { firstName: string; lastName: string | null }) => rosterName({ playerFirstName: r.firstName, playerLastName: r.lastName });
-/** "60-yd sprint · test" · "Changeup speed · test with a range" · "Sets feet before throwing · skill". */
-const metricOptionLabel = (t: RepTeamMeasurableType) =>
-  `${t.name} · ${t.kind === 'skill' ? 'skill' : t.aim === 'range' ? 'test with a range' : 'test'}${t.isActive ? '' : ' (retired)'}`;
+/** "60-yd sprint" · sub "test" · "Changeup speed" · sub "test with a range" · "Sets feet before throwing" · sub "skill". */
+const metricOptionSub = (t: RepTeamMeasurableType) => t.kind === 'skill' ? 'skill' : t.aim === 'range' ? 'test with a range' : 'test';
+/** Coverage's Show choices — sub "latest result" · "latest observation" (the Players view's spelling, moved here). */
+const showOptionSub = (t: RepTeamMeasurableType) => `latest ${t.kind === 'skill' ? 'observation' : 'result'}`;
+/** A retired metric's option carries a "Retired" group instead of repeating the word on every row (SublinedChoice draws it as ONE header above the run). */
+const metricOptionGroup = (t: RepTeamMeasurableType) => t.isActive ? undefined : 'Retired';
+const workingGoals = (r: ReportRow) => r.goals.filter(g => g.status === 'working');
 
 function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -175,6 +197,18 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
     pendingRef.current = next;
     router.replace(insightsDevelopmentHref(base, next), { scroll: false });
   };
+  /** The phone's sheet over the Progress selectors (G4) — this panel's own state; the choices ride the address. */
+  const [sheetOpen, setSheetOpen] = useState(false);
+  /**
+   * ⚠ The hub keeps this panel MOUNTED and hidden when another Insights tab is active, and the sheet
+   * is inline, not portaled — so its `open` must include the tab's own activity (QuestionShell's
+   * contract): a sheet left armed on a hidden panel kept the bottom nav hidden and answered Escape
+   * on whatever tab the coach was on. Leaving the tab or the report (a back gesture, a tab tap)
+   * CLOSES it, the way the hub resets its own tracked section — coming back never re-opens a sheet
+   * the coach did not ask for.
+   */
+  const sheetShown = sheetOpen && searchParams.get('section') === 'development' && address.report === 'progress';
+  if (sheetOpen && !sheetShown) setSheetOpen(false);
 
   /**
    * Sequence guard (the session screen's idiom): the failed-practices "Try again" can be pressed
@@ -187,10 +221,11 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
     const seq = ++loadSeqRef.current;
     setLoading(true);
     try {
-      // ?history=1 → the History-linked column. ?plans=1 → the three Phase 3 sections. Both are
-      // opt-in because each costs a scan the board page and the hub tile don't render.
+      // ?plans=1 → the three Phase 3 sections — opt-in because it costs a walk of the season's
+      // plans the hub tile doesn't render. (⚰ `?history=1` — the Returning-player column's scan of
+      // prior-season identities — is no longer asked for: the column left with stage 4, G1/E9.)
       const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/development/board?history=1&plans=1`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/development/board?plans=1`,
       );
       const json = await res.json().catch(() => null);
       if (seq !== loadSeqRef.current) return;
@@ -198,7 +233,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
       if (res.status === 404) {
         setNoSeason(true);
         setData({
-          showGoals: false, showMeasurables: false, types: [], rows: [],
+          showGoals: false, showMeasurables: false, canWrite: false, types: [], rows: [],
           showPlans: false, planFinding: null, uncoveredFocus: [], practices: [],
           practiceRead: { state: 'empty', truncated: false }, practiceCap: 0,
           tagRead: { state: 'empty', truncated: false },
@@ -252,13 +287,17 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const { rows, showPlans, practices, practiceRead } = data;
   // A failed read is something to SHOW, not an absence — it must not collapse into "nothing yet".
   const practiceTrouble = showPlans && (practiceRead.state === 'failed' || practiceRead.state === 'incomplete');
-  const anyData = rows.some(r => r.goals.length > 0 || Object.keys(r.latest).length > 0 || r.historyLinked)
+  const anyData = rows.some(r => r.goals.length > 0 || Object.keys(r.latest).length > 0 || Object.keys(r.latestObservation ?? {}).length > 0)
     || practices.length > 0 || practiceTrouble;
 
   // The effective selections: what the address says, or the honest default — the first active
   // test, the first roster row, the headline, the season. Never an id the lists do not hold.
   const report: DevelopmentReport = address.report === 'practices' && !showPlans ? 'coverage' : address.report;
   const metric = metricOptions.find(t => t.id === address.metricId) ?? metricOptions.find(t => t.isActive && t.kind === 'test') ?? metricOptions[0] ?? null;
+  // Coverage's first Show choice — the goals as words — rides `metric=focus` (G1), with Internal notes
+  // only. It is also the honest default when the team has defined NO test or skill yet (goals and
+  // plans can exist before a metric does): there is no figure column to show, so the words are it.
+  const focus = report === 'coverage' && data.showGoals && (address.metricId === COVERAGE_FOCUS || metric === null);
   const player = rows.find(r => r.playerId === address.playerId) ?? rows[0] ?? null;
   const show: ProgressShow = address.show ?? 'headline';
   const compare: CompareWindow = address.compare ?? 'season';
@@ -266,13 +305,68 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const here = insightsDevelopmentHref(base, {
     tag: address.tag, report,
     playerId: report === 'progress' ? player?.playerId : null,
-    metricId: report !== 'practices' ? metric?.id : null,
+    metricId: report === 'practices' ? null : focus ? COVERAGE_FOCUS : metric?.id,
     show: report === 'progress' ? address.show : null,
     compare: report === 'progress' ? address.compare : null,
   });
 
-  const reportChoices: DevelopmentReport[] = showPlans ? ['coverage', 'progress', 'practices'] : ['coverage', 'progress'];
+  const reportChoices = developmentReports(showPlans);
   const showChoices = metric ? showOptions(metric) : [];
+  const playerLabel = (r: ReportRow) => `${r.number ? `#${r.number} ` : ''}${playerName(r)}`;
+
+  /** Metric choices shared by the Progress select and the Coverage "Show" select — the metric's own kind ("test" · "test with a range" · "skill") as the Progress qualifier, retired ones grouped under ONE "Retired" header instead of a tag repeated on every row. */
+  const progressMetricOptions: SublinedOption<string>[] = metricOptions.map(t => ({
+    value: t.id, name: t.name, sub: metricOptionSub(t), group: metricOptionGroup(t),
+  }));
+
+  /* The Progress selectors — Player · Metric · Show · Compare — as a row of fields on a desktop, and
+     drawn ONCE so the sheet on a phone (G4) is the same four controls in a column. Takes an idPrefix
+     because BOTH call sites can be mounted at once (`.devReportDesktopOnly` hides its copy with CSS,
+     not unmount) — a hardcoded id on the Metric field would duplicate across them. */
+  const progressFields = (idPrefix: string) => metric && (
+    <>
+      {/* Roster order, never ranked. Changing the player keeps the report, the metric and the window. */}
+      <label className={styles.field}>
+        <span className={styles.label}>Player</span>
+        <select className={`${styles.select} ${styles.devToolbarControl}`} value={player?.playerId ?? ''} onChange={e => setAddress({ playerId: e.target.value })}>
+          {rows.map(r => <option key={r.playerId} value={r.playerId}>{playerLabel(r)}</option>)}
+        </select>
+      </label>
+      <div className={styles.field}>
+        {/* ⚠ SublinedChoice draws NO visible label — its `label` prop is the ARIA name only. */}
+        <label className={styles.label} htmlFor={`${idPrefix}-metric`}>Metric</label>
+        <SublinedChoice
+          id={`${idPrefix}-metric`}
+          label="Metric"
+          variant="toolbar"
+          showClosedSub
+          options={progressMetricOptions}
+          value={metric.id}
+          onChange={v => setAddress({ metricId: v })}
+        />
+      </div>
+      {showChoices.length > 1 && (
+        <label className={styles.field}>
+          <span className={styles.label}>Show</span>
+          <select className={`${styles.select} ${styles.devToolbarControl}`} value={show} onChange={e => setAddress({ show: e.target.value as ProgressShow })}>
+            {showChoices.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+        </label>
+      )}
+      {metric.kind === 'test' && (
+        <label className={styles.field}>
+          <span className={styles.label}>Compare</span>
+          <select className={`${styles.select} ${styles.devToolbarControl}`} value={compare} onChange={e => setAddress({ compare: e.target.value as CompareWindow })}>
+            {(['season', 'last-two'] as const).map(id => <option key={id} value={id}>{COMPARE_LABELS[id]}</option>)}
+          </select>
+        </label>
+      )}
+    </>
+  );
+  /** The phone's one line for the four choices — "Best attempt · This season" under the player and the metric. */
+  const progressSummarySub = metric && metric.kind === 'test'
+    ? [showChoices.length > 1 ? (showChoices.find(o => o.id === show)?.label ?? null) : null, COMPARE_LABELS[compare]].filter(Boolean).join(' · ')
+    : null;
 
   return (
     /* ⚠ NO WRAPPER AND NO HEADER — this is a PANEL (reports portal P1, 2026-08-18). The hub owns
@@ -281,9 +375,8 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
        ⚠ THE REPORT KEEPS THE WORD "DEVELOPMENT" AND THE NAV WORKBENCH DOES NOT: the sidebar item
        is now "Skills & Goals" (owner ruling 5, 2026-08-18). That collision — two doors both called
        Development, one a coverage report and one a workbench — is why this file's old title asked a
-       question instead of naming itself. The tab can be called what it is now, and the cross-link
-       under Coverage below names the other door so a coach who wants to ACT on what they read here
-       knows exactly where to go. */
+       question instead of naming itself. The door under the Coverage table names the room for a
+       coach who holds the grant to it. */
     <>
       {noSeason ? (
         <p className={styles.detailPlaceholder}>
@@ -291,57 +384,62 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
         </p>
       ) : !anyData ? (
         <p className={styles.detailPlaceholder}>
-          Nothing to cover yet — run an evaluation session in Development, add a focus area from any
-          player&apos;s profile, or write a plan for a practice.
+          Nothing to cover yet — run a session in Skills &amp; Goals, add a goal from any
+          player&apos;s record, or write a plan for a practice.
         </p>
       ) : (
         <>
           {/* ── The Report selector (Phase 3): ONE labelled row of form controls, never tabs. On a
-              phone the fields wrap as labelled full-width controls (plan §6). ── */}
+              phone the Report field stays a field and Progress's other four fold into ONE summary
+              control that opens a sheet (G4) — the answer lands on the first screen. ── */}
           <div className={styles.devReportToolbar}>
-            <label className={styles.field}>
-              <span className={styles.label}>Report</span>
-              <select className={`${styles.select} ${styles.devToolbarControl}`} value={report} onChange={e => setAddress({ report: e.target.value as DevelopmentReport })}>
-                {reportChoices.map(id => <option key={id} value={id}>{REPORT_LABELS[id]}</option>)}
-              </select>
-            </label>
-            {report === 'progress' && rows.length > 0 && (
-              // Roster order, never ranked. Changing the player keeps the report, the metric and the window.
-              <label className={styles.field}>
-                <span className={styles.label}>Player</span>
-                <select className={`${styles.select} ${styles.devToolbarControl}`} value={player?.playerId ?? ''} onChange={e => setAddress({ playerId: e.target.value })}>
-                  {rows.map(r => <option key={r.playerId} value={r.playerId}>{r.number ? `#${r.number} ` : ''}{playerName(r)}</option>)}
-                </select>
-              </label>
+            <div className={styles.field}>
+              {/* ⚠ SublinedChoice draws NO visible label — its `label` prop is the ARIA name only. */}
+              <label className={styles.label} htmlFor="coach-dev-report">Report</label>
+              <SublinedChoice
+                id="coach-dev-report"
+                label="Report"
+                variant="toolbar"
+                options={reportChoices.map(id => ({ value: id, name: REPORT_LABELS[id], sub: '' }))}
+                value={report}
+                onChange={v => setAddress({ report: v })}
+              />
+            </div>
+            {report === 'coverage' && (data.showGoals || metricOptions.length > 0) && (
+              // Show: Current focus first (with Internal notes — the goals as words), then every metric.
+              <div className={styles.field}>
+                {/* ⚠ SublinedChoice draws NO visible label — its `label` prop is the ARIA name only. */}
+                <label className={styles.label} htmlFor="coach-dev-show">Show</label>
+                <SublinedChoice
+                  id="coach-dev-show"
+                  label="Show"
+                  variant="toolbar"
+                  showClosedSub
+                  options={[
+                    ...(data.showGoals ? [{ value: COVERAGE_FOCUS, name: 'Current focus', sub: '' }] : []),
+                    ...metricOptions.map(t => ({ value: t.id, name: t.name, sub: showOptionSub(t), group: metricOptionGroup(t) })),
+                  ]}
+                  value={focus ? COVERAGE_FOCUS : (metric?.id ?? null)}
+                  onChange={v => setAddress({ metricId: v })}
+                />
+              </div>
             )}
-            {report !== 'practices' && metricOptions.length > 0 && (
-              <label className={styles.field}>
-                <span className={styles.label}>Metric</span>
-                <select className={`${styles.select} ${styles.devToolbarControl}`} value={metric?.id ?? ''} onChange={e => setAddress({ metricId: e.target.value })}>
-                  {metricOptions.map(t => <option key={t.id} value={t.id}>{metricOptionLabel(t)}</option>)}
-                </select>
-              </label>
-            )}
-            {report === 'progress' && showChoices.length > 1 && (
-              <label className={styles.field}>
-                <span className={styles.label}>Show</span>
-                <select className={`${styles.select} ${styles.devToolbarControl}`} value={show} onChange={e => setAddress({ show: e.target.value as ProgressShow })}>
-                  {showChoices.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </select>
-              </label>
-            )}
-            {report === 'progress' && metric?.kind === 'test' && (
-              <label className={styles.field}>
-                <span className={styles.label}>Compare</span>
-                <select className={`${styles.select} ${styles.devToolbarControl}`} value={compare} onChange={e => setAddress({ compare: e.target.value as CompareWindow })}>
-                  {(['season', 'last-two'] as const).map(id => <option key={id} value={id}>{COMPARE_LABELS[id]}</option>)}
-                </select>
-              </label>
+            {report === 'progress' && player && metric && (
+              <>
+                <div className={styles.devReportDesktopOnly}>{progressFields('progress-desktop')}</div>
+                <button type="button" className={`${styles.devReportSummary} ${styles.devReportPhoneOnly}`} onClick={() => setSheetOpen(true)} aria-haspopup="dialog">
+                  <span className={styles.devReportSummaryMain}>
+                    <b>{playerName(player)}{player.number ? <span className={styles.devBoardMuted}> #{player.number}</span> : null}</b> · {metric.name}
+                    {progressSummarySub && <small>{progressSummarySub}</small>}
+                  </span>
+                  <span className={styles.devReportSummaryDoor}>Change ›</span>
+                </button>
+              </>
             )}
           </div>
 
           {report === 'coverage' && (
-            <CoverageReport data={data} metric={metric} base={base} here={here} tag={address.tag} />
+            <CoverageReport data={data} metric={metric} focus={focus} base={base} here={here} tag={address.tag} />
           )}
           {report === 'progress' && (
             player && metric
@@ -351,17 +449,31 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
           {report === 'practices' && showPlans && (
             <PracticeReview data={data} base={base} tag={address.tag} setTag={tag => setAddress({ tag })} loading={loading} reload={load} />
           )}
+
+          {/* The phone's sheet (G4): the same four choices, one column, Done — on the one form chrome.
+              Each change already rides the address; Done only closes it onto the chart. */}
+          {report === 'progress' && player && metric && (
+            <QuestionShell open={sheetShown} onClose={() => setSheetOpen(false)} ariaLabel="Change what Player progress shows" title="Player progress">
+              <div className={styles.devReportSheetFields}>
+                {progressFields('progress-sheet')}
+                <p className={styles.formHint}>Roster order. A skill has no Show or Compare; a range test no Show.</p>
+              </div>
+              <div className={styles.modalFooter}>
+                <button type="button" className={`btn btn-lime ${styles.tapFloor}`} onClick={() => setSheetOpen(false)}>Done</button>
+              </div>
+            </QuestionShell>
+          )}
         </>
       )}
     </>
   );
 }
 
-// ── Coverage (RESTYLED — screen 5): the selected metric, with ITS date, per player (F12) ──────────
-function CoverageReport({ data, metric, base, here, tag }: {
-  data: ReportData; metric: RepTeamMeasurableType | null; base: string; here: string; tag: string | null;
+// ── Coverage — the ONE roster table (G1): the chosen metric, or the goals as words, per player ───
+function CoverageReport({ data, metric, focus, base, here, tag }: {
+  data: ReportData; metric: RepTeamMeasurableType | null; focus: boolean; base: string; here: string; tag: string | null;
 }) {
-  const { showGoals, rows, showPlans, planFinding, uncoveredFocus, practiceRead, practiceCap, tagRead } = data;
+  const { rows, showPlans, planFinding, uncoveredFocus, practiceRead, practiceCap, tagRead, canWrite } = data;
   /**
    * The coverage column appears only when the question is ANSWERABLE — the API sends `inPlan: null`
    * on every row otherwise. Assigning players to blocks is optional: a coach whose practice is
@@ -369,50 +481,36 @@ function CoverageReport({ data, metric, base, here, tag }: {
    * be the product misreading its own data as a coaching failure.
    */
   const showCoverage = showPlans && rows.some(r => r.inPlan !== null);
-  const cells = metric
+  const shownMetric = focus ? null : metric;
+  const cells = shownMetric
     ? rows.map(r => coverageCell({
-      latest: r.latest[metric.id] ?? null,
-      latestObservation: r.latestObservation?.[metric.id] ?? null,
-      notAssessedOn: r.notAssessedOn?.[metric.id] ?? null,
-    }, metric))
+      latest: r.latest[shownMetric.id] ?? null,
+      latestObservation: r.latestObservation?.[shownMetric.id] ?? null,
+      notAssessedOn: r.notAssessedOn?.[shownMetric.id] ?? null,
+    }, shownMetric))
     : null;
-  const recorded = cells ? cells.filter(c => c.state === 'recorded').length : 0;
+  /** Current focus: each row's goals being worked on, as words — computed once for the count and the rows. */
+  const workingByRow = focus ? rows.map(r => workingGoals(r).map(g => g.focusArea)) : null;
+  const recorded = workingByRow ? workingByRow.filter(w => w.length > 0).length : cells ? cells.filter(c => c.state === 'recorded').length : 0;
+  const isSkill = shownMetric?.kind === 'skill';
+  /** The record, opened where the chosen thing lives — Goals, the metric's Results row, or (a skill) the Notes tab — carrying the way back (F09). */
+  const recordHref = (r: ReportRow) => focus || !shownMetric
+    ? playerDevelopmentHref(base, r.playerId, { view: 'goals', returnTo: here })
+    : isSkill
+      ? playerTabHref(`${base}/roster/${r.playerId}`, 'notes', { returnTo: here })
+      : playerDevelopmentHref(base, r.playerId, { view: 'results', metricId: shownMetric.id, returnTo: here });
 
   return (
     <>
-      {/* ── Section 1 · Coverage ── */}
-      <p className={styles.reportSectionTitle}>Coverage</p>
-      {/* The coverage framing is REQUIRED wording (binding coverage ruling) — it moved here
-          from the retired subtitle so it sits with the roster order it frames. */}
-      <p className={styles.reportSectionSub}>
-        {showCoverage
-          ? 'Who has been named in a practice plan, and where each player is up to.'
-          : 'Where each player is up to.'}
-        {' '}Roster order — a coverage checklist, not a ranking. The date belongs to the selected metric.
-      </p>
-      {/* The explicit denominator (plan §9): what this table describes, and what it does not. */}
-      {metric && cells && (
+      {/* ── The count line — the first thing under the toolbar, and the one place the binding
+          coverage wording is said (G1). The heading, the description and the disclaimer it used
+          to sit under are in the help. ── */}
+      {(focus || (shownMetric && cells)) && (
         <p className={styles.devReportDenominator}>
-          {coverageDenominator(recorded, rows.length, metric)}
-          <br /><span className={styles.devReportAnswerSub}>{COVERAGE_DENOMINATOR_NOTE}</span>
+          {coverageDenominator(recorded, rows.length, focus ? 'focus' : shownMetric!)}
+          <span className={styles.devReportOrderNote}> · {COVERAGE_ORDER_NOTE}</span>
         </p>
       )}
-      {/* ⚠ THE CROSS-LINK IS IN THE APPROVED MOCKUP, and it is the answer to the one question
-          this report cannot answer itself: it MEASURES coverage and offers no way to change it.
-          Every act — setting a focus area, recording a measurable, running an evaluation
-          session — happens on the workbench, which is called "Skills & Goals" from 2026-08-18.
-          Naming the destination by its NEW name is the whole point: a coach who reads "no
-          active focus" here and goes looking for "Development" in the sidebar will not find it. */}
-      {/* ⚠ `.insightsOpsLink`, not a bare <a> in a <p>. The first build of this line was a
-          15px-tall link inside a paragraph, caught by `check:layout` at 361px and 390px — which
-          is the whole reason that sweep addresses each tab separately now. It shares a class
-          with Playing Time's "Manage lineups →" because it is the same thing: the quiet "go do
-          something about this" link at the foot of a report. The 44px tap floor went ON THAT
-          CLASS rather than here, which fixed the older link's identical finding at the same
-          time. */}
-      <Link href={`${base}/development`} className={styles.insightsOpsLink}>
-        Set goals and record in Skills &amp; Goals →
-      </Link>
 
       {/* ⚠ COUNT-ONLY AND NAMELESS, and silent until there is real usage. This is the findings
           rule applied in place — there is deliberately no seventh Insights tile. */}
@@ -437,56 +535,77 @@ function CoverageReport({ data, metric, base, here, tag }: {
         </p>
       )}
 
-      {/* .tableAsCards reflows the table into stacked cards @640 (the Roster idiom). */}
-      <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+      {/* .tableAsCards reflows the table into stacked cards @640 (the Roster idiom) — and on a phone
+          (G4) each card is ONE LINE: the name, then the result and its date, a tick for In a plan,
+          the chevron to Progress. The figure cells are hidden there and the lead cell carries the
+          line (the stage-3 Results card's idiom — `.devReportPhoneLine` / `.devReportDesktopCell`,
+          to be folded into the shared card recipe at the close-out, S6). */}
+      <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard} ${styles.devReportOneLine}`}>
         <table className={styles.devBoardTable}>
           <thead>
             <tr>
               {/* ⚠ NO sort affordance on any column, ever. Roster order is the only order. */}
               <th>Player</th>
-              {showGoals && <th>Active focus</th>}
-              {/* The selected metric, and ITS date — never one "last measurable" for everything (F12). */}
-              {metric && <th>Selected metric</th>}
-              {metric && <th>Recorded on</th>}
+              {focus ? (
+                <>
+                  <th>Current focus</th>
+                  <th>Status</th>
+                </>
+              ) : shownMetric ? (
+                <>
+                  {/* The chosen metric, and ITS date — never one "last measurable" for everything (F12). */}
+                  <th>{shownMetric.name}</th>
+                  <th>{isSkill ? 'Observed on' : 'Recorded on'}</th>
+                </>
+              ) : null}
               {/* ⚠ "In a plan" — never "worked on", "covered" or "did". A recap existing in the
                   section below does not license this column to claim the plan happened. */}
               {showCoverage && <th>In a plan</th>}
-              {/* Measures cross-season identity continuity, not attention — the old
-                  "History linked" label undercut this report's own headline (WI-5). */}
-              <th>Returning player</th>
-              {metric && <th aria-label="Progress" />}
+              {shownMetric && <th aria-label="Progress" />}
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => {
               const name = playerName(r);
-              const working = r.goals.filter(g => g.status === 'working').length;
+              const working = workingByRow?.[i] ?? [];
               const cell = cells?.[i] ?? null;
+              const on = cell?.on ? formatShortDate(cell.on) : null;
+              // The phone's one line: "8.28 seconds · 15 Sept · ✓" · "Not assessed · 10 Jun · ✓" · "— · ✓".
+              const phoneLine = [
+                focus ? (working.length > 0 ? working.join(' · ') : COVERAGE_DASH) : cell ? (on ? `${cell.text} · ${on}` : cell.text) : null,
+                showCoverage && r.inPlan ? '✓' : null,
+              ].filter(Boolean).join(' · ');
               return (
                 <tr key={r.playerId}>
-                  <td>
-                    {/* The record, opened on Development's Goals view, carrying the way back (F09). */}
-                    <Link href={playerDevelopmentHref(base, r.playerId, { view: 'goals', returnTo: here })} style={{ color: 'inherit', textDecoration: 'none' }}>
+                  <td className={`${styles.cardStackCell} ${styles.devReportRowCell}`}>
+                    <Link href={recordHref(r)} className={styles.devCellLink}>
                       {r.number ? <span className={styles.devRowNum}>#{r.number} </span> : null}{name}
                     </Link>
+                    {phoneLine && <span className={styles.devReportPhoneLine}>{phoneLine}</span>}
                   </td>
-                  {showGoals && (
-                    <td data-label="Active focus" className={styles.devBoardVal}>
-                      {working > 0 ? working : <span className={styles.devBoardMuted}>none yet</span>}
-                    </td>
-                  )}
-                  {metric && cell && (
-                    <td data-label="Selected metric" className={styles.devBoardVal} style={{ whiteSpace: 'normal' }}>
-                      {cell.state === 'recorded' ? cell.text : <span className={styles.devBoardMuted}>{cell.text}</span>}
-                    </td>
-                  )}
-                  {metric && cell && (
-                    <td data-label="Recorded on" className={styles.devBoardVal}>
-                      {cell.on ? formatShortDate(cell.on) : <span className={styles.devBoardMuted}>—</span>}
-                    </td>
-                  )}
+                  {focus ? (
+                    <>
+                      <td data-label="Current focus" className={styles.devReportDesktopCell}>
+                        {working.length > 0
+                          ? working.join(' · ')
+                          : r.goals.length > 0 ? <Muted>{r.goals.length} achieved/parked</Muted> : <Muted>{COVERAGE_DASH}</Muted>}
+                      </td>
+                      <td data-label="Status" className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`}>
+                        {working.length > 0 ? `${working.length} active focus area${working.length === 1 ? '' : 's'}` : <Muted>{COVERAGE_DASH}</Muted>}
+                      </td>
+                    </>
+                  ) : shownMetric && cell ? (
+                    <>
+                      <td data-label={shownMetric.name} className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`} style={{ whiteSpace: 'normal' }}>
+                        {cell.state === 'recorded' ? cell.text : <Muted>{cell.text}</Muted>}
+                      </td>
+                      <td data-label={isSkill ? 'Observed on' : 'Recorded on'} className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`}>
+                        {on ?? <Muted>{COVERAGE_DASH}</Muted>}
+                      </td>
+                    </>
+                  ) : null}
                   {showCoverage && (
-                    <td data-label="In a plan" className={styles.devBoardVal}>
+                    <td data-label="In a plan" className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`}>
                       {/* ⚠ A FLAG OR A QUIET TICK — never a number. There is no count of plans
                           here, no percentage, no streak, and no team average on the row,
                           because any of those could be read against another child's row. */}
@@ -495,16 +614,17 @@ function CoverageReport({ data, metric, base, here, tag }: {
                         : <span className={styles.reportFlag}>— not in a plan yet</span>}
                     </td>
                   )}
-                  <td data-label="Returning player" className={styles.devBoardVal}>
-                    {r.historyLinked ? `${r.historyLinked} ✓` : <span className={styles.devBoardMuted}>—</span>}
-                  </td>
-                  {metric && (
-                    <td data-label="Progress" className={styles.devBoardVal}>
-                      {/* The same player in the progress report, the metric kept. */}
-                      <Link href={insightsDevelopmentHref(base, { tag, report: 'progress', playerId: r.playerId, metricId: metric.id })}
-                        className={styles.devReportRowLink} aria-label={`Open ${name}’s progress`}>
-                        Progress →
-                      </Link>
+                  {shownMetric && (
+                    <td className={`${styles.devBoardVal} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
+                      {/* The same player in the progress report, the metric kept — the words on a desktop,
+                          the card's corner chevron on a phone; one link, one door. */}
+                      <span className={styles.listRowActions}>
+                        <Link href={insightsDevelopmentHref(base, { tag, report: 'progress', playerId: r.playerId, metricId: shownMetric.id })}
+                          className={`${styles.devReportRowLink} ${styles.devReportDoor}`} aria-label={`Open ${name}’s progress`}>
+                          <span className={styles.devReportDesktopCell}>Progress →</span>
+                          <ChevronRight size={16} className={`${styles.listRowChevron} ${styles.devReportPhoneOnly}`} aria-hidden />
+                        </Link>
+                      </span>
                     </td>
                   )}
                 </tr>
@@ -513,6 +633,23 @@ function CoverageReport({ data, metric, base, here, tag }: {
           </tbody>
         </table>
       </div>
+      {/* The legend — once, under the table; on a phone the tick joins it. A results-only reader on a
+          team with no metric yet has no figure column, so there is no dash to explain — only the tick. */}
+      {(focus || shownMetric || showCoverage) && (
+        <p className={styles.formHint} style={{ marginTop: '0.5rem' }}>
+          {(focus || shownMetric) && coverageLegend(focus ? 'focus' : shownMetric!)}
+          {showCoverage && <span className={styles.devReportPhoneOnly}>{(focus || shownMetric) && ' · '}{COVERAGE_IN_PLAN_LEGEND}</span>}
+        </p>
+      )}
+      {/* The door to the room, for the coaches who hold the key: a session is where the roster gets
+          recorded, and a door a coach cannot open is not offered (the closed-season rule, one door at
+          a time). `.insightsOpsLink` — the quiet "go do something about this" link at the foot of a
+          report, on the 44px floor. */}
+      {canWrite && (
+        <Link href={`${base}/development`} className={styles.insightsOpsLink}>
+          Record in Skills &amp; Goals →
+        </Link>
+      )}
 
       {/* ── Section 2 · Focus areas that haven't appeared in a plan ──
           ⚠ TAGS, never focus areas and never players. A focus area is the coach's own specific
@@ -626,7 +763,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
             primaryAction={{ href: openHref, label: `Open ${first}’s development →`, variant: 'ghost' }} />
         ) : (
           <>
-            <p className={styles.reportSectionSub}>What the coach saw, in a stated setting — dated entries, newest first.</p>
+            <p className={styles.reportSectionSub}>What the coach saw, in a stated setting — newest first.</p>
             <ol className={styles.devReportTimeline}>
               {observations.map(o => {
                 const goal = o.goalId ? goalById.get(o.goalId) : null;
@@ -649,34 +786,16 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
                 );
               })}
             </ol>
-            <p className={styles.formHint} style={{ marginTop: '0.6rem' }}>
-              These observations describe what the coach saw in the setting they name. They do not establish game performance or an overall rating. Visible to coaches with Internal notes.
-            </p>
-            {/* A goal the observations are evidence for: its review history, the same events the profile shows. */}
-            {goalsWithEvidence.map(g => {
-              const events = goalTimeline(g, dev.reviews, dev.observations);
-              return (
-                <div key={g.id}>
-                  <p className={styles.reportSectionTitle}>How the goal &ldquo;{g.focusArea}&rdquo; has developed</p>
-                  <ol className={styles.devReportTimeline}>
-                    {events.map((ev, i) => (
-                      <li key={`${ev.kind}-${ev.reviewId ?? ev.observationId ?? i}`}>
-                        <time dateTime={ev.on}>{formatShortDate(ev.on)}{ev.by && author(ev.by) ? ` · ${author(ev.by)}` : ''}</time>
-                        <p><strong>{ev.title}</strong></p>
-                        {ev.text && <p>{ev.text}</p>}
-                        {ev.nextReviewOn && <p className={styles.devCardNote}>Next review: {formatShortDate(ev.nextReviewOn)}</p>}
-                        {/* Opens the record on this goal — and, for an observation, its sheet (E2). */}
-                        {(ev.reviewId || ev.observationId) && (
-                          <Link href={playerDevelopmentHref(base, player.playerId, { view: 'goals', goalId: g.id, observationId: ev.observationId ?? null, returnTo: here })} className={styles.devReportRowLink}>
-                            Open →
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              );
-            })}
+            {/* The observation is listed ONCE (G3): a goal it is evidence for is a DOOR to the record,
+                where stage 3 put the goal's history — in the open goal row, carrying the way back. */}
+            {goalsWithEvidence.map(g => (
+              <p key={g.id} className={styles.formHint} style={{ marginTop: '0.6rem' }}>
+                <Link href={playerDevelopmentHref(base, player.playerId, { view: 'goals', goalId: g.id, returnTo: here })} className={styles.devReportRowLink}>
+                  How &ldquo;{g.focusArea}&rdquo; has developed ›
+                </Link>
+                <span className={styles.devBoardMuted}> on {first}’s record</span>
+              </p>
+            ))}
           </>
         )}
         <Link href={openHref} className={styles.insightsOpsLink}>Open {first}’s development →</Link>
@@ -700,15 +819,33 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
   }
   const isRange = series.band != null;
   const unitHead = `Attempts · ${series.unit}`;
+  const headWord = isRange ? 'In range' : headlineLead(def) === 'average' ? 'Headline' : headlineLead(def) === 'last' ? 'Last' : 'Best';
   const newestFirst = [...series.points].reverse();
-  /** One row of "Records behind the chart". */
+  /** The phone's attempts line under a card's title — "8.31* · 8.24 · average 8.275" (the grid's correction mark); nothing for one clean attempt. */
+  const phoneAttempts = (row: ProgressPoint<RepPlayerMeasurable>['row']) => {
+    if (row.values.length < 2 && !row.attempts.some(a => a.correctedFrom != null)) return null;
+    const marks = row.attempts.map(a => `${formatValue(a.value)}${a.correctedFrom != null ? '*' : ''}`).join(' · ');
+    return row.values.length > 1 && row.average != null && !isRange ? `${marks} · average ${formatValue(row.average)}` : marks;
+  };
+  /** The source is the DOOR (C7 — no "entered by" on a row; the session and the sheet say who): the
+   *  session, or the result's own sheet on the player's Results row; the words alone for a reader. */
+  const source = (row: ProgressPoint<RepPlayerMeasurable>['row']) => row.sessionId
+    ? (dev.canWrite ? <Link href={`${base}/development/sessions/${row.sessionId}`} className={styles.devReportRowLink}>Session ›</Link> : 'In a session')
+    : (dev.canWrite
+      ? <Link href={playerDevelopmentHref(base, player.playerId, { view: 'results', metricId: metric.id, returnTo: here })} className={styles.devReportRowLink}>Outside a session ›</Link>
+      : 'Outside a session');
+  /** One row of "Records behind the chart" — and, on a phone, one card: date and headline, the attempts, the door. */
   const recordRow = (row: ProgressPoint<RepPlayerMeasurable>['row']) => {
     const corrected = row.attempts.filter(a => a.correctedFrom != null);
-    const by = author(row.attempts[0]?.createdBy ?? null);
+    const attempts = phoneAttempts(row);
     return (
       <tr key={row.key}>
-        <td data-label="Date" className={styles.devBoardVal}>{formatShortDate(row.recordedOn)}</td>
-        <td data-label={unitHead} className={styles.devBoardVal} style={{ whiteSpace: 'normal' }}>
+        <td className={`${styles.devBoardVal} ${styles.cardStackCell}`}>
+          <span className={styles.devReportDesktopCell}>{formatShortDate(row.recordedOn)}</span>
+          <span className={styles.devReportPhoneLine}><b>{formatShortDate(row.recordedOn)} · {isRange ? `${row.headline ?? 0} of ${row.values.length} in range` : headlineLabel(row, def)}</b></span>
+          {attempts && <span className={styles.devReportPhoneLine}>{attempts}</span>}
+        </td>
+        <td data-label={unitHead} className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`} style={{ whiteSpace: 'normal' }}>
           {/* Every attempt the row holds — the plan it was run against is the session's own fact
               (re-evaluation stage 2, C1) and is reported there ("fewer than planned"), not here. */}
           {row.values.map(formatValue).join(' · ')}
@@ -716,18 +853,13 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
             <span className={styles.devCardNote}>corrected — was {corrected.map(a => formatValue(a.correctedFrom!)).join(' · ')}</span>
           )}
         </td>
-        <td data-label={isRange ? 'In range' : 'Headline'} className={styles.devBoardVal}>
+        <td data-label={headWord} className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`}>
           {isRange ? `${row.headline ?? 0} of ${row.values.length}` : headlineLabel(row, def)}
         </td>
-        <td data-label="Average" className={styles.devBoardVal}>
-          {row.average != null && row.values.length > 1 ? formatValue(row.average) : <span className={styles.devBoardMuted}>—</span>}
+        <td data-label="Average" className={`${styles.devBoardVal} ${styles.devReportDesktopCell}`}>
+          {row.average != null && row.values.length > 1 ? formatValue(row.average) : <Muted>—</Muted>}
         </td>
-        <td data-label="Source" className={styles.devBoardVal}>
-          {row.sessionId
-            ? (dev.canWrite ? <Link href={`${base}/development/sessions/${row.sessionId}`} className={styles.devReportRowLink}>Session →</Link> : 'In a session')
-            : 'Outside a session'}
-          {by ? <span className={styles.devCardNote}>entered by {by}</span> : null}
-        </td>
+        <td className={styles.devBoardVal}>{source(row)}</td>
       </tr>
     );
   };
@@ -748,14 +880,14 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
       <DevelopmentProgressChart series={series} playerName={first} />
 
       <p className={styles.reportSectionTitle}>Records behind the chart</p>
-      <p className={styles.reportSectionSub}>Current season only · every attempt, exactly as recorded · newest first</p>
-      <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+      <p className={styles.reportSectionSub}>Every attempt, as recorded · newest first</p>
+      <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
         <table className={styles.devBoardTable}>
           <thead>
             <tr>
               <th>Date</th>
               <th>{unitHead}</th>
-              <th>{isRange ? 'In range' : series.lineWord === 'average of attempts' ? 'Headline' : series.lineWord === 'last attempt' ? 'Last' : 'Best'}</th>
+              <th>{headWord}</th>
               <th>Average</th>
               <th>Source</th>
             </tr>
@@ -862,8 +994,9 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
               </div>
               {/* ⚠ Silence is STATED, never rendered blank: a practice with nothing written
                   must not read as a practice where nothing happened — and a plan alone does not
-                  establish that it did (F03). */}
-              <p>{p.recap ?? (p.truth === 'upcoming' ? 'Nothing written yet — the practice is still to come.' : 'A plan was saved. Nothing was written afterwards.')}</p>
+                  establish that it did (F03). An upcoming plan says ONE thing (G2 housekeeping) —
+                  its truth label's own line would have said it a second time. */}
+              <p>{p.recap ?? (p.truth === 'upcoming' ? 'The practice is still to come.' : 'A plan was saved. Nothing was written afterwards.')}</p>
               {PRACTICE_TRUTH_LABELS[p.truth].meta && (
                 <p className={styles.devCardNote}>{PRACTICE_TRUTH_LABELS[p.truth].meta}</p>
               )}

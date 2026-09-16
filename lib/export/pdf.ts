@@ -1612,58 +1612,264 @@ export interface DevelopmentSummaryOptions {
 }
 
 /**
- * Save the development handout — the title is the player identity, the subtitle who prepared it
- * and when; each chosen section is its own group (own columns), the next step is a key/value
- * block, the log is the last group. Built on the shared `downloadPDF`/`buildTablePDF` report
- * engine via its multi-header `groups` mode, so org header/footer/branding and pagination stay
- * in ONE place. Current season only, no deltas.
+ * Save the development handout — a DRAWN document (the practice run sheet's idiom, not the
+ * `downloadPDF`/`buildTablePDF` multi-header `groups` engine this used until 2026-09-16), because
+ * this paper is read as a short conversation, not a report: a coach's own goal/success prose, one
+ * observation sentence, a light three-column result list and a quoted next step, laid out exactly
+ * as `DevelopmentHandoutPreview.tsx`'s on-screen paper draws them — ONE model prints both (chart
+ * rule 8's spirit). The `groups` engine's per-section filled header row read as a generic report
+ * (dark bands unrelated to the coach portal's own warm paper) for a document that is supposed to
+ * read as a personal note. Current season only, no deltas — unchanged from the table-engine build.
  */
 export async function downloadDevelopmentSummary(filename: string, opts: DevelopmentSummaryOptions): Promise<void> {
-  const groups: { label: string; headers: string[]; rows: (string | null)[][] }[] = [];
+  const { default: jsPDF } = await import('jspdf');
+  const settings = opts.settings;
+  const accentRgb = hexToRgb(settings.accentColor);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - MARGIN * 2;
+  const maxY = pageHeight - 18;
+
+  // The same warm paper the on-screen preview draws with (`DevelopmentHandoutPreview.module.css`'s
+  // `--paper-ink` / `--paper-muted` / `--paper-line`, token-exempt there for the same reason this
+  // is hardcoded here: this page previews PAPER, not the app's own light/dark theme).
+  const INK: [number, number, number] = [31, 31, 36];
+  const MUTED: [number, number, number] = [90, 86, 81];
+  const HAIRLINE: [number, number, number] = [217, 214, 207];
+  const LINE_H = 4.5;
+
+  const line1 = settings.headerLine1 || opts.teamName;
+  const nameLine = [line1, opts.seasonLabel].filter(Boolean).join(' · ');
+
+  let y = 0;
+
+  function accentBar(): void {
+    doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.rect(0, 0, pageWidth, 8, 'F');
+  }
+
+  /** The compact continuation band — a drawn document pages itself (the practice sheet's idiom). */
+  function continuationHeader(): void {
+    accentBar();
+    const cy = MARGIN + 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...INK);
+    doc.text(nameLine, MARGIN, cy);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(`Player development — ${opts.playerName} (continued)`, pageWidth - MARGIN, cy, { align: 'right' });
+    doc.setDrawColor(...HAIRLINE);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, cy + 3, pageWidth - MARGIN, cy + 3);
+  }
+  const continuationTop = MARGIN + 4 + 3 + 6;
+
+  function newPage(): void {
+    doc.addPage();
+    continuationHeader();
+    y = continuationTop;
+  }
+  function ensureRoom(needed: number): void {
+    if (y + needed > maxY) newPage();
+  }
+
+  /** A section's small-caps label — `.section h3`'s look (muted, uppercase). No rule: the on-screen
+   *  paper separates sections by space alone, only the letterhead above draws a line. */
+  function sectionLabel(text: string): void {
+    ensureRoom(10 + LINE_H); // the label plus room for at least its first line, so it is never orphaned alone at a page's foot
+    y += y > continuationTop + 0.5 ? 5 : 1;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text(text.toUpperCase(), MARGIN, y);
+    y += 5;
+  }
+
+  /** One wrapped paragraph, line by line so a long one breaks between whole lines and never runs off the page. */
+  function paragraph(text: string, p: { bold?: boolean; italic?: boolean; size?: number; color?: [number, number, number]; x?: number; width?: number } = {}): void {
+    const { bold = false, italic = false, size = 9, color = INK, x = MARGIN, width = contentWidth - (x - MARGIN) } = p;
+    doc.setFont('helvetica', italic ? 'italic' : bold ? 'bold' : 'normal');
+    doc.setFontSize(size);
+    const lines: string[] = doc.splitTextToSize(text, width);
+    for (const line of lines) {
+      ensureRoom(LINE_H);
+      doc.setFont('helvetica', italic ? 'italic' : bold ? 'bold' : 'normal');
+      doc.setFontSize(size);
+      doc.setTextColor(...color);
+      doc.text(line, x, y);
+      y += LINE_H;
+    }
+  }
+
+  // ── Letterhead, eyebrow, the player's own name as the real headline ──
+  accentBar();
+  y = drawIdentityBand(doc, settings, nameLine, MARGIN) + 7;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text('PLAYER DEVELOPMENT', MARGIN, y);
+  y += 6;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...INK);
+  doc.text(opts.playerName, MARGIN, y);
+  if (opts.playerNumber) {
+    const nameW = doc.getTextWidth(opts.playerName);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(...MUTED);
+    doc.text(` ${opts.playerNumber}`, MARGIN + nameW, y);
+  }
+  y += 6;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text(opts.preparedLine, MARGIN, y);
+  y += 3;
+
+  // ── What we're working on: bold focus line, the success sentence beneath it — prose, no table ──
   if (opts.goals.length > 0) {
-    groups.push({
-      label: 'What we’re working on', headers: ['Focus', 'What success looks like'],
-      rows: opts.goals.map(g => [g.focusArea, g.success]),
-    });
+    sectionLabel('What we’re working on');
+    for (const g of opts.goals) {
+      paragraph(g.focusArea, { bold: true });
+      if (g.success) paragraph(g.success);
+      y += 1.5;
+    }
   }
+
+  // ── A recent observation: one sentence per observation, date folded in ──
   if (opts.observations.length > 0) {
-    groups.push({
-      label: opts.observations.length === 1 ? 'A recent observation' : 'Recent observations',
-      headers: ['Date', 'What was seen'],
-      rows: opts.observations.map(o => [o.date, o.text]),
-    });
+    sectionLabel(opts.observations.length === 1 ? 'A recent observation' : 'Recent observations');
+    for (const o of opts.observations) {
+      paragraph(`${o.date} · ${o.text}`);
+      y += 1.5;
+    }
   }
+
+  // ── Selected test results: a light three-column list, a hairline under each row — no filled
+  //    header band. "How it was read" prints as a footnote under the list, per test, not a fourth
+  //    squeezed column (the on-screen paper's own layout). ──
   if (opts.results.length > 0) {
-    // Parent-facing labels (D6 /marketing pass): the printed handout uses "Test results"
-    // and "Result" — plainer than the in-app coach term "Measurables"/"Reading".
-    groups.push({
-      label: opts.results.length === 1 ? 'Selected test result' : 'Selected test results',
-      headers: ['Test', 'Result', 'Date', 'How it was read'],
-      rows: opts.results.map(r => [r.test, r.result, r.date, r.note]),
-    });
+    sectionLabel(opts.results.length === 1 ? 'Selected test result' : 'Selected test results');
+    const dateColW = 24;
+    const resultColW = 42;
+    const testColW = contentWidth - dateColW - resultColW;
+    const testX = MARGIN, resultX = MARGIN + testColW, dateX = resultX + resultColW;
+
+    function tableHeadRow(): void {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...MUTED);
+      doc.text('Test', testX, y);
+      doc.text('Result', resultX, y);
+      doc.text('Date', dateX, y);
+      y += 2;
+      doc.setDrawColor(...HAIRLINE);
+      doc.setLineWidth(0.3);
+      doc.line(MARGIN, y, MARGIN + contentWidth, y);
+      y += 4;
+    }
+    /** A row is atomic; a table that spills onto a new page redraws its column heads there, so a
+     *  continuation page never reads as an unlabelled column of numbers. */
+    function ensureRow(rowH: number): void {
+      if (y + rowH > maxY) { newPage(); tableHeadRow(); }
+    }
+    tableHeadRow();
+    for (const r of opts.results) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const testLines: string[] = doc.splitTextToSize(r.test, testColW - 3);
+      const resultLines: string[] = doc.splitTextToSize(r.result, resultColW - 3);
+      const rowLines = Math.max(testLines.length, resultLines.length, 1);
+      const rowH = rowLines * LINE_H;
+      ensureRow(rowH + 2);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...INK);
+      doc.text(testLines, testX, y);
+      doc.text(resultLines, resultX, y);
+      doc.text(r.date, dateX, y);
+      y += rowH;
+      doc.setDrawColor(...HAIRLINE);
+      doc.setLineWidth(0.2);
+      doc.line(MARGIN, y, MARGIN + contentWidth, y);
+      y += 3;
+    }
+    y += 1;
+    for (const r of opts.results) {
+      if (!r.note) continue;
+      paragraph(opts.results.length > 1 ? `${r.test}: ${r.note}` : r.note, { size: 8, color: MUTED });
+      y += 0.8;
+    }
   }
+
+  // ── Next step: the coach's own words as a quoted, indented line; the review date plain beneath it ──
   if (opts.nextStep || opts.nextReviewOn) {
-    // A group whose headers are all blank is a key/value block, not a table (the practice sheet's idiom).
-    const rows: (string | null)[][] = [];
-    if (opts.nextStep) rows.push([opts.nextStep]);
-    if (opts.nextReviewOn) rows.push([`We’ll look at this together again on ${opts.nextReviewOn}.`]);
-    groups.push({ label: 'Next step', headers: [''], rows });
+    sectionLabel('Next step');
+    if (opts.nextStep) {
+      const quoteX = MARGIN + 3.5;
+      const quoteW = contentWidth - 3.5;
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      const lines: string[] = doc.splitTextToSize(opts.nextStep, quoteW);
+      ensureRoom(lines.length * LINE_H + 2); // atomic: a 600-character quote still fits well under one page
+      const barTop = y - 3;
+      for (const line of lines) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.setTextColor(...INK);
+        doc.text(line, quoteX, y);
+        y += LINE_H;
+      }
+      doc.setDrawColor(...HAIRLINE);
+      doc.setLineWidth(1);
+      doc.line(MARGIN + 1.5, barTop, MARGIN + 1.5, y - LINE_H + 3);
+      y += 1.5;
+    }
+    if (opts.nextReviewOn) paragraph(`We’ll look at this together again on ${opts.nextReviewOn}.`);
   }
+
+  // ── Full dated result log — the appendix, oldest → newest per test ──
   if (opts.log && opts.log.length > 0) {
-    groups.push({
-      label: `Full dated result log${opts.seasonLabel ? ` · ${opts.seasonLabel}` : ''}`,
-      headers: ['Test', 'Result'],
-      rows: opts.log.flatMap(t => t.lines.map(line => [t.test, line])),
-    });
+    sectionLabel(`Full dated result log${opts.seasonLabel ? ` · ${opts.seasonLabel}` : ''}`);
+    for (const t of opts.log) {
+      ensureRoom(LINE_H + 2);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...INK);
+      doc.text(t.test, MARGIN, y);
+      y += LINE_H;
+      for (const line of t.lines) paragraph(line, { size: 8 });
+      y += 1.5;
+    }
   }
-  const title = `Player development — ${opts.playerName}${opts.playerNumber ? `  ${opts.playerNumber}` : ''}`;
-  // D1: the header carries the team's name; the subtitle says who prepared it, when, and the season.
-  const subtitle = [opts.preparedLine, opts.seasonLabel].filter(Boolean).join(' · ');
-  await downloadPDF(filename, title, subtitle, [], [], opts.settings, {
-    groups,
-    identity: opts.teamName,
-    notes: [{ text: 'For this player’s development conversation · A record of this season’s coaching' }],
-  });
+
+  if (opts.goals.length === 0 && opts.observations.length === 0 && opts.results.length === 0
+    && !opts.nextStep && !opts.nextReviewOn && !(opts.log && opts.log.length > 0)) {
+    y += 3;
+    paragraph('Nothing was recorded for this conversation.', { italic: true, color: MUTED });
+  }
+
+  // The purpose line the on-screen paper's own foot carries (`.paperFoot`) — printed on the page,
+  // unlike the org footer band below it (page numbers and branding, PDF-only, on every document).
+  y += 2;
+  ensureRoom(LINE_H + 4);
+  doc.setDrawColor(...HAIRLINE);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, MARGIN + contentWidth, y);
+  y += 4;
+  paragraph('For this player’s development conversation · A record of this season’s coaching', { size: 8, color: MUTED });
+
+  // Footer on every page, with TRUE page numbers — the shared post-pass (D3).
+  stampFooters(doc, settings);
+  doc.save(filename);
 }
 
 // ════════════════════════════════════════════════════════════════════════════

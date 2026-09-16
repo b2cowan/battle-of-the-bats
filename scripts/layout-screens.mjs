@@ -65,6 +65,19 @@ async function openFirstBlock(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Open the Progress summary control's SHEET on a phone (development re-evaluation stage 4, G4,
+ * 2026-09-16): below 640 the four selectors are one control ("… · Change ›") that opens the four
+ * fields in a sheet with Done. The control is not rendered at wider widths, so the gesture is a
+ * no-op there and the entry measures the desktop row of fields instead.
+ */
+async function openProgressSheet(page) {
+  const control = page.getByRole('button', { name: /Change ›$/ }).first();
+  if (await control.count() === 0 || !(await control.isVisible())) return;
+  await control.click();
+  await page.getByRole('dialog', { name: 'Change what Player progress shows' }).waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
 
 /**
  * Open the probe practice's CIRCUIT and then its first STATION (stage 3, 2026-09-15): the block
@@ -194,7 +207,8 @@ export const SCREENS = [
   { id: 'coach-development-drills',    session: 'coach', path: (c) => `${team(c)}/practice?section=drills`,    ready: 'h1' },
   // Phase 1 (2026-09-12): three views on one screen. The board's page redirects into Players;
   // the id is kept so the baseline's keys carry over. Metrics and its editor are new screens.
-  { id: 'coach-development-board',     session: 'coach', path: (c) => `${team(c)}/development?section=players`, ready: 'h1' },
+  // ⚰ `coach-development-board` (the hub's Players tab) went with the tab — re-evaluation stage 4,
+  //    G1, 2026-09-16: the roster table's one home is Insights → Coverage (`coach-history-development`).
   { id: 'coach-development-metrics',   session: 'coach', path: (c) => `${team(c)}/development?section=metrics`, ready: 'h1' },
   // A metric's definition is a SHEET over the Metrics tab (re-evaluation stage 1, 2026-09-14) — the
   // two ids keep their names and measure the hub with the sheet open (`?edit=`); `ready` waits
@@ -565,6 +579,16 @@ export const SCREENS = [
     path: (c) => `${team(c)}/history?section=development&report=progress&player=${c.receiptPlayerId}&metric=${c.rangeTypeId}` },
   { id: 'coach-history-development-progress-skill', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/history?section=development&report=progress&player=${c.receiptPlayerId}&metric=${c.skillTypeId}` },
+  /* Re-evaluation stage 4 (G1 · G4, 2026-09-16): Coverage on its first Show choice — the goals as
+     words — and, on a phone, the sheet the Progress summary control opens (the four selectors in
+     a column). The sheet is a product gesture, not an address: below 640 the runner presses the
+     summary control; at wider widths the control is not on the screen and the gesture is a no-op,
+     so the entry measures the desktop row there. */
+  { id: 'coach-history-development-focus', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&metric=focus` },
+  { id: 'coach-history-development-progress-sheet', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&report=progress&player=${c.receiptPlayerId}&metric=${c.measurableTypeId}`,
+    interact: openProgressSheet },
   { id: 'coach-history-development-practices', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/history?section=development&report=practices` },
   { id: 'coach-history-results',     session: 'coach', path: (c) => `${team(c)}/history?section=results`,     ready: 'h1' },

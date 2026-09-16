@@ -11,10 +11,10 @@ import { useCoaches } from '@/lib/coaches-context';
 import { assignmentSeasonName } from '@/lib/coach-season-label';
 import { playerDevelopmentHref, returnLabel, safeReturnPath } from '@/lib/development-address';
 import { groupBySession, headlineLabel, type SessionResult } from '@/lib/measurable-series';
-import { logLine, handoutResultNote, observationText } from '@/lib/development-report';
+import { logLine, handoutResultNote, handoutNextReview, observationText } from '@/lib/development-report';
 import { playerName as rosterName } from '@/lib/coach-roster-name';
 import { GOAL_STATUS_LABELS } from '@/lib/development-goal-history';
-import { formatShortDate } from '@/lib/measurable-format';
+import { formatShortDate, todayLocal } from '@/lib/measurable-format';
 import {
   buildFilename, DEFAULT_PDF_SETTINGS, downloadDevelopmentSummary, fetchResolvedPdfSettings,
   type OrgPdfSettings, type DevelopmentSummaryOptions,
@@ -40,9 +40,19 @@ import css from './DevelopmentHandoutPreview.module.css';
  * goal and observation lines are gated exactly as the screen is — a coach without Internal notes
  * sees results only, and the handout says nothing about goals.
  *
- * ⚠ NOTHING IS STORED (build call, recommended): the handout is a print of the record as of today,
- * prepared fresh each time. A next step worth keeping is a goal REVIEW — Phase 2's record — and the
- * link beneath the box takes the coach there; this screen never grows a second store.
+ * ⚠ NOTHING IS STORED (build call, recommended; Q 8.1 held on the re-evaluation, stage 4): the
+ * handout is a print of the record as of today, prepared fresh each time — the defaults are the
+ * goals being worked on, the latest observation, each active test's latest result, never last
+ * time's choices (remembering them is a stored version). A next step worth keeping is a goal REVIEW
+ * — Phase 2's record — and the link beneath the box takes the coach there; this screen never grows
+ * a second store.
+ *
+ * ⚠ NEVER A PAST DATE AS A PROMISE (owner ruling G5, 2026-09-16): "We'll look at this together
+ * again on …" prints only while the chosen goal's review date is still ahead (`handoutNextReview`),
+ * and the Next step section exists only with something to say — the paper and the PDF read the ONE
+ * model below, so they print the same. The chooser says where the observation goes ("the family
+ * reads it" — E8's push), says "nothing is stored or sent" once, and keeps the boundary line to the
+ * boundary.
  */
 
 interface HandoutData {
@@ -172,7 +182,8 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
   // ONE goal carries both the printed "we'll look at this again on …" date and the "save this next
   // step as a review" door: the chosen goal with the earliest review date, else the first chosen.
   const goalForReview = [...chosenGoals].sort((a, b) => (a.reviewOn ?? '9999').localeCompare(b.reviewOn ?? '9999'))[0] ?? null;
-  const nextReviewOn = goalForReview?.reviewOn ?? null;
+  // The printing rule (G5): the date prints only while it is still ahead, by the coach's local day.
+  const nextReviewOn = handoutNextReview(goalForReview?.reviewOn, todayLocal());
   const anythingToChoose = (data.showGoals && (data.goals.length > 0 || observations.length > 0)) || (data.showMeasurables && tests.length > 0);
   const logChosen = includeLog && data.showMeasurables && tests.length > 0;
   const anythingChosen = chosenGoals.length > 0 || chosenObservations.length > 0 || chosenResults.length > 0 || nextStep.trim().length > 0 || logChosen;
@@ -240,9 +251,16 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
       ) : (
         <div className={css.layout}>
           {/* ── The choices ── */}
-          <section className={css.choose} aria-labelledby="handout-choose">
-            <h2 id="handout-choose" className={css.chooseTitle}>Choose what belongs in this conversation</h2>
-            <p className={css.chooseSub}>Current season · one player. Nothing here is stored or sent — the handout is a print of the record as of today.</p>
+          <section className={css.choose} aria-labelledby="handout-choose" id="handout-choices">
+            {/* On a phone the paper sits below every choice (≤900, the layout's own breakpoint) — a
+                coach ticking blind had no sign there was a paper changing underneath. The jump link
+                says so; the paper's foot links back. Nothing else changes: choices first is right,
+                because a phone is where you tick, not where you print. */}
+            <div className={css.chooseHead}>
+              <h2 id="handout-choose" className={css.chooseTitle}>Choose what belongs in this conversation</h2>
+              <a href="#handout-paper" className={css.jumpLink}>See the paper ↓</a>
+            </div>
+            <p className={css.chooseSub}>Current season · one player · nothing is stored or sent — a print of the record as of today.</p>
 
             {data.showGoals && data.goals.length > 0 && (
               <fieldset className={css.group}>
@@ -262,6 +280,9 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
             {data.showGoals && observations.length > 0 && (
               <fieldset className={css.group}>
                 <legend>A recent observation</legend>
+                {/* Where the sentence goes (E8's push, G5): the sheet that wrote it said "on a handout
+                    only if you choose it" — this is the other half of that sentence. */}
+                <p className={shared.formHint} style={{ margin: '-0.1rem 0 0.35rem' }}>Printed as written — the family reads it.</p>
                 {observations.map(o => (
                   <label key={o.id} className={css.choice}>
                     <input type="checkbox" checked={chosenObservationIds.has(o.id)} onChange={e => setObservationIds(toggle(chosenObservationIds, o.id, e.target.checked))} />
@@ -292,7 +313,8 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
                       </label>
                       {chosen && rows.length > 1 && (
                         <label className={css.sessionPick}>
-                          <span>Which result</span>
+                          {/* The row above has just said which — the latest; the picker is for choosing another. */}
+                          <span>Use a different result</span>
                           <select className={`${shared.select} ${shared.devToolbarControl}`} value={chosen.key} onChange={e => pickResult(type.id, e.target.value)}>
                             {rows.map(r => <option key={r.key} value={r.key}>{formatShortDate(r.recordedOn)} · {headlineLabel(r, type)}</option>)}
                           </select>
@@ -330,13 +352,14 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
                 <Printer size={14} aria-hidden /> {printBusy ? 'Building PDF…' : 'Print / Save as PDF'}
               </button>
             </div>
+            {/* The boundary, and only the boundary — no product history, nothing said twice. */}
             <p className={css.boundary}>
-              Excludes tryout evaluations, other players’ figures and internal notes — the same boundary the previous PDF kept. No link is created and nothing is sent.
+              Not on the paper: tryout evaluations, other players’ figures, internal notes.
             </p>
           </section>
 
           {/* ── The paper, as it will print ── */}
-          <article className={css.paper} aria-label="The handout as it will print">
+          <article id="handout-paper" className={css.paper} aria-label="The handout as it will print">
             <div className={css.letterhead}>
               {/* The club's crest as the PDF prints it — a data URL the org's settings already resolved. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -401,6 +424,7 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
             )}
             {!anythingChosen && <p className={css.empty} style={{ marginTop: '1rem' }}>Nothing chosen yet — tick what belongs in this conversation.</p>}
             <footer className={css.paperFoot}>For this player’s development conversation · A record of this season’s coaching</footer>
+            <a href="#handout-choices" className={`${css.jumpLink} ${css.jumpBack}`}>↑ Back to the choices</a>
           </article>
         </div>
       )}

@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  progressSeries, statedChange, compareWindow, coverageCell, coverageDenominator, COVERAGE_DENOMINATOR_NOTE,
-  progressAxis, xFractions, showOptions, logLine, handoutResultNote, describeSeries, scopeLine,
+  progressSeries, statedChange, compareWindow, coverageCell, coverageDenominator, COVERAGE_DASH, COVERAGE_ORDER_NOTE,
+  progressAxis, xFractions, showOptions, logLine, handoutResultNote, handoutNextReview, describeSeries, scopeLine, developmentReports,
   type ReportDefinition, type ProgressPoint,
 } from '../../lib/development-report.ts';
-import type { SessionResult } from '../../lib/measurable-series.ts';
+import { averageOf, describeHeadline, headlineMethod, type SessionResult } from '../../lib/measurable-series.ts';
+import { formatValue } from '../../lib/measurable-format.ts';
 import { formatShortDate } from '../../lib/measurable-format.ts';
 
 /** Dates in expectations go through the ONE formatter the module uses — the assertions are about the words, not the locale. */
@@ -83,7 +84,8 @@ describe('progressSeries — one object behind the chart, the answer line and th
       reading(66, '2026-09-08', 'c2', 1, 'mph'), reading(70, '2026-09-08', 'c2', 2, 'mph'), reading(64, '2026-09-08', 'c2', 3, 'mph'),
     ];
     const s = progressSeries(rows, changeup, { show: 'headline', compare: 'season' });
-    assert.deepEqual(s.points.map(p => p.value), [63.667, 66.667]);
+    // The average to one decimal more than its whole-number attempts carry (stage 4, G3) — 63.7, not 63.667.
+    assert.deepEqual(s.points.map(p => p.value), [63.7, 66.7]);
     assert.deepEqual(s.points[1].marks.map(m => m.inRange), [true, false, true]);
     assert.deepEqual(s.points.map(p => p.label), ['0 of 3 in range', '2 of 3 in range']);
     assert.deepEqual(s.band, { from: 62, to: 68 });
@@ -179,14 +181,54 @@ describe('coverageCell — per metric, that metric\'s own date (F12)', () => {
     const both = coverageCell({ latest: { value: 8.31, unit: 'seconds', recordedOn: '2026-06-10', attempts: 1, inRange: null }, latestObservation: null, notAssessedOn: '2026-05-01' }, sprint);
     assert.equal(both.state, 'recorded');
   });
-  it('nothing recorded is stated as an absence of records, never a judgement', () => {
-    assert.deepEqual(coverageCell(none, sprint), { text: 'No result recorded for this test this season', on: null, state: 'none' });
-    assert.deepEqual(coverageCell(none, skill), { text: 'No observation recorded for this skill this season', on: null, state: 'none' });
+  it('nothing recorded is ONE dash — the legend under the table says what it means, once (stage 4, G1)', () => {
+    assert.deepEqual(coverageCell(none, sprint), { text: COVERAGE_DASH, on: null, state: 'none' });
+    assert.deepEqual(coverageCell(none, skill), { text: COVERAGE_DASH, on: null, state: 'none' });
+    assert.equal(COVERAGE_DASH, '—');
   });
-  it('the denominator sentence names the count, the metric and the season — and what it does not say', () => {
-    assert.equal(coverageDenominator(4, 6, sprint), '4 of 6 players have a 60-yd sprint result recorded this season.');
-    assert.equal(coverageDenominator(1, 1, skill), '1 of 1 player has a Sets feet before throwing observation recorded this season.');
-    assert.equal(COVERAGE_DENOMINATOR_NOTE, 'This describes the records that exist. It does not assess the attention a player received.');
+  it('the count line names the count, the metric and the season; the verb follows the count; the order note is its own words', () => {
+    assert.equal(coverageDenominator(4, 6, sprint), '4 of 6 players have a 60-yd sprint result this season');
+    assert.equal(coverageDenominator(1, 12, sprint), '1 of 12 players has a 60-yd sprint result this season');
+    assert.equal(coverageDenominator(1, 1, skill), '1 of 1 player has a Sets feet before throwing observation this season');
+    assert.equal(coverageDenominator(1, 12, 'focus'), '1 of 12 players has a goal being worked on');
+    assert.equal(coverageDenominator(0, 12, 'focus'), '0 of 12 players have a goal being worked on');
+    assert.equal(COVERAGE_ORDER_NOTE, 'roster order, not a ranking');
+  });
+});
+
+describe('developmentReports — Practice review only with the schedule grant (one rule for the selector and the rail count)', () => {
+  it('three with the grant, two without', () => {
+    assert.deepEqual(developmentReports(true), ['coverage', 'progress', 'practices']);
+    assert.deepEqual(developmentReports(false), ['coverage', 'progress']);
+  });
+});
+
+describe('the average prints to one decimal more than its attempts, never more than three (stage 4, G3)', () => {
+  it('whole-number attempts read to one decimal; hundredths to thousandths; the cap holds', () => {
+    assert.equal(averageOf([60, 70, 61]), 63.7);
+    assert.equal(formatValue(averageOf([60, 70, 61])!), '63.7');
+    assert.equal(averageOf([8.31, 8.24]), 8.275);
+    assert.equal(averageOf([8.12, 8.05, 8.2]), 8.123);
+    assert.equal(averageOf([1.2345, 1.2355]), 1.235, 'capped at three decimals');
+    assert.equal(averageOf([]), null);
+  });
+  it('every reader of the average says the same figure — the row, the read-back, the series, the description', () => {
+    const rows = [reading(60, '2026-08-25', 'c1', 1, 'mph'), reading(70, '2026-08-25', 'c1', 2, 'mph'), reading(61, '2026-08-25', 'c1', 3, 'mph')];
+    const s = progressSeries(rows, changeup, { show: 'headline', compare: 'season' });
+    assert.equal(s.points[0].row.average, 63.7);
+    assert.match(describeSeries(s, 'Devon').description, /average 63\.7\b/);
+    assert.equal(describeHeadline([60, 70, 61], sprint), 'Best of 3 attempts · 60 · 70 · 61 · average 63.7');
+    assert.equal(headlineMethod(s.points[0].row, sprint), 'best of 3 attempts · avg 63.7');
+  });
+});
+
+describe('handoutNextReview — a past date never prints as a promise (stage 4, G5)', () => {
+  it('prints a date that is today or later, and nothing for a date that has passed or no date', () => {
+    assert.equal(handoutNextReview('2026-06-24', '2026-09-15'), null);
+    assert.equal(handoutNextReview('2026-09-15', '2026-09-15'), '2026-09-15');
+    assert.equal(handoutNextReview('2026-09-29', '2026-09-15'), '2026-09-29');
+    assert.equal(handoutNextReview(null, '2026-09-15'), null);
+    assert.equal(handoutNextReview(undefined, '2026-09-15'), null);
   });
 });
 

@@ -8846,14 +8846,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    the difference instead, so nothing paints outside and nothing is clipped. */
 .devTableCard tbody tr:last-child td { padding-bottom: 0.7rem; }
 
-.devCardHeadRow {
-  display: flex;
-  flex-wrap: wrap; /* a toolbar control (the session search, the Players "Show") drops under the title at 361px rather than overflowing it */
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  margin-bottom: 0.6rem;
-}
+/* ⚰ `.devCardHeadRow` — its last two users left with the PlayerDevelopmentSection.tsx rewrite (development lifecycle re-evaluation, 2026-09-16). */
 /* A link inside a table cell or a mini row that meets the 44px tap floor without changing the row's
    rhythm: tap padding + a matching negative margin (the .lineupInsightsLink shape). Sessions,
    Players and Metrics rows (Phase 1) all wear it. */
@@ -14115,3 +14108,69 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .devSessionOpen { color: var(--badge-warning-ink, var(--warning)); font-weight: 600; }
 .devSessionDone { color: var(--badge-success-ink, var(--success)); }
 @media (max-width: 640px) { .devSessionRan, .devSessionState, .devSessionAt { white-space: normal; } }
+
+/* ── Re-evaluation stage 4 · Reports & handout (2026-09-16) — Insights → Development ─────────────
+   `.devReportOrderNote` — the quiet half of the count line ("· roster order, not a ranking"): the
+   binding coverage wording, said once, at the weight of a note rather than a heading.
+   `.devReportDesktopOnly` / `.devReportPhoneOnly` — the Progress selectors are a row of fields on a
+   desktop and ONE summary control on a phone (G4); `display: contents` keeps the fields in the
+   toolbar's flex flow, and the pair is inert everywhere else.
+   `.devReportSummary` — the phone's summary control: "Devon Test #4 · 60-yd sprint / Best attempt ·
+   This season · Change ›", one 44px tap, the stage-2 when-line's idiom (the session's Change ›).
+   `.devReportSheetFields` — the sheet's fields in a column, on the one form chrome (`QuestionShell`).
+   `.devReportPhoneLine` / `.devReportDesktopCell` — a card-reflowed row on a phone is ONE LINE: the
+   figure cells are hidden and the lead cell carries the line ("8.28 seconds · 15 Sept · ✓"; a
+   record's "10 Jun · 8.24 seconds" with its attempts under it). ⚠ The THIRD use of stage 3's
+   one-line phone card (`PlayerDevelopment.module.css` `.phoneLine` / `.desktopCell`) — shared here
+   by the Coverage rows and the records cards, and named for the close-out (S6) to fold both pairs
+   into the `.tableAsCards` family rather than a fourth copy.
+   `.devReportDoor` — the row's door to Progress: the words on a desktop, the card's corner chevron
+   on a phone, at the tap floor (the `.listRowToggle` shape). */
+.devReportOrderNote { font-weight: 400; color: var(--text-secondary); white-space: nowrap; }
+.devReportDesktopOnly { display: contents; }
+.devReportPhoneOnly { display: none; }
+.devReportSummary {
+  display: none;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--card-bg, var(--surface));
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: left;
+  cursor: pointer;
+}
+.devReportSummaryMain { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.devReportSummaryMain b { font-weight: 600; }
+.devReportSummaryMain small { font-size: var(--type-support); color: var(--text-secondary); }
+.devReportSummaryDoor { flex: none; font-size: var(--type-support); font-weight: 700; color: var(--logic-lime); white-space: nowrap; }
+.devReportSheetFields { display: flex; flex-direction: column; gap: 0.9rem; }
+.devReportPhoneLine { display: none; }
+.devReportDoor { display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 640px) {
+  .devReportDesktopOnly { display: none; }
+  .devReportPhoneOnly { display: inline; }
+  .devReportSummary { display: flex; }
+  .devReportDesktopCell { display: none !important; }
+  /* The line reads in the body face (its cell is a data cell, in mono, on a desktop) — the stage-3 card's face. */
+  .devReportPhoneLine { display: block; font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-support); color: var(--text-secondary); margin-top: 0.15rem; font-variant-numeric: tabular-nums; white-space: normal; }
+  .devReportPhoneLine b { color: var(--text-primary); font-weight: 600; }
+  .devReportDoor { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); padding: 0; }
+}
+/* `.devReportOneLine` / `.devReportRowCell` — the Coverage card on a phone is ONE LINE (G4): the
+   name at the left, the value · date · tick at the right, the chevron in the corner — twelve
+   players in about 640px where the six-line cards were 4,131px. The card's own padding steps
+   down to the tap floor's height; the lead cell turns from the recipe's column into a row. */
+@media (max-width: 640px) {
+  .devReportOneLine tr { padding: 0.15rem 0.85rem; margin-bottom: 0.4rem; }
+  .devReportOneLine td.devReportRowCell { flex-direction: row; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .devReportOneLine td.devReportRowCell .devReportPhoneLine { margin-top: 0; text-align: right; }
+  /* The corner chevron centres on the one line (the recipe pins it to a card's top edge). */
+  .devReportOneLine td.cardActionCorner { top: 50%; transform: translateY(-50%); }
+}

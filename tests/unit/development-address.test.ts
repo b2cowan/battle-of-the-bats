@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   parseDevelopmentAddress, safeReturnPath, playerDevelopmentHref, returnLabel,
   skillsAndGoalsHref, insightsDevelopmentHref, insightsTagFromAddress, parseSkillsAndGoalsSection, parseMetricEdit,
-  parseInsightsDevelopmentAddress, developmentHandoutHref, developmentAddressTab,
+  parseInsightsDevelopmentAddress, developmentHandoutHref, developmentAddressTab, COVERAGE_FOCUS,
 } from '../../lib/development-address.ts';
 import { UNTAGGED_FILTER } from '../../lib/rep-drills.ts';
 
@@ -57,7 +57,8 @@ describe('the profile address', () => {
     assert.equal(safeReturnPath(null, base), null);
   });
 
-  it('builds the link the Players tab and Insights use, and the label the way back wears', () => {
+  it('builds the link the reports use, and the label the way back wears', () => {
+    // An old Players-tab address is still a safe internal path — it lands on the hub's Overview (stage 4, G1).
     const from = `${base}/development?section=players&metric=M1`;
     assert.equal(
       playerDevelopmentHref(base, 'P1', { view: 'results', metricId: 'M1', returnTo: from }),
@@ -79,10 +80,13 @@ describe('the profile address', () => {
 });
 
 describe('the workspace and Insights addresses', () => {
-  it('Skills & Goals is four sections on ?section= — the overview is the bare address, with the chosen metric on Players', () => {
+  it('Skills & Goals is three sections on ?section= — the overview is the bare address; the Players tab is gone (stage 4, G1)', () => {
     assert.equal(skillsAndGoalsHref(base, 'sessions'), `${base}/development?section=sessions`);
-    assert.equal(skillsAndGoalsHref(base, 'players', { metric: 'M1' }), `${base}/development?section=players&metric=M1`);
     assert.equal(skillsAndGoalsHref(base, 'metrics'), `${base}/development?section=metrics`);
+    // The roster table has ONE home — Insights → Coverage — and its first Show choice rides `metric=focus`, one spelling.
+    assert.equal(COVERAGE_FOCUS, 'focus');
+    assert.equal(insightsDevelopmentHref(base, { metricId: COVERAGE_FOCUS }), `${base}/history?section=development&metric=focus`);
+    assert.equal(parseInsightsDevelopmentAddress(new URLSearchParams('metric=focus')).metricId, COVERAGE_FOCUS);
     // A metric's definition is a sheet over whichever section is on screen (stage 1): `edit=new` defines, an id edits.
     assert.equal(skillsAndGoalsHref(base, 'metrics', { edit: 'new' }), `${base}/development?section=metrics&edit=new`);
     assert.equal(skillsAndGoalsHref(base, 'overview', { edit: 'M1' }), `${base}/development?edit=M1`);
@@ -92,7 +96,8 @@ describe('the workspace and Insights addresses', () => {
     assert.equal(parseMetricEdit(null), null);
     // Stage 0 (2026-09-14): the overview is the landing and the bare address — never `?section=overview`.
     assert.equal(skillsAndGoalsHref(base, 'overview'), `${base}/development`);
-    assert.equal(parseSkillsAndGoalsSection('players'), 'players');
+    assert.equal(parseSkillsAndGoalsSection('players'), 'overview', 'the retired Players address lands on the Overview');
+    assert.equal(parseSkillsAndGoalsSection('sessions'), 'sessions');
     assert.equal(parseSkillsAndGoalsSection('overview'), 'overview');
     assert.equal(parseSkillsAndGoalsSection('board'), 'overview', 'an unknown section lands on the overview');
     assert.equal(parseSkillsAndGoalsSection(null), 'overview');

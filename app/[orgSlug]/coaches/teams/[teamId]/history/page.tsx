@@ -230,12 +230,12 @@ export default function CoachesInsightsPage({
    *
    * ⚠ THE DEVELOPMENT READ STAYS, and the reason is worth stating so it is not tidied away next:
    * it does NOT feed a tile — it feeds a FINDINGS RULE (the count-only coverage nudge, "N players
-   * don't have a measurable yet"). Delete it and that finding silently stops firing, with no error
+   * don't have a result yet"). Delete it and that finding silently stops firing, with no error
    * and no empty state, because the engine simply never runs a rule whose input is absent.
    *
    * ⚠ Lazy for the same reason as the coordinated load below: findings render on the Dashboard
    * only, so a coach who opens a bookmark straight into a report tab should not pay for this. The
-   * Development PANEL makes its own, richer read (`?history=1&plans=1`) and is unaffected either way.
+   * Development PANEL makes its own, richer read (`?plans=1`) and is unaffected either way.
    */
   const [devSummary, setDevSummary] = useState<{ rosterCount: number; withMeasurable: number; withFocus: number } | null>(null);
   const onDashboard = effectiveSection === 'dashboard';

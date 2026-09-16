@@ -3148,23 +3148,39 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
     }
     const { data: scoped } = await db.from('rep_team_evaluation_sessions').select('id')
       .eq('team_id', team.id).eq('note', 'Phase 2 probe — scoped').limit(1).maybeSingle();
-    const { data: haveChangeup } = await db.from('rep_player_measurables').select('id')
-      .eq('team_id', team.id).eq('player_id', devonId).eq('measurable_type_id', changeupId).limit(1);
-    if (!haveChangeup?.length && scoped) {
-      const row = (value, attempt, recordedOn, sessionId) => ({
-        org_id: org.id, team_id: team.id, player_id: devonId, measurable_type_id: changeupId,
-        value, unit: 'mph', recorded_on: recordedOn, session_id: sessionId, attempt_no: attempt, created_by: user.id,
-      });
-      const ins = await db.from('rep_player_measurables').insert([
-        // May 27: 0 of 3 in range (60 −2 · 70 +2 · 61 −1) — average 63.7.
-        row(60, 1, earlierDate, rangeSession.id), row(70, 2, earlierDate, rangeSession.id), row(61, 3, earlierDate, rangeSession.id),
-        // Jun 10 (the scoped session): 2 of 3 in range (66 in · 70 +2 · 64 in) — average 66.7. "Moved into the range".
-        row(66, 1, `${y}-06-10`, scoped.id), row(70, 2, `${y}-06-10`, scoped.id), row(64, 3, `${y}-06-10`, scoped.id),
-      ]);
+    const row = (value, attempt, recordedOn, sessionId) => ({
+      org_id: org.id, team_id: team.id, player_id: devonId, measurable_type_id: changeupId,
+      value, unit: 'mph', recorded_on: recordedOn, session_id: sessionId, attempt_no: attempt, created_by: user.id,
+    });
+    // Re-asserted PER SESSION (re-evaluation stage 4, 2026-09-16): a stage-3 walk step removed the
+    // Jun 10 result and the old "any changeup row exists" check never put it back, so the range
+    // chart drew one point and no change for a day. Each session's three attempts come back on
+    // their own when that session has none.
+    const sessionRows = [
+      // May 27: 0 of 3 in range (60 −2 · 70 +2 · 61 −1) — average 63.7.
+      { session: rangeSession, date: earlierDate, values: [60, 70, 61] },
+      // Jun 10 (the scoped session): 2 of 3 in range (66 in · 70 +2 · 64 in) — average 66.7. "Moved into the range".
+      ...(scoped ? [{ session: scoped, date: `${y}-06-10`, values: [66, 70, 64] }] : []),
+    ];
+    for (const s of sessionRows) {
+      const { data: have } = await db.from('rep_player_measurables').select('id')
+        .eq('team_id', team.id).eq('player_id', devonId).eq('measurable_type_id', changeupId).eq('session_id', s.session.id).limit(1);
+      if (have?.length) continue;
+      const ins = await db.from('rep_player_measurables').insert(s.values.map((v, i) => row(v, i + 1, s.date, s.session.id)));
       if (ins.error) { console.error('✗ changeup readings insert', ins.error.message); process.exit(1); }
+      ok(`Changeup speed restored on Devon for ${s.date} (${s.values.join(' · ')})`);
     }
     ok(`Phase 3 records present — Changeup speed on Devon in two sessions (May 27: 0 of 3 in range · Jun 10: 2 of 3 in range — the band, the filled marks, the dashed average, "moved into the range")`);
   }
+
+  /* ── Re-evaluation stage 4 · Reports & handout (2026-09-16): a PARKED goal on Devon, so the family
+     recap's one status rule can be walked from the seed — working and achieved print on the keepsake,
+     parked does not (G6). It also gives the handout's chooser a second, unticked goal (only the goals
+     being worked on are ticked by default) and leaves Coverage's Current focus at ONE working goal. */
+  await ensureOne('rep_player_development_goals', { player_id: devonId, focus_area: 'Two-strike approach' }, {
+    org_id: org.id, team_id: team.id, player_id: devonId,
+    focus_area: 'Two-strike approach', note: 'Parked until the swing change settles.', status: 'parked', created_by: user.id,
+  }, "Devon's parked goal");
 
   /* ── Re-evaluation stage 3 · Player (2026-09-15): the record the frames draw, and a linked season ──
      · WALK ARTEFACTS CLEARED. The seed adds and never removes, so a status pick made during a walk

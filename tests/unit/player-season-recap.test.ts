@@ -11,19 +11,40 @@ import {
   computePlayerSeasonRecap,
   isRecapEmpty,
   type PlayerSeasonRecapInput,
+  type RecapTestInput,
 } from '../../lib/player-season-recap.ts';
+import { formatShortDate } from '../../lib/measurable-format.ts';
 
 const NOTHING: PlayerSeasonRecapInput = {
   attendanceGames: { attended: 0, known: 0, recorded: 0 },
   attendancePractices: { attended: 0, known: 0, recorded: 0 },
   goals: [],
-  measurables: [],
+  tests: [],
   awards: [],
   playingTime: null,
 };
 
 const input = (patch: Partial<PlayerSeasonRecapInput>): PlayerSeasonRecapInput =>
   ({ ...NOTHING, ...patch });
+
+/** Dates in expectations go through the ONE formatter the series module uses. */
+const d = formatShortDate;
+
+/* The tests as the reports read them (re-evaluation stage 4, G6): the definition decides what the
+   line follows; the readings are every attempt. */
+const sprint: RecapTestInput['def'] = {
+  name: '60-yd sprint', kind: 'test', unit: 'seconds', aim: 'lower', headline: 'best',
+  rangeFrom: null, rangeTo: null, method: null,
+};
+const changeup: RecapTestInput['def'] = {
+  name: 'Changeup speed', kind: 'test', unit: 'mph', aim: 'range', headline: 'in_range',
+  rangeFrom: 62, rangeTo: 68, method: null,
+};
+let seq = 0;
+const reading = (value: number, recordedOn: string, sessionId: string | null, attemptNo = 1, unit = 'seconds') => ({
+  id: `r${++seq}`, value, unit, recordedOn, createdAt: `${recordedOn}T12:00:${String(seq).padStart(2, '0')}Z`, sessionId, attemptNo,
+});
+const test = (def: RecapTestInput['def'], readings: RecapTestInput['readings']): RecapTestInput => ({ def, readings });
 
 describe('degrades honestly — nothing recorded means nothing shown', () => {
   it('a coach who recorded nothing produces an entirely empty recap', () => {
@@ -81,107 +102,114 @@ describe('attendance', () => {
   });
 });
 
-describe('worked on this season', () => {
-  it('a single reading is a measurement, not a trend', () => {
+describe('worked on this season — through the ONE series the chart and the handout read (stage 4, G6)', () => {
+  it('a single result is a measurement, not a story', () => {
     const r = computePlayerSeasonRecap(input({
-      measurables: [{ typeId: 't-sprint', typeName: 'Sprint', value: 8.2, unit: 's', recordedOn: '2026-04-02' }],
+      tests: [test(sprint, [reading(8.2, '2026-04-02', 's1')])],
     }));
-    assert.equal(r.workedOn, null, 'one reading cannot state a change');
+    assert.equal(r.workedOn, null, 'one result cannot state a change');
   });
 
-  it('two readings on the SAME day are a repeat, not a season of change', () => {
+  it('three attempts in ONE session are one result — and one result is no line', () => {
     const r = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-sprint', typeName: 'Sprint', value: 8.2, unit: 's', recordedOn: '2026-04-02' },
-        { typeId: 't-sprint', typeName: 'Sprint', value: 8.1, unit: 's', recordedOn: '2026-04-02' },
-      ],
+      tests: [test(sprint, [reading(8.2, '2026-04-02', 's1', 1), reading(8.1, '2026-04-02', 's1', 2), reading(8.3, '2026-04-02', 's1', 3)])],
     }));
     assert.equal(r.workedOn, null);
   });
 
-  it('states first → latest as a fact, with no judgement of direction', () => {
+  it('two bench-side attempts on the SAME day are one result too (correct by construction)', () => {
     const r = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-sprint', typeName: 'Sprint', value: 7.6, unit: 's', recordedOn: '2026-06-20' },
-        { typeId: 't-sprint', typeName: 'Sprint', value: 8.2, unit: 's', recordedOn: '2026-04-02' },
-        { typeId: 't-sprint', typeName: 'Sprint', value: 7.9, unit: 's', recordedOn: '2026-05-11' },
-      ],
+      tests: [test(sprint, [reading(8.2, '2026-04-02', null, 1), reading(8.1, '2026-04-02', null, 2)])],
     }));
-    const t = r.workedOn?.trends[0];
-    assert.equal(t?.firstValue, 8.2);
-    assert.equal(t?.firstOn, '2026-04-02');
-    assert.equal(t?.latestValue, 7.6);
-    assert.equal(t?.latestOn, '2026-06-20');
-    assert.equal(t?.readings, 3);
-    // The shape carries no "improved"/"direction" field at all — the product cannot know
-    // whether lower is better for a coach's own free-text unit.
-    assert.equal('improved' in (t as object), false);
-    assert.equal('direction' in (t as object), false);
+    assert.equal(r.workedOn, null);
   });
 
-  it('DROPS a trend whose two ends were measured in different units', () => {
-    // The coach edited the test's unit mid-season; each reading snapshots the unit it was
-    // logged with. "30 → 110" is a unit conversion, not a change — and there is no honest way
-    // to render it, so the absent-not-wrong rule applies.
+  it('states the first result → the latest in the paper\'s words, the change as arithmetic in the unit, and a count of RESULTS', () => {
     const r = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-throw', typeName: 'Throw', value: 30, unit: 'm', recordedOn: '2026-04-02' },
-        { typeId: 't-throw', typeName: 'Throw', value: 110, unit: 'ft', recordedOn: '2026-06-02' },
-      ],
+      tests: [test(sprint, [
+        // The headline per session leads (best, lower is the aim) — not an arbitrary attempt.
+        reading(8.62, '2026-05-06', null),
+        reading(8.41, '2026-05-20', null),
+        reading(8.31, '2026-06-10', 's3', 1), reading(8.24, '2026-06-10', 's3', 2),
+        reading(8.28, '2026-09-15', 's4', 1),
+      ])],
     }));
-    assert.equal(r.workedOn, null, 'a cross-unit comparison must never reach a family');
+    const t = r.workedOn?.trends[0];
+    assert.equal(t?.typeName, '60-yd sprint');
+    assert.equal(t?.line, '8.62 → 8.28 seconds');
+    assert.equal(t?.change, `0.34 seconds lower since ${d('2026-05-06')}`);
+    assert.equal(t?.firstOn, '2026-05-06');
+    assert.equal(t?.latestOn, '2026-09-15');
+    assert.equal(t?.results, 4, 'four results — the session\'s two attempts are one');
+    // The shape carries no "improved"/"direction" field at all — the change is words in the unit,
+    // never a verdict (chart rule 4).
+    assert.equal('improved' in (t as object), false);
+    assert.equal('direction' in (t as object), false);
+    assert.doesNotMatch(JSON.stringify(t), /faster|slower|better|worse/i);
+  });
+
+  it('a range test says attempts in range and "moved into the range" — never best, faster or slower', () => {
+    const r = computePlayerSeasonRecap(input({
+      tests: [test(changeup, [
+        reading(60, '2026-05-27', 'c1', 1, 'mph'), reading(70, '2026-05-27', 'c1', 2, 'mph'), reading(61, '2026-05-27', 'c1', 3, 'mph'),
+        reading(66, '2026-06-10', 'c2', 1, 'mph'), reading(70, '2026-06-10', 'c2', 2, 'mph'), reading(64, '2026-06-10', 'c2', 3, 'mph'),
+      ])],
+    }));
+    const t = r.workedOn?.trends[0];
+    assert.equal(t?.line, '2 of 3 in range');
+    assert.equal(t?.change, `moved into the range since ${d('2026-05-27')} (0 of 3)`);
+    assert.equal(t?.results, 2);
   });
 
   it('never merges two DIFFERENT tests that happen to share a name', () => {
     // A retired "Sprint" and a newly-created "Sprint" are two tests: type names are unique
-    // only among ACTIVE types. Splicing them would invent a season-long change from two
-    // unrelated measurements.
+    // only among ACTIVE types (the assembler groups by type id, so they arrive as two entries).
+    // Splicing them would invent a season-long change from two unrelated measurements.
     const r = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-sprint-old', typeName: 'Sprint', value: 60, unit: 's', recordedOn: '2026-04-02' },
-        { typeId: 't-sprint-new', typeName: 'Sprint', value: 1, unit: 's', recordedOn: '2026-06-20' },
+      tests: [
+        test({ ...sprint, name: 'Sprint' }, [reading(60, '2026-04-02', null)]),
+        test({ ...sprint, name: 'Sprint' }, [reading(1, '2026-06-20', null)]),
       ],
     }));
-    assert.equal(r.workedOn, null, 'each type had one reading — neither can state a change');
+    assert.equal(r.workedOn, null, 'each test had one result — neither can state a change');
   });
 
-  it('keeps the display name of the LATEST reading for a renamed test', () => {
+  it('goals print by ONE rule: working and achieved with their status word; parked stays off the keepsake', () => {
     const r = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-1', typeName: '40m dash', value: 8.2, unit: 's', recordedOn: '2026-04-02' },
-        { typeId: 't-1', typeName: '40m sprint', value: 7.6, unit: 's', recordedOn: '2026-06-20' },
+      goals: [
+        { focusArea: 'First touch', status: 'working' },
+        { focusArea: 'Reads the pitcher', status: 'achieved' },
+        { focusArea: 'Two-strike approach', status: 'parked' },
       ],
     }));
-    assert.equal(r.workedOn?.trends.length, 1, 'a rename is still one test');
-    assert.equal(r.workedOn?.trends[0].typeName, '40m sprint');
+    assert.deepEqual(r.workedOn?.focusAreas, [
+      { focusArea: 'First touch', status: 'working' },
+      { focusArea: 'Reads the pitcher', status: 'achieved' },
+    ]);
+    const parkedOnly = computePlayerSeasonRecap(input({ goals: [{ focusArea: 'Two-strike approach', status: 'parked' }] }));
+    assert.equal(parkedOnly.workedOn, null, 'a parked goal alone is nothing to print — the block is absent, not empty');
   });
 
-  it('goals alone are enough for the block; trends alone are too', () => {
+  it('goals alone are enough for the block; results alone are too', () => {
     const goalsOnly = computePlayerSeasonRecap(input({
       goals: [{ focusArea: 'First touch', status: 'working' }],
     }));
     assert.equal(goalsOnly.workedOn?.focusAreas.length, 1);
     assert.deepEqual(goalsOnly.workedOn?.trends, []);
 
-    const trendsOnly = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-sprint', typeName: 'Sprint', value: 8.2, unit: 's', recordedOn: '2026-04-02' },
-        { typeId: 't-sprint', typeName: 'Sprint', value: 7.6, unit: 's', recordedOn: '2026-06-20' },
-      ],
+    const resultsOnly = computePlayerSeasonRecap(input({
+      tests: [test(sprint, [reading(8.2, '2026-04-02', null), reading(7.6, '2026-06-20', null)])],
     }));
-    assert.deepEqual(trendsOnly.workedOn?.focusAreas, []);
-    assert.equal(trendsOnly.workedOn?.trends.length, 1);
+    assert.deepEqual(resultsOnly.workedOn?.focusAreas, []);
+    assert.equal(resultsOnly.workedOn?.trends.length, 1);
   });
 
-  it('counts distinct evaluation DATES, not readings', () => {
+  it('carries no count of sessions and no "notes" — the old caption counted days and named notes that did not exist', () => {
     const r = computePlayerSeasonRecap(input({
-      measurables: [
-        { typeId: 't-sprint', typeName: 'Sprint', value: 8.2, unit: 's', recordedOn: '2026-04-02' },
-        { typeId: 't-throw', typeName: 'Throw', value: 30, unit: 'm', recordedOn: '2026-04-02' },
-        { typeId: 't-sprint', typeName: 'Sprint', value: 7.6, unit: 's', recordedOn: '2026-06-20' },
-      ],
+      tests: [test(sprint, [reading(8.2, '2026-04-02', null), reading(7.6, '2026-06-20', null)])],
     }));
-    assert.equal(r.workedOn?.sessionCount, 2);
+    assert.equal('sessionCount' in (r.workedOn as object), false);
+    assert.doesNotMatch(JSON.stringify(r.workedOn), /readings?/i);
   });
 });
 

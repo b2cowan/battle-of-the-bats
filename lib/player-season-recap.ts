@@ -18,7 +18,15 @@
  * in-game stats is forbidden by owner ruling 3. This is a GROWTH recap — attendance, what the
  * coach worked on, awards, playing time, the team's season — which is the differentiated
  * version, not a consolation prize. Do not add a stats block.
+ *
+ * ⚠ THE RECAP IS THE SECOND FAMILY SURFACE FOR DEVELOPMENT (re-evaluation stage 4, owner ruling
+ * G6, 2026-09-16) — the handout is the first. Its "Worked on this season" tile reads each test
+ * through `progressSeries`, the one series the chart, the Player progress report and the handout
+ * read: the headline per result, the change in words, "N results". It was the seventh reader of a
+ * child's sprint and the only one not through the module — the only one that could disagree.
  */
+import { progressSeries, type ReportDefinition } from './development-report.ts';
+import type { AttemptReading } from './measurable-series.ts';
 
 /** One player's attendance tallies for a bucket (games or practices). */
 export interface RecapAttendanceInput {
@@ -29,28 +37,28 @@ export interface RecapAttendanceInput {
   recorded: number;
 }
 
-/** A development focus area the coach logged for this player. */
+/** A development goal the coach set with this player. */
 export interface RecapGoalInput {
   focusArea: string;
   status: 'working' | 'achieved' | 'parked';
 }
 
-/** One measurable reading. `recordedOn` is a plain calendar date (YYYY-MM-DD). */
-export interface RecapMeasurableInput {
-  /**
-   * The measurable TYPE's id — the grouping key.
-   *
-   * ⚠ NOT the name. Type names are unique only among ACTIVE types (`rep_team_measurable_types`
-   * carries a partial unique index on `lower(name) WHERE is_active`), so a coach who retires
-   * "Sprint" and later creates a new "Sprint" has two genuinely different tests wearing one
-   * label. Grouping by name would splice them into a single before/after and show a family a
-   * change that never happened.
-   */
-  typeId: string;
-  typeName: string;
-  value: number;
-  unit: string;
-  recordedOn: string;
+/**
+ * One TEST the player has results under, as the reports read it (re-evaluation stage 4, owner
+ * ruling G6, 2026-09-16): the definition — its aim, headline and range, which decide what the line
+ * follows — and the player's every attempt under it, any order. The recap builds each test's line
+ * through `progressSeries`, the ONE series the chart, the Player progress report and the handout
+ * read, so the keepsake and the paper cannot disagree about a child's number.
+ *
+ * ⚠ The definition's ID is the grouping key, NOT the name. Type names are unique only among ACTIVE
+ * types (`rep_team_measurable_types` carries a partial unique index on `lower(name) WHERE
+ * is_active`), so a coach who retires "Sprint" and later creates a new "Sprint" has two genuinely
+ * different tests wearing one label. Grouping by name would splice them into a single before/after
+ * and show a family a change that never happened.
+ */
+export interface RecapTestInput {
+  def: ReportDefinition;
+  readings: AttemptReading[];
 }
 
 export interface RecapAwardInput {
@@ -75,21 +83,28 @@ export interface PlayerSeasonRecapInput {
   attendanceGames: RecapAttendanceInput;
   attendancePractices: RecapAttendanceInput;
   goals: RecapGoalInput[];
-  measurables: RecapMeasurableInput[];
+  tests: RecapTestInput[];
   awards: RecapAwardInput[];
   playingTime: RecapPlayingTimeInput | null;
 }
 
-/** One test, first reading to latest — stated as a CHANGE, never judged as an improvement. */
+/**
+ * One test, the first result to the latest — in the paper's own words (G6): stated as a CHANGE,
+ * never judged as an improvement. "60-yd sprint · 8.62 → 8.28 seconds · 0.34 seconds lower since
+ * 6 May · 4 results"; a range test "2 of 3 in range · moved into the range since 27 May (0 of 3)".
+ * Every string comes from the series module, so the family's line and the coach's chart agree to
+ * the decimal.
+ */
 export interface RecapMeasurableTrend {
   typeName: string;
-  unit: string;
-  firstValue: number;
+  /** "8.62 → 8.28 seconds" — the first and latest points' headlines; a range test, the latest's "2 of 3 in range". */
+  line: string;
+  /** The change in words — `statedChange`: arithmetic in the unit, or the range's "moved into …"; never a verdict. */
+  change: string | null;
   firstOn: string;
-  latestValue: number;
   latestOn: string;
-  /** How many readings the coach logged for this test. ≥2 by construction. */
-  readings: number;
+  /** Points on the line — RESULTS (a session's or a day's attempts are one), never attempts. ≥2 by construction. */
+  results: number;
 }
 
 export interface PlayerSeasonRecapStats {
@@ -104,21 +119,23 @@ export interface PlayerSeasonRecapStats {
     games: { attended: number; known: number } | null;
     practices: { attended: number; known: number } | null;
   } | null;
-  /** What the coach worked on. Null when no focus area was ever logged for this player. */
+  /** What the coach worked on. Null when nothing that prints was ever logged for this player. */
   workedOn: {
-    focusAreas: { focusArea: string; status: 'working' | 'achieved' | 'parked' }[];
     /**
-     * Tests with at least TWO readings, so a change can be stated as a fact.
+     * Goals by ONE rule (G6): a goal being worked on and a goal achieved print with their status
+     * word — a goal is set WITH the player, and the recap is a keepsake. A PARKED goal does not:
+     * on a season keepsake it reads as a failure. Observations stay off the recap.
+     */
+    focusAreas: { focusArea: string; status: 'working' | 'achieved' }[];
+    /**
+     * Tests with at least TWO results on the line, so a change can be stated as a fact — through
+     * the same series the coach's chart and the handout read (G6).
      *
-     * ⚠ NEVER labelled an improvement. A coach's test type carries a name and a free-text
-     * unit and nothing else — the product has no idea whether lower is better for "seconds",
-     * "reps" or "mph". Rendering an arrow or a colour here would be the recap inventing a
-     * judgement it has no basis for. First reading → latest reading, and the family (who
-     * knows the sport) reads it.
+     * ⚠ NEVER labelled an improvement. The change is `statedChange`'s arithmetic in the unit
+     * ("0.34 seconds lower since 6 May") or the range's "moved into the range" — never faster,
+     * better or an arrow. The family (who knows the sport) reads it.
      */
     trends: RecapMeasurableTrend[];
-    /** Evaluation dates touched — "across N sessions" in the mockup. */
-    sessionCount: number;
   } | null;
   /** Awards earned, newest first. Null when none — never "0 awards". */
   awards: { count: number; items: RecapAwardInput[] } | null;
@@ -145,12 +162,6 @@ function median(values: number[]): number {
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
-/** Sorts plain YYYY-MM-DD dates. String comparison is correct and timezone-free for this
- *  format — parsing them into Date objects is the repo's documented date trap. */
-function byRecordedOn(a: RecapMeasurableInput, b: RecapMeasurableInput): number {
-  return a.recordedOn.localeCompare(b.recordedOn);
-}
-
 export function computePlayerSeasonRecap(input: PlayerSeasonRecapInput): PlayerSeasonRecapStats {
   // ── Attendance (games + practices together; no-replies excluded from the rate) ──
   let attendance: PlayerSeasonRecapStats['attendance'] = null;
@@ -173,51 +184,40 @@ export function computePlayerSeasonRecap(input: PlayerSeasonRecapInput): PlayerS
     }
   }
 
-  // ── Worked on this season (focus areas + measurable trends) ──
+  // ── Worked on this season (the goals that print + one line per test, through the one series) ──
   let workedOn: PlayerSeasonRecapStats['workedOn'] = null;
   {
-    // Keyed on the type ID — see `RecapMeasurableInput.typeId`. Two tests that happen to
-    // share a name are two tests.
-    const byType = new Map<string, RecapMeasurableInput[]>();
-    for (const m of input.measurables) {
-      let list = byType.get(m.typeId);
-      if (!list) { list = []; byType.set(m.typeId, list); }
-      list.push(m);
-    }
-
     const trends: RecapMeasurableTrend[] = [];
-    for (const readings of byType.values()) {
-      if (readings.length < 2) continue; // one reading is a measurement, not a story
-      const sorted = [...readings].sort(byRecordedOn);
-      const first = sorted[0];
-      const latest = sorted[sorted.length - 1];
-      // Two readings on the SAME day are a repeat measurement, not a change over a season.
-      if (first.recordedOn === latest.recordedOn) continue;
-      // ⚠ The unit is snapshotted onto each reading AT LOG TIME, and a coach can edit a test's
-      // unit mid-season. When the two ends of the trend were measured in different units,
-      // "60 → 1" is not a change, it is a unit conversion wearing a change's clothes. There is
-      // no honest way to state it, so the trend is dropped — the absent-not-wrong rule.
-      if (first.unit !== latest.unit) continue;
+    for (const { def, readings } of input.tests) {
+      // The paper's own reading of the record: the headline per result, this season, in the
+      // test's one unit (fixed once a result exists — a unit that differed between two ends of
+      // the line cannot happen any more, so nothing here checks for it).
+      const series = progressSeries(readings, def, { show: 'headline', compare: 'season' });
+      const first = series.points[0];
+      const latest = series.points[series.points.length - 1];
+      // One result is a measurement, not a story — and a session's three attempts, or a day's from
+      // the bench, are ONE result here as they are everywhere (correct by construction: the old
+      // "two readings on one day" rule is what `groupBySession` does).
+      if (!first || first === latest) continue;
       trends.push({
-        typeName: latest.typeName,
-        unit: latest.unit,
-        firstValue: first.value,
-        firstOn: first.recordedOn,
-        latestValue: latest.value,
-        latestOn: latest.recordedOn,
-        readings: sorted.length,
+        typeName: def.name,
+        line: series.band ? latest.label : `${first.label} → ${latest.label} ${series.unit}`,
+        change: series.change,
+        firstOn: first.row.recordedOn,
+        latestOn: latest.row.recordedOn,
+        results: series.points.length,
       });
     }
     trends.sort((a, b) => a.typeName.localeCompare(b.typeName));
 
-    const focusAreas = input.goals.map(g => ({ focusArea: g.focusArea, status: g.status }));
-    const sessionCount = new Set(input.measurables.map(m => m.recordedOn)).size;
+    // Goals by one rule: working and achieved print; parked does not (G6).
+    const focusAreas = input.goals.flatMap(g => (g.status === 'parked' ? [] : [{ focusArea: g.focusArea, status: g.status }]));
 
-    // The block exists only if the coach put something in it. A player with goals but no
-    // readings gets the goals; a player with readings but no goals gets the trends; a player
-    // with neither has no "worked on this season" heading at all.
+    // The block exists only if the coach put something in it that prints. A player with goals but
+    // no results gets the goals; a player with results but no goals gets the lines; a player with
+    // neither has no "worked on this season" heading at all.
     if (focusAreas.length > 0 || trends.length > 0) {
-      workedOn = { focusAreas, trends, sessionCount };
+      workedOn = { focusAreas, trends };
     }
   }
 

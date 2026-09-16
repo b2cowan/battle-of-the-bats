@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import QuestionShell from '@/components/coaches/QuestionShell';
+import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { FOCUS_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
@@ -12,7 +13,6 @@ export interface GoalSheetValues {
   focusArea: string;
   note: string | null;
   success: string | null;
-  reviewOn: string | null;
   tagId: string | null;
 }
 
@@ -20,8 +20,11 @@ export interface GoalSheetValues {
  * "Add goal" / "Edit wording" — the goal's fields in a sheet over the Goals view (development
  * lifecycle re-evaluation stage 3, 2026-09-15: the sheet/page test — a new goal is a sheet, the
  * record is the page; the fields are unchanged, E5). The record is the focus and the status; the
- * note, what success looks like, the review date and the focus tag stay optional behind "More"
- * (F08, F11, F17). A goal can still be one line of text.
+ * note, what success looks like and the focus tag stay optional behind "More" (F08, F11, F17). A
+ * goal can still be one line of text.
+ *
+ * The review date does NOT live here (owner, 2026-09-16): it's the "Review goal" sheet's field —
+ * one door sets it, so a later review can never disagree with what this sheet last saved.
  *
  * F11 (Phase 1): the focus TAG is the same picker the tryout hand-off uses, the same 'focus'
  * vocabulary the drills and the focus rail read — one tag, optional, never inferred from the text.
@@ -44,28 +47,26 @@ export default function GoalSheet({
 }) {
   const initial = {
     focus: editing?.focusArea ?? '', note: editing?.note ?? '', success: editing?.success ?? '',
-    reviewOn: editing?.reviewOn ?? '', tagId: editing?.tagId ?? null,
+    tagId: editing?.tagId ?? null,
   };
   const [focus, setFocus] = useState(initial.focus);
   const [note, setNote] = useState(initial.note);
   const [success, setSuccess] = useState(initial.success);
-  const [reviewOn, setReviewOn] = useState(initial.reviewOn);
   const [tagId, setTagId] = useState<string | null>(initial.tagId);
-  const [moreOpen, setMoreOpen] = useState(!!(initial.success || initial.reviewOn || initial.tagId));
   const [localErr, setLocalErr] = useState('');
 
-  const dirty = focus !== initial.focus || note !== initial.note || success !== initial.success || reviewOn !== initial.reviewOn || tagId !== initial.tagId;
+  const dirty = focus !== initial.focus || note !== initial.note || success !== initial.success || tagId !== initial.tagId;
   const close = useDiscardGuard({ dirty, close: onClose, noun: 'goal', detail: focus.trim() ? 'a focus area' : undefined });
   const title = editing ? 'Edit the goal' : 'Add a goal';
 
   return (
     <QuestionShell open onClose={close} ariaLabel={title} title={title} subtitle={editing?.focusArea} busy={busy}>
-      <form className={styles.formBody} onSubmit={e => {
+      <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
         e.preventDefault();
         const f = focus.trim();
         if (!f) { setLocalErr('Type the focus area first.'); return; }
         setLocalErr('');
-        onSubmit({ focusArea: f, note: note.trim() || null, success: success.trim() || null, reviewOn: reviewOn || null, tagId });
+        onSubmit({ focusArea: f, note: note.trim() || null, success: success.trim() || null, tagId });
       }}>
         <div className={styles.formGrid}>
           <label className={`${styles.field} ${styles.formGridFull}`}>
@@ -78,24 +79,19 @@ export default function GoalSheet({
             <input className={styles.input} type="text" value={note} maxLength={280} placeholder="One short note the player would be happy to read"
               onChange={e => setNote(e.target.value)} />
           </label>
-          <div className={`${styles.field} ${styles.formGridFull}`}>
-            <button type="button" className={`btn btn-ghost ${styles.tapFloor}`} style={{ fontSize: 'var(--type-support)', alignSelf: 'flex-start' }}
-              aria-expanded={moreOpen} onClick={() => setMoreOpen(o => !o)}>
-              {moreOpen ? 'Less' : 'More — success, review date, tag'}
-            </button>
-          </div>
-          {moreOpen && (
-            <>
-              <label className={`${styles.field} ${styles.formGridFull}`}>
+          <div className={styles.formGridFull}>
+            <CoachFormDisclosure
+              label="More — success, tag"
+              title="More"
+              meta={(initial.success || initial.tagId) ? 'Set' : undefined}
+              defaultOpen={!!(initial.success || initial.tagId)}
+            >
+              <label className={styles.field}>
                 <span className={styles.label}>What would success look like? (optional)</span>
                 <input className={styles.input} type="text" value={success} maxLength={280} placeholder="e.g. sets feet without a cue in the partner drill"
                   onChange={e => setSuccess(e.target.value)} />
               </label>
-              <label className={styles.field}>
-                <span className={styles.label}>Review on (optional)</span>
-                <input className={styles.input} type="date" value={reviewOn} onChange={e => setReviewOn(e.target.value)} />
-              </label>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
+              <div className={styles.field}>
                 <TagPicker
                   all={focusTags}
                   selected={tagId ? [tagId] : []}
@@ -109,8 +105,8 @@ export default function GoalSheet({
                   onManageChanged={onTagsChanged}
                 />
               </div>
-            </>
-          )}
+            </CoachFormDisclosure>
+          </div>
         </div>
         {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
         <div className={styles.modalFooter}>

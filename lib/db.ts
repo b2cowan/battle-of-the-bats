@@ -9160,7 +9160,7 @@ export async function getRepDevelopmentGoalReviewsForPlayer(playerId: string): P
 
 /**
  * APPEND a review and move the goal's status (and next review date) in the same step — the goal's
- * `status` is the latest review's (dictionary gotcha 5). No update or delete exists for a review.
+ * `status` is the latest review's (dictionary gotcha 5).
  * ⚠ Two statements, no transaction: the review is written FIRST, so a failure on the goal update
  * leaves a review whose status the goal does not yet show — the honest direction (the event exists;
  * the summary lags one reload) rather than a status with no event behind it.
@@ -9188,6 +9188,102 @@ export async function appendRepDevelopmentGoalReview(fields: {
     ...(fields.nextReviewOn !== undefined ? { reviewOn: fields.nextReviewOn } : {}),
   });
   return { review: mapRepDevelopmentGoalReview(data), goal };
+}
+
+/** ONE review, team + player scoped (the observations precedent). */
+export async function getRepDevelopmentGoalReview(id: string, teamId: string, playerId: string): Promise<RepDevelopmentGoalReview | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_development_goal_reviews')
+    .select('*')
+    .eq('id', id).eq('team_id', teamId).eq('player_id', playerId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepDevelopmentGoalReview(data) : null;
+}
+
+/**
+ * The goal's status pill (and next-review date) is the LATEST remaining review's, full stop — the
+ * same rule the append path always applied, re-run after an edit or a delete could have changed
+ * which review that is. No review left = back to the goal's pre-review default (mig 295's own
+ * default: 'working', no next review named).
+ */
+async function recomputeRepPlayerDevelopmentGoalFromReviews(goalId: string, teamId: string, playerId: string): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_development_goal_reviews')
+    .select('status, next_review_on')
+    .eq('goal_id', goalId).eq('team_id', teamId).eq('player_id', playerId)
+    .order('reviewed_on', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  await updateRepPlayerDevelopmentGoal(goalId, teamId, playerId, {
+    status: (data?.status as RepDevelopmentGoalStatus | undefined) ?? 'working',
+    reviewOn: data ? ((data.next_review_on as string | null) ?? null) : null,
+  });
+}
+
+/**
+ * Correct a review in place (owner ruling 2026-09-16 — this is the coach's own working record, not
+ * an audit log a mistake should have to live in forever) — then recompute the goal's status/pill
+ * from whichever review is now the latest, since editing may have moved it.
+ * ⚠ Two statements, no transaction, same accepted shape as the append path (`appendRep…Review`
+ * above): if the recompute throws after the review itself saved, the correction stands and the
+ * pill lags until the next write touches this goal — never a lost edit, at worst a stale summary.
+ */
+export async function updateRepDevelopmentGoalReview(
+  id: string, teamId: string, playerId: string,
+  fields: {
+    reviewedOn: string; status: RepDevelopmentGoalStatus; note: string | null; nextReviewOn: string | null;
+    evidenceMeasurableIds: string[]; evidenceObservationIds: string[];
+  },
+): Promise<{ review: RepDevelopmentGoalReview; goal: RepPlayerDevelopmentGoal | null } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_development_goal_reviews')
+    .update({
+      reviewed_on: fields.reviewedOn, status: fields.status, note: fields.note?.trim() || null,
+      next_review_on: fields.nextReviewOn,
+      evidence_measurable_ids: fields.evidenceMeasurableIds, evidence_observation_ids: fields.evidenceObservationIds,
+    })
+    .eq('id', id).eq('team_id', teamId).eq('player_id', playerId)
+    .select('goal_id')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const goalId = data.goal_id as string;
+  await recomputeRepPlayerDevelopmentGoalFromReviews(goalId, teamId, playerId);
+  const [review, goal] = await Promise.all([
+    getRepDevelopmentGoalReview(id, teamId, playerId),
+    getRepPlayerDevelopmentGoal(goalId, teamId, playerId),
+  ]);
+  return review ? { review, goal } : null;
+}
+
+/**
+ * Remove a mistaken review, then recompute the goal's status/pill from whatever is now latest.
+ * ⚠ No transaction across the delete and the recompute (same accepted shape as the write paths
+ * above): if the recompute throws, the review is already gone and the pill lags until the next
+ * write — never a review that "comes back", at worst a stale summary.
+ */
+export async function deleteRepDevelopmentGoalReview(
+  id: string, teamId: string, playerId: string,
+): Promise<{ goal: RepPlayerDevelopmentGoal | null } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_development_goal_reviews')
+    .delete()
+    .eq('id', id).eq('team_id', teamId).eq('player_id', playerId)
+    .select('goal_id')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const goalId = data.goal_id as string;
+  await recomputeRepPlayerDevelopmentGoalFromReviews(goalId, teamId, playerId);
+  // The delete and the recompute are the write; this last read is only a convenience snapshot
+  // for the caller's optimistic UI. If IT throws, the removal already succeeded — surfacing that
+  // as a failed delete (/review 2026-09-16) would be worse than the caller just keeping its local
+  // goal state one read stale until the next load.
+  const goal = await getRepPlayerDevelopmentGoal(goalId, teamId, playerId).catch(() => null);
+  return { goal };
 }
 
 /**

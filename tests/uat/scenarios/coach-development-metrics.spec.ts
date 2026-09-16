@@ -215,39 +215,59 @@ test.describe('the definition contract, through the routes', () => {
 });
 
 test.describe('the three views and the exact addresses, rendered', () => {
-  test('the Sessions tab carries the tour anchor (the Overview is the landing since stage 0); Players shows the chosen metric with ITS date; the way back returns', async ({ page }) => {
+  test('the Sessions tab carries the tour anchor (the Overview is the landing since stage 0); the hub has no Players tab; Coverage in Insights is the one roster table, with the chosen metric and ITS date; the way back returns', async ({ page }) => {
     await signIn(page, COACH);
     await page.goto(`${base()}/development?section=sessions`);
     await expect(page.locator('[data-sandbox-tour="development-sessions"]')).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Skills and Goals views' }).getByRole('link', { name: 'Metrics' })).toBeVisible();
+    const tabs = page.getByRole('navigation', { name: 'Skills and Goals views' });
+    await expect(tabs.getByRole('link', { name: 'Metrics' })).toBeVisible();
+    // Re-evaluation stage 4 (G1): the Players tab is gone; its old address lands on the Overview.
+    await expect(tabs.getByRole('link', { name: 'Players' })).toHaveCount(0);
+    await page.goto(`${base()}/development?section=players`);
+    await expect(page.getByText('Everything in Skills & Goals')).toBeVisible();
 
-    // The board's old address lands on the Players view.
+    // The board's old address lands on the one roster table — Insights → Coverage.
     await page.goto(`${base()}/development/board`);
-    await page.waitForURL(url => url.searchParams.get('section') === 'players', { timeout: 30_000 });
+    await page.waitForURL(url => url.pathname.endsWith('/history') && url.searchParams.get('section') === 'development', { timeout: 30_000 });
 
-    // Choose Throw speed: Devon's row shows the km/h reading and the date it was recorded on.
+    // Show Throw speed: Devon's row shows the km/h result and the date it was recorded on.
     const throwSpeed = (await call(page, 'get', `${api()}?all=1`)).body.types as Array<{ id: string; name: string }>;
     const ts = throwSpeed.find(t => t.name === 'Throw speed')!;
-    await page.goto(`${base()}/development?section=players&metric=${ts.id}`);
+    const coverage = `${base()}/history?section=development&metric=${ts.id}`;
+    await page.goto(coverage);
     const devonRow = page.locator('tr', { hasText: 'Devon Test' });
     await expect(devonRow).toBeVisible();
     expect((await devonRow.innerText()).toLowerCase()).toContain('84 km/h');
-    // A player with no reading under this metric says so — never a blank that could be a zero.
+    // A player with nothing under this metric is ONE dash — the legend under the table says what it means.
     const caseyRow = page.locator('tr', { hasText: 'Casey Test' });
-    expect((await caseyRow.innerText()).toLowerCase()).toContain('not recorded');
+    expect((await caseyRow.innerText())).toContain('—');
+    await expect(page.getByText(/— no result this season/)).toBeVisible();
+    // The count line is the first thing under the toolbar; the retired prose is gone.
+    await expect(page.getByText(/of 12 players (has|have) a Throw speed result this season/)).toBeVisible();
+    await expect(page.getByText('Set goals and record in Skills & Goals →')).toHaveCount(0);
+    await expect(page.getByText('Returning player')).toHaveCount(0);
+    // The head coach holds the grant, so the door to the room is offered under the table.
+    await expect(page.getByRole('link', { name: 'Record in Skills & Goals →' })).toBeVisible();
 
     // The name is a link into the record's Results view, carrying the metric and the way back.
     const href = await devonRow.getByRole('link', { name: /Devon Test/ }).getAttribute('href');
     expect(href).toContain('section=development');
     expect(href).toContain('view=results');
     expect(href).toContain(`metric=${ts.id}`);
-    expect(decodeURIComponent(href!)).toContain(`return=${base()}/development?section=players&metric=${ts.id}`);
+    expect(decodeURIComponent(href!)).toContain(`return=${coverage}`);
     await page.goto(href!);
     await expect(page.locator('#development')).toBeVisible();
     // The header's way back names where the coach came from and returns there.
-    const back = page.getByRole('link', { name: 'Back to Skills & Goals' });
+    const back = page.getByRole('link', { name: 'Back to Insights' });
     await expect(back).toBeVisible();
-    expect(await back.getAttribute('href')).toBe(`${base()}/development?section=players&metric=${ts.id}`);
+    expect(await back.getAttribute('href')).toBe(coverage);
+
+    // Current focus — the goals as words — is Coverage's first Show choice, with Internal notes.
+    await page.goto(`${base()}/history?section=development&metric=focus`);
+    const devonFocus = page.locator('tr', { hasText: 'Devon Test' });
+    await expect(devonFocus).toBeVisible();
+    expect(await devonFocus.innerText()).toContain('First-step quickness off the bag');
+    await expect(page.getByText(/of 12 players (has|have) a goal being worked on/)).toBeVisible();
   });
 
   test('Metrics lists every definition with what a record means; the retired rows are the same table', async ({ page }) => {

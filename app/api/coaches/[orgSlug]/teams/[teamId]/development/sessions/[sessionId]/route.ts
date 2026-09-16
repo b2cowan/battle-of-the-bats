@@ -14,6 +14,7 @@ import {
   getRepTeamEventById,
   getRepSessionNotAssessed,
   getRepSessionObservations,
+  getRepTeamDevelopmentGoalsForPlayers,
   getOrgMemberDisplayNames,
 } from '@/lib/db';
 import { orgDayKey } from '@/lib/timezone';
@@ -89,6 +90,13 @@ export const GET = withObservability(async (_req: Request,
     getRepSessionNotAssessed(sessionId, teamId),
     showObservations ? getRepSessionObservations(sessionId, teamId) : Promise.resolve([]),
   ]);
+  // The observation sheet's own "Evidence for" list (Option A, 2026-09-16): gated with
+  // observations, same Internal-notes permission — a coach who can't read a goal's text can't be
+  // offered it as a pick either. Active roster only; a past participant's row is read-only, so
+  // their sheet never opens here.
+  const goals = showObservations
+    ? await getRepTeamDevelopmentGoalsForPlayers(players.filter(p => p.status === 'active').map(p => p.id))
+    : [];
   // "Entered by" — on Edit and in the review (owner ruling 2026-09-11: every record names who wrote
   // it; re-evaluation stage 2, C7: off the row, where it was a second line on every saved card).
   const authors = await getOrgMemberDisplayNames(resolved.ctx.org.id, [
@@ -131,6 +139,7 @@ export const GET = withObservability(async (_req: Request,
     events: events.map(e => ({ id: e.id, name: e.name, eventType: e.eventType, startsAt: e.startsAt })),
     notAssessed,
     observations,
+    goals,
     showObservations,
     authors,
     canWrite: canWriteDevelopment(caps),

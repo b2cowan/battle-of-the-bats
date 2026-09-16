@@ -309,7 +309,8 @@ export function computeInsightFindings(inputs: FindingsInputs): InsightFinding[]
         tier: 'development',
         tone: 'info',
         report: 'development',
-        text: `${uncovered} player${plural(uncovered)} do${uncovered === 1 ? 'es' : ''}n't have a measurable yet this season — one evaluation session covers everyone.`,
+        // One word per thing (re-evaluation stage 4, G3): a test produces a RESULT, and it is a SESSION.
+        text: `${uncovered} player${plural(uncovered)} do${uncovered === 1 ? 'es' : ''}n't have a result yet this season — one session covers everyone.`,
       });
     }
   }

@@ -46,6 +46,21 @@ const round3 = (v: number) => Number(v.toFixed(3));
 /** Display goes through the one formatter (`formatValue`); `round3` is for the arithmetic only. */
 const format = formatValue;
 
+/**
+ * THE AVERAGE'S PRECISION — one decimal more than its attempts carry, never more than three
+ * (re-evaluation stage 4, owner ruling G3, 2026-09-16). Three whole-number changeups (60 · 70 · 61)
+ * read 63.7, not 63.667: nothing on the record is known to a thousandth of a mile an hour. Two
+ * hundredths sprints (8.31 · 8.24) still read 8.275. Rounded HERE, where the average is computed,
+ * so every reader — the records table, the chart's label and description, the session read-back,
+ * the Results row's "avg", the family recap — prints the same figure through `formatValue` without
+ * each being taught (chart rule 8: one source).
+ */
+export function averageOf(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const decimals = Math.min(3, Math.max(...values.map(v => (format(v).split('.')[1] ?? '').length)) + 1);
+  return Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(decimals));
+}
+
 /** How one attempt landed against a range test's band: in, or how far past the nearer edge. */
 export function attemptAgainstRange(value: number, from: number, to: number): { inRange: boolean; delta: number } {
   if (value < from) return { inRange: false, delta: round3(value - from) };
@@ -65,7 +80,7 @@ export function sessionHeadline(values: number[], def: HeadlineDefinition): numb
     : values.filter(v => attemptAgainstRange(v, def.rangeFrom!, def.rangeTo!).inRange).length);
   const last = () => values[values.length - 1];
   switch (def.headline) {
-    case 'average': return round3(values.reduce((a, b) => a + b, 0) / values.length);
+    case 'average': return averageOf(values);
     case 'last': return last();
     case 'in_range': return inRange();
     default:

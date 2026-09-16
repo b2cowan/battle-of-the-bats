@@ -123,6 +123,24 @@
 .chartCard .progressLabel { font-size: 11px; font-weight: 700; fill: var(--text-primary); }
 .progressBand { fill: color-mix(in srgb, var(--logic-lime) 14%, transparent); }
 .progressBandLabel { font-size: 9px; fill: var(--text-secondary); }
+/* The tick and date labels — the progress chart's own class, NOT `.secondary`: the container rule
+   above switches `.secondary` off below 420px, which on a phone left the chart with no ticks and
+   no dates at all. The phone drawing needs them. */
+.chartCard .progressAxisLabel { fill: var(--text-tertiary); }
+
+/* ── Two drawings, one shown (re-evaluation stage 4, G4, 2026-09-16) ──
+   The desktop drawing (720 × 262) scaled to a 324px phone was 118px tall. Below 640 the phone
+   drawing (358 × 240) takes over — the same series at a phone aspect, its labels at 12px so the
+   dates and ticks read. Both are in the DOM; the stylesheet decides, so nothing re-measures. */
+.progressPhone { display: none; }
+@media (max-width: 640px) {
+  .progressDesktop { display: none; }
+  .progressPhone { display: block; }
+  .chartCard .progressPhone text { font-size: 12px; }
+  .chartCard .progressPhone .progressLabel { font-size: 13px; }
+  .chartCard .progressPhone .progressUnit,
+  .chartCard .progressPhone .progressBandLabel { font-size: 11px; }
+}
 
 /* ── Monthly attendance grouped bars ── */
 .barGames { fill: var(--logic-lime); }

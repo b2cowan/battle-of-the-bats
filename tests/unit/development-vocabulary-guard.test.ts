@@ -53,6 +53,15 @@ const SURFACES = [
   'lib/development-input.ts',
   'lib/development-goal-history.ts',
   'lib/player-notes-timeline.ts',
+  // Re-evaluation stage 4 · Reports & handout (2026-09-16): the three surfaces the retired words
+  // survived on — the progress chart's foot ("a single reading"), the Insights dashboard's finding
+  // ("don't have a measurable yet — one evaluation session covers everyone") and the FAMILY recap
+  // ("N readings") — plus the Coverage report's board route (its error and section words).
+  'components/charts/DevelopmentProgressChart.tsx',
+  'lib/insight-findings.ts',
+  'components/family/PlayerRecapView.tsx',
+  'lib/player-season-recap.ts',
+  'app/api/coaches/[orgSlug]/teams/[teamId]/development/board/route.ts',
 ];
 
 /** The retired words, as a coach would meet them. Case-insensitive; whole words. */
@@ -62,6 +71,8 @@ const RETIRED: ReadonlyArray<[RegExp, string]> = [
   [/\bmeasurable types?\b/i, '"measurable type" — it is a "metric" (B1)'],
   [/\bmeasurables?\b/i, '"measurable" — a test produces a "result" (B2)'],
   [/\breadings?\b/i, '"reading" — the number inside a result is an "attempt"; a row is a "result" (B2)'],
+  // Stage 2 retired the page title; the phrase survived in four sentences until stage 4 (G3).
+  [/\bevaluation sessions?\b/i, '"evaluation session" — it is a "session" (C4; stage 4 G3)'],
 ];
 
 /** What a coach reads: JSX text nodes and string literals that look like prose. Comments stripped first. */

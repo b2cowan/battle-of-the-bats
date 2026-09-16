@@ -240,10 +240,13 @@ describe('B5 — no tryout evaluation data can reach a family-facing payload (R3
       attendanceGames: { attended: 8, known: 10, recorded: 10 },
       attendancePractices: { attended: 12, known: 14, recorded: 14 },
       goals: [{ focusArea: 'Arm strength', status: 'working' }],
-      measurables: [
-        { typeId: 't1', typeName: '30m sprint', value: 5.1, unit: 's', recordedOn: '2027-05-01' },
-        { typeId: 't1', typeName: '30m sprint', value: 4.9, unit: 's', recordedOn: '2027-06-01' },
-      ],
+      tests: [{
+        def: { name: '30m sprint', kind: 'test', unit: 's', aim: 'lower', headline: 'best', rangeFrom: null, rangeTo: null, method: null },
+        readings: [
+          { id: 'r1', value: 5.1, unit: 's', recordedOn: '2027-05-01', createdAt: '2027-05-01T12:00:00Z', sessionId: null, attemptNo: 1 },
+          { id: 'r2', value: 4.9, unit: 's', recordedOn: '2027-06-01', createdAt: '2027-06-01T12:00:00Z', sessionId: null, attemptNo: 1 },
+        ],
+      }],
       awards: [{ name: 'Hustle', emoji: '⚡', awardedAt: '2027-06-02' }],
       playingTime: { fieldInnings: 40, benchInnings: 10, gamesWithLineup: 10, teamFieldInnings: [40, 38, 42] },
     });

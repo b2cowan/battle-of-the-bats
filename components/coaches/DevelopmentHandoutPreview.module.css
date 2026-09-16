@@ -21,8 +21,18 @@
   border: 1px solid var(--border-2); border-radius: var(--radius);
   background: var(--card-bg);
 }
+.chooseHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 .chooseTitle { margin: 0; font-size: var(--type-heading); font-weight: 800; color: var(--text-primary); }
 .chooseSub { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+/* The two jump links (re-evaluation stage 4, G5) — "See the paper ↓" beside the title, "↑ Back to the
+   choices" at the paper's foot — exist only where the paper is below the choices (≤900, the layout's
+   own breakpoint). The quiet door voice, on the tap floor. */
+.jumpLink { display: none; }
+@media (max-width: 900px) {
+  .jumpLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); font-size: var(--type-support); font-weight: 600; color: var(--blueprint-light); text-decoration: none; white-space: nowrap; }
+  .jumpLink:hover { text-decoration: underline; }
+  .jumpBack { margin-top: 0.4rem; color: var(--paper-muted); }
+}
 .group { margin: 0; padding: 0; border: 0; min-width: 0; }
 .group legend { padding: 0; margin-bottom: 0.3rem; font-size: var(--type-support); font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
 .choice {

@@ -114,7 +114,7 @@ export default function RecordResultSheet({
   return (
     <>
       <QuestionShell open onClose={close} ariaLabel={`${title} — ${playerName}`} title={title} subtitle={`${playerName} · outside a session`} busy={busy}>
-        <form className={styles.formBody} onSubmit={e => { e.preventDefault(); submit(); }}>
+        <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => { e.preventDefault(); submit(); }}>
           <div className={styles.formGrid}>
             <label className={styles.field}>
               <span className={styles.label}>Test</span>

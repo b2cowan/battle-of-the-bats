@@ -4,7 +4,7 @@ import type { PlayerSeasonRecapPayload } from '@/lib/rep-player-season-recap';
 import { generateKeepsakeCardBlob, awardSummaryLine } from '@/lib/keepsake-card';
 import { shareScoreImage } from '@/lib/share-card';
 import { shadeHex } from '@/lib/wrapped-share-card';
-import { formatShortDate, formatValue } from '@/lib/measurable-format';
+import { formatShortDate } from '@/lib/measurable-format';
 import styles from './PlayerRecapView.module.css';
 
 /**
@@ -23,16 +23,17 @@ import styles from './PlayerRecapView.module.css';
  * are equally bad: telling a family something that did not happen, and implying the coach
  * neglected something because a feature they never used leaves a visible gap.
  *
- * ⚠ NO MEASURABLE IS LABELLED AN IMPROVEMENT. A coach's test type carries a name and a
- * free-text unit and nothing else — the product cannot know whether lower is better for
- * "seconds", "reps" or "mph". First reading → latest reading, stated as a fact, with no arrow
- * and no colour. The family knows the sport; we do not.
+ * ⚠ NO RESULT IS LABELLED AN IMPROVEMENT. "Worked on this season" reads each test through the
+ * one series the coach's chart and the handout read (re-evaluation stage 4, owner ruling G6,
+ * 2026-09-16): the first result → the latest, the change in words ("0.34 seconds lower since
+ * 6 May" — arithmetic in the unit, or a range's "moved into the range"), and how many results.
+ * Never faster, better, an arrow or a colour. The family knows the sport; we do not. A goal being
+ * worked on or achieved prints; a parked one stays off the keepsake.
  */
 
-const STATUS_LABEL: Record<'working' | 'achieved' | 'parked', string> = {
+const STATUS_LABEL: Record<'working' | 'achieved', string> = {
   working: 'working on it',
   achieved: 'got there',
-  parked: 'parked',
 };
 
 const BAND_LABEL: Record<'in_band' | 'above_band' | 'below_band', string> = {
@@ -151,24 +152,14 @@ export default function PlayerRecapView({ recap, isPreview = false }: {
               {recap.workedOn.trends.map(t => (
                 <span key={t.typeName} className={styles.focusRow}>
                   <b>{t.typeName}</b>
-                  {/* `formatValue` is the shared measurable formatter — it strips the float
-                      noise a raw coach-entered number carries (7.599999999). Every other
-                      surface that renders a reading uses it; a recap that read "7.5999" would
-                      look like a bug to the one audience least able to shrug it off. */}
-                  <span className={styles.trendValue}>
-                    {formatValue(t.firstValue)}{t.unit ? ` ${t.unit}` : ''} → {formatValue(t.latestValue)}{t.unit ? ` ${t.unit}` : ''}
-                  </span>
+                  {/* The paper's words, from the one series module: "8.62 → 8.28 seconds", then the
+                      change in words and the count of results (a session's attempts are one). */}
+                  <span className={styles.trendValue}>{t.line}</span>
                   <span className={styles.tileSub}>
-                    {formatShortDate(t.firstOn)} to {formatShortDate(t.latestOn)} · {t.readings} readings
+                    {t.change ? `${t.change} · ` : `${formatShortDate(t.firstOn)} to ${formatShortDate(t.latestOn)} · `}{t.results} results
                   </span>
                 </span>
               ))}
-              {recap.workedOn.sessionCount > 0 && (
-                <span className={styles.tileSub}>
-                  Coach’s notes across {recap.workedOn.sessionCount} session
-                  {recap.workedOn.sessionCount === 1 ? '' : 's'}
-                </span>
-              )}
             </div>
           )}
 

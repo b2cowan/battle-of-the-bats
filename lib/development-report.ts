@@ -14,8 +14,8 @@
  * points are a CHANGE, never a trend; one point is one point (no fabricated baseline). Nothing here
  * ranks, scores, projects, or compares a child to the team.
  *
- * Pure module: the panel, the chart component, the handout page, the Players view and the unit
- * tests read it.
+ * Pure module: the panel, the chart component, the handout page, the family recap's assembler and
+ * the unit tests read it.
  */
 import {
   groupBySession, chronological, attemptAgainstRange, headlineLabel, headlineLead,
@@ -24,7 +24,7 @@ import {
 import { HEADLINE_LABELS, aimSentence } from './measurable-definition';
 import { formatValue, formatShortDate } from './measurable-format';
 // The selectors' unions live with the ADDRESS (they are what `?report=` / `?show=` / `?compare=` may say).
-import type { DevelopmentReport, ProgressShow, CompareWindow } from './development-address.ts';
+import { DEVELOPMENT_REPORTS, type DevelopmentReport, type ProgressShow, type CompareWindow } from './development-address.ts';
 
 export type { DevelopmentReport, ProgressShow, CompareWindow };
 
@@ -36,6 +36,14 @@ export const REPORT_LABELS: Readonly<Record<DevelopmentReport, string>> = {
 };
 /** The two comparison choices on screen 5. */
 export const COMPARE_LABELS: Readonly<Record<CompareWindow, string>> = { season: 'This season', 'last-two': 'Last two records' };
+/**
+ * The reports a coach is offered — Practice review only with the schedule grant (its rows are
+ * practice content). ONE rule: the panel's Report selector and the Overview's rail count read it,
+ * so the rail never says "3 reports" to a coach who can open two (stage 4 housekeeping).
+ */
+export function developmentReports(withPractices: boolean): DevelopmentReport[] {
+  return DEVELOPMENT_REPORTS.filter(r => r !== 'practices' || withPractices);
+}
 
 /** The definition a report reads — `RepTeamMeasurableType` narrowed to what the sentences need. */
 export interface ReportDefinition extends HeadlineDefinition {
@@ -265,11 +273,16 @@ export interface CoverageCellInput {
 }
 export type CoverageCellState = 'recorded' | 'not_assessed' | 'none';
 
+/** The one dash — an absence on the Coverage table, explained once by the legend under it. */
+export const COVERAGE_DASH = '—';
+
 /**
- * ONE cell for the selected metric — the Coverage table and the Players view both read it: the
- * latest headline ("8.31 seconds (of 2)", "2 of 3 in range", a skill's descriptor) with THAT
- * metric's own date; "Not assessed" when a session marked it and NO result exists; else an absence
- * of records, stated as one. ⚠ A result always wins over a not-assessed mark, whatever their dates:
+ * ONE cell for the selected metric on the Coverage table (the one roster table since re-evaluation
+ * stage 4, G1 — the Skills & Goals Players tab that drew the same cell is gone): the latest headline
+ * ("8.31 seconds (of 2)", "2 of 3 in range", a skill's descriptor) with THAT metric's own date;
+ * "Not assessed" when a session marked it and NO result exists; else a DASH — the legend under the
+ * table says what it means, once, rather than "No result recorded for this test this season" as a
+ * cell value on seven rows. ⚠ A result always wins over a not-assessed mark, whatever their dates:
  * coverage describes the records that EXIST, and a later session that took no result does not
  * erase one that was taken. Never a judgement, never a number another child's row could be read
  * against.
@@ -279,7 +292,7 @@ export function coverageCell(input: CoverageCellInput, def: Pick<ReportDefinitio
     const o = input.latestObservation;
     if (o) return { text: o.descriptor ?? o.note ?? 'Observed', on: o.observedOn, state: 'recorded' };
     if (input.notAssessedOn) return { text: 'Not assessed', on: input.notAssessedOn, state: 'not_assessed' };
-    return { text: 'No observation recorded for this skill this season', on: null, state: 'none' };
+    return { text: COVERAGE_DASH, on: null, state: 'none' };
   }
   const l = input.latest;
   if (l) {
@@ -289,15 +302,29 @@ export function coverageCell(input: CoverageCellInput, def: Pick<ReportDefinitio
     return { text, on: l.recordedOn, state: 'recorded' };
   }
   if (input.notAssessedOn) return { text: 'Not assessed', on: input.notAssessedOn, state: 'not_assessed' };
-  return { text: 'No result recorded for this test this season', on: null, state: 'none' };
+  return { text: COVERAGE_DASH, on: null, state: 'none' };
 }
 
-/** "4 of 6 players have a 60-yd sprint result recorded this season." — the explicit denominator (plan §9). */
-export function coverageDenominator(recorded: number, total: number, def: Pick<ReportDefinition, 'kind' | 'name'>): string {
-  const noun = def.kind === 'skill' ? 'observation' : 'result';
-  return `${recorded} of ${total} player${total === 1 ? '' : 's'} ${total === 1 ? 'has' : 'have'} a ${def.name} ${noun} recorded this season.`;
+/**
+ * The count line — the first thing under the toolbar, and the one place the binding coverage
+ * wording is said (G1): "4 of 12 players have a 60-yd sprint result this season · roster order, not
+ * a ranking". Current focus: "1 of 12 players has a goal being worked on"; a skill: "… a Sets feet
+ * before throwing observation this season". The explicit denominator (plan §9) in one sentence; the
+ * description, the disclaimer and the heading it used to sit under live in the help.
+ */
+export function coverageDenominator(recorded: number, total: number, def: Pick<ReportDefinition, 'kind' | 'name'> | 'focus'): string {
+  const players = `${recorded} of ${total} player${total === 1 ? '' : 's'} ${recorded === 1 ? 'has' : 'have'}`;
+  if (def === 'focus') return `${players} a goal being worked on`;
+  return `${players} a ${def.name} ${def.kind === 'skill' ? 'observation' : 'result'} this season`;
 }
-export const COVERAGE_DENOMINATOR_NOTE = 'This describes the records that exist. It does not assess the attention a player received.';
+export const COVERAGE_ORDER_NOTE = 'roster order, not a ranking';
+/** The legend under the table — what a dash and "Not assessed" mean, said once, for what Show shows. */
+export function coverageLegend(def: Pick<ReportDefinition, 'kind'> | 'focus'): string {
+  if (def === 'focus') return `${COVERAGE_DASH} no goal being worked on`;
+  return `${COVERAGE_DASH} no ${def.kind === 'skill' ? 'observation' : 'result'} this season · Not assessed: a session said so, on that date`;
+}
+/** The tick's word for the phone's one-line row, where the In-a-plan column folds into the line. */
+export const COVERAGE_IN_PLAN_LEGEND = '✓ in a plan';
 
 // ── The handout (screen 6) — the same rows, in a handout's words ──────────────────────────────────
 /** "Sep 8 · best 8.05 of 3 (8.12 · 8.05 · 8.2)" · "Sep 8 · 2 of 3 in range (66 · 70 · 64)" · "Aug 1 · 8.41 seconds". */
@@ -308,6 +335,17 @@ export function logLine(row: SessionResult, def: ReportDefinition): string {
   const attempts = row.values.map(formatValue).join(' · ');
   if (isRange(def)) return `${date} · ${row.headline ?? 0} of ${n} in range (${attempts})`;
   return `${date} · ${effectiveHeadline(def)} ${formatValue(row.headline ?? row.value)} of ${n} (${attempts})`;
+}
+
+/**
+ * THE PRINTING RULE for the handout's "We'll look at this together again on …" line (re-evaluation
+ * stage 4, owner ruling G5, 2026-09-16): a review date prints only while it is still ahead — today
+ * or later, by the COACH's local day. A goal reviewed in June still carries June on the record, and
+ * a paper prepared in September must not read it as a promise; with nothing typed and no date
+ * ahead, the paper's and the PDF's Next step section is absent altogether (both read the one model).
+ */
+export function handoutNextReview(reviewOn: string | null | undefined, today: string): string | null {
+  return reviewOn && reviewOn >= today ? reviewOn : null;
 }
 
 /**

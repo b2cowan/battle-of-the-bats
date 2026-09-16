@@ -346,14 +346,17 @@ const SITES: Site[] = [
     screen: 'Skills & Goals — the "not turned on for you" gate on the whole subtree (D5)', variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
+    // Three tabs — Overview · Sessions · Metrics — since re-evaluation stage 4 (G1, 2026-09-16): the
+    // Players tab left for Insights → Coverage, the one roster table.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx', occurrence: 0,
-    screen: 'Skills & Goals', variant: 'standard', helpHost: 'masthead',
+    screen: 'Skills & Goals (Overview · Sessions · Metrics)', variant: 'standard', helpHost: 'masthead',
     actions: {
       from: 'startAction', slot: 'action', holds: 'Start session (the one create; ABSENT until a test is defined — stage 0, 2026-09-14)',
       phoneHidden: null, phoneInTitleRow: null,
     },
   },
-  /* The team board's page is a REDIRECT into the Players view now (Phase 1) — no header. */
+  /* The team board's page is a REDIRECT into Insights → Coverage now (Phase 1 sent it to the Players
+     view; stage 4 sent it on to the table's one home) — no header. */
   /* A metric's definition is a SHEET over the hub since re-evaluation stage 1 (2026-09-14) — no
      header of its own; the two `metrics/…` routes redirect into `?edit=`. */
   {

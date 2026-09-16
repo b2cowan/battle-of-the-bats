@@ -129,7 +129,8 @@ test('the pages behind hidden nav doors render the shared not-granted block, not
     'announcements/page.tsx',
     'chat/page.tsx',
     'tournaments/page.tsx',
-    // Phase 1 (2026-09-12): the board's page redirects into Skills & Goals, which carries the block.
+    // Phase 1 (2026-09-12): the board's page redirected into Skills & Goals, which carried the block
+    // (since re-evaluation stage 4, G1, it redirects into Insights → Coverage, an ungated read).
     // Re-evaluation stage 0 (2026-09-14, D5): the block moved to the SUBTREE's layout — one door for
     // the hub, a session and a metric's definition, keyed on the Development grant.
     'development/layout.tsx',

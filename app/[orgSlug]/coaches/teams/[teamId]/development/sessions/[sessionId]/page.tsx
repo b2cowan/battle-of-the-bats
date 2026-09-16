@@ -26,6 +26,7 @@ import styles from '../../../../../coaches.module.css';
 import css from '@/components/coaches/DevelopmentSession.module.css';
 import type {
   RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerObservation, RepEvaluationNotAssessed,
+  RepPlayerDevelopmentGoal,
 } from '@/lib/types';
 
 interface SessionWorld {
@@ -38,6 +39,9 @@ interface SessionWorld {
   events: SessionEventOption[];
   notAssessed: RepEvaluationNotAssessed[];
   observations: RepPlayerObservation[];
+  /** Every active roster player's goals (any status) — the observation sheet's own "Evidence for"
+   *  list, filtered per player when the sheet opens. Gated with observations (showObservations). */
+  goals: RepPlayerDevelopmentGoal[];
   showObservations: boolean;
   authors: Record<string, string>;
   canWrite: boolean;
@@ -169,7 +173,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   }
 
   const {
-    session, roster, pastParticipants, types, entries, events, notAssessed, observations, showObservations, authors,
+    session, roster, pastParticipants, types, entries, events, notAssessed, observations, goals, showObservations, authors,
     canWrite, canWriteObservations,
   } = data;
   /**
@@ -346,8 +350,8 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     if (!obsSheet || obsBusy) return;
     const { player, skill, existing } = obsSheet;
     // An edit sends ONLY what changed (a descriptor the skill has since dropped is never re-sent
-    // untouched); nothing changed closes without a request. The date and the goal are fixed here.
-    const patch = existing ? observationEditPatch(existing, { ...v, observedOn: existing.observedOn, goalId: existing.goalId }) : null;
+    // untouched); nothing changed closes without a request. The date is fixed here; the goal is not.
+    const patch = existing ? observationEditPatch(existing, { ...v, observedOn: existing.observedOn }) : null;
     if (existing && !patch) { setObsSheet(null); return; }
     setObsBusy(true); setObsErr('');
     try {
@@ -359,7 +363,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(existing
           ? patch
-          : { measurableTypeId: skill.id, observedOn: session.sessionDate, sessionId: session.id, descriptor: v.descriptor || null, note: v.note.trim() || null }),
+          : { measurableTypeId: skill.id, observedOn: session.sessionDate, sessionId: session.id, descriptor: v.descriptor || null, note: v.note.trim() || null, goalId: v.goalId }),
       });
       const json = await res.json().catch(() => null);
       // Another coach recorded this cell meanwhile (409): READ it, never re-send — the row shows theirs.
@@ -614,7 +618,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
               <RecordObservationDialog
                 key={`${obsSheet.player.id}:${obsSheet.skill.id}`}
                 skills={[obsSheet.skill]}
-                goals={[]}
+                goals={goals.filter(g => g.playerId === obsSheet.player.id).map(g => ({ id: g.id, focusArea: g.focusArea }))}
                 editing={obsSheet.existing}
                 fixed={{
                   skill: obsSheet.skill,

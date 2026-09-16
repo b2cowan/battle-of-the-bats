@@ -12,11 +12,16 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * "Record an observation" (development lifecycle Phase 2, mockup screen 4; re-evaluation stage 2,
  * C12 — the sheet for everything, owner ruling 2026-09-15): what the coach saw against a SKILL,
  * dated, with an optional descriptor (one of the skill's own words) and optionally as evidence for
- * a goal. ONE form for one record, from every door: the Goals toolbar and a goal (which pre-selects
- * itself as the evidence link) ask for the skill and the date; a SESSION's grid opens the same
- * sheet with both FIXED (`fixed`) — the skill is the chip, the date is the session's — so it asks
- * only the descriptor and the sentence. Editing reuses the form; the skill it names is fixed.
- * Nothing saves until Save. Visible to coaches with Internal notes.
+ * a goal. ONE form for one record, from every door: the Goals toolbar asks for the skill, the date
+ * and the goal; a GOAL's own button (`presetGoalId`) FIXES the goal — its name is the subtitle, the
+ * same place "Review the goal" and "Edit the goal" put it, and the Evidence for field is not asked
+ * (owner, 2026-09-16: clicking the button inside the goal IS the choice; asking again with the same
+ * goal pre-filled was a question already answered); a SESSION's grid opens the same sheet with the
+ * skill and the date FIXED (`fixed`) — the skill is the chip, the date is the session's — so it
+ * asks only the descriptor, the sentence and (owner ruling 2026-09-16, "The Evidence Door") Evidence
+ * for. A door that answers a question does not ask it. Editing reuses the form from every door as
+ * the record's own editor: the skill it names is fixed, the goal link stays changeable. Nothing
+ * saves until Save. Visible to coaches with Internal notes.
  *
  * ⚠ THE SHEET TAKES REMOVE (re-evaluation stage 3, owner ruling E2, 2026-09-15). An observation's
  * home is the Notes tab; the goal's history, Player progress and the session row are its doors; and
@@ -65,8 +70,10 @@ export default function RecordObservationDialog({
   // A descriptor saved under a word the skill's list has since dropped: offered once, marked, so
   // the select shows what is stored rather than silently reading "No descriptor" over it.
   const staleDescriptor = descriptor && skill && !skill.descriptors.includes(descriptor) ? descriptor : null;
+  const presetGoal = !editing && presetGoalId ? goals.find(g => g.id === presetGoalId) ?? null : null;
   const verb = editing ? 'Edit the observation' : 'Record an observation';
   const title = fixed ? `${fixed.playerName} — ${fixed.skill.name}` : verb;
+  const subtitle = fixed?.subtitle ?? presetGoal?.focusArea;
   // Typed work a Cancel, an X or Escape would throw away — asked once, never on Save.
   const dirty = note !== initialNote || descriptor !== initialDescriptor
     || skillId !== initialSkillId || observedOn !== initialObservedOn || goalId !== initialGoalId;
@@ -76,8 +83,8 @@ export default function RecordObservationDialog({
   });
 
   return (
-    <QuestionShell open onClose={close} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={fixed?.subtitle} busy={busy}>
-        <form className={styles.formBody} onSubmit={e => {
+    <QuestionShell open onClose={close} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={subtitle} busy={busy}>
+        <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
           e.preventDefault();
           if (!skillId) { setLocalErr('Choose the skill you observed.'); return; }
           if (!note.trim() && !descriptor) { setLocalErr('Say what you saw, or choose a descriptor.'); return; }
@@ -122,7 +129,7 @@ export default function RecordObservationDialog({
                 {note.length} / {MAX_OBSERVATION_NOTE_LEN}
               </span>
             </label>
-            {goals.length > 0 && (
+            {goals.length > 0 && !presetGoal && (
               <label className={`${styles.field} ${styles.formGridFull}`}>
                 <span className={styles.label}>Evidence for</span>
                 <select className={styles.select} value={goalId} onChange={e => setGoalId(e.target.value)}>

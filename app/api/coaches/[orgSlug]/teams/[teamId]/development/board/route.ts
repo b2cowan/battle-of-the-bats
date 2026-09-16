@@ -18,7 +18,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import {
-  denyUnless, canViewDevelopmentGoals, canViewMeasurables, canManageSchedule,
+  denyUnless, canViewDevelopmentGoals, canViewMeasurables, canManageSchedule, canWriteDevelopment,
 } from '@/lib/coach-capabilities';
 import { linkCurrentId, linkPriorId } from '@/lib/continuity-match';
 import {
@@ -39,10 +39,12 @@ const PRACTICE_CAP = 200;
  *  Goals ride the notes capability; measurables ride record access — each column is
  *  filtered server-side per caller.
  *
- *  `?history=1` adds the per-player `historyLinked` season label (the Development REPORT
- *  needs it). It's opt-in because resolving it scans the team's prior-season identities —
- *  the Team board page and the Insights hub tile don't render that column, so they don't
- *  request it and don't pay for the scan.
+ *  `?history=1` adds the per-player `historyLinked` season label. It's opt-in because resolving
+ *  it scans the team's prior-season identities. ⚠ DORMANT since re-evaluation stage 4 (owner
+ *  ruling G1 with E9, 2026-09-16): the Coverage report was its only caller and its Returning-player
+ *  column is gone — a confirmed link is an identity fact, and its home is the team-level roster or
+ *  settings page E9 named, which does not exist yet. The option is kept for that page (the shape
+ *  is already right — a season label per player, no PII); nothing asks for it today.
  *
  *  `?plans=1` adds the three practice-plan answers the Development report gained in Practice
  *  Plans Phase 3 — coverage ("In a plan"), the focus-area tags no plan was about, and the
@@ -248,6 +250,12 @@ export const GET = withObservability(async (req: Request,
   return NextResponse.json({
     showGoals,
     showMeasurables,
+    /**
+     * The Development grant — decided HERE, the way the sessions and player reads decide it: the
+     * Coverage report offers its "Record in Skills & Goals →" door only to a coach who can open the
+     * room (re-evaluation stage 4, G1 — a door a coach cannot open is not offered).
+     */
+    canWrite: canWriteDevelopment(caps),
     types,
     rows: players.map(p => ({
       playerId: p.id,

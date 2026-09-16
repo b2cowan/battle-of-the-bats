@@ -35,13 +35,18 @@ const RETIRED_VIEW_OBSERVATIONS = 'observations';
 const RETIRED_VIEW_ARCHIVE = 'archive';
 
 /**
- * Skills & Goals — four views on one screen. `overview` is the LANDING (re-evaluation stage 0,
+ * Skills & Goals — three views on one screen. `overview` is the LANDING (re-evaluation stage 0,
  * owner ruling 2026-09-14): Money's shape — a getting-started card while there is nothing to
  * count, the season's dashboard once there is. The bare hub address IS the overview, so it never
- * carries `?section=overview`; the other three are addressed as before.
+ * carries `?section=overview`; the other two are addressed as before.
+ *
+ * ⚠ `players` is RETIRED (re-evaluation stage 4, owner ruling G1, 2026-09-16): the roster table has
+ * ONE home, Insights → Coverage, because a coach without the Development grant has no Skills &
+ * Goals door at all and reads the roster there. An old `?section=players` address lands on the
+ * Overview (`parseSkillsAndGoalsSection`); it is never offered.
  */
-export type SkillsAndGoalsSection = 'overview' | 'sessions' | 'players' | 'metrics';
-export const SKILLS_AND_GOALS_SECTIONS: ReadonlyArray<SkillsAndGoalsSection> = ['overview', 'sessions', 'players', 'metrics'];
+export type SkillsAndGoalsSection = 'overview' | 'sessions' | 'metrics';
+export const SKILLS_AND_GOALS_SECTIONS: ReadonlyArray<SkillsAndGoalsSection> = ['overview', 'sessions', 'metrics'];
 
 export interface DevelopmentAddress {
   view: DevelopmentView | null;
@@ -133,15 +138,15 @@ export function returnLabel(returnTo: string | null, base: string): string | nul
 
 /**
  * Skills & Goals — sections on `?section=`, the Money and Insights hubs' convention; the overview
- * is the bare address. `metric` is the Players view's Show choice. `edit` opens a metric's
- * DEFINITION in its sheet over whichever section is on screen (re-evaluation stage 1, 2026-09-14
- * — a metric is a record on a list, so it opens over the list the way a player's dues do, never
- * on a page of its own): `new` defines one, an id edits it. Back closes the sheet.
+ * is the bare address. `edit` opens a metric's DEFINITION in its sheet over whichever section is
+ * on screen (re-evaluation stage 1, 2026-09-14 — a metric is a record on a list, so it opens over
+ * the list the way a player's dues do, never on a page of its own): `new` defines one, an id edits
+ * it. Back closes the sheet. (⚰ `metric` — the Players view's Show choice — went with the view,
+ * stage 4; the Show choice lives on the Insights address now.)
  */
-export function skillsAndGoalsHref(base: string, section: SkillsAndGoalsSection, extra?: { metric?: string | null; edit?: MetricEdit | null }): string {
+export function skillsAndGoalsHref(base: string, section: SkillsAndGoalsSection, extra?: { edit?: MetricEdit | null }): string {
   const qp = new URLSearchParams();
   if (section !== 'overview') qp.set('section', section);
-  if (extra?.metric) qp.set('metric', extra.metric);
   if (extra?.edit) qp.set('edit', extra.edit);
   const q = qp.toString();
   return q ? `${base}/development?${q}` : `${base}/development`;
@@ -168,6 +173,13 @@ export function parseSkillsAndGoalsSection(raw: string | null | undefined): Skil
  */
 export type DevelopmentReport = 'coverage' | 'progress' | 'practices';
 export const DEVELOPMENT_REPORTS: ReadonlyArray<DevelopmentReport> = ['coverage', 'progress', 'practices'];
+/**
+ * Coverage's first Show choice — the goals as words per player (re-evaluation stage 4, G1: the
+ * Players view's "Current focus", moved here with the table). It rides `metric=` with this ONE
+ * spelling — the Overview's Goals door and the panel's selector both write it; an id-shaped word,
+ * so `isRecordId` lets it through and a real metric id can never collide with it.
+ */
+export const COVERAGE_FOCUS = 'focus';
 export type ProgressShow = 'headline' | 'average';
 export const PROGRESS_SHOWS: ReadonlyArray<ProgressShow> = ['headline', 'average'];
 export type CompareWindow = 'season' | 'last-two';
