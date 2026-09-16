@@ -26,9 +26,11 @@ import { withObservability } from '@/lib/observability';
  * ⚠⚠ **HEAD COACH ONLY, AND `tryouts` ALONE IS NOT ENOUGH.** This asks a question the caller
  * CHOOSES — "was a child with this name, this birth date and this guardian email on your roster in
  * a past season?" — and answers yes or no. That is a confirmation oracle over prior-season family
- * PII, and prior-season identity is a stricter class than the current tryout cycle: the sibling
- * route that serves the same pool (`development/continuity`) has always been `isHeadCoach` only,
- * saying "Only the head coach can review returning players."
+ * PII, and prior-season identity is a stricter class than the current tryout cycle. (The sibling
+ * route that serves the same pool, `development/continuity`, was `isHeadCoach` only from
+ * 2026-07-17 until ruling 9 of the development lifecycle moved it onto the delegable Development
+ * grant on 2026-09-11 — so it is no longer the precedent this comment once cited. This route's
+ * gate stands on the argument below, not on that sibling.)
  *
  * `tryouts` is **delegable** — a head coach can grant it to an assistant helping run tryout day
  * while deliberately leaving `rosterPii` ("Contacts & birthdates") switched off. Gating on

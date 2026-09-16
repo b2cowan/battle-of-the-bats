@@ -3175,10 +3175,12 @@ ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0])
      · A LINKED SEASON, so the Previous-seasons fold can be walked. Devon Test ↔ "Devon Prior" on the
        live team's OWN finished season (`priorYear` — a continuity link is same-team by its composite
        keys, so the finished "UAT Between Seasons" team the plan named cannot be the other side):
-       confirmed, the carry-forward already answered ("fresh", so no banner), with one achieved goal
-       and one result on the prior row. The fold reads "2025 Season" on his record — the season's own
-       name, as the frame draws it. A walk's "Not the same player — unlink" leaves a rejected
-       tombstone on the pair; the seed re-asserts the fixture on it rather than minting a twin. */
+       confirmed, carry_status stamped "fresh" (a column the product no longer reads or writes —
+       the per-player offer left the player's page 2026-09-16; the stamp just keeps the row's
+       shape honest), with one achieved goal and one result on the prior row. The fold reads
+       "2025 Season" on his record — the season's own name, as the frame draws it. Nothing on the
+       player's page can unlink any more, but a rejected tombstone from an older walk may still sit
+       on the pair; the seed re-asserts the fixture on it rather than minting a twin. */
   {
     const { data: devonGoal } = await db.from('rep_player_development_goals').select('id')
       .eq('team_id', team.id).eq('player_id', devonId).eq('focus_area', 'First-step quickness off the bag').limit(1).maybeSingle();

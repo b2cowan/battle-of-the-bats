@@ -123,7 +123,6 @@ const DEVELOPMENT_WRITE_ROUTES = [
   `${TEAM_API}/roster/[playerId]/development/goals/[goalId]/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/measurables/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/measurables/[entryId]/route.ts`,
-  `${TEAM_API}/roster/[playerId]/development/carry/route.ts`,
   `${TEAM_API}/tryout-baselines/route.ts`,
   // Phase 2 (2026-09-13): not-assessed marks, observations, goal reviews.
   `${TEAM_API}/development/sessions/[sessionId]/not-assessed/route.ts`,
@@ -136,7 +135,6 @@ const DEVELOPMENT_WRITE_ROUTES = [
 const GOAL_WRITE_ROUTES = new Set([
   `${TEAM_API}/roster/[playerId]/development/goals/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/goals/[goalId]/route.ts`,
-  `${TEAM_API}/roster/[playerId]/development/carry/route.ts`,
   `${TEAM_API}/tryout-baselines/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/observations/route.ts`,
   `${TEAM_API}/roster/[playerId]/development/observations/[observationId]/route.ts`,

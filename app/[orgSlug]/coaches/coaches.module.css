@@ -8914,17 +8914,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   margin: 0;
 }
 
-/* ── Player Development 3D — the one-time rollover carry-forward banner (M5).
-   Blueprint-blue = the info/offer voice; amber stays reserved for continuity-verify. */
-.devCarryBanner {
-  border: 1px solid var(--blueprint-blue);
-  background: rgba(var(--blueprint-blue-rgb, 30, 58, 138), 0.16);
-  border-radius: 12px;
-  padding: 0.7rem 0.8rem;
-  margin: 0 0 0.9rem;
-}
-.devCarryBanner b { color: var(--text-primary); }
-.devCarryActions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+/* ⚰ `.devCarryBanner` / `.devCarryActions` STOOD HERE — the one-time rollover carry-forward
+   banner on a player's Skills & Goals tab (Player Development 3D, M5; blueprint-blue as the
+   info/offer voice). Retired 2026-09-16 with the banner itself: nothing on a player's page links a
+   past season or acts on the link (owner ruling E9, plan §20.1) — a team-level surface is the next
+   home for that question, and it will draw its own chrome. */
 
 /* The three quiet actions inside a player's Skills & Goals card — Test types, Add focus area,
    Log a measurable — plus the "Add test" in the shared new-test row. All four are the GLOBAL

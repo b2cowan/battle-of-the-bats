@@ -2357,7 +2357,10 @@ export interface RepPlayerContinuityLink {
   confidence: 'high' | 'possible';
   decidedBy: string | null;
   decidedAt: string | null;
-  // One-time rollover carry-forward answer (3D, mig 192) — null until the coach answers.
+  // One-time rollover carry-forward answer (3D, mig 192). ⚠ DORMANT since 2026-09-16: the product
+  // neither reads nor writes these — the per-player offer left the player's page (owner ruling
+  // E9, plan §20.1; dictionary gotcha 9). Rows stamped before then are history; the UAT seed
+  // still writes 'fresh'.
   carryStatus: 'carried' | 'fresh' | null;
   carryDecidedBy: string | null;
   carryDecidedAt: string | null;

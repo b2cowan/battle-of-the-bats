@@ -3,11 +3,13 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ContinuityRow } from '@/lib/continuity-match';
 
 /**
- * The returning-player scan + decide plumbing, shared by BOTH verify doors (the player
- * profile's Development card and the tryout Decision Board) so the fetch/reconcile/409
- * handling can never drift between them (3C /simplify extraction).
+ * The returning-player scan + decide plumbing (3C /simplify extraction). ONE caller today: the
+ * tryout Decision Board. It also served the player profile's verify door until 2026-09-16, when
+ * nothing on a player's page linked a past season any more (owner ruling E9, plan §20.1); the
+ * team-level linking surface that replaces that door is this hook's next caller, so the
+ * fetch/reconcile/409 handling stays here rather than folding into the board.
  *
- * `apiBase` = …/development/continuity (null/undefined disables — e.g. non-head-coach).
+ * `apiBase` = …/development/continuity (null/undefined disables — e.g. no Development grant).
  * Scan errors are QUIET by design: no chip is the honest no-data state, and a scan hiccup
  * must never error its host surface. Decide errors surface via `error`.
  */

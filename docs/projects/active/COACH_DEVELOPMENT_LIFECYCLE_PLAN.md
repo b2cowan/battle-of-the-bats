@@ -572,3 +572,58 @@ the player, the Results row IS the home of a result and every other reading alre
 **Housekeeping done:** the five producers (E1); the measurables route's skill error now says "record one from the skill's chip on a session, or from a goal on the player's record"; "in an evaluation session" → "in a session ›" on both readers; "trend shows after a second result" / "no results yet" / "not written yet" / "no review date set" are gone (a dash or an absent line); the two explaining sentences left the screen (help); `PlayerDevelopmentSection` drops `playerNumber` · `teamName` · `seasonName` on both sides — **`playerName` stays, and is now READ** (the sheets' titles, the never-run caption "Not yet recorded for Devon"); the vocabulary guard registers `RecordResultSheet`, `GoalSheet`, `PlayerNotesTab` and the notes route; three dead rules in `coaches.module.css` (`.miniRowMainWrap`, `.tapFloorSquare`, `.devTailLink`) retired with a ⚰ note; the tab's own classes live in `components/coaches/PlayerDevelopment.module.css` (the repo rule: a new component's floor in its own module); the pre-existing "Not the same player — unlink" line raised to the tap floor (the linked season put it on the layout sweep for the first time).
 
 **The fixture, as built:** the seed now (a) deletes every WORDLESS review on Devon's fixture goal on each run (the three 14 Sept pill presses went), (b) RETIRES any active test on the team not in its `TYPES` list (the "walk test" — its results stay), and (c) links Devon Test to "Devon Prior" on the live team's OWN finished 2025 season — confirmed, carry answered "fresh", one achieved goal ("Prior season — reads the pitcher before the pitch") and one sprint result (8.9 s, 15 Jun 2025) on the prior row — so the fold reads "2025 Season". **The plan named the wrong team:** a continuity link is same-team by its composite keys, so the finished "UAT Between Seasons" team cannot be the other side; the label the frame drew is the same.
+
+### 20.1 E9 — nothing on a player's page links a past season (owner ruling 2026-09-16, on the §191 walk)
+
+The owner opened Devon's Skills & Goals tab on the fixture and read, above the view switch, *"Linked
+to your 2025 Season record — confirmed Sep 15 · Not the same player — unlink"* — the first time the
+line had ever rendered on the UAT team, because the fixture carried no confirmed link until the
+stage-3 seed added one for the fold. The ruling: **"remove all — we can have linking on a roster or
+settings page; even if we want to link we wouldn't want to do it one at a time on each of their own
+roster pages."** The E1 bullet that kept the prompts "above the views, unchanged" is superseded.
+
+**What left the player's page (built 2026-09-16, no migration):**
+- The confirmed-link receipt and its always-visible unlink. After *Start next season* every carried
+  player would have carried it permanently, above the live goals — the loudest possible breach of
+  the rule that the historical layer stays quiet and below the live content.
+- The "Possible returning player — verify" compare card (Confirm · Not the same player · Not sure
+  yet). It still renders on the tryout Decision Board, which is a team-level surface.
+- The one-time "Returning player — bring forward the N goals they were working on in 2025?" offer,
+  its route (`…/development/carry`) and its data helper. `carry_status` stays on the link row
+  (dictionary gotcha 9 rewritten): the product no longer reads or writes it; the fixture still
+  stamps `'fresh'`.
+- The rollover summary's note no longer points at "the bring-forward offer on their Development
+  card"; its mint-failure warning no longer promises a profile prompt that would offer the link.
+- Help: the returning-players FAQ names its two places (the Decision Board, Start next season) and
+  says a player's own page is not one; the development-history FAQ loses the offer paragraph and
+  says a goal worth keeping is set again with the player; the Start-next-season recipe bullet points
+  at Previous seasons. Walk step A1 on the artifact drops "leave it".
+
+**What stays:** the Previous seasons fold (E1) — it READS a confirmed link, it never makes one — and
+the rollover's automatic confirmed links, which are what the fold reads for a carried player.
+
+**Two gaps the team-level surface must carry, named here so they are not lost (not built, not
+argued — the owner ruled where they go):** (1) a player added by hand mid-season who was on the team
+last year has no place to be linked until that page exists; (2) a wrong link (only possible from a
+Decision Board confirm) has no undo anywhere. Both are rare; both belong on the roster/settings
+surface, which gets its own mockup session before it is built (the standing rule for every history
+shelf). The continuity scan for roster rows (`?target=roster`) is that page's read and is
+unexercised today.
+
+**/review (2026-09-16, high-risk tier — four lenses: correctness · security/tenancy · data/contract ·
+regression):** the deterministic gate caught the carry banner's two dead stylesheet rules (retired
+with a ⚰ note); the rendered check passed on the Skills & Goals tab at 361/390/768/1440 (the
+`--changed` run widened to all 91 screens because the shared stylesheet is touched, and aborted on
+memory against a server another session was using — re-run scoped; an abort is not a pass). Five
+findings, all fixed: the season-end FAQ still promised "each returning player's profile offers to
+bring their open goals forward" (rewritten); the continuity scan's docstring said HEAD-COACH ONLY
+while the code has gated on the delegable Development grant since ruling 9 (2026-09-11) — and the
+prior-season sibling route cited that stale sentence as precedent (both comments corrected to the
+code; the gate itself is the ruling's and was not changed); `findConfirmedLink` lost its last
+caller with the carry route (retired with a ⚰ note — the archive walker keeps its own copy of the
+priority rule); the hook's docstring and the type's field comment still described the profile door
+and "until the coach answers" (both corrected). **One open call for the owner, not made here:** the
+`?target=roster` scan is now dead product code that returns prior-season guardian identity to any
+holder of the delegable grant. The recommendation is to refuse it (400) until the team-level surface
+exists and re-enable it with that build; left reachable for now because the plan names it as that
+page's read and the gate is unchanged from before E9.

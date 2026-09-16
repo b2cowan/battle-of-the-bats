@@ -16,7 +16,6 @@ import {
 } from '@/lib/measurable-series';
 import { activeMeasuredTests, measuredTestsWithHistory } from '@/lib/measurable-definition';
 import { goalTimeline, originSentence, GOAL_STATUS_LABELS, type GoalEvent } from '@/lib/development-goal-history';
-import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
 import ReviewGoalDialog from '@/components/coaches/ReviewGoalDialog';
 import RecordObservationDialog from '@/components/coaches/RecordObservationDialog';
@@ -25,8 +24,7 @@ import GoalSheet, { type GoalSheetValues } from '@/components/coaches/GoalSheet'
 import { GOAL_STATUSES } from '@/lib/development-input';
 import { REMOVE_OBSERVATION_CONFIRM, fixedObservation, patchObservation, deleteObservation as deleteObservationRecord } from '@/components/coaches/observation-sheet-host';
 import { splitTypedName } from '@/lib/coach-roster-name';
-import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
-import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
+import { formatValue, todayLocal, formatShortDate } from '@/lib/measurable-format';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
   RepTryoutBaselineSnapshot, RepPlayerObservation, RepDevelopmentGoalReview,
@@ -43,7 +41,7 @@ interface ArchiveSeason {
 
 interface DevelopmentData {
   canWrite: boolean;
-  /** The grant WITH Internal notes — goals, observations, reviews (and the carry offer) draw on this; results on `canWrite`. */
+  /** The grant WITH Internal notes — goals, observations, reviews draw on this; results on `canWrite`. */
   canWriteGoals: boolean;
   showGoals: boolean;
   showMeasurables: boolean;
@@ -55,7 +53,6 @@ interface DevelopmentData {
   /** user id → display name, for "entered by" / "written by". */
   authors: Record<string, string>;
   archive: ArchiveSeason[];
-  carry: { linkId: string; priorRosterId: string; priorSeasonLabel: string; workingCount: number } | null;
   /**
    * The frozen tryout snapshot, when this player was seeded from a tryout (Phase 2, R4).
    * ⚠ Null for everyone else, AND null for any coach without the tryouts capability — the server
@@ -89,9 +86,16 @@ const NO_GOAL_OPEN = 'none' as const;
  * Results is a table on the list recipe whose rows open to their dated rows; a bench-side result is
  * a SHEET that records what a session records (up to five attempts on a date, one headline); and
  * Previous seasons is a shut fold at the tab's foot, titled by the season's name, absent when there
- * is none. The continuity card and the carry-forward offer sit ABOVE the views (prompts, not
- * records); the tryout snapshot heads Goals (it is what the goals were chosen from). Phase 2's
+ * is none. The tryout snapshot heads Goals (it is what the goals were chosen from). Phase 2's
  * Observations and Previous seasons VIEWS are gone; their addresses land on the home.
+ *
+ * ⚠ Nothing on this tab LINKS a player to a past season (owner ruling 2026-09-16). The
+ * "Linked to your 2025 record" receipt with its unlink, the "Possible returning player — verify"
+ * card and the one-time "bring forward last season's goals?" offer all left the player's page:
+ * an identity decision is made for the team, not one player at a time on each profile. Today a
+ * link is made on the tryout Decision Board or by Start next season; a team-level surface
+ * (roster or settings) is its next home and gets its own mockup session. The fold below only
+ * READS a link.
  */
 export default function PlayerDevelopmentSection({
   orgSlug, teamId, playerId, playerName, arrival, onArrived,
@@ -134,20 +138,8 @@ export default function PlayerDevelopmentSection({
   const [resultErr, setResultErr] = useState('');
   const [expandedTypeId, setExpandedTypeId] = useState<string | null>(arrival.view === 'results' ? arrival.metricId : null);
 
-  // ── 3D: previous-seasons archive (the fold) + the one-time carry-forward offer ──
+  // ── 3D: previous-seasons archive (the fold) ──
   const [expandedSeasonId, setExpandedSeasonId] = useState<string | null>(null);
-  const [carryBusy, setCarryBusy] = useState(false);
-  const [carryErr, setCarryErr] = useState('');
-
-  const {
-    byCurrent: continuityByCurrent, decide: decideContinuity, dismiss: dismissContinuity,
-    busy: continuityBusy, error: continuityErr,
-  } = useContinuityLinks(
-    data?.canWrite ? `/api/coaches/${orgSlug}/teams/${teamId}/development/continuity` : null,
-    'roster',
-    playerId,
-  );
-  const continuity = continuityByCurrent[playerId] ?? [];
   // Sequenced like the session screen's: every status pick re-reads, and two in quick succession
   // can resolve out of order — the OLDER read must never land over the newer one.
   const loadSeqRef = useRef(0);
@@ -536,42 +528,6 @@ export default function PlayerDevelopmentSection({
     }
   }
 
-  /** The one-time carry-forward answer (3D). 'carry' merges the copied focus areas into the
-   *  list; either answer retires the banner. A 409 = answered in another tab — that answer
-   *  stands, so the banner quietly retires without an error. */
-  async function answerCarry(action: 'carry' | 'fresh') {
-    if (carryBusy) return;
-    setCarryBusy(true);
-    setCarryErr('');
-    try {
-      const res = await fetch(`${base}/carry`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
-      const json = await res.json().catch(() => null);
-      if (res.status === 409) {
-        setData(d => d ? { ...d, carry: null } : d);
-        return;
-      }
-      if (!res.ok || !json) throw new Error(json?.error ?? "Couldn't save that — try again.");
-      const copied: RepPlayerDevelopmentGoal[] = json.goals ?? [];
-      setData(d => d ? { ...d, carry: null, goals: [...d.goals, ...copied] } : d);
-    } catch (e) {
-      setCarryErr(e instanceof Error ? e.message : "Couldn't save that — try again.");
-    } finally {
-      setCarryBusy(false);
-    }
-  }
-
-  /** "View {season} record" — opens that season's fold at the tab's foot (never a navigation, E1). */
-  function viewOldRecord(priorRosterId: string) {
-    setExpandedSeasonId(priorRosterId);
-    window.setTimeout(() => {
-      document.getElementById(`dev-archive-${priorRosterId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 50);
-  }
-
   if (!data && !error) {
     return <CoachLoading label="Loading development…" inline />;
   }
@@ -618,57 +574,6 @@ export default function PlayerDevelopmentSection({
   return (
     <>
       {error && <p className={styles.errorText} role="alert">{error}</p>}
-
-      {/* ── Returning player? (3C — UNCHANGED, above the views) ── */}
-      {canWrite && continuity.length > 0 && (
-        <div style={{ marginBottom: '0.9rem' }}>
-          {continuity.map(row => row.status === 'confirmed' ? (
-            <p key={row.linkId} className={styles.devCardNote} style={{ marginBottom: '0.35rem' }}>
-              Linked to your {row.prior.seasonLabel} record
-              {row.decidedAt ? ` — confirmed ${formatShortInstant(row.decidedAt)}` : ''}.{' '}
-              {/* At the tap floor: the linked season the fixture now carries put this line on the
-                  layout sweep for the first time (the "green check over an empty fixture" trap). */}
-              <button type="button" className={`btn btn-ghost ${styles.tapFloor}`} style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem' }}
-                disabled={continuityBusy} onClick={() => decideContinuity(playerId, row, 'reject')}>
-                Not the same player — unlink
-              </button>
-            </p>
-          ) : (
-            <ContinuityCompareCard key={row.linkId} row={row} busy={continuityBusy}
-              onConfirm={() => decideContinuity(playerId, row, 'confirm')}
-              onReject={() => decideContinuity(playerId, row, 'reject')}
-              onDismiss={() => dismissContinuity(playerId, row.linkId)} />
-          ))}
-          {continuityErr && <p className={styles.errorText} role="alert">{continuityErr}</p>}
-        </div>
-      )}
-
-      {/* ── Carry-forward offer (3D, M5 — UNCHANGED, above the views) ── */}
-      {canWriteGoals && data.carry && (
-        <div className={styles.devCarryBanner}>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>
-            <b>Returning player — bring forward the {data.carry.workingCount} goal{data.carry.workingCount === 1 ? '' : 's'} they were working on in {data.carry.priorSeasonLabel}?</b>
-          </p>
-          <p className={styles.devCardNote} style={{ marginTop: '0.25rem' }}>
-            They&apos;ll join this season as &ldquo;Working on it&rdquo;. Results never carry over — last season&apos;s stay in its fold below. You can look first.
-          </p>
-          <div className={styles.devCarryActions}>
-            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
-              onClick={() => data.carry && viewOldRecord(data.carry.priorRosterId)}>
-              View {data.carry.priorSeasonLabel} record
-            </button>
-            <button type="button" className="btn btn-lime" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
-              onClick={() => answerCarry('carry')}>
-              Yes, bring forward
-            </button>
-            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
-              onClick={() => answerCarry('fresh')}>
-              No, start fresh
-            </button>
-          </div>
-          {carryErr && <p className={styles.errorText} role="alert" style={{ marginTop: '0.4rem' }}>{carryErr}</p>}
-        </div>
-      )}
 
       {/* ── The view switch, and the handout door beside it (E1) — the one thing on this tab a coach
           opens with a purpose beyond reading, where the Metrics door used to sit. Roster's List /

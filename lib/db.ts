@@ -9418,30 +9418,6 @@ export async function decideContinuityLink(
   return data ? mapRepPlayerContinuityLink(data) : null;
 }
 
-/** Record the ONE-TIME rollover carry-forward answer (3D, mig 192) — guarded in the
- *  UPDATE itself: only a CONFIRMED link that hasn't been answered yet. Returns null when
- *  the row is missing, not confirmed, or already answered (callers 409/404 honestly). */
-export async function setContinuityCarryDecision(
-  id: string, teamId: string, carryStatus: 'carried' | 'fresh', decidedBy: string,
-): Promise<RepPlayerContinuityLink | null> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_player_continuity_links')
-    .update({
-      carry_status: carryStatus,
-      carry_decided_by: decidedBy,
-      carry_decided_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .eq('team_id', teamId)
-    .eq('status', 'confirmed')
-    .is('carry_status', null)
-    .select()
-    .maybeSingle();
-  if (error) throw error;
-  return data ? mapRepPlayerContinuityLink(data) : null;
-}
-
 /** Team-scoped bulk roster-row fetch (the archive chain walks prior roster ids). */
 export async function getRepRosterPlayersByIds(ids: string[], teamId: string): Promise<RepRosterPlayer[]> {
   if (ids.length === 0) return [];

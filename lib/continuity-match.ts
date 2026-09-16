@@ -41,27 +41,13 @@ export function linkPriorId(link: { priorRosterId: string | null; priorRegistrat
   return link.priorRosterId ?? link.priorRegistrationId ?? '';
 }
 
-/**
- * The single CONFIRMED link for a current entity, resolving the accept-boundary ALIAS in an
- * EXPLICIT priority: a link keyed by the entity's own id wins over one keyed by its
- * originating tryout registration (`currentIds` in priority order, most-specific first). One
- * definition so the profile card, the board, and the carry offer can never pick different
- * links for the same human (a current entity can hold a board-era registration-keyed link AND
- * a rollover-minted roster-keyed link). Pass falsy ids freely — they're skipped.
- */
-export function findConfirmedLink<T extends {
-  status: 'suggested' | 'confirmed' | 'rejected';
-  currentRosterId: string | null; currentRegistrationId: string | null;
-}>(links: T[], currentIds: (string | null | undefined)[]): T | null {
-  const confirmedById = new Map<string, T>();
-  for (const l of links) {
-    if (l.status === 'confirmed') confirmedById.set(linkCurrentId(l), l);
-  }
-  for (const id of currentIds) {
-    if (id && confirmedById.has(id)) return confirmedById.get(id)!;
-  }
-  return null;
-}
+/* ⚰ `findConfirmedLink` STOOD HERE — "the single CONFIRMED link for a current entity, resolving
+   the accept-boundary alias in an explicit priority (the entity's own id over its originating
+   tryout registration)". Its last caller was the per-player carry-forward route, which left with
+   the player page's linking prompts on 2026-09-16 (owner ruling E9, plan §20.1). The archive
+   walker in the player development GET keeps its own copy of the same priority rule; when the
+   team-level linking surface is built, that walker's rule is the one to lift out, not this one to
+   resurrect from history. */
 
 /** The scan API's per-link response row — ONE definition shared by the server route and
  *  both verify doors (profile card + Decision Board), so a wire-shape change can't drift. */

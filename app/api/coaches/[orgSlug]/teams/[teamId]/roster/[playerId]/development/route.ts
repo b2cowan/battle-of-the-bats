@@ -49,21 +49,19 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
  *  a team history deeper than 8 seasons is beyond any real chain. */
 async function walkConfirmedPriorChain(
   teamId: string, player: RepRosterPlayer, links: RepPlayerContinuityLink[],
-): Promise<{ directLink: RepPlayerContinuityLink | null; priors: { link: RepPlayerContinuityLink; row: RepRosterPlayer }[] }> {
+): Promise<{ link: RepPlayerContinuityLink; row: RepRosterPlayer }[]> {
   const confirmedByCurrent = new Map<string, RepPlayerContinuityLink>();
   for (const l of links) {
     if (l.status === 'confirmed') confirmedByCurrent.set(linkCurrentId(l), l);
   }
 
   const priors: { link: RepPlayerContinuityLink; row: RepRosterPlayer }[] = [];
-  let directLink: RepPlayerContinuityLink | null = null;
   let currentIds: string[] = [player.id, player.tryoutRegistrationId ?? ''].filter(Boolean);
   const visited = new Set<string>(currentIds);
 
   for (let hop = 0; hop < 8; hop++) {
     const link = currentIds.map(id => confirmedByCurrent.get(id)).find(Boolean);
     if (!link) break;
-    if (hop === 0) directLink = link;
     if (link.priorRosterId) {
       if (visited.has(link.priorRosterId)) break; // defensive: a cycle would loop forever
       const [row] = await getRepRosterPlayersByIds([link.priorRosterId], teamId);
@@ -78,7 +76,7 @@ async function walkConfirmedPriorChain(
     }
     currentIds.forEach(id => visited.add(id));
   }
-  return { directLink, priors };
+  return priors;
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -96,8 +94,8 @@ export const GET = withObservability(async (_req: Request,
     return denied!;
   }
   // Two write flags, because the grant covers results on its own and goals only WITH notes
-  // (`canWriteDevelopmentGoals`). The section draws the log form on the first and the goal form,
-  // the continuity decisions and the carry offer on the second.
+  // (`canWriteDevelopmentGoals`). The section draws the log form on the first and the goal form
+  // on the second.
   const canWrite = canWriteDevelopment(caps);
   const canWriteGoals = canWriteDevelopmentGoals(caps);
 
@@ -122,7 +120,7 @@ export const GET = withObservability(async (_req: Request,
   // ── Previous-seasons archive (3D): confirmed chain, oldest→newest, scrapbook only —
   // dated records with NO cross-season computation anywhere. Column visibility follows
   // the same gates as the current season (goals ride notes, measurables ride roster). ──
-  const { directLink, priors } = await walkConfirmedPriorChain(teamId, player, links);
+  const priors = await walkConfirmedPriorChain(teamId, player, links);
 
   let archive: {
     priorRosterId: string;
@@ -187,24 +185,6 @@ export const GET = withObservability(async (_req: Request,
     archive.reverse();
   }
 
-  // ── Carry-forward offer (3D, head coach only): the DIRECT confirmed link, unanswered,
-  // with a roster prior that has working focus areas to bring. Reads the already-assembled
-  // archive season (goals + label) — no re-derivation. Count-honest; measurables are never
-  // offered (copying readings across seasons would fabricate trend data). ──
-  let carry: { linkId: string; priorRosterId: string; priorSeasonLabel: string; workingCount: number } | null = null;
-  if (canWriteGoals && directLink && directLink.carryStatus === null && directLink.priorRosterId) {
-    const directArchive = archive.find(a => a.priorRosterId === directLink.priorRosterId);
-    const workingCount = directArchive?.goals.filter(g => g.status === 'working').length ?? 0;
-    if (directArchive && workingCount > 0) {
-      carry = {
-        linkId: directLink.id,
-        priorRosterId: directArchive.priorRosterId,
-        priorSeasonLabel: directArchive.seasonLabel,
-        workingCount,
-      };
-    }
-  }
-
   // "Entered by" / "written by" — every record names who wrote it (owner ruling 2026-09-11). The
   // caller is resolved through the SAME map (Phase 3: the handout reads "Prepared <date> · <coach>").
   const viewerId = resolved.ctx.user.id;
@@ -227,7 +207,6 @@ export const GET = withObservability(async (_req: Request,
     authors,
     viewerId,
     archive,
-    carry,
     // The stored snapshot ONLY — never recomputed here. A rubric edited in September must not
     // change what August's card says (R4).
     tryoutBaseline: tryoutBaseline ? tryoutBaseline.snapshot : null,

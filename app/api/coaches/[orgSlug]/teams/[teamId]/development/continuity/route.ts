@@ -16,14 +16,26 @@ import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/li
 import { matchPriorIdentities, type ContinuityIdentity, type ContinuityRow } from '@/lib/continuity-match';
 
 /**
- * The returning-player SCAN (Player Development 3C). HEAD-COACH ONLY — the compare payload
- * carries guardian identity from prior seasons, the same sensitivity class as the tryout
- * Decide surfaces. Never called from (or rendered on) blind evaluator screens.
+ * The returning-player SCAN (Player Development 3C). The compare payload carries guardian
+ * identity from prior seasons, the same sensitivity class as the tryout Decide surfaces.
+ * Never called from (or rendered on) blind evaluator screens.
+ *
+ * ⚠ GATE: the Development grant (`canWriteDevelopment`) — the head coach always, an assistant
+ * only when the head coach switched it on for them. It was `isHeadCoach` alone from 2026-07-17
+ * until ruling 9 of the development lifecycle (2026-09-11) moved every development write, this
+ * scan and the continuity decisions included, onto the delegable grant (mig 292 rewrote the
+ * policies to match). An earlier version of this comment still said "HEAD-COACH ONLY" for five
+ * days after that stopped being true; the sibling `tryout-candidates/prior-season` route cited
+ * it as precedent. Read the code, not the comment.
  *
  * ?target=registrations           → current tryout cycle's candidates (Decision Board chips)
- * ?target=roster                  → current active roster rows (the manual-add door, D5)
- * ?target=roster&playerId=<id>    → ONE player's slice (the profile card — no whole-roster
- *                                   match work per profile visit)
+ * ?target=roster                  → current active roster rows
+ * ?target=roster&playerId=<id>    → ONE player's slice
+ *   ⚠ Both roster targets are UNEXERCISED since 2026-09-16: the player profile's verify card was
+ *   their only caller, and nothing on a player's page links a past season any more (owner ruling
+ *   E9, plan §20.1 — linking is decided for the team, never one profile at a time). The
+ *   roster/settings surface that replaces it is this scan's next caller. Same gate as above
+ *   until then — an unexercised branch fails closed exactly as it always did.
  *
  * Scanning bulk-INSERTS new `suggested` pairs — existing rows of ANY status are excluded
  * up front (a rejected row is the never-re-suggest tombstone), and a concurrent-scan race
