@@ -9,7 +9,9 @@
 }
 @media (min-width: 1024px) {
   .host {
-    height: 100dvh;
+    /* Height comes from the base calc — the host page publishes the real top-chrome height in
+       --coach-topbar-h and zeroes the bottom-nav var on desktop. A hard 100dvh here overflowed
+       the document by the top strip + masthead and let the open-time scroll drag the page. */
     min-height: 420px;
   }
 }

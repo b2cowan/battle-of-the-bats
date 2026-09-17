@@ -355,7 +355,11 @@ export default function ChatPanel({
   );
 
   const scrollToBottom = useCallback((smooth = false) => {
-    bottomRef.current?.scrollIntoView({ behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto' });
+    // Scroll the LIST, not the sentinel into view: scrollIntoView walks every scrollable ancestor
+    // and will drag the host page if the panel is even a few px taller than its slot.
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto' });
   }, []);
 
   const markRead = useCallback(async () => {

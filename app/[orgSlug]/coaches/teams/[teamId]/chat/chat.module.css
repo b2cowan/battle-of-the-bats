@@ -4,10 +4,13 @@
    floats with dead space + a nested scroll. We cancel that padding with negative margins and set the
    vars to this portal's real chrome (no mobile top bar; bottom nav only ≤900px). */
 .chatWrap {
-  /* The pinned team header (D2, 2026-08-01) IS this portal's top bar now — its measured
-     height is published as --coach-header-h on the shared <main>, so the chat box's
-     viewport calc stays honest and the composer never slips below the fold. */
-  --coach-topbar-h: var(--coach-header-h, 0px);
+  /* This portal's "top bar" is the fixed FieldLogicHQ strip (--coach-topstrip-top, zeroed ≤900
+     where it never renders) PLUS the pinned team masthead (D2, 2026-08-01 — its measured height is
+     published as --coach-header-h on the shared <main>). Both must come off the viewport calc: an
+     oversized box overflows the document, and ChatPanel's open-time scroll then scrolls the page
+     (overflow:hidden only blocks the user, not programmatic scroll) — the room list's first row
+     slid under the masthead every time a conversation was selected. */
+  --coach-topbar-h: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
   /* Was a hand-typed 64px, independent of the bar it was reserving room for — the same
      64px/72px drift already caught and reconciled once in the consumer shell (see
      UNIFIED_HOME_TOURNAMENT_NAV_MERGE_PLAN §"KNOWN DRIFT"). CoachesBottomNav enforces its own
