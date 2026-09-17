@@ -13,11 +13,12 @@ import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { canManageSchedule } from '@/lib/coach-capabilities';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachEventListRow from '@/components/coaches/CoachEventListRow';
+import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
 import { gameDayEntryHref } from '@/lib/coach-game-day';
 import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
-import { formatInOrgZone } from '@/lib/timezone';
+import { formatInOrgZone, formatOrgDayMonth } from '@/lib/timezone';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
@@ -377,7 +378,7 @@ export default function CoachesLineupsPage({
     const gameDayHref = gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
     // Shared with the Practice plans hub (2026-08-15) — the row's date tile formats in the org's
     // zone inside the component, so the two hubs cannot drift onto different clocks.
-    const row = (
+    return (
       <CoachEventListRow
         key={e.id}
         href={`${base}/lineups/${e.id}`}
@@ -391,14 +392,9 @@ export default function CoachesLineupsPage({
         }
         action={action}
         primaryLabel={isPrimary ? 'Build lineup' : null}
+        // Beside the row, never inside it — the row keeps one destination (the builder).
+        beside={gameDayHref ? <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link> : undefined}
       />
-    );
-    if (!gameDayHref) return row;
-    return (
-      <div key={e.id} className={styles.eventChipRow}>
-        {row}
-        <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link>
-      </div>
     );
   };
 
@@ -488,23 +484,25 @@ export default function CoachesLineupsPage({
             )}
           </div>
 
-          {upcomingShown.length > 0 && (
-            // data-sandbox-tour: the beat the demo's "count the lineups" step rings — the games
-            // still waiting behind the one lineup already saved. Inert off a demo org.
-            <section aria-labelledby="lineups-upcoming" data-sandbox-tour="lineups-upcoming">
-              <p className={styles.sectionKicker} id="lineups-upcoming">Upcoming games</p>
-              <div className={styles.lineupFrontList}>
-                {upcomingShown.map(e => renderRow(e, 'Build lineup'))}
-              </div>
-            </section>
-          )}
-          {recentShown.length > 0 && (
-            <section aria-labelledby="lineups-recent">
-              <p className={styles.sectionKicker} id="lineups-recent">Recent games</p>
-              <div className={styles.lineupFrontList}>
-                {recentShown.map(e => renderRow(e, 'Open lineup'))}
-              </div>
-            </section>
+          {/* ONE frame for both halves (standard §3.10, F-27): "Upcoming games" and "Recent
+              games" are band rows inside it. data-sandbox-tour: the beat the demo's "count the
+              lineups" step rings — the games still waiting behind the one lineup already saved —
+              now anchors on the whole list. Inert off a demo org. */}
+          {(upcomingShown.length > 0 || recentShown.length > 0) && (
+            <CoachRowList label="Games" className={styles.hubRowList} data-sandbox-tour="lineups-upcoming">
+              {upcomingShown.length > 0 && (
+                <>
+                  <CoachRowBand id="lineups-upcoming">Upcoming games</CoachRowBand>
+                  {upcomingShown.map(e => renderRow(e, 'Build lineup'))}
+                </>
+              )}
+              {recentShown.length > 0 && (
+                <>
+                  <CoachRowBand id="lineups-recent">Recent games</CoachRowBand>
+                  {recentShown.map(e => renderRow(e, 'Open lineup'))}
+                </>
+              )}
+            </CoachRowList>
           )}
           {noMatches && (
             <p className={styles.lineupFilterNoMatch}>
@@ -546,11 +544,17 @@ export default function CoachesLineupsPage({
                   </Link>
                 )}
               </div>
-              <div className={styles.lineupTplList}>
+              {/* The templates as a row list (standard §3.10, F-28): the same frame as the games
+                  list; the name is the link (§3.6 — a row that navigates has the name as the link),
+                  the three controls sit in the trail and clear the tap floor at ≤ 768. */}
+              <CoachRowList label="Templates">
                 {templates.map(t => (
-                  <div key={t.id} className={styles.lineupTplRow}>
-                    {renamingId === t.id ? (
-                      <div className={styles.lineupTplRename}>
+                  renamingId === t.id ? (
+                    <CoachRow
+                      key={t.id}
+                      as="static"
+                      title={
+                      <span className={styles.lineupTplRename}>
                         <input
                           className={styles.input}
                           value={renameValue}
@@ -566,15 +570,16 @@ export default function CoachesLineupsPage({
                         <button type="button" className={styles.lineupTplIconBtn} aria-label="Cancel rename" onClick={() => setRenamingId(null)}>
                           <X size={16} />
                         </button>
-                      </div>
-                    ) : (
-                      <>
-                        <Link href={`${base}/lineups/templates/${t.id}`} className={styles.lineupTplInfo}>
-                          <span className={styles.lineupTplName}>{t.name}</span>
-                          <span className={styles.lineupTplMeta}>
-                            {t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {t.inningCount} {sportPack.periodLabelPlural.toLowerCase()} · {t.entries.length} player{t.entries.length === 1 ? '' : 's'}
-                          </span>
-                        </Link>
+                      </span>
+                      }
+                    />
+                  ) : (
+                    <CoachRow
+                      key={t.id}
+                      as="static"
+                      title={<Link href={`${base}/lineups/templates/${t.id}`} className={`${styles.lineupTplName} ${styles.rowTapLink}`}>{t.name}</Link>}
+                      caption={`${t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · ${t.inningCount} ${sportPack.periodLabelPlural.toLowerCase()} · ${t.entries.length} player${t.entries.length === 1 ? '' : 's'}`}
+                      trail={
                         <div className={styles.lineupTplActions}>
                           <button type="button" className={styles.btnSecondary} disabled={pickerGames.length === 0} title={pickerGames.length === 0 ? 'Add a game first' : undefined} onClick={() => { setNotice(''); setApplyTemplate(t); }}>
                             Apply
@@ -586,11 +591,11 @@ export default function CoachesLineupsPage({
                             <Trash2 size={15} />
                           </button>
                         </div>
-                      </>
-                    )}
-                  </div>
+                      }
+                    />
+                  )
                 ))}
-              </div>
+              </CoachRowList>
             </>
           )}
         </section>
@@ -602,29 +607,26 @@ export default function CoachesLineupsPage({
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>Apply &ldquo;{applyTemplate.name}&rdquo; to&hellip;</>} onClose={() => setApplyTemplate(null)} closeIconSize={18} closeAriaLabel="Close" />
             <p className={styles.bodyNote} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
-            <div className={styles.lineupFrontList}>
+            {/* A row that is a BUTTON (it applies the template), on the same recipe as the games
+                list — `CoachRow as="button"` is the row-list component's own second face, not a
+                branch bolted onto the navigation row. Inset: the modal paints the ground. The
+                org-zone clock is shared with the hub's rows through the same formatter. */}
+            <CoachRowList inset label="Games">
               {pickerGames.map(g => (
-                <button key={g.id} type="button" className={styles.lineupFrontRow} disabled={!!applyBusyGameId} onClick={() => applyToGame(g)} style={{ textAlign: 'left', cursor: applyBusyGameId ? 'wait' : 'pointer' }}>
-                  {/* ⚠ NOT CoachEventListRow: this is a <button> that applies a template, not a
-                      link that navigates, and bolting an as-button branch onto a component built
-                      for one navigation idiom is the special case it exists to avoid. It does
-                      share the org-zone clock, which is the half that was actually wrong. */}
-                  <span className={styles.lineupFrontDate}>
-                    <span className={styles.lineupFrontDay}>{formatInOrgZone(g.startsAt, { day: 'numeric' })}</span>
-                    <span className={styles.lineupFrontMonth}>{formatInOrgZone(g.startsAt, { month: 'short' })}</span>
-                  </span>
-                  <span className={styles.lineupFrontMain}>
-                    <span className={styles.lineupFrontTitle}>{gameTitle(g)}</span>
-                    <span className={styles.lineupFrontMeta}>{formatWeekday(g.startsAt)} · {formatTime(g.startsAt)}</span>
-                  </span>
-                  {ready[g.id] === true && <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span>}
-                  <span className={styles.lineupFrontAction}>
-                    {applyBusyGameId === g.id ? 'Applying…' : 'Apply'}
-                    <ArrowRight size={14} aria-hidden />
-                  </span>
-                </button>
+                <CoachRow
+                  key={g.id}
+                  as="button"
+                  disabled={!!applyBusyGameId}
+                  onClick={() => applyToGame(g)}
+                  lead={formatOrgDayMonth(g.startsAt)}
+                  leadKind="date"
+                  title={gameTitle(g)}
+                  caption={`${formatWeekday(g.startsAt)} · ${formatTime(g.startsAt)}`}
+                  trail={ready[g.id] === true ? <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span> : undefined}
+                  door={{ label: applyBusyGameId === g.id ? 'Applying…' : 'Apply', icon: <ArrowRight size={14} aria-hidden /> }}
+                />
               ))}
-            </div>
+            </CoachRowList>
           </div>
         </div>
       )}

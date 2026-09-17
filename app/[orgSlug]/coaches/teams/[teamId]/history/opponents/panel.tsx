@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, use } from 'react';
-import Link from 'next/link';
 import { Library } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
@@ -8,6 +7,7 @@ import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { recordChip, recordTone, resultLetter, hasMeetings, hasBookContent, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { formatInOrgZone } from '@/lib/timezone';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import styles from '../../../../coaches.module.css';
 
 // "Who are we up against?" — the Opponent Scouting Book's list: every team we've faced,
@@ -90,44 +90,53 @@ export function ScoutingPanel({
             onChange={e => setQuery(e.target.value)}
             aria-label="Search opponents"
           />
-          <div className={styles.scoutList}>
-            {shown.map(e => (
-              <Link key={e.key} href={`${base}/history/opponents/${encodeURIComponent(e.key)}`} className={styles.scoutRow}>
-                <span
-                  className={styles.scoutNoteDot}
-                  data-has={hasBookContent(e) ? 'yes' : 'no'}
-                  aria-hidden
+          {/* The row list (standard §3.10, F-29): one frame on the card, the same frame the Results
+              tab beside it draws — six white cards on the paper were two treatments one tab apart.
+              The note dot is the one lead mark; the record chip keeps its own recipe. */}
+          {shown.length > 0 && (
+            <CoachRowList label="Opponents">
+              {shown.map(e => (
+                <CoachRow
+                  key={e.key}
+                  as="link"
+                  href={`${base}/history/opponents/${encodeURIComponent(e.key)}`}
+                  mark={<span className={styles.scoutNoteDot} data-has={hasBookContent(e) ? 'yes' : 'no'} aria-hidden />}
+                  title={e.displayName}
+                  caption={
+                    <>
+                      {e.lastMeeting
+                        ? `Last met ${formatInOrgZone(e.lastMeeting.startsAt, { month: 'short', day: 'numeric', year: 'numeric' })}${e.lastMeeting.result ? ` · ${resultLetter(e.lastMeeting.result)}${e.lastMeeting.teamScore != null ? ` ${e.lastMeeting.teamScore}–${e.lastMeeting.opponentScore}` : ''}` : ''}`
+                        : 'No games on file'}
+                      {e.observationCount > 0 && ` · ${e.observationCount} observation${e.observationCount === 1 ? '' : 's'}`}
+                    </>
+                  }
+                  trail={
+                    <>
+                      {/* Club Shared Book: your club knows this opponent too. A marker, not a second
+                          count — the number lives on the card, where the teams are named. */}
+                      {clubKeys.has(e.key) && (
+                        <span
+                          className={styles.scoutClubBadge}
+                          role="img"
+                          aria-label={`Your club has shared notes on ${e.displayName}`}
+                          title={`Your club has shared notes on ${e.displayName}`}
+                        >
+                          <Library size={13} aria-hidden />
+                        </span>
+                      )}
+                      <span className={styles.scoutRecChip} data-tone={recordTone(e.record)} title={`Record vs ${e.displayName} (${sportPack.label.toLowerCase()} record rule — scrimmages not counted)`}>
+                        {recordChip(e.record)}
+                      </span>
+                    </>
+                  }
+                  door="chevron"
                 />
-                <span className={styles.scoutRowMain}>
-                  <span className={styles.scoutRowName}>{e.displayName}</span>
-                  <span className={styles.scoutRowMeta}>
-                    {e.lastMeeting
-                      ? `Last met ${formatInOrgZone(e.lastMeeting.startsAt, { month: 'short', day: 'numeric', year: 'numeric' })}${e.lastMeeting.result ? ` · ${resultLetter(e.lastMeeting.result)}${e.lastMeeting.teamScore != null ? ` ${e.lastMeeting.teamScore}–${e.lastMeeting.opponentScore}` : ''}` : ''}`
-                      : 'No games on file'}
-                    {e.observationCount > 0 && ` · ${e.observationCount} observation${e.observationCount === 1 ? '' : 's'}`}
-                  </span>
-                </span>
-                {/* Club Shared Book: your club knows this opponent too. A marker, not a second
-                    count — the number lives on the card, where the teams are named. */}
-                {clubKeys.has(e.key) && (
-                  <span
-                    className={styles.scoutClubBadge}
-                    role="img"
-                    aria-label={`Your club has shared notes on ${e.displayName}`}
-                    title={`Your club has shared notes on ${e.displayName}`}
-                  >
-                    <Library size={13} aria-hidden />
-                  </span>
-                )}
-                <span className={styles.scoutRecChip} data-tone={recordTone(e.record)} title={`Record vs ${e.displayName} (${sportPack.label.toLowerCase()} record rule — scrimmages not counted)`}>
-                  {recordChip(e.record)}
-                </span>
-              </Link>
-            ))}
-            {shown.length === 0 && q && (
-              <p className={styles.scoutListNone}>No opponent matches “{query}”.</p>
-            )}
-          </div>
+              ))}
+            </CoachRowList>
+          )}
+          {shown.length === 0 && q && (
+            <p className={styles.scoutListNone}>No opponent matches “{query}”.</p>
+          )}
           <p className={styles.scoutFootnote}>
             Records count the same games Season Wrapped counts — scrimmages are listed on each opponent’s page but never counted.
           </p>

@@ -162,7 +162,7 @@ describe('compareWindow — this season or the last two records', () => {
 });
 
 describe('coverageCell — per metric, that metric\'s own date (F12)', () => {
-  const none = { latest: null, latestObservation: null, notAssessedOn: null };
+  const none = { latest: null, latestObservation: null };
   it('a test with a result reads the headline and its date', () => {
     const c = coverageCell({ ...none, latest: { value: 8.31, unit: 'seconds', recordedOn: '2026-06-10', attempts: 2, inRange: null } }, sprint);
     assert.deepEqual(c, { text: '8.31 seconds (of 2)', on: '2026-06-10', state: 'recorded' });
@@ -177,12 +177,7 @@ describe('coverageCell — per metric, that metric\'s own date (F12)', () => {
     const noDescriptor = coverageCell({ ...none, latestObservation: { descriptor: null, note: 'One cue.', observedOn: '2026-06-10' } }, skill);
     assert.equal(noDescriptor.text, 'One cue.');
   });
-  it('not assessed is a state, dated by the session that marked it — and a later result wins over it', () => {
-    assert.deepEqual(coverageCell({ ...none, notAssessedOn: '2026-06-10' }, sprint), { text: 'Not assessed', on: '2026-06-10', state: 'not_assessed' });
-    const both = coverageCell({ latest: { value: 8.31, unit: 'seconds', recordedOn: '2026-06-10', attempts: 1, inRange: null }, latestObservation: null, notAssessedOn: '2026-05-01' }, sprint);
-    assert.equal(both.state, 'recorded');
-  });
-  it('nothing recorded is ONE dash — the legend under the table says what it means, once (stage 4, G1)', () => {
+  it('nothing recorded is ONE dash, whatever the reason — a session marking the player not-assessed still reads as a dash (owner, 2026-09-17: why there is no data is noise)', () => {
     assert.deepEqual(coverageCell(none, sprint), { text: COVERAGE_DASH, on: null, state: 'none' });
     assert.deepEqual(coverageCell(none, skill), { text: COVERAGE_DASH, on: null, state: 'none' });
     assert.equal(COVERAGE_DASH, '—');

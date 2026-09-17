@@ -9,6 +9,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachEventListRow from '@/components/coaches/CoachEventListRow';
+import { CoachRowList, CoachRowBand, CoachRowListFoot } from '@/components/coaches/CoachRowList';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabilities';
@@ -263,7 +264,7 @@ export default function CoachesPracticePlansPage({
     // "Open" is the record's door — a past practice, or a coach who cannot write plans — and it is
     // the quiet one; the working doors keep their weight.
     const action = planned ? 'Open the plan' : (!past && canPlan) ? 'Plan this practice' : 'Open';
-    const row = (
+    return (
       <CoachEventListRow
         key={e.id}
         href={`${base}/practice/${e.id}`}
@@ -283,14 +284,9 @@ export default function CoachesPracticePlansPage({
         note={past ? practiceRecapLine(e.practiceRecap) : null}
         // The room's one lime lives on the card now (D1) — no row carries it.
         primaryLabel={null}
+        // Beside the row, never inside it — the row stays one control (§3.6).
+        beside={inRunWindow ? <Link href={`${base}/practice/${e.id}/run`} className={styles.gdEntryBtn}>Run practice</Link> : undefined}
       />
-    );
-    if (!inRunWindow) return row;
-    return (
-      <div key={e.id} className={styles.eventChipRow}>
-        {row}
-        <Link href={`${base}/practice/${e.id}/run`} className={styles.gdEntryBtn}>Run practice</Link>
-      </div>
     );
   };
 
@@ -410,26 +406,35 @@ export default function CoachesPracticePlansPage({
             </div>
           )}
 
-          {upcomingShown.length > 0 && (
-            <section aria-labelledby="practices-upcoming">
-              <p className={styles.sectionKicker} id="practices-upcoming">Coming up</p>
-              <div className={styles.lineupFrontList}>{upcomingShown.map(e => renderRow(e, false))}</div>
-            </section>
-          )}
-          {recentShown.length > 0 && (
-            <section aria-labelledby="practices-recent">
-              <p className={styles.sectionKicker} id="practices-recent">Recent practices</p>
-              <div className={styles.lineupFrontList}>{recentShown.map(e => renderRow(e, true))}</div>
-              {/* The one quiet door (L8) — words, never "All 23"; gone once opened, and absent at
-                  six or fewer. Practice review under Insights → Development is unchanged. */}
-              {moreRecent && (
-                <p className={styles.ppEveryPractice}>
-                  <button type="button" className={styles.ppTlQuietLink} onClick={() => setShowAllFor(teamId)}>
-                    Every practice this season ›
-                  </button>
-                </p>
+          {/* ONE frame for both halves of the list (standard §3.10, F-27 — owner-ruled 2026-09-16):
+              "Coming up" and "Recent practices" are BAND ROWS inside it, not kickers on the paper
+              over two stacks of cards. The two vocabularies (D3) are untouched — the planner's
+              doors above the band, the record's "Open" below it. */}
+          {(upcomingShown.length > 0 || recentShown.length > 0) && (
+            <CoachRowList label="Practices" className={styles.hubRowList}>
+              {upcomingShown.length > 0 && (
+                <>
+                  <CoachRowBand id="practices-upcoming">Coming up</CoachRowBand>
+                  {upcomingShown.map(e => renderRow(e, false))}
+                </>
               )}
-            </section>
+              {recentShown.length > 0 && (
+                <>
+                  <CoachRowBand id="practices-recent">Recent practices</CoachRowBand>
+                  {recentShown.map(e => renderRow(e, true))}
+                </>
+              )}
+            </CoachRowList>
+          )}
+          {/* The one quiet door (L8) — words, never "All 23"; gone once opened, and absent at
+              six or fewer. Practice review under Insights → Development is unchanged. It sits
+              UNDER the frame, in the notes stack (§3.5), never inside it. */}
+          {moreRecent && (
+            <CoachRowListFoot>
+              <button type="button" className={styles.ppTlQuietLink} onClick={() => setShowAllFor(teamId)}>
+                Every practice this season ›
+              </button>
+            </CoachRowListFoot>
           )}
           {noMatches && (
             <p className={styles.lineupFilterNoMatch}>All caught up — every practice here has a plan.</p>

@@ -347,6 +347,15 @@ export function formatDayMonth(value: string | null | undefined): string {
   return `${p.d} ${SHORT_MONTHS[p.m - 1]}`;
 }
 
+/**
+ * "27 Oct" — an INSTANT's day and month, read in the org's zone, day first. The date column that
+ * leads a row list's rows (standard §3.10.4): the two hubs and the lineup picker. Lives here so
+ * the two callers cannot spell the same two-call expression apart.
+ */
+export function formatOrgDayMonth(iso: string): string {
+  return `${formatInOrgZone(iso, { day: 'numeric' })} ${formatInOrgZone(iso, { month: 'short' })}`;
+}
+
 const LONG_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /**

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import type { PayableItem, PayableLane } from '@/components/accounting/UpcomingPayablesPanel';
+import { CoachCard, kit } from '@/components/coaches/kit';
 import styles from './overview-dashboard.module.css';
 
 /* One chronological money timeline for the Overview dashboard — dues, team
@@ -198,9 +199,9 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
   }
 
   return (
-    <div className={styles.card}>
+    <CoachCard>
       <div className={styles.ledgerHead}>
-        <span className={styles.eye}>Next {days} days</span>
+        <span className={kit.eye}>Next {days} days</span>
         {!loading && !error && rows.length > 0 && (
           <span className={styles.ledgerSummary}>
             {overdueAmt > 0 && <><b className={styles.amtBad}>{fmt(overdueAmt)}</b> overdue · </>}
@@ -273,14 +274,14 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
         </div>
       )}
 
-      <div className={styles.foot}>
+      <div className={kit.foot}>
         {/* ⚠ THE BOOK, NOT THE SCHEDULE. This window shows 30 days of what is coming; the register
             shows all of it, and the season behind it, in one column. The payment schedule survives
             on Payables, where commitments are managed — one place to see, separate doors to act. */}
-        <Link href={hrefs.fullBook} className={styles.footLink}>
+        <Link href={hrefs.fullBook} className={kit.footLink}>
           See the whole book →
         </Link>
       </div>
-    </div>
+    </CoachCard>
   );
 }

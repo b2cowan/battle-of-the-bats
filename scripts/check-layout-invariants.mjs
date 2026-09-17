@@ -188,7 +188,12 @@ if (has('--changed') && !onlyIds) {
         .replace('__PLAYER__', '[playerId]')
         .replace('__TEMPLATE__', '[templateId]')
         .replace('__SESSION__', '[sessionId]')
-        .replace('__OPPONENT__', '[opponentKey]');
+        .replace('__OPPONENT__', '[opponentKey]')
+        // A tab screen addresses its page with `?section=…`; the folder is what a changed file can
+        // match, so the query is dropped (found 2026-09-16: `coach-history-scouting` computed to
+        // `…/history?section=scouting`, matched no file, and the Scouting Book's own diff swept
+        // the Dashboard tab instead — "looks covered, is not").
+        .replace(/\?.*$/, '');
     const hit = SCREENS.filter((s) => files.some((f) => f.startsWith(dirOf(s) + '/') || f.startsWith(dirOf(s) + '.')));
     onlyIds = hit.map((s) => s.id);
     if (!onlyIds.length) {
@@ -486,20 +491,131 @@ function probeInPage(opts) {
     const rootFs = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     const toPx = (v) => { v = (v || '').trim(); if (!v) return null; if (v.endsWith('rem')) return parseFloat(v) * rootFs; if (v.endsWith('px')) return parseFloat(v); return null; };
     const LADDER_TOKENS = ['--type-display', '--type-figure', '--type-title', '--type-heading', '--type-body', '--type-support', '--type-label', '--type-token', '--money-cat-size', '--money-line-size', '--money-catnum-size'];
-    for (const table of Array.from(root.querySelectorAll('table'))) {
-      if (!visible(table) || isExempt(table)) continue;
-      const tcs = getComputedStyle(table);
-      const ladder = LADDER_TOKENS.map((t) => toPx(tcs.getPropertyValue(t))).filter((v) => v != null);
-      if (!ladder.length) continue; // a surface with no ladder published cannot be held to one
+    // The sizes inside a container that are not on the ladder the container publishes — one
+    // reader for tables (every cell) and row lists (every text leaf in a row). Returns null when
+    // the surface publishes no ladder at all: it cannot be held to one.
+    const offLadder = (container, cells) => {
+      const ccs = getComputedStyle(container);
+      const ladder = LADDER_TOKENS.map((t) => toPx(ccs.getPropertyValue(t))).filter((v) => v != null);
+      if (!ladder.length) return null;
       const off = new Set();
-      for (const cell of Array.from(table.querySelectorAll('th, td'))) {
+      for (const cell of cells) {
         if (!visible(cell)) continue;
         const fs = parseFloat(getComputedStyle(cell).fontSize);
         if (!ladder.some((v) => Math.abs(v - fs) < 0.35)) off.add(fs.toFixed(2));
       }
-      if (off.size) {
+      return off;
+    };
+    for (const table of Array.from(root.querySelectorAll('table'))) {
+      if (!visible(table) || isExempt(table)) continue;
+      const off = offLadder(table, Array.from(table.querySelectorAll('th, td')));
+      if (off && off.size) {
         const head = table.querySelector('th');
         add('type-ladder', `table·${(head && nameOf(head)) || nameOf(table)}`, `cells at ${[...off].join('px, ')}px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)`);
+      }
+    }
+    // A ROW LIST is a table without a heading row (standard §1, §3.10) and is held to the same
+    // ladder: every text leaf inside a `[data-row-list-row]` — the title, the caption, the date
+    // column, a chip — reads at a ladder size. One finding per list, keyed on the list's label.
+    const hasText = (el) => Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim());
+    for (const list of Array.from(root.querySelectorAll('[data-row-list]'))) {
+      if (!visible(list) || isExempt(list)) continue;
+      const off = offLadder(list, Array.from(list.querySelectorAll('[data-row-list-row] *')).filter(hasText));
+      if (off && off.size) add('type-ladder', `list·${list.getAttribute('aria-label') || nameOf(list)}`, `rows at ${[...off].join('px, ')}px — not on the type ladder`);
+    }
+  }
+
+  // ── R9 · a row list sits on the card — read from the ANCESTOR, never the row ────
+  //
+  // Standard §3.10.1: between an item row and the paper there is exactly ONE thing that paints
+  // the card — the list's own frame, or the card / shelf around it — never zero, never two.
+  //
+  // ⚠⚠ THIS RULE EXISTS BECAUSE THE TABLE STANDARD SHIPPED FOR TEN DAYS WITH ITS GROUND UNPAINTED
+  // (register F-24, 2026-09-16). The sentence said "rows transparent over the card"; the gate
+  // verified the transparency and never the card, and every list table sat on the blueprint grid
+  // under a crisp white heading while the inventory RECORDED the transparency as a pass. A rule
+  // that says "over X" is a rule about X — so this one walks UP from the row to `main` and asks
+  // what the first painted ancestor is, and compares it to the card token resolved on that very
+  // element (both skins, no literal).
+  //
+  // At ≤ 640 the frame stands down and each row is its own card (the table's phone recipe), so
+  // the question flips: the row's <li> must paint the wash, and NOTHING between it and `main`
+  // may paint — a slab behind a stack of cards is the defect `.devTableCard` shipped (F-24).
+  if (wanted('list-ground')) {
+    const transparent = (c) => !c || c === 'transparent' || /^rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)$/.test(c);
+    const resolve = (el, token) => {
+      // The token is read off the element itself so its own ancestry publishes the value (the
+      // warm and dark skins both remap --card-bg); a probe element paints it so we compare
+      // COMPUTED rgb to computed rgb, never a var() string to a colour.
+      const raw = getComputedStyle(el).getPropertyValue(token).trim();
+      if (!raw) return null;
+      const probe = document.createElement('span');
+      probe.style.backgroundColor = raw;
+      el.appendChild(probe);
+      const out = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return out;
+    };
+    const stopAt = root.querySelector('main') || root;
+    const phone = window.innerWidth <= 640;
+    for (const list of Array.from(root.querySelectorAll('[data-row-list]'))) {
+      if (!visible(list) || isExempt(list)) continue;
+      // Only the FIRST visible row is read — `.find`, not `.filter`, so a forty-row list costs one
+      // layout read, not forty (the same idiom the modal finder above uses).
+      const row = Array.from(list.querySelectorAll(':scope > [data-row-list-row]')).find(visible);
+      if (!row) continue;
+      const label = `list·${list.getAttribute('aria-label') || nameOf(list)}`;
+      const card = resolve(list, '--card-bg');
+      if (!card) continue; // a surface with no card token cannot be held to one
+      if (!phone) {
+        // Walk up from the row: the first painted ancestor must be the card.
+        let node = row.parentElement;
+        let painter = null;
+        while (node && node !== stopAt.parentElement) {
+          const bg = getComputedStyle(node).backgroundColor;
+          if (!transparent(bg)) { painter = { node, bg }; break; }
+          node = node.parentElement;
+        }
+        const rowBg = getComputedStyle(row).backgroundColor;
+        if (!transparent(rowBg)) {
+          add('list-ground', label, `the row itself paints ${rowBg} — a row is not a card on a desktop (§3.10.2)`);
+        } else if (!painter) {
+          add('list-ground', label, `nothing between the row and the page paints a ground — the list sits on the paper (§3.10.1: exactly one painter)`);
+        } else if (painter.bg !== card) {
+          add('list-ground', label, `the ground behind the row is ${painter.bg}, painted by <${painter.node.tagName.toLowerCase()} class="${String(painter.node.className).slice(0, 60)}">, not the card (${card})`);
+        } else {
+          // Exactly ONE painter: a framed list must be the painter itself; an inset list must
+          // find it above. A framed list inside a painted card is "two" — and since a healthy
+          // frame is always the FIRST painter the walk meets, the second is looked for by
+          // continuing ABOVE the frame to `main` (the paper is main's own ground and does not count).
+          const declared = list.getAttribute('data-row-list');
+          if (declared === 'frame' && painter.node !== list) add('list-ground', label, `declared as a framed list but the card is painted by an ancestor <${painter.node.tagName.toLowerCase()}> — two painters, or the frame lost its ground`);
+          if (declared === 'inset' && painter.node === list) add('list-ground', label, `declared inset (the card around it paints) but the list paints its own ground`);
+          if (declared === 'frame' && painter.node === list) {
+            let above = list.parentElement;
+            while (above && above !== stopAt) {
+              const bg = getComputedStyle(above).backgroundColor;
+              if (!transparent(bg)) { add('list-ground', label, `a framed list inside a painted <${above.tagName.toLowerCase()} class="${String(above.className).slice(0, 60)}"> (${bg}) — two painters; pass \`inset\` and let the card paint`); break; }
+              above = above.parentElement;
+            }
+          }
+        }
+      } else {
+        const rowBg = getComputedStyle(row).backgroundColor;
+        if (transparent(rowBg)) add('list-ground', label, `at ≤ 640 each row is its own card and this row paints nothing`);
+        // The list and any PURE wrapper above it (a node whose only child is the list — a frame
+        // by another name) must paint nothing. A section card that also holds a label or stat
+        // boxes is the page's card, not the list's frame, and the walk stops there.
+        let node = list;
+        while (node && node !== stopAt.parentElement) {
+          const bg = getComputedStyle(node).backgroundColor;
+          if (!transparent(bg)) { add('list-ground', label, `at ≤ 640 a slab (${bg}) is painted behind the stack by <${node.tagName.toLowerCase()} class="${String(node.className).slice(0, 60)}"> — the frame did not stand down`); break; }
+          // "Pure" counts VISIBLE children — a hidden label or an inert marker beside the list
+          // must not end the walk with the slab one level up unread.
+          const parent = node.parentElement;
+          if (!parent || Array.from(parent.children).filter(visible).length !== 1) break;
+          node = parent;
+        }
       }
     }
   }
@@ -1102,7 +1218,8 @@ if (mode === 'report') {
   md += `| \`contrast\` | Text is readable against what is painted behind it. |\n`;
   md += `| \`hidden-behind-chrome\` | Nothing usable hides under a fixed bar. |\n`;
   md += `| \`control-width\` | An icon-only control is ${TAP_FLOOR}px wide as well as tall — at touch widths only. |\n`;
-  md += `| \`type-ladder\` | Every table cell reads at a size on the type ladder (membership, not pixels). |\n\n`;
+  md += `| \`type-ladder\` | Every table cell — and every line of a row list — reads at a size on the type ladder (membership, not pixels). |\n`;
+  md += `| \`list-ground\` | A row list sits on the card: the first painted ancestor behind a row IS the card token, painted by exactly one thing; at ≤ 640 each row is its own card and nothing paints a slab behind the stack. Read from the ancestor, never the row (F-24). |\n\n`;
   for (const [rule, list] of Object.entries(byRule).sort((a, b) => b[1].length - a[1].length)) {
     md += `## \`${rule}\` — ${list.length}\n\n`;
     for (const f of list) md += `- **${f.screen}** @${f.width} · ${f.signature}\n  - ${f.detail}\n`;

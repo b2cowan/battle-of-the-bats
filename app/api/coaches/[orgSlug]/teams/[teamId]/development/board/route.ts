@@ -290,8 +290,6 @@ export const GET = withObservability(async (req: Request,
       goals: goalsByPlayer.get(p.id) ?? [],
       latest: Object.fromEntries(latestByPlayer.get(p.id) ?? []),
       latestObservation: Object.fromEntries(latestObservationByPlayer.get(p.id) ?? []),
-      /** metric id → the date of the latest session that marked this player not assessed on it. */
-      notAssessedOn: Object.fromEntries(notAssessedByPlayer.get(p.id) ?? []),
       lastRecordedOn: lastRecordedByPlayer.get(p.id) ?? null,
       historyLinked: historyLabelFor(p),
       /**

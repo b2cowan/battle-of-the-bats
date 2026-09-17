@@ -17,6 +17,7 @@ import {
 } from '@/lib/insight-findings';
 import { insightsSectionHref, type CoachInsightsSection } from '@/lib/coach-insights-links';
 import styles from '../../../coaches.module.css';
+import { kit } from '@/components/coaches/kit';
 import type { RepTeamEvent } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
 import {
@@ -607,14 +608,14 @@ export default function CoachesInsightsPage({
               <div className={styles.insightsBand}>
                 {scopedGames > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
-                    <span className={styles.insightsStatLbl}>Record</span>
-                    <span className={styles.insightsStatVal}>{formatRecord(record)}</span>
-                    <span className={styles.insightsStatCap}>{scopeCaption}</span>
+                    <span className={kit.eye}>Record</span>
+                    <span className={kit.big}>{formatRecord(record)}</span>
+                    <span className={kit.sub}>{scopeCaption}</span>
                   </Link>
                 )}
                 {last5.length > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
-                    <span className={styles.insightsStatLbl}>Form</span>
+                    <span className={kit.eye}>Form</span>
                     <span className={styles.wltFormPips} aria-label="Recent form, oldest to newest">
                       {last5.map((g, i) => (
                         <span key={i} className={styles.wltPip} data-r={g.result ?? undefined}>
@@ -622,29 +623,29 @@ export default function CoachesInsightsPage({
                         </span>
                       ))}
                     </span>
-                    {streakLabel && <span className={styles.insightsStatCap}>{streakLabel}</span>}
+                    {streakLabel && <span className={kit.sub}>{streakLabel}</span>}
                   </Link>
                 )}
                 {scoredGames.length > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
-                    <span className={styles.insightsStatLbl}>{sportPack.score.diff}</span>
-                    <span className={styles.insightsStatVal} data-pos={diff >= 0 ? 'true' : 'false'}>{diff >= 0 ? `+${diff}` : diff}</span>
+                    <span className={kit.eye}>{sportPack.score.diff}</span>
+                    <span className={`${kit.big} ${diff >= 0 ? kit.bigGood : kit.bigBad}`}>{diff >= 0 ? `+${diff}` : diff}</span>
                     <span className={styles.insightsSegBar} aria-hidden><i style={{ width: `${Math.round((scoredFor / Math.max(1, scoredFor + scoredAgainst)) * 100)}%` }} /></span>
-                    <span className={styles.insightsStatCap}>{scoredFor} scored · {scoredAgainst} allowed</span>
+                    <span className={kit.sub}>{scoredFor} scored · {scoredAgainst} allowed</span>
                   </Link>
                 )}
                 {closeTotal > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
-                    <span className={styles.insightsStatLbl}>Close games</span>
-                    <span className={styles.insightsStatVal}>{formatRecord(close)}</span>
-                    <span className={styles.insightsStatCap}>in one-{scoreUnitWord} games</span>
+                    <span className={kit.eye}>Close games</span>
+                    <span className={kit.big}>{formatRecord(close)}</span>
+                    <span className={kit.sub}>in one-{scoreUnitWord} games</span>
                   </Link>
                 )}
                 {attendancePct != null && canAttendance && (
                   <Link href={insightsSectionHref(base, 'attendance')} className={styles.insightsStat}>
-                    <span className={styles.insightsStatLbl}>Attendance</span>
-                    <span className={styles.insightsStatVal}>{attendancePct}<small>%</small></span>
-                    <span className={styles.insightsStatCap}>games + practices</span>
+                    <span className={kit.eye}>Attendance</span>
+                    <span className={kit.big}>{attendancePct}<small>%</small></span>
+                    <span className={kit.sub}>games + practices</span>
                   </Link>
                 )}
               </div>

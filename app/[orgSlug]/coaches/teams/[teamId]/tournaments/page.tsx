@@ -119,20 +119,22 @@ export default function PremiumTeamTournamentsPage({
   );
 
   // The merge point: both halves of the season are genuinely empty (nothing entered, nothing
-  // hosted), so CoachTournamentChoiceCard replaces both illustrated blocks with one. State C
-  // (already linked, just nothing yet) stays outside this — it's a compact "check back" panel
-  // with no button, not a second full onboarding block, so stacking it with an empty hosted
-  // section never reproduced the below-the-fold problem this exists to fix.
+  // hosted), so CoachTournamentChoiceCard replaces both illustrated blocks with one — in EVERY
+  // linkage state. The first cut (3698f8c7) left State C (linked, just nothing yet) out on the
+  // theory that its `compact` card was a buttonless strip that could not stack badly; on prod it
+  // rendered as a full medallion card, and a standalone workspace — whose linkage is ALWAYS
+  // 'workspace' — got exactly the two stacked trophies the merge exists to remove (owner,
+  // 2026-09-13). Which JOIN tile the merged card shows still follows the linkage.
   const hostEmpty = hosted !== null && hosted.canRun && hosted.tournaments.length === 0;
-  const bothEmpty = data !== null && sorted.length === 0 && data.linkage === 'none' && hostEmpty;
+  const bothEmpty = data !== null && sorted.length === 0 && hostEmpty;
 
   // Only the "could this become the merged card?" shape needs to wait on the second fetch — a
-  // team with real entries, or already-linked (State C), renders immediately either way, exactly
-  // as before. Without this, the plain State A/B card could paint first and then get swapped out
-  // for CoachTournamentChoiceCard moments later once `hosted` resolves — a jarring content swap
-  // this whole change exists to avoid (review 2026-09-13). `hosted` always settles to a real value
-  // (see the fetch above), so this never waits forever.
-  const awaitingMergeDecision = data !== null && sorted.length === 0 && data.linkage === 'none' && hosted === null;
+  // team with real entries renders immediately either way, exactly as before. Without this, the
+  // plain empty card could paint first and then get swapped out for CoachTournamentChoiceCard
+  // moments later once `hosted` resolves — a jarring content swap this whole change exists to
+  // avoid (review 2026-09-13). `hosted` always settles to a real value (see the fetch above), so
+  // this never waits forever.
+  const awaitingMergeDecision = data !== null && sorted.length === 0 && hosted === null;
 
   const hostSetupHref = `/${orgSlug}/admin/org/tournaments?create=1&source=coach_portal_tournaments`;
   const trackHostCta = (eventType: 'tournament_plus_acquisition_cta_viewed' | 'tournament_plus_acquisition_cta_clicked') =>
@@ -203,21 +205,11 @@ export default function PremiumTeamTournamentsPage({
             })}
           </div>
         </>
-      ) : data.linkage !== 'none' ? (
-        // State C — linked (workspace or admin-link), just nothing recorded yet this season.
-        // Checked first: a bridged team with zero entries is "no tournaments yet", never the
-        // "nothing linked" copy below, regardless of which linkage produced the bridge.
-        <CoachEmptyState
-          compact
-          icon={<Trophy size={20} aria-hidden />}
-          headline="No tournaments yet this season"
-          description="This season's tournament entries appear here the moment you're registered."
-          payoff="Once one lands, its games drop straight into your Schedule, its chat room opens under Chat, and its results count toward your season record in Insights."
-        />
       ) : bothEmpty ? (
         // Merged state (stacked-onboarding review, 2026-09-13): nothing entered AND nothing
         // hosted, so one card offers both doors instead of two full illustrated blocks stacked
-        // on the page. The join tile still branches on self-serve (A) vs link-required (B).
+        // on the page. The join tile branches the way the un-merged empties below do: self-serve
+        // (A / a standalone workspace), already linked by the org (C), or link-required (B).
         <CoachTournamentChoiceCard
           headline="Your tournament season lives here"
           intro="Join tournaments other organizers run, or host your own — either way, it shows up here automatically."
@@ -227,12 +219,23 @@ export default function PremiumTeamTournamentsPage({
             body: (
               <>
                 Register on the organizer&apos;s public page using{' '}
-                <strong>this account&apos;s email</strong> — the entry appears here automatically
-                with schedule, scores, and status.
+                <strong>this account&apos;s email</strong> — the entry appears here the moment
+                you&apos;re registered, with schedule, scores, and status.
               </>
             ),
             primaryAction: { label: 'How registering works', onClick: () => openHelp(helpRequest) },
             secondaryAction: { label: 'Browse public tournaments', href: '/discover' },
+          } : data.linkage !== 'none' ? {
+            kicker: 'Join one',
+            title: 'No tournaments yet this season',
+            body: (
+              <>
+                This season&apos;s entries appear here the moment{' '}
+                {currentOrg?.name ?? 'your organization'} registers this team — with the live
+                schedule and scores.
+              </>
+            ),
+            primaryAction: { label: 'How linking works', onClick: () => openHelp(helpRequest) },
           } : {
             kicker: 'Link required',
             title: 'No tournaments linked yet',
@@ -257,6 +260,18 @@ export default function PremiumTeamTournamentsPage({
             onView: () => trackHostCta('tournament_plus_acquisition_cta_viewed'),
           }}
           payoff="Either way: games land on your Schedule ready for lineups, the chat room opens under Chat, and results count toward your season record in Insights."
+        />
+      ) : data.linkage !== 'none' ? (
+        // State C — linked (workspace or admin-link), just nothing recorded yet this season, and
+        // the viewer cannot host (otherwise the merged card above took it). Checked before A/B:
+        // a bridged team with zero entries is "no tournaments yet", never the "nothing linked"
+        // copy below, regardless of which linkage produced the bridge.
+        <CoachEmptyState
+          compact
+          icon={<Trophy size={20} aria-hidden />}
+          headline="No tournaments yet this season"
+          description="This season's tournament entries appear here the moment you're registered."
+          payoff="Once one lands, its games drop straight into your Schedule, its chat room opens under Chat, and its results count toward your season record in Insights."
         />
       ) : isTeamWorkspace ? (
         // State A — standalone/workspace team, never bridged: registration is self-serve by account email,

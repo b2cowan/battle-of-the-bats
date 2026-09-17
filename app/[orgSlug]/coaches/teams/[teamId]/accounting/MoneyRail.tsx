@@ -1,9 +1,8 @@
 'use client';
-import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
-import styles from './overview-dashboard.module.css';
+import { CoachRail, kit, type CoachRailDot, type CoachRailGroupSpec } from '@/components/coaches/kit';
 
 /* One line, one live stat, one chevron per Money surface — the Overview's index.
  *
@@ -48,7 +47,7 @@ const INDEX_STEPS: { step: string; keys: RowKey[] }[] = [
 ];
 const MORE_KEYS: RowKey[] = ['fundraisers', 'sponsorships', 'club', 'budget', 'budgetVsActual'];
 
-const danger = (text: string) => <span className={styles.railStatDanger}>{text}</span>;
+const danger = (text: string) => <span className={kit.railStatDanger}>{text}</span>;
 
 /* One entry per surface — dot, name and stat together, so adding a Money screen is
  * one map entry rather than three parallel lookups kept in step by hand. `Record<RowKey, …>`
@@ -65,14 +64,14 @@ const danger = (text: string) => <span className={styles.railStatDanger}>{text}<
  * So Sponsorships and Allocations share blue, adjacent in the `more` variant, and that is
  * accepted: the row NAME carries the information and the dot only reinforces it — the same
  * reason the deutan ruling forbids colour from ever being the sole carrier. */
-const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) => ReactNode }> = {
+const ROWS: Record<RowKey, { dot: CoachRailDot; name: string; stat: (s: MoneySummary) => ReactNode }> = {
   budget: {
-    dot: styles.railDotPlum,
+    dot: 'plum',
     name: 'Season Budget Plan',
     stat: s => (s.budget.effectiveTotal > 0 ? <><b>{fmt(s.budget.effectiveTotal)}</b> set</> : 'Not started'),
   },
   dues: {
-    dot: styles.railDotGood,
+    dot: 'good',
     name: 'Player Dues',
     // The alert rides ALONGSIDE the money, never instead of it — the drill-in cards this
     // replaced showed the amount and the overdue chip together, and a row that swaps
@@ -112,7 +111,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
    * this split removed.
    */
   fundraisers: {
-    dot: styles.railDotGood,
+    dot: 'good',
     name: 'Fundraisers',
     stat: s => s.fundraisers.driveRaised > 0
       ? <><b>{fmt(s.fundraisers.driveRaised)}</b> raised</>
@@ -121,7 +120,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
         : <>None yet · <b>start one</b></>,
   },
   sponsorships: {
-    dot: styles.railDotBlue,
+    dot: 'blue',
     name: 'Sponsorships',
     // ⚠ A PLEDGE RIDES ALONGSIDE THE MONEY, NEVER INSIDE IT — the same rule the tab's own summary
     // keeps. "$500 · $2,000 pledged" is honest; "$2,500" would be a season flattering itself with
@@ -153,7 +152,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
   /* ⚖ TWO ROWS, ONE TAB since the fold (2026-08-28) — the Fundraisers/Sponsorships precedent:
      each row answers its own question and lands on its own VIEW of the one Ledger. */
   transactions: {
-    dot: styles.railDotRust,
+    dot: 'rust',
     name: 'Ledger',
     /**
      * ⚠ THE ROW SPEAKS IN THE REGISTER'S OWN TWO COLUMNS (money redesign P3), and that is NOT the
@@ -170,7 +169,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
       : <><b>{fmt(s.moneyOut.total)}</b> out · <b>{fmt(s.moneyIn.total)}</b> in</>),
   },
   payables: {
-    dot: styles.railDotRust,
+    dot: 'rust',
     name: 'Bills',
     /* ⚠ THE COUNT IS THE FACT HERE, not a qualifier on someone else's figure — this row exists to
        answer "is anything coming due?", so an empty answer is good news and says so plainly rather
@@ -187,7 +186,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
      it is spoken by a screen reader and shown on hover, and the shape (not the colour) carries it.
      What is still awaiting the club keeps its home on the Club tab, one tap away. */
   club: {
-    dot: styles.railDotBlue,
+    dot: 'blue',
     name: 'Club',
     stat: s => {
       if (s.allocations.count === 0) return 'Nothing owed';
@@ -199,7 +198,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
             <>
               {' '}
               <span
-                className={styles.railStatWarn}
+                className={kit.railStatWarn}
                 role="img"
                 aria-label={`${overdue} overdue`}
                 title={`${overdue} overdue`}
@@ -213,7 +212,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
     },
   },
   budgetVsActual: {
-    dot: styles.railDotOlive,
+    dot: 'olive',
     name: 'Budget vs. Actual',
     // "Needs a budget" rather than an em-dash: a dash reads as missing data, and
     // this is the one row whose emptiness has a cause the coach can act on.
@@ -239,38 +238,27 @@ export default function MoneyRail({ summary, hrefs, variant }: Props) {
       .filter(g => g.keys.length > 0)
     : [{ step: null, keys: MORE_KEYS.filter(k => hrefs[k]) }];
 
+  /* The kit's rail draws it (CoachRail — the card, the fold, the row, the chevron, once): this
+     component keeps only what is Money's — which rows, in which groups, saying what. The two-column
+     fold measures the CARD, not the viewport: the operating dashboard hands the rail a ~362px slot
+     beside the ledger, where one column is correct, while the setup shape hands it the full page
+     column, where it is not. */
+  const railGroups: CoachRailGroupSpec[] = groups.map(g => ({
+    step: g.step ?? undefined,
+    rows: g.keys.map(key => ({
+      key,
+      href: hrefs[key]!,
+      dot: ROWS[key].dot,
+      name: ROWS[key].name,
+      stat: ROWS[key].stat(summary),
+    })),
+  }));
+
   return (
-    /* `railCard` makes this card the thing the two-column rule measures, not the
-       viewport — the live operating dashboard hands this same component a ~362px
-       slot beside the ledger, where one column is correct, while the setup and
-       archived shapes hand it the full page column, where it is not. */
-    <div className={`${styles.card} ${styles.railCard}`}>
-      <div className={styles.eyeRow}>
-        <span className={styles.eye}>{variant === 'index' ? 'Everything in Money' : 'More in Money'}</span>
-      </div>
-      <div className={styles.railCols}>
-        {groups.map(g => (
-          /* A labelled GROUP, not a heading: the owner ruling that removed the four headed
-             sections was about visual weight, but the rows really are grouped, and a screen
-             reader lost that when the <h2>s went. `role="group"` restores the structure
-             without restoring the headings. */
-          <div
-            key={g.step ?? 'all'}
-            className={styles.railGroup}
-            {...(g.step ? { role: 'group', 'aria-labelledby': `money-rail-step-${g.step.toLowerCase()}` } : {})}
-          >
-            {g.step && <p className={styles.railStep} id={`money-rail-step-${g.step.toLowerCase()}`}>{g.step}</p>}
-            {g.keys.map(key => (
-              <Link key={key} href={hrefs[key]!} className={styles.railRow}>
-                <span className={`${styles.railDot} ${ROWS[key].dot}`} />
-                <span className={styles.railName}>{ROWS[key].name}</span>
-                <span className={styles.railStat}>{ROWS[key].stat(summary)}</span>
-                <span className={styles.railChev} aria-hidden>›</span>
-              </Link>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
+    <CoachRail
+      title={variant === 'index' ? 'Everything in Money' : 'More in Money'}
+      groups={railGroups}
+      idPrefix="money-rail"
+    />
   );
 }

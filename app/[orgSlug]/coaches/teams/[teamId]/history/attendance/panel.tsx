@@ -15,6 +15,7 @@ import MonthlyAttendanceChart from '@/components/charts/MonthlyAttendanceChart';
 import type { MonthlyAttendanceBucket } from '@/lib/coach-monthly-attendance';
 import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../../coaches.module.css';
+import { CoachCard, kit } from '@/components/coaches/kit';
 import att from './attendance.module.css';
 
 /** Event types attendance is taken on — the games plus practices and multi-day tournaments,
@@ -379,16 +380,16 @@ export function AttendancePanel({
           {markTargetLoading ? (
             // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
             // might have to take back.
-            <div className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
+            <CoachCard accent className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
               <SkeletonBlock w="110px" h="0.7rem" />
               <SkeletonBlock w="min(360px, 85%)" h="1.35rem" />
               <SkeletonBlock w="170px" h="0.9rem" />
               <SkeletonBlock w="150px" h="30px" />
-            </div>
+            </CoachCard>
           ) : markTarget ? (
             // Reuses the Overview "Right now" anchor-card family rather than a parallel set of
             // classes — same eyebrow / headline / meta / CTA shape, so the two read as one pattern.
-            <div className={styles.nowCard}>
+            <CoachCard accent className={styles.nowCard}>
               <p className={styles.nowEyebrow}>Take attendance</p>
               <p className={styles.nowHeadline}>{eventDisplayTitle(markTarget)}</p>
               <p className={styles.nowMeta}>{formatEventWhen(markTarget.startsAt)}</p>
@@ -397,7 +398,7 @@ export function AttendancePanel({
                   Take attendance <ArrowRight size={14} aria-hidden />
                 </Link>
               </div>
-            </div>
+            </CoachCard>
           ) : null /* Lookup failed, or the events are gone but their figures remain. Either way
                       we do not know the schedule is empty, so we do not say it is. */}
 
@@ -418,29 +419,29 @@ export function AttendancePanel({
                 return (
                   <div className={styles.insightsBand}>
                     <div className={styles.insightsStat}>
-                      <span className={styles.insightsStatLbl}>Season</span>
-                      <span className={styles.insightsStatVal}>{t.season ?? '—'}<small>%</small></span>
-                      <span className={styles.insightsStatCap}>Games and practices</span>
+                      <span className={kit.eye}>Season</span>
+                      <span className={kit.big}>{t.season ?? '—'}<small>%</small></span>
+                      <span className={kit.sub}>Games and practices</span>
                     </div>
                     {t.games != null && (
                       <div className={styles.insightsStat}>
-                        <span className={styles.insightsStatLbl}>Games</span>
-                        <span className={styles.insightsStatVal}>{t.games}<small>%</small></span>
+                        <span className={kit.eye}>Games</span>
+                        <span className={kit.big}>{t.games}<small>%</small></span>
                       </div>
                     )}
                     {t.practices != null && (
                       <div className={styles.insightsStat}>
-                        <span className={styles.insightsStatLbl}>Practices</span>
-                        <span className={styles.insightsStatVal}>{t.practices}<small>%</small></span>
+                        <span className={kit.eye}>Practices</span>
+                        <span className={kit.big}>{t.practices}<small>%</small></span>
                       </div>
                     )}
                     {t.marked != null && (
                       <div className={styles.insightsStat}>
-                        <span className={styles.insightsStatLbl}>Recorded</span>
-                        <span className={styles.insightsStatVal}>{t.marked}<small>%</small></span>
+                        <span className={kit.eye}>Recorded</span>
+                        <span className={kit.big}>{t.marked}<small>%</small></span>
                         {/* ⚠ NOT a reply rate — see `seasonTotals`. This is how much of your own
                             sheet you finished, and it is the denominator of every figure beside it. */}
-                        <span className={styles.insightsStatCap}>Marked in or out, not left blank</span>
+                        <span className={kit.sub}>Marked in or out, not left blank</span>
                       </div>
                     )}
                   </div>

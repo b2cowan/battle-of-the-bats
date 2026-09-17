@@ -29,7 +29,8 @@ export type HostedTournamentsState = { canRun: boolean; tournaments: HostedTourn
  * The hosted-tournaments read lives one level up (the page fetches once and passes `state` down)
  * so the page can also decide, before this section ever renders, whether the season's OTHER half
  * is empty too — in which case the page renders CoachTournamentChoiceCard instead of mounting
- * this section at all (stacked-onboarding review, 2026-09-13).
+ * this section at all (stacked-onboarding review, 2026-09-13), whatever the team's linkage.
+ * So the SetupCard below is only ever reached beneath a real list of entries.
  */
 const STATUS_WORD: Record<string, string> = { draft: 'Draft', active: 'Active', completed: 'Completed' };
 

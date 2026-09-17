@@ -143,9 +143,10 @@
    tap shape, this for the quiet underlined face (a button and a link alike). */
 .sourceDoor { border: 0; background: none; font: inherit; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
 .sourceDoor:hover { color: var(--text-primary); text-decoration: underline; }
-/* The phone's one line under a card's title ("8.28 seconds · 15 Sept"; "10 Jun · 8.24 seconds") —
-   hidden at pointer widths, where the columns say it. */
-.phoneLine { display: none; }
+/* ⚰ `.phoneLine` / `.desktopCell` (stage 3 → 2026-09-16): the phone's one line under a card's title
+   is the shared `.cardPhoneLine` / `.cardDesktopCell` family in coaches.module.css now — this pair
+   was its first draft, and the practices library promoted it on the day a second table wanted it;
+   the shared style kit (owner ruling F) folded this copy and Coverage's into it. */
 /* The never-run caption under the table, in caption type. */
 .captionLine { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 .captionLine b { color: var(--text-secondary); font-weight: 600; }
@@ -190,16 +191,9 @@
   .goalActions > * { min-height: var(--tap-min, 44px); }
 }
 
-/* ── the phone (≤640): the table is cards; the title's one line says what the hidden columns said ──
-   ⚠ A third way to trim a card-reflowed table on a phone (beside `.tableAsCards`' own `data-label`
-   lines and `.rosterTable`'s hidden columns): the frame draws ONE line ("8.28 seconds · 15 Sept") where
-   the recipe would draw two labelled ones, so the three figure cells are hidden and the lead cell
-   carries the line. If a second table wants this density, promote the pair into the `.tableAsCards`
-   family in coaches.module.css rather than copying it. */
+/* ── the phone (≤640): the table is cards; the title's one line says what the hidden columns said
+   (the shared `.cardPhoneLine` family; this file keeps only the opened test's indent). ── */
 @media (max-width: 640px) {
-  .desktopCell { display: none !important; }
-  .phoneLine { display: block; font-size: var(--type-support); color: var(--text-secondary); margin-top: 0.15rem; }
-  .phoneLine b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
   .innerRow td:first-child { padding-left: 0.6rem; }
   /* An opened test's rows sit inside its card's list as quieter cards. */
   .innerRow { margin-left: 0.6rem; }
@@ -207,10 +201,10 @@
   .goalActions > * { justify-content: center; }
   .handoutLink { width: 100%; justify-content: center; min-height: var(--tap-min, 44px); }
   .historyMeta { white-space: normal; }
-  /* the toolbar: the switch spans the width, its write doors stack full-width under it. The shared
-     `.listToolbarEnd` forces its slot to a single non-wrapping line at this width (it is built for
-     Roster's one toggle + one export); this slot can hold up to three write doors, so it opts back
-     into wrapping and stretches each one to its own row rather than squeezing them onto one. */
+  /* the toolbar (the kit's `CoachListToolbar`, 2026-09-16): the switch spans the width, its write
+     doors stack full-width under it — this slot can hold up to three write doors, so each is
+     stretched to its own row rather than squeezed onto one. Worn BESIDE the kit's actions class on
+     the same element; never composed from it. */
   .viewSwitch { display: flex; width: 100%; }
   .viewSwitch > * { flex: 1; text-align: center; }
   .toolbarEnd { width: 100%; margin-left: 0; flex-wrap: wrap; }

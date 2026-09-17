@@ -7,6 +7,7 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import { canManageAwards } from '@/lib/coach-capabilities';
 import styles from '../../../../coaches.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
 
 // "Who's earning it?" — a new report (not a metric folded into an existing one, unlike the
@@ -231,18 +232,14 @@ export function AwardsPanel({
               award types" at 15px on a 361px phone. Scoped HERE rather than on `.btnPrimary` /
               `.tagManageLink`: those are portal-wide primitives on screens this project has no
               rendered coverage of, and re-geometrying every coach button is not a P1 change. */}
-          <div className={styles.insightsPanelToolbar}>
-            {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
-            {players.length === 0 ? (
-              <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
-            ) : (
-              <button className={styles.btnPrimary} onClick={() => { setEditingAward(null); setGiveOpen(true); }}>🏆 Give an award</button>
-            )}
-            {/* Chunk D 3.4 — awards night, printed. Offered only for a chosen award TYPE:
-                "print every award this season" is a stack of mismatched certificates, not a
-                thing a coach wants. ⚠ Carries the year: the certificate names the season it was
-                won in, and that page reads it from the URL. */}
-            {activeType && visibleAwards.length > 0 && (
+          {/* The kit's list toolbar (2026-09-16): the primary leads, the print door is the action
+              pinned right — the row every list in the portal draws; the tap floor is the kit's. */}
+          <CoachListToolbar
+            actions={activeType && visibleAwards.length > 0 && (
+              /* Chunk D 3.4 — awards night, printed. Offered only for a chosen award TYPE:
+                 "print every award this season" is a stack of mismatched certificates, not a
+                 thing a coach wants. ⚠ Carries the year: the certificate names the season it was
+                 won in, and that page reads it from the URL. */
               <Link
                 href={`${base}/history/awards/certificate?typeId=${activeType.id}`}
                 className={styles.tagManageLink}
@@ -250,7 +247,14 @@ export function AwardsPanel({
                 <Printer size={13} aria-hidden /> Print {visibleAwards.length} certificate{visibleAwards.length === 1 ? '' : 's'}
               </Link>
             )}
-          </div>
+          >
+            {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
+            {players.length === 0 ? (
+              <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
+            ) : (
+              <button className={`${styles.btnPrimary} ${styles.tapFloor}`} onClick={() => { setEditingAward(null); setGiveOpen(true); }}>🏆 Give an award</button>
+            )}
+          </CoachListToolbar>
 
           {awards.length === 0 ? (
             <div className={styles.emptyState}>
@@ -302,20 +306,34 @@ export function AwardsPanel({
 
               <section style={{ marginBottom: '1.75rem' }}>
                 <p className={styles.sectionKicker}>Leaderboard</p>
-                {leaderboard.map((row, i) => (
-                  <div key={row.playerId} className={styles.tagManagerRow}>
-                    <span className={styles.mutedInline} style={{ width: '1.5rem', flexShrink: 0 }}>{i + 1}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700 }}>{row.playerName}</div>
-                      <div className={styles.lineupChips} style={{ marginTop: '0.25rem' }}>
-                        {Array.from(row.byType.values()).map((t, ti) => (
-                          <span key={ti} className={styles.lineupChip}>{t.type?.emoji ? `${t.type.emoji} ` : ''}{t.count}× {t.type?.name ?? 'Award'}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <span style={{ fontWeight: 800, fontFamily: 'var(--font-data)' }}>{row.total}</span>
-                  </div>
-                ))}
+                {/* A TABLE, on the same frame as the history under it (table standard, 2026-09-16).
+                    It was a stack of divs borrowing the Tags settings row — rank, a bold name with
+                    the chips on a second line, a data-face total — and the one thing on this screen
+                    still sitting on the paper once the frame painted the card. A reader compares
+                    totals across rows (who has more), which is the standard's test for a table, not
+                    a card list; as a table it takes the frame, the heading row, the compact density
+                    and the figure twin for free, with no recipe of its own. */}
+                <div className={styles.insightsTableWrap}>
+                  <table className={styles.insightsTable}>
+                    <thead><tr><th className={styles.tdShrink}>#</th><th>Player</th><th>Awards</th><th className={styles.insightsNumHead}>Total</th></tr></thead>
+                    <tbody>
+                      {leaderboard.map((row, i) => (
+                        <tr key={row.playerId}>
+                          <td className={`${styles.tdShrink} ${styles.mutedInline}`}>{i + 1}</td>
+                          <td>{row.playerName}</td>
+                          <td>
+                            <span className={styles.lineupChips}>
+                              {Array.from(row.byType.values()).map((t, ti) => (
+                                <span key={ti} className={styles.lineupChip}>{t.type?.emoji ? `${t.type.emoji} ` : ''}{t.count}× {t.type?.name ?? 'Award'}</span>
+                              ))}
+                            </span>
+                          </td>
+                          <td className={styles.insightsNum}>{row.total}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </section>
 
               <section>

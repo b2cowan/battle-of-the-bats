@@ -20,6 +20,7 @@ import { activeMeasuredTests, recordMeaning } from '@/lib/measurable-definition'
 import Muted from '@/components/coaches/Muted';
 import styles from '../../../coaches.module.css';
 import ov from './overview.module.css';
+import { CoachCard, CoachEyebrow, CoachFigure, CoachChip, CoachBar, CoachRail, CoachListToolbar, kit } from '@/components/coaches/kit';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -36,8 +37,6 @@ interface BoardRow {
   /** The HEADLINE of the latest session per test (Phase 2) — never the last row typed. */
   latest: Record<string, { value: number; unit: string; recordedOn: string; attempts: number; inRange: number | null }>;
   latestObservation?: Record<string, { descriptor: string | null; note: string | null; observedOn: string }>;
-  /** metric id → the date of the latest session that marked this player not assessed on it (Phase 3). */
-  notAssessedOn?: Record<string, string>;
 }
 interface BoardData { showGoals: boolean; showMeasurables: boolean; rows: BoardRow[] }
 
@@ -391,20 +390,16 @@ function SessionsView({
             sessions has learned it. The search waits for a list long enough to need finding
             (nine sessions or more) and is a bare field when it comes — no label band. */}
         {hasSessions && (
-          <div className={styles.panelToolbar}>
-            <p className={styles.devListLede}>
-              <strong>{sessions.length}</strong> {sessions.length === 1 ? 'session' : 'sessions'} this season
-            </p>
-            {sessions.length >= SEARCH_FROM && (
-              <div className={styles.panelToolbarActions}>
-                <label className={styles.field} style={{ flex: '0 1 240px' }}>
-                  <span className={styles.srOnly}>Find a session</span>
-                  <input type="search" className={`${styles.input} ${styles.devToolbarControl}`} value={query} placeholder="Find a session…"
-                    onChange={e => setQuery(e.target.value)} />
-                </label>
-              </div>
+          <CoachListToolbar
+            lede={<><strong>{sessions.length}</strong> {sessions.length === 1 ? 'session' : 'sessions'} this season</>}
+            actions={sessions.length >= SEARCH_FROM && (
+              <label className={styles.field} style={{ flex: '0 1 240px' }}>
+                <span className={styles.srOnly}>Find a session</span>
+                <input type="search" className={`${styles.input} ${styles.devToolbarControl}`} value={query} placeholder="Find a session…"
+                  onChange={e => setQuery(e.target.value)} />
+              </label>
             )}
-          </div>
+          />
         )}
 
         {hasSessions ? (
@@ -415,7 +410,7 @@ function SessionsView({
                (the lead cell has no label: it renders as the card title; the chevron pins to the
                card's corner). ⚠ The shared card recipe tints an item card on a phone; the table
                standard says an item row is never tinted — flagged to the standard, not forked here. */
-            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
+            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
               <table className={styles.table} aria-label="Sessions">
                 <thead>
                   <tr>
@@ -549,7 +544,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
 
   if (stage === 'define') {
     return (
-      <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
+      <CoachCard accent className={`${styles.nowCard} ${styles.nowPreseason}`}>
         <p className={styles.nowEyebrow}>Skills &amp; Goals · Getting started</p>
         <p className={styles.nowHeadline}>Start by deciding what this team measures</p>
         <p className={styles.nowMeta}>
@@ -561,7 +556,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
           <Link href={metricsNewHref} className="btn btn-lime btn-sm">Define your first metric <ArrowRight size={14} aria-hidden /></Link>
           <button type="button" className={`${styles.nowSecondary} ${ov.linkButton}`} onClick={onHelp}>How development works <ArrowRight size={13} aria-hidden /></button>
         </div>
-      </div>
+      </CoachCard>
     );
   }
 
@@ -572,7 +567,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
       ? names.map((n, i) => <span key={i}>{i > 0 && (i === names.length - 1 ? ' and ' : ', ')}<strong>{n}</strong></span>)
       : <><strong>{names[0]}</strong>, <strong>{names[1]}</strong> and {names.length - 2} more</>;
     return (
-      <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
+      <CoachCard accent className={`${styles.nowCard} ${styles.nowPreseason}`}>
         <p className={styles.nowEyebrow}>Skills &amp; Goals · Ready to record</p>
         <p className={styles.nowHeadline}>Run your first session</p>
         <p className={styles.nowMeta}>
@@ -584,7 +579,7 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
           <button type="button" className="btn btn-lime btn-sm" onClick={onStart}><Plus size={14} aria-hidden /> Start session</button>
           <Link href={metricsNewHref} className={styles.nowSecondary}>Add another metric <ArrowRight size={13} aria-hidden /></Link>
         </div>
-      </div>
+      </CoachCard>
     );
   }
 
@@ -614,91 +609,99 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
 
   return (
     <>
-      <div className={ov.row3}>
+      {/* The kit's card, eyebrow, chip, figure, bar and foot (components/coaches/kit — owner rulings
+          A–H, 2026-09-16): the SAME parts Money's Overview renders, so the two dashboards cannot
+          drift. This file keeps only what is Skills & Goals': the arc line, the attention list. */}
+      <div className={kit.row3}>
         {/* Sessions — the count, the latest, and whether any were left half-recorded. */}
-        <div className={`${ov.card} ${unfinished.length > 0 ? ov.cardAlert : ''}`}>
-          <div className={ov.eyeRow}>
-            <span className={ov.eye}>Sessions</span>
-            {unfinished.length > 0
-              ? <span className={`${ov.chip} ${ov.chipDanger}`}>{plural(unfinished.length, 'unfinished session')}</span>
-              : <span className={`${ov.chip} ${ov.chipGood}`}>all complete</span>}
-          </div>
-          <div className={ov.big}>{sessions.length} <small>this season</small></div>
-          <p className={ov.sub}>
+        <CoachCard alert={unfinished.length > 0}>
+          <CoachEyebrow
+            chip={unfinished.length > 0
+              ? <CoachChip tone="danger">{plural(unfinished.length, 'unfinished session')}</CoachChip>
+              : <CoachChip tone="good">all complete</CoachChip>}
+          >
+            Sessions
+          </CoachEyebrow>
+          <CoachFigure>{sessions.length} <small>this season</small></CoachFigure>
+          <p className={kit.sub}>
             {latest ? <>Last <b>{formatShortDate(latest.sessionDate)}</b>{latest.note ? ` · ${latest.note}` : ''}</> : 'None yet'}
           </p>
-          <div className={ov.foot}>
-            <Link href={skillsAndGoalsHref(base, 'sessions')} className={ov.footLink}>Sessions →</Link>
+          <div className={kit.foot}>
+            <Link href={skillsAndGoalsHref(base, 'sessions')} className={kit.footLink}>Sessions →</Link>
           </div>
-        </div>
+        </CoachCard>
 
         {/* Players measured — the one ratio on the screen, so it gets the bar. */}
-        <div className={ov.card}>
-          <div className={ov.eyeRow}>
-            <span className={ov.eye}>Players measured</span>
-            {boardReady && rows.length > 0 && (
-              <span className={`${ov.chip} ${measured.length === rows.length ? ov.chipGood : ov.chipWarn}`}>
+        <CoachCard>
+          <CoachEyebrow
+            chip={boardReady && rows.length > 0 && (
+              <CoachChip tone={measured.length === rows.length ? 'good' : 'warn'}>
                 {measured.length === rows.length ? 'everyone' : `${unmeasured.length} without`}
-              </span>
+              </CoachChip>
             )}
-          </div>
+          >
+            Players measured
+          </CoachEyebrow>
           {boardReady ? (
             <>
-              <div className={`${ov.big} ${measured.length > 0 ? ov.vGood : ''}`}>{measured.length} <small>of {rows.length} · {coveragePct}%</small></div>
-              <div className={ov.bar} role="img" aria-label={`${measured.length} of ${rows.length} players measured`}>
-                <div className={`${ov.seg} ${ov.segGood}`} style={{ width: `${coveragePct}%` }} />
-              </div>
-              <div className={ov.legend}>
-                <span><span className={`${ov.legendDot} ${ov.dotFill}`} aria-hidden /><b>{measured.length}</b> with a result</span>
-                <span><span className={`${ov.legendDot} ${ov.dotTrack}`} aria-hidden /><b>{unmeasured.length}</b> without</span>
-              </div>
+              <CoachFigure tone={measured.length > 0 ? 'good' : undefined}>{measured.length} <small>of {rows.length} · {coveragePct}%</small></CoachFigure>
+              <CoachBar
+                segments={[{ pct: coveragePct }]}
+                label={`${measured.length} of ${rows.length} players measured`}
+                legend={[
+                  { dot: 'fill', text: <><b>{measured.length}</b> with a result</> },
+                  { dot: 'track', text: <><b>{unmeasured.length}</b> without</> },
+                ]}
+              />
             </>
           ) : (
             <>
-              <div className={ov.big}>{dash}</div>
-              <p className={ov.sub}>{boardError || 'Loading…'}</p>
+              <CoachFigure>{dash}</CoachFigure>
+              <p className={kit.sub}>{boardError || 'Loading…'}</p>
             </>
           )}
-          <div className={ov.foot}>
-            <Link href={coverageHref} className={ov.footLink}>Coverage →</Link>
+          <div className={kit.foot}>
+            <Link href={coverageHref} className={kit.footLink}>Coverage →</Link>
           </div>
-        </div>
+        </CoachCard>
 
         {/* Goals — working, with the reviews falling due. */}
-        <div className={`${ov.card} ${reviewsDue.length > 0 ? ov.cardAlert : ''}`}>
-          <div className={ov.eyeRow}>
-            <span className={ov.eye}>Goals</span>
-            {/* ⚠ "no reviews due" — never "on track" (chart rule 6; stage 4, G7): the product states what
-                the record holds and does not grade a child's progress against a schedule. */}
-            {boardReady && (reviewsDue.length > 0
-              ? <span className={`${ov.chip} ${ov.chipDanger}`}>{plural(reviewsDue.length, 'review')} due</span>
+        <CoachCard alert={reviewsDue.length > 0}>
+          {/* ⚠ "no reviews due" — never "on track" (chart rule 6; stage 4, G7): the product states what
+              the record holds and does not grade a child's progress against a schedule. */}
+          <CoachEyebrow
+            chip={boardReady && (reviewsDue.length > 0
+              ? <CoachChip tone="danger">{plural(reviewsDue.length, 'review')} due</CoachChip>
               : working.length > 0
-                ? <span className={`${ov.chip} ${ov.chipGood}`}>no reviews due</span>
+                ? <CoachChip tone="good">no reviews due</CoachChip>
                 : null)}
-          </div>
-          <div className={ov.big}>{boardReady ? <>{working.length} <small>working</small></> : dash}</div>
-          <p className={ov.sub}>
+          >
+            Goals
+          </CoachEyebrow>
+          <CoachFigure>{boardReady ? <>{working.length} <small>working</small></> : dash}</CoachFigure>
+          <p className={kit.sub}>
             {!boardReady ? (boardError || 'Loading…')
               : reviewsDue.length > 0 ? <>Overdue: <b>{reviewsDue[0].playerName}</b>{reviewsDue.length > 1 ? ` and ${reviewsDue.length - 1} more` : ''}</>
               : nextReview ? <>Next review <b>{formatShortDate(nextReview.reviewOn!)}</b> · {nextReview.playerName}</>
               : working.length > 0 ? 'No review dates set' : 'No goals set yet'}
           </p>
-          <div className={ov.foot}>
-            <Link href={focusHref} className={ov.footLink}>Coverage →</Link>
+          <div className={kit.foot}>
+            <Link href={focusHref} className={kit.footLink}>Coverage →</Link>
           </div>
-        </div>
+        </CoachCard>
       </div>
 
-      <div className={ov.row2}>
+      <div className={kit.row2}>
         {/* What needs attention — the "this week" the lifecycle had nowhere (Standing back, S4).
             A count and a name, each a door to where you act; never a chart. */}
-        <div className={`${ov.card} ${reviewsDue.length > 0 || unfinished.length > 0 ? ov.cardAlert : ''}`}>
-          <div className={ov.eyeRow}>
-            <span className={ov.eye}>Needs attention</span>
-            {boardReady && (attentionCount > 0
-              ? <span className={`${ov.chip} ${reviewsDue.length > 0 || unfinished.length > 0 ? ov.chipDanger : ov.chipWarn}`}>{attentionCount}</span>
-              : <span className={`${ov.chip} ${ov.chipGood}`}>all clear</span>)}
-          </div>
+        <CoachCard alert={reviewsDue.length > 0 || unfinished.length > 0}>
+          <CoachEyebrow
+            chip={boardReady && (attentionCount > 0
+              ? <CoachChip tone={reviewsDue.length > 0 || unfinished.length > 0 ? 'danger' : 'warn'}>{attentionCount}</CoachChip>
+              : <CoachChip tone="good">all clear</CoachChip>)}
+          >
+            Needs attention
+          </CoachEyebrow>
           {boardError && <p className={styles.errorText} role="alert">{boardError}</p>}
           {boardReady && attentionCount === 0 ? (
             <p className={ov.allClear}>Nothing waiting — every goal is reviewed, every player has a result, every session is complete.</p>
@@ -736,27 +739,22 @@ function OverviewView({ base, stage, types, sessions, board, boardError, reportC
               )}
             </ul>
           )}
-        </div>
+        </CoachCard>
 
-        {/* Everything in Skills & Goals — Money's rail: the rooms in the arc's order, a figure each.
-            (The Players row went with the tab, stage 4 — the roster is read in Insights.) */}
-        <div className={ov.card}>
-          <div className={ov.eyeRow}><span className={ov.eye}>Everything in Skills &amp; Goals</span></div>
-          <div className={ov.rail}>
-            <Link href={skillsAndGoalsHref(base, 'metrics')} className={ov.railRow}>
-              <span className={`${ov.railDot} ${ov.dotPlum}`} aria-hidden /><span className={ov.railName}>Metrics</span>
-              <span className={ov.railStat}><b>{active.length}</b> active</span><span className={ov.railChev} aria-hidden>›</span>
-            </Link>
-            <Link href={skillsAndGoalsHref(base, 'sessions')} className={ov.railRow}>
-              <span className={`${ov.railDot} ${ov.dotGood}`} aria-hidden /><span className={ov.railName}>Sessions</span>
-              <span className={ov.railStat}><b>{sessions.length}</b> this season</span><span className={ov.railChev} aria-hidden>›</span>
-            </Link>
-            <Link href={coverageHref} className={ov.railRow}>
-              <span className={`${ov.railDot} ${ov.dotOlive}`} aria-hidden /><span className={ov.railName}>Reports <span className={ov.railNote}>in Insights</span></span>
-              <span className={ov.railStat}><b>{reportCount}</b> {reportCount === 1 ? 'report' : 'reports'}</span><span className={ov.railChev} aria-hidden>›</span>
-            </Link>
-          </div>
-        </div>
+        {/* Everything in Skills & Goals — the kit's rail (Money's, drawn once): the rooms in the arc's
+            order, a figure each. (The Players row went with the tab, stage 4 — the roster is read in
+            Insights.) */}
+        <CoachRail
+          title={<>Everything in Skills &amp; Goals</>}
+          idPrefix="sg-rail"
+          groups={[{
+            rows: [
+              { key: 'metrics', href: skillsAndGoalsHref(base, 'metrics'), dot: 'plum', name: 'Metrics', stat: <><b>{active.length}</b> active</> },
+              { key: 'sessions', href: skillsAndGoalsHref(base, 'sessions'), dot: 'good', name: 'Sessions', stat: <><b>{sessions.length}</b> this season</> },
+              { key: 'reports', href: coverageHref, dot: 'olive', name: 'Reports', note: 'in Insights', stat: <><b>{reportCount}</b> {reportCount === 1 ? 'report' : 'reports'}</> },
+            ],
+          }]}
+        />
       </div>
     </>
   );
@@ -798,7 +796,7 @@ function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMe
     );
   };
   const table = (rows: RepTeamMeasurableType[]) => (
-    <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
+    <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
       <table className={`${styles.devBoardTable} ${styles.devMetricsTable}`}>
         <thead>
           <tr>
@@ -813,19 +811,16 @@ function MetricsView({ base, types, canWrite }: { base: string; types: RepTeamMe
 
   return (
     <div>
-      {/* Money's list-tab grammar (2026-09-14): the toolbar on the paper, the table on white. */}
-      <div className={styles.panelToolbar}>
-        <p className={styles.devListLede}>
-          <strong>Tests record numbers. Skills describe behaviour.</strong> Goals explain what a player is working toward.
-        </p>
-        {canWrite && (
-          <div className={styles.panelToolbarActions}>
-            <Link href={skillsAndGoalsHref(base, 'metrics', { edit: 'new' })} className={`${styles.btnSecondary} ${styles.devSectionAction}`}>
-              <Plus size={14} aria-hidden /> Define a metric
-            </Link>
-          </div>
+      {/* Money's list-tab grammar (2026-09-14) — the kit's toolbar now: the lede on the paper, the
+          action pinned right, the table on the card. */}
+      <CoachListToolbar
+        lede={<><strong>Tests record numbers. Skills describe behaviour.</strong> Goals explain what a player is working toward.</>}
+        actions={canWrite && (
+          <Link href={skillsAndGoalsHref(base, 'metrics', { edit: 'new' })} className={`${styles.btnSecondary} ${styles.devSectionAction}`}>
+            <Plus size={14} aria-hidden /> Define a metric
+          </Link>
         )}
-      </div>
+      />
 
       {active.length === 0 ? (
         <CoachEmptyState

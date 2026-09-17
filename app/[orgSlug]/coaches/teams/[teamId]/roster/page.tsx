@@ -39,6 +39,7 @@ import {
 import CoachExportButton from '@/components/coaches/CoachExportButton';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
+import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -695,20 +696,15 @@ export default function RosterPage({
       {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live
           here) — plus the counts that used to be the header subtitle (page-header ruling
           2026-08-11: a live fact leads the body it counts, not the chrome above it). */}
-      <div className={styles.listToolbar}>
-        {/* ⚠ THE COUNT IS GONE ENTIRELY (owner ruling 2026-08-26). It was dropped on phones on
-            2026-08-24 to stop it squeezing "Depth chart" into wrapping; that turned out to be the
-            wrong cause (the pills were splitting their box in half — see the toolbar's own
-            `.segBtn` note) and the count was never the problem. It goes now for the honest reason:
-            a roster is twelve rows on one screen, and counting something a coach can see is chrome
-            charging rent. */}
-        {/* ⚠ THE VIEW SWITCH LEADS THE ROW (owner ruling 2026-09-13, hub R2-4). It used to ride
-            inside `.listToolbarEnd` beside Export, which left the whole left half of the toolbar
-            empty once the count went. Every other view switch in the portal — Schedule, Money,
-            Insights — sits at the LEFT of its row, and the table standard (§3.9) puts the
-            arrangement control left with only the export pinned right. `.listToolbarView` carries
-            the phone rules the toggle used to inherit from the slot it has left. */}
-        <div className={`${styles.segChoice} ${styles.listToolbarView}`} aria-label="Roster view">
+      {/* The kit's list toolbar (components/coaches/kit, 2026-09-16) — the row Money's tabs, Skills &
+          Goals and Insights already draw. ⚠ THE COUNT IS GONE ENTIRELY (owner ruling 2026-08-26):
+          a roster is twelve rows on one screen, and counting something a coach can see is chrome
+          charging rent. ⚠ THE VIEW SWITCH LEADS THE ROW (owner ruling 2026-09-13, hub R2-4) —
+          every other view switch in the portal sits at the LEFT of its row, and the table standard
+          (§3.9) puts the arrangement control left with only the export pinned right;
+          `kit.toolbarView` carries the equal-pill grid and the phone floor. */}
+      <CoachListToolbar actions={rosterExport}>
+        <div className={`${styles.segChoice} ${kit.toolbarView}`} aria-label="Roster view">
           <button type="button" aria-pressed={view === 'list'}
             className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
             onClick={() => setView('list')}>List</button>
@@ -716,10 +712,7 @@ export default function RosterPage({
             className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
             onClick={() => setView('depth')}>Depth chart</button>
         </div>
-        <span className={styles.listToolbarEnd}>
-          {rosterExport}
-        </span>
-      </div>
+      </CoachListToolbar>
 
       {view === 'depth' ? (
         <DepthChartBoard orgSlug={orgSlug} teamId={teamId} />

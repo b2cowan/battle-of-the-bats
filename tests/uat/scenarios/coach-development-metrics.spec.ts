@@ -238,10 +238,9 @@ test.describe('the three views and the exact addresses, rendered', () => {
     const devonRow = page.locator('tr', { hasText: 'Devon Test' });
     await expect(devonRow).toBeVisible();
     expect((await devonRow.innerText()).toLowerCase()).toContain('84 km/h');
-    // A player with nothing under this metric is ONE dash — the legend under the table says what it means.
+    // A player with nothing under this metric is ONE dash — no legend, no reason given (owner, 2026-09-17).
     const caseyRow = page.locator('tr', { hasText: 'Casey Test' });
     expect((await caseyRow.innerText())).toContain('—');
-    await expect(page.getByText(/— no result this season/)).toBeVisible();
     // The count line is the first thing under the toolbar; the retired prose is gone.
     await expect(page.getByText(/of 12 players (has|have) a Throw speed result this season/)).toBeVisible();
     await expect(page.getByText('Set goals and record in Skills & Goals →')).toHaveCount(0);

@@ -1,5 +1,5 @@
 'use client';
-import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Fragment, use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { formatTime } from '@/lib/utils';
 import { ArrowLeft, Calendar, CalendarPlus, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
@@ -43,7 +43,9 @@ import {
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
 import CoachLoading from '@/components/coaches/CoachLoading';
+import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
 import styles from '../../../coaches.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import { gameDayEntryHref } from '@/lib/coach-game-day';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
@@ -432,7 +434,7 @@ function errorMessage(error: unknown, fallback: string) {
 //   · its clipboard sat INSIDE the title text with hand-rolled spacing, where `EventChip` and
 //     `TournamentGameChip` both put their mark in the leading icon slot before the time.
 // Both are fixed here; the dashed rail and the muted name stay exactly as they were.
-function TryoutChip({ session, dayKey, href }: { session: RepTryoutSession; dayKey?: string; href: string }) {
+function TryoutChip({ session, dayKey, href, listRow }: { session: RepTryoutSession; dayKey?: string; href: string; listRow?: boolean }) {
   // ⚠ A session is a real moment now, read in the CLUB's zone like every event beside it — see
   // lib/tryout-session-label for why it used to be sliced, and why that was wrong.
   const time = formatTryoutSessionTime(session.startsAt);
@@ -440,6 +442,23 @@ function TryoutChip({ session, dayKey, href }: { session: RepTryoutSession; dayK
   // header, the flat list does not.
   const lead = dayKey ? time : [shortDate(tryoutSessionDay(session.startsAt)), time].filter(Boolean).join(' · ');
   const place = [session.label, session.location, session.fieldNumber && `Field ${session.fieldNumber}`].filter(Boolean).join(' · ');
+  // The LIST view's face (standard §3.10, F-26): the chip below is the calendar CELL's (K-21). The
+  // clipboard is the one lead mark and the muted name carries the distinctness the dashed rail
+  // carries in a cell.
+  if (listRow) {
+    return (
+      <CoachRow
+        as="link"
+        href={href}
+        tooltip="Tryout — opens your Tryouts tab"
+        mark={<ClipboardList size={12} aria-hidden />}
+        lead={lead}
+        leadKind="date-time"
+        title={<span className={styles.eventChipOpp}>Tryout{place ? ` · ${place}` : ''}</span>}
+        titleWeight="plain"
+      />
+    );
+  }
   return (
     <Link href={href} className={`${styles.eventChip} ${styles.tryoutChip}`} title="Tryout — opens your Tryouts tab">
       <ClipboardList size={12} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} aria-hidden />
@@ -455,32 +474,46 @@ function TryoutChip({ session, dayKey, href }: { session: RepTryoutSession; dayK
 // public game page (never opens the event editor). Mirrors TryoutChip; games flow through none of the
 // editor / attendance / lineup / save paths. `dayKey` present in day-scoped views (week/month) → show
 // the time only; the flat list shows the date too.
-function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGame; dayKey?: string }) {
+function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTournamentGame; dayKey?: string; listRow?: boolean }) {
   const lead = dayKey
     ? (game.timeLabel ?? (game.phase === 'live' ? 'Live' : 'TBD'))
     : [game.dateLabel, game.timeLabel].filter(Boolean).join(' · ');
+  // The name and the trail (a live score, or the final score and result) are built ONCE so the
+  // calendar cell's chip and the list view's row cannot drift apart — the same shape EventChip
+  // takes below.
+  const title = (
+    <>vs {game.opponentName}<span className={styles.eventChipOpp}> · </span><span className={styles.tournamentChipTag}>Tournament</span></>
+  );
+  const trail = game.phase === 'live' ? (
+    <span className={styles.eventChipResult} style={{ color: 'var(--danger)' }}>
+      <span className={styles.tournamentLiveDot} aria-hidden />{game.myScore ?? 0}–{game.oppScore ?? 0}
+    </span>
+  ) : game.phase === 'final' ? (
+    <>
+      <span className={styles.eventChipScore}>{game.myScore}–{game.oppScore}</span>
+      {game.result && (
+        <span className={styles.eventChipResult} style={{ color: resultColor(game.result) }}>{game.result.toUpperCase()}</span>
+      )}
+    </>
+  ) : null;
+  // The LIST view's face (§3.10, F-26); the chip is the calendar cell's (K-21).
+  if (listRow) {
+    const face = {
+      mark: <Trophy size={12} style={{ color: 'var(--warning)' }} aria-hidden />,
+      lead, leadKind: 'date-time' as const,
+      title, titleWeight: 'plain' as const,
+      trail,
+    };
+    return game.href
+      ? <CoachRow as="link" href={game.href} tooltip="Open the live game page" {...face} />
+      : <CoachRow as="static" {...face} />;
+  }
   const inner = (
     <>
       <Trophy size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-hidden />
       <span className={styles.eventChipTime}>{lead}</span>
-      <span className={styles.eventChipName}>
-        vs {game.opponentName}<span className={styles.eventChipOpp}> · </span>
-        <span className={styles.tournamentChipTag}>Tournament</span>
-      </span>
-      <span className={styles.eventChipTrail}>
-        {game.phase === 'live' ? (
-          <span className={styles.eventChipResult} style={{ color: 'var(--danger)' }}>
-            <span className={styles.tournamentLiveDot} aria-hidden />{game.myScore ?? 0}–{game.oppScore ?? 0}
-          </span>
-        ) : game.phase === 'final' ? (
-          <>
-            <span className={styles.eventChipScore}>{game.myScore}–{game.oppScore}</span>
-            {game.result && (
-              <span className={styles.eventChipResult} style={{ color: resultColor(game.result) }}>{game.result.toUpperCase()}</span>
-            )}
-          </>
-        ) : null}
-      </span>
+      <span className={styles.eventChipName}>{title}</span>
+      <span className={styles.eventChipTrail}>{trail}</span>
     </>
   );
   return game.href ? (
@@ -490,7 +523,7 @@ function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGam
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -520,6 +553,62 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
   // The row stays ONE interactive element (it opens the drawer); the Game day action is a
   // SIBLING link beside it, never a control nested inside the button — invalid HTML and a
   // mis-tap magnet on a phone. Outside the live window the sibling simply isn't there.
+  // The trail slot — STATE only (Moved, a mismatch, your record vs them, the score, cancelled).
+  // Built once so the calendar cell's chip and the list view's row cannot drift apart.
+  const trail = (
+    <>
+      {/* Batch 4: the organizer rescheduled this since the coach last looked here. Their lineup
+          and attendance came with it — this only exists so they know the time changed. */}
+      {moved && !cancelled && (
+        <span className={styles.eventChipMoved} title="The organizer moved this game">Moved</span>
+      )}
+      {mismatch && !cancelled && (
+        <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
+      )}
+      {/* Scouting Book glance: your record vs this opponent, upcoming games only (the
+          caller passes null once a score exists — the trail slot is the score's then). */}
+      {bookRecord && !cancelled && (
+        <span className={styles.scoutRecChip} data-tone="even" title={`Your record vs ${event.opponent}`}>{bookRecord}</span>
+      )}
+      {cancelled ? (
+        <span className={styles.eventChipResult} style={{ color: 'var(--warning)' }}>CANCELLED</span>
+      ) : (
+        <>
+          {!!awardCount && (
+            <span className={styles.eventChipResult} title={`${awardCount} award${awardCount === 1 ? '' : 's'} given`} style={{ color: 'var(--logic-lime)' }}>
+              🏆 {awardCount}
+            </span>
+          )}
+          {hasScore && <span className={styles.eventChipScore}>{event.teamScore}–{event.opponentScore}</span>}
+          {!span && event.result && (
+            <span className={styles.eventChipResult} style={{ color: resultColor(event.result) }}>
+              {event.result.toUpperCase()}
+            </span>
+          )}
+        </>
+      )}
+    </>
+  );
+  // The LIST view's face (standard §3.10, F-26 — owner-ruled 2026-09-16): one row in one frame,
+  // the type icon as the one lead mark (the 3px colour rail stays in the calendar cell, K-21), the
+  // date-time as a date column, the name as a record read (400). The row is a real button that
+  // opens the drawer; the Game day link sits BESIDE it in the same <li>, never inside it.
+  if (listRow) {
+    return (
+      <CoachRow
+        as="button"
+        onClick={onClick}
+        className={cancelled ? styles.rowListMuted : undefined}
+        mark={<Icon size={12} style={{ color }} aria-hidden />}
+        lead={lead}
+        leadKind={span ? 'text' : 'date-time'}
+        title={<span style={cancelled ? { textDecoration: 'line-through' } : undefined}>{event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}</span>}
+        titleWeight="plain"
+        trail={trail}
+        beside={gameDayHref ? <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link> : undefined}
+      />
+    );
+  }
   const chip = (
     <button
       className={styles.eventChip}
@@ -532,36 +621,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
         {event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}
       </span>
       <span className={styles.eventChipTrail}>
-        {/* Batch 4: the organizer rescheduled this since the coach last looked here. Their lineup
-            and attendance came with it — this only exists so they know the time changed. */}
-        {moved && !cancelled && (
-          <span className={styles.eventChipMoved} title="The organizer moved this game">Moved</span>
-        )}
-        {mismatch && !cancelled && (
-          <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
-        )}
-        {/* Scouting Book glance: your record vs this opponent, upcoming games only (the
-            caller passes null once a score exists — the trail slot is the score's then). */}
-        {bookRecord && !cancelled && (
-          <span className={styles.scoutRecChip} data-tone="even" title={`Your record vs ${event.opponent}`}>{bookRecord}</span>
-        )}
-        {cancelled ? (
-          <span className={styles.eventChipResult} style={{ color: 'var(--warning)' }}>CANCELLED</span>
-        ) : (
-          <>
-            {!!awardCount && (
-              <span className={styles.eventChipResult} title={`${awardCount} award${awardCount === 1 ? '' : 's'} given`} style={{ color: 'var(--logic-lime)' }}>
-                🏆 {awardCount}
-              </span>
-            )}
-            {hasScore && <span className={styles.eventChipScore}>{event.teamScore}–{event.opponentScore}</span>}
-            {!span && event.result && (
-              <span className={styles.eventChipResult} style={{ color: resultColor(event.result) }}>
-                {event.result.toUpperCase()}
-              </span>
-            )}
-          </>
-        )}
+        {trail}
       </span>
     </button>
   );
@@ -2024,40 +2084,40 @@ export default function CoachesSchedulePage({
       const rows = [
         ...(grouped[mk] ?? []).map(e => ({
           at: shownAt(e.startsAt ? orgDayKey(e.startsAt) : '', e.startsAt ? clock24(e.startsAt) : ''),
-          node: <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} />,
+          node: <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} listRow />,
         })),
         ...games.map(g => ({
           at: shownAt(g.gameDate ?? '', g.startsAt ? clock24(g.startsAt) : ''),
-          node: <TournamentGameChip key={`g-${g.id}`} game={g} />,
+          node: <TournamentGameChip key={`g-${g.id}`} game={g} listRow />,
         })),
         ...trys.map(s => ({
           at: shownAt(tryoutSessionDay(s.startsAt), clock24(s.startsAt)),
-          node: <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />,
+          node: <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} listRow />,
         })),
       ].sort((a, b) => a.at.localeCompare(b.at));
+      // A month is a BAND ROW inside the one frame (standard §3.10.5), not a kicker on the paper
+      // over a separate stack — the feed's day header, on the schedule.
       return (
-        <div key={mk} className={styles.calMonthGroup}>
-          <div className={styles.calMonthLabel}>{label}</div>
-          <div className={styles.calEventList}>
-            {rows.map(r => r.node)}
-          </div>
-        </div>
+        <Fragment key={mk}>
+          <CoachRowBand>{label}</CoachRowBand>
+          {rows.map(r => r.node)}
+        </Fragment>
       );
     });
+    // The LIST view is a row list on the recipe (§3.10, F-26): one frame on the card, compact
+    // rows with a hairline, months as bands. The week and month views keep their chips (K-21).
     return (
-      <>
+      <CoachRowList label="Schedule">
         {monthGroups}
         {tbdGames.length > 0 && (
-          <div key="tbd" className={styles.calMonthGroup}>
-            <div className={styles.calMonthLabel}>To be scheduled</div>
-            <div className={styles.calEventList}>
-              {tbdGames.map(g => (
-                <TournamentGameChip key={`g-${g.id}`} game={g} />
-              ))}
-            </div>
-          </div>
+          <>
+            <CoachRowBand>To be scheduled</CoachRowBand>
+            {tbdGames.map(g => (
+              <TournamentGameChip key={`g-${g.id}`} game={g} listRow />
+            ))}
+          </>
         )}
-      </>
+      </CoachRowList>
     );
   }
 
@@ -2321,7 +2381,9 @@ export default function CoachesSchedulePage({
 
       {/* List | Week | Month — a view switcher is not an action: it rides the body it switches
           (ruling 2026-08-11), exactly where Roster's List/Depth-chart toggle already lives. */}
-      <div className={styles.listToolbar}>
+      {/* The kit's list toolbar (components/coaches/kit, 2026-09-16): the view toggle leads, the
+          export is pinned right — the row every list in the portal draws. */}
+      <CoachListToolbar actions={scheduleExport}>
         <div className={styles.viewToggle}>
           {(['list', 'week', 'month'] as ViewMode[]).map(v => (
             <button
@@ -2333,8 +2395,7 @@ export default function CoachesSchedulePage({
             </button>
           ))}
         </div>
-        <span className={styles.listToolbarEnd}>{scheduleExport}</span>
-      </div>
+      </CoachListToolbar>
 
       {/* Navigator for week/month */}
       {view !== 'list' && (
@@ -3141,7 +3202,7 @@ export default function CoachesSchedulePage({
           <div className={`${styles.modal} ${styles.eventFormModal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestDiscardForm} />
 
-            <div className={styles.formBody}>
+            <div className={`${styles.formBody} ${styles.formBodyTight}`}>
               {/* Legend for the per-field * markers below —
                   most fields on this form are optional, so only the few that block Save are flagged. */}
               <p className={styles.formHint}>* Required</p>

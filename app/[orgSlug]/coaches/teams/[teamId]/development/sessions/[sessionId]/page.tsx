@@ -734,7 +734,7 @@ function SessionReviewDialog({
              tall name list never drags the row's own numbers down to its middle — they stay beside
              the test name, where the header above them says what they mean; the header stays pinned
              while the body scrolls so that reading never breaks. */
-          <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
+          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={`${styles.table} ${css.reviewTable}`} aria-label="What was recorded, by test">
               <thead>
                 <tr>

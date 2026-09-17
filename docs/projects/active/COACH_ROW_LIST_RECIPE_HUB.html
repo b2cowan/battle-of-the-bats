@@ -1,0 +1,854 @@
+<title>Coach Row-List Recipe</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;
+--f-display:'Barlow Condensed','Arial Narrow',sans-serif;--f-body:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;--f-data:'IBM Plex Mono',ui-monospace,Menlo,monospace;color-scheme:light}
+/* ── the PRODUCT's tokens, verbatim from app/globals.css — inside the frames only ── */
+.fr,.pfr{--p-paper:#F8F4ED;--p-card:#FFFFFF;--p-ink:#241E15;--p-ink-soft:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line-strong:rgba(70,55,30,.20);--p-olive:#57651E;--p-olive-soft:rgba(87,101,30,.10);--p-lime:#D9F99D;--p-fill:rgba(70,55,30,.08);--p-success:#34662A;--p-success-soft:rgba(52,102,42,.12);--p-warn:#835006;--p-warn-soft:rgba(131,80,6,.12);--p-danger:#B03A22;--p-grid:#ebe6dc;--p-cardborder:rgba(87,101,30,.3);--p-white8:#FFFFFF;--p-hover-old:rgba(70,55,30,.12);--p-shadow:0 1px 2px rgba(36,30,21,.06);--p-navy:#0F1B3D;--p-evt-practice:#7C3AED;--p-evt-game:#2563EB;--p-evt-tourn:#B45309}
+.fr[data-skin=dark],.pfr[data-skin=dark]{--p-paper:#0A0A0A;--p-card:#111827;--p-ink:rgba(255,255,255,.9);--p-ink-soft:rgba(255,255,255,.7);--p-dim:#94A3B8;--p-line:rgba(255,255,255,.08);--p-line-strong:rgba(255,255,255,.18);--p-olive:#D9F99D;--p-olive-soft:rgba(30,58,138,.18);--p-lime:#D9F99D;--p-fill:rgba(255,255,255,.06);--p-success:#22C55E;--p-success-soft:rgba(34,197,94,.12);--p-warn:#F59E0B;--p-warn-soft:rgba(245,158,11,.12);--p-danger:#EF4444;--p-grid:rgba(255,255,255,.035);--p-cardborder:rgba(30,58,138,.3);--p-white8:rgba(255,255,255,.08);--p-hover-old:rgba(255,255,255,.1);--p-shadow:0 1px 2px rgba(0,0,0,.4);--p-navy:#0F1B3D;--p-evt-practice:#A78BFA;--p-evt-game:#60A5FA;--p-evt-tourn:#FBBF24}
+
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 var(--f-body)}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h1[tabindex]:focus{outline:none}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions{display:flex;gap:8px}.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:#b9d88c}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;padding:10px 24px;font-size:12px;color:var(--muted);background:#fafbf7;border-bottom:1px solid var(--line);align-items:center}
+.specimenlabel{display:inline-block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;padding:4px 9px;border-radius:4px;margin:0}
+.specimenlabel.today{background:#eeeee9;color:#5c6658}.specimenlabel.after{background:var(--lime);color:#2b3f12}.specimenlabel.alt{background:#e3edf2;color:#1d4a5e}
+main.hubsection{padding:0}
+.screenwrap{padding:22px 24px 30px}
+.screenhead{max-width:900px;margin:0 0 14px}.screenhead h2{margin:0 0 6px;font-size:21px}.screenhead p{font-size:14px;color:var(--muted)}
+.pair{display:flex;flex-direction:column;gap:26px}
+.spec{display:flex;flex-direction:column;gap:8px}
+.spec .cap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.scroller{overflow-x:auto;padding-bottom:6px}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+.note{padding:12px 14px;border-left:3px solid var(--blue);background:#edf5f8;font-size:13px;margin:0 0 14px;border-radius:0 6px 6px 0;max-width:900px}
+
+/* clickable highlights */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;font-family:var(--f-body)}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-family:var(--f-body);font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+/* ── the product frame (true size: the coach portal's main column at 1440 = 1220px) ── */
+.fr{width:1220px;flex:none;border:1px solid #c6cebc;border-radius:12px;overflow:hidden;background:var(--p-paper);box-shadow:0 12px 36px #2732210a;color:var(--p-ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.fr .grid{background-image:linear-gradient(var(--p-grid) 1px,transparent 1px),linear-gradient(90deg,var(--p-grid) 1px,transparent 1px);background-size:22px 22px}
+.masthead{background:var(--p-card);border-bottom:1px solid var(--p-line);padding:10px 32px;display:flex;align-items:center;gap:20px;color:var(--p-ink)}
+.masthead .tname{font-weight:700;font-size:16px;line-height:1.2}.masthead .tmeta{font:11px var(--f-data);color:var(--p-dim);letter-spacing:.3px;margin-top:2px}.masthead .tmeta b{color:var(--p-ink)}
+.masthead .next{margin-left:auto;text-align:right;font-size:13px;font-weight:700;color:var(--p-ink)}.masthead .next small{display:block;font:10px var(--f-data);letter-spacing:1.2px;color:var(--p-dim)}
+.masthead .help{width:34px;height:34px;border-radius:50%;border:1px solid var(--p-line-strong);background:var(--p-card);display:grid;place-items:center;font-weight:700;color:var(--p-ink)}
+.body{padding:26px 32px 34px;color:var(--p-ink)}
+.body.narrow{max-width:1024px;margin:0 auto}
+.pagehead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.pagehead .icon{width:34px;height:34px;border-radius:9px;background:var(--p-olive-soft);border:1px solid var(--p-line);display:grid;place-items:center;color:var(--p-olive);font-weight:700;font-family:var(--f-data);font-size:12px}
+.pagehead h1{font:700 20px var(--f-display);margin:0;letter-spacing:.2px;color:var(--p-ink);line-height:1.1}
+.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.btn{min-height:38px;padding:6px 14px;white-space:nowrap;border:1px solid var(--p-line-strong);border-radius:8px;background:var(--p-card);font-weight:700;font-size:14px;color:var(--p-ink);display:inline-flex;align-items:center;gap:6px}
+.btn.lime{background:var(--p-lime);border-color:#b9d88c;color:#241E15}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--p-line);margin-bottom:18px}
+.tabs span{padding:10px 14px;font-size:14px;font-weight:600;color:var(--p-dim);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs span.on{color:var(--p-olive);border-bottom-color:var(--p-olive)}
+.seg{display:inline-flex;border:1px solid var(--p-line-strong);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.seg span{padding:7px 18px;font-weight:600;font-size:14px;background:var(--p-card);color:var(--p-dim)}.seg span.on{background:var(--p-fill);color:var(--p-ink)}
+.kicker{margin:22px 0 10px;font:800 11px var(--f-body);letter-spacing:.9px;text-transform:uppercase;color:var(--p-dim)}
+.monthlabel{font:700 12px var(--f-body);letter-spacing:1px;text-transform:uppercase;color:var(--p-dim);padding-bottom:8px;border-bottom:1px solid var(--p-line);margin:0 0 12px}
+.onething{background:var(--p-card);border:1px solid var(--p-line);border-left:4px solid var(--p-navy);border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:1fr auto;gap:6px 20px;align-items:center;margin-bottom:6px;box-shadow:var(--p-shadow)}
+.onething .k{font:700 11px var(--f-body);letter-spacing:.9px;text-transform:uppercase;color:var(--p-dim)}.onething .k.r{text-align:right}
+.onething .h{font:700 20px var(--f-display);color:var(--p-ink)}.onething .m{font-size:14px;color:var(--p-ink-soft)}
+.onething .chip{justify-self:end}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.chip.ok{color:var(--p-success);background:var(--p-success-soft)}.chip.warn{color:var(--p-warn);background:var(--p-warn-soft)}.chip.mute{color:var(--p-dim);border:1px solid var(--p-line-strong)}
+.search{border:1px solid var(--p-line-strong);border-radius:999px;background:var(--p-card);padding:11px 18px;color:var(--p-dim);font-size:14px;margin-bottom:14px;min-height:44px}
+.foot{font-size:12px;color:var(--p-dim);margin:10px 4px 0}
+.lnk{color:var(--p-olive);font-weight:700;text-decoration:none}
+
+/* TODAY — the card stack (lineupFrontRow / scoutRow), as measured */
+.cstack{display:flex;flex-direction:column;gap:9px}
+.crow{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--p-white8);border:1px solid var(--p-cardborder);border-radius:12px;box-shadow:var(--p-shadow);color:var(--p-ink);min-height:73px}
+.crow.hov{background:var(--p-hover-old);transform:translateY(-1px)}
+.crow .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;line-height:1}
+.crow .tile b{font:800 20px var(--f-display);color:var(--p-ink)}.crow .tile i{font:700 10px var(--f-body);letter-spacing:.6px;text-transform:uppercase;color:var(--p-dim);font-style:normal;margin-top:2px}
+.crow .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.crow .t{font-size:16px;font-weight:700;color:var(--p-ink)}.crow .m{font-size:12px;color:var(--p-dim)}
+.crow .act{font-size:14px;font-weight:700;color:var(--p-olive);white-space:nowrap}.crow .act.q{color:var(--p-dim);font-weight:600}
+.crow.scout{min-height:68px;padding:11px 14px;gap:11px}.crow.scout .t{font-size:14px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}.dot.y{background:var(--p-warn)}.dot.n{border:1.5px dashed var(--p-line-strong)}
+.rec{font:700 12px var(--f-data);padding:5px 9px;border-radius:6px;white-space:nowrap}.rec.up{color:var(--p-success);background:var(--p-success-soft)}.rec.down{color:var(--p-danger);background:rgba(176,58,34,.12)}.rec.even{color:var(--p-ink-soft);background:var(--p-fill)}
+/* TODAY — the schedule chip */
+.chips{display:flex;flex-direction:column;gap:6px}
+.echip{display:flex;align-items:center;gap:8px;background:var(--p-card);border-left:3px solid var(--p-evt-game);border-radius:0 6px 6px 0;padding:7px 12px;min-height:31px;color:var(--p-ink)}
+.echip.hov{background:var(--p-olive-soft)}
+.echip.p{border-left-color:var(--p-evt-practice)}.echip.t{border-left-color:var(--p-evt-tourn)}
+.echip .ic{width:12px;height:12px;border-radius:3px;border:2px solid var(--p-evt-game);flex:none}.echip.p .ic{border-color:var(--p-evt-practice);border-radius:50%}.echip.t .ic{border-color:var(--p-evt-tourn)}
+.echip .tm{font-size:12px;color:var(--p-dim);min-width:88px;flex:none}.echip .nm{flex:1;font-size:14px}
+.echip .sc{font-weight:700;font-variant-numeric:tabular-nums}.echip .rs{font-size:11px;font-weight:700}
+.rs.w{color:var(--p-success)}.rs.l{color:var(--p-danger)}.rs.t{color:var(--p-warn)}
+/* TODAY — pills on a card (miniRow), off-roster fold, staff */
+.card{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;overflow:hidden}
+.card .ch{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px;font:700 16px var(--f-display);color:var(--p-ink)}.card .ch small{font:600 11px var(--f-data);letter-spacing:1px;text-transform:uppercase;color:var(--p-dim)}
+.card .cb{padding:8px 16px 16px}
+.pills{display:flex;flex-direction:column;gap:5px}
+.pill{display:flex;align-items:center;gap:12px;padding:6px 10px;background:var(--p-olive-soft);border:1px solid var(--p-line);border-radius:8px;min-height:41px}
+.pill .n{flex:1;font-size:14px}.pill .d{font-size:12px;color:var(--p-dim)}
+.badge{font:600 12px var(--f-body);letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:5px}.badge.ok{color:#2A5222;background:rgba(52,102,42,.14)}.badge.no{color:var(--p-danger);background:rgba(176,58,34,.12)}
+.fold{margin-top:14px;border:1px dashed var(--p-line-strong);border-radius:10px;padding:0 14px}
+.fold .sum{padding:10px 0;font-size:14px;font-weight:600;color:var(--p-dim)}
+.fold .r{display:flex;align-items:center;gap:10px;padding:6px 0 10px;border-top:1px solid var(--p-paper)}
+.fold .r .n{font-weight:600;color:var(--p-ink-soft)}.fold .r .j{font:12px var(--f-data);color:var(--p-dim)}.fold .r .b{margin-left:auto;font:700 12px var(--f-display);padding:4px 10px;border:1px solid var(--p-line-strong);border-radius:6px;background:var(--p-fill)}
+.stafflist{background:var(--p-card);border:1px solid var(--p-line-strong);border-radius:12px;overflow:hidden}
+.staffrow{display:grid;grid-template-columns:1fr auto auto;grid-template-areas:"who role act" "caps caps caps";gap:5px 14px;align-items:center;padding:10px 18px;border-top:1px solid var(--p-line)}
+.staffrow:first-child{border-top:0}
+.staffrow .who{grid-area:who;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.staffrow .who b{font-size:16px;font-weight:600}.staffrow .who small{font-size:12px;color:var(--p-dim)}
+.staffrow .role{grid-area:role}.staffrow .act{grid-area:act;font-size:14px;font-weight:600}.staffrow .act i{font-style:normal;color:var(--p-dim);margin-left:4px}
+.staffrow .caps{grid-area:caps;display:flex;gap:6px;flex-wrap:wrap}.cap{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--p-fill);color:var(--p-ink-soft)}.cap.s{border:1px solid var(--p-line-strong);background:var(--p-olive-soft)}
+.rolechip{font:800 10px var(--f-body);letter-spacing:.8px;text-transform:uppercase;padding:4px 9px;border-radius:5px;border:1px solid var(--p-line-strong);color:var(--p-ink-soft)}.rolechip.hc{background:#241E15;color:#fff;border-color:#241E15}
+/* TODAY — the shelf rows (already on the shelf card) */
+.shelf{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;padding:0 16px 8px}
+.shelf .sh{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;font:700 16px var(--f-body)}.shelf .sh small{font:600 11px var(--f-data);letter-spacing:1px;color:var(--p-dim)}
+.monthhead{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600;border-top:1px solid var(--p-line)}.monthhead small{font-weight:400;font-size:12px;color:var(--p-dim);flex:1}.monthhead i{font-style:normal;color:var(--p-dim)}
+.srow{display:flex;align-items:center;gap:8px;padding:7px 0 7px 9px;border-left:2px solid var(--p-line);border-bottom:1px solid var(--p-line);font-size:14px;min-height:38px}
+.srow:last-child{border-bottom:0}.srow .dt{flex:0 0 54px;color:var(--p-dim);font-variant-numeric:tabular-nums}.srow .ic{width:11px;height:11px;border:2px solid var(--p-evt-game);border-radius:3px;flex:none}.srow .nm{flex:1}.srow .sc{flex:0 0 52px;text-align:right;font-variant-numeric:tabular-nums}.srow .oc{flex:0 0 42px;text-align:right;color:var(--p-ink-soft)}
+.drow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid var(--p-line);font-size:14px;font-weight:600;color:var(--p-ink);min-height:44px}
+.drow:last-child{border-bottom:0}.drow small{display:block;font-weight:400;font-size:12px;color:var(--p-dim)}.drow i{font-style:normal;color:var(--p-dim)}
+
+/* ── AFTER — the recipe: one frame, hairlined rows, band rows ── */
+.rl{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.rl.inset{border:0;border-radius:0;background:transparent}
+.band{display:flex;align-items:center;gap:8px;padding:6px 16px;font:700 12px var(--f-display);letter-spacing:.6px;text-transform:uppercase;color:var(--p-ink-soft);background:var(--p-paper);border-top:1px solid var(--p-line);border-bottom:1px solid var(--p-line)}
+.band:first-child{border-top:0}
+.rr{display:flex;align-items:center;gap:14px;padding:6.72px 16px;border-bottom:1px solid var(--p-line);color:var(--p-ink);min-height:36px}
+.rr.cf{padding-top:11.2px;padding-bottom:11.2px}
+.rr:last-child{border-bottom:0}
+.rr.door{cursor:pointer}.rr.door.hov{background:var(--p-olive-soft)}
+.rr .lead{flex:0 0 auto;color:var(--p-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rr .lead.dt{width:64px}.rr .lead.dt2{width:120px}
+.rr .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.rr .t{font-size:14px;font-weight:600;color:var(--p-ink)}.rr .t.plain{font-weight:400}.rr .c{font-size:12px;color:var(--p-dim)}.rr .c.mean{color:var(--p-ink-soft);font-style:italic}
+.rr .trail{display:flex;align-items:center;gap:12px;flex:none}
+.rr .go{font-size:14px;font-weight:600;color:var(--p-ink);white-space:nowrap}.rr .go.q{color:var(--p-dim)}.rr .go i{font-style:normal;color:var(--p-dim);margin-left:3px}
+.rr .chev{color:var(--p-dim);font-size:16px;line-height:1;width:16px;text-align:center}
+.rr .ic{width:12px;height:12px;border-radius:3px;border:2px solid var(--p-evt-game);flex:none}.rr .ic.p{border-color:var(--p-evt-practice);border-radius:50%}.rr .ic.t{border-color:var(--p-evt-tourn)}
+.rr .sc{font-weight:700;font-variant-numeric:tabular-nums}
+.rr .j{font:12px var(--f-data);color:var(--p-dim)}
+.rr .b{font:700 12px var(--f-display);padding:4px 10px;border:1px solid var(--p-line-strong);border-radius:6px;background:var(--p-fill);color:var(--p-ink);min-height:28px}
+.rr .oc{flex:0 0 42px;text-align:right;color:var(--p-ink-soft)}.rr .scr{flex:0 0 52px;text-align:right;font-variant-numeric:tabular-nums}
+.rr.two{display:grid;grid-template-columns:1fr auto auto;grid-template-areas:"who role act" "caps caps caps";gap:4px 14px}
+.rr.two .who{grid-area:who;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.rr.two .who b{font-size:14px;font-weight:600}.rr.two .who small{font-size:12px;color:var(--p-dim)}
+.rr.two .role{grid-area:role}.rr.two .act{grid-area:act}.rr.two .caps{grid-area:caps;display:flex;gap:6px;flex-wrap:wrap}
+.rlfoot{padding:10px 16px 0;font-size:14px}
+.stripe{position:relative}.stripe::after{content:attr(data-h);position:absolute;right:-4px;top:0;transform:translateX(100%);font:600 11px var(--f-data);color:#9e3030;background:#fff;border:1px solid #e0a9a9;border-radius:4px;padding:1px 5px;white-space:nowrap}
+
+/* the comparison table (Results tab) drawn beside the scouting book */
+table.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;color:var(--p-ink)}
+.tbl th{font:700 12px var(--f-display);letter-spacing:.6px;text-transform:uppercase;color:var(--p-ink-soft);padding:8px 16px;border-bottom:1px solid var(--p-line);text-align:left;white-space:nowrap;background:var(--p-card)}
+.tbl td{padding:6.72px 16px;border-bottom:1px solid var(--p-line);vertical-align:middle}.tbl tr:last-child td{border-bottom:0}
+.tbl .n,.tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ── phone (390) ── */
+.pfr{width:390px;flex:none;border:1px solid #c6cebc;border-radius:22px;overflow:hidden;background:var(--p-paper);box-shadow:0 12px 36px #2732210a;color:var(--p-ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.pfr .masthead{padding:10px 16px;gap:10px}.pfr .masthead .next{display:none}
+.pfr .body{padding:14px 16px 24px}
+.pfr .grid{background-image:linear-gradient(var(--p-grid) 1px,transparent 1px),linear-gradient(90deg,var(--p-grid) 1px,transparent 1px);background-size:22px 22px}
+.pcards{display:flex;flex-direction:column;gap:10px}
+.pcard{position:relative;display:flex;flex-direction:column;gap:3px;padding:10px 44px 10px 14px;background:var(--p-olive-soft);border:1px solid var(--p-line);border-radius:10px;color:var(--p-ink);min-height:44px}
+.pcard .t{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pcard .m{font-size:12px;color:var(--p-dim)}
+.pcard .chev{position:absolute;right:0;top:0;bottom:0;width:44px;display:grid;place-items:center;color:var(--p-dim);font-size:18px}
+.pband{font:700 12px var(--f-display);letter-spacing:.6px;text-transform:uppercase;color:var(--p-ink-soft);padding:8px 2px 2px}
+/* today's phone rows (lineupFrontRow grid at 390) */
+.pcrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"date title title" "date meta chip";column-gap:13px;row-gap:2px;align-items:center;padding:12px 16px;background:var(--p-white8);border:1px solid var(--p-cardborder);border-radius:12px;box-shadow:var(--p-shadow);min-height:87px}
+.pcrow .tile{grid-area:date;display:flex;flex-direction:column;align-items:center;line-height:1;min-width:44px}.pcrow .tile b{font:800 20px var(--f-display)}.pcrow .tile i{font:700 10px var(--f-body);letter-spacing:.6px;text-transform:uppercase;color:var(--p-dim);font-style:normal;margin-top:2px}
+.pcrow .t{grid-area:title;font-size:16px;font-weight:700;line-height:1.25}.pcrow .m{grid-area:meta;font-size:12px;color:var(--p-dim)}.pcrow .chip{grid-area:chip;justify-self:end}
+.pechip{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;background:var(--p-card);border-left:3px solid var(--p-evt-game);border-radius:0 6px 6px 0;padding:7px 12px;min-height:52px}
+.pechip.p{border-left-color:var(--p-evt-practice)}.pechip .ic{width:12px;height:12px;border-radius:3px;border:2px solid var(--p-evt-game);flex:none}.pechip.p .ic{border-color:var(--p-evt-practice);border-radius:50%}
+.pechip .tm{font-size:12px;color:var(--p-dim)}.pechip .nm{flex:1 0 100%;font-size:14px;padding-left:20px}.pechip .sc{font-weight:700;margin-left:auto}
+.twoup{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.twoup .col{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+
+/* ── document tabs ── */
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage h2{margin-top:26px}.docpage table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0 16px}.docpage th,.docpage td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;text-align:left}.docpage th{background:var(--soft);font-weight:700}
+.docpage code{font:12.5px var(--f-data);background:#eeefe8;padding:1px 4px;border-radius:3px}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin-bottom:6px}
+.docpage .note{max-width:none}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+/* decisions panel */
+.qbox{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:14px}
+.qbox .qh{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:6px}.qbox .qh strong{font-size:15px}
+.qbox .qid{font:700 12px var(--f-data);color:var(--muted);white-space:nowrap}
+.qbox .rec{display:block;padding:10px 12px;border-left:3px solid var(--olive);background:#f2f6ea;border-radius:0 6px 6px 0;font-size:14px;margin:8px 0 10px;font-family:var(--f-body);font-weight:400;color:var(--ink)}
+.qbox .rec b{color:var(--olive)}
+.qbox .rides{font-size:13px;color:var(--muted);margin:0 0 10px}
+.choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.choices button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.choices button[aria-pressed=true]{background:var(--soft);font-weight:700;border-color:#aab6a1}
+.choices button[data-value=build][aria-pressed=true]{background:#e3f3d4;border-color:#b9d88c}.choices button[data-value=change][aria-pressed=true]{background:#f4ecd9;border-color:#e0c98a}.choices button[data-value=notnow][aria-pressed=true]{background:#eeeee9}
+.qbox textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;font-size:13px}
+#decOut,#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 var(--f-data)}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.proposed{background:#e3edf2;border-color:#b6cfdb}
+/* qa */
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.screenwrap{padding:16px 12px 24px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Coach row lists — one recipe (register F-17) · project hub</strong><br><small>Ruled as drawn 2026-09-16 · session B1 BUILT on dev the same day (Scouting Book · Schedule list · the two hubs · Lineups templates · the component and the gates) · walk owed (ledger §197) · session B2 (the rest) next</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-09-16 — 23 lists re-measured at 1440·768·390, both skins; standard §3.10 written; register F-26–F-40, K-21–K-24; ruled as drawn the same day">Design</li>
+    <li class="stage done" title="Drafted 2026-09-16 — COACH_ROW_LIST_RECIPE_PLAN.md + PM brief">Plan</li>
+    <li class="stage current" title="Built on dev 2026-09-16 — session B1: CoachRowList, the list-ground gate, F-26–F-29; B2 owed">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="skin" aria-pressed="false">Dark skin</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk · B1</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#s1">1 · The finding — one tab apart</a>
+    <a href="#s2">2 · Practice plans hub</a>
+    <a href="#s3">3 · Schedule list</a>
+    <a href="#s4">4 · The small lists</a>
+    <a href="#s5">5 · Closed season</a>
+    <a href="#s6">6 · Phone · 390</a>
+  </nav>
+  <div class="legend">
+    <span class="specimenlabel today">Today · as measured</span>
+    <span class="specimenlabel after">After · on the recipe</span>
+    <span class="specimenlabel alt">The alternative</span>
+    <span>Frames are <strong>true size</strong>: the portal's main column at 1440 (1220px — the sidebar is unchanged and omitted) and a 390 phone. Scroll a frame sideways on a narrow window; do not let it reflow.</span>
+    <span>Every red flag and green chip opens its explanation. Tags: <span class="mk" data-k="new" data-note="Drawn here for the first time.">New</span><span class="mk" data-k="re" data-note="Exists today and changes in shape, wording or place.">Restyled</span><span class="mk" data-k="un" data-note="Exists today and is drawn unchanged so a build cannot drop it by accident.">Unchanged</span></span>
+  </div>
+  <main>
+
+  <!-- ═══════════════ 1 · THE FINDING ═══════════════ -->
+  <section class="screen screenwrap" id="s1">
+    <div class="screenhead">
+      <h2 tabindex="-1">1 · The finding — two treatments, one tab apart</h2>
+      <p>Insights → <strong>Results</strong> has sat on the card frame since F-24 (09-16). Insights → <strong>Scouting Book</strong>, one tab to the right, is six white cards floating on the blueprint grid. The re-measure found this is the whole of F-17: seven lists are the <em>phone's</em> card shape drawn at 1440, and nothing paints a ground behind them. This screen is decision <strong>Q1</strong> drawn both ways.</p>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Insights → Scouting Book · 1440</span><span>Measured: 6 rows · 68px · 8px gaps · white card, olive/blueprint .3 border, shadow · ground behind the row = <b>the paper</b> · hover tints <code>--white-10</code> and lifts −1px</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body">
+            <div class="pagehead"><div class="icon">In</div><h1>Insights</h1></div>
+            <div class="tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span>Playing Time</span><span>Development</span><span>Awards</span><span class="on">Scouting Book</span></div>
+            <div class="search">Search opponents…</div>
+            <div class="cstack">
+              <div class="crow scout hov"><span class="dot n"></span><div class="main"><span class="t">Probe Rovers <button class="fl" data-finding="F-29" data-here="The first row, hovered: the card tints with --white-10 (a brown line-tint in warm) and lifts −1px. A row that opens should tint --home-olive-soft and nothing else.">F-29</button></span><span class="m">Last met Sep 16, 2026</span></div><span class="rec even">0-0</span></div>
+              <div class="crow scout"><span class="dot y"></span><div class="main"><span class="t">Ridgeview</span><span class="m">Last met May 4, 2026 · L 1–2 · 1 observation</span></div><span class="rec up">2-1</span></div>
+              <div class="crow scout"><span class="dot n"></span><div class="main"><span class="t">Westbrook</span><span class="m">Last met Apr 28, 2026 · W 8–2</span></div><span class="rec up">1-0</span></div>
+              <div class="crow scout"><span class="dot n"></span><div class="main"><span class="t">Fairhaven <button class="fl" data-finding="F-29" data-here="Between this card and the next: 8px of the blueprint grid. The Results tab one click left is one white card with hairlines — the same reader, two treatments.">ground</button></span><span class="m">Last met Apr 22, 2026 · T 3–3</span></div><span class="rec even">0-0-1</span></div>
+              <div class="crow scout"><span class="dot n"></span><div class="main"><span class="t">Northgate</span><span class="m">Last met Apr 16, 2026 · L 2–5</span></div><span class="rec down">0-2</span></div>
+              <div class="crow scout"><span class="dot y"></span><div class="main"><span class="t">Lakeside</span><span class="m">Last met Apr 10, 2026 · W 4–3 · 1 observation</span></div><span class="rec up">2-0</span></div>
+            </div>
+            <p class="foot">Records count the same games Season Wrapped counts — scrimmages are listed on each opponent's page but never counted.</p>
+          </div>
+        </div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Insights → Results · 1440 — the tab one click LEFT</span><span>On the card since F-24: one frame, hairlined compact rows, a heading row. This is what the Scouting Book sits beside.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body">
+            <div class="pagehead"><div class="icon">In</div><h1>Insights</h1></div>
+            <div class="tabs"><span>Dashboard</span><span class="on">Results</span><span>Attendance</span><span>Playing Time</span><span>Development</span><span>Awards</span><span>Scouting Book</span></div>
+            <div class="rl"><table class="tbl"><thead><tr><th>Date</th><th>Game</th><th class="n">Score</th><th>Result</th><th>Tags</th></tr></thead><tbody>
+              <tr><td>Apr 4</td><td>vs Ridgeview</td><td class="n">6–3</td><td>Win</td><td>League</td></tr>
+              <tr><td>Apr 10</td><td>vs Lakeside</td><td class="n">4–3</td><td>Win</td><td>League</td></tr>
+              <tr><td>Apr 16</td><td>vs Northgate</td><td class="n">2–5</td><td>Loss</td><td>League</td></tr>
+              <tr><td>Apr 22</td><td>vs Fairhaven</td><td class="n">3–3</td><td>Tie</td><td>League</td></tr>
+              <tr><td>Apr 28</td><td>vs Westbrook</td><td class="n">8–2</td><td>Win</td><td>Tournament</td></tr>
+              <tr><td>May 4</td><td>vs Ridgeview</td><td class="n">1–2</td><td>Loss</td><td>Tournament</td></tr>
+            </tbody></table></div>
+          </div>
+        </div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel after">After · Scouting Book on the recipe · Q1 = yes</span><span>One frame paints the card (the table's own frame); comfortable rows (name + last-met) with <code>--home-line</code>; hover tints <code>--home-olive-soft</code> and the pointer, nothing else; the note dot is the one lead mark; the record chip keeps its recipe.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body">
+            <div class="pagehead"><div class="icon">In</div><h1>Insights</h1></div>
+            <div class="tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span>Playing Time</span><span>Development</span><span>Awards</span><span class="on">Scouting Book</span></div>
+            <div class="search">Search opponents…<span class="mk" data-k="un" data-note="The search field is unchanged — the recipe governs the rows, not the chrome above them.">Unchanged</span></div>
+            <div class="rl"><button class="fl fix" data-finding="F-29" data-here="The frame: --home-line border, 8px radius, --card-bg — the same .tableWrap the Results table uses. The ground behind every row is now the card, and the gate reads that ancestor.">fixes F-29</button><span class="mk" data-k="re" data-note="Six gapped cards became six hairlined rows in one frame. The name, the last-met line, the note dot and the record chip are exactly what they were.">Restyled</span>
+              <div class="rr cf door hov"><span class="dot n"></span><div class="main"><span class="t">Probe Rovers</span><span class="c">Last met Sep 16, 2026</span></div><div class="trail"><span class="rec even">0-0</span><span class="chev">›</span></div></div>
+              <div class="rr cf door"><span class="dot y"></span><div class="main"><span class="t">Ridgeview</span><span class="c">Last met May 4, 2026 · L 1–2 · 1 observation</span></div><div class="trail"><span class="rec up">2-1</span><span class="chev">›</span></div></div>
+              <div class="rr cf door"><span class="dot n"></span><div class="main"><span class="t">Westbrook</span><span class="c">Last met Apr 28, 2026 · W 8–2</span></div><div class="trail"><span class="rec up">1-0</span><span class="chev">›</span></div></div>
+              <div class="rr cf door"><span class="dot n"></span><div class="main"><span class="t">Fairhaven</span><span class="c">Last met Apr 22, 2026 · T 3–3</span></div><div class="trail"><span class="rec even">0-0-1</span><span class="chev">›</span></div></div>
+              <div class="rr cf door"><span class="dot n"></span><div class="main"><span class="t">Northgate</span><span class="c">Last met Apr 16, 2026 · L 2–5</span></div><div class="trail"><span class="rec down">0-2</span><span class="chev">›</span></div></div>
+              <div class="rr cf door"><span class="dot y"></span><div class="main"><span class="t">Lakeside</span><span class="c">Last met Apr 10, 2026 · W 4–3 · 1 observation</span></div><div class="trail"><span class="rec up">2-0</span><span class="chev">›</span></div></div>
+            </div>
+            <p class="foot">Records count the same games Season Wrapped counts — scrimmages are listed on each opponent's page but never counted.</p>
+          </div>
+        </div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel alt">The alternative · Q1 = no — keep the card stacks, record them as a KEEP</span><span>Drawn so the choice is real. What it costs: every one of the seven lists stays a second treatment beside its carded neighbour, and the register would need a KEEP row that says a list of records may float on the paper — the exact sentence F-24 spent ten days finding out was wrong for tables.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="body" style="padding-top:18px">
+            <div class="tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span>Playing Time</span><span>Development</span><span>Awards</span><span class="on">Scouting Book</span></div>
+            <div class="cstack">
+              <div class="crow scout"><span class="dot n"></span><div class="main"><span class="t">Probe Rovers</span><span class="m">Last met Sep 16, 2026</span></div><span class="rec even">0-0</span></div>
+              <div class="crow scout"><span class="dot y"></span><div class="main"><span class="t">Ridgeview</span><span class="m">Last met May 4, 2026 · L 1–2 · 1 observation</span></div><span class="rec up">2-1</span></div>
+              <div class="crow scout"><span class="dot n"></span><div class="main"><span class="t">Westbrook <span class="mk" data-k="un" data-note="The alternative keeps today's card row unchanged — and would record it in the register as K-nn: 'a list of records may sit on the paper as gapped cards'. That is the sentence this session recommends against.">Unchanged</span></span><span class="m">Last met Apr 28, 2026 · W 8–2</span></div><span class="rec up">1-0</span></div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 2 · PRACTICE PLANS HUB ═══════════════ -->
+  <section class="screen screenwrap" id="s2" hidden>
+    <div class="screenhead">
+      <h2 tabindex="-1">2 · Practice plans hub — the row the re-evaluation never redrew</h2>
+      <p>Stages 0–4 redrew the page four times (the next-practice card, the tabs, "Every practice this season ›") and never the row: it is the same component Lineups uses, a 73px card with a <strong>20px display-face day tile</strong> — the one place in the portal a row reads larger than its section heading. Whole screen, before and after. The next-practice card, the tab bar and the ruled vocabulary ("Open the plan" / "Open" / "Plan set" / "No plan written") are <strong>unchanged</strong>.</p>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · 1440 · as measured</span><span>7 rows · 73px · 9px gaps · day tile 20px Barlow 800 · title 16px 700 · meta 12px · kickers on the paper · the list column is 960px</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body narrow">
+            <div class="pagehead"><div class="icon">Pp</div><h1>Practice plans</h1></div>
+            <div class="tabs"><span class="on">Practices</span><span>Templates</span><span>Circuits</span><span>Drills</span></div>
+            <div class="onething"><span class="k">Next practice</span><span class="k r">In 6 days</span><span class="h">Tue, Sep 22 · 5:21 p.m.</span><span class="btn lime">Open the plan →</span><span class="m">Practice review — next week · UAT Fields</span><span class="chip ok">✓ Plan set · 1 block · 20 min</span></div>
+            <p class="kicker">Coming up <button class="fl" data-finding="F-27" data-here="A kicker on the paper (--type-label 800) over a stack of one card; then another kicker over six more. Two stacks, two labels, the grid between every card.">label</button></p>
+            <div class="cstack">
+              <div class="crow hov"><div class="tile"><b>27</b><i>Oct</i></div><div class="main"><span class="t">Practice <button class="fl" data-finding="F-27" data-here="Hovered: the card tints --white-10 and lifts −1px. The day tile beside it is 20px in the display face at 800 — larger than the page's own 'Practice plans' title (20px 700).">F-27</button></span><span class="m">Tue · 6:00 p.m. · 1 block · 15 of 120 min</span></div><span class="chip ok">✓ Plan set</span><span class="act">Open the plan →</span></div>
+            </div>
+            <p class="kicker">Recent practices</p>
+            <div class="cstack">
+              <div class="crow"><div class="tile"><b>15</b><i>Sep</i></div><div class="main"><span class="t">UAT probe practice</span><span class="m">Tue · 5:01 p.m. · 3 blocks · 55 of 90 min · 1 rotation</span></div><span class="chip ok">✓ Plan set</span><span class="act">Open the plan →</span></div>
+              <div class="crow"><div class="tile"><b>29</b><i>May</i></div><div class="main"><span class="t">Team practice 5</span><span class="m">Fri · 7:00 p.m. · 1 block · 15 min</span></div><span class="chip ok">✓ Plan set</span><span class="act">Open the plan →</span></div>
+              <div class="crow"><div class="tile"><b>26</b><i>May</i></div><div class="main"><span class="t">Team practice 4</span><span class="m">Tue · 7:00 p.m.</span></div><span class="chip mute">No plan written</span><span class="act q">Open →</span></div>
+              <div class="crow"><div class="tile"><b>19</b><i>May</i></div><div class="main"><span class="t">Team practice 3</span><span class="m">Tue · 7:00 p.m.</span></div><span class="chip mute">No plan written</span><span class="act q">Open →</span></div>
+              <div class="crow"><div class="tile"><b>14</b><i>May</i></div><div class="main"><span class="t">Practice review — written up</span><span class="m">Thu · 7:00 p.m. · 2 blocks · 40 of 60 min</span><span class="m" style="font-style:italic;color:var(--p-ink-soft)">“Good energy — the relay drill finally clicked.”</span></div><span class="chip ok">✓ Plan set</span><span class="act">Open the plan →</span></div>
+              <div class="crow"><div class="tile"><b>12</b><i>May</i></div><div class="main"><span class="t">Team practice 2</span><span class="m">Tue · 7:00 p.m.</span></div><span class="chip mute">No plan written</span><span class="act q">Open →</span></div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel after">After · on the recipe</span><span>One frame; "Coming up" and "Recent practices" as <strong>band rows</strong> inside it; comfortable rows (~62px: title + when-and-fit); the date is a <strong>date column</strong> (body, tabular, tertiary); the title <code>--type-body</code> 600; the worded door stays (stage 0 D3) at body 600 with its arrow. Seven rows: 565px today → ~490px.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body narrow">
+            <div class="pagehead"><div class="icon">Pp</div><h1>Practice plans</h1></div>
+            <div class="tabs"><span class="on">Practices</span><span>Templates</span><span>Circuits</span><span>Drills</span></div>
+            <div class="onething"><span class="k">Next practice <span class="mk" data-k="un" data-note="The next-practice card is stage 0's D1 — the room's one lime, by state. The recipe does not touch it; it is a one-thing card, not a row.">Unchanged</span></span><span class="k r">In 6 days</span><span class="h">Tue, Sep 22 · 5:21 p.m.</span><span class="btn lime">Open the plan →</span><span class="m">Practice review — next week · UAT Fields</span><span class="chip ok">✓ Plan set · 1 block · 20 min</span></div>
+            <div class="rl" style="margin-top:16px"><button class="fl fix" data-finding="F-27" data-here="One frame on the card for both halves of the list. The two kickers became two band rows inside it (uppercase --type-support, display face, secondary ink, on the paper tone with --home-line above and below — the feed's day header).">fixes F-27</button>
+              <div class="band">Coming up <span class="mk" data-k="re" data-note="Was a --type-label kicker floating on the paper above a separate stack. Now a band row inside the one frame — the label-row recipe §3.10 names.">Restyled</span></div>
+              <div class="rr cf door hov"><span class="lead dt">27 Oct</span><div class="main"><span class="t">Practice <span class="mk" data-k="re" data-note="The date beside this title was a 44px tile: the day at 20px in the display face at 800, the month at 10px under it. Now a date column — --type-body, tabular, tertiary, fixed width. The display face appears nowhere below a heading. The title itself went from --type-heading 700 to --type-body 600.">Restyled</span></span><span class="c">Tue · 6:00 p.m. · 1 block · 15 of 120 min</span></div><div class="trail"><span class="chip ok">✓ Plan set<span class="mk" data-k="un" data-note="The readiness chip is stage 0's vocabulary (Plan set · No plan · No plan written) and keeps its own recipe; the row does not resize it.">Unchanged</span></span><span class="go">Open the plan <i>→</i></span></div></div>
+              <div class="band">Recent practices</div>
+              <div class="rr cf door"><span class="lead dt">15 Sep</span><div class="main"><span class="t">UAT probe practice</span><span class="c">Tue · 5:01 p.m. · 3 blocks · 55 of 90 min · 1 rotation</span></div><div class="trail"><span class="chip ok">✓ Plan set</span><span class="go">Open the plan <i>→</i></span></div></div>
+              <div class="rr cf door"><span class="lead dt">29 May</span><div class="main"><span class="t">Team practice 5</span><span class="c">Fri · 7:00 p.m. · 1 block · 15 min</span></div><div class="trail"><span class="chip ok">✓ Plan set</span><span class="go">Open the plan <i>→</i></span></div></div>
+              <div class="rr cf door"><span class="lead dt">26 May</span><div class="main"><span class="t">Team practice 4</span><span class="c">Tue · 7:00 p.m.</span></div><div class="trail"><span class="chip mute">No plan written</span><span class="go q">Open <i>→</i><span class="mk" data-k="un" data-note="'Open' in the record's voice — stage 0 D3. The words stay; only their box changed: the door borrows its tap box from the row (.rowTapLink) instead of adding to it.">Unchanged</span></span></div></div>
+              <div class="rr cf door"><span class="lead dt">19 May</span><div class="main"><span class="t">Team practice 3</span><span class="c">Tue · 7:00 p.m.</span></div><div class="trail"><span class="chip mute">No plan written</span><span class="go q">Open <i>→</i></span></div></div>
+              <div class="rr cf door"><span class="lead dt">14 May</span><div class="main"><span class="t">Practice review — written up</span><span class="c">Thu · 7:00 p.m. · 2 blocks · 40 of 60 min</span><span class="c mean">“Good energy — the relay drill finally clicked.”</span></div><div class="trail"><span class="chip ok">✓ Plan set</span><span class="go">Open the plan <i>→</i></span></div></div>
+              <div class="rr cf door"><span class="lead dt">12 May</span><div class="main"><span class="t">Team practice 2</span><span class="c">Tue · 7:00 p.m.</span></div><div class="trail"><span class="chip mute">No plan written</span><span class="go q">Open <i>→</i></span></div></div>
+            </div>
+            <p class="foot" style="font-size:14px"><a class="lnk" href="#s2">Every practice this season ›</a><span class="mk" data-k="un" data-note="L8's one quiet door under the past list — absent at six or fewer. Drawn here because a real season has more; it sits under the frame in the notes stack, where the table standard puts a door (§3.5).">Unchanged</span></p>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="note"><strong>Lineups hub and its Templates tab</strong> take the same row (it is one component) — the games list gains the same frame and date column; a template row keeps its Apply / Rename / Delete controls at <code>--tap-min</code> both ways at ≤ 768 (F-28). Not drawn separately: it would be this screen with "vs Probe Rovers · Wed · 6:00 p.m." in the rows.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 3 · SCHEDULE LIST ═══════════════ -->
+  <section class="screen screenwrap" id="s3" hidden>
+    <div class="screenhead">
+      <h2 tabindex="-1">3 · Schedule — the list view</h2>
+      <p>Sixteen 31px chips on the paper with 6px gaps: the calendar cell's chip, reused as the list's row. 31px is under every floor the standard has, and at 768 each row is a <strong>736 × 31 control</strong> — under the tap floor, the "one schedule item at 768" left red on 09-07. The Week and Month views keep the chip exactly as it is (<strong>K-21</strong>): a calendar cell is not a list.</p>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · 1440 · as measured</span><span>16 rows · 31px · 6px gaps · lead 12px · name 14px · a 3px event-type rail · month kickers on the paper</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body">
+            <div class="pagehead"><div class="icon">Sc</div><h1>Schedule</h1><div class="actions"><span class="btn lime">+ Add Event ▾</span><span class="btn">⇪ Import</span></div></div>
+            <div class="seg"><span class="on">List</span><span>Week</span><span>Month</span></div>
+            <p class="monthlabel">April 2026</p>
+            <div class="chips">
+              <div class="echip hov"><span class="ic"></span><span class="tm">Apr 4 · 6:00 p.m.</span><span class="nm">vs Ridgeview <button class="fl" data-finding="F-26" data-here="A 31px chip: 7.2px of padding either side of one 14px line. The compact table row beside it (Results) is 37px. At 768 this exact row measured 736 × 31 — a control under --tap-min.">F-26</button></span><span class="sc">6–3</span><span class="rs w">WIN</span></div>
+              <div class="echip"><span class="ic"></span><span class="tm">Apr 10 · 6:00 p.m.</span><span class="nm">vs Lakeside</span><span class="sc">4–3</span><span class="rs w">WIN</span></div>
+              <div class="echip"><span class="ic"></span><span class="tm">Apr 16 · 6:00 p.m.</span><span class="nm">vs Northgate</span><span class="sc">2–5</span><span class="rs l">LOSS</span></div>
+              <div class="echip"><span class="ic"></span><span class="tm">Apr 22 · 6:00 p.m.</span><span class="nm">vs Fairhaven</span><span class="sc">3–3</span><span class="rs t">TIE</span></div>
+              <div class="echip t"><span class="ic"></span><span class="tm">Apr 28 · 6:00 p.m.</span><span class="nm">vs Westbrook <button class="fl" data-finding="F-26" data-here="The 3px amber rail says 'tournament game'; the amber icon two pixels to its right says the same thing. In a list one lead mark is enough; in a calendar cell the rail is the chip's whole identity (K-21).">rail</button></span><span class="sc">8–2</span><span class="rs w">WIN</span></div>
+            </div>
+            <p class="monthlabel" style="margin-top:28px">May 2026</p>
+            <div class="chips">
+              <div class="echip t"><span class="ic"></span><span class="tm">May 4 · 6:00 p.m.</span><span class="nm">vs Ridgeview</span><span class="sc">1–2</span><span class="rs l">LOSS</span></div>
+              <div class="echip p"><span class="ic"></span><span class="tm">May 5 · 7:00 p.m.</span><span class="nm">Team practice 1</span></div>
+              <div class="echip p"><span class="ic"></span><span class="tm">May 12 · 7:00 p.m.</span><span class="nm">Team practice 2</span></div>
+              <div class="echip p"><span class="ic"></span><span class="tm">May 14 · 7:00 p.m.</span><span class="nm">Practice review — written up</span></div>
+              <div class="echip p"><span class="ic"></span><span class="tm">May 19 · 7:00 p.m.</span><span class="nm">Team practice 3</span></div>
+              <div class="echip p"><span class="ic"></span><span class="tm">May 26 · 7:00 p.m.</span><span class="nm">Team practice 4</span></div>
+              <div class="echip p"><span class="ic"></span><span class="tm">May 29 · 7:00 p.m.</span><span class="nm">Team practice 5</span></div>
+            </div>
+            <p class="monthlabel" style="margin-top:28px">September 2026</p>
+            <div class="chips">
+              <div class="echip p"><span class="ic"></span><span class="tm">Sep 15 · 5:01 p.m.</span><span class="nm">UAT probe practice</span></div>
+              <div class="echip"><span class="ic"></span><span class="tm">Sep 16 · 6:00 p.m.</span><span class="nm">vs Probe Rovers</span></div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel after">After · on the recipe</span><span>One frame; months as band rows; compact rows (~37px — the same height as a Results row); the type icon is the one lead mark; the date column at body size, tabular; scores tabular; the result word keeps its colour. 16 rows: ~706px today (with kickers) → ~680px.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid">
+          <div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+          <div class="body">
+            <div class="pagehead"><div class="icon">Sc</div><h1>Schedule</h1><div class="actions"><span class="btn lime">+ Add Event ▾</span><span class="btn">⇪ Import</span></div></div>
+            <div class="seg"><span class="on">List</span><span>Week</span><span>Month <span class="mk" data-k="un" data-note="Week and Month keep today's chip inside their cells — K-21. The same component grows a list face; the calendar face is untouched.">Unchanged</span></span></div>
+            <div class="rl"><button class="fl fix" data-finding="F-26" data-here="One frame paints the card; rows are compact (6.72px padding, one 14px line, a --home-line hairline) — 37px, the height of a Results row one tab away. At ≤ 768 the row is --tap-min tall.">fixes F-26</button>
+              <div class="band">April 2026 <span class="mk" data-k="re" data-note="Was a 12px kicker on the paper with a hairline under it, over a separate stack of chips. Now a band row inside the frame — the feed's day header, already walked in §138.">Restyled</span></div>
+              <div class="rr door hov"><span class="ic"></span><span class="lead dt2">Apr 4 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Ridgeview <span class="mk" data-k="re" data-note="The lead beside this name was 12px. A date that leads a row is a date column: --type-body, tabular, tertiary, fixed width.">Restyled</span></span></div><div class="trail"><span class="sc">6–3</span><span class="rs w">WIN</span></div></div>
+              <div class="rr door"><span class="ic"></span><span class="lead dt2">Apr 10 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Lakeside</span></div><div class="trail"><span class="sc">4–3</span><span class="rs w">WIN</span></div></div>
+              <div class="rr door"><span class="ic"></span><span class="lead dt2">Apr 16 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Northgate</span></div><div class="trail"><span class="sc">2–5</span><span class="rs l">LOSS</span></div></div>
+              <div class="rr door"><span class="ic"></span><span class="lead dt2">Apr 22 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Fairhaven</span></div><div class="trail"><span class="sc">3–3</span><span class="rs t">TIE</span></div></div>
+              <div class="rr door"><span class="ic t"></span><span class="lead dt2">Apr 28 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Westbrook <span class="mk" data-k="re" data-note="The 3px amber rail is gone from the LIST row; the amber tournament icon is the one lead mark and carries the type's colour (§3.10.7). The rail stays in the calendar cells (K-21). This is panel Q4's last ask.">Restyled</span></span></div><div class="trail"><span class="sc">8–2</span><span class="rs w">WIN</span></div></div>
+              <div class="band">May 2026</div>
+              <div class="rr door"><span class="ic t"></span><span class="lead dt2">May 4 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Ridgeview</span></div><div class="trail"><span class="sc">1–2</span><span class="rs l">LOSS</span></div></div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">May 5 · 7:00 p.m.</span><div class="main"><span class="t plain">Team practice 1</span></div></div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">May 12 · 7:00 p.m.</span><div class="main"><span class="t plain">Team practice 2</span></div></div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">May 14 · 7:00 p.m.</span><div class="main"><span class="t plain">Practice review — written up</span></div></div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">May 19 · 7:00 p.m.</span><div class="main"><span class="t plain">Team practice 3</span></div></div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">May 26 · 7:00 p.m.</span><div class="main"><span class="t plain">Team practice 4</span></div></div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">May 29 · 7:00 p.m.</span><div class="main"><span class="t plain">Team practice 5</span></div></div>
+              <div class="band">September 2026</div>
+              <div class="rr door"><span class="ic p"></span><span class="lead dt2">Sep 15 · 5:01 p.m.</span><div class="main"><span class="t plain">UAT probe practice</span></div></div>
+              <div class="rr door"><span class="ic"></span><span class="lead dt2">Sep 16 · 6:00 p.m.</span><div class="main"><span class="t plain">vs Probe Rovers</span></div><div class="trail"><span class="btn" style="min-height:32px;padding:3px 10px;font-size:13px">Game day<span class="mk" data-k="un" data-note="The Game day sibling link (inside the run window) stays a sibling beside the row, never nested in it — the row keeps being one control.">Unchanged</span></span></div></div>
+            </div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 4 · THE SMALL LISTS ═══════════════ -->
+  <section class="screen screenwrap" id="s4" hidden>
+    <div class="screenhead">
+      <h2 tabindex="-1">4 · The small lists — specimens, not screens</h2>
+      <p>Each of these is one pattern the recipe fixes on one axis. They are drawn as specimens at true size inside their own card or fold, because the change is the row, not the screen around it.</p>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Player → This season · "Last 10 sessions"</span><span class="specimenlabel after" style="margin-left:14px">After</span><span>41px tinted pills with borders and 5px gaps, on the section card → compact hairlined rows on the same card (the card is the painter). Stays a row list: the stat boxes above answer the column question (Q3).</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm" style="width:1220px"><div class="grid"><div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
+          <div class="card"><div class="ch">Attendance <small>69% · 13 recorded</small></div><div class="cb">
+            <p class="kicker" style="margin-top:4px">Last 10 sessions</p>
+            <div class="pills">
+              <div class="pill"><span class="n">UAT probe game <button class="fl" data-finding="F-32" data-here="A pill: --home-olive-soft fill, a --border-2 border, 8px radius, 5px gap to the next — a tint on an item row (§3.3: tint means structure), inside a card that already paints the ground.">F-32</button></span><span class="d">16 Sept</span><span class="badge ok">Present</span></div>
+              <div class="pill"><span class="n">UAT probe practice</span><span class="d">15 Sept</span><span class="badge ok">Present</span></div>
+              <div class="pill"><span class="n">Team practice 5</span><span class="d">29 May</span><span class="badge ok">Present</span></div>
+              <div class="pill"><span class="n">Team practice 4</span><span class="d">26 May</span><span class="badge ok">Present</span></div>
+              <div class="pill"><span class="n">Team practice 3</span><span class="d">19 May</span><span class="badge no">Absent</span></div>
+            </div>
+          </div></div>
+          <div class="card"><div class="ch">Attendance <small>69% · 13 recorded</small></div><div class="cb">
+            <p class="kicker" style="margin-top:4px">Last 10 sessions <span class="mk" data-k="un" data-note="The label line stays — a row list with no heading row must say what it is (§1), and this is its name.">Unchanged</span></p>
+            <div class="rl inset"><button class="fl fix" data-finding="F-32" data-here="Compact hairlined rows, transparent over the section card. No fill, no border, no radius, no gap: the hairline is the whole separation. 41px → 37px; ten rows on one screen with room to spare.">fixes F-32</button>
+              <div class="rr"><div class="main"><span class="t plain">UAT probe game</span></div><div class="trail"><span class="c">16 Sept</span><span class="badge ok">Present<span class="mk" data-k="un" data-note="The attendance badge keeps its recipe; the row does not resize it.">Unchanged</span></span></div></div>
+              <div class="rr"><div class="main"><span class="t plain">UAT probe practice</span></div><div class="trail"><span class="c">15 Sept</span><span class="badge ok">Present</span></div></div>
+              <div class="rr"><div class="main"><span class="t plain">Team practice 5</span></div><div class="trail"><span class="c">29 May</span><span class="badge ok">Present</span></div></div>
+              <div class="rr"><div class="main"><span class="t plain">Team practice 4</span></div><div class="trail"><span class="c">26 May</span><span class="badge ok">Present</span></div></div>
+              <div class="rr"><div class="main"><span class="t plain">Team practice 3</span></div><div class="trail"><span class="c">19 May</span><span class="badge no">Absent</span></div></div>
+            </div>
+          </div></div>
+        </div></div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Roster → Off the roster</span><span class="specimenlabel after" style="margin-left:14px">After</span><span>A dashed fold on the paper; the row's hairline is <code>--white-05</code> — paper on paper, invisible → the fold paints the card when open and keeps its dashed edge (K-24); <code>--home-line</code> under the rows.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid"><div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:26px;padding-top:18px">
+          <div><div class="fold"><div class="sum">▾ Off the roster (1)</div><div class="r"><span class="n">Morgan Left <button class="fl" data-finding="F-38" data-here="Look above this row: its border-top is --white-05, which the warm skin remaps to --home-paper — a paper line on the paper. Nothing paints a card behind the fold, and the roster table above it sits on one.">F-38</button></span><span class="j">#99</span><span class="b">Add back</span></div></div></div>
+          <div><div class="fold" style="background:var(--p-card)"><button class="fl fix" data-finding="F-38" data-here="The open fold paints --card-bg — it is the one painter behind these rows — and keeps its dashed edge (K-24: a fold of records that have LEFT the list). The hairline is --home-line, and the name takes the item line's ink.">fixes F-38</button><div class="sum">▾ Off the roster (1)</div><div class="rl inset"><div class="rr" style="padding-left:0;padding-right:0"><div class="main"><span class="t">Morgan Left</span></div><div class="trail"><span class="j">#99</span><span class="b">Add back</span></div></div></div></div></div>
+        </div></div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Coaching staff</span><span class="specimenlabel after" style="margin-left:14px">After</span><span>Already the recipe's shape — the list paints its own card, rows are hairlined. The name renders at <strong>16px inherited</strong> (nothing on the row asks for a size) and "Edit access ›" carries a 36px box on a desktop → <code>--type-body</code> 600; the door composes <code>.rowTapLink</code>; the frame border on <code>--home-line</code>.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid"><div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:26px;padding-top:18px">
+          <div class="stafflist">
+            <div class="staffrow"><div class="who"><b>UAT Assistant (money) <button class="fl" data-finding="F-35" data-here="16px. No rule on the row sets a size, so the name inherits the page's 16px — the same mechanism F-01 found on 109 table cells. The cell decides its own size, from the ladder.">F-35</button></b><small>uat-asst-money@uat-test-org.local</small></div><div class="role"><span class="rolechip">Assistant coach</span></div><div class="act">Edit access <i>›</i></div><div class="caps"><span class="cap">Schedule · view</span><span class="cap">Attendance</span><span class="cap">Lineups</span><span class="cap">Staff chat</span><span class="cap">Scouting book</span><span class="cap s">🔒 Money · edit</span><span class="cap s">🔒 Contacts &amp; birthdates</span></div></div>
+            <div class="staffrow"><div class="who"><b>UAT Helper</b><small>uat-helper@uat-test-org.local</small></div><div class="role"><span class="rolechip">Helper</span></div><div class="act">Edit access <i>›</i></div><div class="caps"><span class="cap">Schedule · view</span><span class="cap">Scouting book</span><span style="font-size:12px;color:var(--p-dim);align-self:center">Nothing else, not the staff chat.</span></div></div>
+          </div>
+          <div class="rl"><button class="fl fix" data-finding="F-35" data-here="The name at --type-body 600. Everything else on this list already followed the recipe — it was rebuilt on 09-11 with the standard's ground and without its sizes. The frame's border is --home-line now (was --border, the strong line).">fixes F-35</button>
+            <div class="rr cf two"><div class="who"><b>UAT Assistant (money)</b><small>uat-asst-money@uat-test-org.local</small></div><div class="role"><span class="rolechip">Assistant coach</span></div><div class="act"><span class="go">Edit access <i>›</i></span></div><div class="caps"><span class="cap">Schedule · view</span><span class="cap">Attendance</span><span class="cap">Lineups</span><span class="cap">Staff chat</span><span class="cap">Scouting book</span><span class="cap s">🔒 Money · edit</span><span class="cap s">🔒 Contacts &amp; birthdates</span></div></div>
+            <div class="rr cf two"><div class="who"><b>UAT Helper</b><small>uat-helper@uat-test-org.local</small></div><div class="role"><span class="rolechip">Helper</span></div><div class="act"><span class="go">Edit access <i>›</i></span></div><div class="caps"><span class="cap">Schedule · view</span><span class="cap">Scouting book</span><span style="font-size:12px;color:var(--p-dim);align-self:center">Nothing else, not the staff chat.</span></div></div>
+          </div>
+        </div></div></div></div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Tags — a library's words · Player → Notes · Email families → Recent announcements · Tournaments</span><span>Four rows drawn once each, after only — the change on each is one axis.</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid"><div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:26px;padding-top:18px">
+          <div class="card"><div class="ch">Tags · Money tags</div><div class="cb"><div class="rl inset">
+            <div class="rr cf"><div class="main"><span class="t">Spring classic2 <button class="fl fix" data-finding="F-39" data-here="Was 16px inherited; now --type-body 600. The three icon buttons already clear 44 × 44 at 768 and 390. The libraries list above this one (Money tags · Practice tags · …) is already on the recipe and adopts the component with no visible change.">fixes F-39</button></span><span class="c">on 3 records</span></div><div class="trail"><span class="b">✎</span><span class="b">⇄</span><span class="b">🗑</span></div></div>
+            <div class="rr cf"><div class="main"><span class="t">Umpire fees</span><span class="c">on 12 records</span></div><div class="trail"><span class="b">✎</span><span class="b">⇄</span><span class="b">🗑</span></div></div>
+          </div></div></div>
+          <div class="card"><div class="ch">Notes</div><div class="cb"><div class="rl inset">
+            <div class="rr cf"><span class="lead dt">15 Sep <button class="fl fix" data-finding="F-33" data-here="Was --type-support in the DATA face. A date is not a measurement (K-20 names the one column that keeps the mono); body face, tabular, tertiary — the same ruling F-25 made on the Development table's date.">fixes F-33</button></span><div class="main"><span class="c"><span class="cap">Goal · First-step quickness</span></span><span class="t plain">Beat the ball to the bag twice in a row — first time this month.</span></div><div class="trail"><span class="go q">Goal <i>›</i></span></div></div>
+            <div class="rr cf"><span class="lead dt">2 Sep</span><div class="main"><span class="c"><span class="cap">Session · Tuesday</span></span><span class="t plain">Still opening the hips early on the throw.</span></div><div class="trail"><span class="go q">Session <i>›</i></span></div></div>
+          </div></div></div>
+          <div class="card"><div class="ch">Recent announcements <small>2</small></div><div class="cb"><div class="rl inset">
+            <div class="rr cf door"><span style="color:var(--p-success);font-weight:700">✓</span><div class="main"><span class="t">Rain-out — Thursday practice moved to Friday <button class="fl fix" data-finding="F-31" data-here="Was a --surface-2 card row with a 38 × 38 status tile inside the log card — a card on a card. Now a hairlined row on the log card (the card is the painter) with the status icon as the one lead mark; the row still folds on a real button.">fixes F-31</button></span><span class="c">Sep 10 · sent to 11 families · 11 delivered</span></div><div class="trail"><span class="chev">⌄</span></div></div>
+            <div class="rr cf door"><span style="color:var(--p-warn);font-weight:700">✓</span><div class="main"><span class="t">Team photo — Saturday 9:00 a.m.</span><span class="c">Aug 28 · sent to 11 families · 1 bounced</span></div><div class="trail"><span class="chev">⌄</span></div></div>
+          </div></div></div>
+          <div><div class="rl">
+            <div class="rr cf door"><div class="main"><span class="t">Riverdale Summer Classic <button class="fl fix" data-finding="F-30" data-here="Was a --surface card with the strong border and a 16px heading-size title, gapped 0.5rem. Now a hairlined row in the frame, title --type-body 600; the lifecycle chip and status badge keep their recipes. The free portal's Overview shows ONE of these as a card — that is a tile and keeps the card face.">fixes F-30</button></span><span class="c">Riverdale Minor Ball · U13 Hawks · Jul 18–20</span></div><div class="trail"><span class="chip ok">● Live</span><span class="chev">›</span></div></div>
+            <div class="rr cf door"><div class="main"><span class="t">Lakeside Fall Invitational</span><span class="c">Lakeside Baseball · U13 Hawks · Sep 26–27 · Accepted</span></div><div class="trail"><span class="chip mute">Upcoming</span><span class="chev">›</span></div></div>
+          </div><p class="foot">Tournaments — entries. Not rendered on the fixture (no entry); drawn from the stylesheet.</p></div>
+        </div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 5 · CLOSED SEASON ═══════════════ -->
+  <section class="screen screenwrap" id="s5" hidden>
+    <div class="screenhead">
+      <h2 tabindex="-1">5 · Closed season — the rows inside a shelf</h2>
+      <p>The page's shape is ruled (ONE PAGE, 2026-08-18) and the recipe does not touch it: the shelves are the surface, and they already paint the card behind their rows. What moves is small — density by content on the roster rows, a hover on the practices doors, the results rows' stray left rule. The month fold stays as the shelf's own group row (<strong>K-23</strong>), and the results stay a <em>row list</em>: the answer strip above them carries the season's comparison (Q3).</p>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="cap"><span class="specimenlabel today">Today · Results shelf · The practices you ran</span><span class="specimenlabel after" style="margin-left:14px">After</span></div>
+        <div class="scroller"><div class="fr" data-skin="warm"><div class="grid"><div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:26px;padding-top:18px">
+          <div>
+            <div class="shelf"><div class="sh">Results <small>4 GAMES · 2-1-1 ⌃</small></div>
+              <div class="monthhead">June <small>4 games · 2-1-1</small><i>▾</i></div>
+              <div class="srow"><span class="dt">Jun 25</span><span class="ic"></span><span class="nm">Fairhaven (away) <button class="fl" data-finding="F-37" data-here="The 2px left rule on every results row — no other list in the portal has one; the month head above is the structure. Everything else here is already the recipe: 38px compact, --home-line, tabular score right, the outcome as a WORD.">F-37</button></span><span class="sc">3–3</span><span class="oc">Tie</span></div>
+              <div class="srow"><span class="dt">Jun 18</span><span class="ic"></span><span class="nm">Northgate (home)</span><span class="sc">2–6</span><span class="oc">Loss</span></div>
+              <div class="srow"><span class="dt">Jun 11</span><span class="ic"></span><span class="nm">Lakeside (away)</span><span class="sc">5–3</span><span class="oc">Win</span></div>
+            </div>
+            <div class="shelf" style="margin-top:14px"><div class="sh">The practices you ran <small>2 ⌃</small></div>
+              <div class="monthhead">June <small>2 nights · Hitting</small><i>▾</i></div>
+              <div class="drow"><span>Jun 24 · Tuesday practice <button class="fl" data-finding="F-37" data-here="A link — it opens the read-only plan — with no hover tint. A row that opens takes --home-olive-soft and the pointer (§3.6).">F-37</button><small>3 blocks · 60 min · Hitting · Baserunning</small></span><i>›</i></div>
+              <div class="drow"><span>Jun 10 · Tuesday practice<small>No plan written — your note about how it went</small></span><i>›</i></div>
+            </div>
+          </div>
+          <div>
+            <div class="shelf"><button class="fl fix" data-finding="F-37" data-here="No left rule; otherwise these rows were already right, and the month fold stays (K-23). The shelf card is the one painter; the rows draw no frame of their own (§3.10.1 — never two).">fixes F-37</button><div class="sh">Results <small>4 GAMES · 2-1-1 ⌃</small></div>
+              <div class="monthhead">June <small>4 games · 2-1-1</small><i>▾</i><span class="mk" data-k="un" data-note="The month fold — a native details/summary with that month's fact — is the shelf's group row by the 2026-08-18 gate. K-23 records it; the recipe does not redraw it.">Unchanged</span></div>
+              <div class="rl inset"><div class="rr" style="padding-left:0;padding-right:0"><span class="lead dt">Jun 25</span><span class="ic"></span><div class="main"><span class="t plain">Fairhaven (away)</span></div><span class="scr">3–3</span><span class="oc">Tie</span></div>
+              <div class="rr" style="padding-left:0;padding-right:0"><span class="lead dt">Jun 18</span><span class="ic"></span><div class="main"><span class="t plain">Northgate (home)</span></div><span class="scr">2–6</span><span class="oc">Loss</span></div>
+              <div class="rr" style="padding-left:0;padding-right:0"><span class="lead dt">Jun 11</span><span class="ic"></span><div class="main"><span class="t plain">Lakeside (away)</span></div><span class="scr">5–3</span><span class="oc">Win</span></div></div>
+            </div>
+            <div class="shelf" style="margin-top:14px"><div class="sh">The practices you ran <small>2 ⌃</small></div>
+              <div class="monthhead">June <small>2 nights · Hitting</small><i>▾</i></div>
+              <div class="rl inset"><div class="rr cf door hov" style="padding-left:0;padding-right:0"><div class="main"><span class="t">Jun 24 · Tuesday practice</span><span class="c">3 blocks · 60 min · Hitting · Baserunning</span></div><div class="trail"><span class="chev">›</span></div></div>
+              <div class="rr cf door" style="padding-left:0;padding-right:0"><div class="main"><span class="t">Jun 10 · Tuesday practice</span><span class="c">No plan written — your note about how it went</span></div><div class="trail"><span class="chev">›</span></div></div></div>
+            </div>
+          </div>
+        </div></div></div></div>
+      </div>
+      <div class="note"><strong>The roster shelf</strong> ("#1 · Avery Past" …) goes from 44px to compact 37px on its one-line rows and stays comfortable where a row carries a position or "Left during the season" — density by content, read from the same <code>.rowCaption</code> marker the tables read. Flat by ruling: no row opens, no row tints.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 6 · PHONE ═══════════════ -->
+  <section class="screen screenwrap" id="s6" hidden>
+    <div class="screenhead">
+      <h2 tabindex="-1">6 · Phone · 390 — the frame stands down, the rows are the table's cards</h2>
+      <p>At ≤ 640 a row list does what a table does: the frame sheds its ground and border, and each row is its own card on the <strong>one</strong> card recipe the portal already has (<code>--border-2</code>, 10px radius, the <code>--home-olive-soft</code> wash — the roster's phone cards). Today the hubs' phone rows are white cards with a date tile and the schedule's are 52px chips; after, every list's phone shape is the same shape. Open this artifact on the phone to judge the tap targets.</p>
+    </div>
+    <div class="twoup">
+      <div class="col"><span class="specimenlabel today">Today · Practice plans · 390</span>
+        <div class="pfr" data-skin="warm"><div class="grid"><div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">2026 Season · <b>3-2-1</b></div></div><div class="help">?</div></div><div class="body">
+          <p class="kicker" style="margin-top:4px">Recent practices</p>
+          <div class="cstack">
+            <div class="pcrow"><div class="tile"><b>15</b><i>Sep</i></div><span class="t">UAT probe practice <button class="fl" data-finding="F-27" data-here="87px: a white card with the display-face day tile on the left and a 16px title. The label 'Open the plan' is hidden at this width — the whole card is already the door.">F-27</button></span><span class="m">Tue · 5:01 p.m. · 3 blocks · 55 of 90 min</span><span class="chip ok">✓ Plan set</span></div>
+            <div class="pcrow"><div class="tile"><b>29</b><i>May</i></div><span class="t">Team practice 5</span><span class="m">Fri · 7:00 p.m. · 1 block · 15 min</span><span class="chip ok">✓ Plan set</span></div>
+            <div class="pcrow"><div class="tile"><b>26</b><i>May</i></div><span class="t">Team practice 4</span><span class="m">Tue · 7:00 p.m.</span><span class="chip mute">No plan written</span></div>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="col"><span class="specimenlabel after">After · Practice plans · 390</span>
+        <div class="pfr" data-skin="warm"><div class="grid"><div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">2026 Season · <b>3-2-1</b></div></div><div class="help">?</div></div><div class="body">
+          <p class="pband">Recent practices <span class="mk" data-k="re" data-note="On a phone the band is a plain label over the cards — the frame has stood down, so there is no frame for it to sit inside.">Restyled</span></p>
+          <div class="pcards"><button class="fl fix" data-finding="F-27" data-here="The table's own phone card: --home-olive-soft wash, --border-2, 10px radius, 10px gaps, no white slab behind the stack. The title is the card's title (no label), the date leads the meta line, the door is the corner chevron (K-09) — 'Open the plan' was already hidden at this width today.">fixes F-27</button>
+            <div class="pcard"><span class="t">UAT probe practice <span class="chip ok">✓ Plan set</span></span><span class="m">15 Sep · Tue · 5:01 p.m. · 3 blocks · 55 of 90 min</span><span class="chev">›</span></div>
+            <div class="pcard"><span class="t">Team practice 5 <span class="chip ok">✓ Plan set</span></span><span class="m">29 May · Fri · 7:00 p.m. · 1 block · 15 min</span><span class="chev">›</span></div>
+            <div class="pcard"><span class="t">Team practice 4 <span class="chip mute">No plan written</span></span><span class="m">26 May · Tue · 7:00 p.m.</span><span class="chev">›</span></div>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="col"><span class="specimenlabel today">Today · Schedule list · 390</span>
+        <div class="pfr" data-skin="warm"><div class="grid"><div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">2026 Season · <b>3-2-1</b></div></div><div class="help">?</div></div><div class="body">
+          <p class="monthlabel">April 2026</p>
+          <div class="chips">
+            <div class="pechip"><span class="ic"></span><span class="tm">Apr 4 · 6:00 p.m.</span><span class="sc">6–3 <span class="rs w">WIN</span></span><span class="nm">vs Ridgeview <button class="fl" data-finding="F-26" data-here="52px: the chip wraps its name under its time at this width. It is a control, so it clears --tap-min here — but the same row is 31px at 768, the touch band.">F-26</button></span></div>
+            <div class="pechip"><span class="ic"></span><span class="tm">Apr 10 · 6:00 p.m.</span><span class="sc">4–3 <span class="rs w">WIN</span></span><span class="nm">vs Lakeside</span></div>
+            <div class="pechip p"><span class="ic"></span><span class="tm">May 5 · 7:00 p.m.</span><span class="nm">Team practice 1</span></div>
+          </div>
+        </div></div></div>
+      </div>
+      <div class="col"><span class="specimenlabel after">After · Schedule list · 390</span>
+        <div class="pfr" data-skin="warm"><div class="grid"><div class="masthead"><div><div class="tname">UAT Test Team</div><div class="tmeta">2026 Season · <b>3-2-1</b></div></div><div class="help">?</div></div><div class="body">
+          <p class="pband">April 2026</p>
+          <div class="pcards"><button class="fl fix" data-finding="F-26" data-here="Cards on the one card recipe; the icon leads the title; the date is the meta line; the score and result sit on the title line. ~64px per card against 52 today — the cost of one recipe, stated.">fixes F-26</button>
+            <div class="pcard"><span class="t"><span class="ic" style="width:12px;height:12px;border-radius:3px;border:2px solid var(--p-evt-game);display:inline-block"></span>vs Ridgeview <span class="sc" style="margin-left:auto">6–3</span><span class="rs w">WIN</span></span><span class="m">Apr 4 · 6:00 p.m.</span><span class="chev">›</span></div>
+            <div class="pcard"><span class="t"><span class="ic" style="width:12px;height:12px;border-radius:3px;border:2px solid var(--p-evt-game);display:inline-block"></span>vs Lakeside <span class="sc" style="margin-left:auto">4–3</span><span class="rs w">WIN</span></span><span class="m">Apr 10 · 6:00 p.m.</span><span class="chev">›</span></div>
+            <div class="pcard"><span class="t"><span class="ic" style="width:12px;height:12px;border-radius:50%;border:2px solid var(--p-evt-practice);display:inline-block"></span>Team practice 1</span><span class="m">May 5 · 7:00 p.m.</span><span class="chev">›</span></div>
+          </div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+  </main>
+  <footer class="intent" id="intent"></footer>
+</section>
+
+<!-- ═══════════════ DECISIONS ═══════════════ -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Decision panel · owner</div>
+  <h1>Six asks, each with a recommendation</h1>
+  <p class="sub">Pick <strong>Build as drawn</strong>, <strong>Change it</strong> (say how in the box) or <strong>Not now</strong> on each; the choices stay in this browser, and the button at the foot builds the paste-back for chat. Nothing is built until these land.</p>
+  <div id="qs"></div>
+  <button class="button primary" type="button" id="buildDec">Build the paste-back</button>
+  <textarea id="decOut" rows="12" readonly hidden></textarea>
+  <h2>Rulings, as they happen</h2>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- ═══════════════ PM BRIEF ═══════════════ -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Coach row lists — one recipe</h1>
+  <p class="sub">Companion to <code>docs/projects/active/COACH_ROW_LIST_RECIPE_PM_BRIEF.md</code>. Planning and mockups only; the build is a later session, gated on the Decisions tab.</p>
+  <h2>What changes for the coach</h2>
+  <p>Every list of records in the portal that is not a table — the practice and lineup hubs, the schedule's list view, the scouting book, tournaments, announcements, the small lists on a player's page, the staff list, tags, notifications, the closed-season shelves — sits on the same white card the tables sit on, with the same thin line between rows, the same row heights for the same kind of row, and the same words in the same sizes. A coach moving from Results to Scouting Book, or from the Roster to "Off the roster", stops seeing two different products.</p>
+  <p>What a coach will notice: the practice hub and the lineups hub lose their floating white cards and their big display-face date tiles and become a calm framed list with a date column; the schedule's list view becomes a framed list with month bands and rows the same height as everywhere else (a little taller than today's 31px chips — and, at tablet width, finally tall enough to tap); the scouting book matches the Results tab beside it; "Off the roster" finally has a visible line under its rows. On a phone every list's cards look like every other list's cards.</p>
+  <p>What a coach will <em>not</em> notice, on purpose: the Week and Month calendar views (their chips stay), the next-practice card, every worded action the practices re-evaluation ruled ("Open the plan", "Plan this practice", "Open"), the notifications feed's day headers and unread tint, the closed-season page's shape and its month folds. The recipe governs rows, not the rooms around them.</p>
+  <h2>Why it matters</h2>
+  <p>The app-wide table standard (2026-09-06) treated a table and a row list as one thing but only ever wrote the sentences for tables. Ten days later the owner found the list tables on the paper (F-24) and, the same afternoon, the Awards leaderboard floating beside a carded table. The row lists are what is left: measured today, seven of them are the phone's card shape drawn on a desktop, on the blueprint grid, one tab from a carded table. A product that looks like two products on adjacent tabs reads as unfinished to a coach — and to a club deciding whether to pay for it.</p>
+  <h2>Customer impact</h2>
+  <p>Every coach, every day: the schedule list and the two hubs are the portal's most-opened screens after the Overview. Nothing changes in what a coach can do; a few things get quieter and one thing (the schedule row at tablet width) becomes tappable. The closed-season page and the notifications feed change by pixels a reader will not see.</p>
+  <h2>Priority</h2>
+  <p>Next in the table-standard sequence (§8 item 7) — the last records surface not on the standard. Sequenced by reader impact: the season's daily screens first (schedule, the two hubs), then the tab-neighbours of carded tables (scouting book, tournaments, announcements), then the small lists, then the closed season and the feed.</p>
+  <h2>Tradeoffs made</h2>
+  <ul>
+    <li><strong>The schedule's rows grow from 31 to ~37px</strong> (and to ~64px cards on a phone, from 52). One recipe with a floor costs a long month a little height; the alternative — a private density for one screen — is the thing the standard exists to refuse.</li>
+    <li><strong>The date tile goes.</strong> The hubs' 20px display-face day was a small calendar flourish; it was also the one row in the portal larger than its own page title. A body-size date column reads just as fast and lets the title lead.</li>
+    <li><strong>Two lists stay lists by judgement, not by the letter of the test.</strong> The closed-season results and a player's last sessions have three same-kind columns — the table test's wording — but the question a column would answer is already answered above them (the season's record; the attendance boxes). The standard now says so.</li>
+  </ul>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>The rendered gate finds <strong>zero</strong> lists of records on the paper across the coach sweep, and would fail the day one is added — the ground is read from the ancestor, not the row.</li>
+    <li>Every bin-B list renders through one component; the old row classes are gone (the dead-selector gate proves it).</li>
+    <li>The build's owner walk passes with no list looking different from its neighbour on any axis it did not claim in the register.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ FULL PLAN ═══════════════ -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full plan</div>
+  <h1>Coach row lists — one recipe (F-17) · implementation plan</h1>
+  <p class="sub">Companion to <code>docs/projects/active/COACH_ROW_LIST_RECIPE_PLAN.md</code>, which carries the technical detail; this tab is the readable form. Standard §3.10 is the recipe; register F-26–F-40 and K-21–K-24 are its rows.</p>
+  <h2>Problem / context</h2>
+  <p>F-17 recorded "six row treatments for one job" from the 2026-09-06 inventory and was deferred with the rest of the standard's build ("own session, own mockups"). Re-measured on 2026-09-16 at 1440 · 768 · 390 in both skins, with the ground read from the ancestor: the enumeration was stale (one class had left the page; four were never lists) and the real finding is <strong>two species</strong> — seven gapped card stacks on the paper and nine hairlined lists, eight already on a card. The standard's ground sentence named a table; nothing said who paints a list's ground.</p>
+  <h2>Scope</h2>
+  <p>The seventeen bin-B lists (F-26–F-39), one bin-A conversion (F-40), four KEEPs (K-21–K-24), the component, the three gate extensions and the §-walk. Nothing else.</p>
+  <div class="note"><strong>Out of scope</strong><p>Every <code>&lt;table&gt;</code>; the money grids; the closed-season page's shape; the practice document and library rooms; the notifications redraw's content and its open item R8; the calendar's Week and Month cells; anything platform- or club-admin.</p></div>
+  <h2>Approach</h2>
+  <h3>The recipe (standard §3.10)</h3>
+  <ol>
+    <li><strong>Exactly one painter of the ground</strong> — the table's frame when the list stands on the page; the section card or shelf when it sits inside one; never zero, never two; stands down at ≤ 640.</li>
+    <li><strong>A row is not a card</strong> — no per-row border, radius, shadow, fill or gap on a desktop.</li>
+    <li>Density by content from <code>.rowCaption</code>; type from the ladder on the line; a leading date is a date column; the display face nowhere below a heading.</li>
+    <li>The label row is a <strong>band</strong> inside the frame (the feed's day header) or the section title above it.</li>
+    <li>Hover = tint + pointer on a row that opens; a worded door where a ruling worded it; <code>.rowTapLink</code> for in-row controls.</li>
+    <li>One lead mark; the colour rail stays in calendar cells.</li>
+    <li>One component (<code>CoachRowList</code> / <code>CoachRow</code>), never a second row class.</li>
+  </ol>
+  <h3>The bins</h3>
+  <table><thead><tr><th>Bin</th><th>Lists</th><th>What happens</th></tr></thead><tbody>
+    <tr><td><strong>A</strong> · a table wearing divs</td><td>An opponent's page — their results this season (F-40)</td><td>a <code>&lt;table&gt;</code> on the shared frame when next touched; no recipe. The closed-season results and the player's sessions <em>stay</em> row lists (the column question is answered above them — §3.10's test)</td></tr>
+    <tr><td><strong>B</strong> · a genuine row list</td><td>Schedule list (F-26) · the two hubs (F-27) · Lineups templates (F-28) · Scouting book (F-29) · Tournaments (F-30) · Announcements (F-31) · player sessions/awards (F-32) · player notes (F-33) · guardians (F-34) · Staff (F-35) · Notifications (F-36) · closed-season rows (F-37) · Off the roster (F-38) · Tags (F-39)</td><td>the recipe, through the component; each FIX row names its axes</td></tr>
+    <tr><td><strong>C</strong> · not records</td><td>the Ledger's date menu · the tryouts checklist and stepper · the team hub's setup list · the Settings form rows · the closed-season shelves themselves · the calendar-cell chips (K-21) · the depth-chart board · the chat panel · the money band tiles · the Overview's one-thing card · the free portal's lone tournament card</td><td>removed from F-17 with a sentence each</td></tr>
+  </tbody></table>
+  <h3>The component and the gates (Q5)</h3>
+  <p><code>components/coaches/CoachRowList.tsx</code> renders the frame (composing <code>.tableWrap</code>), optional band rows and rows with four slots — lead · main (title + caption composing <code>.rowCaption</code>) · trail · door — as a link, a button or a static row. It stamps <code>data-row-list</code> on the list and <code>data-row-list-row</code> on each row so a rendered gate can find it whatever the hashed class is. <code>CoachEventListRow</code> becomes a thin caller (the date lead + the ruled chip and door). Three gate extensions: (a) the stylesheet guard scans the <code>rowList*</code> family; (b) <code>check:layout</code>'s <code>type-ladder</code> reads the rows' text; (c) a new <code>list-ground</code> rule reads the <strong>first painted ancestor</strong> behind every row at ≥ 641 and asserts the card token — and at ≤ 640 asserts no painted slab between the row-card and <code>main</code>.</p>
+  <h2>Sequence (Q6) — by reader impact</h2>
+  <ol>
+    <li><strong>The component and the gates</strong>, proven on one list (Scouting book — the Q1 specimen) — the guard must find it before anything else adopts it.</li>
+    <li><strong>The season's daily screens</strong>: Schedule list (F-26), the two hubs and Lineups templates (F-27, F-28).</li>
+    <li><strong>The carded tables' neighbours</strong>: Tournaments (F-30), Announcements (F-31).</li>
+    <li><strong>The small lists</strong>: player sessions/awards, notes, guardians (F-32–F-34), Staff (F-35), Off the roster (F-38), Tags (F-39).</li>
+    <li><strong>The quiet ones</strong>: closed-season rows (F-37), the feed's ladder tokens (F-36), then the opponent table (F-40) when that page is next open.</li>
+  </ol>
+  <h2>Open questions</h2>
+  <p>All six are on the Decisions tab with a recommendation each. The two the drawings could not settle alone: whether the schedule's list rows drop the colour rail (Q4), and whether "one frame with bands" is preferred over "two labelled frames" on the hubs (Q2c).</p>
+  <h2>Rollout</h2>
+  <p>No migration, no route, no data change — stylesheet, one component and its callers, three gate extensions. The demo sandboxes follow (the schedule list and the practice hub are tour destinations; the build fails if an anchor stops existing). The help articles name no list furniture; <code>/docs</code> checks the schedule and practice-plans articles after the build.</p>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<!-- ═══════════════ QA WALK (sketch) ═══════════════ -->
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow" style="padding:24px 24px 0">Owner QA walk · session B1 (ledger §197) — the Scouting Book, the Schedule list, the two hubs, Lineups templates</div>
+  <h1 style="padding:0 24px">Coach row lists — QA walk · B1</h1>
+  <div style="padding:0 24px 24px;max-width:900px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: uat-coach@uat-test-org.local · Password: <em>from .env.local</em> (UAT_COACH_PASSWORD; keep it private) · Org/Team: uat-test-org / UAT Test Team · the closed season: UAT Between Seasons · 2025 Season. <strong>Identities are pinned, never figures</strong> — the seed's numbers move.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* hub tabs */
+const HUBS=['mockup','decisions','brief','plan','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));window.scrollTo({top:0})}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* skin toggle — every product frame at once */
+$('skin').onclick=()=>{const dark=$('skin').getAttribute('aria-pressed')!=='true';$('skin').setAttribute('aria-pressed',String(dark));$('skin').textContent=dark?'Warm skin':'Dark skin';document.querySelectorAll('.fr,.pfr').forEach(f=>f.dataset.skin=dark?'dark':'warm')};
+
+/* screen router */
+const intents={
+ s1:'The Scouting Book is drawn beside the Results tab because that is where the owner will see the defect first — one tab apart, one on the card and one on the paper. The "alternative" frame exists so Q1 is a real choice, not a rubber stamp.',
+ s2:'The practice hub is the highest-traffic list in the portal and the one the re-evaluation redrew around four times without touching. Everything ruled in stages 0–4 is tagged Unchanged so the build cannot drop it; only the row changes.',
+ s3:'The schedule list is where the recipe costs something (31 → 37px) and fixes something (a 736 × 31 control at 768). Both are on the frame. The calendar views are deliberately not drawn: they keep their chips.',
+ s4:'Specimens, because each of these changes on exactly one axis — a fill, a hairline, a size, a face. Drawing whole screens would hide how small each change is.',
+ s5:'The closed-season page is ONE PAGE by ruling. The recipe reaches its rows and stops: the month fold is the shelf\'s group row (K-23), and the results stay a row list because the answer strip already carries the comparison.',
+ s6:'The phone is where "one recipe" is cheapest to see: every list\'s cards become the same cards the roster already uses. Judge the tap targets on the device, not here.'};
+function showScreen(){const id=location.hash.slice(1)||'s1';const known=document.getElementById(id)&&document.getElementById(id).classList.contains('screen');const use=known?id:'s1';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==use);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+use?'page':'false'));$('intent').innerHTML=intents[use]?'<strong>Design intent:</strong> '+esc(intents[use]):'';if(known)showHub('mockup');document.getElementById(use)?.querySelector('h2')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+/* explanations */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ 'F-26':{t:'Schedule → List view — a chip is not a row',now:'Sixteen 31px white chips on the paper with 6px gaps, a 3px event-type rail on each, month kickers above each stack, no hairline. The row is a 736 × 31 control at 768 — under the 44px tap floor. Measured 2026-09-16.',fix:'One frame on the card; compact rows (~37px, the height of a Results row) with --home-line; months as band rows inside the frame; the type icon as the one lead mark; --tap-min at ≤ 768. The Week and Month cells keep the chip (K-21).'},
+ 'F-27':{t:'Practice plans hub and Lineups hub — the shared event row',now:'73px white cards on the paper with 9px gaps, an olive/blueprint border and a shadow; hover tints --white-10 and lifts −1px; the day tile at --type-title in the display face at 800 — a row larger than the page title; the title at --type-heading. One component, two hubs.',fix:'One frame with "Coming up / Recent practices" as band rows; comfortable rows; the date as a date column (body, tabular, tertiary); title --type-body 600; hover tint + pointer only; the worded door stays (stage 0 D3).'},
+ 'F-28':{t:'Lineups → Templates — the same card with three controls',now:'The same card shape; Apply at 70 × 33 and two 38 × 38 icon buttons at 768.',fix:'The same frame as the games list; --tap-min both ways at ≤ 768 (K-12).'},
+ 'F-29':{t:'Insights → Scouting Book — six cards one tab from a carded table',now:'68px white cards on the paper with 8px gaps; hover lifts. The Results and Awards tabs beside it sit on the card frame since F-24.',fix:'The frame; comfortable rows; hover tint only; the record chip keeps its recipe. The Q1 specimen.'},
+ 'F-30':{t:'Tournaments — entries',now:'--surface cards with the strong border, 1rem × 1.25rem padding, a heading-size title, 0.5rem gaps. Not rendered on the fixture (no entry) — read from the stylesheet. The same component draws the free portal\'s lone Overview card.',fix:'The frame; comfortable rows; title --type-body 600; chips keep their recipes. The lone Overview card is a tile (bin C) and keeps the card face — the component grows a list face.'},
+ 'F-31':{t:'Email families → Recent announcements',now:'--surface-2 card rows with a 38 × 38 status tile inside the log card — a card on a card. Not rendered (none sent); stylesheet-read.',fix:'Hairlined rows on the log card; the status icon as the one lead mark; the fold stays a real button (K-07).'},
+ 'F-32':{t:'Player → This season — Last N sessions · Awards',now:'41px pills — --home-olive-soft fill, --border-2, 8px radius, 5px gaps — on the section card. A tint on an item row (§3.3).',fix:'Compact hairlined rows on the section card; the label line stays; the badge keeps its recipe. Stays a row list: the stat boxes above answer the column question (Q3).'},
+ 'F-33':{t:'Player → Notes — the date in the data face',now:'The observation\'s date at --type-support in the mono face.',fix:'Body face, tabular, tertiary — a date is not a measurement (K-20; F-25 made the same call on the Development table).'},
+ 'F-34':{t:'Player → Family — guardians',now:'Rows separated by 0.6rem of margin, no rule. Not rendered (no contact on the fixture player).',fix:'--home-line under every row but the last; density by content.'},
+ 'F-35':{t:'Coaching staff — a size nobody chose',now:'The name at 16px inherited (nothing on the row sets a size); "Edit access ›" a 36px box on a desktop with its own ≤ 768 rule; the frame border on --border. Otherwise already the recipe: the list paints its own card, rows are hairlined.',fix:'--type-body 600 on the name; the door composes .rowTapLink; the frame token is --home-line.'},
+ 'F-36':{t:'Notifications feed — literal rems in a shared module',now:'Title 0.88rem (14.08px), body 0.8rem (12.8), day header 0.64rem (10.24) in the data face — a module the admin page also renders. Already the recipe\'s shape: frame, card, hairline, band, hover on a target.',fix:'Ladder tokens (--type-body 600 / --type-support / the band recipe). A 0.08px change the guard needs, not the eye. The row-as-div is the redraw\'s R8, not this recipe.'},
+ 'F-37':{t:'Closed season — the shelves\' rows',now:'Roster rows at 44px for one line; the practices doors have no hover; the results rows carry a 2px left rule no other list has. Already on the ground (the shelf paints it) and tabular-right on the score.',fix:'Compact where one line, comfortable where <small> composes .rowCaption; hover on the practices doors; no left rule. The month fold stays (K-23). Stays a row list (Q3).'},
+ 'F-38':{t:'Roster → Off the roster — paper on paper',now:'A dashed fold on the paper under the carded roster table; the row hairline is --white-05, which the warm skin remaps to --home-paper — invisible.',fix:'The open fold paints --card-bg (it is the one painter) and keeps its dashed edge (K-24); --home-line under the rows; the name at the item line\'s ink.'},
+ 'F-39':{t:'Settings → Tags — a library\'s words',now:'The word at 16px inherited. The libraries list above it is already on the recipe (a real aria-expanded button, 44px, --home-line, olive hover, on the Settings shelf card).',fix:'--type-body 600; the libraries adopt the component with no visible change.'},
+ 'F-40':{t:'An opponent\'s page — their results this season (bin A)',now:'Result · score · vs · date as flex rows, the score in the data face. Not rendered on the fixture.',fix:'A <table> on the shared frame when the page is next touched — a reader compares results across rows and nothing above them answers the column question. No recipe needed; low priority.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today.',re:'Exists today and changes in shape, wording or place. Each tag\'s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><p class="sub">The register row of the same id in TABLE_EXCEPTION_REGISTER.md carries the measured numbers.</p></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here)}});
+
+/* ── the decision panel ── */
+const QS=[
+ {id:'Q1',ask:'Does a row list sit on the card?',rec:'Yes — exactly one painter. A list on the page takes the table\'s own frame; a list inside a card or shelf is painted by that card and draws no frame of its own; never zero, never two. The frame stands down at ≤ 640 where the rows become the table\'s cards.',rides:'Rides on it: F-26, F-27, F-29, F-30, F-31, F-38 (six lists leave the paper) and the list-ground gate, which cannot be written without a ground to assert. Screen 1 draws both answers.'},
+ {id:'Q2a',ask:'Density — no list has a private floor.',rec:'Yes — compact for a one-line row, comfortable for a caption row, from the same .rowCaption marker the tables read. The schedule list goes from 31px to ~37 (a Results row), and its 768 row clears --tap-min.',rides:'Rides on it: F-26 (the schedule), F-37 (the roster shelf\'s 44px one-liners go compact).'},
+ {id:'Q2b',ask:'The date lead — a date column, not a display-face tile.',rec:'Yes — the hubs\' 20px Barlow day tile becomes "27 Oct" in the body face, tabular, tertiary, fixed width. The display face appears nowhere below a heading; the title leads the row.',rides:'Rides on it: F-27 (both hubs). Screen 2.'},
+ {id:'Q2c',ask:'Grouped lists — one frame with band rows, or two labelled frames?',rec:'One frame with bands (uppercase --type-support, display face, secondary ink, on the paper tone with a hairline above and below — the feed\'s day header, walked in §138). Months in the schedule; "Coming up / Recent practices" in the hubs.',rides:'Rides on it: F-26, F-27. The alternative — two frames, each with a kicker above — is the same rows with a gap in the middle; say so if you prefer it.'},
+ {id:'Q2d',ask:'Hover and the door.',rec:'A row that opens tints --home-olive-soft and takes the pointer — nothing else (no lift, no shadow, no border change). The door is the chevron, or the words a ruling gave it ("Open the plan" · "Open" · "Edit access") at body 600 with the arrow. An in-row control borrows its box from the row.',rides:'Rides on it: F-27, F-29, F-35, F-37 (the practices doors gain a hover).'},
+ {id:'Q3',ask:'Which lists are really tables (bin A)?',rec:'One: an opponent\'s page — their results this season (F-40), when that page is next touched. Two look like tables by the letter of the test and stay row lists: the closed-season results (the answer strip carries the season\'s record) and a player\'s last sessions (the stat boxes carry the counts). The standard now says: a list is a table when a COLUMN answers the reader\'s question and nothing above the rows already has.',rides:'Rides on it: F-32, F-37 stay row lists; F-40 becomes a table. Say "Change it" if either borderline should be a table after all.'},
+ {id:'Q4',ask:'The named exceptions (KEEP), and the schedule\'s colour rail.',rec:'Keep four: K-21 the chip inside a calendar cell (not a list); K-22 the feed\'s unread tint (state, ruled by the redraw); K-23 the closed-season month fold (the shelf\'s group row, owner gate 2026-08-18); K-24 the dashed edge on Off the roster (a fold of records that have left). And in the schedule\'s LIST view the 3px colour rail goes — the type icon already carries the colour and a list leads with one mark; the rail stays in the calendar cells.',rides:'Rides on it: the register\'s KEEP rows; F-26\'s lead mark. Screen 3 shows the rail both ways (today / after).'},
+ {id:'Q5',ask:'How it holds — the component and the gates.',rec:'One component (CoachRowList / CoachRow) that every bin-B list renders through, stamping data-row-list on the list and data-row-list-row on each row; the stylesheet guard scans the rowList family; check:layout\'s type-ladder reads the rows; and a NEW list-ground rule reads the first painted ancestor behind every row and asserts the card — the rule F-24 needed and did not have. check:css-selectors deletes the old row classes the day their last caller goes.',rides:'Rides on it: everything after the first list. A recipe nothing can find drifts by Christmas.'},
+ {id:'Q6',ask:'The build order.',rec:'(1) the component + the gates, proven on the Scouting Book; (2) the season\'s daily screens — Schedule list, the two hubs, Lineups templates; (3) the carded tables\' neighbours — Tournaments, Announcements; (4) the small lists — player sessions/notes/guardians, Staff, Off the roster, Tags; (5) the quiet ones — the closed-season rows, the feed\'s tokens, then the opponent table when that page is open. One session for (1)–(2), one for (3)–(5), each with its own §-walk.',rides:'Reorder freely; (1) must stay first.'}
+];
+let dec={};try{dec=JSON.parse(localStorage.getItem('f17-decisions')||'{}')}catch(e){dec={}}
+function saveDec(){try{localStorage.setItem('f17-decisions',JSON.stringify(dec))}catch(e){}}
+function drawQs(){$('qs').innerHTML=QS.map(q=>`<div class="qbox"><div class="qh"><strong>${esc(q.ask)}</strong><span class="qid">${esc(q.id)}</span></div><span class="rec"><b>Recommendation —</b> ${esc(q.rec)}</span><p class="rides">${esc(q.rides)}</p><div class="choices">${[['build','Build as drawn'],['change','Change it'],['notnow','Not now']].map(([v,l])=>`<button type="button" data-q="${q.id}" data-value="${v}" aria-pressed="${dec[q.id]===v}">${l}</button>`).join('')}</div><label><span class="meta">Notes (what to change, or why not now)</span><textarea data-qnotes="${q.id}" rows="2">${esc(dec['notes-'+q.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{dec[b.dataset.q]=b.dataset.value;saveDec();drawQs()});
+ document.querySelectorAll('[data-qnotes]').forEach(t=>t.oninput=()=>{dec['notes-'+t.dataset.qnotes]=t.value;saveDec()})}
+drawQs();
+$('buildDec').onclick=()=>{const L=['Coach row lists — F-17 decision panel (paste-back)','Standard §3.10 · register F-26–F-40 / K-21–K-24 · hub: '+location.href.split('#')[0],''];QS.forEach(q=>{const v=dec[q.id]||'unset';L.push(`${q.id} · ${q.ask} — ${v==='build'?'BUILD AS DRAWN':v==='change'?'CHANGE IT':v==='notnow'?'NOT NOW':'unset'}`);if(dec['notes-'+q.id])L.push('   notes: '+dec['notes-'+q.id])});const out=$('decOut');out.value=L.join('\n');out.hidden=false;out.focus();out.select()};
+
+/* rulings log — append one per ruling as it happens */
+const DECISIONS=[
+ {date:'2026-09-16',ask:'Session B1 built on dev — the component (CoachRowList / CoachRow), the three gate extensions (the stylesheet guard, type-ladder on rows, the new list-ground rule that reads the ancestor — broken on purpose once and reported by name), Insights → Scouting Book, the Schedule’s list view, the two hubs, Lineups → Templates and the apply-to-game picker',ruling:'accepted',label:'Built · walk owed',why:'On the owner’s "build here". Two things the build found the drawings had not: a worded door needs a corner chevron on the phone (now emitted), and the Scouting Book’s red record chip fell to 4.06:1 on the phone’s card wash (its fill is mixed over the card now). Session B2 — tournaments, announcements, the player’s lists, staff, the feed, the closed-season rows, Off the roster, tags — is next.'},
+ {date:'2026-09-16',ask:'Q1–Q6 — the ground, the recipe’s four sub-asks, the bins, the four KEEPs and the schedule’s colour rail, the component and the gates, the build order',ruling:'accepted',label:'Build as drawn',why:'Owner: "agree with your mockups". Every ask went the recommended way: a row list sits on the card (exactly one painter); no private floor; the date lead is a date column; one frame with band rows; tint-only hover; only the opponent’s results rows are a table (the closed-season results and the player’s sessions stay lists); K-21–K-24 kept and the rail dropped in the list view; CoachRowList + data-row-list + list-ground; the order as listed.'},
+ {date:'2026-09-16',ask:'F-17 re-measured, binned into A / B / C, recipe written as standard §3.10, register rows F-26–F-40 and K-21–K-24 added',ruling:'proposed',label:'Proposed',why:'The planning session the F-17 prompt commissioned. The six asks above carried the recommendation each was drawn to.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+
+/* ── the QA walk sketch ── */
+const QA_PARTS=[
+ {id:'A',title:'The ground (desktop 1440, warm then dark)',steps:['Insights → Scouting Book: the six opponents sit in ONE white card with a thin line between them — no blueprint grid between rows, no shadow under any row; switch to Results and back: the same card, the same rounded frame.','Practice plans: under the next-practice card, ONE card holds both halves; "COMING UP" and "RECENT PRACTICES" are bands inside it on the paper tone, not labels floating above two stacks.','Lineups → Games: the same one card with "UPCOMING GAMES" / "RECENT GAMES" bands; Lineups → Templates: the template sits in a card of the same frame.','Schedule → List: one card for the whole list; "APRIL 2026" / "MAY 2026" / "SEPTEMBER 2026" are bands inside it; no coloured rail on the left of any row (the type icon carries the colour). Switch to Week and Month: the chips in the cells still have their rail, size and colour.','Dark skin (the avatar menu → Dark): every list above sits on the dark card tone — not black — with visible hairlines; bands on the darker paper tone.']},
+ {id:'B',title:'Density and type (desktop)',steps:['Schedule → List and Insights → Results in two windows side by side: a game row and a Results row are the same height; "Apr 4 · 6:00 p.m." reads at the body size in the same quiet grey as the Results date.','Practice plans: the date reads "27 Oct" in the body face, left, quiet — no big day tile; the title ("Practice", "UAT probe practice") is the row\'s largest text and is NOT larger than the page title "Practice plans".','Practice plans: a past practice with a recap shows the recap line quoted, italic, under the when-line; a planned row shows "3 blocks · 55 of 90 min · 1 rotation" on the when-line exactly as before.','Lineups → Templates: the template name is underlined quietly (the roster\'s name link) and is the same size as a roster name; "Everyone bats · 6 innings · 12 players" under it.']},
+ {id:'C',title:'Bands, doors and hover',steps:['Practice plans: hover a Recent practices row — it tints olive and the cursor is a pointer; it does NOT lift or grow a shadow. The words "Open the plan →" / "Open →" are unchanged and "Open" is the quieter one.','Practice plans: click a row — the plan page opens. Back. The next-practice card, the tabs (Practices · Templates · Circuits · Drills) and, on a team with more than six past practices, "Every practice this season ›" under the card are as before.','Lineups → Games: the row with "Build lineup" (the page\'s one lime) still carries it; a game inside its live window shows the "● Game day" pill BESIDE the row, and clicking the row (not the pill) opens the builder.','Lineups → Templates → Apply: the picker sheet lists the games as rows of the same shape with "Apply →" at the right; the Rename pencil turns the row into the name field with ✓ / ✕.','Scouting Book: hover an opponent — tint only; click — the opponent\'s page opens; the amber dot / dashed dot and the record chip (2-1, 0-2, 0-0-1) are where they were.','Schedule → List: click a row — the event drawer opens as before; a cancelled event reads faded with its name struck through; a game with awards shows "🏆 N"; the tryout row reads "Tryout · …" in the quiet ink and opens the Tryouts tab.']},
+ {id:'D',title:'The phone (390, warm)',steps:['Practice plans: the rows are cards with the olive wash — no white slab behind the stack, no date tile; the title and its chip on the first line, "15 Sep · Tue · 5:01 p.m. · …" on the second (a long when-line wraps under itself, not under the date); a chevron sits in the card\'s right edge; tapping anywhere on the card opens the plan.','Schedule → List: the same cards; "APRIL 2026" is a plain label above them; a game card carries its score and WIN/LOSS on the title line and "Apr 4 · 6:00 p.m." under it; the "● Game day" pill sits at the right of its card.','Insights → Scouting Book: cards with the record chip on the title line and the note dot leading; the red "0-2" chip is readable on the card wash.','Lineups → Templates: the template card shows the name, its meta, and Apply / pencil / bin as 44px targets.']},
+ {id:'E',title:'Tablet (768, warm)',steps:['Schedule → List: a row is at least 44px tall (it was 31 — the tap-floor miss the sweep had left red).','Lineups → Templates: Apply, Rename and Delete are each 44px tall (the icons 44 wide too).']},
+ {id:'F',title:'Nothing else moved',steps:['Schedule → Week and Month, and the day sheet a cell opens: chips as before, rail included.','Notifications: day headers, the unread shading, Mark all read — as before.','The closed-season page (UAT Between Seasons): Season Wrapped, the four shelves and their rows — untouched in this session (they are the next session\'s).','Roster, Money, the Development tables: unchanged.']},
+ {id:'G',title:'The gate (build session — recorded, not walked)',steps:['check:layout list-ground: zero findings on the four screens at 390 · 768 · 1440.','Broken on purpose (the Scouting Book declared inset, on the paper): reported as "list·Opponents — the ground behind the row is rgb(248, 244, 237), painted by <main …>, not the card"; restored.','table-recipe-guard: a literal font-size on .rowListTitle fails the ladder test; restored.','check:css-selectors: the retired row classes are gone, no new dead selectors; 15 baseline entries for the 31px schedule rows at 768 pruned.']}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('f17-qa-state')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('f17-qa-state',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button type="button" data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

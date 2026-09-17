@@ -403,30 +403,26 @@ export function xFractions(dates: string[]): number[] {
 export interface CoverageCellInput {
   latest: { value: number; unit: string; recordedOn: string; attempts: number; inRange: number | null } | null;
   latestObservation: { descriptor: string | null; note: string | null; observedOn: string } | null;
-  /** The date of the latest session that marked this player not assessed on this metric. */
-  notAssessedOn: string | null;
 }
-export type CoverageCellState = 'recorded' | 'not_assessed' | 'none';
+export type CoverageCellState = 'recorded' | 'none';
 
-/** The one dash — an absence on the Coverage table, explained once by the legend under it. */
+/** The one dash — an absence on the Coverage table, whatever the reason: nobody reads it as anything but "no data" (owner, 2026-09-17). */
 export const COVERAGE_DASH = '—';
 
 /**
  * ONE cell for the selected metric on the Coverage table (the one roster table since re-evaluation
  * stage 4, G1 — the Skills & Goals Players tab that drew the same cell is gone): the latest headline
- * ("8.31 seconds (of 2)", "2 of 3 in range", a skill's descriptor) with THAT metric's own date;
- * "Not assessed" when a session marked it and NO result exists; else a DASH — the legend under the
- * table says what it means, once, rather than "No result recorded for this test this season" as a
- * cell value on seven rows. ⚠ A result always wins over a not-assessed mark, whatever their dates:
- * coverage describes the records that EXIST, and a later session that took no result does not
- * erase one that was taken. Never a judgement, never a number another child's row could be read
- * against.
+ * ("8.31 seconds (of 2)", "2 of 3 in range", a skill's descriptor) with THAT metric's own date; else a
+ * DASH — including when a session marked the player not-assessed, because the table answers "is there
+ * a result", never "why isn't there one" (owner, 2026-09-17: whether the player was there is noise).
+ * ⚠ A result always wins over a not-assessed mark, whatever their dates: coverage describes the
+ * records that EXIST, and a later session that took no result does not erase one that was taken.
+ * Never a judgement, never a number another child's row could be read against.
  */
 export function coverageCell(input: CoverageCellInput, def: Pick<ReportDefinition, 'kind' | 'aim'>): { text: string; on: string | null; state: CoverageCellState } {
   if (def.kind === 'skill') {
     const o = input.latestObservation;
     if (o) return { text: o.descriptor ?? o.note ?? 'Observed', on: o.observedOn, state: 'recorded' };
-    if (input.notAssessedOn) return { text: 'Not assessed', on: input.notAssessedOn, state: 'not_assessed' };
     return { text: COVERAGE_DASH, on: null, state: 'none' };
   }
   const l = input.latest;
@@ -436,7 +432,6 @@ export function coverageCell(input: CoverageCellInput, def: Pick<ReportDefinitio
       : `${formatValue(l.value)} ${l.unit}${l.attempts > 1 ? ` (of ${l.attempts})` : ''}`;
     return { text, on: l.recordedOn, state: 'recorded' };
   }
-  if (input.notAssessedOn) return { text: 'Not assessed', on: input.notAssessedOn, state: 'not_assessed' };
   return { text: COVERAGE_DASH, on: null, state: 'none' };
 }
 
@@ -457,13 +452,6 @@ function playersHave(n: number, total: number): string {
   return `${n} of ${total} player${total === 1 ? '' : 's'} ${n === 1 ? 'has' : 'have'}`;
 }
 export const COVERAGE_ORDER_NOTE = 'roster order, not a ranking';
-/** The legend under the table — what a dash and "Not assessed" mean, said once, for what Show shows. */
-export function coverageLegend(def: Pick<ReportDefinition, 'kind'> | 'focus'): string {
-  if (def === 'focus') return `${COVERAGE_DASH} no goal being worked on`;
-  return `${COVERAGE_DASH} no ${def.kind === 'skill' ? 'observation' : 'result'} this season · Not assessed: a session said so, on that date`;
-}
-/** The tick's word for the phone's one-line row, where the In-a-plan column folds into the line. */
-export const COVERAGE_IN_PLAN_LEGEND = '✓ in a plan';
 
 // ── The handout (screen 6) — the same rows, in a handout's words ──────────────────────────────────
 /** "Sep 8 · best 8.05 of 3 (8.12 · 8.05 · 8.2)" · "Sep 8 · 2 of 3 in range (66 · 70 · 64)" · "Aug 1 · 8.41 seconds". */

@@ -5,6 +5,7 @@ import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import MoneyRail from './MoneyRail';
 import styles from '../../../coaches.module.css';
+import { CoachCard } from '@/components/coaches/kit';
 
 /* Setup-stage Money Overview (`stage === 'plan' | 'collect'`): the anchor card that
  * names the coach's next move, the headline tiles once there is cash to report, the
@@ -37,7 +38,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
 
   if (summary.stage === 'plan') {
     return (
-      <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
+      <CoachCard accent className={`${styles.nowCard} ${styles.nowPreseason}`}>
         <p className={styles.nowEyebrow}>Money · Getting started</p>
         <p className={styles.nowHeadline}>Start with your season budget</p>
         <p className={styles.nowMeta}>
@@ -65,7 +66,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
             is the head coach&apos;s job — you&apos;ll see the numbers here once they do.
           </p>
         )}
-      </div>
+      </CoachCard>
     );
   }
 
@@ -79,7 +80,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
   const needsRoster = budget.rosterCount === 0;
   const needsLines = budget.lineCount === 0;
   return (
-    <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
+    <CoachCard accent className={`${styles.nowCard} ${styles.nowPreseason}`}>
       <p className={styles.nowEyebrow}>Budget ready</p>
       <p className={styles.nowHeadline}>
         {needsRoster ? 'Add your roster to assign dues'
@@ -105,7 +106,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
           <Link href={hrefs.dues} className={styles.nowSecondary}>Set dues manually <ArrowRight size={13} /></Link>
         </div>
       )}
-    </div>
+    </CoachCard>
   );
 }
 

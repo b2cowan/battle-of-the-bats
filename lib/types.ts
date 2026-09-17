@@ -2201,6 +2201,8 @@ export interface RepTeamEvaluationSession {
    * A deleted practice leaves the session on the date it had (SET NULL): "on a date".
    */
   eventId: string | null;
+  /** Derived by the sessions reader (never stored): the linked event's name, for "at Team practice 5 ›". */
+  eventName?: string | null;
   note: string | null;
   /**
    * The session's SCOPE (mig 295, mockup screen 3): the metric definitions (tests AND observed
@@ -2211,6 +2213,14 @@ export interface RepTeamEvaluationSession {
    */
   scopeMetricIds: string[] | null;
   scopePlayerIds: string[] | null;
+  /**
+   * The attempts PLANNED per test in this session — metric id → 1..5 (mig 298, re-evaluation stage 2,
+   * C1). Null on every session from before the count existed: it claims only what was recorded (as
+   * many boxes as a row holds, no "of N run", no "fewer than planned"). A skill has no count. ⚠ A
+   * FLOOR, never a ceiling (C2): a row may hold more attempts than planned, up to five, and a
+   * lowered count never hides a saved attempt. Keys ⊆ `scopeMetricIds` — the route proves it.
+   */
+  scopeAttempts: Record<string, number> | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2218,8 +2228,6 @@ export interface RepTeamEvaluationSession {
   playerCount?: number;
   typeCount?: number;
   entryCount?: number;
-  /** Derived by the sessions reader (never stored): the linked event's name, for "at Team practice 5 ›". */
-  eventName?: string | null;
   /**
    * Derived (never stored) — the in-scope (player, metric) cells that hold NOTHING: no reading, no
    * "not assessed" mark, no observation — over `scopeCellCount`, the cells that COUNT. Both null when
@@ -2230,14 +2238,6 @@ export interface RepTeamEvaluationSession {
    * who has since left the active roster is listed on the session but never counted, so the
    * Overview and the session page agree on "N of M" (/simplify, 2026-09-14).
    */
-  /**
-   * The attempts PLANNED per test in this session — metric id → 1..5 (mig 298, re-evaluation stage 2,
-   * C1). Null on every session from before the count existed: it claims only what was recorded (as
-   * many boxes as a row holds, no "of N run", no "fewer than planned"). A skill has no count. ⚠ A
-   * FLOOR, never a ceiling (C2): a row may hold more attempts than planned, up to five, and a
-   * lowered count never hides a saved attempt. Keys ⊆ `scopeMetricIds` — the route proves it.
-   */
-  scopeAttempts: Record<string, number> | null;
   unrecordedCount?: number | null;
   scopeCellCount?: number | null;
 }

@@ -104,7 +104,10 @@ type Rule = { file: string; sel: string; body: string; line: number };
  * or "cell" — an eyebrow is not a row, and a caption span inside a cell is judged where it
  * renders, by the layout sweep's `type-ladder` rule.
  */
-const TABLE_SEL = /(^|[\s>+~,(])(table|thead|tbody|tfoot|th|td|tr)\b|\.(table|th|td|tr)([A-Z][a-zA-Z]*)?(?![a-zA-Z_-])|\.[a-z][a-zA-Z]*(Th|Td|Tr|Table)(?![a-zA-Z_-])/;
+// …and, since 2026-09-16, the ROW LIST family (`.rowList`, `.rowListRow`, `.rowListBand`,
+// `.rowListCaption`…): a row list is a table without a heading row (standard §1, §3.10) and its
+// recipe is held to the same ladder and the same tokens.
+const TABLE_SEL = /(^|[\s>+~,(])(table|thead|tbody|tfoot|th|td|tr)\b|\.(table|th|td|tr|rowList)([A-Z][a-zA-Z]*)?(?![a-zA-Z_-])|\.[a-z][a-zA-Z]*(Th|Td|Tr|Table)(?![a-zA-Z_-])/;
 function tableRules(): Rule[] {
   const rules: Rule[] = [];
   for (const [file, raw] of CSS) {
@@ -195,6 +198,12 @@ test('the guard itself sees a size wherever it sits (the blind spot /review foun
   assert.ok(TABLE_SEL.test('.periodTh'), 'a class ending in Th is a table part');
   assert.ok(TABLE_SEL.test('.periodTd'), 'a class ending in Td is a table part');
   assert.ok(!TABLE_SEL.test('.heroEyebrow'), 'an eyebrow is not a row');
+  // The row-list family (standard §3.10, 2026-09-16) is a table part: the frame, its rows, its bands.
+  assert.ok(TABLE_SEL.test('ul.rowList'), 'the row-list frame is a table part');
+  assert.ok(TABLE_SEL.test('.rowListRow:has(.rowCaption)'), 'a row-list row is a table part');
+  assert.ok(TABLE_SEL.test('.rowListItem:has(> .rowListBeside)'), 'a row-list item is a table part');
+  assert.ok(TABLE_SEL.test('.rowListBand'), 'a band row is a table part');
+  assert.ok(!TABLE_SEL.test('.hubRowList'), 'a caller\'s spacing class beside the list is not');
   assert.ok(!TABLE_SEL.test('.rowLabel'), 'a settings row label is judged by the rendered gate, not here');
 });
 

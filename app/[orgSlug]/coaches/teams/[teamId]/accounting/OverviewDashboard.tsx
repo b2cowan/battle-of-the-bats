@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import MoneyNextThirtyDays from './MoneyNextThirtyDays';
 import MoneyRail from './MoneyRail';
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
+import { CoachCard, CoachEyebrow, CoachFigure, CoachChip, CoachBar, kit } from '@/components/coaches/kit';
 import styles from './overview-dashboard.module.css';
 
 /* Operate-stage Money Overview: three story cards (Bills settled / Cash / Budget),
@@ -121,64 +122,55 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
 
   return (
     <>
-      <div className={styles.row3}>
+      <div className={kit.row3}>
         {/* ── Bills settled ── */}
-        <div className={`${styles.card} ${dues.overdueCount > 0 ? styles.cardAlert : ''}`}>
-          <div className={styles.eyeRow}>
-            <span className={styles.eye}>Bills settled</span>
-            {/* No chip at all when nothing is scheduled — a green "on track"
-                beside "no installments are set yet" would be a lie. */}
-            {dues.expected > 0 && (
+        <CoachCard alert={dues.overdueCount > 0}>
+          {/* No chip at all when nothing is scheduled — a green "on track"
+              beside "no installments are set yet" would be a lie. */}
+          <CoachEyebrow
+            chip={dues.expected > 0 && (
               dues.overdueCount > 0 ? (
-                <span className={`${styles.chip} ${styles.chipDanger}`}>
-                  <AlertTriangle size={11} aria-hidden /> {dues.overdueCount} overdue
-                </span>
+                <CoachChip tone="danger"><AlertTriangle size={11} aria-hidden /> {dues.overdueCount} overdue</CoachChip>
               ) : dues.neverPaidCount > 0 ? (
-                <span className={`${styles.chip} ${styles.chipWarn}`}>{dues.neverPaidCount} unpaid</span>
+                <CoachChip tone="warn">{dues.neverPaidCount} unpaid</CoachChip>
               ) : (
-                <span className={`${styles.chip} ${styles.chipGood}`}>{allCollected ? 'all in' : 'on track'}</span>
+                <CoachChip tone="good">{allCollected ? 'all in' : 'on track'}</CoachChip>
               )
             )}
-          </div>
+          >
+            Bills settled
+          </CoachEyebrow>
           {dues.expected > 0 ? (
             <>
-              <div className={styles.big}>
+              <CoachFigure>
                 {fmt(dues.settled)} <small>of {fmt(dues.duesNet)} · {pct}%</small>
-              </div>
-              <div className={styles.bar}>
-                {dues.settled > 0 && (
-                  <div className={`${styles.seg} ${styles.segCollected}`} style={{ width: `${Math.min(segWidth(dues.settled, dues.duesNet), 100)}%` }} />
-                )}
-                {dues.overdueAmount > 0 && (
-                  <div className={`${styles.seg} ${styles.segOverdue}`} style={{ width: `${segWidth(dues.overdueAmount, dues.duesNet)}%` }} />
-                )}
-              </div>
-              <div className={styles.legend}>
-                <span><span className={`${styles.legendDot} ${styles.dotCollected}`} /><b>{fmt(dues.settled)}</b> settled</span>
-                {dues.overdueAmount > 0 && (
-                  <span><span className={`${styles.legendDot} ${styles.dotOverdue}`} /><b>{fmt(dues.overdueAmount)}</b> overdue</span>
-                )}
-                {toCome > 0 && (
-                  <span><span className={`${styles.legendDot} ${styles.dotTrack}`} /><b>{fmt(toCome)}</b> to come</span>
-                )}
-              </div>
+              </CoachFigure>
+              <CoachBar
+                segments={[
+                  { pct: Math.min(segWidth(dues.settled, dues.duesNet), 100) },
+                  { pct: segWidth(dues.overdueAmount, dues.duesNet), tone: 'over' },
+                ]}
+                legend={[
+                  { dot: 'fill', text: <><b>{fmt(dues.settled)}</b> settled</> },
+                  ...(dues.overdueAmount > 0 ? [{ dot: 'over' as const, text: <><b>{fmt(dues.overdueAmount)}</b> overdue</> }] : []),
+                  ...(toCome > 0 ? [{ dot: 'track' as const, text: <><b>{fmt(toCome)}</b> to come</> }] : []),
+                ]}
+              />
             </>
           ) : (
             <p className={styles.footNote}>Dues schedules exist but no installments are set yet. Set them up in Player Dues.</p>
           )}
-          <div className={styles.foot}>
-            <Link href={hrefs.dues} className={styles.footLink}>Player Dues →</Link>
+          <div className={kit.foot}>
+            <Link href={hrefs.dues} className={kit.footLink}>Player Dues →</Link>
           </div>
-        </div>
+        </CoachCard>
 
         {/* ── Cash on hand ── */}
-        <div className={styles.card}>
-          <div className={styles.eyeRow}>
-            <span className={styles.eye}>Cash on hand</span>
-          </div>
-          <div className={`${styles.big} ${summary.onHand >= 0 ? styles.vGood : styles.vBad}`}>
+        <CoachCard>
+          <CoachEyebrow>Cash on hand</CoachEyebrow>
+          <CoachFigure tone={summary.onHand >= 0 ? 'good' : 'bad'}>
             {fmt(summary.onHand)}
-          </div>
+          </CoachFigure>
           <div className={styles.flow}>
             <div className={styles.flowRow}>
               <span className={styles.flowLabel}>IN</span>
@@ -203,36 +195,37 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
               that produces it. What is still owed keeps its answers — the Bills settled card for money
               in, the Next-N-days ledger below for everything dated — and the caveat sentence above
               already points at them without spending this link on it. */}
-          <div className={styles.foot}>
-            <Link href={hrefs.transactions} className={styles.footLink}>Ledger →</Link>
+          <div className={kit.foot}>
+            <Link href={hrefs.transactions} className={kit.footLink}>Ledger →</Link>
           </div>
-        </div>
+        </CoachCard>
 
         {/* ── Budget ── */}
-        <div className={styles.card}>
-          <div className={styles.eyeRow}>
-            <span className={styles.eye}>Budget</span>
-            {summary.headroom != null && (
+        <CoachCard>
+          <CoachEyebrow
+            chip={summary.headroom != null && (
               overBudget
-                ? <span className={`${styles.chip} ${styles.chipDanger}`}>over budget</span>
-                : <span className={`${styles.chip} ${styles.chipGood}`}>on plan</span>
+                ? <CoachChip tone="danger">over budget</CoachChip>
+                : <CoachChip tone="good">on plan</CoachChip>
             )}
-          </div>
+          >
+            Budget
+          </CoachEyebrow>
           {summary.headroom == null ? (
             <>
-              <div className={`${styles.big} ${styles.vMuted}`}>—</div>
+              <CoachFigure tone="muted">—</CoachFigure>
               <p className={styles.footNote}>
                 No budget yet. Set a season plan to see headroom and track spending against it.
               </p>
-              <div className={styles.foot}>
-                <Link href={hrefs.budgetStarter} className={styles.footLink}>Set up your budget →</Link>
+              <div className={kit.foot}>
+                <Link href={hrefs.budgetStarter} className={kit.footLink}>Set up your budget →</Link>
               </div>
             </>
           ) : (
             <>
-              <div className={`${styles.big} ${overBudget ? styles.vBad : styles.vGood}`}>
+              <CoachFigure tone={overBudget ? 'bad' : 'good'}>
                 {fmt(Math.abs(summary.headroom))} <small>{overBudget ? 'over budget' : 'headroom'}</small>
-              </div>
+              </CoachFigure>
               <div className={styles.planLegend} aria-hidden>
                 <span><span className={`${styles.planSwatch} ${styles.planSwatchActual}`} />actual</span>
                 <span><span className={`${styles.planSwatch} ${styles.planSwatchPlanned}`} />planned</span>
@@ -337,16 +330,16 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                   </div>
                 )}
               </div>
-              <div className={styles.foot}>
-                <Link href={hrefs.budget} className={styles.footLink}>Budget plan →</Link>
-                <Link href={hrefs.budgetVsActual} className={styles.footLink}>Budget vs. Actual →</Link>
+              <div className={kit.foot}>
+                <Link href={hrefs.budget} className={kit.footLink}>Budget plan →</Link>
+                <Link href={hrefs.budgetVsActual} className={kit.footLink}>Budget vs. Actual →</Link>
               </div>
             </>
           )}
-        </div>
+        </CoachCard>
       </div>
 
-      <div className={payablesApiUrl ? styles.row2 : styles.rowSolo}>
+      <div className={payablesApiUrl ? kit.row2 : styles.rowSolo}>
         {payablesApiUrl && (
           <MoneyNextThirtyDays
             apiUrl={payablesApiUrl}

@@ -1,15 +1,17 @@
 /* ── Skills & Goals → Overview (re-evaluation stage 0, 2026-09-14) ──
    The season's dashboard, on MONEY'S GRAMMAR (owner, 2026-09-14: "use the money dashboard as the
-   design model"). Three story cards over a 2:1 row of "Needs attention" and the rail — white
-   cards, a mono eyebrow with a state chip beside it, one big figure, a bar where a ratio is the
-   story, a door band pinned to the foot. The getting-started card (preseason) is the SHARED
-   `.nowCard` in coaches.module.css; only the arc line below is ours.
+   design model"). Three story cards over a 2:1 row of "Needs attention" and the rail. The
+   getting-started card (preseason) is the SHARED `.nowCard` in coaches.module.css.
 
-   ⚠ TWIN of `accounting/overview-dashboard.module.css` — `.card`, `.eye`, `.chip*`, `.big`,
-   `.bar`, `.foot`, `.railRow` carry the same values on purpose, so the two Overviews read as one
-   object. Change one half of a paired treatment, go find the twin. Not imported from Money's
-   module: a coach screen must not depend on another section's stylesheet (shared component >
-   shared class — a shared dashboard kit is the right extraction if a third Overview appears). */
+   ⚠ THE CARDS, EYEBROWS, CHIPS, FIGURES, BAR, FOOT AND THE RAIL ARE THE KIT'S
+   (`components/coaches/kit`, owner rulings A–H 2026-09-16). This file WAS a value-for-value twin of
+   `accounting/overview-dashboard.module.css` — fourteen selectors copied so the two Overviews read
+   as one object, with a docblock saying a shared kit was the right extraction — and within three
+   days the twin had drifted (the rail chevron 16px against Money's 12, no two-column fold, two
+   figure tones missing). The page renders the kit now; what stays here is only what is Skills &
+   Goals': the arc line, the help opener, and the "Needs attention" list, which is this screen's
+   own content (a finding per row) in the slot Money gives its ledger. Nothing here composes a kit
+   class. */
 
 /* the getting-started card's arc line */
 .arc {
@@ -24,102 +26,8 @@
 .linkButton { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
 .linkButton:hover { text-decoration: underline; }
 
-/* ── Rows (Money's) ── */
-.row3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin-bottom: 0.8rem;
-}
-.row2 {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 0.8rem;
-  margin-bottom: 1.5rem;
-}
-@media (max-width: 860px) {
-  .row3, .row2 { grid-template-columns: minmax(0, 1fr); }
-}
-
-/* ── Cards (Money's) ── */
-.card {
-  background: var(--home-card, rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  border-radius: 8px;
-  padding: 0.95rem 1.05rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  min-width: 0;
-}
-/* Something due announces itself on the card edge, not with a button (Money's overdue rule). */
-.cardAlert { border-left: 3px solid var(--home-live, var(--danger)); }
-
-.eyeRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.eye {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.chip {
-  display: inline-flex; align-items: center; gap: 0.25rem;
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 0.14rem 0.5rem;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-.chipDanger { color: var(--home-live, var(--danger)); background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.3); }
-.chipWarn   { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); border: 1px solid rgba(var(--warning-rgb), 0.3); }
-.chipGood   { color: var(--home-olive, var(--success)); background: rgba(var(--success-rgb), 0.07); border: 1px solid rgba(var(--success-rgb), 0.25); }
-
-.big {
-  font-size: var(--type-figure);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  color: var(--white-90);
-  font-variant-numeric: tabular-nums;
-}
-.big small { font-size: var(--type-support); font-weight: 600; color: var(--home-dim, var(--white-45)); letter-spacing: 0; }
-.vGood { color: var(--success); }
-
-.sub { font-size: var(--type-support); line-height: 1.45; color: var(--home-dim, var(--white-45)); margin: 0; }
-.sub b { color: var(--white-80); font-weight: 650; font-variant-numeric: tabular-nums; }
-
-/* ── Bars (Money's) ── */
-.bar { display: flex; height: 12px; border-radius: 6px; background: var(--home-line, var(--white-10)); overflow: hidden; gap: 2px; }
-.seg { height: 100%; }
-.segGood { background: var(--home-olive, var(--success)); border-radius: 6px 0 0 6px; }
-.legend { display: flex; gap: 0.85rem; flex-wrap: wrap; font-size: var(--type-support); color: var(--home-dim, var(--white-45)); }
-.legend b { color: var(--white-80); font-weight: 650; font-variant-numeric: tabular-nums; }
-.legendDot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 0.3rem; vertical-align: -1px; }
-.dotFill { background: var(--home-olive, var(--success)); }
-.dotTrack { background: var(--home-line, var(--white-10)); }
-
-/* ── Card foot: the same-height door band, pinned to the bottom edge (Money's) ── */
-.foot {
-  display: flex; gap: 1.1rem; align-items: center; flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--home-line, var(--border-2));
-}
-.footLink {
-  display: inline-flex; align-items: center; gap: 0.25rem;
-  min-height: 44px;
-  font-size: var(--type-body); font-weight: 650;
-  color: var(--home-olive, var(--primary-light));
-  text-decoration: none;
-}
-.footLink:hover { text-decoration: underline; }
-
-/* ── Needs attention — the ledger's slot ── */
+/* ── Needs attention — the ledger's slot: a finding per row, each a door to where you act.
+   Named to F-17 (the row-list recipe) for binning; it stays this screen's until then. ── */
 .attn { list-style: none; margin: 0; padding: 0; }
 .attnRow {
   display: grid;
@@ -144,37 +52,3 @@
 }
 .attnLink:hover { text-decoration: underline; }
 .allClear { margin: 0.3rem 0; font-size: var(--type-body); color: var(--home-dim, var(--white-45)); }
-
-/* ── Everything in Skills & Goals — the rail (Money's) ── */
-.rail { display: flex; flex-direction: column; }
-.railRow {
-  display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto 10px;
-  gap: 0.6rem;
-  align-items: center;
-  min-height: 44px;
-  padding: 0.1rem 0;
-  border-top: 1px solid var(--home-line, var(--border-2));
-  text-decoration: none;
-  color: inherit;
-}
-.railRow:first-child { border-top: none; }
-.railRow:hover .railName { text-decoration: underline; }
-.railDot { width: 8px; height: 8px; border-radius: 50%; }
-.dotPlum  { background: var(--home-plum, var(--warning)); }
-.dotGood  { background: var(--success); }
-/* ⚰ `.dotRust` — the Players row's dot — went with the row (stage 4, G1, 2026-09-16). */
-.dotOlive { background: var(--home-olive, var(--success)); }
-.railName {
-  font-size: var(--type-body); font-weight: 650; color: var(--white-90);
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.railNote { font-weight: 400; color: var(--home-dim, var(--white-45)); font-size: var(--type-support); }
-/* A stat is a few words and stays on ONE line (Money's rail): the rail is the 1fr column and at
-   1200px it is ~330px wide — a long stat squeezed the NAME to nothing. Length is held in the copy. */
-.railStat { font-size: var(--type-support); color: var(--home-dim, var(--white-45)); text-align: right; white-space: nowrap; }
-.railStat b { color: var(--white-80); font-weight: 650; font-variant-numeric: tabular-nums; }
-.railChev { color: var(--home-dim, var(--white-45)); font-size: var(--type-heading); line-height: 1; }
-/* A phone cannot hold "Coverage · Progress · Practice review" beside a name on one line: let the
-   stat wrap and share the row, rather than ellipsing the NAME (the segment that carries the meaning). */
-

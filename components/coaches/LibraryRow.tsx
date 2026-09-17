@@ -229,7 +229,7 @@ export function LibraryTableRow({
         <button type="button" className={`${styles.devCellLink} ${styles.libRowName}`} onClick={e => { e.stopPropagation(); onOpen(); }}>
           <LibraryNameTags name={name} tags={tags} shared={shared} retired={retired} />
         </button>
-        {facts && <span className={`${styles.listRowSub} ${styles.cardPhoneLine}`}>{facts}</span>}
+        {facts && <span className={styles.cardPhoneLine}>{facts}</span>}
         {line && <span className={`${styles.listRowSub} ${quietLine ? styles.libRowQuiet : styles.libRowLine}`}>{line}</span>}
       </td>
       {cells.map(cell => (
@@ -283,7 +283,10 @@ export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTag
   }, [items]);
   return (
     <div className={styles.ppDrillFilters}>
-      <input className={styles.input} value={query} onChange={e => onQuery(e.target.value)}
+      {/* `.scoutSearch` — the same rounded search field the Scouting Book uses, reused rather than
+          restyled (owner ask, 2026-09-17): one search-field look across the portal instead of a
+          second recipe living beside it. */}
+      <input className={styles.scoutSearch} type="search" value={query} onChange={e => onQuery(e.target.value)}
         placeholder={`Search ${noun}…`} aria-label={`Search ${noun}`} />
       <MultiSelectDropdown label="Tags" options={options} selected={tagFilter} onChange={onTagFilter} restQuiet />
       {sort}

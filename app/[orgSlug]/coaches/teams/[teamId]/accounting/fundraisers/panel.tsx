@@ -34,6 +34,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import RoomShell, { type RoomTile } from '@/components/coaches/RoomShell';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
@@ -553,11 +554,11 @@ export function FundraisersPanel({
       {/* ⚰ The "Back to Money" row and this panel's own CoachPageHeader are GONE (back-in-header
           ruling 2026-08-26; cleanup tranche 6, 2026-09-01) — every legacy money route is a
           permanent redirect into the hub, whose header is the live one. */}
+      {/* The export keeps BOTH kinds; its Received/Pledged split (Q15) is what keeps a
+          spreadsheet honest about the mix. */}
       {fundraisers.length > 0 && (
-        <div className={styles.panelToolbar}>
-          {/* The export keeps BOTH kinds; its Received/Pledged split (Q15) is what keeps a
-              spreadsheet honest about the mix. */}
-          <div className={styles.panelToolbarActions}>
+        <CoachListToolbar
+          actions={(
             <MoneyExportButton
               label="Fundraisers"
               formats={['xlsx', 'csv']}
@@ -571,8 +572,8 @@ export function FundraisersPanel({
                 emptyMessage: 'This season has no fundraisers to export yet.',
               })}
             />
-          </div>
-        </div>
+          )}
+        />
       )}
 
       {loading ? (
@@ -593,16 +594,15 @@ export function FundraisersPanel({
               band's create door sits in ITS OWN heading row, same spot, same weight, sibling
               labels — "+ Fundraiser" / "+ Pledge" (owner, §121 walk). */}
           <section aria-label="Fundraisers">
-            <div className={styles.panelToolbar} style={{ marginBottom: '0.5rem' }}>
-              <h3 className={styles.panelSubhead}>Fundraisers</h3>
-              {canWriteMoney && (
-                <div className={styles.panelToolbarActions}>
-                  <button type="button" className={styles.btnSecondary} onClick={openCreate}>
-                    <Plus size={15} aria-hidden /> Fundraiser
-                  </button>
-                </div>
+            <CoachListToolbar
+              actions={canWriteMoney && (
+                <button type="button" className={styles.btnSecondary} onClick={openCreate}>
+                  <Plus size={15} aria-hidden /> Fundraiser
+                </button>
               )}
-            </div>
+            >
+              <h3 className={styles.panelSubhead}>Fundraisers</h3>
+            </CoachListToolbar>
             {driveRows.length === 0 ? (
               <p className={styles.muted} style={{ margin: '0 0 0.5rem' }}>
                 No drives yet.{canWriteMoney && <> Press <strong>+ Fundraiser</strong> to run one — the whole team takes part, and each player&rsquo;s share comes off their dues.</>}
@@ -666,14 +666,14 @@ export function FundraisersPanel({
           {/* ── LIST TWO: SPONSORS ─────────────────────────────────────────────────────────────
               The flat Pledged / In / To come columns stay — they are why comparing sponsors never
               needed a fold. Status is DERIVED from the two figures, never a field. */}
-          <section aria-label="Sponsors" ref={sponsorBandRef}>
-            <div className={styles.panelToolbar} style={{ marginTop: '2rem' }}>
-              <h3 className={styles.panelSubhead} style={{ margin: 0 }}>Sponsors</h3>
-              {canWriteMoney && (
-                <div className={styles.panelToolbarActions}>
-                  {/* ⚖ "+ Pledge", NOT "+ Sponsorship" (owner, §121 walk): "Sponsorship" claims the
-                      whole relationship, cheques included. Pledge is the promise door; Record is the
-                      money door. */}
+          {/* The air between the two bands is the section's own, not the toolbar's — the kit's row
+              has one geometry everywhere (decision E). */}
+          <section aria-label="Sponsors" ref={sponsorBandRef} style={{ marginTop: '2rem' }}>
+            <CoachListToolbar
+              actions={canWriteMoney && (
+                  /* ⚖ "+ Pledge", NOT "+ Sponsorship" (owner, §121 walk): "Sponsorship" claims the
+                     whole relationship, cheques included. Pledge is the promise door; Record is the
+                     money door. */
                   <button type="button" className={styles.btnSecondary} /* ⚠⚠ THE SAME FORM RECORD OPENS, LOCKED (owner ruling, §135 walk 2026-09-03). This door
                       used to open a sheet of its own that happened to ask the same questions — two
                       forms to keep in step, and they had already drifted (the sheet capped its note,
@@ -687,9 +687,10 @@ export function FundraisersPanel({
                     })}>
                     <Plus size={15} aria-hidden /> Pledge
                   </button>
-                </div>
               )}
-            </div>
+            >
+              <h3 className={styles.panelSubhead} style={{ margin: 0 }}>Sponsors</h3>
+            </CoachListToolbar>
             {sponsorRows.length === 0 ? (
               <p className={styles.muted} style={{ margin: '0.25rem 0 0' }}>
                 No sponsors yet.{canWriteMoney && <> Press <strong>+ Pledge</strong> for a promise — or <strong>Record</strong> when a cheque is already in hand.</>}

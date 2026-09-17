@@ -1,6 +1,7 @@
 'use client';
 import type { ReactNode } from 'react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { CoachCard } from '@/components/coaches/kit';
 
 /**
  * The coach portal's "one thing" card — ONE shape for the one situation a screen puts first.
@@ -54,7 +55,7 @@ export default function CoachOneThingCard({
   children?: ReactNode;
 }) {
   return (
-    <div className={styles.oneThing} data-shape={shape} data-kind={kind}>
+    <CoachCard accent className={styles.oneThing} data-shape={shape} data-kind={kind}>
       <p className={styles.oneKicker} data-t={tone}>
         {kicker}
         {when && <span className={styles.oneKickerWhen}>{when}</span>}
@@ -70,6 +71,6 @@ export default function CoachOneThingCard({
         </div>
       )}
       {children}
-    </div>
+    </CoachCard>
   );
 }

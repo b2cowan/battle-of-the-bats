@@ -1,0 +1,933 @@
+<title>Coach Shared Style Kit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+code{font:12.5px/1.4 ui-monospace,Menlo,monospace;background:#eceee6;padding:1px 5px;border-radius:4px}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions{display:flex;gap:8px}.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:#b9d88c}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted)}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:13.5px;margin:0 0 18px}.docpage th,.docpage td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}.docpage th{background:var(--soft);font-weight:700}
+.docpage .tablewrap{overflow-x:auto;margin:0 0 18px}.docpage .tablewrap table{margin:0;min-width:640px}
+.docpage ul,.docpage ol{padding-left:22px}.docpage li{margin:0 0 6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer;font-family:system-ui,sans-serif}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-family:system-ui,sans-serif;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+/* ── the decision panel ── */
+.ask{margin:18px 0 0;padding:18px 20px 16px;border-left:3px solid var(--blue);background:#edf5f8;border-radius:0 8px 8px 0}
+.ask .qn{font:12px ui-monospace,monospace;color:var(--blue);letter-spacing:.04em}
+.ask h3{font-size:18px;font-weight:650;line-height:1.3;margin:4px 0 8px}
+.ask p{font-size:14.5px;line-height:1.55;margin:0 0 6px}
+.ask .rec{font-size:14px;margin:8px 0 0;padding:10px 12px;background:#fff;border:1px solid #b6cfdb;border-radius:6px}.ask .rec b{color:var(--olive)}
+.choices{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.choices label{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:13.5px;cursor:pointer}
+.choices input{accent-color:var(--olive);width:16px;height:16px}
+.ask textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;background:#fff}
+#rulingsOut,#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:#fff}
+
+/* ── QA walk (hidden until the build) ── */
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+
+/* ════════════ THE PRODUCT FRAME — FieldLogicHQ's real warm tokens, with the dark set behind a toggle ════════════ */
+.frame{
+  --p-paper:#F8F4ED;--p-card:#FFFFFF;--p-white8:#FFFFFF;--p-ink:#241E15;--p-ink-soft:#4A4235;--p-dim:#615A54;--p-tert:#615A54;
+  --p-line:rgba(70,55,30,.12);--p-line-strong:rgba(70,55,30,.20);--p-accent-rgb:87,101,30;--p-olive:#57651E;--p-olive-soft:rgba(87,101,30,.10);
+  --p-live:#B03A22;--p-live-rgb:176,58,34;--p-amber:#835006;--p-amber-rgb:131,80,6;--p-win:#34662A;--p-win-rgb:52,102,42;--p-plum:#7B4B6E;--p-rust:#B45309;--p-blue:#134FD3;
+  --p-shadow:0 2px 8px rgba(0,0,0,.10);--p-highlight:inset 0 1px 0 rgba(15,17,35,.04);--p-lime-fill:#57651E;
+  --f-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--f-display:'Barlow Condensed','Arial Narrow',sans-serif;--f-data:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+.frame[data-skin=dark]{
+  --p-paper:#0A0A0A;--p-card:#111827;--p-white8:rgba(255,255,255,.08);--p-ink:rgba(255,255,255,.9);--p-ink-soft:rgba(255,255,255,.7);--p-dim:rgba(255,255,255,.45);--p-tert:#94A3B8;
+  --p-line:rgba(255,255,255,.08);--p-line-strong:rgba(30,58,138,.25);--p-accent-rgb:30,58,138;--p-olive:#D9F99D;--p-olive-soft:rgba(30,58,138,.18);
+  --p-live:#EF4444;--p-live-rgb:239,68,68;--p-amber:#F59E0B;--p-amber-rgb:245,158,11;--p-win:#22C55E;--p-win-rgb:34,197,94;--p-plum:#F59E0B;--p-rust:#F59E0B;--p-blue:#3B82F6;
+  --p-shadow:0 2px 8px rgba(0,0,0,.4);--p-highlight:inset 0 1px 0 rgba(255,255,255,.06);--p-lime-fill:#D9F99D;
+  background:var(--p-paper);
+}
+.frame[data-skin=dark] .brandbar{background:#111827;border-color:var(--p-line)}.frame[data-skin=dark] .brand,.frame[data-skin=dark] .team{color:var(--p-ink)}.frame[data-skin=dark] .brand span{color:var(--p-olive)}
+.frame main{font-family:var(--f-sans);color:var(--p-ink);background:var(--p-paper)}
+.pg{max-width:960px;margin:0 auto;padding:26px 24px 30px}
+.spec{margin:0 0 30px}
+.spec > .cap{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-family:system-ui,sans-serif}
+.spec > .cap .lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:800;padding:3px 8px;border-radius:4px}
+.cap .lbl.before{background:#f3dede;color:#7a2222}.cap .lbl.after{background:#e3f3d4;color:#2b3f12}
+.spec > .cap h4{margin:0;font-size:14px;font-weight:700;color:var(--p-ink)}
+.spec > .cap .m{font-size:12px;color:var(--p-dim);font-family:var(--f-data)}
+.divider{height:1px;background:var(--p-line-strong);margin:8px 0 26px}
+.kicker{font-family:var(--f-sans);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--p-dim);margin:0 0 10px}
+.screenhead h1:focus{outline:none}
+.screenhead{margin:0 0 18px}.screenhead h1{font-family:var(--f-display);font-size:28px;font-weight:800;letter-spacing:0;margin:0 0 2px;color:var(--p-ink)}.screenhead .sub{font-family:var(--f-sans);color:var(--p-dim);font-size:14px}
+
+/* rows */
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;margin-bottom:.8rem}
+.row2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:.8rem;margin-bottom:1rem}
+@container (max-width:860px){.row3,.row2{grid-template-columns:minmax(0,1fr)}}
+
+/* ── BEFORE · the dashboard story card (Money Overview · Skills & Goals Overview) — values copied from the two twin stylesheets ── */
+.b-card{position:relative;background:var(--p-card);border:1px solid rgba(var(--p-accent-rgb),.15);border-radius:8px;padding:.95rem 1.05rem;display:flex;flex-direction:column;gap:.45rem;min-width:0}
+.b-card.alert{border-left:3px solid var(--p-live)}
+.eyeRow{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.b-eye{font-family:var(--f-data);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--p-ink-soft)}
+.chip{display:inline-flex;align-items:center;gap:.25rem;font-family:var(--f-data);font-size:10px;font-weight:700;letter-spacing:.05em;padding:.14rem .5rem;border-radius:999px;white-space:nowrap}
+.chip.danger{color:var(--p-live);background:rgba(var(--p-live-rgb),.08);border:1px solid rgba(var(--p-live-rgb),.3)}
+.chip.warn{color:var(--p-amber);background:rgba(var(--p-amber-rgb),.08);border:1px solid rgba(var(--p-amber-rgb),.3)}
+.chip.good{color:var(--p-olive);background:rgba(var(--p-win-rgb),.07);border:1px solid rgba(var(--p-win-rgb),.25)}
+.b-big{font-family:var(--f-sans);font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:var(--p-ink);font-variant-numeric:tabular-nums}
+.b-big small{font-size:12px;font-weight:600;color:var(--p-dim);letter-spacing:0}
+.vGood{color:var(--p-win)}.vBad{color:var(--p-live)}
+.b-sub{font-size:12px;line-height:1.45;color:var(--p-dim);margin:0}.b-sub b{color:var(--p-ink);font-weight:650;font-variant-numeric:tabular-nums}
+.bar{display:flex;height:12px;border-radius:6px;background:var(--p-line);overflow:hidden;gap:2px}.bar i{display:block;height:100%}
+.bar .fill{background:var(--p-olive);border-radius:6px 0 0 6px}.bar .over{background:repeating-linear-gradient(135deg,var(--p-live) 0 4px,rgba(var(--p-live-rgb),.55) 4px 8px)}
+.legend{display:flex;gap:.85rem;flex-wrap:wrap;font-size:12px;color:var(--p-dim)}.legend b{color:var(--p-ink);font-weight:650;font-variant-numeric:tabular-nums}
+.legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:.3rem;vertical-align:-1px}.dot.fill{background:var(--p-olive)}.dot.track{background:var(--p-line)}.dot.over{background:repeating-linear-gradient(135deg,var(--p-live) 0 3px,rgba(var(--p-live-rgb),.55) 3px 6px)}
+.foot{display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:.35rem;border-top:1px solid var(--p-line)}
+.footLink{display:inline-flex;align-items:center;gap:.25rem;min-height:44px;font-size:14px;font-weight:650;color:var(--p-olive);text-decoration:none}
+.flow{display:flex;flex-direction:column;gap:.35rem;margin-top:.1rem}.flowRow{display:grid;grid-template-columns:34px 1fr auto;gap:.5rem;align-items:center;font-size:12px}.flowLabel{color:var(--p-dim);font-weight:700}.flowTrack{height:10px;border-radius:5px;background:var(--p-line);overflow:hidden}.flowTrack i{display:block;height:100%;border-radius:5px}.flowIn{background:var(--p-win)}.flowOut{background:var(--p-rust)}.flowAmt{font-variant-numeric:tabular-nums;color:var(--p-ink);font-weight:650}
+.planRow{display:flex;flex-direction:column;gap:.2rem;font-size:12px}.planHead{display:flex;justify-content:space-between;gap:.7rem}.planHead b{color:var(--p-ink);font-weight:700}.planHead span{color:var(--p-dim);font-variant-numeric:tabular-nums}.planBar{position:relative;height:10px}.planTrack{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--p-line)}.planFill{position:absolute;top:0;bottom:0;left:0;border-radius:5px;background:var(--p-olive)}
+
+/* the rail (Money's and S&G's) */
+.railRow{display:grid;grid-template-columns:10px minmax(0,1fr) auto 10px;gap:.6rem;align-items:center;min-height:44px;padding:.1rem 0;border-top:1px solid var(--p-line);text-decoration:none;color:inherit}
+.railRow:first-of-type{border-top:none}
+.railDot{width:8px;height:8px;border-radius:50%}.d-good{background:var(--p-win)}.d-blue{background:var(--p-blue)}.d-rust{background:var(--p-rust)}.d-plum{background:var(--p-plum)}.d-olive{background:var(--p-olive)}
+.railName{font-size:14px;font-weight:650;color:var(--p-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.railNote{font-weight:400;color:var(--p-dim);font-size:12px}
+.railStat{font-size:12px;color:var(--p-dim);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.railStat b{color:var(--p-ink);font-weight:650}
+.railChev{color:var(--p-dim);font-size:12px;line-height:1}.railChev.big16{font-size:16px}
+.railCols2{columns:2;column-gap:2rem}.railCols2 .railRow{break-inside:avoid}
+@container (max-width:1000px){.railCols2{columns:1}}
+/* needs attention */
+.attn{list-style:none;margin:0;padding:0}
+.attnRow{display:grid;grid-template-columns:9px minmax(0,1fr) auto;gap:.7rem;align-items:start;min-height:44px;padding:.55rem 0;border-top:1px solid var(--p-line)}.attnRow:first-child{border-top:none}
+.attnDot{width:9px;height:9px;border-radius:50%;margin-top:.45rem}.attnDue{background:var(--p-live)}.attnWarn{background:var(--p-amber)}
+.attnMain{font-size:14px;color:var(--p-ink);line-height:1.45;min-width:0}.attnMain b{font-weight:700}.attnMain small{display:block;font-size:12px;color:var(--p-dim)}
+.attnLink{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:650;color:var(--p-olive);text-decoration:none;white-space:nowrap}
+/* ledger rows (Money's "Next 30 days") */
+.ledgerRow > span:nth-child(2){display:flex;flex-direction:column;min-width:0}
+.ledgerRow{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:.7rem;align-items:center;min-height:44px;padding:.35rem 0;border-top:1px solid var(--p-line)}.ledgerRow:first-child{border-top:none}
+.ledgerDate{font-family:var(--f-data);font-size:12px;color:var(--p-dim);letter-spacing:.02em}.ledgerDate.due{color:var(--p-live)}
+.ledgerTitle{font-size:14px;font-weight:650;color:var(--p-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ledgerSub{font-size:12px;color:var(--p-dim)}
+.ledgerAmt{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--p-ink)}.ledgerAmt.in{color:var(--p-win)}
+.daysToggle{display:inline-flex;gap:2px;border:1px solid var(--p-line);border-radius:6px;padding:2px}.daysToggle span{font-size:12px;padding:3px 8px;border-radius:4px;color:var(--p-dim)}.daysToggle span.on{background:var(--p-olive-soft);color:var(--p-ink);font-weight:700}
+
+/* ── BEFORE · the team Overview's tile ("Your team at a glance") and the One Thing card ── */
+.b-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;align-items:stretch}
+@container (max-width:700px){.b-tiles{grid-template-columns:repeat(2,1fr)}}
+.b-tile{display:flex;flex-direction:column;gap:.3rem;min-height:92px;padding:.9rem 1rem;background:var(--p-white8);border:1px solid rgba(var(--p-accent-rgb),.3);border-radius:12px;box-shadow:var(--p-shadow),var(--p-highlight);text-decoration:none;color:inherit;transition:transform .12s}
+.b-tile:hover{transform:translateY(-1px);border-color:rgba(var(--p-accent-rgb),.6)}
+.b-tileHead{display:flex;align-items:center;justify-content:space-between;gap:.4rem;color:var(--p-tert);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:var(--f-sans)}
+.b-tileHead .ic{display:inline-flex;align-items:center;gap:.4rem}.b-tileHead .arr{color:var(--p-olive);opacity:.45}
+.b-tileVal{font-family:var(--f-display);font-size:24px;font-weight:800;letter-spacing:-.01em;color:var(--p-ink);line-height:1.1;margin-top:.1rem}.b-tileVal.danger{color:var(--p-live)}
+.b-tileSub{font-size:12px;color:var(--p-tert)}
+.b-tileBar{display:flex;align-items:center;gap:.45rem;margin-top:.2rem}.b-tileBar .tr{flex:1;height:5px;border-radius:999px;background:var(--p-line);overflow:hidden}.b-tileBar .tr i{display:block;height:100%;background:var(--p-lime-fill);border-radius:999px}.b-tileBar .pct{font-size:11px;font-weight:700;color:var(--p-tert)}
+.b-tileFlag{margin-top:.3rem;font-size:12px;font-weight:700}.b-tileFlag.ok{color:var(--p-lime-fill)}.b-tileFlag.warn{color:var(--p-amber)}
+.pips{display:inline-flex;gap:3px;margin-top:.15rem}.pips i{width:10px;height:10px;border-radius:2px;display:block}.pips .w{background:var(--p-win)}.pips .l{background:var(--p-live)}.pips .t{background:var(--p-line-strong)}
+.b-one{position:relative;display:flex;flex-direction:column;gap:.35rem;padding:1.05rem 1.25rem 1.15rem;margin:0 0 1.35rem;background:var(--p-white8);border:1px solid rgba(var(--p-accent-rgb),.3);border-left:3px solid var(--p-blue);border-radius:12px;box-shadow:var(--p-shadow),var(--p-highlight)}
+.oneKicker{display:flex;align-items:center;gap:.4rem;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--p-blue)}.oneKicker .when{margin-left:auto;color:var(--p-tert)}
+.oneHeadline{font-family:var(--f-display);font-size:28px;font-weight:800;line-height:1.05;margin:0;color:var(--p-ink)}
+.oneMeta{margin:0;color:var(--p-tert);font-size:14px}
+.oneChips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.3rem}.oneChip{display:inline-flex;align-items:center;gap:.3rem;font-size:12px;padding:.25rem .55rem;border-radius:999px;border:1px solid var(--p-line-strong);color:var(--p-ink-soft)}.oneChip.todo{border-color:rgba(var(--p-amber-rgb),.5);color:var(--p-amber)}
+.onePrimary{display:inline-flex;align-items:center;min-height:44px;padding:0 1rem;border-radius:6px;background:var(--p-lime-fill);color:#fff;font-weight:700;font-size:14px;text-decoration:none;margin-top:.5rem;align-self:flex-start}.frame[data-skin=dark] .onePrimary{color:#241E15}
+
+/* ── BEFORE · the Insights scoreboard band ── */
+.b-band{display:flex;flex-wrap:wrap;gap:.9rem 0;border-top:1px solid var(--p-line);border-bottom:1px solid var(--p-line);padding:.9rem 0;margin-bottom:1.2rem}
+.b-stat{display:flex;flex-direction:column;flex:1 1 auto;min-width:118px;padding:0 1.1rem;border-right:1px solid var(--p-line);min-height:40px}.b-stat:last-child{border-right:0}
+.b-statLbl{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--p-tert);margin:0 0 .3rem;font-family:var(--f-sans)}
+.b-statVal{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1;color:var(--p-ink);font-variant-numeric:tabular-nums}.b-statVal small{font-size:16px;color:var(--p-tert);font-weight:700}
+.b-statCap{font-size:11px;color:var(--p-tert);margin:.3rem 0 0}
+
+/* ── AFTER · the kit ── */
+.k-card{position:relative;background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;padding:.95rem 1.05rem;display:flex;flex-direction:column;gap:.45rem;min-width:0;color:inherit;text-decoration:none}
+.k-card.alert{border-left:3px solid var(--p-live)}.k-card.accent{border-left:3px solid var(--p-blue)}
+.k-card.door{box-shadow:var(--p-shadow),var(--p-highlight);transition:transform .12s,border-color .12s}.k-card.door:hover{transform:translateY(-1px);border-color:var(--p-line-strong)}
+.k-eye{font-family:var(--f-data);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--p-ink-soft);display:inline-flex;align-items:center;gap:.4rem}
+.k-eye .arr,.k-eye.arr{color:var(--p-dim);opacity:.6}
+.k-big{font-family:var(--f-sans);font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:var(--p-ink);font-variant-numeric:tabular-nums}.k-big small{font-size:12px;font-weight:600;color:var(--p-dim);letter-spacing:0}
+.k-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;align-items:stretch}
+@container (max-width:700px){.k-tiles{grid-template-columns:repeat(2,1fr)}}
+.k-flag{font-size:12px;font-weight:700;margin-top:.2rem}.k-flag.ok{color:var(--p-olive)}.k-flag.warn{color:var(--p-amber)}
+.k-band{display:flex;flex-wrap:wrap;gap:.9rem 0;border-top:1px solid var(--p-line);border-bottom:1px solid var(--p-line);padding:.9rem 0;margin-bottom:1.2rem}
+.k-stat{display:flex;flex-direction:column;flex:1 1 auto;min-width:118px;padding:0 1.1rem;border-right:1px solid var(--p-line);min-height:40px}.k-stat:last-child{border-right:0}
+.k-stat .k-eye{margin:0 0 .3rem}.k-stat .k-big{line-height:1}.k-statCap{font-size:12px;color:var(--p-dim);margin:.3rem 0 0}
+
+/* ── tables & toolbars ── */
+.tw{overflow-x:auto;border:1px solid var(--p-line);border-radius:8px;background:var(--p-card)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{font-family:var(--f-display);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink-soft);background:var(--p-card);text-align:left;padding:.42rem .6rem;border-bottom:1px solid var(--p-line);white-space:nowrap}
+.tbl td{padding:.42rem .6rem;border-bottom:1px solid var(--p-line);color:var(--p-ink);vertical-align:middle}.tbl tr:last-child td{border-bottom:0}.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}.tbl td.chev{text-align:right;color:var(--p-dim)}
+.tbl td .name{font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:.4rem;min-height:36px;padding:0 .7rem;border:1px solid var(--p-line-strong);border-radius:6px;background:var(--p-card);font-size:13px;color:var(--p-ink)}.pill b{color:var(--p-dim);font-weight:600}
+.btn2{display:inline-flex;align-items:center;gap:.35rem;min-height:36px;padding:0 .8rem;border:1px solid var(--p-line-strong);border-radius:6px;background:var(--p-card);font-size:13px;font-weight:650;color:var(--p-ink);text-decoration:none}
+.btnLime{display:inline-flex;align-items:center;gap:.35rem;min-height:36px;padding:0 .8rem;border-radius:6px;background:var(--p-lime-fill);color:#fff;font-size:13px;font-weight:700;text-decoration:none}.frame[data-skin=dark] .btnLime{color:#241E15}
+.search{min-height:36px;padding:0 .6rem;border:1px solid var(--p-line-strong);border-radius:6px;background:var(--p-card);font-size:13px;color:var(--p-dim);display:inline-flex;align-items:center;width:220px}
+.seg{display:inline-flex;border:1px solid var(--p-line-strong);border-radius:6px;overflow:hidden}.seg span{font-size:13px;padding:.4rem .7rem;color:var(--p-dim)}.seg span.on{background:var(--p-olive-soft);color:var(--p-ink);font-weight:700}
+/* BEFORE toolbars — five recipes, values copied */
+.b-panelToolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;margin-bottom:.9rem}.b-panelToolbar .act{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.5rem;margin-left:auto}
+.b-listToolbar{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin:0 0 1rem}.b-listToolbar .end{display:inline-flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-left:auto}
+.b-insToolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin-bottom:1rem}.b-insToolbar > a,.b-insToolbar > button{min-height:44px}
+.b-ppToolbar{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.9rem}.b-ppToolbar .end{margin-left:auto;display:inline-flex;gap:.5rem}
+.b-schedToolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}.b-schedToolbar .act{margin-left:auto;display:inline-flex;gap:.5rem}
+.b-devListLede{margin:0;font-size:12px;color:var(--p-tert);max-width:64ch;line-height:1.45;flex:1 1 24rem}.b-devListLede b{color:var(--p-ink-soft)}
+.b-listFact{font-size:14px;color:var(--p-tert)}
+.b-denominator{margin:.2rem 0 .1rem;font-size:14px;font-weight:700;color:var(--p-ink);line-height:1.4}
+/* AFTER · CoachListToolbar */
+.k-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;margin-bottom:.9rem}
+.k-toolbar .lede{margin:0;font-size:12px;color:var(--p-tert);max-width:64ch;line-height:1.45;flex:1 1 24rem}.k-toolbar .lede b{color:var(--p-ink-soft)}
+.k-toolbar .act{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.5rem;margin-left:auto}
+.stacked{display:grid;gap:22px}
+
+/* ── phone lines (drawn at 390 always) ── */
+.phonebox{width:390px;max-width:100%;padding:12px 16px;background:var(--p-paper);border:1px dashed var(--p-line-strong);border-radius:10px}
+.phones{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.pcard{border:1px solid var(--p-line);border-radius:10px;padding:.65rem .85rem;margin-bottom:.65rem;background:var(--p-olive-soft);position:relative}
+.pcard .t{font-size:14px;font-weight:600;color:var(--p-ink);display:block;padding-right:2.6rem}
+.pcard .corner{position:absolute;top:.3rem;right:.35rem;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--p-dim);font-size:18px}
+.pcard.oneline{padding:.15rem .85rem;margin-bottom:.4rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:38px}.pcard.oneline .t{padding-right:2.4rem;display:inline}.pcard.oneline .corner{top:50%;transform:translateY(-50%)}
+.pl-tert{display:block;font-size:12px;color:var(--p-tert);margin-top:.15rem;font-variant-numeric:tabular-nums}
+.pl-sec{display:block;font-size:12px;color:var(--p-ink-soft);margin-top:.15rem;font-variant-numeric:tabular-nums;font-family:var(--f-sans)}.pl-sec b{color:var(--p-ink);font-weight:600}
+.pcard.oneline .pl-sec{margin-top:0;text-align:right;display:inline}
+.k-pl{display:block;font-size:12px;color:var(--p-ink-soft);margin-top:.15rem;font-variant-numeric:tabular-nums;font-family:var(--f-sans)}.k-pl b{color:var(--p-ink);font-weight:600}
+.pcard .lab{display:flex;justify-content:space-between;gap:.75rem;padding:.28rem 0;font-size:14px}.pcard .lab::before{content:attr(data-label);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--p-tert)}
+.hpx{font-family:var(--f-data);font-size:11px;color:var(--p-dim);text-align:right;margin:-.35rem 0 .6rem}
+
+@container(max-width:700px){main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.pg{padding:18px 14px 24px}.screenhead h1{font-size:23px}.railCols2{columns:1}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Coach shared style kit — project hub</strong><br><small>A–H ruled as recommended 16 Sept 2026 · built on dev the same day · /simplify + /review done (ledger §198) · the owner’s walk is on the QA Walk tab</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Assessed from source and drawn 2026-09-16; scope, the F-17 wall and A–H ruled the same day (all as recommended)">Design</li>
+    <li class="stage done" title="Plan + PM brief written 2026-09-16 (COACH_SHARED_STYLE_KIT_PLAN.md)">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-16 in the plan’s §7 order — plan §7.1 is the build record">Build</li>
+    <li class="stage done" title="/simplify (8 applied) + /review (3 confirmed, all fixed) 2026-09-16 — plan §7.1">Review</li>
+    <li class="stage current" title="Owner QA walk owed — ledger §198, parts A–F on the QA Walk tab">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="skin" aria-pressed="false">Dark skin</button><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#s-dash">1 · Two dashboards, one card</a>
+    <a href="#s-overview">2 · The team Overview</a>
+    <a href="#s-band">3 · The Insights band</a>
+    <a href="#s-toolbars">4 · Five toolbars, one job</a>
+    <a href="#s-phone">5 · The phone line</a>
+    <a href="#s-rail">6 · The rail</a>
+  </nav>
+  <div class="frame" id="frame" data-skin="warm">
+    <header class="brandbar">
+      <div class="brand">FieldLogic<span>HQ</span></div>
+      <div class="team">UAT Test Team · 2026 Season<br><span class="meta">Head coach view · true size at a 960px reading column · toggle the skin and the phone above</span></div>
+    </header>
+    <main>
+
+      <!-- ═══════════════ 1 · DASHBOARDS ═══════════════ -->
+      <section class="screen" id="s-dash">
+        <div class="pg">
+          <div class="screenhead"><h1>Two dashboards, one card</h1><p class="sub">Money → Overview and Skills &amp; Goals → Overview, as they render today, then on the kit. The owner asked for the second to be built on the first's grammar; it was, by copying every value into a second stylesheet.</p></div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Money → Overview (today)</h4><span class="m">card: white · border olive 15% · radius 8 · pad 15.2 × 16.8 · no shadow</span></div>
+            <div class="row3">
+              <div class="b-card alert">
+                <div class="eyeRow"><span class="b-eye">Bills settled <button class="fl" data-finding="F03" data-here="Money's eyebrow: IBM Plex Mono, 11px (label), 700, tracked 0.09em, secondary ink. This is the one the kit keeps.">F03</button></span><span class="chip danger">2 overdue</span></div>
+                <div class="b-big">$4,250 <small>of $6,000 · 71%</small><button class="fl" data-finding="F04" data-here="Money's figure: Inter 24px 800, tabular. The team Overview's tile draws the same role in Barlow Condensed.">F04</button></div>
+                <div class="bar"><i class="fill" style="width:71%"></i><i class="over" style="width:12%"></i></div>
+                <div class="legend"><span><i class="dot fill"></i><b>$4,250</b> collected</span><span><i class="dot over"></i><b>$750</b> overdue</span></div>
+                <div class="foot"><a class="footLink" href="#s-dash">Player Dues →</a></div>
+              </div>
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Cash on hand</span></div>
+                <div class="b-big vGood">$1,180</div>
+                <div class="flow"><div class="flowRow"><span class="flowLabel">In</span><span class="flowTrack"><i class="flowIn" style="width:100%"></i></span><span class="flowAmt">$5,400</span></div><div class="flowRow"><span class="flowLabel">Out</span><span class="flowTrack"><i class="flowOut" style="width:78%"></i></span><span class="flowAmt">$4,220</span></div></div>
+                <div class="foot"><a class="footLink" href="#s-dash">Ledger →</a></div>
+              </div>
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Budget</span><span class="chip good">on plan</span></div>
+                <div class="b-big vGood">$640 <small>headroom</small></div>
+                <div class="planRow"><div class="planHead"><b>Spending</b><span>$3,560 of $4,200</span></div><div class="planBar"><i class="planTrack" style="width:100%"></i><i class="planFill" style="width:85%"></i></div></div>
+                <div class="planRow"><div class="planHead"><b>Player dues</b><span>$4,250 of $6,000</span></div><div class="planBar"><i class="planTrack" style="width:100%"></i><i class="planFill" style="width:71%"></i></div></div>
+                <div class="foot"><a class="footLink" href="#s-dash">Budget plan →</a><a class="footLink" href="#s-dash">Budget vs. Actual →</a></div>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Next 30 days</span><span class="daysToggle"><span>14</span><span class="on">30</span><span>60</span></span></div>
+                <div class="ledgerRow"><span class="ledgerDate due">Sep 12</span><span><span class="ledgerTitle">Devon Test · installment 2</span><span class="ledgerSub">Player dues · overdue 4 days</span></span><span class="ledgerAmt">$250</span></div>
+                <div class="ledgerRow"><span class="ledgerDate">Sep 20</span><span><span class="ledgerTitle">Umpire fees — Sept</span><span class="ledgerSub">Bill · Riverdale Umpires Assn.</span></span><span class="ledgerAmt">$180</span></div>
+                <div class="ledgerRow"><span class="ledgerDate">Oct 01</span><span><span class="ledgerTitle">Sponsorship — Main St. Hardware</span><span class="ledgerSub">Expected in</span></span><span class="ledgerAmt in">$500</span></div>
+              </div>
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">More in Money</span></div>
+                <div>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-good"></span><span class="railName">Player Dues</span><span class="railStat"><b>9</b> of 12 paid</span><span class="railChev">›<button class="fl" data-finding="F01" data-here="Money's rail chevron is 12px (support). The same chevron on Skills &amp; Goals' rail, one screen over, is 16px (heading) — the twin has already drifted, three days after it was copied.">F01</button></span></a>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-blue"></span><span class="railName">Fundraisers</span><span class="railStat"><b>$1,340</b> raised</span><span class="railChev">›</span></a>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-rust"></span><span class="railName">Bills</span><span class="railStat"><b>1</b> due</span><span class="railChev">›</span></a>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-olive"></span><span class="railName">Budget vs. Actual</span><span class="railStat">on plan</span><span class="railChev">›</span></a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Skills &amp; Goals → Overview (today)</h4><span class="m">the same card, from a second stylesheet: 14 selectors copied value for value</span></div>
+            <div class="row3">
+              <div class="b-card alert">
+                <div class="eyeRow"><span class="b-eye">Sessions</span><span class="chip danger">1 unfinished session</span></div>
+                <div class="b-big">6 <small>this season</small></div>
+                <p class="b-sub">Last ran <b>12 Sept</b> · 60-yd sprint, Throwing accuracy</p>
+                <div class="foot"><a class="footLink" href="#s-dash">Sessions →</a></div>
+              </div>
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Players measured</span><span class="chip warn">3 with no result</span></div>
+                <div class="b-big vGood">9 <small>of 12 · 75%</small></div>
+                <div class="bar"><i class="fill" style="width:75%"></i></div>
+                <div class="legend"><span><i class="dot fill"></i><b>9</b> measured</span><span><i class="dot track"></i><b>3</b> not yet</span></div>
+                <div class="foot"><a class="footLink" href="#s-dash">Coverage →</a></div>
+              </div>
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Goals</span><span class="chip danger">2 reviews due</span></div>
+                <div class="b-big">5 <small>working</small></div>
+                <p class="b-sub">Next review <b>18 Sept</b> · Avery Test, first-step quickness</p>
+                <div class="foot"><a class="footLink" href="#s-dash">Coverage →</a></div>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Needs attention</span><span class="chip danger">3</span></div>
+                <ul class="attn">
+                  <li class="attnRow"><span class="attnDot attnDue"></span><span class="attnMain"><b>2 goal reviews</b> due by today<small>Avery Test · Jordan Test</small></span><a class="attnLink" href="#s-dash">Review →</a></li>
+                  <li class="attnRow"><span class="attnDot attnWarn"></span><span class="attnMain"><b>3 players</b> with no result this season<small>Casey Test · Morgan Test · Riley Test</small></span><a class="attnLink" href="#s-dash">Coverage →</a></li>
+                  <li class="attnRow"><span class="attnDot attnDue"></span><span class="attnMain"><b>1 session</b> left unfinished<small>12 Sept · 4 of 12 readings missing</small></span><a class="attnLink" href="#s-dash">Finish →</a></li>
+                </ul>
+              </div>
+              <div class="b-card">
+                <div class="eyeRow"><span class="b-eye">Everything in Skills &amp; Goals</span></div>
+                <div>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-plum"></span><span class="railName">Metrics</span><span class="railStat"><b>4</b> active</span><span class="railChev big16">›<button class="fl" data-finding="F01" data-here="Skills &amp; Goals' rail chevron: 16px. Money's, drawn above: 12px. Same row, same job, two values — and Money's rail folds to two columns on a wide card while this one never will, because that rule was not copied.">F01</button></span></a>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-good"></span><span class="railName">Sessions</span><span class="railStat"><b>6</b> this season</span><span class="railChev big16">›</span></a>
+                  <a class="railRow" href="#s-dash"><span class="railDot d-olive"></span><span class="railName">Reports <span class="railNote">in Insights</span></span><span class="railStat"><b>3</b> reports</span><span class="railChev big16">›</span></a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl after">After</span><h4>Both Overviews on the kit</h4><span class="m">one card: card ground · the neutral hairline · radius 8 · same padding</span></div>
+            <p class="kicker">Money → Overview <span class="mk" data-k="re" data-note="The card's border moves from the olive 15% accent tint to the neutral hairline every table already wears (the standing direction since the 2026-07-30 ink ruling and the table standard's F-10). Nothing else on this screen moves: the eyebrow, chip, figure, bar, foot and rail are the kit's source values.">Restyled — border only</span></p>
+            <div class="row3">
+              <div class="k-card alert"><div class="eyeRow"><span class="k-eye">Bills settled</span><span class="chip danger">2 overdue</span></div><div class="k-big">$4,250 <small>of $6,000 · 71%</small></div><div class="bar"><i class="fill" style="width:71%"></i><i class="over" style="width:12%"></i></div><div class="legend"><span><i class="dot fill"></i><b>$4,250</b> collected</span><span><i class="dot over"></i><b>$750</b> overdue</span></div><div class="foot"><a class="footLink" href="#s-dash">Player Dues →</a></div></div>
+              <div class="k-card"><div class="eyeRow"><span class="k-eye">Cash on hand</span></div><div class="k-big vGood">$1,180</div><div class="flow"><div class="flowRow"><span class="flowLabel">In</span><span class="flowTrack"><i class="flowIn" style="width:100%"></i></span><span class="flowAmt">$5,400</span></div><div class="flowRow"><span class="flowLabel">Out</span><span class="flowTrack"><i class="flowOut" style="width:78%"></i></span><span class="flowAmt">$4,220</span></div></div><div class="foot"><a class="footLink" href="#s-dash">Ledger →</a></div></div>
+              <div class="k-card"><div class="eyeRow"><span class="k-eye">Budget</span><span class="chip good">on plan</span></div><div class="k-big vGood">$640 <small>headroom</small></div><div class="planRow"><div class="planHead"><b>Spending</b><span>$3,560 of $4,200</span></div><div class="planBar"><i class="planTrack" style="width:100%"></i><i class="planFill" style="width:85%"></i></div></div><div class="planRow"><div class="planHead"><b>Player dues</b><span>$4,250 of $6,000</span></div><div class="planBar"><i class="planTrack" style="width:100%"></i><i class="planFill" style="width:71%"></i></div></div><div class="foot"><a class="footLink" href="#s-dash">Budget plan →</a><a class="footLink" href="#s-dash">Budget vs. Actual →</a></div></div>
+            </div>
+            <p class="kicker" style="margin-top:14px">Skills &amp; Goals → Overview <span class="mk" data-k="un" data-note="Visually the same screen: the kit's values ARE this screen's values. The only pixel that moves is the rail chevron (16px → 12px, Money's) and the card border (accent tint → hairline). The second stylesheet is deleted; the page imports the kit.">Unchanged in shape</span> <button class="fl fix" data-finding="F01" data-here="One kit module renders both dashboards. There is nothing left to drift: a change to the card, the eyebrow or the rail lands on Money and Skills &amp; Goals at once.">fixes F01</button></p>
+            <div class="row3">
+              <div class="k-card alert"><div class="eyeRow"><span class="k-eye">Sessions</span><span class="chip danger">1 unfinished session</span></div><div class="k-big">6 <small>this season</small></div><p class="b-sub">Last ran <b>12 Sept</b> · 60-yd sprint, Throwing accuracy</p><div class="foot"><a class="footLink" href="#s-dash">Sessions →</a></div></div>
+              <div class="k-card"><div class="eyeRow"><span class="k-eye">Players measured</span><span class="chip warn">3 with no result</span></div><div class="k-big vGood">9 <small>of 12 · 75%</small></div><div class="bar"><i class="fill" style="width:75%"></i></div><div class="legend"><span><i class="dot fill"></i><b>9</b> measured</span><span><i class="dot track"></i><b>3</b> not yet</span></div><div class="foot"><a class="footLink" href="#s-dash">Coverage →</a></div></div>
+              <div class="k-card"><div class="eyeRow"><span class="k-eye">Goals</span><span class="chip danger">2 reviews due</span></div><div class="k-big">5 <small>working</small></div><p class="b-sub">Next review <b>18 Sept</b> · Avery Test, first-step quickness</p><div class="foot"><a class="footLink" href="#s-dash">Coverage →</a></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ 2 · THE TEAM OVERVIEW ═══════════════ -->
+      <section class="screen" id="s-overview" hidden>
+        <div class="pg">
+          <div class="screenhead"><h1>The team Overview</h1><p class="sub">The coach's front page — the One Thing card and "Your team at a glance". This is the screen whose pixels move, so it is drawn whole, before and after.</p></div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Overview (today)</h4><span class="m">tile: --white-8 ground · border olive 30% · radius 12 · shadow + top highlight · pad 14.4 × 16</span></div>
+            <div class="b-one">
+              <div class="oneKicker">◆ Next up <span class="when">Thursday 6:00 p.m.</span></div>
+              <h2 class="oneHeadline">Practice — Riverdale Park, Diamond 2</h2>
+              <p class="oneMeta">Plan: Warm-up · Infield rotation · Live BP · 75 min</p>
+              <div class="oneChips"><span class="oneChip">✓ Plan written</span><span class="oneChip todo">Attendance not taken</span><span class="oneChip">12 on the roster</span></div>
+              <a class="onePrimary" href="#s-overview">Open the plan</a>
+              <button class="fl" data-finding="F02" data-here="The One Thing card wears the Overview family's skin: --white-8 ground (white in warm, an 8% white wash in dark), a 30% accent border, 12px radius, a shadow. Two screens over, Money's cards are white, 15% accent, 8px, flat. In dark these are two different greys." style="position:absolute;margin:0;right:14px;top:44px">F02</button>
+            </div>
+            <p class="kicker">Your team at a glance</p>
+            <div class="b-tiles">
+              <a class="b-tile" href="#s-overview"><span class="b-tileHead"><span class="ic">🏆 Record <button class="fl" data-finding="F03" data-here="The tile's eyebrow: Inter, 12px (support), 700, tracked 0.04em, tertiary ink — a size up, a face over and half the tracking of Money's eyebrow. The ladder names 11px 'label' as the uppercase-eyebrow step.">F03</button></span><span class="arr">→</span></span><span class="b-tileVal">4–2–1 <button class="fl" data-finding="F04" data-here="The tile's figure is Barlow Condensed 24px 800. Money's and Skills &amp; Goals' figure is Inter 24px 800. One role, two faces, on consecutive screens.">F04</button></span><span class="pips"><i class="w"></i><i class="w"></i><i class="l"></i><i class="w"></i><i class="t"></i><i class="l"></i><i class="w"></i></span><span class="b-tileSub">Last: W 6–3 vs Northgate</span></a>
+              <a class="b-tile" href="#s-overview"><span class="b-tileHead"><span class="ic">👥 Roster</span><span class="arr">→</span></span><span class="b-tileVal">12</span><span class="b-tileSub">9 of 12 positioned</span><span class="b-tileFlag warn">3 missing an email</span></a>
+              <a class="b-tile" href="#s-overview"><span class="b-tileHead"><span class="ic">📅 This week</span><span class="arr">→</span></span><span class="b-tileVal">3 <small style="font-size:16px;color:var(--p-tert)">events</small></span><span class="b-tileSub">Thu practice · Sat game · Sun game</span></a>
+              <a class="b-tile" href="#s-overview"><span class="b-tileHead"><span class="ic">$ Dues</span><span class="arr">→</span></span><span class="b-tileVal">$4,250</span><span class="b-tileBar"><span class="tr"><i style="width:71%"></i></span><span class="pct">71%</span><button class="fl" data-finding="F02" data-here="The tile's bar: 5px, lime fill, a pill track. The Money card two screens over draws the same ratio as a 12px olive bar with segments. In warm both fills resolve to olive, so only the height differs; in dark the tile's is true lime and Money's is olive-as-lime — the same colour by two routes.">F02</button></span><span class="b-tileSub">9 of 12 players paid</span></a>
+              <a class="b-tile" href="#s-overview"><span class="b-tileHead"><span class="ic">✓ Attendance</span><span class="arr">→</span></span><span class="b-tileVal">84%</span><span class="b-tileSub">this season · 11 events</span></a>
+              <a class="b-tile" href="#s-overview"><span class="b-tileHead"><span class="ic">📈 Skills &amp; Goals</span><span class="arr">→</span></span><span class="b-tileVal">9 <small style="font-size:16px;color:var(--p-tert)">of 12</small></span><span class="b-tileSub">measured this season</span><span class="b-tileFlag ok">2 reviews due</span></a>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl after">After</span><h4>Overview on the kit</h4><span class="m">door tile = the kit card + elevation + hover lift · same six tiles, same order, same facts</span></div>
+            <div class="k-card accent" style="margin-bottom:1.35rem;padding:1.05rem 1.25rem 1.15rem;gap:.35rem">
+              <div class="oneKicker">◆ Next up <span class="when">Thursday 6:00 p.m.</span></div>
+              <h2 class="oneHeadline">Practice — Riverdale Park, Diamond 2</h2>
+              <p class="oneMeta">Plan: Warm-up · Infield rotation · Live BP · 75 min</p>
+              <div class="oneChips"><span class="oneChip">✓ Plan written</span><span class="oneChip todo">Attendance not taken</span><span class="oneChip">12 on the roster</span></div>
+              <a class="onePrimary" href="#s-overview">Open the plan</a>
+              <span class="mk" data-k="re" data-note="The One Thing card keeps everything the One Thing ruling gave it — its kicker, headline, chips, one lime action and its 3px accent edge by kind. What changes is the skin underneath: the kit's card ground, the neutral hairline, radius 8 instead of 12. Decision C lets you keep this card on its old skin if you would rather the front page not move at all." style="position:absolute;right:14px;top:14px;margin:0">Restyled — skin only</span>
+            </div>
+            <p class="kicker">Your team at a glance <button class="fl fix" data-finding="F02" data-here="Every tile is the kit's card in its door role: the same ground token as Money's cards and every table frame (one grey in dark), the neutral hairline, radius 8 — plus the lift and hover that say 'this whole card opens', which the report card never has.">fixes F02</button> <button class="fl fix" data-finding="F03" data-here="The eyebrow is the kit's: mono 11px, 0.09em, secondary ink, with the tile's icon and arrow kept.">fixes F03</button> <button class="fl fix" data-finding="F04" data-here="The figure is the kit's: Inter 24px 800, tabular — the same numeral a coach reads on the Money and Skills &amp; Goals cards.">fixes F04</button></p>
+            <div class="k-tiles">
+              <a class="k-card door" href="#s-overview"><span class="eyeRow"><span class="k-eye">🏆 Record</span><span class="k-eye arr">→</span></span><span class="k-big">4–2–1</span><span class="pips"><i class="w"></i><i class="w"></i><i class="l"></i><i class="w"></i><i class="t"></i><i class="l"></i><i class="w"></i></span><span class="b-sub">Last: W 6–3 vs Northgate</span></a>
+              <a class="k-card door" href="#s-overview"><span class="eyeRow"><span class="k-eye">👥 Roster</span><span class="k-eye arr">→</span></span><span class="k-big">12</span><span class="b-sub">9 of 12 positioned</span><span class="k-flag warn">3 missing an email</span></a>
+              <a class="k-card door" href="#s-overview"><span class="eyeRow"><span class="k-eye">📅 This week</span><span class="k-eye arr">→</span></span><span class="k-big">3 <small>events</small></span><span class="b-sub">Thu practice · Sat game · Sun game</span></a>
+              <a class="k-card door" href="#s-overview"><span class="eyeRow"><span class="k-eye">$ Dues</span><span class="k-eye arr">→</span></span><span class="k-big">$4,250 <small>of $6,000 · 71%</small></span><span class="bar"><i class="fill" style="width:71%"></i></span><span class="b-sub">9 of 12 players paid</span></a>
+              <a class="k-card door" href="#s-overview"><span class="eyeRow"><span class="k-eye">✓ Attendance</span><span class="k-eye arr">→</span></span><span class="k-big">84%</span><span class="b-sub">this season · 11 events</span></a>
+              <a class="k-card door" href="#s-overview"><span class="eyeRow"><span class="k-eye">📈 Skills &amp; Goals</span><span class="k-eye arr">→</span></span><span class="k-big">9 <small>of 12</small></span><span class="b-sub">measured this season</span><span class="k-flag ok">2 reviews due</span></a>
+            </div>
+            <p class="hpx" style="margin-top:.6rem;text-align:left">Tile height today ≈ 104px; on the kit ≈ 106px (the 12px bar and 24px figure; padding unchanged). The board stays three-up, two rows.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ 3 · THE INSIGHTS BAND ═══════════════ -->
+      <section class="screen" id="s-band" hidden>
+        <div class="pg">
+          <div class="screenhead"><h1>The Insights band</h1><p class="sub">Insights' scoreboard is a borderless band — deliberately not cards. It keeps its shape; only its type joins the kit.</p></div>
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Insights → Dashboard (today)</h4><span class="m">label 10px 800 0.12em · figure Barlow 24 · caption 11px</span></div>
+            <div class="b-band">
+              <a class="b-stat" href="#s-band"><span class="b-statLbl">Record <button class="fl" data-finding="F03" data-here="The band's eyebrow: Inter 10px (token — the badge step), 800, tracked 0.12em. The type ladder's own finding on the Money card ('a heading at badge size') applies here word for word.">F03</button></span><span class="b-statVal">4–2–1</span><span class="b-statCap">7 games</span></a>
+              <a class="b-stat" href="#s-band"><span class="b-statLbl">Attendance</span><span class="b-statVal">84<small>%</small></span><span class="b-statCap">11 events</span></a>
+              <a class="b-stat" href="#s-band"><span class="b-statLbl">Runs for / against</span><span class="b-statVal">38 <small>/ 27</small></span><span class="b-statCap">+11</span></a>
+              <a class="b-stat" href="#s-band"><span class="b-statLbl">Awards given</span><span class="b-statVal">14</span><span class="b-statCap">to 9 players</span></a>
+              <a class="b-stat" href="#s-band"><span class="b-statLbl">Measured</span><span class="b-statVal">9 <small>of 12</small></span><span class="b-statCap">this season</span></a>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="spec">
+            <div class="cap"><span class="lbl after">After</span><h4>The band, on the kit's type</h4><span class="m">eyebrow 11px mono 0.09em · figure Inter 24 · caption 12px</span> <span class="mk" data-k="un" data-note="The band stays a band: no card, no border, the same hairline top and bottom, the same five tiles that omit themselves without data. Decision D is about its type only.">Shape unchanged</span> <button class="fl fix" data-finding="F03" data-here="The band's label becomes the kit's eyebrow, so Overview → Money → Insights read one label. Its caption moves from 11px to the kit's 12px sub.">fixes F03</button></div>
+            <div class="k-band">
+              <a class="k-stat" href="#s-band"><span class="k-eye">Record</span><span class="k-big">4–2–1</span><span class="k-statCap">7 games</span></a>
+              <a class="k-stat" href="#s-band"><span class="k-eye">Attendance</span><span class="k-big">84<small>%</small></span><span class="k-statCap">11 events</span></a>
+              <a class="k-stat" href="#s-band"><span class="k-eye">Runs for / against</span><span class="k-big">38 <small>/ 27</small></span><span class="k-statCap">+11</span></a>
+              <a class="k-stat" href="#s-band"><span class="k-eye">Awards given</span><span class="k-big">14</span><span class="k-statCap">to 9 players</span></a>
+              <a class="k-stat" href="#s-band"><span class="k-eye">Measured</span><span class="k-big">9 <small>of 12</small></span><span class="k-statCap">this season</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ 4 · TOOLBARS ═══════════════ -->
+      <section class="screen" id="s-toolbars" hidden>
+        <div class="pg">
+          <div class="screenhead"><h1>Five toolbars, one job</h1><p class="sub">The row above a list: context or a lens on the left, the actions on the right, the table under it. The portal draws it five ways.</p></div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Five screens, five recipes</h4><span class="m">gaps 0.5/0.75 · 0.75 · 0.6 · 0.5 · 0.5 — space below 14.4 · 16 · 16 · 14.4 · 16</span></div>
+            <div class="stacked">
+              <div>
+                <p class="kicker">Money → Player Dues · <code style="background:none;padding:0;color:var(--p-dim)">.panelToolbar</code> (6 files) <button class="fl" data-finding="F05" data-here="Money's toolbar: flex, wrap, gap 8×12px, 14.4px below. The lens (a View pill) sits left; the actions right in their own slot.">F05</button></p>
+                <div class="b-panelToolbar"><span class="pill"><b>View</b> Season totals ▾</span><div class="act"><a class="btn2" href="#s-toolbars">Export</a><a class="btnLime" href="#s-toolbars">+ Add a player</a></div></div>
+                <div class="tw"><table class="tbl"><thead><tr><th>Player</th><th>Dues</th><th>Paid</th><th>Owing</th><th></th></tr></thead><tbody><tr><td class="name">Avery Test</td><td class="num">$500</td><td class="num">$500</td><td class="num">—</td><td class="chev">›</td></tr><tr><td class="name">Casey Test</td><td class="num">$500</td><td class="num">$250</td><td class="num">$250</td><td class="chev">›</td></tr></tbody></table></div>
+              </div>
+              <div>
+                <p class="kicker">Skills &amp; Goals → Sessions · <code style="background:none;padding:0;color:var(--p-dim)">.panelToolbar + .devListLede</code> <button class="fl" data-finding="F06" data-here="The count line here: 12px, tertiary ink, 64ch. The Roster's count line, next: 14px, tertiary. Insights → Coverage's: 14px bold, primary — that one is the report's finding, not a lede, and is kept.">F06</button></p>
+                <div class="b-panelToolbar"><p class="b-devListLede"><b>6</b> sessions this season</p><div class="act"><span class="search">Find a session…</span></div></div>
+                <div class="tw"><table class="tbl"><thead><tr><th>Date</th><th>Session</th><th>Ran</th><th>State</th><th></th></tr></thead><tbody><tr><td>12 Sept</td><td class="name">60-yd sprint · Throwing accuracy</td><td>12 of 12</td><td>Unfinished</td><td class="chev">›</td></tr><tr><td>5 Sept</td><td class="name">60-yd sprint</td><td>11 of 12</td><td>Complete</td><td class="chev">›</td></tr></tbody></table></div>
+              </div>
+              <div>
+                <p class="kicker">Roster · <code style="background:none;padding:0;color:var(--p-dim)">.listToolbar</code> (3 files) <button class="fl" data-finding="F05" data-here="The Roster's toolbar: space-between, gap 12px, 16px below; its end slot carries its own copy of the 44px tap floor because the shared floor did not reach it.">F05</button></p>
+                <div class="b-listToolbar"><span class="b-listFact">12 players · 9 positioned</span><div class="end"><span class="seg"><span class="on">Active</span><span>Off the roster</span></span><a class="btnLime" href="#s-toolbars">+ Add a player</a></div></div>
+                <div class="tw"><table class="tbl"><thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Bats</th><th></th></tr></thead><tbody><tr><td class="num">4</td><td class="name">Devon Test</td><td>SS</td><td>R</td><td class="chev">›</td></tr><tr><td class="num">7</td><td class="name">Jordan Test</td><td>CF</td><td>L</td><td class="chev">›</td></tr></tbody></table></div>
+              </div>
+              <div>
+                <p class="kicker">Insights → Playing Time · <code style="background:none;padding:0;color:var(--p-dim)">.insightsPanelToolbar</code> <button class="fl" data-finding="F05" data-here="Insights' toolbar: gap 9.6px, 16px below, and a third hand-written 44px floor on its links.">F05</button></p>
+                <div class="b-insToolbar"><span class="pill"><b>Show</b> Innings ▾</span><a class="btn2" href="#s-toolbars">Export</a></div>
+                <div class="tw"><table class="tbl"><thead><tr><th>Player</th><th>Innings</th><th>Share</th><th></th></tr></thead><tbody><tr><td class="name">Avery Test</td><td class="num">38</td><td class="num">92%</td><td class="chev">›</td></tr><tr><td class="name">Riley Test</td><td class="num">21</td><td class="num">51%</td><td class="chev">›</td></tr></tbody></table></div>
+              </div>
+              <div>
+                <p class="kicker">Practice plans · <code style="background:none;padding:0;color:var(--p-dim)">.ppToolbar</code> (2 files) <button class="fl" data-finding="F05" data-here="The practice hub's toolbar: gap 8px, 14.4px below, its floor written a fourth time inside a 768px media query.">F05</button></p>
+                <div class="b-ppToolbar"><a class="btnLime" href="#s-toolbars">+ New practice</a><a class="btn2" href="#s-toolbars">Templates</a><div class="end"><a class="btn2" href="#s-toolbars">Library</a></div></div>
+                <div class="tw"><table class="tbl"><thead><tr><th>When</th><th>Practice</th><th>Length</th><th></th></tr></thead><tbody><tr><td>Thu 6:00 p.m.</td><td class="name">Warm-up · Infield rotation · Live BP</td><td>75 min</td><td class="chev">›</td></tr></tbody></table></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="spec">
+            <div class="cap"><span class="lbl after">After</span><h4>One component: CoachListToolbar</h4><span class="m">lede · lens · actions · sticky — gap 8×12 · 14.4 below · the tap floor once</span> <button class="fl fix" data-finding="F05" data-here="Every list above renders its toolbar through one component with three slots — a lede sentence, a lens control, the actions — and one optional behaviour (sticky, which Ledger already needs). The tap floor lives in the component; a screen cannot forget it.">fixes F05</button> <button class="fl fix" data-finding="F06" data-here="The lede is one role: 12px, tertiary, 64ch — the Skills &amp; Goals count line. The Roster's fact moves down from 14px to join it. Coverage's bold finding line is not a lede and stays.">fixes F06</button></div>
+            <div class="stacked">
+              <div><p class="kicker">Money → Player Dues <span class="mk" data-k="un" data-note="Money's toolbar IS the kit's geometry; its lens and actions render exactly here.">Unchanged</span></p><div class="k-toolbar"><span class="pill"><b>View</b> Season totals ▾</span><div class="act"><a class="btn2" href="#s-toolbars">Export</a><a class="btnLime" href="#s-toolbars">+ Add a player</a></div></div><div class="tw"><table class="tbl"><thead><tr><th>Player</th><th>Dues</th><th>Paid</th><th>Owing</th><th></th></tr></thead><tbody><tr><td class="name">Avery Test</td><td class="num">$500</td><td class="num">$500</td><td class="num">—</td><td class="chev">›</td></tr><tr><td class="name">Casey Test</td><td class="num">$500</td><td class="num">$250</td><td class="num">$250</td><td class="chev">›</td></tr></tbody></table></div></div>
+              <div><p class="kicker">Roster <span class="mk" data-k="re" data-note="The count line drops from 14px to the kit's 12px lede; the gap below the toolbar goes from 16px to 14.4px; the segmented control and the lime action are where they were.">Restyled — lede size, 1.6px of spacing</span></p><div class="k-toolbar"><p class="lede"><b>12</b> players · 9 positioned</p><div class="act"><span class="seg"><span class="on">Active</span><span>Off the roster</span></span><a class="btnLime" href="#s-toolbars">+ Add a player</a></div></div><div class="tw"><table class="tbl"><thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Bats</th><th></th></tr></thead><tbody><tr><td class="num">4</td><td class="name">Devon Test</td><td>SS</td><td>R</td><td class="chev">›</td></tr><tr><td class="num">7</td><td class="name">Jordan Test</td><td>CF</td><td>L</td><td class="chev">›</td></tr></tbody></table></div></div>
+              <div><p class="kicker">Insights → Playing Time <span class="mk" data-k="re" data-note="The lens and Export keep their places; the gap between them tightens from 9.6px to 8px and the space below from 16px to 14.4px. The 44px floor comes from the component.">Restyled — spacing only</span></p><div class="k-toolbar"><span class="pill"><b>Show</b> Innings ▾</span><div class="act"><a class="btn2" href="#s-toolbars">Export</a></div></div><div class="tw"><table class="tbl"><thead><tr><th>Player</th><th>Innings</th><th>Share</th><th></th></tr></thead><tbody><tr><td class="name">Avery Test</td><td class="num">38</td><td class="num">92%</td><td class="chev">›</td></tr><tr><td class="name">Riley Test</td><td class="num">21</td><td class="num">51%</td><td class="chev">›</td></tr></tbody></table></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ 5 · THE PHONE LINE ═══════════════ -->
+      <section class="screen" id="s-phone" hidden>
+        <div class="pg">
+          <div class="screenhead"><h1>The phone line</h1><p class="sub">On a phone a list table becomes cards, and three tables trim the card to its title and one line. Each wrote its own pair. Drawn at 390px, always.</p></div>
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Three copies (today, 390px)</h4><span class="m">the line's ink: tertiary · secondary · secondary</span></div>
+            <div class="phones">
+              <div class="phonebox">
+                <p class="kicker">Practice plans → Drills <span class="mk" data-k="un" data-note="The shared pair from the practices stage-4 build (2026-09-16): .cardPhoneLine / .cardDesktopCell. Its line takes its type from .listRowSub — 12px, TERTIARY ink.">the shared pair</span></p>
+                <div class="pcard"><span class="t">Four-corner throwing</span><span class="pl-tert">20 min · In 3 plans <button class="fl" data-finding="F07" data-here="The library's line: 12px in the tertiary ink (via .listRowSub). The two copies to the right draw the same role in the SECONDARY ink with the figure in the primary — three tables, two inks for one line.">F07</button></span><span class="corner">›</span></div>
+                <div class="pcard"><span class="t">Cut-off relays</span><span class="pl-tert">15 min · Not in a plan yet</span><span class="corner">›</span></div>
+                <p class="hpx">card ≈ 66px</p>
+              </div>
+              <div class="phonebox">
+                <p class="kicker">Player → Skills &amp; Goals → Results <span class="mk" data-k="un" data-note="Stage 3's pair, in PlayerDevelopment.module.css: .phoneLine / .desktopCell — 12px, secondary ink, figure primary 600.">copy 2</span></p>
+                <div class="pcard"><span class="t">60-yd sprint</span><span class="pl-sec"><b>8.28 seconds</b> · 15 Sept</span><span class="corner">›</span></div>
+                <div class="pcard"><span class="t">Throwing accuracy</span><span class="pl-sec"><b>7 of 10</b> · 12 Sept</span><span class="corner">›</span></div>
+                <p class="hpx">card ≈ 66px</p>
+              </div>
+              <div class="phonebox">
+                <p class="kicker">Insights → Coverage <span class="mk" data-k="un" data-note="Stage 4's pair, in coaches.module.css: .devReportPhoneLine / .devReportDesktopCell, plus .devReportOneLine — the ONE-LINE variant: the lead cell becomes a row, the line at the right, the chevron centred. 38px rows; twelve players in ~530px.">copy 3 + one-line</span></p>
+                <div class="pcard oneline"><span class="t">Avery Test</span><span class="pl-sec"><b>8.28 s</b> · 15 Sept · ✓</span><span class="corner">›</span></div>
+                <div class="pcard oneline"><span class="t">Casey Test</span><span class="pl-sec">—</span><span class="corner">›</span></div>
+                <div class="pcard oneline"><span class="t">Devon Test</span><span class="pl-sec"><b>8.62 s</b> · 5 Sept</span><span class="corner">›</span></div>
+                <p class="hpx">row = 38px</p>
+              </div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="spec">
+            <div class="cap"><span class="lbl after">After</span><h4>One family, one ink</h4><span class="m">.cardPhoneLine carries its own type · .cardsOneLine is the one-line modifier</span> <button class="fl fix" data-finding="F07" data-here="The shared pair gains the type the two copies had (12px, secondary ink, the figure primary 600, tabular, body face) so a table composes nothing else; the one-line wrapper joins the family as .cardsOneLine. The two private pairs are deleted — 3 tables, 1 recipe, 1 ink.">fixes F07</button></div>
+            <div class="phones">
+              <div class="phonebox"><p class="kicker">Drills <span class="mk" data-k="re" data-note="The line's ink moves from tertiary to secondary — the line replaces hidden COLUMNS a coach reads, not a caption. ~1 shade darker; nothing else moves.">Restyled — ink</span></p><div class="pcard"><span class="t">Four-corner throwing</span><span class="k-pl"><b>20 min</b> · In 3 plans</span><span class="corner">›</span></div><div class="pcard"><span class="t">Cut-off relays</span><span class="k-pl"><b>15 min</b> · Not in a plan yet</span><span class="corner">›</span></div></div>
+              <div class="phonebox"><p class="kicker">Results <span class="mk" data-k="un" data-note="Pixel-identical: this copy's values ARE the family's values now. Its private pair is deleted.">Unchanged</span></p><div class="pcard"><span class="t">60-yd sprint</span><span class="k-pl"><b>8.28 seconds</b> · 15 Sept</span><span class="corner">›</span></div><div class="pcard"><span class="t">Throwing accuracy</span><span class="k-pl"><b>7 of 10</b> · 12 Sept</span><span class="corner">›</span></div></div>
+              <div class="phonebox"><p class="kicker">Coverage <span class="mk" data-k="un" data-note="Pixel-identical; the one-line wrapper is renamed into the family (.cardsOneLine) and its private pair deleted.">Unchanged</span></p><div class="pcard oneline"><span class="t">Avery Test</span><span class="pl-sec"><b>8.28 s</b> · 15 Sept · ✓</span><span class="corner">›</span></div><div class="pcard oneline"><span class="t">Casey Test</span><span class="pl-sec">—</span><span class="corner">›</span></div><div class="pcard oneline"><span class="t">Devon Test</span><span class="pl-sec"><b>8.62 s</b> · 5 Sept</span><span class="corner">›</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ 6 · THE RAIL ═══════════════ -->
+      <section class="screen" id="s-rail" hidden>
+        <div class="pg">
+          <div class="screenhead"><h1>The rail</h1><p class="sub">"More in Money" and "Everything in Skills &amp; Goals" — a rail of doors, one live line each. Two copies; one already knows how to fold.</p></div>
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Money's rail on a wide card (today)</h4><span class="m">folds to two columns above 940px · chevron 12px</span></div>
+            <div class="b-card"><div class="eyeRow"><span class="b-eye">More in Money</span></div>
+              <div class="railCols2">
+                <a class="railRow" href="#s-rail"><span class="railDot d-good"></span><span class="railName">Player Dues</span><span class="railStat"><b>9</b> of 12 paid</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-blue"></span><span class="railName">Fundraisers</span><span class="railStat"><b>$1,340</b> raised</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-plum"></span><span class="railName">Sponsorships</span><span class="railStat"><b>2</b> confirmed</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-rust"></span><span class="railName">Bills</span><span class="railStat"><b>1</b> due</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-olive"></span><span class="railName">Ledger</span><span class="railStat"><b>38</b> entries</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-olive"></span><span class="railName">Budget vs. Actual</span><span class="railStat">on plan</span><span class="railChev">›<button class="fl" data-finding="F08" data-here="Money's rail: a container query folds it into two columns when the card is wider than 940px, a row never splits, the chevron is 12px. Skills &amp; Goals' rail, below, has none of that — its one-column rule is all that was copied.">F08</button></span></a>
+              </div>
+            </div>
+          </div>
+          <div class="spec">
+            <div class="cap"><span class="lbl before">Before</span><h4>Skills &amp; Goals' rail on the same width (today)</h4><span class="m">one column always · chevron 16px</span></div>
+            <div class="b-card"><div class="eyeRow"><span class="b-eye">Everything in Skills &amp; Goals</span></div>
+              <div>
+                <a class="railRow" href="#s-rail"><span class="railDot d-plum"></span><span class="railName">Metrics</span><span class="railStat"><b>4</b> active</span><span class="railChev big16">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-good"></span><span class="railName">Sessions</span><span class="railStat"><b>6</b> this season</span><span class="railChev big16">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-olive"></span><span class="railName">Reports <span class="railNote">in Insights</span></span><span class="railStat"><b>3</b> reports</span><span class="railChev big16">›</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="spec">
+            <div class="cap"><span class="lbl after">After</span><h4>One rail component</h4><span class="m">CoachRail · CoachRailRow — dot · name · note · stat · chevron 12px · folds at 940</span> <button class="fl fix" data-finding="F08" data-here="Both rails render through one component: the fold, the row, the chevron and the dot lanes live once. Skills &amp; Goals' 'in Insights' note becomes a prop the Money rail simply does not pass.">fixes F08</button></div>
+            <div class="k-card"><div class="eyeRow"><span class="k-eye">Everything in Skills &amp; Goals</span></div>
+              <div>
+                <a class="railRow" href="#s-rail"><span class="railDot d-plum"></span><span class="railName">Metrics</span><span class="railStat"><b>4</b> active</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-good"></span><span class="railName">Sessions</span><span class="railStat"><b>6</b> this season</span><span class="railChev">›</span></a>
+                <a class="railRow" href="#s-rail"><span class="railDot d-olive"></span><span class="railName">Reports <span class="railNote">in Insights</span></span><span class="railStat"><b>3</b> reports</span><span class="railChev">›</span></a>
+              </div>
+              <span class="mk" data-k="re" data-note="The chevron drops from 16px to Money's 12px; the border moves to the hairline. Everything else is as built on 2026-09-14." style="position:absolute;right:14px;top:14px;margin:0">Restyled — chevron, border</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- ═══════════════ DECISIONS ═══════════════ -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Decisions · for the owner to rule on</div>
+  <h1>Eight decisions, one paste-back</h1>
+  <p class="sub">Each carries my recommendation. Pick a ruling, add a note where you disagree, and build the block at the foot to paste into the chat. Nothing leaves this page until you paste it.</p>
+
+  <div class="ask" data-q="A">
+    <div class="qn">A · The card skin</div>
+    <h3>Does every kit card take one ground, the neutral hairline and radius 8?</h3>
+    <p>Today three card skins sit on consecutive screens: the dashboard card (white · olive 15% border · 8px · flat), the Overview tile family (<code>--white-8</code> · olive 30% · 12px · shadow — the One Thing card and the six tiles), and the table frame (white · neutral hairline · 8px). In warm the grounds coincide; in <b>dark</b> the tile family is a translucent 8% white over near-black while the other two are the opaque card — three greys for "a card". The portal has been converging on <i>card + neutral hairline</i> since the 2026-07-30 ink ruling (the Staff screen, the nudge panels, the table standard's F-10 on 09-06); the dashboard's olive tint predates that.</p>
+    <div class="rec"><b>Recommendation: yes.</b> One ground token (the table frame's), the neutral hairline, radius 8 — a card and a table on one page share an edge. Radius 12 stays the button/input radius the token table names it as.</div>
+    <div class="choices"><label><input type="radio" name="A" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="A" value="Change"> Change (say how)</label><label><input type="radio" name="A" value="Not now"> Not now</label></div>
+    <textarea rows="2" placeholder="Notes on A"></textarea>
+  </div>
+
+  <div class="ask" data-q="B">
+    <div class="qn">B · Two card roles</div>
+    <h3>Report card and door tile — two roles on one skin, rather than one card or three?</h3>
+    <p>The dashboard card <i>reports</i> (no hover, the doors are in its foot band — the 2026-08-11 "reports, doesn't shout" ruling). The Overview tile <i>is a door</i>: the whole card is a link, it lifts on hover, an arrow sits in its eyebrow. That difference is real and a coach uses it. Everything else that differs between them — ground, border, radius, eyebrow face, figure face, bar height — is accident.</p>
+    <div class="rec"><b>Recommendation: yes.</b> <code>CoachCard</code> with a <code>door</code> role: the elevation, hover lift and arrow belong to the role, not to the screen.</div>
+    <div class="choices"><label><input type="radio" name="B" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="B" value="Change"> Change (say how)</label><label><input type="radio" name="B" value="Not now"> Not now</label></div>
+    <textarea rows="2" placeholder="Notes on B"></textarea>
+  </div>
+
+  <div class="ask" data-q="C">
+    <div class="qn">C · The team Overview adopts the kit</div>
+    <h3>Do "Your team at a glance" and the One Thing card move onto the kit — and does the One Thing card come with them?</h3>
+    <p>This is the one visible change on the coach's front page: the six tiles take the kit's card (door role), its mono eyebrow and its Inter figure; the 5px lime bar becomes the kit's 12px bar. The One Thing card keeps its kicker, headline, chips, lime action and 3px accent edge, and takes only the skin underneath (radius 12 → 8, tint → hairline). The Overview page's own comment said it kept its tile language "so re-skinning it would not be a second card system" — then Money became one anyway. Screen 2 draws it whole.</p>
+    <div class="rec"><b>Recommendation: yes, both.</b> If the front page is to move at all, the One Thing card and the tiles should move together — a hairline board under a tinted, rounder card is the two-skins problem on one screen. The alternative is tiles only (rule "Change" and say so).</div>
+    <div class="choices"><label><input type="radio" name="C" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="C" value="Tiles only"> Tiles only — leave the One Thing card</label><label><input type="radio" name="C" value="Not now"> Not now — leave the Overview alone</label></div>
+    <textarea rows="2" placeholder="Notes on C"></textarea>
+  </div>
+
+  <div class="ask" data-q="D">
+    <div class="qn">D · The Insights band</div>
+    <h3>Does the Insights scoreboard band take the kit's eyebrow, figure and caption — keeping its borderless shape?</h3>
+    <p>The band is deliberately not cards and stays that way. Its label is 10px (the badge step) at 0.12em, its figure the display face, its caption 11px. On the kit: the mono 11px eyebrow, the Inter figure, a 12px caption. Screen 3.</p>
+    <div class="rec"><b>Recommendation: yes, type only.</b></div>
+    <div class="choices"><label><input type="radio" name="D" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="D" value="Change"> Change (say how)</label><label><input type="radio" name="D" value="Not now"> Not now</label></div>
+    <textarea rows="2" placeholder="Notes on D"></textarea>
+  </div>
+
+  <div class="ask" data-q="E">
+    <div class="qn">E · The list toolbar</div>
+    <h3>Does the row above a list become one component, with one lede role?</h3>
+    <p>Five toolbar recipes across 15 files do one job with four gaps, two spacings below and the 44px tap floor hand-copied three times. <code>CoachListToolbar</code> takes a lede (one role: 12px, tertiary, 64ch — the Skills &amp; Goals count line; the Roster's 14px fact joins it), a lens slot, an actions slot, and the sticky behaviour the Ledger already needs. Coverage's bold "4 of 12 players have a result" line is the report's <i>finding</i>, not a lede, and is left alone. The frame under the toolbar is already one class and the empty state already one component — a fourth wrapper around all three would add a layer without removing a copy, so the kit stops at the toolbar. Screen 4.</p>
+    <div class="rec"><b>Recommendation: yes.</b> Money's geometry is the kit's; the visible change elsewhere is 1.6px of spacing and one count line dropping a size.</div>
+    <div class="choices"><label><input type="radio" name="E" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="E" value="Change"> Change (say how)</label><label><input type="radio" name="E" value="Not now"> Not now</label></div>
+    <textarea rows="2" placeholder="Notes on E"></textarea>
+  </div>
+
+  <div class="ask" data-q="F">
+    <div class="qn">F · The phone line</div>
+    <h3>Do the three phone-line pairs fold into the shared one, in the secondary ink?</h3>
+    <p>The practices build promoted a shared pair on 09-16 and named this project as where the other two fold in. The one open question is the line's ink: the shared pair inherits tertiary (a caption's ink); the two copies use secondary with the figure in primary. The line replaces hidden <i>columns</i> — data a coach reads — so it is not a caption. Screen 5.</p>
+    <div class="rec"><b>Recommendation: yes, secondary.</b> Results and Coverage are pixel-identical after; the Drills line goes one shade darker.</div>
+    <div class="choices"><label><input type="radio" name="F" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="F" value="Tertiary"> Fold, but keep the tertiary ink</label><label><input type="radio" name="F" value="Not now"> Not now</label></div>
+    <textarea rows="2" placeholder="Notes on F"></textarea>
+  </div>
+
+  <div class="ask" data-q="G">
+    <div class="qn">G · The rail</div>
+    <h3>Does the rail of doors become one component, on Money's values?</h3>
+    <p>Two rails; Money's folds to two columns above 940px and Skills &amp; Goals' cannot, because the container rule was not copied; the chevrons are 12px and 16px. Screen 6. The Money Ledger rows and the Skills &amp; Goals attention list sit in the same card slot but hold different things (records; findings) — they stay per-screen and are named to the F-17 row-list session for binning.</p>
+    <div class="rec"><b>Recommendation: yes.</b></div>
+    <div class="choices"><label><input type="radio" name="G" value="Build as drawn"> Build as drawn</label><label><input type="radio" name="G" value="Change"> Change (say how)</label><label><input type="radio" name="G" value="Not now"> Not now</label></div>
+    <textarea rows="2" placeholder="Notes on G"></textarea>
+  </div>
+
+  <div class="ask" data-q="H">
+    <div class="qn">H · What stays different, on purpose</div>
+    <h3>Confirm the list of deliberate differences the kit does not touch.</h3>
+    <p>Money's plan-vs-actual bars and cash mini-bars (approved on their own mockup); the Ledger and attention rows (G); the Insights band's shape (D); the One Thing card's kicker, headline, chips, action and accent-by-kind; the Coverage report's own selector toolbar and bold finding line; the Roster's own phone reflow (owner-ruled phone chrome, 2026-08); the closed-season page (2026-08-18); and everything under F-17 (the div-row lists). Each is written into the kit's docblock as an exemption so the next reader knows it was seen.</p>
+    <div class="rec"><b>Recommendation: confirm.</b></div>
+    <div class="choices"><label><input type="radio" name="H" value="Confirmed"> Confirmed</label><label><input type="radio" name="H" value="Change"> Change the list (say how)</label></div>
+    <textarea rows="2" placeholder="Notes on H"></textarea>
+  </div>
+
+  <h2 style="margin-top:28px">Your rulings, to paste back</h2>
+  <button class="button primary" type="button" id="buildRulings">Build the paste-back block</button>
+  <textarea id="rulingsOut" rows="14" readonly hidden aria-label="Rulings to paste back"></textarea>
+
+  <h2 style="margin-top:34px">Rulings so far</h2>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- ═══════════════ PM BRIEF ═══════════════ -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Coach shared style kit</h1>
+  <h2>What changes for the coach</h2>
+  <p>Almost nothing they would name, and that is the point. Money's Overview and Skills &amp; Goals' Overview already look like one product; after this they <i>are</i> one — built from one set of parts, so the next dashboard cannot come out a shade different. The screens that had quietly gone their own way come back into line: the team Overview's six tiles and its front card take the same card, the same small label and the same numeral as the money cards two clicks away; the Insights scoreboard's labels stop being the smallest text in the portal; the row of controls above every list sits at the same height with the same breathing room; and the one-line summary a card shows on a phone reads in one ink on the drills list, the results list and the coverage report alike. In the dark skin one thing a coach may actually notice: the Overview's cards stop being a different grey from every other card.</p>
+  <h2>Why it matters</h2>
+  <p>Each of these shapes was built well, once, and then copied by hand into the next screen — the Skills &amp; Goals dashboard was copied from Money's on the owner's instruction, and had already drifted in three places by the third day. Copies drift silently; a reader sees "slightly off" without being able to say why, and the product reads as several products. A shared kit turns "keep these the same" from a discipline into a fact.</p>
+  <h2>Customer impact</h2>
+  <p>Every head coach and assistant, on the four screens they open most (Overview, Money, Skills &amp; Goals, Insights) and on every list in the portal. If we do nothing, the next dashboard-shaped screen is a fourth copy, and the F-17 row-list work landing beside it will be matching a moving target.</p>
+  <h2>Priority</h2>
+  <p>Now, before anything else styles a dashboard — the owner's own close-out condition on the Development project. It sits beside F-17 (the row lists), which owns the row; this owns the card, the toolbar and the phone fold. The two are planned separately and built in the order the plan sets.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Both Overviews render from one kit; the second stylesheet is gone. Money's and Skills &amp; Goals' pages look as they do today.</li>
+    <li>The team Overview and the Insights band pass the same eyebrow/figure guard the money cards pass.</li>
+    <li>One toolbar component behind every list; the five recipes deleted; the tap floor asserted once.</li>
+    <li>One phone-line family; the two private pairs deleted.</li>
+    <li>A build guard fails when a coach stylesheet declares a card, eyebrow, figure, toolbar or rail row outside the kit — the same "no thirtieth branch" pattern the season-close rule uses.</li>
+    <li>The layout gate's screen baseline re-measured on the Overview (the only screen whose pixels move) and green across the rest; both skins.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ FULL PLAN ═══════════════ -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment · source-based, 2026-09-16</div>
+  <h1>Coach shared style kit — plan</h1>
+  <p class="sub">The file of record is <code>docs/projects/active/COACH_SHARED_STYLE_KIT_PLAN.md</code>; this tab mirrors it.</p>
+
+  <h2>Origin and scope</h2>
+  <p>Owner, 2026-09-14, on hearing that Skills &amp; Goals had been given Money's dashboard grammar by copying the stylesheet: <i>"let's make sure this is discussed when this project is over. Shared stylings are important for consistency across the app."</i> The Development lifecycle re-evaluation closed 2026-09-16; this is that discussion. Ruled the same day: <b>coach-portal first, door open</b> (the kit on tokens so it is portable; tournament-admin and public-site candidates listed below, not drawn), and <b>two projects with a wall</b> — F-17 (the row-list recipe) owns the row; this project owns the card, the chrome around a list and the table-row-on-a-phone fold.</p>
+  <div class="note"><strong>Foundation, and its state.</strong> The table standard's F-24/F-25 pass (ledger §194) is <b>built on dev and uncommitted</b> at the time of this assessment; its hunks sit in the coach stylesheet, the Development pages and both design docs, with five peer sessions live. This assessment reads the working tree as truth (it is what renders). The build lands as a private-index commit.</div>
+
+  <h2>Method</h2>
+  <p>Source-based, as the Development re-evaluation's §2–§3 were: every <code>*.module.css</code> under the coach area with a dashboard, overview, table, list or card in it or its selectors was read and the look-alikes diffed. Each finding is tagged <b>Code finding</b> (follows from what the code does), <b>UX hypothesis</b> (a coach would plausibly notice; not yet observed) or <b>Proposal</b>.</p>
+
+  <h2>Findings</h2>
+  <h3>F01 — Two dashboards, one stylesheet copied by hand <span class="tag">Code finding</span></h3>
+  <p><code>development/overview.module.css</code> (180 lines) duplicates <code>accounting/overview-dashboard.module.css</code> (679 lines) value for value on <code>.row3 .row2 .card .cardAlert .eyeRow .eye .chip .chipDanger .chipWarn .chipGood .big .sub .bar .seg .legend .legendDot .foot .footLink .railRow .railDot .railName .railStat .railChev</code>. Already drifted: <code>.railChev</code> is <code>--type-support</code> in Money and <code>--type-heading</code> in Skills &amp; Goals; Money's <code>.railCard</code> container query (two columns above 940px) has no twin; <code>.vBad</code>/<code>.vMuted</code> exist only in Money; <code>.railNote</code> only in Skills &amp; Goals. The twin's own docblock says "a shared dashboard kit is the right extraction if a third Overview appears" — the second consumer is the extraction point (memory: shared-component rule, third instance).</p>
+  <h3>F02 — Three card skins for one card, and three greys in dark <span class="tag">Code finding</span></h3>
+  <div class="tablewrap"><table><thead><tr><th>Skin</th><th>Where</th><th>Ground</th><th>Border</th><th>Radius</th><th>Shadow</th></tr></thead><tbody>
+    <tr><td>Dashboard card</td><td><code>.card</code> ×2 modules</td><td><code>--home-card</code> → white / <code>--bg-card</code></td><td>accent 15%</td><td>8</td><td>none</td></tr>
+    <tr><td>Overview family</td><td><code>.snapshotCard .nowCard .oneThing .insightsCallouts</code></td><td><code>--white-8</code> → white / <b>8% white wash</b></td><td>accent 30%</td><td>12 (<code>--radius</code>)</td><td><code>--shadow-sm</code> + highlight</td></tr>
+    <tr><td>Table frame</td><td><code>.tableWrap</code> (16 consumers)</td><td><code>--card-bg</code> → white / <code>--hud-surface</code></td><td><code>--home-line</code> (neutral)</td><td>8</td><td>none</td></tr>
+    <tr><td>Tinted section</td><td><code>.detailSection</code></td><td><code>--home-olive-soft</code></td><td>accent 15%</td><td>8</td><td>none</td></tr>
+  </tbody></table></div>
+  <p>In warm the first three grounds all resolve to <code>#FFF</code>; in dark <code>--white-8</code> is a translucent wash over <code>#0A0A0A</code> while the other two are the opaque <code>#111827</code>. Two quiet inks split the same way: the dashboard's <code>.sub</code> uses <code>--home-dim</code> (white-45 in dark) and the tile's <code>.snapshotSub</code> uses <code>--text-tertiary</code> (<code>#94A3B8</code>). The standing direction is card + neutral hairline (2026-07-30; Staff 08; F-10 09-06); the dashboard's accent tint predates it.</p>
+  <h3>F03 — Three eyebrows <span class="tag">Code finding</span> <span class="tag">UX hypothesis</span></h3>
+  <p><code>.eye</code> mono · label 11 · 700 · 0.09em · secondary (dashboard) — <code>.snapshotHead</code> sans · support 12 · 700 · 0.04em · tertiary (tiles) — <code>.insightsStatLbl</code> sans · token 10 · 800 · 0.12em · tertiary (band); plus <code>.railStep</code> mono · token 10 · 0.09em. The type ladder names <code>--type-label</code> as the uppercase-eyebrow step and found "a heading at badge size" on this very role once already. Hypothesis: a coach reading Overview → Money → Insights meets three label sizes in two faces.</p>
+  <h3>F04 — Two figure faces <span class="tag">Code finding</span></h3>
+  <p><code>.big</code> is Inter 24 800 tabular; <code>.snapshotValue</code> and <code>.insightsStatVal</code> are Barlow Condensed 24 800. The ladder pass settled the <i>size</i> (figure 24) and not the face.</p>
+  <h3>F05 — Five toolbars for one job <span class="tag">Code finding</span></h3>
+  <div class="tablewrap"><table><thead><tr><th>Recipe</th><th>Files</th><th>Gap</th><th>Below</th><th>Tap floor</th></tr></thead><tbody>
+    <tr><td><code>.panelToolbar</code> + <code>Actions</code> + <code>Sticky</code></td><td>Money ×4 · Skills &amp; Goals ×2</td><td>8 × 12</td><td>14.4</td><td>—</td></tr>
+    <tr><td><code>.listToolbar</code> + <code>End</code> + <code>Fact</code></td><td>Roster · Schedule · PlayerDevelopmentSection</td><td>12</td><td>16</td><td>own copy on <code>End</code></td></tr>
+    <tr><td><code>.insightsPanelToolbar</code></td><td>Insights reports</td><td>9.6</td><td>16</td><td>own copy (<code>&gt; a, &gt; button</code>)</td></tr>
+    <tr><td><code>.ppToolbar</code> + <code>End</code> + <code>Flush</code></td><td>Practice hub · Schedule practice panel</td><td>8</td><td>14.4</td><td>own copy @768</td></tr>
+    <tr><td><code>.scheduleToolbar</code> + <code>Actions</code></td><td>Schedule ×3</td><td>8</td><td>—</td><td>—</td></tr>
+  </tbody></table></div>
+  <p>Not in the set, on purpose: <code>.devReportToolbar</code> (a report's selector fields, align-end) and <code>.ppDrillFilters</code> (search + tag chips) — different jobs.</p>
+  <h3>F06 — Three count lines <span class="tag">Code finding</span></h3>
+  <p><code>.devListLede</code> support 12 · tertiary · 64ch (Sessions, Metrics) — <code>.listToolbarFact</code> body 14 · tertiary (Roster) — <code>.moneySummaryBasis</code> support 12. <code>.devReportDenominator</code> (body 14 · 700 · primary) is Coverage's finding sentence, not a lede: kept.</p>
+  <h3>F07 — Three phone-line pairs <span class="tag">Code finding</span></h3>
+  <p><code>.cardPhoneLine</code>/<code>.cardDesktopCell</code> (shared, promoted 2026-09-16 by the practices build; type from <code>.listRowSub</code>, tertiary) — <code>.phoneLine</code>/<code>.desktopCell</code> (<code>PlayerDevelopment.module.css</code>, Results; secondary, <code>b</code> primary 600) — <code>.devReportPhoneLine</code>/<code>.devReportDesktopCell</code> (Coverage + records; secondary, sans forced because its desktop cell is K-20 mono) + <code>.devReportOneLine</code> (the one-line variant: lead cell becomes a row, 38px). The practices commit's own comment points the two copies at this project ("S6").</p>
+  <h3>F08 — The rail is two copies <span class="tag">Code finding</span></h3>
+  <p>See F01: the fold, the chevron, the note.</p>
+
+  <h2>What the kit holds — component or class, and why</h2>
+  <div class="tablewrap"><table><thead><tr><th>Part</th><th>Form</th><th>Why that form</th><th>Consumers</th></tr></thead><tbody>
+    <tr><td><b>CoachCard</b> (report · door)</td><td>Component</td><td>the door role carries behaviour (whole-card link, hover, arrow, focus ring) — a class would leave that hand-typed per tile</td><td>Money Overview ×5 cards · S&amp;G Overview ×5 · team Overview ×6 tiles + One Thing</td></tr>
+    <tr><td><b>Eyebrow · Figure · Sub · Chip</b></td><td>Classes in the kit module (+ small components where a chip carries tone)</td><td>purely visual; a token-level recipe with a guard is enough</td><td>every card above; the Insights band</td></tr>
+    <tr><td><b>Bar</b> (segments · legend)</td><td>Component</td><td>a11y: the ratio in the accessible name, the hatched overrun, the legend dots — three places to get wrong</td><td>Money dues · S&amp;G measured · Overview dues tile</td></tr>
+    <tr><td><b>CoachListToolbar</b> (lede · lens · actions · sticky)</td><td>Component</td><td>the tap floor and the sticky measured-top are behaviour</td><td>15 files, five recipes</td></tr>
+    <tr><td><b>CoachRail · CoachRailRow</b></td><td>Component</td><td>the container fold and the link row</td><td>Money · S&amp;G</td></tr>
+    <tr><td><b>Phone-line family</b> (<code>.cardPhoneLine .cardDesktopCell .cardsOneLine</code>)</td><td>Class family (existing, completed)</td><td>a display swap and a type recipe; the markup is two cells and a span — under the ~5-file component threshold and already one family</td><td>Drills/Templates/Circuits/Practices · Results · Coverage · records</td></tr>
+  </tbody></table></div>
+  <p><b>Where it lives:</b> <code>components/coaches/kit/</code> — one <code>CoachKit.module.css</code> (tokens only, no pixels that are not the ladder's), one export per part. Consumers never reach into a kit class from their own module (the standing trap). Both Overviews' stylesheets shrink to their screen-only rules (Money's plan bars, flow bars, ledger; S&amp;G's arc line, attention list).</p>
+
+  <h2>Deliberate differences kept (decision H)</h2>
+  <ul>
+    <li>Money's plan-vs-actual rows and cash in/out mini-bars — approved on mockup 64d49b0e; screen-only.</li>
+    <li>The Ledger rows and the attention list — different content in the same slot; named to F-17 for binning (likely B and C).</li>
+    <li>The Insights band's borderless shape — type only.</li>
+    <li>The One Thing card's kicker · headline · chips · single lime action · accent edge by <code>data-kind</code>.</li>
+    <li><code>.devReportToolbar</code> (selector fields) and <code>.devReportDenominator</code> (a finding, not a lede).</li>
+    <li>The Roster's own phone reflow (owner-ruled roster phone chrome).</li>
+    <li>The closed-season page, the practice document, everything under F-17.</li>
+  </ul>
+
+  <h2>Sequence (build session)</h2>
+  <ol>
+    <li><b>Kit first, no consumers</b>: the module, the components, the guard (fails on a coach stylesheet declaring a kit selector outside the kit — the pattern of the history-endpoint guard).</li>
+    <li><b>Money Overview</b> onto the kit — pixel-identical except the border. Baseline: no rows move.</li>
+    <li><b>Skills &amp; Goals Overview</b> — delete <code>overview.module.css</code>'s twin block. Chevron 16 → 12.</li>
+    <li><b>Toolbar</b> — the five recipes, one screen at a time, Money last (its geometry is the kit's; it is the control).</li>
+    <li><b>Phone line</b> — the two private pairs deleted; <code>.cardsOneLine</code>.</li>
+    <li><b>Team Overview</b> (C) and <b>Insights band</b> (D) — the visible ones, last, so an owner "not now" costs nothing above.</li>
+    <li><b>Rail</b> (G).</li>
+  </ol>
+  <div class="note"><strong>Built 2026-09-16 (plan §7.1).</strong> Every step landed in the order above. Three things the build corrected in the plan: the toolbar fold was three live recipes, not five (two had no callers; the practice document's action row is not a list toolbar); the kit's tap floor is ≤ 768, the standard's number, which retired ten rows of tablet debt; and every screen-set inner rhythm (padding, gap, accent) reaches the kit through custom properties, because the two stylesheets' order is not guaranteed and the One Thing card lost its padding to the kit's on the first build — found by measurement, fixed, and guarded (a caller reaching into a kit class now fails the build).</div>
+  <h2>Verification</h2>
+  <ul>
+    <li><code>check:layout</code> at 361 · 390 · 768 · 1440, both skins, on Overview · Money Overview · S&amp;G Overview · Insights · Roster · Dues · Sessions · Playing Time · Practice plans · Drills · Coverage · a player's Results. <b>The Overview baseline WILL move</b> (tile radius, figure line-height, the 12px bar) — re-accept those rows by measurement, not by hand; every other screen must not move a row.</li>
+    <li>The type-ladder guard extended to the kit's classes; the warm-palette contrast test given the kit's ink/ground pairs in <i>both</i> skins (the static-gate-reads-dark-only trap).</li>
+    <li>A stylesheet guard: any <code>*.module.css</code> under <code>app/[orgSlug]/coaches</code> or <code>components/coaches</code> outside the kit that declares <code>.card .eye .big .railRow .panelToolbar .listToolbar .insightsPanelToolbar .ppToolbar .scheduleToolbar .phoneLine .devReportPhoneLine</code> fails the build.</li>
+    <li>UAT waits keyed to any renamed class re-pointed (the loading-state lesson).</li>
+  </ul>
+  <h2>Door left open — not drawn</h2>
+  <p>Tournament-admin dashboard (<code>admin/tournaments/dashboard</code>: drag cards, checklist, its own owner-ruled density system), the club-admin accounting pages (5 of ~180 selectors shared with the coach money pages — not twins), the public-site state cards. The kit is written on tokens so any of these could adopt it; adopting them is its own session with its own mockups.</p>
+  <h2>Sibling wall — F-17</h2>
+  <p>F-17 owns what a record row looks like (schedule chips, the closed-season shelves, tags, notifications, scouting) and whether a row list sits on the card. This project owns the card, the toolbar above any list, the table frame's phone fold and the rail of doors (F-17's bin C). Build order: this kit's toolbar before F-17's build, so F-17's lists sit under the same toolbar; F-17's "does a row list sit on the card" ruling before the kit's card is declared final, so one ground token serves both.</p>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden data-walk="ready">
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">Coach shared style kit — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · Account: the UAT head coach · Org/Team: uat-test-org / UAT Test Team</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS=['mockup','decisions','brief','plan','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));window.scrollTo({top:0})}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+$('skin').onclick=()=>{const f=$('frame');const dark=f.dataset.skin!=='dark';f.dataset.skin=dark?'dark':'warm';$('skin').setAttribute('aria-pressed',String(dark));$('skin').textContent=dark?'Warm skin':'Dark skin'};
+
+const intents={
+ 's-dash':'Two dashboards are drawn from their real values so the twin is visible as a twin; the After is the same two screens on one kit — the only pixels that move are a border and a chevron. Toggle the dark skin to see the grounds.',
+ 's-overview':'The whole front page, because it is the one screen whose pixels move: the tile family joins the kit as a door role. Decision C lets the One Thing card stay put if the front page should not move at all.',
+ 's-band':'A band is not a card and stays a band; only its label, figure and caption take the kit’s type so Overview → Money → Insights read one label.',
+ 's-toolbars':'Five recipes for the row above a list. Money’s geometry is the kit’s, so Money is unchanged and everything else moves by a size or a few pixels; the tap floor stops being copied.',
+ 's-phone':'Drawn at 390 and never reflowed: the three phone-line copies side by side, then the one family. Results and Coverage are pixel-identical after; the Drills line goes one shade darker.',
+ 's-rail':'The rail of doors — F-17’s bin C, so it is this project’s. One component carries the fold Money has and Skills & Goals lacks.'
+};
+function showScreen(){const id=location.hash.slice(1)||'s-dash';const known=document.getElementById(id)&&document.getElementById(id).classList.contains('screen');const target=known?id:'s-dash';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==target);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+target?'page':'false'));$('intent').innerHTML=intents[target]?'<strong>Design intent:</strong> '+esc(intents[target]):'';const h=document.getElementById(target)?.querySelector('h1');if(h){h.tabIndex=-1;h.focus({preventScroll:true})}}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'Two dashboards, one stylesheet copied by hand',now:'development/overview.module.css duplicates accounting/overview-dashboard.module.css value for value on the card, eyebrow, chips, figure, bar, foot and rail — a second stylesheet because a coach screen must not import another section’s module. Three days in it has already drifted: the rail chevron is 12px on Money and 16px on Skills & Goals, and Money’s two-column rail fold was never copied.',fix:'One kit module (components/coaches/kit) renders both dashboards. The twin block is deleted; each page keeps only its screen-only rules.'},
+ F02:{t:'Three card skins for one card — and three greys in dark',now:'The dashboard card is white · olive 15% border · 8px · flat. The Overview family (the One Thing card, the six tiles, the Insights callouts) is --white-8 · olive 30% · 12px · shadow. The table frame is white · neutral hairline · 8px. In warm all three grounds are #FFF; in dark the Overview family is a translucent 8% white wash while the other two are the opaque card colour.',fix:'One ground token (the table frame’s --card-bg), the neutral hairline, radius 8, on every kit card. The door role adds elevation and a hover lift; the report card stays flat.'},
+ F03:{t:'Three eyebrows',now:'Money/S&G: IBM Plex Mono 11px 700 0.09em secondary. Overview tiles: Inter 12px 700 0.04em tertiary. Insights band: Inter 10px 800 0.12em tertiary. The type ladder names 11px “label” as the uppercase-eyebrow step and has already found “a heading at badge size” on this role once.',fix:'One Eyebrow: mono, 11px, 0.09em, secondary ink — the dashboard’s, which the owner named as the model. Tiles and the band take it.'},
+ F04:{t:'Two figure faces',now:'The dashboard figure is Inter 24px 800 tabular. The Overview tile and the Insights band draw the same role in Barlow Condensed 24px 800.',fix:'One Figure: Inter 24px 800 tabular — the numeral a coach already reads on the money cards.'},
+ F05:{t:'Five toolbars for one job',now:'.panelToolbar (Money ×4, S&G ×2), .listToolbar (Roster, Schedule, a player’s Results), .insightsPanelToolbar, .ppToolbar (practice hub), .scheduleToolbar — gaps 8×12 / 12 / 9.6 / 8 / 8, space below 14.4 / 16 / 16 / 14.4, and the 44px tap floor hand-written three separate times.',fix:'CoachListToolbar: lede · lens · actions · sticky. Money’s geometry is the kit’s. The floor lives in the component.'},
+ F06:{t:'Three count lines',now:'.devListLede 12px tertiary 64ch (Sessions, Metrics) · .listToolbarFact 14px tertiary (Roster) · .moneySummaryBasis 12px. Coverage’s .devReportDenominator (14px bold primary) is the report’s finding sentence, not a lede.',fix:'One lede role in the toolbar: 12px, tertiary, 64ch. The Roster’s fact joins it; Coverage’s finding line is left alone.'},
+ F07:{t:'Three phone-line pairs',now:'.cardPhoneLine/.cardDesktopCell (shared, promoted 2026-09-16 by the practices build; its line takes .listRowSub’s tertiary ink) · .phoneLine/.desktopCell (PlayerDevelopment.module.css; secondary ink, figure primary 600) · .devReportPhoneLine/.devReportDesktopCell + .devReportOneLine (Coverage and the records cards; secondary, body face forced over a mono cell).',fix:'The shared pair carries its own type (12px, secondary, figure primary 600, tabular, body face); .cardsOneLine joins the family; the two private pairs are deleted.'},
+ F08:{t:'The rail is two copies',now:'Money’s rail folds to two columns above 940px with a container query and never splits a row; Skills & Goals’ rail has none of that and a 16px chevron against Money’s 12px.',fix:'CoachRail / CoachRailRow: the fold, the row, the dot lanes, the chevron, once. The “in Insights” note is a prop.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();e.stopPropagation();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ---- decision panel: persist + paste-back ---- */
+const RKEY='cssk-rulings';let rulings={};try{rulings=JSON.parse(localStorage.getItem(RKEY)||'{}')}catch(e){rulings={}}
+function saveR(){try{localStorage.setItem(RKEY,JSON.stringify(rulings))}catch(e){}}
+document.querySelectorAll('.ask[data-q]').forEach(ask=>{const q=ask.dataset.q;const ta=ask.querySelector('textarea');ask.querySelectorAll('input[type=radio]').forEach(r=>{if(rulings[q]===r.value)r.checked=true;r.onchange=()=>{rulings[q]=r.value;saveR()}});if(rulings['n'+q])ta.value=rulings['n'+q];ta.oninput=()=>{rulings['n'+q]=ta.value;saveR()}});
+$('buildRulings').onclick=()=>{const lines=['Coach shared style kit — rulings (paste back)',''];document.querySelectorAll('.ask[data-q]').forEach(ask=>{const q=ask.dataset.q;const t=ask.querySelector('h3').textContent.trim();lines.push(`${q} · ${t}`);lines.push(`   ruling: ${rulings[q]||'—'}`);if(rulings['n'+q])lines.push(`   notes: ${rulings['n'+q]}`);lines.push('')});const out=$('rulingsOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+const DECISIONS=[
+ {date:'2026-09-16',ask:'Scope — coach portal first, with the door left open?',ruling:'accepted',label:'Accepted',why:'The evidence and the design docs anchor in the coach portal; the kit is written on tokens so it is portable, and the tournament-admin and public-site candidates are listed in the plan, not drawn.'},
+ {date:'2026-09-16',ask:'Relation to F-17 (row lists) — two projects with a wall?',ruling:'accepted',label:'Accepted',why:'F-17 owns the row; this project owns the card, the toolbar above any list, the table-row-on-a-phone fold and the rail of doors. The plan names the build order.'},
+ {date:'2026-09-16',ask:'A–H — the eight kit decisions',ruling:'accepted',label:'All as recommended',why:'Owner: “agree with your recommendations, go ahead and build.” A one skin (card ground · neutral hairline · radius 8) · B two roles, report and door · C the team Overview adopts the kit, tiles AND the One Thing card · D the Insights band takes the type only · E one toolbar component, one lede role · F the phone line folds into the shared family in the secondary ink · G one rail component on Money’s values · H the deliberate-difference list confirmed. Built in this same session, in the plan’s §7 order.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
+
+/* ---- QA walk — filled by the build session ---- */
+const QA_PARTS=[
+ {id:'A',title:'Money → Overview (the source of the kit — nothing should look different)',steps:[
+  'Open Money → Overview at desktop width. Three story cards: Bills settled · Cash on hand · Budget. Each has a small uppercase mono label, one big figure, and a foot band of links pinned to the card’s bottom edge.',
+  'The Bills settled card: the bar shows a hatched slice for the overdue money; the legend under it names settled · overdue · to come. The card’s left edge is red when something is overdue.',
+  'Cash on hand: the figure is green when positive; the IN/OUT mini-bars render under it; “Ledger →” is the foot link.',
+  'Budget: the plan-vs-actual rows (Spending · Player dues · Fundraising) and their two foot links are exactly as before — this card’s rows are deliberately its own.',
+  'The “More in Money” rail on the right: dot · name · figure · a small chevron per row; the Club row’s warning triangle appears when the club is owed and overdue.',
+  'Switch to the dark skin (account menu → theme). Every card on this screen is the same grey, and the card borders are a quiet hairline — no coloured tint.',
+ ]},
+ {id:'B',title:'Skills & Goals → Overview (the twin — now the same parts)',steps:[
+  'Open Skills & Goals (a team with at least one session). Sessions · Players measured · Goals cards read as Money’s do: label, chip, figure, sub-line, foot link.',
+  'Players measured: the bar and its legend (“with a result” · “without”) render; the figure is green when anyone is measured.',
+  'Needs attention on the left, “Everything in Skills & Goals” rail on the right; the rail’s chevron is the same small size as Money’s rail chevron (it was larger before).',
+  'A team before its first test: the getting-started card (“Start by deciding what this team measures”) has a blue left edge, a white ground, a hairline border and square-ish corners — the same card as the rest of the portal.',
+  'Dark skin: the cards here are the same grey as Money’s.',
+ ]},
+ {id:'C',title:'The list toolbar (one row above every list)',steps:[
+  'Roster: the List / Depth chart switch leads the row at the left, Export is pinned right. The two pills are equal width, sized to “Depth chart”.',
+  'Roster at phone width (≤ 640): the switch and Export share one row; each pill is at least 44px tall; nothing scrolls sideways.',
+  'Money → Player Dues: the View pill on the left, Export and Send due reminders on the right. Money → Ledger: the toolbar sticks under the tab row while the register scrolls, with no gap for rows to show through.',
+  'Skills & Goals → Sessions: the count line (“N sessions this season”) reads in the small quiet type; the search field appears at nine sessions or more. Metrics: the definition sentence leads, “Define a metric” on the right.',
+  'Insights → Awards: “Give an award” leads; “Print N certificates” (with an award type chosen) is pinned right.',
+  'Schedule: List / Week / Month leads, Export pinned right. A player → Skills & Goals: Goals / Results leads, the handout and add doors on the right.',
+  'On a TABLET (768 wide) every button in those toolbars is at least 44px tall — Export, Send due reminders, Fundraiser, Pledge, List, Depth chart. (These were under the floor before.)',
+ ]},
+ {id:'D',title:'The phone line (a table row on a phone)',steps:[
+  'On a phone: Practice plans → Drills. Each card is the drill’s name with ONE line under it (“20 min · In 3 plans”); the line reads in the same ink as a Results line, one shade darker than a caption.',
+  'A player → Skills & Goals → Results on a phone: each test card shows its name and one line “8.28 seconds · 15 Sept” with the figure in bold; opening a test shows its dated rows one line each.',
+  'Insights → Development → Coverage on a phone: ONE LINE per player — the name at the left, the result · date · tick at the right, the chevron centred on the row; twelve players fit in roughly one screen.',
+  'On a desktop none of those three lines appear — the columns say it.',
+ ]},
+ {id:'E',title:'The team Overview (the one screen that visibly changed)',steps:[
+  'Open the team Overview. “Your team at a glance”: six tiles, three across, each with a small uppercase mono label and an icon, a big figure in the same face as the money cards, a sub-line, and a small arrow at the top right.',
+  'Hover a tile: it lifts slightly and its arrow slides. Click it: it opens the screen it names (Record → results; Roster → roster; Dues → Player Dues; Budget → Budget plan; Attendance → attendance; Skills & Goals or Playing time → Insights).',
+  'The Dues tile: a 12px bar — the same bar the Money card draws; when a payment is overdue the filled share is red. The Budget tile: the same bar in olive.',
+  'The Record tile shows the W/L/T pips under the record. A tile with words for a figure (“Not set”, “None yet”, “No games yet”) shows them a step smaller and quieter.',
+  'The “Next up” card at the top: its coloured left edge follows the kind (olive for a practice, green on game day, amber for a season check, blue otherwise); its corners are the same as the tiles’ and its border is a hairline — it no longer has a tinted frame.',
+  'Phone width: the tiles sit two across at the same card density as desktop; nothing overflows.',
+  'Dark skin: the six tiles and the Next up card are the same grey as every other card in the portal (they used to be a lighter, translucent wash).',
+ ]},
+ {id:'F',title:'The Insights band',steps:[
+  'Insights → Dashboard: the scoreboard band is still a borderless band with hairlines above and below — not cards.',
+  'Its labels (Record · Form · the score diff · Close games · Attendance) are the same small uppercase mono as a card’s label; its figures are the same face and size as a card’s figure; the score diff is green when positive and red when negative.',
+  'Insights → Attendance: the Season · Games · Practices · Recorded band reads the same way.',
+  'The “What stands out” frame keeps its lime top edge; in dark it sits on the same grey as the cards.',
+ ]},
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('cssk-qa')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('cssk-qa',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

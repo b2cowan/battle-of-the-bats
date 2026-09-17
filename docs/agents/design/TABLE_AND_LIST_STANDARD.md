@@ -35,7 +35,9 @@ There are two physical shapes and the standard treats them as one thing:
 | **Row list** | stacked `<div>`/`<li>` rows under an optional label row | the admin shell's flat rows, the coach schedule and practice lists, the sandbox's team list |
 
 A row list follows every rule below that applies to a row; the only thing it may lack is a heading
-row, and then its first line must say what the list is.
+row, and then its first line must say what the list is. **§3.10 names the axes a row list had no
+sentence for** — who paints its ground, that a row is not a card, the band row, the one lead mark —
+and the test for when a row list is really a table.
 
 ## 2. Vocabulary — the row roles
 
@@ -109,7 +111,10 @@ Relationships (these are what a guard asserts — §9):
 
 Faces: body text is the sans face; **column headings are the condensed display face** (this is
 today's de-facto rule in every shell and is kept — A-06 asks the owner to confirm it); the data face
-is for badges and, in the admin shells, for figures (K-10).
+is for badges and, in the admin shells, for figures (K-10) — and, in the coach portal, for **a
+recorded measurement column only** (K-20: "8.75 / 8.33 / 8.28" lined up digit for digit, the same
+ground the jersey number stands on). A date, a tick, a door or a sentence beside it takes the body
+face like every other list's.
 
 ### 3.3 Colour — the ground, the tints, the hairlines, the ink
 
@@ -117,6 +122,17 @@ is for badges and, in the admin shells, for figures (K-10).
   **pinned columns are opaque** (`--card-bg`) so scrolled money never reads through a label, and
   therefore every cell of a pinned-column table paints the ground (one declaration on the table,
   never per row type).
+  - ⚠ **THE FRAME PAINTS THE CARD, and on a phone it stands down** (F-24, 2026-09-16). "Sits on
+    the card ground" names a ground that something has to paint, and for ten days nothing in the
+    list family did: the heading painted its own card, the rows painted nothing, the frame painted
+    nothing — so Roster, Dues, Club, Fundraisers, Documents and Attendance all drew a white heading
+    bar over a body the blueprint grid showed through, in both skins. The inventory *recorded* it
+    (row ground: transparent) and §149 passed, because the gate verified the row's transparency —
+    which this bullet asks for — and never what was behind it. **A rule that says "over X" is a
+    rule about X; measure X.** The shared frame (`.tableWrap`) paints `--card-bg` now; at ≤ 640,
+    where rows become cards, the frame sheds the ground with its border — the card is the ground
+    there, and a slab behind a stack of tinted cards is a defect (the Development pages' private
+    card class shipped exactly that).
 - **Tint means structure, and only structure.** A band heading carries an accent wash
   (`rgba(var(--primary-rgb), .10)`); a group row carries the neutral wash (`--home-fill`). An item
   row is never tinted. **No zebra** (A-03 asks the owner to confirm; today's one zebra rule has
@@ -154,8 +170,18 @@ is for badges and, in the admin shells, for figures (K-10).
 - ⚠ **A bar, chip or glyph drawn beside a figure owns the edge it sits on.** In a right-aligned
   column it must LEAD the figure, or the column's right edge belongs to the decoration and the
   heading no longer points at the number (the "On field" share bar, 2026-09-07).
+- **Vertical alignment is centred** (`vertical-align: middle`), on every cell of every recipe
+  (2026-09-16). This axis was unnamed until the Development report table top-aligned its cells and
+  nothing could call it drift (F-25). Centred is what three of the four recipes already did, what
+  the approved Money lists passed §149 with (a two-line Club row beside one-line figures), what card
+  mode already does (`align-items: center`), and the only alignment under which a chip, a tap box or
+  a control beside text lines up with it. Top alignment earns its keep only on long multi-paragraph
+  cells, and this standard caps a name at two lines — so there is no exception to register.
 - The **last column is the action column and is right-aligned**, with **one shape on every row** —
-  the chevron — and nothing conditional beside it (K-08).
+  the chevron — and nothing conditional beside it (K-08). **A row with two doors names the second**
+  (K-19): where the lead cell is already a link to one place, the last column's door to a *different*
+  place is worded on a desktop ("Progress →"), because a bare chevron beside a name-link reads as the
+  same door. On a phone it is the corner chevron K-09 governs.
 - A fixed-width column is allowed only for a control column or a date; a name column is elastic and
   **wraps on word boundaries, two lines at most** — never mid-word, never an ellipsis on the thing
   that identifies the row.
@@ -181,6 +207,14 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   same thing goes.
 - **Expand all / Collapse all** sits at the right end of the table's toolbar, acts on the view being
   read, and exists on every table with more than one fold.
+- **A link or control inside a compact row borrows its tap box from the row; it never adds to it.**
+  The recipe is one marker (`.rowTapLink`: a 44px border-box, the padding that makes it 44, a
+  matching negative margin, vertical only) that every in-row link composes — the shape the
+  Development name link has had since Phase 1, named on 2026-09-16 because the density rule reads
+  the *cell's* padding and cannot see a control's box: "Progress →" carried a 44px box with no
+  negative margin and every row of Insights → Coverage stood at 58px on a 40px table (F-25). The
+  last row of a table absorbs the spill (a content-based rule on the marker) so the frame never
+  grows a scrollbar over it.
 - **Minimum target: `--tap-min` tall AND wide at ≤ 768, including WIDTH for icon-only controls.**
   The tap-floor gate measures height only; this standard adds the width rule and §9 says how to
   gate it. ⚠ The admin shell's 38px HEIGHT exception (K-18) does **not** extend to width: an
@@ -223,6 +257,81 @@ A pager sits under the table, right. The notes stack sits under the table in cap
 button belongs to the nearest chrome that names what it creates — the tab's toolbar, never the hub
 header.
 
+### 3.10 Row lists — the same rows without a heading row (register F-17 → F-26–F-40, K-21–K-24)
+
+**Status: RULED AS DRAWN 2026-09-16** (owner, on the hub's six asks: "agree with your mockups")
+**and BUILT on dev the same day for the first half** — the component (`CoachRowList` / `CoachRow`),
+the three gate extensions (§9), Insights → Scouting Book, the Schedule's list view, the two hubs and
+Lineups → Templates (F-26–F-29, K-21). The second half (F-30–F-40, K-22–K-24: tournaments,
+announcements, the player's lists, staff, the feed, the closed-season rows, Off the roster, tags) is
+session B2 of `docs/projects/active/COACH_ROW_LIST_RECIPE_PLAN.md`. Hub artifact:
+https://claude.ai/artifact/S78c93Zrp4U91mZTpyMsXk. Evidence:
+`TABLE_INVENTORY_2026-09-16_ROWLISTS.md` (rendered, 23 targets, 1440 · 768 · 390, both skins).
+
+A row list is a stack of item rows with no heading row (§1). It takes every rule above that a row
+takes; this section names the axes on which a row list had, until now, no sentence — and the
+re-measure found that "six treatments" was really **two species with a ground problem**: gapped
+card stacks on the paper (the hubs, the schedule list, the scouting book, tournaments,
+announcements) and hairlined rows that are already right wherever something paints a card behind
+them (staff, the feed, the shelves, tags, notes) and wrong where nothing does (Off the roster).
+
+1. **Ground — exactly one painter.** Between an item row and the paper there is exactly ONE thing
+   that paints `--card-bg`: the list's own frame — **the table's frame** (`.tableWrap`: `--home-line`
+   border, radius, `--card-bg`) — when the list stands on the page; the section card or shelf
+   around it when the list sits inside one (then the list draws no frame of its own). **Never
+   zero** (a list on the paper) and **never two** (a framed list inside a card). Rows are
+   transparent over it. At ≤ 640 the frame stands down with its ground and each row is its own
+   card on **the table's card recipe** (`--border-2`, radius, the `--home-olive-soft` wash) — never
+   a second card recipe. ⚠ **The gate reads the ancestor:** the rendered rule asserts that the first
+   painted ground behind a row IS the card token, not that the row is transparent (F-24's lesson).
+2. **A row is not a card.** On a desktop a row list draws no per-row border, radius, shadow, fill
+   or gap; the hairline (`--home-line`) under every row but the last is the whole separation. A
+   gapped stack of bordered, shadowed cards is the phone's shape used at 1440, and one beside a
+   carded table is two treatments on one screen (§194, the owner's own objection).
+3. **Density by content** (§3.1), read from the same marker the tables read: compact for a
+   one-line row, comfortable for a row that carries a caption (`.rowCaption`) or a worded control;
+   at ≤ 768 a row that carries a control is at least `--tap-min`. No list has a private floor: a
+   31px agenda row is not a density, it is the absence of one.
+4. **Type** (§3.2), and **every line decides its own size** — an inherited 16px is not a decision:
+   the item line is `--type-body` (600 when it names the record, 400 otherwise); the caption
+   `--type-support` in `--text-tertiary` (`--text-secondary` when it carries the row's meaning — a
+   recap, a note); **a date that leads a row is a date column** — `--type-body`, tabular,
+   `--text-tertiary`, fixed width, left — never a tile in the display face; **the display face
+   appears nowhere below a heading**; a chip or badge keeps its own recipe (§3.2's badge row, or
+   the chip a ruling drew) and the row does not resize it.
+5. **The label row.** A row list with no heading row must say what it is (§1): either the section
+   title or shelf above the frame, or — inside the frame, where a list is grouped — a **band row**:
+   uppercase `--type-support`, display face, 700, `--text-secondary`, on the paper tone
+   (`--home-paper`) with `--home-line` above and below. That is the notifications feed's day
+   header, already in the product and walked (§138); a month in the schedule and "Coming up /
+   Recent" in the hubs are band rows. One frame with bands, not a kicker on the paper over each of
+   several stacks.
+6. **Interaction** (§3.6): a row that opens is a real link or button and its whole box is the
+   target; it takes `--home-olive-soft` and the pointer on hover and **nothing else** — no lift, no
+   shadow, no border change; a row that opens nothing does not change on hover. The door is the
+   chevron, last, right — or, where a ruling worded the action ("Open the plan", "Plan this
+   practice", "Edit access"), those words at `--type-body` 600 with the arrow, right (K-19's
+   shape). A control inside a row borrows its tap box from the row (`.rowTapLink`).
+7. **One lead mark.** A row may lead with ONE mark in a fixed-width slot — a type icon, a status
+   dot, a date. A coloured rail on the row's edge is a calendar-cell idiom (K-21) and is not drawn
+   in a list; the icon already carries the type's colour.
+8. **Phone** (≤ 640): the frame stands down; each row is a card on the table's card recipe; the
+   item line is the card's title; a date lead is the card's first meta line; the door is the
+   corner chevron or a full-width worded row (K-09).
+9. **The unit is a component, not a class** (owner ruling): every bin-B list renders through ONE
+   row-list component (`CoachRowList` / `CoachRow` — the plan names it), whose classes
+   (`.rowList`, composing `.tableWrap`; `.rowListBand`; `.rowListRow`; `.rowListCaption`, composing
+   `.rowCaption`) and `data-row-list` attribute are what the guards key on (§9). A list that
+   needs a different row composes the component with a different lead or trail; it does not write
+   a second row class.
+
+**When a row list is a table instead** (bin A — the Awards Leaderboard, 2026-09-16): when the
+reader's question is answered by a **column** — a total, a rank, a sum — rather than by a row, it
+is a `<table>` on the shared frame and needs no recipe. When the column question is already
+answered above the rows (a shelf's answer strip, a section's stat boxes), the rows are a record and
+stay a row list even with three same-kind columns; that is why the closed-season results shelf
+and the player's "Last 10 sessions" are row lists and the leaderboard was not.
+
 ---
 
 ## 4. Which surface the standard is derived from, and why
@@ -246,9 +355,9 @@ hierarchy's answer to a three-level tree and stays a documented exception (K-02)
 | coach `.moneyGrid` | 3 files · 5 views | `--money-line-size` 13.44px 600 | 12px display · secondary · card ground | inset `--home-line` | **the standard**, ladder excepted (K-02) |
 | coach `.table` (list) | 13 files · 24 renders | declared 14 · **renders 15** (F-01) | 12px display · secondary | `--white-05` → **paper in warm** (F-02) | FIX F-01 F-02 F-10; density by content (A-01) |
 | coach `.insightsTable` | 3 files | renders 15 (F-01) | 12px display · secondary · **no ground** | `--home-line` | FIX F-01 F-09; heading ground |
-| coach `.devBoardTable` | 3 files | renders 15 (F-01) | **11px mono · tertiary** | `--white-10` | FIX F-01 F-15 |
+| coach `.devBoardTable` | 3 files | renders 15 (F-01) | **11px mono · tertiary** | `--white-10` | FIX F-01 F-15 — both landed; **F-25 (top-aligned cells, 58px rows) landed 2026-09-16**; the measurement column's data face is K-20 |
 | coach register (`.registerTable` on `.table`) | 1 file | 12px 700/400 · `0.28rem` | 12px display | paper (F-02); zebra never paints (F-04) | KEEP density K-01; FIX F-02 F-04 |
-| coach row lists (schedule, plans, lineups, season-end, tags, notifications) | 8 files | 12–20px, six treatments | none or uppercase 11–12 | `--home-line` or none | FIX F-17 (one row-list recipe) |
+| coach row lists — **re-measured 2026-09-16** (`TABLE_INVENTORY_2026-09-16_ROWLISTS.md`): the two hubs, Lineups templates, the Schedule list, Scouting book, Tournaments, Announcements, the player's sessions — **gapped card stacks on the paper**; Staff, the feed, the closed-season shelves, Tags, Notes — hairlined rows on a card already; Off the roster — hairlined on the paper | 17 lists · 12 files | 14 body on all but two (16 inherited: Staff, Tags words; 14.08/12.8 literal: the feed); the hubs' day tile 20 display 800 | a kicker on the paper, or none; the feed's day band | `--home-line` on the hairlined nine; none on the card stacks; paper on the fold | §3.10 — FIX F-26–F-40 (one recipe, one component, the frame paints), KEEP K-21–K-24; bin C removed from F-17 |
 | admin-shell flat row (`.row` / `.rowMain` + `.tableHeader`) | tournament admin lists | mono 12.8 / 11.5 · 36px compact / 44px comfortable | **9.3px mono** | `--border-2` | KEEP shape K-13; FIX F-07 heading |
 | admin `<table>` modules (members, families, house league, accounting, rep teams, bva, budget) | 25 files · **0 rendered** (fixture gap) | 0.85–0.88rem declared | 0.63–0.7rem, `--white-30/40` | `--white-05`/blue tints | stylesheet-read only; FIX F-18 when a fixture exists |
 | the **global** `th`/`td` element rule | every table with no cell rule of its own | **15px** · `0.875rem` padding | 12.8px display · `--white-60` | `--border-2` | RETIRE — it is a recipe by accident (F-01, F-11) |
@@ -296,7 +405,9 @@ standard and the mockups** (prompt §8.4). The order the register's FIX rows arg
 4. **F-05 / F-06 / F-12** platform admin: one shared recipe, headings on the ladder, a phone shape.
 5. **F-07 / F-16** tournament admin headings and the check-in row control.
 6. **F-08 / F-19** the Months view's figure doors and the target-width rule.
-7. **F-17** one row-list recipe for the coach portal's eight div-based lists.
+7. **F-17** one row-list recipe for the coach portal's row lists — **planned and drawn
+   2026-09-16 as §3.10 + register F-26–F-40 / K-21–K-24**, its own plan
+   (`COACH_ROW_LIST_RECIPE_PLAN.md`) and hub artifact; the build waits on the owner's panel.
 8. **F-18** the club admin `<table>` modules, once a fixture can render them.
 
 ## 9. Enforcement — how this holds after the session ends
@@ -307,6 +418,7 @@ Prefer extending a gate that exists; assert **relationships and role membership*
 |---|---|---|---|
 | `tests/unit/money-hierarchy-type-scale.test.ts` → generalise into **`table-recipe-guard.test.ts`** | parse every `.module.css` rule whose selector names a table part; assert every `font-size` on a th/td/row class is a `--type-*` token (or `--money-*` on the money grid, or a `table-exception: K-nn` comment on the line); every hairline/frame colour is `--home-line`/`--home-line-strong`/`--border-2`; **every `var(--x)` names a token that is defined** (this alone would have caught F-04) | a rule outranked by the cascade into another legal value; anything the sweep never renders |
 | `check:layout` | (a) a **`control-width`** rule at touch widths: an icon-only control (no text) is ≥ `--tap-min` wide — the finding the prompt required; (b) a **`type-ladder`** rule at 1440: every visible `th`/`td` font-size is a ladder value — membership, not pixels; (c) sweep entries for the report **views** the default URL never shows (Months, By activity, By period) via a `storage` hook on the screen entry, which is how this review reached them | the inside of a closed fold; a control hidden behind a view the entry does not address |
+| **row lists** (§3.10 — BUILT 2026-09-16, session B1; broken on purpose once and reported by name) | (a) `table-recipe-guard.test.ts` scans the `rowList*` selector family as it scans table parts — ladder membership on every `font-size`, hairline/frame colours from the line tokens, every named token defined; (b) `check:layout` `type-ladder` reads `[data-row-list] [data-row-list-row]` text as it reads `td`; (c) a new `check:layout` rule **`list-ground`**: at ≥ 641 the first painted ancestor behind every `[data-row-list-row]` computes to the card token, and at ≤ 640 the row's own ground is the card wash with no painted slab between it and `main` — **the probe reads the ancestor**, which is the rule F-24 needed and did not have | a list that never composes the component (the register's human gate; `check:css-selectors` deletes the old row classes the day their last caller goes) |
 | `check:css-selectors` | no change; it already deletes dead recipes | a live recipe that is wrong |
 | **the register** | human gate: a review comment that cites a register id, or adds one, is the only way a table may differ | nothing — but only if reviewers use it |
 

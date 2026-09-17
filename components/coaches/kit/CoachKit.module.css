@@ -1,0 +1,448 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE COACH KIT — the dashboard card, its parts, the list toolbar and the rail, ONCE.
+   Plan: docs/projects/active/COACH_SHARED_STYLE_KIT_PLAN.md (owner rulings A–H, 2026-09-16).
+
+   Why this file exists: Skills & Goals' Overview was given Money's dashboard grammar on the owner's
+   instruction by COPYING every value into a second stylesheet — a coach screen must not import
+   another section's module — and it had drifted in three places three days later (the rail
+   chevron, the rail's two-column fold, two figure tones). The owner's ruling on hearing it: "shared
+   stylings are important for consistency across the app." The second consumer of a shape is the
+   extraction point, not the third.
+
+   ⚠ TOKENS ONLY. The only pixels here are the type ladder's (`--type-*`), the tap floor's and the
+   card's 8px radius. A screen-only rule (Money's plan-vs-actual rows, S&G's attention list) stays in
+   that screen's module and COMPOSES nothing from here — a caller never reaches into a kit class
+   from its own stylesheet (the `.pageHeaderBlock .pageHeaderStd` trap); it renders the kit's
+   components and puts the kit's exported classes on its own markup.
+
+   ⚠ THE SKIN IS THE TABLE FRAME'S (decision A): `--card-bg` ground, the neutral `--home-line`
+   hairline, radius 8 — so a card and a table on one page share an edge, and in the DARK skin every
+   card is one grey. It was three: the dashboard card wore an olive/blueprint 15% tint (the idiom
+   the 2026-07-30 ink ruling and the table standard's F-10 had already retired from every table),
+   and the Overview family sat on `--white-8` — white in warm, a translucent 8% wash over near-black
+   in dark, a different grey from every card beside it.
+
+   Deliberate differences this kit does NOT touch (decision H — say so here so the next reader knows
+   they were seen, not missed): Money's plan-vs-actual rows and cash mini-bars (mockup 64d49b0e);
+   the Ledger rows and S&G's attention list (different content in the same slot — F-17's `inset`
+   row list is their home if it bins them); the Insights band's borderless SHAPE (its type is the
+   kit's); the One Thing card's kicker · headline · chips · single lime action · accent-by-kind
+   (the One Thing ruling — it takes only the skin); `.devReportToolbar` (a report's selector
+   fields) and `.devReportDenominator` (a finding, not a lede); `.ppToolbar` (the practice
+   DOCUMENT's action row, not a list toolbar — practices re-evaluation); the Roster's own phone
+   reflow; the closed-season page; every div-row list (F-17).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Rows: three story cards, then a 2:1 row (Money's Next-N-days beside its rail; S&G's attention
+   list beside its rail). One column under 860. ── */
+.row3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.row2 {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 860px) {
+  .row3, .row2 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── The card ──
+   ⚠ PADDING AND GAP ARE READ FROM `--card-pad` / `--card-gap`, the way the accent edge reads
+   `--card-accent`: a screen that needs its own inner rhythm (the One Thing card, the getting-started
+   card) sets the property on its own class and the kit paints it. It cannot set the padding itself —
+   this module and the screen's are separate stylesheets at the same specificity, and on the served
+   page the kit's rule came LATER and won, so the One Thing card rendered with the kit's 15.2 × 16.8
+   instead of its own (measured 2026-09-16, the day it was built). A custom property has no order. */
+.card {
+  background: var(--card-bg, var(--surface));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+  padding: var(--card-pad, 0.95rem 1.05rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap, 0.45rem);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+/* The DOOR role (decision B): the whole card is the link. It says so — a lift off the page, a hover
+   step, and the arrow the eyebrow carries. A report card never has these; its doors are in its
+   foot band (the 2026-08-11 "reports, doesn't shout" ruling). The elevation is the Overview tiles'
+   own, kept for the role rather than the screen. */
+.cardDoor {
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.cardDoor:hover {
+  border-color: var(--home-line-strong, var(--border));
+  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
+  transform: translateY(-1px);
+}
+.cardDoor:hover .eyeArrow { opacity: 1; transform: translateX(2px); }
+/* Something due announces itself on the card edge, not with a button (Money's overdue rule). */
+.cardAlert { border-left: 3px solid var(--home-live, var(--danger)); }
+/* An ACCENT edge whose meaning is the screen's: the One Thing card's colour-by-kind, the
+   getting-started card's blue. The caller sets `--card-accent` on its own class (a custom property,
+   so the two modules' cascade order cannot matter); the kit paints the 3px. */
+.cardAccent { border-left: 3px solid var(--card-accent, var(--home-olive, var(--primary-light))); }
+
+/* ── Eyebrow: the card's name, and beside it a state chip or the door's arrow ── */
+.eyeRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+/* `--type-label` IS the uppercase-eyebrow step (the type ladder, 2026-08-28): it must still be
+   read. Mono, tracked, secondary ink — Money's, which the owner named as the model. The Overview
+   tiles' 12px sans and the Insights band's 10px sans ("a heading at badge size", the ladder's own
+   finding on this role) both take this now (decisions C, D). */
+.eye {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.eyeArrow {
+  color: var(--home-olive, var(--primary-light));
+  opacity: 0.45;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+/* ── Chip: a state beside the eyebrow. `--type-token` — recognised, never read (a badge). Colour
+   never carries the verdict alone: the danger chip carries an icon or a word. ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.chipDanger {
+  color: var(--home-live, var(--danger));
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+}
+.chipWarn {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+}
+.chipGood {
+  color: var(--home-olive, var(--success));
+  background: rgba(var(--success-rgb), 0.07);
+  border: 1px solid rgba(var(--success-rgb), 0.25);
+}
+
+/* ── Figure: the number a card exists to show (`--type-figure`, a card figure read at a desk).
+   The body face, tabular: one numeral on Money, Skills & Goals and the team Overview alike — the
+   tiles and the Insights band drew it in the display face (decisions C, D). ── */
+.big {
+  display: block;
+  font-size: var(--type-figure);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.big small {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--home-dim, var(--white-45));
+  letter-spacing: 0;
+}
+.bigGood { color: var(--success); }
+.bigBad { color: var(--home-live, var(--danger)); }
+.bigMuted { color: var(--text-tertiary); }
+/* A tile whose "figure" is words ("Not set") is a step quieter and smaller — the Overview's D11:
+   "nothing set up yet" is a muted tile, never a dashed one. */
+.bigWords { color: var(--text-tertiary); font-size: var(--type-heading); font-weight: 700; }
+
+/* ── Sub: the line under the figure. One quiet ink — the dashboard's `--home-dim` and the tile's
+   `--text-tertiary` were two different greys in the dark skin. ── */
+.sub {
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--home-dim, var(--white-45));
+  margin: 0;
+}
+.sub b { color: var(--text-primary); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* ── Flag: a short status line inside a card ("Lineup not set", "2 missing an email"). ── */
+.flag { margin-top: 0.3rem; font-size: var(--type-support); font-weight: 700; }
+.flagOk { color: var(--home-olive, var(--logic-lime)); }
+.flagWarn { color: var(--warning); }
+/* A fact worth carrying but not worth alarming about (a birthday this week). */
+.flagMute { color: var(--text-tertiary); font-weight: 600; }
+
+/* ── Bar: a ratio as geometry. 12px, the neutral track, segments with a 2px gap. The overrun
+   segment is HATCHED, not just red — the olive fill and the danger red are near-identical under
+   deutan vision (ΔE 1.0), so the slice survives colour-blind viewing and print. ── */
+.bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--home-line, var(--white-10));
+  overflow: hidden;
+  gap: 2px;
+}
+.seg { height: 100%; }
+.segFill { background: var(--home-olive, var(--success)); border-radius: 6px 0 0 6px; }
+/* A solid danger FILL — the share itself is the alarm (the Dues tile's paid share while a payment
+   is overdue); the hatch below is the OVERRUN, a slice past the plan, and the two must not swap. */
+.segBad { background: var(--home-live, var(--danger)); border-radius: 6px 0 0 6px; }
+.segOver {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--home-live, var(--danger)) 0 4px,
+    rgba(var(--danger-rgb), 0.55) 4px 8px
+  );
+}
+.legend {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  font-size: var(--type-support);
+  color: var(--home-dim, var(--white-45));
+}
+.legend b { color: var(--text-primary); font-weight: 650; font-variant-numeric: tabular-nums; }
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 0.3rem;
+  vertical-align: -1px;
+}
+.dotFill { background: var(--home-olive, var(--success)); }
+.dotOver {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--home-live, var(--danger)) 0 3px,
+    rgba(var(--danger-rgb), 0.55) 3px 6px
+  );
+}
+.dotTrack { background: var(--home-line, var(--white-10)); }
+
+/* ── Foot: the same-height door band pinned to the card's bottom edge, so the feet of sibling
+   cards align as one band and slack sits ABOVE them. Links take the tap floor. ── */
+.foot {
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
+}
+.footLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--tap-min, 44px);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive, var(--primary-light));
+  text-decoration: none;
+}
+.footLink:hover { text-decoration: underline; }
+
+/* ═══ THE LIST TOOLBAR (decision E) — the row above a list: context or a lens on the left, the
+   actions pinned right, wrapping, one rem of air below, the table under it. It was three live
+   recipes (`.panelToolbar` on six Money and Skills & Goals tabs, `.listToolbar` on Roster and
+   Schedule, `.insightsPanelToolbar` on the reports) with three gaps, two spacings below and the
+   44px floor hand-written three times — and two dead ones (`.scheduleToolbar`, `.listToolbarFact`
+   and its phone drop had no callers). Money's geometry is the kit's.
+   ⚠ `.ppToolbar` is NOT this: it is the practice document's action row (Save as template · Print
+   the sheet · Library), ruled with the practice document, and stays where it is. ═══ */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.9rem;
+}
+/* Docks under the sticky tab row on the one tab whose list can run to a season's worth of rows
+   (the Ledger — reading-order ruling). ⚠⚠ `top` IS SET INLINE FROM A MEASURED HEIGHT, not here: a
+   hand-picked constant is exactly what let rows show through a gap between this layer and the tab
+   row on the real page. This rule supplies everything ELSE sticky needs. ⚠ MARGIN → PADDING WHEN
+   PINNED (2026-08-19): margin is never painted, so once the toolbar and the column headers are
+   both pinned that empty space became a WINDOW a scrolled row showed through; padding keeps the
+   identical gap and paints it. Compound on purpose so `.toolbar`'s own margin loses the tie. */
+.toolbarSticky {
+  position: sticky;
+  z-index: 55;
+  background: var(--bg);
+  padding-top: 0.4rem;
+  margin-top: -0.4rem;
+}
+.toolbar.toolbarSticky {
+  margin-bottom: 0;
+  padding-bottom: 0.9rem;
+}
+/* The lede — ONE role (decision E): a count or a sentence, `--type-support`, the quiet ink, a
+   reading measure. The Roster's fact was 14px, Skills & Goals' 12px, Coverage's 14px bold; the
+   last is the report's FINDING and keeps its own class. */
+.toolbarLede {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  max-width: 64ch;
+  line-height: 1.45;
+  flex: 1 1 24rem;
+}
+.toolbarLede strong { color: var(--text-secondary); }
+/* The actions, pinned right by an auto margin — so a toolbar with nothing leading still holds its
+   right edge, and one with a lede or a lens keeps them apart. */
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* Link-styled members need padding as well as a floor, or the words sit pinned to the top of a
+   44px box that looks like a rendering slip rather than a target (Insights' export links). */
+.toolbarActions > a { display: inline-flex; align-items: center; gap: 0.35rem; }
+/* ⚠ A LIST TOOLBAR'S VIEW SWITCH HAS EQUAL PILLS, SIZED TO ITS LONGEST LABEL (owner, 2026-08-26),
+   and it LEADS the row (owner, 2026-09-13 — where Schedule, Money and Insights already put theirs).
+   Grid, not flex, and that distinction is the whole rule: `flex: 1` in a `fit-content` box splits
+   whatever width the box already settled on, which is how "Depth chart" wrapped inside its own
+   pill for months; `grid-auto-columns: 1fr` in an auto-width grid resolves every column to the
+   LARGEST max-content, so both pills take the longer label and no label can be squeezed. Worn by
+   the switch itself (the caller's segmented control), beside its own class. Child buttons by
+   element, not class — a compound with another module's class cannot match.
+   ⚠ ANCHORED UNDER `.toolbar` FOR SPECIFICITY, NOT STRUCTURE: the switch also wears the portal's
+   `.segChoice`, which sets `display` and `width` at the same specificity from another stylesheet,
+   and which of two same-weight rules wins across modules is stylesheet ORDER — the One Thing card
+   lost its padding that way the day the kit was built. (0,2,0) beats (0,1,0) whichever comes first. */
+.toolbar .toolbarView {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: fit-content;
+}
+.toolbar .toolbarView > button { text-align: center; white-space: nowrap; }
+/* At touch widths every control in the actions and the view switch takes the tap floor — ONCE,
+   here, instead of in three recipes. ⚠ ≤ 768, not 640: the table standard's §3.6 and the
+   tablet-band ruling (§115) put the floor at 768, and the three recipes disagreed (Money's 640,
+   the practice hub's 768, Roster's 640) — which is how Money's Export and Send-reminders sat at
+   30px on a 768 tablet as baselined debt. Desktop keeps the portal's grandfathered compact control
+   heights, a portal-wide decision this kit does not reopen. */
+@media (max-width: 768px) {
+  .toolbarActions button,
+  .toolbarActions a { min-height: var(--tap-min, 44px); }
+  /* `fit-content` + `min-width: 0`, and `flex: 0 0 auto` on the CHILD — the container-only
+     override never finishes the job; the child carries the property doing the squeezing
+     (2026-08-26, the same failure a third time). 0.7rem of side padding is what makes switch +
+     export one row at 361 with the floor intact. */
+  .toolbar .toolbarView { min-width: 0; }
+  .toolbar .toolbarView > button { flex: 0 0 auto; padding: 0.42rem 0.7rem; min-height: var(--tap-min, 44px); }
+}
+
+/* ═══ THE RAIL (decision G) — "More in Money" · "Everything in Skills & Goals": a rail of doors,
+   one live line each (F-17's bin C, so it is this kit's). dot · name · note · stat · chevron. ═══ */
+.railCard {
+  container-type: inline-size;
+  /* ⚠ Inline-size containment also makes this card a containing block for any absolutely-
+     positioned descendant. A tooltip or menu added inside the rail later anchors HERE. */
+}
+/* The setup variant groups its rows under the season's steps. The rule that separates one step
+   from the next rides the GROUP, not the step label — a label can't know whether it is first, and
+   a stray hairline above the first row reads as a dangling divider. */
+.railGroup { border-top: 1px solid var(--home-line, var(--border-2)); }
+.railGroup:first-child { border-top: none; }
+.railStep {
+  margin: 0;
+  padding: 0.5rem 0 0.1rem;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-45));
+}
+/* Two columns once the CARD is wide enough (owner ruling 2026-08-12) — a container query, because
+   a viewport query cannot tell a wide rail from a narrow one beside a 2fr ledger. A row is one
+   fact; it never splits across the gutter. A group that NAMES ITSELF must not split either. Keyed
+   on the marker's presence: the operate rail is one UNLABELLED group, and forbidding a break inside
+   that one would pack every row into column one. ⚠ Deliberately NO `:last-child` margin reset —
+   multicol fragments by COLUMN, and the reset would zero the gap under exactly one of the two. */
+@container (min-width: 940px) {
+  .railCols { columns: 2; column-gap: 2rem; }
+  .railCols .railRow { break-inside: avoid; }
+  .railCols .railGroup:has(.railStep) { break-inside: avoid; margin-bottom: 0.55rem; }
+}
+/* ⚠ THE ROW FLOOR STAYS AT 44px on every width — the approved mockup's mouse-only 34px would have
+   put seven new sub-floor findings in the layout baseline for the last 15% of the win. */
+.railRow {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto 10px;
+  gap: 0.6rem;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  padding: 0.1rem 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  text-decoration: none;
+  color: inherit;
+}
+.railRow:first-of-type { border-top: none; }
+.railRow:hover .railName { text-decoration: underline; }
+.railDot { width: 8px; height: 8px; border-radius: 50%; }
+.railDotGood { background: var(--success); }
+/* ⚠ `--info`, not `--blueprint-blue`: the coach warm gate remaps the latter to `--home-olive`, so
+   the "blue lane" dot rendered the SAME olive as the olive lane. `--info` is the warm palette's
+   real blue and is unchanged in dark. */
+.railDotBlue { background: var(--info); }
+.railDotRust { background: var(--home-rust, var(--warning)); }
+.railDotPlum { background: var(--home-plum, var(--warning)); }
+.railDotOlive { background: var(--home-olive, var(--success)); }
+/* ⚠ The NAME is the segment that gives way: the middle track is `minmax(0, 1fr)` and the stat
+   beside it is `nowrap`, so without `overflow` "Sponsorships" painted 14px past the card at 361. */
+.railName {
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.railNote { font-weight: 400; color: var(--home-dim, var(--white-45)); font-size: var(--type-support); }
+/* A stat is a few words and stays on ONE line: the rail is the 1fr column and at 1200px it is
+   ~330px wide — a long stat squeezed the NAME to nothing. Length is held in the copy. */
+.railStat {
+  font-size: var(--type-support);
+  color: var(--home-dim, var(--white-45));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.railStat b { color: var(--text-primary); font-weight: 650; }
+.railStatDanger { color: var(--home-live, var(--danger)); font-weight: 700; }
+/* The overdue FLAG on a rail row — the fact without the sentence. Colour matches the danger stat
+   so the two read as one alarm, but the triangle's SHAPE is what carries it (deutan ruling); the
+   count lives in the icon's accessible name. */
+.railStatWarn {
+  display: inline-flex;
+  vertical-align: -2px;
+  color: var(--home-live, var(--danger));
+}
+/* ⚠ A TEXT glyph, not an icon — a hairline token measured 1.44:1 on the white card and failed the
+   rendered contrast sweep; `--home-dim` is the muted ink AA-corrected precisely so quiet things
+   still read (5.91:1). `--type-support` — Money's; Skills & Goals' copy had drifted to heading size. */
+.railChev { color: var(--home-dim, var(--white-45)); font-size: var(--type-support); line-height: 1; }

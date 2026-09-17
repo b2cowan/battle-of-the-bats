@@ -62,6 +62,7 @@ import {
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
+import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
   RepTeamMoneyIn, DuesPaymentMethod,
@@ -6854,11 +6855,7 @@ function MoneyRecordsPanel({
       {/* ⚠ STICKY ON THE REGISTER ONLY (reading-order ruling, follow-up to P3) — the one tab whose
           list can run to a season's worth of rows. Docks directly under the top strip + team
           masthead (`registerStickyBase`) — nothing else pins above it any more. */}
-      <div
-        ref={toolbarRef}
-        className={`${styles.panelToolbar} ${!onPayables ? styles.panelToolbarSticky : ''}`}
-        style={!onPayables ? { top: registerStickyBase } : undefined}
-      >
+      <CoachListToolbar ref={toolbarRef} sticky={!onPayables} stickyTop={registerStickyBase}>
         {/* `.panelToolbarTabs` lets the sub-tab group shrink and wrap instead of sizing to its
             content — see the note on that class. */}
         {/* ⚠ FOUR SUB-TABS BECAME TWO AND ONE (Money split P1 then P3). P1 divided the old strip's
@@ -6879,7 +6876,7 @@ function MoneyRecordsPanel({
             control type. Nothing here may wrap between decks — each row has a fixed cast. */}
         <div className={styles.panelDeck}>
           {viewPill}
-        <div className={styles.panelToolbarActions}>
+        <div className={kit.toolbarActions}>
           {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
               the whole argument for Export living down here. A hub-wide menu could only ever
               have offered "expenses and payables" as one undifferentiated lump. */}
@@ -7106,7 +7103,7 @@ function MoneyRecordsPanel({
             </span>
           )}
         </div>
-      </div>
+      </CoachListToolbar>
       {/* ⚠ THE ORG/TEAM COLOUR LEGEND IS GONE, and nothing was lost with it: the swatch now sits in
           each option of the tag pill, where the distinction is actually being used. The legend
           rendered on Payables only, so the register showed blue-bordered chips and never said

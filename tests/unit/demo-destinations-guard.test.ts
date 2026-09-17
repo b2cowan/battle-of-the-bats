@@ -60,7 +60,7 @@ function markersInSource(): Set<string> {
       const full = path.join(dir, entry);
       if (statSync(full).isDirectory()) { if (entry !== 'node_modules') walk(full); continue; }
       if (!/\.(tsx|ts)$/.test(entry)) continue;
-      for (const m of readFileSync(full, 'utf8').matchAll(/data-sandbox-tour\s*[=:]\s*["'{]?\s*["']?([a-z0-9-]+)/g)) found.add(m[1]);
+      for (const m of readFileSync(full, 'utf8').matchAll(/data-sandbox-tour\s*[=:]\s*\{?\s*["']([a-z0-9-]+)["']/g)) found.add(m[1]);
     }
   };
   for (const root of MARKER_ROOTS) walk(root);

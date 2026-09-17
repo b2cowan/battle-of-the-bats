@@ -49,6 +49,7 @@ import { isNeverPaidPlayer } from '@/lib/dues-status';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../coaches.module.css';
+import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachBar, kit } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepTeamEvent, RepEventType } from '@/lib/types';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
@@ -2122,20 +2123,20 @@ export default function TeamOverviewPage({
           thing rather than below the fold at the bottom of the page. */}
       <section aria-labelledby="board-title">
         <p className={styles.sectionKicker} id="board-title">Your team at a glance</p>
-        {/* The shipped tile language, unchanged — this band gained tiles and moved up the page, so
-            re-skinning it would have been a second card system for no reason. */}
-        <div className={styles.snapshotGrid}>
+        {/* The kit's DOOR card (components/coaches/kit — owner ruling C, 2026-09-16): the same card,
+            eyebrow, figure and bar the Money and Skills & Goals dashboards draw, plus the lift, the
+            hover and the arrow that say the whole tile opens. This band had kept "the shipped tile
+            language, unchanged" so as not to be a second card system — and then Money became one. */}
+        <div className={styles.boardGrid}>
           {board.slots.map(key => {
             const tile = buildTile(key);
             const Icon = tile.icon;
+            const pct = tile.progress && tile.progress.total > 0 ? Math.round((tile.progress.value / tile.progress.total) * 100) : 0;
             return (
-              <Link key={tile.key} href={tile.href} className={styles.snapshotCard} data-tone={tile.tone}>
-                <span className={styles.snapshotHead}>
-                  <span className={styles.snapshotHeadLabel}><Icon size={13} aria-hidden /> {tile.label}</span>
-                  <ArrowRight size={13} className={styles.snapshotHeadArrow} aria-hidden />
-                </span>
-                <span className={styles.snapshotValue} data-tone={tile.tone}>{tile.value}</span>
-                <span className={styles.snapshotSub}>{tile.sub}</span>
+              <CoachDoorCard key={tile.key} href={tile.href} data-tone={tile.tone}>
+                <CoachEyebrow arrow icon={<Icon size={13} aria-hidden />}>{tile.label}</CoachEyebrow>
+                <CoachFigure tone={tile.tone === 'danger' ? 'bad' : undefined} words={tile.tone === 'muted'}>{tile.value}</CoachFigure>
+                <span className={kit.sub}>{tile.sub}</span>
                 {tile.pips && tile.pips.length > 0 && (
                   // The same W/L/T pips the record widget and Insights use — one pip language.
                   <span className={styles.wltFormPips} aria-hidden>
@@ -2147,29 +2148,28 @@ export default function TeamOverviewPage({
                   </span>
                 )}
                 {tile.progress && (
-                  <span className={styles.snapshotBar} title={tile.progress.title}>
-                    <span className={styles.snapshotBarTrack}>
-                      <span
-                        className={styles.snapshotBarFill}
-                        data-tone={tile.progress.tone}
-                        style={{ width: `${tile.progress.total > 0 ? Math.round((tile.progress.value / tile.progress.total) * 100) : 0}%` }}
-                      />
-                    </span>
-                    <span className={styles.snapshotBarPct}>{tile.progress.label}</span>
-                  </span>
+                  <>
+                    {/* The kit's bar — the same 12px bar the Money card draws for the same ratio;
+                        the ratio's words (the label) sit under it; the fuller sentence is both the
+                        bar's accessible name and its hover, as the old gauge carried it. */}
+                    <CoachBar segments={[{ pct, tone: tile.progress.tone === 'danger' ? 'bad' : 'fill' }]} label={tile.progress.title} title={tile.progress.title} />
+                    <span className={kit.sub}>{tile.progress.label}</span>
+                  </>
                 )}
-                {tile.flag && <span className={styles.snapshotFlag} data-tone={tile.flag.tone}>{tile.flag.text}</span>}
-              </Link>
+                {tile.flag && (
+                  <span className={`${kit.flag} ${tile.flag.tone === 'ok' ? kit.flagOk : tile.flag.tone === 'warn' ? kit.flagWarn : kit.flagMute}`}>{tile.flag.text}</span>
+                )}
+              </CoachDoorCard>
             );
           })}
           {/* Undecided slots hold their space without claiming an identity, so resolving them into
               real tiles is not a reshuffle. A placeholder that said "Dues" and then became "Money —
               not set up" would be exactly the identity flip the fixed-set rule forbids. */}
           {Array.from({ length: board.pendingSlots }, (_, i) => (
-            <div key={`pending-${i}`} className={styles.snapshotCard} data-tone="muted" aria-hidden>
-              <span className={styles.snapshotHead}><span className={styles.snapshotHeadLabel}>&nbsp;</span></span>
-              <span className={styles.snapshotValue} data-tone="muted">…</span>
-            </div>
+            <CoachCard key={`pending-${i}`} data-tone="muted" aria-hidden>
+              <CoachEyebrow>&nbsp;</CoachEyebrow>
+              <CoachFigure words>…</CoachFigure>
+            </CoachCard>
           ))}
         </div>
       </section>

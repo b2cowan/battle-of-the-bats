@@ -33,6 +33,7 @@ import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 
 /**
  * ═══ THE CLUB TAB — one relationship, one screen (money redesign P4, owner-ruled 2026-08-17) ═══
@@ -1421,8 +1422,8 @@ export function ClubPanel({
                 — which is the only moment a coach needs the total to check nothing has gone astray.
                 ⚠ THE TABLE KEEPS THE NAME FOR SCREEN READERS (aria-label below) — dropping a visible
                 heading must not leave the table anonymous to someone who cannot see the tab bar. */}
-            <div className={styles.panelToolbar}>
-              <div className={styles.panelToolbarActions}>
+            <CoachListToolbar
+              actions={(<>
                 <MoneyExportButton
                   label="Club money"
                   formats={['xlsx', 'csv']}
@@ -1444,8 +1445,8 @@ export function ClubPanel({
                     <Plus size={15} aria-hidden /> Make a request
                   </button>
                 )}
-              </div>
-            </div>
+              </>)}
+            />
 
             {/* ⚠⚠ THE FILTER ROW EARNS ITS SPACE OR IT IS NOT THERE (owner-approved). Seven records
                 need no filter — the chips would be chrome taller than the thing they organise — so

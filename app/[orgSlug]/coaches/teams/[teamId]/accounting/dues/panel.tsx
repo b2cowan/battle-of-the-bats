@@ -26,6 +26,7 @@ import { installmentToSend, buildInstallmentColumns, focusInstallmentColumn, fam
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 /** Not per-team: a coach who shuts this shelf has said how they like to READ a dues list, and
  *  re-shutting it on every team would make that preference feel like it had not been taken. */
 const SCHEDULE_FOLD_KEY = 'flhq-dues-schedule-fold';
@@ -2338,7 +2339,50 @@ export function PlayerDuesPanel({
   // spreadsheet, and gating Export behind write access would have been a quiet permission change
   // smuggled in by a layout move.
   const duesToolbar = (
-    <div className={styles.panelToolbar}>
+    <CoachListToolbar
+      actions={(
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {duesExport}
+            {moneyCanWrite && (
+            <>
+            {/* ⚰ "SET DUES FOR ALL PLAYERS" IS NOT A TOOLBAR BUTTON ANY MORE (owner D2, 2026-09-04).
+                It is a set-once act that sat beside the weekly ones on a screen a coach visits to
+                chase payments. Before dues exist the setup block above carries it as the primary;
+                once they exist it is the quiet "Change the schedule for everyone" at the foot of
+                the Collection schedule — the timeline it rewrites. Budget Plan and Overview had
+                already made the same call. ⚠ NOT A LOCK: re-running mid-season stays legitimate
+                (owner ruling 2026-08-14, reaffirmed) — the protection is the generator's preview. */}
+            {/* Secondaries go icon-only on phones (`.headerBtnLabel` — the page-header
+                ruling's mechanism). aria-labels carry the words. */}
+            <button
+              className={styles.btnSecondary}
+              onClick={openReminderConfirm}
+              disabled={sendingReminders}
+              style={{ opacity: sendingReminders ? 0.6 : 1 }}
+              /* Tracks the visible ternary — a static label would tell AT "Send due
+                 reminders" while sighted users watch "Sending…" (/review finding). */
+              aria-label={sendingReminders ? 'Sending reminders' : 'Send due reminders'}
+            >
+              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send due reminders'}</span>
+            </button>
+            </>
+            )}
+          </div>
+          {reminderResult && reminderResult.emailsSent > 0 && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
+              Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
+            </span>
+          )}
+          {reminderResult && reminderResult.emailsSent === 0 && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
+              No reminders needed — nothing is past due or due within 3 days.
+            </span>
+          )}
+          {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
+        </div>
+      )}
+    >
       {/* The view lens sits on the toolbar's left — exactly the slot the panel-toolbar ruling
           reserved for "a view switch, a status filter, a lens picker". Desktop-only: phones
           have one view (the cards), so a control there would choose between nothing.
@@ -2395,49 +2439,7 @@ export function PlayerDuesPanel({
           />
         </div>
       )}
-      <div className={styles.panelToolbarActions}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {duesExport}
-            {moneyCanWrite && (
-            <>
-            {/* ⚰ "SET DUES FOR ALL PLAYERS" IS NOT A TOOLBAR BUTTON ANY MORE (owner D2, 2026-09-04).
-                It is a set-once act that sat beside the weekly ones on a screen a coach visits to
-                chase payments. Before dues exist the setup block above carries it as the primary;
-                once they exist it is the quiet "Change the schedule for everyone" at the foot of
-                the Collection schedule — the timeline it rewrites. Budget Plan and Overview had
-                already made the same call. ⚠ NOT A LOCK: re-running mid-season stays legitimate
-                (owner ruling 2026-08-14, reaffirmed) — the protection is the generator's preview. */}
-            {/* Secondaries go icon-only on phones (`.headerBtnLabel` — the page-header
-                ruling's mechanism). aria-labels carry the words. */}
-            <button
-              className={styles.btnSecondary}
-              onClick={openReminderConfirm}
-              disabled={sendingReminders}
-              style={{ opacity: sendingReminders ? 0.6 : 1 }}
-              /* Tracks the visible ternary — a static label would tell AT "Send due
-                 reminders" while sighted users watch "Sending…" (/review finding). */
-              aria-label={sendingReminders ? 'Sending reminders' : 'Send due reminders'}
-            >
-              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send due reminders'}</span>
-            </button>
-            </>
-            )}
-          </div>
-          {reminderResult && reminderResult.emailsSent > 0 && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
-              Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
-            </span>
-          )}
-          {reminderResult && reminderResult.emailsSent === 0 && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
-              No reminders needed — nothing is past due or due within 3 days.
-            </span>
-          )}
-          {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
-        </div>
-      </div>
-    </div>
+    </CoachListToolbar>
   );
 
 

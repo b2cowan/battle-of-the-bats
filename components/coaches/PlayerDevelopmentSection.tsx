@@ -8,6 +8,7 @@ import { playerDevelopmentHref, developmentHandoutHref, type DevelopmentAddress,
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './PlayerDevelopment.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import {
@@ -644,18 +645,10 @@ export default function PlayerDevelopmentSection({
           it, and its buttons had nowhere to sit but a second row under an empty-feeling left edge
           once it was gone; folding them up here reads as one toolbar instead of two). Roster's
           List/Depth-chart shape (owner ruling 2026-09-13, hub R2-4). ── */}
-      <div className={styles.listToolbar}>
-        <div className={`${styles.segChoice} ${css.viewSwitch}`} role="group" aria-label="Development views">
-          {views.map(v => (
-            <button key={v.id} type="button" aria-pressed={activeView === v.id}
-              className={`${styles.segBtn} ${styles.tapFloor}${activeView === v.id ? ' ' + styles.segBtnActive : ''}`}
-              onClick={() => chooseView(v.id)}>
-              {v.label}
-            </button>
-          ))}
-        </div>
-        {(hasRecords || (activeView === 'goals' && canWriteGoals) || (activeView === 'results' && canWrite)) && (
-          <span className={`${styles.listToolbarEnd} ${css.toolbarEnd}`}>
+      <CoachListToolbar
+        actionsClassName={css.toolbarEnd}
+        actions={(hasRecords || (activeView === 'goals' && canWriteGoals) || (activeView === 'results' && canWrite)) && (
+          <>
             {hasRecords && (
               <Link href={developmentHandoutHref(portalBase, playerId, { returnTo: playerDevelopmentHref(portalBase, playerId, { view: activeView, returnTo: arrival.returnTo }) })}
                 className={`btn btn-ghost ${styles.tapFloor} ${css.handoutLink}`}>
@@ -682,9 +675,19 @@ export default function PlayerDevelopmentSection({
                 <Plus size={13} aria-hidden /> Record a result
               </button>
             )}
-          </span>
+          </>
         )}
-      </div>
+      >
+        <div className={`${styles.segChoice} ${css.viewSwitch}`} role="group" aria-label="Development views">
+          {views.map(v => (
+            <button key={v.id} type="button" aria-pressed={activeView === v.id}
+              className={`${styles.segBtn} ${styles.tapFloor}${activeView === v.id ? ' ' + styles.segBtnActive : ''}`}
+              onClick={() => chooseView(v.id)}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </CoachListToolbar>
 
       {/* ══ GOALS ══ */}
       {activeView === 'goals' && data.showGoals && (
@@ -785,14 +788,14 @@ export default function PlayerDevelopmentSection({
                pointer shortcut, the chevron last; retired rows the same rows in the tertiary ink, last.
                The .tableAsCards primitive reflows rows to cards @640 — the lead cell is the card's
                title; its own one-line reading of the hidden columns sits under it. */
-            <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.devTableCard}`}>
+            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
               <table className={styles.table} aria-label="Results">
                 <thead>
                   <tr>
                     <th className={styles.th}>Test</th>
-                    <th className={`${styles.th} ${css.desktopCell}`}>Latest</th>
-                    <th className={`${styles.th} ${css.desktopCell}`}>Trend</th>
-                    <th className={`${styles.th} ${styles.tdShrink} ${css.desktopCell}`}>Date</th>
+                    <th className={`${styles.th} ${styles.cardDesktopCell}`}>Latest</th>
+                    <th className={`${styles.th} ${styles.cardDesktopCell}`}>Trend</th>
+                    <th className={`${styles.th} ${styles.tdShrink} ${styles.cardDesktopCell}`}>Date</th>
                     <th className={styles.th} aria-label="Open" />
                   </tr>
                 </thead>
@@ -817,13 +820,13 @@ export default function PlayerDevelopmentSection({
                           <td className={`${styles.td} ${styles.cardStackCell}`}>
                             <button type="button" className={`${styles.devCellLink} ${css.testName}`} aria-expanded={expanded} onClick={e => { e.stopPropagation(); toggle(); }}>{type.name}</button>
                             <span className={styles.listRowSub}>{caption}</span>
-                            {latest && <span className={css.phoneLine}><b>{headline}</b> · {formatShortDate(latest.recordedOn)}</span>}
+                            {latest && <span className={styles.cardPhoneLine}><b>{headline}</b> · {formatShortDate(latest.recordedOn)}</span>}
                           </td>
-                          <td className={`${styles.td} ${css.desktopCell} ${css.latest}`} data-label="Latest">{headline}</td>
-                          <td className={`${styles.td} ${css.desktopCell} ${css.trendCell}`} data-label="Trend">
+                          <td className={`${styles.td} ${styles.cardDesktopCell} ${css.latest}`} data-label="Latest">{headline}</td>
+                          <td className={`${styles.td} ${styles.cardDesktopCell} ${css.trendCell}`} data-label="Trend">
                             {chronoValues.length >= 2 ? <Sparkline values={chronoValues.slice(-10)} /> : <span className={styles.devRowDash}>—</span>}
                           </td>
-                          <td className={`${styles.td} ${styles.tdShrink} ${css.desktopCell}`} data-label="Date">{latest ? formatShortDate(latest.recordedOn) : <span className={styles.devRowDash}>—</span>}</td>
+                          <td className={`${styles.td} ${styles.tdShrink} ${styles.cardDesktopCell}`} data-label="Date">{latest ? formatShortDate(latest.recordedOn) : <span className={styles.devRowDash}>—</span>}</td>
                           <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
                             <span className={styles.listRowActions}>
                               <button type="button" className={`${styles.linkBtn} ${styles.listRowToggle}`} aria-label={`${expanded ? 'Close' : 'Open'} ${type.name}`} aria-expanded={expanded}
@@ -835,7 +838,7 @@ export default function PlayerDevelopmentSection({
                         </tr>
                         {expanded && (
                           <>
-                            <tr className={`${css.innerHead} ${css.desktopCell}`}>
+                            <tr className={`${css.innerHead} ${styles.cardDesktopCell}`}>
                               <td className={styles.td}>Date</td>
                               <td className={styles.td}>Result</td>
                               <td className={styles.td} colSpan={2}>Attempts</td>
@@ -848,13 +851,13 @@ export default function PlayerDevelopmentSection({
                               return (
                                 <tr key={row.key} className={`${styles.tr} ${css.innerRow}`}>
                                   <td className={`${styles.td} ${styles.cardStackCell}`}>
-                                    <span className={css.desktopCell}>{formatShortDate(row.recordedOn)}</span>
-                                    <span className={css.phoneLine}><b>{formatShortDate(row.recordedOn)} · {headlineLabel(row, type)}</b></span>
+                                    <span className={styles.cardDesktopCell}>{formatShortDate(row.recordedOn)}</span>
+                                    <span className={styles.cardPhoneLine}><b>{formatShortDate(row.recordedOn)} · {headlineLabel(row, type)}</b></span>
                                   </td>
-                                  <td className={`${styles.td} ${css.desktopCell} ${css.innerResult}`} data-label="Result">{headlineLabel(row, type)}</td>
+                                  <td className={`${styles.td} ${styles.cardDesktopCell} ${css.innerResult}`} data-label="Result">{headlineLabel(row, type)}</td>
                                   {/* The attempts and the correction mark as the grid shows them (8.31* — the original on
                                       hover); a single uncorrected attempt is one dash, and on a phone that cell is not drawn. */}
-                                  <td className={`${styles.td} ${css.attemptsCell}${attemptsText ? '' : ` ${css.desktopCell}`}`} colSpan={2}>
+                                  <td className={`${styles.td} ${css.attemptsCell}${attemptsText ? '' : ` ${styles.cardDesktopCell}`}`} colSpan={2}>
                                     {attemptsText ? <span title={correctedTitle}>{attemptsText}</span> : <span className={styles.devRowDash}>—</span>}
                                   </td>
                                   <td className={`${styles.td} ${styles.tdShrink}`}>

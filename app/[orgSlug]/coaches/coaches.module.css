@@ -64,6 +64,12 @@
    data-label render value-only — use for the trailing action cell). */
 @media (max-width: 640px) {
   .tableAsCards { border: none !important; overflow: visible; }
+  /* The frame sheds its card ground with its border: on a phone the CARD is the ground (F-24).
+     ⚠ Compound on purpose — this block sits 3,000 lines ABOVE `.tableWrap`, and a media query adds
+     no specificity, so a bare `.tableAsCards { background: none }` here LOSES to the frame's own
+     rule on source order (measured: the wrapper stayed white at 390). Same trap as
+     `.cardActionLabel` below. */
+  .tableWrap.tableAsCards { background: none; }
   .tableAsCards table,
   .tableAsCards tbody,
   .tableAsCards tfoot,
@@ -203,9 +209,13 @@
    one line inside the lead cell that SHOWS there instead, composed by the row from the same facts.
    Promoted here from the Results table's own `phoneLine` / `desktopCell` pair
    (`PlayerDevelopment.module.css`), whose comment asked for exactly this the day a second table
-   wanted it; that table and the peer's records cards still wear their own copies — S6 (the shared
-   stylings close-out) points them here. Same order rule as `.cardActionLabel` above: base first,
-   media after. */
+   wanted it. ⚠ ONE FAMILY SINCE 2026-09-16 (the shared style kit, owner ruling F): that table's
+   pair and the Coverage / records cards' pair (`.devReportPhoneLine` / `.devReportDesktopCell`)
+   are DELETED and compose this one, so the line carries its own type here — `--type-support`, the
+   SECONDARY ink (the line replaces hidden COLUMNS a coach reads, not a caption), the figure in
+   the primary at 600, tabular, and the body face (a K-20 measurement cell is mono on a desktop and
+   its phone line must not be). A consumer composes nothing else onto it. Same order rule as
+   `.cardActionLabel` above: base first, media after. */
 /* ⚠ SCOPED TO `.tableAsCards` FOR SPECIFICITY, NOT TASTE (Team progress build, 2026-09-16). The line
    is composed with `.listRowSub` for its caption look, and `.listRowSub { display: block }` sits
    ~12,400 lines BELOW this rule at the same specificity — so a bare `.cardPhoneLine { display: none }`
@@ -219,9 +229,32 @@
    phone card is the name and its counts). A span, so `td.cardDesktopCell` cannot serve. */
 .cardDesktopLine { display: block; }
 @media (max-width: 640px) {
-  .tableAsCards .cardPhoneLine { display: block; }
-  .tableAsCards td.cardDesktopCell { display: none; }
+  .tableAsCards .cardPhoneLine {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: var(--type-support);
+    color: var(--text-secondary);
+    white-space: normal;
+  }
+  .tableAsCards .cardPhoneLine b { color: var(--text-primary); font-weight: 600; }
+  /* Any element — a cell, the Results table's inner heading ROW, a date span beside a phone line
+     — not only a `td`: the two folded pairs hid all three. */
+  .tableAsCards .cardDesktopCell { display: none; }
   .tableAsCards .cardDesktopLine { display: none; }
+  /* `.cardsOneLine` — the family's ONE-LINE variant (Insights → Coverage, stage 4 G4; the shared
+     kit, 2026-09-16): the phone card is one line — the name at the left, the line at the right,
+     the corner chevron centred — twelve players in ~530px where six-line cards were 4,131px. On
+     the WRAPPER beside `.tableAsCards`; `.cardsOneLineLead` on the lead cell turns the recipe's
+     column into a row. The card's padding steps down to the tap floor's height. */
+  /* ⚠ `.tableAsCards.cardsOneLine`, three classes deep, ON PURPOSE: the stack cell's own
+     `.tableAsCards td.cardStackCell { flex-direction: column }` sits ~90 lines BELOW this block at
+     (0,2,1), and the copy this replaced only ever won because it lived at the END of the file. A
+     rule that wins by position loses the day someone moves it; (0,3,1) wins wherever it stands. */
+  .tableAsCards.cardsOneLine tr { padding: 0.15rem 0.85rem; margin-bottom: 0.4rem; }
+  .tableAsCards.cardsOneLine td.cardsOneLineLead { flex-direction: row; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .tableAsCards.cardsOneLine td.cardsOneLineLead .cardPhoneLine { margin-top: 0; text-align: right; }
+  .tableAsCards.cardsOneLine td.cardActionCorner { top: 50%; transform: translateY(-50%); }
 }
 
 /* scrollX — controlled horizontal scroll for a genuine 2-D grid (lineup
@@ -238,6 +271,10 @@
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border-2);
   border-radius: 8px;
+  /* A frame paints the card (F-24, 2026-09-16) — the same ground `.tableWrap` paints. The grids that
+     paint their own cells (money, the pinned-column tables) are unchanged by it; the tryout history
+     table, which paints nothing, stops showing the paper through its rows. */
+  background: var(--card-bg, var(--surface));
 }
 .scrollXSticky th:first-child,
 .scrollXSticky td:first-child {
@@ -272,7 +309,7 @@
 /* scrollXBare — for content that already carries its own borders (a stack of bordered
    category cards). Without this the scroller draws a second frame around everything,
    which is a change on desktops that never overflow at all. */
-.scrollXBare { border: none; border-radius: 0; }
+.scrollXBare { border: none; border-radius: 0; background: none; }
 
 /* scrollXHint — the affordance .scrollX has always required. Rendered by
    <CoachScrollX> only while the content actually overflows and the coach hasn't
@@ -1680,57 +1717,23 @@
 }
 .setupGuideLink:hover { text-decoration: underline; }
 
-/* ── Run-mode snapshot ("Your team at a glance") ────────────────────────── */
-/* Even rows on purpose (not "as many as fit", which orphans the 5th tile): 3-up on
-   mid widths, a clean single row of all five on wide desktop. Mobile handled at ≤640. */
-.snapshotGrid {
+/* ── The board ("Your team at a glance") ──────────────────────────────────
+   ⚰ `.snapshotCard` · `.snapshotHead` · `.snapshotHeadLabel` · `.snapshotHeadArrow` · `.snapshotValue` ·
+   `.snapshotSub` · `.snapshotBar*` · `.snapshotFlag` (Chunk I → 2026-09-16): the six tiles are the
+   kit's DOOR card now (components/coaches/kit; owner ruling C) — the same card, eyebrow, figure,
+   sub, bar and flag the Money and Skills & Goals dashboards draw, with the lift, hover and arrow
+   that say the whole tile opens. This band had kept "the shipped tile language, unchanged" so as
+   not to be a second card system; Money became one anyway, and the kit ends it. Only the GRID is
+   the board's own. Even rows on purpose (not "as many as fit", which orphans the last tile):
+   3-up from 700 — the board is SIX tiles, the portal's reading column is 960px, and 6-across would
+   be ~145px a tile, a list not a board. */
+.boardGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0.75rem;
   align-items: stretch; /* every tile in a row is the same height */
 }
-@media (min-width: 700px)  { .snapshotGrid { grid-template-columns: repeat(3, 1fr); } }
-/* Chunk I: the board is SIX tiles, so 3-up is the only even desktop shape (two clean rows).
-   The old 5-up rule existed for a five-tile row and would now orphan the sixth. The portal's
-   reading column is 960px, so 6-across would be ~145px a tile — a list, not a board. */
-.snapshotCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-height: 92px;
-  padding: 0.9rem 1rem;
-  background: var(--white-8);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius);
-  /* Real elevation (drop shadow) lifts the card off the near-black page so it reads as a
-     distinct panel; the inner top-highlight crisps the top edge. Keeps the warm rounded skin. */
-  box-shadow: var(--shadow-sm), var(--highlight-top);
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
-}
-.snapshotCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-  background: var(--white-10);
-  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
-  transform: translateY(-1px);
-}
-.snapshotCard:hover .snapshotHeadArrow { opacity: 1; transform: translateX(2px); }
-.snapshotHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-  color: var(--text-tertiary);
-  font-size: var(--type-support);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.snapshotHeadLabel { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; }
-.snapshotHeadArrow {
-  color: var(--blueprint-light); opacity: 0.45; flex-shrink: 0;
-  transition: opacity 0.15s, transform 0.15s;
-}
+@media (min-width: 700px)  { .boardGrid { grid-template-columns: repeat(3, 1fr); } }
 
 /* Headline stat strip above the tiles — big number + small uppercase label, dot-separated. */
 .statStrip { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.85rem; margin: 0 0 1.25rem; }
@@ -1742,82 +1745,16 @@
    alpha ladder is the right home for them and the AA text floor does not apply. Do not "finish the
    sweep" by converting these: it would make three pieces of visual grammar shout. */
 .statStripDot { color: var(--white-25); font-weight: 700; }
-.snapshotValue {
-  font-family: var(--font-display);
-  font-size: var(--type-figure);
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: var(--text-primary);
-  line-height: 1.1;
-  margin-top: 0.1rem;
-}
-.snapshotValue[data-tone="danger"] { color: var(--danger); }
-/* Chunk I, D11 — "nothing set up yet" is a MUTED tile, never a dashed one (the portal has exactly
-   one dashed frame, the Money sample). A first-week coach would otherwise read six tiles saying
-   "not set" as a broken product, so the tile keeps its frame, softens its ink, and its `sub` says
-   what it would give them. Smaller because these values are words, not figures. */
-.snapshotValue[data-tone="muted"] {
-  color: var(--text-tertiary);
-  font-size: var(--type-heading);
-  font-weight: 700;
-}
-.snapshotSub {
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-/* Mini gauge inside a snapshot card (track + fill + ratio) — mirrors the admin
-   .gaugeWrap idiom in the coach rounded style. Lime by default, danger when overdue. */
-.snapshotBar {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-top: 0.2rem;
-}
-.snapshotBarTrack {
-  flex: 1;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--border-2);
-  overflow: hidden;
-}
-.snapshotBarFill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--logic-lime);
-  transition: width 0.4s ease;
-}
-.snapshotBarFill[data-tone="danger"] { background: var(--danger); }
-.snapshotBarPct {
-  font-size: var(--type-label);
-  font-weight: 700;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
-
-/* Small status line inside a snapshot card (e.g. "Lineup not set", "2 missing email"). */
-.snapshotFlag {
-  margin-top: 0.3rem;
-  font-size: var(--type-support);
-  font-weight: 700;
-}
-.snapshotFlag[data-tone="ok"] { color: var(--logic-lime); }
-.snapshotFlag[data-tone="warn"] { color: var(--warning); }
-/* A fact worth carrying but not worth alarming about (a birthday this week). */
-.snapshotFlag[data-tone="mute"] { color: var(--text-tertiary); font-weight: 600; }
 
 
 
-/* Mobile: denser glance — "Next up" leads full-width, Roster + Dues sit as a compact pair
-   beneath it, so the snapshot fits without the tall stacked scroll. */
+/* Mobile: the board is a compact pair per row, so the glance fits without a tall stacked scroll.
+   ⚰ The tile-level compaction that sat here (9px radius, token-size eyebrow, title-size figure) went
+   with the tile family (2026-09-16): a kit card is one card at every width, and 24px figures two-up
+   at 390 fit — a tile a coach reads on a phone is not a smaller card, it is the same card. */
 @media (max-width: 640px) {
   .sectionKicker { margin: 1rem 0 0.5rem; }
-  .snapshotGrid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-  .snapshotCard { padding: 0.65rem 0.75rem; gap: 0.15rem; border-radius: 9px; }
-  .snapshotHead { font-size: var(--type-token); gap: 0.3rem; }
-  .snapshotValue { font-size: var(--type-title); }
-  .snapshotSub { font-size: var(--type-label); }
-  .snapshotBar { margin-top: 0.35rem; }
+  .boardGrid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 }
 
 /* ── Lineups front door (game list) ─────────────────────────────────────── */
@@ -1860,18 +1797,29 @@
 .lineupAnalyticsFlag { font-style: normal; color: var(--warning); }
 .lineupAnalyticsEmpty { margin: 0.3rem 0; font-size: var(--type-body); color: var(--text-tertiary); }
 
-/* ── Templates manager (Lineups landing page) ── */
-.lineupTplList { display: flex; flex-direction: column; gap: 0.55rem; }
-.lineupTplRow {
-  display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.65rem 0.85rem; border-radius: var(--radius);
-  background: var(--white-8); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
+/* ⚠ THE QUIET DOOR — a house rule, in ONE place (roster + player page review, 2026-09-13). A link
+   or button that opens something reads as a door AT REST: a hairline underline in the line-strong
+   token, solid ink on hover/focus. The roster's player name, the recap row and the Notes tab's
+   Edit / Remove all compose it; a token change here reaches every one of them. Hoisted above its
+   first composer in the file — CSS Modules `composes` resolves top-down; a composer above its
+   definition passes Turbopack dev but fails the webpack production build. */
+.quietUnderline {
+  text-decoration: underline;
+  text-decoration-color: var(--home-line-strong, rgba(255,255,255,0.18));
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.12s, text-decoration-color 0.12s;
 }
-.lineupTplInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.12rem; text-decoration: none; }
-.lineupTplName { color: var(--text-primary); font-weight: 650; font-size: var(--type-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lineupTplInfo:hover .lineupTplName { color: var(--blueprint-light); }
-.lineupTplMeta { color: var(--text-tertiary); font-size: var(--type-support); }
+.quietUnderline:hover, .quietUnderline:focus-visible { text-decoration-color: currentColor; }
+
+/* ── Templates manager (Lineups landing page) ── */
+/* ⚰ `.lineupTplList` / `.lineupTplRow` / `.lineupTplInfo` / `.lineupTplMeta` are GONE (2026-09-16, standard
+   §3.10, register F-28): a template is a `CoachRow` on the same frame as the games list. */
+/* The name is the door (§3.6) — the roster's own name link: quiet underline, body 600. Was
+   `--type-heading` 650 inside a card row (F-28). */
+.lineupTplName { composes: quietUnderline; font-weight: 600; font-size: var(--type-body); color: var(--text-primary); }
+/* ⚠ Not `playerNameLink`: that one stretches over its whole phone card (::after), which would
+   put Apply · Rename · Delete under an invisible link. */
 .lineupTplActions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .lineupTplIconBtn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1884,34 +1832,6 @@
 .lineupTplRename input { flex: 1; min-width: 0; }
 
 .lineupFrontList { display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 0.5rem; }
-.lineupFrontRow {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.75rem 1rem;
-  background: var(--white-8);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
-  text-decoration: none;
-  color: var(--text-primary);
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
-}
-.lineupFrontRow:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-  background: var(--white-10);
-  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
-  transform: translateY(-1px);
-}
-.lineupFrontDate {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 44px; flex-shrink: 0; line-height: 1;
-}
-.lineupFrontDay { font-family: var(--font-display); font-size: var(--type-title); font-weight: 800; color: var(--text-primary); }
-.lineupFrontMonth { font-size: var(--type-token); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-top: 2px; }
-.lineupFrontMain { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
-.lineupFrontTitle { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lineupFrontMeta { font-size: var(--type-support); color: var(--text-tertiary); }
 .lineupFrontChip {
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
   font-size: var(--type-support); font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 999px;
@@ -1924,20 +1844,13 @@
 /* The record's voice (practices re-evaluation stage 0, D3): a past practice with no plan is
    "No plan written" — outlined and quiet, never the amber of work still waiting. */
 .lineupFrontChip[data-tone="mute"] { color: var(--text-tertiary); background: transparent; border: 1px solid var(--border-2); }
-.lineupFrontAction {
-  display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
-  font-size: var(--type-body); font-weight: 700; color: var(--blueprint-light);
-}
-/* "Open" on a past row — the same door in the record's register (D3). */
-.lineupFrontActionQuiet { color: var(--text-tertiary); font-weight: 600; }
-/* A past practice's recap, first line only (D3) — quoted, one line, clipped rather than wrapped so
-   a paragraph of "how it went" cannot turn a row into a card. */
-.lineupFrontNote {
-  font-size: var(--type-support); color: var(--text-secondary); font-style: italic;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+/* ⚰ `.lineupFrontRow` and its date tile / title / meta / note / action classes are GONE (2026-09-16,
+   standard §3.10, register F-27): the two hubs' rows render through `CoachRow` now. What stays is
+   the ruled chip (`.lineupFrontChip`, also on the next-practice card), the page's one lime
+   (`.lineupFrontPrimary`) and `.lineupFrontList`, which the closed-season shelves still stack their
+   rows under until F-37 moves them onto the recipe. */
 /* The Games pane's single lime action (nearest upcoming game without a lineup) — a styled span
-   inside the row Link, so the whole row stays one interactive element. */
+   inside the row link, so the whole row stays one interactive element. */
 .lineupFrontPrimary { flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.3rem; }
 
 /* ── Lineups Games-tab filter bar (v2, design log 2026-07-08) ──────────────
@@ -2014,17 +1927,16 @@
 /* A tile is a link now, so it needs to say so on hover — quietly: this is a whole band of them and
    a loud treatment would turn the scoreboard into a row of buttons. */
 a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
-.insightsStatLbl { display: block; font-size: var(--type-token); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 0.3rem; }
-.insightsStatVal { display: block; font-family: var(--font-display); font-weight: 800; font-size: var(--type-figure); line-height: 1; color: var(--text-primary); font-variant-numeric: tabular-nums; margin: 0; }
-.insightsStatVal small { font-size: var(--type-heading); color: var(--text-tertiary); font-weight: 700; }
-.insightsStatVal[data-pos="true"] { color: var(--success); }
-.insightsStatVal[data-pos="false"] { color: var(--danger); }
-.insightsStatCap { display: block; font-size: var(--type-label); color: var(--text-tertiary); margin: 0.3rem 0 0; }
+/* ⚰ `.insightsStatLbl` · `.insightsStatVal` · `.insightsStatCap` (2026-08-18 → 2026-09-16): the band's
+   label, figure and caption are the kit's `eye` · `big` · `sub` now (components/coaches/kit; owner
+   ruling D — TYPE ONLY: the band keeps its borderless shape, this tile, its hairlines and its bar).
+   The label was 10px — the badge step — on a role the ladder names as 11px "label"; the figure was
+   the display face where every card figure in the portal is the body face. */
 .insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: var(--home-card, rgba(255,255,255,0.13)); overflow: hidden; margin-top: 0.4rem; }
 .insightsSegBar i { display: block; height: 100%; background: var(--logic-lime); border-radius: 3px 0 0 3px; }
 .insightsCalm { color: var(--text-tertiary); font-size: var(--type-body); padding: 0.9rem 0.1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); margin-bottom: 1.2rem; }
 /* What stands out — the one lime-TINTED frame on the page (a highlight, not an action). */
-.insightsCallouts { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25); border-top: 2px solid rgba(var(--logic-lime-rgb), 0.45); border-radius: var(--radius); background: var(--white-8); box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.95rem 1rem 0.55rem; margin-bottom: 1.25rem; }
+.insightsCallouts { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25); border-top: 2px solid rgba(var(--logic-lime-rgb), 0.45); border-radius: var(--radius); background: var(--card-bg, var(--surface)); /* the card ground, not `--white-8`: one grey in dark (kit A, 2026-09-16) — the highlight frame itself is deliberately its own */ box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.95rem 1rem 0.55rem; margin-bottom: 1.25rem; }
 .insightsCo { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.5rem 0.4rem; border-radius: 10px; text-decoration: none; color: inherit; min-height: 40px; }
 .insightsCo:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
 .insightsCoDot { flex: none; width: 9px; height: 9px; border-radius: 50%; margin-top: 0.42rem; }
@@ -2061,7 +1973,10 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 .insightsTagSummaryLbl { font-size: var(--type-support); color: var(--text-tertiary); }
 .insightsTagSummaryRec { font-weight: 800; font-size: var(--type-heading); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .insightsTagSummaryRuns { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-.insightsTableWrap { overflow-x: auto; }
+/* `.insightsTableWrap` lives in the table block beside `.tableWrap`, which it composes (F-24). It was a
+   bare `overflow-x: auto` here — no border, no radius, no ground — so the six report tables sat on
+   the paper under a white heading bar like the list family did, and the list frame's fix passed
+   them by. */
 /* Figures in an insights table line up on the digit (standard §3.4, register F-09); the cell size
    comes from the baseline now that the global cell rule is the ladder's body step. */
 .insightsTable { font-variant-numeric: tabular-nums; }
@@ -2096,7 +2011,11 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    middle, the half-fix that would have left QA §149's complaint standing. Bar first puts the figure
    hard right, under its own heading and in one column with Bench beside it — the two numbers a
    coach reads as a pair. */
-.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-right: 0.5rem; overflow: hidden; }
+/* ⚠ THE TRACK IS THE NEUTRAL WASH, NOT THE CARD TONE (F-24's twin, 2026-09-16). It was `--home-card`
+   — white — which read as a track only because the table sat on the paper; the day the frame painted
+   the card the track vanished and a 64px share bar became a green line of varying length with no
+   "out of what". Change one half of a paired treatment, go find the twin. */
+.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-fill, rgba(255,255,255,0.12)); border-radius: 3px; margin-right: 0.5rem; overflow: hidden; }
 .insightsFieldBar i { display: block; height: 100%; background: rgba(var(--blueprint-blue-rgb), 0.75); }
 .insightsFlagWarn { color: var(--warning); font-size: var(--type-support); font-weight: 700; }
 .insightsRecGood { color: var(--success); }
@@ -2153,17 +2072,9 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 .ptMatrixLegend i[data-band='week'] { background: rgba(var(--logic-lime-rgb), 0.16); }
 .ptMatrixLegend i[data-band='stale'] { background: rgba(var(--logic-lime-rgb), 0.06); }
 .ptMatrixLegend i[data-band='never'] { background: none; }
-/* ── A report panel's own toolbar (reports portal P1, 2026-08-18) ──────────
-   The action row a tab carries beside the thing it names (Awards' Give / Manage / Print). It exists
-   as a class so the 44px TAP FLOOR can be applied to its controls WITHOUT touching `.btnPrimary`
-   and `.tagManageLink`, which are portal-wide primitives used on screens this project does not
-   sweep. `check:layout` flagged those two at 33px and 15px inside this row at 361px and 390px. */
-.insightsPanelToolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
-.insightsPanelToolbar > button,
-.insightsPanelToolbar > a { min-height: var(--tap-min, 44px); }
-/* The link-styled members need padding as well as a floor, or the words sit pinned to the top of a
-   44px box that looks like a rendering slip rather than a target. */
-.insightsPanelToolbar > a { display: inline-flex; align-items: center; gap: 0.35rem; }
+/* ⚰ `.insightsPanelToolbar` (reports portal P1, 2026-08-18 → 2026-09-16) — the report panel's
+   action row is the kit's `CoachListToolbar` now (components/coaches/kit; owner ruling E). Its
+   44px floor on link-styled members lives in the kit's actions slot, once. */
 
 /* The quiet "go do something about this" link at the foot of a report panel — Playing Time's
    "Manage lineups →", Development's "Set goals and record measurables in Skills & Goals →".
@@ -2229,62 +2140,10 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 
 
 @media (max-width: 640px) {
-  /* ── Lineup game cards: the NAME wraps, the furniture shrinks ──────────────
-     The row was flex with every element but the title at `flex-shrink: 0`, so the
-     whole width deficit landed on the one string that identifies the game: at 390px
-     the opponent name got 125px of a 326px row (95px at 360px), and two games against
-     the same club rendered identically once ellipsised. This is the un-migrated
-     instance of the 2026-06-29 schedule ruling ("line 2 = the untruncated name").
-
-     Below 640px the row becomes a grid so the title spans the full content column and
-     the status chip drops beside the time, where there is slack. `display: contents`
-     on the title+meta wrapper lets its two children take grid areas without a second
-     nesting level. Desktop is untouched — this whole block is phone-only. */
-  .lineupFrontRow {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "date title title"
-      "date meta  chip";
-    column-gap: 0.8rem;
-    row-gap: 0.15rem;
-    align-items: center;
-  }
-  .lineupFrontMain  { display: contents; }
-  .lineupFrontDate  { grid-area: date; }
-  .lineupFrontMeta  { grid-area: meta; }
-  .lineupFrontChip  { grid-area: chip; justify-self: end; }
-  /* The recap line (D3) takes a third row under meta + chip, spanning the content columns — as
-     a `display: contents` child it would otherwise be auto-placed into whatever cell was free
-     and squeeze the meta to a sliver. Explicit placement, not a template row: a row without a
-     note must not pay the row-gap for an empty track. */
-  .lineupFrontNote  { grid-column: 2 / -1; grid-row: 3; min-width: 0; }
-  .lineupFrontTitle {
-    grid-area: title;
-    white-space: normal;          /* was nowrap — a cut name stops naming the game */
-    overflow-wrap: anywhere;      /* one long unbroken word can't overflow the card */
-    line-height: 1.25;
-    /* Two lines fits every realistic club name; the clamp is the safety valve that
-       stops one pathological entry making a five-line card. `overflow: hidden` +
-       `text-overflow` come from the base rule, so the cut still shows an ellipsis.
-       -webkit- only, deliberately: the standard `line-clamp` needs `display: block`
-       and a minifier that treats the pair as aliases keeps the LAST one (the
-       backdrop-filter prefix-order gotcha), which would silently unclamp this. */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-  /* The pane's one lime action spans the card on its own row — it was competing with
-     the chip for the same shrink-proof corner and sat under the 44px tap floor. */
-  .lineupFrontPrimary {
-    grid-column: 1 / -1;
-    justify-content: center;
-    min-height: var(--tap-min, 44px);
-    margin-top: 0.6rem;
-  }
-  /* The whole card is the link and its label is hidden at this width, so what was left
-     was a bare glyph costing ~9% of the contested track for no information. */
-  .lineupFrontAction { display: none; }
+  /* ⚰ The lineup game-card grid that stood here (2026-06-29 → 2026-09-16) went with `.lineupFrontRow`:
+     the rows are `CoachRow` cards now (standard §3.10 — the title is the card's title, the date
+     joins the caption line, the door is the corner chevron). The pane's one lime keeps its floor. */
+  .lineupFrontPrimary { min-height: var(--tap-min, 44px); }
 
   /* The needs-lineup toggle stops right-aligning and wraps to its own row. */
   .lineupFilterNeeds { margin-left: 0; }
@@ -2318,33 +2177,30 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    Three shapes, one card. `data-shape` carries the treatment; `data-kind` is available for
    per-situation tweaks without another class. Colour comes from the SAME semantic tokens the old
    cards used, so the warm gate's remaps reach this with no gate-specific rules. */
+/* ⚠ THE SKIN IS THE KIT'S (components/coaches/kit, owner ruling C, 2026-09-16): the card renders as
+   `<CoachCard accent>` — the kit's ground, hairline and radius — and this class keeps only what is
+   the One Thing's: its layout, its spacing, and the ACCENT COLOUR by kind, set as `--card-accent`
+   for the kit's edge to read (a custom property, so the two modules' cascade order cannot matter). */
 .oneThing {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1.05rem 1.25rem 1.15rem;
   margin: 0 0 1.35rem;
-  background: var(--white-8);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-left-width: 3px;
-  border-left-color: var(--blueprint-blue);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
+  --card-pad: 1.05rem 1.25rem 1.15rem;
+  --card-gap: 0.35rem;
+  --card-accent: var(--blueprint-blue);
 }
 /* The accent is driven by `data-kind` ALONE, on purpose. Colouring by `data-shape` as well put two
    equal-specificity rules on one property, so the winner depended on declaration order — a future
    reorder would have silently flipped game day from green to blue. `shape` is a pure function of
    `kind` in the resolver, so one axis can express everything and the collision cannot recur. */
-.oneThing[data-kind="game_day"] { border-left-color: var(--success); }
-.oneThing[data-kind="next_event"] { border-left-color: var(--blueprint-blue); }
+.oneThing[data-kind="game_day"] { --card-accent: var(--success); }
+.oneThing[data-kind="next_event"] { --card-accent: var(--blueprint-blue); }
 /* A decision only this coach can make. Amber = "you are being asked", never an error. */
-.oneThing[data-kind="season_check"] { border-left-color: var(--warning); }
-.oneThing[data-kind="lull"] { border-left-color: var(--blueprint-blue); }
-.oneThing[data-kind="preseason"] { border-left-color: var(--blueprint-blue); }
+.oneThing[data-kind="season_check"] { --card-accent: var(--warning); }
+.oneThing[data-kind="lull"] { --card-accent: var(--blueprint-blue); }
+.oneThing[data-kind="preseason"] { --card-accent: var(--blueprint-blue); }
 /* The Practice plans hub's next-practice card (practices re-evaluation stage 0, D1) — the SAME
    card as the Overview's, rendered on the hub, so D1 and D7 produce one thing. Olive: the room's
    own accent, neither "live" green nor the schedule blue. */
-.oneThing[data-kind="next_practice"] { border-left-color: var(--home-olive, var(--blueprint-blue)); }
+.oneThing[data-kind="next_practice"] { --card-accent: var(--home-olive, var(--blueprint-blue)); }
 /* The state chip sits on the meta row beside the quiet links — the row chip's own shape. */
 .oneMetaRow .lineupFrontChip { align-self: center; }
 
@@ -2500,7 +2356,7 @@ a.oneChip:hover { border-color: currentColor; }
 .oneAnswerMuted:hover { text-decoration: underline; }
 
 @media (max-width: 640px) {
-  .oneThing { padding: 0.95rem 1rem 1.05rem; }
+  .oneThing { --card-pad: 0.95rem 1rem 1.05rem; }
   .oneHeadline { font-size: var(--type-title); }
   /* ⚠ The primary keeps the 44px phone floor but NOT its own full-width row. Giving it one is what
      made the phone the worst case — the card ran to 267px and pushed the board's first row past
@@ -2550,24 +2406,22 @@ a.oneChip:hover { border-color: currentColor; }
    said it was safe to retire, which was wrong and would have stripped the styling off both.
    Chunk I's genuinely orphaned leftovers (`.seasonCue*`, `.setupLine*`, `.lastSeasonCard*`,
    `.weekStrip*`, `.snapshotHeadcount*`) have since been removed; this family stayed, on purpose. */
+/* ⚠ THE SKIN IS THE KIT'S (components/coaches/kit, owner ruling A, 2026-09-16): every caller renders
+   `<CoachCard accent className={styles.nowCard}>`; this class keeps the card's layout and its blue
+   accent (the one phase colour that survived Chunk I), read by the kit's edge. It sat on the
+   Money setup Overview beside the kit's rail — two skins on one screen until this. */
 .nowCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 1.1rem 1.25rem;
   margin: 0 0 1.5rem;
-  background: var(--white-8);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-left-width: 3px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
+  --card-pad: 1.1rem 1.25rem;
+  --card-gap: 0.4rem;
+  --card-accent: var(--blueprint-blue);
 }
 /* ⚰ THREE OF THE FOUR PHASE ACCENTS ARE GONE (cleanup tranche 6, 2026-09-01): `.nowInSeason`,
    `.nowGameDay` and `.nowResult` had zero usages. The card's phase used to tint its left border
    four ways; the Overview's "One Thing" rework left only the preseason case rendering, and the
    other three sat here reading as a live four-state design. ⚠ `.nowInSeason` was also a duplicate
    of the rule below it in everything but name. */
-.nowPreseason { border-left-color: var(--blueprint-blue); }
+.nowPreseason { --card-accent: var(--blueprint-blue); }
 
 .nowEyebrow {
   display: flex;
@@ -2667,7 +2521,7 @@ a.oneChip:hover { border-color: currentColor; }
 .loadErrorRetry:hover { text-decoration: underline; }
 
 @media (max-width: 640px) {
-  .nowCard { padding: 0.9rem 1rem; margin-bottom: 1.1rem; }
+  .nowCard { --card-pad: 0.9rem 1rem; margin-bottom: 1.1rem; }
   .nowHeadline { font-size: var(--type-title); }
 }
 
@@ -3141,12 +2995,33 @@ a.oneChip:hover { border-color: currentColor; }
 /* ⚠ THE FRAME IS THE NEUTRAL LINE, the same one every report card wears (table standard §3.3,
    owner-approved 2026-09-06, register F-10). It was an accent tint — blueprint at 15%, olive in
    warm — while the money grids two tabs over drew `--home-line`; the one-surface plan §9.2 noted
-   the mismatch and this closes it. */
+   the mismatch and this closes it.
+
+   ⚠⚠ AND THE FRAME PAINTS THE CARD (register F-24, 2026-09-16). The standard says a table sits on
+   the card ground with its rows transparent OVER it — and for ten days nothing in the list family
+   painted that card. `.th` paints its own `--card-bg`, `.td` paints nothing, this frame painted
+   nothing, so every list table (Roster, Dues, Club, Fundraisers, Documents, Attendance) drew a
+   white heading bar over a body the blueprint grid showed straight through, in both skins. The
+   2026-09-06 inventory RECORDED it (row ground: transparent, on all of them) and the walk passed,
+   because the gate checked the row's transparency — which the standard asks for — and never what
+   was behind it. The Development pages noticed Money "on white", believed it, and grew a private
+   card class to match; that class is retired with this rule. The money grids keep painting their
+   own cells (pinned columns, K-06) — that is the standard's other sentence, not a second ground.
+   ⚠ The frame stands down at ≤640 wherever the rows become cards (`.tableAsCards`, the roster's own
+   reflow): on a phone the CARD is the ground, and a white slab behind a stack of tinted cards is
+   the defect the private class shipped with. */
 .tableWrap {
   overflow-x: auto;
   border: 1px solid var(--home-line, var(--border-2));
   border-radius: 8px;
+  background: var(--card-bg, var(--surface));
 }
+/* The Insights report tables' frame IS this frame (standard §3.3 "one frame", F-14; the ground F-24).
+   It was its own class with `overflow-x: auto` and nothing else, declared 1,000 lines up among the
+   insights recipes — which is how the list frame's card fix reached every list and none of the six
+   report tables (Playing Time, Results, Awards, the lineup comparison). A comparison keeps this frame
+   on a phone and scrolls inside it (K-05); it never takes `.tableAsCards`. */
+.insightsTableWrap { composes: tableWrap; }
 
 .table {
   width: 100%;
@@ -3351,6 +3226,29 @@ a.oneChip:hover { border-color: currentColor; }
    be a class. */
 .tdShrink { width: 1%; white-space: nowrap; }
 
+/* ── A link or control INSIDE a compact row (table standard §3.6, 2026-09-16) ────────────────────
+   The tap box BORROWS its height from the row instead of adding to it: a 44px border-box, the
+   padding that makes it 44, and a matching negative margin so the row keeps its compact rhythm.
+   This is the shape `.devCellLink` had since Phase 1 and `.lineupInsightsLink` before it; it is
+   named here because the density rule reads the CELL's padding and cannot see a control's box —
+   "Progress →" carried a 44px box with no negative margin and every row of Insights → Coverage
+   stood at 58px on a 40px table (register F-25). A control that composes this marker cannot do that.
+   ⚠ VERTICAL ONLY — a sideways negative margin overflows a card-reflowed cell at 361px.
+   ⚠ Compose it (`composes: rowTapLink`), never copy it: the last-row rule below reads the marker. */
+.rowTapLink {
+  display: inline-block;
+  box-sizing: border-box;
+  min-height: var(--tap-min, 44px);
+  padding: 0.7rem 0;
+  margin: -0.7rem 0;
+}
+/* The LAST row absorbs its links' tap box: a 44px box on a ~40px row spills 2px past the table's
+   bottom edge, which is enough for the frame (`overflow-x: auto`) to grow a vertical scrollbar over
+   a four-row list (owner, 2026-09-14). The last row's padding grows by the spill instead, so nothing
+   paints outside and nothing is clipped. Content-based (`:has()` on the marker), the way the density
+   rule reads `.rowCaption` — it was a per-feature wrapper class on seven Development tables. */
+.tableWrap tbody tr:last-child:has(.rowTapLink) > td { padding-bottom: 0.7rem; }
+
 /* ⚰ ── The kind picker (`.kindPick` / `.kindOption*`) IS GONE — and it had been dead a while ──
    The fundraiser-or-sponsor choice it styled was removed when fundraisers became DRIVES ONLY
    (Direction A); a sponsor is created from its own form now, so the choice has no markup left.
@@ -3418,7 +3316,10 @@ a.oneChip:hover { border-color: currentColor; }
   background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
   padding-top: 0.55rem;
   padding-bottom: 0.6rem;
-  vertical-align: top;
+  /* Was `top`, from the days the footer cells carried captions under their figures (`.footLabel`,
+     retired 2026-09-03); nothing here has a second line now and the standard's axis is centred
+     (§3.4, 2026-09-16). */
+  vertical-align: middle;
 }
 /* ⚰ `.footLabel` IS RETIRED (owner ruling 2026-09-03, D4). It captioned a totals cell in the
    table foot — "ASSESSED", "COLLECTED" — and the dues Season-totals footer was its last caller;
@@ -4261,18 +4162,6 @@ a.oneChip:hover { border-color: currentColor; }
    avatars removed 2026-07-28 (owner) — they encoded nothing (name-hash colour),
    ate card width, and were the portal's only circular monogram. */
 .playerCell { display: inline-flex; align-items: center; min-width: 0; }
-/* ⚠ THE QUIET DOOR — a house rule, in ONE place (roster + player page review, 2026-09-13). A link
-   or button that opens something reads as a door AT REST: a hairline underline in the line-strong
-   token, solid ink on hover/focus. The roster's player name, the recap row and the Notes tab's
-   Edit / Remove all compose it; a token change here reaches every one of them. */
-.quietUnderline {
-  text-decoration: underline;
-  text-decoration-color: var(--home-line-strong, rgba(255,255,255,0.18));
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  transition: color 0.12s, text-decoration-color 0.12s;
-}
-.quietUnderline:hover, .quietUnderline:focus-visible { text-decoration-color: currentColor; }
 
 .playerNameLink {
   composes: quietUnderline;
@@ -4353,7 +4242,8 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* Mobile: reflow the roster table into stacked cards */
 @media (max-width: 640px) {
-  .rosterWrap { border: none; overflow: visible; }
+  /* Border AND ground go — the roster's own reflow, so it takes `.tableAsCards`'s stand-down by hand (F-24). */
+  .rosterWrap { border: none; overflow: visible; background: none; }
   .rosterTable thead { display: none; }
   .rosterTable,
   .rosterTable tbody,
@@ -4896,10 +4786,13 @@ a.oneChip:hover { border-color: currentColor; }
 .discHide { color: var(--text-tertiary); }
 .discHide:hover { color: var(--text-secondary); text-decoration: underline; }
 .linkBtnAccent {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-size: var(--type-support);
   color: var(--logic-lime); font-weight: 600;
   display: inline-flex; align-items: center; gap: 0.25rem;
 }
 .linkBtnAccent:hover { text-decoration: underline; }
+.linkBtnAccent:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 .discNote {
   margin: -0.25rem 0 0;
   font-size: var(--type-support); line-height: 1.45;
@@ -4955,6 +4848,13 @@ a.oneChip:hover { border-color: currentColor; }
    decision, not to a fix for one sheet. MUST stay below `.formBody` (~70 lines up) — same
    specificity, so source order is what makes it win. */
 .bulkBody { padding-bottom: 0; }
+
+/* Same fix as `.bulkBody` immediately above (see its note for why this isn't the `.formBody`
+   default) — a second, reusable name so a future sheet opts in without re-deriving the 40px.
+   Development lifecycle stage 3's two new sheets (GoalSheet, RecordResultSheet) both take it;
+   their footers sit directly under a short, fixed field list with nothing else pinning them
+   down, so the dead air was visible on first render rather than only between tab states. */
+.formBodyTight { padding-bottom: 0; }
 
 .bulkPreview { display: flex; flex-direction: column; gap: 0.35rem; }
 .bulkPreviewHead {
@@ -5181,32 +5081,11 @@ a.oneChip:hover { border-color: currentColor; }
 .formCheck input { accent-color: var(--logic-lime); cursor: pointer; }
 
 /* Segmented Home / Away / Neutral choice — lime active fill (coach accent) */
-/* Body toolbar under a page header: the live fact a subtitle used to carry (left) beside the
-   view switcher (right) — page-header ruling 2026-08-11: facts lead the body they describe,
-   and a view switcher rides the views it switches. Roster and Schedule both use this row. */
-.listToolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin: 0 0 1rem;
-}
-.listToolbarFact { font-size: var(--type-body); color: var(--text-tertiary); }
-
-/* ⚠ THE FACT YIELDS TO THE CONTROL ON A PHONE (owner ruling 2026-08-24). Roster’s toolbar carries
-   the live count, the List/Depth-chart toggle and Export on one row; at 390px the count took
-   enough width that "Depth chart" wrapped INSIDE its own button, which reads as a broken control
-   rather than a tight one. The count is the least load-bearing thing in that row on a phone — the
-   roster it counts is directly beneath it — so it is the one that goes.
-
-   ⚠ Its own class, not `.listToolbar .listToolbarFact`: the same fact style carries "#7 · Age 12"
-   on the player page, which must not vanish, and a descendant selector would silently take any
-   future toolbar fact with it. A screen opts IN to yielding. */
-.listToolbarFactPhoneDrop { display: inline; }
-@media (max-width: 640px) {
-  .listToolbarFactPhoneDrop { display: none; }
-}
+/* ⚰ `.listToolbar` · `.listToolbarFact` · `.listToolbarFactPhoneDrop` (page-header ruling
+   2026-08-11 → 2026-09-16). Roster, Schedule and a player's Results toolbar render the kit's
+   `CoachListToolbar` now (owner ruling E). The fact and its phone drop had had NO caller since
+   the count left the Roster toolbar (owner ruling 2026-08-26); the geometry is Money's. The
+   equal-pill view switch lives on as `kit.toolbarView`, worn beside `.segChoice`. */
 
 .segChoice {
   display: inline-flex;
@@ -5243,30 +5122,8 @@ a.oneChip:hover { border-color: currentColor; }
 .segChoiceFull { display: flex; width: 100%; }
 .segChoiceFull .segBtn { flex: 1; text-align: center; }
 
-/* ⚠ A LIST TOOLBAR'S VIEW TOGGLE HAS EQUAL PILLS, SIZED TO ITS LONGEST LABEL (owner call,
-   2026-08-26). "List" beside "Depth chart" left a stub next to a slab — legible, but plainly two
-   controls rather than one switch, and the eye reads the wide half as the selected one whichever
-   is actually on.
-
-   Grid, not flex, and that distinction is the whole rule. `flex: 1` in a `fit-content` box splits
-   whatever width the box already settled on, which is how "Depth chart" ended up wrapping inside
-   its own pill for months. `grid-auto-columns: 1fr` in an auto-width grid resolves every column to
-   the LARGEST max-content instead — so both pills take the width of the longer label, the box grows
-   to hold them, and no label can be squeezed. Equal by construction rather than by division.
-
-   ⚠ Scoped to the toolbar's VIEW SWITCH on purpose (`.listToolbarView`, worn by the toggle that
-   LEADS a list toolbar — owner ruling 2026-09-13, hub R2-4, moved it out of `.listToolbarEnd`
-   to the left of the row where Schedule, Money and Insights already put theirs, standard §3.9).
-   The base `.segChoice` is also the sheets' Paste/Upload switch and the Home/Away/Neutral field,
-   both of which want the full-width flex behaviour. Two classes, so source order against the
-   base rule stops mattering. */
-.listToolbar .listToolbarView {
-  display: inline-grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  width: fit-content;
-}
-.listToolbar .listToolbarView .segBtn { text-align: center; white-space: nowrap; }
+/* ⚰ `.listToolbar .listToolbarView` — the equal-pill grid (owner 2026-08-26; leading the row, owner
+   2026-09-13) is `kit.toolbarView` in components/coaches/kit now, its argument with it. */
 
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
 @media (max-width: 640px) {
@@ -5930,21 +5787,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 
 /* ── Calendar (Phase 6J) ──────────────────────────────────────────────────── */
-/* Schedule header toolbar: takes its own full-width row below the title; the view toggle sits
-   on the left and the export + add controls pin to the right. */
-.scheduleToolbar {
-  flex: 1 1 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.scheduleToolbarActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: auto;
-}
+/* ⚰ `.scheduleToolbar` / `.scheduleToolbarActions` (Phase 6J → 2026-09-16): zero callers when the
+   shared style kit landed — the Schedule's row is the kit's `CoachListToolbar`. */
 
 .viewToggle {
   display: flex;
@@ -6092,12 +5936,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .calNavBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .calNavLabel { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
 
-.calMonthGroup { margin-bottom: 1.75rem; }
-.calMonthLabel {
-  font-size: var(--type-support); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--text-tertiary); padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07)); margin-bottom: 0.75rem;
-}
+/* ⚰ `.calMonthGroup` / `.calMonthLabel` are GONE from this module (2026-09-16, standard §3.10, F-26):
+   the list view's months are band rows inside one `CoachRowList`. `.calEventList` stays — the day
+   sheet and the week/month cells still stack their chips under it (K-21). */
 .calEventList { display: flex; flex-direction: column; gap: 0.35rem; }
 
 .eventChip {
@@ -7884,98 +7725,18 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   padding-bottom: 0.4rem;
 }
 
-/* ── Panel toolbar (page-level action ruling 2026-08-13, plan §5.3) ─────────────────────────
-   A tab's own control row: whatever the tab already had on the left (a view switch, a status
-   filter, a lens picker), and the tab's actions pinned right. ONE class so the two tabs that
-   gain a row match the five that already had one — a hand-rolled second copy per panel is
-   precisely how the budget/bva header CSS forked before.
+/* ⚰ `.panelToolbar` · `.panelToolbarSticky` · `.panelToolbarActions` (page-level action ruling
+   2026-08-13 → 2026-09-16) — the kit's `CoachListToolbar` (components/coaches/kit; owner ruling E)
+   carries the row, its sticky variant (the measured `top` still set inline by the Ledger, the
+   margin→padding rule with it) and the actions slot. Every Money tab, Skills & Goals, Roster,
+   Schedule, a player's Results and Insights render it; Money's geometry was the kit's. The
+   `.panelSubhead` band heading below is a caller's own and stays. */
 
-   Actions pin right via .panelToolbarActions' auto margin, so a toolbar with nothing on its
-   left still reads as a right-pinned row rather than a left-hugging one. */
-/* ⚠ OPT-IN ONLY — a modifier added to this ONE rendered instance when the Money hub's Transactions
-   tab is active (reading-order ruling, follow-up to P3). `.panelToolbar` itself stays untouched, so
-   the six other tabs sharing the class render exactly as before. Docks under the sticky tab row.
-   ⚠⚠ `top` IS SET INLINE, FROM A MEASURED HEIGHT, NOT HERE — a hand-picked CSS constant is exactly
-   what let rows show through a gap between this layer and the tab row on the real page. This rule
-   supplies everything ELSE sticky needs (position, stacking, an opaque ground); the panel component
-   supplies the number. */
-.panelToolbarSticky {
-  position: sticky;
-  z-index: 55;
-  background: var(--bg);
-  padding-top: 0.4rem;
-  margin-top: -0.4rem;
-}
-
-.panelToolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.9rem;
-}
-
-/* A BAND's own heading inside a tab (the fundraising split, Direction A 2026-08-29): quieter
-   than the page title, louder than a table heading — the two-band pattern's one new piece. */
-.panelSubhead {
-  font-size: var(--type-section, 1rem);
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  margin: 0;
-  color: var(--text-primary);
-}
-/* ⚠⚠ MARGIN → PADDING WHEN PINNED (found 2026-08-19, right after the fix it corrects). Giving
-   the sticky column headers the toolbar's usual bottom margin as part of their offset restored
-   the breathing room in normal flow — but margin is empty space, never painted, so once both the
-   toolbar and the header are independently pinned, that empty space became a WINDOW a scrolled
-   row could show through, not solid ground. Converting it to padding on the pinned toolbar keeps
-   the exact same visual gap (padding pushes the table down identically to margin) while making
-   the toolbar's own opaque background extend across it — nothing behind it can show through any
-   more. A compound selector, not a source-order bet: `.panelToolbar`'s own margin-bottom rule
-   sits earlier in this file and would otherwise win the tie. */
-.panelToolbar.panelToolbarSticky {
-  margin-bottom: 0;
-  padding-bottom: 0.9rem;
-}
-.panelToolbarActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-left: auto;
-}
-
-/* ⚠ A SEGMENTED TOGGLE PLACED INTO THIS TOOLBAR MUST BE ALLOWED TO SHRINK. `.viewToggle` is a
-   nowrap flex row with `overflow: hidden`. As a standalone BLOCK it was capped at its parent's
-   width and simply clipped whatever did not fit; the moment it became a flex ITEM of
-   `.panelToolbar` (the 2026-08-15 sub-tabs+actions merge) it started sizing to its CONTENT instead
-   — flex items default to `min-width: auto` — and three sub-tab labels are wider than a 361px
-   phone. `min-width: 0` lets it shrink back into the row; `flex-wrap: wrap` is what stops that
-   shrinking from re-clipping the last tab out of reach, which is what the old block was quietly
-   doing.
-
-   ⚠ REMOVING THIS CLASS REPRODUCES 30px OF SIDEWAYS PAGE SCROLL on coach-expenses at 361 —
-   verified both ways on a freshly restarted dev server. The rendered check accepts sideways scroll
-   on no screen and had never recorded it before this row existed.
-
-   ⚠⚠ AND THE MEASUREMENT ONLY MEANS THAT ON A HEALTHY SERVER. An earlier attempt to find the cause
-   rendered the screen with this whole toolbar `display: none` and still saw the overflow, which
-   "proved" the cause lay elsewhere. It proved nothing: that run followed a hard-killed dev-server
-   child, so the browser was being served a stale compiled bundle and the experiment never tested
-   the code it appeared to. Restarting the server reversed the result. If a layout finding here ever
-   contradicts the source you are reading, restart the server before you believe it. */
-.panelToolbarTabs {
-  min-width: 0;
-  flex-wrap: wrap;
-}
-/* The portal's one tap floor, at the phone breakpoint only — matching the page header's rule
-   rather than inventing a second convention. Desktop keeps the portal's compact control
-   heights, which are a grandfathered portal-wide decision this pass does not reopen. */
-@media (max-width: 640px) {
-  .panelToolbarActions button,
-  .panelToolbarActions a { min-height: var(--tap-min, 44px); }
-}
+/* ⚰ `.panelToolbarTabs` — zero callers by 2026-09-16 (the sub-tabs it let shrink became the View
+   pill). Its headstone keeps the warning: removing it once reproduced 30px of sideways scroll on
+   coach-expenses at 361, so if that finding ever returns, `min-width: 0; flex-wrap: wrap` on the
+   toggle inside the toolbar is where to look — on a freshly restarted server. The actions slot's
+   phone floor lives in the kit. */
 .coachTabBar {
   display: flex;
   gap: 0.15rem;
@@ -8863,27 +8624,19 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    IS Money's — `.panelToolbar` with the control in `.panelToolbarActions` (/simplify, 2026-09-14:
    a second toolbar class one file away from the first was the drift the shared-class rule names);
    these two classes are only the lede and the ground. The tinted panel is not used here any more. */
-.devListLede { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); max-width: 64ch; line-height: 1.45; flex: 1 1 24rem; }
-.devListLede strong { color: var(--text-secondary); }
-/* The table's ground — `.tableWrap` draws the neutral frame; the card ground is the standard's. */
-.devTableCard { background: var(--card-bg, var(--surface)); }
-/* The LAST row absorbs its links' tap box: `.devCellLink` paints 44px tall on a ~37px row (its
-   negative margins keep the rhythm), which is harmless between rows and a 4–5px spill past the
-   table's bottom edge on the last one — enough for the frame (`overflow-x: auto`) to grow a
-   vertical scrollbar over a four-row list (owner, 2026-09-14). The last row's padding grows by
-   the difference instead, so nothing paints outside and nothing is clipped. */
-.devTableCard tbody tr:last-child td { padding-bottom: 0.7rem; }
+/* ⚰ `.devListLede` — the kit's `toolbarLede` (owner ruling E, 2026-09-16): one lede role for every
+   list toolbar, this one's values. */
+/* ⚰ `.devTableCard` STOOD HERE (2026-09-14 → 2026-09-16) and painted the card ground under seven
+   Development tables, because the builder saw Money's lists "on white" and matched them. They were
+   not on white — no list table was (register F-24) — and the shared frame paints the card for every
+   table now, standing down on a phone where this class did not (a white slab behind the stacked
+   cards). Its last-row rule lives with `.rowTapLink` in the table block, content-based. */
 
-/* ⚰ `.devCardHeadRow` — its last two users left with the PlayerDevelopmentSection.tsx rewrite (development lifecycle re-evaluation, 2026-09-16). */
 /* A link inside a table cell or a mini row that meets the 44px tap floor without changing the row's
-   rhythm: tap padding + a matching negative margin (the .lineupInsightsLink shape). Sessions,
-   Players and Metrics rows (Phase 1) all wear it. */
+   rhythm — the `.rowTapLink` shape (table block), which it composes so the last-row rule can read it.
+   Sessions, Players and Metrics rows (Phase 1) all wear it. */
 .devCellLink {
-  display: inline-block;
-  box-sizing: border-box;
-  min-height: var(--tap-min, 44px);
-  padding: 0.7rem 0;
-  margin: -0.7rem 0; /* vertical only — a sideways negative margin overflows a card-reflowed cell at 361px */
+  composes: rowTapLink;
   color: inherit;
   text-decoration: none;
   overflow-wrap: anywhere;
@@ -8916,11 +8669,20 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   padding: var(--table-pad-compact) 0.6rem;
   border-bottom: 1px solid var(--home-line, var(--border-2));
 }
+/* ⚠ CENTRED, like every other cell in the portal (table standard §3.4, register F-25, 2026-09-16).
+   This was `top` — the one recipe of four that was — and the standard had no sentence on the axis,
+   so nothing could call it drift. What it looked like: "Progress →" sitting a line below the name
+   and the figures on every row of Insights → Coverage, because the cell pinned the link's 44px tap
+   box to its top and the words sat in the middle of that box. */
 .devBoardTable td {
   padding: var(--table-pad-compact) 0.6rem;
   border-bottom: 1px solid var(--home-line, var(--border-2));
-  vertical-align: top;
+  vertical-align: middle;
 }
+/* ⚠ A RECORDED MEASUREMENT, AND ONLY THAT (register K-20, 2026-09-16). The data face lines
+   "8.75 / 8.33 / 8.28" up digit for digit, which is the point of the column — the same ground the
+   jersey number stands on. It was on the DATE, the In-a-plan tick and the "Progress →" door too,
+   which are not measurements; those take the body face like every other list (standard §3.4). */
 .devBoardVal { font-family: var(--font-data); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .devBoardMuted { color: var(--text-tertiary); }
 /* Mobile reflow comes from the shared .tableAsCards primitive — no bespoke dual tree. */
@@ -10242,7 +10004,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppDocFields { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.6rem; }
 
 /* The hub's one quiet door under Recent practices (stage 4, L8) — words, never a count. */
-.ppEveryPractice { margin: 0.5rem 0 0; padding-left: 0.25rem; font-size: var(--type-support); font-weight: 600; }
+/* ⚰ `.ppEveryPractice` is GONE (2026-09-16): the door sits in the row list's foot (`.rowListFoot`). */
 
 /* ── The goal, one line (D4) ── */
 .ppGoalLine { display: flex; align-items: baseline; gap: 0.4rem; min-width: 0; }
@@ -10414,6 +10176,25 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppTickRow { display: flex; align-items: flex-start; gap: 0.55rem; font-size: var(--type-body); color: var(--text-primary); min-height: var(--tap-min, 44px); cursor: pointer; }
 .ppTickRow input { margin-top: 0.3rem; width: 1.1rem; height: 1.1rem; flex: none; }
 .ppTickNames { color: var(--text-tertiary); }
+/* Once the master is pressed the run of names becomes a row per typed station, indented under it
+   (S1, 2026-09-17). A row is 36px on a desktop and takes the touch floor on a phone or tablet — the
+   quick-minute chips' own rule (.ppQuickChip below) — so six rows are 216px, not 264, where the
+   pointer is fine. The from-drills line (S3) sits in the same indent, muted, no control. */
+.ppTickRows { display: flex; flex-direction: column; margin: -0.2rem 0 0.15rem 1.65rem; }
+.ppTickSub { min-height: 2.25rem; font-size: var(--type-body); }
+.ppTickSub { cursor: default; }
+.ppTickSub input { margin-top: 0.2rem; }
+.ppTickSub label { cursor: pointer; }
+/* The S2 note runs on from the name on a desktop (" · already in your drills — …") and drops under
+   it on a phone, where the row is too narrow for both; the separator is real text, not generated
+   content (some screen readers voice `::before` strings and others skip them). */
+.ppTickSep { color: var(--text-tertiary); }
+.ppTickFrom { margin: 0 0 0.35rem 1.65rem; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+@media (max-width: 768px) {
+  .ppTickSub { min-height: var(--tap-min, 44px); }
+  .ppTickSub .ppTickNames { display: block; margin-top: 0.1rem; }
+  .ppTickSep { display: none; }
+}
 
 /* ── THE DOCKED LIBRARY (stage 4, owner ruling L5 — A, 2026-09-16) ──
    The pair: the sheet at stage 1's 816 letter width, a 20px gap, the 320 panel — 1,156 in all,
@@ -10861,12 +10642,14 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
   padding: 0.7rem 0 0.5rem;
 }
-/* The tap floor is stated HERE rather than inherited. The portal's shared `.input` renders ~35px
-   and `.btnPrimary`/`.btnSecondary` ~31–41px product-wide; that baseline is fine on a desk but this
-   room is opened on a phone in a car park, so every control it introduces is raised to `--tap-min`
-   locally. Deliberately scoped to these classes — changing the shared primitives to satisfy one
-   feature would be a portal-wide visual change nobody asked for. */
-.ppDrillFilters .input { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-min, 44px); }
+/* The tap floor is stated HERE rather than inherited. `.btnPrimary`/`.btnSecondary` render
+   ~31–41px product-wide; that baseline is fine on a desk but this room is opened on a phone in a
+   car park, so every control it introduces is raised to `--tap-min` locally. Deliberately scoped
+   to these classes — changing the shared primitives to satisfy one feature would be a
+   portal-wide visual change nobody asked for. (The search field reuses `.scoutSearch` — the
+   Scouting Book's own field, already 44px on its own — so only its row-fit sizing is stated here;
+   its standalone bottom margin is cancelled, it isn't the last thing in this row.) */
+.ppDrillFilters .scoutSearch { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-min, 44px); margin-bottom: 0; }
 .ppDrillFilters button { min-height: var(--tap-min, 44px); }
 /* The Tags dropdown's closed pill (`MultiSelectDropdown`) only reaches the tap floor under 768px —
    here it sits beside a search box that is ALWAYS 44px (the car-park reasoning above), so it would
@@ -11045,7 +10828,7 @@ span.libCardMain { cursor: default; }
 .ppRailBadge li { font-size: var(--type-support); color: var(--text-secondary); }
 
 @media (max-width: 640px) {
-  .ppDrillFilters .input { flex-basis: 100%; }
+  .ppDrillFilters .scoutSearch { flex-basis: 100%; }
 }
 
 
@@ -11198,7 +10981,7 @@ span.libCardMain { cursor: default; }
 
 /* ─── Opponent Scouting Book (P1, owner-approved 2026-08-04) ─────────────────────────────
    Every colour is a token, so the warm gate re-skins this with no rules of its own.
-   List rows follow the lineupFront idiom; the record chip is data-tone'd like
+   The opponents are a row list on the standard's recipe (§3.10); the record chip is data-tone'd like
    lineupFrontChip (up = success, down = danger, even = neutral). */
 .scoutSearch {
   width: 100%;
@@ -11214,32 +10997,12 @@ span.libCardMain { cursor: default; }
   min-height: var(--tap-min, 44px);
 }
 .scoutSearch::placeholder { color: var(--text-tertiary); }
-.scoutList { display: flex; flex-direction: column; gap: 0.5rem; }
-.scoutRow {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.7rem 0.9rem;
-  background: var(--white-8);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
-  text-decoration: none;
-  color: var(--text-primary);
-  transition: border-color 0.15s, background 0.15s, transform 0.12s;
-}
-.scoutRow:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-  background: var(--white-10);
-  transform: translateY(-1px);
-}
+/* ⚰ `.scoutList` / `.scoutRow*` are GONE (2026-09-16, standard §3.10, register F-29): the opponents
+   render through `CoachRow` on the frame the Results tab beside them draws. */
 /* Presence dot: "there's something in the book on them" — amber = written, dashed = not yet. */
 .scoutNoteDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .scoutNoteDot[data-has="yes"] { background: var(--warning); }
 .scoutNoteDot[data-has="no"] { background: transparent; border: 1.5px dashed var(--white-30); }
-.scoutRowMain { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; flex: 1; }
-.scoutRowName { font-size: var(--type-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.scoutRowMeta { font-size: var(--type-support); color: var(--text-tertiary); }
 .scoutRecChip {
   flex-shrink: 0;
   font-family: var(--font-data);
@@ -11249,11 +11012,204 @@ span.libCardMain { cursor: default; }
   padding: 0.3rem 0.55rem;
   border-radius: 6px;
 }
+/* A translucent tint — right on the card AND on the paper (the opponent page's header chips sit
+   on the paper). The one ground it fails on is the phone card's wash, where the row-list block
+   makes it opaque over the card token (see `.rowListItem .scoutRecChip` at ≤ 640). */
 .scoutRecChip[data-tone="up"]   { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
 .scoutRecChip[data-tone="down"] { color: var(--danger);  background: rgba(var(--danger-rgb), 0.12); }
 .scoutRecChip[data-tone="even"] { color: var(--text-secondary); background: var(--white-10); }
 .scoutListNone { font-size: var(--type-body); color: var(--text-tertiary); margin: 0.5rem 0.2rem; }
 .scoutFootnote { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.55rem 0.15rem; line-height: 1.5; }
+/* ═══ THE ROW LIST — one recipe for every stack of records that is not a <table> ═══════════════
+   Standard §3.10 (register F-17 → F-26–F-40, K-21–K-24; owner-ruled "as drawn" 2026-09-16). The
+   component is `components/coaches/CoachRowList.tsx`; a list renders THROUGH it, never through a
+   second row class (a shared component beats a shared class). These classes exist so the guards
+   can find the recipe — the stylesheet guard scans the `rowList*` family, and the rendered sweep
+   reads `[data-row-list]` / `[data-row-list-row]`.
+
+   ⚠ WHY THE BLOCK SITS AT THE FOOT OF THE FILE. `.rowList` composes `.tableWrap`, so the element
+   carries BOTH classes and every declaration here is a single-class rule of equal specificity to
+   the frame's — the cascade resolves by SOURCE ORDER, and the frame is declared 11,000 lines up.
+   The ≤ 640 stand-down below ("the frame sheds its ground with its border") only wins because it
+   is written after `.tableWrap`; moving this block up the file re-paints a white slab behind the
+   phone's cards in silence — the exact trap `.tableWrap.tableAsCards` documents at the top.
+
+   The two sentences the row lists had no recipe for (measured 2026-09-16, seven lists on the
+   paper, one paper-coloured hairline):
+   · EXACTLY ONE PAINTER OF THE GROUND — `.rowList` paints `--card-bg` when the list stands on the
+     page; `.rowListInset` paints nothing because the card or shelf around it already does. Never
+     zero, never two.
+   · A ROW IS NOT A CARD — no per-row border, radius, shadow, fill or gap on a desktop; the hairline
+     under every row but the last is the whole separation. At ≤ 640 each row becomes the table's
+     own phone card (the same `--border-2` / 10px / olive wash `.tableAsCards tr` draws) — one card
+     recipe in the portal, not a second one. */
+/* `composes` only lives on a single-class rule (CSS Modules); the overrides ride on `ul.` */
+.rowList { composes: tableWrap; }
+ul.rowList { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+.rowListInset { composes: rowList; }
+ul.rowListInset { border: 0; border-radius: 0; background: none; }
+
+/* The band row — the label row inside a frame (a month, a day, "Coming up"): the column heading's
+   recipe on the paper tone, ruled above and below. The feed's day header, already walked (§138). */
+.rowListBand {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--home-paper, var(--surface-2));
+  border-top: 1px solid var(--home-line, var(--border-2));
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+}
+.rowListBand:first-child { border-top: 0; }
+
+/* One record. The <li> owns the hairline; the row inside it (a link, a button or a plain div —
+   the WHOLE box is the target, §3.6) owns the padding, the density and the hover. */
+.rowListItem { display: block; border-bottom: 1px solid var(--home-line, var(--border-2)); }
+.rowListItem:last-child { border-bottom: 0; }
+.rowListRow {
+  display: flex; align-items: center; gap: 0.85rem;
+  width: 100%;
+  padding: var(--table-pad-compact) 1rem;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: left;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+/* Density by what the row HOLDS (§3.1, owner A-01): the same marker the tables read. */
+.rowListRow:has(.rowCaption) { padding-top: var(--table-pad-comfortable); padding-bottom: var(--table-pad-comfortable); }
+/* Hover only on a row that opens (F-03) — the tint and the pointer, nothing else: no lift, no
+   shadow, no border change (those were the card idiom the seven lists borrowed). */
+.rowListDoor { cursor: pointer; transition: background 0.1s; }
+.rowListDoor:hover { background: var(--home-olive-soft, rgba(255,255,255,0.04)); }
+.rowListDoor:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+/* The one lead mark (§3.10.7) — a type icon, a status dot — and the date column beside it. */
+.rowListMark { display: inline-flex; align-items: center; flex: none; color: var(--text-tertiary); }
+.rowListLead {
+  flex: none; color: var(--text-tertiary);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.rowListLead[data-lead="date"] { width: 4.25rem; }
+.rowListLead[data-lead="date-time"] { width: 8.25rem; }
+.rowListMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+/* A name wraps on word boundaries, two lines at most — never mid-word, never an ellipsis on the
+   thing that identifies the row (§3.4); `anywhere` is only the safety valve for one unbroken word. */
+.rowListTitle {
+  font-size: var(--type-body); font-weight: 600; color: var(--text-primary); min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rowListTitle[data-weight="plain"] { font-weight: 400; }
+.rowListCaption { composes: rowCaption; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+/* A caption that carries the row's MEANING — a recap, a note — reads a step up, and quoted. */
+.rowListCaption[data-meaning] { color: var(--text-secondary); font-style: italic; }
+.rowListTrail { display: flex; align-items: center; gap: 0.75rem; flex: none; }
+/* The worded door (K-19's shape — where a ruling worded the action) borrows its tap box from the
+   row; the chevron is the last thing on the row, right (K-08). */
+.rowListGo { composes: rowTapLink; display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.rowListGo[data-quiet] { color: var(--text-tertiary); }
+.rowListChevron { display: inline-flex; align-items: center; flex: none; color: var(--text-tertiary); }
+/* The corner chevron a WORDED door grows on a phone (K-09) — absent on a desktop, where the words are the door. */
+.rowListChevron[data-phone] { display: none; }
+/* The two hubs' list sits a breath under the next-practice card / the filter bar. */
+.hubRowList { margin-top: 1.1rem; }
+/* The notes stack under a framed list (§3.5): a door in words, never inside the frame. */
+.rowListFoot { margin: 0.6rem 0.25rem 0; font-size: var(--type-support); color: var(--text-tertiary); }
+/* The door in the foot is a real target on a phone ("Every practice this season ›" measured 19px). */
+.rowListFoot a, .rowListFoot button { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+/* A record that is cancelled or retired reads faded — the row's own opacity, never a tint. */
+.rowListMuted { opacity: 0.55; }
+/* A control that sits BESIDE a row (the Game day pill inside a game's live window): a sibling of
+   the row inside its <li>, never nested in the row's own link or button — invalid HTML and a
+   mis-tap magnet on a phone. The row keeps being one control. */
+.rowListItem:has(> .rowListBeside) { display: flex; align-items: center; }
+.rowListItem:has(> .rowListBeside) > .rowListRow { flex: 1 1 auto; min-width: 0; width: auto; }
+.rowListBeside { flex: none; display: flex; align-items: center; padding-right: 0.75rem; }
+@media (max-width: 640px) {
+  .rowListBeside { padding-right: 0.6rem; }
+  /* The pill beside the row IS the card's right edge: the corner chevron would sit under it. */
+  .rowListItem:has(> .rowListBeside) .rowListChevron { display: none; }
+  .rowListItem:has(> .rowListBeside) .rowListRow { padding-right: 0.85rem; }
+}
+
+/* Touch (K-12): a row that is a control clears the floor; the worded door's box already does;
+   a control in the trail (Apply · Rename · Delete on a template row) clears it both ways. */
+@media (max-width: 768px) {
+  a.rowListRow, button.rowListRow { min-height: var(--tap-min, 44px); }
+  .rowListTrail button, .rowListTrail a { min-height: var(--tap-min, 44px); }
+  .rowListTrail .lineupTplIconBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}
+
+/* ≤ 640 — the frame stands down with its ground and each row is the table's own phone card
+   (K-09: the title is the card's title, the door is the corner chevron, a worded door hides —
+   the whole card is the link, which is what today's hubs already did at this width). The date
+   column moves onto the caption's line with a separator drawn only when there is a caption. */
+@media (max-width: 640px) {
+  ul.rowList, ul.rowListInset { border: 0; border-radius: 0; background: none; overflow: visible; }
+  .rowListBand { background: none; border: 0; padding: 0.55rem 0.15rem 0.25rem; }
+  .rowListItem {
+    position: relative;
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    background: var(--home-olive-soft, rgba(255,255,255,0.025));
+    margin-bottom: 0.65rem;
+  }
+  .rowListRow, .rowListRow:has(.rowCaption) {
+    flex-wrap: wrap; align-items: center;
+    gap: 0.15rem 0.5rem;
+    padding: 0.65rem 0.85rem;
+    min-height: var(--tap-min, 44px);
+  }
+  .rowListItem:has(.rowListChevron) .rowListRow { padding-right: 3rem; }
+  /* THE PHONE ORDER, in one place (a slot added later takes the next number here, nowhere else):
+       0 mark · 1 title · 2 trail · 3 the line break · 4 the date lead · 5 the caption.
+     The main wrapper dissolves so the title and caption become the row's own flex items. */
+  .rowListMain { display: contents; }
+  .rowListMark { order: 0; }
+  .rowListTitle { order: 1; flex: 1 1 0; min-width: 0; }
+  .rowListTrail { order: 2; margin-left: auto; }
+  /* A forced line break: everything ordered after it starts the second line. */
+  .rowListRow::after { content: ''; order: 3; flex-basis: 100%; height: 0; }
+  .rowListLead[data-lead] { order: 4; width: auto; font-size: var(--type-support); }
+  .rowListRow:has(.rowListCaption) .rowListLead[data-lead]::after { content: ' ·'; }
+  /* The caption sits beside the date and wraps inside its own box (a hanging indent), rather
+     than dropping whole to a third line and leaving "15 Sep ·" alone on the second. */
+  .rowListCaption { order: 5; flex: 1 1 0; min-width: 0; }
+  .rowListCaption[data-meaning] { flex-basis: 100%; }
+  /* The worded door leaves the SCREEN, not the accessibility tree: a screen reader on a phone
+     still hears "Open the plan" on the row. `display: none` would silence it. */
+  .rowListGo {
+    position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  /* The page's one lime (Build lineup) takes its own full-width row under the card's lines —
+     the treatment the retired card grid gave it — instead of a pill squeezed beside the title. */
+  .rowListTrail:has(.lineupFrontPrimary) { display: contents; }
+  .rowListTrail:has(.lineupFrontPrimary) > * { order: 2; }
+  .rowListTrail:has(.lineupFrontPrimary) > :first-child { margin-left: auto; }
+  .rowListRow .lineupFrontPrimary { order: 6; flex-basis: 100%; justify-content: center; margin: 0.5rem 0 0; }
+  /* Inside a phone card the record chip's tint would composite over the card wash — the red one
+     fell to 4.06:1 there — so the fill goes opaque over the card token here, and only here. */
+  .rowListItem .scoutRecChip[data-tone="up"]   { background: color-mix(in srgb, var(--success) 12%, var(--card-bg)); }
+  .rowListItem .scoutRecChip[data-tone="down"] { background: color-mix(in srgb, var(--danger) 12%, var(--card-bg)); }
+  .rowListItem .scoutRecChip[data-tone="even"] { background: color-mix(in srgb, var(--text-secondary) 12%, var(--card-bg)); }
+  /* A worded door hides at this width and its corner chevron shows (K-09). */
+  .rowListChevron[data-phone] { display: grid; }
+  .rowListChevron {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: var(--tap-min, 44px);
+    display: grid; place-items: center;
+  }
+}
+
 /* The scouting book's own back-link is RETIRED (page-header ruling 2026-08-11): every drill-in
    in the portal now uses the one .lineupBackLink treatment. */
 
@@ -13533,95 +13489,11 @@ button.gdChip[aria-pressed='true'] {
   white-space: nowrap;
 }
 
-/* The right end of a list toolbar: the view toggle and that list's EXPORT, together (house rule 2,
-   2026-08-23). `margin-left: auto` keeps the pair pinned right when a live fact leads the row, and
-   lets it hold the right edge on its own when nothing does. */
-.listToolbarEnd {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-left: auto;
-}
-/* ⚠ THE PHONE TAP FLOOR, WHICH THIS SLOT NEEDED ITS OWN COPY OF. The portal enforces 44px at the
-   phone breakpoint through the surface a control sits on — `.pageHeaderStd .pageHeaderActions` for
-   a header, `.panelToolbarActions` for a Money tab's row. A list toolbar was neither, so the export
-   that moved down here on 2026-08-23 landed at 30px: the first thing the rendered sweep caught, and
-   invisible to every file-reading gate. Element selectors reach DESCENDANTS on purpose — the export
-   trigger is wrapped, and a menu inside it is tapped too. Desktop keeps the portal's grandfathered
-   compact control heights, which is a portal-wide decision this pass deliberately does not reopen.
-
-   ⚠ IT ALSO GROWS THE VIEW TOGGLE THAT SHARES THIS SLOT, AND THAT IS THE POINT, NOT A SIDE EFFECT
-   (/review, 2026-08-24 — the reviewer read the comment as justifying only the export). Roster's
-   List / Depth chart pills are `.segChoice`, which never carried a floor; Schedule's List / Week /
-   Month are `.viewToggleBtn`, which gained one on 2026-08-15 under a comment reading "every view
-   toggle in the portal gains it". `.segChoice` was the instance that sentence missed, and it sat
-   under the floor until this rule reached it — the rendered baseline lost `button·List` and
-   `button·Depth chart` at 361 and 390 on the same run that this slot was introduced. The two
-   toggles now measure the same on a phone, which is what that ruling asked for. */
-@media (max-width: 640px) {
-  .listToolbarEnd button,
-  .listToolbarEnd a {
-    min-height: var(--tap-min, 44px);
-  }
-
-  /* ⚠⚠ THE EXPORT WAS NOT PINNED RIGHT ON A PHONE, WHICH IS THE WHOLE OF HOUSE RULE 2
-     (design review 2026-08-24). `.listToolbarEnd` wraps, so when its contents overflowed the
-     export dropped to a SECOND line inside this box and started at the box's LEFT edge — bottom
-     -left, under the toggle. The slot holds one toggle and one export and is never a list, so
-     it has no business wrapping: nowrap keeps the pair together and the export on the right at
-     every width, which is what the rule actually asks for. `min-width: 0` is what lets the row
-     shrink instead of pushing the page sideways. */
-  .listToolbarEnd { flex-wrap: nowrap; min-width: 0; }
-
-  /* ⚠ A FORM FIELD'S RULE WAS DECIDING A TOOLBAR'S LAYOUT. The `.segChoice` block at ~640 sets
-     `display: flex; width: 100%` under a comment naming its actual subject — "equal-width
-     segmented choices (Home/Away/Neutral) go full-width rather than squashing their labels".
-     That is right for a choice inside a FORM and wrong for a view toggle riding a toolbar: at
-     390px it took the whole row, which pushed the export off the end and produced the defect
-     above. Scoped back to `fit-content` here only; every form-context `.segChoice` is untouched.
-     ⚠ Do NOT "simplify" this by editing the base rule — the sheets' Paste/Upload switch and the
-     Home/Away/Neutral field both depend on the full-width default.
-     ⚠ The toggle LEADS the toolbar now (`.listToolbarView`, 2026-09-13) and no longer sits in
-     this slot, so the fit-content grid, the floor and the padding are on the view switch itself
-     — one home, wherever the toggle sits in the row. */
-  .listToolbar .listToolbarView {
-    display: inline-grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
-    width: fit-content;
-    min-width: 0;
-  }
-  /* 1rem of side padding per button is desktop generosity; 0.7 is what makes
-     fact + toggle + export one row at 361 with the tap floor above still intact.
-
-     ⚠⚠ AND `flex: 1` COMES OFF WITH IT — the half the scope-back above missed (owner report,
-     2026-08-26). The base phone rule sets BOTH `.segChoice { width: 100% }` and
-     `.segBtn { flex: 1 }`. Resetting only the CONTAINER to `fit-content` left the two pills
-     still splitting whatever width it settled on down the middle, so "Depth chart" — three times
-     the label "List" is — got exactly half and wrapped onto a second line INSIDE its own pill, at
-     every phone width, with a hand's width of empty toolbar to its right. The live count was
-     dropped on 2026-08-24 to buy room for it, which never had a chance of working: the control was
-     not short of room, it was refusing to use it.
-
-     This is the same failure a third time in this file — see the `.segChoiceFull` comment beside
-     the base rule, which describes it exactly ("`flex: 1` still split its children evenly, which
-     is a recipe for squeezing the LONGER label until it wraps") and was written about a form. A
-     container-only override never finishes the job: the CHILD carries the property doing the
-     squeezing. `nowrap` is the belt to that braces — a segmented pill that has wrapped reads as a
-     broken control, not a tight one. */
-  .listToolbar .listToolbarView .segBtn { flex: 0 0 auto; padding: 0.42rem 0.7rem; min-height: var(--tap-min, 44px); }
-
-  /* The live fact yields first — it is prose, the two controls are targets. Scoped to a direct
-     child of the toolbar because `.listToolbarFact` is also worn by the player page's status row,
-     which is not a flex row and must not start ellipsizing.
-     ⚠ `.listToolbar` itself deliberately KEEPS `flex-wrap: wrap`. With a long fact (a team with
-     inactive players) the fact takes line one and the toggle+export share line two — two rows,
-     never three, and the export still right-pinned. That degradation is the point: forcing the
-     toolbar itself to nowrap is what put 30px of sideways scroll on coach-expenses at 361 (see
-     the `.panelToolbar` note beside `.viewToggle`), and no screen may scroll sideways. */
-  .listToolbar > .listToolbarFact { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-}
+/* ⚰ `.listToolbarEnd` and its phone block (house rule 2, 2026-08-23 → 2026-09-16) — the kit's
+   `toolbarActions` slot (components/coaches/kit; owner ruling E). Its 44px phone floor lives there
+   once. Its nowrap rule ("toggle + export never split") had nothing left to hold once the view
+   switch moved to the LEFT of the row (owner 2026-09-13) and the slot held one export; the
+   switch's own phone rules are `kit.toolbarView`'s; the fact's ellipsis rule had no caller. */
 /* One header action that survives phones while its siblings hide: display:contents so the
    wrapper adds nothing to the desktop flex row; gone under the header's own 640px breakpoint. */
 .headerActionWideOnly { display: contents; }
@@ -13764,6 +13636,15 @@ button.gdChip[aria-pressed='true'] {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+/* `variant="toolbar"` (SublinedChoice): a compact filter that must read as one of a ROW of plain
+   `.select`s (Report · Show · Metric · Player), not the bold olive "answer this" money field above
+   — the closed button borrows `.select` + `.devToolbarControl` for its chrome and only adds the
+   flex layout a button needs to place its own chevron. */
+.convChoiceToolbarField { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-align: left; cursor: pointer; }
+.convChoiceToolbarField:disabled { cursor: not-allowed; opacity: 0.6; }
+.convChoiceToolbarCaret { flex: 0 0 auto; color: var(--text-tertiary); }
+/* The closed field's qualifier ("· latest result") — muted, so the metric's own name stays the thing that reads first. */
+.convChoiceClosedSub { color: var(--text-tertiary); }
 /* Cold open, nothing chosen yet — the rest of the form is a quiet promise, not fields. */
 .convGhostNote { font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
 /* ⚠ The full-viewport `.convWhatBackdrop` click-catcher is GONE (/review, 2026-08-23): painted
@@ -13998,7 +13879,7 @@ button.gdChip[aria-pressed='true'] {
   align-items: center;
   width: 100%;
 }
-.panelDeck .panelToolbarActions { margin-left: auto; }
+/* (the deck's right slot is the kit's `toolbarActions`, which carries its own auto margin) */
 .panelFilterStrip {
   display: flex;
   flex-wrap: wrap;
@@ -14269,7 +14150,10 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    .devToolbarControl); on a phone each is a labelled full-width control (plan §6). */
 .devReportToolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; align-items: flex-end; margin: 0 0 1rem; }
 .devReportToolbar .field { flex: 1 1 200px; min-width: 160px; max-width: 300px; }
-.devReportToolbar .select { min-width: 0; text-overflow: ellipsis; }
+/* ⚠ A solid card, not the shared `.select`'s paper wash (owner, 2026-09-17): these sit on the
+   report's own paper background, and a native <select>'s open list renders OS-white regardless of
+   this CSS — leaving the paper-toned closed box looking unstyled next to its own crisp-white list. */
+.devReportToolbar .select { min-width: 0; text-overflow: ellipsis; background: var(--home-card, var(--bg-card)); }
 @media (max-width: 640px) {
   .devReportToolbar .field { flex: 1 1 100%; }
 }
@@ -14287,11 +14171,14 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .devReportTimeline time { display: block; font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); letter-spacing: 0.03em; }
 .devReportTimeline p { margin: 0.15rem 0 0; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.45; }
 .devReportTimeline p strong { color: var(--text-primary); }
-/* A link inside a table row — inline-block with VERTICAL padding only, so its tap floor never
-   overflows a card-reflowed cell sideways at 361px (the Phase 2 lesson). */
+/* A link inside a table row — the `.rowTapLink` shape (table block): a 44px tap box that borrows
+   its height from the row. ⚠ It carried its own box until 2026-09-16 — `padding: 0.55rem 0` and a
+   44px floor with NO negative margin — and that box, not the padding rule, set every row of
+   Insights → Coverage at 58px on a compact table (register F-25). */
 .devReportRowLink {
-  display: inline-block; padding: 0.55rem 0; font-size: var(--type-support); font-weight: 600;
-  color: var(--blueprint-light); text-decoration: none; white-space: nowrap; min-height: var(--tap-min, 44px); line-height: 1.2;
+  composes: rowTapLink;
+  font-size: var(--type-support); font-weight: 600;
+  color: var(--blueprint-light); text-decoration: none; white-space: nowrap; line-height: 1.2;
 }
 .devReportRowLink:hover { text-decoration: underline; }
 
@@ -14405,26 +14292,16 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .devReportSummaryMain small { font-size: var(--type-support); color: var(--text-secondary); }
 .devReportSummaryDoor { flex: none; font-size: var(--type-support); font-weight: 700; color: var(--logic-lime); white-space: nowrap; }
 .devReportSheetFields { display: flex; flex-direction: column; gap: 0.9rem; }
-.devReportPhoneLine { display: none; }
+/* ⚰ `.devReportPhoneLine` / `.devReportDesktopCell` and `.devReportOneLine` / `.devReportRowCell`
+   (stage 4 G4 → 2026-09-16): Coverage and the records cards compose the shared `.cardPhoneLine` /
+   `.cardDesktopCell` family and its `.cardsOneLine` variant (the `.tableAsCards` block at the top
+   of this file) — the shared style kit, owner ruling F, folded this third copy of the stage-3
+   phone idiom into the one the practices library had already promoted. */
 .devReportDoor { display: inline-flex; align-items: center; justify-content: center; }
 @media (max-width: 640px) {
   .devReportDesktopOnly { display: none; }
   .devReportPhoneOnly { display: inline; }
   .devReportSummary { display: flex; }
-  .devReportDesktopCell { display: none !important; }
-  /* The line reads in the body face (its cell is a data cell, in mono, on a desktop) — the stage-3 card's face. */
-  .devReportPhoneLine { display: block; font-family: var(--font-sans, system-ui, sans-serif); font-size: var(--type-support); color: var(--text-secondary); margin-top: 0.15rem; font-variant-numeric: tabular-nums; white-space: normal; }
-  .devReportPhoneLine b { color: var(--text-primary); font-weight: 600; }
-  .devReportDoor { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); padding: 0; }
-}
-/* `.devReportOneLine` / `.devReportRowCell` — the Coverage card on a phone is ONE LINE (G4): the
-   name at the left, the value · date · tick at the right, the chevron in the corner — twelve
-   players in about 640px where the six-line cards were 4,131px. The card's own padding steps
-   down to the tap floor's height; the lead cell turns from the recipe's column into a row. */
-@media (max-width: 640px) {
-  .devReportOneLine tr { padding: 0.15rem 0.85rem; margin-bottom: 0.4rem; }
-  .devReportOneLine td.devReportRowCell { flex-direction: row; align-items: center; justify-content: space-between; gap: 0.6rem; }
-  .devReportOneLine td.devReportRowCell .devReportPhoneLine { margin-top: 0; text-align: right; }
-  /* The corner chevron centres on the one line (the recipe pins it to a card's top edge). */
-  .devReportOneLine td.cardActionCorner { top: 50%; transform: translateY(-50%); }
+  /* The corner chevron is its own 44×44 box — the row-borrowing padding and margin stand down. */
+  .devReportDoor { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); padding: 0; margin: 0; }
 }
