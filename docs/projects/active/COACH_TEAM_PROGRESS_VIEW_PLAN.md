@@ -1,6 +1,6 @@
 # Coaches portal: a team-level progress view for Skills & Goals — assessment and proposed plan
 
-**16 September 2026 · Source-based assessment on the UAT fixture · Ruled T1–T8 "Build as drawn" ("I agree with your mockups") and BUILT on dev the same day · Owner QA walk §196 owed · commit on the owner's say-so**
+**16 September 2026 · Source-based assessment on the UAT fixture · Ruled T1–T8 "Build as drawn" ("I agree with your mockups") and BUILT on dev the same day · ruling A on the built screen 2026-09-17 · **committed `e88e31f5` 2026-09-17** · Owner QA walk §196 owed**
 Read first: [product brief](COACH_TEAM_PROGRESS_VIEW_PM_BRIEF.md). See it: the [project hub](COACH_TEAM_PROGRESS_VIEW_HUB.html) — artifact `1omqXRfxFi8UsrCKXCcjN6` (mockup · decisions T1–T8 with a paste-back · brief · plan; the QA walk tab is appended when a build lands).
 Origin: the Development lifecycle re-evaluation's **D8** ("Build = not now", stage 0, `docs/projects/archive/COACH_DEVELOPMENT_LIFECYCLE_PLAN.md` §17) and **G7** (the refusals are a principle; "D8's team-trend tile stays deferred on its own terms", §21; Business Decisions Log 2026-09-16). Neither is a spec; both are why this project exists.
 

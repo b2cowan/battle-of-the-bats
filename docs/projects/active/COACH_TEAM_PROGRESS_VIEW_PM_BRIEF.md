@@ -1,6 +1,6 @@
 # PM brief — Team progress: a team-level read for Skills & Goals
 
-**16 September 2026 · Ruled "Build as drawn" and built on dev the same day; your QA walk (§196) is on the hub's QA Walk tab · Plan: [COACH_TEAM_PROGRESS_VIEW_PLAN.md](COACH_TEAM_PROGRESS_VIEW_PLAN.md) · Hub artifact `1omqXRfxFi8UsrCKXCcjN6`**
+**16 September 2026 · Ruled "Build as drawn" and built on dev the same day; committed `e88e31f5` 2026-09-17; your QA walk (§196) is on the hub's QA Walk tab · Plan: [COACH_TEAM_PROGRESS_VIEW_PLAN.md](COACH_TEAM_PROGRESS_VIEW_PLAN.md) · Hub artifact `1omqXRfxFi8UsrCKXCcjN6`**
 
 **The one thing to check first: nothing in this proposal ranks or compares individual players.** The new report's rows are *metrics*, not players; every figure is a count of *how many* players, never *which*; and no family surface — the development handout, the season recap — reads it. A parent cannot reach it and a coach cannot sort it.
 
