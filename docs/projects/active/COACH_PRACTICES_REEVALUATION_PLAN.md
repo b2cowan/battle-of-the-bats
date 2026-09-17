@@ -1511,3 +1511,43 @@ fixture at 1440 · 390 · 768 (the sorted head's `aria-sort`, the remembered key
 **Not done here:** the picker sheet and the docked panel (name order, tags beside the name — a picker is not a table);
 `/docs` and `/review` offered.
 
+### 7.10 Follow-up on the build · "Save to my circuits" — which stations become drills — RULED and BUILT 2026-09-17
+
+**The ask (owner, on the built dialog with a six-station block):** *"can we give the option of which stations to
+save as drills? also, does it know if any of them already are drills so the user only saves what is new (maybe they
+pulled 3 new drills and created 3 new ones)?"* **Read against the code:** it knows, in two ways, and says nothing
+about either. A station placed from the library is never offered (`writtenStationsOf` — no `drillId`) and the saved
+circuit keeps pointing at it. A typed station whose *name* matches an active drill is also left out
+(`stationsToPromote`, case-insensitive), and with the tick on `promoteToCircuit` seeds its map with the whole active
+library so `pointStationsAtDrills` points that station at the existing drill by name — keeping the words typed
+tonight, so the circuit's station claims a drill it does not read as. Both are silent (the names simply do not
+appear). And the tick is all or nothing — the owner's block had three keepers and three called *test*. Drawn on the
+hub's "4 · The library" tab as a new section `#s4-save` (five frames at the dialog's real 520 and the phone's 390,
+notes 99–103; asks S1–S3, the letter for the same reason as T; `dLabel` passes S through). Measured: the dialog is
+316px as built, 519 with six rows open on a desktop, 604 on the phone.
+
+**The three calls, each recommended "as drawn":**
+
+- **S1 · which stations.** Once the tick is on, the run of names becomes a row per typed station, all on; the coach
+  unticks; the master is tri-state (a dash while some are off; one press turns everything back on). Off by default —
+  the shut dialog is exactly today's, so the one-question principle holds: nothing is asked of a coach who does not
+  tick. A row is a checkbox (36px on a desktop, 44 on touch — the clock row's rule), not a toggling chip (a chip is
+  the filter idiom, and a matched name needs room for a note).
+- **S2 · a typed name already in the library.** Shown as a row with a note — "already in your drills — the circuit
+  uses that one, with its words" — ticked by default (what the tick asked for; what a retried save needs, since a
+  save that failed midway has already created some). Ticked, the circuit's station **becomes** that drill — the
+  link takes the drill's words and tags, not only its id (a small fix in `pointStationsAtDrills`' caller: build the
+  station from the drill via `drillToStation`, as a placed drill is). Unticked, tonight's words stay as a plain
+  station, no link. Tonight's block is untouched either way.
+- **S3 · stations that came from your drills.** One muted line under the tick names them and says they stay linked;
+  absent when every station was typed; when every station came from a drill the tick stays absent and the line
+  reads alone.
+
+**Not in this follow-up:** "Save to my drills…" on a plain block (no stations, no tick); "Save as template…"; the
+circuit editor; the docked panel. No migration. **Rides at build:** `PromoteDialog`'s `tick` carries every typed
+station with a `have` flag rather than the pre-filtered list; `onSave` returns the ticked station ids; the help's
+circuits article (`premium-circuit-library`) re-words the tick's definition (`/docs`); a QA walk part on the hub.
+
+**The ruling (owner, 2026-09-17, in chat — "looks good, go for it and build as drawn"):** S1–S3 all as drawn.
+
+**Build record (2026-09-17, the same session).** `lib/rep-circuits.ts`: `stationsToPromote` is gone; `tickRowsFor(block, drills)` returns one row per distinct typed name with the ACTIVE same-name drill on it (`{ station, existing }` — a retired drill is not "held": the unique index is partial on active names); `fromDrillsLine(block)` builds the S3 sentence (null · "X, Y and Z came from your drills and stay linked." · "All N stations…"); `pointStationsAtDrills(shape, Map<nameKey, RepTeamDrill>)` now REBUILDS a pointed station from the drill via `drillToStation` with the station's id kept — a drill-backed station reads the drill's words, never tonight's under the same name; `drillNameKey` exported (the index's key, one place). `_PracticePlanEditor.tsx`: `PromoteDialog`'s `tick` is `{ rows, fromLine }`; state is `picked` (a set of station ids — empty = master off) + `rowsOpen` (true after the first press on the master; the rows never collapse); the master is `checked = all`, `indeterminate = some && !all` set on the DOM node in an effect, and a press turns everything on or everything off; `onSave(tagIds, pickedStationIds)`; the S2 note reads "already in your drills" or "already in the club's drills" by `existing.teamId === null`. `promoteToCircuit` walks `tickRowsFor` and touches only the kept rows: an `existing` row links without a create; the rest are created through `onCreateDrill` and linked from the returned drill (which the route re-reads with its tags — the old `tagNamesById` workaround is gone); the shape is pointed once at the end. The whole-library seeding of the link map is gone — the retry path is served by `existing` instead (the page folds each created drill into `drills` at once, so a failed-midway save's created drills re-open as held rows, ticked). CSS: `.ppTickRows` (indent 1.65rem), `.ppTickSub` (36px; the 44px floor at ≤ 768 — the quick-chip rule), `.ppTickFrom`; the note runs on from the name with a ` · ` drawn by `::before` on a desktop and drops under it on a phone. Help: the tick's definition re-worded and two definitions added ("Already in your drills", "Came from your drills and stay linked"), keywords + searchText extended. Tests: `rep-circuits.test.ts` — 18 pass (the tick describe rewritten: rows with the held drill and a retired one ignored; the from-line's three shapes; the rebuild-from-drill with id kept and no kit smuggled; an unticked name left as typed). Gates: `typecheck` clean · focused lint 0 · `check:spelling` · `check:dictionary`. Hub: the section's status span, the tab chip, E2/E3 re-worded, **part K (K1–K6) on "QA walk · 4"**; ledger **§200**; brief section appended; TODO line 136. **/review (high-risk funnel, four lenses — correctness · data & contract · concurrency/state · regression + accessibility; 11 found → 10 after dedup → 7 confirmed and fixed, 3 accepted with a reason, 0 refuted).** Fixed: **(High) the link was by NAME, and `tickRowsFor` gives two same-named typed stations one row — so the hidden twin was rebuilt from the drill too and lost its own words**; `pointStationsAtDrills` now takes a map keyed by STATION id (the row's own station and no other; the twin stays as typed; test added). **(Medium) a station rebuilt from the drill it had just made came back with a name snapshot of kit it had held by id** — `stationToDrillInput` now carries `equipmentTagIds` beside the resolved names (the create route already proves and stores them; `drillToStation` reads both back; the picker resolves names that match ids without adopt rows; round-trip test added — this also improves D18's station promote). (Low) a team drill and a club-shared one sharing a name matched whichever the list carried last — the team's own now wins, deterministically (test). (Low, a11y) the S2 note was inside the row's `<label>`, so the checkbox's accessible name was a sentence — the label is the name alone and the note is `aria-describedby`; the ` · ` separator was CSS generated content (voiced by some readers, skipped by others) — real text, hidden on a phone. (Low) the help said only "your drills" — the club case added to the definition and the search terms. Accepted: the master's count includes a matched name (it IS a written station; the row says the rest — as drawn); a row that vanishes under an open dialog via another tab's save is simply absent from the list and the save (rows and the save come from one render — the list on screen is what saves); double-submit rests on the same synchronous busy flag every sibling dialog uses. Gates re-run green after the fixes; `check:layout --only=coach-practice-plan` at 361/390/768/1440 clean (the sweep does not open the dialog). **Not done here:** a browser probe (the owner's walk is part K); commit on the owner's word (a private index — d8 committed the columns work as `bcf62af4`; this build's hunks are alone in the working copy of the shared files).

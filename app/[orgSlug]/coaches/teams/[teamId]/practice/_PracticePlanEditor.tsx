@@ -26,8 +26,8 @@ import {
   type DrillInput, type RepTeamDrill,
 } from '@/lib/rep-drills';
 import {
-  circuitToBlock, pointStationsAtDrills, stationsToPromote, blockToCircuitShape,
-  type CircuitInput, type RepTeamCircuit,
+  circuitToBlock, pointStationsAtDrills, tickRowsFor, fromDrillsLine, blockToCircuitShape,
+  type CircuitInput, type RepTeamCircuit, type TickRow,
 } from '@/lib/rep-circuits';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
@@ -1123,18 +1123,20 @@ function DrillPickerSheet({
           </button>
         </div>
 
-        <div className={styles.ppDrillTabs} role="tablist">
-          <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
-            className={styles.ppDrillTab} data-on={tab === 'drills' ? 'on' : undefined}
-            onClick={() => setTab('drills')}>From your drills</button>
-          {circuits && onPickCircuit && (
-            <button type="button" role="tab" aria-selected={tab === 'circuits'} disabled={!hasCircuits}
-              className={styles.ppDrillTab} data-on={tab === 'circuits' ? 'on' : undefined}
-              onClick={() => setTab('circuits')}>From your circuits</button>
-          )}
-          <button type="button" role="tab" aria-selected={tab === 'write'}
-            className={styles.ppDrillTab} data-on={tab === 'write' ? 'on' : undefined}
-            onClick={() => setTab('write')}>Write one</button>
+        <div className={styles.ppDrillTabsWrap}>
+          <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist">
+            <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
+              className={`${styles.segBtn}${tab === 'drills' ? ` ${styles.segBtnActive}` : ''}`}
+              onClick={() => setTab('drills')}>From your drills</button>
+            {circuits && onPickCircuit && (
+              <button type="button" role="tab" aria-selected={tab === 'circuits'} disabled={!hasCircuits}
+                className={`${styles.segBtn}${tab === 'circuits' ? ` ${styles.segBtnActive}` : ''}`}
+                onClick={() => setTab('circuits')}>From your circuits</button>
+            )}
+            <button type="button" role="tab" aria-selected={tab === 'write'}
+              className={`${styles.segBtn}${tab === 'write' ? ` ${styles.segBtnActive}` : ''}`}
+              onClick={() => setTab('write')}>Write one</button>
+          </div>
         </div>
 
         {tab === 'write' ? (
@@ -1247,15 +1249,19 @@ function LibraryPanel({
         </button>
       </div>
       {hasCircuits && (
-        <div className={styles.ppDrillTabs} role="tablist" aria-label="Drills or circuits">
-          <button type="button" role="tab" aria-selected={shown === 'drills'} className={styles.ppDrillTab}
-            data-on={shown === 'drills' ? 'on' : undefined} onClick={() => setFace('drills')}>
-            Drills <span className={styles.ppLibraryCount}>{drills.length}</span>
-          </button>
-          <button type="button" role="tab" aria-selected={shown === 'circuits'} className={styles.ppDrillTab}
-            data-on={shown === 'circuits' ? 'on' : undefined} onClick={() => setFace('circuits')}>
-            Circuits <span className={styles.ppLibraryCount}>{circuits.length}</span>
-          </button>
+        <div className={styles.ppDrillTabsWrap}>
+          <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist" aria-label="Drills or circuits">
+            <button type="button" role="tab" aria-selected={shown === 'drills'}
+              className={`${styles.segBtn}${shown === 'drills' ? ` ${styles.segBtnActive}` : ''}`}
+              onClick={() => setFace('drills')}>
+              Drills <span className={styles.ppLibraryCount}>{drills.length}</span>
+            </button>
+            <button type="button" role="tab" aria-selected={shown === 'circuits'}
+              className={`${styles.segBtn}${shown === 'circuits' ? ` ${styles.segBtnActive}` : ''}`}
+              onClick={() => setFace('circuits')}>
+              Circuits <span className={styles.ppLibraryCount}>{circuits.length}</span>
+            </button>
+          </div>
         </div>
       )}
       <div className={styles.ppLibraryBody}>
@@ -1312,7 +1318,7 @@ function LibraryPanelRow({
         </span>
       ) : undefined}
       open={open} onToggle={onToggle}
-      actions={<button type="button" className={styles.btnSecondary} onClick={onAdd}>{addLabel}</button>}
+      actions={<button type="button" className={styles.libCardAdd} onClick={onAdd}>+ {addLabel}</button>}
     >
       {kind === 'drill' ? <DrillPreviewBody drill={drill!} equipmentTags={equipmentTags} /> : <CircuitPreviewBody circuit={circuit!} />}
       <div className={styles.libCardFoot}>
@@ -1332,9 +1338,18 @@ function LibraryPanelRow({
  *
  * ⚠ The TICK is the owner's scenario (L9): "also save its N written stations as drills" — ticked,
  * the drills are created FIRST and the saved circuit's stations point at them; tonight's block is
- * left exactly as it is. Off by default. A station already in the library by name is not offered
- * (the label names how many it would add); when none would be added the tick is absent, not
- * disabled.
+ * left exactly as it is. Off by default.
+ *
+ * ⚠ The tick is a LIST once it is on (the save-dialog follow-up, owner rulings S1–S3, 2026-09-17).
+ * Shut, the dialog is exactly the one-tick dialog above — the typed stations' names in a run after
+ * the label, nothing asked of a coach who does not tick. The first press on the master turns the
+ * run into a row per typed station, all on, and the master becomes tri-state (a dash while some are
+ * off; a press on it turns everything on, or everything off). The rows stay once opened, so
+ * nothing collapses under the cursor. A typed station whose name the library already holds is a
+ * row WITH A NOTE, not a missing name (S2): kept ticked, the circuit's station becomes that drill;
+ * unticked, tonight's words stay as a plain station. One quiet line names the stations that came
+ * from drills and says they stay linked (S3) — it is the answer to "does it know", and it is absent
+ * when every station was typed.
  */
 function PromoteDialog({
   kind, name, sentence, tags, onCreateTag, tick, busy, error, onSave, onClose, manage, onManageChanged,
@@ -1346,25 +1361,40 @@ function PromoteDialog({
   sentence: string;
   tags: PickableTag[];
   onCreateTag: (name: string) => Promise<PickableTag | null>;
-  /** The circuit's second question — the written stations it would also save as drills. */
-  tick?: { stations: PracticeStation[] };
+  /** The circuit's second question — a row per typed station (S1 · S2) and the from-drills line (S3). */
+  tick?: { rows: TickRow[]; fromLine: string | null };
   busy: boolean;
   error: string;
-  /** The tags chosen, and the block's minutes as "usually" for a drill (named in the sentence). */
-  onSave: (tagIds: string[], alsoDrills: boolean) => void;
+  /** The tags chosen, and — for a circuit — the ids of the typed stations the coach kept ticked. */
+  onSave: (tagIds: string[], pickedStationIds: string[]) => void;
   onClose: () => void;
   manage?: TagManageConfig;
   onManageChanged?: () => void;
 }) {
   const [tagIds, setTagIds] = useState<string[]>([]);
-  const [alsoDrills, setAlsoDrills] = useState(false);
+  /** The typed stations kept ticked (by station id); empty = the master is off. */
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
+  /** True once the master has been pressed — from then on the run of names is a list of rows. */
+  const [rowsOpen, setRowsOpen] = useState(false);
   /* The dialog floor (D9), busy-gated: while the save is in flight the sheet holds, so a write is
      never torn down under its own request. The tag list inside claims its own Escape while open
      (`escapeOwnership.ts`) — it closes itself, not the sheet. */
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogFloor(true, panelRef, { onClose, busy });
   const noun = kind === 'drill' ? 'drills' : 'circuits';
-  const tickStations = tick?.stations ?? [];
+  const rows = tick?.rows ?? [];
+  const allPicked = rows.length > 0 && rows.every(r => picked.has(r.station.id));
+  const somePicked = rows.some(r => picked.has(r.station.id));
+  /* The master's dash — `indeterminate` is a DOM property, not an attribute, so it is set by hand. */
+  const masterRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (masterRef.current) masterRef.current.indeterminate = somePicked && !allPicked; }, [somePicked, allPicked]);
+  function pressMaster() {
+    setRowsOpen(true);
+    setPicked(allPicked ? new Set() : new Set(rows.map(r => r.station.id)));
+  }
+  function toggleRow(id: string) {
+    setPicked(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  }
   return (
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Save to my ${noun}`}
@@ -1384,21 +1414,45 @@ function PromoteDialog({
             onCreate={onCreateTag}
             manage={manage} onManageChanged={onManageChanged}
           />
-          {kind === 'circuit' && tickStations.length > 0 && (
+          {kind === 'circuit' && rows.length > 0 && (
             <label className={styles.ppTickRow}>
-              <input type="checkbox" checked={alsoDrills} onChange={e => setAlsoDrills(e.target.checked)} />
+              <input ref={masterRef} type="checkbox" checked={allPicked} onChange={pressMaster} />
               <span>
-                Also save {tickStations.length === 1 ? 'its 1 written station' : `its ${tickStations.length} written stations`} as drills, with these tags
-                <span className={styles.ppTickNames}> — {tickStations.map(s => s.name.trim()).join(' · ')}</span>
+                Also save {rows.length === 1 ? 'its 1 written station' : `its ${rows.length} written stations`} as drills, with these tags
+                {!rowsOpen && <span className={styles.ppTickNames}> — {rows.map(r => r.station.name.trim()).join(' · ')}</span>}
               </span>
             </label>
           )}
+          {kind === 'circuit' && rowsOpen && rows.length > 0 && (
+            <div className={styles.ppTickRows} role="group" aria-label="Stations to save as drills">
+              {rows.map(({ station, existing }) => (
+                /* The label is the NAME alone; the S2 note is described-by, so a screen reader hears
+                   "Cone weave, checkbox" and then the note — not a sentence-long control name. The
+                   separator is real text (hidden on a phone, where the note drops under the name)
+                   rather than generated content, which some readers voice and others skip. */
+                <div key={station.id} className={`${styles.ppTickRow} ${styles.ppTickSub}`}>
+                  <input id={`tick-${station.id}`} type="checkbox" checked={picked.has(station.id)} onChange={() => toggleRow(station.id)}
+                    aria-describedby={existing ? `tick-note-${station.id}` : undefined} />
+                  <span>
+                    <label htmlFor={`tick-${station.id}`}>{station.name.trim()}</label>
+                    {existing && (
+                      <>
+                        <span className={styles.ppTickSep} aria-hidden="true"> · </span>
+                        <span id={`tick-note-${station.id}`} className={styles.ppTickNames}>already in {existing.teamId === null ? 'the club’s' : 'your'} drills — the circuit uses that one, with its words</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          {kind === 'circuit' && tick?.fromLine && <p className={styles.ppTickFrom}>{tick.fromLine}</p>}
           <p className={styles.formHint}>{sentence}</p>
           {error && <p className={styles.errorText}>{error}</p>}
         </div>
         <div className={styles.modalFooter}>
           <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(tagIds, alsoDrills)}>
+          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(tagIds, rows.filter(r => picked.has(r.station.id)).map(r => r.station.id))}>
             {busy ? 'Saving…' : `Save to my ${noun}`}
           </button>
         </div>
@@ -2525,8 +2579,8 @@ export default function PracticePlanEditor({
    */
   const kitNamesOf = (o: { equipment?: string[]; equipmentTagIds?: string[] }): string[] =>
     mergedTagNames(o.equipment, o.equipmentTagIds, equipmentTags);
-  /** The names the circuit's tick must not duplicate — the library's ACTIVE drills. */
-  const activeDrillNames = useMemo(() => drills.filter(d => d.isActive).map(d => d.name), [drills]);
+  /** The library's ACTIVE drills — what the circuit's tick reads a typed name against (S2). */
+  const activeDrills = useMemo(() => drills.filter(d => d.isActive), [drills]);
 
   /** The drill a written STATION or a bare written BLOCK would become — one reader per shape. */
   function drillInputFor(block: PracticePlanBlock, station: PracticeStation | null, tagIds: string[]): DrillInput {
@@ -2556,34 +2610,38 @@ export default function PracticePlanEditor({
    * same create the station's promote uses, and only then is the circuit stored with its stations
    * pointing at them — so the drills' counts work, and next time the circuit is placed its stations
    * arrive drill-backed. A station whose create fails stops the save with the error; nothing on
-   * tonight's plan changes either way. A same-name active drill is never duplicated
-   * (`stationsToPromote` left it out of the tick).
+   * tonight's plan changes either way.
+   *
+   * ⚠ Only the stations the coach KEPT TICKED are touched (S1). A ticked row whose name the library
+   * already holds is not created again — the circuit's station is pointed at the existing drill and
+   * rebuilt from it (S2), which is also what a save that failed midway needs on its retry: the
+   * drills it did create are in `drills` by then (the page folds each create in at once), so their
+   * rows re-open as "already in your drills" and the retry links rather than duplicates. An
+   * unticked row is left exactly as typed, linked to nothing.
    */
-  async function promoteToCircuit(tagIds: string[], alsoDrills: boolean) {
+  async function promoteToCircuit(tagIds: string[], pickedStationIds: string[]) {
     if (!promoting || promoting.kind !== 'circuit' || !onCreateCircuit) return;
     const block = plan.blocks.find(b => b.id === promoting.blockId);
     if (!block) { setPromoting(null); return; }
     setPromoteBusy(true); setPromoteError('');
     let shape = blockToCircuitShape(block);
-    if (alsoDrills && onCreateDrill) {
-      /* Every written station points at its same-name drill — the ones this save CREATES and the
-         ones the library already HOLDS (the tick names only what it would add, but a station whose
-         drill is already there must not be the one left unlinked; and a save that failed midway
-         has already created some — the retry finds them here rather than leaving them behind). */
-      const made = new Map<string, { id: string; tagNames: readonly string[] }>(
-        drills.filter(d => d.isActive).map(d => [d.name.trim().toLowerCase(), { id: d.id, tagNames: d.tags.map(t => t.name) }]),
-      );
-      const tagNames = tagNamesById(tagIds, focusTags);
-      for (const station of stationsToPromote(block, activeDrillNames)) {
+    if (pickedStationIds.length > 0 && onCreateDrill) {
+      const kept = new Set(pickedStationIds);
+      /* Keyed by the row's STATION id — the row's own station and no other, so a hidden same-named
+         twin (one row per name) is left exactly as typed rather than rebuilt alongside. */
+      const link = new Map<string, RepTeamDrill>();
+      for (const { station, existing } of tickRowsFor(block, activeDrills)) {
+        if (!kept.has(station.id)) continue;
+        if (existing) { link.set(station.id, existing); continue; }
         const result = await onCreateDrill(stationToDrillInput({ ...station, equipment: kitNamesOf(station) }, tagIds));
         if (!result.ok || !result.drill) {
           setPromoteBusy(false);
           setPromoteError(result.error ?? `Could not save “${station.name}” as a drill.`);
           return;
         }
-        made.set(station.name.trim().toLowerCase(), { id: result.drill.id, tagNames });
+        link.set(station.id, result.drill);
       }
-      shape = pointStationsAtDrills(shape, made);
+      shape = pointStationsAtDrills(shape, link);
     }
     const result = await onCreateCircuit({ name: block.title.trim(), tagIds, block: shape });
     setPromoteBusy(false);
@@ -3221,7 +3279,7 @@ export default function PracticePlanEditor({
         return (
           <PromoteDialog kind="circuit" name={block.title.trim() || `Block ${plan.blocks.indexOf(block) + 1}`}
             sentence={`The stations, their setup, points and kit come with it${usually}. Who runs each station, who’s at it and the groups stay with tonight’s practice.`}
-            tick={onCreateDrill ? { stations: stationsToPromote(block, activeDrillNames) } : undefined}
+            tick={{ rows: onCreateDrill ? tickRowsFor(block, activeDrills) : [], fromLine: fromDrillsLine(block) }}
             tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
             manage={focusManage} onManageChanged={onFocusTagsChanged}
             busy={promoteBusy} error={promoteError}

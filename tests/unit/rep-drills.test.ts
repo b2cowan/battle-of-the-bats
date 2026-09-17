@@ -149,6 +149,13 @@ describe('promotion (D18) drops the people, keeps the shape', () => {
     assert.ok(!('note' in input));
   });
 
+  it('carries the kit in BOTH forms — the ids are the live storage, so a station rebuilt from the drill it made keeps them', () => {
+    const withIds = stationToDrillInput({ id: 's1', name: 'Ladder', equipmentTagIds: ['e1', 'e2'], equipment: ['Ladder'] });
+    assert.deepEqual(withIds.equipmentTagIds, ['e1', 'e2']);
+    assert.deepEqual(withIds.equipment, ['Ladder']);
+    assert.deepEqual(stationToDrillInput({ id: 's2', name: 'Bare' }).equipmentTagIds, []);
+  });
+
   it('drops anything that is not a uuid rather than passing it to a PostgREST filter', () => {
     assert.deepEqual(stationToDrillInput({ id: 's', name: 'X' }, ['not-a-uuid', '']).tagIds, []);
     assert.deepEqual(stationToDrillInput({ id: 's', name: 'X' }).tagIds, []);

@@ -739,7 +739,7 @@ details.call .body p{margin:0 0 6px}
   <button type="button" class="tab" role="tab" data-tab="qa2" aria-selected="false" aria-controls="tab-qa2">QA walk · 2<span class="st built">§190 complete</span></button>
   <button type="button" class="tab" role="tab" data-tab="stage3" aria-selected="false" aria-controls="tab-stage3">3 · Stations and the rotation<span class="st built">built 15 Sep</span><span class="st built">groups room ruled B · built 16 Sep</span><span class="st built">D13 · D14 ruled · built · walked 16 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa3" aria-selected="false" aria-controls="tab-qa3">QA walk · 3<span class="st built">§192 complete</span></button>
-  <button type="button" class="tab" role="tab" data-tab="stage4" aria-selected="false" aria-controls="tab-stage4">4 · The library<span class="st built">ruled 16 Sep · L1–L9</span><span class="st built">built on dev 16 Sep</span><span class="st built">columns follow-up · ruled T1–T4 + built on dev 17 Sep · §199 · walk owed (QA walk · 4, part J)</span><span class="st dim">station 6</span></button>
+  <button type="button" class="tab" role="tab" data-tab="stage4" aria-selected="false" aria-controls="tab-stage4">4 · The library<span class="st built">ruled 16 Sep · L1–L9</span><span class="st built">built on dev 16 Sep</span><span class="st built">columns follow-up · ruled T1–T4 + built on dev 17 Sep · §199 · walk owed (QA walk · 4, part J)</span><span class="st built">save dialog · S1–S3 ruled · built 17 Sep</span><span class="st dim">station 6</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa4" aria-selected="false" aria-controls="tab-qa4">QA walk · 4<span class="st">§195 owed</span></button>
 </nav>
 
@@ -4045,10 +4045,174 @@ details.call .body p{margin:0 0 6px}
     <div class="plain" style="margin-top:18px"><b>Not in this follow-up:</b> the picker sheet's rows and the docked panel (name order, tags beside the name — a picker is not a table); the template and circuit editors' meta lines; the help's three library articles gain one sentence each on the columns and the sort (`/docs` at build time); no migration — every figure is computed from the plans as today.</div>
   </section>
 
+  <section class="psec" id="s4-save">
+    <style>
+      /* The save-dialog follow-up (17 Sep) — the promote dialog at its real 520, a tick row that can
+         hold a second line, the rows under the master, and the phone at 390. */
+      #s4-save .promote{width:520px;max-width:520px;padding:18px 20px 16px}
+      #s4-save .promote .hpx{right:auto;left:8px;top:-9px}
+      #s4-save .promote .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+      #s4-save .promote .hd b.h{margin:0;font-size:17px;line-height:1.3}
+      #s4-save .promote .hd .x{color:#615A54;font-size:16px;line-height:1;padding-top:3px}
+      #s4-save .promote .flab{margin:0 0 6px}
+      #s4-save .chk{display:flex;align-items:flex-start;gap:8px;font-size:15px;line-height:1.45;color:#241E15;min-height:44px;padding:6px 0}
+      #s4-save .chk i{flex:none;margin-top:4px;width:16px;height:16px}
+      #s4-save .chk .tn{color:#8B847B}
+      #s4-save .chk i.mix{border-color:#57651E;position:relative}
+      #s4-save .chk i.mix::after{content:"";position:absolute;left:3px;right:3px;top:6px;height:2px;background:#57651E}
+      #s4-save .rows{display:flex;flex-direction:column;margin:-2px 0 2px 24px;position:relative}
+      #s4-save .rows .chk{min-height:36px;padding:2px 0;font-size:14.5px}
+      #s4-save .rows .chk i{margin-top:3px}
+      #s4-save .rows .al{color:#8B847B;font-size:13px}
+      #s4-save .fromline{font-size:13px;color:#8B847B;line-height:1.45;margin:0 0 10px 24px;padding-right:28px;position:relative}
+      #s4-save .btn2.dark{background:#D9F99D;border-color:#D9F99D;color:#241E15}
+      #s4-save .promote p{margin:4px 0 0;font-size:13.5px;color:#4A4235;line-height:1.5}
+      #s4-save .promote .ft{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+      #s4-save .rows>.mk.r,#s4-save .fromline>.mk.r{left:auto;right:-31px;top:-4px}
+      #s4-save .pf .stage{width:980px;padding:36px 30px;background:rgba(36,30,21,.35);display:flex;justify-content:center;gap:40px;align-items:flex-start}
+      #s4-save .pf .stage.wide{width:1140px}
+      #s4-save .pf.ph .stage{width:390px;padding:12px;display:block}
+      #s4-save .pf.ph .promote{width:100%;max-width:none;padding:16px 16px 14px}
+      #s4-save .pf.ph .rows .chk{min-height:44px;padding:4px 0}
+      #s4-save .pf.ph .rows .chk .al{display:block;margin-top:1px}
+      #s4-save .pf.ph .rows{margin-left:20px}
+      #s4-save .pf.ph .rows>.mk.r{right:-14px}
+    </style>
+    <h2>Follow-up on the build · “Save to my circuits” — which stations become drills (owner ask, 17 Sep) <span class="status built">RULED S1–S3 “build as drawn” · BUILT ON DEV 17 Sep — no migration · the walk is part K of “QA walk · 4” · ledger §200</span></h2>
+    <p class="intro">The owner, on the built dialog with a six-station block: <em>“can we give the option of which stations to save as drills? also, does it know if any of them already are drills so the user only saves what is new (maybe they pulled 3 new drills and created 3 new ones)?”</em> Read against the code: <b>it knows, in two ways, and says nothing about either.</b> A station placed from the library is never offered — it is a drill already and the saved circuit keeps pointing at it. A typed station whose <em>name</em> matches a drill the coach already has is also left out, so nothing is saved twice; with the tick on it is quietly pointed at that drill by name — keeping the words typed tonight, so the circuit's station claims to be a drill it does not read as. Both are silent: the names simply do not appear, and a coach who wrote six and sees three wonders where the rest went. And the tick is all or nothing — the owner's screenshot has three stations worth keeping and three called <em>test</em>; today the only way to keep the three is to save six. Three calls below, drawn on the dialog at its real 520 and on the phone.</p>
+
+    <div class="frametools"><span>Frames:</span><span class="sw" role="group" aria-label="Frame size"><button type="button" data-fit="fit" aria-pressed="true">Fit to window</button><button type="button" data-fit="true" aria-pressed="false">True size</button></span><span>· the dialog is 520 wide at any desktop width · phone 390</span></div>
+
+    <p class="framecap" data-short="The save · before">Before · the dialog as built (the owner's screenshot, at 100%)<span class="k">520 · six typed stations, none from the library · one tick for all six · the block behind it is L9's frame 86, unchanged</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="stage">
+        <div class="promote an" data-measure="s4-save-before"><span class="hpx" data-hpx></span><button type="button" class="mk r" aria-expanded="false" aria-label="Note 99" data-d="S1">99</button><div class="pop" hidden><b>All or nothing</b>The one tick saves every written station as a drill, or none. On this block three are worth keeping and three are called test. Today a coach keeps the three by saving six — three junk drills in the library, to retire later — or by opening each of the three, pressing Save to my drills… (three dialogs), and then saving the circuit with nothing linked. The count in the label (“its 6 written stations”) and the run of names are honest about what the tick would do; they just cannot be told which.</div>
+          <div class="hd"><b class="h">Save “Skills circuit” to your circuits</b><span class="x">✕</span></div>
+          <div class="flab">Tags — optional</div>
+          <div class="pick" style="margin-bottom:6px">Search your tags…</div>
+          <div class="chk"><i></i><span>Also save its 6 written stations as drills, with these tags <span class="tn">— Close control · Footwork ladder · Finishing · test · test 2 · test 3</span></span></div>
+          <p>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</p>
+          <div class="ft"><span class="btn2">Cancel</span><span class="btn2 dark">Save to my circuits</span></div>
+        </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn">99</span><span><b>All or nothing.</b> One tick, six drills or none; the three worth keeping cost three junk ones, or three more dialogs.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="The save · rows">After · the owner's block — the tick is on, and three of the six are unticked <span class="rec">recommended</span><span class="k">520 · S1 · one tick is still all of them; a row is one · the master shows a dash at three of six · a row is 36px on a desktop</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="stage">
+        <div class="promote an" data-measure="s4-save-rows"><span class="hpx" data-hpx></span>
+          <div class="hd"><b class="h">Save “Skills circuit” to your circuits</b><span class="x">✕</span></div>
+          <div class="flab">Tags — optional</div>
+          <div class="pick" style="margin-bottom:6px">Search your tags…</div>
+          <div class="chk"><i class="mix"></i><span>Also save its 6 written stations as drills, with these tags</span></div>
+          <div class="rows an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 100" data-d="S1">100</button><div class="pop" hidden><b>One tick is still all of them; a row is one</b>Off, the dialog is exactly today's — one tick and the run of names. Ticked, the run becomes a row per station, all on, and the coach unticks what is not worth keeping; the master shows a dash while some are off, and turns everything back on with one press. Nothing is asked of a coach who does not tick. The rows are the checkbox's honest shape — “which of these” is a checkbox's question, and a row has room for the one note a matched name needs (S2). A row is 36px on a desktop and 44 on a touch screen, the clock row's own rule; six rows are 216px here, so the dialog grows from 316 to 519 for the coach who opened them.</div>
+            <div class="chk"><i class="on"></i><span>Close control</span></div>
+            <div class="chk"><i class="on"></i><span>Footwork ladder</span></div>
+            <div class="chk"><i class="on"></i><span>Finishing</span></div>
+            <div class="chk"><i></i><span>test</span></div>
+            <div class="chk"><i></i><span>test 2</span></div>
+            <div class="chk"><i></i><span>test 3</span></div>
+          </div>
+          <p>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</p>
+          <div class="ft"><span class="btn2">Cancel</span><span class="btn2 dark">Save to my circuits</span></div>
+        </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">100</span><span><b>One tick is still all of them; a row is one.</b> Ticked, the names become rows, all on; untick the three called test and the master shows a dash. Off by default, and the shut dialog is today's.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="The save · mixed block">After · a block that pulled three from the library and typed three, one of them a name already in the library — as it opens, and once ticked <span class="rec">recommended</span><span class="k">520 × 2 · S2 · S3 · left: nothing touched, one quiet line says what stays linked · right: ticked — Cone weave is shown, not hidden</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf" style="width:1140px"><div class="stage wide">
+        <div class="promote an" data-measure="s4-save-mixed-shut"><span class="hpx" data-hpx></span>
+          <div class="hd"><b class="h">Save “Skills circuit” to your circuits</b><span class="x">✕</span></div>
+          <div class="flab">Tags — optional</div>
+          <div class="pick" style="margin-bottom:6px">Search your tags…</div>
+          <div class="chk"><i></i><span>Also save its 3 written stations as drills, with these tags <span class="tn">— Turn and shoot · Wall passes · Cone weave</span></span></div>
+          <div class="fromline an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 101" data-d="S3">101</button><div class="pop" hidden><b>It says what it already knew</b>Footwork ladder, Close control and Finishing were placed from the library. Today they are simply absent from the tick and nothing says why — the count reads “its 3 written stations” under a block the coach can see has six. One muted line, no control: they stay linked, as they always did, and the count now has its reason beside it. Absent when every station was typed. When every station came from a drill the tick is absent today and stays absent; the line then reads alone — “All 6 stations came from your drills and stay linked.”</div>Footwork ladder, Close control and Finishing came from your drills and stay linked.</div>
+          <p>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</p>
+          <div class="ft"><span class="btn2">Cancel</span><span class="btn2 dark">Save to my circuits</span></div>
+        </div>
+        <div class="promote an" data-measure="s4-save-mixed-open"><span class="hpx" data-hpx></span>
+          <div class="hd"><b class="h">Save “Skills circuit” to your circuits</b><span class="x">✕</span></div>
+          <div class="flab">Tags — optional</div>
+          <div class="pick" style="margin-bottom:6px">Search your tags…</div>
+          <div class="chk"><i class="on"></i><span>Also save its 3 written stations as drills, with these tags</span></div>
+          <div class="rows an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 102" data-d="S2">102</button><div class="pop" hidden><b>A name you already have — shown, not hidden</b>Cone weave was typed tonight; a drill called Cone weave is already in the library. Today it is left out of the tick silently, and — with the tick on — the saved circuit points that station at the library drill by name while keeping tonight's words, so next time the circuit lands the station is read-only, labelled as the drill, and reads something the drill does not say. Now it is a row with one note. Ticked (the default — it is what the tick asked for, and what a save that failed midway needs on its retry): the circuit's station becomes your Cone weave drill — its words, its tags. Unticked: tonight's words stay as a plain station in the circuit, no link. Tonight's block is untouched either way.</div>
+            <div class="chk"><i class="on"></i><span>Turn and shoot</span></div>
+            <div class="chk"><i class="on"></i><span>Wall passes</span></div>
+            <div class="chk"><i class="on"></i><span>Cone weave <span class="al">· already in your drills — the circuit uses that one, with its words</span></span></div>
+          </div>
+          <div class="fromline">Footwork ladder, Close control and Finishing came from your drills and stay linked.</div>
+          <p>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</p>
+          <div class="ft"><span class="btn2">Cancel</span><span class="btn2 dark">Save to my circuits</span></div>
+        </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">101</span><span><b>It says what it already knew.</b> The three that came from the library are named in one muted line and stay linked; absent when there are none.</span></li>
+      <li><span class="nn ok">102</span><span><b>A name you already have — shown, not hidden.</b> Cone weave is a row with a note: ticked, the circuit's station becomes that drill with its words; unticked, tonight's words stay as a plain station.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="The save · phone">After · the phone — the owner's block, ticked, three off<span class="k">390 · S1 · rows at 44 · the sheet scrolls under the buttons as every dialog does</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf ph" style="min-height:0"><div class="stage">
+        <div class="promote an" data-measure="s4-save-phone"><span class="hpx" data-hpx></span>
+          <div class="hd"><b class="h">Save “Skills circuit” to your circuits</b><span class="x">✕</span></div>
+          <div class="flab">Tags — optional</div>
+          <div class="pick" style="margin-bottom:6px;min-height:44px">Search your tags…</div>
+          <div class="chk"><i class="mix"></i><span>Also save its 6 written stations as drills, with these tags</span></div>
+          <div class="rows an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 103" data-d="S1">103</button><div class="pop" hidden><b>The phone</b>The same dialog at 390 — the rows at the 44px floor, so six are 264px; with the master, the tags and the sentence the dialog is 604px tall and the sheet scrolls under the buttons, as every dialog in the portal does. A matched name's note wraps under its name (frame 102's row, on a phone).</div>
+            <div class="chk"><i class="on"></i><span>Close control</span></div>
+            <div class="chk"><i class="on"></i><span>Footwork ladder</span></div>
+            <div class="chk"><i class="on"></i><span>Finishing</span></div>
+            <div class="chk"><i></i><span>test</span></div>
+            <div class="chk"><i></i><span>test 2</span></div>
+            <div class="chk"><i></i><span>test 3</span></div>
+          </div>
+          <p>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</p>
+          <div class="ft"><span class="btn2" style="min-height:44px;display:inline-flex;align-items:center">Cancel</span><span class="btn2 dark" style="min-height:44px;display:inline-flex;align-items:center">Save to my circuits</span></div>
+        </div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">103</span><span><b>The phone.</b> Rows at 44; the dialog is 604 tall with six rows open and scrolls under its buttons.</span></li>
+    </ol>
+
+    <h2 style="margin-top:28px">The three calls</h2>
+
+    <div class="ask" data-q="S1" data-kind="build">
+      <div class="qn">S1 · which stations</div>
+      <h3>Once the tick is on, the names beneath it become rows a coach can untick. One tick still means all of them; off by default, exactly as today.</h3>
+      <p><b>Recommendation: yes, as drawn (frames 100 · 103).</b> The owner's screenshot is the case: three keepers, three called test, and today the only way to keep the three is to save six. The dialog was built to ask one optional question, on the principle that a coach at 9 p.m. will not answer more — and that principle is kept: the fast path is untouched (one tick, everything), nothing is asked of a coach who does not tick, and the rows appear only for the one who did. A row is a checkbox because “which of these” is a checkbox's question; a row is 36px on a desktop and 44 on a touch screen, the clock row's rule. <b>The alternative:</b> the names as toggling chips in the run, so nothing changes height. Compact, and not recommended — a chip is the product's filter idiom, six of them wrapping read as a filter bar, and a matched name (S2) has no room on a chip for its note.</p>
+      <div class="rides"><b>Rides:</b> the save creates only the ticked stations as drills and points the circuit's stations at those; the master is a tri-state checkbox (on · off · some); the help's circuits article reads “each station you tick” where it reads “each station you wrote yourself”. No migration.</div>
+    </div>
+
+    <div class="ask" data-q="S2" data-kind="build">
+      <div class="qn">S2 · a typed name you already have</div>
+      <h3>A typed station whose name matches a drill in the library is shown as a row with a note — “already in your drills — the circuit uses that one, with its words” — ticked by default; unticked, tonight's words stay as a plain station.</h3>
+      <p><b>Recommendation: yes, as drawn (frame 102).</b> Today that station is left out of the tick silently and, with the tick on, the saved circuit points it at the library drill by name while keeping the words typed tonight — a station that claims to be a drill it does not read as, which is the exact thing the drill rule exists to prevent. Shown as a row, the coach decides: ticked, the circuit's station <em>is</em> that drill (its words, its tags), which is what the tick asked for and what a retried save needs (a save that failed midway has already created some of the drills, so on the retry they are “already in your drills”); unticked, the words stay as a plain station, no link. Tonight's block is untouched either way. <b>The alternative:</b> leave it silent, as today. Cheaper, and not recommended — it hides the one decision in the dialog a coach would want to make, and keeps the mismatch.</p>
+      <div class="rides"><b>Rides:</b> linking a station to an existing drill takes the drill's words and tags, not only its id (a small fix in the save); the retry path is unchanged; the help's circuits article gains the sentence.</div>
+    </div>
+
+    <div class="ask" data-q="S3" data-kind="build">
+      <div class="qn">S3 · stations that came from your drills</div>
+      <h3>One quiet line under the tick names the stations that came from your drills and says they stay linked. Absent when every station was typed.</h3>
+      <p><b>Recommendation: yes, as drawn (frame 101).</b> It is the answer to “does it know” — one muted sentence, no control, and the count in the tick's label (“its 3 written stations”) gets its reason beside it instead of leaving three names to vanish. When every station came from a drill the tick is absent today and stays absent; the line then reads alone. <b>The alternative:</b> nothing, as today — the block already shows a drill-placed station as one, so the coach could work it out. Not recommended: the dialog is where they are looking at this moment, and the missing names are the thing that surprises.</p>
+      <div class="rides"><b>Rides:</b> nothing beyond the dialog's own words.</div>
+    </div>
+
+    <div class="plain" style="margin-top:18px"><b>Not in this follow-up:</b> “Save to my drills…” on a plain block (no stations, no tick — one question, as built); “Save as template…” above the sheet; the circuit editor; the docked panel. No migration — the dialog reads what the block and the library already hold.</div>
+  </section>
+
   <section class="psec">
     <div class="summary" style="padding-top:0">
       <h2>Your decisions on this stage, to paste back</h2>
-      <p>Collects L1–L9 (printed as D1–D9) and the columns follow-up’s T1–T4 with your notes into one block of text — L1–L9 were ruled 16 Sep; T1–T4 (17 Sep) are the ones to rule.</p>
+      <p>Collects L1–L9 (printed as D1–D9) the columns follow-up’s T1–T4 and the save dialog’s S1–S3 with your notes into one block of text — L1–L9 were ruled 16 Sep; T1–T4 and S1–S3 on 17 Sep — all built.</p>
       <button type="button" id="buildSummaryStage4">Build the stage summary</button>
       <textarea id="summaryOutStage4" hidden aria-label="Stage summary to paste back"></textarea>
     </div>
@@ -4883,9 +5047,9 @@ details.call .body p{margin:0 0 6px}
 
 <div class="prop" id="tab-qa4" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">QA walk · stage 4 · The library <span class="status built">built on dev 16 Sep · committed 34bb88f5 · ledger §195 · walk owed</span> <span class="status built">columns follow-up built 17 Sep · ledger §199 · part J</span> <span class="status">one migration — circuits (302, applied to dev; prod-owed)</span></div>
+    <div class="eyebrow">QA walk · stage 4 · The library <span class="status built">built on dev 16 Sep · committed 34bb88f5 · ledger §195 · walk owed</span> <span class="status built">columns follow-up built 17 Sep · ledger §199 · part J</span> <span class="status built">save dialog built 17 Sep · ledger §200 · part K</span> <span class="status">one migration — circuits (302, applied to dev; prod-owed)</span></div>
     <h1>The walk — pass it</h1>
-    <p class="lede">Forty steps in ten parts, on the product as built (part J, the columns, joined on 17 Sep). Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are not</strong> — the probe practice re-anchors to today, so its clock times drift; the drill's name, the block titles, the tab labels and the sentences are the things to check. The fixture drifts under other sessions' hands: on 16 Sep the Skills circuit held <b>six</b> stations (three probe-typed "test" ones beside the seeded three) and the Oct 27 practice held one untitled block with one station — read every identity from the screen.</p>
+    <p class="lede">Forty-six steps in eleven parts, on the product as built (parts J, the columns, and K, the save dialog’s stations, joined on 17 Sep). Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are not</strong> — the probe practice re-anchors to today, so its clock times drift; the drill's name, the block titles, the tab labels and the sentences are the things to check. The fixture drifts under other sessions' hands: on 16 Sep the Skills circuit held <b>six</b> stations (three probe-typed "test" ones beside the seeded three) and the Oct 27 practice held one untitled block with one station — read every identity from the screen.</p>
     <div class="plain" style="margin-top:14px"><b>What this stage changed, in one breath.</b> The two library tabs are tables and a third tab, <b>Circuits</b>, joined them; the row is the door; Retire moved into the drill's sheet and the editors' headers; a written block saves to your drills with its minutes and a block with stations saves to your circuits (two optional questions); the library docks beside the plan from 1440 up and a row drags into a gap or onto the open block's stations, blocks drag by their gutter — <em>buttons everywhere; drag as an addition on desktop, with a mouse — never the only way</em>; an empty template is not offered as a start; the provenance line is one sentence; the hub's past list has one quiet door.</div>
   </header>
 
@@ -4940,8 +5104,8 @@ details.call .body p{margin:0 0 6px}
       <h3>E · A circuit can be kept — two optional questions (L9)</h3>
       <p class="wwho">Head coach · 1440 · <b>UAT probe practice</b> → open <b>Skills circuit</b>. E5 tidies up.</p>
       <div class="wstep" data-w="E1"><div class="wn">E1</div><div class="wbody"><h4>The word follows the shape</h4><p>The circuit's doors line ends in <b>Save to my circuits…</b> — the same quiet door Warm-up showed, a different word because the block has stations.</p></div></div>
-      <div class="wstep" data-w="E2"><div class="wn">E2</div><div class="wbody"><h4>Tags, and the tick — with the stations named and counted</h4><p>Press it: “Save “Skills circuit” to your circuits” · <b>Tags — optional</b> · a tick reading <b>Also save its N written stations as drills — Close control · Footwork ladder · Finishing …</b> (N = the stations the coach typed; a station picked from a drill is not offered; one already in the library by name is left out and not counted — and, ticked, that station is pointed at the drill the library already holds) · the sentence <b>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</b> Escape closes it and focus returns to the door.</p></div></div>
-      <div class="wstep" data-w="E3"><div class="wn">E3</div><div class="wbody"><h4>Save with the tick — the drills first, then the circuit points at them</h4><p>Open it again, <b>tick</b> the box, <b>Save to my circuits</b>. Tonight's block is untouched: its columns still open as written stations, none reads “From your drills”. Practice plans → <b>Drills</b>: one new row per written station (Close control, Footwork ladder, Finishing …), each <b>Not in a plan yet</b>. <b>Circuits</b>: one row, <b>Skills circuit</b>, its line the stations' names in order then <b>rotates every 15 min</b>, <b>45 min</b> under Usually, <b>Not started a plan yet</b> under Started.</p></div></div>
+      <div class="wstep" data-w="E2"><div class="wn">E2</div><div class="wbody"><h4>Tags, and the tick — with the stations named and counted</h4><p>Press it: “Save “Skills circuit” to your circuits” · <b>Tags — optional</b> · a tick reading <b>Also save its N written stations as drills, with these tags — Close control · Footwork ladder · Finishing …</b> (N = the stations the coach typed, one per distinct name; a station picked from a drill is not in the run — if the block holds one, a muted line under the tick names it: <b>… came from your drills and stay linked.</b>) · the sentence <b>The stations, their setup, points and kit come with it, and 45 min as how long it usually runs. Who runs each station, who's at it and the groups stay with tonight's practice.</b> Untouched, this is the whole dialog — no rows. Escape closes it and focus returns to the door.</p></div></div>
+      <div class="wstep" data-w="E3"><div class="wn">E3</div><div class="wbody"><h4>Save with the tick — the drills first, then the circuit points at them</h4><p>Open it again, <b>tick</b> the box: the run of names becomes a <b>row per station, each ticked</b> (part K walks the rows). Leave them all on and press <b>Save to my circuits</b>. Tonight's block is untouched: its columns still open as written stations, none reads “From your drills”. Practice plans → <b>Drills</b>: one new row per written station (Close control, Footwork ladder, Finishing …), each <b>Not in a plan yet</b>. <b>Circuits</b>: one row, <b>Skills circuit</b>, its line the stations' names in order then <b>rotates every 15 min</b>, <b>45 min</b> under Usually, <b>Not started a plan yet</b> under Started.</p></div></div>
       <div class="wstep" data-w="E4"><div class="wn">E4</div><div class="wbody"><h4>The circuit's editor — the block alone on a sheet</h4><p>Click the row: a page titled <b>Skills circuit</b>, <b>← Circuits</b> as the way back, <b>Retire this circuit</b> in the header. The sheet: a facts line (“45 min · N stations · Not started a plan yet”), Name and Tags, one sentence about what a circuit keeps, then the block itself open — its title box, Minutes (no “Rest of practice” chip: a circuit has no practice to fill), the two lines, the rotation strip, the station columns each opening the station modal, “Groups are drawn on the practice itself — a circuit keeps the shape, not the players.” No clock in the gutter (just “45 min”), no goal line, no “+ Add a block”, no Staff, no Players. Change the interval to 10 and back: <b>Saved</b> floats at the foot.</p></div></div>
       <div class="wstep" data-w="E5"><div class="wn">E5</div><div class="wbody"><h4>Save again without the tick — and tidy</h4><p>Back on the probe practice, press <b>Save to my circuits…</b> on Skills circuit again: the name is taken (“You already have a circuit called “Skills circuit””). Rename the block's title to <b>Skills circuit 2</b>, save WITHOUT the tick: the Circuits tab shows both; open <b>Skills circuit 2</b>'s editor — its stations read as written stations, none “from your drills”. Put the block's title back to <b>Skills circuit</b>. Retire <b>Skills circuit 2</b> from its header and the tick's drills from their sheets (leave <b>Skills circuit</b> for Part G).</p></div></div>
     </div>
@@ -4998,6 +5162,17 @@ details.call .body p{margin:0 0 6px}
       <div class="wstep" data-w="J6"><div class="wn">J6</div><div class="wbody"><h4>Two stations from one drill are still one plan — then put it back</h4><p>Add <b>Probe drill</b> to the same block a second time (<b>+ Add a station</b> → From your drills). On <b>Drills</b> it still reads <b>1 plan</b>, never “2 plans” — a practice counts once however many of its stations came from the drill. Then remove both stations (the block's own words come home — D13's reverse), and the row is back to its two dashes.</p></div></div>
       <div class="wstep" data-w="J7"><div class="wn">J7</div><div class="wbody"><h4>768 — the headings are the control, and they clear the tap floor</h4><p>At 768 the table keeps its five headings and there is <b>no Sort control</b> beside the Tags filter. Tap <b>Plans</b>: it sorts. Each heading's tap box is at least 44px tall (the whole heading is the button — inspect one if in doubt). Nothing scrolls sideways.</p></div></div>
       <div class="wstep" data-w="J8"><div class="wn">J8</div><div class="wbody"><h4>390 — a Sort menu beside Tags; the card keeps its words</h4><p>At 390 the table is cards and a <b>⇅ Sort</b> pill sits beside <b>Tags</b>. Open it: <b>Name · Usually · Plans · Last planned</b>. Pick <b>Plans</b>: the pill now reads <b>Sort · Plans</b>; open it again and the ticked row says <b>Most first · tap again to turn it round</b>. A card's facts line still reads in words — <b>20 min · Not in a plan yet</b>, or, with J5 in place, <b>20 min · In 1 plan · last &lt;date&gt;</b> — never a bare dash. Escape closes the menu and focus returns to the pill.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="K">
+      <h3>K · The save's stations — rows under the tick, a name you already have, the from-drills line (S1–S3, 17 Sep)</h3>
+      <p class="wwho">Head coach · 1440, then 390 · <b>UAT probe practice</b> → open <b>Skills circuit</b> (its stations as typed — if E3 left drills behind, retire them first so the names are free). K6 tidies up.</p>
+      <div class="wstep" data-w="K1"><div class="wn">K1</div><div class="wbody"><h4>One tick is still all of them; a row is one</h4><p>Press <b>Save to my circuits…</b>, tick <b>Also save its N written stations as drills, with these tags</b>: the run of names after the label goes and a <b>row per typed station</b> appears under it, indented, each with its own tick, <b>all on</b>. Untick two of them: the master's box shows a <b>dash</b> (some on, some off). Press the master: every row turns on. Press it again: every row turns off, and the rows stay where they are (nothing collapses under the cursor). Each row is about 36px tall at 1440.</p></div></div>
+      <div class="wstep" data-w="K2"><div class="wn">K2</div><div class="wbody"><h4>Save with two unticked — only the ticked ones become drills</h4><p>Tick the master, untick the <b>last two</b> rows, press <b>Save to my circuits</b>. Practice plans → <b>Drills</b>: a new row for each <em>ticked</em> station and <b>none</b> for the two you unticked. <b>Circuits</b> → open <b>Skills circuit</b>'s editor: the ticked stations' columns read <b>From your drills</b> (read-only, the drill's words); the two unticked ones open as plain written stations. Tonight's block on the practice is untouched either way.</p></div></div>
+      <div class="wstep" data-w="K3"><div class="wn">K3</div><div class="wbody"><h4>A name you already have is shown, not hidden — and the circuit uses that drill's words</h4><p>On <b>Drills</b>, open one of the drills K2 just made (say <b>Close control</b>) and change its <b>What you're doing</b> to <b>THE DRILL SAYS THIS</b>; save. Retire <b>Skills circuit</b> from its editor's header (its name must be free). Back on the practice, open <b>Skills circuit</b> → <b>Save to my circuits…</b> → tick the master: the <b>Close control</b> row carries a muted note — <b>already in your drills — the circuit uses that one, with its words</b> — and is ticked like the others; the rows without a library drill carry no note. Save. <b>Circuits</b> → the new <b>Skills circuit</b> → its Close control column reads <b>From your drills</b> and opens to <b>THE DRILL SAYS THIS</b>, not tonight's words. Tonight's block still reads tonight's words.</p></div></div>
+      <div class="wstep" data-w="K4"><div class="wn">K4</div><div class="wbody"><h4>Unticked, a matched name stays as typed — no link</h4><p>Retire that circuit again. Save once more with the master ticked and <b>only the Close control row unticked</b>: in the new circuit's editor, Close control opens as a <b>plain written station with tonight's words</b> and no “From your drills”; the others read From your drills. No second “Close control” drill appeared on <b>Drills</b> (the name is taken, and nothing tried to take it).</p></div></div>
+      <div class="wstep" data-w="K5"><div class="wn">K5</div><div class="wbody"><h4>The from-drills line says what it already knew</h4><p>On the practice, open <b>Skills circuit</b>, <b>+ Add a station</b> → <b>From your drills</b> → add <b>Probe drill</b> (or any library drill). Press <b>Save to my circuits…</b>: under the tick a muted line reads <b>Probe drill came from your drills and stays linked.</b> — and Probe drill is <em>not</em> in the tick's run or its rows. Cancel; remove that station (the block is back as it was). Open a block whose every station came from drills, if the fixture has one: no tick at all, and the line reads <b>All N stations came from your drills and stay linked.</b></p></div></div>
+      <div class="wstep" data-w="K6"><div class="wn">K6</div><div class="wbody"><h4>390 — rows at the tap floor; then tidy</h4><p>At 390 open the dialog and tick the master: each row is at least <b>44px</b> tall, the note on a matched name <b>wraps under its name</b> rather than running on, and the sheet <b>scrolls under the Cancel · Save buttons</b>. Cancel. Tidy: retire every circuit and drill this part made (Retire from the editors' headers and the drills' sheets), and put <b>Close control</b>'s words back if it survives.</p></div></div>
     </div>
 
     <div class="summary" style="padding-top:28px">
@@ -5275,7 +5450,7 @@ details.call .body p{margin:0 0 6px}
   // ── decisions ↔ markers: every marker carries its decision's tag; every decision lists where it is drawn ──
   var DTITLE={};
   Array.prototype.forEach.call(document.querySelectorAll('.prop .ask[data-q]'),function(a){a.id='ask-'+a.getAttribute('data-q');DTITLE[a.getAttribute('data-q')]=a.querySelector('h3').textContent.trim()});
-  function dLabel(q){return q.charAt(0)==='T'?q:'D'+q.slice(1)}
+  function dLabel(q){return (q.charAt(0)==='T'||q.charAt(0)==='S')?q:'D'+q.slice(1)}
   function tabOf(el){var p=el.closest('.prop, .shell');if(!p)return null;for(var k in panels){if(panels[k]===p.id)return k}return null}
   function goToAsk(q){
     var a=document.getElementById('ask-'+q);if(!a)return;

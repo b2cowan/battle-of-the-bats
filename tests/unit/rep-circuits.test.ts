@@ -1,20 +1,28 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  blockToCircuitShape, circuitLine, circuitToBlock, countCircuitUses, pointStationsAtDrills,
-  stationsToPromote, validateCircuitInput, writtenStationsOf,
+  blockToCircuitShape, circuitLine, circuitToBlock, countCircuitUses, fromDrillsLine, pointStationsAtDrills,
+  tickRowsFor, validateCircuitInput, writtenStationsOf,
 } from '../../lib/rep-circuits.ts';
 import { blockForTemplate, planToTemplateShape, templateBlocksLine } from '../../lib/rep-plan-templates.ts';
 import { copyPracticePlanForReuse, sanitizePracticePlan } from '../../lib/rep-practice-plan.ts';
-import type { PracticePlanBlock } from '../../lib/types.ts';
+import { stationToDrillInput } from '../../lib/rep-drills.ts';
+import type { PracticePlanBlock, RepTeamDrill } from '../../lib/types.ts';
+
+/** A library drill for the tick's tests — active, the team's own, bare unless said otherwise. */
+const drill = (over: Partial<RepTeamDrill>): RepTeamDrill => ({
+  id: 'd', orgId: 'o', teamId: 't', name: 'Drill', tags: [], usualMinutes: null, description: null, goal: null,
+  coachingPoints: [], setup: null, equipment: [], equipmentTagIds: [], isActive: true, sortOrder: 0,
+  createdBy: null, createdAt: '2026-09-17T00:00:00Z', ...over,
+} as RepTeamDrill);
 
 /**
  * Circuits — the third size of reusable thing (practices re-evaluation stage 4, owner ruling L9,
  * 2026-09-16). The rules worth a test each are the ones that fail SILENTLY:
  *   · a circuit carries NO PEOPLE — and no hand-arranged grid (D14), which names people by id;
  *   · placing one must PRESERVE every station's drill provenance (the template's rule);
- *   · the tick creates drills FIRST and the saved shape points at them by NAME, never duplicating
- *     a drill the library already holds;
+ *   · the tick creates drills FIRST and the saved shape points the ticked STATIONS at them (by
+ *     station id — a same-named twin is left as typed), never duplicating a drill the library holds;
  *   · the count says PLANS, once per plan, however many times a circuit sits in one.
  */
 
@@ -112,28 +120,90 @@ describe('circuitToBlock — placed: fresh ids, provenance, empty groups, fully 
   });
 });
 
-describe('the tick — written stations as drills, created first, pointed at by name', () => {
+describe('the tick — written stations as drills, created first, the ticked stations pointed at them', () => {
   it('writtenStationsOf: named, not drill-backed', () => {
     const names = writtenStationsOf(circuitBlock() as unknown as PracticePlanBlock).map(s => s.name);
     assert.deepEqual(names, ['Footwork ladder', 'Finishing']);
   });
 
-  it('stationsToPromote skips a same-name library drill (case-insensitively) and a duplicate name', () => {
-    const block = circuitBlock({ stations: [{ id: 's1', name: 'Ladder' }, { id: 's2', name: 'ladder' }, { id: 's3', name: 'Finishing' }] }) as unknown as PracticePlanBlock;
-    assert.deepEqual(stationsToPromote(block, ['FINISHING ']).map(s => s.name), ['Ladder']);
+  it('tickRowsFor: one row per distinct typed name; a same-name library drill is SHOWN on its row, not hidden (S2)', () => {
+    const block = circuitBlock({ stations: [{ id: 's1', name: 'Ladder' }, { id: 's2', name: 'ladder' }, { id: 's3', name: 'Finishing' }, { id: 's4', name: 'Close control', drillId: 'd-close' }] }) as unknown as PracticePlanBlock;
+    const rows = tickRowsFor(block, [drill({ id: 'd-fin', name: 'FINISHING ' }), drill({ id: 'd-old', name: 'Ladder', isActive: false })]);
+    assert.deepEqual(rows.map(r => [r.station.id, r.existing?.id ?? null]), [['s1', null], ['s3', 'd-fin']],
+      'the duplicate name shares the first row; the drill-placed station is not a row; a retired drill does not count as held');
   });
 
-  it('pointStationsAtDrills rewrites drillId by NAME and snapshots the tag names; others untouched', () => {
+  it('tickRowsFor: when the team\'s own drill and a club-shared one share a name, the team\'s own is the match — whichever order the list carries them', () => {
+    const block = circuitBlock({ stations: [{ id: 's1', name: 'Ladder' }, { id: 's2', name: 'Cones' }] }) as unknown as PracticePlanBlock;
+    const club = drill({ id: 'd-club', name: 'Ladder', teamId: null });
+    const own = drill({ id: 'd-own', name: 'ladder' });
+    assert.equal(tickRowsFor(block, [club, own])[0].existing?.id, 'd-own');
+    assert.equal(tickRowsFor(block, [own, club])[0].existing?.id, 'd-own');
+    assert.equal(tickRowsFor(block, [club])[0].existing?.id, 'd-club', 'a club drill alone still matches');
+  });
+
+  it('fromDrillsLine (S3): null when every station was typed; names the drill-placed ones; "All N" when none was typed', () => {
+    const typed = circuitBlock({ stations: [{ id: 's1', name: 'A' }, { id: 's2', name: 'B' }] }) as unknown as PracticePlanBlock;
+    assert.equal(fromDrillsLine(typed), null);
+    assert.equal(fromDrillsLine(circuitBlock() as unknown as PracticePlanBlock), 'Close control came from your drills and stays linked.');
+    const three = circuitBlock({ stations: [
+      { id: 's1', name: 'Footwork ladder', drillId: 'd1' }, { id: 's2', name: 'Close control', drillId: 'd2' },
+      { id: 's3', name: 'Finishing', drillId: 'd3' }, { id: 's4', name: 'Turn and shoot' },
+    ] }) as unknown as PracticePlanBlock;
+    assert.equal(fromDrillsLine(three), 'Footwork ladder, Close control and Finishing came from your drills and stay linked.');
+    const all = circuitBlock({ stations: [{ id: 's1', name: 'A', drillId: 'd1' }, { id: 's2', name: 'B', drillId: 'd2' }] }) as unknown as PracticePlanBlock;
+    assert.equal(fromDrillsLine(all), 'All 2 stations came from your drills and stay linked.');
+  });
+
+  it('pointStationsAtDrills rebuilds a pointed station FROM the drill (its words, its tags, its id kept); others untouched', () => {
     const shape = blockToCircuitShape(circuitBlock());
     const pointed = pointStationsAtDrills(shape, new Map([
-      ['footwork ladder', { id: 'd-ladder', tagNames: ['Skills'] }],
-      ['finishing', { id: 'd-fin', tagNames: [] }],
+      ['s1', drill({ id: 'd-ladder', name: 'Footwork ladder', tags: [{ id: 't1', name: 'Skills' } as never], setup: 'THE DRILL SAYS one ladder', coachingPoints: ['Quick feet'] })],
+      ['s3', drill({ id: 'd-fin', name: 'Finishing', description: 'From the top of the area' })],
     ]));
-    assert.equal(pointed.stations?.[0].drillId, 'd-ladder');
-    assert.deepEqual(pointed.stations?.[0].drillTags, ['Skills']);
+    const ladder = pointed.stations?.[0];
+    assert.equal(ladder?.id, 's1', 'the station keeps its id');
+    assert.equal(ladder?.drillId, 'd-ladder');
+    assert.deepEqual(ladder?.drillTags, ['Skills']);
+    assert.equal(ladder?.setup, 'THE DRILL SAYS one ladder', 'the drill\'s words, not tonight\'s under the same name');
+    assert.deepEqual(ladder?.coachingPoints, ['Quick feet']);
     assert.equal(pointed.stations?.[1].drillId, 'd-close', 'an already drill-backed station is left alone');
+    assert.equal(pointed.stations?.[1].description, 'From the drill');
     assert.equal(pointed.stations?.[2].drillId, 'd-fin');
+    assert.equal(pointed.stations?.[2].description, 'From the top of the area');
     assert.equal(pointed.stations?.[2].drillTags, undefined);
+    assert.equal(pointed.stations?.[2].equipment, undefined, 'the typed station\'s kit is not smuggled onto the drill');
+  });
+
+  it('pointStationsAtDrills leaves an unticked typed station exactly as typed — a station the map does not hold', () => {
+    const shape = blockToCircuitShape(circuitBlock());
+    const pointed = pointStationsAtDrills(shape, new Map([['s3', drill({ id: 'd-fin', name: 'Finishing' })]]));
+    assert.equal(pointed.stations?.[0].drillId, undefined);
+    assert.equal(pointed.stations?.[0].setup, 'Two ladders');
+  });
+
+  it('a same-named TWIN of a ticked row is left as typed — the link is by station, never by name (/review 2026-09-17)', () => {
+    const shape = blockToCircuitShape(circuitBlock({ stations: [
+      { id: 's1', name: 'Passing', setup: 'Pairs, ten metres' },
+      { id: 's2', name: 'passing', setup: 'Threes, one touch — its OWN words' },
+    ] }));
+    const rows = tickRowsFor(shape, []);
+    assert.equal(rows.length, 1, 'one row per name');
+    const pointed = pointStationsAtDrills(shape, new Map([[rows[0].station.id, drill({ id: 'd-pass', name: 'Passing', setup: 'Pairs, ten metres' })]]));
+    assert.equal(pointed.stations?.[0].drillId, 'd-pass');
+    assert.equal(pointed.stations?.[1].drillId, undefined, 'the twin is not linked');
+    assert.equal(pointed.stations?.[1].setup, 'Threes, one touch — its OWN words', 'and keeps its own words');
+  });
+
+  it('a station rebuilt from the drill it made keeps its kit ids — the round trip through stationToDrillInput', () => {
+    const shape = blockToCircuitShape(circuitBlock({ stations: [
+      { id: 's1', name: 'Ladder', equipmentTagIds: ['e1'], equipment: ['Ladder'] }, { id: 's2', name: 'Cones' },
+    ] }));
+    const input = stationToDrillInput(shape.stations![0]);
+    const created = drill({ id: 'd-ladder', name: input.name, equipment: input.equipment ?? [], equipmentTagIds: input.equipmentTagIds ?? [] });
+    const pointed = pointStationsAtDrills(shape, new Map([['s1', created]]));
+    assert.deepEqual(pointed.stations?.[0].equipmentTagIds, ['e1']);
+    assert.deepEqual(pointed.stations?.[0].equipment, ['Ladder']);
   });
 });
 

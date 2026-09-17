@@ -246,6 +246,11 @@ export function stationToDrillInput(station: PracticeStation, tagIds?: string[] 
     coachingPoints: station.coachingPoints ?? [],
     setup: station.setup ?? null,
     equipment: station.equipment ?? [],
+    // BOTH kit forms, as `drillToStation` reads them back: the ids are the live storage (mig 272)
+    // and the names the caller resolved cover a pre-library station. Without the ids a circuit's
+    // station rebuilt from the drill it just made (`pointStationsAtDrills`) would come back holding
+    // only a name snapshot of kit it had held by id a moment before (`/review` 2026-09-17).
+    equipmentTagIds: station.equipmentTagIds ?? [],
   };
 }
 

@@ -10421,7 +10421,22 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppSheetPair > .ppDoc { flex: 1 1 auto; min-width: 0; }
 .ppSheetPairDocked { flex-direction: row; align-items: flex-start; gap: 20px; }
 .ppSheetPairDocked > .ppDoc { flex: 1 1 816px; min-width: 0; }
-.ppLibraryHost { flex: 0 0 320px; width: 320px; min-width: 0; position: sticky; top: 0.75rem; align-self: flex-start; max-height: calc(100vh - 1.5rem); display: flex; }
+/* ⚠ `top: 0.75rem` ALONE STUCK THE PANEL BEHIND THE PORTAL'S OWN FIXED CHROME, not just close to
+   the top of the viewport: this shell has a fixed top strip AND a sticky per-team masthead above
+   any page's content, and every OTHER sticky element that pins below both of them clears the same
+   two live-measured variables (`.teamHeader`, `.sidebar`, `.coachTabBarSticky` above) —
+   `--coach-topstrip-top` (the fixed strip) plus `--coach-header-h` (the masthead's own measured
+   height). A bare `0.75rem` ignored both, so once the page scrolled the panel's head and toggle
+   sat UNDER that chrome rather than below it — only whatever fell past the chrome's bottom edge
+   (the search bar downward) stayed visible. `max-height` clears the same two so the panel's own
+   internal scroll still fits the room actually left in the viewport. */
+.ppLibraryHost {
+  flex: 0 0 320px; width: 320px; min-width: 0; position: sticky;
+  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 0.75rem);
+  align-self: flex-start;
+  max-height: calc(100vh - var(--coach-topstrip-top, 0px) - var(--coach-header-h, 0px) - 1.5rem);
+  display: flex;
+}
 .ppToolbarEnd { margin-left: auto; }
 .ppToolbarEnd[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
 .ppLibrary {
@@ -10432,6 +10447,26 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppLibraryHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.6rem 0.5rem 0.4rem 0.9rem; border-bottom: 1px solid var(--home-line, var(--border-2)); }
 .ppLibraryTitle { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
 .ppLibraryCount { color: var(--text-tertiary); font-weight: 400; font-variant-numeric: tabular-nums; margin-left: 0.25rem; }
+/* The library's tab switcher, BOTH its homes — the docked panel's Drills/Circuits face and the
+   picker sheet's From-your-drills/From-your-circuits/Write-one tabs: the shared `.segChoice`
+   recipe (Roster's List/Depth-chart, Home/Away/Neutral), not the bespoke separate-boxes pair
+   this control had quietly grown on its own — the touching pill with a dark active fill is the
+   portal's one answer to a two-or-three-way switch. The count keeps its quiet ink at rest and
+   switches to the active segment's own (inverted) ink once selected, rather than staying dim
+   against a now-dark fill.
+   ⚠ PADDING ON A WRAPPER, NOT MARGIN ON THE `width:100%` ELEMENT ITSELF — that was the first cut
+   of this rule and it bled the pill past the card's rounded corners: `.segChoiceFull` sizes the
+   control to 100% of ITS containing block, so a side margin on that same element pushes its total
+   footprint 0.9rem past the card on each edge rather than insetting it. The inset has to come from
+   a plain block ancestor with no width of its own — `.segChoice`/`.segChoiceFull` then measures
+   100% of the ALREADY-inset content box. */
+.ppDrillTabsWrap { padding: 0.6rem 0.9rem 0; }
+.ppDrillTabsWrap .segBtnActive .ppLibraryCount { color: inherit; opacity: 0.7; }
+.ppDrillTabsWrap .segBtn:disabled { opacity: 0.35; cursor: default; }
+/* `.segBtn`'s own padding lands short of the tap floor (the `.ppDrillTab` it replaces stated
+   this itself) — this room is opened on a phone same as the rest of the library, so it's stated
+   here rather than on the shared primitive, the same scoping `.ppDrillFilters` already uses. */
+.ppDrillTabsWrap .segBtn { min-height: var(--tap-min, 44px); }
 .ppLibraryBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 0.6rem 0.6rem; }
 .ppLibraryBody .ppDrillFilters { padding-top: 0.5rem; }
 .ppLibraryFoot { padding: 0.4rem 0.6rem 0.5rem; border-top: 1px solid var(--home-line, var(--border-2)); }
@@ -10812,14 +10847,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 
 /* -- The picker sheet -- */
-.ppDrillTabs { display: flex; gap: 0.35rem; padding: 0.6rem 0.9rem 0; }
-.ppDrillTab {
-  flex: 1 1 0; min-height: var(--tap-min, 44px);
-  background: none; border: 1px solid var(--border-2); border-radius: 8px; cursor: pointer;
-  font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary); padding: 0 0.5rem;
-}
-.ppDrillTab[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
-.ppDrillTab:disabled { opacity: 0.35; cursor: default; }
+/* ⚰ `.ppDrillTabs` / `.ppDrillTab` (toggle-format follow-up, 2026-09-17): both callers — this
+   sheet's From-your-drills/From-your-circuits/Write-one tabs and the docked panel's Drills/
+   Circuits face — moved onto `.ppDrillTabsWrap` + the shared `.segChoice`/`.segBtn` recipe above,
+   the same touching dark-fill control Roster's List/Depth-chart and Home/Away/Neutral already use.
+   This pair drew its own separate-boxes look instead, which is what prompted the move. */
 
 .ppDrillFilters {
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
@@ -10836,6 +10868,14 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    here it sits beside a search box that is ALWAYS 44px (the car-park reasoning above), so it would
    read short and mismatched on desktop too. Matched at every width, scoped to this bar alone. */
 .ppDrillFilters .multiSelectSummary { min-height: var(--tap-min, 44px); }
+/* ⚠ RIGHT-ANCHORED, not the shared `.multiSelectPanel`'s default `left: 0`. This bar's Tags
+   dropdown is the last control in a row that can be as narrow as the 320px docked library
+   (`.ppLibrary`) — `left: 0` on the panel's 190px min-width overshoots the row's own right edge,
+   and `.ppLibraryBody`'s `overflow-y: auto` computes `overflow-x` to `auto` too (the CSS overflow
+   spec forces the paired axis off `visible`), so the panel gets hard-CLIPPED at that boundary
+   instead of merely reading close to an edge. Scoped to this bar alone: the report toolbars that
+   share `.multiSelectPanel` elsewhere have room and expect the left-anchored open. */
+.ppDrillFilters .multiSelectPanel { left: auto; right: 0; }
 
 .ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
 
@@ -10891,6 +10931,17 @@ span.libCardMain { cursor: default; }
 .libCardChevron { position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); display: inline-flex; }
 .libCardActions { flex: none; display: flex; align-items: center; gap: 0.4rem; align-self: center; }
 .libCardActions button { min-height: var(--tap-min, 44px); }
+/* A row's Add is a repeated action down a list of dozens, not a form's one commit — the tap
+   target stays the same floor as `.btnSecondary` carried, but the border and fill go: bordered
+   boxes down every row compete with the name for attention, and the row already opens on a tap
+   (the Preview) and, on the docked panel, drags — a quiet "+ Add" says the same thing without it. */
+.libCardAdd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--tap-min, 44px); padding: 0 0.6rem;
+  background: none; border: none; border-radius: 6px;
+  font-size: var(--type-support); font-weight: 700; color: var(--text-secondary);
+}
+.libCardAdd:hover { background: var(--home-olive-soft, var(--white-8)); color: var(--text-primary); }
 /* Opened in place — the sheet's Preview without the sheet. */
 .libCardBody { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.2rem 0.7rem 0.6rem 2.3rem; min-width: 0; }
 .libCard:not(:has(.libCardGrip)) .libCardBody { padding-left: 0.7rem; }

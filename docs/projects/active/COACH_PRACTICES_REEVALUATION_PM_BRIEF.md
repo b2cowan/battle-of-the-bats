@@ -261,3 +261,35 @@ top and the never-planned at the foot, click *Plans* and see their staples first
 order; on a phone the Sort menu does the same; nothing on the page ranks anything until they click. **What is
 owed:** the owner's walk (part J on the hub's "QA walk · 4" tab), then the commit on the owner's word.
 
+## Follow-up on the stage-4 build · "Save to my circuits" chooses its stations — RULED and BUILT 2026-09-17 · walk owed (§200, part K of QA walk · 4)
+
+**What a coach sees and does differently.** The save dialog's tick — *Also save its N written stations as drills,
+with these tags* — is unchanged until it is pressed. Pressed, the run of names under it becomes **a row per station
+they typed, each with its own tick, all on**; untick the ones not worth keeping (the block that prompted this had three
+keepers and three called *test*) and the master shows a dash; one press on the master turns everything on, or off.
+Only the ticked stations become drills. **A typed station whose name is already one of their drills is shown, not
+hidden** — its row carries a muted note, *already in your drills — the circuit uses that one, with its words*; kept
+ticked, the saved circuit's station genuinely becomes that drill (its words, its tags), and unticked, tonight's words
+stay as a plain station with no link. **One quiet line under the tick names the stations that came from the
+library** — *Footwork ladder, Close control and Finishing came from your drills and stay linked.* — the answer to
+"does it know which are already drills"; it is absent when every station was typed. Tonight's block is untouched
+either way, as it always was.
+
+**Why it matters.** Before, the tick was all or nothing: keeping three good stations meant saving three junk drills
+too, or three more dialogs. And the dialog already knew which stations were drills — placed ones, and typed names it
+already held — but said nothing, so names vanished from the list with no reason given; worse, a typed name that
+matched a library drill was quietly pointed at that drill while keeping tonight's words, so the circuit's station
+claimed to be a drill it did not read as. Now the coach chooses, the dialog says what it knows, and a linked station
+is honestly its drill.
+
+**Tradeoffs and calls made.** The dialog was built to ask one optional question; the rows are a third only for the
+coach who ticks — the fast path (one tick, everything) and the untouched dialog are exactly as they were. Rows are
+checkboxes, not toggling chips (a chip is the filter idiom, and a matched name needs room for its note). The matched
+row defaults to *on* because that is what the tick asked for and what a save that failed midway needs on its retry.
+A row is 36px on a desktop and takes the 44px floor on a phone or tablet. No migration; the help's circuits article
+gained the rows and the two notes.
+
+**Success criteria.** A coach with a six-station block keeps three as drills and leaves three; a coach who types a
+name they already have sees it named on its row and decides; a coach who built the block from library drills reads
+one line saying so and is asked nothing. **What is owed:** the owner's walk (part K on the hub's "QA walk · 4"
+tab), then the commit on the owner's word.

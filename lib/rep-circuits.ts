@@ -28,16 +28,25 @@
  *
  * ⚠ **Promotion copies; the tick creates, then points.** "Also save its N written stations as
  * drills" on the save dialog creates the drills through the existing create route BEFORE the circuit
- * row is stored and rewrites the saved shape's station `drillId`s (`pointStationsAtDrills`); tonight's
- * block is left exactly as it was — nothing on the page turns read-only under the coach's hands.
+ * row is stored and rewrites the saved shape's stations (`pointStationsAtDrills`); tonight's block
+ * is left exactly as it was — nothing on the page turns read-only under the coach's hands.
+ *
+ * ⚠ **The tick is a list, and a linked station IS its drill** (the save-dialog follow-up, owner
+ * rulings S1–S3, 2026-09-17). Once the tick is on, every TYPED station is a row the coach can
+ * untick (`tickRowsFor`); a typed station whose name the library already holds is SHOWN with a
+ * note, never hidden (S2); the stations that came from drills are named in one line and stay
+ * linked (S3, `fromDrillsLine`). Pointing a station at a drill — created or existing — rebuilds
+ * it FROM the drill (`drillToStation`), because a drill-backed station is read-only and counted
+ * as that drill: the words it shows must be the drill's, not whatever was typed under the same
+ * name tonight.
  */
 import {
   MAX_TITLE_LEN, PRACTICE_PLAN_VERSION, newPracticePlanId, sanitizePracticePlan,
   type PracticePlan, type PracticePlanBlock, type PracticeStation,
 } from './rep-practice-plan';
 import { blockForTemplate } from './rep-plan-templates';
-import { MAX_TAGS_PER_ITEM, uniqueIds } from './rep-drills';
-import type { RepTeamCircuit } from './types';
+import { MAX_TAGS_PER_ITEM, drillToStation, uniqueIds } from './rep-drills';
+import type { RepTeamCircuit, RepTeamDrill } from './types';
 
 export type { RepTeamCircuit, RepTeamCircuitWithUsage } from './types';
 
@@ -138,45 +147,96 @@ export function writtenStationsOf(block: Pick<PracticePlanBlock, 'stations'>): P
   return (block.stations ?? []).filter(s => !s.drillId && s.name.trim().length > 0);
 }
 
-/**
- * Which of a block's written stations the tick would ADD to the library — a station already there
- * by name (active) is not duplicated, and the tick's label names only what it would create.
- */
-export function stationsToPromote(
-  block: Pick<PracticePlanBlock, 'stations'>,
-  existingDrillNames: readonly string[],
-): PracticeStation[] {
-  const have = new Set(existingDrillNames.map(n => n.trim().toLowerCase()));
-  const seen = new Set<string>();
-  return writtenStationsOf(block).filter(s => {
-    const key = s.name.trim().toLowerCase();
-    if (have.has(key) || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+/** The key the library's unique index uses — a name, trimmed, case-folded. */
+function drillNameKey(name: string): string {
+  return name.trim().toLowerCase();
 }
 
 /**
- * Point a circuit shape's stations at the drills the tick created (by NAME, case-insensitively —
- * the same key the library's unique index uses), snapshotting each drill's tag names as
- * `drillToStation` does. A station the map does not name is left as the coach wrote it. Called
- * AFTER the drills exist and BEFORE the circuit is stored — never the other way round.
+ * One row of the tick (S1): a TYPED station, and the active drill of the same name when the
+ * library already holds one (S2 — shown with a note, never hidden). One row per distinct name —
+ * two typed stations called "Passing" share a row, because the library can hold only one drill
+ * of that name; the row IS the first of them, and the save touches that station alone
+ * (`pointStationsAtDrills` links by station id) — the twin stays as typed.
+ */
+export interface TickRow {
+  station: PracticeStation;
+  existing: RepTeamDrill | null;
+}
+
+export function tickRowsFor(
+  block: Pick<PracticePlanBlock, 'stations'>,
+  drills: readonly RepTeamDrill[],
+): TickRow[] {
+  // ACTIVE only — the library's unique index is partial on active names, so a retired "Ladder"
+  // neither blocks a new one nor is a drill a station should be pointed at. The index is per
+  // scope, so the team's own drill and a club-shared one may share a name: the team's own wins,
+  // deterministically, rather than whichever the list happened to carry last.
+  const have = new Map<string, RepTeamDrill>();
+  for (const d of drills) {
+    if (!d.isActive) continue;
+    const key = drillNameKey(d.name);
+    const held = have.get(key);
+    if (!held || (held.teamId === null && d.teamId !== null)) have.set(key, d);
+  }
+  const seen = new Set<string>();
+  const rows: TickRow[] = [];
+  for (const station of writtenStationsOf(block)) {
+    const key = drillNameKey(station.name);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({ station, existing: have.get(key) ?? null });
+  }
+  return rows;
+}
+
+function listNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/**
+ * S3 — the one quiet line under the tick naming the stations that came from drills. Null when
+ * every station was typed; "All N stations…" when none was, so the line reads alone where the
+ * tick is absent.
+ */
+export function fromDrillsLine(block: Pick<PracticePlanBlock, 'stations'>): string | null {
+  const stations = block.stations ?? [];
+  const from = stations.filter(s => s.drillId && s.name.trim().length > 0);
+  if (from.length === 0) return null;
+  if (from.length === stations.length) {
+    return from.length === 1
+      ? 'Its one station came from your drills and stays linked.'
+      : `All ${from.length} stations came from your drills and stay linked.`;
+  }
+  const names = listNames(from.map(s => s.name.trim()));
+  return `${names} came from your drills and ${from.length === 1 ? 'stays' : 'stay'} linked.`;
+}
+
+/**
+ * Point a circuit shape's typed stations at drills — the ones the tick CREATED and the ones the
+ * coach kept linked to an existing drill (S2) — by STATION ID: the row's own station and no other.
+ * ⚠ Not by name (`/review` 2026-09-17): `tickRowsFor` gives two same-named typed stations ONE row,
+ * and pointing by name would rebuild the hidden twin too — its own words gone with no row to say
+ * so. The twin is left exactly as typed. ⚠ A pointed station is REBUILT FROM THE DRILL
+ * (`drillToStation`, its id kept): a drill-backed station is read-only and labelled as that drill,
+ * so it must read the drill's words, not tonight's under the same name. A station the map does
+ * not name is left exactly as the coach wrote it; a station already drill-backed is never touched.
+ * Called AFTER the drills exist and BEFORE the circuit is stored — never the other way round.
  */
 export function pointStationsAtDrills(
   block: PracticePlanBlock,
-  drillsByName: ReadonlyMap<string, { id: string; tagNames: readonly string[] }>,
+  drillsByStationId: ReadonlyMap<string, RepTeamDrill>,
 ): PracticePlanBlock {
   if (!block.stations) return block;
   return {
     ...block,
     stations: block.stations.map(s => {
       if (s.drillId) return s;
-      const drill = drillsByName.get(s.name.trim().toLowerCase());
+      const drill = drillsByStationId.get(s.id);
       if (!drill) return s;
-      const next: PracticeStation = { ...s, drillId: drill.id };
-      if (drill.tagNames.length) next.drillTags = [...drill.tagNames];
-      else delete next.drillTags;
-      return next;
+      return drillToStation(drill, () => s.id);
     }),
   };
 }
