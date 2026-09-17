@@ -195,21 +195,29 @@ describe('the tag filter — one id, one meaning', () => {
     item('C', []),
   ];
 
-  it('null shows everything', () => {
-    assert.deepEqual(filterTagged(items, '', null).map(i => i.name), ['A', 'B', 'C']);
+  it('an empty set shows everything', () => {
+    assert.deepEqual(filterTagged(items, '', new Set()).map(i => i.name), ['A', 'B', 'C']);
   });
 
   it('a tag id shows every item carrying it, however many others it also carries', () => {
-    assert.deepEqual(filterTagged(items, '', 't1').map(i => i.name), ['A', 'B']);
-    assert.deepEqual(filterTagged(items, '', 't2').map(i => i.name), ['B']);
+    assert.deepEqual(filterTagged(items, '', new Set(['t1'])).map(i => i.name), ['A', 'B']);
+    assert.deepEqual(filterTagged(items, '', new Set(['t2'])).map(i => i.name), ['B']);
+  });
+
+  it('several tags OR together — the Ledger tag filter\'s own contract', () => {
+    assert.deepEqual(filterTagged(items, '', new Set(['t1', 't2'])).map(i => i.name), ['A', 'B']);
   });
 
   it('an untagged item is reachable — it must never fall out of every chip', () => {
-    assert.deepEqual(filterTagged(items, '', UNTAGGED_FILTER).map(i => i.name), ['C']);
+    assert.deepEqual(filterTagged(items, '', new Set([UNTAGGED_FILTER])).map(i => i.name), ['C']);
+  });
+
+  it('"no tags" ORs in beside a real tag rather than replacing it', () => {
+    assert.deepEqual(filterTagged(items, '', new Set(['t2', UNTAGGED_FILTER])).map(i => i.name), ['B', 'C']);
   });
 
   it('search reads the tag names as well as the item name', () => {
-    assert.deepEqual(filterTagged(items, 'field', null).map(i => i.name), ['B']);
+    assert.deepEqual(filterTagged(items, 'field', new Set()).map(i => i.name), ['B']);
   });
 });
 
@@ -218,23 +226,42 @@ describe('use counts — a fact about a DRILL, never about a child', () => {
     blocks: [{ title: 'B', duration: { minutes: 20 }, rotates: false, stations }],
   });
 
-  it('counts stations still attached to their drill', () => {
-    const counts = countDrillUses([
-      planWith([{ name: 'a', drillId: 'd1' }, { name: 'b', drillId: 'd2' }]),
-      planWith([{ name: 'c', drillId: 'd1' }]),
+  const on = (plan: ReturnType<typeof planWith> | null, startsAt: string | null) => ({ plan, startsAt });
+
+  it('counts the PLANS holding a station still attached to the drill, and the newest of them', () => {
+    const uses = countDrillUses([
+      on(planWith([{ name: 'a', drillId: 'd1' }, { name: 'b', drillId: 'd2' }]), '2026-05-19T22:00:00Z'),
+      on(planWith([{ name: 'c', drillId: 'd1' }]), '2026-09-15T22:00:00Z'),
     ]);
-    assert.equal(counts.get('d1'), 2);
-    assert.equal(counts.get('d2'), 1);
+    assert.deepEqual(uses.get('d1'), { planCount: 2, lastPlannedAt: '2026-09-15T22:00:00Z' });
+    assert.deepEqual(uses.get('d2'), { planCount: 1, lastPlannedAt: '2026-05-19T22:00:00Z' });
+  });
+
+  it('a plan counts ONCE however many of its stations came from the drill — "In 1 plan", not "In 2"', () => {
+    const uses = countDrillUses([
+      on(planWith([{ name: 'tee 1', drillId: 'd1' }, { name: 'tee 2', drillId: 'd1' }]), '2026-09-15T22:00:00Z'),
+    ]);
+    assert.equal(uses.get('d1')?.planCount, 1);
+  });
+
+  it('the newest date wins whatever order the plans arrive in', () => {
+    const uses = countDrillUses([
+      on(planWith([{ name: 'a', drillId: 'd1' }]), '2026-04-01T22:00:00Z'),
+      on(planWith([{ name: 'a', drillId: 'd1' }]), '2026-09-15T22:00:00Z'),
+      on(planWith([{ name: 'a', drillId: 'd1' }]), '2026-06-01T22:00:00Z'),
+    ]);
+    assert.equal(uses.get('d1')?.lastPlannedAt, '2026-09-15T22:00:00Z');
   });
 
   it('a DETACHED station stops counting — it is no longer that drill', () => {
-    const counts = countDrillUses([planWith([{ name: 'a' }, { name: 'b', drillId: 'd1' }])]);
-    assert.equal(counts.get('d1'), 1);
-    assert.equal(counts.size, 1);
+    const uses = countDrillUses([on(planWith([{ name: 'a' }, { name: 'b', drillId: 'd1' }]), null)]);
+    assert.equal(uses.get('d1')?.planCount, 1);
+    assert.equal(uses.get('d1')?.lastPlannedAt, null);
+    assert.equal(uses.size, 1);
   });
 
   it('tolerates null plans and plans with no stations', () => {
-    assert.equal(countDrillUses([null, planWith([])]).size, 0);
+    assert.equal(countDrillUses([on(null, null), on(planWith([]), '2026-09-15T22:00:00Z')]).size, 0);
   });
 });
 

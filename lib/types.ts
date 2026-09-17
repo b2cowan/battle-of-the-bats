@@ -2140,6 +2140,12 @@ export interface RepTeamDrillWithUsage extends RepTeamDrill {
    * screen.
    */
   planCount: number;
+  /**
+   * ISO date of the newest of those plans' practices, or null (columns follow-up, owner ruling
+   * T2, 2026-09-17 — the Drills tab's "Last planned" column). ⚠ "Last planned", never "last used":
+   * the same honesty as the count, and a drill in next Tuesday's plan shows next Tuesday.
+   */
+  lastPlannedAt: string | null;
 }
 
 export interface RepPlayerMeasurable {

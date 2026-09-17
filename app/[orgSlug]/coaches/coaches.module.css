@@ -10832,6 +10832,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    feature would be a portal-wide visual change nobody asked for. */
 .ppDrillFilters .input { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-min, 44px); }
 .ppDrillFilters button { min-height: var(--tap-min, 44px); }
+/* The Tags dropdown's closed pill (`MultiSelectDropdown`) only reaches the tap floor under 768px —
+   here it sits beside a search box that is ALWAYS 44px (the car-park reasoning above), so it would
+   read short and mismatched on desktop too. Matched at every width, scoped to this bar alone. */
+.ppDrillFilters .multiSelectSummary { min-height: var(--tap-min, 44px); }
 
 .ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
 
@@ -10911,6 +10915,33 @@ span.libCardMain { cursor: default; }
   .libRowLine { white-space: normal; max-width: none; }
   .tableAsCards td.libRowLead { gap: 0.15rem; }
   .libRowLead .listRowSub { margin-top: 0; }
+}
+
+/* ── The library table's SORTABLE HEAD (columns follow-up, owner ruling T3, 2026-09-17) — the
+   first in the coach portal. The heading's whole box is the button (the `<th>` gives up its
+   padding to it), so the target is the heading and not a word inside it; `aria-sort` on the
+   `<th>` is the state, and the arrow follows it — the column in charge in the primary ink, the
+   rest wearing a quiet up-down glyph so the affordance shows before the first click. */
+.thSort { padding: 0; }
+.thSortBtn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  width: 100%; padding: var(--table-pad-compact) 1rem;
+  background: none; border: 0; cursor: pointer; text-align: left;
+  font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit;
+}
+.thSortBtn:hover { color: var(--text-primary); }
+.thSortIcon { flex-shrink: 0; color: var(--text-tertiary); }
+.thSort[aria-sort="ascending"] .thSortBtn, .thSort[aria-sort="descending"] .thSortBtn { color: var(--text-primary); }
+.thSort[aria-sort="ascending"] .thSortIcon, .thSort[aria-sort="descending"] .thSortIcon { color: var(--home-olive, var(--logic-lime)); }
+@media (max-width: 768px) {
+  /* On the tablet the headings are the only sort control, so they take the tap floor. */
+  .thSortBtn { min-height: var(--tap-min, 44px); }
+}
+/* The phone's Sort menu (T4) sits beside the Tags filter and exists only where the table is a
+   stack of cards with no head row to click — a tablet and a desktop have the headings. */
+.libSortPhone { display: none; }
+@media (max-width: 640px) {
+  .libSortPhone { display: inline-flex; }
 }
 
 .ppRetiredWrap { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; }

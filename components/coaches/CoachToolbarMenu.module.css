@@ -98,6 +98,8 @@
 .itemText { display: grid; gap: 0.1rem; min-width: 0; }
 .itemLabel { font-size: var(--type-body); font-weight: 650; line-height: 1.25; }
 .itemHint { font-size: var(--type-support); line-height: 1.35; color: var(--text-secondary); }
+/* The tick on a chosen row of a choose-between set (`checked`) — at the row's end, in the same ink as the icon. */
+.itemCheck { flex-shrink: 0; margin-left: auto; color: var(--home-olive, var(--logic-lime)); }
 
 .separator {
   height: 1px;

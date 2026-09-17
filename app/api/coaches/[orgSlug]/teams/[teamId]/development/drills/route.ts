@@ -70,9 +70,14 @@ export const GET = withObservability(async (req: Request,
     getRepTeamPracticePlansAcrossSeasons(teamId).catch(() => []),
   ]);
 
-  const uses = countDrillUses(plans.map(p => p.plan));
+  const uses = countDrillUses(plans);
   return NextResponse.json({
-    drills: drills.map(d => ({ ...d, planCount: uses.get(d.id) ?? 0 })),
+    // ⚠ "In N plans" and "last planned", never "used" — nothing records what was actually run (D4).
+    drills: drills.map(d => ({
+      ...d,
+      planCount: uses.get(d.id)?.planCount ?? 0,
+      lastPlannedAt: uses.get(d.id)?.lastPlannedAt ?? null,
+    })),
     canWrite: canWritePracticePlans(assignment.capabilities),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/drills' });
@@ -111,7 +116,7 @@ export const POST = withObservability(async (req: Request,
     const drill = await createRepTeamDrill({
       ...parsed.drill, orgId: ctx.org.id, teamId, createdBy: ctx.user.id,
     });
-    return NextResponse.json({ drill: { ...drill, planCount: 0 } }, { status: 201 });
+    return NextResponse.json({ drill: { ...drill, planCount: 0, lastPlannedAt: null } }, { status: 201 });
   } catch (error: unknown) {
     // Partial unique index on ACTIVE names, case-insensitive → 409, matching the measurable-type UX.
     if ((error as { code?: string })?.code === '23505') {

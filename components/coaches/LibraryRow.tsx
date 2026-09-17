@@ -6,7 +6,9 @@ import { circuitLine } from '@/lib/rep-circuits';
 import { UNTAGGED_FILTER, collectTags, type Taggable } from '@/lib/rep-drills';
 import { templateUseLabel } from '@/lib/rep-plan-templates';
 import { mergedTagNames } from '@/lib/rep-practice-plan';
+import { formatInOrgZone } from '@/lib/timezone';
 import type { PickableTag } from '@/components/coaches/TagPicker';
+import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -28,6 +30,14 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * ⚠ No caption is INVENTED for a row with no words: a drill saved from a station that carried only
  * setup, points and kit reads name · facts and nothing else. Only a template's and a circuit's
  * "Nothing in it yet" is written, in the quiet italic — words, never "0 blocks".
+ *
+ * ⚠ THE COLUMNS FOLLOW-UP (owner rulings T1–T4, 2026-09-17): the table face carries the count as
+ * a figure with its own heading ("8 plans", a dash at zero — `libraryCountCell`) and a Last
+ * planned column (`libraryDateCell`; drills compute the date since this), and its headings sort
+ * (`LibrarySort.tsx`). Tags were drawn as a column and reconsidered on sight: they STAY beside the
+ * name (T1) because the line under it is the browsable fact and the widest thing on the row, and
+ * "which of these are hitting" is the Tags filter's question. The card faces keep their written
+ * labels ("In 6 plans") — a card has no heading to lean on.
  */
 
 /** Usually · Plans on one line, for the card face ("20 min · Not in a plan yet"). */
@@ -240,52 +250,73 @@ export function LibraryTableRow({
 }
 
 /**
- * The search box and the tag chips over any library list — the three tabs, the picker sheet and
- * the docked panel — so no two lists can drift on what a chip means. "All" carries the count;
- * "No tags" is ALWAYS offered when it applies, so an item can never become unreachable simply by
- * carrying no tags. The predicate itself is `filterTagged`, the caller's.
+ * The search box and the tag filter over any library list — the three tabs, the picker sheet and
+ * the docked panel — so no two lists can drift on what "tagged" means. A `MultiSelectDropdown`,
+ * not a chip row (register reading-order rule: four-plus options, or a list that will grow, is a
+ * dropdown — practices re-evaluation follow-up, 2026-09-17). Ticking several tags OR-s them
+ * together and "No tags" sits in the same list as a real option, never a mode of its own — the
+ * same contract the Ledger's own Tags pill already speaks. The predicate itself is `filterTagged`,
+ * the caller's.
  */
-export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTagFilter }: {
+export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTagFilter, sort }: {
   items: readonly { tags: readonly { id: string; name: string }[] }[];
   /** "drills" · "templates" · "circuits" — the search box's word. */
   noun: string;
   query: string;
-  tagFilter: string | null;
+  tagFilter: ReadonlySet<string>;
   onQuery: (q: string) => void;
-  onTagFilter: (tagId: string | null) => void;
+  onTagFilter: (next: Set<string>) => void;
+  /** The tabs' phone Sort menu (`LibrarySortMenu`, T4) — beside the Tags filter, shown by the
+   *  card breakpoint alone. The picker and the docked panel have no sort and pass nothing. */
+  sort?: ReactNode;
 }) {
   /* Memoised on the list: this bar sits inside the docked panel, which re-renders with the plan
-     editor on every keystroke under autosave — the tag walk and the per-chip counts must not
+     editor on every keystroke under autosave — the tag walk and the per-option counts must not
      repeat for a keystroke typed in a block. */
-  const { tags, counts, untagged } = useMemo(() => {
+  const options = useMemo(() => {
     const all = collectTags(items as readonly Taggable[]);
-    return {
-      tags: all,
-      counts: new Map(all.map(t => [t.id, items.filter(d => d.tags.some(x => x.id === t.id)).length])),
-      untagged: items.filter(d => d.tags.length === 0).length,
-    };
+    const counts = new Map(all.map(t => [t.id, items.filter(d => d.tags.some(x => x.id === t.id)).length]));
+    const untagged = items.filter(d => d.tags.length === 0).length;
+    const opts = all.map(t => ({ id: t.id, label: `${t.name} (${counts.get(t.id) ?? 0})` }));
+    if (untagged > 0) opts.push({ id: UNTAGGED_FILTER, label: `No tags (${untagged})` });
+    return opts;
   }, [items]);
   return (
     <div className={styles.ppDrillFilters}>
       <input className={styles.input} value={query} onChange={e => onQuery(e.target.value)}
         placeholder={`Search ${noun}…`} aria-label={`Search ${noun}`} />
-      <div className={styles.ppSuggestWrap}>
-        <button type="button" className={styles.ppSuggestChip} data-on={tagFilter == null ? 'on' : undefined}
-          onClick={() => onTagFilter(null)}>All <span>{items.length}</span></button>
-        {tags.map(t => (
-          <button key={t.id} type="button" className={styles.ppSuggestChip}
-            data-on={tagFilter === t.id ? 'on' : undefined} onClick={() => onTagFilter(t.id)}>
-            {t.name} <span>{counts.get(t.id)}</span>
-          </button>
-        ))}
-        {untagged > 0 && (
-          <button type="button" className={styles.ppSuggestChip}
-            data-on={tagFilter === UNTAGGED_FILTER ? 'on' : undefined}
-            onClick={() => onTagFilter(UNTAGGED_FILTER)}>No tags <span>{untagged}</span></button>
-        )}
-      </div>
+      <MultiSelectDropdown label="Tags" options={options} selected={tagFilter} onChange={onTagFilter} restQuiet />
+      {sort}
     </div>
   );
+}
+
+/**
+ * "May 19, 2026" — the Last planned cell on all three tabs, and the card's "last May 19, 2026"
+ * (columns follow-up, owner ruling T2, 2026-09-17). ⚠ The date of the practice the plan was
+ * written FOR — "last planned", never "last used" (D4).
+ */
+export function libraryDateLabel(iso: string): string {
+  return formatInOrgZone(iso, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/**
+ * The count cell on all three tabs: the figure and its unit — "8 plans", "1 plan" — and a dash
+ * where there is nothing to count (owner, on sight, 2026-09-17: the heading already says the
+ * verb — Plans, Started — so the cell does not repeat it, and Length shows a dash for an empty
+ * template the same way). ⚠ Still PLANS, never practices; still never a bare 0. The CARD faces
+ * keep their written labels (`drillUseLabel` / `templateUseLabel`) — a card has no heading to
+ * lean on, and a bare dash on a card would say nothing.
+ */
+export function libraryCountCell(planCount: number): ReactNode {
+  return planCount > 0
+    ? `${planCount} plan${planCount === 1 ? '' : 's'}`
+    : <span className={styles.devRowDash}>—</span>;
+}
+
+/** The Last planned cell: the date, or the dash. */
+export function libraryDateCell(iso: string | null): ReactNode {
+  return iso ? libraryDateLabel(iso) : <span className={styles.devRowDash}>—</span>;
 }
 
 /** The table's frame on the list recipe — the tabs' three tables share it. */

@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CoachToolbarMenu.module.css';
@@ -262,19 +262,27 @@ export function CoachToolbarMenuHeading({ children }: { children: ReactNode }) {
   return <div className={styles.heading}>{children}</div>;
 }
 
-/** A plain do-this-now row. */
+/** A plain do-this-now row — or, with `checked` given, one of a set the menu chooses between. */
 export function CoachToolbarMenuItem({
   icon,
   label,
   hint,
   disabled = false,
   nested = false,
+  checked,
   onSelect,
 }: {
   icon?: ReactNode;
   label: ReactNode;
   hint?: ReactNode;
   disabled?: boolean;
+  /**
+   * The row is ONE OF A SET the menu chooses between — the practice library's phone Sort menu
+   * ("Name · Usually · Plans · Last planned", one ticked; columns follow-up, owner ruling T4,
+   * 2026-09-17). Given at all, the row is announced as a radio item with its state, and the
+   * ticked one wears a check at its end. Left undefined, the row is the plain do-this-now item.
+   */
+  checked?: boolean;
   /**
    * This choice makes a CHILD of the one above it — indented, with a turn-down mark.
    * Schedule's *Tournament game* sits under *Tournament* this way, because a game slot belongs to a
@@ -293,7 +301,8 @@ export function CoachToolbarMenuItem({
     <button
       type="button"
       className={`${styles.item}${nested ? ` ${styles.itemNested}` : ''}`}
-      role="menuitem"
+      role={checked === undefined ? 'menuitem' : 'menuitemradio'}
+      aria-checked={checked === undefined ? undefined : checked}
       tabIndex={-1}
       disabled={disabled}
       onClick={onSelect}
@@ -303,6 +312,7 @@ export function CoachToolbarMenuItem({
         <span className={styles.itemLabel}>{label}</span>
         {hint && <span className={styles.itemHint}>{hint}</span>}
       </span>
+      {checked && <Check size={15} className={styles.itemCheck} aria-hidden />}
     </button>
   );
 }

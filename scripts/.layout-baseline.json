@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-14T20:41:21.830Z",
+  "generated": "2026-09-17T16:37:29.153Z",
   "entries": {
     "coach-development-metric-new|768|tap-floor|button·Help: Skills & Goals": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
@@ -3169,6 +3169,30 @@
     "coach-practice-circuits|768|control-width|button·Help: Circuits": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
       "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-drills|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-templates|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-drills|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-templates|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-drills|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-templates|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
+      "detail": "16px tall (floor 44)"
     }
   }
 }

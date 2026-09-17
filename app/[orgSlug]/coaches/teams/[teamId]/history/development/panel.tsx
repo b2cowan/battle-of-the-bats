@@ -923,8 +923,10 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
 }) {
   const { practices, practiceRead, practiceCap, tagRead } = data;
   // The SAME predicate the drill library and the template room use. `filterTagged` needs a `tags`
-  // array and a `name`, which a practice row already has.
-  const shownPractices = filterTagged(practices, '', tag);
+  // array and a `name`, which a practice row already has. This screen keeps its own single-select
+  // chip row (a URL-addressable `tag`, not the library's multi-select dropdown) — wrapped into a
+  // one-element set for the shared predicate's now-multi-select contract.
+  const shownPractices = filterTagged(practices, '', tag == null ? new Set() : new Set([tag]));
   // ⚠ `collectTags`, not a hand-rolled dedup. Its own doc names this list as one of its three
   // callers, and a second copy of "unique tags in first-seen order" is exactly how two surfaces
   // start quietly disagreeing — which is what the shared module exists to prevent.

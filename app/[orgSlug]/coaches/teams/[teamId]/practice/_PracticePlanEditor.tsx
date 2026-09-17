@@ -1183,7 +1183,7 @@ function LibraryBrowser({
   draggable?: boolean;
 }) {
   const [query, setQuery] = useState('');
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [openId, setOpenId] = useState<string | null>(null);
   const items: readonly { tags: { id: string; name: string }[] }[] = kind === 'drills' ? drills : circuits;
   const shownDrills = useMemo(

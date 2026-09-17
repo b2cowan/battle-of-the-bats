@@ -6,13 +6,17 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { formatInOrgZone } from '@/lib/timezone';
 import { filterTagged } from '@/lib/rep-drills';
+import { totalPlannedMinutes } from '@/lib/rep-practice-plan';
 import {
   templateBlocksLine, templateShapeLabel, templateUseLabel,
   type RepTeamPlanTemplateWithUsage,
 } from '@/lib/rep-plan-templates';
-import { LibraryFilterBar, LibraryTable, LibraryTableRow } from '@/components/coaches/LibraryRow';
+import { sortLibraryRows, type LibrarySortColumn } from '@/lib/library-sort';
+import {
+  LibraryFilterBar, LibraryTable, LibraryTableRow, libraryCountCell, libraryDateCell, libraryDateLabel,
+} from '@/components/coaches/LibraryRow';
+import { LibrarySortHead, LibrarySortMenu, useLibrarySort } from '@/components/coaches/LibrarySort';
 import { PastSeasonImportDialog, usePastSeasonImport, type PastSeasonRow } from '@/components/coaches/PastSeasonImport';
 import { planTemplateHref } from '@/lib/practice-plans-address';
 import PracticePlansTabs from './_PracticePlansTabs';
@@ -21,13 +25,15 @@ import styles from '../../../coaches.module.css';
 /**
  * The plan-template library — the TEMPLATES TAB of the Practice plans room (practices
  * re-evaluation stage 0, owner ruling D5, 2026-09-14; redrawn at stage 4, owner rulings L3 · L4,
- * 2026-09-16). A TABLE on the portal's list recipe: Template (the name, its tags beside it, and
- * the BLOCKS' TITLES as its line — "Warm-up · Skills circuit · Small-sided game") · Length
- * ("60 min · 3 blocks", because it is what makes a template pickable without opening it) ·
- * Started · a chevron. **The row is the door** to the template's editor; Rename is the editor's own
- * Name field and Retire follows it into the editor's header — there are no actions on a row. An
- * empty template reads "Nothing in it yet" in the quiet italic — words, never "0 blocks" — and is
- * NOT offered in *Start this plan from…* (L4); "Start from blank" stays.
+ * 2026-09-16; the columns follow-up, owner rulings T1–T4, 2026-09-17). A TABLE on the portal's
+ * list recipe: Template (the name, its tags beside it, and the BLOCKS' TITLES as its line —
+ * "Warm-up · Skills circuit · Small-sided game") · Length ("60 min · 3 blocks", because it is
+ * what makes a template pickable without opening it) · Started (the figure — "8 plans", a dash
+ * at zero) · Last planned (the date) · a chevron. **The row is the door** to the template's
+ * editor; Rename is the editor's own Name field and Retire follows it into the editor's header —
+ * there are no actions on a row. An empty template reads "Nothing in it yet" in the quiet italic
+ * — words, never "0 blocks" — and is NOT offered in *Start this plan from…* (L4); "Start from
+ * blank" stays.
  *
  * ⚠ A VIEW, not a page: the hub (`practice/page.tsx`) resolves the team, the season and the
  * capability gates before this mounts, and decides whether the tab exists at all. It renders its
@@ -37,13 +43,16 @@ import styles from '../../../coaches.module.css';
  * now, so a grouped list would print the same template under two headings. "No tags" is always
  * offered when it applies, so a template can never become unreachable by having none.
  *
- * ⚠ **Sorted by NAME, never by use.** "Most used first" is a ranking, and the library must not
- * quietly tell a coach which of their own ideas is best — the instinct §4 applies to children,
- * applied one level out.
+ * ⚠ **Opens in NAME order and says nothing on its own; every heading sorts on a click** (T3,
+ * 2026-09-17 — this replaced "sorted by name, never by use"). A sort here is the coach asking
+ * their own library a question, never the library ranking their ideas unasked; the no-ranking
+ * rule proper is about children, not templates. The choice is remembered per tab in this browser;
+ * the rules of the order live in `lib/library-sort.ts`.
  *
- * ⚠ **"Started 8 plans", never "used 8×"** — a template's count is a fact about the PLANS it
- * produced, and nothing records what was actually run (D4). Zero renders as "Not started a plan
- * yet" in words, so an unused template never reads as a failing score.
+ * ⚠ **"8 plans", never "used 8×"** — a template's count is a fact about the PLANS it produced,
+ * and nothing records what was actually run (D4). Zero is a dash in the table (the heading says
+ * "Started"; Length shows a dash for an empty template the same way) and "Not started a plan
+ * yet" in words on the card, so an unused template never reads as a failing score.
  *
  * ⚠ **Retired, not deleted**, and a retired template dims under "Show retired" rather than
  * disappearing — plans it already started keep reading exactly as written.
@@ -59,8 +68,20 @@ type ImportRow = PastSeasonRow & { name: string; plan: unknown; shapeLabel: stri
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
-const fmtDate = (iso: string) =>
-  formatInOrgZone(iso, { day: 'numeric', month: 'short', year: 'numeric' });
+/** "May 19, 2026" — the shared library date, for the Last planned column and the import dialog. */
+const fmtDate = libraryDateLabel;
+
+/**
+ * The four headings and what each sorts by (T3). Length sorts on the planned minutes — the figure
+ * the cell leads with — never the block count; an empty template has nothing to sort by and sits
+ * at the foot with the never-started ones.
+ */
+const TEMPLATE_COLUMNS: readonly LibrarySortColumn<RepTeamPlanTemplateWithUsage>[] = [
+  { key: 'name', label: 'Template', menuLabel: 'Name', kind: 'text', get: t => t.name },
+  { key: 'length', label: 'Length', kind: 'minutes', get: t => totalPlannedMinutes(t.plan) },
+  { key: 'started', label: 'Started', kind: 'count', get: t => t.planCount },
+  { key: 'planned', label: 'Last planned', kind: 'date', get: t => t.lastPlannedAt },
+];
 
 export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const router = useRouter();
@@ -72,7 +93,7 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
   const [loadError, setLoadError] = useState('');
 
   const [query, setQuery] = useState('');
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [showRetired, setShowRetired] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -105,8 +126,15 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
   const active = useMemo(() => templates.filter(t => t.isActive), [templates]);
   const retired = useMemo(() => templates.filter(t => !t.isActive), [templates]);
 
+  // The chosen order (none = the API's name order), applied to the live list and the retired one
+  // alike — "Show retired" is the same table one fold down.
+  const { sort, choose } = useLibrarySort('templates', TEMPLATE_COLUMNS);
   // The SAME predicate the drill library and the in-plan picker use — one rule, three lists.
-  const shown = useMemo(() => filterTagged(active, query, tagFilter), [active, query, tagFilter]);
+  const shown = useMemo(
+    () => filterTagged(sortLibraryRows(active, sort, TEMPLATE_COLUMNS), query, tagFilter),
+    [active, sort, query, tagFilter],
+  );
+  const retiredShown = useMemo(() => sortLibraryRows(retired, sort, TEMPLATE_COLUMNS), [retired, sort]);
 
   /**
    * "New template" is offered at ZERO as well as at one (owner ruling, frame 03; L4 keeps it).
@@ -178,11 +206,13 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
 
   const row = (template: RepTeamPlanTemplateWithUsage) => {
     // The blocks' titles are the browsable fact (L3); an empty one says so in words (L4). Length
-    // and the count — ⚠ PLANS, never practices (D4), written out, never a bare 0 — each read ONCE
-    // for the desktop cells and the phone card's one line alike.
+    // is read ONCE for the desktop cell and the phone card's one line alike; the count is a figure
+    // in the table (the heading says "Started") and words on the card — ⚠ PLANS, never practices
+    // (D4), never a bare 0 either way — and the date has its own column (T2).
     const blocks = templateBlocksLine(template.plan);
     const length = blocks ? templateShapeLabel(template.plan) : null;
     const started = templateUseLabel(template.planCount);
+    const last = template.lastPlannedAt ? `last ${fmtDate(template.lastPlannedAt)}` : null;
     return (
       <LibraryTableRow
         key={template.id}
@@ -191,23 +221,18 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
         retired={!template.isActive}
         line={blocks || 'Nothing in it yet'}
         quietLine={!blocks}
-        facts={[length, started].filter(Boolean).join(' · ')}
+        facts={[length, started, last].filter(Boolean).join(' · ')}
         cells={[
           { label: 'Length', value: length ?? <span className={styles.devRowDash}>—</span>, shrink: true, data: true },
-          { label: 'Started', value: template.lastPlannedAt ? `${started} · last ${fmtDate(template.lastPlannedAt)}` : started, shrink: true },
+          { label: 'Started', value: libraryCountCell(template.planCount), shrink: true, data: true },
+          { label: 'Last planned', value: libraryDateCell(template.lastPlannedAt), shrink: true, data: true },
         ]}
         onOpen={() => router.push(planTemplateHref(base, template.id))}
         openLabel={`Open ${template.name}`}
       />
     );
   };
-  const head = (
-    <>
-      <th className={styles.th}>Template</th>
-      <th className={`${styles.th} ${styles.tdShrink}`}>Length</th>
-      <th className={`${styles.th} ${styles.tdShrink}`}>Started</th>
-    </>
-  );
+  const head = <LibrarySortHead columns={TEMPLATE_COLUMNS} sort={sort} onSort={choose} />;
 
   return (
     <div className={styles.page}>
@@ -246,7 +271,8 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
         </CoachEmptyState>
       ) : (
         <>
-          <LibraryFilterBar items={active} noun="templates" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} />
+          <LibraryFilterBar items={active} noun="templates" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
+            sort={<LibrarySortMenu columns={TEMPLATE_COLUMNS} sort={sort} onSort={choose} />} />
 
           {shown.length === 0 ? (
             <p className={styles.formHint}>No templates match that.</p>
@@ -259,7 +285,7 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
               <button type="button" className={styles.ppAddInline} onClick={() => setShowRetired(s => !s)}>
                 {showRetired ? 'Hide' : 'Show'} retired ({retired.length})
               </button>
-              {showRetired && <LibraryTable label="Retired templates" head={head}>{retired.map(row)}</LibraryTable>}
+              {showRetired && <LibraryTable label="Retired templates" head={head}>{retiredShown.map(row)}</LibraryTable>}
             </div>
           )}
         </>

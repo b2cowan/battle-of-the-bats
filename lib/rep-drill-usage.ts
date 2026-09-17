@@ -25,23 +25,52 @@ function stationsOf(plan: PracticePlan | null | undefined): PracticeStation[] {
   return plan.blocks.flatMap(b => b.stations ?? []);
 }
 
+/** What a drill's row says about its use — the same shape a template's and a circuit's carry. */
+export interface DrillUse {
+  /** How many PLANS hold a station picked from this drill. */
+  planCount: number;
+  /** The date of the newest of those plans' practices, or null. ⚠ "Last planned", never "last run". */
+  lastPlannedAt: string | null;
+}
+
 /**
- * How many stations across these plans were picked from each drill, keyed by drill id.
+ * How many PLANS each drill appears in, and when the newest of them is, keyed by drill id.
  *
  * ⚠ Counts only stations that are STILL attached to their drill. A station a coach detached to edit
  * has stopped being that drill by definition (owner ruling 2026-08-01), and counting it would make
  * the number mean "eight things that started out as this" — exactly the noise the read-only rule
  * exists to prevent.
+ *
+ * ⚠ **A plan counts ONCE however many of its stations came from the drill** (columns follow-up,
+ * 2026-09-17). Until then this walk counted STATIONS while every surface said "In 8 plans" — a
+ * drill placed at two tee stations of one practice read "In 2 plans". The words were always the
+ * honest ones; the count now matches them.
+ *
+ * ⚠ The date is the practice's — the day the plan was written FOR — and the newest wins whatever
+ * order the caller walked in, so a caller that sorts ascending cannot make "last planned" the
+ * oldest practice. The same rule as `countTemplateUses`, kept as a separate walk for the same
+ * reason that one gives: this counts stations INSIDE a plan, that one counts plans.
  */
-export function countDrillUses(plans: readonly (PracticePlan | null)[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const plan of plans) {
+export function countDrillUses(
+  plans: readonly { plan: PracticePlan | null; startsAt: string | null }[],
+): Map<string, DrillUse> {
+  const uses = new Map<string, DrillUse>();
+  for (const { plan, startsAt } of plans) {
+    const inThisPlan = new Set<string>();
     for (const station of stationsOf(plan)) {
-      if (!station.drillId) continue;
-      counts.set(station.drillId, (counts.get(station.drillId) ?? 0) + 1);
+      if (station.drillId) inThisPlan.add(station.drillId);
+    }
+    for (const drillId of inThisPlan) {
+      const seen = uses.get(drillId);
+      if (!seen) {
+        uses.set(drillId, { planCount: 1, lastPlannedAt: startsAt });
+        continue;
+      }
+      seen.planCount += 1;
+      if (startsAt && (!seen.lastPlannedAt || startsAt > seen.lastPlannedAt)) seen.lastPlannedAt = startsAt;
     }
   }
-  return counts;
+  return uses;
 }
 
 /** One activity a coach already planned, offered for import into the live library. */

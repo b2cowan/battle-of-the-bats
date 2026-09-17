@@ -10,7 +10,11 @@ import {
   emptyDrillDraft, filterTagged, sortDrillsForPicker,
   type DrillInput, type RepTeamDrillWithUsage,
 } from '@/lib/rep-drills';
-import { LibraryFilterBar, LibraryTable, LibraryTableRow, drillCardLine, drillUseLabel } from '@/components/coaches/LibraryRow';
+import { sortLibraryRows, type LibrarySortColumn } from '@/lib/library-sort';
+import {
+  LibraryFilterBar, LibraryTable, LibraryTableRow, drillCardLine, drillUseLabel, libraryCountCell, libraryDateCell, libraryDateLabel,
+} from '@/components/coaches/LibraryRow';
+import { LibrarySortHead, LibrarySortMenu, useLibrarySort } from '@/components/coaches/LibrarySort';
 import { PastSeasonImportDialog, usePastSeasonImport, type PastSeasonRow } from '@/components/coaches/PastSeasonImport';
 import DrillSheet from '@/components/coaches/DrillSheet';
 import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
@@ -23,23 +27,29 @@ import styles from '../../../coaches.module.css';
  * owner ruling D5, 2026-09-14; redrawn at stage 4, owner rulings L3 · L6, 2026-09-16). A TABLE on
  * the portal's list recipe: Drill (the name, its tags beside it, the first line of *what you're
  * doing* under it — one line, cut short, absent when unwritten) · Usually (a dash when never set) ·
- * Plans (in words) · a chevron. **The row is the door** — it opens the drill's SHEET, the station
- * modal's shape, where Retire now lives; there are no actions on a row. On a phone the table
- * reflows to a card as tall as its words.
+ * Plans (the figure — "8 plans", a dash at zero) · Last planned (the date) · a chevron (the
+ * columns follow-up, owner rulings T1–T4, 2026-09-17). **The row is the door** — it opens the
+ * drill's SHEET, the station modal's shape, where Retire now lives; there are no actions on a
+ * row. On a phone the table reflows to a card as tall as its words.
  *
  * ⚠ A VIEW, not a page: the hub (`practice/page.tsx`) resolves the team, the season and the
  * capability gates before this mounts, and decides whether the tab exists at all (absent for a
  * coach the drills read would refuse). It renders its own page header because its header ACTION
  * ("New drill") and its help section are its own — the page-actions guard enumerates it by file.
  *
- * ⚠ **Sorted by NAME, never by use.** A "most used" ordering is a ranking, and the library must not
- * quietly tell a coach which of their own ideas is best — the instinct §4 applies to children,
- * applied one level out. Shared club drills lead, then the team's own, each A–Z.
+ * ⚠ **Opens in NAME order — shared club drills first, then the team's own, each A–Z — and says
+ * nothing on its own; every heading sorts on a click** (T3, 2026-09-17 — this replaced "sorted by
+ * name, never by use"). A sort here is the coach asking their own library a question, never the
+ * library ranking their ideas unasked; the no-ranking rule proper is about children, not drills,
+ * and the past-season import has ordered by plan count since it was built. Under a chosen column
+ * the club drills take their place in the order rather than leading — "club first" is the resting
+ * order's grouping, not a fact about the drill. Remembered per tab in this browser.
  *
  * ⚠ **"In 8 plans" is a fact about a DRILL** and is the one count this feature is allowed to show.
- * Zero renders as "Not in a plan yet" in words, so an unused drill never reads as a failing score.
+ * Zero is a dash in the table (the heading says "Plans") and "Not in a plan yet" in words on the
+ * card, so an unused drill never reads as a failing score.
  * ⚠ **PLANS, never practices** — nothing records what was actually run (D4), so "used 8×" would be
- * a claim the data cannot support.
+ * a claim the data cannot support; the date column is "Last planned" for the same reason.
  *
  * ⚠ **Nothing is seeded and no tag is supplied.** Every drill and tag here is coach-typed;
  * a "Hitting / Fielding / Pitching" list would be one sport talking to a platform serving many.
@@ -54,6 +64,14 @@ type LoadState = { drills: RepTeamDrillWithUsage[]; canWrite: boolean };
 type ImportRow = PastSeasonRow & { drill: DrillInput; planCount: number; lastPlannedAt: string | null };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
+
+/** The four headings and what each sorts by (T3); a drill with no minutes or no plan sits at the foot under that column. */
+const DRILL_COLUMNS: readonly LibrarySortColumn<RepTeamDrillWithUsage>[] = [
+  { key: 'name', label: 'Drill', menuLabel: 'Name', kind: 'text', get: d => d.name },
+  { key: 'usually', label: 'Usually', kind: 'minutes', get: d => d.usualMinutes },
+  { key: 'plans', label: 'Plans', kind: 'count', get: d => d.planCount },
+  { key: 'planned', label: 'Last planned', kind: 'date', get: d => d.lastPlannedAt },
+];
 
 const draftOf = (drill: RepTeamDrillWithUsage): DrillInput => ({
   name: drill.name, tagIds: drill.tags.map(t => t.id), usualMinutes: drill.usualMinutes,
@@ -71,7 +89,7 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
   const [loadError, setLoadError] = useState('');
 
   const [query, setQuery] = useState('');
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<Set<string>>(() => new Set());
   const [showRetired, setShowRetired] = useState(false);
 
   /** The sheet: a new drill (`id: null`), or one row's — with whether it is retired, for the foot. */
@@ -120,11 +138,15 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
   const active = useMemo(() => drills.filter(d => d.isActive), [drills]);
   const retired = useMemo(() => drills.filter(d => !d.isActive), [drills]);
 
+  // The chosen order over the resting one (club first, then A–Z — the picker's and the panel's,
+  // which never sort); applied to the live list and the retired one alike.
+  const { sort, choose } = useLibrarySort('drills', DRILL_COLUMNS);
   // The SAME predicate the in-plan picker and the docked panel use — one rule, so the lists can't drift.
   const shown = useMemo(
-    () => filterTagged(sortDrillsForPicker(active), query, tagFilter),
-    [active, query, tagFilter],
+    () => filterTagged(sortLibraryRows(sortDrillsForPicker(active), sort, DRILL_COLUMNS), query, tagFilter),
+    [active, sort, query, tagFilter],
   );
+  const retiredShown = useMemo(() => sortLibraryRows(sortDrillsForPicker(retired), sort, DRILL_COLUMNS), [retired, sort]);
 
   async function saveDrill() {
     if (!editing) return;
@@ -179,10 +201,12 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
   };
 
   const row = (drill: RepTeamDrillWithUsage) => {
-    // "20 min" in the data face (a dash when never given a length); the one count in words — never a
-    // bare 0, never "used". Each read ONCE, for the desktop cells and the phone card's one line alike.
+    // "20 min" in the data face (a dash when never given a length); the one count as a figure in
+    // the table and in words on the card — never a bare 0, never "used"; the date in its own
+    // column (T2). Each read ONCE, for the desktop cells and the phone card's one line alike.
     const usually = drill.usualMinutes ? `${drill.usualMinutes} min` : null;
     const plans = drillUseLabel(drill.planCount);
+    const last = drill.lastPlannedAt ? `last ${libraryDateLabel(drill.lastPlannedAt)}` : null;
     return (
       <LibraryTableRow
         key={drill.id}
@@ -191,16 +215,18 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
         shared={drill.teamId === null}
         retired={!drill.isActive}
         line={drillCardLine(drill)}
-        facts={[usually, plans].filter(Boolean).join(' · ')}
+        facts={[usually, plans, last].filter(Boolean).join(' · ')}
         cells={[
           { label: 'Usually', value: usually ?? <span className={styles.devRowDash}>—</span>, shrink: true, data: true },
-          { label: 'Plans', value: plans, shrink: true },
+          { label: 'Plans', value: libraryCountCell(drill.planCount), shrink: true, data: true },
+          { label: 'Last planned', value: libraryDateCell(drill.lastPlannedAt), shrink: true, data: true },
         ]}
         onOpen={() => openRow(drill)}
         openLabel={`Open ${drill.name}`}
       />
     );
   };
+  const head = <LibrarySortHead columns={DRILL_COLUMNS} sort={sort} onSort={choose} />;
 
   const header = (
     <>
@@ -268,20 +294,13 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
         </CoachEmptyState>
       ) : (
         <>
-          <LibraryFilterBar items={active} noun="drills" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} />
+          <LibraryFilterBar items={active} noun="drills" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
+            sort={<LibrarySortMenu columns={DRILL_COLUMNS} sort={sort} onSort={choose} />} />
 
           {shown.length === 0 ? (
             <p className={styles.formHint}>No drills match that.</p>
           ) : (
-            <LibraryTable label="Drills" head={(
-              <>
-                <th className={styles.th}>Drill</th>
-                <th className={`${styles.th} ${styles.tdShrink}`}>Usually</th>
-                <th className={`${styles.th} ${styles.tdShrink}`}>Plans</th>
-              </>
-            )}>
-              {shown.map(row)}
-            </LibraryTable>
+            <LibraryTable label="Drills" head={head}>{shown.map(row)}</LibraryTable>
           )}
 
           {/* Retired rows read dim, under the table; opening one shows the same sheet with Restore. */}
@@ -291,15 +310,7 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
                 {showRetired ? 'Hide' : 'Show'} retired ({retired.length})
               </button>
               {showRetired && (
-                <LibraryTable label="Retired drills" head={(
-                  <>
-                    <th className={styles.th}>Drill</th>
-                    <th className={`${styles.th} ${styles.tdShrink}`}>Usually</th>
-                    <th className={`${styles.th} ${styles.tdShrink}`}>Plans</th>
-                  </>
-                )}>
-                  {sortDrillsForPicker(retired).map(row)}
-                </LibraryTable>
+                <LibraryTable label="Retired drills" head={head}>{retiredShown.map(row)}</LibraryTable>
               )}
             </div>
           )}

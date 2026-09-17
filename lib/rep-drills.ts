@@ -333,19 +333,21 @@ export const UNTAGGED_FILTER = ' untagged';
  * of drills reachable by no chip at all. Ids cannot drift, and `rep_team_tags` enforces
  * case-insensitive uniqueness per team so the two spellings can no longer both exist.
  *
- * @param tagId `null` = everything · `UNTAGGED_FILTER` = only items carrying no tags.
+ * @param tagIds Empty = everything, ticking several OR-s them together (a money-tags precedent:
+ *   money centralization P3, 2026-08-25). `UNTAGGED_FILTER` may sit alongside real tag ids in the
+ *   same set — "no tags" is just another option a coach can OR in, not a mode of its own.
  */
 export function filterTagged<T extends Taggable>(
   items: readonly T[],
   query: string,
-  tagId: string | null,
+  tagIds: ReadonlySet<string>,
 ): T[] {
   const q = query.trim().toLowerCase();
   return items.filter(item => {
-    if (tagId === UNTAGGED_FILTER) {
-      if (item.tags.length) return false;
-    } else if (tagId != null && !item.tags.some(t => t.id === tagId)) {
-      return false;
+    if (tagIds.size > 0) {
+      const matchesTag = item.tags.some(t => tagIds.has(t.id));
+      const matchesUntagged = tagIds.has(UNTAGGED_FILTER) && item.tags.length === 0;
+      if (!matchesTag && !matchesUntagged) return false;
     }
     if (!q) return true;
     return item.name.toLowerCase().includes(q)

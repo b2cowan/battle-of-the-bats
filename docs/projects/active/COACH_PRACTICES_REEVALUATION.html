@@ -739,7 +739,7 @@ details.call .body p{margin:0 0 6px}
   <button type="button" class="tab" role="tab" data-tab="qa2" aria-selected="false" aria-controls="tab-qa2">QA walk · 2<span class="st built">§190 complete</span></button>
   <button type="button" class="tab" role="tab" data-tab="stage3" aria-selected="false" aria-controls="tab-stage3">3 · Stations and the rotation<span class="st built">built 15 Sep</span><span class="st built">groups room ruled B · built 16 Sep</span><span class="st built">D13 · D14 ruled · built · walked 16 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa3" aria-selected="false" aria-controls="tab-qa3">QA walk · 3<span class="st built">§192 complete</span></button>
-  <button type="button" class="tab" role="tab" data-tab="stage4" aria-selected="false" aria-controls="tab-stage4">4 · The library<span class="st built">ruled 16 Sep · L1–L9</span><span class="st built">built on dev 16 Sep</span><span class="st dim">station 6</span></button>
+  <button type="button" class="tab" role="tab" data-tab="stage4" aria-selected="false" aria-controls="tab-stage4">4 · The library<span class="st built">ruled 16 Sep · L1–L9</span><span class="st built">built on dev 16 Sep</span><span class="st built">columns follow-up · ruled T1–T4 + built on dev 17 Sep · §199 · walk owed (QA walk · 4, part J)</span><span class="st dim">station 6</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa4" aria-selected="false" aria-controls="tab-qa4">QA walk · 4<span class="st">§195 owed</span></button>
 </nav>
 
@@ -3827,10 +3827,228 @@ details.call .body p{margin:0 0 6px}
     <div class="plain" style="margin-top:12px"><b>Not this stage:</b> the run screen and the printed sheet (stage 5 — neither reads the library); “How it went” and the record's face (stage 6); the equipment adopt-rows read on an old drill (the tag idiom's); the template editor's “Rest of practice” gutter label overrunning its cell (seen on the fixture — stage 1's gutter, carried); the groups room (D9–D12, ruled B tonight and being built in another session — this stage's drag shares its kit and its reason, nothing else).</div>
   </section>
 
+  <section class="psec" id="s4-columns">
+    <style>
+      /* The columns follow-up (17 Sep) — a sortable header and its arrow, drawn in the hub's table idiom. */
+      #s4-columns .lt th.srt{cursor:pointer;white-space:nowrap}
+      #s4-columns .lt th.srt .ar{display:inline-block;margin-left:4px;color:rgba(74,66,53,.35);font-size:10px}
+      #s4-columns .lt th.srt.on{color:#241E15}
+      #s4-columns .lt th.srt.on .ar{color:#57651E}
+      #s4-columns .lt td.tg{vertical-align:middle}
+      #s4-columns .lt td.tg .tagz{margin-left:0;flex-wrap:wrap;row-gap:4px}
+      #s4-columns .lt td.tg i{color:#9A938B;font-style:normal}
+      #s4-columns .lt td.d{font-family:"IBM Plex Mono",monospace;font-size:13px;color:#4A4235;white-space:nowrap;font-variant-numeric:tabular-nums}
+      #s4-columns .lt td.d i{color:#9A938B;font-style:normal}
+      #s4-columns .lt .cap{max-width:520px}
+      #s4-columns .pill{border:1px solid rgba(70,55,30,.25);border-radius:999px;padding:0 12px;font-size:13px;font-weight:600;color:#4A4235;background:#fff;display:inline-flex;align-items:center;gap:6px;min-height:44px}
+      #s4-columns .pill.on{border-color:#241E15;color:#241E15}
+      #s4-columns .menu{position:absolute;z-index:3;top:100%;left:0;margin-top:6px;background:#fff;border:1px solid rgba(70,55,30,.2);border-radius:10px;box-shadow:0 8px 24px rgba(70,55,30,.16);padding:6px;min-width:190px;font-size:14px;color:#241E15}
+      #s4-columns .menu div{padding:9px 12px;border-radius:7px;display:flex;justify-content:space-between;gap:12px}
+      #s4-columns .menu div.on{background:rgba(87,101,30,.1);font-weight:700}
+      #s4-columns .menu div span{color:#57651E}
+      #s4-columns .pf.ph .lcard .lb .tagz{display:inline-flex;gap:4px;margin-left:6px;vertical-align:1px}
+      #s4-columns .pf.ph .lcard .lb .tagz span{font-size:11px;font-weight:600;color:#3E5A8A;background:rgba(62,90,138,.1);border:1px solid rgba(62,90,138,.22);border-radius:999px;padding:1px 7px;white-space:nowrap}
+      #s4-columns .pf .lt .club{font-size:11px;font-weight:700;color:#8F540C;background:rgba(143,84,12,.08);border:1px solid rgba(143,84,12,.25);border-radius:999px;padding:1px 7px;margin-left:8px;vertical-align:1px}
+    </style>
+    <h2>Follow-up on the build · the library's columns (owner ask, 17 Sep) <span class="status built">RULED T1–T4 · BUILT ON DEV 17 Sep — as drawn after the two reconsiderations; no migration · the walk is part J of “QA walk · 4” · ledger §199</span></h2>
+    <p class="intro">The owner, on the built Templates tab: <em>“can we update the template/drill/circuit tables to have a ‘last used’ date column, number of times used, and tags column so a user can see the most recent, frequently used, hitting items? and make the columns sortable so I can sort by most recently used or most frequently used?”</em> Read against the code: <b>the count is already on every row</b> (“In 8 plans” · “Started 8 plans” — the Plans / Started column), <b>the date is already there for templates and circuits</b> but folded into the same cell (“Started 1 plan · last May 19, 2026”) so there is nothing to sort by, and <b>a drill row has no date at all</b> — only its count is computed. Tags sit beside the name. Nothing is sortable; the three tabs are in name order, club drills first. Four calls below, each drawn on all three tabs: tags — first drawn as a column, then reconsidered on sight and kept beside the name (T1) · the date as its own column, and the word on it (T2) · sortable headers and what the default stays (T3) · the phone, where there are no headers (T4). Rows marked <em>illustrative</em> are not on the fixture — it holds one drill in no plan and one template with one plan, which cannot show a sort.</p>
+
+    <div class="frametools"><span>Frames:</span><span class="sw" role="group" aria-label="Frame size"><button type="button" data-fit="fit" aria-pressed="true">Fit to window</button><button type="button" data-fit="true" aria-pressed="false">True size</button></span><span>· desktop 1440 · tablet 768 · phone 390</span></div>
+
+    <p class="framecap" data-short="Columns · before">Before · the Templates tab as built (the owner's screenshot)<span class="k">1440 · the page column · Template · Length · Started — the count and the date share one cell; tags beside the name; nothing sorts</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="ptabs"><span>Practices</span><span class="on">Templates</span><span>Circuits</span><span>Drills</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px"><div class="find" style="min-width:0;flex:1"><div>Search templates…</div></div><span class="pill">Tags ▾</span></div>
+      <div class="ltwrap an"><button type="button" class="mk r" aria-expanded="false" aria-label="Note 91" data-d="T2 T3">91</button><div class="pop" hidden><b>One cell, two facts — and nothing to sort by</b>“Started 1 plan · last May 19, 2026” is the count and the date in one string, so the column can only ever be read, never ordered; a drill row does not compute the date at all (its count walks the plans, its date was never asked for). Tags sit beside the name, which is where a card wants them and not where a table does. The heading says <em>Started</em> for a template and circuit, <em>Plans</em> for a drill — two words on purpose: a template <em>starts</em> a plan; a drill is <em>in</em> one.</div>
+        <table class="lt">
+          <thead><tr><th>Template</th><th>Length</th><th>Started</th><th class="chev"></th></tr></thead>
+          <tbody>
+            <tr><td class="nm"><b>New template 8</b><span class="cap none">Nothing in it yet</span></td><td class="n"><i>—</i></td><td class="w">Not started a plan yet</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>New template 9</b><span class="cap none">Nothing in it yet</span></td><td class="n"><i>—</i></td><td class="w">Not started a plan yet</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Probe plan template</b><span class="cap">Warm-up · Skills circuit · Small-sided game</span></td><td class="n">60 min · 3 blocks</td><td class="w" style="background:rgba(255,230,0,.35)">Started 1 plan · last May 19, 2026</td><td class="chev">›</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ltfoot"><u>Show retired (1)</u></div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn">91</span><span><b>One cell, two facts.</b> The count and the date are one string; a drill has no date; tags sit beside the name; nothing sorts.</span></li></ol>
+
+    <p class="framecap" data-short="Columns · Templates after">After · the Templates tab — Length · Started · Last planned, tags beside the name, sorted by Last planned, newest first <span class="rec">recommended</span><span class="k">1440 · the page column · T1 · T2 · T3 · the fixture's rows plus three illustrative ones (Tuesday standard · Rain day · Bunting circuit) so a sort has something to show</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="ptabs"><span>Practices</span><span class="on">Templates</span><span>Circuits</span><span>Drills</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px"><div class="find" style="min-width:0;flex:1"><div>Search templates…</div></div><span class="pill">Tags ▾</span></div>
+      <div class="ltwrap an" data-measure="s4c-templates"><span class="hpx" data-hpx></span>
+        <table class="lt">
+          <thead><tr>
+            <th class="srt an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 92" data-d="T3">92</button><div class="pop" hidden><b>A header is a button</b>Every column but Tags sorts on a click; a second click turns it round; the arrow marks the one in charge. The first click gives the order a coach clicks for: names A–Z, minutes shortest first, counts most first, dates newest first. A row with nothing to sort by — a dash: no plan yet, no date, no length — always sits at the bottom whichever way the arrow points, so “oldest first” never puts the never-planned on top as if they were the oldest. With no arrow pressed the tab is as it was: names A–Z, club drills first. Once a coach picks a column the tab remembers it in this browser, per tab.</div>Template<span class="ar">▲▼</span></th>
+                        <th class="srt">Length<span class="ar">▲▼</span></th>
+            <th class="srt">Started<span class="ar">▲▼</span></th>
+            <th class="srt on an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 93" data-d="T2">93</button><div class="pop" hidden><b>“Last planned”, not “last used”</b>The date is the date of the newest practice this template started — the day it was planned <em>for</em>. Nothing in the product records what was run (a coach plans a drill and skips it in the rain), which is the same reason the count keeps the word <em>plans</em> and never says “used”. <b>Revised on sight (owner, 17 Sep):</b> the heading carries the verb, so the cell is the number and its unit — “8 plans”, “1 plan” — and a dash where there is nothing to count, as Length already does for an empty template. So the column is <em>Last planned</em>, and a template in next Tuesday's plan shows next Tuesday — the most recent plan it is in, which is what “most recent” means here. Drills get the same column: today only templates and circuits compute a date.</div>Last planned<span class="ar">▼</span></th>
+            <th class="chev"></th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="nm an"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 94" data-d="T1">94</button><div class="pop" hidden><b>Tags stay beside the name — no column</b>Drawn first as a column (this artifact's earlier version); the owner asked whether the title should keep them, and it should. The line under the name — the stations' names, the blocks' titles, a drill's first line — is the fact that makes a row browsable, and a Tags column took about 170px from it (“…rotates eve…”). What a column buys is alignment, and it is ragged anyway (none to three chips a row). The question it exists for — “which of these are hitting” — is the Tags filter's, one control up, which also handles a row with two tags; “the most recent hitting ones” is that filter plus the Last planned arrow. And name · chips · one line is how every list in the portal reads, and how this one is built today. A tag never sorts.</div><b>Tuesday standard</b><span class="tagz"><span>Hitting</span><span>Skills</span></span><span class="cap">Warm-up · Tee stations · Live BP · Situations · Baserunning</span></td><td class="n">90 min · 5 blocks</td><td class="n">8 plans</td><td class="d">Sep 15, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Probe plan template</b><span class="cap">Warm-up · Skills circuit · Small-sided game</span></td><td class="n">60 min · 3 blocks</td><td class="n">1 plan</td><td class="d">May 19, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Bunting circuit</b><span class="tagz"><span>Hitting</span></span><span class="cap">Warm-up · Bunting stations · Scrimmage</span></td><td class="n">60 min · 3 blocks</td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Rain day (gym)</b><span class="tagz"><span>Fitness</span></span><span class="cap">Footwork ladder · Small-sided game</span></td><td class="n">45 min · 2 blocks</td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>New template 8</b><span class="cap none">Nothing in it yet</span></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>New template 9</b><span class="cap none">Nothing in it yet</span></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ltfoot"><u>Show retired (1)</u></div>
+</div></div>
+</div></div>
+    <ol class="notes">
+      <li><span class="nn ok">92</span><span><b>A header is a button.</b> Every column but Tags; a second click turns it round; “never” always last; the default stays name order; remembered per tab in this browser.</span></li>
+      <li><span class="nn ok">93</span><span><b>“Last planned”, not “last used.”</b> The date of the newest practice it is in — the same honesty as “Started 1 plan”. Drills gain the column.</span></li>
+      <li><span class="nn ok">94</span><span><b>Tags stay beside the name — no column.</b> The line keeps its width; the Tags filter answers “which are hitting”; the arrow answers “most recent”. As built today.</span></li>
+    </ol>
+
+    <p class="framecap" data-short="Columns · Drills after">After · the Drills tab sorted by Plans, most first — a club drill takes its place in the order; ties fall to the name <span class="rec">recommended</span><span class="k">1440 · the page column · T3 · the fixture's five drills with illustrative counts, plus one club drill (Tee work)</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="ptabs"><span>Practices</span><span>Templates</span><span>Circuits</span><span class="on">Drills</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px"><div class="find" style="min-width:0;flex:1"><div>Search drills…</div></div><span class="pill">Tags ▾</span></div>
+      <div class="ltwrap an" data-measure="s4c-drills"><span class="hpx" data-hpx></span>
+        <table class="lt">
+          <thead><tr>
+            <th class="srt">Drill<span class="ar">▲▼</span></th>
+                        <th class="srt">Usually<span class="ar">▲▼</span></th>
+            <th class="srt on an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 95" data-d="T3">95</button><div class="pop" hidden><b>Most first, then the name; the club drill falls into line</b>The cell is “6 plans”, the heading says the rest; a dash at zero. Sorted by Plans the club drill (Tee work, the amber chip) sits where its count puts it rather than leading the list — “club first” is the resting order's grouping, not a fact about the drill, and a chosen column is the whole order. Footwork ladder and Warm-up tie at six and fall to the name. The two rows with a dash sit at the foot in name order whichever way the arrow points. This is the coach asking their own library a question; the library still opens in name order and says nothing on its own — which is what the “never by use” line was protecting, and the past-season import has ordered its rows by plan count since it was built, for the same reason: these are the coach's activities, not children.</div>Plans<span class="ar">▼</span></th>
+            <th class="srt">Last planned<span class="ar">▲▼</span></th>
+            <th class="chev"></th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="nm"><b>Footwork ladder</b><span class="tagz"><span>Skills</span></span><span class="cap">Two ladders side by side; in-in-out-out, then icky shuffle.</span></td><td class="n">15 min</td><td class="n">6 plans</td><td class="d">Sep 15, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Warm-up</b><span class="cap">Dynamic warm-up, then partner work at walking pace.</span></td><td class="n">10 min</td><td class="n">6 plans</td><td class="d">Sep 10, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Tee work</b><span class="club">Club</span><span class="tagz"><span>Hitting</span></span><span class="cap">Three tees, three heights; five swings and rotate.</span></td><td class="n">12 min</td><td class="n">3 plans</td><td class="d">Sep 8, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Probe drill</b><span class="cap">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</span></td><td class="n">20 min</td><td class="n">2 plans</td><td class="d">May 19, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm" style="padding-top:13px;padding-bottom:13px"><b>Close control</b><span class="tagz"><span>Skills</span></span></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+            <tr><td class="nm" style="padding-top:13px;padding-bottom:13px"><b>Finishing</b></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ltfoot"><u>Show retired (1)</u></div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">95</span><span><b>Most first, then the name; the club drill falls into line.</b> A chosen column is the whole order; the never-planned rows stay at the foot; the tab still opens in name order.</span></li></ol>
+
+    <p class="framecap" data-short="Columns · Circuits after">After · the Circuits tab — the same five columns; sorted by Started, most first <span class="rec">recommended</span><span class="k">1440 · the page column · T1 · T2 · T3 · the fixture's one circuit (Skills circuit) plus three illustrative ones so a sort has something to show</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf narrow"><div class="cardonly">
+      <div class="ptabs"><span>Practices</span><span>Templates</span><span class="on">Circuits</span><span>Drills</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px"><div class="find" style="min-width:0;flex:1"><div>Search circuits…</div></div><span class="pill">Tags ▾</span></div>
+      <div class="ltwrap an" data-measure="s4c-circuits"><span class="hpx" data-hpx></span>
+        <table class="lt">
+          <thead><tr>
+            <th class="srt">Circuit<span class="ar">▲▼</span></th>
+                        <th class="srt">Usually<span class="ar">▲▼</span></th>
+            <th class="srt on an"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 96" data-d="T2 T3">96</button><div class="pop" hidden><b>The third tab, the same table</b>Circuit (the name, its tags beside it, its stations' names as the line — then how it rotates) · Usually (the block's minutes) · Started (the template's kind of count, because a circuit is scaffolding: it counts the blocks it seeded) · Last planned · the chevron. Sorted here by Started, most first: the cell reads “5 plans”, a dash where none; the two never-placed circuits sit at the foot in name order, the empty one last of all. Every rule drawn on the Templates and Drills frames holds here unchanged — one row, three tabs.</div>Started<span class="ar">▼</span></th>
+            <th class="srt">Last planned<span class="ar">▲▼</span></th>
+            <th class="chev"></th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="nm"><b>Tee stations</b><span class="tagz"><span>Hitting</span></span><span class="cap">Front toss · Tee work · Soft toss · rotates every 8 min</span></td><td class="n">30 min</td><td class="n">5 plans</td><td class="d">Sep 15, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Infield rounds</b><span class="tagz"><span>Fielding</span><span>Skills</span></span><span class="cap">Short hops · Backhands · Double-play feeds · rotates every 6 min</span></td><td class="n">25 min</td><td class="n">3 plans</td><td class="d">Sep 10, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Skills circuit</b><span class="tagz"><span>Skills</span></span><span class="cap">Footwork ladder · Close control · Finishing · rotates every 15 min</span></td><td class="n">45 min</td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Wet-day circuit</b><span class="cap none">Nothing in it yet</span></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ltfoot"><u>Show retired (1)</u></div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">96</span><span><b>The third tab, the same table.</b> Circuit · Usually · Started · Last planned, tags beside the name; every rule from the other two frames holds unchanged.</span></li></ol>
+
+    <p class="framecap" data-short="Columns · phone">After · the phone — no headers, so a Sort menu beside Tags; the card's line gains the date <span class="rec">recommended</span><span class="k">390 · the Drills tab · T4 · T1 · the menu drawn open</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf ph" style="min-height:844px">
+  <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span>👤</span></span></div>
+  <div class="body"><div class="main">
+    <div class="mast"><div class="team">UAT Test Team</div><div class="season">UAT Test Org · 2026 Season · 3-2-1</div></div>
+    <div class="grid after"><div class="col">
+      <div class="phead"><div class="ptitle"><span class="icon">✎</span><h1>Practice plans</h1></div></div>
+      <div class="ptabs"><span>Practices</span><span>Templates</span><span>Circuits</span><span class="on">Drills</span></div>
+      <div class="find" style="min-width:0;margin-bottom:10px"><div>Search drills…</div></div>
+      <div class="an" style="display:flex;gap:8px;margin-bottom:10px;position:relative"><button type="button" class="mk ok r" aria-expanded="false" aria-label="Note 97" data-d="T4">97</button><div class="pop" hidden><b>A Sort menu where there are no headers</b>At phone width the table is a stack of cards and has no header row to click, so the same four choices sit in a menu beside the Tags filter — the pill reads the choice it holds (“Sort · Plans”) so the order is never a mystery. It appears only below 641px; on a tablet and a desktop the headers are the control and the menu is absent, not a second copy. Tags stay beside the name on the card (T1); the card's one line of facts gains the date at its end — “15 min · In 6 plans · last Sep 15, 2026”; tags beside the name, as on the table now. The card keeps its words (“In 6 plans”, “Not in a plan yet”) where the table shows “6 plans” and a dash: a card has no heading to lean on, and a bare dash on a card would say nothing.</div><span class="pill">Tags ▾</span><span class="pill on">Sort · Plans ▾</span>
+        <div class="menu" style="left:100px;top:100%"><div>Name</div><div>Usually</div><div class="on">Plans <span>✓</span></div><div>Last planned</div></div>
+      </div>
+      <div class="lstack" data-measure="s4c-phone" style="margin-top:170px"><span class="hpx" data-hpx></span>
+        <div class="lcard"><div class="lb"><b>Footwork ladder</b><span class="tagz"><span>Skills</span></span><div class="m">15 min · In 6 plans · last Sep 15, 2026</div><div class="c">Two ladders side by side; in-in-out-out, then icky shuffle.</div></div><span class="cv">›</span></div>
+        <div class="lcard"><div class="lb"><b>Warm-up</b><div class="m">10 min · In 6 plans · last Sep 10, 2026</div><div class="c">Dynamic warm-up, then partner work at walking pace.</div></div><span class="cv">›</span></div>
+        <div class="lcard"><div class="lb"><b>Tee work</b><span class="club" style="font-size:11px;font-weight:700;color:#8F540C;background:rgba(143,84,12,.08);border:1px solid rgba(143,84,12,.25);border-radius:999px;padding:1px 7px;margin-left:6px">Club</span><span class="tagz"><span>Hitting</span></span><div class="m">12 min · In 3 plans · last Sep 8, 2026</div><div class="c">Three tees, three heights; five swings and rotate.</div></div><span class="cv">›</span></div>
+        <div class="lcard"><div class="lb"><b>Probe drill</b><div class="m">20 min · In 2 plans · last May 19, 2026</div><div class="c">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</div></div><span class="cv">›</span></div>
+        <div class="lcard"><div class="lb"><b>Close control</b><span class="tagz"><span>Skills</span></span><div class="m">Not in a plan yet</div></div><span class="cv">›</span></div>
+      </div>
+    </div></div>
+  </div></div>
+  <div class="bar"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span>MORE</span></div>
+</div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">97</span><span><b>A Sort menu where there are no headers.</b> Below 641px only; the pill reads its choice; the card's line ends with the date and keeps its words — a card has no heading to lean on.</span></li></ol>
+
+    <p class="framecap" data-short="Columns · 768">After · the tablet band — five columns in 736px; the line keeps its 380 clamp<span class="k">768 · the tab's column is 736 · T3 · headers are the control here, no menu</span></p>
+    <div class="framewrap"><div class="frame">
+<div class="pf t768"><div class="cardonly" style="width:768px;padding:16px">
+      <div class="ptabs"><span>Practices</span><span>Templates</span><span>Circuits</span><span class="on">Drills</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><div class="find" style="min-width:0;flex:1"><div>Search drills…</div></div><span class="pill">Tags ▾</span></div>
+      <div class="ltwrap an" data-measure="s4c-768"><button type="button" class="mk ok" aria-expanded="false" aria-label="Note 98" data-d="T1 T3">98</button><div class="pop" hidden><b>It fits at 768 with room to spare</b>Name 400 · Usually 70 · Plans 110 · Last planned 120 · the chevron; the first line keeps the 380px clamp the stage-4 build gave it, and the tags sit beside the name as today. The 44px floor on every row holds. Nothing scrolls sideways. (With a Tags column — the earlier version — the line clamped at 230.)</div><span class="hpx" data-hpx></span>
+        <table class="lt">
+          <thead><tr><th class="srt">Drill<span class="ar">▲▼</span></th><th class="srt">Usually<span class="ar">▲▼</span></th><th class="srt">Plans<span class="ar">▲▼</span></th><th class="srt on">Last planned<span class="ar">▼</span></th><th class="chev"></th></tr></thead>
+          <tbody>
+            <tr><td class="nm"><b>Footwork ladder</b><span class="tagz"><span>Skills</span><span>Fitness</span></span><span class="cap" style="max-width:380px">Two ladders side by side; in-in-out-out, then icky shuffle.</span></td><td class="n">15 min</td><td class="n">6 plans</td><td class="d">Sep 15, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Warm-up</b><span class="cap" style="max-width:380px">Dynamic warm-up, then partner work at walking pace.</span></td><td class="n">10 min</td><td class="n">6 plans</td><td class="d">Sep 10, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm"><b>Probe drill</b><span class="cap" style="max-width:380px">Two lines, cones five metres apart; players carry through at pace and turn at the far cone.</span></td><td class="n">20 min</td><td class="n">2 plans</td><td class="d">May 19, 2026</td><td class="chev">›</td></tr>
+            <tr><td class="nm" style="padding-top:13px;padding-bottom:13px"><b>Close control</b><span class="tagz"><span>Skills</span></span></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+            <tr><td class="nm" style="padding-top:13px;padding-bottom:13px"><b>Finishing</b></td><td class="n"><i>—</i></td><td class="n"><i>—</i></td><td class="d"><i>—</i></td><td class="chev">›</td></tr>
+          </tbody>
+        </table>
+      </div>
+</div></div>
+</div></div>
+    <ol class="notes"><li><span class="nn ok">98</span><span><b>It fits at 768 with room to spare</b> — five columns, the line keeps its clamp, the 44px floor holds.</span></li></ol>
+
+    <h2 style="margin-top:28px">The four calls</h2>
+
+    <div class="ask" data-q="T1" data-kind="build">
+      <div class="qn">T1 · tags · reconsidered on sight 17 Sep — the column came out</div>
+      <h3>Tags stay beside the name on all three tabs, as built — no Tags column; the line under the name keeps its width.</h3>
+      <p><b>Recommendation: no column — beside the name, as built (frames 92 · 94 · 96 · 98).</b> Drawn first as a column; on sight the owner asked whether the title should keep them, and it should. The line under the name is the browsable fact (L3) and the widest thing on the row; a Tags column took about 170px from it, so a circuit's stations read “…rotates eve…” at 1440 and clamped at 230 on a tablet. What a column bought was alignment, and with none to three chips a row it was ragged anyway. The question it existed for — “which of these are hitting” — is the Tags filter's, one control up, which also handles a row with two tags; “the most recent hitting ones” is that filter plus the Last planned arrow, which is exactly the owner's example. Name · chips · one line is the portal's list idiom and this library's current build, so this half of the ask becomes no change. A tag never sorts. The docked panel and the picker's rows are untouched.</p>
+      <div class="rides"><b>Rides:</b> nothing — the row's head is as built; the earlier column version stays in this artifact's history.</div>
+    </div>
+
+    <div class="ask" data-q="T2" data-kind="build">
+      <div class="qn">T2 · the date · revised on sight 17 Sep — the count cell reads its number; a dash at zero</div>
+      <h3>The date becomes its own column, headed “Last planned” — and a drill gets one for the first time.</h3>
+      <p><b>Recommendation: “Last planned”, the date alone in the cell, on all three tabs (frame 93).</b> Not “last used”: nothing in the product records what was run — a coach plans a drill and skips it in the rain — and that is the same reason the count already says “In 8 plans” and “Started 8 plans” rather than “used 8×”. The date is the newest practice the thing is in, so a drill in next Tuesday's plan shows next Tuesday — which is the most recent plan it is in, and the right answer to “most recent”. The count column keeps its heading per tab (Plans for a drill, Started for a template and a circuit); <b>its cell reads the number and its unit — “8 plans”, “1 plan” — and a dash where there is nothing to count</b> (the owner's revision on sight, 17 Sep; the heading already says the verb, and Length shows a dash for an empty template the same way). The “· last …” tail moves to its own column. The phone card, the docked panel and the picker keep their words — “In 6 plans”, “Not in a plan yet” — because a card has no heading to lean on. The template editor's own meta line is unchanged. <b>Fixed on the way:</b> a drill placed at two stations of one practice counts “In 2 plans” today; it becomes one plan, which is what the words claim.</p>
+      <div class="rides"><b>Rides:</b> the drill count's walk carries the newest practice date beside the count (templates and circuits already do); the drills API returns it; the count cell in the table face reads “8 plans” / a dash while the card face keeps the written label; the date cell reads a short date; the past-season import is unchanged (it already says “last planned”).</div>
+    </div>
+
+    <div class="ask" data-q="T3" data-kind="build">
+      <div class="qn">T3 · sorting</div>
+      <h3>Every column but Tags sorts on a click; the tab still opens in name order; the choice is remembered per tab in this browser.</h3>
+      <p><b>Recommendation: yes, as drawn (frames 92 · 95 · 96).</b> A click sorts, a second click turns it round, the arrow marks the column in charge. The first click gives the order a coach clicks for — names A–Z, minutes shortest first, counts most first, dates newest first — and a row with nothing to sort by (a dash — no plan yet, no date, no length) always sits at the foot whichever way the arrow points. Ties fall to the name. Under a chosen column the club drills take their place in the order rather than leading (frame 95); with no column chosen the tab is exactly as built — names A–Z, club first — and once a coach picks one, that tab remembers it in this browser, the way the docked library remembers its toggle. <b>The line this changes:</b> the build carried “sorted by name, never by use — a ranking of the coach's own ideas”. That was the no-ranking rule stretched one level out; the rule itself is about children, and the past-season import has ordered its rows by plan count since it was built, saying so in its own words. A coach sorting their own library is the coach asking a question, not the library answering one unasked — the default is what keeps that true.</p>
+      <div class="rides"><b>Rides:</b> a sortable head for the shared table (the first in the coach portal — a button in the heading with the sort state announced for a screen reader); the three tabs each name their columns' keys; the retired list under “Show retired” follows the same order; the picker sheet and the docked panel keep name order (a picker is not a table).</div>
+    </div>
+
+    <div class="ask" data-q="T4" data-kind="build">
+      <div class="qn">T4 · the phone</div>
+      <h3>Below 641px a “Sort ▾” menu sits beside the Tags filter with the same four choices; above it the headers are the control and the menu is absent.</h3>
+      <p><b>Recommendation: yes, as drawn (frame 97).</b> The card stack has no header row to click, so the one control that fits is a menu that reads its own choice (“Sort · Plans”). It is the phone's path only — a tablet and a desktop have headers, and a second copy of the control beside them would be the redundancy house rule 6 refuses. The card's one line of facts ends with the date (“15 min · In 6 plans · last Sep 15, 2026”). <b>The alternative:</b> no sort on the phone at all — the library is written at a desk. Cheaper, and it leaves a coach who sorted on the laptop finding the phone in name order with no way to ask; not recommended.</p>
+      <div class="rides"><b>Rides:</b> the toolbar menu the header creates already use, one more in the filter row, shown by the card breakpoint alone; the same remembered choice as the headers.</div>
+    </div>
+
+    <div class="plain" style="margin-top:18px"><b>Not in this follow-up:</b> the picker sheet's rows and the docked panel (name order, tags beside the name — a picker is not a table); the template and circuit editors' meta lines; the help's three library articles gain one sentence each on the columns and the sort (`/docs` at build time); no migration — every figure is computed from the plans as today.</div>
+  </section>
+
   <section class="psec">
     <div class="summary" style="padding-top:0">
       <h2>Your decisions on this stage, to paste back</h2>
-      <p>Collects L1–L9 (printed as D1–D9) with your notes into one block of text — L1–L8 were ruled as drawn in chat on 16 Sep; L9 is the one to confirm.</p>
+      <p>Collects L1–L9 (printed as D1–D9) and the columns follow-up’s T1–T4 with your notes into one block of text — L1–L9 were ruled 16 Sep; T1–T4 (17 Sep) are the ones to rule.</p>
       <button type="button" id="buildSummaryStage4">Build the stage summary</button>
       <textarea id="summaryOutStage4" hidden aria-label="Stage summary to paste back"></textarea>
     </div>
@@ -4665,9 +4883,9 @@ details.call .body p{margin:0 0 6px}
 
 <div class="prop" id="tab-qa4" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">QA walk · stage 4 · The library <span class="status built">built on dev 16 Sep · committed 34bb88f5 · ledger §195 · walk owed</span> <span class="status">one migration — circuits (302, applied to dev; prod-owed)</span></div>
+    <div class="eyebrow">QA walk · stage 4 · The library <span class="status built">built on dev 16 Sep · committed 34bb88f5 · ledger §195 · walk owed</span> <span class="status built">columns follow-up built 17 Sep · ledger §199 · part J</span> <span class="status">one migration — circuits (302, applied to dev; prod-owed)</span></div>
     <h1>The walk — pass it</h1>
-    <p class="lede">Thirty-two steps in nine parts, on the product as built. Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are not</strong> — the probe practice re-anchors to today, so its clock times drift; the drill's name, the block titles, the tab labels and the sentences are the things to check. The fixture drifts under other sessions' hands: on 16 Sep the Skills circuit held <b>six</b> stations (three probe-typed "test" ones beside the seeded three) and the Oct 27 practice held one untitled block with one station — read every identity from the screen.</p>
+    <p class="lede">Forty steps in ten parts, on the product as built (part J, the columns, joined on 17 Sep). Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are not</strong> — the probe practice re-anchors to today, so its clock times drift; the drill's name, the block titles, the tab labels and the sentences are the things to check. The fixture drifts under other sessions' hands: on 16 Sep the Skills circuit held <b>six</b> stations (three probe-typed "test" ones beside the seeded three) and the Oct 27 practice held one untitled block with one station — read every identity from the screen.</p>
     <div class="plain" style="margin-top:14px"><b>What this stage changed, in one breath.</b> The two library tabs are tables and a third tab, <b>Circuits</b>, joined them; the row is the door; Retire moved into the drill's sheet and the editors' headers; a written block saves to your drills with its minutes and a block with stations saves to your circuits (two optional questions); the library docks beside the plan from 1440 up and a row drags into a gap or onto the open block's stations, blocks drag by their gutter — <em>buttons everywhere; drag as an addition on desktop, with a mouse — never the only way</em>; an empty template is not offered as a start; the provenance line is one sentence; the hub's past list has one quiet door.</div>
   </header>
 
@@ -4767,6 +4985,19 @@ details.call .body p{margin:0 0 6px}
       <div class="wstep" data-w="I1"><div class="wn">I1</div><div class="wbody"><h4>Started from …</h4><p>On a blank practice, <b>start this plan from… → A template → Probe plan template</b>. Over the sheet's goal line, one sentence: <b>Started from Probe plan template — edit anything here; the template won't change.</b> — the name bold, nothing about “this plan is yours now”. Edit a block's title: the line stays. Delete the blocks afterwards.</p></div></div>
       <div class="wstep" data-w="I2"><div class="wn">I2</div><div class="wbody"><h4>Every practice this season ›</h4><p>Practice plans (the Practices tab): under <b>Recent practices</b> six rows, then one quiet line — <b>Every practice this season ›</b> (words, no count). Press it: the rest of the season's past practices appear in place under the six, and the door is gone. Reload: six again, the door back. With six or fewer past practices the door is absent.</p></div></div>
       <div class="wstep" data-w="I3"><div class="wn">I3</div><div class="wbody"><h4>Practice review is where it was</h4><p>Insights → Development → <b>Practice review</b> is unchanged — the by-tag list with its truth label — and there is no fourth tab for it on Practice plans.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="J">
+      <h3>J · The columns — a date of its own, the count as a figure, and headings that sort (T1–T4, 17 Sep)</h3>
+      <p class="wwho">Head coach · 1440, then 768 and 390 · Practice plans → <b>Templates</b>, then <b>Drills</b>. J5 places Probe drill on the probe practice and J6 takes it off again.</p>
+      <div class="wstep" data-w="J1"><div class="wn">J1</div><div class="wbody"><h4>Five headings, each with a quiet ↕</h4><p>On <b>Templates</b> the head reads <b>Template · Length · Started · Last planned</b> and a blank head over the chevrons; every heading but the blank wears a small up-down glyph and no arrow is lit. <b>Probe plan template</b>'s row reads <b>60 min · 3 blocks</b> · <b>1 plan</b> · <b>May 19, 2026</b> (or whatever date its one plan carries — read it from the screen); an empty “New template N” row reads a dash in all three. The tags — where a template has any — sit beside the name, not in a column of their own. The list is in name order.</p></div></div>
+      <div class="wstep" data-w="J2"><div class="wn">J2</div><div class="wbody"><h4>Last planned, newest first — the never-planned at the foot</h4><p>Click the <b>Last planned</b> heading: its arrow points <b>down</b> and reads as the only lit one; <b>Probe plan template</b> is the first row and the empties follow in name order. Click it again: the arrow points <b>up</b> — “oldest first” — and Probe plan template is <em>still</em> first, the dashes still at the foot (a dash is not the oldest date).</p></div></div>
+      <div class="wstep" data-w="J3"><div class="wn">J3</div><div class="wbody"><h4>The other headings</h4><p>Click <b>Template</b>: A–Z, arrow up; again: Z–A, arrow down (“Probe plan template” now leads the “New template N” rows). Click <b>Started</b>: the arrow points down and the row reading <b>1 plan</b> is first, the dashes after it. Click <b>Length</b>: arrow up, “60 min · 3 blocks” first, the dashes after. Keyboard: Tab to a heading and press Enter — it sorts the same way.</p></div></div>
+      <div class="wstep" data-w="J4"><div class="wn">J4</div><div class="wbody"><h4>Remembered per tab, in this browser</h4><p>Leave the Templates tab sorted by <b>Started</b> and reload the page: the same arrow is lit and the order is as you left it. Open <b>Drills</b>: it is in name order with nothing lit — each tab remembers its own. Open <b>Show retired (N)</b> under either table: the retired rows follow the same order as the live ones.</p></div></div>
+      <div class="wstep" data-w="J5"><div class="wn">J5</div><div class="wbody"><h4>A drill earns a date the first time it is planned</h4><p>On <b>Drills</b>, <b>Probe drill</b> reads <b>20 min</b> · a dash · a dash (not in a plan yet). Open the <b>UAT probe practice</b>, open its <b>Warm-up</b> block, press <b>+ Stations</b> → <b>From your drills</b> → add <b>Probe drill</b> (the block's words become station 1, the drill station 2 — D13). Back on <b>Drills</b>: the row now reads <b>1 plan</b> · <b>today's date</b> (the probe practice re-anchors to today). Click <b>Plans</b>: Probe drill is first; the club drills — if the fixture holds any — take their place in the order rather than leading.</p></div></div>
+      <div class="wstep" data-w="J6"><div class="wn">J6</div><div class="wbody"><h4>Two stations from one drill are still one plan — then put it back</h4><p>Add <b>Probe drill</b> to the same block a second time (<b>+ Add a station</b> → From your drills). On <b>Drills</b> it still reads <b>1 plan</b>, never “2 plans” — a practice counts once however many of its stations came from the drill. Then remove both stations (the block's own words come home — D13's reverse), and the row is back to its two dashes.</p></div></div>
+      <div class="wstep" data-w="J7"><div class="wn">J7</div><div class="wbody"><h4>768 — the headings are the control, and they clear the tap floor</h4><p>At 768 the table keeps its five headings and there is <b>no Sort control</b> beside the Tags filter. Tap <b>Plans</b>: it sorts. Each heading's tap box is at least 44px tall (the whole heading is the button — inspect one if in doubt). Nothing scrolls sideways.</p></div></div>
+      <div class="wstep" data-w="J8"><div class="wn">J8</div><div class="wbody"><h4>390 — a Sort menu beside Tags; the card keeps its words</h4><p>At 390 the table is cards and a <b>⇅ Sort</b> pill sits beside <b>Tags</b>. Open it: <b>Name · Usually · Plans · Last planned</b>. Pick <b>Plans</b>: the pill now reads <b>Sort · Plans</b>; open it again and the ticked row says <b>Most first · tap again to turn it round</b>. A card's facts line still reads in words — <b>20 min · Not in a plan yet</b>, or, with J5 in place, <b>20 min · In 1 plan · last &lt;date&gt;</b> — never a bare dash. Escape closes the menu and focus returns to the pill.</p></div></div>
     </div>
 
     <div class="summary" style="padding-top:28px">
@@ -5044,7 +5275,7 @@ details.call .body p{margin:0 0 6px}
   // ── decisions ↔ markers: every marker carries its decision's tag; every decision lists where it is drawn ──
   var DTITLE={};
   Array.prototype.forEach.call(document.querySelectorAll('.prop .ask[data-q]'),function(a){a.id='ask-'+a.getAttribute('data-q');DTITLE[a.getAttribute('data-q')]=a.querySelector('h3').textContent.trim()});
-  function dLabel(q){return 'D'+q.slice(1)}
+  function dLabel(q){return q.charAt(0)==='T'?q:'D'+q.slice(1)}
   function tabOf(el){var p=el.closest('.prop, .shell');if(!p)return null;for(var k in panels){if(panels[k]===p.id)return k}return null}
   function goToAsk(q){
     var a=document.getElementById('ask-'+q);if(!a)return;
@@ -5219,7 +5450,7 @@ details.call .body p{margin:0 0 6px}
     Array.prototype.forEach.call(document.querySelectorAll('#tab-stage4 .ask[data-q]'),function(a){
       var q=a.getAttribute('data-q');var h=a.querySelector('h3').textContent.trim();
       var ans=state['a-'+q];var label=ans?choicesFor(a).filter(function(c){return c[0]===ans})[0][1]:'no answer';
-      lines.push('['+(ans?'x':' ')+'] D'+q.slice(1)+' — '+h);
+      lines.push('['+(ans?'x':' ')+'] '+dLabel(q)+' — '+h);
       lines.push('    -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''));
     });
     if(state['d-stage4plan'])lines.push('','Notes: '+state['d-stage4plan'].replace(/\s+/g,' ').trim());

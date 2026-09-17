@@ -1455,3 +1455,59 @@ saved, "Draw" offered), Escape and focus on the save dialog; the past-season imp
   B Retire in the sheet · C Templates and the not-offered rule · D a block kept as a drill · E a circuit kept, the tick ·
   F the dock · G drag, with the button beside every drop · H the picker's sheet and touch · I provenance and the one door);
   ledger **§195**; **committed `34bb88f5` 2026-09-16 on the owner's word** — from a private index (56 files; the shared files by hunk, the ledger reconstructed from HEAD + §195; the staged tree typechecked and its guard tests run in isolation first; the default index reset to HEAD afterwards with nothing of the peers' staged). The walk is next.
+
+### 7.9 Follow-up on the build · the library's columns — RULED and BUILT 2026-09-17
+
+**The ask (owner, on the built Templates tab):** a "last used" date column, the number of times used, a tags column,
+and sortable columns — "so a user can see the most recent, frequently used, hitting items". **Read against the code:**
+the count was already on every row (Plans / Started, in words); the date was there for templates and circuits but
+welded to the count in one cell ("Started 1 plan · last May 19, 2026"), so nothing could sort on it, and a drill
+computed no date at all; tags sat beside the name; nothing sorted — the stage-4 build carried "sorted by name, never
+by use", which was the no-ranking rule (about children, plan §4 of the original practice-plans plan) stretched one
+level out while the past-season import had ordered its rows by plan count since it was built. Drawn on the hub's
+"4 · The library" tab as a new section (five frames, notes 91–98; asks T1–T4, the letter because the tab's L-asks
+and the paste-back's `D` printing would otherwise collide), then revised twice on sight and ruled.
+
+**The rulings (owner, 2026-09-17, in chat — "looks good, I agree with your recommendations, go for it"):**
+
+- **T1 · Tags stay beside the name — no column.** Drawn first as a column; the owner asked whether the title should
+  keep them ("so we have room for more text"), and it should: the line under the name is the browsable fact (L3) and
+  the widest thing on the row — a Tags column took ~170px from it at 1440 and clamped it at 230 on a tablet; what a
+  column bought was alignment, ragged anyway; "which of these are hitting" is the Tags filter's question; and
+  name · chips · one line is the portal's list idiom and this library's build. Nothing changed here.
+- **T2 · "Last planned", its own column, on all three tabs; the count cell reads the figure.** Not "last used" —
+  nothing records what was run (D4), the same reason the count says plans; the date is the newest practice the thing
+  is in, so a drill in next Tuesday's plan shows next Tuesday. Drills compute the date for the first time. **Revised
+  on sight:** the count cell is the number and its unit — "8 plans", "1 plan" — and a dash at zero (the heading
+  already says the verb; Length shows a dash for an empty template the same way). The card faces keep their words
+  ("In 6 plans", "Not in a plan yet") — a card has no heading to lean on. **Fixed on the way:** a drill placed at two
+  stations of one practice counted "In 2 plans"; a plan counts once now, which is what the words always claimed.
+- **T3 · Every heading sorts on a click; the tab still opens in name order and says nothing on its own; remembered
+  per tab in this browser.** First click: names A–Z, minutes shortest first, counts most first, dates newest first; a
+  second click turns it round; a row with nothing to sort by (a dash) sits at the foot whichever way the arrow points;
+  ties fall to the name; under a chosen column the club drills take their place in the order rather than leading.
+- **T4 · The phone's Sort menu** beside the Tags filter, below 641px only (a card stack has no head row); the trigger
+  reads its choice ("Sort · Plans"); the ticked row says which way it runs and that a second tap turns it round.
+
+**Built as (no migration, no new route):** `lib/library-sort.ts` — the pure half (`firstDirection` · `nextSort` ·
+`sortLibraryRows` with the empties-last and name-tiebreak rules · `parseLibrarySort`/`serializeLibrarySort` · the
+direction in words), 12 unit tests; `components/coaches/LibrarySort.tsx` — `useLibrarySort` (remembered under
+`coach-library-sort-<tab>`, read after mount like the dock's toggle), `LibrarySortHead` (a `<th>` per column with
+`aria-sort` and a real button; the whole heading is the target; ↕ at rest, ↑/↓ in charge; the tap floor at ≤768
+where the headings are the only control) and `LibrarySortMenu` (the phone's `CoachToolbarMenu`, whose item gained a
+`checked` prop — `menuitemradio` + `aria-checked` + a tick — the first choose-between menu in the portal);
+`LibraryRow.tsx` — `libraryCountCell` · `libraryDateCell` · `libraryDateLabel` and a `sort` slot on the filter bar;
+`countDrillUses` returns `{ planCount, lastPlannedAt }` per drill and counts DISTINCT plans, the drills route and
+`RepTeamDrillWithUsage` carry `lastPlannedAt`; the three views declare their four columns (`menuLabel: 'Name'` for the
+lead) and apply the sort to the live and retired lists alike; `.thSort` / `.thSortBtn` / `.thSortIcon` /
+`.libSortPhone` in `coaches.module.css`. **Gates:** 4,121 unit (0 fail) · `typecheck` clean · lint 0 errors on the
+touched files (the three `load()` effects' warnings pre-date this) · `check:spelling` · `check:layout --only=` the
+three library tabs at 361/390/768/1440 — no new findings from this work; **six NEW tap-floor rows recorded with a
+reason** for the Tags dropdown's checkboxes inside a closed `<details>` (Chrome keeps their geometry; the same
+accepted decision as the Money hub's and the handout's filter checkboxes) — they belong to the peer session's
+uncommitted dropdown swap, whose session had ended, so this session baselined them · a Playwright probe on the
+fixture at 1440 · 390 · 768 (the sorted head's `aria-sort`, the remembered key, the phone menu's trigger and tick).
+**Hub:** the section's chip reads built; **"QA walk · 4" gains part J — the columns** (8 steps); ledger **§199**.
+**Not done here:** the picker sheet and the docked panel (name order, tags beside the name — a picker is not a table);
+`/docs` and `/review` offered.
+

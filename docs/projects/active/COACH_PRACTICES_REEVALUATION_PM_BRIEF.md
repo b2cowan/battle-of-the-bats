@@ -227,3 +227,37 @@ reviewed (five lenses; the one High — a press on a reorder arrow that drifted 
 help synced (a new Circuits article; the drills article no longer promises "four taps"). **What is owed:** the owner's
 walk on the hub's "QA walk · 4" tab (32 steps; ledger §195) — the build is committed (`34bb88f5`, 2026-09-16) — and
 migration 302 on prod before the code that reads it.
+
+## Follow-up on the stage-4 build · the library's columns — RULED and BUILT 2026-09-17 · walk owed (§199, part J of QA walk · 4)
+
+**What a coach sees and does differently.** Every library table — Drills, Templates, Circuits — now has **a "Last
+planned" column** (the date of the newest practice the thing is in) and its **count column reads the figure** ("8
+plans", "1 plan") with a dash where there is nothing to count, instead of "Started 1 plan · last May 19, 2026" in one
+cell. **Every column heading sorts on a click** — names A–Z, minutes shortest first, counts most first, dates newest
+first — and a second click turns it round; the arrow marks the column in charge; rows with nothing to sort by sit at
+the foot whichever way it points; the choice is remembered on that computer, per tab. The tab still opens the way it
+did — names A–Z, club drills first — and says nothing on its own until the coach asks. On a phone, where a table is a
+stack of cards with no headings, a **Sort** menu sits beside the Tags filter with the same choices and reads its own
+choice ("Sort · Plans"). Tags stay beside the name, as built.
+
+**Why.** The owner's ask on the built Templates tab: "the most recent, frequently used, hitting items" — and the
+honest answer was that the count was already there, the date was welded to it, a drill had no date at all, and
+nothing sorted. Sorting a coach's own library by how often they planned something is the coach asking a question, not
+the product ranking their ideas — the "never by use" line the build carried was the no-ranking rule (which is about
+children) stretched one level too far, and the past-season import had ordered by plan count since it was built. The
+word is still **planned**, never *used*: nothing records what was actually run, which is also why the count says
+plans.
+
+**Two reconsiderations on sight, both the owner's.** The count cell lost the word "Started" (the heading already says
+it; a dash at zero, like Length). And the Tags column, drawn first, came out: it took about 170px from the line under
+the name — the stations' names, the blocks' titles, a drill's first line — which is the fact that makes a row worth
+browsing, and "which of these are hitting" is the Tags filter's job. Five columns per tab, not six.
+
+**Also fixed on the way.** A drill placed at two stations of the same practice used to count "In 2 plans"; it is one
+plan now, which is what the words always claimed.
+
+**Success criteria.** A coach on a laptop can click *Last planned* and see what they planned most recently at the
+top and the never-planned at the foot, click *Plans* and see their staples first, and come back tomorrow to the same
+order; on a phone the Sort menu does the same; nothing on the page ranks anything until they click. **What is
+owed:** the owner's walk (part J on the hub's "QA walk · 4" tab), then the commit on the owner's word.
+

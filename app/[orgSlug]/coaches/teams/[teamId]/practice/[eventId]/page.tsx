@@ -912,7 +912,7 @@ export default function CoachPracticePlanPage({
       // ⚠ Only a template that HOLDS A BLOCK is offered as a start (stage 4, L4): an empty one is
       // listed on its tab reading "Nothing in it yet", one click from the editor that finishes it,
       // and never here. "Start from blank" stays where it was.
-      const startable = filterTagged(templates.filter(t => t.plan.blocks.length > 0), copyQuery, null);
+      const startable = filterTagged(templates.filter(t => t.plan.blocks.length > 0), copyQuery, new Set());
       if (startable.length === 0) return <p className={styles.formHint}>No template with a block in it matches that.</p>;
       return startable.map(template => (
         <button key={template.id} type="button" className={styles.ppPickRow}
