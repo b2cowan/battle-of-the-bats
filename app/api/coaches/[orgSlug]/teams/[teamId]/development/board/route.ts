@@ -28,6 +28,7 @@ import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceTruth } from '@/lib/practice-truth';
 import { sectionUsable, toSectionRead } from '@/lib/report-section-state';
 import { groupBySession, latestSessionResult } from '@/lib/measurable-series';
+import { teamMetricCounts, teamSkillCounts, type TeamMetricCounts } from '@/lib/development-report';
 import type { RepTeamEvent, RepTeamMeasurableType } from '@/lib/types';
 
 /** The practice read's cap. The shared read says whether the season held more (F05). */
@@ -222,6 +223,28 @@ export const GET = withObservability(async (req: Request,
     const last = perType.get(m.measurableTypeId);
     if (!last || m.sessionDate > last) perType.set(m.measurableTypeId, m.sessionDate);
   }
+  /**
+   * ── Team progress (owner rulings T1–T8, 2026-09-16): counts of motion per METRIC, naming nobody. ──
+   * Computed HERE, in the walk this route already makes — the readings per (player, metric) are in
+   * hand, and the fold runs each player's readings through the same series reader the chart draws
+   * from. ⚠ COUNTS ON THE WIRE, NEVER A PER-PLAYER FIRST (the `inPlan` rule below, one section
+   * up): the wire shape is the no-ranking guarantee, and a per-player change beside a name would be
+   * a ranking by eye. A skill rides the notes gate exactly as its observations do — absent without
+   * it — and reads coverage only (T6): who has been observed, and when; never a count per descriptor.
+   */
+  const team: Record<string, TeamMetricCounts> = {};
+  // (`showMeasurables` is already true here — the route denied without it above.)
+  for (const def of types as RepTeamMeasurableType[]) {
+    if (def.kind === 'skill') {
+      if (!showGoals) continue;
+      const notAssessed = players.filter(p => !latestObservationByPlayer.get(p.id)?.has(def.id) && notAssessedByPlayer.get(p.id)?.has(def.id)).length;
+      team[def.id] = teamSkillCounts(players.map(p => latestObservationByPlayer.get(p.id)?.get(def.id)?.observedOn ?? null), notAssessed);
+      continue;
+    }
+    const notAssessed = players.filter(p => !readingsByPlayer.get(p.id)?.get(def.id)?.length && notAssessedByPlayer.get(p.id)?.has(def.id)).length;
+    team[def.id] = teamMetricCounts(players.map(p => readingsByPlayer.get(p.id)?.get(def.id) ?? []), def, notAssessed);
+  }
+
   // `id` + `reviewOn` ride along for the Skills & Goals Overview's "review due" line (stage 0,
   // 2026-09-14) — the same read the Players view draws, no second query.
   const goalsByPlayer = new Map<string, { id: string; focusArea: string; status: string; reviewOn: string | null }[]>();
@@ -257,6 +280,8 @@ export const GET = withObservability(async (req: Request,
      */
     canWrite: canWriteDevelopment(caps),
     types,
+    /** Team progress — metric id → counts (above). Nameless by construction; a skill only with the notes gate. */
+    team,
     rows: players.map(p => ({
       playerId: p.id,
       firstName: p.playerFirstName,

@@ -171,8 +171,21 @@ export function parseSkillsAndGoalsSection(raw: string | null | undefined): Skil
  * report, the metric and the window; Back/Forward and a fresh link move every selector, because the
  * panel reads the address on every render.
  */
-export type DevelopmentReport = 'coverage' | 'progress' | 'practices';
-export const DEVELOPMENT_REPORTS: ReadonlyArray<DevelopmentReport> = ['coverage', 'progress', 'practices'];
+/**
+ * The four reports, in the selector's order — whole → one: Coverage (who has a result, per player on
+ * one metric), Team progress (counts of motion per METRIC, naming nobody — owner ruling T1/T2,
+ * 2026-09-16, the project D8 parked), Player progress (one child's chart), Practice review. This
+ * ONE list is what the selector offers and what the Overview's rail counts (`developmentReports`),
+ * so a report added here appears in both by construction.
+ */
+export type DevelopmentReport = 'coverage' | 'team' | 'progress' | 'practices';
+export const DEVELOPMENT_REPORTS: ReadonlyArray<DevelopmentReport> = ['coverage', 'team', 'progress', 'practices'];
+/**
+ * The reports whose address carries a METRIC (`metric=`): Coverage's Show and Player progress's
+ * Metric. A positive list, so a report added above defaults to "no metric" without the panel
+ * growing a second exclusion — Team progress and Practice review read the whole team.
+ */
+export const REPORTS_WITH_METRIC: ReadonlySet<DevelopmentReport> = new Set<DevelopmentReport>(['coverage', 'progress']);
 /**
  * Coverage's first Show choice — the goals as words per player (re-evaluation stage 4, G1: the
  * Players view's "Current focus", moved here with the table). It rides `metric=` with this ONE

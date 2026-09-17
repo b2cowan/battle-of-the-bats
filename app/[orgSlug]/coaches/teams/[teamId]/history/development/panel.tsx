@@ -4,15 +4,17 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, Info, TrendingUp } from 'lucide-react';
 import {
-  insightsDevelopmentHref, parseInsightsDevelopmentAddress, playerDevelopmentHref, COVERAGE_FOCUS,
+  insightsDevelopmentHref, parseInsightsDevelopmentAddress, playerDevelopmentHref, COVERAGE_FOCUS, REPORTS_WITH_METRIC,
   type InsightsDevelopmentAddress, type DevelopmentReport, type ProgressShow, type CompareWindow,
 } from '@/lib/development-address';
 import {
   REPORT_LABELS, COMPARE_LABELS, progressSeries, scopeLine, coverageCell, coverageDenominator, COVERAGE_ORDER_NOTE, coverageLegend, COVERAGE_IN_PLAN_LEGEND,
-  COVERAGE_DASH, developmentReports, showOptions, type ProgressSeries, type ProgressPoint, type ReportDefinition,
+  COVERAGE_DASH, developmentReports, showOptions, teamChangeSummary, teamPlayersCell, teamCountLine, teamLegend, TEAM_COUNT_NOTE,
+  type ProgressSeries, type ProgressPoint, type ReportDefinition, type TeamMetricCounts,
 } from '@/lib/development-report';
 import { playerTabHref } from '@/lib/coach-player-tabs';
 import { headlineLabel, headlineLead } from '@/lib/measurable-series';
+import { aimSentence } from '@/lib/measurable-definition';
 import DevelopmentProgressChart from '@/components/charts/DevelopmentProgressChart';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import QuestionShell from '@/components/coaches/QuestionShell';
@@ -26,6 +28,7 @@ import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepPlayerObservation, RepDevelopmentGoalReview,
 } from '@/lib/types';
 import Muted from '@/components/coaches/Muted';
+import { LibraryTable } from '@/components/coaches/LibraryRow';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import styles from '../../../../coaches.module.css';
 
@@ -40,6 +43,12 @@ import styles from '../../../../coaches.module.css';
 // the hub's own `?section=development` address (report · player · metric · show
 // · compare · tag), read on EVERY render, so Back/Forward and a fresh link move
 // the selectors with them.
+//
+// ⚠ TEAM PROGRESS IS THE ONE TEAM-LEVEL READ (owner rulings T1–T8, 2026-09-16 — the D8 the
+// re-evaluation parked): counts of motion per METRIC, the rows metrics and never players, so the
+// table cannot rank children by construction. Its counts arrive from the board route as counts
+// (a per-player first never travels), and every one is a fold over the same series reader the
+// chart draws from. The Overview does not change — its rail's report count reads 4 by computation.
 //
 // ⚠ COVERAGE IS THE ONE ROSTER TABLE (re-evaluation stage 4, owner ruling G1,
 // 2026-09-16). The Skills & Goals Players tab drew the same cell from the same
@@ -122,6 +131,8 @@ interface ReportData {
   canWrite: boolean;
   types: RepTeamMeasurableType[];
   rows: ReportRow[];
+  /** Team progress — metric id → counts, nameless by construction; a skill only with the notes gate. */
+  team: Record<string, TeamMetricCounts>;
   showPlans: boolean;
   planFinding: string | null;
   uncoveredFocus: { id: string; name: string }[];
@@ -233,7 +244,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
       if (res.status === 404) {
         setNoSeason(true);
         setData({
-          showGoals: false, showMeasurables: false, canWrite: false, types: [], rows: [],
+          showGoals: false, showMeasurables: false, canWrite: false, types: [], rows: [], team: {},
           showPlans: false, planFinding: null, uncoveredFocus: [], practices: [],
           practiceRead: { state: 'empty', truncated: false }, practiceCap: 0,
           tagRead: { state: 'empty', truncated: false },
@@ -305,7 +316,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const here = insightsDevelopmentHref(base, {
     tag: address.tag, report,
     playerId: report === 'progress' ? player?.playerId : null,
-    metricId: report === 'practices' ? null : focus ? COVERAGE_FOCUS : metric?.id,
+    metricId: !REPORTS_WITH_METRIC.has(report) ? null : focus ? COVERAGE_FOCUS : metric?.id,
     show: report === 'progress' ? address.show : null,
     compare: report === 'progress' ? address.compare : null,
   });
@@ -440,6 +451,9 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
 
           {report === 'coverage' && (
             <CoverageReport data={data} metric={metric} focus={focus} base={base} here={here} tag={address.tag} />
+          )}
+          {report === 'team' && (
+            <TeamReport data={data} metrics={metricOptions} base={base} tag={address.tag} />
           )}
           {report === 'progress' && (
             player && metric
@@ -1006,6 +1020,110 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
             A topic appearing in a plan does not prove that a specific player worked on or achieved a goal.
           </p>
         </>
+      )}
+    </>
+  );
+}
+
+// ── Team progress — counts of motion per METRIC, naming nobody (owner rulings T1–T8, 2026-09-16) ──
+/**
+ * One row per metric, active first and retired under the Metrics tab's own fold; the columns Players
+ * with a result · Since their first result · Last recorded; the ROW is the door to Coverage on
+ * that metric — the names behind the count, in roster order, and from there one child's chart. The
+ * drill path only ever runs counts → names → one child. On the library's list recipe (the row is
+ * the door, a bare chevron — register K-19: a row with ONE door does not name it), and on a phone one
+ * card per metric two lines tall — the name, then the counts — on the shared `cardPhoneLine` pair:
+ * Coverage's one-line card does not fit "4 of 12 · 2 lower · 1 higher · 15 Sept" beside a name.
+ */
+function TeamReport({ data, metrics, base, tag }: {
+  data: ReportData; metrics: RepTeamMeasurableType[]; base: string; tag: string | null;
+}) {
+  const router = useRouter();
+  const { rows, canWrite, team } = data;
+  const total = rows.length;
+  // The count line's numerator is the OVERVIEW's "players measured" rule — a result OR an observation — so the two
+  // screens can never disagree by the one player whose only record is an observation (/review, 2026-09-16).
+  const withAny = rows.filter(r => Object.keys(r.latest).length > 0 || Object.keys(r.latestObservation ?? {}).length > 0).length;
+  const active = metrics.filter(t => t.isActive), retired = metrics.filter(t => !t.isActive);
+  const dash = <Muted>{COVERAGE_DASH}</Muted>;
+  /** "seconds · lower is the aim" · "mph · aim: 62–68 mph" · "km/h · record only" · "skill" — the Metrics tab's own words. */
+  const subLine = (t: RepTeamMeasurableType) => t.kind === 'skill' ? 'skill' : [t.unit, aimSentence(t)].filter(Boolean).join(' · ');
+  const coverageHref = (t: RepTeamMeasurableType) => insightsDevelopmentHref(base, { tag, report: 'coverage', metricId: t.id });
+
+  const row = (t: RepTeamMeasurableType) => {
+    const c = team[t.id];
+    const players = c ? teamPlayersCell(c, total, t) : null;
+    const change = c ? teamChangeSummary(c, t) : null;
+    const href = coverageHref(t);
+    const lastRecorded = c?.lastRecordedOn ? formatShortDate(c.lastRecordedOn) : null;
+    // The phone's one line under the name: "4 of 12 · 2 lower · 1 higher · 15 Sept" — the same facts as the cells.
+    const facts = [players, change, lastRecorded].filter(Boolean).join(' · ') || COVERAGE_DASH;
+    return (
+      <tr key={t.id} className={`${styles.tr} ${styles.rowTappable}${t.isActive ? '' : ` ${styles.devRetiredRow}`}`} onClick={() => router.push(href)}>
+        {/* `libRowLead` — the library row's lead cell: on the phone card its stacked lines sit close, so the card is as tall as its words. */}
+        <td className={`${styles.td} ${styles.cardStackCell} ${styles.libRowLead}`}>
+          <Link href={href} className={`${styles.devCellLink} ${styles.libRowName}`} onClick={e => e.stopPropagation()}>{t.name}</Link>
+          <span className={`${styles.listRowSub} ${styles.cardDesktopLine}`}>{subLine(t)}</span>
+          <span className={`${styles.listRowSub} ${styles.cardPhoneLine}`}>{facts}</span>
+        </td>
+        <td data-label="Players with a result" className={`${styles.td} ${styles.cardDesktopCell} ${styles.libRowData}`}>
+          {players ?? dash}{c && c.notAssessed > 0 && <span className={styles.devBoardMuted}> · {c.notAssessed} not assessed</span>}
+        </td>
+        <td data-label="Since their first result" className={`${styles.td} ${styles.cardDesktopCell} ${styles.libRowData}`}>
+          {change ?? dash}
+        </td>
+        {/* A date in the body face, like every other list's (standard §3.4). */}
+        <td data-label="Last recorded" className={`${styles.td} ${styles.tdDate} ${styles.cardDesktopCell}`}>
+          {lastRecorded ?? dash}
+        </td>
+        <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
+          <span className={styles.listRowActions}>
+            <Link href={href} className={`${styles.linkBtn} ${styles.listRowToggle}`} aria-label={`Open Coverage on ${t.name}`} onClick={e => e.stopPropagation()}>
+              <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+            </Link>
+          </span>
+        </td>
+      </tr>
+    );
+  };
+  /* The library tabs' own frame (the list recipe); it adds the trailing "Open" heading for the chevron column.
+     ⚠ NO sort affordance on any column, ever — library order is the only order. */
+  const table = (list: RepTeamMeasurableType[], label: string) => (
+    <LibraryTable label={label} head={<>
+      <th className={styles.th}>Metric</th>
+      <th className={styles.th}>Players with a result</th>
+      {/* The cell carries its own denominator ("3 compared · …") — a separate "Two or more" column read as a bare number (owner, 2026-09-17). */}
+      <th className={styles.th}>Since their first result</th>
+      <th className={styles.th}>Last recorded</th>
+    </>}>
+      {list.map(row)}
+    </LibraryTable>
+  );
+
+  return (
+    <>
+      {/* The count line first — the whole-roster denominator said once (Coverage's rule, G1). */}
+      <p className={styles.devReportDenominator}>
+        {teamCountLine(withAny, total)}
+        <span className={styles.devReportOrderNote}> · {TEAM_COUNT_NOTE}</span>
+      </p>
+      {active.length === 0
+        ? <p className={styles.detailPlaceholder}>No active metric to read yet.</p>
+        : table(active, 'Team progress, active metrics')}
+      {/* Retired metrics under the Metrics tab's own fold — a retired test's results are still a record. */}
+      {retired.length > 0 && (
+        <details style={{ marginTop: '0.8rem' }}>
+          <summary className={`${styles.devCardNote} ${styles.devDisclosureSummary}`}>Retired ({retired.length})</summary>
+          <div style={{ marginTop: '0.4rem' }}>{table(retired, 'Team progress, retired metrics')}</div>
+        </details>
+      )}
+      {/* One legend, one disclaimer (G3's rule) — the sentence Player progress keeps, said once for the table. */}
+      <p className={styles.formHint} style={{ marginTop: '0.5rem' }}>{teamLegend()}</p>
+      <p className={styles.formHint} style={{ marginTop: '0.35rem' }}>A change in a test does not explain why it happened.</p>
+      {canWrite && (
+        <Link href={`${base}/development`} className={styles.insightsOpsLink}>
+          Record in Skills &amp; Goals →
+        </Link>
       )}
     </>
   );

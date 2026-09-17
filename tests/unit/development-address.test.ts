@@ -123,6 +123,9 @@ describe('the workspace and Insights addresses', () => {
     const b = parseInsightsDevelopmentAddress(new URLSearchParams('report=leaderboard&player=../x&show=best&compare=year'));
     assert.deepEqual(b, { tag: null, report: 'coverage', playerId: null, metricId: null, show: null, compare: null }, 'unknown values are dropped, never passed through');
     assert.equal(parseInsightsDevelopmentAddress(new URLSearchParams('')).report, 'coverage');
+    // Team progress (T1/T2, 2026-09-16): the fourth report rides the same address and carries nothing else.
+    assert.equal(insightsDevelopmentHref(base, { report: 'team' }), `${base}/history?section=development&report=team`);
+    assert.equal(parseInsightsDevelopmentAddress(new URLSearchParams('report=team')).report, 'team');
   });
   it('the handout preview is a page of its own under the record, carrying a SAFE way back only', () => {
     assert.equal(developmentHandoutHref(base, 'P1'), `${base}/roster/P1/development/handout`);

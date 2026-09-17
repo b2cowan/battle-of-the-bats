@@ -31,6 +31,7 @@ export type { DevelopmentReport, ProgressShow, CompareWindow };
 // ── The three reports and the selectors' labels ───────────────────────────────────────────────────
 export const REPORT_LABELS: Readonly<Record<DevelopmentReport, string>> = {
   coverage: 'Coverage',
+  team: 'Team progress',
   progress: 'Player progress',
   practices: 'Practice review',
 };
@@ -167,27 +168,161 @@ export function compareWindow<P>(points: P[], window: CompareWindow): P[] {
  * Null when the two points are the same point.
  */
 export function statedChange(first: ProgressPoint, latest: ProgressPoint, def: ReportDefinition, unit: string): string | null {
-  if (first.row.key === latest.row.key) return null;
+  const direction = changeDirection(first, latest, def);
+  if (!direction) return null;
   const since = formatShortDate(first.row.recordedOn);
   if (isRange(def)) {
     const from = def.rangeFrom!, to = def.rangeTo!;
     // A range test's row headline IS its attempts in range.
-    const firstIn = first.row.headline ?? 0, latestIn = latest.row.headline ?? 0;
-    const firstOf = `${firstIn} of ${first.row.values.length}`;
+    const firstOf = `${first.row.headline ?? 0} of ${first.row.values.length}`;
     const pastBand = (): string => {
       const avg = latest.row.average ?? latest.value;
       if (avg > to) return `${formatValue(round3(avg - to))} ${unit} above the range`;
       if (avg < from) return `${formatValue(round3(from - avg))} ${unit} below the range`;
       return 'attempts either side of the range, none in it';
     };
-    if (latestIn > 0 && firstIn === 0) return `moved into the range since ${since} (${firstOf})`;
-    if (latestIn > 0) return `${firstOf} in range on ${since}`;
-    if (firstIn > 0) return `moved out of the range since ${since} (${firstOf}) · ${pastBand()}`;
-    return pastBand();
+    switch (direction) {
+      case 'into': return `moved into the range since ${since} (${firstOf})`;
+      case 'in_both': return `${firstOf} in range on ${since}`;
+      case 'out': return `moved out of the range since ${since} (${firstOf}) · ${pastBand()}`;
+      default: return pastBand();
+    }
+  }
+  if (direction === 'unchanged') return `unchanged since ${since}`;
+  return `${formatValue(round3(Math.abs(latest.value - first.value)))} ${unit} ${direction} since ${since}`;
+}
+
+/**
+ * The DIRECTION of a change between two points — the one reading `statedChange` writes its sentence
+ * from and the Team progress fold counts (owner ruling T3, 2026-09-16): a test reads lower / higher /
+ * unchanged in its unit (the aim is stated beside it, never a verdict); a range test reads whether the
+ * attempts moved into or out of the band, sat in it on both dates, or outside it on both. Null when
+ * the two points are the same point.
+ */
+export type ChangeDirection = 'lower' | 'higher' | 'unchanged' | 'into' | 'out' | 'in_both' | 'outside_both';
+export function changeDirection(first: ProgressPoint, latest: ProgressPoint, def: ReportDefinition): ChangeDirection | null {
+  if (first.row.key === latest.row.key) return null;
+  if (isRange(def)) {
+    const firstIn = first.row.headline ?? 0, latestIn = latest.row.headline ?? 0;
+    if (latestIn > 0 && firstIn === 0) return 'into';
+    if (latestIn > 0) return 'in_both';
+    if (firstIn > 0) return 'out';
+    return 'outside_both';
   }
   const delta = round3(latest.value - first.value);
-  if (delta === 0) return `unchanged since ${since}`;
-  return `${formatValue(Math.abs(delta))} ${unit} ${delta < 0 ? 'lower' : 'higher'} since ${since}`;
+  return delta === 0 ? 'unchanged' : delta < 0 ? 'lower' : 'higher';
+}
+
+// ── Team progress — counts of motion per METRIC, naming nobody (owner rulings T1–T8, 2026-09-16) ──
+/**
+ * ⚠ THE WIRE IS THE NO-RANKING GUARANTEE. The board route computes these counts in the walk it
+ * already makes and sends COUNTS; a per-player "first" never reaches the browser, so no screen can
+ * grow a column of changes beside names (a ranking by eye — plan §5). Rows on the report are
+ * metrics, never players.
+ *
+ * ⚠ ONE READER BEHIND EVERY NUMBER (§185's guardrail). `lower` is literally the number of players
+ * whose Player-progress answer line, on "This season", says "… lower since …": each player's readings
+ * go through the same `progressSeries` the chart draws from, and the count is a fold over
+ * `changeDirection` on its first and last points. The two screens cannot disagree.
+ */
+export interface TeamMetricCounts {
+  /** Players with at least one result on the metric (a test) or one observation (a skill). */
+  withResult: number;
+  /** Players with NO result whom a session marked not assessed on it — a result always wins (the Coverage cell's rule). */
+  notAssessed: number;
+  /** Players with two or more results — the only ones a change can be read for. Always 0 for a skill. */
+  withTwo: number;
+  /** How many of those moved each way, keyed by `changeDirection`'s own word — a key is present only when its count is. A skill has none. */
+  byDirection: Partial<Record<ChangeDirection, number>>;
+  /** The latest date ANY player has a result (or an observation) on the metric; null with none. */
+  lastRecordedOn: string | null;
+}
+
+const emptyCounts = (): TeamMetricCounts => ({ withResult: 0, notAssessed: 0, withTwo: 0, byDirection: {}, lastRecordedOn: null });
+
+/**
+ * The fold for ONE test: `perPlayer` holds each active player's readings under the definition (any
+ * order; an empty array for a player with none) and `notAssessed` how many of the players with NO
+ * result a session marked not assessed. The season window, first to latest, per player.
+ */
+export function teamMetricCounts<R extends AttemptReading>(perPlayer: R[][], def: ReportDefinition, notAssessed: number): TeamMetricCounts {
+  const c = emptyCounts();
+  c.notAssessed = notAssessed;
+  for (const readings of perPlayer) {
+    const s = progressSeries(readings, def, { show: 'headline', compare: 'season' });
+    const first = s.points[0], latest = s.points[s.points.length - 1];
+    if (!first || !latest) continue;
+    c.withResult += 1;
+    if (!c.lastRecordedOn || latest.row.recordedOn > c.lastRecordedOn) c.lastRecordedOn = latest.row.recordedOn;
+    if (s.points.length < 2) continue;
+    c.withTwo += 1;
+    const dir = changeDirection(first, latest, def);
+    if (dir) c.byDirection[dir] = (c.byDirection[dir] ?? 0) + 1;
+  }
+  return c;
+}
+
+/**
+ * The fold for ONE skill: each player's latest observation date, or null — coverage only (T6): no
+ * count per descriptor. `notAssessed` counts the players with NO observation whom a session marked
+ * not assessed on the skill, exactly as a test row does (the Coverage cell reads a skill that way too).
+ */
+export function teamSkillCounts(perPlayerLatest: (string | null)[], notAssessed = 0): TeamMetricCounts {
+  const c = emptyCounts();
+  c.notAssessed = notAssessed;
+  for (const on of perPlayerLatest) {
+    if (!on) continue;
+    c.withResult += 1;
+    if (!c.lastRecordedOn || on > c.lastRecordedOn) c.lastRecordedOn = on;
+  }
+  return c;
+}
+
+/** Each direction's word on the Team progress row — `statedChange`'s own vocabulary, said once. */
+const DIRECTION_WORDS: Readonly<Record<ChangeDirection, string>> = {
+  lower: 'lower', higher: 'higher', unchanged: 'unchanged',
+  into: 'moved into the range', out: 'moved out of the range', in_both: 'in the range on both', outside_both: 'outside the range on both',
+};
+/** The order the cell reads them in — a test's three, or a range test's four. */
+const TEST_DIRECTIONS: ReadonlyArray<ChangeDirection> = ['lower', 'higher', 'unchanged'];
+const RANGE_DIRECTIONS: ReadonlyArray<ChangeDirection> = ['into', 'out', 'in_both', 'outside_both'];
+
+/**
+ * The "Since their first result" cell — its own denominator first, then the direction counts in the
+ * aim's own words, zero counts omitted: "3 compared · 2 lower · 1 higher" · "1 compared · 1 moved
+ * into the range". "Compared" is the players with two or more results, each against their own first
+ * (owner ruling A, 2026-09-17: the separate "Two or more" column read as a bare number nobody could
+ * connect to the cell beside it). Null when nobody has two results (the cell shows the dash and the
+ * legend says why). Never a percentage, a mean, or a verdict.
+ */
+export function teamChangeSummary(c: TeamMetricCounts, def: Pick<ReportDefinition, 'aim' | 'headline' | 'rangeFrom' | 'rangeTo'>): string | null {
+  // A skill's fold never counts two (`teamSkillCounts`), so this one guard covers both kinds.
+  if (c.withTwo === 0) return null;
+  const said = (isRange(def) ? RANGE_DIRECTIONS : TEST_DIRECTIONS)
+    .filter(d => (c.byDirection[d] ?? 0) > 0)
+    .map(d => `${c.byDirection[d]} ${DIRECTION_WORDS[d]}`);
+  return [`${c.withTwo} compared`, ...said].join(' · ');
+}
+
+/** "4 of 12" for a test · "3 of 12 observed" for a skill · null with nothing recorded (the dash). */
+export function teamPlayersCell(c: TeamMetricCounts, total: number, def: Pick<ReportDefinition, 'kind'>): string | null {
+  if (c.withResult === 0 && c.notAssessed === 0) return null;
+  return def.kind === 'skill' ? `${c.withResult} of ${total} observed` : `${c.withResult} of ${total}`;
+}
+
+/**
+ * The count line first (Coverage's rule): the whole-roster denominator said once — the same
+ * active-roster rows every development count reads. The numerator is the OVERVIEW's "players
+ * measured" rule — a result OR an observation (`/review`, 2026-09-16: a player whose only record
+ * is an observation counted on one screen and not the other) — and the sentence says both words.
+ */
+export function teamCountLine(withAny: number, total: number): string {
+  return `${playersHave(withAny, total)} at least one result or observation this season`;
+}
+export const TEAM_COUNT_NOTE = 'counts per metric, never a ranking';
+/** The one legend under the table — the dash's meaning (one spelling, `COVERAGE_DASH`), the cell's rule, and the sentence Player progress already prints, said once for the whole table. */
+export function teamLegend(): string {
+  return `${COVERAGE_DASH} nothing recorded this season · Compared: the players with two or more results this season, each against their own first, in the test’s unit · a single result is a point, not a change`;
 }
 
 /**
@@ -313,9 +448,13 @@ export function coverageCell(input: CoverageCellInput, def: Pick<ReportDefinitio
  * description, the disclaimer and the heading it used to sit under live in the help.
  */
 export function coverageDenominator(recorded: number, total: number, def: Pick<ReportDefinition, 'kind' | 'name'> | 'focus'): string {
-  const players = `${recorded} of ${total} player${total === 1 ? '' : 's'} ${recorded === 1 ? 'has' : 'have'}`;
+  const players = playersHave(recorded, total);
   if (def === 'focus') return `${players} a goal being worked on`;
   return `${players} a ${def.name} ${def.kind === 'skill' ? 'observation' : 'result'} this season`;
+}
+/** "4 of 12 players have" · "1 of 12 players has" — the one spelling of the count line's opening, on Coverage and Team progress alike. */
+function playersHave(n: number, total: number): string {
+  return `${n} of ${total} player${total === 1 ? '' : 's'} ${n === 1 ? 'has' : 'have'}`;
 }
 export const COVERAGE_ORDER_NOTE = 'roster order, not a ranking';
 /** The legend under the table — what a dash and "Not assessed" mean, said once, for what Show shows. */

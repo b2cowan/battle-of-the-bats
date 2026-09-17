@@ -1,0 +1,763 @@
+<title>Team Progress</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* ── Hub chrome — the owner-approved project-hub template (docs/agents/design/PROJECT_HUB_TEMPLATE.html).
+   The chrome is deliberately a DIFFERENT ground from the frames, so the frames read as specimens. ── */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ask:#6b4f1d;--ask-soft:#f6efe0;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions{display:flex;gap:8px}.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime)}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+main.hubsection{padding:0 0 36px;min-height:400px}
+.screenhead{max-width:900px;margin:26px auto 6px;padding:0 24px}
+.screenhead .eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.screenhead p{font-size:15px;max-width:70ch}.screenhead h1:focus{outline:0}
+.legendbar{max-width:900px;margin:0 auto 10px;padding:0 24px;font-size:12px;color:var(--muted);line-height:2}
+.intent{max-width:900px;margin:14px auto 0;padding:14px 24px;font-size:13px;color:var(--muted)}.intent strong{color:var(--ink)}
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0 18px}.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}.docpage th{background:var(--soft);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+.tablewrap{overflow-x:auto}
+.docpage ul{padding-left:20px}.docpage li{margin-bottom:6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.inherited{background:#e8eef2;border-color:#b6cfdb}
+
+/* the asks — lettered decisions with the owner's controls (the re-evaluation artifact's shape) */
+.ask{margin:18px auto 0;padding:18px 20px 16px;border-left:3px solid var(--ask);background:var(--ask-soft);border-radius:0 8px 8px 0;max-width:76ch}
+.ask .qn{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;color:var(--ask);letter-spacing:.04em}
+.ask h3{font-size:18px;font-weight:650;line-height:1.3;margin:4px 0 8px;color:var(--ink)}
+.ask p{font-size:15px;line-height:1.55;color:#3a4336;margin:0 0 6px}
+.ask .rides{font-size:13.5px;color:var(--muted);margin-top:8px}.ask .rides b{color:#3a4336;font-weight:600}
+.ruling{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.ruling button{border:1px solid #cdbf9c;background:#fff;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.ruling button[aria-pressed=true]{background:var(--lime);border-color:#b9d88c;font-weight:700}
+.ask textarea.note{width:100%;border:1px solid #cdbf9c;border-radius:6px;padding:8px 10px;margin-top:8px;resize:vertical;font-size:13.5px;background:#fff}
+#summaryOut,#qaOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:#fff}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}.signin code{font-size:12px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}.qapart h3{margin-top:0}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px;border-top:1px solid var(--soft)}.qastep:first-of-type{border-top:0}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.qastep b{display:block}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;font-size:13.5px}
+
+/* clickable highlights — a finding flag (red), a fix chip (green), a NEW/RESTYLED/UNCHANGED tag */
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 system-ui,sans-serif;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:17px}.dialogbody{padding:25px}
+
+/* ── The frames: the portal's own materials (warm palette, Inter · Barlow Condensed · IBM Plex Mono) at 1440 and 390. ── */
+.fitwrap{width:calc(100% - 48px);max-width:1440px;margin:10px auto 0;overflow:hidden}
+.fitwrap.scroll{overflow-x:auto}
+.frame{--p-paper:#F8F4ED;--p-card:#FFFFFF;--p-ink:#241E15;--p-soft:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);--p-olive:#57651E;--p-olive-soft:rgba(87,101,30,.10);--p-live:#B03A22;--p-live-soft:rgba(176,58,34,.10);--p-lime:#D9F99D;--p-gold:#835006;--p-blue:#134FD3;
+  width:1440px;background:var(--p-paper);color:var(--p-ink);font:14px/1.45 Inter,system-ui,sans-serif;border:1px solid #c6cebc;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px #2732210a;transform-origin:top left;
+  background-image:linear-gradient(rgba(70,55,30,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.045) 1px,transparent 1px);background-size:40px 40px}
+.frame.phone{width:390px;border-radius:18px;margin:10px auto 0;transform:none}
+.frame *{box-sizing:border-box}
+.frame .mono,.frame .fig{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.topstrip{height:48px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 16px;gap:14px}
+.topstrip .logo{width:24px;height:24px;background:#241E15;border-radius:4px;position:relative}.topstrip .logo::after{content:'';position:absolute;left:7px;top:6px;border:6px solid transparent;border-left:9px solid var(--p-lime)}
+.topstrip .wm{font:700 14px 'IBM Plex Mono',monospace;letter-spacing:.04em}.topstrip .wm b{font-weight:700}.topstrip .wm span{color:var(--p-dim);font-weight:500;font-size:11px;letter-spacing:.14em;margin-left:14px;padding-left:14px;border-left:1px solid var(--p-line2)}
+.topstrip .ws{margin-left:auto;border:1px solid var(--p-line2);border-radius:20px;padding:6px 14px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.12em}
+.topstrip .bell{width:26px;height:20px;position:relative;margin-right:10px;color:var(--p-soft);font-size:15px}.topstrip .bell i{position:absolute;right:-2px;top:-7px;background:var(--p-live);color:#fff;font:700 9px/1 Inter;border-radius:8px;padding:2px 4px;font-style:normal}
+.teamhead{height:60px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 32px 0 32px;gap:20px}
+.teamhead h1{font:700 17px/1.2 Inter,sans-serif;margin:0;letter-spacing:-.2px}.teamhead .tm{font:500 11.5px 'IBM Plex Mono',monospace;color:var(--p-olive);letter-spacing:.02em}.teamhead .tm b{color:var(--p-ink)}
+.teamhead .next{margin-left:auto;text-align:right;font:600 12px Inter}.teamhead .next small{display:block;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--p-dim)}
+.teamhead .help{width:32px;height:32px;border:1px solid var(--p-line2);border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--p-soft)}
+.body{display:flex;min-height:880px}
+.sb{width:220px;background:var(--p-card);border-right:1px solid var(--p-line);padding:14px 14px 0;flex-shrink:0}
+.sb .sel{border:1px solid var(--p-line2);border-radius:6px;padding:9px 12px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;margin-bottom:12px}
+.sb .grp{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:var(--p-dim);padding:12px 12px 4px;display:flex;justify-content:space-between}
+.sb a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:var(--p-soft);text-decoration:none;font-weight:500;font-size:14px;border-left:3px solid transparent;margin-left:-14px;padding-left:23px}
+.sb a i{width:15px;height:15px;border:1.6px solid currentColor;border-radius:3px;display:inline-block;opacity:.75;font-style:normal}
+.sb a.on{background:var(--p-olive-soft);color:var(--p-olive);border-left-color:var(--p-olive);font-weight:600}
+.sb .helpdot{margin-top:18px;padding-top:14px;border-top:1px solid var(--p-line)}.sb .helpdot a::after{content:'';width:7px;height:7px;background:var(--p-olive);border-radius:50%;margin-left:6px}
+.pg{flex:1;padding:28px 130px 40px 130px;min-width:0}
+.pg.wide{padding:28px 32px 40px 32px}
+.pgtitle{display:flex;align-items:center;gap:12px;margin-bottom:14px}.pgtitle .ico{width:32px;height:32px;border:1px solid var(--p-line2);border-radius:50%;background:var(--p-olive-soft);display:grid;place-items:center;color:var(--p-olive);font-size:14px}
+.pgtitle h2{font:700 21px/1 'Barlow Condensed',Inter,sans-serif;margin:0;letter-spacing:.01em}
+.pgtitle .lime{margin-left:auto;background:var(--p-lime);color:#1e2a0f;font-weight:600;font-size:14px;padding:9px 14px;border-radius:7px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--p-line2);margin-bottom:24px}.tabs span{padding:10px 14px 12px;color:var(--p-soft);font-weight:500;font-size:15px;border-bottom:2px solid transparent;margin-bottom:-1px;position:relative}.tabs span.on{color:var(--p-ink);font-weight:600;border-bottom-color:var(--p-olive)}
+/* Skills & Goals overview — Money's dashboard grammar */
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}.row2{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.card{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:18px 18px 16px;position:relative}
+.card.alert{border-left:3px solid var(--p-live)}
+.eye{display:flex;justify-content:space-between;align-items:center;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--p-soft);margin-bottom:8px}
+.chip{font:500 10.5px 'IBM Plex Mono',monospace;letter-spacing:.02em;text-transform:none;padding:3px 9px;border-radius:12px;border:1px solid}
+.chip.d{color:var(--p-live);border-color:rgba(176,58,34,.35);background:var(--p-live-soft)}.chip.w{color:var(--p-gold);border-color:rgba(131,80,6,.35);background:rgba(131,80,6,.08)}.chip.g{color:var(--p-olive);border-color:rgba(87,101,30,.35);background:var(--p-olive-soft)}
+.big{font:600 24px/1.1 'IBM Plex Mono',monospace;margin:4px 0 6px}.big small{font:500 12px Inter;color:var(--p-soft)}.big.good{color:var(--p-olive)}
+.subl{font-size:13px;color:var(--p-soft);margin:0 0 12px}.subl b{color:var(--p-ink);font-weight:600}
+.bar{height:8px;border-radius:4px;background:rgba(70,55,30,.12);overflow:hidden;margin:6px 0 8px}.bar i{display:block;height:100%;background:var(--p-olive)}
+.lgd{display:flex;gap:14px;font-size:12.5px;color:var(--p-soft);margin-bottom:12px}.lgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--p-olive)}.lgd i.t{background:rgba(70,55,30,.2)}
+.foot{border-top:1px solid var(--p-line);padding-top:12px;margin-top:auto}.foot a,.door{color:var(--p-olive);font-weight:700;text-decoration:none;font-size:14px}
+.attn{list-style:none;margin:0;padding:0}.attn li{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--p-line)}.attn li:last-child{border-bottom:0}
+.attn .dot{width:8px;height:8px;border-radius:50%;background:var(--p-live);margin-top:7px;flex-shrink:0}.attn .dot.w{background:var(--p-gold)}
+.attn .m{flex:1;font-size:14px}.attn .m b{font-weight:600}.attn .m small{display:block;font-size:12.5px;color:var(--p-soft);margin-top:2px}
+.attn .go{color:var(--p-olive);font-weight:700;white-space:nowrap;font-size:14px}
+.rail{display:flex;flex-direction:column}.rail div{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--p-line);font-size:14px}.rail div:last-child{border-bottom:0}
+.rail .rd{width:8px;height:8px;border-radius:50%;background:#6a4a8a}.rail .rd.g{background:var(--p-olive)}.rail .rd.o{background:#8a7a2a}
+.rail .nm{font-weight:600;flex:1}.rail .nm span{color:var(--p-soft);font-weight:400}.rail .st{font-size:13px;color:var(--p-soft)}.rail .st b{color:var(--p-ink);font-weight:700}.rail .cv{color:var(--p-dim)}
+.count{font-size:14px;margin:0 0 8px}.count b{font-weight:700}.count span{color:var(--p-soft)}
+/* Insights toolbar + report tables — the list recipe (white table, neutral frame) */
+.toolbar{display:flex;gap:16px;margin-bottom:18px}.field{display:flex;flex-direction:column;gap:6px}.field label{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--p-soft)}
+.select{width:300px;height:44px;border:1px solid var(--p-line2);border-radius:6px;background:var(--p-card);display:flex;align-items:center;padding:0 14px;font-size:14.5px;gap:8px}.select span{color:var(--p-soft)}.select::after{content:'⌄';margin-left:auto;color:var(--p-dim);font-size:16px}
+.tbl{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.tbl table{width:100%;border-collapse:collapse;font-size:14.5px}
+.tbl th{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--p-soft);text-align:left;padding:10px 14px;border-bottom:1px solid var(--p-line)}
+.tbl td{padding:9px 14px;border-bottom:1px solid var(--p-line);vertical-align:middle;height:38px}.tbl tr:last-child td{border-bottom:0}
+.tbl .num{font:500 12px 'IBM Plex Mono',monospace;color:var(--p-dim);margin-right:6px}
+.tbl .fig{font-size:13.5px;letter-spacing:.01em}.tbl .dim{color:var(--p-dim)}.tbl .dim.fig{font-size:13.5px}
+.tbl .door{font-size:13.5px}.tbl td.r{text-align:right}
+.tbl .name{font-weight:500}.tbl .subn{display:block;font-size:12px;color:var(--p-soft);margin-top:1px}
+.tbl tr.ret td{color:var(--p-dim)}.tbl tr.ret .name{color:var(--p-dim)}
+.tbl .fold td{padding:8px 14px;background:rgba(70,55,30,.03);font-size:13px;color:var(--p-olive);font-weight:600}
+.hint{font-size:12.5px;color:var(--p-dim);margin:8px 0 0}
+.opslink{display:inline-block;margin-top:16px;color:var(--p-olive);font-weight:700;font-size:13.5px}
+.tick{color:var(--p-dim)}
+/* phone frame */
+.ph-head{padding:14px 16px 10px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:flex-start;gap:10px}
+.ph-head h1{font:700 17px Inter;margin:0}.ph-head .tm{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--p-olive)}.ph-head .tm b{color:var(--p-ink)}.ph-head .help{margin-left:auto;width:36px;height:36px;border:1px solid var(--p-line2);border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--p-soft)}
+.ph-body{padding:16px 16px 0}
+.ph-body .pgtitle h2{font-size:20px}
+.ph-tabs{display:flex;gap:0;border-bottom:1px solid var(--p-line2);margin:0 -16px 16px;padding:0 16px;overflow:hidden;white-space:nowrap}.ph-tabs span{padding:8px 10px 10px;color:var(--p-soft);font-weight:500;font-size:14.5px;border-bottom:2px solid transparent;margin-bottom:-1px}.ph-tabs span.on{color:var(--p-ink);font-weight:600;border-bottom-color:var(--p-olive)}
+.ph-body .select{width:100%}
+.ph-body .field{margin-bottom:12px}
+.ph-count{font-size:14px;margin:4px 0 10px}.ph-count b{font-weight:700}.ph-count span{color:var(--p-soft)}
+.line{display:flex;align-items:center;gap:8px;background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;padding:0 0 0 12px;min-height:44px;margin-bottom:6px;font-size:14px}
+.line .nm{font-weight:500;padding:6px 0;min-width:0}.line .nm .num{font:500 11px 'IBM Plex Mono',monospace;color:var(--p-dim);margin-right:4px}
+.line .val{margin-left:auto;font-size:12.5px;color:var(--p-soft);text-align:right;white-space:nowrap;padding:6px 0}.line .val.fig{font-size:12.5px}
+.line .chev{width:44px;min-height:44px;align-self:stretch;display:grid;place-items:center;color:var(--p-dim);border-left:1px solid var(--p-line);flex-shrink:0}
+.line.two{align-items:stretch}.line.two .stack{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:8px 0;min-width:0}.line.two .stack .nm{padding:0}.line.two .stack .val{margin:0;text-align:left;white-space:normal;padding:0}
+.ph-nav{position:sticky;bottom:0;margin-top:16px;background:#F3EEE4;border-top:1px solid var(--p-line);display:flex;justify-content:space-around;padding:8px 6px 10px}.ph-nav div{font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--p-soft);text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}.ph-nav i{width:20px;height:18px;border:1.6px solid currentColor;border-radius:4px;display:block}.ph-nav .n{width:34px;height:34px;border-radius:50%;background:#241E15;color:#fff;display:grid;place-items:center;font:700 14px Inter;font-style:normal;border:0}
+/* the team-average specimen (screen 5) — not a product screen */
+.spec{max-width:900px;margin:10px auto;padding:22px 24px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.spec h3{margin-top:0}
+.spec svg{width:100%;height:auto;display:block;max-width:720px}
+.spec table{border-collapse:collapse;width:100%;font-size:13.5px;margin-top:10px}.spec th,.spec td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}.spec th{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.spec .mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.spec .bad{color:var(--error);font-weight:700}
+.walktable{max-width:1000px;margin:10px auto;padding:0 24px}
+.walktable table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff;border:1px solid var(--line)}.walktable th,.walktable td{border:1px solid var(--line);padding:9px 11px;vertical-align:top;text-align:left;line-height:1.45}.walktable th{background:var(--soft);font-size:11.5px;letter-spacing:.5px;text-transform:uppercase}
+.kind{display:inline-block;font:700 10px/1.4 system-ui;letter-spacing:.5px;text-transform:uppercase;padding:1px 6px;border-radius:4px;border:1px solid var(--line);background:var(--soft);margin-right:4px}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.fitwrap{width:calc(100% - 20px)}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Team progress — project hub</strong><br><small>Ruled 2026-09-16 (T1–T8 all Build as drawn — "I agree with your mockups") · built on dev the same day · QA walk on the tab at the right, owed. The Overview does not change; Team progress is the fourth report in Insights → Development.</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup published 2026-09-16 (this artifact); walked source-based on the UAT fixture; ruled T1–T8 Build as drawn the same day">Design</li>
+    <li class="stage done" title="Plan + PM brief drafted 2026-09-16 — docs/projects/active/COACH_TEAM_PROGRESS_VIEW_PLAN.md">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-16 — the board route's counts, the fourth report, the two-line phone card; 27/27 rendered checks on the fixture; commit on the owner's say-so">Build</li>
+    <li class="stage done" title="/simplify + /review + /docs run 2026-09-16 (the plan's §10 'Built as' says what changed)">Review</li>
+    <li class="stage current" title="Owner QA walk — ledger §196 — on the QA Walk tab">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions">
+    <button type="button" id="viewToggle" aria-pressed="false">Phone width</button>
+    <button type="button" id="fitToggle" aria-pressed="true">Fit to window</button>
+  </div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions · T1–T8</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<!-- ═══════════════════════════ MOCKUP ═══════════════════════════ -->
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Walkthrough" id="walkNav">
+    <a href="#s-walk">1 · The walk</a>
+    <a href="#s-overview">2 · Today · Overview</a>
+    <a href="#s-coverage">3 · Today · Insights → Development</a>
+    <a href="#s-team">4 · Proposed · Team progress</a>
+    <a href="#s-average">5 · Why not a team average</a>
+    <a href="#s-overview-after">6 · The Overview after</a>
+  </nav>
+
+  <!-- 1 · The walk -->
+  <section class="screen" id="s-walk">
+    <div class="screenhead">
+      <div class="eyebrow">The walk · source-based, on the UAT fixture</div>
+      <h1 tabindex="-1">“How is my team doing this season, overall?”</h1>
+      <p>Walked as the head coach at three natural moments, reading what the code can honestly answer today. Not a signed-in user study: interaction paths are inferred from the code and the figures come from the fixture’s real records. Findings are tagged the way the Development lifecycle assessment tagged them — <span class="kind">Code finding</span> follows directly from the implementation; <span class="kind">UX hypothesis</span> is a plausible problem needing observation; <span class="kind">Proposal</span> is something claimed for the future, not the present.</p>
+    </div>
+    <div class="walktable"><div class="tablewrap"><table>
+      <thead><tr><th style="width:19%">The moment, and the question</th><th style="width:27%">What exists today</th><th style="width:27%">Where the coach stops</th><th>Proposed</th></tr></thead>
+      <tbody>
+        <tr><td><b>Mid-season, a Tuesday.</b> “Is the sprint work landing across the group?”</td><td>Coverage shows one metric at a time — each player’s <em>latest</em> result and its date, in roster order. Player progress draws one player’s change. The Overview counts players measured (4 of 12).</td><td>Nothing reads the roster as a whole on a metric. To learn how many players have moved on the 60-yd sprint, the coach opens Player progress once per player — twelve times for one test, sixty for the five active metrics. <button class="fl" type="button" data-finding="F01" data-here="Coverage carries only the LATEST result per player per metric; the earlier ones are read by the route and dropped at the wire.">F01</button></td><td>A fourth report, <b>Team progress</b>: one row per metric — how many players have a result, and of those compared (two or more results) how many sit lower or higher than their first, in the test’s own unit. “3 compared · 2 lower · 1 higher · lower is the aim.” Nobody named. <span class="kind">Proposal</span></td></tr>
+        <tr><td><b>Before a parent conversation.</b> “What do I tell Devon’s family?”</td><td>The development handout: one player, the current season, a coach-written next step, nothing stored.</td><td>The coach does not stop — the paper is the instrument, and it is right. What must NOT happen is a team figure finding its way onto it.</td><td>Nothing changes here, and the new report never feeds the handout, the family recap, or any family surface. That boundary is drawn as a decision (T8), not left implied. <span class="kind">Code finding</span> — the handout reads one player’s records and the printing rule; no team read exists for it to pick up.</td></tr>
+        <tr><td><b>Planning Thursday’s practice.</b> “What haven’t we measured since June?”</td><td>Coverage’s date column, one metric at a time. The Overview’s Sessions card names the last session’s date only. Needs attention lists players with no result at all.</td><td>“When did we last take a throw-speed result?” has no answer short of switching Show to each metric and reading down the column. <button class="fl" type="button" data-finding="F05" data-here="Coverage's Recorded-on column is per player, for the ONE metric Show selects; no surface says the last date per metric.">F05</button></td><td>The same report’s <b>Last recorded</b> column: Throw speed · 3 Jun, Changeup speed · 10 Jun, walk test · —. A date the coach reads by eye — no “stale” threshold the product would have to invent (the S4 refusal holds). <span class="kind">Proposal</span></td></tr>
+        <tr><td><b>Standing back.</b> “Where does a team read belong?”</td><td>Insights → Results reads the team’s record; Attendance a team percentage; Playing Time the bench balance across the roster. Development offers Coverage, Player progress and Practice review.</td><td>Development is the one Insights tab with no team-level read. <button class="fl" type="button" data-finding="F04" data-here="The Report selector: Coverage (per player, one metric) · Player progress (one player) · Practice review (practices). None reads the roster whole.">F04</button> The Overview was named by the owner as where team-level progress would live, and then ruled state, not analysis (D7) — a real tension, resolved here by putting the analysis where the other team reads already live and leaving the Overview as ruled.</td><td>Team progress joins the Report selector; the Overview is untouched except that its rail’s “Reports in Insights” count is computed and reads 4. <span class="kind">Proposal</span></td></tr>
+        <tr><td><b>The honest alternative.</b> “Should anything be built at all?”</td><td>D8 is parked; the product is complete without it.</td><td>A young season will read thin: on the fixture, four of five active metrics say “none has two results yet.” That is true and useful (“run a session”), but it is not a trend.</td><td>Weighed as a real option in T1. The recommendation is to build, because the gap is a screen the other Insights tabs already have and the counts cost no new read (<button class="fl" type="button" data-finding="F02" data-here="The board route reads every result for every active player and keeps only the latest per player per metric for the wire.">F02</button>) — but “Not now” is a legitimate ruling and the plan says so.</td></tr>
+      </tbody>
+    </table></div></div>
+    <div class="intent"><strong>What the walk settled:</strong> the question is not “a team-trend tile, yes or no” — it is what a team-level fact can be that is neither a ranking (G7) nor analysis on the Overview (D7). One survives: counts of direction per metric, with the denominator stated, on the page where the team is already read.</div>
+  </section>
+
+  <!-- 2 · Today · Overview -->
+  <section class="screen" id="s-overview" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Today · Skills &amp; Goals → Overview · 1440 · UAT Test Team, 2026 Season, as it renders</div>
+      <h1 tabindex="-1">The Overview is state, not analysis — and stays that way</h1>
+      <p>Drawn exactly as the fixture renders it today (stage 0, D7 — three story cards, Needs attention, the rail). This screen is here so you can judge the proposal against the whole surface it was first imagined on. Nothing on it is proposed to change; screen 6 shows it after.</p>
+    </div>
+    <div class="legendbar"><span class="mk" data-k="un" data-note="Every element on this screen exists today and is drawn as it renders. The proposal changes nothing here.">Unchanged</span> every card, list and door as built 2026-09-14 (ledger §185) · figures from the fixture on 2026-09-16</div>
+    <div class="fitwrap desk"><div class="frame" id="f-overview">
+      <div class="topstrip"><div class="logo"></div><div class="wm"><b>FIELDLOGICHQ</b><span>COACHES PORTAL</span></div><div class="bell">🔔<i>1</i></div><div class="ws">WORKSPACES ⌄</div></div>
+      <div class="teamhead"><div><h1>UAT Test Team</h1><div class="tm">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+      <div class="body">
+        <aside class="sb"><div class="sel">UAT Test Team <span>⌄</span></div><a><i></i>Overview</a><div class="grp">SEASON <span>⌄</span></div><a><i></i>Schedule</a><a><i></i>Practice plans</a><a><i></i>Lineups</a><a><i></i>Tournaments</a><div class="grp">PROGRESS <span>⌄</span></div><a class="on"><i></i>Skills &amp; Goals</a><a><i></i>Insights</a><div class="grp">MONEY <span>⌄</span></div><a><i></i>Money</a><div class="grp">COMMUNICATION <span>⌄</span></div><a><i></i>Chat</a><a><i></i>Email families</a><div class="grp">TEAM <span>5 ›</span></div><div class="helpdot"><a><i></i>Help</a></div></aside>
+        <main class="pg">
+          <div class="pgtitle"><div class="ico">↗</div><h2>Skills &amp; Goals</h2><div class="lime">+ Start session</div></div>
+          <div class="tabs"><span class="on">Overview</span><span>Sessions</span><span>Metrics</span></div>
+          <div class="row3">
+            <div class="card alert" style="display:flex;flex-direction:column"><div class="eye">Sessions <span class="chip d">2 unfinished sessions</span></div><div class="big">4 <small>this season</small></div><p class="subl">Last <b>15 Sept</b> · Probe session — results recorded at the seeded practice.</p><div class="foot"><a>Sessions →</a></div></div>
+            <div class="card" style="display:flex;flex-direction:column"><div class="eye">Players measured <span class="chip w">8 without</span></div><div class="big good">4 <small>of 12 · 33%</small></div><div class="bar"><i style="width:33%"></i></div><div class="lgd"><span><i></i><b>4</b> with a result</span><span><i class="t"></i><b>8</b> without</span></div><div class="foot"><a>Coverage →</a></div></div>
+            <div class="card alert" style="display:flex;flex-direction:column"><div class="eye">Goals <span class="chip d">1 review due</span></div><div class="big">2 <small>working</small></div><p class="subl">Overdue: <b>Devon Test</b></p><div class="foot"><a>Coverage →</a></div></div>
+          </div>
+          <div class="row2">
+            <div class="card alert"><div class="eye">Needs attention <span class="chip d">4</span></div>
+              <ul class="attn">
+                <li><span class="dot"></span><div class="m"><b>Goal review due</b> — Devon Test, “First-step quickness off the bag”<small>was due 24 Jun</small></div><span class="go">Review →</span></li>
+                <li><span class="dot"></span><div class="m"><b>15 Sept session left unfinished</b><small>56 of 60 in scope not recorded · Probe session — results recorded at the seeded practice.</small></div><span class="go">Open →</span></li>
+                <li><span class="dot"></span><div class="m"><b>10 Jun session left unfinished</b><small>15 of 20 in scope not recorded · Phase 2 probe — scoped</small></div><span class="go">Open →</span></li>
+                <li><span class="dot w"></span><div class="m"><b>8 players have no result this season</b><small>Casey Test, Frankie Test, Gray Test, Harper Test and 4 more</small></div><span class="go">Coverage →</span></li>
+              </ul></div>
+            <div class="card"><div class="eye">Everything in Skills &amp; Goals</div><div class="rail">
+              <div><span class="rd"></span><span class="nm">Metrics</span><span class="st"><b>5</b> active</span><span class="cv">›</span></div>
+              <div><span class="rd g"></span><span class="nm">Sessions</span><span class="st"><b>4</b> this season</span><span class="cv">›</span></div>
+              <div><span class="rd o"></span><span class="nm">Reports <span>in Insights</span></span><span class="st"><b>3</b> reports</span><span class="cv">›</span></div>
+            </div></div>
+          </div>
+        </main>
+      </div>
+    </div></div>
+    <div class="intent"><strong>Design intent:</strong> the ruling stands on its own reasons — every figure here is a count a coach acts on, each tile a door. A trend on this screen would be a fourth reading of Coverage; the proposal leaves it alone.</div>
+  </section>
+
+  <!-- 3 · Today · Insights → Development -->
+  <section class="screen" id="s-coverage" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Today · Insights → Development · Coverage · 1440 and 390 · as it renders</div>
+      <h1 tabindex="-1">Three reports, and none of them reads the team</h1>
+      <p>Coverage since stage 4 (G1): Report · Show, the count line first, the one roster table, a dash and one legend. Every red flag is a finding — click it. Use <em>Phone width</em> in the bar for the 390 frame.</p>
+    </div>
+    <div class="legendbar"><span class="mk" data-k="un" data-note="Coverage is drawn as built and walked (§193). The proposal changes nothing on this report; it adds a fourth choice to the Report field.">Unchanged</span> the Coverage report as built 2026-09-16 · red flags are findings, click to read</div>
+    <div class="fitwrap desk"><div class="frame" id="f-coverage">
+      <div class="topstrip"><div class="logo"></div><div class="wm"><b>FIELDLOGICHQ</b><span>COACHES PORTAL</span></div><div class="bell">🔔<i>1</i></div><div class="ws">WORKSPACES ⌄</div></div>
+      <div class="teamhead"><div><h1>UAT Test Team</h1><div class="tm">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+      <div class="body">
+        <aside class="sb"><div class="sel">UAT Test Team <span>⌄</span></div><a><i></i>Overview</a><div class="grp">SEASON <span>⌄</span></div><a><i></i>Schedule</a><a><i></i>Practice plans</a><a><i></i>Lineups</a><a><i></i>Tournaments</a><div class="grp">PROGRESS <span>⌄</span></div><a><i></i>Skills &amp; Goals</a><a class="on"><i></i>Insights</a><div class="grp">MONEY <span>⌄</span></div><a><i></i>Money</a><div class="grp">COMMUNICATION <span>⌄</span></div><a><i></i>Chat</a><a><i></i>Email families</a><div class="grp">TEAM <span>5 ›</span></div><div class="helpdot"><a><i></i>Help</a></div></aside>
+        <main class="pg wide">
+          <div class="pgtitle"><div class="ico">▥</div><h2>Insights</h2></div>
+          <div class="tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span>Playing Time</span><span class="on">Development</span><span>Awards</span><span>Scouting Book</span></div>
+          <div class="toolbar">
+            <div class="field"><label>REPORT <button class="fl" type="button" data-finding="F04" data-here="The Report field offers Coverage · Player progress · Practice review. Each is per player, one player, or per practice — no choice reads the roster as a whole.">F04</button></label><div class="select">Coverage</div></div>
+            <div class="field"><label>SHOW <button class="fl" type="button" data-finding="F01" data-here="Show selects ONE metric, and the table shows each player's LATEST result on it. The player's first result — what a change is measured from — is not on this screen.">F01</button></label><div class="select">60-yd sprint <span>· latest result</span></div></div>
+          </div>
+          <p class="count"><b>4 of 12 players have a 60-yd sprint result this season</b> <span>· roster order, not a ranking</span> <button class="fl" type="button" data-finding="F02" data-here="The read behind this line — the board route — has already grouped every result per session for every player; it hands the screen only the latest one per metric.">F02</button></p>
+          <div class="tbl"><table>
+            <thead><tr><th>Player</th><th>60-yd sprint</th><th>Recorded on <button class="fl" type="button" data-finding="F05" data-here="This date is per player for the metric Show selects. To learn the last date any Throw speed result was taken, the coach switches Show and reads down this column again.">F05</button></th><th>In a plan</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><span class="num">#1</span>Avery Test</td><td class="fig">8.75 seconds</td><td>15 Sept</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#2</span>Blake Test</td><td class="fig">8.33 seconds</td><td>15 Sept</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#3</span>Casey Test</td><td class="fig dim">Not assessed</td><td>10 Jun</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#4</span>Devon Test</td><td class="fig">8.28 seconds</td><td>15 Sept</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#5</span>Emerson Test</td><td class="fig">8.3 seconds</td><td>15 Sept</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#6</span>Frankie Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#7</span>Gray Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#8</span>Harper Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#9</span>Indigo Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#10</span>Jules Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#11</span>Kai Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+              <tr><td><span class="num">#12</span>Logan Test</td><td class="fig dim">—</td><td class="dim">—</td><td class="tick">✓</td><td class="r"><span class="door">Progress →</span></td></tr>
+            </tbody>
+          </table></div>
+          <p class="hint">— no result this season · Not assessed: a session said so, on that date</p>
+          <span class="opslink">Record in Skills &amp; Goals →</span>
+        </main>
+      </div>
+    </div></div>
+    <div class="fitwrap phone" hidden><div class="frame phone" id="f-coverage-phone">
+      <div class="ph-head"><div><h1>UAT Test Team</h1><div class="tm">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="help">?</div></div>
+      <div class="ph-body">
+        <div class="pgtitle"><div class="ico">▥</div><h2>Insights</h2></div>
+        <div class="ph-tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span class="on">Development</span><span>Awards</span></div>
+        <div class="field"><label>REPORT</label><div class="select">Coverage</div></div>
+        <div class="field"><label>SHOW</label><div class="select">60-yd sprint <span>· latest result</span></div></div>
+        <p class="ph-count"><b>4 of 12 players have a 60-yd sprint result this season</b> <span>· roster order, not a ranking</span></p>
+        <div class="line"><span class="nm"><span class="num">#1</span>Avery Test</span><span class="val">8.75 seconds · 15 Sept · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#2</span>Blake Test</span><span class="val">8.33 seconds · 15 Sept · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#3</span>Casey Test</span><span class="val">Not assessed · 10 Jun · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#4</span>Devon Test</span><span class="val">8.28 seconds · 15 Sept · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#5</span>Emerson Test</span><span class="val">8.3 seconds · 15 Sept · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#6</span>Frankie Test</span><span class="val">— · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#7</span>Gray Test</span><span class="val">— · ✓</span><span class="chev">›</span></div>
+        <div class="line"><span class="nm"><span class="num">#8</span>Harper Test</span><span class="val">— · ✓</span><span class="chev">›</span></div>
+        <p class="hint">… four more rows · — no result this season · Not assessed: a session said so, on that date · ✓ in a plan</p>
+        <span class="opslink">Record in Skills &amp; Goals →</span>
+        <div class="ph-nav"><div><i class="n">N</i>OVERVIEW</div><div><i></i>SCHEDULE</div><div><i></i>CHAT</div><div><i></i>ROSTER</div><div><i></i>MORE</div></div>
+      </div>
+    </div></div>
+    <div class="intent"><strong>Design intent:</strong> Coverage answers “who has a result” for one metric, in roster order, and is right. It is not asked to answer “how many have moved”, and cannot — it never sees a player’s first result.</div>
+  </section>
+
+  <!-- 4 · Proposed · Team progress -->
+  <section class="screen" id="s-team" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Proposed · Insights → Development · Team progress · 1440 and 390 · every figure from the fixture</div>
+      <h1 tabindex="-1">One row per metric — counts of motion, nobody named</h1>
+      <p>The fourth choice in the Report field. Rows are <em>metrics</em>, so the table cannot rank children by construction. Each row says how many players have a result, and — of those with two or more, the players <em>compared</em> — how many sit lower or higher than their first result this season, arithmetic in the test’s unit, the aim on the row. The cell carries its own denominator (“3 compared · 2 lower · 1 higher”), ruled A on the built screen 2026-09-17. The row is a door to Coverage on that metric: counts → names in roster order → one child’s chart, never the reverse. Green chips say which finding each element answers; tags say what is new.</p>
+    </div>
+    <div class="legendbar"><span class="mk" data-k="new" data-note="Not in the product today.">New</span> the report and its table · <span class="mk" data-k="un" data-note="The Insights shell, the tabs, the Report field's chrome and the list recipe are unchanged; only a fourth choice and its table are added.">Unchanged</span> the shell, the tabs, the field chrome, the list recipe · every number is one the fixture produces on 2026-09-16</div>
+    <div class="fitwrap desk"><div class="frame" id="f-team">
+      <div class="topstrip"><div class="logo"></div><div class="wm"><b>FIELDLOGICHQ</b><span>COACHES PORTAL</span></div><div class="bell">🔔<i>1</i></div><div class="ws">WORKSPACES ⌄</div></div>
+      <div class="teamhead"><div><h1>UAT Test Team</h1><div class="tm">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+      <div class="body">
+        <aside class="sb"><div class="sel">UAT Test Team <span>⌄</span></div><a><i></i>Overview</a><div class="grp">SEASON <span>⌄</span></div><a><i></i>Schedule</a><a><i></i>Practice plans</a><a><i></i>Lineups</a><a><i></i>Tournaments</a><div class="grp">PROGRESS <span>⌄</span></div><a><i></i>Skills &amp; Goals</a><a class="on"><i></i>Insights</a><div class="grp">MONEY <span>⌄</span></div><a><i></i>Money</a><div class="grp">COMMUNICATION <span>⌄</span></div><a><i></i>Chat</a><a><i></i>Email families</a><div class="grp">TEAM <span>5 ›</span></div><div class="helpdot"><a><i></i>Help</a></div></aside>
+        <main class="pg wide">
+          <div class="pgtitle"><div class="ico">▥</div><h2>Insights</h2></div>
+          <div class="tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span>Playing Time</span><span class="on">Development</span><span>Awards</span><span>Scouting Book</span></div>
+          <div class="toolbar">
+            <div class="field"><label>REPORT <span class="mk" data-k="new" data-note="A fourth choice in the Report field: Coverage · Team progress · Player progress · Practice review (the order reads whole → one). The field itself is unchanged; the address carries report=team like the other three.">New choice</span> <button class="fl fix" type="button" data-finding="F04" data-here="Team progress is the team-level read the other Insights tabs already have; it joins the same selector rather than adding a tab or a tile.">fixes F04</button></label><div class="select">Team progress</div></div>
+          </div>
+          <p class="count"><b>4 of 12 players have at least one result or observation this season</b> <span>· counts per metric, never a ranking</span> <span class="mk" data-k="new" data-note="The count line first, as Coverage's is (G1): the whole-roster denominator said once — the same active-roster denominator Coverage, the Overview and the findings strip already share.">New</span> <button class="fl fix" type="button" data-finding="F02" data-here="Every count on this screen is taken in the walk the board route already makes — per player, per metric, rows grouped by session — and sent as counts. No new read; per-player firsts never travel to the browser.">fixes F02</button></p>
+          <div class="tbl"><table>
+            <thead><tr><th>Metric</th><th>Players with a result</th><th>Since their first result <button class="fl fix" type="button" data-finding="F01" data-here="For every player with two or more results on this metric — the players 'compared' — is their latest lower or higher than their first this season? The same reading Player progress gives on 'This season' — counted, in the aim's own words, naming no one. The cell carries its own denominator (owner ruling A, 2026-09-17: the separate 'Two or more' column read as a bare number).">fixes F01</button></th><th>Last recorded <button class="fl fix" type="button" data-finding="F05" data-here="The latest date any player has a result on this metric — a date the coach reads by eye. No threshold, no 'stale' word: S4's refusal to invent a judgement holds.">fixes F05</button></th><th></th></tr></thead>
+            <tbody>
+              <tr><td><span class="name">60-yd sprint</span><span class="subn">seconds · lower is the aim</span></td><td class="fig">4 of 12 <span class="dim" style="font-size:12px">· 1 not assessed</span></td><td class="fig">3 compared · 2 lower · 1 higher</td><td>15 Sept</td><td class="r"><span class="door">Coverage →</span> <span class="mk" data-k="new" data-note="The row's door opens Coverage with Show set to this metric — the names behind the count, in roster order. From there, Progress → on a row is one child's chart. The drill path only ever goes counts → names → one child.">Door</span></td></tr>
+              <tr><td><span class="name">walk test</span><span class="subn">seconds · lower is the aim</span></td><td class="fig dim">—</td><td class="fig dim">—</td><td class="dim">—</td><td class="r"><span class="door">Coverage →</span></td></tr>
+              <tr><td><span class="name">Throw speed</span><span class="subn">km/h · record only</span></td><td class="fig">1 of 12</td><td class="fig">1 compared · 1 higher</td><td>3 Jun</td><td class="r"><span class="door">Coverage →</span></td></tr>
+              <tr><td><span class="name">Changeup speed</span><span class="subn">mph · aim: 62–68 mph</span></td><td class="fig">1 of 12</td><td class="fig">1 compared · 1 moved into the range</td><td>10 Jun</td><td class="r"><span class="door">Coverage →</span></td></tr>
+              <tr><td><span class="name">Sets feet before throwing</span><span class="subn">skill</span></td><td class="fig">3 of 12 observed</td><td class="fig dim">—</td><td>15 Sept</td><td class="r"><span class="door">Coverage →</span></td></tr>
+              <tr class="fold"><td colspan="5">Hide retired (2) <span class="mk" data-k="new" data-note="Retired metrics sit under a fold, collapsed by default ('Show retired (2)'), in the quiet ink — the library's own treatment. A retired test's results are still a record.">Fold</span></td></tr>
+              <tr class="ret"><td><span class="name">walk test</span><span class="subn">seconds · lower is the aim · retired</span></td><td class="fig">2 of 12</td><td class="fig dim">—</td><td>15 Sept</td><td class="r"><span class="door">Coverage →</span></td></tr>
+              <tr class="ret"><td><span class="name">Shuttle run</span><span class="subn">seconds · lower is the aim · retired</span></td><td class="fig">2 of 12</td><td class="fig dim">—</td><td>15 Sept</td><td class="r"><span class="door">Coverage →</span></td></tr>
+            </tbody>
+          </table></div>
+          <p class="hint">— nothing recorded this season · <b>Compared:</b> the players with two or more results this season, each against their own first, in the test’s unit · a single result is a point, not a change <span class="mk" data-k="new" data-note="One legend under the table (G1's rule): what 'compared' means, and the sentence Player progress already prints — 'a single result is a point, not a change' — said once for the whole table.">Legend</span></p>
+          <p class="hint">A change in a test does not explain why it happened. <span class="mk" data-k="new" data-note="One disclaimer per screen (G3): the same sentence Player progress keeps. Nothing else on the screen talks about itself.">One disclaimer</span></p>
+          <span class="opslink">Record in Skills &amp; Goals →</span> <span class="mk" data-k="un" data-note="Coverage's door to the room, for coaches who hold the Development grant — the same rule, the same link.">Unchanged</span>
+        </main>
+      </div>
+    </div></div>
+    <div class="fitwrap phone" hidden><div class="frame phone" id="f-team-phone">
+      <div class="ph-head"><div><h1>UAT Test Team</h1><div class="tm">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="help">?</div></div>
+      <div class="ph-body">
+        <div class="pgtitle"><div class="ico">▥</div><h2>Insights</h2></div>
+        <div class="ph-tabs"><span>Dashboard</span><span>Results</span><span>Attendance</span><span class="on">Development</span><span>Awards</span></div>
+        <div class="field"><label>REPORT</label><div class="select">Team progress</div></div>
+        <p class="ph-count"><b>4 of 12 players have at least one result or observation this season</b> <span>· counts per metric, never a ranking</span></p>
+        <div class="line two"><span class="stack"><span class="nm">60-yd sprint</span><span class="val fig">4 of 12 · 3 compared · 2 lower · 1 higher · 15 Sept</span></span><span class="chev">›</span></div>
+        <div class="line two"><span class="stack"><span class="nm">walk test</span><span class="val fig">—</span></span><span class="chev">›</span></div>
+        <div class="line two"><span class="stack"><span class="nm">Throw speed</span><span class="val fig">1 of 12 · 1 compared · 1 higher · 3 Jun</span></span><span class="chev">›</span></div>
+        <div class="line two"><span class="stack"><span class="nm">Changeup speed</span><span class="val fig">1 of 12 · 1 compared · 1 moved into the range · 10 Jun</span></span><span class="chev">›</span></div>
+        <div class="line two"><span class="stack"><span class="nm">Sets feet before throwing</span><span class="val fig">3 of 12 observed · 15 Sept</span></span><span class="chev">›</span></div>
+        <div class="line" style="background:transparent;border-style:dashed"><span class="nm" style="color:var(--p-olive);font-weight:600">Show retired (2)</span><span class="chev">›</span></div>
+        <p class="hint" style="margin-top:10px">— nothing recorded · <b>Compared:</b> players with two or more results, each against their own first · one result is a point, not a change <span class="mk" data-k="new" data-note="The phone is one card per metric, TWO lines tall — the name, then the counts and the last date beneath it — with the chevron to Coverage on that metric. Coverage's one-line card (G4) does not fit here: '4 of 12 · 2 lower · 1 higher · 15 Sept' is longer than a 390 line leaves beside a name, and the first draft of this frame wrapped the name under the figures. So the card is as tall as its words (the practices library's idiom), never a clipped name. The aim is not on the card — it is on Coverage's count line one tap away, and 'lower/higher' already carries its direction.">One card per metric</span></p>
+        <p class="hint">A change in a test does not explain why it happened.</p>
+        <span class="opslink">Record in Skills &amp; Goals →</span>
+        <div class="ph-nav"><div><i class="n">N</i>OVERVIEW</div><div><i></i>SCHEDULE</div><div><i></i>CHAT</div><div><i></i>ROSTER</div><div><i></i>MORE</div></div>
+      </div>
+    </div></div>
+    <div class="intent"><strong>Design intent:</strong> the structural guarantee is the row. A table whose rows are tests has no child to sort; the only figure beside a name on any development surface stays where it is today — on Coverage and Player progress, one child, their own record.</div>
+  </section>
+
+  <!-- 5 · Why not a team average -->
+  <section class="screen" id="s-average" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">Not a product screen · the arithmetic behind decision T3 · the fixture’s real 60-yd sprint records</div>
+      <h1 tabindex="-1">Why the team figure is a count, not an average</h1>
+      <p>Stage 0 sketched the team trend as “best-of average 8.41 → 8.30 since May” — a figure naming no child, so the refusal to rank seemed to hold. Read against the fixture’s real records it fails a different rule first: the denominator. <button class="fl" type="button" data-finding="F03" data-here="The four session averages below are computed from the fixture's 60-yd sprint rows exactly as the board groups them (one row per session or per bench-side day).">F03</button></p>
+    </div>
+    <div class="spec">
+      <h3>The 60-yd sprint’s “team average” per session, and who was actually in it</h3>
+      <svg viewBox="0 0 720 220" role="img" aria-label="Four session averages of the 60-yd sprint: 8.62 on 6 May, 8.41 on 20 May, 8.50 on 10 June, 8.42 on 15 September, drawn on elapsed time">
+        <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#5c6658">
+          <text x="38" y="28" text-anchor="end">8.7</text><text x="38" y="66" text-anchor="end">8.6</text><text x="38" y="104" text-anchor="end">8.5</text><text x="38" y="142" text-anchor="end">8.4</text><text x="38" y="180" text-anchor="end">8.3</text>
+        </g>
+        <g stroke="#d3d9cd" stroke-width="1"><line x1="44" y1="24" x2="690" y2="24"/><line x1="44" y1="62" x2="690" y2="62"/><line x1="44" y1="100" x2="690" y2="100"/><line x1="44" y1="138" x2="690" y2="138"/><line x1="44" y1="176" x2="690" y2="176"/></g>
+        <polyline points="44,54.4 112.5,134.2 215,101.1 690,132.3" fill="none" stroke="#9e3030" stroke-width="2" stroke-dasharray="6 4"/>
+        <g fill="#9e3030"><circle cx="44" cy="54.4" r="5"/><circle cx="112.5" cy="134.2" r="5"/><circle cx="215" cy="101.1" r="5"/><circle cx="690" cy="132.3" r="5"/></g>
+        <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#222b21" font-weight="600">
+          <text x="44" y="44" text-anchor="start">8.62</text><text x="112.5" y="154" text-anchor="middle">8.41</text><text x="215" y="91" text-anchor="middle">8.50</text><text x="690" y="152" text-anchor="end">8.42</text>
+        </g>
+        <g font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5c6658">
+          <text x="44" y="200" text-anchor="start">6 May</text><text x="112.5" y="200" text-anchor="middle">20 May</text><text x="215" y="200" text-anchor="middle">10 Jun</text><text x="690" y="200" text-anchor="end">15 Sept</text>
+          <text x="44" y="214" text-anchor="start" fill="#9e3030" font-weight="700">1 child</text><text x="112.5" y="214" text-anchor="middle" fill="#9e3030" font-weight="700">1 child</text><text x="215" y="214" text-anchor="middle" fill="#9e3030" font-weight="700">3 children</text><text x="690" y="214" text-anchor="end" fill="#9e3030" font-weight="700">4 children</text>
+        </g>
+      </svg>
+      <table>
+        <thead><tr><th>Date</th><th>“Team average”</th><th>Who it is the average of</th><th>What moved it</th></tr></thead>
+        <tbody>
+          <tr><td>6 May</td><td class="mono">8.62</td><td>Devon alone (a bench-side reading)</td><td>A “team” figure that is one child’s number. Anyone who knows only Devon was timed in May can read it as Devon.</td></tr>
+          <tr><td>20 May</td><td class="mono">8.41</td><td>Devon alone</td><td>Devon’s second reading — still one child.</td></tr>
+          <tr><td>10 Jun</td><td class="mono">8.50</td><td>Avery 8.70 · Devon 8.24 · Emerson 8.55</td><td>Two new players enter the sample. The figure <em>rises</em> 0.09 while Devon’s own time fell 0.17.</td></tr>
+          <tr><td>15 Sept</td><td class="mono">8.42</td><td>Avery 8.75 · Blake 8.33 · Devon 8.28 · Emerson 8.30</td><td>Blake’s first-ever result (8.33) lowers the figure on its own; without Blake it reads 8.44. Avery went <em>up</em> 0.05. “8.62 → 8.42 since May” reads as the team getting faster, and nothing on the line says the sample changed.</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px;font-size:14px"><b>The same four players, paired — each against their own first result:</b> Devon 8.62 → 8.28 <span class="mono">0.34 s lower</span> · Emerson 8.55 → 8.30 <span class="mono">0.25 s lower</span> · Avery 8.70 → 8.75 <span class="mono">0.05 s higher</span> · Blake one result. The honest sentence is <b>“3 of 12 have two or more results · 2 lower · 1 higher · lower is the aim”</b> — which is what the proposed row says. A mean of those changes (−0.18 s) would hide that one of three went the other way; a chart would draw a line through populations that are not the same population. This page is the reason T3 recommends counts.</p>
+      <p class="sub">This is the plan’s §9 rule applied to one number — “each report needs an explicit denominator; do not compare 4 of 6 from a session against the current roster” — and it fails before the ranking question is reached. The names appear on this page only because it is the owner’s working paper; the product screen names no one.</p>
+    </div>
+    <div class="intent"><strong>Design intent:</strong> the refusal of a team average is not only the brand’s posture (G7) — on a roster this size it is an arithmetic honesty problem the product would be manufacturing. The count survives because it carries its denominator in the sentence.</div>
+  </section>
+
+  <!-- 6 · The Overview after -->
+  <section class="screen" id="s-overview-after" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">After · Skills &amp; Goals → Overview · 1440 · unchanged by design</div>
+      <h1 tabindex="-1">The Overview after: one computed count reads 4</h1>
+      <p>Drawn so the whole screen can be judged: nothing moves, nothing is added. The rail’s report count is already computed from the report list; with a fourth report it reads 4. That row is the door the owner pictured on this screen — to the analysis, not the analysis itself.</p>
+    </div>
+    <div class="legendbar"><span class="mk" data-k="un" data-note="Every element on this screen exists today and is unchanged.">Unchanged</span> everything · <span class="mk" data-k="re" data-note="No code on this screen changes. The rail's count is computed from the reports this coach can open (stage 4 housekeeping), so a fourth report makes it read 4 — for a coach with the schedule grant; 3 for one without, as today's 2.">Computed</span> the rail's report count</div>
+    <div class="fitwrap desk"><div class="frame" id="f-overview-after">
+      <div class="topstrip"><div class="logo"></div><div class="wm"><b>FIELDLOGICHQ</b><span>COACHES PORTAL</span></div><div class="bell">🔔<i>1</i></div><div class="ws">WORKSPACES ⌄</div></div>
+      <div class="teamhead"><div><h1>UAT Test Team</h1><div class="tm">UAT Test Org · 2026 Season · <b>3-2-1</b></div></div><div class="next"><small>NEXT</small>Tue 5:21 p.m. practice</div><div class="help">?</div></div>
+      <div class="body">
+        <aside class="sb"><div class="sel">UAT Test Team <span>⌄</span></div><a><i></i>Overview</a><div class="grp">SEASON <span>⌄</span></div><a><i></i>Schedule</a><a><i></i>Practice plans</a><a><i></i>Lineups</a><a><i></i>Tournaments</a><div class="grp">PROGRESS <span>⌄</span></div><a class="on"><i></i>Skills &amp; Goals</a><a><i></i>Insights</a><div class="grp">MONEY <span>⌄</span></div><a><i></i>Money</a><div class="grp">COMMUNICATION <span>⌄</span></div><a><i></i>Chat</a><a><i></i>Email families</a><div class="grp">TEAM <span>5 ›</span></div><div class="helpdot"><a><i></i>Help</a></div></aside>
+        <main class="pg">
+          <div class="pgtitle"><div class="ico">↗</div><h2>Skills &amp; Goals</h2><div class="lime">+ Start session</div></div>
+          <div class="tabs"><span class="on">Overview</span><span>Sessions</span><span>Metrics</span></div>
+          <div class="row3">
+            <div class="card alert" style="display:flex;flex-direction:column"><div class="eye">Sessions <span class="chip d">2 unfinished sessions</span> <span class="mk" data-k="un" data-note="The Sessions card: unchanged.">Unchanged</span></div><div class="big">4 <small>this season</small></div><p class="subl">Last <b>15 Sept</b> · Probe session — results recorded at the seeded practice.</p><div class="foot"><a>Sessions →</a></div></div>
+            <div class="card" style="display:flex;flex-direction:column"><div class="eye">Players measured <span class="chip w">8 without</span> <span class="mk" data-k="un" data-note="The Players-measured card and its bar: unchanged. It is a count of coverage, and stays the one ratio on the screen.">Unchanged</span></div><div class="big good">4 <small>of 12 · 33%</small></div><div class="bar"><i style="width:33%"></i></div><div class="lgd"><span><i></i><b>4</b> with a result</span><span><i class="t"></i><b>8</b> without</span></div><div class="foot"><a>Coverage →</a></div></div>
+            <div class="card alert" style="display:flex;flex-direction:column"><div class="eye">Goals <span class="chip d">1 review due</span> <span class="mk" data-k="un" data-note="The Goals card: unchanged.">Unchanged</span></div><div class="big">2 <small>working</small></div><p class="subl">Overdue: <b>Devon Test</b></p><div class="foot"><a>Coverage →</a></div></div>
+          </div>
+          <div class="row2">
+            <div class="card alert"><div class="eye">Needs attention <span class="chip d">4</span> <span class="mk" data-k="un" data-note="Needs attention: unchanged. T7 recommends AGAINST adding a per-metric line here ('8 players have one result or none on the 60-yd sprint') — it would be one line per metric, and this list is for things a coach acts on today.">Unchanged</span></div>
+              <ul class="attn">
+                <li><span class="dot"></span><div class="m"><b>Goal review due</b> — Devon Test, “First-step quickness off the bag”<small>was due 24 Jun</small></div><span class="go">Review →</span></li>
+                <li><span class="dot"></span><div class="m"><b>15 Sept session left unfinished</b><small>56 of 60 in scope not recorded · Probe session — results recorded at the seeded practice.</small></div><span class="go">Open →</span></li>
+                <li><span class="dot"></span><div class="m"><b>10 Jun session left unfinished</b><small>15 of 20 in scope not recorded · Phase 2 probe — scoped</small></div><span class="go">Open →</span></li>
+                <li><span class="dot w"></span><div class="m"><b>8 players have no result this season</b><small>Casey Test, Frankie Test, Gray Test, Harper Test and 4 more</small></div><span class="go">Coverage →</span></li>
+              </ul></div>
+            <div class="card"><div class="eye">Everything in Skills &amp; Goals</div><div class="rail">
+              <div><span class="rd"></span><span class="nm">Metrics</span><span class="st"><b>5</b> active</span><span class="cv">›</span></div>
+              <div><span class="rd g"></span><span class="nm">Sessions</span><span class="st"><b>4</b> this season</span><span class="cv">›</span></div>
+              <div><span class="rd o"></span><span class="nm">Reports <span>in Insights</span></span><span class="st"><b>4</b> reports <span class="mk" data-k="re" data-note="Reads 4 because the count is computed from the reports this coach can open — no change on this screen. This row is the Overview's door to Team progress: the door the owner pictured here, without the analysis on the dashboard.">Computed</span></span><span class="cv">›</span></div>
+            </div></div>
+          </div>
+        </main>
+      </div>
+    </div></div>
+    <div class="intent"><strong>Design intent:</strong> D7 is kept on its merits, not out of deference — a count a coach acts on belongs here, a reading of change belongs in Insights beside the other readings of change.</div>
+  </section>
+</section>
+
+<!-- ═══════════════════════════ DECISIONS ═══════════════════════════ -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Eight calls, lettered T · answer each, then Build summary at the foot</div>
+  <h1>Decisions — Team progress</h1>
+  <p class="sub" style="margin-bottom:8px"><b>Ruled 2026-09-16 — all eight Build as drawn</b> ("I agree with your mockups", in chat) <b>and built the same day</b>; the controls stay so a later change of mind has somewhere to land. Each says which of the two it is — <b>what goes in</b>, or <b>formatting</b> — what rides on it, and where I’d push if you disagree. Two things the build did differently from the frame, both recorded in the plan’s “Built as” table: the row’s door is the standard’s bare chevron (a row with one door does not name it — register K-19) rather than the words “Coverage →”, and the retired rows sit under the Metrics tab’s own “Retired (N)” fold beneath the table rather than a fold-row inside it. The owner’s one change on the built screen (A, 2026-09-17): the “Two or more” column is gone and the change cell carries its own denominator — “3 compared · 2 lower · 1 higher” — under “Since their first result”. One wording change from the review: the count line reads “…have at least one result <b>or observation</b> this season” so it counts exactly what the Overview’s “Players measured” counts — a player whose only record is an observation would otherwise have been counted on one screen and not the other.</p>
+
+  <div class="ask" data-q="T1">
+    <div class="qn">T 1 · what goes in · the question D8 parked</div>
+    <h3>Team progress is a fourth report in Insights → Development — and the Overview does not change</h3>
+    <p>The team-level read belongs where the other team-level reads already live: Results reads the record, Attendance a team percentage, Playing Time the bench balance — Development is the one Insights tab that reads nothing about the roster as a whole. Insights is where a coach already goes to have the season read back; the Overview stays state (D7), and its rail row (“Reports in Insights · 4”) is the door the owner pictured on that screen.</p>
+    <div class="rides"><b>What rides on it:</b> every other decision. <b>The honest alternative:</b> nothing — D8 stays parked. On a young season the report reads thin (on the fixture, four of five active metrics say “none has two results yet”), and that is true rather than useful. <b>Where I’d push:</b> the gap is a screen the other tabs already have, the counts cost no new read, and “none has two results yet” is itself the answer a coach acts on (run a session). “Not now” is a legitimate ruling and the plan records it as one.</div>
+  </div>
+
+  <div class="ask" data-q="T2">
+    <div class="qn">T 2 · formatting · the shape and the name</div>
+    <h3>Rows are metrics, never players: Metric · Players with a result · Since their first result · Last recorded — the row is a door to Coverage on that metric</h3>
+    <p>A table whose rows are tests has no child to sort — that is the structural guarantee, ahead of any wording rule. Active metrics in library order, retired ones under a collapsed “Show retired (N)” fold in the quiet ink. The metric name carries the unit and the aim as its sub-line (“seconds · lower is the aim”, “mph · aim: 62–68 mph”, “km/h · record only”, “skill”). The name is called <b>Team progress</b>, pairing with Player progress; the Report field reads Coverage · Team progress · Player progress · Practice review (whole → one).</p>
+    <div class="rides"><b>What rides on it:</b> the phone line (one line per metric, name left, counts and date right, chevron to Coverage — the 390 idiom Coverage already uses). <b>Alternatives:</b> “Season so far” or “By metric” as the name; a fourth <em>Show</em> choice inside Coverage instead of a report (rejected — Coverage’s rows are players, and an all-metrics view there is the P2 matrix with a figure per child per column). <b>Where I’d push:</b> keep the columns to these four; a fifth is where a per-child figure would creep back in. <b>Ruled A on the built screen (2026-09-17):</b> the “Two or more” column the frame drew read as a bare number — it is gone, and the change cell carries its own denominator: “3 compared · 2 lower · 1 higher”.</div>
+  </div>
+
+  <div class="ask" data-q="T3">
+    <div class="qn">T 3 · what goes in · the figure</div>
+    <h3>Counts of direction in the aim’s own words — “2 lower · 1 higher”, “1 moved into the range” — never a team average, a mean change, a percentage or a chart</h3>
+    <p>For every player with two or more results on the metric, the same question Player progress answers on “This season”: is the latest lower or higher than the first, in the unit? Counted, not named. A range test counts “moved into the range” / “moved out of the range” / “in range on both”. A record-only test counts higher and lower with no aim stated. Screen 5 shows why an average fails on the fixture’s own records before the ranking question is reached: the sample changes between sessions and the figure moves with it.</p>
+    <div class="rides"><b>What rides on it:</b> one reader behind every number — the count is the number of players whose Player-progress answer line says “lower”, computed from the same series module, so the two screens cannot disagree. <b>Where I’d push:</b> if a mean is ever wanted, the honest one is paired (the same players on both sides) and it still hides the split; counts show it.</div>
+  </div>
+
+  <div class="ask" data-q="T4">
+    <div class="qn">T 4 · what goes in · the floor</div>
+    <h3>No minimum — the denominator says how thin it is (“1 of 12 · 1 higher”)</h3>
+    <p>The findings strip on the Insights Dashboard is silent below three players with a result because it is a nudge, and a nudge on thin data erodes trust. A report is a different instrument: it states its denominator in the sentence, so “1 of 12 have a result · 1 higher” is true and reads as thin. On a roster this size, a floor of three would blank four of five rows for most of a season.</p>
+    <div class="rides"><b>Alternative:</b> hide the Since-their-first cell under three players with two results, showing “—” and the legend’s “too few to count”. <b>Where I’d push:</b> a coach who can already see on Coverage that only Devon has a throw-speed result learns nothing new from “1 higher”; the count leaks nothing the roster table does not already hold, and the family never sees this page (T8).</div>
+  </div>
+
+  <div class="ask" data-q="T5">
+    <div class="qn">T 5 · formatting · the window</div>
+    <h3>Since each player’s first result this season — the “This season” reading — with no Compare control in this version</h3>
+    <p>Player progress offers “This season” and “Last two records”. The team row reads the season: first to latest per player, results grouped per session exactly as the chart’s points are. A “last two” team count is drawable later on the same address convention if the season reading proves too coarse; it is not drawn now because a second window doubles the sentence on every row.</p>
+    <div class="rides"><b>What rides on it:</b> the legend’s one sentence (“latest lower or higher than their first this season”). <b>Where I’d push:</b> none — this is the plain reading.</div>
+  </div>
+
+  <div class="ask" data-q="T6">
+    <div class="qn">T 6 · what goes in · skills</div>
+    <h3>An observed skill’s row is coverage only: “3 of 12 observed · 15 Sept” — no count per descriptor</h3>
+    <p>A skill has no unit and no direction; its descriptors are the coach’s own judgment words (“Independently”, “With a reminder”, “With support”). A count of children under each word is a rating distribution without names, and the names are one click away on Coverage — the plan’s chart rules refuse a line through ordinal labels for the same reason. So the row says who has been observed and when, and stops.</p>
+    <div class="rides"><b>Alternative:</b> “latest descriptor: 1 Independently · 1 With a reminder · 1 With support”. <b>Where I’d push:</b> hold the line here; if a skill’s descriptors are ever ordered by the coach (a later definition question), this row can read the order — not before.</div>
+  </div>
+
+  <div class="ask" data-q="T7">
+    <div class="qn">T 7 · what goes in · the Overview</div>
+    <h3>The Overview is unchanged; its rail’s report count reads 4 by computation</h3>
+    <p>Screen 6. No tile, no line, no chart. The one thing that could honestly be argued for — a Needs-attention line per metric, “8 players have one result or none on the 60-yd sprint” — is recommended against: it is one line per metric, and that list is for things a coach acts on today, which “8 have no result this season” already covers with a door.</p>
+    <div class="rides"><b>What rides on it:</b> D7 as ruled. <b>Where I’d push:</b> if the owner wants a door with the report’s name on it rather than “4 reports”, the rail row could read “Reports in Insights · Coverage · Team progress · …” — a formatting call, and it makes the row longer than its siblings.</div>
+  </div>
+
+  <div class="ask" data-q="T8">
+    <div class="qn">T 8 · what goes in · who reads it, and where it never goes</div>
+    <h3>Every coach with record access reads it (Insights’ own gate, as Coverage); it never reaches the handout, the family recap, or the findings strip in this version</h3>
+    <p>Team progress is read with the same gate as Coverage — record access, not the Development grant — because a read must not sit behind a write grant (G1’s rule). Skills ride the notes gate as they do on Coverage: a coach without Internal notes sees no skill row. The report never feeds a family surface: the handout reads one player’s records and prints nothing about the team; the recap likewise. The Insights Dashboard’s “What stands out” strip gains no rule from it now — a team sentence there needs a threshold and a tone, and that is a findings-engine decision for after the report has earned it.</p>
+    <div class="rides"><b>What rides on it:</b> the boundary the PM brief promises first — nothing here ranks or compares children, and no parent can reach it. <b>Where I’d push:</b> none.</div>
+  </div>
+
+  <h2 style="margin-top:28px">Build summary</h2>
+  <p class="sub">Every answer and note on this page, as text, to paste back into the chat. Nothing leaves this browser until you do.</p>
+  <button class="button primary" type="button" id="buildSummary" style="margin-top:10px">Build summary</button>
+  <textarea id="summaryOut" rows="14" readonly hidden></textarea>
+
+  <h2 style="margin-top:36px">Inherited rulings this project stands on</h2>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- ═══════════════════════════ PM BRIEF ═══════════════════════════ -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief · 2026-09-16 · proposal, nothing built</div>
+  <h1>Team progress — a team-level read for Skills &amp; Goals</h1>
+  <div class="note"><strong>The one thing to check first:</strong> nothing in this proposal ranks or compares individual players. The new report’s rows are <em>metrics</em>, not players; every figure is a count of how many players, never which; and no family surface — the handout, the season recap — reads it. A parent cannot reach it and a coach cannot sort it.</div>
+  <h2>What changes for the coach</h2>
+  <p>Insights → Development gains a fourth report beside Coverage, Player progress and Practice review: <b>Team progress</b>. One row per metric the team measures. Each row says how many players have a result this season, how many have two or more, and — of those — how many sit lower or higher than their first result, in the test’s own unit with the aim stated (“2 lower · 1 higher · lower is the aim”). A last column says when a result on that metric was last recorded. A metric’s row opens Coverage on that metric, where the names are, in roster order. On a phone it is one line per metric.</p>
+  <p>Skills &amp; Goals’ Overview does not change. Its “Reports in Insights” row already counts the reports a coach can open, so it reads 4.</p>
+  <h2>Why it matters</h2>
+  <p>Today a coach can see who has a result (Coverage) and how one player has changed (Player progress), but not whether the thing they are coaching is moving across the group. Answering “is the sprint work landing?” means opening Player progress once per player. Development is the one Insights tab with no team-level read — Results, Attendance and Playing Time all have one. And “when did we last measure throwing?” has no answer short of reading a column per metric.</p>
+  <h2>What was deliberately not proposed</h2>
+  <ul>
+    <li><b>A team average or a trend line.</b> On the fixture’s real records the 60-yd sprint’s session average reads 8.62 → 8.42 “since May” — but May is one child and September is four different children, and one newcomer’s first result moves the figure by itself. A team average on a roster this size is a child’s number wearing a team label. Counts carry their denominator in the sentence; an average hides it.</li>
+    <li><b>Anything on the Overview.</b> It was ruled state, not analysis, and that ruling holds on its merits: the Overview counts what a coach acts on today.</li>
+    <li><b>A per-player change column on Coverage.</b> A column of changes beside names is a ranking by eye.</li>
+    <li><b>A count per skill descriptor.</b> A distribution of children across a coach’s judgment words is a rating table without names.</li>
+  </ul>
+  <h2>Customer impact</h2>
+  <p>Every coach with record access on a Premium Coaches Portal team — head coach and assistants alike — the same audience as Coverage. Read at a few natural moments a season: mid-season, before planning a session, at the season’s close. If we do nothing, the product stays complete and the coach keeps touring Player progress; the cost is time and a question left unanswered, not a broken flow.</p>
+  <h2>Priority</h2>
+  <p>Low-cost, self-contained: no migration, no new data read (the counts come from a walk the product already makes), one table on the existing list recipe, no change to any screen a family sees. Fits between larger work; it does not block anything and nothing blocks it. “Not now” is a legitimate ruling.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach can answer “how many of my players have moved on X, and which way” from one screen, without opening a player.</li>
+    <li>A coach can answer “when did we last record X” from the same screen.</li>
+    <li>No development surface — this one included — carries a figure beside one child that another child’s figure can be read against; the vocabulary guard stays green.</li>
+    <li>Team progress, Coverage, Player progress and the Overview never disagree on a count, because they read one denominator and one series.</li>
+  </ul>
+  <p class="meta">Source documents: docs/projects/active/COACH_TEAM_PROGRESS_VIEW_PM_BRIEF.md · COACH_TEAM_PROGRESS_VIEW_PLAN.md</p>
+</section>
+
+<!-- ═══════════════════════════ FULL PLAN ═══════════════════════════ -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full plan · source-based assessment · 2026-09-16</div>
+  <h1>Team progress — assessment and proposed plan</h1>
+  <h2>1 · Assessment</h2>
+  <p>The Development lifecycle re-evaluation closed with two things parked on their own terms: the shared-stylings close-out (S6) and D8, team-level progress. D8 was deferred first because the refusals question (S5) was open, and kept deferred once G7 answered it — “a team figure on one metric, naming no child, is analysis, and stage 0 builds none.” This project asks the narrower question that leaves: what team-level fact is neither a ranking nor analysis on the Overview? Walked source-based on the UAT fixture, one survives: counts of direction per metric with the denominator stated, on Insights, where the other team-level reads already live.</p>
+  <h2>2 · Scope, method and confidence</h2>
+  <p>Read: the Insights → Development panel (Coverage, Player progress, Practice review and their one Report selector), the Skills &amp; Goals Overview, the board route both read, the series and report modules, the findings engine, the address module, the archived plan’s §8/§9/§17/§21 and the Business Decisions Log’s G7 entry. Probed: the fixture’s development rows, grouped per session exactly as the board groups them. Not done: a signed-in user study. Every figure on the mockup is one the fixture produces on 2026-09-16.</p>
+  <h2>3 · Findings</h2>
+  <p><strong>F01 — Motion across the roster is unreadable without a per-player tour.</strong> <span class="kind">Code finding</span> Coverage’s wire shape carries each player’s latest result per metric and nothing earlier; Player progress reads one player. Counting how many players have moved on one metric means opening Player progress once per player — twelve views on the fixture, sixty across the active metrics.</p>
+  <p><strong>F02 — The board route already reads every result and drops the earlier ones at the wire.</strong> <span class="kind">Code finding</span> It fetches every result for every active player, groups them per session through the one series home, and keeps only the latest row per player per metric. A per-metric count of players moved costs no new read; it is a fold over rows the route already holds.</p>
+  <p><strong>F03 — A team average per session compares different children.</strong> <span class="kind">Code finding</span> On the fixture’s 60-yd sprint the session averages are 8.62 (6 May, Devon alone), 8.41 (20 May, Devon alone), 8.50 (10 Jun, three players) and 8.42 (15 Sept, four). The 10 Jun figure rises while Devon’s own time falls; Blake’s first result lowers the 15 Sept figure by itself; Avery’s time went up. This is §9’s denominator rule broken in one number, before the no-ranking rule is reached. On a thin sample the “team” average is one child’s figure.</p>
+  <p><strong>F04 — Development is the one Insights tab with no team-level read.</strong> <span class="kind">Code finding</span> Results reads the season record; Attendance a team percentage; Playing Time the bench balance across the roster. Development offers three reports, each per player, one player, or per practice.</p>
+  <p><strong>F05 — “When did we last measure X?” has no answer short of a column per metric.</strong> <span class="kind">Code finding</span> Coverage’s Recorded-on column is per player for the metric Show selects; the Overview’s Sessions card names the last session’s date only. A per-metric last-recorded date exists nowhere.</p>
+  <p><strong>F06 — The owner named the Overview as the home of team-level progress, and then ruled it state.</strong> <span class="kind">Context</span> Both are on the record (§185, D7). The proposal resolves it by leaving the Overview as ruled and putting the reading beside the other readings in Insights; the rail’s computed report count is the door.</p>
+  <h2>4 · What “team trend” could mean — the candidates weighed</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Candidate</th><th>Names a child?</th><th>Honest denominator?</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>A team average (or best-of average) per session, as a line</td><td>No — but on a thin sample it IS one child’s figure</td><td>No: the population changes between points (F03)</td><td>Rejected on the arithmetic first, the posture second</td></tr>
+      <tr><td>A per-player change column on Coverage</td><td>Yes — a figure beside every name</td><td>Yes</td><td>Rejected: a column of changes beside names is a ranking by eye; G1 fixed Coverage’s shape</td></tr>
+      <tr><td>A mean or median of paired changes per metric</td><td>No</td><td>Yes (paired)</td><td>Rejected: hides the split (2 lower + 1 higher reads as “−0.18 s”)</td></tr>
+      <tr><td><b>Counts of direction per metric, rows are metrics</b></td><td>No</td><td>Yes — said in the sentence</td><td><b>Proposed</b></td></tr>
+      <tr><td>A count per skill descriptor</td><td>No</td><td>Yes</td><td>Not proposed (T6): a rating distribution without names</td></tr>
+      <tr><td>Nothing — D8 stays parked</td><td>—</td><td>—</td><td>Legitimate; weighed in T1</td></tr>
+    </tbody>
+  </table></div>
+  <h2>5 · The proposal</h2>
+  <p>A fourth report, <b>Team progress</b>, in the Report field of Insights → Development, addressed as the other three are. The count line first: “4 of 12 players have at least one result or observation this season · counts per metric, never a ranking.” Then one table on the list recipe: Metric (name; unit and aim as the sub-line) · Players with a result (“4 of 12 · 1 not assessed”) · Since their first result (“3 compared · 2 lower · 1 higher”; a range test “1 compared · 1 moved into the range”; a record-only test “1 compared · 1 higher”) · Last recorded · Coverage → (the row’s door, opening Coverage with Show set to the metric). A skill’s row: “3 of 12 observed”, the last observation’s date, dashes elsewhere. Retired metrics under a collapsed fold. One legend, one disclaimer (the sentence Player progress keeps), and Coverage’s “Record in Skills &amp; Goals →” door for grant-holders. Phone: one line per metric on the one-line card idiom, chevron to Coverage. Empty states: a team with no session sees Insights → Development’s existing “Nothing to cover yet”; a metric with no player holding two results shows dashes and the legend explains.</p>
+  <h2>6 · Read from the code — what the build must fit</h2>
+  <ul>
+    <li><b>One denominator.</b> Coverage, the Overview’s Players-measured card and the findings strip all count active roster rows from the board read. Team progress counts the same rows; its count line is the same sentence shape as Coverage’s.</li>
+    <li><b>One series.</b> First-to-latest per player is the series module’s “This season” reading (rows grouped per session, the headline per the definition, the change by arithmetic). The team count is a fold over that per player; the two screens cannot disagree.</li>
+    <li><b>Counts on the wire, never per-player firsts.</b> The board’s wire shape is the no-ranking guarantee (its own comment says so of the In-a-plan boolean). The route gains a per-metric block of counts and a last-recorded date; a per-player “first” never reaches the browser.</li>
+    <li><b>The address.</b> The report list and its labels are one list read by the selector and by the Overview’s rail count; a fourth entry appears in both by construction. The report’s address carries nothing but the report name.</li>
+    <li><b>The gate.</b> The panel is read with record access; skills ride the notes gate. Same as Coverage.</li>
+    <li><b>The vocabulary guard.</b> The new report’s strings join the guarded surfaces; “lower / higher / moved into the range” are the words the series module already uses.</li>
+    <li><b>Layout ids.</b> The Insights development screens gain one desktop and one 390 row for the new report; no new route, no migration.</li>
+  </ul>
+  <h2>7 · Decisions</h2>
+  <p>T1–T8 on the Decisions tab, each with a recommendation. In brief: T1 build as a fourth report (or nothing); T2 rows are metrics, four columns (ruled A: the change cell carries its denominator), the row a door; T3 counts of direction, never an average; T4 no floor; T5 the season window, no Compare; T6 skills are coverage only; T7 the Overview unchanged; T8 record access reads it, no family surface ever does.</p>
+  <h2>8 · Built as (2026-09-16)</h2>
+  <p>Built on dev the same day the owner ruled. No migration, no new route: the counts are computed in the walk the roster read already makes and sent as counts; the fourth report sits on the library’s list-recipe table frame; the phone card is two lines on the shared phone-line pair. Four things differ from the frames, all flagged: the row’s door is the list standard’s bare chevron (a row with one door does not name it); the retired rows sit under the Metrics tab’s own “Retired (N)” fold beneath the table; the count line says “result or observation” so it matches the Overview’s own rule; and — the owner’s ruling A on the built screen, 2026-09-17 — the “Two or more” column is gone, its number folded into the change cell as “3 compared · 2 lower · 1 higher”. Found and fixed on the way: the practices library’s phone facts line was rendering on every desktop row (a shared-stylesheet cascade defect) — one line fixes both tables. Verified by 111 unit tests on the touched modules, typecheck, lint, the layout check at four widths, and a 27-check rendered probe of the fixture at 1440 and 390; simplify, review and help-docs passes run. The plan file’s §10 carries the full table.</p>
+  <h2>8a · Expected at build (as written before the build)</h2>
+  <p>No migration; no new route; the board route computes the per-metric counts in its existing walk; the address module and report labels gain the fourth report; the panel gains a fourth branch on the existing table chrome and the one-line phone idiom; the vocabulary guard gains the surface; layout rows at 1440 and 390; help — “Insights → Development: the four reports” and the Skills &amp; Goals guide’s reports paragraph; the demo tour has no beat on Insights → Development, so no re-seed. Then simplify → review → docs → the walk on this hub’s QA tab → a private-index commit on the owner’s say-so.</p>
+  <h2>9 · Evidence index — the fixture on 2026-09-16</h2>
+  <p>Roster 12 active. Metrics: 60-yd sprint (seconds, lower, best), walk test (active, no results), Throw speed (km/h, record), Changeup speed (mph, range 62–68), Sets feet before throwing (skill); retired: walk test (2 results), Shuttle run (2 results). 60-yd sprint: Avery 8.70 → 8.75 (higher), Blake 8.33 (one), Casey not assessed 10 Jun, Devon 8.62 → 8.28 (lower), Emerson 8.55 → 8.30 (lower) — 4 of 12, 3 with two or more, 2 lower · 1 higher, last 15 Sept. Throw speed: Devon 77 → 84 (higher), last 3 Jun. Changeup: Devon 0 of 3 → 2 of 3 in range, last 10 Jun. Skill: Devon 10 Jun, Avery and Blake 15 Sept — 3 of 12. Goals: Devon 2 working, 1 parked.</p>
+  <p class="meta">Source document: docs/projects/active/COACH_TEAM_PROGRESS_VIEW_PLAN.md</p>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="docpage">
+    <div class="eyebrow">Owner QA walk · ledger §196 · built on dev 2026-09-16</div>
+    <h1>Team progress — QA walk</h1>
+    <p class="sub" style="margin-bottom:14px">Six parts, twenty-four steps. Identities are pinned — Devon, Emerson, Avery, Blake, the 15 Sept session — and the counts are today’s fixture (a peer walk that records a result moves them; the plan’s §9 says what today’s rows read). Mark each step, give each part a verdict, write what you saw; <em>Build paste-back summary</em> at the foot gives you the text. Nothing leaves this browser until you paste it.</p>
+    <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · the UAT head coach (UAT_COACH_EMAIL in .env.local) · UAT Test Org / UAT Test Team · 2026 Season. Part E needs a second window as <code>uat-asst-nomoney@uat-test-org.local</code> and then <code>uat-asst-development@uat-test-org.local</code> (passwords in .env.local). Part D at a 390-wide window or on your phone.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildQA">Build paste-back summary</button>
+    <textarea id="qaOut" rows="12" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* hub tabs */
+const HUBS=['mockup','decisions','brief','plan','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));try{localStorage.setItem('tp-hub',which)}catch(e){}}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* phone / desktop — a screen that has both shows the chosen one; a screen with only a desktop frame keeps it */
+let phone=false;try{phone=localStorage.getItem('tp-phone')==='1'}catch(e){}
+function paintView(){document.querySelectorAll('.screen').forEach(s=>{const d=s.querySelector('.fitwrap.desk'),p=s.querySelector('.fitwrap.phone');if(!d)return;if(p){d.hidden=phone;p.hidden=!phone}else{d.hidden=false}});$('viewToggle').setAttribute('aria-pressed',String(phone));$('viewToggle').textContent=phone?'Desktop width':'Phone width';fitAll()}
+$('viewToggle').onclick=()=>{phone=!phone;try{localStorage.setItem('tp-phone',phone?'1':'0')}catch(e){}paintView()};
+
+/* true size / fit — the 1440 frames scale to the window in fit mode; the 390 frame is always true size */
+let fit=true;try{fit=localStorage.getItem('tp-fit')!=='0'}catch(e){}
+function fitAll(){document.querySelectorAll('.fitwrap.desk').forEach(w=>{const f=w.querySelector('.frame');if(!f)return;w.classList.toggle('scroll',!fit);if(fit){const k=Math.min(1,w.clientWidth/1440);f.style.transform='scale('+k+')';w.style.height=(f.offsetHeight*k)+'px'}else{f.style.transform='';w.style.height=''}});$('fitToggle').setAttribute('aria-pressed',String(fit));$('fitToggle').textContent=fit?'Fit to window':'True size (1440)'}
+$('fitToggle').onclick=()=>{fit=!fit;try{localStorage.setItem('tp-fit',fit?'1':'0')}catch(e){}fitAll()};
+window.addEventListener('resize',fitAll);
+
+/* mockup screen router */
+const intents={};
+function showScreen(){const id=location.hash.slice(1)||'s-walk';const known=[...document.querySelectorAll('.screen')].some(el=>el.id===id);const target=known?id:'s-walk';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==target);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+target?'page':'false'));document.getElementById(target)?.querySelector('h1')?.focus({preventScroll:true});paintView()}
+window.addEventListener('hashchange',showScreen);
+
+/* explanations behind every highlight */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+  F01:{t:'Motion across the roster is unreadable without a per-player tour',now:'Coverage’s wire shape carries each player’s LATEST result per metric and nothing earlier; Player progress reads one player’s full record. To count how many players have moved on the 60-yd sprint, the coach opens Player progress once per player — twelve times for one test, sixty across the five active metrics.',fix:'Team progress counts it per metric: of the players with two or more results, how many sit lower or higher than their first this season — the same “This season” reading Player progress gives, folded over the roster and sent as counts. Nobody named.'},
+  F02:{t:'The board already reads every result and drops the earlier ones at the wire',now:'The board route fetches every result for every active player, groups them per session through the one series home, and keeps only the latest row per player per metric for the screen. The earlier rows are read and discarded on every load of Coverage and the Overview.',fix:'The per-metric counts (with a result · two or more · lower · higher · into/out of the range · last recorded) are computed in that same walk and sent as counts. No new read, no per-player first on the wire — the wire shape stays the no-ranking guarantee it already is.'},
+  F03:{t:'A team average per session compares different children',now:'On the fixture’s 60-yd sprint the session averages are 8.62 (6 May — Devon alone), 8.41 (20 May — Devon alone), 8.50 (10 Jun — Avery, Devon, Emerson) and 8.42 (15 Sept — Avery, Blake, Devon, Emerson). The 10 Jun figure rises while Devon’s own time fell 0.17; Blake’s first result lowers the 15 Sept figure by itself; Avery’s time went up. “8.62 → 8.42 since May” would read as the team getting faster.',fix:'No average is drawn anywhere. The team figure is a count of players moved in each direction, each against their own first result — a sentence that carries its denominator: “3 of 12 have two or more · 2 lower · 1 higher · lower is the aim.”'},
+  F04:{t:'Development is the one Insights tab with no team-level read',now:'Results reads the season record; Attendance a team percentage; Playing Time the bench balance across the roster. Development’s Report field offers Coverage (per player, one metric), Player progress (one player) and Practice review (per practice) — none reads the roster as a whole.',fix:'Team progress joins the same Report field as the fourth choice. No new tab, no tile, nothing on the Overview.'},
+  F05:{t:'“When did we last measure X?” has no answer short of a column per metric',now:'Coverage’s Recorded-on column is per player for the one metric Show selects. The Overview’s Sessions card names the last session’s date. No surface says the last date a result was taken on each metric.',fix:'Team progress’s Last recorded column: the latest date any player has a result on that metric — read by eye, with no “stale” threshold for the product to invent (the S4 refusal holds).'},
+};
+const KIND={new:'New',re:'Computed / restyled',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and reads differently for a stated reason. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* the asks — Build as drawn / Change it / Not now + a note, kept in this browser */
+const KEY='tp-decisions-v1';let state={};try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+const BUILD=[['keep','Build as drawn'],['reshape','Change it — note below'],['later','Not now']];
+document.querySelectorAll('.ask[data-q]').forEach(ask=>{const q=ask.dataset.q;const wrap=document.createElement('div');wrap.className='ruling';wrap.setAttribute('role','group');wrap.setAttribute('aria-label','Your answer to '+q);
+  BUILD.forEach(c=>{const b=document.createElement('button');b.type='button';b.textContent=c[1];b.dataset.v=c[0];b.setAttribute('aria-pressed',String(state['a-'+q]===c[0]));b.onclick=()=>{state['a-'+q]=state['a-'+q]===c[0]?undefined:c[0];if(state['a-'+q]===undefined)delete state['a-'+q];save();wrap.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(state['a-'+q]===x.dataset.v)))};wrap.appendChild(b)});
+  const note=document.createElement('textarea');note.className='note';note.rows=1;note.placeholder='What you are thinking — the shape you want, or why this one holds';note.value=state['n-'+q]||'';note.oninput=()=>{state['n-'+q]=note.value;if(!note.value)delete state['n-'+q];save()};
+  ask.appendChild(wrap);ask.appendChild(note)});
+$('buildSummary').onclick=()=>{const lines=['Team progress — decisions T1–T8 — '+new Date().toISOString().slice(0,10),''];document.querySelectorAll('.ask[data-q]').forEach(a=>{const q=a.dataset.q;const h=a.querySelector('h3').textContent.trim();const ans=state['a-'+q];const label=ans?BUILD.find(c=>c[0]===ans)[1]:'no answer';lines.push('['+(ans?'x':' ')+'] '+q+' — '+h);lines.push('    -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''))});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+/* inherited rulings — the ones this project stands on; the T rulings are appended here once pasted back */
+const DECISIONS=[
+  {date:'2026-09-17 · on the built screen: “I do not understand what Two or more means” → A',ask:'The “Two or more” column goes; the change cell carries its own denominator — “3 compared · 2 lower · 1 higher” — under “Since their first result”',ruling:'accepted',label:'Accepted · built 2026-09-17',why:'A bare count of players with two or more results, one cell away from the counts it was the denominator for, read as a number nobody could connect. Option A (drop the column, say “N compared” in the cell) over option B (rename the column): everything on the row now adds up in one place — 4 with a result, 3 compared, 2 lower, 1 higher — and the legend says what “compared” means.'},
+  {date:'2026-09-16 · in chat: “I agree with your mockups”',ask:'T1–T8 — Team progress as drawn: a fourth report in Insights → Development; rows are metrics; counts of direction, never an average; no floor; the season window; skills coverage-only; the Overview unchanged; record access reads it and no family surface does',ruling:'accepted',label:'Accepted · built 2026-09-16',why:'All eight recommendations taken as drawn and built on dev the same day. Two build-time departures from the frame, flagged rather than silent: the row’s door is the list standard’s bare chevron (a row with one door does not name it) instead of the words “Coverage →”, and the retired rows sit under the Metrics tab’s own “Retired (N)” fold beneath the table. One finding on the way: the shared phone-line class the practices library also uses was rendering its phone facts on desktop (a cascade-order defect); fixed once in the shared stylesheet, which also fixes the Drills/Templates/Circuits tabs.'},
+  {date:'2026-09-14 · stage 0, D7',ask:'The Skills & Goals Overview is state, not analysis',ruling:'inherited',label:'Inherited · binding',why:'Four count tiles, each a door; Needs attention; the rail. No chart, no table, no team average. Every figure from the readers the reports already use. This project leaves it as ruled (T7).'},
+  {date:'2026-09-14 · stage 0, D8',ask:'Team-level progress: build = not now',ruling:'inherited',label:'Inherited · the origin',why:'The owner named the Overview as where team-level progress would live; deferred until S5 (are the refusals principle or default?) was answered. Its own stage when ruled. This project is that stage.'},
+  {date:'2026-09-16 · stage 4, G7 · Business Decisions Log',ask:'The refusals are a product principle, not a per-team setting',ruling:'inherited',label:'Inherited · binding',why:'Never a ranking, a sort by result, a team average beside a child, a percentile, “on track”, a projected date, or “faster”. A change is arithmetic in the unit with the aim stated. D8’s team-trend tile stays deferred on its own terms — it names nobody but it is analysis. Everything proposed here is written on these words.'},
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+
+/* ---- QA walk — checkboxes, a verdict per part, notes, a paste-back; kept in this browser ---- */
+const QA_PARTS=[
+  {id:'A',title:'The report (head coach, 1440)',steps:[
+    ['The Report field offers four, whole → one','Insights → Development. Open the Report field: Coverage · Team progress · Player progress · Practice review, in that order. Pick Team progress. No second field appears beside it.'],
+    ['The count line is the first thing under the toolbar','“4 of 12 players have at least one result or observation this season · counts per metric, never a ranking” — bold, then the quiet half.'],
+    ['The 60-yd sprint row','Metric “60-yd sprint” with “seconds · lower is the aim” under it · Players with a result “4 of 12 · 1 not assessed” · Since their first result “3 compared · 2 lower · 1 higher” · Last recorded “15 Sept” (or “Sep 15” in your browser’s date style) · a chevron at the right. No “Two or more” column. No name anywhere on the row.'],
+    ['The walk-test row is dashes','The active “walk test” reads a dash in every figure column and for the date.'],
+    ['Throw speed and Changeup speed','Throw speed: “km/h · record only” · 1 of 12 · “1 compared · 1 higher” · 3 Jun. Changeup speed: “mph · aim: 62–68 mph” · 1 of 12 · “1 compared · 1 moved into the range” · 10 Jun.'],
+    ['The skill row is coverage only','“Sets feet before throwing” with “skill” under it · “3 of 12 observed” · dash · 15 Sept. No count per descriptor anywhere.'],
+    ['Retired (2) is a fold beneath the table','Closed by default. Open it: the retired “walk test” and “Shuttle run”, each “2 of 12 · — · 15 Sept”, in the quiet ink, their own chevrons.'],
+    ['One legend, one disclaimer, one door','Under the table: “— nothing recorded this season · Compared: the players with two or more results this season, each against their own first, in the test’s unit · a single result is a point, not a change”; then “A change in a test does not explain why it happened.” once; then “Record in Skills & Goals →”. Nothing else.'],
+  ]},
+  {id:'B',title:'The doors — counts → names → one child, never the reverse',steps:[
+    ['The row opens Coverage on that metric','Click anywhere on the sprint row (or its name, or its chevron). Coverage opens with Show = “60-yd sprint · latest result” and its own count line “4 of 12 players have a 60-yd sprint result this season · roster order, not a ranking”.'],
+    ['The team’s counts add up on the children','On Coverage, Progress → on Devon: “8.28 seconds on 15 Sept · 0.34 seconds lower since 6 May”. Emerson: 0.25 seconds lower since 10 Jun. Avery: 0.05 seconds higher since 10 Jun. Blake: one result, no change sentence. That is the row’s “3 compared · 2 lower · 1 higher”.'],
+    ['Back returns to Team progress','The browser’s Back from Coverage lands on Team progress with the Report field still reading Team progress.'],
+    ['The skill row opens Coverage on the skill','Its row opens Coverage with Show = “Sets feet before throwing · latest observation”: Devon, Avery and Blake carry a descriptor and a date; nine rows a dash.'],
+  ]},
+  {id:'C',title:'The Overview — unchanged, one computed count',steps:[
+    ['Nothing moved','Skills & Goals → Overview: Sessions · Players measured · Goals · Needs attention · the rail, exactly as before (Sessions 4 with 2 unfinished; Players measured 4 of 12 · 33%; Goals 2 working · 1 review due; Needs attention 4).'],
+    ['The rail reads 4 reports','“Reports in Insights · 4 reports ›” — and the row opens Insights → Development (Coverage), whose Report field now offers Team progress.'],
+  ]},
+  {id:'D',title:'The phone (390)',steps:[
+    ['One two-line card per metric','Insights → Development → Team progress at 390: the Report field, the count line, then a card per active metric — the name on the first line, “4 of 12 · 3 compared · 2 lower · 1 higher · 15 Sept” beneath it (the counts wrap onto a third line on a narrow phone, the date last — the card is as tall as its words, like the practices library’s), a chevron at the right. No “seconds · lower is the aim” on the card. No labelled rows per column.'],
+    ['The cards’ words','walk test “—” · Throw speed “1 of 12 · 1 compared · 1 higher · 3 Jun” · Changeup speed “1 of 12 · 1 compared · 1 moved into the range · 10 Jun” · Sets feet before throwing “3 of 12 observed · 15 Sept”. Then “Retired (2)” collapsed.'],
+    ['The chevron opens Coverage on the metric','Tap the sprint card’s chevron (or its name): Coverage at 390 on the sprint, its one-line rows.'],
+    ['Nothing scrolls sideways','The page never scrolls horizontally; the legend, the disclaimer and the door sit under the cards above the bottom nav.'],
+  ]},
+  {id:'E',title:'Who sees what',steps:[
+    ['A record-access assistant without Internal notes (uat-asst-nomoney)','Insights → Development: the Report field offers Coverage · Team progress · Player progress (no Practice review — no schedule grant). Team progress shows the four tests and the retired fold and NO “Sets feet before throwing” row; no “Record in Skills & Goals →” under the table.'],
+    ['A development assistant with Internal notes (uat-asst-development)','The same report with the skill row present (“3 of 12 observed · 15 Sept”) and the “Record in Skills & Goals →” door under the table.'],
+  ]},
+  {id:'F',title:'Not there, by design (T3 · T7 · T8)',steps:[
+    ['No team average, no chart, no percentage','Nowhere on Team progress is there a mean, a trend line, a bar, a percentage or the words “faster”, “better”, “improved” or “on track”.'],
+    ['No figure beside a child','No player is named on Team progress; a child’s figure appears only on Coverage and Player progress, one child, their own record.'],
+    ['The handout carries nothing about the team','Devon’s record → Preview development handout: the paper reads Devon’s own goals and results; no team count, no “2 lower”, no mention of other players.'],
+    ['The Insights Dashboard says nothing new','Insights → Dashboard: the “What stands out” strip has no team-progress sentence (its one development line, if it fires, is the existing “N players don’t have a result yet…”).'],
+  ]},
+];
+const QAKEY='tp-qa-v1';let qa={};try{qa=JSON.parse(localStorage.getItem(QAKEY)||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem(QAKEY,JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent='Checked '+c.checked+' of '+c.total}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>'<div class="qapart"><h3>Part '+esc(p.id)+' · '+esc(p.title)+'</h3>'+p.steps.map((st,i)=>'<label class="qastep"><input type="checkbox" data-step="'+p.id+'-'+i+'" '+(qa[p.id+'-'+i]?'checked':'')+'> <span><b>'+p.id+(i+1)+' · '+esc(st[0])+'</b>'+esc(st[1])+'</span></label>').join('')+'<div class="verdictrow">Verdict:'+['pass','issue','call'].map(v=>'<button data-verdict="'+p.id+'" data-value="'+v+'" aria-pressed="'+(qa['verdict-'+p.id]===v)+'">'+(v==='pass'?'Pass':v==='issue'?'Defect':'Needs a call')+'</button>').join('')+'</div><label>Notes<textarea data-notes="'+p.id+'" rows="2" placeholder="What you saw — a defect, a doubt, a word to change">'+esc(qa['notes-'+p.id]||'')+'</textarea></label></div>').join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildQA').onclick=()=>{const c=qaCounts();const lines=['Team progress — QA walk (ledger §196) — '+new Date().toISOString().slice(0,10),'Checked '+c.checked+' of '+c.total,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push('Part '+p.id+' · '+p.title+' — verdict: '+v);p.steps.forEach((st,i)=>lines.push('  ['+(qa[p.id+'-'+i]?'x':' ')+'] '+p.id+(i+1)+' — '+st[0]));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id].replace(/\s+/g,' ').trim());lines.push('')});const out=$('qaOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+/* start */
+let startHub='mockup';try{startHub=localStorage.getItem('tp-hub')||'mockup'}catch(e){}
+if(!HUBS.includes(startHub))startHub='mockup';
+showHub(startHub);showScreen();
+</script>

@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   progressSeries, statedChange, compareWindow, coverageCell, coverageDenominator, COVERAGE_DASH, COVERAGE_ORDER_NOTE,
   progressAxis, xFractions, showOptions, logLine, handoutResultNote, handoutNextReview, describeSeries, scopeLine, developmentReports,
+  changeDirection, teamMetricCounts, teamSkillCounts, teamChangeSummary, teamPlayersCell, teamCountLine, teamLegend, TEAM_COUNT_NOTE, REPORT_LABELS,
   type ReportDefinition, type ProgressPoint,
 } from '../../lib/development-report.ts';
 import { averageOf, describeHeadline, headlineMethod, type SessionResult } from '../../lib/measurable-series.ts';
@@ -197,9 +198,106 @@ describe('coverageCell — per metric, that metric\'s own date (F12)', () => {
 });
 
 describe('developmentReports — Practice review only with the schedule grant (one rule for the selector and the rail count)', () => {
-  it('three with the grant, two without', () => {
-    assert.deepEqual(developmentReports(true), ['coverage', 'progress', 'practices']);
-    assert.deepEqual(developmentReports(false), ['coverage', 'progress']);
+  it('four with the grant, three without — Team progress in the selector\'s order, whole → one (T2)', () => {
+    assert.deepEqual(developmentReports(true), ['coverage', 'team', 'progress', 'practices']);
+    assert.deepEqual(developmentReports(false), ['coverage', 'team', 'progress']);
+    assert.equal(REPORT_LABELS.team, 'Team progress');
+  });
+});
+
+/**
+ * Team progress (owner rulings T1–T8, 2026-09-16) — counts of motion per METRIC, naming nobody. The
+ * fixture's own shape: Avery 8.70 → 8.75 (higher), Blake one result, Casey not assessed, Devon
+ * 8.62 → 8.28 (lower), Emerson 8.55 → 8.30 (lower), seven with nothing — 4 of 12 · 1 not assessed ·
+ * 3 with two or more · 2 lower · 1 higher · last 15 Sept.
+ */
+describe('changeDirection — the one reading statedChange writes from and the team fold counts (T3)', () => {
+  const pts = (a: number, aOn: string, b: number, bOn: string, def: ReportDefinition, unit = 'seconds') =>
+    progressSeries([reading(a, aOn, 'x1', 1, unit), reading(b, bOn, 'x2', 1, unit)], def, { show: 'headline', compare: 'season' }).points;
+  it('lower · higher · unchanged in the unit — the same words statedChange prints', () => {
+    const [f1, l1] = pts(8.62, '2026-05-06', 8.28, '2026-09-15', sprint);
+    assert.equal(changeDirection(f1, l1, sprint), 'lower');
+    assert.match(statedChange(f1, l1, sprint, 'seconds')!, /^0\.34 seconds lower since /);
+    const [f2, l2] = pts(8.7, '2026-06-10', 8.75, '2026-09-15', sprint);
+    assert.equal(changeDirection(f2, l2, sprint), 'higher');
+    const [f3, l3] = pts(84, '2026-05-06', 84, '2026-06-03', legacy, 'km/h');
+    assert.equal(changeDirection(f3, l3, legacy), 'unchanged');
+    assert.equal(statedChange(f3, l3, legacy, 'km/h'), `unchanged since ${d('2026-05-06')}`);
+  });
+  it('a range test reads into · out · in both · outside both', () => {
+    const range = (first: number[], latest: number[]) => progressSeries([
+      ...first.map((v, i) => reading(v, '2026-05-27', 'r1', i + 1, 'mph')),
+      ...latest.map((v, i) => reading(v, '2026-06-10', 'r2', i + 1, 'mph')),
+    ], changeup, { show: 'headline', compare: 'season' }).points;
+    const into = range([70, 60, 61], [64, 70, 66]);
+    assert.equal(changeDirection(into[0], into[1], changeup), 'into');
+    assert.match(statedChange(into[0], into[1], changeup, 'mph')!, /^moved into the range since /);
+    const out = range([64, 66], [70, 71]);
+    assert.equal(changeDirection(out[0], out[1], changeup), 'out');
+    const both = range([64], [66]);
+    assert.equal(changeDirection(both[0], both[1], changeup), 'in_both');
+    const neither = range([70], [71]);
+    assert.equal(changeDirection(neither[0], neither[1], changeup), 'outside_both');
+  });
+  it('the same point is no direction', () => {
+    const [f] = pts(8.4, '2026-05-06', 8.4, '2026-05-06', sprint);
+    assert.equal(changeDirection(f, f, sprint), null);
+  });
+});
+
+describe('teamMetricCounts — a fold over progressSeries per player, counts only (T3 · T4 · T5)', () => {
+  const avery = [reading(8.7, '2026-06-10', 's-jun', 1), reading(8.75, '2026-09-15', 's-sep', 1)];
+  const blake = [reading(8.33, '2026-09-15', 's-sep', 1)];
+  const devon = [reading(8.62, '2026-05-06', null, 1), reading(8.41, '2026-05-20', null, 1), reading(8.31, '2026-06-10', 's-jun', 1), reading(8.24, '2026-06-10', 's-jun', 2), reading(8.28, '2026-09-15', 's-sep', 1)];
+  const emerson = [reading(8.55, '2026-06-10', 's-jun', 1), reading(8.3, '2026-09-15', 's-sep', 1)];
+  const roster = [avery, blake, [], devon, emerson, [], [], [], [], [], [], []];
+  it('the fixture\'s sprint row: 4 of 12 · 1 not assessed · 3 with two or more · 2 lower · 1 higher · last 15 Sept', () => {
+    const c = teamMetricCounts(roster, sprint, 1);
+    assert.deepEqual(c, { withResult: 4, notAssessed: 1, withTwo: 3, byDirection: { lower: 2, higher: 1 }, lastRecordedOn: '2026-09-15' });
+    assert.equal(teamPlayersCell(c, 12, sprint), '4 of 12');
+    assert.equal(teamChangeSummary(c, sprint), '3 compared · 2 lower · 1 higher');
+  });
+  it('one reader behind every number: "lower" is exactly the players whose Player-progress change says lower', () => {
+    const c = teamMetricCounts(roster, sprint, 0);
+    const says = (word: string) => roster.filter(r => (progressSeries(r, sprint, { show: 'headline', compare: 'season' }).change ?? '').includes(` ${word} since`)).length;
+    assert.equal(c.byDirection.lower, says('lower'));
+    assert.equal(c.byDirection.higher, says('higher'));
+  });
+  it('a player with one result counts as measured, never as a change (a point, not a change)', () => {
+    const c = teamMetricCounts([blake], sprint, 0);
+    assert.deepEqual([c.withResult, c.withTwo, c.byDirection], [1, 0, {}]);
+    assert.equal(teamChangeSummary(c, sprint), null, 'nobody at two or more — the cell is the dash and the legend says why');
+  });
+  it('the range test counts moved into the range; a record-only test counts higher with no aim', () => {
+    const devonChangeup = [reading(70, '2026-05-27', 'c1', 1, 'mph'), reading(60, '2026-05-27', 'c1', 2, 'mph'), reading(61, '2026-05-27', 'c1', 3, 'mph'),
+      reading(64, '2026-06-10', 'c2', 1, 'mph'), reading(70, '2026-06-10', 'c2', 2, 'mph'), reading(66, '2026-06-10', 'c2', 3, 'mph')];
+    const r = teamMetricCounts([devonChangeup, [], []], changeup, 0);
+    assert.deepEqual([r.withResult, r.withTwo, r.byDirection, r.lastRecordedOn], [1, 1, { into: 1 }, '2026-06-10']);
+    assert.equal(teamChangeSummary(r, changeup), '1 compared · 1 moved into the range');
+    const devonThrow = [reading(77, '2026-05-06', null, 1, 'km/h'), reading(82, '2026-05-20', null, 1, 'km/h'), reading(84, '2026-06-03', null, 1, 'km/h')];
+    const t = teamMetricCounts([devonThrow], legacy, 0);
+    assert.equal(teamChangeSummary(t, legacy), '1 compared · 1 higher');
+    assert.equal(t.lastRecordedOn, '2026-06-03');
+  });
+  it('nothing recorded is nothing — no denominator invented, the cell is null (the dash)', () => {
+    const c = teamMetricCounts([[], [], []], sprint, 0);
+    assert.equal(c.withResult, 0); assert.equal(c.lastRecordedOn, null);
+    assert.equal(teamPlayersCell(c, 3, sprint), null);
+    assert.equal(teamPlayersCell({ ...c, notAssessed: 2 }, 3, sprint), '0 of 3', 'a not-assessed mark with no result is still said');
+  });
+  it('a skill is coverage only (T6): who has been observed and when, never a count per descriptor', () => {
+    const c = teamSkillCounts(['2026-06-10', null, '2026-09-15', '2026-09-15', null], 1);
+    assert.deepEqual([c.withResult, c.withTwo, c.notAssessed, c.lastRecordedOn], [3, 0, 1, '2026-09-15']);
+    assert.equal(teamPlayersCell(c, 12, skill), '3 of 12 observed');
+    assert.equal(teamChangeSummary(c, skill), null);
+  });
+  it('the count line, the note and the legend say what the screen is — counts, never a ranking', () => {
+    assert.equal(teamCountLine(4, 12), '4 of 12 players have at least one result or observation this season');
+    assert.equal(teamCountLine(1, 12), '1 of 12 players has at least one result or observation this season');
+    assert.equal(TEAM_COUNT_NOTE, 'counts per metric, never a ranking');
+    assert.match(teamLegend(), /^— nothing recorded this season · Compared: the players with two or more results/);
+    const words = teamLegend() + (teamChangeSummary(teamMetricCounts(roster, sprint, 0), sprint) ?? '');
+    for (const banned of [/faster/i, /better/i, /improv/i, /on track/i, /average/i, /%/]) assert.doesNotMatch(words, banned);
   });
 });
 

@@ -621,6 +621,10 @@ export const SCREENS = [
     interact: openProgressSheet },
   { id: 'coach-history-development-practices', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/history?section=development&report=practices` },
+  /* Team progress (owner rulings T1–T8, 2026-09-16): the fourth report — one row per METRIC, counts
+     of motion naming nobody, the row a door to Coverage; on a phone one two-line card per metric. */
+  { id: 'coach-history-development-team', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history?section=development&report=team` },
   { id: 'coach-history-results',     session: 'coach', path: (c) => `${team(c)}/history?section=results`,     ready: 'h1' },
   /**
    * ⚠ ADDED 2026-08-16 (archive rail Phase 2) — it was the one Insights door with NO rendered

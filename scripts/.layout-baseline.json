@@ -37,6 +37,10 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
+    "coach-history-development-team|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
     "coach-development-handout|390|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
       "detail": "16px tall (floor 44)"
@@ -54,6 +58,10 @@
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history-development-practices|390|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-team|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -97,7 +105,15 @@
       "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
       "detail": "34px tall (floor 44)"
     },
+    "coach-history-development-team|768|tap-floor|button·Help: Development": {
+      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
     "coach-history-development-practices|768|control-width|button·Help: Development": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-development-team|768|control-width|button·Help: Development": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },

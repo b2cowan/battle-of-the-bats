@@ -206,10 +206,22 @@
    wanted it; that table and the peer's records cards still wear their own copies — S6 (the shared
    stylings close-out) points them here. Same order rule as `.cardActionLabel` above: base first,
    media after. */
-.cardPhoneLine { display: none; font-variant-numeric: tabular-nums; }
+/* ⚠ SCOPED TO `.tableAsCards` FOR SPECIFICITY, NOT TASTE (Team progress build, 2026-09-16). The line
+   is composed with `.listRowSub` for its caption look, and `.listRowSub { display: block }` sits
+   ~12,400 lines BELOW this rule at the same specificity — so a bare `.cardPhoneLine { display: none }`
+   LOST on source order and the phone line rendered on every desktop row (measured on the Drills
+   tab at 1440: "20 min · Not in a plan yet" under every drill name, duplicating its cells). The
+   descendant selector outranks the caption class; the pair only ever lives inside a card reflow. */
+.tableAsCards .cardPhoneLine { display: none; font-variant-numeric: tabular-nums; }
+/* `.cardDesktopLine` — the pair's third member (Team progress, 2026-09-16): a LINE inside the lead
+   cell that shows on a desktop and hides on the phone card — the inverse of `.cardPhoneLine`, for a
+   sub-line the card has no room for ("seconds · lower is the aim" under a metric's name, where the
+   phone card is the name and its counts). A span, so `td.cardDesktopCell` cannot serve. */
+.cardDesktopLine { display: block; }
 @media (max-width: 640px) {
-  .cardPhoneLine { display: block; }
+  .tableAsCards .cardPhoneLine { display: block; }
   .tableAsCards td.cardDesktopCell { display: none; }
+  .tableAsCards .cardDesktopLine { display: none; }
 }
 
 /* scrollX — controlled horizontal scroll for a genuine 2-D grid (lineup
