@@ -10004,6 +10004,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppStColLine { font-size: var(--type-support); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ppStColNote { composes: ppStColLine; color: var(--home-amber, var(--warning)); }
 .ppStColFirst { composes: ppStColLine; color: var(--text-tertiary); }
+/* ONE quiet olive link recipe for the sheet — the when-line's schedule link, the head's "View on
+   schedule", the ghost row's alternatives — composed, never re-typed.
+   Defined here, ahead of its first composer (the station column's door): `composes` resolves
+   top-down, so a recipe must sit above every rule that composes it. */
+.ppQuietLink { color: var(--home-olive, var(--blueprint-light)); font-weight: 700; text-decoration: none; }
+.ppQuietLink:hover { text-decoration: underline; }
 /* The door's word in the sheet's quiet-link voice; pinned to the column's foot so three columns'
    "Open ›" sit on one line however their lines above wrap. As tall as the reorder pair beside it
    and clear of its width (two 1.75rem buttons and the inset), so the pair overlays only this row. */
@@ -10223,10 +10229,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppDocWhenAmber { color: var(--warning); }
 /* The day and the clock share one line on a desktop; the phone stacks them (the frame's 390). */
 .ppDocWhenDay, .ppDocWhenSep { display: inline; }
-/* ONE quiet olive link recipe for the sheet — the when-line's schedule link, the head's "View on
-   schedule", the ghost row's alternatives — composed, never re-typed. */
-.ppQuietLink { color: var(--home-olive, var(--blueprint-light)); font-weight: 700; text-decoration: none; }
-.ppQuietLink:hover { text-decoration: underline; }
 .ppDocWhenLink { composes: ppQuietLink; font-family: var(--font-body, inherit); }
 /* The header's schedule link, as Lineups draws it, in the sheet's voice and at the tap floor. */
 .ppDocHeadLink {
@@ -10270,6 +10272,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppFoldToggle[aria-expanded='true'] .ppFoldChevron { transform: rotate(90deg); }
 .ppFoldTitle { font-weight: 700; color: var(--home-olive, var(--text-primary)); }
 .ppAboutSummary { color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A block's one-line note treatment — sits here, ahead of the About fold's preview that composes
+   it (`composes` resolves top-down); the block rows that wear it directly follow further down. */
+.ppTlDesc {
+  font-size: var(--type-body); color: var(--text-secondary); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 /* The closed fold's own description line (owner catch, 2026-09-15) — same one-line-ellipsis
    treatment a closed practice block already gives its note (`.ppTlDesc`), indented to sit under
    the title rather than the chevron, so it reads as the head's second line, not a new field. */
@@ -10316,10 +10324,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppTlClosed:hover { background: var(--home-olive-soft, var(--white-8)); }
 .ppTlTitle { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: var(--type-body); font-weight: 700; }
 .ppTlUntitled { color: var(--text-tertiary); font-weight: 600; font-style: italic; }
-.ppTlDesc {
-  font-size: var(--type-body); color: var(--text-secondary); max-width: 100%;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 /* The row's second line (owner ask, 2026-09-15) — same treatment as `.ppTlDesc` (one line,
    never wraps the row taller), with a bold label so it can't be misread as more "doing" text. */
 .ppTlWatch {
