@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   blockRotates,
+  buildRunOutline,
   buildRunSteps,
   computeRotation,
   namesWholeTeam,
@@ -190,5 +191,61 @@ describe('the rotation\'s rows, keyed by station (P7) — the field reads the bo
     assert.deepEqual(t.rows[1].cells, [['Group A', 'Group B'], [], []]);
     assert.deepEqual(t.rows[1].out.map(o => o.name), ['Group C']);
     assert.equal(t.rows[1].round, 2, 'the line reads "C sits round 2 out" from the row\'s own number');
+  });
+});
+
+/**
+ * THE FIELD'S FIRST SCREEN — the plan as a list (stage 7, owner ruling W1–W3, 2026-09-18).
+ * One row per block, the plan's length (never a clock), a rotation's shape, stations as rows under
+ * their block with the sole station folded, every row's stop, and "mine" from the reader's walk.
+ */
+describe('buildRunOutline — the list Run practice opens on', () => {
+  const warmup = block({ id: 'w', title: 'Warm-up', duration: { minutes: 15 }, staffTagIds: ['t-coach'] });
+  const rot = rotationBlock({
+    stations: [
+      { id: 's1', name: 'Tees', staffTagIds: ['t-sam'] },
+      { id: 's2', name: 'Short hop', staffTagIds: ['t-coach'] },
+      { id: 's3', name: 'Toss' },
+    ],
+  });
+  const game = block({ id: 'g', title: 'Small-sided game', duration: { minutes: null, restOfPractice: true } });
+  const plan = { version: 1, blocks: [warmup, rot, game] };
+  const steps = buildRunSteps(plan.blocks);
+  const mine = new Set(['t-coach']);
+  const rows = buildRunOutline(plan, steps, mine);
+
+  it('one row per block, in practice order, with the plan\'s length as the field states it — never a clock', () => {
+    assert.deepEqual(rows.map(r => r.title), ['Warm-up', 'Station rotation', 'Small-sided game']);
+    assert.deepEqual(rows.map(r => r.length), ['15 min', '45 min', 'Rest of practice']);
+  });
+
+  it('a rotation the field walks by rounds says its shape; a plain block says nothing', () => {
+    assert.deepEqual(rows.map(r => r.shape), ['', '3 rounds · 15 min a round', '']);
+  });
+
+  it('every row is a door: a block row opens its FIRST stop (round 1 of a rotation)', () => {
+    assert.deepEqual(rows.map(r => r.stepIndex), [0, 1, 4], 'three rounds sit between the warm-up and the game');
+    assert.equal(steps[rows[1].stepIndex].round, 1);
+  });
+
+  it('stations are rows under their block; "mine" at both levels is the walk\'s own answer', () => {
+    assert.deepEqual(rows[1].stations.map(s => s.label), ['Tees', 'Short hop', 'Toss']);
+    assert.deepEqual(rows.map(r => r.mine), [true, false, false], 'a station inside a block does not mark the block');
+    assert.deepEqual(rows[1].stations.map(s => s.mine), [false, true, false]);
+  });
+
+  it('a sole station IS the block — no sub-row, and its staff marks the block row', () => {
+    const sole = block({ id: 'd', title: 'Drill', stations: [{ id: 'only', name: 'Bunting', staffTagIds: ['t-coach'] }] });
+    const [row] = buildRunOutline({ version: 1, blocks: [sole] }, buildRunSteps([sole]), mine);
+    assert.deepEqual(row.stations, []);
+    assert.equal(row.mine, true);
+  });
+
+  it('a rotation that cannot be walked yet (no groups) is one plain stop, with no shape', () => {
+    const half = rotationBlock({ id: 'half', rotation: { intervalMinutes: 15, groupSource: 'random', groups: [] } });
+    const [row] = buildRunOutline({ version: 1, blocks: [half] }, buildRunSteps([half]), new Set());
+    assert.equal(row.shape, '');
+    assert.equal(row.stepIndex, 0);
+    assert.equal(row.length, '45 min');
   });
 });

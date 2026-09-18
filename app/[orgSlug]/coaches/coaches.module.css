@@ -9606,11 +9606,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppMinutes { width: 5rem; font-variant-numeric: tabular-nums; }
 /* .ppCount retired 2026-08-01 with the station's "how many of it" field (owner ruling). */
 
-/* â”€â”€ Blocks â”€â”€ */
-.ppBlock {
-  border: 1px solid var(--border-2); border-radius: 12px;
-  background: var(--card-bg); overflow: hidden;
-}
+/* ── Blocks ── */
+/* ⚰ `.ppBlock` (the card frame) deleted 2026-09-18 with stage 6: the closed-season reader, its last
+   host, now mounts the sheet itself (R5); the editor stopped drawing cards at stage 3. */
 .ppBlockHead {
   display: flex; align-items: center; gap: 0.4rem;
   padding: 0.5rem 0.6rem;
@@ -9619,15 +9617,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* .ppBlockOrder retired 2026-09-15 — the open head's reorder pair moved to the gutter (`.ppTlMove`). */
 .ppBlockTitleWrap { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
 .ppBlockTitle { font-weight: 600; }
-/* The closed-season reader's block line — "15 min · 6:00 p.m.–6:15 p.m." under a finished
-   practice's block title (`history/development/practices/[eventId]`). The EDITOR's open head
-   stopped using it at stage 3 (2026-09-15): the clock had already moved to the gutter at stage 1
-   and the ROTATION tag it still carried is said by the strip's pressed "Groups rotate" chip a
-   line down. The reader is not this stage's; the rule stays for it. */
-.ppBlockClock {
-  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-  font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums;
-}
+/* ⚰ `.ppBlockClock` — the closed-season reader's "15 min · 6:00 p.m.–6:15 p.m." line — deleted
+   2026-09-18 with stage 6 (R5): the reader renders the record's face through the sheet, whose
+   gutter already carries the clock. */
 .ppShapeTag {
   display: inline-flex; align-items: center; gap: 0.2rem;
   font-size: var(--type-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
@@ -9733,11 +9725,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border: 1px solid var(--white-8); border-radius: 10px;
   background: var(--home-olive-soft, rgba(255,255,255,0.02));
 }
-.ppStationHead {
-  display: flex; align-items: center; gap: 0.4rem;
-  padding: 0.45rem 0.55rem;
-  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
-}
+/* ⚰ `.ppStationHead` deleted 2026-09-18 with stage 6 (R5) — the reader's station card head; the
+   sheet's stations are columns and a modal (stage 3). */
 .ppStationBody { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.7rem 0.8rem; }
 
 /* ── Stations as COLUMNS under their block (practices re-evaluation stage 3, owner ruling D2,
@@ -10457,6 +10446,24 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppRunRowS { display: block; margin: 0; font-size: var(--type-heading); font-weight: 700; line-height: 1.25; color: var(--text-primary); overflow-wrap: anywhere; }
 .ppRunRowM { display: block; margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
 .ppRunRowGo { font-size: var(--type-support); font-weight: 700; color: var(--home-olive, var(--logic-lime)); white-space: nowrap; }
+
+/* ── THE LIST — the field's first screen (practices re-evaluation stage 7, owner ruling W1–W4,
+   2026-09-18). Run practice opens here, on any day: one row per block on the SAME row component
+   as the rotation's list — the block's number where the group letter goes (.ppRunRowG), the name,
+   the rotation's shape and who runs it beneath, and the plan's LENGTH on the right (.ppRunRowLen:
+   mono, dark, tabular — "15 min", "Rest of practice", never a clock, W2) — and a block's stations
+   as `[data-face="station"]` rows indented to the block's text under it (W3), each 44, each a
+   door. Block rows keep the 56 floor. No big button: the rows are the doors. ── */
+.ppRunOutline { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+/* 2.75rem letter column + 0.7rem gap — the station rows start where the block's name does. */
+.ppRunOutlineStations { margin-left: 3.45rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.ppRunRowLen {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.4rem;
+  max-width: 6.5rem; text-align: right; font-family: var(--font-data); font-size: var(--type-support);
+  font-weight: 700; line-height: 1.25; color: var(--text-primary); font-variant-numeric: tabular-nums;
+}
+/* The door's chevron, on a block row and a station row alike — olive, never the text's colour. */
+.ppRunRowLen svg, .ppRunRowGo svg { flex: none; color: var(--home-olive, var(--logic-lime)); }
 /* A sitting-out group is one line under the list, in the grid's own words ("D sits round 3 out") —
    the same meta line as the staff line (.ppRunMeta). */
 
@@ -10615,16 +10622,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    boxes reads as broken on a phone, and plain text makes a picked drill visibly a different,
    shorter shape from a station the coach typed. */
 .ppReadTxt { margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
-.ppReadPre { white-space: pre-wrap; }   /* a paragraph typed with line breaks keeps them */
+/* ⚰ `.ppReadPre` deleted 2026-09-18 with stage 6 (R5) — the reader's pre-wrapped paragraph. */
 .ppReadPoints {
   margin: 0; padding-left: 1.1rem;
   font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary);
 }
 .ppReadPoints li { margin-bottom: 0.15rem; }
-.ppStationNameRead {
-  flex: 1 1 auto; min-width: 0;
-  font-size: var(--type-body); font-weight: 700; color: var(--text-primary);
-}
+/* ⚰ `.ppStationNameRead` deleted 2026-09-18 with stage 6 (R5) — the reader's station name. */
 
 /* Provenance. Quiet, and it STAYS for the life of the station -- it records where this came from,
    which remains true however the practice goes. */

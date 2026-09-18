@@ -31,7 +31,7 @@ be (a three-block practice is 6,627px and 59 inputs on desktop; the printed run 
 | 4 | **The library** | The Templates and Drills tab rows on the list recipe (the row is the door; a drill row reads its first line, a template row its blocks; a phone card as tall as its words); the library docked beside the plan on a wide desktop (the sheet back at 816, the panel in the rest — the header's column); drag as an addition on desktop with a mouse — a drill onto the page, a block by its gutter — buttons everywhere; *Save to my drills…* on the bare written block (and the import reads bare blocks); an empty template not offered as a start; the drill sheet as the station modal's shape with Retire in its foot; the provenance line as one sentence; the hub's past list uncapped behind one door, Practice review left under Insights | **DRAWN 2026-09-16 · RULED 2026-09-16 (L1–L8 as drawn — §7.0) · L9 · Circuits added on the ruling (a saved block with stations: the word circuit, a fourth tab, a two-question save, with stage 4 — §7.7) · BUILT ON DEV 2026-09-16 (§7.8; migration 302 prod-owed) · COMMITTED `34bb88f5` 2026-09-16 · §195 WALK OWED**; step zero — D9–D12 ruled B / yes / as drawn 2026-09-15 before any drag was drawn |
 | 5 | **Paper & the field** | The run door's window on the plan page, "everyone" chips, the printed sheet — **including turning the printed rotation grid to STATION columns to match the screen (owner, 2026-09-16, deferred here from D14: groups in the cells, stacked when they share; a "Sitting out" column when a group sits a round out; the sideways fallback kept for too many stations to fit across the page)**; the field screen's "Rotation due" reads a hand-arranged grid (a sitting-out group already named on its due-moves line) | **DRAWN 2026-09-17 on the hub ("5 · Paper & the field" tab; P1–P9 with recommendations; notes 104–134; the befores are the live screen and the rendered sheet) · RULED 2026-09-17 (P1–P9 all as drawn) · BUILT ON DEV 2026-09-17 (§8.7; no migration; /simplify · /review 12 fixed · /docs done) · COMMITTED `fe2d8244` · §201 WALK COMPLETE 2026-09-17** — §8 below |
 | 6 | **Afterwards & who sees what** | The record's face for a finished practice — from when (R1), and what it is (R2: the recap first, the sheet read-only, the toolbar a record earns); "How it went" at the start and the promise line gone (R3); the hub's rows (R4 — settled 18 Sep by `b2c7ff26`: no field door on a row); the closed-season reader as the record's face — one document (R5); the shelf's name (R6); the Overview during tonight's practice — Q 10.1 answered (R7); the Schedule panel's sentence and gate for an assistant (R8); the helper's door reads a block (R9) | **DRAWN 2026-09-17 on the hub ("6 · Afterwards & who sees what", R1–R9 with recommendations, notes 135–167; the befores are the live screens on the re-seeded fixture at 1440 and 390, the afters in the portal's materials, measured) · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by `b2c7ff26`) · NOT BUILT — build prompt `COACH_PRACTICES_STAGE6_BUILD_PROMPT.md`** — §9 below |
-| 7 | **Where are we** — the field’s first screen | Run practice opens on the plan as a LIST (W1: blocks in order with the plan’s length and who runs it, stations beneath, every row a door, “that’s you” on the reader’s rows); the number on a row is the length, never a planned clock (W2); stations as rows, not a count (W3); the block screen’s back goes to the list (W4) | **DRAWN 2026-09-18 on the hub (“7 · Where are we”, W1–W4, notes 168–175) · RULING OWED** — §10 below |
+| 7 | **Where are we** — the field’s first screen | Run practice opens on the plan as a LIST (W1: blocks in order with the plan’s length and who runs it, stations beneath, every row a door, “that’s you” on the reader’s rows); the number on a row is the length, never a planned clock (W2); stations as rows, not a count (W3); the block screen’s back goes to the list (W4) | **DRAWN and RULED 2026-09-18 (W1–W4 as drawn) · BUILT ON DEV 2026-09-18 (§10.7) · §205 walk owed (the hub’s “QA walk · 7” tab)** — §10 below |
 
 **Two ladders, two numberings:** the walk's arc counts the eleven SCREENS (stations 0–10); the tabs count the STAGES built. Each tab names the stations it covers — Arrive took 0, 2 and 6 (the first screen, the list, the libraries as tabs); The blank page takes 1 and 3. Station 1 (Put a practice on the calendar) had no stage of its own until the owner asked why (2026-09-14): its one question is the end time, which stage 1 depends on, so it is stage 1's D9. A later stage may depend on an earlier ruling, which is why the tabs are added one at a time. Defects the walk logged that belong
 to later stages are NOT fixed on the way past (the walk's "Across the walk" section lists them): the plan page offers Run practice at
@@ -1830,7 +1830,7 @@ out) and E (the now-marker) are superseded by this ruling**; the rest of that wa
 thing in the same work (Run practice on any day, green on the day; opens on the first block every time; a helper's
 buttons).
 
-## 9. Stage 6 · Afterwards & who sees what — DRAWN 2026-09-17 on the hub ("6 · Afterwards & who sees what" tab, R1–R9, notes 135–167) · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by `b2c7ff26`) · BUILT ON DEV 2026-09-18 (§9.7 the build record; ledger §204; the hub's "QA walk · 6" tab) · §204 WALK OWED · the last stage as ruled 18 Sep (a stage 7 was drawn the same day — §10)
+## 9. Stage 6 · Afterwards & who sees what — DRAWN 2026-09-17 on the hub ("6 · Afterwards & who sees what" tab, R1–R9, notes 135–167) · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by `b2c7ff26`) · BUILT ON DEV 2026-09-18 (§9.7 the build record; ledger §204; the hub's "QA walk · 6" tab) · COMMITTED `f4858f54` 2026-09-18 · §204 WALK COMPLETE 2026-09-18 (owner, in chat — 24/24 PASS, parts A–H) · the last stage as ruled 18 Sep (a stage 7 was drawn the same day — §10)
 
 Walk stations 9 (Afterwards — how it went, and the record) and 10 (Who sees what); the last stage of the ladder as ruled on 18 Sep — §10 (stage 7 · Where are we) was drawn the same day.
 Drawn on the hub as the tab after "QA walk · 5": thirteen frames, the befores as the live screens on the re-seeded
@@ -1967,7 +1967,7 @@ Schedule panel; the Overview's game-in-progress face beyond R7's shared rule; pe
 attendance on the record; anything written at the field; the hub's brief tab on the artifact (stale since stage 2 —
 the source brief is the record).
 
-### 9.7 Build record (2026-09-18) — BUILT ON DEV; §204 walk owed; commit owed on the owner's word
+### 9.7 Build record (2026-09-18) — BUILT ON DEV, COMMITTED `f4858f54` 2026-09-18 on the owner's word; §204 WALK COMPLETE 2026-09-18 (owner, in chat — 24/24 PASS, parts A–H)
 
 **Built as ruled, R1–R3 · R5–R9; R4 nothing (settled by `b2c7ff26`, confirmed on the fixture: the hub's rows carry no
 door, the card's is the one Run practice on the page).** No migration, no new route, no year parameter; `HISTORY_ENDPOINTS`
@@ -2100,7 +2100,7 @@ greyed fields (the same `readOnly`) — consistent, and the one blast-radius eff
 reader · E the shelf and the help · F the Overview · G the Schedule panel · H the helper)**; ledger **§204**. When it is walked, stages 0–6
 are complete; §10 (stage 7 · Where are we, drawn 2026-09-18 by another session) is the ladder's open rung.
 
-## 10. Stage 7 · Where are we — the field’s first screen — DRAWN 2026-09-18 on the hub (“7 · Where are we” tab, W1–W4, notes 168–175) · RULING OWED
+## 10. Stage 7 · Where are we — the field’s first screen — DRAWN 2026-09-18 on the hub (“7 · Where are we” tab, W1–W4, notes 168–175) · RULED 2026-09-18 (W1–W4 as drawn) · BUILT ON DEV 2026-09-18 (§10.7) · §205 walk owed
 
 Walk station 8 (The field), revisited after P10. Drawn on the hub as the tab after “6 · Afterwards & who sees what”:
 four frames at 390 in the run screen’s own materials (the before is the built screen — P10 + the who-runs-it build on
@@ -2108,7 +2108,13 @@ dev — drawn from the code, not a capture; the afters carry a live `[data-hpx]`
 we*; `dLabel` passes W through; the paste-back is `#buildSummaryStage7`). Nothing here changes what a practice stores;
 no migration, no new route, no year.
 
-### 10.0 Why this stage exists — the sentence P10 misread
+### 10.0 The ruling (owner, 2026-09-18, in chat: “looks good, go ahead and build it”)
+
+W1–W4 as drawn. One deviation made in the build and stated to the owner in the hand-off: the list’s lime line read
+“Tonight’s plan” in the drawing — a clock word on a screen the owner can open any day (P10) — so the list prints the
+plan’s **goal** there instead (`plan.goal`, in the goal line’s own style) and nothing when the plan has none.
+
+### 10.0a Why this stage exists — the sentence P10 misread
 
 On 2026-09-17 the owner revised P10 in chat: *“since we have removed the timer, I should be able to run a practice at
 any time (before, during, or after its scheduled time) and it should always land on the initial run practice page.”*
@@ -2189,3 +2195,49 @@ record opens the same list; nothing says “ran”.
 Remembering the stop between opens (P10 said no; the list makes the memory unnecessary); a wake lock; anything
 written at the field; a planned clock on the list (W2, named and not drawn); a desktop-specific layout (the run page
 is one column at every width).
+
+### 10.7 Build record (2026-09-18) — BUILT ON DEV the same session as the ruling · §205 walk owed
+
+**What was built, by file.**
+- `lib/rep-practice-plan.ts` — `buildRunOutline(plan, steps, mineTagIds)` + `RunOutlineRow`: the reader’s walk
+  (`practicePlanLevels`, so a sole station folds and “mine” is the block screen’s own answer) plus, per block, its
+  first stop’s index in `buildRunSteps`’ list, `formatDuration` of its own length, and a rotation’s shape
+  (“3 rounds · 15 min a round”) when the field walks it by rounds — “” for a rotation that degraded to one stop.
+- `…/practice/[eventId]/run/page.tsx` — the cursor’s **null is the list** (the effect that set it to 0 once the plan
+  arrived is deleted); `onList` gates the stop reads; `go(-1)` off the first stop returns null (Back is never
+  disabled); `openStop(at, station)` for a row; `toList()` for “← Blocks”. The list: the bar (“← Plan” as a Link;
+  “N blocks”; the same help button), the event’s name as the title, the plan’s goal when present, one
+  `.ppRunRow[data-face="block"]` per row (the number in `.ppRunRowG`, the shape and who-runs-it lines in
+  `.ppRunRowM`, the length + chevron in `.ppRunRowLen`, `data-mine`), a block’s stations as
+  `.ppRunRow[data-face="station"]` rows inside `.ppRunOutlineStations`, the attendance fold (now one JSX value
+  shared by the list and every stop). The stop’s bar: “← Blocks” (a button) where the plan link was. The empty
+  state’s sentence says the screen “lists the blocks … and walks through them one at a time”.
+- `coaches.module.css` — `.ppRunOutline`, `.ppRunOutlineStations` (indented 3.45rem — the letter column plus its
+  gap), `.ppRunRowLen` (mono, dark, tabular, wraps at 6.5rem so “Rest of practice” takes two lines instead of
+  squeezing the title), and the chevron’s olive. **On the way past:** five dead reader rules the stage-6 commit
+  orphaned (`.ppBlock`, `.ppBlockClock`, `.ppStationHead`, `.ppReadPre`, `.ppStationNameRead` — the closed-season
+  reader mounts the sheet since R5) failed `check:css-selectors` at HEAD; deleted with ⚰ notes, because the gate’s
+  own instruction is “delete them” and the stage-6 session had ended.
+- `lib/help-content/coaches.tsx` — the Run practice article: summary, keywords (“opens on the list”, “find my
+  station”, “back to blocks” …), searchText, the first two paragraphs (the list first, then the block screen; Back
+  from the first block is the list; ← Blocks); the late-start FAQ (“opens on the plan as a list every time … tap the
+  block you’re at”); the helper FAQ (“Inside, the plan as a list with their station marked *that’s you* — one tap”).
+- `scripts/layout-screens.mjs` — the run entry’s note names the list as what it measures.
+- Tests: `tests/unit/practice-run.test.ts` gains six cases for `buildRunOutline` (order + lengths; the shape; the
+  first stop per row; stations under their block with “mine” at both levels; the sole station folds and marks the
+  block; a half-written rotation is one stop with no shape). `tests/uat/scenarios/practice-run-layout.spec.ts` is
+  re-based on the list: `openList` / `openRun` (the first block row, no rewind through Back), a new probe for the
+  list (three block rows ≥56 with the plan’s lengths and no clock text, three station rows ≥44, a station row → the
+  station screen → All stations → ← Blocks → the list, a block row → Back → the list, a marked row always says
+  “that’s you”), and the three “clock uses tabular numerals” probes — failing since P10 removed the clock and the
+  “Planned for” face — replaced by a no-clock probe.
+
+**Verified.** `npm test` 4,198/4,198 (the vocabulary guard’s run-page assertions hold: `runStepLengthLabel(step)`,
+no storage, the helper line, “nobody”, no “ran”); `tsc` clean; eslint clean on the changed files;
+`verify:changed` exit 0 (after the five dead rules went); `check:layout --only=coach-practice-run` clean at
+361/390/768/1440 (the list is what it measures now); the run-layout spec 20/20 against the running dev server on
+the re-seeded fixture; one look at the list and a block at 390 on the dev server — as drawn (the list stands 681px
+below the masthead with the fixture’s three stations).
+
+**Not changed.** The station screen; Rotate now / Next block; the doors (the card’s shortcut and the plan page’s
+toolbar open the list now); nothing stored, nothing remembered; no migration; no route; no year.

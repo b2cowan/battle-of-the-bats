@@ -392,7 +392,7 @@ Schedule no longer carry a Run practice button — a column of green pills for p
 was clutter. Any practice can still be run on any day: open its plan, tap Run practice (two taps). The shortcut
 stays where it earns its place — the **Next practice** card, here and on the Overview.
 
-## Stage 6 · Afterwards & who sees what — DRAWN 2026-09-17 · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by the owner's `b2c7ff26`) · BUILT ON DEV 2026-09-18 · §204 walk owed
+## Stage 6 · Afterwards & who sees what — DRAWN 2026-09-17 · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by the owner's `b2c7ff26`) · BUILT ON DEV 2026-09-18 · COMMITTED `f4858f54` · §204 WALK COMPLETE 2026-09-18 (24/24 PASS, parts A–H)
 
 **What a coach sees and does differently.** A finished practice opens as a **record**, not as tonight's editor.
 From three hours after it ends — the same instant *Run practice* stops being the green button — the page reads: the
@@ -431,14 +431,14 @@ line. Q 10.1 is answered with the fact the Overview was missing, not the helper'
 
 **Built (18 Sep), as ruled.** Everything above is on dev. Measured rather than drawn: May's record is 512px tall on a desktop and puts the note first; on a phone the note is on the first screen (it began exactly at the fold before). The no-plan record is 329px; the circuit's record with one row open is 1,063px where the old reader took 2,196. Three things to know from the build: (1) the closed-season reader also gained **Print the sheet** — the frame drew it, and to give it that without a second copy of the paper's arithmetic the sheet-building moved to one shared place both pages call; (2) on the fixture the probe **game** starts ten minutes before the probe practice, so during both the Overview's one thing is **game day** — the rule's named blast radius (a game in progress keeps its console door; before, the card looked past both to next week); among things already on, the one that started most recently wins, which is what makes a tournament day's second game beat the lingering first; (3) a viewer on a live practice no longer sees "Set it on the schedule ›" — a write they could not make. The review found and fixed one real hole before anyone met it: a dialog left open when a practice crossed into record mode could have written onto the record and left the page scroll-locked; every writing dialog now closes itself the moment the sheet turns read-only. Found on the sweep and left for their owners: Season's End's *Share your season* button is under the tap floor on a phone, and the team masthead's small NEXT chip reads the next start (Sep 25) during tonight's practice.
 
-**Priority.** Stage 6 of 6, the last of the ladder; the §202 short walk (the no-clock build) is owed beside it.
+**Priority.** Stage 6 of 6, the last of the ladder — walked and complete (§204). The §202 short walk (the no-clock build) is owed beside it.
 **Success criteria.** May's practice opens with the coach's note first and nothing that invites writing; a practice
 reads the same from Practice plans, from Insights and from a finished season's shelf; Practice plans shows one green
 button, on the day; an assistant with View + edit finds the same door on the Schedule as on the hub; a coach on the
 Overview during practice sees tonight, not next week. No migration, no new route, no year parameter anywhere it is
 not already.
 
-## Stage 7 · Where are we — the field’s first screen — DRAWN 2026-09-18 · ruling owed (W1–W4 on the hub’s “7 · Where are we” tab)
+## Stage 7 · Where are we — the field’s first screen — DRAWN and RULED 2026-09-18 (W1–W4 as drawn) · BUILT ON DEV 2026-09-18 · §205 walk owed (the hub’s “QA walk · 7” tab)
 
 **What a coach sees and does differently.** Tapping **Run practice** opens the plan as a **list**: the practice’s
 name, then one row per block in order — its number, its name, who runs it — with the plan’s length on the right
@@ -468,3 +468,12 @@ the point); W4 the block’s back goes to the list (recommended; one door per sc
 the helper’s door, reads the list once it exists). **Success criteria.** Opening Run practice on any day shows every
 block and station on one screen at 390 with the reader’s rows marked; a helper reaches their station in one tap; no
 clock anywhere on the field; nothing written, nothing remembered.
+
+**Built the same day (2026-09-18).** As drawn, with one stated change: the small line under the practice’s name
+read *“Tonight’s plan”* in the mockup — a clock word on a screen you can open any day — so the list shows the plan’s
+**goal** there instead, and nothing when there isn’t one. **How to try it:** open any practice’s plan → *Run
+practice* (or the next-practice card’s shortcut). You land on the list; tap a block or a station; *← Blocks* brings
+the list back; *Back* on the first block is the list; the last block still ends at *Back to the plan*. Sign in as the
+helper and the list marks their one station. **The walk** is fourteen steps on the hub’s *QA walk · 7* tab. Found on
+the way and fixed: three field-screen probes that had been failing since the clock was removed (they looked for a
+clock) now probe that no clock is back; five leftover style rules from the old finished-season reader were removed.

@@ -1572,6 +1572,46 @@ export function runStepLengthLabel(step: RunStep): string {
   return step.round != null ? `${step.minutes} min a round` : `${step.minutes} min`;
 }
 
+/**
+ * THE FIELD'S FIRST SCREEN — the plan as a list (practices re-evaluation stage 7, owner ruling
+ * W1–W3, 2026-09-18). One row per block in practice order with the plan's LENGTH for it
+ * ("15 min", "Rest of practice" — never a planned clock, W2) and, for a rotation the field can
+ * walk, its shape ("3 rounds · 15 min a round"); a block's stations as rows under it (W3), the
+ * sole station folded into its block exactly as the reader's walk folds it. Every row is a door:
+ * `stepIndex` is the stop a block row opens (its first round), and a station row opens the same
+ * stop with that station open. "Mine" at both levels is the walk's own answer — `practicePlanLevels`
+ * — so the list and the block screen never disagree about whose a row is.
+ *
+ * ⚠ The steps are the ones `buildRunSteps` built for the same blocks — passed in, never rebuilt,
+ * so a rotation that degraded to a plain stop (no groups yet) reads as one stop here too.
+ */
+export interface RunOutlineRow extends PracticePlanLevel {
+  /** Index into `buildRunSteps(...)` of this block's first stop. */
+  stepIndex: number;
+  /** "15 min" · "Rest of practice" · "" — `formatDuration` of the block's own length. */
+  length: string;
+  /** "3 rounds · 15 min a round" when the field walks this block by rounds; "" otherwise. */
+  shape: string;
+}
+
+export function buildRunOutline(
+  plan: PracticePlan | null | undefined,
+  steps: readonly RunStep[],
+  mineTagIds: ReadonlySet<string>,
+): RunOutlineRow[] {
+  return practicePlanLevels(plan, mineTagIds).map(level => {
+    const stepIndex = Math.max(0, steps.findIndex(s => s.blockIndex === level.index));
+    const first = steps[stepIndex];
+    const byRounds = first && first.blockIndex === level.index && first.round != null;
+    return {
+      ...level,
+      stepIndex,
+      length: formatDuration(level.block.duration),
+      shape: byRounds ? `${first.rounds} rounds${first.minutes != null ? ` · ${first.minutes} min a round` : ''}` : '',
+    };
+  });
+}
+
 // ── Reuse helpers (copy-from-previous) ─────────────────────────────────────────
 
 /**

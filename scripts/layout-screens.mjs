@@ -332,7 +332,9 @@ export const SCREENS = [
     path: (c) => `${team(c)}/practice/${c.practiceEventId}/run`,
     ready: 'h1',
     skip: ['tap-floor'],
-    note: 'The field screen sets its OWN, HIGHER floor (56px) and is held to it by practice-run-layout.spec.ts. Re-checking the 44px floor here would be weaker, not stronger.',
+    // Stage 7 (2026-09-18): Run practice opens on the plan as a LIST — that is the screen this entry
+    // measures; the block and station screens behind its rows are held by the spec below.
+    note: 'The field screen sets its OWN, HIGHER floor (56px) and is held to it by practice-run-layout.spec.ts — the list it opens on (block rows 56, station rows 44) and the block screen alike. Re-checking the 44px floor here would be weaker, not stronger.',
   },
 
   // ── Game day (P1–P3) ────────────────────────────────────────────────────────

@@ -1,16 +1,16 @@
 'use client';
 import { Fragment, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ClipboardList } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
-  blockOwnPeople, blockRotates, buildRunSteps, computeRotation, formatDuration, levelsForStaffTags,
-  namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation,
-  runStepLengthLabel, soleStationOf, stationLabel,
+  blockOwnPeople, blockRotates, buildRunOutline, buildRunSteps, computeRotation, formatDuration,
+  levelsForStaffTags, namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching,
+  rotationByStation, runStepLengthLabel, soleStationOf, stationLabel,
   type PracticePlan, type PracticePlanBlock, type PracticeStation, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
 import PracticeStationView from '../../_PracticeStationView';
@@ -51,12 +51,23 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * assistant can run a station without a new capability key. There are no writes on this screen, so
  * there is no write gate to get wrong.
  *
- * ⚠ THE SCREEN ALWAYS OPENS ON THE FIRST STOP, ON ANY DAY (owner, 2026-09-17, P10 revised in the
- * same session). It used to land on whichever stop the planned clock said was running — the same
- * wrong premise as the counter — and, for an hour, remembered the stop and the chosen station per
- * tab (D28). Both went: the field is a plain reader that opens at the top every time, before,
- * during or after the practice, and holds nothing between opens. After a reload the coach taps
- * forward. Nothing about the practice is written (D4).
+ * ⚠ THE SCREEN OPENS ON THE PLAN AS A LIST, ON ANY DAY (practices re-evaluation stage 7, owner
+ * ruling W1–W4, 2026-09-18). P10's revision said Run practice "should always land on the initial
+ * run practice page", and for a day that was built as block 1 — but there never was a first
+ * screen: the field opened on one block and moved with Back / Next, so a coach opening the phone
+ * during the circuit read the warm-up and tapped forward, and a helper looking for their station
+ * tapped Next and then a row. Without a clock the screen cannot guess where you are; with a list
+ * it does not have to. The list (`buildRunOutline`): one row per block in order — number, name,
+ * who runs it, the plan's LENGTH on the right (W2: "15 min", never a planned clock) — a block's
+ * stations as rows beneath it (W3), every row a door (a block row → that block at its first stop;
+ * a station row → the same stop with that station open), and "that's you" on the reader's own
+ * rows from the same identity walk the block screen reads. On a block, "← Blocks" goes back to
+ * the list (W4); the plan's door is on the list's bar; the last block still ends at the plan.
+ *
+ * It used to land on whichever stop the planned clock said was running — the same wrong premise
+ * as the counter — and, for an hour, remembered the stop and the chosen station per tab (D28).
+ * Both went with P10: the field is a plain reader that opens at the top every time, before, during
+ * or after the practice, and holds nothing between opens. Nothing about the practice is written (D4).
  *
  * ⚠ EVERYONE GETS BACK / NEXT, HELPERS INCLUDED (the same revision). Phase 4 gave a helper the
  * sentence instead of the buttons because the clock landed them on the right stop and a button
@@ -148,8 +159,9 @@ export default function CoachPracticeRunPage({
   const [loadError, setLoadError] = useState('');
 
   /**
-   * The cursor: which stop is on screen. Null until the plan arrives, then the remembered stop for
-   * this tab (below) or the first. The coach owns it from there — it never moves on its own.
+   * The cursor: which stop is on screen. NULL IS THE LIST — the field's first screen (stage 7,
+   * W1) — and the coach picks a stop from it. The coach owns the cursor from there: it never
+   * moves on its own, and Back from the first stop returns to the list.
    */
   const [stepIndex, setStepIndex] = useState<number | null>(null);
   const [stationId, setStationId] = useState<string | null>(null);
@@ -193,11 +205,8 @@ export default function CoachPracticeRunPage({
   );
   const blocks = useMemo(() => plan?.blocks ?? [], [plan]);
   const steps = useMemo(() => buildRunSteps(blocks), [blocks]);
-
-  // Opens on the first stop once the plan arrives — every time, on any day (P10 revised).
-  useEffect(() => {
-    if (stepIndex === null && steps.length > 0) setStepIndex(0);
-  }, [steps, stepIndex]);
+  /* ⚰ The effect that set the cursor to 0 once the plan arrived is DELETED (stage 7, W1): the
+     screen opens on the list, every time, on any day, and the coach picks the stop. */
 
   const gridFor = useCallback((block: PracticePlanBlock): RotationGrid | null => {
     if (!blockRotates(block) || !block.rotation) return null;
@@ -214,15 +223,33 @@ export default function CoachPracticeRunPage({
     return player ? playerDisplayName(player) : '';
   }, [rosterById]);
 
+  // The list is on screen while the cursor is null (W1); a stop otherwise.
+  const onList = stepIndex === null;
   const index = Math.min(Math.max(stepIndex ?? 0, 0), Math.max(steps.length - 1, 0));
-  const step: RunStep | null = steps[index] ?? null;
-  const nextStep: RunStep | null = steps[index + 1] ?? null;
+  const step: RunStep | null = onList ? null : steps[index] ?? null;
+  const nextStep: RunStep | null = onList ? null : steps[index + 1] ?? null;
   const block = step ? blocks[step.blockIndex] ?? null : null;
 
-  /** Move the cursor. It moves this screen and records nothing (D4 · D26). */
+  /** Move the cursor. It moves this screen and records nothing (D4 · D26). Back off the first
+   *  stop returns to the list — each screen's Back goes one level up (W4). */
   const go = useCallback((delta: number) => {
-    setStepIndex(current => Math.min(steps.length - 1, Math.max(0, (current ?? 0) + delta)));
+    setStepIndex(current => {
+      const next = (current ?? 0) + delta;
+      return next < 0 ? null : Math.min(steps.length - 1, next);
+    });
   }, [steps.length]);
+
+  /** A row on the list: open this stop — with one of its stations open, when a station row. */
+  const openStop = useCallback((at: number, station: string | null) => {
+    setStepIndex(Math.min(steps.length - 1, Math.max(0, at)));
+    setStationId(station);
+  }, [steps.length]);
+
+  /** "← Blocks" — back to the list from a stop (W4). */
+  const toList = useCallback(() => {
+    setStepIndex(null);
+    setStationId(null);
+  }, []);
 
   const rotating = !!block && blockRotates(block);
   // Memoised: `computeRotation` walks groups × rounds and builds the plain-language statements;
@@ -268,13 +295,16 @@ export default function CoachPracticeRunPage({
   // "Mine", by IDENTITY (mig 303): the staff tags whose person is the reader, matched by id at
   // every level through the one reader's walk — never a name. The sole-station block reads the
   // station's answer, the same holder the staff line reads.
-  const mine = useMemo(() => {
+  const mineTags = useMemo(() => {
     const me = data?.viewerUserId;
-    const mineTags = new Set((data?.staffTags ?? []).filter(t => t.userId != null && t.userId === me).map(t => t.id));
-    return levelsForStaffTags(data?.plan, mineTags);
-  }, [data?.viewerUserId, data?.staffTags, data?.plan]);
+    return new Set((data?.staffTags ?? []).filter(t => t.userId != null && t.userId === me).map(t => t.id));
+  }, [data?.viewerUserId, data?.staffTags]);
+  const mine = useMemo(() => levelsForStaffTags(data?.plan, mineTags), [data?.plan, mineTags]);
   const mineStations = useMemo(() => new Set(mine.stationIds), [mine]);
   const mineBlocks = useMemo(() => new Set(mine.blockIds), [mine]);
+  // The list's rows (W1–W3) — the RESOLVED plan, so a row's staff line reads current tag names
+  // like every other line on this screen; "mine" from the same walk as the sets above.
+  const outline = useMemo(() => buildRunOutline(plan, steps, mineTags), [plan, steps, mineTags]);
   const blockIsMine = !!block && (mineBlocks.has(block.id) || (!!soleStationOf(block) && mineStations.has(soleStationOf(block)!.id)));
   const blockStaffLine = blockStaff.length > 0 ? `${blockStaff.join(' · ')}${blockIsMine ? ' — that’s you' : ''}` : blockIsMine ? 'that’s you' : '';
   const blockPlayers = useMemo(
@@ -335,9 +365,126 @@ export default function CoachPracticeRunPage({
           quiet
           icon={<ClipboardList size={22} />}
           headline="There’s no plan to run yet"
-          description="The field screen walks through the blocks of a practice one at a time. This practice doesn’t have any yet."
+          description="The field screen lists the blocks of a practice and walks through them one at a time. This practice doesn’t have any yet."
           secondaryAction={{ href: planHref, label: 'Open the plan' }}
         />
+      </div>
+    );
+  }
+
+  const helpButton = <HelpButton iconOnly label="Running a practice" help={runHelpRequest} />;
+
+  /* ── D8 — who's here tonight. Read-only, folded shut, already true. On the list and on every
+     stop alike: the one field-time write a coach reliably finishes is one tap from anywhere. ── */
+  const attendanceFold = data?.canViewAttendance && (data?.roster.length ?? 0) > 0 ? (
+    <details className={styles.ppRunFold}>
+      <summary className={styles.ppRunFoldHead}>
+        <span>Who’s here tonight</span>
+        <span className={styles.ppRunFoldCount}>{attendingCount} of {data.roster.length}</span>
+      </summary>
+      <div className={styles.ppRunFoldBody}>
+        {ATTENDANCE_GROUPS.map(group => {
+          // Roster order, always — no sort affordance anywhere in this feature (§4).
+          const names = data.roster
+            .filter(p => (attendanceByPlayer.get(p.id) ?? 'unknown') === group.status)
+            .map(playerDisplayName);
+          if (names.length === 0) return null;
+          return (
+            <p key={group.status} className={styles.ppRunFoldGroup}>
+              <b>{group.label}</b>{names.join(' · ')}
+            </p>
+          );
+        })}
+      </div>
+    </details>
+  ) : null;
+
+  /* ── THE LIST — the field's first screen (stage 7, W1–W3) ──
+     The practice's name, its goal if the plan has one, then one row per block on the station
+     list's own recipe: the number where the group letter goes, the name, the rotation's shape
+     and who runs it beneath, the plan's length on the right — never a clock (W2). A block's
+     stations follow as rows under it (W3), each a door to that station. The reader's own rows
+     say "that's you" from the same walk the stops read. No big button: the rows are the doors and
+     each stands 56 (a station row 44). Nothing here is remembered between opens. */
+  if (onList) {
+    const rosterIds = (data?.roster ?? []).map(p => p.id);
+    return (
+      <div className={styles.page}>
+        <div className={styles.ppRunPage}>
+          <div className={styles.ppRunBar}>
+            <Link href={planHref} className={styles.ppRunBackLink}>
+              <ArrowLeft size={13} aria-hidden /> Plan
+            </Link>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <b>{blocks.length} {blocks.length === 1 ? 'block' : 'blocks'}</b>
+              {helpButton}
+            </span>
+          </div>
+
+          <h1 className={styles.ppRunTitle}>{data?.event.name?.trim() || 'Practice'}</h1>
+          {plan?.goal?.trim() && <p className={styles.ppRunGoal}>{plan.goal.trim()}</p>}
+
+          <div className={styles.ppRunOutline} data-testid="run-outline">
+            {outline.map(row => {
+              // Who runs it — the holder the stop's own staff line reads (the sole station when the
+              // station is the block); with nobody named, the block's people word (P5).
+              const holder = soleStationOf(row.block) ?? row.block;
+              const staffLine = holder.staff?.length ? holder.staff.join(' · ') : '';
+              const own = blockOwnPeople(row.block);
+              const peopleWord = own === undefined ? '' : namesWholeTeam(own, rosterIds) ? 'Whole team' : own.length > 0 ? `${own.length} players` : '';
+              const who = staffLine || peopleWord;
+              const meta = `${who}${row.mine ? `${who ? ' — ' : ''}that’s you` : ''}`;
+              return (
+                <Fragment key={row.block.id}>
+                  <button
+                    type="button"
+                    className={styles.ppRunRow}
+                    data-face="block"
+                    data-mine={row.mine ? 'mine' : undefined}
+                    onClick={() => openStop(row.stepIndex, null)}
+                  >
+                    <span className={styles.ppRunRowG}>{row.index + 1}</span>
+                    <span>
+                      <span className={styles.ppRunRowS}>{row.title}</span>
+                      {row.shape && <span className={styles.ppRunRowM}>{row.shape}</span>}
+                      {meta && <span className={styles.ppRunRowM}>{meta}</span>}
+                    </span>
+                    <span className={styles.ppRunRowLen}>
+                      {row.length}
+                      <ChevronRight size={18} aria-hidden />
+                    </span>
+                  </button>
+                  {row.stations.length > 0 && (
+                    <div className={styles.ppRunOutlineStations}>
+                      {row.stations.map(s => {
+                        const line = s.station.staff?.length ? s.station.staff.join(' · ') : '';
+                        const stationMeta = `${line}${s.mine ? `${line ? ' — ' : ''}that’s you` : ''}`;
+                        return (
+                          <button
+                            key={s.station.id}
+                            type="button"
+                            className={styles.ppRunRow}
+                            data-face="station"
+                            data-mine={s.mine ? 'mine' : undefined}
+                            onClick={() => openStop(row.stepIndex, s.station.id)}
+                          >
+                            <span>
+                              <span className={styles.ppRunRowS}>{s.label}</span>
+                              {stationMeta && <span className={styles.ppRunRowM}>{stationMeta}</span>}
+                            </span>
+                            <span className={styles.ppRunRowGo}><ChevronRight size={18} aria-hidden /></span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Fragment>
+              );
+            })}
+          </div>
+
+          {attendanceFold}
+        </div>
       </div>
     );
   }
@@ -364,9 +511,11 @@ export default function CoachPracticeRunPage({
     <>
       {isHelper && <p className={styles.ppRunHandedOff}>{whoAdvances}</p>}
       <div className={styles.ppRunActions}>
-        <button type="button" className={styles.ppRunSecondary} disabled={index === 0} onClick={() => go(-1)}>
+        {/* Never disabled: from the first stop, Back is the list (W4). */}
+        <button type="button" className={styles.ppRunSecondary} onClick={() => go(-1)}>
           Back
         </button>
+        {/* The last stop still ends at the plan — the practice is over and "How it went" is there. */}
         {advance.disabled ? (
           <Link href={planHref} className={styles.ppRunPrimary}>Back to the plan</Link>
         ) : (
@@ -483,14 +632,16 @@ export default function CoachPracticeRunPage({
     <div className={styles.page}>
       <div className={styles.ppRunPage}>
         <div className={styles.ppRunBar}>
-          <Link href={planHref} className={styles.ppRunBackLink}>
-            <ArrowLeft size={13} aria-hidden /> Plan
-          </Link>
+          {/* "← Blocks" — one level up is the list, not the plan (W4); the plan's door is on the
+              list's own bar. A button: it moves this screen and records nothing. */}
+          <button type="button" className={styles.ppRunBackLink} onClick={toList}>
+            <ArrowLeft size={13} aria-hidden /> Blocks
+          </button>
           {/* Help stays in the 0.7rem chrome line, never in the body — at arm's length in the sun
               there is room for exactly one idea, and it isn't this one. */}
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
             <b>{step.blockIndex + 1} of {blocks.length}</b>
-            <HelpButton iconOnly label="Running a practice" help={runHelpRequest} />
+            {helpButton}
           </span>
         </div>
 
@@ -571,29 +722,8 @@ export default function CoachPracticeRunPage({
 
         {actionRow}
 
-        {/* ── D8 — who's here tonight. Read-only, folded shut, already true. ── */}
-        {data?.canViewAttendance && (data?.roster.length ?? 0) > 0 && (
-          <details className={styles.ppRunFold}>
-            <summary className={styles.ppRunFoldHead}>
-              <span>Who’s here tonight</span>
-              <span className={styles.ppRunFoldCount}>{attendingCount} of {data.roster.length}</span>
-            </summary>
-            <div className={styles.ppRunFoldBody}>
-              {ATTENDANCE_GROUPS.map(group => {
-                // Roster order, always — no sort affordance anywhere in this feature (§4).
-                const names = data.roster
-                  .filter(p => (attendanceByPlayer.get(p.id) ?? 'unknown') === group.status)
-                  .map(playerDisplayName);
-                if (names.length === 0) return null;
-                return (
-                  <p key={group.status} className={styles.ppRunFoldGroup}>
-                    <b>{group.label}</b>{names.join(' · ')}
-                  </p>
-                );
-              })}
-            </div>
-          </details>
-        )}
+        {/* D8 — who's here tonight, the same fold the list carries. */}
+        {attendanceFold}
       </div>
     </div>
   );

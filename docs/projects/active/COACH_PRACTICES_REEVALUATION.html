@@ -745,7 +745,8 @@ details.call .body p{margin:0 0 6px}
   <button type="button" class="tab" role="tab" data-tab="qa5" aria-selected="false" aria-controls="tab-qa5">QA walk · 5<span class="st built">§201 complete</span></button>
   <button type="button" class="tab" role="tab" data-tab="stage6" aria-selected="false" aria-controls="tab-stage6">6 · Afterwards &amp; who sees what<span class="st built">ruled 18 Sep · R1–R3 · R5–R9 as drawn · R4 settled by b2c7ff26</span><span class="st built">built on dev 18 Sep</span><span class="st dim">stations 9 · 10</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa6" aria-selected="false" aria-controls="tab-qa6">QA walk · 6<span class="st">§204 owed</span></button>
-  <button type="button" class="tab" role="tab" data-tab="stage7" aria-selected="false" aria-controls="tab-stage7">7 · Where are we<span class="st">drawn 18 Sep · W1–W4 · ruling owed</span><span class="st dim">the field's first screen</span></button>
+  <button type="button" class="tab" role="tab" data-tab="stage7" aria-selected="false" aria-controls="tab-stage7">7 · Where are we<span class="st built">ruled 18 Sep · W1–W4 as drawn</span><span class="st built">built on dev 18 Sep</span><span class="st dim">the field's first screen</span></button>
+  <button type="button" class="tab" role="tab" data-tab="qa7" aria-selected="false" aria-controls="tab-qa7">QA walk · 7<span class="st">§205 owed</span></button>
 </nav>
 
 <div class="shell" id="tab-walk" role="tabpanel">
@@ -6770,7 +6771,7 @@ details.call .body p{margin:0 0 6px}
   </style>
 
   <header class="phead">
-    <div class="eyebrow">Stage 7 · Where are we — the field's first screen <span class="status">drawn 18 Sep · W1–W4 · ruling owed</span> <span class="status built">follows P10 — the field has no clock</span></div>
+    <div class="eyebrow">Stage 7 · Where are we — the field's first screen <span class="status built">drawn 18 Sep · RULED 18 Sep — W1–W4 as drawn (owner, in chat: “looks good, go ahead and build it”)</span> <span class="status built">built on dev 18 Sep · §205 walk owed (QA walk · 7)</span> <span class="status built">follows P10 — the field has no clock</span></div>
     <h1>Run practice opens on the whole plan — every block, every station, one tap to yours</h1>
     <p class="lede">P10 took the clock off the field and, with it, the only thing that ever told the screen where the coach was. The revision the same day said Run practice <em>“should always land on the initial run practice page”</em>, and that was built as <b>block 1</b> — which, read back on 18 Sep, was not what the sentence meant: there is no first screen; there never was one. The field has always opened on one block and moved with Back and Next. So a coach opening their phone during the circuit lands on the warm-up and taps forward; a parent helper looking for their station taps <em>Next block</em> and then a row. This stage draws the first screen the sentence was asking for: <b>the plan as a list</b> — blocks with their lengths, stations beneath, every row a door, and <em>that's you</em> on the rows that are theirs.</p>
   </header>
@@ -6986,7 +6987,7 @@ details.call .body p{margin:0 0 6px}
   <section class="psec">
     <div class="summary" style="padding-top:0">
       <h2>Your decisions on this stage, to paste back</h2>
-      <p>Collects W1–W4 with your notes into one block of text. Paste it into the chat and the build follows it.</p>
+      <p>Collects W1–W4 with your notes into one block of text. Ruled 18 Sep in chat — all four as drawn; the paste-back stays so a revision can be sent the same way. One deviation from the drawing, made in the build and stated: the list's lime line “Tonight's plan” became the plan's goal line (a clock word on an any-day screen).</p>
       <button type="button" id="buildSummaryStage7">Build the stage summary</button>
       <textarea id="summaryOutStage7" hidden aria-label="Stage summary to paste back"></textarea>
     </div>
@@ -6994,6 +6995,70 @@ details.call .body p{margin:0 0 6px}
 
   <section class="psec">
     <div class="yours" data-notes="stage7plan"><div class="label">Your notes on this stage</div></div>
+  </section>
+</div>
+
+<div class="prop" id="tab-qa7" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">QA walk · stage 7 · Where are we <span class="status built">ruled and built on dev 18 Sep · §205 walk owed</span> <span class="status">no migration · no new route · nothing written · nothing remembered</span></div>
+    <h1>The walk — pass it</h1>
+    <p class="lede">Fourteen steps in four parts, on the product as built. Mark each <em>Pass</em> or <em>Defect</em> and write what you saw; every mark is kept on this page (this browser) and the summary at the foot collects the walk for the chat. <strong>Identities are pinned, figures are yours</strong> — the fixture's names are the names to look for; a count or a length is what your seed says it is.</p>
+    <div class="plain" style="margin-top:14px"><b>What this stage changed, in one breath.</b> <b>Run practice opens on the plan as a list</b> — one row per block in order (number, name, who runs it, the plan's length on the right: <em>15 min · 45 min · Rest of practice</em>; a rotation's shape under its name), a block's stations as rows beneath it, <b>every row a door</b> (a block row → that block at round 1; a station row → that station's screen), and <em>— that's you</em> on the rows you are named on. On a block, <b>← Blocks</b> goes back to the list; Back from the first block is the list too; the last block still ends at <b>Back to the plan</b>. Nothing else on the field moved.</div>
+  </header>
+
+  <section class="psec">
+    <div class="signin">
+      <h2>Sign in as</h2>
+      <table>
+        <tr><th>Where</th><td><b>localhost:3000</b> — the dev server. No restart needed for this build (no new files, no shared-module change) unless a peer's build asked for one.</td></tr>
+        <tr><th>Head coach</th><td><b>uat-coach@uat-test-org.local</b> · the standing dev password in <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>) · <b>UAT Test Team · 2026 Season</b></td></tr>
+        <tr><th>Helper</th><td><b>uat-helper@uat-test-org.local</b> — the station-runner's phone; same password.</td></tr>
+        <tr><th>The practice</th><td><b>UAT probe practice</b> (today's) — Warm-up 15 min · Skills circuit 45 min (three stations: Footwork ladder, Close control, Finishing; three groups) · Small-sided game, rest of practice. If you have added stations since the seed, expect your rows too.</td></tr>
+        <tr><th>Before you start</th><td>"That's you" rides identity, never a name: in the plan page's <b>Who runs it</b> picker → <b>Manage staff…</b>, make sure <b>UAT Coach</b> is linked to the head coach and <b>Jordan Helper</b> to the helper (the owner's earlier screenshots show the first already done). A word that is "a name only" marks nothing — by design.</td></tr>
+        <tr><th>Widths</th><td><b>390</b> throughout (Parts A–C); <b>1440</b> once (D1) — the same column in the middle of the page.</td></tr>
+      </table>
+    </div>
+
+    <div class="wpart" data-part="A">
+      <h3>A · The list is the first screen (W1 · W2 · W3)</h3>
+      <p class="wwho">Head coach · 390 · Practice plans → the next-practice card → <b>Run practice</b> (or the plan page's toolbar).</p>
+      <div class="wstep" data-w="A1"><div class="wn">A1</div><div class="wbody"><h4>It opens on the list, not on Warm-up</h4><p>The bar reads <b>← PLAN</b> on the left and <b>3 BLOCKS</b> (your count) with the help circle on the right. The title is the practice's name — <b>UAT probe practice</b> — and under it the plan's goal, <i>Sharper decisions under pressure.</i> No "Tonight", no clock, no countdown anywhere.</p></div></div>
+      <div class="wstep" data-w="A2"><div class="wn">A2</div><div class="wbody"><h4>One row per block, the length on the right — never a time of day</h4><p>Three rows, numbered <b>1 · 2 · 3</b> in the olive column: <b>Warm-up</b> · <b>Skills circuit</b> · <b>Small-sided game</b>. On the right, in the mono face: <b>15 min</b>, <b>45 min</b>, <b>Rest of practice</b> (on two lines), each with a chevron. Nowhere on the list does a planned clock like <i>5:15</i> appear.</p></div></div>
+      <div class="wstep" data-w="A3"><div class="wn">A3</div><div class="wbody"><h4>A rotation says its shape; every row says who runs it</h4><p>Under <b>Skills circuit</b>: <i>3 rounds · 15 min a round</i> on one line and <i>UAT Coach</i> on the next. Under Warm-up: <i>UAT Coach</i>. Under Small-sided game (nobody named): <i>Whole team</i>.</p></div></div>
+      <div class="wstep" data-w="A4"><div class="wn">A4</div><div class="wbody"><h4>Stations sit under their block, indented, each with who runs it</h4><p>Under the circuit's row, indented to its name: <b>Footwork ladder</b> (UAT Coach …), <b>Close control</b> (Sam Assistant), <b>Finishing</b> (Jordan Helper) — shorter rows than a block's, each with its own chevron. Nothing under Warm-up or the game (no stations).</p></div></div>
+      <div class="wstep" data-w="A5"><div class="wn">A5</div><div class="wbody"><h4>Your rows say so</h4><p>With UAT Coach linked to you: the <b>Warm-up</b> row and the <b>Footwork ladder</b> station row carry the olive edge and <i>— that's you</i> after the name(s). The <b>Skills circuit</b> block row itself is NOT marked (a station inside a block never marks the block).</p></div></div>
+      <div class="wstep" data-w="A6"><div class="wn">A6</div><div class="wbody"><h4>Who's here tonight is at the foot of the list</h4><p>Under the last row: the folded <b>Who's here tonight · N of M</b> (your figures), the same fold every block screen carries. Open it: the four groups in roster order.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="B">
+      <h3>B · Every row is a door — and the way back (W1 · W4)</h3>
+      <p class="wwho">Head coach · 390 · on the list.</p>
+      <div class="wstep" data-w="B1"><div class="wn">B1</div><div class="wbody"><h4>A block row opens that block at its first stop</h4><p>Tap <b>Skills circuit</b>: the block screen — <b>Skills circuit</b>, <i>ROUND 1 OF 3 · 15 MIN A ROUND</i>, the rows A · B · C by station, <b>Rotate now</b>. The bar now reads <b>← BLOCKS</b> on the left (not "Plan") and <b>2 OF 3</b> on the right.</p></div></div>
+      <div class="wstep" data-w="B2"><div class="wn">B2</div><div class="wbody"><h4>← Blocks is the list</h4><p>Tap <b>← BLOCKS</b>: the list again, exactly as you left it (A1). Nothing about where you were is kept.</p></div></div>
+      <div class="wstep" data-w="B3"><div class="wn">B3</div><div class="wbody"><h4>A station row opens that station's screen in one tap</h4><p>Tap <b>Close control</b> under the circuit: the station screen — <b>← All stations</b> in the bar, <b>Close control</b>, Sam Assistant, the setup and points, <i>Coming to you · Round 1 …</i>. Tap <b>← All stations</b>: the circuit's block screen at round 1 (B1). Tap <b>← BLOCKS</b>: the list.</p></div></div>
+      <div class="wstep" data-w="B4"><div class="wn">B4</div><div class="wbody"><h4>Back from the first block is the list; the last block still ends at the plan</h4><p>Tap <b>Warm-up</b>, then the small <b>Back</b> button: the list (Back is never greyed out now). Tap <b>Small-sided game</b>: <i>That's the last block.</i> and the big button reads <b>Back to the plan</b> — tap it and you are on the plan page. Reopen Run practice from its toolbar: the list.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="C">
+      <h3>C · The helper's phone (W1)</h3>
+      <p class="wwho">Sign out; sign in as <b>uat-helper</b> · 390 · the helper's home → <b>Open my station</b>.</p>
+      <div class="wstep" data-w="C1"><div class="wn">C1</div><div class="wbody"><h4>The same list, their one row marked</h4><p>The same three blocks and three stations in the same order. With Jordan Helper linked to the helper: only the <b>Finishing</b> station row carries the olive edge and <i>— that's you</i>; no block row is marked. No "moves everyone on" line on the list (there are no buttons here).</p></div></div>
+      <div class="wstep" data-w="C2"><div class="wn">C2</div><div class="wbody"><h4>One tap to their station; the helper's buttons behind it</h4><p>Tap <b>Finishing</b>: the station screen opens as <b>You're running</b>. Tap <b>← All stations</b> then read above the buttons: <i>UAT Coach moves everyone on — these buttons move only your screen.</i> (the head coach's name as the fixture has it). <b>← BLOCKS</b> takes the helper back to the list too.</p></div></div>
+    </div>
+
+    <div class="wpart" data-part="D">
+      <h3>D · Any day, any width, nothing written</h3>
+      <p class="wwho">Head coach.</p>
+      <div class="wstep" data-w="D1"><div class="wn">D1</div><div class="wbody"><h4>The same list at 1440 and on a past practice</h4><p>At 1440 the list is the same column in the middle of the page. Open a <b>past</b> practice's plan (Team practice 3, May 19) → its toolbar's plain <b>Run practice</b>: the same list, its own blocks; nothing on it says the practice "ran".</p></div></div>
+      <div class="wstep" data-w="D2"><div class="wn">D2</div><div class="wbody"><h4>Reload lands on the list; nothing is saved</h4><p>On any block screen, reload the page: the list. Walk the whole practice from the list to <i>That's the last block.</i> and back; the plan page's sheet and "How it went" are exactly as they were — nothing on the field writes.</p></div></div>
+    </div>
+
+    <div class="summary" style="padding-top:28px">
+      <h2>Your walk, to paste back</h2>
+      <p>Collects every step's Pass / Defect and note, and each part's verdict, into one block of text.</p>
+      <button type="button" id="buildWalkSummary7">Build the walk summary</button>
+      <textarea id="walkOut7" hidden aria-label="Walk summary to paste back"></textarea>
+    </div>
   </section>
 </div>
 
@@ -7209,7 +7274,7 @@ details.call .body p{margin:0 0 6px}
 
   // ── tabs: the walk is the record; each stage gets a proposal tab as we reach it ──
   var tabBtns=Array.prototype.slice.call(document.querySelectorAll('.tab[data-tab]'));
-  var panels={walk:'tab-walk',arrive:'tab-arrive',qa:'tab-qa',stage1:'tab-stage1',qa1:'tab-qa1',stage2:'tab-stage2',qa2:'tab-qa2',stage3:'tab-stage3',qa3:'tab-qa3',stage4:'tab-stage4',qa4:'tab-qa4',stage5:'tab-stage5',qa5:'tab-qa5',stage6:'tab-stage6',qa6:'tab-qa6',stage7:'tab-stage7',plan:'tab-plan',brief:'tab-brief'};
+  var panels={walk:'tab-walk',arrive:'tab-arrive',qa:'tab-qa',stage1:'tab-stage1',qa1:'tab-qa1',stage2:'tab-stage2',qa2:'tab-qa2',stage3:'tab-stage3',qa3:'tab-qa3',stage4:'tab-stage4',qa4:'tab-qa4',stage5:'tab-stage5',qa5:'tab-qa5',stage6:'tab-stage6',qa6:'tab-qa6',stage7:'tab-stage7',qa7:'tab-qa7',plan:'tab-plan',brief:'tab-brief'};
   function showTab(k){
     if(!panels[k])k='walk';
     Object.keys(panels).forEach(function(p){var el=document.getElementById(panels[p]);if(el)el.hidden=(p!==k)});
@@ -7396,6 +7461,7 @@ details.call .body p{margin:0 0 6px}
   setupWalk('tab-qa4','w4','buildWalkSummary4','walkOut4','Practices — stage 4 The library — QA walk (ledger §195)');
   setupWalk('tab-qa5','w5','buildWalkSummary5','walkOut5','Practices — stage 5 Paper & the field — QA walk (ledger §201)');
   setupWalk('tab-qa6','w6','buildWalkSummary6','walkOut6','Practices — stage 6 Afterwards & who sees what — QA walk (ledger §204)');
+  setupWalk('tab-qa7','w7','buildWalkSummary7','walkOut7','Practices — stage 7 Where are we — QA walk (ledger §205)');
 
   // ── paste-back for the stage 1 tab ──
   document.getElementById('buildSummaryStage1').addEventListener('click',function(){
