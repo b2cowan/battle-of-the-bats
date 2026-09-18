@@ -44,6 +44,52 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-18',
+    title: 'Practice plans and Skills & Goals, rebuilt — plus host your own team in your tournament',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Practice plans, rebuilt end to end. Build a plan as a real document — set the time, drag blocks in, and pull a drill or a saved "circuit" (a set of rotating stations) from your library docked right beside the plan. Save any block as a template or a drill for next time. Print the finished plan, or open it on the field as a simple list you work through one stop at a time.',
+      },
+      {
+        category: 'new',
+        text: 'Staff tags can now be linked to a real coach on your team, so "You\'re on…" means something — send tonight\'s plan to your staff and each person sees exactly which blocks and stations are theirs.',
+      },
+      {
+        category: 'new',
+        text: 'A finished practice becomes a permanent record afterward — the plan you wrote and how it actually went, in one place.',
+      },
+      {
+        category: 'new',
+        text: 'Skills & Goals, redesigned. A new Overview dashboard, clearer test definitions, and sessions where you plan how many attempts you\'ll run for each test before you start. Record what you saw for a skill right from the session grid.',
+      },
+      {
+        category: 'new',
+        text: 'A player\'s Goals and Results are now two clear views — review a goal in place, record a result with every attempt kept (not just the best), and print a handout for the family.',
+      },
+      {
+        category: 'new',
+        text: 'Team Progress — a new report under Insights → Development shows how the whole team is trending on each measurement, never ranking individual players against each other.',
+      },
+      {
+        category: 'new',
+        text: 'Add your own team to your tournament in one click, with no separate registration — for coaches who also run the event.',
+      },
+      {
+        category: 'improved',
+        text: 'A more consistent look across every list and table in the coach portal.',
+      },
+      {
+        category: 'fixed',
+        text: 'The chat window no longer slides under the header when you open a conversation.',
+      },
+      {
+        category: 'fixed',
+        text: 'Easier-to-tap jump links on the practice run screen on a phone.',
+      },
+    ],
+  },
+  {
     date: '2026-09-13',
     title: 'Player development, properly recorded — and two more jobs a head coach can hand off',
     highlights: [
