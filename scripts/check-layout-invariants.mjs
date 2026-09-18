@@ -179,7 +179,7 @@ if (has('--changed') && !onlyIds) {
     // them `--changed` builds `.../roster/undefined` and the screen silently never matches its own
     // route folder — a screen listed in the sweep but unreachable by the changed-file filter, which
     // is the same "looks covered, is not" shape the entries themselves were added to close.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__' };
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', recordPracticeEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__' };
     const dirOf = (s) =>
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')

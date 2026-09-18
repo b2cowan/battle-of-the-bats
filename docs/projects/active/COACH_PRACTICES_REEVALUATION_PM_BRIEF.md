@@ -391,3 +391,80 @@ product's value at the field is the information for the practice; the coach is t
 Schedule no longer carry a Run practice button — a column of green pills for practices in October and last May
 was clutter. Any practice can still be run on any day: open its plan, tap Run practice (two taps). The shortcut
 stays where it earns its place — the **Next practice** card, here and on the Overview.
+
+## Stage 6 · Afterwards & who sees what — DRAWN 2026-09-17 · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by the owner's `b2c7ff26`) · BUILT ON DEV 2026-09-18 · §204 walk owed
+
+**What a coach sees and does differently.** A finished practice opens as a **record**, not as tonight's editor.
+From three hours after it ends — the same instant *Run practice* stops being the green button — the page reads: the
+coach's *How it went* **first** (the one box that stays writable, for you and your staff, never families), then the
+sheet exactly as the plan page draws it, read-only: the when-line as a fact, *Goal:* where *Tonight:* was, the
+blocks as shut rows that open to read — stations, the rotation grid, the groups, everything the paper prints. No
+"+ Add a block", no "Set it on the schedule", no Library, no Send to staff. The toolbar keeps *Run practice* (plain),
+*Save as template…* and *Print the sheet*, and a quiet *Edit the plan* for a writer who needs to correct it. A record
+with no plan says "No plan was written for this practice." and still takes the note. Tonight's practice stays
+tonight's page until three hours after it ends — the couch write-up lands in the box under the sheet — and by the
+morning it is a record with the note at the top. *How it went* still appears the moment the practice starts; the
+line on every unstarted plan promising that it will is gone. On Practice plans the record half is quiet again — already,
+by your 18 Sep ruling (the field door left the rows entirely; the next-practice card keeps the shortcut, the plan
+page keeps the door), which went further than this stage drew and settles R4. The finished season's shelf — now titled **Practices** — opens the
+same record's face: one document, reached from the same door, with the same year. Insights → Practice review opens
+a live-season practice on its own page. The Overview knows tonight: during a practice the card reads "Today ·
+8:49 p.m. · Run practice", not "In 7 days". An assistant on the Schedule reads why they can't plan and — if they hold
+Schedule: View + edit — gets *Plan this practice* as the hub already gives them; a helper's *Open my station* waits
+for a block, not a row.
+
+**Why.** The kickoff asked when *How it went* should appear. The fixture answered a wider question: a finished
+practice has no face of its own and four borrowed ones — tonight's editor from Practice plans (the note last, below
+the fold on a phone), a third rendering from Insights (2,196px for a circuit the sheet draws in 1,284; the block's
+words repeated on every station; no groups, no grid, no "Whole team"; a fourth label for the tonight-note), and a
+greyed form for an assistant. One plan, four renderings. Yesterday's no-clock ruling put *Run practice* on every
+planned practice, any day, and gave the day the weight — the hub's rows didn't get the weight, so five live pills sat
+on the record half for a day (settled the next morning: the door left the rows). And the record's own shelf is titled with the one verb the product refuses everywhere else.
+
+**Trade-offs and close calls.** The record's boundary is the run window's close, not the start (the coach at the
+bench keeps the editor) and not the next morning (a fourth clock). The record keeps *Run practice* — the owner's
+any-day ruling — as the plain button. *Edit the plan* is a door, not the default: correcting a plan you'll save as a
+template is real; rewriting May because the page opened as an editor is what stage 0 said the row should stop
+inviting. The reader becomes the record's face rather than being fixed in eleven places by hand — a third copy of
+one document is the arithmetic the paper's grid already taught. "Goal:" is the paper's word for the record's goal
+line. Q 10.1 is answered with the fact the Overview was missing, not the helper's shape.
+
+**Built (18 Sep), as ruled.** Everything above is on dev. Measured rather than drawn: May's record is 512px tall on a desktop and puts the note first; on a phone the note is on the first screen (it began exactly at the fold before). The no-plan record is 329px; the circuit's record with one row open is 1,063px where the old reader took 2,196. Three things to know from the build: (1) the closed-season reader also gained **Print the sheet** — the frame drew it, and to give it that without a second copy of the paper's arithmetic the sheet-building moved to one shared place both pages call; (2) on the fixture the probe **game** starts ten minutes before the probe practice, so during both the Overview's one thing is **game day** — the rule's named blast radius (a game in progress keeps its console door; before, the card looked past both to next week); among things already on, the one that started most recently wins, which is what makes a tournament day's second game beat the lingering first; (3) a viewer on a live practice no longer sees "Set it on the schedule ›" — a write they could not make. The review found and fixed one real hole before anyone met it: a dialog left open when a practice crossed into record mode could have written onto the record and left the page scroll-locked; every writing dialog now closes itself the moment the sheet turns read-only. Found on the sweep and left for their owners: Season's End's *Share your season* button is under the tap floor on a phone, and the team masthead's small NEXT chip reads the next start (Sep 25) during tonight's practice.
+
+**Priority.** Stage 6 of 6, the last of the ladder; the §202 short walk (the no-clock build) is owed beside it.
+**Success criteria.** May's practice opens with the coach's note first and nothing that invites writing; a practice
+reads the same from Practice plans, from Insights and from a finished season's shelf; Practice plans shows one green
+button, on the day; an assistant with View + edit finds the same door on the Schedule as on the hub; a coach on the
+Overview during practice sees tonight, not next week. No migration, no new route, no year parameter anywhere it is
+not already.
+
+## Stage 7 · Where are we — the field’s first screen — DRAWN 2026-09-18 · ruling owed (W1–W4 on the hub’s “7 · Where are we” tab)
+
+**What a coach sees and does differently.** Tapping **Run practice** opens the plan as a **list**: the practice’s
+name, then one row per block in order — its number, its name, who runs it — with the plan’s length on the right
+(*15 min*, *45 min*, *Rest of practice*). A block that rotates says so under its name (*3 rounds · 15 min a round*),
+and its stations sit under it, one row each, with who runs them. **Every row is a door**: tap a block and you are on
+it (a rotation at round 1); tap a station and you are on that station. **Your own rows say so** — the olive edge and
+*— that’s you* that the block screen already wears — so a parent helper opening their phone at 5:20 sees their one
+station in a list of nine, taps it, and is there. *Who’s here tonight* is at the foot of the list, as on every
+block. On a block, the back link reads *← Blocks* (the plan is one tap further, on the list’s own bar); Back, Next
+block and Rotate now are unchanged; the last block still ends at *Back to the plan*, where *How it went* is.
+
+**Why.** P10 took the clock off the field, and with it the only thing that ever told the screen where the coach was.
+The same-day revision — “it should always land on the initial run practice page” — was built as *block 1*, and on
+18 Sep the owner asked where the first screen with the list of blocks had gone. It never existed: the field has
+always opened on one block. Without a clock the screen cannot guess where you are; with a list it does not have to.
+Today a coach opening the phone during the circuit taps *Next block* then *Rotate now* past a warm-up that is over;
+a helper looking for Finishing taps *Next block* and then a row; anyone at the last block taps three times. With the
+list, each is one tap (two for round 2), and nobody reads a block that is not theirs first. The one case that gains
+a tap is the start — the case a coach can afford one.
+
+**The four decisions.** W1 the list as the first screen, rows as doors, *that’s you* on yours (recommended as drawn);
+W2 the number on a row is the plan’s length, never a planned clock (recommended; the plan page already prints the
+clock for anyone who wants it); W3 stations as rows under their block, not a count (recommended — the helper’s tap is
+the point); W4 the block’s back goes to the list (recommended; one door per screen, each one level up).
+
+**Priority.** A follow-up to P10 on the field, ahead of the stage-6 build if the owner rules it first (stage 6’s R9,
+the helper’s door, reads the list once it exists). **Success criteria.** Opening Run practice on any day shows every
+block and station on one screen at 390 with the reader’s rows marked; a helper reaches their station in one tap; no
+clock anywhere on the field; nothing written, nothing remembered.

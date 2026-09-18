@@ -15,8 +15,14 @@
  * about which DOOR to offer today; the field screen itself has no clock (stage 5, P10) and reads
  * the same on any day.
  *
+ * ⚠ ONE record boundary (stage 6, R1): a practice is a RECORD from the instant its run window
+ * closes — `practiceIsRecord`, beside the window it reads. The plan page and the closed-season
+ * reader draw the record's face from it; nothing else may compute a date boundary of its own.
+ *
  * ⚠ Nothing here records what HAPPENED. `run` means "the window is open and there is a plan to
  * run", never "the practice was run" — "planned, never done" (`lib/rep-practice-plan.ts` rule 2).
+ * A "record" is a plan the clock has passed, and the recap the coach wrote — never a claim that
+ * the practice took place as planned.
  */
 import { summarizePracticePlan, totalPlannedMinutes } from './rep-practice-plan';
 import type { PracticePlan, RepTeamEvent } from './types';
@@ -43,16 +49,45 @@ export function practiceHasPlan(e: Pick<RepTeamEvent, 'practicePlan'>): boolean 
  * the callers that know the end pass it.
  */
 export function isInRunWindow(startsAt: string, nowMs: number, endsAt?: string | null): boolean {
+  const window = runWindowOf(startsAt, endsAt);
+  return !!window && nowMs >= window.opensAtMs && nowMs <= window.closesAtMs;
+}
+
+/**
+ * Is the practice a RECORD — its run window has CLOSED: three hours after the planned end, or after
+ * the start with no end (practices re-evaluation stage 6, owner ruling R1, 2026-09-18). The same
+ * instant the green Run practice goes plain on every door; before it the plan page is the live
+ * editor (tonight's, and the three hours after — the couch write-up lands there), after it the
+ * page is the record's face with "How it went" first. Nothing is stored; the plan page reads this
+ * from its minute clock. ⚠ The ONLY place "is it a record" is decided — the hub's split at NOW
+ * (`Recent practices`) is a different, coarser fact and stays as it is.
+ */
+export function practiceIsRecord(startsAt: string | null | undefined, nowMs: number, endsAt?: string | null): boolean {
+  if (!startsAt) return false;
+  const window = runWindowOf(startsAt, endsAt);
+  return !!window && nowMs > window.closesAtMs;
+}
+
+/**
+ * The run window's two edges, from the ONE constant — the start minus three hours, and three
+ * hours after the end (or the start, when the practice has no end or one at or before its start).
+ * Null when the start is not a date. `isInRunWindow` and `practiceIsRecord` are the two readers;
+ * a third boundary computed anywhere else is the drift this module exists to remove.
+ */
+function runWindowOf(startsAt: string, endsAt?: string | null): { opensAtMs: number; closesAtMs: number } | null {
   const startMs = new Date(startsAt).getTime();
+  if (!Number.isFinite(startMs)) return null;
   const endMs = endsAt ? new Date(endsAt).getTime() : NaN;
   const last = Number.isFinite(endMs) && endMs > startMs ? endMs : startMs;
-  return nowMs >= startMs - RUN_WINDOW_MS && nowMs <= last + RUN_WINDOW_MS;
+  return { opensAtMs: startMs - RUN_WINDOW_MS, closesAtMs: last + RUN_WINDOW_MS };
 }
 
 /**
  * Has the practice STARTED — the start time has passed (stage 1, D7: "How it went" appears once
- * it has). A different fact from the run window, which opens three hours early. Stage 6 owns
- * anything finer (from the end? the next morning?) and will refine this in one place.
+ * it has). A different fact from the run window, which opens three hours early. Stage 6 (R3)
+ * kept the start as the box's moment — the coach is the clock now, and a practice cut short must
+ * not wait for a schedule that is already wrong — and answered "from when is it a record?" with
+ * `practiceIsRecord` above, not by moving this.
  */
 export function practiceStarted(startsAt: string | null | undefined, nowMs: number): boolean {
   if (!startsAt) return false;
@@ -137,10 +172,14 @@ export function practicePlanFit(plan: PracticePlan, lengthMinutes: number | null
   return { planned, length: lengthMinutes, remainder: { kind: hasRest ? 'rest' : 'unplanned', minutes: left } };
 }
 
-/** The first half of the line — "15 of 90 min planned" · "15 min planned" · "Nothing planned yet". */
-export function practicePlannedLabel(fit: PracticePlanFit): string {
+/**
+ * The first half of the line — "15 of 90 min planned" · "15 min planned" · "Nothing planned yet".
+ * On a RECORD (stage 6, R2) the empty reading drops its "yet": a finished practice with nothing
+ * planned is a fact, not a promise — "Nothing planned".
+ */
+export function practicePlannedLabel(fit: PracticePlanFit, opts: { record?: boolean } = {}): string {
   if (fit.length != null) return `${fit.planned} of ${fit.length} min planned`;
-  return fit.planned > 0 ? `${fit.planned} min planned` : 'Nothing planned yet';
+  return fit.planned > 0 ? `${fit.planned} min planned` : opts.record ? 'Nothing planned' : 'Nothing planned yet';
 }
 
 /** The second half — "90 unplanned" · "10 over" · "60 rest of practice" — or null when the plan fits. */

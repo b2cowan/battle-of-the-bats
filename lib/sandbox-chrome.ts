@@ -564,7 +564,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
       exactPath: true,
       anchor: '[data-sandbox-tour="season-recaps"]',
-      said: 'Last year, kept on one page: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, so this is all of it now: the results, who was on the team, the practices you ran and how the money added up, each folded away until you want it. Open the practices — one reads exactly as it was written.',
+      said: 'Last year, kept on one page: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed, so this is all of it now: the results, who was on the team, the practices and how the money added up, each folded away until you want it. Open the practices — one reads exactly as it was written.',
     },
   ];
 }

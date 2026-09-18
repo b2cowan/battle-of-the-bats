@@ -1005,12 +1005,15 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
                 {/* F03 — the truth label, from the one shared table. */}
                 <span className={styles.tagRead} data-truth={p.truth}>{PRACTICE_TRUTH_LABELS[p.truth].label}</span>
                 {p.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
-                {/* ⚠ THE ARCHIVE DOOR, and the only route to it. A past plan is readable
-                    read-only in any season, reached only from this list — the schedule's
-                    practice section stays hidden in a finished season, as 1b ruled. The page it
-                    opens shows the plan AND "How it went", so the link says so when a recap exists. */}
+                {/* ⚠ THE PRACTICE'S OWN PAGE (practices re-evaluation stage 6, R5, 2026-09-18).
+                    This report is always the team's WORKING season, and a finished practice's own
+                    page IS the record's face now — "How it went" first, the sheet read-only — so
+                    this row opens it there, and a working-season practice has one face, not two.
+                    The look-back reader (`history/development/practices/[eventId]`) is reached from
+                    a finished season's shelf only; this list no longer sends anyone to it. The link
+                    says what the page holds when a recap exists. */}
                 {p.hasPlan && (
-                  <Link href={`${base}/history/development/practices/${p.eventId}`}
+                  <Link href={`${base}/practice/${p.eventId}`}
                     className={styles.reportRecapLink}>
                     {p.recap ? 'Open plan and recap →' : 'Open the plan →'}
                   </Link>

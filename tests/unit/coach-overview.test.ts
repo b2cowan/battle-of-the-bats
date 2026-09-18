@@ -11,6 +11,8 @@ import {
   type AnchorInput,
   type BoardInput,
 } from '../../lib/coach-overview.ts';
+import { eventWindowOpen, nextOpenEvent } from '../../lib/coach-next-event.ts';
+import { isInRunWindow } from '../../lib/practice-state.ts';
 import type { CoachCapabilities } from '../../lib/coach-capabilities.ts';
 
 /** A head coach's full-access bundle — the baseline every case overrides from. */
@@ -813,5 +815,79 @@ describe('resolveOverviewAnchor — the lull keeps its tournament door (review f
   it('offers no such door when there is no tournament', () => {
     const decision = resolveOverviewAnchor(anchorInput({ phase: 'in_season', hasNextEvent: false }));
     assert.deepEqual(decision?.answers, []);
+  });
+});
+
+/**
+ * ═══ THE OVERVIEW'S NEXT EVENT — the first whose WINDOW has not closed (practices re-evaluation
+ * stage 6, owner ruling R7, 2026-09-18) ═══
+ *
+ * "Next" used to be "the first start still ahead", so twenty minutes into tonight's practice the
+ * card looked past it to next week ("In 7 days") while the Practice plans card one click away read
+ * "Today · Run practice" from the run window. The pick now reads the two windows every door reads —
+ * the practice's run window and the game's console window — and nothing of its own.
+ */
+describe('nextOpenEvent (R7) — a practice in its run window is the card; a game in its; else the next start', () => {
+  const NOW = Date.parse('2026-09-17T21:35:00-04:00');
+  const H = 60 * 60 * 1000;
+  const at = (offsetMs: number) => new Date(NOW + offsetMs).toISOString();
+  const practice = (id: string, start: number, end: number | null = null) =>
+    ({ id, eventType: 'practice', status: 'scheduled', startsAt: at(start), endsAt: end == null ? null : at(end), arrivalTime: null });
+  const game = (id: string, start: number, end: number | null = null) =>
+    ({ id, eventType: 'league_game', status: 'scheduled', startsAt: at(start), endsAt: end == null ? null : at(end), arrivalTime: null });
+  const teamEvent = (id: string, start: number) =>
+    ({ id, eventType: 'other', status: 'scheduled', startsAt: at(start), endsAt: null, arrivalTime: null });
+
+  it('tonight\'s practice, twenty minutes in, is the next event — not next week\'s', () => {
+    const tonight = practice('tonight', -20 * 60_000, 70 * 60_000);
+    const nextWeek = practice('next-week', 7 * 24 * H);
+    assert.equal(nextOpenEvent([nextWeek, tonight], NOW)?.id, 'tonight');
+  });
+  it('a practice stays the card through the three hours after its end, then gives way', () => {
+    const tonight = practice('tonight', -2 * H, -0.5 * H);
+    const nextWeek = practice('next-week', 7 * 24 * H);
+    assert.equal(nextOpenEvent([tonight, nextWeek], NOW)?.id, 'tonight', 'ended half an hour ago — the write-up window');
+    assert.equal(nextOpenEvent([tonight, nextWeek], NOW + 2.5 * H)?.id, 'tonight', 'the window\'s last instant');
+    assert.equal(nextOpenEvent([tonight, nextWeek], NOW + 2.5 * H + 1000)?.id, 'next-week', 'shut — the record; next week is next');
+  });
+  it('a game in progress is next through the console\'s own window — the named blast radius', () => {
+    const today = game('today', -1 * H, 1 * H);
+    const saturday = game('saturday', 3 * 24 * H);
+    assert.equal(nextOpenEvent([saturday, today], NOW)?.id, 'today');
+    assert.equal(nextOpenEvent([saturday, today], NOW + 4 * H + 1000)?.id, 'saturday', 'three hours after the end the console shuts');
+  });
+  it('two open windows: the most recently STARTED wins — a tournament day\'s second game, not the lingering first (/review)', () => {
+    // 9–10 a.m. lingers until 1 p.m.; 11–12 is on at 11:30.
+    const first = game('first', -2.5 * H, -1.5 * H);
+    const second = game('second', -0.5 * H, 0.5 * H);
+    assert.equal(nextOpenEvent([first, second], NOW)?.id, 'second');
+    // The fixture's evening: a 7:20 game and a 7:30 practice — the practice started last.
+    const gameFirst = game('game', -80 * 60_000, 40 * 60_000);
+    const practiceAfter = practice('practice', -70 * 60_000, 20 * 60_000);
+    assert.equal(nextOpenEvent([gameFirst, practiceAfter], NOW)?.id, 'practice');
+    // A started event beats one still to start even when the upcoming one's window is open.
+    const lingering = practice('lingering', -4 * H, -2 * H);
+    const inAnHour = game('in-an-hour', 1 * H, 3 * H);
+    assert.equal(nextOpenEvent([inAnHour, lingering], NOW)?.id, 'lingering');
+    assert.equal(nextOpenEvent([inAnHour, lingering], NOW + 1 * H + 1000)?.id, 'in-an-hour', 'and yields once the game starts');
+  });
+  it('anything else is next only while its start is ahead; the earliest start wins', () => {
+    const past = teamEvent('past', -1 * H);
+    const later = teamEvent('later', 5 * H);
+    const soon = teamEvent('soon', 2 * H);
+    assert.equal(nextOpenEvent([later, past, soon], NOW)?.id, 'soon');
+  });
+  it('a cancelled event is never next, even inside its window; nothing ahead is null', () => {
+    const cancelled = { ...practice('c', -20 * 60_000, 70 * 60_000), status: 'cancelled' };
+    assert.equal(nextOpenEvent([cancelled], NOW), null);
+    assert.equal(nextOpenEvent([practice('old', -2 * 24 * H, -2 * 24 * H + H)], NOW), null);
+    assert.equal(nextOpenEvent([], NOW), null);
+  });
+  it('the pick reads the run window\'s edges exactly — a practice with no end is next until three hours after its START', () => {
+    const noEnd = practice('no-end', -3 * H);
+    const later = practice('later', 2 * 24 * H);
+    assert.equal(nextOpenEvent([later, noEnd], NOW)?.id, 'no-end');
+    assert.equal(nextOpenEvent([later, noEnd], NOW + 1000)?.id, 'later');
+    assert.equal(eventWindowOpen(noEnd, NOW), isInRunWindow(noEnd.startsAt, NOW, noEnd.endsAt), 'the same predicate, not a copy');
   });
 });

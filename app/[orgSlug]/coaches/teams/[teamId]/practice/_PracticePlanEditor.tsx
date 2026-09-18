@@ -32,7 +32,9 @@ import {
 import TagPicker, { type PickablePerson, type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
-import { CoachingPointsField, FieldLabel, OPEN_DOOR, TeachingFields, type TeachingDoor } from '@/components/coaches/PracticeFields';
+import {
+  CoachingPointsField, FieldLabel, OPEN_DOOR, ReadChips, ReadField, TeachingFacts, TeachingFields, type TeachingDoor,
+} from '@/components/coaches/PracticeFields';
 import {
   LibraryList, LibraryCard, LibraryFilterBar, drillCardFacts, circuitCardFacts, drillCardLine, circuitCardLine,
   DrillPreviewBody, CircuitPreviewBody,
@@ -226,11 +228,14 @@ function FoldHead({
   );
 }
 
+/** The roster door beside a Players line. ABSENT in read mode (stage 6, R2) — the chips or
+ *  "Whole team" beside it already say who, and a disabled button says only "not for you". */
 function PlayerPickerButton({
   count, readOnly, onOpen,
 }: { count: number; readOnly: boolean; onOpen: () => void }) {
+  if (readOnly) return null;
   return (
-    <button type="button" className={styles.ppPickBtn} disabled={readOnly} onClick={onOpen}>
+    <button type="button" className={styles.ppPickBtn} onClick={onOpen}>
       <Users size={13} aria-hidden />
       {count > 0 ? `${count} player${count === 1 ? '' : 's'}` : 'Choose players'}
     </button>
@@ -239,8 +244,10 @@ function PlayerPickerButton({
 
 // ── Station ──────────────────────────────────────────────────────────────────
 
-/**
- * The DRILL half of a station, rendered as TEXT rather than as disabled inputs.
+/*
+ * The DRILL half of a station renders as TEXT rather than as disabled inputs — `TeachingFacts`
+ * from the shared module (it was this file's `DrillFacts` until stage 6 made the same face the
+ * READ mode of every field, 2026-09-18).
  *
  * ⚠ **Read-only is the point, not a limitation** (owner ruling 2026-08-01): *"if I load a drill and
  * completely change everything about it, then I didn't run the same drill."* A drill is an IDENTITY
@@ -251,50 +258,6 @@ function PlayerPickerButton({
  * the words plainly makes a drill-backed station visibly a different shape from one a coach typed —
  * shorter, more readable, and honestly distinguishable at a glance.
  */
-function DrillFacts({ station, equipmentTags }: { station: PracticeStation; equipmentTags?: PickableTag[] }) {
-  const { description, goal, coachingPoints, setup } = station;
-  // Kit can be legacy NAMES, library IDS (mig 272 drills store ids only), or mid-migration both —
-  // shown as the editor shows every such list (`mergedTagNames`), never written back.
-  const equipment = mergedTagNames(station.equipment, station.equipmentTagIds, equipmentTags ?? []);
-  return (
-    <>
-      {description && (
-        <div className={styles.ppField}>
-          <FieldLabel>What you&apos;re doing</FieldLabel>
-          <p className={styles.ppReadTxt}>{description}</p>
-        </div>
-      )}
-      {goal && (
-        <div className={styles.ppField}>
-          <FieldLabel>What you&apos;re watching for</FieldLabel>
-          <p className={styles.ppReadTxt}>{goal}</p>
-        </div>
-      )}
-      {coachingPoints?.length ? (
-        <div className={styles.ppField}>
-          <FieldLabel>Coaching points</FieldLabel>
-          <ol className={styles.ppReadPoints}>
-            {coachingPoints.map((point, i) => <li key={i}>{point}</li>)}
-          </ol>
-        </div>
-      ) : null}
-      {setup && (
-        <div className={styles.ppField}>
-          <FieldLabel>Setup</FieldLabel>
-          <p className={styles.ppReadTxt}>{setup}</p>
-        </div>
-      )}
-      {equipment?.length ? (
-        <div className={styles.ppFieldRow}>
-          <FieldLabel>Equipment</FieldLabel>
-          <div className={styles.ppChipWrap}>
-            {equipment.map(e => <span key={e} className={styles.ppChip}>{e}</span>)}
-          </div>
-        </div>
-      ) : null}
-    </>
-  );
-}
 
 /** The optional fields a station offers behind a door when it is flattened into its block (D1). */
 type StationDoor = 'points' | 'setup' | 'equipment' | 'staff' | 'note';
@@ -398,7 +361,7 @@ function StationFields({
             {station.drillTags?.length ? ` · ${station.drillTags.join(' · ')}` : ''}
             {sole && drillActions}
           </p>
-          <DrillFacts station={station} equipmentTags={equipmentTags} />
+          <TeachingFacts values={station} equipmentTags={equipmentTags} />
           {!sole && drillActions && <div className={styles.ppDrillActions}>{drillActions}</div>}
         </>
       ) : (
@@ -417,13 +380,16 @@ function StationFields({
       {/* ⚠ A template stores no staff and no players — the practice supplies both, which is what
           lets one template work in April with twelve and July with nine. The controls are absent
           rather than disabled: a control that exists only to refuse should not exist. */}
-      {!withoutPeople && staff.show && (
+      {/* Read (stage 6, R2): who runs it as chips when someone does — the picker's own disabled
+          face — and absent when nobody is named (the modal shows every door, so without this an
+          empty read station would print a label over nothing). */}
+      {!withoutPeople && staff.show && (!readOnly || hasStaff(station)) && (
         <div className={styles.ppField}>
           <FieldLabel onRemove={staff.onRemove} removeLabel={staff.removeLabel}>{staffLabel}</FieldLabel>
           <PracticeTagPicker all={staffTags} ids={station.staffTagIds ?? []}
             legacyNames={station.staff} disabled={readOnly} onCreate={onCreateStaffTag}
             people={staffPeople} onPickPerson={onPickStaffPerson}
-            manage={staffManage} onManageChanged={onStaffTagsChanged}
+            manage={readOnly ? undefined : staffManage} onManageChanged={onStaffTagsChanged}
             onChange={next => onPatch({ staffTagIds: next })}
             emptyHint="No staff yet — pick someone on the team, or type a name."
             autoFocus={staff.autoFocus} />
@@ -434,8 +400,9 @@ function StationFields({
           under the grid), so a rotating station offers no roster of its own — and no "Starts with"
           either: the grid's first row says who starts here (D6). Everywhere else the station owns
           its list; flattened into its block it reads as the block's Players line (Whole team until
-          names are chosen). */}
-      {!withoutPeople && !isRotation && (
+          names are chosen). Read, a station in a non-rotating circuit that names nobody has no
+          line — the roster door was the only thing on it. */}
+      {!withoutPeople && !isRotation && (!readOnly || playerCount > 0 || sole) && (
         <div className={styles.ppFieldRow}>
           <FieldLabel>Players</FieldLabel>
           {playerCount > 0 ? (
@@ -465,11 +432,13 @@ function StationFields({
           travel back to the library, so it is also the one that must never be locked. It absorbs
           most "one word different tonight" cases with no detaching at all.
           ⚠ Absent on a TEMPLATE for exactly the same reason it is absent on a drill: "just for
-          tonight" is the one field that must never travel in either direction. */}
-      {!withoutPeople && note.show && (
+          tonight" is the one field that must never travel in either direction. Read: the note as
+          text under the same label, when there is one. */}
+      {!withoutPeople && note.show && readOnly && <ReadField label="Just for tonight" text={station.note} />}
+      {!withoutPeople && note.show && !readOnly && (
         <div className={styles.ppField}>
           <FieldLabel onRemove={note.onRemove} removeLabel={note.removeLabel}>Just for tonight</FieldLabel>
-          <input className={styles.input} value={station.note ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
+          <input className={styles.input} value={station.note ?? ''} maxLength={MAX_TEXT_LEN}
             aria-label="Just for tonight" autoFocus={note.autoFocus}
             placeholder="A one-off note for this practice" onChange={e => onPatch({ note: e.target.value })} />
         </div>
@@ -708,8 +677,10 @@ function StationModal({
         <CoachModalHeader
           onClose={onClose}
           closeAriaLabel="Close"
-          title={fromDrill ? label : (
-            <input className={`${styles.input} ${styles.ppStationTitle}`} value={station.name} disabled={readOnly}
+          // The head IS the name: text for a drill's, text when read (stage 6, R2), a box to type
+          // into otherwise.
+          title={fromDrill || readOnly ? label : (
+            <input className={`${styles.input} ${styles.ppStationTitle}`} value={station.name}
               maxLength={MAX_TITLE_LEN} placeholder="Station name" aria-label="Station name"
               onChange={e => onPatch({ name: e.target.value })} />
           )}
@@ -776,10 +747,34 @@ function RotationStrip({
   const intervalShown = rotation.intervalMinutes ?? defaultIntervalMinutes(blockMinutes, stationCount);
   const rounds = describeRounds(blockMinutes, intervalShown);
 
+  /* Read (stage 6, R2): the line as a FACT — "Groups rotate · every 15 min · 3 rounds of 15 =
+     45 min" — the same words the pressed chip and the box spell out, with nothing to press. A
+     circuit that does not rotate says nothing here: each column carries its own players. */
+  if (readOnly) {
+    if (!isRotation) return null;
+    return (
+      <p className={`${styles.ppRotStrip} ${styles.ppRotStripRead}`}>
+        <span className={styles.ppRotFact}><Repeat size={11} aria-hidden /> Groups rotate</span>
+        {intervalShown != null && (
+          <>
+            <span className={styles.ppClockSep} aria-hidden>·</span>
+            <span>every {intervalShown} min</span>
+          </>
+        )}
+        {rounds && (
+          <>
+            <span className={styles.ppClockSep} aria-hidden>·</span>
+            <span className={styles.ppRotRounds}>{rounds}</span>
+          </>
+        )}
+      </p>
+    );
+  }
+
   return (
     <div className={styles.ppRotStrip}>
       <button type="button" className={styles.ppQuickChip} aria-pressed={isRotation}
-        data-on={isRotation ? 'on' : undefined} disabled={readOnly} onClick={() => onToggle(!isRotation)}>
+        data-on={isRotation ? 'on' : undefined} onClick={() => onToggle(!isRotation)}>
         <Repeat size={11} aria-hidden /> Groups rotate
       </button>
       {isRotation && (
@@ -788,7 +783,7 @@ function RotationStrip({
           <label className={styles.ppRotEvery}>
             <span>every</span>
             <input className={`${styles.input} ${styles.ppMinutes} ${styles.ppRotMinutes}`} type="number" min={1} max={MAX_MINUTES}
-              inputMode="numeric" disabled={readOnly} value={intervalShown ?? ''}
+              inputMode="numeric" value={intervalShown ?? ''}
               aria-label="Minutes between moves" placeholder="—"
               onChange={e => onSetRotation({ intervalMinutes: e.target.value ? Number(e.target.value) : null })} />
             <span>min</span>
@@ -981,7 +976,8 @@ function RotationBoard({
           no bins — the room behind the door is the only place anything changes. ── */}
       {rotation.groups.length === 0 ? (
         <p className={styles.ppGroupReadLine}>
-          <span className={styles.ppRailNone}>No groups yet</span>
+          {/* Read (stage 6), the fact without the promise: a record's groups are not "yet". */}
+          <span className={styles.ppRailNone}>{readOnly ? 'No groups' : 'No groups yet'}</span>
           {!readOnly && (
             <>
               <span className={styles.ppClockSep} aria-hidden>·</span>
@@ -1750,11 +1746,20 @@ function BlockCard({
         {/* The head is the title, the collapse and the bin. The reorder pair left it for the
             gutter (above), where the shut row has it too. */}
         <div className={styles.ppBlockTitleWrap}>
-          <input className={`${styles.input} ${styles.ppBlockTitle}`} value={block.title} disabled={readOnly}
-            maxLength={MAX_TITLE_LEN}
-            placeholder="What are we doing?"
-            autoFocus={focusTitle}
-            aria-label={`Block ${index + 1} title`} onChange={e => onPatch({ title: e.target.value })} />
+          {/* Read (stage 6, R2): the title as the shut row prints it — text, the rotation tag beside
+              it — never a greyed box. */}
+          {readOnly ? (
+            <span className={styles.ppTlTitle}>
+              {block.title || <span className={styles.ppTlUntitled}>{label}</span>}
+              {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
+            </span>
+          ) : (
+            <input className={`${styles.input} ${styles.ppBlockTitle}`} value={block.title}
+              maxLength={MAX_TITLE_LEN}
+              placeholder="What are we doing?"
+              autoFocus={focusTitle}
+              aria-label={`Block ${index + 1} title`} onChange={e => onPatch({ title: e.target.value })} />
+          )}
           {/* The clock left this line for the gutter (stage 1); the ROTATION tag left it at stage 3 —
               an open rotating block carries the pressed "Groups rotate" chip on its strip a few
               lines down, so the tag said the same thing twice (and overflowed the head on a phone).
@@ -1785,11 +1790,14 @@ function BlockCard({
             is ABSENT, not disabled with a hover title (invisible on a phone). Un-pressing Rest
             returns the default length, never "no length" — a null stalls the clock at this block.
             The consequence, "ends 7:15 p.m.", is the gutter's own walk (`clock.endLabel`); the
-            open block repeats the START nowhere — the gutter has it. A template has no clock. */}
+            open block repeats the START nowhere — the gutter has it. A template has no clock.
+            Read (stage 6, R2): no clock row at all — the gutter already says the start and the
+            length, and "ends 7:15 p.m." is the next row's start. */}
+        {!readOnly && (
         <div className={styles.ppField}>
           <FieldLabel>Minutes</FieldLabel>
           <div className={styles.ppClockRow}>
-            {!readOnly && QUICK_MINUTES.map(n => {
+            {QUICK_MINUTES.map(n => {
               const on = !isRest && block.duration.minutes === n;
               return (
                 <button key={n} type="button" className={styles.ppQuickChip} aria-pressed={on}
@@ -1798,13 +1806,13 @@ function BlockCard({
               );
             })}
             <input className={`${styles.input} ${styles.ppMinutes}`} type="number" min={1} max={MAX_MINUTES}
-              inputMode="numeric" disabled={readOnly || isRest}
+              inputMode="numeric" disabled={isRest}
               value={isRest ? '' : block.duration.minutes ?? ''} aria-label="Minutes"
               onChange={e => onPatch({
                 duration: { minutes: e.target.value ? Number(e.target.value) : null },
               })} />
             <span className={styles.ppUnit}>min</span>
-            {!readOnly && !restTakenElsewhere && (
+            {!restTakenElsewhere && (
               <>
                 <span className={styles.ppClockSep} aria-hidden>·</span>
                 <button type="button" className={styles.ppQuickChip} aria-pressed={isRest}
@@ -1819,24 +1827,32 @@ function BlockCard({
             )}
           </div>
         </div>
+        )}
 
         {/* ── The two teaching fields (D2 · D3) — two fields, not one notes area: the "watching
             for" line is what the field screen prints in bold at arm's length, and older plans
             read through a field-by-field fallback. The station's words, the drill library's
             words, the field screen's words; the stored keys stay `description` / `goal`. Absent
             on a block with exactly one station and no words of its own (D7) — the station's
-            read-only text under Stations IS the block's teaching then. */}
-        {showTeaching && (
+            read-only text under Stations IS the block's teaching then. Read (stage 6, R2): the
+            same two, as text under their labels, each absent when empty. */}
+        {showTeaching && readOnly && (
+          <>
+            <ReadField label="What you're doing" text={block.description} />
+            <ReadField label="What you're watching for" text={block.goal} />
+          </>
+        )}
+        {showTeaching && !readOnly && (
           <>
             <label className={styles.ppField}>
               <FieldLabel>What you&apos;re doing</FieldLabel>
-              <textarea className={styles.textarea} rows={2} value={block.description ?? ''} disabled={readOnly}
+              <textarea className={styles.textarea} rows={2} value={block.description ?? ''}
                 maxLength={MAX_TEXT_LEN} placeholder="What happens, and how it's set up"
                 onChange={e => onPatch({ description: e.target.value })} />
             </label>
             <label className={styles.ppField}>
               <FieldLabel>What you&apos;re watching for</FieldLabel>
-              <input className={styles.input} value={block.goal ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
+              <input className={styles.input} value={block.goal ?? ''} maxLength={MAX_TEXT_LEN}
                 placeholder="What good looks like here" onChange={e => onPatch({ goal: e.target.value })} />
             </label>
           </>
@@ -1861,7 +1877,7 @@ function BlockCard({
             <PracticeTagPicker all={staffTags} ids={block.staffTagIds ?? []}
               legacyNames={block.staff} disabled={readOnly} onCreate={onCreateStaffTag}
               people={staffPeople} onPickPerson={onPickStaffPerson}
-              manage={staffManage} onManageChanged={onStaffTagsChanged}
+              manage={readOnly ? undefined : staffManage} onManageChanged={onStaffTagsChanged}
               onChange={next => onPatch({ staffTagIds: next })}
               emptyHint="No staff yet — pick someone on the team, or type a name."
               /* A block that already carries a drill (its own card, own fields) can push this
@@ -1906,11 +1922,12 @@ function BlockCard({
         {/* Kit lives at exactly ONE level — the activity's (D11), the same law as people: the
             block's while it has no stations, each station's once it has them. What is chosen
             here rises into the bag under "About this practice" and prints beside this block. */}
-        {showKit && (
+        {showKit && readOnly && <ReadChips label="Equipment" names={tagNamesById(block.equipmentTagIds, equipmentTags)} />}
+        {showKit && !readOnly && (
           <div className={styles.ppField}>
             <FieldLabel onRemove={equipmentDoor.onRemove} removeLabel={equipmentDoor.removeLabel}>Equipment</FieldLabel>
             <PracticeTagPicker all={equipmentTags} ids={block.equipmentTagIds ?? []}
-              disabled={readOnly} onCreate={onCreateEquipmentTag}
+              onCreate={onCreateEquipmentTag}
               manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
               onChange={next => onPatch({ equipmentTagIds: next })}
               emptyHint="No equipment yet — type an item to add your first one."
@@ -2111,7 +2128,27 @@ interface Props {
   onChangePlanTags?: (next: string[]) => void;
   eventStartsAt: string;
   eventEndsAt: string | null;
+  /**
+   * ⚠ READ MODE IS A FACE, NOT A DISABLED FORM (practices re-evaluation stage 6, owner ruling R2,
+   * 2026-09-18). A viewer who may not write — an assistant on a live plan, and everyone on a
+   * finished practice's record — reads the same sheet: shut rows that OPEN to read (the block's
+   * words, its stations as columns, the rotation line as a fact, the grid, the groups — the paper's
+   * order), a station's five fields as the modal, read-only; no ghost row, no gaps, no gutter
+   * arrows, no doors at a block's foot, no "+ What everyone's working on", no pickers' search
+   * boxes, no greyed inputs anywhere. ONE editor, one mode — the record's face, the assistant's
+   * face and the closed-season reader all mount this with `readOnly`; a second renderer of the
+   * shut row, the column or the grid is the drift this prop exists to prevent.
+   */
   readOnly: boolean;
+  /**
+   * The sheet is a finished practice's RECORD (stage 6, R1 · R2): the goal line reads "Goal:" —
+   * the paper's own word (it prints GOAL) — where the live page says "Tonight:", so the record
+   * and the print agree; an unwritten goal reads as silence, never as the future-tense placeholder.
+   * Read-only by construction (the pages pass both); the word is the only thing it changes.
+   */
+  record?: boolean;
+  /** An id for the goal line's input — the plan page focuses it after "Edit the plan" (stage 6). */
+  goalInputId?: string;
   /**
    * ⚠ Editing a TEMPLATE, not a practice: no roster, no staff, no groups, no "just for tonight".
    * The controls are ABSENT, not disabled — see the module header.
@@ -2141,7 +2178,7 @@ export default function PracticePlanEditor({
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   focusManage, onFocusTagsChanged,
-  eventStartsAt, eventEndsAt, readOnly, withoutPeople = false, onStartFrom,
+  eventStartsAt, eventEndsAt, readOnly, record = false, goalInputId, withoutPeople = false, onStartFrom,
   staffPeople = [], onPickStaffPerson, viewerBlockIds, viewerStationIds,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
@@ -2751,7 +2788,15 @@ export default function PracticePlanEditor({
     return !!block.stations?.some(s => s.id === target.stationId);
   }
 
-  const pickerTarget = attach && attachTargetExists(attach) ? attach : null;
+  /* ⚠ EVERY WRITING DIALOG RESOLVES TO NOTHING IN READ MODE (stage 6, /review 2026-09-18). The
+     editor is keyed per practice, not per mode, and `readOnly` can flip TRUE under an open dialog
+     without a remount: the plan page reads the record boundary from its minute clock, so a picker
+     or the groups room left open past three hours after the practice's end would otherwise stay
+     up — the picker still able to write a player onto a record, the room's scroll lock outliving
+     the room it belonged to (its JSX is gated on `!readOnly`; its lock was not). Resolved here, in
+     the same place a vanished target already closes them, so the lock and the dialog agree. The
+     station modal is the one that stays: it has a read face of its own. */
+  const pickerTarget = !readOnly && attach && attachTargetExists(attach) ? attach : null;
   const selectedIds = pickerTarget ? selectedIdsFor(pickerTarget) : [];
   /** The picker is a sole station's — the block's own Players line, one level down (D1). */
   const pickerIsSoleStation = pickerTarget?.kind === 'station'
@@ -2763,14 +2808,18 @@ export default function PracticePlanEditor({
      more stations, which is the only shape that has groups; a station deleted under the room
      (another tab's autosave) closes it rather than leaving a room with nothing to arrange. */
   const openGroupsBlock = (() => {
+    if (readOnly) return undefined;
     const block = openGroups ? plan.blocks.find(b => b.id === openGroups.blockId) : undefined;
     return block && blockRotates(block) && (block.stations?.length ?? 0) >= 2 ? block : undefined;
   })();
+  const openDrillSheet = readOnly ? null : drillSheet;
+  const openPromoting = readOnly ? null : promoting;
+  const openNewDrill = readOnly ? null : newDrill;
   // Register with the shared overlay stack: hides the mobile bottom nav while a sheet is up (so a
   // mis-tap can't land on a nav tab underneath it) and locks the page behind it. Read the RESOLVED
   // targets, not the raw state: a station or a picker target that vanished under its dialog
   // (another tab's autosave) unmounts the dialog, and the lock must go with it (/review, 2026-09-15).
-  useOverlayOpen(!!pickerTarget || !!drillSheet || !!promoting || !!openStationRow || !!openGroupsBlock || !!newDrill);
+  useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openGroupsBlock || !!openNewDrill);
   /* The roster picker's dialog floor (stage 2, D9) — armed while it is open; Escape closes it
      and hands focus back to the "Choose players…" that opened it. ⚠ Escape never closes an open
      BLOCK: a row is not a sheet, and the floor is mounted on the sheets alone. */
@@ -2856,13 +2905,16 @@ export default function PracticePlanEditor({
       {layout.sheet && (<>
       {/* ── The goal, one line above the timeline (stage 1, D4) ──
           The one thing worth saying about the whole practice, where the sheet prints it. A
-          template's is "Goal:" — there is no tonight for it. */}
+          template's is "Goal:" — there is no tonight for it — and so is a RECORD's (stage 6, R2):
+          the paper's word, so the record and the print agree. Read, an unwritten goal is silence
+          stated in the muted ink ("Nothing written for this one."), never the placeholder's
+          future tense. */}
       <div className={styles.ppGoalLine}>
-        <span className={styles.ppGoalKicker}>{withoutPeople ? 'Goal:' : 'Tonight:'}</span>
+        <span className={styles.ppGoalKicker}>{withoutPeople || record ? 'Goal:' : 'Tonight:'}</span>
         {readOnly ? (
-          <span className={plan.goal ? styles.ppGoalRead : styles.ppGoalNone}>{plan.goal || 'No goal written'}</span>
+          <span className={plan.goal ? styles.ppGoalRead : styles.ppGoalNone}>{plan.goal || 'Nothing written for this one.'}</span>
         ) : (
-          <input className={styles.ppGoalInput} value={plan.goal ?? ''} maxLength={MAX_TEXT_LEN}
+          <input id={goalInputId} className={styles.ppGoalInput} value={plan.goal ?? ''} maxLength={MAX_TEXT_LEN}
             placeholder="What the whole practice is for"
             aria-label={withoutPeople ? 'Goal' : "Tonight's goal"}
             onChange={e => onChange({ ...plan, goal: e.target.value })} />
@@ -2908,7 +2960,10 @@ export default function PracticePlanEditor({
            * Absent in the template room, whose tags live on the template row: asking the same
            * question in two places is how the two answers start disagreeing.
            */}
-          {onChangePlanTags && (
+          {/* Read (stage 6, R2): a field with nothing chosen is ABSENT — a disabled picker with no
+              chips is a label over nothing. The tags print as chips through the picker's own
+              disabled face (chips, no search box), the same face the paper prints from. */}
+          {onChangePlanTags && (!readOnly || (planTagIds?.length ?? 0) > 0) && (
             <>
               <TagPicker
                 label="What this practice is about"
@@ -2917,22 +2972,22 @@ export default function PracticePlanEditor({
                 onChange={onChangePlanTags}
                 onCreate={readOnly ? undefined : onCreateFocusTag}
                 // The same quiet manage door Equipment carries below — two tag groups, one grammar.
-                manage={focusManage} onManageChanged={onFocusTagsChanged}
+                manage={readOnly ? undefined : focusManage} onManageChanged={onFocusTagsChanged}
                 disabled={readOnly}
                 emptyHint="No tags yet — type a word to make your first one."
               />
-              {/* ⚠ Read-only, and only on a plan written before tags existed. Never editable and
-                  never migrated: the coach's old words keep matching the rail, and there is
-                  exactly ONE control for saying what a practice is about. */}
-              {(plan.practiceTypes?.length ?? 0) > 0 && (
-                <div className={styles.ppFieldRow}>
-                  <FieldLabel>Also tagged</FieldLabel>
-                  <div className={styles.ppChipWrap}>
-                    {plan.practiceTypes!.map(t => <span key={t} className={styles.ppChip}>{t}</span>)}
-                  </div>
-                </div>
-              )}
             </>
+          )}
+          {/* ⚠ Read-only, and only on a plan written before tags existed. Never editable and
+              never migrated: the coach's old words keep matching the rail, and there is
+              exactly ONE control for saying what a practice is about. */}
+          {onChangePlanTags && (plan.practiceTypes?.length ?? 0) > 0 && (
+            <div className={styles.ppFieldRow}>
+              <FieldLabel>Also tagged</FieldLabel>
+              <div className={styles.ppChipWrap}>
+                {plan.practiceTypes!.map(t => <span key={t} className={styles.ppChip}>{t}</span>)}
+              </div>
+            </div>
           )}
           {/* The bag's derived half, said where the coach is looking (D11): what rose from the
               blocks and stations below is shown here and removed THERE — the picker under it holds
@@ -2941,21 +2996,28 @@ export default function PracticePlanEditor({
               catch, 2026-09-15) — the derived line used to float between the tags above and the
               picker below with no heading of its own, reading as a trailing note on "What this
               practice is about" rather than the start of Equipment. */}
-          <div className={styles.ppField}>
-            <FieldLabel>Equipment</FieldLabel>
-            {kitBag.fromBlocks.length > 0 && (
-              <p className={styles.ppRailDerived}>
-                {kitBag.fromBlocks.join(' · ')} <span>— from the blocks below</span>
-              </p>
-            )}
-            <PracticeTagPicker all={equipmentTags} ids={plan.equipmentTagIds ?? []}
-              legacyNames={plan.equipment} disabled={readOnly} onCreate={onCreateEquipmentTag}
-              manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
-              onChange={next => onChange({ ...plan, equipmentTagIds: next })}
-              emptyHint={kitBag.fromBlocks.length > 0
-                ? 'Anything else to bring that belongs to no block — water, the first-aid kit.'
-                : 'No equipment yet — type an item to add your first one.'} />
-          </div>
+          {/* Read (stage 6, R2): the bag as one line of chips when there is a bag, the field absent
+              when there is not — the derived half and the extras read as one list, which is what
+              the paper prints. */}
+          {readOnly ? (
+            <ReadChips label="Equipment" names={kitBag.all} />
+          ) : (
+            <div className={styles.ppField}>
+              <FieldLabel>Equipment</FieldLabel>
+              {kitBag.fromBlocks.length > 0 && (
+                <p className={styles.ppRailDerived}>
+                  {kitBag.fromBlocks.join(' · ')} <span>— from the blocks below</span>
+                </p>
+              )}
+              <PracticeTagPicker all={equipmentTags} ids={plan.equipmentTagIds ?? []}
+                legacyNames={plan.equipment} onCreate={onCreateEquipmentTag}
+                manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
+                onChange={next => onChange({ ...plan, equipmentTagIds: next })}
+                emptyHint={kitBag.fromBlocks.length > 0
+                  ? 'Anything else to bring that belongs to no block — water, the first-aid kit.'
+                  : 'No equipment yet — type an item to add your first one.'} />
+            </div>
+          )}
         </div>}
       </div>
       </>)}
@@ -3257,44 +3319,44 @@ export default function PracticePlanEditor({
       )}
 
       {/* ── The drill picker (Phase 2; the circuits tab at stage 4) ── */}
-      {drillSheet && (
+      {openDrillSheet && (
         <DrillPickerSheet
           drills={drills}
-          circuits={drillSheet.kind === 'block' ? circuits : undefined}
+          circuits={openDrillSheet.kind === 'block' ? circuits : undefined}
           equipmentTags={equipmentTags}
           title={
-            drillSheet.kind === 'block' ? 'Add a block'
-              : drillSheet.swapId ? 'Swap this drill'
+            openDrillSheet.kind === 'block' ? 'Add a block'
+              : openDrillSheet.swapId ? 'Swap this drill'
                 : 'Add a station'
           }
           writeLabel={
-            drillSheet.kind === 'block' ? 'Write a block'
-              : drillSheet.swapId ? 'Write this one myself'
+            openDrillSheet.kind === 'block' ? 'Write a block'
+              : openDrillSheet.swapId ? 'Write this one myself'
                 : 'Write a station'
           }
           onPick={drill => {
-            if (drillSheet.kind === 'block') addBlockFromDrill(drill);
-            else addStationFromDrill(drillSheet.blockId, drill, drillSheet.swapId);
+            if (openDrillSheet.kind === 'block') addBlockFromDrill(drill);
+            else addStationFromDrill(openDrillSheet.blockId, drill, openDrillSheet.swapId);
           }}
-          onPickCircuit={drillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit) : undefined}
+          onPickCircuit={openDrillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit) : undefined}
           onWriteOne={() => {
-            if (drillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
-            else addBlankStation(drillSheet.blockId, drillSheet.swapId);
+            if (openDrillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
+            else addBlankStation(openDrillSheet.blockId, openDrillSheet.swapId);
           }}
           onClose={() => setDrillSheet(null)}
         />
       )}
 
       {/* ── "Save to my drills…" / "Save to my circuits…" (D18 · L1 · L9) ── */}
-      {promoting && (() => {
-        const block = plan.blocks.find(b => b.id === promoting.blockId);
+      {openPromoting && (() => {
+        const block = plan.blocks.find(b => b.id === openPromoting.blockId);
         // Deleting the block or station while its dialog is open would otherwise leave a dead end
         // — the same self-closing rule `attachTargetExists` applies to the roster picker.
         if (!block) return null;
         // The block's minutes as "usually", named in the sentence — none for a rest-of-practice block.
         const usually = block.duration.restOfPractice || !block.duration.minutes ? '' : `, and ${block.duration.minutes} min as how long it usually runs`;
-        if (promoting.kind === 'station') {
-          const station = block.stations?.find(s => s.id === promoting.stationId);
+        if (openPromoting.kind === 'station') {
+          const station = block.stations?.find(s => s.id === openPromoting.stationId);
           if (!station) return null;
           return (
             <PromoteDialog kind="drill" name={promoteName(block, station)}
@@ -3305,7 +3367,7 @@ export default function PracticePlanEditor({
               onSave={tagIds => promoteToDrill(tagIds)} onClose={() => setPromoting(null)} />
           );
         }
-        if (promoting.kind === 'block') {
+        if (openPromoting.kind === 'block') {
           if ((block.stations?.length ?? 0) > 0) return null;
           return (
             <PromoteDialog kind="drill" name={block.title.trim()}
@@ -3329,9 +3391,9 @@ export default function PracticePlanEditor({
       })()}
 
       {/* ── "+ New drill" from the docked panel — the one drill sheet (L5 · L6) ── */}
-      {newDrill && (
+      {openNewDrill && (
         <DrillSheet
-          draft={newDrill} isNew
+          draft={openNewDrill} isNew
           tags={focusTags} onCreateTag={onCreateFocusTag ?? (async () => null)}
           equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
           focusManage={focusManage} onFocusTagsChanged={onFocusTagsChanged}

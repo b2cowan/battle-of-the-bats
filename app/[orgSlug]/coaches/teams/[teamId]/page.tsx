@@ -33,7 +33,8 @@ import {
   type TileKey,
 } from '@/lib/coach-overview';
 import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
-import { practicePlanState } from '@/lib/practice-state';
+import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
+import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
@@ -352,12 +353,13 @@ export default function TeamOverviewPage({
       });
       setBudget(canMoney ? { amount: budgetData.budgetAmount ?? null, spent: budgetData.totalExpenses ?? 0 } : null);
 
-      // Next upcoming event for the snapshot
+      // The next event for the snapshot — the first whose WINDOW has not closed (practices
+      // re-evaluation stage 6, R7, 2026-09-18): a practice in progress stays "next" while its run
+      // window holds, a game while the console's window holds, anything else while its start is
+      // ahead. "First start still ahead" looked past tonight's practice to next week twenty
+      // minutes in, while the Practice plans card read "Today · Run practice" one click away.
       const now = Date.now();
-      const upcoming = events
-        .filter(e => e.status === 'scheduled' && new Date(e.startsAt).getTime() >= now)
-        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-      const nextUp = upcoming[0] ?? null;
+      const nextUp = nextOpenEvent(events, now);
       setNextEvent(nextUp);
       // Calendar-day gap in the org timezone (Toronto), not a rolling-24h count — so a game
       // later *today* reads 0 ("Today"), not 1 ("Tomorrow"), and game-day can actually fire.
@@ -635,16 +637,25 @@ export default function TeamOverviewPage({
    * `useState` initializer does not run again.
    *
    * ⚠ The tick re-renders only when the ANSWER changes, never merely because a minute has passed.
-   * Nothing here touches the network, and it does not run at all unless a game is pending.
+   * Nothing here touches the network, and it does not run at all unless a game or a practice is
+   * pending (a practice joined at stage 6 — its run window is the answer its card reads).
    */
   useEffect(() => {
-    if (!nextEvent || !GAME_EVENT_TYPES.includes(nextEvent.eventType)) return;
+    if (!nextEvent) return;
+    // The practice's card reads the run window off the same clock (stage 0, D7) and — since a
+    // practice in progress stays "next" through its window (stage 6, R7) — its lime would go stale
+    // on an open tab too: the answer that matters is whichever window this event's doors read.
+    const isGame = GAME_EVENT_TYPES.includes(nextEvent.eventType);
+    if (!isGame && nextEvent.eventType !== 'practice') return;
     const shape = toGameDayEventShape(nextEvent);
+    const answer = (ms: number) => (isGame
+      ? isInGameDayWindow(shape, ms)
+      : isInRunWindow(nextEvent.startsAt, ms, nextEvent.endsAt));
     const sync = () => setGameDayNowMs(prev => {
       const now = Date.now();
-      return isInGameDayWindow(shape, prev) === isInGameDayWindow(shape, now) ? prev : now;
+      return answer(prev) === answer(now) ? prev : now;
     });
-    // Immediately (catches the team switch above), then once a minute while the game is pending.
+    // Immediately (catches the team switch above), then once a minute while the event is pending.
     const first = setTimeout(sync, 0);
     const timer = setInterval(sync, 60_000);
     return () => { clearTimeout(first); clearInterval(timer); };

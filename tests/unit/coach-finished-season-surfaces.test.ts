@@ -629,7 +629,7 @@ describe('the look-back layer', () => {
   it('no row of the results or roster shelf is a link', () => {
     for (const [sectionId, until] of [
       ['season-results', 'sectionId="season-roster"'],
-      ['season-roster', '── "The practices you ran"'],
+      ['season-roster', '── "Practices"'],
     ] as const) {
       const shelf = seasonEnd.slice(seasonEnd.indexOf(`sectionId="${sectionId}"`), seasonEnd.indexOf(until));
       assert.ok(shelf.length > 400, `expected to find the ${sectionId} shelf to inspect`);

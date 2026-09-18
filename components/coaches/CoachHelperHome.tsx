@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CalendarClock, ClipboardList, PencilLine } from 'lucide-react';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { tournamentToday, formatInOrgZone } from '@/lib/timezone';
+import { practiceHasPlan } from '@/lib/practice-state';
 import type { RepTeamEvent } from '@/lib/types';
 // Path copied verbatim from the verified sibling `CoachStaffPanel.tsx` — a CSS-module import is
 // invisible to TypeScript, so a wrong depth compiles happily and ships an unstyled screen.
@@ -78,7 +79,11 @@ export default function CoachHelperHome({ orgSlug, teamId, teamName, timeZone }:
           location: e.location ?? null,
           // The plan rides the event, so this needs no second request — and it is the difference
           // between "come back later" and "here is your station", which is the whole of H5.
-          hasPlan: Boolean(e.practicePlan),
+          // ⚠ The hub's ONE definition of "has a plan" — at least one BLOCK (practices
+          // re-evaluation stage 6, R9): a goal typed and abandoned is a real, blockless row, and
+          // keying off the row sent a helper through "Open my station" onto "There's no plan to
+          // run yet". Without a block the card says "The plan isn't written yet", as it should.
+          hasPlan: practiceHasPlan(e),
         }))
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
       setPractices(rows);

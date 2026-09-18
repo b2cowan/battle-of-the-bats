@@ -35,7 +35,7 @@
  */
 
 /**
- * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
+ * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, recordPracticeEventId:string, gameEventId:string,
  *            fundraiserId:string, sponsorId:string, clubBillId:string, finishedTeamId:string,
  *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
  *            evalSessionId:string, opponentKey:string, measurableTypeId:string, rangeTypeId:string, skillTypeId:string,
@@ -302,6 +302,24 @@ export const SCREENS = [
     path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
     ready: '[data-room="practice-plan"][data-room-state="loaded"]',
     interact: dockLibrary,
+  },
+  {
+    // THE RECORD'S FACE (practices re-evaluation stage 6, R1 · R2, 2026-09-18): the same page for a
+    // practice whose run window shut months ago — "How it went" first and writable, the sheet
+    // read-only in its own shape, the toolbar's three buttons and the quiet edit door. A mode of
+    // the plan page, never measured until it was built.
+    id: 'coach-practice-record',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.recordPracticeEventId}`,
+    ready: '[data-room="practice-plan"][data-record="record"]',
+  },
+  {
+    // The record with a row OPEN to read: the block's words as text, its lines, nothing to press.
+    id: 'coach-practice-record-open',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.recordPracticeEventId}`,
+    ready: '[data-room="practice-plan"][data-record="record"]',
+    interact: openFirstBlock,
   },
   // The three library tabs (stage 4, L3 · L9): tables on the list recipe, cards at ≤640 — the 267px
   // phone row was this stage's own defect, so the tabs are measured at every width.

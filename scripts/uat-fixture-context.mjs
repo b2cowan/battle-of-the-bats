@@ -97,6 +97,20 @@ export async function resolveUatContext() {
   if (ev.error) throw new FixtureError(`rep_team_events lookup failed: ${ev.error.message}`);
   if (!ev.data) throw new FixtureError('No "UAT probe practice" event on the active program year.');
 
+  // ── A finished practice on the LIVE season — the record's face (stage 6, R1 · R2) ─────────────
+  // May's written-up practice: a plan, a recap, and a run window that shut months ago, so the plan
+  // page draws it as a record ("How it went" first, the sheet read-only). The sweep had never
+  // measured that face until stage 6 built it; a screen that is a mode of another page is a screen.
+  const recordEv = await db.from('rep_team_events')
+    .select('id').eq('program_year_id', py.data.id).eq('name', 'Practice review — written up').maybeSingle();
+  if (recordEv.error) throw new FixtureError(`record practice lookup failed: ${recordEv.error.message}`);
+  if (!recordEv.data) {
+    throw new FixtureError(
+      'No "Practice review — written up" practice on the active program year, so the record\'s face cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
   // ── The probe GAME, kept live ──────────────────────────────────────────────────────────────
   // ⚠ THIS RESOLVER WRITES. That is unusual for a lookup and is the point: the Game-Day console
   // has no door outside a live window, so a game seeded yesterday resolves to the read-only recap
@@ -374,6 +388,8 @@ export async function resolveUatContext() {
     teamId: team.data.id,
     programYearId: py.data.id,
     practiceEventId: ev.data.id,
+    /** May's written-up practice on the live season — the plan page as a RECORD (stage 6). */
+    recordPracticeEventId: recordEv.data.id,
     gameEventId: game.data.id,
     fundraiserId: fr.data.id,
     sponsorId: sp.data.id,

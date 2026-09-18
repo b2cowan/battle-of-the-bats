@@ -1,44 +1,57 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ClipboardList, Library } from 'lucide-react';
+import { ClipboardList, Printer } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOrg } from '@/lib/org-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import { playerDisplayName } from '@/lib/coach-roster-name';
-import { formatInOrgZone } from '@/lib/timezone';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
-import {
-  blockRotates, computeBlockClocks, formatDuration, resolvePracticePlanTagNames, resolveStationTeaching,
-  type PracticePlan, type PracticePlanBlock, type PracticeStation,
-} from '@/lib/rep-practice-plan';
+import { buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
+import { buildPracticeSheet } from '@/lib/practice-sheet';
+import { practiceHasPlan } from '@/lib/practice-state';
+import { emptyPracticePlan, type PracticePlan } from '@/lib/rep-practice-plan';
+import { HowItWent, NoPlanRecord, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
+import PracticePlanEditor from '../../../../practice/_PracticePlanEditor';
 // ⚠ SIX levels: [eventId] → practices → development → history → [teamId] → teams → coaches.
 // A CSS-module import path is invisible to TypeScript — Phase 2 shipped a wrong depth that
 // typechecked cleanly and rendered a whole room as a build error. Copied from a verified sibling.
 import styles from '../../../../../../coaches.module.css';
 
 /**
- * A past practice plan, READ-ONLY (Practice Plans Phase 3, frame 12).
+ * A past practice plan, READ-ONLY (Practice Plans Phase 3, frame 12) — the RECORD'S FACE
+ * (practices re-evaluation stage 6, owner ruling R5, 2026-09-18).
  *
  * ⚠ **A LOOK-BACK PAGE, RULED EXPLICITLY** (owner, 2026-08-01, §10.8 ruling 1; re-approved with
  * P3 C3, 2026-08-16). It is the one thing in Practice Plans that may be handed a season, and it is
  * enumerated in `HISTORY_PAGES` in `tests/unit/coach-history-endpoint-guard.test.ts` — the only
  * page besides Season's End that reads `?year=` off the URL.
  *
- * ⚠ **Reached from exactly TWO lists, and from nowhere else.** "Practice review" (was "Practices you've run") inside the
- * Development report (the original caller, which passes no year because the report is always the
- * team's working season), and the practices section on a finished season's Season's End page
- * (which passes both the year and `from=season-end`, so the back link returns there). The
- * schedule's practice-plan section stays hidden in a completed season exactly as 1b ruled — neither
- * door reopens that one.
+ * ⚠ **Reached from the finished season's shelf — "Practices" on Season's End (which passes both
+ * the year and `from=season-end`, so the back link returns there).** Insights → Practice review used
+ * to send a LIVE-season row here too; since stage 6 (R5) it opens the practice's own page, which IS
+ * the record's face for a finished practice — so a working-season practice has one face, not two,
+ * and this page serves finished seasons only. The schedule's practice-plan section stays hidden in
+ * a completed season exactly as 1b ruled.
  *
- * ⚠ **Every control is GONE, not disabled.** No edit, no delete, no "Run practice", no "Save as
- * template", no drill picker, no promotion. There is no write path to this page's data at all: the
- * route behind it is GET-only.
+ * ⚠ **ONE DOCUMENT, NOT A THIRD RENDERER (R5).** This page used to draw its own document — its own
+ * labels ("What this practice was for" · "Who was assigned" · "On the night"), every station as a
+ * stacked card with all five fields, a station with no words of its own printing the BLOCK's
+ * words again, no grid, no rounds, no "Whole team", no block kit, 2,196px for a circuit the sheet
+ * draws in 1,284. It now mounts the SHEET in its read mode — the same rows-that-open-to-read face
+ * the plan page shows for a finished practice and an assistant sees on a live one — with "How it
+ * went" first. What was missing from the record is here because the record IS the sheet.
+ *
+ * ⚠ **Every write control is GONE, not disabled.** No edit door, no delete, no "Run practice", no
+ * "Save as template", no drill picker, no promotion. There is no write path to this page's data at
+ * all: the route behind it is GET-only. "How it went" is READ here for everyone, the head coach
+ * included — a closed season is a record, and writing into it is the one thing the whole ruling
+ * forbids. Print the sheet is the one control: paper is not a write.
  *
  * ⚠ **It shows what the coach could see AT THE TIME.** Every word renders from the plan's own
  * jsonb, which copied the drill's text when the drill was added — so editing that drill since
  * cannot rewrite what June's practice says. That property is what makes an honest archive cheap,
- * and it is Phase 2's copy-on-add paying for itself.
+ * and it is Phase 2's copy-on-add paying for itself. (The staff/equipment libraries are the one
+ * deliberate exception — see the route's header.)
  *
  * ⚠ **The container rule:** the unit of work is every page reachable from the door, never the door
  * alone. This page IS the bottom — it has no level down for a defect to hide on — and its one
@@ -61,90 +74,15 @@ type LoadState = {
   season: { programYearId: string; name: string; isReadOnly: boolean };
 };
 
-const fmtDate = (iso: string) =>
-  formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-const fmtTime = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit', hour12: true });
-
-// ── Sub-components at MODULE level (never in a render body). ─────────────────
-
-function ReadField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className={styles.ppField}>
-      <span className={styles.ppFieldLabel}>{label}</span>
-      {children}
-    </div>
-  );
-}
-
-/**
- * One station, as a record.
- *
- * ⚠ The teaching resolves through the SAME `resolveStationTeaching` the live editor, the run
- * screen and the printed sheet use — so a plan written before the drill library existed (its
- * teaching on the BLOCK) reads correctly here too, for ever. There is no "convert my old plans"
- * story and none is wanted.
- */
-function ReadStation({
-  station, block, nameOf,
-}: {
-  station: PracticeStation;
-  block: PracticePlanBlock;
-  nameOf: (id: string) => string | null;
-}) {
-  const { description, goal, coachingPoints } = resolveStationTeaching(station, block);
-  const players = (station.playerIds ?? []).map(nameOf).filter(Boolean) as string[];
-  return (
-    <div className={styles.ppStation}>
-      <div className={styles.ppStationHead}>
-        <span className={styles.ppStationNameRead}>{station.name || '(untitled station)'}</span>
-        {station.drillId && (
-          <span className={styles.ppFromDrill}>
-            <Library size={12} aria-hidden /> From your drills
-            {station.drillTags?.length ? ` · ${station.drillTags.join(' · ')}` : ''}
-          </span>
-        )}
-      </div>
-      <div className={styles.ppStationBody}>
-        {description && <ReadField label="What you're doing"><p className={styles.ppReadTxt}>{description}</p></ReadField>}
-        {goal && <ReadField label="What you're watching for"><p className={styles.ppReadTxt}>{goal}</p></ReadField>}
-        {coachingPoints.length > 0 && (
-          <ReadField label="Coaching points">
-            <ol className={styles.ppReadPoints}>{coachingPoints.map((p, i) => <li key={i}>{p}</li>)}</ol>
-          </ReadField>
-        )}
-        {station.setup && <ReadField label="Setup"><p className={styles.ppReadTxt}>{station.setup}</p></ReadField>}
-        {station.equipment?.length ? (
-          <ReadField label="Equipment">
-            <div className={styles.ppChipWrap}>
-              {station.equipment.map(e => <span key={e} className={styles.ppChip}>{e}</span>)}
-            </div>
-          </ReadField>
-        ) : null}
-        {/* ⚠ **"Who was ASSIGNED", never "who ran it" or "who was at it."** An earlier draft used
-            those, defending the past tense on the grounds that the writing happened in the past.
-            That conflates two different things: this page is a record of what the coach PLANNED,
-            and the product has never recorded who actually turned up at a station or whether the
-            plan was followed (D4 — there are still no "we ran it" ticks anywhere in the schema).
-            "Ran" is the literally forbidden verb in §4, and "was at it" would assert a child's
-            attendance the data cannot support. The live editor says "Who runs it"; a record of it
-            says "who was assigned". */}
-        {station.staff?.length ? (
-          <ReadField label="Who was assigned"><p className={styles.ppReadTxt}>{station.staff.join(', ')}</p></ReadField>
-        ) : null}
-        {players.length > 0 && (
-          <ReadField label="Who was assigned"><p className={styles.ppReadTxt}>{players.join(', ')}</p></ReadField>
-        )}
-        {station.note && <ReadField label="On the night"><p className={styles.ppReadTxt}>{station.note}</p></ReadField>}
-      </div>
-    </div>
-  );
-}
+/** Nothing on this page changes the plan; the editor's `onChange` is required and never called. */
+const NEVER_CHANGES = () => {};
 
 export default function CoachPastPracticePlanPage({
   params,
 }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> }) {
   const { orgSlug, teamId, eventId } = use(params);
-  const { loading: ctxLoading } = useCoaches();
+  const { assignments, loading: ctxLoading } = useCoaches();
+  const { currentOrg } = useOrg();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   // ⚠ No season lookup from the nav: the route below resolves the season and hands it back on the
   // payload, which is the only honest source — this page renders a record that may belong to a
@@ -154,8 +92,8 @@ export default function CoachPastPracticePlanPage({
   /**
    * ⚠ **THE ONE PAGE BESIDE SEASON'S END THAT READS A YEAR** (P3 C3), and it is enumerated in
    * `HISTORY_PAGES` in the guard test with the three questions answered. It reads one because its
-   * second caller can hand it one: Season's End may be showing a year the team is no longer on,
-   * and a row opened from there names an event outside the working season.
+   * caller can hand it one: Season's End may be showing a year the team is no longer on, and a row
+   * opened from there names an event outside the working season.
    */
   const yearParam = searchParams.get('year');
   /**
@@ -173,6 +111,7 @@ export default function CoachPastPracticePlanPage({
   const [data, setData] = useState<LoadState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   /**
    * ⚠⚠ **A RUN GENERATION, because this page can now cross SEASONS as well as events** (`/review`
@@ -220,20 +159,43 @@ export default function CoachPastPracticePlanPage({
   }, [orgSlug, teamId, eventId, yearParam]);
   useEffect(() => { load(); }, [load]);
 
-  const nameOf = useCallback((id: string): string | null => {
-    const p = data?.roster.find(r => r.id === id);
-    return p ? playerDisplayName(p) : null;
-  }, [data]);
+  // Team-resolved PDF settings (team look → club look → defaults) — the same read the plan page
+  // makes; the team's paper is not season-scoped. Optional; the sheet falls back to defaults.
+  // Cleanup-guarded so a slow response for a previous team can never land as this team's branding.
+  useEffect(() => {
+    let cancelled = false;
+    void fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`)
+      .then(s => { if (!cancelled) setPdfSettings(s); });
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
 
-  // Resolved to CURRENT tag names (mig 266) — see `resolvePracticePlanTagNames` and the route's
-  // header note. Deliberate: this is the one place this page's own "editing since cannot rewrite
-  // what June's practice says" rule doesn't hold for staff/equipment specifically.
-  const plan = data?.plan
-    ? resolvePracticePlanTagNames(data.plan, data.staffTags ?? [], data.equipmentTags ?? [])
-    : null;
-  const clocks = plan ? computeBlockClocks(plan.blocks, data?.event.startsAt, data?.event.endsAt ?? null) : [];
+  const plan = data?.plan ?? emptyPracticePlan();
+  // The hub's one definition of "has a plan" — at least one block (stage 0); a goal-only row is a
+  // record with no plan, exactly as the plan page reads it.
+  const hasBlocks = practiceHasPlan({ practicePlan: data?.plan ?? null });
+  const teamName = assignments.find(a => a.teamId === teamId)?.teamName ?? teamId;
+
+  /** "Print the sheet" — the record on paper, through the ONE builder the plan page prints through. */
+  async function handlePrint() {
+    if (!data) return;
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+    };
+    await downloadPracticeSheet(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'practice-plan', scope: data.event.name || 'practice' }, 'pdf'),
+      buildPracticeSheet({
+        plan, event: data.event, teamName,
+        roster: data.roster,
+        // The read route never fetches focus areas for a finished season: the section is absent.
+        goals: [], canViewFocus: false,
+        staffTags: data.staffTags, equipmentTags: data.equipmentTags,
+        planTagIds: data.tags.map(t => t.id), focusTags: data.tags, settings,
+      }),
+    );
+  }
 
   /* ⚠ THE ONLY LINK OUT, and it goes back to whichever list sent the coach here, carrying the
      season. Hard-coding one destination was right while there was one caller and wrong the day
@@ -268,117 +230,61 @@ export default function CoachPastPracticePlanPage({
       ) : error || !data ? (
         <p className={styles.errorText} role="alert">{error || 'Could not open that plan.'}</p>
       ) : (
-        <>
-          {/* Page-header ruling 2026-08-11: when and where this practice was, and what it was
-              tagged, are facts ABOUT the practice — they lead the record instead of hanging under
-              the title. */}
-          <div className={styles.pageSummaryStrip}>
-            <span>
-              {[
-                data.event.startsAt ? `${fmtDate(data.event.startsAt)} · ${fmtTime(data.event.startsAt)}` : null,
-                [data.event.location, data.event.fieldNumber].filter(Boolean).join(', ') || null,
-              ].filter(Boolean).join(' · ')}
-            </span>
-            {data.tags.length > 0 && (
-              <span className={styles.tagReadRow}>
-                {data.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
-              </span>
-            )}
-          </div>
-
-          {!plan ? (
-            <p className={styles.detailPlaceholder}>No plan was written for this practice.</p>
-          ) : (
-            <>
-              {/* The record reads what the sheet printed: the goal, the coach's description
-                  (2026-09-14) and the equipment. The focus section is not here by design — the
-                  read route never fetches goals for a finished season. */}
-              {(plan.goal || plan.description || plan.equipment?.length) ? (
-                <div className={styles.ppHeaderCard}>
-                  {plan.goal && (
-                    <ReadField label="What this practice was for"><p className={styles.ppReadTxt}>{plan.goal}</p></ReadField>
-                  )}
-                  {plan.description && (
-                    <ReadField label="About this practice"><p className={`${styles.ppReadTxt} ${styles.ppReadPre}`}>{plan.description}</p></ReadField>
-                  )}
-                  {plan.equipment?.length ? (
-                    <ReadField label="Equipment">
-                      <div className={styles.ppChipWrap}>
-                        {plan.equipment.map(e => <span key={e} className={styles.ppChip}>{e}</span>)}
-                      </div>
-                    </ReadField>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {plan.blocks.map((block, i) => {
-                const clock = clocks[i];
-                const stations = block.stations ?? [];
-                const blockPlayers = (block.playerIds ?? []).map(nameOf).filter(Boolean) as string[];
-                return (
-                  <div key={block.id} className={styles.ppBlock}>
-                    <div className={styles.ppBlockHead}>
-                      <div className={styles.ppBlockTitleWrap}>
-                        <span className={styles.ppStationNameRead}>{block.title || `Block ${i + 1}`}</span>
-                        <span className={styles.ppBlockClock}>
-                          {[
-                            formatDuration(block.duration),
-                            clock ? `${clock.startLabel}${clock.endLabel ? `–${clock.endLabel}` : ''}` : null,
-                          ].filter(Boolean).join(' · ')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.ppBlockBody}>
-                      {block.description && <ReadField label="What you're doing"><p className={styles.ppReadTxt}>{block.description}</p></ReadField>}
-                      {block.goal && <ReadField label="What you're watching for"><p className={styles.ppReadTxt}>{block.goal}</p></ReadField>}
-                      {block.coachingPoints?.length ? (
-                        <ReadField label="Coaching points">
-                          <ol className={styles.ppReadPoints}>{block.coachingPoints.map((p, j) => <li key={j}>{p}</li>)}</ol>
-                        </ReadField>
-                      ) : null}
-                      {block.staff?.length ? (
-                        <ReadField label="Who was assigned"><p className={styles.ppReadTxt}>{block.staff.join(', ')}</p></ReadField>
-                      ) : null}
-                      {blockPlayers.length > 0 && (
-                        <ReadField label="Who was assigned"><p className={styles.ppReadTxt}>{blockPlayers.join(', ')}</p></ReadField>
-                      )}
-
-                      {/* The groups as they were drawn that night — part of what the coach wrote,
-                          so part of the record. Rendered only when the reader may see the roster. */}
-                      {blockRotates(block) && (block.rotation?.groups.length ?? 0) > 0 && (
-                        <ReadField label="Groups">
-                          <div className={styles.ppChipWrap}>
-                            {block.rotation!.groups.map(g => {
-                              const names = g.playerIds.map(nameOf).filter(Boolean) as string[];
-                              return (
-                                <span key={g.id} className={styles.ppChip}>
-                                  {g.name}{names.length > 0 ? ` — ${names.join(', ')}` : ''}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        </ReadField>
-                      )}
-
-                      {stations.map(station => (
-                        <ReadStation key={station.id} station={station} block={block} nameOf={nameOf} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </>
+        <div className={styles.ppSheetCol}>
+          {/* The one control a record on a closed season has: paper. Nothing to run (the field is
+              a live team's), nothing to save from, nothing to edit. Absent, like the plan page's
+              toolbar, when there is no plan to print. */}
+          {hasBlocks && (
+            <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
+              <button type="button" className={styles.btnSecondary} onClick={handlePrint}>
+                <Printer size={14} aria-hidden /> Print the sheet
+              </button>
+            </div>
           )}
 
-          {/* "How it went" — the one thing on this page that describes what actually happened, and
-              it earns that because the coach wrote it. Silence is stated, never rendered blank. */}
-          <div className={styles.ppRecorded}>
-            <h2 className={styles.ppRecordedTitle}>How it went</h2>
-            {data.recap
-              ? <p className={styles.ppReadTxt}>{data.recap}</p>
-              : <p className={styles.ppRecapNone}>Nothing written down for this one.</p>}
+          {/* ── THE SHEET, as the record's face (stage 6, R2 · R5) ── the head as a fact (the year
+              matters here, and where it was), the recap first and READ, then the sheet read-only in
+              its own shape — or, with no plan, the reader's one sentence. */}
+          <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded" data-record="closed-season">
+            <div className={styles.ppDocHead}>
+              <div className={styles.ppDocWhen}>
+                <PracticeWhenLine
+                  startsAt={data.event.startsAt} endsAt={data.event.endsAt} plan={plan} record withYear
+                  where={[data.event.location, data.event.fieldNumber].filter(Boolean).join(', ') || null}
+                />
+              </div>
+            </div>
+
+            <HowItWent first recap={data.recap ?? ''} />
+
+            {hasBlocks ? (
+              <PracticePlanEditor
+                key={`${eventId}:${yearParam ?? ''}`}
+                plan={plan}
+                onChange={NEVER_CHANGES}
+                roster={data.roster}
+                // The read route never fetches focus areas or attendance for a finished season.
+                goals={[]}
+                canViewFocus={false}
+                attendance={[]}
+                canViewAttendance={false}
+                drills={[]}
+                focusTags={data.tags}
+                planTagIds={data.tags.map(t => t.id)}
+                // Present so the About fold can NAME the tags (a read-only chip list); never called.
+                onChangePlanTags={NEVER_CHANGES}
+                staffTags={data.staffTags}
+                equipmentTags={data.equipmentTags}
+                eventStartsAt={data.event.startsAt}
+                eventEndsAt={data.event.endsAt}
+                readOnly
+                record
+              />
+            ) : (
+              <NoPlanRecord />
+            )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

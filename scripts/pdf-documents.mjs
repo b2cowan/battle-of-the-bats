@@ -960,7 +960,12 @@ export async function buildDocuments() {
     id: 'coach-practice-run-sheet',
     label: 'Practice run sheet',
     entry: 'downloadPracticeSheet',
-    screens: ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx'],
+    // The plan page (live, and as a record) and the closed-season reader print the SAME document
+    // through one builder (`lib/practice-sheet.ts`, stage 6) — two screens, one fixture.
+    screens: [
+      'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx',
+      'app/[orgSlug]/coaches/teams/[teamId]/history/development/practices/[eventId]/page.tsx',
+    ],
     // The turned grid's headings are the coach's STATION names (P1) — read back as text, whole, on
     // the finished page. `columns: 'customer'` would be the honest label for coach-typed headings,
     // but this document never prints the drop notice (it turns sideways instead), so the fixed

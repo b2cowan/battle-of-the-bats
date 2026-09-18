@@ -10266,9 +10266,22 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppLibraryFoot { padding: 0.4rem 0.6rem 0.5rem; border-top: 1px solid var(--home-line, var(--border-2)); }
 .ppLibraryFoot .ppAddInline { display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; min-height: var(--tap-min, 44px); }
 
-/* The foot — "How it went" waits for the practice (D7); the line says so. */
-.ppDocNote { margin: 0.9rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); font-style: italic; }
+/* The foot — "How it went" once the practice has started (D7). ⚰ `.ppDocNote`, the italic line
+   that promised the box on every unstarted plan, went with stage 6 (R3): a page states what it
+   has, not what it will have. */
 .ppDocFoot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--home-line, var(--border-2)); }
+/* ── THE RECORD'S FACE (practices re-evaluation stage 6, owner rulings R1 · R2 · R5, 2026-09-18) ──
+   The same "How it went" block, FIRST — under the sheet's head, above the goal — on a finished
+   practice's page and on the closed-season reader: a rule under it where the foot's is above. */
+.ppDocRecap { margin: 0.2rem 0 0.9rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--home-line, var(--border-2)); }
+/* A record with no plan: one sentence, the reader's own, in the body's own size. */
+.ppRecordNone { margin: 0.9rem 0 0.2rem; font-size: var(--type-body); font-style: italic; color: var(--text-secondary); }
+/* The record's quiet way into the editor — a text link at the toolbar's right end; on a phone it
+   takes its own tap-height line under the three buttons. */
+.ppEditPlanLink { display: inline-flex; align-items: center; gap: 0.3rem; min-height: var(--tap-min, 44px); font-size: var(--type-support); font-weight: 600; }
+/* The rotation line READ (stage 6): a fact, not a chip and a box — the same words, the same row. */
+.ppRotStripRead { margin: 0; }
+.ppRotFact { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; color: var(--text-primary); }
 
 /* 768 = the touch band (tablet-band ruling §115): every field on the sheet takes the tap floor —
    the pickers inside the About fold and the template's title block, and the "Recorded here" links. */
@@ -10316,6 +10329,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .ppDocHead { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
   .ppDocWhenDay { display: block; }
   .ppDocWhenSep { display: none; }
+  /* The record's edit door takes its own line under the three buttons (stage 6, frame 147). */
+  .ppEditPlanLink { flex-basis: 100%; margin-left: 0; }
   /* 5.75rem: the reorder pair at the tap floor is 88px wide and sits flush to the spine (its
      negative right margin cancels the gutter's padding); "12:00 p.m." at the label size measures
      66px and had 5rem until the pair arrived (owner, 2026-09-15) — the block gives up 12px for it

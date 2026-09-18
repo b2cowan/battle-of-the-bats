@@ -1,6 +1,22 @@
 {
-  "generated": "2026-09-17T16:37:29.153Z",
+  "generated": "2026-09-18T15:15:34.713Z",
   "entries": {
+    "coach-practice-record|768|tap-floor|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-record|768|control-width|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-practice-record-open|768|tap-floor|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-record-open|768|control-width|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
     "coach-development-metric-new|768|tap-floor|button·Help: Skills & Goals": {
       "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
       "detail": "34px tall (floor 44)"

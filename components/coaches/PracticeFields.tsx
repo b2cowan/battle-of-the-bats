@@ -1,6 +1,7 @@
 'use client';
 import { X } from 'lucide-react';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
+import { mergedTagNames } from '@/lib/rep-practice-plan';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -77,6 +78,9 @@ export function CoachingPointsField({
   noun: string;
 }) {
   const current = points ?? [];
+  // Read mode is a FACE, not a greyed box (stage 6, R2): the points as the list the field screen
+  // and the paper print them, and nothing at all when there are none.
+  if (readOnly) return <ReadPoints points={current} />;
   return (
     /* ⚠ A `<div>`, not the usual `<label>` wrapper (owner catch, 2026-09-15): a native `<label>`
        with TWO labelable children (this field's remove button, plus the textarea) forwards a click
@@ -101,6 +105,70 @@ export function CoachingPointsField({
         </span>
       )}
     </div>
+  );
+}
+
+// ── The READ face (practices re-evaluation stage 6, owner ruling R2, 2026-09-18) ──────────────
+// A viewer who cannot write, and everyone on a finished practice's record, reads the same five
+// fields as TEXT — the label, then the words — never as disabled inputs (a stack of greyed boxes
+// reads as broken on a phone, and a record is not a form). The same face a drill-backed station
+// has always shown for its locked words (owner ruling 2026-08-01), promoted from the editor's
+// private `DrillFacts` to the shared module so the modal, the flattened station, the drill sheet
+// and the closed-season reader all read one shape. A field with nothing in it is ABSENT.
+
+/** A written line, under its label. Nothing when there is nothing. */
+export function ReadField({ label, text }: { label: string; text?: string | null }) {
+  if (!text?.trim()) return null;
+  return (
+    <div className={styles.ppField}>
+      <FieldLabel>{label}</FieldLabel>
+      <p className={styles.ppReadTxt}>{text}</p>
+    </div>
+  );
+}
+
+/** Coaching points as the numbered list the field screen and the paper print. Nothing when none. */
+export function ReadPoints({ points }: { points?: readonly string[] | null }) {
+  const shown = (points ?? []).filter(p => p.trim());
+  if (shown.length === 0) return null;
+  return (
+    <div className={styles.ppField}>
+      <FieldLabel>Coaching points</FieldLabel>
+      <ol className={styles.ppReadPoints}>
+        {shown.map((point, i) => <li key={i}>{point}</li>)}
+      </ol>
+    </div>
+  );
+}
+
+/** Kit as chips — the resolved names, never ids. Nothing when the list is empty. */
+export function ReadChips({ label, names }: { label: string; names: readonly string[] }) {
+  if (names.length === 0) return null;
+  return (
+    <div className={styles.ppFieldRow}>
+      <FieldLabel>{label}</FieldLabel>
+      <div className={styles.ppChipWrap}>
+        {names.map(n => <span key={n} className={styles.ppChip}>{n}</span>)}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The five teaching fields, READ — what you're doing · what you're watching for · coaching points
+ * · setup · equipment, in the list's own order, each absent when empty. Kit can be legacy NAMES,
+ * library IDS (mig 272 drills store ids only), or mid-migration both — shown as the editor shows
+ * every such list (`mergedTagNames`'s rule, applied here), never written back.
+ */
+export function TeachingFacts({ values, equipmentTags }: { values: TeachingValues; equipmentTags: readonly PickableTag[] }) {
+  return (
+    <>
+      <ReadField label="What you're doing" text={values.description} />
+      <ReadField label="What you're watching for" text={values.goal} />
+      <ReadPoints points={values.coachingPoints} />
+      <ReadField label="Setup" text={values.setup} />
+      <ReadChips label="Equipment" names={mergedTagNames(values.equipment ?? undefined, values.equipmentTagIds ?? undefined, equipmentTags)} />
+    </>
   );
 }
 
@@ -157,6 +225,9 @@ export function TeachingFields({
 }) {
   const door = (id: 'points' | 'setup' | 'equipment'): TeachingDoor => (doors ? doors(id) : OPEN_DOOR);
   const points = door('points'), setup = door('setup'), equipment = door('equipment');
+  // Read mode is the FACE above, not this form with its boxes greyed (stage 6, R2): the doors do
+  // not apply — a field with words shows, a field without is absent.
+  if (readOnly) return <TeachingFacts values={values} equipmentTags={equipmentTags} />;
   return (
     <>
       <label className={styles.ppField}>

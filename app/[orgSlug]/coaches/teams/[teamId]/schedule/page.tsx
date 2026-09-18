@@ -28,6 +28,8 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import { MapPin, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
+import { practiceHasPlan } from '@/lib/practice-state';
+import { canWritePracticePlans } from '@/lib/coach-capabilities';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -2801,11 +2803,15 @@ export default function CoachesSchedulePage({
             {selectedEvent.eventType === 'practice' && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Practice plan</h4>
-                {selectedEvent.practicePlan ? (
+                {/* "Has a plan" is the hub's ONE definition — at least one block (stage 0; stage 6
+                    applied it here): a goal typed and abandoned is a real, blockless row, and it
+                    read "0 blocks — …" with an Open door on this panel while the hub's row said
+                    "No plan written". */}
+                {practiceHasPlan(selectedEvent) ? (
                   <>
                     <p className={styles.formHint}>
-                      {summarizePracticePlan(selectedEvent.practicePlan)}
-                      {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
+                      {summarizePracticePlan(selectedEvent.practicePlan!)}
+                      {selectedEvent.practicePlan!.goal ? ` — ${selectedEvent.practicePlan!.goal}` : ''}
                     </p>
                     <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
                       <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
@@ -2814,7 +2820,13 @@ export default function CoachesSchedulePage({
                     </div>
                   </>
                 ) : (
-                  page.capabilities?.isHeadCoach ? (
+                  /* The door follows the grant the plan page itself writes on — Schedule: View +
+                     edit (`canWritePracticePlans`, staff-access pass 2) — never "head coach"
+                     (practices re-evaluation stage 6, owner ruling R8, 2026-09-18): an assistant
+                     with View + edit read "No plan yet." here and "Plan this practice" on the hub.
+                     A viewer gets the plan page's own sentence, so the panel says WHY and not just
+                     "no". */
+                  page.capabilities && canWritePracticePlans(page.capabilities) ? (
                     <>
                       <p className={styles.formHint}>
                         No plan yet — set out the blocks, stations and groups for this practice.
@@ -2824,10 +2836,9 @@ export default function CoachesSchedulePage({
                       </Link>
                     </>
                   ) : (
-                    // Writing a plan is the head coach's today (pass 2 of the staff access plan
-                    // moves it onto "Schedule: View + edit"); a door onto a builder that refuses
-                    // is not offered to anyone else.
-                    <p className={styles.formHint}>No plan yet.</p>
+                    <p className={styles.formHint}>
+                      No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach.
+                    </p>
                   )
                 )}
               </div>

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   RUN_WINDOW_MS, practiceHasPlan, isInRunWindow, practicePlanState,
   practiceFitLabel, practiceLengthMinutes, practiceRecapLine,
-  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted,
+  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted, practiceIsRecord,
 } from '../../lib/practice-state.ts';
 import { emptyPracticePlan, sanitizePracticePlan, summarizePracticePlan, type PracticePlan } from '../../lib/rep-practice-plan.ts';
 
@@ -173,5 +173,69 @@ describe('the run window has BOTH edges — three hours after the END, not the s
     const planned = planOf([{ title: 'Camp', duration: { minutes: 240 } }]);
     assert.equal(practicePlanState({ practicePlan: planned, startsAt: at(-3.5 * H), endsAt: at(0.5 * H) }, NOW), 'run');
     assert.equal(practicePlanState({ practicePlan: planned, startsAt: at(-3.5 * H) }, NOW), 'planned');
+  });
+});
+
+// ── Stage 6 · Afterwards & who sees what (owner rulings R1 · R2, 2026-09-18) ────────────────────
+
+describe('practiceIsRecord (R1) — a record from the instant the run window CLOSES, and never before', () => {
+  it('before the start, during, and inside the trailing three hours it is NOT a record', () => {
+    const start = at(-1 * H), end = at(0.5 * H);
+    assert.equal(practiceIsRecord(at(2 * H), NOW), false, 'still ahead');
+    assert.equal(practiceIsRecord(start, NOW, end), false, 'in progress');
+    assert.equal(practiceIsRecord(start, NOW + 0.5 * H, end), false, 'just ended');
+    assert.equal(practiceIsRecord(start, NOW + 3.5 * H, end), false, 'exactly three hours after the end — the window\'s last instant is still live');
+  });
+  it('one instant after the window shuts it IS a record — the same instant Run practice goes plain', () => {
+    const start = at(-1 * H), end = at(0.5 * H);
+    const shut = NOW + 3.5 * H + 1000;
+    assert.equal(practiceIsRecord(start, shut, end), true);
+    assert.equal(isInRunWindow(start, shut, end), false, 'the two predicates share the one edge');
+    assert.equal(practiceIsRecord(start, NOW + 30 * 24 * H, end), true, 'and a month later, still');
+  });
+  it('with no end, the boundary is three hours after the START', () => {
+    const start = at(-3 * H);
+    assert.equal(practiceIsRecord(start, NOW), false, 'exactly three hours after the start — live');
+    assert.equal(practiceIsRecord(start, NOW + 1000), true);
+    assert.equal(practiceIsRecord(start, NOW + 1000, null), true);
+  });
+  it('an end at or before the start is no end — the start rules', () => {
+    const start = at(-3 * H);
+    assert.equal(practiceIsRecord(start, NOW + 1000, at(-4 * H)), true, 'an end before the start');
+    assert.equal(practiceIsRecord(start, NOW + 1000, start), true, 'an end equal to the start');
+    assert.equal(practiceIsRecord(start, NOW - 1000, at(-4 * H)), false);
+  });
+  it('a missing or unreadable start is never a record (nothing to be a record OF)', () => {
+    assert.equal(practiceIsRecord(null, NOW), false);
+    assert.equal(practiceIsRecord(undefined, NOW), false);
+    assert.equal(practiceIsRecord('not a date', NOW), false);
+    assert.equal(practiceIsRecord(at(-10 * H), NOW, 'not a date'), true, 'an unreadable END is no end; the start rules');
+  });
+  it('the three facts stay three: started · in the window · a record', () => {
+    // A 7:00–8:30 p.m. practice, read across its evening.
+    const start = at(0), end = at(1.5 * H);
+    const reads = [
+      [-4 * H, false, false, false],   // 3 p.m. — ahead, outside
+      [-2 * H, false, true, false],    // 5 p.m. — the window opens three hours early
+      [0, true, true, false],          // 7:00 — started
+      [1 * H, true, true, false],      // 8:00 — in progress
+      [4.5 * H, true, true, false],    // 11:30 — the window's last instant
+      [4.5 * H + 60_000, true, false, true], // 11:31 — a record
+    ] as const;
+    for (const [offset, started, inWindow, record] of reads) {
+      const now = NOW + offset;
+      assert.equal(practiceStarted(start, now), started, `started at +${offset / H}h`);
+      assert.equal(isInRunWindow(start, now, end), inWindow, `in window at +${offset / H}h`);
+      assert.equal(practiceIsRecord(start, now, end), record, `record at +${offset / H}h`);
+    }
+  });
+});
+
+describe('practicePlannedLabel on a record (R2) — a fact, never a promise', () => {
+  it('"Nothing planned" without its "yet"; every other reading unchanged', () => {
+    assert.equal(practicePlannedLabel(practicePlanFit(emptyPracticePlan(), null), { record: true }), 'Nothing planned');
+    assert.equal(practicePlannedLabel(practicePlanFit(emptyPracticePlan(), null)), 'Nothing planned yet');
+    assert.equal(practicePlannedLabel(practicePlanFit(planOf([{ title: 'A', duration: { minutes: 15 } }]), null), { record: true }), '15 min planned');
+    assert.equal(practicePlannedLabel(practicePlanFit(emptyPracticePlan(), 90), { record: true }), '0 of 90 min planned');
   });
 });

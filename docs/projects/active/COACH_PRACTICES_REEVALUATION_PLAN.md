@@ -1,6 +1,6 @@
 # Practices — holistic re-evaluation: the stage ladder, and stage 0 · Arrive
 
-**Plan · 15 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled, built, walked (§188 complete) and committed `6cff92e8` · stage 2 · The block RULED 2026-09-15 (D1–D11 all as drawn, §5.0) and BUILT ON DEV the same day (§5.10) · §190 WALK COMPLETE (§5.11) and COMMITTED `d52085a2` · stage 3 · Stations and the rotation RULED 2026-09-15 (D1–D3 · D5–D8 as drawn, D4 revised — §6.0) · BUILT ON DEV 2026-09-15 (§6.7 · §6.8) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · COMMITTED `7e2af89d` 2026-09-16 (stage 3 + the groups room + D13/D14, one commit) · the groups-board revision (§6.9, D9–D12) drawn, RULED B 2026-09-16 and BUILT ON DEV the same evening (the Groups ROOM — WALKED by the owner 2026-09-16 — hub QA walk · 3 part J) · D13–D14 (§6.11: the split on "+ Stations", the grid as a starting point) drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (parts K · L) · stage 4 · The library **DRAWN 2026-09-16 on the hub ("4 · The library" tab) · RULED 2026-09-16 (owner, in chat: "I approve everything as designed" — L1–L8 as drawn, §7.0) · L9 · Circuits added on the ruling and ruled in words the same day (§7.7) · BUILT ON DEV 2026-09-16 (§7.8 — L1–L8 as drawn, L9 in words; ONE migration, 302, prod-owed) · COMMITTED `34bb88f5` 2026-09-16 (a private index; the two stage-4 prompts deleted with it) · §195 WALK OWED** · **stage 5 · Paper & the field DRAWN 2026-09-17 on the hub ("5 · Paper & the field" tab, P1–P9, §8) · RULED 2026-09-17 (all nine as drawn, §8.0) · NOT BUILT — build prompt [COACH_PRACTICES_STAGE5_BUILD_PROMPT.md](COACH_PRACTICES_STAGE5_BUILD_PROMPT.md)** (stage 3's build prompt: [COACH_PRACTICES_STAGE3_BUILD_PROMPT.md](COACH_PRACTICES_STAGE3_BUILD_PROMPT.md))**
+**Plan · 15 September 2026 · stage 0 ruled, built, walked (§186 passed 24/24) and committed `b3c97830` · stage 1 ruled, built, walked (§188 complete) and committed `6cff92e8` · stage 2 · The block RULED 2026-09-15 (D1–D11 all as drawn, §5.0) and BUILT ON DEV the same day (§5.10) · §190 WALK COMPLETE (§5.11) and COMMITTED `d52085a2` · stage 3 · Stations and the rotation RULED 2026-09-15 (D1–D3 · D5–D8 as drawn, D4 revised — §6.0) · BUILT ON DEV 2026-09-15 (§6.7 · §6.8) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · COMMITTED `7e2af89d` 2026-09-16 (stage 3 + the groups room + D13/D14, one commit) · the groups-board revision (§6.9, D9–D12) drawn, RULED B 2026-09-16 and BUILT ON DEV the same evening (the Groups ROOM — WALKED by the owner 2026-09-16 — hub QA walk · 3 part J) · D13–D14 (§6.11: the split on "+ Stations", the grid as a starting point) drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (parts K · L) · stage 4 · The library **DRAWN 2026-09-16 on the hub ("4 · The library" tab) · RULED 2026-09-16 (owner, in chat: "I approve everything as designed" — L1–L8 as drawn, §7.0) · L9 · Circuits added on the ruling and ruled in words the same day (§7.7) · BUILT ON DEV 2026-09-16 (§7.8 — L1–L8 as drawn, L9 in words; ONE migration, 302, prod-owed) · COMMITTED `34bb88f5` 2026-09-16 (a private index; the two stage-4 prompts deleted with it) · §195 WALK OWED** · **stage 5 · Paper & the field DRAWN 2026-09-17 on the hub ("5 · Paper & the field" tab, P1–P9, §8) · RULED 2026-09-17 (all nine as drawn, §8.0) · BUILT ON DEV and COMMITTED `fe2d8244` 2026-09-17 · §201 WALK COMPLETE 2026-09-17 · P10 (the field has no clock; Run practice on any day; the now-marker gone) RULED, BUILT and COMMITTED `ab4e6f4a` 2026-09-17 (§8.8; §202 walk owed)** · **stage 6 · Afterwards & who sees what DRAWN 2026-09-17 on the hub ("6 · Afterwards & who sees what" tab, R1–R9, notes 135–167, §9) · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn, §9.0; R4 settled by `b2c7ff26`) · BUILT ON DEV 2026-09-18 (§9.7 — the last stage as ruled on 18 Sep; a stage 7 was drawn the same day by another session, §10, ruling owed) · §204 WALK OWED · commit owed on the owner's word (the two stage-6 prompts deleted with it)**
 Companions: [PM brief](COACH_PRACTICES_REEVALUATION_PM_BRIEF.md) · the walk + every stage's proposal on ONE artifact:
 https://claude.ai/code/artifact/5c3d2f1b-5159-4d99-bad7-c48b2820da28 (source `COACH_PRACTICES_REEVALUATION.html` — republish the
 SAME path / `url`) · kickoff prompt used for this stage: [COACH_PRACTICES_STAGE0_BUILD_PROMPT.md](COACH_PRACTICES_STAGE0_BUILD_PROMPT.md)
@@ -30,7 +30,8 @@ be (a three-block practice is 6,627px and 59 inputs on desktop; the printed run 
 | 3 | **Stations & rotation** | The sole-station question first (flatten, or keep the card); stations as columns under their block, rows on a phone; the rotation as one line; a station column that opens for the rest; the draw as one control; the grid in the same columns; points as one field on a station and in the library; people MOVE like kit | **Drawn 2026-09-15 on the hub ("3 · Stations and the rotation", D1–D8 with recommendations, notes 31–42, live heights: the circuit 4,083px on the fixture → 835 drawn; the sole station 922 → 567 flattened) · RULED 2026-09-15 (D4 as REVISED — a modal with a stepper) · BUILT ON DEV 2026-09-15 (§6.7: the circuit 1,140 built at 1440 with the grid and the groups on the block, the drill-placed block 618) · §192 WALK COMPLETE 2026-09-15 (§6.10 — one finding carried to stage 4) · commit owed · the groups-board revision (§6.9, D9–D12) drawn 2026-09-15 · RULED B 2026-09-16 · BUILT ON DEV 2026-09-16 (the Groups ROOM; walked by the owner 2026-09-16, part J) · D13–D14 drawn, RULED, BUILT ON DEV and WALKED 2026-09-16 (§6.11; parts K · L)** |
 | 4 | **The library** | The Templates and Drills tab rows on the list recipe (the row is the door; a drill row reads its first line, a template row its blocks; a phone card as tall as its words); the library docked beside the plan on a wide desktop (the sheet back at 816, the panel in the rest — the header's column); drag as an addition on desktop with a mouse — a drill onto the page, a block by its gutter — buttons everywhere; *Save to my drills…* on the bare written block (and the import reads bare blocks); an empty template not offered as a start; the drill sheet as the station modal's shape with Retire in its foot; the provenance line as one sentence; the hub's past list uncapped behind one door, Practice review left under Insights | **DRAWN 2026-09-16 · RULED 2026-09-16 (L1–L8 as drawn — §7.0) · L9 · Circuits added on the ruling (a saved block with stations: the word circuit, a fourth tab, a two-question save, with stage 4 — §7.7) · BUILT ON DEV 2026-09-16 (§7.8; migration 302 prod-owed) · COMMITTED `34bb88f5` 2026-09-16 · §195 WALK OWED**; step zero — D9–D12 ruled B / yes / as drawn 2026-09-15 before any drag was drawn |
 | 5 | **Paper & the field** | The run door's window on the plan page, "everyone" chips, the printed sheet — **including turning the printed rotation grid to STATION columns to match the screen (owner, 2026-09-16, deferred here from D14: groups in the cells, stacked when they share; a "Sitting out" column when a group sits a round out; the sideways fallback kept for too many stations to fit across the page)**; the field screen's "Rotation due" reads a hand-arranged grid (a sitting-out group already named on its due-moves line) | **DRAWN 2026-09-17 on the hub ("5 · Paper & the field" tab; P1–P9 with recommendations; notes 104–134; the befores are the live screen and the rendered sheet) · RULED 2026-09-17 (P1–P9 all as drawn) · BUILT ON DEV 2026-09-17 (§8.7; no migration; /simplify · /review 12 fixed · /docs done) · COMMITTED `fe2d8244` · §201 WALK COMPLETE 2026-09-17** — §8 below |
-| 6 | **Afterwards & who sees what** | "How it went" timing (renders before the practice today), the closed-season shelf, the recap line's second half if not ruled at stage 0 | not drawn |
+| 6 | **Afterwards & who sees what** | The record's face for a finished practice — from when (R1), and what it is (R2: the recap first, the sheet read-only, the toolbar a record earns); "How it went" at the start and the promise line gone (R3); the hub's rows (R4 — settled 18 Sep by `b2c7ff26`: no field door on a row); the closed-season reader as the record's face — one document (R5); the shelf's name (R6); the Overview during tonight's practice — Q 10.1 answered (R7); the Schedule panel's sentence and gate for an assistant (R8); the helper's door reads a block (R9) | **DRAWN 2026-09-17 on the hub ("6 · Afterwards & who sees what", R1–R9 with recommendations, notes 135–167; the befores are the live screens on the re-seeded fixture at 1440 and 390, the afters in the portal's materials, measured) · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by `b2c7ff26`) · NOT BUILT — build prompt `COACH_PRACTICES_STAGE6_BUILD_PROMPT.md`** — §9 below |
+| 7 | **Where are we** — the field’s first screen | Run practice opens on the plan as a LIST (W1: blocks in order with the plan’s length and who runs it, stations beneath, every row a door, “that’s you” on the reader’s rows); the number on a row is the length, never a planned clock (W2); stations as rows, not a count (W3); the block screen’s back goes to the list (W4) | **DRAWN 2026-09-18 on the hub (“7 · Where are we”, W1–W4, notes 168–175) · RULING OWED** — §10 below |
 
 **Two ladders, two numberings:** the walk's arc counts the eleven SCREENS (stations 0–10); the tabs count the STAGES built. Each tab names the stations it covers — Arrive took 0, 2 and 6 (the first screen, the list, the libraries as tabs); The blank page takes 1 and 3. Station 1 (Put a practice on the calendar) had no stage of its own until the owner asked why (2026-09-14): its one question is the end time, which stage 1 depends on, so it is stage 1's D9. A later stage may depend on an earlier ruling, which is why the tabs are added one at a time. Defects the walk logged that belong
 to later stages are NOT fixed on the way past (the walk's "Across the walk" section lists them): the plan page offers Run practice at
@@ -1828,3 +1829,363 @@ articles say so. `.gdEntryBtn` keeps its other reader (the Schedule's game-day p
 out) and E (the now-marker) are superseded by this ruling**; the rest of that walk stands. The help's two practice articles say the new
 thing in the same work (Run practice on any day, green on the day; opens on the first block every time; a helper's
 buttons).
+
+## 9. Stage 6 · Afterwards & who sees what — DRAWN 2026-09-17 on the hub ("6 · Afterwards & who sees what" tab, R1–R9, notes 135–167) · RULED 2026-09-18 (R1–R3 · R5–R9 as drawn; R4 settled by `b2c7ff26`) · BUILT ON DEV 2026-09-18 (§9.7 the build record; ledger §204; the hub's "QA walk · 6" tab) · §204 WALK OWED · the last stage as ruled 18 Sep (a stage 7 was drawn the same day — §10)
+
+Walk stations 9 (Afterwards — how it went, and the record) and 10 (Who sees what); the last stage of the ladder as ruled on 18 Sep — §10 (stage 7 · Where are we) was drawn the same day.
+Drawn on the hub as the tab after "QA walk · 5": thirteen frames, the befores as the live screens on the re-seeded
+UAT fixture at 1440 and 390 (signed in as the head coach, an assistant with view-only Schedule, and the helper), the
+afters in the portal's materials with a live `[data-hpx]` on every one; asks `R1`…`R9` (R for the record — the letter
+keeps their state and ids apart from every earlier tab; `dLabel` passes R through; the paste-back is
+`#buildSummaryStage6`). Nothing here changes what a practice stores; no migration, no new route, no year parameter
+anywhere it is not already. Kickoff prompt: `COACH_PRACTICES_STAGE6_PLANNING_PROMPT.md` (deleted with the build commit).
+
+### 9.0 The rulings (owner, 2026-09-18, in chat: "I agree with your recommendations, go ahead and write the build prompt")
+
+| | Decision | Ruling |
+|---|---|---|
+| R1 | A practice is a record from three hours after its planned end (or its start, with no end) — the instant the run window shuts and the green Run practice goes plain. | Build as drawn |
+| R2 | The record's face: the recap first (writable), the sheet read-only in its own shape ("Goal:" for "Tonight:", no schedule link, shut rows open to read, no ghost row / arrows / doors), the toolbar Run practice · Save as template… · Print · a quiet Edit the plan; Library and Send to staff absent; a no-plan record says "No plan was written for this practice." and takes the note. | Build as drawn |
+| R3 | "How it went" at the start, as today; the promise line on every unstarted plan removed. | Build as drawn |
+| R4 | The hub's rows. | **Settled 18 Sep by the owner's own ruling and commit `b2c7ff26`, further than drawn — no field door on a row at all; nothing to build** |
+| R5 | The closed-season reader renders the record's face — the same read-only sheet, the recap first; its route, doors, year and back link unchanged; Insights → Practice review opens a live-season practice on its own page. | Build as drawn |
+| R6 | The shelf is "Practices"; the help's sentences and the demo's tour line take the word. | Build as drawn |
+| R7 | The Overview's next event is the first whose window has not closed — a practice in progress is the card; the shape unchanged (Q 10.1 answered: the fact, not the helper's shape). | Build as drawn |
+| R8 | The Schedule panel for an assistant: the plan page's sentence, and the door on the plan page's own grant (Schedule: View + edit). | Build as drawn |
+| R9 | The helper's "Open my station" waits for a block, not a bare plan row. | Build as drawn |
+
+Build prompt: `COACH_PRACTICES_STAGE6_BUILD_PROMPT.md` (deleted with the build commit, as every stage's was). The build
+record is §9.7.
+
+### 9.1 Where the line is — and what moved under it since the kickoff
+
+**This stage:** the record's face for a finished practice (what the page IS, and from when); "How it went" — when it
+appears and the line that promises it; the hub's record half on desktop and on the phone; the closed-season reader
+and its shelf; the Schedule panel's sentence and gate for an assistant; the Overview during tonight's practice
+(Q 10.1); the helper's door.
+
+**Ruled since the kickoff was written and taken as given (P10 and its follow-ups, 2026-09-17, `ab4e6f4a`, §8.8):**
+the field has no clock; **Run practice is on every planned practice, any day — past practices included**, so the
+kickoff's "the run door — never, the window is shut" is stale and the record keeps the door; the now-marker (P9) is
+gone; "The clock starts 11:30 p.m." no longer exists to name a day. The ±3h window survives only as **weight** — and
+the hub's rows did not get that half: every planned row, May's included, wears the live pill with the red dot. That
+is a defect against the ruling's own words, inside this stage's remit; drawn as R4 (a quieter door on the rows) on the 17th. **On
+the 18th the owner went further and removed the door from the rows altogether** (`b2c7ff26`: "the 2 clicks … will
+remove a lot of clutter") — Run practice is the next-practice card's shortcut and the plan page's toolbar, nowhere else;
+the Schedule panel offers Open the plan only. R4 stands as the record of the finding; nothing in it is left to rule.
+
+**The re-framing (gate 1, stated on the tab before drawing):** the kickoff asked *when "How it went" should appear*.
+The fixture answered a wider question — **a finished practice has no face of its own and four borrowed ones.** From
+Practice plans, May's written-up practice opens tonight's editor ("Tonight:" over a four-month-old practice; "no end
+set · Set it on the schedule ›" inviting a schedule write; "+ Add a block"; "+ What everyone's working on"; the ▲▼
+arrows; Library; Send to staff) with the coach's note the LAST thing on the page — at 390 it begins at 844px, the
+fold. From Insights → Practice review the SAME practice opens a third rendering (the reader): 2,196px for a circuit
+the sheet draws in 1,284, the block's words repeated on every station, no groups, no grid, no "Whole team", a
+fourth label for the tonight-note. An assistant gets a fourth: the editor with its boxes greyed. One plan, four
+renderings. The stage's real decision is **one document in three modes** — writing, reading, the record — and every
+item the kickoff listed falls out of it.
+
+**Not this stage:** a wake lock (an explicit fast-follow); the lineups page's once-per-mount game-day clock
+(recorded); a recap line on the Schedule panel (stated); the Overview's game-in-progress face beyond what R7's shared
+rule gives it; per-block "we ran it" ticks (never — D4); attendance on the record; anything written at the field.
+
+### 9.2 The inputs, answered from the code and the screens before drawing
+
+| # | Input | What the code does · what the screen showed (17 Sep, UAT fixture, re-seeded) | Answer |
+|---|---|---|---|
+| 1 | When does "How it went" render; before / during / after? | `practiceStarted` — the instant the start passes, from the page's minute clock. **Before:** an italic line at the sheet's foot on every unstarted plan — *"How it went" appears here once the practice has started.* (19px at 1440 · 38px at 390). **During:** the box under the timeline (158px), under "+ Add a block" and "+ What everyone's working on". **After (May 14):** the same box in the same place — the last thing on the page; at 390 it starts at 844px, the fold. | R3 keeps the start (the coach is the clock now; a practice that ended early should not wait for the schedule) and drops the promise line. On the record the box moves FIRST (R2). |
+| 2 | What does a past practice's page offer that a record should not? | Everything tonight's does: "Tonight:" with the goal placeholder *What the whole practice is for*; "20 min planned · no end set · Set it on the schedule ›" (a schedule write, invited on a May practice — and shown to a view-only assistant who cannot edit the schedule); "+ Add a block · 15 min · or a drill from your library"; "+ What everyone's working on"; the gutter arrows; Library; **Send to staff** (the who-runs-it build, live — a record has nobody to prepare); every open block's inputs. Run practice, Save as template… and Print are right. An assistant's past practice with no plan reads *"No plan for this practice **yet** … once there is one."* on May 26. | R2 — the record's face. |
+| 3 | Where is "past"? | Three lines: the hub splits at NOW (a practice that started twenty minutes ago is under Recent practices — the card catches it); "started" is the start (the recap box); the run window runs to three hours after the END (or the start, with no end) and since P10 decides only the door's weight. Nothing decides the page. | R1 — a record from the instant the run window shuts; one line, already computed, the same instant the green button goes plain. |
+| 4 | What does the closed-season reader render, against what the plan page now is? | Its own document: "What this practice was for" · Equipment chips (the plan's — a block's kit, D11's `equipmentTagIds`, is never resolved by `resolvePracticePlanTagNames` for blocks) · per block "What you're doing · What you're watching for · Coaching points · Who was assigned (staff) · Who was assigned (players) · Groups (chips)" · every station as a stacked card with all five fields, and a station with no words of its own prints the BLOCK's through `resolveStationTeaching` (the fixture's circuit says "Three stations, groups move on every fifteen minutes" four times) · "On the night" for `station.note` · "How it went" last. No grid, no rounds, no "Whole team", no provenance line. The circuit: **2,196px** at 1440 (2,334 at 390) against the plan page's 1,284 (shut rows). The full list, in words and order, is the tab's table. | R5 — the reader renders the record's face; the three-label set retires. |
+| 5 | Does the reader read a year? | Yes: `HISTORY_PAGES` lists it, `HISTORY_ENDPOINTS` its route — both unchanged by R5. Reached from TWO lists: the season-end shelf (with `?year=` and `from=season-end`) and Insights → Practice review (no year — the working season; `history/development/panel.tsx` ~1013). So a **live-season** past practice has two faces today: the hub's "Open" (the editor) and Insights' "Open plan and recap →" (the reader). | R5 also sends Insights' live-season link to `/practice/{id}` (the record's face after R1/R2); the reader serves finished seasons only. The guard passes as is. |
+| 6 | The recap on the hub row | D3 built it for the desktop row; since the row-list recipe (`CoachRow`, 16 Sep) `note` renders on the phone card too (`data-meaning`, `flex-basis:100%`, italic) and in "Every practice this season ›" (the same `renderRow`). Station 9's "no home on the phone" is closed. What the phone card gained on 17 Sep is `beside` = the `gdEntryBtn` live pill on every planned row: the title truncates ("Practice review — ne…"), the caption wraps to three lines, a planned card is 130–171px against an unplanned 60. | Confirmed for the line — nothing to build. The pill went with the 18 Sep ruling (R4, settled). |
+| 7 | The assistant's Schedule sentence, the helper's card, the Overview | **Schedule panel** (`schedule/page.tsx` ~2803): no plan, `!isHeadCoach` → *"No plan yet."* — the door gated on **head coach** while the plan page writes on `canWritePracticePlans` = **Schedule: View + edit** (pass 2, on prod); an assistant with View + edit reads "No plan yet." here and "Plan this practice" on the hub. The plan page's sentence: *"Writing the plan comes with Schedule: View + edit — ask your head coach. You'll be able to read and print it once there is one."* **Helper's home** (`CoachHelperHome`): "Tonight's practice · Thursday, September 17 · 8:49 p.m. · UAT Fields · Open the plan to find your station and the group with you · [Open my station]" — by calendar day, and `hasPlan: Boolean(e.practicePlan)` (a goal-only ROW opens onto "There's no plan to run yet"). **Overview** during tonight's practice (8:49–10:19 p.m., read at 9:35): *"NEXT EVENT · PRACTICE · IN 7 DAYS · Thu, Sep 24, 9:09 p.m. · Open the plan"* — `nextEvent` is the first event with `startsAt >= now`, so a practice in progress is not "next"; the hub card reads "Today · 8:49 p.m. · Run practice". | R8 the sentence and the gate; R9 the helper's door reads a block; R7 the Overview learns tonight — Q 10.1's answer is the fact, not the helper's shape. |
+| 8 | The help | `premium-practice-after`: "appears at the foot of the sheet once the practice has started — until then a line says it will" (R3 changes the clause; R2 moves the box on a record). `premium-practice-finished-season`: "the Practice plans page tells you so and stops offering to plan" (false since the season gate — the hub never renders for a finished season); "a section called **The practices you ran**" (R6); "The same list also sits under Development … as Practice review" (R5 changes where its live-season rows open). `premium-practice-access`: the Schedule panel's sentence joins it (R8). `premium-practice-reuse`: "the practices you ran in previous years" (R6's word). | Sentences named per decision; the build's /docs pass takes them together. |
+| 9 | The demo | The coach tour's stop 8 lands on the 13U team's Season's End page (anchor `season-recaps`, the family recap — not the shelf); its line says "the practices you ran … Open the practices — one reads exactly as it was written." The 13U seed carries plans AND recaps (independent — "either, not both"); the live 12U seed carries plans and no recaps. No stop opens the reader or a plan page; R5 keeps the reader's route; R6 changes one word in the line (no figure in it). | One narration line follows R6; nothing else moves; the build fails if it did. |
+
+**Kept, confirmed on the code:** "Recorded here" (sessions measured at the practice) stays on the record; the
+assistant's read face already opens rows to read ("Open" on the shut row) — R2 makes that a mode rather than a set of
+disabled inputs; `Save as template…` from a past practice is a fine template; the demo's `season-recaps` anchor is
+untouched.
+
+### 9.3 The decisions
+
+| | Decision (as drawn) | Recommendation | What rides on it |
+|---|---|---|---|
+| R1 | A practice is a record from three hours after its planned end (or its start, with no end) — the instant the run window shuts and the green Run practice goes plain. Before that the live page; after it the record's face. | Yes, as drawn (frame 143). Named, not recommended: from the start (the coach at the bench loses the editor mid-practice); the next morning (a fourth clock; a 10 a.m. practice stays live all day). | One predicate beside `isInRunWindow` in `lib/practice-state.ts` ("is a record"), read by the plan page from its minute clock; nothing stored; the hub's split unchanged. |
+| R2 | The record's face: the recap first (writable, autosaving as today); the sheet read-only in the document's own shape — the head as a fact (no schedule link; "Goal:" for "Tonight:"), shut rows that open to read (stations as columns, the rotation line, the grid, the groups — the paper's order), no ghost row, no arrows, no doors, no "+ What everyone's working on"; the toolbar Run practice (plain) · Save as template… · Print the sheet · a quiet Edit the plan (writers); Library and Send to staff absent. A record with no plan: the note box and "No plan was written for this practice." — the assistant's "yet … once there is one" goes. | Yes, as drawn (frames 139–147). Alternative B (the editor with the ghost row gone and the recap moved first) is the before with two lines moved — not drawn. The edit door is a door, not the default. | The editor's `readOnly` path becomes a READ mode (rows open to read; a station's five fields as the modal, read-only; no disabled inputs) — also the assistant's face on a live practice; the page chooses the mode from R1 and flips to the editor on "Edit the plan" for that visit; the recap block renders at the head in record mode and at the foot in live mode (one component); "Goal:" as the record's word; the no-plan record's empty state; `Send to staff` and Library gated on live mode. |
+| R3 | "How it went" at the start, as today; the promise line on every unstarted plan removed. | Yes (frame 148). Named, not recommended: from the end. | One line deleted; the help's "until then a line says it will"; `practiceStarted` unchanged. |
+| R4 | **SETTLED 18 Sep by the owner (`b2c7ff26`), further than drawn:** no field door on a row at all — Run practice is the next-practice card's shortcut and the plan page's toolbar, nowhere else; the Schedule panel offers Open the plan only. (Drawn on the 17th as a quieter worded door on the rows and a foot line on the phone card — frames 151–154, kept as the record of the finding.) | Nothing to rule; the paste-back prints it as settled. | Built: the hub's rows carry no pill, the Schedule panel's door, the help's two paragraphs, the §202 walk's step 6. The build session builds nothing for R4. |
+| R5 | The closed-season reader page renders the record's face instead of its own document — the recap first (read-only on a closed season), the same read-only sheet; its route, its two doors, its `?year=` and its back link unchanged. Insights → Practice review opens a live-season practice on `/practice/{id}`. | Yes, as drawn (frames 159–161). The alternative — keep the reader and fix its eleven drifts by hand — is the third copy of the arithmetic the paper's grid already taught us about. The one-page ruling is untouched: one page, one shelf, a different renderer behind the same door, the year travelling as it does today. | The reader page mounts the sheet's read mode (with the recap block) fed by the read route it already calls; a block's kit needs `resolvePracticePlanTagNames` to name `equipmentTagIds` on blocks (one line); its three labels retire; `HISTORY_ENDPOINTS` / `HISTORY_PAGES` unchanged; the Development report's link target for a live-season row; the demo's stops unmoved; the closed-season page's playing-time and scouting guards untouched. |
+| R6 | The shelf is "Practices" — never "The practices you ran"; the help's two sentences and the demo's tour line take the same word. | Yes (frames 162 · 163). Alternative: "The practices you planned" — false of a notes-only night, which the shelf shows on purpose. | One string on `season-end/page.tsx`; two help sentences; one `sandbox-chrome.ts` line (no figure); the vocabulary guard learns the title. |
+| R7 | The Overview's next event is the first whose window has not closed — a practice inside its run window is the one thing: "Today · 8:49 p.m.", Run practice green, Open the plan quiet (the hub card's own reading). The card's shape unchanged; the helper's home stays the helper's. Q 10.1 answered: the fact, not the shape. | Yes (frames 164 · 165). | The Overview's next-event pick (`page.tsx` ~356) reads the windows the doors read (the run window for a practice, the game-day window for a game) instead of "start still ahead"; `coach-overview` tests; a game in progress benefits through the same rule — blast radius named, the console's own face not redrawn here. |
+| R8 | The Schedule panel for an assistant: view-only → "No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach."; View + edit (head coach or not) → today's sentence with Plan this practice →. | Yes (frames 166 · 167). | The panel reads `canWritePracticePlans` (the plan page's predicate) instead of `page.capabilities?.isHeadCoach`; one sentence; the access article. |
+| R9 | The helper's "Open my station" only when tonight's plan has a block; otherwise "The plan isn't written yet". | Yes (stated, not drawn — the home's shape is unchanged). A defect whatever else is ruled. | `practiceHasPlan` in `CoachHelperHome`'s row mapping; nothing else. |
+
+### 9.4 The frames, measured (true size, `[data-measure]` + a live `[data-hpx]` tag)
+
+Befores (live, 17 Sep): the plan page — next week 900 (the promise line 19px), tonight 1,446 (the box at 1,007),
+May 14 995 (the box at 719; at 390 the document 1,182 and the box at 844), the circuit 1,284; the hub 1,072 (the
+written-up row 87 with its recap line; at 390 the planned cards 130–171); the reader — the written-up practice 900,
+the circuit **2,196** (2,334 at 390), the closed season's 939; the Overview card 144 reading "In 7 days" during the
+practice; the Schedule panel's practice section 118 (head coach) · 68 (assistant, "No plan yet."). Afters (drawn):
+the record's face 508 at 1440 (the sheet alone) · 534 at 390 with the note on the first screen · the no-plan record
+311; the hub's record half 488 for five rows (the live pill gone) · the phone card 156 (the title whole); the
+record's face for the circuit with one row open 1,004 (against the reader's 2,196); the shelf row 59; the Overview
+card 164; the Schedule section 94.
+
+### 9.5 Verification (for the build session, after the rulings)
+
+- **Unit:** `practice-state` — the record predicate (before the start · during · inside the trailing three hours ·
+  after; with and without an end); the Overview resolver's pick (a practice in its window is the card; a game in its
+  window; neither → the next start); `practiceHasPlan` on the helper's rows; the vocabulary guard learns the reader
+  (no "On the night", no "Who was assigned", no "What this practice was for"), the shelf's title (never "ran") and
+  the plan page's record face (never "Tonight:" on a record, no "Set it on the schedule" on a record, no promise
+  line anywhere).
+- **The rendered fixture (Playwright, re-seeded):** May 14 as the head coach at 1440 and 390 — the recap first and
+  writable, no ghost row, no arrows, no Library, no Send to staff, the toolbar's three buttons and the quiet edit
+  door; "Edit the plan" opens the editor and the way back returns the record; May 26 — "No plan was written for this
+  practice." with the note box, no lime; the same two as `uat-asst-nomoney` (the record's sentence, no edit door);
+  tonight's practice during the window — the live editor with the box under the timeline (freeze the clock LAST —
+  `page.clock.install` rotates the stored session); next week — no promise line; the hub at 1440 and 390 — no field
+  door on a row (b2c7ff26), the phone card's title whole and the recap line on it; the Between
+  Seasons team's shelf titled "Practices", its row opening the record's face with the year and the back link to
+  Season's End; Insights → Practice review → May 14 opens `/practice/…`; the Overview during the practice reads
+  "Today · 8:49 p.m. · Run practice"; the Schedule panel for `uat-asst-nomoney` on May 26 reads the sentence; the
+  helper's home with a goal-only plan (write one through the API, restore after) reads "The plan isn't written yet".
+- **Static:** `verify:changed` (spelling — "Goal:", the shelf's title); `typecheck`; `check:layout
+  --only=coach-practice-plan,coach-practice-hub,coach-season-end` at 361/390/768/1440 and the finished-season
+  screens; the history guard (`coach-history-endpoint-guard`) green with its lists unchanged; the demo's tour-anchor
+  check (no stop moves).
+- `/docs` on the four practice articles; `/review`; the owner's walk on a "QA walk · 6" tab, ledger § numbered at
+  build time.
+
+### 9.6 Not this stage
+
+A wake lock (an explicit fast-follow); the lineups page's once-per-mount game-day clock; a recap line on the
+Schedule panel; the Overview's game-in-progress face beyond R7's shared rule; per-block "we ran it" ticks (never);
+attendance on the record; anything written at the field; the hub's brief tab on the artifact (stale since stage 2 —
+the source brief is the record).
+
+### 9.7 Build record (2026-09-18) — BUILT ON DEV; §204 walk owed; commit owed on the owner's word
+
+**Built as ruled, R1–R3 · R5–R9; R4 nothing (settled by `b2c7ff26`, confirmed on the fixture: the hub's rows carry no
+door, the card's is the one Run practice on the page).** No migration, no new route, no year parameter; `HISTORY_ENDPOINTS`
+and `HISTORY_PAGES` untouched (the guard green with its lists as they were).
+
+**The one predicate (R1).** `practiceIsRecord(startsAt, nowMs, endsAt)` in `lib/practice-state.ts`, beside `isInRunWindow`;
+both now read one private `runWindowOf` (start −3h … end +3h, or start +3h with no end or an end at/before the start; null
+for an unreadable start). The record begins the instant after the window's last instant — the two predicates share the
+edge (`<=` / `>`), proved in the unit test's six-read evening. The plan page reads it from the minute clock it already runs;
+nothing is stored; the hub's split at NOW is untouched.
+
+**The record's face (R2) — one document in three modes, one editor prop.** The editor's `readOnly` became a FACE rather
+than thirteen disabled inputs: the five teaching fields read as text through ONE shared face (`TeachingFacts` in
+`components/coaches/PracticeFields.tsx` — what was the editor's private `DrillFacts`, promoted; `TeachingFields` and
+`CoachingPointsField` return it when read), the block's title and its two fields as text, no clock row (the gutter has
+the time), the rotation line as a fact ("Groups rotate · every 15 min · 3 rounds of 15 = 45 min"), the station modal's
+name as text with no Delete and the stepper kept, the pickers' own disabled face (chips, no search box, no manage door),
+a Players line only where there is one, "No groups" (never "yet"), no ghost row, no gaps, no gutter arrows, no doors, no
+"+ What everyone's working on", no roster door, no drill sheet, no groups room. A new `record` prop carries the one WORD
+that differs between an assistant's live read and a finished practice's record: "Goal:" for "Tonight:"; an unwritten goal
+reads "Nothing written for this one." in the muted italic (read mode everywhere — "No goal written" is gone). The reader's
+`ReadField`/`ReadStation` and their three labels are deleted. **The plan page:** `recordMode = practiceIsRecord && !editing`;
+`writing = canWrite && !recordMode`; the sheet's head as a fact through the shared `PracticeWhenLine` (no schedule link on a
+record — and, found on the way, none for a viewer on a live practice either, who could not set an end); "How it went" FIRST
+on a record through the shared `HowItWent` (one component; the live page renders it at the foot once the practice has
+started — its own autosave, `recapDirty`, untouched; on a record its failed save is said under the box because the plan's
+floating pill is the live face's); the toolbar Run practice (plain — `practicePlanState` is 'planned' on a record) · Save as
+template… · Print the sheet · a quiet **Edit the plan** (`data-testid="edit-the-plan"`) for a writer; **Library and Send to
+staff gated on `writing`, the sent line and the "You're on" strip on `!recordMode` — the who-runs-it build's controls and
+test ids untouched**; the scouting bridge off the record; the provenance line without "edit anything here"; the SaveStatusPill
+the live face's. **The no-plan record** (the hub's definition — no BLOCK): the head, the note (writable for a writer), "No plan
+was written for this practice." — no lime, no toolbar, for the head coach and the assistant alike; the live page's "No plan
+for this practice yet … once there is one" is off the record. **"Edit the plan" is a visit:** a page-level boolean, false on
+every load, never in the URL; while editing, the page is the live face exactly — the note at the FOOT (the visit IS the live
+page; the record's face keeps it first), Library and Send to staff back. **Defence in depth (/review):** every writing dialog
+(the roster picker, the drill sheet, the promote dialog, the new-drill sheet, the groups room) resolves to CLOSED the instant
+`readOnly` is true, so a dialog left open when the boundary passes cannot write onto a record and the groups room's scroll
+lock cannot outlive the room; on a record the editor's `onChange`/`onChangePlanTags` are no-ops. A save already in flight
+when the boundary passes still lands (a keystroke a second before the boundary is a legitimate save). "Edit the plan" moves
+focus to the goal line (the button unmounts under the pointer; nothing remounts).
+
+**Measured on the re-seeded fixture (Playwright, 18 Sep), against §9.4's drawn figures:** May 14's record **512px at 1440**
+(drawn 508; the note begins 101px under the sheet's top) · **553 at 390** with the note at 442 on an 844 viewport (drawn 534;
+today's 1,182 with the note at 844) · the no-plan record **329** (drawn 311) · the circuit's record shut **802**, one row open
+**1,063** (drawn 1,004; the reader's before was 2,196) · the reader's July 4 record **539** at 1440, 256 at 390 with no plan.
+The assistant's May 14: 425, toolbar Run practice · Print. Zero disabled inputs on every record face; one input on the head
+coach's (the note). Edit the plan → the live face (Tonight:, the schedule link, the ghost row, Library, Send to staff, the
+note at 719) → reload → the record.
+
+**The promise line (R3)** deleted with its class (`.ppDocNote`); the start unchanged.
+
+**The reader (R5)** — `history/development/practices/[eventId]/page.tsx` mounts `PracticePlanEditor readOnly record` fed by
+its own GET-only route (goals, attendance, drills empty; the event's tags as the About fold's read chips; `NEVER_CHANGES` for
+the two mutators), with `HowItWent` first and READ for everyone (the head coach included — a closed season is a record), the
+head with the YEAR and the venue, and **Print the sheet** — the frame's one control. The paper's builder moved whole out of the
+plan page's `handlePrint` into `lib/practice-sheet.ts` (`buildPracticeSheet`) so both pages print through one; the vocabulary
+guard's print-path assertions read it there. Its route, its `?year=`, `from=season-end`, the hoisted header and the back link
+("Back to Season's End" carrying the year) unchanged. **Insights → Practice review** links a row to `/practice/{id}`; the
+reader is reached from the finished season's shelf only. **The block's kit:** the plan's "one line in `resolvePracticePlanTagNames`"
+was not written — a block has no names field to resolve into ("No legacy free-text twin"); the reader names a block's kit live
+through the same read chips the plan page does, which is where the gap actually closed.
+
+**The shelf (R6)** is "Practices"; the page's own preview line and the two comment markers took the word; the demo tour's stop-8
+line changed one word (`check:demos` green — no stop moved); the help's sentences (below).
+
+**The Overview (R7)** — `lib/coach-next-event.ts`: `nextOpenEvent` — the first scheduled event whose window has not closed
+(a practice through `isInRunWindow` with its end, a game through `isInGameDayWindow`, anything else while its start is ahead);
+**among events already STARTED the most recently started wins** (/review: a tournament day's finished 9 a.m. game lingers until
+1 p.m. and must not beat the 11 a.m. game in progress). ⚠ Named blast radius: a game in progress is now "next", so the
+Overview's console door stays through the game (before, the card looked past a game at first pitch). The card's minute ticker
+re-syncs for a practice's run window too (it watched games alone). **On the fixture** the probe game starts ten minutes before
+the probe practice, so during both the Overview reads GAME DAY (before this build it read "NEXT · IN 7 DAYS" through both);
+with the game cancelled it reads "Today · 9:30 a.m. · Run practice" — the walk's F2. Found, not changed: the team masthead's
+small NEXT chip is a server pick of the next START and reads next week's practice during tonight's — a different fact
+("next", not "on"); the code's own note records it as an accepted divergence.
+
+**The Schedule panel (R8)** reads `canWritePracticePlans` (never `isHeadCoach`) and says why ("No plan yet. Writing the plan
+comes with Schedule: View + edit — ask your head coach."); its "has a plan" is the hub's one definition (`practiceHasPlan` —
+a goal-only row read "0 blocks — goal · Open the plan" there while the hub said "No plan written"; R9's defect one screen over).
+**The helper (R9)** — `practiceHasPlan(e)`; a goal-only plan reads "The plan isn't written yet" (proved on the fixture by
+writing a goal-only plan through the API and restoring it).
+
+**Verification.** `typecheck` 0 · full unit **4,192/4,192** (new: the predicate's six-read evening and every edge — no end, an
+end at/before the start, an unreadable end, the shared instant; the Overview pick's seven cases incl. the double-header and the
+fixture's evening; `practicePlannedLabel`'s record word; the vocabulary guard's stage-6 blocks — the reader mounts the sheet
+and its three labels and two renderers are gone, no write control on the reader, the boundary is the lib's, the promise line
+and its class gone, the when-line's invitation gated, "Goal:"/"Tonight:", the toolbar's gates and the edit door, the no-plan
+record, no native control merely disabled by read mode (a regex hardened against a handler before the prop), the shelf never
+"ran", the tour line, the Schedule's grant and definition, the helper's block; `coach-history-endpoint-guard` green with its
+lists unchanged; the finished-season guard's shelf marker moved with the comment) · focused lint 0 errors · `check:spelling` ·
+`check:demos` · `verify:changed`'s lint gate 0 errors · **`check:layout --only=` nine screens at 361/390/768/1440 — the plan
+page, the station, the hub, Season's End, the finished season's shelf and reader, the Practice review report, and TWO NEW
+screens `coach-practice-record` / `coach-practice-record-open` (the record shut, and a row open to read — the mode the sweep
+had never measured; `recordPracticeEventId` = May 14 in the fixture context)** — no finding on the record's own face at any
+width; the new screens' inherited header chrome (the 768 help button, grandfathered on every coach screen) baselined with a
+reason. The sweep also surfaced, NOT this stage's: the peer's "You're on" links at 32px ≤768 (passed to that session);
+Season's End's "Share your season" button at 29px on a phone and the "Switch team" select spilling 76px at 1440 (pre-existing,
+unbaselined — the Wrapped card's). **Rendered probes** (five Playwright passes on the re-seeded fixture, the plan restored
+after the goal-only write): the figures above; Edit the plan and the way back; the assistant's faces; the no-plan record both
+ways; next week without the promise line; tonight's live face with the box under the timeline; the shelf's title; the shelf's
+rows opening the reader with the year; the reader's back link; Insights' rows opening `/practice/…`; the Schedule panel's two
+sentences; the helper's two faces; the hub card as the only Run practice door.
+
+**/simplify** — done by design in the build rather than as a pass afterwards: one read face (the editor's `DrillFacts` deleted for
+the shared `TeachingFacts`), one sheet chrome (`PracticeWhenLine` replaces the page's `renderWhenLine`; `HowItWent` replaces the
+inline foot block and the reader's own), one paper builder (`buildPracticeSheet` — a verbatim move, diffed line by line), the
+reader's two renderers deleted. Left alone and said so: the PDF-settings merge is repeated nine times across the portal (not
+this stage's), and the plan page's and the reader's no-plan faces compose the same three pieces in eight lines each.
+
+**/review** — high-risk funnel, four lenses (the predicate and the pick · write-path leaks · regression/blast radius ·
+accessibility and the guard's robustness): **12 found → 11 after dedup → 6 confirmed and fixed, 3 accepted, 2 out of scope
+recorded, 0 refuted.** Fixed: the writing dialogs resolving to closed in read mode (the High: the groups room's scroll lock
+outliving the room; the roster picker able to write onto a record); the most-recently-started rule for the pick; the ticker for a
+practice; focus after Edit the plan; a regex flag the TypeScript target predates (it broke `typecheck`); the guard hardened; the
+mutators as no-ops on a record. Accepted: source-pinned guard assertions (the ruling's words, on purpose); the redundant sr-only
+span beside the recap's aria-label (pre-existing, harmless); the drill sheet's Retire button relying on its caller (not
+exploitable). **/docs** — the four practice articles and the closed-season article: a new answer "When a practice is over: the
+record" (split out to keep "Print it, run it, then say how it went" under the length standard, its "until then a line says it
+will" gone); "What happens to your plans when the season ends" names the Practices shelf, says the reader is read-only for
+everyone and that Practice review opens the practice's own page, and drops the false "Practice plans tells you so and stops
+offering to plan"; "What a plan is — and who can write one" gains Reading a plan · Writing How it went and the Schedule panel's
+sentence; "practices you planned in previous years" across the library, template and circuit articles; the helper FAQ says the
+button waits for a block; the closed-season article's shelves say "the practices"; search terms for record · finished practice ·
+edit the plan · nothing written down · no plan was written.
+
+**Also changed, stated:** the shared read face now renders a CLUB drill or a RETIRED drill in the drill sheet as text rather than
+greyed fields (the same `readOnly`) — consistent, and the one blast-radius effect outside the practice pages.
+
+**Walk:** the hub's **"QA walk · 6" tab — 24 steps in eight parts (A the record's face · B no plan · C the three moments · D the
+reader · E the shelf and the help · F the Overview · G the Schedule panel · H the helper)**; ledger **§204**. When it is walked, stages 0–6
+are complete; §10 (stage 7 · Where are we, drawn 2026-09-18 by another session) is the ladder's open rung.
+
+## 10. Stage 7 · Where are we — the field’s first screen — DRAWN 2026-09-18 on the hub (“7 · Where are we” tab, W1–W4, notes 168–175) · RULING OWED
+
+Walk station 8 (The field), revisited after P10. Drawn on the hub as the tab after “6 · Afterwards & who sees what”:
+four frames at 390 in the run screen’s own materials (the before is the built screen — P10 + the who-runs-it build on
+dev — drawn from the code, not a capture; the afters carry a live `[data-hpx]`), asks `W1`…`W4` (W for *where are
+we*; `dLabel` passes W through; the paste-back is `#buildSummaryStage7`). Nothing here changes what a practice stores;
+no migration, no new route, no year.
+
+### 10.0 Why this stage exists — the sentence P10 misread
+
+On 2026-09-17 the owner revised P10 in chat: *“since we have removed the timer, I should be able to run a practice at
+any time (before, during, or after its scheduled time) and it should always land on the initial run practice page.”*
+The build (`ab4e6f4a`) read “the initial run practice page” as **block 1** and landed there every time. On 2026-09-18
+the owner asked *“what happened to the first screen that has the list of drills/stations and times that I can click
+the one I want?”* — and the code’s answer is that **no such screen ever existed**: every version of the run page
+since `ebd29c7f` opens on one block and moves with Back / Next; the only list on the field is the station list inside
+a rotating block (P7); “1 of 3” is text. The screen the owner remembers is the plan page. The owner’s ask, in his
+words: *“after you click ‘run’ you are in a practice plan screen that shows the blocks (and maybe stations if there
+is room) but only a high level and their times … click into the block they want (highlighted the ones that they are
+in so they can easily navigate to their blocks/stations). Since we removed the time component a user opening their
+phone mid practice doesn’t want to have to click through one at a time to find the drill.”*
+
+### 10.1 The inputs, answered from the code before drawing
+
+| # | Input | What the code does | Answer |
+|---|---|---|---|
+| 1 | Where does Run practice open? | The cursor starts at 0; nothing is remembered between opens (P10, revised). | Block 1, whatever the time. |
+| 2 | Is there a list of the blocks on the field? | No — `ebd29c7f` → `ab4e6f4a` all open on a block. The one list is inside a rotating block (P7). | The remembered screen is the plan page. |
+| 3 | What does “mine” already know? | By identity (mig 303): `levelsForStaffTags` gives the reader’s blocks and stations once per read; the block screen’s olive edge and “that’s you” come from it at both levels. | The list’s marks need no new read. |
+| 4 | What does the plan page do for the same person? | “You’re on 5:15 Skills circuit › Footwork ladder” — the block’s planned clock and a jump to the row (who-runs-it, ruling G); the live page’s only. | The plan page answers “where am I”; the field does not. |
+| 5 | Taps to the stop you are at, today | Head coach at round 2: Next block · Rotate now. Helper at Finishing: Next block · the row. The last block: Next block ×2 (a rotation is three stops). | Two to three taps, through screens that are not theirs. |
+
+### 10.2 The decisions (recommendations; the owner rules on the hub)
+
+- **W1 · The first screen is the plan as a list.** One row per block in order — number, name, who runs it (or, for a
+  block that names nobody, its people word: *Whole team*), the plan’s length on the right; a block’s stations as rows
+  beneath it; every row a door (a block row → that block, a rotation at round 1; a station row → the block with that
+  station open). The reader’s own rows carry the olive edge and *— that’s you*. Nothing remembered between opens; no
+  big button under the list (the rows stand 56 and are the doors). *Who’s here tonight* at the foot, as on every
+  block. **Recommend as drawn.** Named, not recommended: land on block 1 and make “1 of 3” open the list as a sheet
+  (one more thing to learn; the mid-practice coach still reads the wrong block first); a “Start” button (duplicates
+  row 1); a “You’re on …” strip at the top (the marked rows are that strip).
+- **W2 · The number on a row is the plan’s length**, in the field’s words since P10 — *15 min*, *45 min*, *Rest of
+  practice* — with a rotation’s shape under its name (*3 rounds · 15 min a round*). Never a planned clock. **Recommend
+  as drawn.** Named, not recommended: the planned start beside each block (*5:00 · 5:15 · 6:00*) — the sheet’s gutter
+  and the plan page’s strip already carry it; on the field it would be the first clock back since P10.
+- **W3 · Stations are rows under their block**, 44 tall, name + who runs it, each a door to the station screen; a
+  sole-station block shows no sub-row (the station IS the block). Six stations = nine rows; the page measures 750
+  below the masthead at 390. **Recommend as drawn.** Named, not recommended: “6 stations” on the block row with the
+  stations one tap further — costs the helper the tap the screen exists to save.
+- **W4 · The block screen’s back goes to the list** (*← Blocks*); the plan’s door is on the list’s bar; the station
+  screen’s *← All stations* still returns to its block; the last block’s big button still says *Back to the plan*
+  (How it went lives there, R3). **Recommend as drawn.** Named, not recommended: keep *← Plan* on the block and make
+  “2 of 3” the list’s door — two doors in a bar with room for one idea.
+
+### 10.3 The frames, measured (true size, `[data-measure]` + a live `[data-hpx]`)
+
+| Frame | Height at 390 (below the masthead) | Notes |
+|---|---|---|
+| Before · block 1 as built | 660 | 168 |
+| After · the list, head coach | 750 | 169–173 |
+| After · the list, the helper | 750 | 174 |
+| After · a block from the list (round 1) | 754 | 175 |
+
+### 10.4 Where else it touches
+
+The doors do not move (the next-practice card’s shortcut and the plan page’s toolbar open the list instead of block
+1; the rows and the Schedule panel still carry none — `b2c7ff26`). Stage 6’s R9 (“the helper’s door reads a block”)
+was drawn against a screen that opened on block 1; with the list the helper’s door reads the list with their row
+marked — the stage-6 build takes this ruling with it, whichever builds first. Help: the Run practice sub-topic’s
+“walks through a practice one block at a time” gains the list in one paragraph. The record (R2): Run practice on a
+record opens the same list; nothing says “ran”.
+
+### 10.5 Verification (for the build session, after the ruling)
+
+- **Unit:** the list’s rows from a plan (order; a sole-station block has no sub-rows; the length label per row;
+  “mine” at both levels from `levelsForStaffTags`); a station row’s tap sets the cursor to the block’s first step
+  with that station open.
+- **Rendered:** the layout gate on the run page at 361/390/768/1440 — the list, then a block, then a station; every
+  row ≥44 (a block row 56); no horizontal scroll at 361 with “Rest of practice” in the right column.
+- **Static:** `verify:changed`; `typecheck` (the run page is a client page reading shared lib types).
+- `/docs` on the Run practice sub-topic; `/review`; the owner’s walk as part of §202’s short walk or its own § at
+  build time.
+
+### 10.6 Not this stage
+
+Remembering the stop between opens (P10 said no; the list makes the memory unnecessary); a wake lock; anything
+written at the field; a planned clock on the list (W2, named and not drawn); a desktop-specific layout (the run page
+is one column at every width).

@@ -44,7 +44,7 @@ type SeasonStatement = {
 const fmtMoney = (n: number) =>
   `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-/** One row of "The practices you ran" — the season-scoped list C3 added (P3). */
+/** One row of the "Practices" shelf — the season-scoped list C3 added (P3); named at stage 6 (R6). */
 type SeasonPractice = {
   eventId: string;
   name: string;
@@ -283,7 +283,7 @@ export default function SeasonEndPage({
   const [reopening, setReopening] = useState(false);
   const [reopenError, setReopenError] = useState('');
   /**
-   * "The practices you ran" (P3 C3). `null` until answered, so an empty season renders the section
+   * The "Practices" shelf (P3 C3). `null` until answered, so an empty season renders the section
    * saying so rather than a permanent spinner.
    *
    * ⚠ Fetched separately from Wrapped, and deliberately: it carries a NARROWER gate (see
@@ -551,7 +551,7 @@ export default function SeasonEndPage({
           <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
             <strong>{page.programYearName}</strong> is still under way — a season stays live until
             you close it. When it does, this is where it gets kept: the season&apos;s story, the
-            results, the roster, the practices you ran and how it added up.
+            results, the roster, the practices and how it added up.
           </p>
           {/* ⚠⚠ **THE "COMPARE EVERY SEASON" DOOR IS DELETED** (owner, 2026-08-19), and it had to go
               in the same change as the list it opened. That list lived at the foot of the Insights
@@ -815,7 +815,7 @@ export default function SeasonEndPage({
             </CoachCollapseSection>
           )}
 
-          {/* ── "The practices you ran" (P3 C3) ──────────────────────────────────────────────
+          {/* ── "Practices" (P3 C3; named at stage 6, R6 — never "the practices you ran") ────
               ⚠ **COLLAPSED BY DEFAULT, and that is a binding design constraint rather than a
               taste** (CLAUDE.md ruling §1.6: a history shelf that makes the live screen noisier is
               a failed design). It costs a live season nothing at all — no live season renders this
@@ -829,7 +829,7 @@ export default function SeasonEndPage({
           {practices && practices.length > 0 && (
             <CoachCollapseSection
               sectionId="season-practices"
-              title="The practices you ran"
+              title="Practices"
               meta={`${practices.length}${practicesTruncated ? '+' : ''}`}
               defaultOpen={false}
             >
@@ -876,9 +876,9 @@ export default function SeasonEndPage({
               <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
                 Read-only — open one and it reads exactly as you wrote it.
               </p>
-              {/* ⚠ THE TRUNCATION IS STATED, never silent (plan §5 risk 1). A list headed "the
-                  practices you ran" that quietly stops short tells a coach they ran fewer than
-                  they did — the one way this section can lie about a season. */}
+              {/* ⚠ THE TRUNCATION IS STATED, never silent (plan §5 risk 1). A list of the season's
+                  practices that quietly stops short tells a coach the season held fewer than
+                  it did — the one way this section can lie about a season. */}
               {practicesTruncated && (
                 <p className={styles.formHint}>
                   Showing the {practices.length} most recent — this season held more than that.

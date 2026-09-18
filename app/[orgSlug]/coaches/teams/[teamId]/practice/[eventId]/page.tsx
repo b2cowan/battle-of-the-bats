@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, CalendarDays, ClipboardList, Library, NotebookPen, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
+import { BookMarked, ClipboardList, Library, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -11,25 +11,20 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import {
-  buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS,
-  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetRotation, type PracticeSheetStation,
+  buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
-import { playerDisplayName } from '@/lib/coach-roster-name';
+import { buildPracticeSheet } from '@/lib/practice-sheet';
 import { canWriteDevelopment } from '@/lib/coach-capabilities';
 import { formatInOrgZone, orgDayKey } from '@/lib/timezone';
 import { formatStoredClock } from '@/lib/utils';
 import { useMinuteClock } from '@/lib/use-minute-clock';
+import { practiceHasPlan, practiceIsRecord, practicePlanState, practiceStarted } from '@/lib/practice-state';
 import {
-  practiceHasPlan, practiceLengthMinutes, practicePlanFit, practicePlanState, practicePlannedLabel, practiceRemainderLabel,
-  practiceStarted,
-} from '@/lib/practice-state';
-import {
-  MAX_RECAP_LEN,
-  blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan, rotationByStation,
-  formatDuration, isPracticePlanEmpty, newPracticePlanId, practiceKitBag, resolvePracticePlanTagNames,
-  resolveStationTeaching, soleStationOf, stationLabel, tagNamesById, levelsForStaffTags, practicePlanLevels,
+  computeBlockClocks, copyPracticePlanForReuse, emptyPracticePlan, isPracticePlanEmpty, levelsForStaffTags, newPracticePlanId,
+  practicePlanLevels,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
+import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import {
   MAX_TEMPLATE_NAME_LEN, templateBlocksLine, templateShapeLabel, templateToPlan,
@@ -164,12 +159,16 @@ const COPY_SOURCES: ReadonlyArray<{ id: CopySource; label: string; hint: string 
 /** A save that hasn't landed by now is reported as a failure rather than spinning for ever. */
 const SAVE_TIMEOUT_MS = 15_000;
 
-/** "Tue, May 5, 2026" — the picker rows and the printed sheet, where the year matters. */
+/** The editor's mutators on a RECORD (stage 6): nothing may change the plan there, so nothing does. */
+const NEVER_CHANGES = () => {};
+/** The editor's goal line — the first writable thing on the sheet, where focus lands after "Edit the plan". */
+const PLAN_GOAL_INPUT_ID = 'practice-plan-goal';
+
+/** "Tue, May 5, 2026" — the picker rows, where the year matters. (The sheet's own first line and
+ *  the paper's date live with the sheet's chrome and the sheet builder.) */
 const fmtDate = (iso: string) =>
   formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 const fmtTime = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit', hour12: true });
-/** "Tue, May 5" — the sheet's first line, which is about THIS week, not a year. */
-const fmtDay = (iso: string) => formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' });
 /** "Tuesday" / "Sep 29" — the send's title, the word a coach uses at the field (see `practiceDayLabel`). */
 const fmtWeekday = (iso: string) => formatInOrgZone(iso, { weekday: 'long' });
 const fmtShortDate = (iso: string) => formatInOrgZone(iso, { month: 'short', day: 'numeric' });
@@ -251,6 +250,22 @@ export default function CoachPracticePlanPage({
   const [pastError, setPastError] = useState('');
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  /**
+   * "Edit the plan" on a RECORD (stage 6, R2) — this visit only. Never stored, never in the URL;
+   * false on every load, so a record opens as a record and the way back from the editor is the
+   * record. See `recordMode` below.
+   */
+  const [editing, setEditing] = useState(false);
+  /* The door unmounts under the pointer the moment it is pressed (its branch is the record's), so a
+     keyboard or screen-reader coach would be dropped on <body>. Focus lands on the sheet's first
+     writable field instead — the goal line, which the editor renders as an input once it may write
+     (/review, 2026-09-18). The editor is keyed per practice, not per mode, so nothing remounts and
+     no `autoFocus` fires; this is the one place that moves focus. */
+  useEffect(() => {
+    if (!editing) return;
+    const id = requestAnimationFrame(() => document.getElementById(PLAN_GOAL_INPUT_ID)?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [editing]);
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
   useOverlayOpen(copyOpen || saveTemplateOpen || sendOpen);
   /**
@@ -314,6 +329,7 @@ export default function CoachPracticePlanPage({
     (person: PickablePerson) => createStaffTag(person.name, { userId: person.userId }),
     [createStaffTag],
   );
+
 
   /**
    * The reader's own levels (mig 303) — by IDENTITY: their staff tag(s), matched by id at every
@@ -388,6 +404,8 @@ export default function CoachPracticePlanPage({
       setData(body);
       setPlan(body.plan ?? emptyPracticePlan());
       setRecap(body.recap ?? '');
+      // A fresh load is a fresh visit: a record opens as a record (stage 6).
+      setEditing(false);
       setPlanTagIds(body.planTagIds ?? []);
       setFocusTags(body.focusTags ?? []);
       setStaffTags(body.staffTags ?? []);
@@ -727,182 +745,25 @@ export default function CoachPracticePlanPage({
     }
   }
 
+  /**
+   * "Print the sheet" — the paper (stage 5). The sheet's DATA is assembled by the one shared
+   * builder (`buildPracticeSheet`) the closed-season reader prints through too (stage 6, R5); this
+   * page owns only what the builder cannot know: the team's paper (`pdfSettings`), its name, and
+   * the download.
+   */
   async function handlePrint() {
     if (!data) return;
-    const { event, roster, goals, canViewFocus } = data;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
-    // Resolved to CURRENT tag names (mig 266) — see `resolvePracticePlanTagNames`. The sheet, like
-    // the run screen, only ever reads `.staff`/`.equipment` as plain strings; this is what lets a
-    // station saved under the new picker still print who's running it and what to bring.
-    const resolved = resolvePracticePlanTagNames(plan, staffTags, equipmentTags);
-    const clocks = computeBlockClocks(resolved.blocks, event.startsAt, event.endsAt);
-    const clockByBlock = new Map(clocks.map(c => [c.blockId, c]));
-    const nameOf = (id: string) => {
-      const p = roster.find(r => r.id === id);
-      return p ? playerDisplayName(p) : '';
-    };
-
-    // ⚠ ONE PASS, ONE BLOCK AT A TIME. The run sheet prints each rotation INSIDE the block it
-    // was configured on (owner-approved structure, 2026-08-22), so the grid, its honest-arithmetic
-    // statements and its group membership are assembled here beside that block's own prose —
-    // never flattened into document-level lists that the sheet then has to re-associate.
-    //
-    // Each block's start comes from the SAME clock walk as the time column (`clock.startMs`),
-    // never a second copy of the arithmetic — an earlier duplicate had already drifted on how a
-    // "rest of practice" block advances the cursor, so the sheet and the screen disagreed.
-    const blocks: PracticeSheetBlock[] = resolved.blocks.map(block => {
-      const clock = clockByBlock.get(block.id);
-      const time = clock ? `${clock.startLabel}${clock.endLabel ? `–${clock.endLabel}` : ''}` : '';
-      // One vocabulary at both levels (stage 2, D3): the block's line says "Watch for:" as its
-      // station lines below already do — the word the field screen prints in bold.
-      // The block's kit (D11) prints beside the block, where a station's already prints; the
-      // block has no legacy names field to resolve into, so its ids are named here directly.
-      const blockKit = tagNamesById(block.equipmentTagIds, equipmentTags);
-      const notes = [
-        block.goal ? `Watch for: ${block.goal}` : '',
-        block.description ?? '',
-        blockKit.length ? `Equipment: ${blockKit.join(', ')}` : '',
-        ...(block.coachingPoints ?? []).map((p, i) => `${i + 1}. ${p}`),
-      ].filter(Boolean).join('\n');
-
-      // Each station as a LABELLED BLOCK under the words (stage 5, P8) — the screen's column and
-      // the modal's order, on paper: the name with "Run by" beside it, then what it says of its
-      // own, then Setup · Equipment · Players · Tonight · Rotation as lines, then its points.
-      // Never the " · "-joined prose run this used to be (it wrapped mid-item: "Run by Sam /
-      // Assistant"), never columns.
-      const stations: PracticeSheetStation[] = (block.stations ?? []).map((s, i) => {
-        // ⚠ The SAME resolver the field screen uses. The sheet is what an assistant running the
-        // tee station actually carries, so a station whose teaching came from a drill must print
-        // it — and a plan written before the library existed must still print the block's.
-        const { description, goal } = resolveStationTeaching(s, block);
-        return {
-          name: stationLabel(s, i),
-          runBy: (s.staff ?? []).join(', '),
-          // Only when the station says something the block hasn't already said above, so the
-          // sheet doesn't print the same sentence twice for a single-station block — in the
-          // block's own order: "Watch for:" first, then the doing line.
-          words: [
-            goal && goal !== block.goal ? `Watch for: ${goal}` : '',
-            description && description !== block.description ? description : '',
-          ].filter(Boolean),
-          // The renderer prints a fact only when its value is there — a line is absent, never empty.
-          facts: [
-            ['Setup', s.setup ?? ''],
-            // "Kit" was the pre-2026-08-01 name, and equipment is a LIST — the old template
-            // interpolated the array itself, printing "Screen,Balls,Net" with no spaces.
-            ['Equipment', (s.equipment ?? []).join(', ')],
-            // The station's own people — and when the station IS the block (its sole station) and
-            // names nobody, the block's word: "Whole team", as the field says for the same block.
-            ['Players', (s.playerIds ?? []).map(nameOf).filter(Boolean).join(', ')
-              || (soleStationOf(block) === s && !(s.playerIds ?? []).length ? 'Whole team' : '')],
-            ['Tonight', s.note ?? ''],
-            ['Rotation', s.rotationNote ?? ''],
-          ],
-          // Read from the STATION, not the resolver: the block's own points are already printed
-          // once above, and re-printing them under every station would double them on the page.
-          // (Comparing the resolver's array by identity worked, but only by accident of how the
-          // fallback happens to return the same reference.)
-          points: s.coachingPoints ?? [],
-        };
-      });
-
-      // The rotation of THIS block, when it has one.
-      //
-      // ⚠ An UNFINISHED rotation still prints. `computeRotation` returns no rounds but a
-      // statement saying what is missing ("Add how often groups move…") — the sheet used to
-      // drop the whole thing, so a coach reading only the paper had no idea a station plan was
-      // ever intended. It now prints the statement and whatever groups exist, with no grid.
-      let rotation: PracticeSheetRotation | null = null;
-      if (blockRotates(block) && block.rotation) {
-        const grid = computeRotation(
-          block.rotation, block.stations, block.duration.minutes ?? null, clock?.startMs,
-        );
-        // The grid TURNED to station columns (stage 5, P1 — the paper reads as the screen's board
-        // has since D6): the block's named stations across, one row per round, the group(s) in
-        // each cell. Assembled from the screen's own re-key (`rotationByStation`) — by station
-        // ID, never by a cell's position — because a hand-arranged grid (D14) can put a group
-        // anywhere in a round, share a station between two, leave one empty or sit a group out,
-        // and the paper must print each exactly where the coach put it.
-        const turned = rotationByStation(grid, block.stations);
-        rotation = {
-          stationNames: turned.stations.map(s => s.name),
-          rounds: turned.rows.map(r => ({
-            round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
-            groups: r.cells,
-            out: r.out.map(o => o.name),
-          })),
-          notes: grid.notes,
-          groups: block.rotation.groups.map(g => ({
-            name: g.name,
-            players: g.playerIds.map(nameOf).filter(Boolean).join(', '),
-          })),
-        };
-      }
-
-      // Whose line this is — the lib's one rule (`blockOwnPeople`): the block's own people, or
-      // nothing when they live on its stations (a sole station's print under that station).
-      const own = block.stations?.length ? undefined : blockOwnPeople(block);
-      const players = (own ?? []).map(nameOf).filter(Boolean).join(', ');
-      return {
-        time,
-        title: block.title || '(untitled)',
-        duration: formatDuration(block.duration),
-        staff: (block.staff ?? []).join(', '),
-        // "Whole team" where the sheet printed nothing (stage 5, P5) — the plan page's own word
-        // for a block that names nobody; a coach's list prints as written, because the record is
-        // the coach's own list (the page keeps "12 players" apart from "Whole team" on purpose).
-        players: players || (own && own.length === 0 ? 'Whole team' : ''),
-        notes,
-        stations,
-        rotation,
-      };
-    });
-
-    // ⚠ Focus areas print ONLY when the plan carries the section (the paper follows the screen —
-    // 2026-09-14) AND the person generating the sheet can see them. An assistant without `notes`
-    // gets the same sheet with the section absent — and the data never reached their browser in
-    // the first place, so there is nothing here to forget to hide.
-    const focus = plan.includeFocusAreas && canViewFocus
-      ? roster.map(p => ({
-          player: playerDisplayName(p),
-          // Separated by a middot, not a comma: a focus area is a SENTENCE ("Backhand pickups —
-          // glove out front, working through the ball"), and joining two of them with a comma made
-          // one player’s two goals read as a single run-on line on the printed sheet.
-          focusAreas: goals.filter(g => g.playerId === p.id && g.status === 'working').map(g => g.focusArea).join('  ·  '),
-        })).filter(row => row.focusAreas)
-      : [];
-
-    // ⚠ The arrival time is a STORED "HH:mm" and it printed raw — "Arrive 17:45" — for as long as
-    // this sheet existed, the eighth hand-rolled clock the 2026-08-26 ruling found, unrendered
-    // because the rendered check's fixture types its own "5:45 p.m." (stage 5, P2). The clock rule
-    // has no paper carve-out: the same guard-then-format the Schedule reads the field through.
-    const whereLabel = [
-      event.startsAt ? fmtTime(event.startsAt) : '',
-      event.arrivalTime ? `Arrive ${formatStoredClock(event.arrivalTime)}` : '',
-      [event.location, event.fieldNumber].filter(Boolean).join(', '),
-    ].filter(Boolean).join('  ·  ');
-
     await downloadPracticeSheet(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'practice-plan', scope: event.name || 'practice' }, 'pdf'),
-      {
-        teamName: assignment?.teamName ?? teamId,
-        dateLabel: event.startsAt ? fmtDate(event.startsAt) : '',
-        whereLabel,
-        goal: plan.goal ?? null,
-        // What the practice is ABOUT: its tags now, plus any legacy free-text labels a plan
-        // written before Phase 3 still carries. ⚠ The sheet is subject to the same vocabulary
-        // rule as the screen — these describe what was PLANNED, and the sheet says nothing about
-        // what was done.
-        description: plan.description ?? null,
-        practiceTypes: [...tagNamesById(planTagIds, focusTags), ...(plan.practiceTypes ?? [])],
-        // The head prints the BAG (stage 2, D11) — everything the blocks and stations below need
-        // plus the coach's extras — the same walk the sheet's About line reads on screen.
-        equipment: practiceKitBag(plan, equipmentTags).all,
-        blocks, focus, settings,
-      },
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'practice-plan', scope: data.event.name || 'practice' }, 'pdf'),
+      buildPracticeSheet({
+        plan, event: data.event, teamName: assignment?.teamName ?? teamId,
+        roster: data.roster, goals: data.goals, canViewFocus: data.canViewFocus,
+        staffTags, equipmentTags, planTagIds, focusTags, settings,
+      }),
     );
   }
 
@@ -944,14 +805,6 @@ export default function CoachPracticePlanPage({
   }
 
   const canWrite = data?.canWrite ?? false;
-  // The pair renders only when the width allows AND the coach chose it — the blank page docks
-  // through its ghost row, which sets `docked` first.
-  const isDocked = canWrite && canDock && docked;
-  const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
-  const hasPastSeasonPlans = data?.hasPastSeasonPlans ?? false;
-  // Read once here so the picker below (which renders outside the `!data` guard) never has to
-  // null-check the load state mid-JSX.
-  const templates = data?.templates ?? [];
   // ONE definition of "is there a plan here", shared with the save path — otherwise a
   // whitespace-only goal reads as a plan on screen while the save path nulls the column.
   const hasPlan = !isPracticePlanEmpty(plan);
@@ -959,60 +812,57 @@ export default function CoachPracticePlanPage({
   // goal typed and nothing else is a savable row (`hasPlan` above), not something to run or print.
   const hasBlocks = practiceHasPlan({ practicePlan: plan });
 
-  /* The sheet's first line (stage 1, D3): how long the practice is, and how the plan fills it.
-     The length comes from the same helper the hub's "60 of 90 min" reads, so the two cannot
-     disagree; the fill is timed minutes only, with a rest-of-practice block named as such. */
-  const practiceLength = event?.startsAt ? practiceLengthMinutes(event.startsAt, event.endsAt) : null;
-  const fit = practicePlanFit(plan, practiceLength);
-  const remainderLabel = practiceRemainderLabel(fit);
-  // Unplanned time and an overrun are both worth a coach's eye; the rest block is spoken for.
-  const remainderTone = fit.remainder?.kind === 'rest' ? undefined : styles.ppDocWhenAmber;
   const started = practiceStarted(event?.startsAt, nowMs);
+  /**
+   * ── THE RECORD (practices re-evaluation stage 6, owner rulings R1 · R2, 2026-09-18) ──
+   * A practice is a RECORD from the instant its run window closes — three hours after its planned
+   * end, or after its start with no end — the same instant the green Run practice goes plain
+   * (`practiceIsRecord`, the one boundary, read from the minute clock this page already runs).
+   * Before it the page is the live editor, tonight's and the three hours after (the couch write-up
+   * lands in the box under the sheet); after it the page is the record's FACE: "How it went" first
+   * and writable, the sheet read-only in its own shape, the toolbar Run practice · Save as
+   * template… · Print the sheet · a quiet Edit the plan for a writer. Library and Send to staff are
+   * the LIVE page's and do not render on a record.
+   *
+   * "Edit the plan" is a VISIT, not a state: a page-level boolean, nothing stored, dropped on the
+   * next load. While editing, the page is the live editor exactly as today — the recap at the foot,
+   * Library and Send to staff included — and the way back is the record.
+   */
+  const isPracticeRecord = practiceIsRecord(event?.startsAt, nowMs, event?.endsAt);
+  const recordMode = isPracticeRecord && !editing;
+  // The pair renders only when the width allows AND the coach chose it — the blank page docks
+  // through its ghost row, which sets `docked` first. Never on a record: the library is a writing tool.
+  const isDocked = canWrite && canDock && docked && !recordMode;
+  const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
+  const hasPastSeasonPlans = data?.hasPastSeasonPlans ?? false;
+  // Read once here so the picker below (which renders outside the `!data` guard) never has to
+  // null-check the load state mid-JSX.
+  const templates = data?.templates ?? [];
   // The toolbar's door (P4) reads the hub card's own state — blocks and the window — never a
   // second rule. `plan` is the sheet as edited (an unsaved first block counts, as it does for
   // "How it went"), and the event's start is the schedule's.
   const runState = event ? practicePlanState({ practicePlan: plan, startsAt: event.startsAt, endsAt: event.endsAt }, nowMs) : 'none';
+  /** May write the SHEET now — a writer on a live practice, or one who opened Edit the plan. */
+  const writing = canWrite && !recordMode;
 
   /**
-   * The sheet's first line — three shapes, one flat function (the `renderPickList` idiom: a
-   * called function, never a component declared in the render body).
-   *   · no start (should not happen for a loaded practice) → "Plan this practice."
-   *   · no end → "20 min planned · no end set · Set it on the schedule ›"
-   *   · an end → "0 of 120 min planned · 120 unplanned" (the remainder in amber)
+   * "How it went" — one block, two places (stage 6, R2 · R3): FIRST on the record, under the head;
+   * at the foot on the live page once the practice has started. Writable for a writer in both
+   * (the recap is the record's one live field — its autosave is its own, `recapDirty`, kept apart
+   * from the plan's on purpose); read for a viewer. A called function, never a component declared
+   * in the render body (the `renderPickList` idiom).
    */
-  function renderWhenLine() {
-    if (!event?.startsAt) return <span className={styles.ppDocWhenLine}>Plan this practice.</span>;
-    const scheduleHref = `${base}/schedule?event=${eventId}`;
-    // The day and the clock share one line on a desktop; the phone stacks them (the frame's 390).
-    const when = (
-      <span className={styles.ppDocWhenLine}>
-        <span className={styles.ppDocWhenDay}>{fmtDay(event.startsAt)}</span>
-        <span className={styles.ppDocWhenSep}> · </span>
-        {fmtTime(event.startsAt)}
-        {practiceLength != null && event.endsAt ? `–${fmtTime(event.endsAt)} · ${practiceLength} min` : ''}
-      </span>
-    );
-    if (practiceLength == null) {
-      // Without an end the frame cannot be drawn; the fix is on the schedule. An end that IS set
-      // but sits at or before the start is said so — "no end set" would be a lie about a field
-      // the coach can see filled (/review, 2026-09-14).
-      const why = event.endsAt ? 'the end is before the start' : 'no end set';
-      return (
-        <>
-          {when}
-          {practicePlannedLabel(fit)} · {why} ·{' '}
-          <Link href={scheduleHref} className={styles.ppDocWhenLink}>
-            {event.endsAt ? 'Fix it on the schedule ›' : 'Set it on the schedule ›'}
-          </Link>
-        </>
-      );
-    }
+  function renderHowItWent(first: boolean) {
     return (
-      <>
-        {when}
-        {practicePlannedLabel(fit)}
-        {remainderLabel && <> · <span className={remainderTone}>{remainderLabel}</span></>}
-      </>
+      <HowItWent
+        first={first}
+        recap={recap}
+        status={recapDirty ? 'saving' : recapSaved ? 'saved' : 'idle'}
+        // On a record the recap is the only thing that can fail to save, and the plan's floating
+        // pill is not there to say so; on the live page the pill already does.
+        error={recordMode && saveError ? saveError : undefined}
+        onChange={canWrite ? next => { setRecap(next); setRecapDirty(true); setRecapSaved(false); setSaveError(''); } : undefined}
+      />
     );
   }
 
@@ -1138,9 +988,9 @@ export default function CoachPracticePlanPage({
               One quiet line above the sheet: Saturday's intelligence while Tuesday's plan is
               being built. Read-only glance — capture and curation stay on the book's own
               surfaces. Absent when the week has no booked opponent with book content, absent
-              in archives (this screen is the LIVE planner; the read-only past-plan door is a
-              different route that never assembles the bridge), and never a pop-up. */}
-          {data.scoutingBridge && (
+              on a RECORD (the bridge is an instrument for planning a week that is still ahead —
+              stage 6, R2), and never a pop-up. */}
+          {data.scoutingBridge && !recordMode && (
             <div className={styles.ppScoutBridge}>
               <p className={styles.ppScoutBridgeLead}>
                 <Telescope size={14} aria-hidden />
@@ -1172,8 +1022,29 @@ export default function CoachPracticePlanPage({
             </div>
           )}
 
+          {/* ── A RECORD WITH NO PLAN (stage 6, R2) — for the head coach AND the assistant ──
+              The hub's row already says "No plan written · Open" (D3); the page it opens agrees:
+              the head, the note box (writable for a writer — a coach who planned nothing and
+              wrote everything afterwards produced exactly the record the shelf exists for), and
+              one sentence, the reader's own. No lime, no "Plan this practice", no toolbar
+              (nothing to print or run) — and never the live page's "No plan for this practice
+              yet … once there is one", which promises a future a record does not have. The hub's
+              definition of "no plan" (no BLOCK) decides it, so the row and the page agree. */}
+          {recordMode && !hasBlocks && (
+            <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded" data-record="no-plan">
+              <div className={styles.ppDocHead}>
+                <div className={styles.ppDocWhen}>
+                  <PracticeWhenLine startsAt={event?.startsAt} endsAt={event?.endsAt} plan={plan} record />
+                </div>
+                {event && <PracticeScheduleLink href={`${base}/schedule?event=${eventId}`} />}
+              </div>
+              {renderHowItWent(true)}
+              <NoPlanRecord />
+            </div>
+          )}
+
           {/* An honest empty state: what a plan is, what it unlocks, and what's blocking. */}
-          {!hasPlan && !canWrite && (
+          {!recordMode && !hasPlan && !canWrite && (
             <CoachEmptyState
               quiet
               icon={<ClipboardList size={22} />}
@@ -1186,7 +1057,7 @@ export default function CoachPracticePlanPage({
           {/* A nudge, not the page's action: the sheet under it carries the one lime (stage 1,
               D5), so the roster door is the quiet variant with a secondary button — two limes on
               a new team's first practice was the /review catch (2026-09-14). */}
-          {!hasPlan && canWrite && data.roster.length === 0 && (
+          {!recordMode && !hasPlan && canWrite && data.roster.length === 0 && (
             <CoachEmptyState
               quiet
               icon={<ClipboardList size={22} />}
@@ -1197,7 +1068,7 @@ export default function CoachPracticePlanPage({
             />
           )}
 
-          {(hasPlan || canWrite) && (
+          {(recordMode ? hasBlocks : hasPlan || canWrite) && (
             <>
               {/* ── The toolbar — only once there is a plan (stage 1, D5) ──
                   The blank page has no toolbar and no disabled Print: its one action is the
@@ -1211,7 +1082,12 @@ export default function CoachPracticePlanPage({
                   walk the plan before, during or after the practice). Always FIRST; the page's
                   one lime on the day (`practicePlanState` 'run', from the minute clock this page
                   already runs for "How it went") and a plain button otherwise — the day decides
-                  the weight, never the door. */}
+                  the weight, never the door.
+                  ⚠ THE RECORD'S TOOLBAR (stage 6, R2): Run practice (plain — never green on a past
+                  day) · Save as template… (a practice that went well is the best template there
+                  is) · Print the sheet · and, at the right end for a writer, a quiet "Edit the
+                  plan" — a door, not the default. Library (a writing tool) and Send to staff
+                  (nobody to prepare) are the LIVE page's and do not render; gated, never deleted. */}
               {hasBlocks && (
                 <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
                   <Link href={`${base}/practice/${eventId}/run`} className={runState === 'run' ? styles.btnPrimary : styles.btnSecondary} data-testid="run-practice">
@@ -1231,7 +1107,7 @@ export default function CoachPracticePlanPage({
                       autosaving plan has no other "done" for (F04). A secondary button: the sheet's
                       first block (or, in the window, Run practice) keeps the page's one lime. Only
                       for a writer, only with blocks, and only when there is a staff to send to. */}
-                  {canWrite && (data.staffPeople?.length ?? 0) > 1 && (
+                  {writing && (data.staffPeople?.length ?? 0) > 1 && (
                     <button type="button" className={styles.btnSecondary} onClick={() => setSendOpen(true)} data-testid="send-to-staff">
                       <Send size={14} aria-hidden /> Send to staff
                     </button>
@@ -1240,18 +1116,28 @@ export default function CoachPracticePlanPage({
                       while docked. ABSENT below a 1,156px working column, not disabled: a 1,366 laptop
                       never sees it and keeps the sheet. On the blank page (no toolbar yet) the ghost
                       row's own words do this job. */}
-                  {canWrite && canDock && (
+                  {writing && canDock && (
                     <button type="button" className={`${styles.btnSecondary} ${styles.ppToolbarEnd}`} aria-pressed={docked}
                       data-on={docked ? 'on' : undefined} data-testid="library-toggle" onClick={() => dock(!docked)}>
                       <Library size={14} aria-hidden /> Library
+                    </button>
+                  )}
+                  {/* The record's one way into the editor, for a writer only (stage 6, R2): quiet, at
+                      the right end, this visit — the way back is the record. On a phone it takes its
+                      own 44px line under the three buttons. */}
+                  {recordMode && canWrite && (
+                    <button type="button" className={`${styles.ppTlQuietLink} ${styles.ppToolbarEnd} ${styles.ppEditPlanLink}`}
+                      data-testid="edit-the-plan" onClick={() => setEditing(true)}>
+                      <Pencil size={13} aria-hidden /> Edit the plan
                     </button>
                   )}
                 </div>
               )}
               {/* The sent state (mig 303's stamp) — the last send, whoever pressed it, as a fact under
                   the toolbar: who, which audience, which channels, when. Re-sending is always allowed
-                  and needs no reason (ruling H deferred "changed since you sent it"). */}
-              {hasBlocks && data.sent && (
+                  and needs no reason (ruling H deferred "changed since you sent it"). The live page's:
+                  a record shows neither the line nor the button (stage 6, R2). */}
+              {!recordMode && hasBlocks && data.sent && (
                 <p className={styles.ppSentLine} data-testid="sent-to-staff">
                   <b>Sent to {data.sent.count ?? 0}</b>
                   {data.sent.audience && <> ({AUDIENCE_SENT_LABEL[data.sent.audience]})</>}
@@ -1271,21 +1157,28 @@ export default function CoachPracticePlanPage({
 
               {/* ── THE SHEET (stage 1, D2) — the page is a document. Its first line is when and
                   how long (D3); the goal, the folds and the timeline are the editor's. */}
-              <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded">
+              <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded" data-record={recordMode ? 'record' : undefined}>
                 <div className={styles.ppDocHead}>
-                  <div className={styles.ppDocWhen}>{renderWhenLine()}</div>
-                  {event && (
-                    <Link href={`${base}/schedule?event=${eventId}`} className={styles.ppDocHeadLink}>
-                      <CalendarDays size={12} aria-hidden /> View on schedule
-                    </Link>
-                  )}
+                  {/* The sheet's first line (stage 1, D3) — on a record a FACT: no "Set it on the
+                      schedule ›" (stage 6, R2). The invitation is a WRITER's: a viewer who cannot
+                      edit the schedule is not asked to (the same stage found it shown to one). */}
+                  <div className={styles.ppDocWhen}>
+                    <PracticeWhenLine startsAt={event?.startsAt} endsAt={event?.endsAt} plan={plan} record={recordMode}
+                      scheduleHref={writing ? `${base}/schedule?event=${eventId}` : undefined} />
+                  </div>
+                  {event && <PracticeScheduleLink href={`${base}/schedule?event=${eventId}`} />}
                 </div>
+
+                {/* ── "How it went" FIRST on the record (stage 6, R2) — the record's one live field,
+                    before what was planned; the live page puts the same block at the foot. ── */}
+                {recordMode && renderHowItWent(true)}
 
                 {/* ── "You're on …" (COACH_PRACTICE_WHO_RUNS_IT, ruling G) — ONLY when the reader is
                     named on this plan, decided by identity (mig 303). One support-size line under the
                     where-line: each entry is their block, or their station under its block, in
-                    practice order, and a jump to that row. Never an empty strip; never on paper. */}
-                {youreOn.length > 0 && (
+                    practice order, and a jump to that row. Never an empty strip; never on paper; the
+                    LIVE page's — a record has nobody to prepare (stage 6, R2). */}
+                {!recordMode && youreOn.length > 0 && (
                   <div className={styles.ppYoureOn} data-testid="youre-on">
                     <span className={styles.ppYoureOnLabel}>You&rsquo;re on</span>
                     {youreOn.map(e => (
@@ -1309,9 +1202,11 @@ export default function CoachPracticePlanPage({
                     <BookMarked size={14} aria-hidden />
                     {/* One sentence (stage 4, L7): the two halves that do the work — "edit anything"
                         and "the template won't change" — and the template's name bold, because it is
-                        the fact. Survives every edit, as it always has. */}
+                        the fact. Survives every edit, as it always has. Read, the fact alone: there is
+                        nothing to edit here (stage 6, R2). */}
                     <span>
-                      Started from <strong>{plan.templateName}</strong> — edit anything here; the template won&apos;t change.
+                      Started from <strong>{plan.templateName}</strong>
+                      {writing ? <> — edit anything here; the template won&apos;t change.</> : null}
                     </span>
                   </p>
                 )}
@@ -1322,7 +1217,11 @@ export default function CoachPracticePlanPage({
                   // accident of unmounting it (/review, 2026-09-14).
                   key={eventId}
                   plan={plan}
-                  onChange={updatePlan}
+                  // A second gate under the editor's own (/review, 2026-09-18): the editor renders no
+                  // write control in read mode, and if one is ever missed, the plan still cannot
+                  // change from a record — the mutator itself is a no-op there. A save already in
+                  // flight when the boundary passes is not this gate's business and still lands.
+                  onChange={writing ? updatePlan : NEVER_CHANGES}
                   roster={data.roster}
                   goals={data.goals}
                   canViewFocus={data.canViewFocus}
@@ -1336,26 +1235,32 @@ export default function CoachPracticePlanPage({
                   onEquipmentTagsChanged={reloadEquipmentTags}
                   drills={data.drills}
                   circuits={data.circuits}
-                  onCreateCircuit={canWrite ? createCircuit : undefined}
-                  library={canWrite ? { canDock, docked: isDocked, onDock: dock, panelHost, circuitsHref: practicePlansHref(base, 'circuits') } : undefined}
+                  // Every writing hook rides on `writing` — a writer on a live practice, or one who
+                  // opened Edit the plan — so a record mounts the same editor with nothing to press.
+                  onCreateCircuit={writing ? createCircuit : undefined}
+                  library={writing ? { canDock, docked: isDocked, onDock: dock, panelHost, circuitsHref: practicePlansHref(base, 'circuits') } : undefined}
                   // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                   // entirely rather than offering a control that only exists to refuse.
-                  onCreateDrill={canWrite ? createDrill : undefined}
+                  onCreateDrill={writing ? createDrill : undefined}
                   focusTags={focusTags}
-                  onCreateFocusTag={canWrite ? createFocusTag : undefined}
+                  onCreateFocusTag={writing ? createFocusTag : undefined}
                   staffTags={staffTags}
-                  onCreateStaffTag={canWrite ? createStaffTag : undefined}
+                  onCreateStaffTag={writing ? createStaffTag : undefined}
                   staffPeople={staffPeopleForPicker}
-                  onPickStaffPerson={canWrite ? pickStaffPerson : undefined}
+                  onPickStaffPerson={writing ? pickStaffPerson : undefined}
                   viewerBlockIds={mine.blockIds}
                   viewerStationIds={mine.stationIds}
                   equipmentTags={equipmentTags}
-                  onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
+                  onCreateEquipmentTag={writing ? createEquipmentTag : undefined}
                   planTagIds={planTagIds}
-                  onChangePlanTags={savePlanTags}
+                  onChangePlanTags={writing ? savePlanTags : NEVER_CHANGES}
                   eventStartsAt={event?.startsAt ?? ''}
                   eventEndsAt={event?.endsAt ?? null}
-                  readOnly={!canWrite}
+                  // READ for a viewer, and for everyone on a record (stage 6, R2) — the same face,
+                  // one prop; `record` is the word ("Goal:" for "Tonight:").
+                  readOnly={!writing}
+                  record={recordMode}
+                  goalInputId={PLAN_GOAL_INPUT_ID}
                   // ⚠ ONE control, THREE sources (frame 05; P3 C2 added the third) — never a
                   // second door. Offered on the blank page when there is anything at all to
                   // start from, which from P3 C2 includes a past season: without that clause the
@@ -1363,7 +1268,7 @@ export default function CoachPracticePlanPage({
                   // yet, saw no door at all — and they are precisely who the third source exists
                   // for. The editor hides it the moment a block exists (stage 1, D5).
                   onStartFrom={
-                    canWrite && (previousWithPlans.length > 0 || templates.length > 0 || hasPastSeasonPlans)
+                    writing && (previousWithPlans.length > 0 || templates.length > 0 || hasPastSeasonPlans)
                       ? () => {
                           setCopyOpen(true);
                           // Land on the fullest source the coach has, in order of nearness to tonight.
@@ -1377,53 +1282,16 @@ export default function CoachPracticePlanPage({
                   }
                 />
 
-                {/* ── "How it went" (D17, frame 07) — ABSENT until the practice has started
-                    (stage 1, D7; stage 6 owns anything finer than "the start has passed") ──
+                {/* ── "How it went" (D17, frame 07) at the FOOT of the live page — ABSENT until the
+                    practice has started (stage 1, D7; stage 6, R3 kept the start and deleted the
+                    line that used to promise it: a page states what it has, not what it will have).
                     A SECOND, SEPARATE section under the plan, on the same principle as "Recorded
                     here" below: the plan is what you INTENDED, this is what you thought afterwards.
-                    It is one of only two things on this screen allowed to describe reality, and it
-                    earns that because a coach sat down at home and typed it.
-
-                    ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** — D17's hard guardrail. The
-                    placeholder and the helper line both steer away from names, there is
-                    deliberately no per-player equivalent, and none may be added: per-child
-                    commentary would drift into behavioural profiling on minors.
-
-                    ⚠ This does NOT reopen D4. An unhurried note written at home is a different act
-                    from an abandoned tick-box mid-drill — nothing at the field records anything,
-                    and there are still no per-block "we ran it" ticks. */}
-                {!started ? (
-                  <p className={styles.ppDocNote}>&ldquo;How it went&rdquo; appears here once the practice has started.</p>
-                ) : (
-                  <div className={styles.ppDocFoot}>
-                    <h2 className={styles.ppRecordedTitle}><NotebookPen size={15} aria-hidden /> How it went</h2>
-                    <p className={styles.formHint}>For you and your staff. Families never see this.</p>
-                    {canWrite ? (
-                      <label className={styles.ppField}>
-                        <span className="sr-only">How it went</span>
-                        <textarea
-                          className={styles.textarea}
-                          rows={4}
-                          value={recap}
-                          maxLength={MAX_RECAP_LEN}
-                          placeholder="What would you do differently next time?"
-                          aria-label="How it went"
-                          onChange={e => { setRecap(e.target.value); setRecapDirty(true); setRecapSaved(false); }}
-                        />
-                        <span className={styles.formHint} aria-live="polite">
-                          {recapDirty ? 'Saving…' : recapSaved ? 'Saved · about the practice, not about a player'
-                            : 'About the practice, not about a player'}
-                        </span>
-                      </label>
-                    ) : recap ? (
-                      <p className={styles.ppReadTxt}>{recap}</p>
-                    ) : (
-                      // ⚠ Silence is stated, never rendered blank — a practice with nothing written
-                      // must not read as a practice where nothing happened.
-                      <p className={styles.ppRecapNone}>Nothing written down for this one.</p>
-                    )}
-                  </div>
-                )}
+                    On a record the same block renders FIRST, above (stage 6, R2); during an "Edit
+                    the plan" visit the page is the live editor and the block is here. The block's
+                    own guardrails (about the practice, never a child; D4 untouched) are on the
+                    component. */}
+                {!recordMode && started && renderHowItWent(false)}
               </div>
               {isDocked && <div ref={setPanelHost} className={styles.ppLibraryHost} />}
               </div>
@@ -1457,8 +1325,9 @@ export default function CoachPracticePlanPage({
       )}
 
       {/* The autosave word, floating at the window's foot (owner, 2026-09-14) — the bar it
-          replaced held nothing else. */}
-      {canWrite && !loading && !loadError && (
+          replaced held nothing else. The PLAN's word: on a record nothing about the plan saves
+          (the recap has its own line under its box), so the pill is the live face's (stage 6). */}
+      {writing && !loading && !loadError && (
         <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
       )}
 
