@@ -10284,6 +10284,9 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   /* The block's quiet links — the doors line and "Choose players…" — take the floor the ghost
      row's links already hold (stage 2, D8); the chips take it with the suggest-chip family. */
   .ppDoorsLine .ppTlQuietLink, .ppWhoLine .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  /* "You're on …" (mig 303) already takes the inline-flex recipe at every width — only the floor
+     itself is a touch-band concern; a mouse row can stay tighter. */
+  .ppYoureOnItem { min-height: var(--tap-min, 44px); }
   .ppRecordedList a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   /* The groups read-out's door (stage 3 revision) takes the floor; the room's draw row, its name
      boxes and its bins take it from the room's own wrapper, which sits outside the open block. */
