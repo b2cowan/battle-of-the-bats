@@ -5175,16 +5175,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "measurable_type_id",
     "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "id",
-    "delete_rule": "RESTRICT",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_observations",
-    "constraint_name": "rep_player_observations_skill_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "measurable_type_id",
-    "foreign_table": "rep_team_measurable_types",
     "foreign_column": "team_id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
@@ -5203,7 +5193,7 @@
     "table_name": "rep_player_observations",
     "constraint_name": "rep_player_observations_skill_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
+    "column_name": "measurable_type_id",
     "foreign_table": "rep_team_measurable_types",
     "foreign_column": "id",
     "delete_rule": "RESTRICT",
@@ -5225,16 +5215,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "kind",
-    "delete_rule": "RESTRICT",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_observations",
-    "constraint_name": "rep_player_observations_skill_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "metric_kind",
-    "foreign_table": "rep_team_measurable_types",
     "foreign_column": "id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
@@ -5243,7 +5223,7 @@
     "table_name": "rep_player_observations",
     "constraint_name": "rep_player_observations_skill_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "metric_kind",
+    "column_name": "team_id",
     "foreign_table": "rep_team_measurable_types",
     "foreign_column": "kind",
     "delete_rule": "RESTRICT",
@@ -5256,6 +5236,26 @@
     "column_name": "metric_kind",
     "foreign_table": "rep_team_measurable_types",
     "foreign_column": "team_id",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_observations",
+    "constraint_name": "rep_player_observations_skill_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "metric_kind",
+    "foreign_table": "rep_team_measurable_types",
+    "foreign_column": "kind",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_observations",
+    "constraint_name": "rep_player_observations_skill_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "metric_kind",
+    "foreign_table": "rep_team_measurable_types",
+    "foreign_column": "id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
@@ -6677,6 +6677,16 @@
     "foreign_table": "rep_program_years",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_ready_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "ready_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

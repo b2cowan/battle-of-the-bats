@@ -45,7 +45,7 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
     date: '2026-09-18',
-    title: 'Practice plans and Skills & Goals, rebuilt — plus host your own team in your tournament',
+    title: 'Practice plans, Skills & Goals and lineups, rebuilt — plus host your own team in your tournament',
     highlights: [
       {
         category: 'new',
@@ -76,8 +76,32 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         text: 'Add your own team to your tournament in one click, with no separate registration — for coaches who also run the event.',
       },
       {
+        category: 'new',
+        text: 'Lineups now say where they actually stand. Every game reads Not started, Draft, Ready or Needs review — on the Lineups page, the team Overview and the schedule. When a lineup is done, mark it Ready; the product records who and when, and any later edit puts it back to Draft, so anyone on staff who opens a Ready lineup knows nothing has changed since.',
+      },
+      {
+        category: 'new',
+        text: 'Tap any inning number to open that inning as a list: every position, who\'s in it and where they sit on your depth chart, who\'s on the bench, and what\'s still open — with Assign, Swap, Keep and Leave open right there. If the lineup needs review, it names the reason, not a guess.',
+      },
+      {
+        category: 'new',
+        text: 'Auto-fill explains itself. Hover or tap a filled cell to see why that player landed there — best at the position, their turn in the rotation, or the only pitcher still available — and a mound left empty because every pitcher is at their cap says so.',
+      },
+      {
         category: 'improved',
         text: 'A more consistent look across every list and table in the coach portal.',
+      },
+      {
+        category: 'improved',
+        text: 'The lineup builder is two tabs — Lineup and Playing time. On a phone, the batting number is now the handle: hold to drag a player up or down the order, or tap it to move or remove them.',
+      },
+      {
+        category: 'improved',
+        text: 'The Lineups page now opens like Practice plans: Games and Templates as tabs, your next game on top with one clear button, and a Needs lineup count that only counts games still ahead.',
+      },
+      {
+        category: 'improved',
+        text: 'Printing a dugout poster with open positions now warns you and names them first.',
       },
       {
         category: 'fixed',
