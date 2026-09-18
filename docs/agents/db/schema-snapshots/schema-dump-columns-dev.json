@@ -13986,6 +13986,51 @@
     "ordinal_position": 33
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan_sent_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 35
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan_sent_audience",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 36
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan_sent_count",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 37
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan_sent_email",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 38
+  },
+  {
     "table_name": "rep_team_expense_tags",
     "column_name": "expense_id",
     "data_type": "uuid",
@@ -15793,6 +15838,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_team_tags",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
   },
   {
     "table_name": "rep_team_tournament_registrations",

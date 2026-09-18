@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-17",
-  "total": 36,
+  "generated": "2026-09-18",
+  "total": 47,
   "counts": {
     "tables": 2,
-    "columns": 14,
-    "indexes": 7,
-    "constraints": 8,
-    "rls": 5
+    "columns": 20,
+    "indexes": 8,
+    "constraints": 10,
+    "rls": 7
   },
   "items": [
     {
@@ -23,6 +23,14 @@
     },
     {
       "key": "check:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_scope_attempts_object_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_events.rep_team_events_practice_plan_sent_audience_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_tags.rep_team_tags_user_is_staff_team_tag",
       "sig": ""
     },
     {
@@ -82,6 +90,30 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_events.practice_plan_sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_plan_sent_audience",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_plan_sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_plan_sent_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_plan_sent_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_tags.user_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-prod:rep_team_measurable_types.replaced_by_id",
       "sig": ""
     },
@@ -114,6 +146,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_team_events.rep_team_events_practice_plan_sent_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_tags.rep_team_tags_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-prod:rep_team_measurable_types.rep_team_measurable_types_replaced_by_id_fkey",
       "sig": ""
     },
@@ -139,6 +179,10 @@
     },
     {
       "key": "index:only-dev:rep_team_circuits_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_tags_team_user_uniq",
       "sig": ""
     },
     {

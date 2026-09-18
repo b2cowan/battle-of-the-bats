@@ -10928,7 +10928,10 @@ span.libCardMain { cursor: default; }
   background: var(--home-card, transparent);
 }
 .ppStCol[data-mine='mine'] { border-color: rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.5); box-shadow: inset 3px 0 0 var(--home-olive, var(--logic-lime)); }
-.ppSentLine { margin: -0.3rem 0 0.9rem; font-size: var(--type-support); color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.35rem; }
+/* Bottom margin stays at 0 — `.ppSheetCol`'s own flex gap already spaces it from the sheet
+   below; a margin here would stack on top of that gap instead of replacing it (the doubled
+   gap the owner caught, 2026-09-18). */
+.ppSentLine { margin: -0.3rem 0 0; font-size: var(--type-support); color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.35rem; }
 .ppSentLine b { color: var(--text-primary); font-weight: 600; }
 .ppSendAudiences { display: flex; flex-direction: column; gap: 0.5rem; margin: 0 0 0.75rem; padding: 0; border: 0; }
 .ppSendAudience, .ppSendEmail {
