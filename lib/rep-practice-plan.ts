@@ -125,6 +125,28 @@ export function splitBlockIntoStations(
  * (D8) decides it, not tidiness. Kit and people are carried up here so the settle pass finds
  * them at home, as it does whenever the last station goes.
  */
+/**
+ * The block's ONE station, when it has exactly one — the case that flattens (stage 2, D1: "with
+ * one station the station IS the block"). The one predicate, read by the editor, the field screen
+ * and the print path; a fourth inline `stations.length === 1` was the drift the stage-5 review found.
+ */
+export function soleStationOf(block: Pick<PracticePlanBlock, 'stations'>): PracticeStation | null {
+  return block.stations?.length === 1 ? block.stations[0] : null;
+}
+
+/**
+ * The people a block holds as ITS OWN line — the block's list with no stations, the sole station's
+ * when the station is the block — or `undefined` when its people live on its stations (two or
+ * more; `settleBlockPeople` moved them there). An empty list is a real answer: nobody named, the
+ * plan page's "Whole team". The field screen and the paper both read this to decide whether a
+ * block has a people line at all (stage 5, P5) — one rule, two surfaces.
+ */
+export function blockOwnPeople(block: Pick<PracticePlanBlock, 'stations' | 'playerIds'>): readonly string[] | undefined {
+  const count = block.stations?.length ?? 0;
+  if (count > 1) return undefined;
+  return (count === 1 ? block.stations![0].playerIds : block.playerIds) ?? [];
+}
+
 export function collapseSoleStation(block: PracticePlanBlock): PracticePlanBlock {
   const stations = block.stations ?? [];
   if (stations.length !== 1) return block;
@@ -847,11 +869,26 @@ export interface BlockClock {
   startLabel: string;
   /** The block's end at its FLOOR duration, or null when it can't be known. */
   endLabel: string | null;
+  /**
+   * The same end as an INSTANT (epoch ms), beside its label for the same reason `startMs` sits
+   * beside `startLabel`: the sheet's now-marker (stage 5, P9) asks which block's planned window
+   * holds the clock, and re-walking the list to answer would be a second copy of the arithmetic.
+   */
+  endMs: number | null;
   /** True for the single "rest of practice" block. */
   restOfPractice: boolean;
 }
 
 const CLOCK_FORMAT: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+
+/**
+ * "6:00 p.m." from an instant — the clock face every block time in the plan wears, in the ORG's zone.
+ * Exported so the run screen's fact and the sheet's now-marker read the same face as the gutter,
+ * rather than each carrying its own copy of the options (the clock ruling's whole lesson).
+ */
+export function formatClockMs(ms: number): string {
+  return formatInOrgZone(new Date(ms).toISOString(), CLOCK_FORMAT);
+}
 
 /** The clock walk's whole answer: one clock per block, and where the walk STOPPED. */
 export type BlockClockWalk = {
@@ -886,7 +923,7 @@ export function walkBlockClocks(
   const startMs = new Date(eventStartsAt).getTime();
   if (Number.isNaN(startMs)) return none;
   const endMs = eventEndsAt ? new Date(eventEndsAt).getTime() : NaN;
-  const at = (ms: number) => formatInOrgZone(new Date(ms).toISOString(), CLOCK_FORMAT);
+  const at = formatClockMs;
 
   let cursor = startMs;
   const clocks = blocks.map(block => {
@@ -899,6 +936,7 @@ export function walkBlockClocks(
         startMs: blockStart,
         startLabel: at(blockStart),
         endLabel: hasEnd ? at(endMs) : null,
+        endMs: hasEnd ? endMs : null,
         restOfPractice: true,
       };
     }
@@ -910,6 +948,7 @@ export function walkBlockClocks(
       startMs: blockStart,
       startLabel: at(blockStart),
       endLabel: minutes != null ? at(blockEnd) : null,
+      endMs: minutes != null ? blockEnd : null,
       restOfPractice: false,
     };
   });
@@ -922,6 +961,38 @@ export function computeBlockClocks(
   eventEndsAt: string | null | undefined,
 ): BlockClock[] {
   return walkBlockClocks(blocks, eventStartsAt, eventEndsAt).clocks;
+}
+
+/**
+ * Which block's PLANNED window holds the clock — the index into the walk, or null when none does
+ * (before the first block, after the planned end, or a block whose end cannot be known). The
+ * sheet's now-marker (stage 5, P9) reads this against the page's minute clock: it is the plan's
+ * now, never a tap's — the field screen is anchored by the coach's taps and may disagree by the
+ * minutes they are behind, and the sheet is the one saying "by the plan". Indexed BY POSITION
+ * (block ids are client-minted and not guaranteed unique).
+ */
+export function plannedBlockAt(clocks: readonly BlockClock[], nowMs: number): number | null {
+  const i = clocks.findIndex(c => c.startMs <= nowMs && c.endMs != null && nowMs < c.endMs);
+  return i >= 0 ? i : null;
+}
+
+/**
+ * Does a block's player list mean the WHOLE TEAM (stage 5, P5)? Yes when it names nobody — the
+ * plan page's own word for an empty list — and yes when the named set is exactly the active
+ * roster: twelve names out of twelve IS the whole team tonight, and twelve chips at arm's length
+ * is a wall. Eleven is chips. A SET comparison, never a count: the sanitiser already drops ids
+ * that left the roster, so the comparison is against the roster the screen was handed.
+ * The plan page keeps "12 players" apart from "Whole team" on purpose (a player added next week
+ * joins one and not the other) — this is the FIELD's comparison; the paper prints a coach's list as
+ * written and says "Whole team" only for an empty one.
+ */
+export function namesWholeTeam(playerIds: readonly string[] | undefined, rosterIds: readonly string[]): boolean {
+  const named = new Set(playerIds ?? []);
+  if (named.size === 0) return true;
+  const roster = new Set(rosterIds);
+  if (roster.size === 0 || named.size !== roster.size) return false;
+  for (const id of roster) if (!named.has(id)) return false;
+  return true;
 }
 
 /** "25 min" · "Rest of practice" · "" — the one duration phrasing, used by the
@@ -1394,10 +1465,11 @@ export interface StationRoundRow {
  * stop in the arithmetic and has no column here either.
  */
 export function rotationByStation(grid: RotationGrid, stations: readonly PracticeStation[] | undefined): {
-  stations: { id: string; name: string }[];
+  /** The named stations themselves, in the coach's order — the field screen's rows read them whole. */
+  stations: PracticeStation[];
   rows: StationRoundRow[];
 } {
-  const stops = (stations ?? []).filter(s => s.name.trim().length > 0).map(s => ({ id: s.id, name: s.name }));
+  const stops = (stations ?? []).filter(s => s.name.trim().length > 0);
   const rows = grid.roundsList.map(round => {
     const byStation = new Map<string, { id: string; name: string }[]>();
     for (const cell of round.cells) {

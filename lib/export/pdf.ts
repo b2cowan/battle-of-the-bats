@@ -932,6 +932,18 @@ export async function fetchResolvedPdfSettings(url: string): Promise<OrgPdfSetti
 //
 //  ⚠ Coach-generated and hand-carried. NEVER a shareable link: a practice plan names
 //  children alongside a date, a start time and a street address.
+//
+//  ⚠ THE SHEET IS THE PRINT OF THE SCREEN'S DOCUMENT (practices re-evaluation stage 5, owner
+//  ruling P2, 2026-09-17). The plan page hands this renderer the document in the ORDER and the
+//  WORDS the screen shows — the block's lines, each station as a labelled block, the rotation
+//  grid turned to STATION columns exactly as the screen's board reads it (P1 · P8), "Whole team"
+//  where the screen says it (P5), every clock through the product's formatter. The rendered
+//  check (`npm run check:pdf`) and the renderer contract test hold that agreement. Paper keeps
+//  its OWN rights, named here so nobody "fixes" them to match the screen: the stacked clock in
+//  the gutter, blocks atomic across pages, the identity band and a true "Page X of Y", the focus
+//  section only for a viewer with the grant and only when the plan carries it, a shut block's
+//  words still printed, and no doors, pills, toolbar, ghost row or "Edit groups" — paper has no
+//  taps.
 // ════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -941,12 +953,25 @@ export async function fetchResolvedPdfSettings(url: string): Promise<OrgPdfSetti
  * the plan, so it can never be an orphan, and it always prints inside its own block. (The
  * structure plan's "fall back to after the timeline" case describes something the data model
  * cannot produce; confirmed against the code and reported to the owner 2026-08-23.)
+ *
+ * ⚠ TURNED TO STATION COLUMNS (stage 5, P1 — ruled in words 2026-09-16, drawn and ruled again
+ * 2026-09-17). The paper reads the same way the screen's board has since D6: the block's named
+ * stations ACROSS, one row per round with its clock, the group(s) in each cell. The caller
+ * assembles it from the screen's own re-key (`rotationByStation`) — never from a round's cells by
+ * position — so a hand-arranged round (D14) prints where the coach put each group: two groups
+ * stacked in one cell when they share, an empty cell for a station with nobody that round, and a
+ * group sitting the round out named in `out`. The grid still turns on its side when the station
+ * headings cannot print whole across the page at the smallest size.
  */
 export interface PracticeSheetRotation {
-  /** The coach's own group names, across the top of the grid. Empty when there is no grid. */
-  groupNames: string[];
-  /** One row per round: its label and the station each group is at. Empty when unfinished. */
-  rounds: { round: string; stations: string[] }[];
+  /** The block's NAMED stations, across the top of the grid, in the coach's order. Empty when there is no grid. */
+  stationNames: string[];
+  /**
+   * One row per round. `groups[i]` is the group name(s) at station `i` that round — two when two
+   * share it (they stack in the cell), none when nobody is there. `out` names the groups sitting
+   * the round out; a "Sitting out" column is drawn only when some round has one.
+   */
+  rounds: { round: string; groups: string[][]; out: string[] }[];
   /**
    * The honest-arithmetic statements ("Group A won't reach the bullpen tonight"). They print
    * as SENTENCES under the grid, never as grid rows — and they print even when there is no
@@ -957,15 +982,46 @@ export interface PracticeSheetRotation {
   groups: { name: string; players: string }[];
 }
 
+/**
+ * One station on paper — a LABELLED BLOCK under the block's own words (stage 5, P8), never the
+ * " · "-joined prose run it used to be (which wrapped mid-item: "Run by Sam / Assistant"), and
+ * never columns. The assistant running the tee holds this sheet, and their station has to be the
+ * easiest thing on it to find.
+ */
+export interface PracticeSheetStation {
+  /** The station's name, bold — the caller labels an unnamed one ("Station 2"). */
+  name: string;
+  /** Who runs it, printed beside the name as " · Run by …". Empty when nobody is named. */
+  runBy: string;
+  /**
+   * What the station says of its OWN when it differs from the block's words — printed first,
+   * as the block's own lines are ("Watch for: …", then the doing line). Empty for a station that
+   * reads the block's teaching (the caller already decided that with the same resolver the field
+   * screen uses).
+   */
+  words: string[];
+  /**
+   * Labelled facts in the station modal's order — Setup · Equipment · Players · Tonight ·
+   * Rotation — as [label, value] pairs; the caller sends only the ones the station carries, so a
+   * line is absent, never empty. The label prints in the muted ink, the value in the prose ink.
+   */
+  facts: [string, string][];
+  /** The station's own coaching points, as "– …" lines. */
+  points: string[];
+}
+
 export interface PracticeSheetBlock {
   /** Running clock window, pre-formatted by the caller in the org's timezone. */
   time: string;
   title: string;
   duration: string;
   staff: string;
+  /** Who is in it — the coach's own list as written, or "Whole team" when nobody was named (P5). */
   players: string;
   /** The coach's own sentences — printed at full width, the whole point of this document. */
   notes: string;
+  /** The block's stations, each a labelled block under the notes (P8). */
+  stations?: PracticeSheetStation[];
   rotation?: PracticeSheetRotation | null;
 }
 
@@ -1018,6 +1074,22 @@ const RUN_GROUP_LINE_H = 4.4;
 const RUN_ROUND_COL_W = 22;
 /** Font sizes a rotation grid may step down through before it turns on its side. */
 const RUN_GRID_SIZES = [8, 7.5, 7] as const;
+/**
+ * A grid HEADING WRAPS to at most this many lines (a stacked cell has no cap — its row simply
+ * grows). ⚠ A QA finding turned into a rule (stage 5, P1, 2026-09-17):
+ * turning the grid to station columns moved the coach's long strings into the HEAD row, and the fit
+ * rule tested a heading's widest WORD then printed the whole heading unwrapped — "Footwork ladder"
+ * passed the rule (12.7 + 5 ≤ 22.3mm) and overran its column by 2mm. Headings now wrap at the
+ * fitted size, the head row grows by `gridLineH` per extra line, and `gridFit` refuses a size at
+ * which any heading needs a third line — the grid turns sideways instead. The per-word test stays,
+ * so a word is never shredded.
+ */
+const RUN_GRID_HEAD_LINES = 2;
+/** One extra line inside a grid row or head, in mm, at a given point size (≈ 1.2× the em). */
+const gridLineH = (size: number) => size * 0.42;
+/** Indent of a station's labelled lines under its name (P8). */
+const RUN_STATION_INDENT = 3.6;
+const RUN_STATION_LINE_H = 3.9;
 
 /** The ink of the run sheet, named once. */
 const RUN_INK: [number, number, number] = [20, 20, 35];
@@ -1189,96 +1261,184 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
   // ── The rotation grid ─────────────────────────────────────────────────────
 
   /**
-   * Which grid size keeps every one of the coach's group names WHOLE in a column of `colW`,
-   * or null when none does.
+   * Which grid size keeps every heading WHOLE in a column of `colW` — every WORD fits, and the
+   * heading wraps to no more than `RUN_GRID_HEAD_LINES` lines — with each heading's wrapped lines
+   * at that size; or null when no size does.
    *
-   * ⚠ Group names are CUSTOMER-SHAPED headings — the exact class that cost the roster and the
+   * ⚠ Station names are CUSTOMER-SHAPED headings — the exact class that cost the roster and the
    * tryout report whole columns in the Registers pass, and the reason this sheet has been
    * printing at compact density as a stop-gap ever since. A heading is never shredded and never
-   * truncated: if it cannot fit, the grid turns on its side instead (below).
+   * truncated: if it cannot fit, the grid turns on its side instead (below). The size and the
+   * wrap are decided TOGETHER here so no caller can pick a size and then wrap at a different one.
    */
-  function gridFontFor(names: string[], colW: number): number | null {
+  /** Each heading's wrapped lines in a column of `colW` at `size`, in the head row's bold face. */
+  function wrapHeads(names: string[], colW: number, size: number): string[][] {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(size);
+    return names.map(n => doc.splitTextToSize(n, colW - 5) as string[]);
+  }
+  /**
+   * `cells` — every string the grid's CELLS will carry (the coach's group names, or sideways the
+   * station names): they must fit whole too, since the turn moved customer text into both places.
+   * ⚠ Words are split on a plain SPACE, exactly as the wrapper splits them — a name joined by a
+   * non-breaking space is one word to both, so it fails the fit and turns the grid rather than
+   * being chopped mid-word by the wrapper's long-word fallback (/review, 2026-09-17).
+   */
+  function gridFit(names: string[], cells: string[], colW: number): { size: number; headLines: string[][] } | null {
+    const widestWord = (strings: string[]) =>
+      Math.max(0, ...strings.map(n => Math.max(0, ...n.split(' ').map(w => doc.getTextWidth(w)))));
     for (const size of RUN_GRID_SIZES) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(size);
-      const widest = Math.max(
-        0,
-        ...names.map(n => Math.max(0, ...n.split(/\s+/).map(w => doc.getTextWidth(w)))),
-      );
-      if (widest + 5 <= colW) return size;
+      // Measured in the bold face for both — the wider one, so a cell (drawn normal) can only fit.
+      if (Math.max(widestWord(names), widestWord(cells)) + 5 > colW) continue;
+      const headLines = wrapHeads(names, colW, size);
+      if (headLines.some(lines => lines.length > RUN_GRID_HEAD_LINES)) continue;
+      return { size, headLines };
     }
     return null;
   }
 
-  /** One grid, laid out as `head` across the top and `rows` down the side. */
-  function drawGrid(head: string[], rowLabelHead: string, rows: { label: string; cells: string[] }[],
-    x: number, width: number, size: number, labelColW: number): void {
+  /** A grid's finished geometry — what `drawGrid` draws and `measureBlock` sums, from ONE source. */
+  type GridLayout = {
+    size: number;
+    labelColW: number;
+    colW: number;
+    rowLabelHead: string;
+    /** Each heading's wrapped lines, in column order. */
+    head: string[][];
+    headH: number;
+    /** Each row: its label's lines, its cells' stacked lines, and the height they need. */
+    rows: { label: string[]; cells: string[][]; h: number }[];
+  };
+
+  /**
+   * Lay a grid out — headings wrapped, cells stacked, every height decided — WITHOUT drawing it.
+   *
+   * ⚠⚠ ONE SOURCE FOR MEASURE AND DRAW. The head row grows with a wrapped heading and a row grows
+   * with a stacked cell; `measureBlock` and `drawGrid` both read the heights off this object, so
+   * the block can never "fit" a page it does not fit (the 2026-08-24 overflow was exactly a
+   * second copy of the height arithmetic, and the group lines below carry the same rule).
+   */
+  function layoutGrid(head: string[], rowLabelHead: string, rows: { label: string; cells: string[][] }[],
+    width: number, labelColW: number, fit: { size: number; headLines: string[][] }): GridLayout {
     const colW = (width - labelColW) / Math.max(1, head.length);
-    ensureRoom(RUN_GRID_HEAD_H + RUN_GRID_ROW_H);
+    const lineH = gridLineH(fit.size);
+    const headH = RUN_GRID_HEAD_H + (Math.max(1, ...fit.headLines.map(l => l.length)) - 1) * lineH;
+    const laid = rows.map(r => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(fit.size);
+      const label = doc.splitTextToSize(r.label, labelColW - 5) as string[];
+      // A cell's names wrap to the column too (the fit proved every WORD fits); a stack of two
+      // names that each wrap is four lines, and the row grows to the deepest cell.
+      doc.setFont('helvetica', 'normal');
+      const cells = r.cells.map(stack => stack.flatMap(name => doc.splitTextToSize(name, colW - 5) as string[]));
+      const deepest = Math.max(label.length, 1, ...cells.map(c => c.length));
+      return { label, cells, h: RUN_GRID_ROW_H + (deepest - 1) * lineH };
+    });
+    return { size: fit.size, labelColW, colW, rowLabelHead, head: fit.headLines, headH, rows: laid };
+  }
+
+  /** Draw a laid-out grid at `x`: `head` across the top, `rows` down the side. */
+  function drawGrid(g: GridLayout, x: number, width: number): void {
+    const lineH = gridLineH(g.size);
+    ensureRoom(g.headH + (g.rows[0]?.h ?? RUN_GRID_ROW_H));
     doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
-    doc.rect(x, y, width, RUN_GRID_HEAD_H, 'F');
+    doc.rect(x, y, width, g.headH, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(size);
+    doc.setFontSize(g.size);
     doc.setTextColor(headInk[0], headInk[1], headInk[2]);
-    doc.text(rowLabelHead, x + 2.5, y + 4.4);
-    head.forEach((h, i) => doc.text(h, x + labelColW + i * colW + 2.5, y + 4.4));
-    y += RUN_GRID_HEAD_H;
-    rows.forEach((r, ri) => {
+    doc.text(g.rowLabelHead, x + 2.5, y + 4.4);
+    g.head.forEach((lines, i) =>
+      lines.forEach((line, li) => doc.text(line, x + g.labelColW + i * g.colW + 2.5, y + 4.4 + li * lineH)));
+    y += g.headH;
+    g.rows.forEach((r, ri) => {
       // A grid row is atomic and a header is never orphaned: a grid that runs long simply
       // continues on the next page, under the sheet's own continuation band.
-      ensureRoom(RUN_GRID_ROW_H);
+      ensureRoom(r.h);
       if (ri % 2 === 1) {
         doc.setFillColor(...RUN_ALT_ROW);
-        doc.rect(x, y, width, RUN_GRID_ROW_H, 'F');
+        doc.rect(x, y, width, r.h, 'F');
       }
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(size);
+      doc.setFontSize(g.size);
       doc.setTextColor(...RUN_INK);
-      doc.text(r.label, x + 2.5, y + 4.3);
+      r.label.forEach((line, li) => doc.text(line, x + 2.5, y + 4.3 + li * lineH));
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...RUN_PROSE);
-      r.cells.forEach((c, i) => doc.text(c, x + labelColW + i * colW + 2.5, y + 4.3));
-      y += RUN_GRID_ROW_H;
+      r.cells.forEach((stack, i) => {
+        const cx = x + g.labelColW + i * g.colW + 2.5;
+        // Nobody here this round: a dash in the quiet ink, never a blank that reads as a mistake.
+        if (stack.length === 0) {
+          doc.setTextColor(...RUN_MUTED);
+          doc.text('—', cx, y + 4.3);
+          return;
+        }
+        doc.setTextColor(...RUN_PROSE);
+        stack.forEach((line, li) => doc.text(line, cx, y + 4.3 + li * lineH));
+      });
+      y += r.h;
     });
     y += 2.5;
   }
 
+  /**
+   * The rotation grid's layout, or null when there is no grid to draw (an unfinished rotation).
+   * Stations across (P1) when their headings fit whole at some size; otherwise sideways.
+   */
+  function rotationGrid(rot: PracticeSheetRotation, width: number): GridLayout | null {
+    if (rot.rounds.length === 0 || rot.stationNames.length === 0) return null;
+    // "Sitting out" is a column only when some round has a group out (a hand-arranged grid,
+    // D14) — and it is the one heading that is not the coach's own words.
+    const anyOut = rot.rounds.some(r => r.out.length > 0);
+    const heads = anyOut ? [...rot.stationNames, 'Sitting out'] : rot.stationNames;
+    const acrossW = (width - RUN_ROUND_COL_W) / heads.length;
+    // Every name the cells will carry — the groups, and the sitters — must fit whole too.
+    const groupNames = rot.rounds.flatMap(r => [...r.groups.flat(), ...r.out]);
+    const fit = gridFit(heads, groupNames, acrossW);
+    if (fit) {
+      // The screen's shape: this round, who is where — stations across, the clock down the side.
+      // One cell per station column BY INDEX (a short round pads with empties, so the sitters
+      // never slide into a station's column), then the sitters.
+      return layoutGrid(
+        heads, 'Round',
+        rot.rounds.map(r => ({
+          label: r.round,
+          cells: [...rot.stationNames.map((_, i) => r.groups[i] ?? []), ...(anyOut ? [r.out] : [])],
+        })),
+        width, RUN_ROUND_COL_W, fit,
+      );
+    }
+    // Too many stations (or a name too long) for the coach's own words to print whole across
+    // the top — so the grid TURNS ON ITS SIDE. Nothing is dropped and nothing is cut; the
+    // question it answers shifts from "this round, who is where" to "where is my station all
+    // night", which is the station coach's own question (owner-approved 2026-08-23; kept at P1).
+    // ⚠ Turned sideways, a round label becomes a COLUMN HEADING, and the caller's label is a
+    // bare ordinal ("1 (6:10 p.m.)") because in the normal orientation it sits under a
+    // "Round" heading that supplies the word. Without it here the grid reads "Station | 1 | 2"
+    // and never says what the columns are. Guarded so a caller that already spells it out
+    // cannot produce "Round Round 1".
+    const roundHeads = rot.rounds.map(r =>
+      /^round\b/i.test(r.round.trim()) ? r.round : `Round ${r.round}`);
+    const labelColW = Math.min(52, Math.max(30, width * 0.32));
+    const roundW = (width - labelColW) / Math.max(1, roundHeads.length);
+    // Sideways there is nowhere further to turn, so the round headings wrap at the floor size
+    // however many lines they need.
+    const floor = RUN_GRID_SIZES[RUN_GRID_SIZES.length - 1];
+    const sideFit = gridFit(roundHeads, groupNames, roundW) ?? { size: floor, headLines: wrapHeads(roundHeads, roundW, floor) };
+    return layoutGrid(
+      roundHeads, 'Station',
+      [
+        ...rot.stationNames.map((name, si) => ({ label: name, cells: rot.rounds.map(r => r.groups[si] ?? []) })),
+        ...(anyOut ? [{ label: 'Sitting out', cells: rot.rounds.map(r => r.out) }] : []),
+      ],
+      width, labelColW, sideFit,
+    );
+  }
+
   /** The whole rotation region: grid (when there is one), statements, group membership. */
   function drawRotation(rot: PracticeSheetRotation, x: number, width: number): void {
-    if (rot.rounds.length > 0 && rot.groupNames.length > 0) {
-      const acrossW = (width - RUN_ROUND_COL_W) / rot.groupNames.length;
-      const size = gridFontFor(rot.groupNames, acrossW);
-      if (size != null) {
-        // The approved shape: this round, who is where.
-        drawGrid(
-          rot.groupNames, 'Round',
-          rot.rounds.map(r => ({ label: r.round, cells: r.stations })),
-          x, width, size, RUN_ROUND_COL_W,
-        );
-      } else {
-        // Too many groups (or names too long) for the coach's own words to print whole across
-        // the top — so the grid TURNS ON ITS SIDE. Nothing is dropped and nothing is cut; the
-        // question it answers shifts from "this round, who is where" to "where is my group all
-        // night", which is the honest trade at this width (owner-approved 2026-08-23).
-        // ⚠ Turned sideways, a round label becomes a COLUMN HEADING, and the caller's label is a
-        // bare ordinal ("1 (6:10 p.m.)") because in the normal orientation it sits under a
-        // "Round" heading that supplies the word. Without it here the grid reads "Group | 1 | 2"
-        // and never says what the columns are. Guarded so a caller that already spells it out
-        // cannot produce "Round Round 1".
-        const roundHeads = rot.rounds.map(r =>
-          /^round\b/i.test(r.round.trim()) ? r.round : `Round ${r.round}`);
-        const labelColW = Math.min(52, Math.max(30, width * 0.32));
-        const acrossSize = gridFontFor(roundHeads, (width - labelColW) / Math.max(1, roundHeads.length)) ?? 7;
-        drawGrid(
-          roundHeads, 'Group',
-          rot.groupNames.map((name, gi) => ({
-            label: name,
-            cells: rot.rounds.map(r => r.stations[gi] ?? '—'),
-          })),
-          x, width, acrossSize, labelColW,
-        );
-      }
-    }
+    const grid = rotationGrid(rot, width);
+    if (grid) drawGrid(grid, x, width);
 
     // The statements travel with the rotation as SENTENCES (D25) — and they print even when
     // there is no grid, which is how a rotation the coach hasn't finished stops disappearing
@@ -1333,6 +1493,95 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
   }
 
   /**
+   * A station's lines on paper (P8), laid out once: the name in bold with " · Run by …" beside it,
+   * then — indented — what it says of its own, its labelled facts and its points, each wrapped to
+   * the indented width. A bare station is its one bold line.
+   *
+   * ⚠ THE SAME RULE AS `groupLines`: anything that measures a station calls this, and the draw
+   * prints exactly these lines. A `label` is drawn in the muted ink ahead of the line's text.
+   */
+  /** `boldTo` — how much of the line is the NAME (bold ink); the rest is the muted "· Run by". */
+  type StationLine = { text: string; label?: string; boldTo?: number; indent: number };
+  function stationLines(st: PracticeSheetStation, width: number): StationLine[] {
+    const out: StationLine[] = [];
+    const inner = Math.max(10, width - RUN_STATION_INDENT);
+    // The name line: bold name, muted "· Run by" — wrapped as one string so a long name and a
+    // long staff list break where the margin falls, and drawn in two inks on the first line.
+    // Measured in the BOLD face (the wider one) so the split can only over-reserve, never overrun.
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    const runBy = st.runBy ? `  ·  Run by ${st.runBy}` : '';
+    const nameLines = doc.splitTextToSize(`${st.name}${runBy}`, width) as string[];
+    nameLines.forEach((line, i) => out.push({
+      // The first line is the name (bold) up to where the name ends, when the whole name is on it.
+      text: line, indent: 0,
+      boldTo: i === 0 ? (line.startsWith(st.name) ? st.name.length : line.length) : undefined,
+    }));
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    for (const w of st.words) {
+      for (const line of doc.splitTextToSize(w, inner) as string[]) out.push({ text: line, indent: RUN_STATION_INDENT });
+    }
+    for (const [label, value] of st.facts) {
+      if (!value) continue;
+      const lines = doc.splitTextToSize(`${label}  ${value}`, inner) as string[];
+      lines.forEach((line, i) => out.push({ text: line, label: i === 0 ? label : undefined, indent: RUN_STATION_INDENT }));
+    }
+    for (const p of st.points) {
+      const lines = doc.splitTextToSize(`– ${p}`, inner) as string[];
+      lines.forEach((line, i) => out.push({ text: line, indent: RUN_STATION_INDENT + (i === 0 ? 0 : 2.2) }));
+    }
+    return out;
+  }
+
+  /** Height of a block's station blocks: a gap above the first, the lines, a gap between each. */
+  function stationsHeight(stations: PracticeSheetStation[] | undefined, width: number): number {
+    if (!stations?.length) return 0;
+    return stations.reduce((h, st) => h + stationLines(st, width).length * RUN_STATION_LINE_H + 1.6, 1.4);
+  }
+
+  /** Draw a block's stations under its words, line by line so a long one breaks between lines. */
+  function drawStations(stations: PracticeSheetStation[], x: number, width: number): void {
+    y += 1.4;
+    for (const st of stations) {
+      for (const line of stationLines(st, width)) {
+        ensureRoom(RUN_STATION_LINE_H);
+        const lx = x + line.indent;
+        // Every line is the prose face; only the name line starts in bold.
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        if (line.boldTo != null) {
+          // The name in bold ink; whatever follows it on the same line (" · Run by …") in the
+          // muted ink, measured in the bold face so the two halves meet exactly.
+          const name = line.text.slice(0, line.boldTo);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(...RUN_INK);
+          doc.text(name, lx, y);
+          if (line.boldTo < line.text.length) {
+            const nameW = doc.getTextWidth(name);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.setTextColor(...RUN_MUTED);
+            doc.text(line.text.slice(line.boldTo), lx + nameW, y);
+          }
+        } else if (line.label) {
+          doc.setTextColor(...RUN_MUTED);
+          doc.text(line.label, lx, y);
+          const labelW = doc.getTextWidth(`${line.label}  `);
+          doc.setTextColor(...RUN_PROSE);
+          doc.text(line.text.slice(line.label.length + 2), lx + labelW, y);
+        } else {
+          doc.setTextColor(...RUN_PROSE);
+          doc.text(line.text, lx, y);
+        }
+        y += RUN_STATION_LINE_H;
+      }
+      y += 1.6;
+    }
+  }
+
+  /**
    * The block's clock, split for the gutter: the start on its own line, the end beneath it.
    * "6:00 p.m.–6:10 p.m." is one string from the caller — as one line it is wider than any
    * sensible gutter, and clipping it would drop the fact it exists to say.
@@ -1374,18 +1623,20 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
 
   /** How tall a block wants to be, so an atomic one can be moved whole. */
   function measureBlock(b: PracticeSheetBlock): number {
+    let h = blockHeadHeight(b);
+    // ⚠ AFTER the head: `blockHeadHeight` leaves the doc at 8pt, and the notes are DRAWN at 9pt —
+    // measured at 8pt they wrapped to fewer lines than they printed, so a note-heavy block near
+    // the foot "fitted" a page it did not fit (/review, 2026-09-17).
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    let h = blockHeadHeight(b) + (b.notes ? doc.splitTextToSize(b.notes, proseW).length * RUN_LINE_H : 0);
+    if (b.notes) h += doc.splitTextToSize(b.notes, proseW).length * RUN_LINE_H;
+    h += stationsHeight(b.stations, proseW);
     const rot = b.rotation;
     if (rot) {
-      if (rot.rounds.length > 0 && rot.groupNames.length > 0) {
-        // Either orientation costs one header row plus one row per line of the long dimension.
-        const acrossW = (proseW - RUN_ROUND_COL_W) / rot.groupNames.length;
-        const sideways = gridFontFor(rot.groupNames, acrossW) == null;
-        const bodyRows = sideways ? rot.groupNames.length : rot.rounds.length;
-        h += 3 + RUN_GRID_HEAD_H + bodyRows * RUN_GRID_ROW_H + 2.5;
-      }
+      // The grid's height is read off the SAME layout the draw uses — a wrapped heading grows
+      // the head row and a stacked cell grows its row, and both are already in it.
+      const grid = rotationGrid(rot, proseW);
+      if (grid) h += 3 + grid.headH + grid.rows.reduce((s, r) => s + r.h, 0) + 2.5;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
       for (const n of rot.notes) h += doc.splitTextToSize(n, proseW - 4).length * 3.9 + 1;
@@ -1491,6 +1742,10 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
           y += RUN_LINE_H;
         }
       }
+
+      // The stations, each a labelled block under the words (P8) — before the grid, as the
+      // screen's columns sit above its grid.
+      if (b.stations?.length) drawStations(b.stations, proseX, proseW);
 
       if (b.rotation) {
         y += 3;

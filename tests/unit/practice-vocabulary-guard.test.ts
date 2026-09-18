@@ -38,8 +38,16 @@ function read(rel: string): string {
 function fnSource(src: string, name: string): string {
   const start = src.indexOf(`function ${name}(`);
   assert.ok(start >= 0, `${name} is gone — the guard reads it`);
+  // An INDENTED function (one declared inside a component, like the plan page's `handlePrint`)
+  // ends at the next declaration at its own indentation — bounding it at column 0 swallowed the
+  // component's whole render, so a word anywhere in the page satisfied a print-path guard
+  // (/review, 2026-09-17). A top-level function keeps its old bounds.
+  const lineStart = src.lastIndexOf('\n', start) + 1;
+  const indent = src.slice(lineStart, start).match(/^\s*/)?.[0] ?? '';
   const rest = src.slice(start);
-  const end = rest.search(/\n(?:async )?function |\n\/\/ ── The editor|\nexport default function /);
+  const end = indent
+    ? rest.search(new RegExp(`\\n${indent}(?:async )?function |\\n${indent}const \\w+ = \\(|\\n${indent}(?:if|return) `))
+    : rest.search(/\n(?:async )?function |\n\/\/ ── The editor|\nexport default function /);
   return (end > 0 ? rest.slice(0, end) : rest)
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
@@ -84,5 +92,55 @@ describe('the printed sheet\'s block line (stage 2, D3 · D11)', () => {
   it('prints the block\'s kit beside the block and the bag at the head', () => {
     assert.ok(print.includes('`Equipment: ${blockKit.join'), 'the block\'s own kit, beside the block');
     assert.ok(print.includes('practiceKitBag(plan, equipmentTags).all'), 'the head prints the bag, the same walk the About line reads');
+  });
+});
+
+// ── Stage 5 · Paper & the field (owner rulings P2 · P3 · P5, 2026-09-17) ───────────────────────
+
+const RUN_PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/run/page.tsx';
+const STATION_VIEW = 'app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeStationView.tsx';
+
+describe('the printed sheet\'s where-line reads the stored arrival time through the ONE clock formatter (stage 5, P2)', () => {
+  const print = fnSource(read(PAGE), 'handlePrint');
+
+  it('prints "Arrive 5:45 p.m.", never the raw "HH:mm" — the eighth hand-rolled clock', () => {
+    assert.ok(print.includes('`Arrive ${formatStoredClock(event.arrivalTime)}`'),
+      'the where-line formats the stored field through lib/utils — the same guard the Schedule reads it through');
+    assert.doesNotMatch(print, /`Arrive \$\{event\.arrivalTime\}`/, 'the raw stored string printed on paper for a month');
+  });
+
+  it('says "Whole team" where the paper printed nothing, and leaves a coach\'s list as written', () => {
+    assert.ok(print.includes("'Whole team'"));
+    assert.doesNotMatch(print, /groupNames:/, 'groups are cells now, never columns (the turned shape is proved in pdf-export-contract)');
+  });
+});
+
+describe('the field screen outside the window states what was PLANNED — never that it ran (stage 5, P3 · D4)', () => {
+  const src = read(RUN_PAGE)
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  it('the eyebrow is "Planned for"', () => {
+    assert.ok(src.includes('>Planned for</p>'));
+  });
+  it('no surface on the field claims the practice happened', () => {
+    for (const claim of ['>Ran ', 'Was run', 'Took place', 'Ran on', 'Completed']) {
+      assert.ok(!src.includes(claim), `"${claim}" would be a claim about what HAPPENED — nothing is written at the field`);
+    }
+  });
+  it('never carries a second copy of the run window — the one constant lives in lib/practice-state', () => {
+    assert.doesNotMatch(src, /3 \* 60 \* 60 \* 1000|RUN_WINDOW_MS/);
+  });
+  it('the rotation\'s words: "nobody" for an empty station, a sitting-out group as a line under the list', () => {
+    assert.ok(src.includes("'nobody'"), 'a station with nobody that round says so');
+    assert.ok(src.includes('sits round {shownRow.round} out'), 'a sitting-out group is a line under the list');
+  });
+});
+
+describe('the station view\'s one-off note takes the editor\'s own label (stage 5)', () => {
+  // Comments stripped: the one explaining why the old label went names it.
+  const src = read(STATION_VIEW).replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  it('says "Just for tonight" — the field, the editor and the paper\'s "Tonight" are one field', () => {
+    assert.ok(src.includes('>Just for tonight</p>'));
+    assert.ok(!src.includes('Note for tonight'));
   });
 });

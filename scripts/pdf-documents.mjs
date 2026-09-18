@@ -893,12 +893,16 @@ export async function buildDocuments() {
 
   /* ══ Working sheets and handouts ════════════════════════════════════════════════════ */
 
+  // The grid TURNED to station columns (practices re-evaluation stage 5, P1): the block's stations
+  // across, one row per round, the group(s) in each cell — the shape the caller assembles from the
+  // screen's own re-key. `out` is empty on the carousel; the hand-arranged case below fills it.
+  const STATION_NAMES = ['Tee work', 'Front toss', 'Live BP'];
   const ROTATION = {
-    groupNames: ['Group A', 'Group B', 'Group C'],
+    stationNames: STATION_NAMES,
     rounds: [
-      { round: '1 (6:20 p.m.)', stations: ['Tee work', 'Front toss', 'Live BP'] },
-      { round: '2 (6:30 p.m.)', stations: ['Live BP', 'Tee work', 'Front toss'] },
-      { round: '3 (6:40 p.m.)', stations: ['Front toss', 'Live BP', 'Tee work'] },
+      { round: '1 (6:20 p.m.)', groups: [['Group A'], ['Group B'], ['Group C']], out: [] },
+      { round: '2 (6:30 p.m.)', groups: [['Group B'], ['Group C'], ['Group A']], out: [] },
+      { round: '3 (6:40 p.m.)', groups: [['Group C'], ['Group A'], ['Group B']], out: [] },
     ],
     notes: ['3 rounds of 10 min.',
       'Group C sees Live BP in round 2 while fresh — Chloe and Owen are working steal jumps against a live catcher.'],
@@ -908,9 +912,27 @@ export async function buildDocuments() {
       { name: 'Group C', players: 'Chloe Desjardins, Owen Whitfield, Isla Marchand, Nathan Oyelaran' },
     ],
   };
+  // Each station as a labelled block under the circuit's words (P8) — every field the modal has,
+  // so the renderer's line-writer is exercised whole: a "Watch for" of its own, Setup · Equipment ·
+  // Tonight · Rotation, and the points as a list. The third is the bare one-line station.
+  const STATIONS = [
+    { name: 'Tee work', runBy: 'Coach Dana', words: ['Watch for: Contact point out front — the tee is a mirror, not a target.'],
+      facts: [['Setup', 'Two tees at the fence, one ball bucket each.'], ['Equipment', 'Tees (2), Bucket of game balls'],
+        ['Tonight', 'Inside pitch only — move the tee in a ball’s width every five swings.']],
+      points: ['Hands inside the ball', 'Finish high, both hands'] },
+    { name: 'Front toss', runBy: 'Coach Priya',
+      facts: [['Setup', 'L-screen at 15 ft, feeder kneeling.'], ['Equipment', 'L-screen, Softies'], ['Rotation', 'Feeder swaps every six swings.']],
+      words: [], points: ['Two-strike approach: choke up, shorten, put it in play'] },
+    { name: 'Live BP', runBy: '', words: [], facts: [], points: [] },
+  ];
+  const LONG_STATIONS = ['Close control', 'Footwork ladder', 'Finishing', 'Short-hop backhands',
+    'Communication circle', 'Front toss', 'Tee work', 'Live BP'];
   const SQUAD = KIDS.slice(0, 12).map((k) => `${k[0]} ${k[1]}`).join(', ');
   const RUN_SHEET = {
     teamName: TEAM, dateLabel: 'Tue, Aug 25, 2026',
+    // ⚠ The where-line arrives PRE-FORMATTED — the plan page formats the stored "17:45" through the
+    // product's one clock formatter (stage 5, P2), and that fix is held where it lives, by the
+    // vocabulary guard (`tests/unit/practice-vocabulary-guard.test.ts`), not by typing "17:45" here.
     whereLabel: '6:00 p.m. · Arrive 5:45 p.m. · Riverdale Park, Diamond 2',
     goal: 'Sharper two-strike at-bats; defensive communication loud enough to hear from the fence.',
     practiceTypes: ['Hitting', 'Baserunning'],
@@ -918,10 +940,11 @@ export async function buildDocuments() {
     blocks: [
       { time: '6:00 p.m.–6:10 p.m.', title: 'Dynamic warm-up & arm care', duration: '10 min', staff: 'Coach Dana', players: SQUAD,
         notes: 'Bands before anyone touches a ball. Throwing starts at 30 ft — anyone who pitched Sunday caps at 60 ft, no long toss.' },
-      { time: '6:10 p.m.–6:20 p.m.', title: 'Throwing progression', duration: '10 min', staff: 'Coach Dana', players: SQUAD, notes: '' },
-      { time: '6:20 p.m.–6:50 p.m.', title: 'Hitting circuit — 3 stations', duration: '30 min', staff: 'All staff', players: 'Groups A/B/C',
+      // A block that names nobody prints "Whole team" where it printed nothing (P5) — the caller's word.
+      { time: '6:10 p.m.–6:20 p.m.', title: 'Throwing progression', duration: '10 min', staff: 'Coach Dana', players: 'Whole team', notes: '' },
+      { time: '6:20 p.m.–6:50 p.m.', title: 'Hitting circuit — 3 stations', duration: '30 min', staff: 'All staff', players: '',
         notes: 'Rotate on the whistle, ten minutes a station. Tee: inside pitch only, contact point out front. Front toss: two-strike approach.',
-        rotation: ROTATION },
+        stations: STATIONS, rotation: ROTATION },
       { time: '6:50 p.m.–7:10 p.m.', title: 'First-to-third reads', duration: '20 min', staff: 'Coach Priya', players: SQUAD,
         notes: 'Live reads off front toss. Freeze on a line drive; on a ground ball read the outfielder’s angle, not the coach.' },
       { time: '7:10 p.m.–7:30 p.m.', title: 'Scrimmage innings', duration: '20 min', staff: 'All staff', players: SQUAD,
@@ -938,6 +961,11 @@ export async function buildDocuments() {
     label: 'Practice run sheet',
     entry: 'downloadPracticeSheet',
     screens: ['app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx'],
+    // The turned grid's headings are the coach's STATION names (P1) — read back as text, whole, on
+    // the finished page. `columns: 'customer'` would be the honest label for coach-typed headings,
+    // but this document never prints the drop notice (it turns sideways instead), so the fixed
+    // default holds and R3 proves each heading is on the paper.
+    headings: [...STATION_NAMES, 'Round'],
     render: (name, settings) => downloadPracticeSheet(name, { ...RUN_SHEET, settings }),
     edgeCases: [
       // A block taller than a page. This is the shape that printed ACROSS the footer (§99).
@@ -947,7 +975,7 @@ export async function buildDocuments() {
           RUN_SHEET.blocks[0],
           { time: '6:10 p.m.–7:40 p.m.', title: 'Everything block', duration: '90 min', staff: 'All staff', players: SQUAD,
             notes: 'Station coaches stay put and the groups move on the whistle; call the play out loud before every rep so the whole field hears it. '.repeat(26),
-            rotation: ROTATION },
+            stations: STATIONS, rotation: ROTATION },
           { time: '7:40 p.m.–7:45 p.m.', title: 'Huddle', duration: '5 min', staff: 'Coach Dana', players: SQUAD, notes: 'Two sentences per coach, max.' },
         ],
       })],
@@ -955,9 +983,49 @@ export async function buildDocuments() {
       ['unfinished-rotation', (name, settings) => downloadPracticeSheet(name, {
         ...RUN_SHEET, settings,
         blocks: RUN_SHEET.blocks.map((b) => (b.rotation
-          ? { ...b, rotation: { groupNames: [], rounds: [], notes: ['Add how often groups move to see the rotation.'], groups: ROTATION.groups } }
+          ? { ...b, rotation: { stationNames: [], rounds: [], notes: ['Add how often groups move to see the rotation.'], groups: ROTATION.groups } }
           : b)),
-      })],
+      }), { headings: [] }],
+      // A HAND-ARRANGED grid (D14, printed at stage 5): two groups share a cell (the row grows), a
+      // station has nobody one round (a dash), a group sits a round out — so the "Sitting out"
+      // column appears, and its heading and a wrapped two-word heading ("Footwork ladder") are
+      // read back whole. Six stations across at letter width is the fixture's own measured budget.
+      ['hand-arranged', (name, settings) => downloadPracticeSheet(name, {
+        ...RUN_SHEET, settings,
+        blocks: RUN_SHEET.blocks.map((b) => (b.rotation
+          ? { ...b, rotation: {
+              ...ROTATION,
+              stationNames: ['Close control', 'Footwork ladder', 'Finishing', 'Tee work', 'Front toss', 'Live BP'],
+              rounds: [
+                { round: '1 (6:20 p.m.)', groups: [['Group A'], ['Group B'], ['Group C'], ['Group D'], ['Group E'], ['Group F']], out: [] },
+                // A THREE-high stack in a round with a round BELOW it: the row grows by two lines, and the
+                // overlap rule's mutation (a frozen row) needs a cell underneath to collide with.
+                { round: '2 (6:30 p.m.)', groups: [['Group F'], ['Group A'], ['Group B', 'Group C', 'Group D'], [], ['Group E'], []], out: [] },
+                { round: '3 (6:40 p.m.)', groups: [['Group E'], ['Group F'], ['Group A', 'Group B'], [], ['Group C'], []], out: ['Group D'] },
+              ],
+              notes: ['3 rounds of 10 min.', 'Group B, Group C and Group D share Finishing in round 2.',
+                'Group A and Group B share Finishing in round 3.', 'Tee work has nobody in rounds 2 and 3.',
+                'Live BP has nobody in rounds 2 and 3.', 'Group D sits round 3 out.'],
+            } }
+          : b)),
+      }), { headings: ['Close control', 'Footwork ladder', 'Finishing', 'Tee work', 'Front toss', 'Live BP', 'Sitting out', 'Round'] }],
+      // Eight stations, one with a thirteen-letter word — more than the coach's own words can print
+      // whole across the page at 7pt — so the grid turns on its SIDE (stations down the side, rounds
+      // across) rather than shredding a word. (Five ordinary names still fit across, wrapped.)
+      ['long-station-names', (name, settings) => downloadPracticeSheet(name, {
+        ...RUN_SHEET, settings,
+        blocks: RUN_SHEET.blocks.map((b) => (b.rotation
+          ? { ...b, rotation: {
+              ...ROTATION,
+              stationNames: LONG_STATIONS,
+              rounds: [1, 2, 3].map((n) => ({
+                round: `${n} (6:${n * 10 + 10} p.m.)`,
+                groups: LONG_STATIONS.map((_, i) => [`Group ${'ABCDEFGH'[(i + 9 - n) % 8]}`]),
+                out: [],
+              })),
+            } }
+          : b)),
+      }), { headings: [...LONG_STATIONS, 'Station', 'Round 1', 'Round 2', 'Round 3'] }],
       // An assistant without the development grant: the focus section is ABSENT, not redacted.
       ['no-focus-grant', (name, settings) => downloadPracticeSheet(name, { ...RUN_SHEET, focus: [], settings })],
     ],

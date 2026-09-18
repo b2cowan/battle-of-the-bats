@@ -64,6 +64,7 @@ import { GAME_MOMENT_MAX, sortMomentsNewestFirst } from '@/lib/coach-game-moment
 import { formatInOrgZone } from '@/lib/timezone';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { formatStoredClock } from '@/lib/utils';
 import styles from '../../../../coaches.module.css';
 import type {
   LineupSettings, RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance,
@@ -989,7 +990,7 @@ export default function CoachGameConsolePage({
           </div>
           <div className={styles.gdChips}>
             {event.fieldNumber && <span className={styles.gdChip}>{event.fieldNumber}</span>}
-            {event.arrivalTime && <span className={styles.gdChip}>Arrive {event.arrivalTime}</span>}
+            {event.arrivalTime && <span className={styles.gdChip}>Arrive {formatStoredClock(event.arrivalTime)}</span>}
             {event.uniform && <span className={styles.gdChip}>{event.uniform}</span>}
             {/* P3 — the screen-awake switch. Present only where it does something: a live game,
                 a coach who runs the bench, a browser that can do it. Never a silent behaviour. */}

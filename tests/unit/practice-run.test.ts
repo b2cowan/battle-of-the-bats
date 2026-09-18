@@ -3,7 +3,12 @@ import { describe, it } from 'node:test';
 import {
   blockRotates,
   buildRunSteps,
+  computeBlockClocks,
+  computeRotation,
   formatRunClock,
+  namesWholeTeam,
+  plannedBlockAt,
+  rotationByStation,
   runRemainingSeconds,
   runStepAt,
 } from '../../lib/rep-practice-plan.ts';
@@ -247,5 +252,74 @@ describe('formatRunClock', () => {
   it('only reaches for hours when a stop genuinely runs past sixty minutes', () => {
     assert.equal(formatRunClock(60 * 60), '1:00:00');
     assert.equal(formatRunClock(-(90 * 60 + 5)), '+1:30:05');
+  });
+});
+
+// ── Stage 5 · Paper & the field (owner rulings P3 · P5 · P7 · P9, 2026-09-17) ──────────────────
+
+describe('namesWholeTeam — "Whole team" is a SET comparison, never a count (P5)', () => {
+  const roster = ['p1', 'p2', 'p3', 'p4'];
+  it('nobody named is the whole team — the plan page\'s own word for an empty list', () => {
+    assert.equal(namesWholeTeam([], roster), true);
+    assert.equal(namesWholeTeam(undefined, roster), true);
+  });
+  it('every active player named IS the whole team tonight; one short is chips', () => {
+    assert.equal(namesWholeTeam(['p4', 'p2', 'p1', 'p3'], roster), true, 'order is irrelevant');
+    assert.equal(namesWholeTeam(['p1', 'p2', 'p3'], roster), false, 'three of four is a subset');
+  });
+  it('a count that happens to match is not enough — the SET must match', () => {
+    assert.equal(namesWholeTeam(['p1', 'p2', 'p3', 'gone'], roster), false, 'four names, one not on the roster');
+    assert.equal(namesWholeTeam(['p1', 'p1', 'p2', 'p3'], roster), false, 'a duplicate does not make up the difference');
+  });
+  it('with no roster to compare against, only an empty list reads as the whole team', () => {
+    assert.equal(namesWholeTeam([], []), true);
+    assert.equal(namesWholeTeam(['p1'], []), false);
+  });
+});
+
+describe('plannedBlockAt — which block\'s PLANNED window holds the clock (P9)', () => {
+  const blocks = [block(), block({ id: 'b2', duration: { minutes: 25 } }), block({ id: 'rest', duration: { minutes: null, restOfPractice: true } })];
+  it('reads the walk\'s own start and end — by the plan, never by a tap', () => {
+    const clocks = computeBlockClocks(blocks, start, end);
+    assert.equal(plannedBlockAt(clocks, startMs - 1), null, 'before the first block');
+    assert.equal(plannedBlockAt(clocks, startMs), 0, 'on the boundary the block that starts owns it');
+    assert.equal(plannedBlockAt(clocks, startMs + min(10) - 1), 0);
+    assert.equal(plannedBlockAt(clocks, startMs + min(10)), 1, 'the next block from its first instant');
+    assert.equal(plannedBlockAt(clocks, startMs + min(60)), 2, 'the rest block runs to the practice end');
+    assert.equal(plannedBlockAt(clocks, new Date(end).getTime()), null, 'the planned end has passed — the marker goes');
+  });
+  it('a block whose end cannot be known never holds the clock', () => {
+    const clocks = computeBlockClocks([block({ duration: { minutes: null, restOfPractice: true } })], start, null);
+    assert.equal(clocks[0].endMs, null);
+    assert.equal(plannedBlockAt(clocks, startMs + min(5)), null);
+  });
+});
+
+describe('the rotation\'s rows, keyed by station (P7) — the field reads the board\'s own re-key', () => {
+  const rot = rotationBlock();
+  const grid = computeRotation(rot.rotation!, rot.stations, 45, startMs);
+  const turned = rotationByStation(grid, rot.stations);
+  it('one row per named station, the group at each — and the NEXT round is the due state\'s row', () => {
+    assert.deepEqual(turned.stations.map(s => s.name), ['Tees', 'Short hop', 'Toss']);
+    // Round 1 (index 0) is what runs; when it is due, round 2 (index 1 — the 1-based round itself)
+    // says who ARRIVES at each station.
+    assert.deepEqual(turned.rows[0].cells, [['Group A'], ['Group B'], ['Group C']]);
+    assert.deepEqual(turned.rows[1].cells, [['Group C'], ['Group A'], ['Group B']], 'the carousel turns');
+    assert.deepEqual(turned.rows[1].out, []);
+  });
+  it('a hand-arranged round: two letters where two share, none where nobody is, the sitter under the list', () => {
+    const arranged = rotationBlock({ rotation: { ...rot.rotation!, arrangement: {
+      stationIds: ['s1', 's2', 's3'], groupIds: ['g1', 'g2', 'g3'], rounds: 3,
+      placements: [
+        { g1: 's1', g2: 's2', g3: 's3' },
+        { g1: 's1', g2: 's1', g3: null },
+        { g1: 's3', g2: 's2', g3: 's1' },
+      ],
+    } } });
+    const g = computeRotation(arranged.rotation!, arranged.stations, 45, startMs);
+    const t = rotationByStation(g, arranged.stations);
+    assert.deepEqual(t.rows[1].cells, [['Group A', 'Group B'], [], []]);
+    assert.deepEqual(t.rows[1].out.map(o => o.name), ['Group C']);
+    assert.equal(t.rows[1].round, 2, 'the line reads "C sits round 2 out" from the row\'s own number');
   });
 });

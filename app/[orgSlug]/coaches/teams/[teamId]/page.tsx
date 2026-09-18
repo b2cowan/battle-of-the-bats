@@ -1,6 +1,6 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-import { formatTime } from '@/lib/utils';
+import { formatStoredClock as fmtClockLabel } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -154,14 +154,6 @@ function errorMessage(error: unknown, fallback: string) {
  *  named the wrong weekday on the card announcing it. */
 function formatEventDate(value: string): string {
   return formatInOrgZone(value, { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
-/** "HH:mm" (24h, as arrival_time is stored) → a friendly clock ("5:15 PM"). */
-function fmtClockLabel(hhmm: string): string {
-  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm.trim());
-  if (!m) return hhmm;
-  const h = Number(m[1]);
-  return formatTime(`${m[1]}:${m[2]}`);
 }
 
 function formatMoney(amount: number): string {

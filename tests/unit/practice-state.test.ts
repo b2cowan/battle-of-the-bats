@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   RUN_WINDOW_MS, practiceHasPlan, isInRunWindow, practicePlanState,
   practiceFitLabel, practiceLengthMinutes, practiceRecapLine,
-  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted,
+  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted, runWindowOpensAt,
 } from '../../lib/practice-state.ts';
 import { emptyPracticePlan, sanitizePracticePlan, summarizePracticePlan, type PracticePlan } from '../../lib/rep-practice-plan.ts';
 
@@ -153,5 +153,40 @@ describe('practiceStarted — the start time has passed (stage 1, D7)', () => {
   it('is not the run window — three hours early is inside the window but not started', () => {
     assert.equal(isInRunWindow(at(2 * H), NOW), true);
     assert.equal(practiceStarted(at(2 * H), NOW), false);
+  });
+});
+
+describe('runWindowOpensAt — the run screen’s "The clock starts" (stage 5, P3)', () => {
+  it('is the start less the ONE window constant — the same instant every door opens on', () => {
+    const start = at(5 * H);
+    assert.equal(runWindowOpensAt(start), NOW + 5 * H - RUN_WINDOW_MS);
+    // The window opens exactly when isInRunWindow first says yes.
+    assert.equal(isInRunWindow(start, runWindowOpensAt(start)! - 1), false);
+    assert.equal(isInRunWindow(start, runWindowOpensAt(start)!), true);
+  });
+  it('has no answer without a start, or for a start that is not a time', () => {
+    assert.equal(runWindowOpensAt(null), null);
+    assert.equal(runWindowOpensAt(''), null);
+    assert.equal(runWindowOpensAt('not a date'), null);
+  });
+});
+
+describe('the run window has BOTH edges — three hours after the END, not the start (/review, stage 5)', () => {
+  it('a four-hour practice keeps its doors and its field clock to the last minute', () => {
+    const start = at(-3.5 * H);            // started three and a half hours ago
+    const end = at(0.5 * H);               // ends in half an hour
+    assert.equal(isInRunWindow(start, NOW), false, 'by the start alone the window shut half an hour ago');
+    assert.equal(isInRunWindow(start, NOW, end), true, 'with the end it is open');
+    assert.equal(isInRunWindow(start, NOW + 3.5 * H, end), true, 'three hours after the end is still inside');
+    assert.equal(isInRunWindow(start, NOW + 3.5 * H + 1000, end), false);
+  });
+  it('an end before the start, or none, falls back to the start', () => {
+    assert.equal(isInRunWindow(at(-3 * H - 1000), NOW, null), false);
+    assert.equal(isInRunWindow(at(-3 * H - 1000), NOW, at(-4 * H)), false, 'an end before the start is no end');
+  });
+  it('practicePlanState reads the end when the event carries one', () => {
+    const planned = planOf([{ title: 'Camp', duration: { minutes: 240 } }]);
+    assert.equal(practicePlanState({ practicePlan: planned, startsAt: at(-3.5 * H), endsAt: at(0.5 * H) }, NOW), 'run');
+    assert.equal(practicePlanState({ practicePlan: planned, startsAt: at(-3.5 * H) }, NOW), 'planned');
   });
 });

@@ -257,9 +257,11 @@ export default function CoachesPracticePlansPage({
   const renderRow = (e: RepTeamEvent, past: boolean) => {
     const planned = practiceHasPlan(e);
     // "Run practice" is offered only around the practice itself, and only once there is a plan to
-    // run — the Schedule panel offers the same door off the same condition. The card has already
-    // claimed the first such practice; this catches a second one inside the same window.
-    const inRunWindow = planned && isInRunWindow(e.startsAt, nowMs);
+    // run — the Schedule's slide-over and the plan page's toolbar offer the same door off the same
+    // condition (one window, every door — stage 5, P3 · P4, 2026-09-17; before that the Schedule
+    // offered it on any date). The card has already claimed the first such practice; this catches
+    // a second one inside the same window.
+    const inRunWindow = planned && isInRunWindow(e.startsAt, nowMs, e.endsAt);
     // Two halves, two vocabularies (D3): above the line the room is a planner, below it a record.
     // "Open" is the record's door — a past practice, or a coach who cannot write plans — and it is
     // the quiet one; the working doors keep their weight.

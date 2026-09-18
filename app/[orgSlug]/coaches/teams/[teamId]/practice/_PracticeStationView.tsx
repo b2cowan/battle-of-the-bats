@@ -240,7 +240,9 @@ export default function PracticeStationView(props: Props) {
           act on. If attribution is wanted it is a model change, not a label change. */}
       {station.note && (
         <div className={styles.ppStNote}>
-          <p className={styles.ppStLbl} style={{ marginBottom: '0.2rem' }}>Note for tonight</p>
+          {/* The editor's own name for this field (stage 5 — one label, not three: the field said
+              "Note for tonight", the paper "Tonight:", the editor "Just for tonight"). */}
+          <p className={styles.ppStLbl} style={{ marginBottom: '0.2rem' }}>Just for tonight</p>
           <p>{station.note}</p>
         </div>
       )}

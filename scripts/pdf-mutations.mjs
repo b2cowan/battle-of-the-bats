@@ -57,6 +57,35 @@ export const MUTATIONS = [
   },
   {
     /**
+     * The turned grid (practices re-evaluation stage 5, P1): a stacked cell GROWS its row by a line
+     * per extra group. Freeze the row and the third stacked name prints over the next round's
+     * line — which only the overlap rule (R7) can see, and only on a THREE-high stack (a two-high
+     * stack's second line still clears the row below by a millimetre). The hand-arranged fixture
+     * carries one for exactly this reason.
+     */
+    name: 'a stacked rotation cell stops growing its row — the third group prints over the next round',
+    file: 'lib/export/pdf.ts',
+    find: '      return { label, cells, h: RUN_GRID_ROW_H + (deepest - 1) * lineH };',
+    replace: '      return { label, cells, h: RUN_GRID_ROW_H };',
+    only: 'coach-practice-run-sheet',
+    expects: 'overlap',
+  },
+  {
+    /** The same grid's headings: unwrapped and unfitted, the coach's words print through the next column. */
+    name: 'a station heading stops wrapping and the fit stops testing — the words print through the neighbour',
+    edits: [
+      { file: 'lib/export/pdf.ts',
+        find: '      if (Math.max(widestWord(names), widestWord(cells)) + 5 > colW) continue;',
+        replace: '      if (false) continue;' },
+      { file: 'lib/export/pdf.ts',
+        find: '    return names.map(n => doc.splitTextToSize(n, colW - 5) as string[]);',
+        replace: '    return names.map(n => [n]);' },
+    ],
+    only: 'coach-practice-run-sheet',
+    expects: 'overlap',
+  },
+  {
+    /**
      * TWO edits, because this defect only exists as a combination: a report has to actually LOSE
      * a column, AND the honest admission has to be missing. Either alone is caught by a
      * different rule — which is the point. It proves the gate still notices a column that

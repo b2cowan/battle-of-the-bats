@@ -516,6 +516,32 @@ function assertDocument(file, read, failures, notes) {
     }
   }
 
+  /* R7 · NO TWO RUNS ON A PAGE OVERLAP (stage 5 of the practices re-evaluation, /review 2026-09-17).
+   *      The turned run-sheet grid puts the coach's own words in headings AND cells, and a heading
+   *      that overruns its column prints straight through its neighbour — a defect every rule above
+   *      is blind to: R3 reads the words back whole, R4 only sees the paper's edge. This one reads
+   *      the geometry pdf.js hands back — each run's box, the baseline up by the em's cap — and
+   *      fails when two boxes intersect. Tolerances: 0.3mm of x (a bold lead and its normal tail
+   *      meet at a measured x) and the box is 70% of the em so a descender never "overlaps" the
+   *      line below. ⚠ It cannot see a 2mm overrun into a column's own left padding — nothing can
+   *      without knowing the column — so the contract test's wrap assertion holds that half. */
+  read.pages.forEach((page, i) => {
+    const body = page.items
+      .filter((t) => !FOOTER_RUN.test(t.str.trim()) && t.w > 0)
+      .map((t) => ({ str: t.str, x0: t.x, x1: t.x + t.w, y0: t.y, y1: t.y + (t.h || 0) * 0.7 }))
+      .sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+    for (let a = 0; a < body.length; a++) {
+      for (let b = a + 1; b < body.length; b++) {
+        const A = body[a]; const B = body[b];
+        if (B.y0 >= A.y1 - 0.01) break; // sorted by baseline: nothing further down can reach A
+        if (A.x1 <= B.x0 + 0.3 * MM || B.x1 <= A.x0 + 0.3 * MM) continue;
+        if (A.y1 <= B.y0 + 0.01 || B.y1 <= A.y0 + 0.01) continue;
+        fail('overlap', `page ${i + 1}: "${clip(A.str)}" and "${clip(B.str)}" print over each other (${((Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0)) / MM).toFixed(1)}mm across).`);
+        return;
+      }
+    }
+  });
+
   /* R4 · Nothing is drawn onto the footer, or off the paper. */
   read.pages.forEach((page, i) => {
     const footer = page.items.filter((t) => FOOTER_RUN.test(t.str.trim()));

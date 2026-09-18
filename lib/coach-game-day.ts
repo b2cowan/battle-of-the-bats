@@ -126,6 +126,12 @@ export function isInGameDayWindow(event: GameDayEventShape, nowMs: number): bool
   if (!isGameDayEvent(event)) return false;
   const window = gameDayWindow(event);
   if (!window) return false;
+  return windowHolds(window, nowMs);
+}
+
+/** Whether an already-computed window holds the instant — for a caller that keeps the windows
+ *  and only moves the clock (the Schedule's season list, once a minute). Inclusive both ends. */
+export function windowHolds(window: { opensAtMs: number; closesAtMs: number }, nowMs: number): boolean {
   return nowMs >= window.opensAtMs && nowMs <= window.closesAtMs;
 }
 

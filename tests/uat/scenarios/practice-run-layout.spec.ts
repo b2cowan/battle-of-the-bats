@@ -125,10 +125,46 @@ test.describe('Practice Plans 1b — field run screen', () => {
           .find(p => /^\+?\d+:\d{2}(:\d{2})?$/.test(p.textContent?.trim() ?? ''));
         return el ? getComputedStyle(el).fontVariantNumeric : null;
       });
+      // ⚠ Outside the run window (stage 5, P3) there is no clock at all — the fact stands in its
+      // place — so this probe only means something within ~3h of the seed. Say so rather than fail.
+      const planned = await page.getByText('Planned for', { exact: true }).count();
+      test.skip(variant === null && planned > 0, 'the fixture is outside its run window — re-seed to measure the clock');
       expect(variant, 'no clock found on the run screen').not.toBeNull();
       expect(variant, 'the clock lost tabular numerals').toContain('tabular-nums');
     });
   }
+
+  /**
+   * Stage 5 (P7): a rotating stop is ONE list keyed by station — each row the door — and the rows
+   * hold the screen's own floor: 56px for the rotation's rows (the letter column at arm's length),
+   * 44px for a station list's. Read the DECLARED minimum and the resolved box, so a padding change
+   * cannot quietly shrink a row below what the field needs.
+   */
+  test('the rotation\'s station rows clear 56px — one row per station, the row is the door', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openRun(page);
+    // The fixture's first block is the warm-up (a plain stop); the circuit is next.
+    await page.getByRole('button', { name: 'Next block' }).click();
+    await expect(page.locator('h1')).toHaveText(/circuit/i);
+
+    const rows = page.locator('[class*="ppRunRow"][data-face="rotation"]');
+    await expect(rows).toHaveCount(3, { timeout: 10_000 });
+    for (let i = 0; i < 3; i++) {
+      const row = rows.nth(i);
+      const declared = await row.evaluate(el => parseFloat(getComputedStyle(el).minHeight));
+      expect(declared, `row ${i} declares a floor below 56px`).toBeGreaterThanOrEqual(56);
+      const box = await row.boundingBox();
+      expect(box!.height, `row ${i} rendered below 56px`).toBeGreaterThanOrEqual(56);
+      await expect(row).toHaveAttribute('data-face', 'rotation');
+    }
+    // No second list saying the same names again (the old Stations list) — on a rotating stop the
+    // station-face rows do not render at all.
+    await expect(page.locator('[class*="ppRunRow"][data-face="station"]')).toHaveCount(0);
+    await expect(page.getByText('Stations', { exact: true })).toHaveCount(0);
+    // The row is the door: tapping it opens that station.
+    await rows.nth(1).click();
+    await expect(page.getByRole('button', { name: 'All stations' })).toBeVisible();
+  });
 
   test('every control still clears the 44px tap floor at 361', async ({ page }) => {
     await page.setViewportSize({ width: 361, height: 780 });

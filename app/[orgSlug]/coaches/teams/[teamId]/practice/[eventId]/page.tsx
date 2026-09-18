@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, CalendarDays, ClipboardList, Library, NotebookPen, Printer, Ruler, Telescope, X } from 'lucide-react';
+import { BookMarked, CalendarDays, ClipboardList, Library, NotebookPen, Play, Printer, Ruler, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -12,21 +12,22 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import {
   buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS,
-  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetRotation,
+  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetRotation, type PracticeSheetStation,
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { canWriteDevelopment } from '@/lib/coach-capabilities';
 import { formatInOrgZone } from '@/lib/timezone';
+import { formatStoredClock } from '@/lib/utils';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import {
-  practiceHasPlan, practiceLengthMinutes, practicePlanFit, practicePlannedLabel, practiceRemainderLabel,
+  practiceHasPlan, practiceLengthMinutes, practicePlanFit, practicePlanState, practicePlannedLabel, practiceRemainderLabel,
   practiceStarted,
 } from '@/lib/practice-state';
 import {
   MAX_RECAP_LEN,
-  blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan, rotationShape,
+  blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan, rotationByStation,
   formatDuration, isPracticePlanEmpty, newPracticePlanId, practiceKitBag, resolvePracticePlanTagNames,
-  resolveStationTeaching, tagNamesById,
+  resolveStationTeaching, soleStationOf, stationLabel, tagNamesById,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
@@ -663,34 +664,48 @@ export default function CoachPracticePlanPage({
         block.description ?? '',
         blockKit.length ? `Equipment: ${blockKit.join(', ')}` : '',
         ...(block.coachingPoints ?? []).map((p, i) => `${i + 1}. ${p}`),
-        ...(block.stations ?? []).map(s => {
-          // ⚠ The SAME resolver the field screen uses. The sheet is what an assistant running the
-          // tee station actually carries, so a station whose teaching came from a drill must print
-          // it — and a plan written before the library existed must still print the block's.
-          const { description, goal } = resolveStationTeaching(s, block);
+      ].filter(Boolean).join('\n');
+
+      // Each station as a LABELLED BLOCK under the words (stage 5, P8) — the screen's column and
+      // the modal's order, on paper: the name with "Run by" beside it, then what it says of its
+      // own, then Setup · Equipment · Players · Tonight · Rotation as lines, then its points.
+      // Never the " · "-joined prose run this used to be (it wrapped mid-item: "Run by Sam /
+      // Assistant"), never columns.
+      const stations: PracticeSheetStation[] = (block.stations ?? []).map((s, i) => {
+        // ⚠ The SAME resolver the field screen uses. The sheet is what an assistant running the
+        // tee station actually carries, so a station whose teaching came from a drill must print
+        // it — and a plan written before the library existed must still print the block's.
+        const { description, goal } = resolveStationTeaching(s, block);
+        return {
+          name: stationLabel(s, i),
+          runBy: (s.staff ?? []).join(', '),
+          // Only when the station says something the block hasn't already said above, so the
+          // sheet doesn't print the same sentence twice for a single-station block — in the
+          // block's own order: "Watch for:" first, then the doing line.
+          words: [
+            goal && goal !== block.goal ? `Watch for: ${goal}` : '',
+            description && description !== block.description ? description : '',
+          ].filter(Boolean),
+          // The renderer prints a fact only when its value is there — a line is absent, never empty.
+          facts: [
+            ['Setup', s.setup ?? ''],
+            // "Kit" was the pre-2026-08-01 name, and equipment is a LIST — the old template
+            // interpolated the array itself, printing "Screen,Balls,Net" with no spaces.
+            ['Equipment', (s.equipment ?? []).join(', ')],
+            // The station's own people — and when the station IS the block (its sole station) and
+            // names nobody, the block's word: "Whole team", as the field says for the same block.
+            ['Players', (s.playerIds ?? []).map(nameOf).filter(Boolean).join(', ')
+              || (soleStationOf(block) === s && !(s.playerIds ?? []).length ? 'Whole team' : '')],
+            ['Tonight', s.note ?? ''],
+            ['Rotation', s.rotationNote ?? ''],
+          ],
           // Read from the STATION, not the resolver: the block's own points are already printed
           // once above, and re-printing them under every station would double them on the page.
           // (Comparing the resolver's array by identity worked, but only by accident of how the
           // fallback happens to return the same reference.)
-          const stationPoints = s.coachingPoints ?? [];
-          return [
-            s.name ? `• ${s.name}` : '',
-            // Only when the station says something the block hasn't already said above, so the
-            // sheet doesn't print the same sentence twice for a single-station block.
-            description && description !== block.description ? description : '',
-            goal && goal !== block.goal ? `Watch for: ${goal}` : '',
-            s.setup ? `Setup: ${s.setup}` : '',
-            // "Kit" was the pre-2026-08-01 name, and equipment is a LIST — the old template
-            // interpolated the array itself, printing "Screen,Balls,Net" with no spaces.
-            s.equipment?.length ? `Equipment: ${s.equipment.join(', ')}` : '',
-            s.staff?.length ? `Run by ${s.staff.join(', ')}` : '',
-            s.playerIds?.length ? s.playerIds.map(nameOf).filter(Boolean).join(', ') : '',
-            s.rotationNote ? `Rotation: ${s.rotationNote}` : '',
-            s.note ? `Tonight: ${s.note}` : '',
-            ...stationPoints.map(p => `– ${p}`),
-          ].filter(Boolean).join(' · ');
-        }),
-      ].filter(Boolean).join('\n');
+          points: s.coachingPoints ?? [],
+        };
+      });
 
       // The rotation of THIS block, when it has one.
       //
@@ -703,20 +718,20 @@ export default function CoachPracticePlanPage({
         const grid = computeRotation(
           block.rotation, block.stations, block.duration.minutes ?? null, clock?.startMs,
         );
-        // Columns are the groups in the rotation's own order; each round's row reads that group's
-        // station by ID — never by cell position, because a hand-arranged grid (D14) can put a
-        // group anywhere in a round or sit it out, and the paper must say which.
-        const { groups: printed } = rotationShape(block.rotation, block.stations, block.duration.minutes ?? null);
+        // The grid TURNED to station columns (stage 5, P1 — the paper reads as the screen's board
+        // has since D6): the block's named stations across, one row per round, the group(s) in
+        // each cell. Assembled from the screen's own re-key (`rotationByStation`) — by station
+        // ID, never by a cell's position — because a hand-arranged grid (D14) can put a group
+        // anywhere in a round, share a station between two, leave one empty or sit a group out,
+        // and the paper must print each exactly where the coach put it.
+        const turned = rotationByStation(grid, block.stations);
         rotation = {
-          groupNames: printed.map(g => g.name),
-          rounds: grid.roundsList.map(r => {
-            const at = new Map(r.cells.map(c => [c.groupId, c.stationName || '—']));
-            const out = new Set(r.out.map(o => o.groupId));
-            return {
-              round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
-              stations: printed.map(g => at.get(g.id) ?? (out.has(g.id) ? 'sits out' : '—')),
-            };
-          }),
+          stationNames: turned.stations.map(s => s.name),
+          rounds: turned.rows.map(r => ({
+            round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
+            groups: r.cells,
+            out: r.out.map(o => o.name),
+          })),
           notes: grid.notes,
           groups: block.rotation.groups.map(g => ({
             name: g.name,
@@ -725,13 +740,21 @@ export default function CoachPracticePlanPage({
         };
       }
 
+      // Whose line this is — the lib's one rule (`blockOwnPeople`): the block's own people, or
+      // nothing when they live on its stations (a sole station's print under that station).
+      const own = block.stations?.length ? undefined : blockOwnPeople(block);
+      const players = (own ?? []).map(nameOf).filter(Boolean).join(', ');
       return {
         time,
         title: block.title || '(untitled)',
         duration: formatDuration(block.duration),
         staff: (block.staff ?? []).join(', '),
-        players: (block.playerIds ?? []).map(nameOf).filter(Boolean).join(', '),
+        // "Whole team" where the sheet printed nothing (stage 5, P5) — the plan page's own word
+        // for a block that names nobody; a coach's list prints as written, because the record is
+        // the coach's own list (the page keeps "12 players" apart from "Whole team" on purpose).
+        players: players || (own && own.length === 0 ? 'Whole team' : ''),
         notes,
+        stations,
         rotation,
       };
     });
@@ -750,9 +773,13 @@ export default function CoachPracticePlanPage({
         })).filter(row => row.focusAreas)
       : [];
 
+    // ⚠ The arrival time is a STORED "HH:mm" and it printed raw — "Arrive 17:45" — for as long as
+    // this sheet existed, the eighth hand-rolled clock the 2026-08-26 ruling found, unrendered
+    // because the rendered check's fixture types its own "5:45 p.m." (stage 5, P2). The clock rule
+    // has no paper carve-out: the same guard-then-format the Schedule reads the field through.
     const whereLabel = [
       event.startsAt ? fmtTime(event.startsAt) : '',
-      event.arrivalTime ? `Arrive ${event.arrivalTime}` : '',
+      event.arrivalTime ? `Arrive ${formatStoredClock(event.arrivalTime)}` : '',
       [event.location, event.fieldNumber].filter(Boolean).join(', '),
     ].filter(Boolean).join('  ·  ');
 
@@ -839,6 +866,10 @@ export default function CoachPracticePlanPage({
   // Unplanned time and an overrun are both worth a coach's eye; the rest block is spoken for.
   const remainderTone = fit.remainder?.kind === 'rest' ? undefined : styles.ppDocWhenAmber;
   const started = practiceStarted(event?.startsAt, nowMs);
+  // The toolbar's door (P4) reads the hub card's own state — blocks and the window — never a
+  // second rule. `plan` is the sheet as edited (an unsaved first block counts, as it does for
+  // "How it went"), and the event's start is the schedule's.
+  const runState = event ? practicePlanState({ practicePlan: plan, startsAt: event.startsAt, endsAt: event.endsAt }, nowMs) : 'none';
 
   /**
    * The sheet's first line — three shapes, one flat function (the `renderPickList` idiom: a
@@ -1070,13 +1101,22 @@ export default function CoachPracticePlanPage({
                   The blank page has no toolbar and no disabled Print: its one action is the
                   first block, inside the sheet. "Start this plan from…" moved into the sheet
                   too, as the ghost row's quiet alternative. What stays up here is what a
-                  written plan earns: the promotion and the paper.
-                  ⚠ NO "Run practice" here (owner ruling 2026-09-14). The builder offered the
-                  field door at ANY date and the run screen then counted the days; the door lives
-                  where the day is known — the hub card and the Overview card, inside the run
-                  window. Whether the plan page earns one back, and where, is stage 5's ruling. */}
+                  written plan earns: the promotion and the paper — and, INSIDE THE RUN WINDOW
+                  ONLY, the field door.
+                  ⚠ "Run practice" left this page on 2026-09-14 because the builder offered it at
+                  ANY date and the run screen then counted the days. It is back (practices
+                  re-evaluation stage 5, owner ruling P4, 2026-09-17) on the one rule every door
+                  now reads — at least one block, ±3h of the start (`practicePlanState`, from the
+                  minute clock this page already runs for "How it went") — as the toolbar's FIRST
+                  control and the page's one lime: the ghost row's "+ Add a block" is quiet once a
+                  block exists. Outside the window the toolbar is exactly what it was. */}
               {hasBlocks && (
                 <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
+                  {runState === 'run' && (
+                    <Link href={`${base}/practice/${eventId}/run`} className={styles.btnPrimary} data-testid="run-practice">
+                      <Play size={14} aria-hidden /> Run practice
+                    </Link>
+                  )}
                   {/* Explicit promotion, never automatic — the "Save to my drills…" bargain, one
                       level up. */}
                   {canWrite && (
@@ -1171,6 +1211,10 @@ export default function CoachPracticePlanPage({
                   onChangePlanTags={savePlanTags}
                   eventStartsAt={event?.startsAt ?? ''}
                   eventEndsAt={event?.endsAt ?? null}
+                  // The sheet's now-marker (stage 5, P9): the page's minute clock, handed down so
+                  // the gutter can say which block's PLANNED window holds it. The template and
+                  // circuit editors pass none and never show it.
+                  nowMs={nowMs}
                   readOnly={!canWrite}
                   // ⚠ ONE control, THREE sources (frame 05; P3 C2 added the third) — never a
                   // second door. Offered on the blank page when there is anything at all to

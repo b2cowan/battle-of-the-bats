@@ -83,6 +83,20 @@ export function formatHour(hour24: number): string {
   return `${TO_12(hour24)} ${PERIOD(hour24)}`;
 }
 
+/**
+ * A STORED clock field ("HH:mm", as `arrival_time` is kept; "HH:mm:ss" too) → "5:15 p.m.". Anything else — a
+ * free-text value a coach typed into the same field — passes through untouched, because it is
+ * theirs and not our prose (the clock ruling's own exception). Guards the shape, then defers to
+ * the ONE formatter above: the Schedule's arrival line and the printed practice sheet's where-line
+ * both read through this, so the two cannot spell the same stored field two ways (the sheet
+ * printed "Arrive 17:45" raw for a month — practices re-evaluation stage 5, P2, 2026-09-17).
+ */
+export function formatStoredClock(value: string | null | undefined): string {
+  const t = (value ?? '').trim();
+  if (!t) return '';
+  return /^\d{1,2}:\d{2}(:\d{2})?$/.test(t) ? formatTime(t) : t;
+}
+
 /** "6:00 p.m." from "18:00", "18:00:00", or an already-formatted label. */
 export function formatTime(timeStr: string): string {
   if (!timeStr) return '';

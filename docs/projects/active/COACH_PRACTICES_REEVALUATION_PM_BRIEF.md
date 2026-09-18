@@ -293,3 +293,74 @@ gained the rows and the two notes.
 name they already have sees it named on its row and decides; a coach who built the block from library drills reads
 one line saying so and is asked nothing. **What is owed:** the owner's walk (part K on the hub's "QA walk · 4"
 tab), then the commit on the owner's word.
+
+## Stage 5 · Paper & the field — DRAWN 2026-09-17 · RULED 2026-09-17 (P1–P9 all as drawn) · BUILT ON DEV 2026-09-17 · walk owed (§201, the hub's "QA walk · 5" tab) · commit owed
+
+**What a coach sees and does differently.** The printed sheet becomes the print of the screen: the rotation grid
+prints with the stations across the top and the group in each cell (two stacked when they share, a "Sitting out"
+column only when someone sits a round out, turned on its side when the coach's station names cannot fit across the
+page — which then reads "where is my station all night", the station coach's own question); each station is a
+short labelled block an assistant can find and read — name and who runs it, then Setup, Equipment, Tonight, and the
+points as a list — instead of one run of facts that wraps mid-item; "Whole team" prints where the paper printed
+nothing; and "Arrive 5:45 p.m." prints where the paper printed "Arrive 17:45". On the field, the door to the run
+screen follows one rule everywhere — three hours either side of the start, once there is a block — including the
+Schedule's panel, which today offers it at any date (the next practice, five days out, currently reads "122:36:04 ·
+LEFT OF 20 MIN"); outside that window the run screen says what it knows — "Planned for Tue, Sep 15 · 5:01 p.m." —
+and stops counting the seconds. The plan page earns a lime *Run practice* back, inside the window only. A rotation
+reads as one list keyed by station — the group letter, the station, who runs it, and the door to that station on
+the same row — six rows where today there are six cards and then the same six names again; when the round runs
+over, the head goes amber and each row shows the letter that arrives, never one sentence of six moves. A plain
+block says who runs it. During the window, the running block's gutter on the plan page reads "now · 5:37", so a
+tablet on the bench reads the sheet with the clock while the phone keeps the run screen.
+
+**Why.** Two documents for one plan was the walk's headline; stage 1 made the screen the sheet, and the paper was
+left to this stage. The screen turned its grid to stations on 15 Sep and the owner asked on the 16th why the paper
+had not. The run screen is right in every way that matters and wrong in five small ones that add up at the field:
+a door with no rule, a counter with no meaning outside the night, twelve chips for "everyone", nothing about who
+runs a block, and a rotation that says every station twice.
+
+**Measured.** The rotation panel at 390: 792px drawn against 1,319px today (913px in the amber state). The paper's
+grid at letter width: six stations fit at 8pt on the fixture; about seven at 7pt for ordinary names; past that,
+sideways. The stations as labelled blocks cost space — on the fixture's six-station circuit the last block moves
+whole to a third page (the seeded three-station circuit stays on two) — stated on the tab, not hidden.
+
+**Trade-offs and close calls.** Keeping one PDF renderer as "the print of the screen" (P2) rather than printing
+the page itself — the page-print loses the team's paper, true page numbers and the rendered check that proves every
+document on every commit. The plan page's door (P4) — argued for from where the coach actually stands at 5:45 p.m.,
+against a fifth door and the stage-1 removal. The now-marker (P9) — small and honest, but it is the plan's now, not
+the coach's taps, and a late start makes sheet and phone disagree by the minutes behind. One word for everyone is
+the plan page's "Whole team", not the walk's "Everyone". "Planned for", never "Ran" — the product never says done.
+
+**Priority.** Stage 5 of 6; next after the stage-4 walks. **Success criteria.** The sheet and the screen show the
+same grid; an assistant finds their station on the paper without reading a paragraph; no screen offers the field
+door outside the window and no run screen counts days; a six-station rotation fits one phone screen with the button
+above the fold; a hand-arranged round reads the same on the sheet, the phone and the paper.
+
+**Built 2026-09-17, as ruled.** What a coach sees now: the printed sheet is the print of the screen — the rotation
+grid reads stations across the top with the groups in the cells (two stacked when they share, a dash for nobody, a
+"Sitting out" column only when a round has one, a long station name wrapped onto two lines rather than running into
+its neighbour, the grid on its side when the names cannot fit), each station a short labelled block (name · Run by;
+Setup · Equipment · Tonight as lines; the points as a list), "Whole team" where nothing printed, "Arrive 5:45 p.m."
+where "17:45" did. One rule for the field door everywhere — and, found by the review, that rule now runs to three
+hours after the practice ENDS, not just after it starts, so a four-hour practice keeps its doors and its clock to the
+last minute. The plan page's toolbar carries a green Run practice first, on the day only; the Schedule's panel offers
+it on the day only. Outside the window the field screen stops counting and says "Planned for · Tue, Sep 15 ·
+5:01 p.m." (before a practice, "The clock starts 2:21 p.m.") — never "ran" — and no clock survives anywhere on the
+screen, the station view included. On the field a rotation is one list, a row per station, each row the door; a
+plain block says who runs it and "Whole team" (or the few named, as chips); the station view's note is labelled "Just
+for tonight". During the window the sheet's running block says "now" in its time gutter with the clock, the spine's
+dot filled — the tablet on the bench reads the sheet while the phone runs the field screen.
+
+**One visible difference from the frames, flagged before the build:** the gutter's marker is two lines — "now" over
+"5:37 p.m." — not the drawn "now · 5:37": the clock keeps its period everywhere a coach reads one, and that does
+not fit the gutter on one line. A one-line change if the owner prefers the bare clock.
+
+**Found on the way and fixed in the same work:** the Overview's call-time chip and the game console's "Arrive" chip
+carried the same raw "17:45"; the Schedule's game-day pill now reads a minute clock (a tab left open shows the door
+when the window opens); the timeline's drag gap sat 12px off the spine on a phone. **The rendered check gained a rule
+that fails any two runs printing over each other** — the class of defect that turning the grid could have introduced
+and nothing caught — with two mutations that prove it bites. No migration, no new route, nothing written at the
+field. Verified: 4,152 unit tests, the rendered check on 23 documents, the layout sweep on the four screens at four
+widths, a Playwright probe on the fixture inside and outside the window; the printed sheet read back from the plan
+page's own Print button. **Walk:** the "QA walk · 5" tab on the hub — 26 steps in six parts (the paper · the field
+inside the window · outside it · the doors · the now-marker · the station's label) — ledger §201.

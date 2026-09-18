@@ -1,6 +1,6 @@
 'use client';
 import { Fragment, use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { formatTime } from '@/lib/utils';
+import { formatStoredClock as fmtClock } from '@/lib/utils';
 import { ArrowLeft, Calendar, CalendarPlus, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import Link from 'next/link';
@@ -28,6 +28,8 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import { MapPin, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
+import { practicePlanState } from '@/lib/practice-state';
+import { useMinuteClock } from '@/lib/use-minute-clock';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import ShareGameLinkRow from '@/components/coaches/ShareGameLinkRow';
@@ -46,7 +48,7 @@ import CoachLoading from '@/components/coaches/CoachLoading';
 import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import { gameDayEntryHref } from '@/lib/coach-game-day';
+import { gameDayConsolePath, gameDayWindow, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
@@ -273,13 +275,6 @@ function resourceHint(type: RepEventType): { label: string; url: string } {
   }
 }
 
-// "HH:mm" (24h, as stored for arrival_time) → friendly 12-hour clock ("5:15 p.m.").
-// Guards the shape, then defers to the ONE shared formatter. This was a seventh copy of that
-// arithmetic, and the copies are exactly how the product ended up spelling the clock two ways.
-function fmtClock(hhmm: string): string {
-  const t = hhmm.trim();
-  return /^\d{1,2}:\d{2}$/.test(t) ? formatTime(t) : hhmm;
-}
 
 /** Form inputs → the wall-clock string the API takes. The server resolves it to a real instant in
  *  the ORG'S zone (C0), so the client never has to know the offset. */
@@ -791,21 +786,34 @@ export default function CoachesSchedulePage({
    * type + status), and absent in an archived season: the console is a live-season INSTRUMENT
    * (same ruling as the scouting book above), so a frozen calendar never offers a bench to run.
    *
-   * Clock snapshot, taken once per mount (render must stay pure): the action appears on the
-   * visit that falls inside the window; the server guard, not this affordance, enforces it.
-   * Memoized as a per-event map — the list view renders the whole season's rows, and the
-   * window arithmetic (Intl timezone math when an arrival time is set) must not be re-paid
-   * per game row on every unrelated re-render.
+   * The clock is read once a MINUTE (render stays pure — the hook snapshots it in state), so a
+   * tab left open through an afternoon shows the door when the window opens rather than on the
+   * next reload; the server guard, not this affordance, enforces it. It used to be a once-per-mount
+   * snapshot — the gap the Overview's fix recorded for this page (2026-08-12) — and it joined the
+   * minute clock when the practice-plan door below came onto the same clock (practices
+   * re-evaluation stage 5, P3, 2026-09-17): one clock for both windows on this screen.
+   * Memoized in two steps — the WINDOWS once per season load (the Intl timezone math when an
+   * arrival time is set, one per game, never re-paid on a tick or an unrelated re-render), then
+   * the doors once a minute as forty integer comparisons against the clock.
    */
-  const [gameDayNowMs] = useState(() => Date.now());
-  const gameDayHrefById = useMemo(() => {
-    const map = new Map<string, string>();
+  const nowMs = useMinuteClock();
+  const gameDayWindowById = useMemo(() => {
+    const map = new Map<string, { opensAtMs: number; closesAtMs: number }>();
     for (const e of events) {
-      const href = gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
-      if (href) map.set(e.id, href);
+      const shape = toGameDayEventShape(e);
+      if (!isGameDayEvent(shape)) continue;
+      const window = gameDayWindow(shape);
+      if (window) map.set(e.id, window);
     }
     return map;
-  }, [events, orgSlug, teamId, gameDayNowMs]);
+  }, [events]);
+  const gameDayHrefById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const [id, w] of gameDayWindowById) {
+      if (windowHolds(w, nowMs)) map.set(id, gameDayConsolePath(orgSlug, teamId, id));
+    }
+    return map;
+  }, [gameDayWindowById, orgSlug, teamId, nowMs]);
   const assignment = assignments.find(a => a.teamId === teamId);
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
   // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
@@ -2781,7 +2789,14 @@ export default function CoachesSchedulePage({
                 into a finished season. This screen is no longer rendered for a closed season at
                 all, so there is nothing left to hide — and READING a past plan has its own home,
                 the practices shelf on the closed-season page, which reaches a year-aware read
-                route rather than this one. */}
+                route rather than this one.
+
+                ⚠ ONE WINDOW, EVERY DOOR (practices re-evaluation stage 5, owner ruling P3,
+                2026-09-17). "Run practice →" is offered on exactly the hub card's condition —
+                at least one block, and inside ±3h of the start (`practicePlanState`, the one
+                constant in `lib/practice-state.ts`) — from the minute clock above. It used to be
+                offered whenever a plan ROW existed: five days out, and on a plan holding only a
+                goal, which the run screen then answered with "There's no plan to run yet". */}
             {selectedEvent.eventType === 'practice' && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Practice plan</h4>
@@ -2792,9 +2807,11 @@ export default function CoachesSchedulePage({
                       {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
                     </p>
                     <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
-                      <Link href={`${base}/practice/${selectedEvent.id}/run`} className={styles.btnSecondary}>
-                        Run practice →
-                      </Link>
+                      {practicePlanState(selectedEvent, nowMs) === 'run' && (
+                        <Link href={`${base}/practice/${selectedEvent.id}/run`} className={styles.btnSecondary}>
+                          Run practice →
+                        </Link>
+                      )}
                       <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
                         Open the plan →
                       </Link>

@@ -1,5 +1,5 @@
 'use client';
-import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -7,10 +7,13 @@ import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
+import { scheduleDayLabel, scheduleTimeLabel } from '@/lib/family-schedule-format';
+import { isInRunWindow, practiceLengthMinutes, runWindowOpensAt } from '@/lib/practice-state';
 import {
-  blockRotates, buildRunSteps, computeBlockClocks, computeRotation, formatDuration, formatRunClock,
-  resolvePracticePlanTagNames, resolveStationTeaching, runRemainingSeconds, runStepAt,
-  type PracticePlan, type PracticePlanBlock, type RotationGrid, type RunStep,
+  blockOwnPeople, blockRotates, buildRunSteps, computeBlockClocks, computeRotation, formatClockMs, formatDuration,
+  formatRunClock, namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation,
+  runRemainingSeconds, runStepAt, soleStationOf, stationLabel,
+  type PracticePlan, type PracticePlanBlock, type PracticeStation, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
 import PracticeStationView from '../../_PracticeStationView';
 import type { PracticeRosterPlayer } from '../../_PracticePlanEditor';
@@ -41,6 +44,25 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * Read + run rides `schedule` — the same grant that already opens Tuesday's practice — so an
  * assistant can run a station without a new capability key. There are no writes on this screen, so
  * there is no write gate to get wrong.
+ *
+ * ⚠ OUTSIDE THE RUN WINDOW THE COUNTER GOES (practices re-evaluation stage 5, owner ruling P3,
+ * 2026-09-17). The clock is right inside ±3h of the start and meaningless outside it — five days
+ * before it read "122:36:04 · LEFT OF 20 MIN", two days after "+44:33:48 · OVER BY". Outside the
+ * window the clock block is the FACT in its place: "Planned for · Tue, Sep 15 · 5:01 p.m." with
+ * the window beneath, or before a practice "The clock starts 2:21 p.m." (the hub's one window,
+ * `RUN_WINDOW_MS`). Never "Ran": nothing is written at the field, so nothing can know. The block,
+ * its words, Back and Next stay — a coach may page through on the couch, and nothing is recorded.
+ *
+ * ⚠ A ROTATION IS ONE LIST, KEYED BY STATION (P7) — `rotationByStation`, the board's own re-key,
+ * never the round's cells by group: one row per station with the group letter(s) that are THERE
+ * (or, due, the letter(s) that ARRIVE), each row the door to that station; "nobody" for a station
+ * a hand-arranged round leaves empty; a sitting-out group one line under the list. The separate
+ * Stations list is gone for a rotating stop; a non-rotating block with stations keeps its list on
+ * the same row component without the letter column.
+ *
+ * ⚠ "WHOLE TEAM" (P5) is a SET comparison against the active roster the route already returns,
+ * never a count — and a plain block says who runs it (P6): the paper's own staff · players line,
+ * under the words, at the support size. Not the eyebrow — that slot is the round's.
  */
 
 type RunData = {
@@ -65,6 +87,7 @@ type RunData = {
 };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
+
 
 /**
  * "Group A" → "A", so a group reads at arm's length in a 2.75rem gutter.
@@ -226,8 +249,16 @@ export default function CoachPracticeRunPage({
   // `nowMs` is 0 until the tick effect runs, and a clock measured against that would read as a
   // wild number for one frame. Nothing clock-shaped renders until it is real.
   const clockReady = nowMs > 0;
+  /**
+   * Outside the run window (P3) — decided from the same clock the screen counts on, and only once
+   * it is real (0 is outside every window). The ONE window, both edges: three hours before the
+   * start to three hours after the END (or the start, with no end) — a four-hour practice keeps its
+   * counter to the last minute. Outside it there is no clock at all: no counter, no "over", no
+   * rotation due, on this screen or the station's — the fact stands where the clock was.
+   */
+  const outsideWindow = clockReady && !!eventStartsAt && !isInRunWindow(eventStartsAt, nowMs, eventEndsAt);
   const anchor = anchorMs ?? step?.startMs ?? 0;
-  const remaining = step && clockReady ? runRemainingSeconds(step.minutes, anchor, nowMs) : null;
+  const remaining = step && clockReady && !outsideWindow ? runRemainingSeconds(step.minutes, anchor, nowMs) : null;
   const clock = remaining == null ? null : formatRunClock(remaining);
   const over = remaining != null && remaining < 0;
 
@@ -309,23 +340,56 @@ export default function CoachPracticeRunPage({
     () => (data?.roster ?? []).filter(p => attendanceByPlayer.get(p.id) === 'attending').length,
     [data?.roster, attendanceByPlayer],
   );
+  /**
+   * Whose block this is — the people and the staff the block itself holds. With no stations the
+   * block holds them; with ONE station the station IS the block (the run screen's rule, and
+   * `settlePlanLevels` moved the people there); with two or more, the stations hold them and the
+   * block's own line says only who runs it.
+   */
+  // The lib's one rule for whose people these are (`blockOwnPeople`); the staff line reads the same
+  // holder — the sole station when the station is the block, else the block.
+  const ownPeople = useMemo(() => (block ? blockOwnPeople(block) : undefined), [block]);
+  const blockStaff = useMemo(() => (block ? (soleStationOf(block) ?? block).staff ?? [] : []), [block]);
   const blockPlayers = useMemo(
-    () => (block?.playerIds ?? []).map(nameOf).filter(Boolean),
-    [block, nameOf],
+    () => (ownPeople ?? []).map(nameOf).filter(Boolean),
+    [ownPeople, nameOf],
   );
-  /** The moves that are due, named group by group — never one silently winning. */
+  // "Whole team" (P5): nobody named, or every active player named — the roster the route handed
+  // this screen, compared as a SET (twelve of twelve is the whole team tonight; eleven is chips).
+  const wholeTeam = useMemo(
+    () => ownPeople !== undefined && namesWholeTeam(ownPeople, (data?.roster ?? []).map(p => p.id)),
+    [ownPeople, data?.roster],
+  );
+  /**
+   * The rotation TURNED to its stations (P7) — the board's own re-key, one column per named
+   * station — and the row this stop reads: the running round, or, once the rotation is due, the
+   * NEXT round (where everyone is going). `stepRound` is 1-based, so it indexes the next round
+   * directly. A group the coach arranged to SIT that round out (D14) has no cell; it is named
+   * under the list, never left off as if it had been forgotten.
+   */
   const stepRound = step?.round ?? null;
-  const dueMoves = useMemo(() => {
-    if (!rotationDue || !grid || stepRound == null) return '';
-    // `stepRound` is 1-based, so it indexes the NEXT round's cells — where everyone is going.
-    // A group the coach arranged to SIT the next round out (D14) has no cell; it is named too,
-    // never left off the list as if it had been forgotten.
-    const next = grid.roundsList[stepRound];
-    return [
-      ...(next?.cells ?? []).map(c => `${shortGroupLabel(c.groupName)} → ${c.stationName || 'a station'}`),
-      ...(next?.out ?? []).map(o => `${shortGroupLabel(o.groupName)} sits out`),
-    ].join(' · ');
-  }, [rotationDue, grid, stepRound]);
+  const turned = useMemo(() => (grid && block ? rotationByStation(grid, block.stations) : null), [grid, block]);
+  const shownRow = turned && stepRound != null ? turned.rows[rotationDue ? stepRound : stepRound - 1] ?? null : null;
+
+  /**
+   * The fact's words (P3) are constants per event, so they are built once — `outsideWindow` (above)
+   * and `beforeWindow` are the only two things that move, and they flip at most twice in a screen's
+   * life, never per tick.
+   */
+  const opensAt = useMemo(() => runWindowOpensAt(eventStartsAt), [eventStartsAt]);
+  const beforeWindow = outsideWindow && opensAt != null && nowMs < opensAt;
+  const fact = useMemo(() => {
+    if (!eventStartsAt) return null;
+    const length = practiceLengthMinutes(eventStartsAt, eventEndsAt);
+    return {
+      // "Tue, Sep 15 · 5:01 p.m." — the plan sheet's own first line, the org's clock.
+      when: `${scheduleDayLabel(eventStartsAt)} · ${scheduleTimeLabel(eventStartsAt)}`,
+      // Under it, after a practice: the window it was planned for — "5:01 p.m.–6:31 p.m. · 90 min".
+      window: eventEndsAt && length != null ? `${scheduleTimeLabel(eventStartsAt)}–${scheduleTimeLabel(eventEndsAt)} · ${length} min` : '',
+      // Before it: when the clock starts — the one window every door opens on.
+      opens: opensAt != null ? `The clock starts ${formatClockMs(opensAt)}` : '',
+    };
+  }, [eventStartsAt, eventEndsAt, opensAt]);
 
   // ── Render ──
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
@@ -435,6 +499,7 @@ export default function CoachPracticeRunPage({
           grid={grid}
           round={step.round}
           isMine={isViewersStation(openStation.staff, data?.viewerName ?? null)}
+          // Null outside the run window — the station view then says nothing about time either.
           clock={clock}
           clockOver={over}
           nameOf={nameOf}
@@ -465,9 +530,53 @@ export default function CoachPracticeRunPage({
    * resolved through; with two or more they differ from each other and the station list below is
    * the honest answer, so the block keeps its own.
    */
-  const soleStation = (block.stations ?? []).length === 1 ? block.stations![0] : null;
+  const soleStation = soleStationOf(block);
   const { description: stopDescription, goal: stopGoal, coachingPoints: points } =
     resolveStationTeaching(soleStation ?? {}, block);
+
+  /**
+   * ONE row, two faces (P7): with `letters` it is the rotation's row — the group letter(s) at (or
+   * arriving at) this station, two stacked when two share, "nobody" when none — and without them
+   * it is the station list's row. Either way the row is the door to that station, and the
+   * viewer's own says so. A called function, never a component declared in the render body.
+   */
+  function renderStationRow(station: PracticeStation, index: number, letters: string[] | null, due: boolean) {
+    const mine = isViewersStation(station.staff, data?.viewerName ?? null);
+    const staffLine = station.staff?.length ? station.staff.join(' · ') : '';
+    const meta = `${staffLine}${mine ? `${staffLine ? ' — ' : ''}that’s you` : ''}`;
+    return (
+      <button
+        key={station.id}
+        type="button"
+        className={styles.ppRunRow}
+        data-face={letters ? 'rotation' : 'station'}
+        data-mine={mine ? 'mine' : undefined}
+        data-due={due ? 'due' : undefined}
+        onClick={() => chooseStation(station.id)}
+      >
+        {letters && (
+          <span className={styles.ppRunRowG} data-count={String(Math.min(letters.length, 2))}>
+            {letters.length === 0
+              ? 'nobody'
+              : letters.map((l, i) => <Fragment key={i}>{i > 0 && <br />}{l}</Fragment>)}
+          </span>
+        )}
+        <span>
+          <span className={styles.ppRunRowS}>{stationLabel(station, index)}</span>
+          {meta && <span className={styles.ppRunRowM}>{meta}</span>}
+        </span>
+        <span className={styles.ppRunRowGo}>{mine ? 'Open' : 'View'}</span>
+      </button>
+    );
+  }
+
+  // Who is in a plain block (P5): the one word, or the coach's few as chips — null when the block's
+  // people live on its stations.
+  const people: ReactNode = wholeTeam ? 'Whole team' : blockPlayers.length > 0 ? (
+    <span className={styles.ppRunWho}>
+      {blockPlayers.map(name => <span key={name} className={styles.ppRunChip}>{name}</span>)}
+    </span>
+  ) : null;
 
   // What the small line under the clock says. Read top to bottom: the most specific state wins.
   let clockLabel: string;
@@ -511,7 +620,16 @@ export default function CoachPracticeRunPage({
         <h1 className={styles.ppRunTitle}>{block.title.trim() || `Block ${step.blockIndex + 1}`}</h1>
         {step.round != null && <p className={styles.ppRunRound}>Round {step.round} of {step.rounds}</p>}
 
-        {clock ? (
+        {outsideWindow && fact ? (
+          /* The fact where the clock was (P3) — what the product knows: when it was planned for. */
+          <>
+            <p className={`${styles.ppRunOf} ${styles.ppRunFactLbl}`}>Planned for</p>
+            <p className={styles.ppRunFact}>
+              {fact.when}
+              {(beforeWindow ? fact.opens : fact.window) && <small>{beforeWindow ? fact.opens : fact.window}</small>}
+            </p>
+          </>
+        ) : clock ? (
           <>
             <p className={styles.ppRunClock} data-over={over ? 'over' : undefined}>{clock}</p>
             <p className={styles.ppRunOf} data-over={over ? 'over' : undefined}>{clockLabel}</p>
@@ -520,30 +638,38 @@ export default function CoachPracticeRunPage({
           <p className={styles.ppRunOf}>{step.restOfPractice ? 'Runs to the end' : 'No length set'}</p>
         ) : null}
 
-        {/* ── A rotation: where everyone is, or where everyone is about to go ── */}
-        {rotating && grid && step.round != null && (
-          rotationDue ? (
-            <div className={styles.ppRunWhere} data-due="due">
-              <span className={styles.ppRunWhereG} aria-hidden>→</span>
-              <div>
-                <p className={styles.ppRunWhereS}>{dueMoves || 'Move the groups on'}</p>
-                <p className={styles.ppRunWhereM}>Coaches stay where they are</p>
-              </div>
-            </div>
-          ) : (
-            (grid.roundsList[step.round - 1]?.cells ?? []).map(cell => {
-              const station = (block.stations ?? []).find(s => s.id === cell.stationId);
-              return (
-                <div key={cell.groupId} className={styles.ppRunWhere}>
-                  <span className={styles.ppRunWhereG}>{shortGroupLabel(cell.groupName)}</span>
-                  <div>
-                    <p className={styles.ppRunWhereS}>{cell.stationName || 'Station'}</p>
-                    {station?.staff?.length ? <p className={styles.ppRunWhereM}>{station.staff.join(' · ')}</p> : null}
-                  </div>
+        {/* ── A rotation: ONE list keyed by station (P7) — who is at each, or who arrives next ── */}
+        {rotating && grid && turned && step.round != null && (
+          <>
+            {rotationDue && (
+              <div className={styles.ppRunWhere} data-due="due">
+                <span className={styles.ppRunWhereG} aria-hidden>→</span>
+                <div>
+                  <p className={styles.ppRunWhereS}>Move the groups on</p>
+                  <p className={styles.ppRunWhereM}>Coaches stay where they are</p>
                 </div>
-              );
-            })
-          )
+              </div>
+            )}
+            <div className={styles.ppRunList}>
+              {stations.map((station, i) => {
+                // The row's letters come from the station's COLUMN, found by id — an unnamed station
+                // is not a stop in the arithmetic (no column, nobody sent there: "nobody"), but the
+                // coach standing at it still needs the door.
+                const col = turned.stations.findIndex(s => s.id === station.id);
+                return renderStationRow(station, i, (col >= 0 ? shownRow?.cells[col] ?? [] : []).map(shortGroupLabel), rotationDue);
+              })}
+            </div>
+            {shownRow && shownRow.out.length > 0 && (
+              <p className={styles.ppRunMeta}>
+                {shownRow.out.map((o, i) => (
+                  <Fragment key={o.id}>{i > 0 && ' · '}<b>{shortGroupLabel(o.name)}</b> sits round {shownRow.round} out</Fragment>
+                ))}
+              </p>
+            )}
+            {blockStaff.length > 0 && (
+              <p className={styles.ppRunMeta}><b>{blockStaff.join(' · ')}</b></p>
+            )}
+          </>
         )}
 
         {/* ── A plain stop: the note, what to watch for, and who's in it ──
@@ -561,43 +687,25 @@ export default function CoachPracticeRunPage({
                 {points.map((point, i) => <li key={i}>{point}</li>)}
               </ol>
             )}
-            {blockPlayers.length > 0 && (
-              <div className={styles.ppRunWho}>
-                {blockPlayers.map(name => <span key={name} className={styles.ppRunChip}>{name}</span>)}
+            {/* Who runs it · who is in it (P5 · P6): "UAT Coach · Whole team", or the coach's few
+                as chips. One quiet line under the words; a block whose people live on its stations
+                says only who runs it. */}
+            {(blockStaff.length > 0 || people) && (
+              <div className={styles.ppRunMeta}>
+                {blockStaff.length > 0 && <b>{blockStaff.join(' · ')}</b>}
+                {blockStaff.length > 0 && people && ' · '}
+                {people}
               </div>
             )}
           </>
         )}
 
-        {/* ── The station picker (D28). Yours is picked out because you're tagged on it. ── */}
-        {stations.length > 0 && (
+        {/* ── The station list on a NON-rotating stop (D28): the same row, no letter column. Yours
+            is picked out because you're tagged on it. ── */}
+        {step.round == null && stations.length > 0 && (
           <div className={styles.ppRunStations}>
             <p className={styles.ppRunStationsLbl}>Stations</p>
-            {stations.map((station, i) => {
-              const mine = isViewersStation(station.staff, data?.viewerName ?? null);
-              const staffLine = station.staff?.length ? station.staff.join(' · ') : '';
-              return (
-                <button
-                  key={station.id}
-                  type="button"
-                  className={styles.ppRunStationRow}
-                  data-mine={mine ? 'mine' : undefined}
-                  onClick={() => chooseStation(station.id)}
-                >
-                  <span>
-                    <span className={styles.ppRunStationName}>
-                      {station.name.trim() || `Station ${i + 1}`}
-                    </span>
-                    {(staffLine || mine) && (
-                      <span className={styles.ppRunStationMeta}>
-                        {staffLine}{mine ? `${staffLine ? ' — ' : ''}that’s you` : ''}
-                      </span>
-                    )}
-                  </span>
-                  <span className={styles.ppRunStationGo}>{mine ? 'Open' : 'View'}</span>
-                </button>
-              );
-            })}
+            {stations.map((station, i) => renderStationRow(station, i, null, false))}
           </div>
         )}
 

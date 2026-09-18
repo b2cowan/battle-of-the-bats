@@ -33,8 +33,30 @@ export function practiceHasPlan(e: Pick<RepTeamEvent, 'practicePlan'>): boolean 
   return (e.practicePlan?.blocks.length ?? 0) > 0;
 }
 
-export function isInRunWindow(startsAt: string, nowMs: number): boolean {
-  return Math.abs(new Date(startsAt).getTime() - nowMs) <= RUN_WINDOW_MS;
+/**
+ * Three hours before the start to three hours after the END — or after the start, when the
+ * practice has no end (or one before its start). ⚠ Both edges, one constant: the window used to be
+ * ±3h of the START alone, so a four-hour practice lost its doors and its field clock an hour
+ * before it finished (/review, stage 5, 2026-09-17). Every door and the field screen read this;
+ * the callers that know the end pass it.
+ */
+export function isInRunWindow(startsAt: string, nowMs: number, endsAt?: string | null): boolean {
+  const startMs = new Date(startsAt).getTime();
+  const endMs = endsAt ? new Date(endsAt).getTime() : NaN;
+  const last = Number.isFinite(endMs) && endMs > startMs ? endMs : startMs;
+  return nowMs >= startMs - RUN_WINDOW_MS && nowMs <= last + RUN_WINDOW_MS;
+}
+
+/**
+ * The instant the run window OPENS for a practice — its start less the one constant above — as
+ * epoch ms, or null when the start is not a time. The run screen's face before a practice says
+ * "The clock starts 2:21 p.m." from this (stage 5, P3); it is the same window every door reads,
+ * never a second one.
+ */
+export function runWindowOpensAt(startsAt: string | null | undefined): number | null {
+  if (!startsAt) return null;
+  const ms = new Date(startsAt).getTime();
+  return Number.isFinite(ms) ? ms - RUN_WINDOW_MS : null;
 }
 
 /**
@@ -48,9 +70,12 @@ export function practiceStarted(startsAt: string | null | undefined, nowMs: numb
   return Number.isFinite(ms) && ms <= nowMs;
 }
 
-export function practicePlanState(e: Pick<RepTeamEvent, 'practicePlan' | 'startsAt'>, nowMs: number): PracticePlanState {
+export function practicePlanState(
+  e: Pick<RepTeamEvent, 'practicePlan' | 'startsAt'> & Partial<Pick<RepTeamEvent, 'endsAt'>>,
+  nowMs: number,
+): PracticePlanState {
   if (!practiceHasPlan(e)) return 'none';
-  return isInRunWindow(e.startsAt, nowMs) ? 'run' : 'planned';
+  return isInRunWindow(e.startsAt, nowMs, e.endsAt) ? 'run' : 'planned';
 }
 
 /**

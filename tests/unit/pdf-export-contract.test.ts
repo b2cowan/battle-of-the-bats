@@ -23,7 +23,7 @@ import { describe, it } from 'node:test';
 import {
   buildTablePDF, buildPracticeRunSheetDoc, buildLineupPosterDoc, buildBattingOrderCardDoc,
   abbreviateHeadings, DEFAULT_PDF_SETTINGS,
-  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetOptions,
+  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetOptions, type PracticeSheetRotation,
   type LineupPosterOptions, type LineupPosterPlayer,
 } from '../../lib/export/pdf';
 import { buildBracketDoc } from '../../lib/export/bracket-pdf';
@@ -36,7 +36,7 @@ import { ROSTER_WALL_HEADERS, ROSTER_PRIVATE_HEADINGS, rosterContactHeaders } fr
 
 // ── Recording fakes ──────────────────────────────────────────────────────────
 
-interface TextCall { str: string; page: number; y?: number }
+interface TextCall { str: string; page: number; x?: number; y?: number; w?: number }
 
 class MockDoc {
   orientation: 'portrait' | 'landscape';
@@ -81,8 +81,12 @@ class MockDoc {
     // y is recorded so "nothing is drawn past the footer" is assertable — the run sheet does its
     // own paging, and an under-measured block silently prints across the footer band.
     const yy = typeof _rest[1] === 'number' ? (_rest[1] as number) : 0;
+    // x too, since the run sheet's grid ORIENTATION (stations across, rounds down) is a fact about
+    // where a run lands, not what it says.
+    const xx = typeof _rest[0] === 'number' ? (_rest[0] as number) : 0;
     (Array.isArray(str) ? str : [str]).forEach((line, i) =>
-      this.texts.push({ str: line, page: this.currentPage, y: yy + i * 4.2 }));
+      // and the run's width IN THE FACE IT WAS DRAWN, so a heading that overruns its column is assertable.
+      this.texts.push({ str: line, page: this.currentPage, x: xx, y: yy + i * 4.2, w: this.getTextWidth(line) }));
   }
   font: 'normal' | 'bold' = 'normal';
   splitWidths: number[] = [];
@@ -856,18 +860,34 @@ describe('the practice run sheet', () => {
     assert.equal(count(doc, 'Practice plan'), 1);
   });
 
+  /** The seeded shape (stage 5, P1): three stations across, three rounds down, the carousel. */
+  const rotation = (over: Partial<PracticeSheetRotation> = {}): PracticeSheetRotation => ({
+    stationNames: ['Tee', 'Toss', 'BP'],
+    rounds: [
+      { round: '1 (6:10 p.m.)', groups: [['Group A'], ['Group B'], ['Group C']], out: [] },
+      { round: '2 (6:20 p.m.)', groups: [['Group C'], ['Group A'], ['Group B']], out: [] },
+    ],
+    notes: ['2 rounds of 10 min.'],
+    groups: [{ name: 'Group A', players: 'Maya' }, { name: 'Group B', players: 'Liam' }, { name: 'Group C', players: 'Ava' }],
+    ...over,
+  });
+  /** Every run with this text, with where it landed. */
+  const runsOf = (doc: MockDoc, str: string) => doc.texts.filter(t => t.str === str);
+  const oneRun = (doc: MockDoc, str: string) => {
+    const runs = runsOf(doc, str);
+    assert.equal(runs.length, 1, `"${str}" prints exactly once`);
+    return runs[0];
+  };
+
   it('NEVER says the practice happened — planned, never done', () => {
     const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
       focus: [{ player: 'Maya Chen', focusAreas: 'Backhand pickups' }],
-      blocks: [block(), block({ time: '6:10–6:40', title: 'Circuit', rotation: {
-        groupNames: ['Group A', 'Group B'],
-        rounds: [{ round: 'Round 1', stations: ['Tee', 'Toss'] }],
-        notes: ['1 round of 30 min.'],
-        groups: [{ name: 'Group A', players: 'Maya' }, { name: 'Group B', players: 'Liam' }],
-      } })],
+      blocks: [block(), block({ time: '6:10–6:40', title: 'Circuit', rotation: rotation(), stations: [
+        { name: 'Tee', runBy: 'Coach Dana', words: [], facts: [['Setup', 'Two tees']], points: ['Hands inside'] },
+      ] })],
     }));
     const printed = doc.texts.map(t => t.str.toLowerCase()).join(' | ');
-    for (const word of ['done', 'completed', 'did it', 'attended', 'finished', 'actual']) {
+    for (const word of ['done', 'completed', 'did it', 'attended', 'finished', 'actual', 'ran ']) {
       assert.ok(!printed.includes(word), `"${word}" must never appear on a sheet about what is PLANNED`);
     }
   });
@@ -875,7 +895,7 @@ describe('the practice run sheet', () => {
   it('prints an UNFINISHED rotation’s statements instead of dropping it silently', () => {
     const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
       blocks: [block({ rotation: {
-        groupNames: [], rounds: [],
+        stationNames: [], rounds: [],
         notes: ['Add how often groups move to see the rotation.'],
         groups: [{ name: 'Group A', players: 'Maya, Liam' }],
       } })],
@@ -886,41 +906,159 @@ describe('the practice run sheet', () => {
     assert.ok(printed.some(s => s.includes('Group A')), 'the groups the coach DID make still print');
   });
 
-  it('turns the grid on its side rather than cutting a coach’s own group name', () => {
+  /**
+   * ⚠ THE ORIENTATION (stage 5, P1 — ruled 2026-09-16, drawn and ruled again 2026-09-17): the
+   * paper reads as the screen's board does — the STATIONS across the top on one baseline, the
+   * rounds down the side with their clocks, the GROUPS in the cells. This is the proof the
+   * rendered check cannot give (it reads text back, not which axis a word sits on).
+   */
+  it('turns the grid to STATION columns — the station names across on one baseline, the groups in the cells', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ blocks: [block({ rotation: rotation() })] }));
+    const head = ['Tee', 'Toss', 'BP'].map(s => oneRun(doc, s));
+    const round = oneRun(doc, 'Round');
+    assert.ok(head.every(h => Math.abs((h.y ?? 0) - (round.y ?? 0)) < 0.01),
+      'the station names sit on the head row\'s baseline, beside "Round"');
+    assert.ok(head[0].x! < head[1].x! && head[1].x! < head[2].x!, 'in the coach\'s own order, left to right');
+    // Round 1: A at Tee, B at Toss, C at BP — the group name in the STATION's column, on the row's line.
+    const r1 = oneRun(doc, '1 (6:10 p.m.)');
+    const a = runsOf(doc, 'Group A').find(t => Math.abs((t.y ?? 0) - (r1.y ?? 0)) < 0.01);
+    const c = runsOf(doc, 'Group C').find(t => Math.abs((t.y ?? 0) - (r1.y ?? 0)) < 0.01);
+    assert.ok(a && c, 'round 1 names its groups on its own line');
+    assert.ok(Math.abs(a!.x! - head[0].x!) < 0.01, 'Group A prints under Tee');
+    assert.ok(Math.abs(c!.x! - head[2].x!) < 0.01, 'Group C prints under BP');
+    assert.ok(r1.y! > round.y!, 'the rounds run DOWN the side, under the head row');
+    assert.ok(!doc.texts.some(t => t.str === 'Group'), 'no "Group" head — groups are cells, never columns');
+  });
+
+  it('wraps a long station heading onto a second line in ITS column, and the head row grows', () => {
+    // Six columns at letter width — the fixture's own budget — so the two-word name must wrap
+    // (its widest WORD still fits, so the grid does not turn); the size-aware fake, since the fit
+    // steps the size down and re-measures.
+    const six = ['Tee', 'Footwork ladder', 'BP', 'Toss', 'Net', 'Wall'];
+    const doc: MockDoc = buildPracticeRunSheetDoc(SizingMockDoc, sheet({
+      blocks: [block({ rotation: rotation({ stationNames: six, rounds: [
+        { round: '1 (6:10 p.m.)', groups: six.map((_, i) => [`Group ${'ABCDEF'[i]}`]), out: [] },
+      ] }) })],
+    }));
+    const first = oneRun(doc, 'Footwork');
+    const second = oneRun(doc, 'ladder');
+    assert.ok(Math.abs(first.x! - second.x!) < 0.01, 'the second line stays in the heading\'s own column');
+    assert.ok(second.y! > first.y!, 'and sits under the first');
+    const tee = oneRun(doc, 'Tee');
+    assert.ok(Math.abs(tee.y! - first.y!) < 0.01, 'the other headings share the first baseline');
+    // The fake's bold is wider than Helvetica's, so the round label may itself wrap here — the
+    // first line of it is enough to place the row.
+    const r1 = doc.texts.find(t => t.str.startsWith('1 (6:10'));
+    // ⚠ "below the second line" is not enough — a head row frozen at one line still puts the round
+    // below the second heading line. The head row must have GROWN by the extra line (6.6mm for one
+    // line at 8pt, plus 0.42 × 8 per extra line), measured against a control with a one-word name.
+    const control: MockDoc = buildPracticeRunSheetDoc(SizingMockDoc, sheet({
+      blocks: [block({ rotation: rotation({ stationNames: ['Tee', 'Ladder', 'BP', 'Toss', 'Net', 'Wall'], rounds: [
+        { round: '1 (6:10 p.m.)', groups: six.map((_, i) => [`Group ${'ABCDEF'[i]}`]), out: [] },
+      ] }) })],
+    }));
+    const c1 = control.texts.find(t => t.str.startsWith('1 (6:10'));
+    const cTee = oneRun(control, 'Tee');
+    assert.ok(r1 && c1 && (r1.y! - tee.y!) - (c1.y! - cTee.y!) >= 8 * 0.42 - 0.01,
+      'the head row grew by one line for the wrapped heading');
+    // And no heading reaches its neighbour's column: the whole point of wrapping.
+    const heads = six.map(n => n.split(' ')[0]).map(w => oneRun(doc, w)).sort((a, b) => a.x! - b.x!);
+    for (let i = 0; i < heads.length - 1; i++) {
+      assert.ok(heads[i].x! + heads[i].w! <= heads[i + 1].x! - 2.5 + 0.01,
+        `"${heads[i].str}" stays inside its column`);
+    }
+  });
+
+  it('stacks two groups that share a station in ONE cell, and only a hand-arranged grid prints "Sitting out"', () => {
+    const carousel: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ blocks: [block({ rotation: rotation() })] }));
+    assert.ok(!carousel.texts.some(t => t.str === 'Sitting out'), 'the carousel has nobody out, so no column');
+
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: [block({ rotation: rotation({ rounds: [
+        { round: '1 (6:10 p.m.)', groups: [['Group A'], ['Group B'], ['Group C']], out: [] },
+        { round: '2 (6:20 p.m.)', groups: [['Group A', 'Group B'], [], ['Group C']], out: ['Group D'] },
+        { round: '3 (6:30 p.m.)', groups: [['Group C'], ['Group A'], ['Group B']], out: [] },
+      ] }) })],
+    }));
+    // ⚠ The stacked ROW GREW: round 3 sits a full extra line below round 2, where round 2 sat one
+    // plain row below round 1 — otherwise the second group prints over the next round's line.
+    const r1 = oneRun(doc, '1 (6:10 p.m.)');
+    const r2b = oneRun(doc, '2 (6:20 p.m.)');
+    const r3 = oneRun(doc, '3 (6:30 p.m.)');
+    assert.ok((r3.y! - r2b.y!) - (r2b.y! - r1.y!) >= 8 * 0.42 - 0.01, 'the stacked row is one line taller than a plain one');
+    const out = oneRun(doc, 'Sitting out');
+    const tee = oneRun(doc, 'Tee');
+    assert.ok(Math.abs(out.y! - tee.y!) < 0.01 && out.x! > tee.x!, 'the column exists, last, on the head row');
+    const r2 = oneRun(doc, '2 (6:20 p.m.)');
+    const a2 = runsOf(doc, 'Group A').find(t => Math.abs((t.y ?? 0) - (r2.y ?? 0)) < 0.01);
+    const b2 = runsOf(doc, 'Group B').find(t => (t.y ?? 0) > (r2.y ?? 0) + 0.01);
+    assert.ok(a2 && b2, 'both sharing groups print');
+    assert.ok(Math.abs(a2!.x! - b2!.x!) < 0.01 && Math.abs(a2!.x! - tee.x!) < 0.01, 'stacked in Tee\'s column, one under the other');
+    const d2 = runsOf(doc, 'Group D').find(t => Math.abs((t.y ?? 0) - (r2.y ?? 0)) < 0.01);
+    assert.ok(d2 && Math.abs(d2.x! - out.x!) < 0.01, 'the group sitting out is named in the Sitting out column');
+    assert.ok(runsOf(doc, '—').some(t => Math.abs((t.y ?? 0) - (r2.y ?? 0)) < 0.01), 'a station with nobody reads a dash');
+  });
+
+  it('turns the grid on its side rather than cutting a coach’s own station name', () => {
     const names = ['Thunderbolts', 'Renegades', 'Hurricanes', 'Wolfpack', 'Mustangs', 'Cyclones',
       'Titans', 'Rockets', 'Comets', 'Ospreys', 'Badgers', 'Falcons'];
     const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
-      blocks: [block({ rotation: {
-        groupNames: names,
+      blocks: [block({ rotation: rotation({
+        stationNames: names,
         rounds: [
-          { round: 'Round 1', stations: names.map(() => 'Station 1') },
-          { round: 'Round 2', stations: names.map(() => 'Station 2') },
+          { round: '1', groups: names.map(() => ['Group A']), out: [] },
+          { round: '2', groups: names.map(() => ['Group B']), out: [] },
         ],
         notes: [], groups: [],
-      } })],
+      }) })],
     }));
     const printed = doc.texts.map(t => t.str);
     for (const n of names) assert.ok(printed.includes(n), `${n} prints whole`);
-    assert.ok(printed.includes('Group'), 'groups became the rows');
+    assert.ok(printed.includes('Station'), 'stations became the rows');
     assert.ok(!printed.includes('Round'), 'rounds became the columns, so "Round" is not the row head');
     // ⚠ Turned sideways, the round label IS the column heading, and the caller's label is a bare
-    // ordinal — without the word the grid reads "Group | 1 | 2" and never says what the columns
+    // ordinal — without the word the grid reads "Station | 1 | 2" and never says what the columns
     // are. Found by seeding a real practice and looking at the paper.
     assert.ok(printed.includes('Round 1') && printed.includes('Round 2'),
       'each column still says which round it is');
   });
 
-  it('keeps the approved shape when the names DO fit — rounds down the side', () => {
-    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
-      blocks: [block({ rotation: {
-        groupNames: ['A', 'B', 'C'],
-        rounds: [{ round: 'Round 1', stations: ['Tee', 'Toss', 'BP'] }],
-        notes: [], groups: [],
-      } })],
-    }));
+  it('keeps the screen\'s shape when the names DO fit — rounds down the side', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ blocks: [block({ rotation: rotation() })] }));
     const printed = doc.texts.map(t => t.str);
-    assert.ok(printed.includes('Round'), 'the row-label heading is Round — the approved orientation');
-    assert.ok(!printed.includes('Group'));
+    assert.ok(printed.includes('Round'), 'the row-label heading is Round — the screen\'s orientation');
+    assert.ok(!printed.includes('Station'));
+  });
+
+  /** P8: a station is a labelled block — its lines in the modal's order, never a " · " prose run. */
+  it('prints each station as a labelled block: name · Run by, then Setup · Equipment · Tonight as lines, then the points', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: [block({ title: 'Circuit', stations: [
+        { name: 'Tee work', runBy: 'Coach Dana', words: ['Watch for: Contact out front.'],
+          facts: [['Setup', 'Two tees at the fence.'], ['Equipment', 'Tees (2)'], ['Tonight', 'Inside pitch only.']],
+          points: ['Hands inside the ball', 'Finish high'] },
+        { name: 'Live BP', runBy: '', words: [], facts: [], points: [] },
+      ] })],
+    }));
+    const name = oneRun(doc, 'Tee work');
+    const runBy = oneRun(doc, '  ·  Run by Coach Dana');
+    assert.ok(Math.abs(name.y! - runBy.y!) < 0.01 && runBy.x! > name.x!, '"Run by" sits beside the name, on its line');
+    const order = ['Watch for: Contact out front.', 'Two tees at the fence.', 'Tees (2)', 'Inside pitch only.',
+      '– Hands inside the ball', '– Finish high'].map(s => oneRun(doc, s));
+    for (let i = 1; i < order.length; i++) assert.ok(order[i].y! > order[i - 1].y!, `line ${i} follows line ${i - 1}`);
+    assert.ok(order.every(l => l.x! > name.x!), 'the lines are indented under the name');
+    for (const [i, label] of ['Setup', 'Equipment', 'Tonight'].entries()) {
+      const l = oneRun(doc, label);
+      assert.ok(Math.abs(l.x! - order[0].x!) < 0.01, `"${label}" is a label at the indent`);
+      assert.ok(Math.abs(l.y! - order[i + 1].y!) < 0.01 && order[i + 1].x! > l.x!, 'its value follows it on the same line');
+    }
+    assert.ok(!doc.texts.some(t => t.str.includes(' · Setup:')), 'never the prose run');
+    assert.equal(runsOf(doc, 'Live BP').length, 1, 'a bare station is one line');
+  });
+
+  it('prints "Whole team" as the caller wrote it — the renderer adds nothing of its own', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ blocks: [block({ players: 'Whole team' })] }));
+    assert.ok(doc.texts.some(t => t.str === 'Coach Dana  ·  Whole team'));
   });
 
   it('every page names whose paper it is, and the page total is true', () => {
@@ -974,14 +1112,51 @@ describe('the practice run sheet', () => {
         blocks: [
           ...Array.from({ length: fillers }, (_, i) => block({ title: `Filler ${i + 1}` })),
           block({ title: 'Circuit', rotation: {
-            groupNames: ['A', 'B', 'C'],
-            rounds: [{ round: '1', stations: ['Tee', 'Toss', 'BP'] }],
+            stationNames: ['Tee', 'Toss', 'BP'],
+            rounds: [{ round: '1', groups: [['A'], ['B'], ['C']], out: [] }],
             notes: [],
             groups: [
               { name: 'Group A', players: huge },
               { name: 'Group B', players: huge },
               { name: 'Group C', players: huge },
             ],
+          } }),
+        ],
+      }));
+      const spilled = doc.texts.filter(t =>
+        (t.y ?? 0) > floor + 0.5 && Math.abs((t.y ?? 0) - footerY) > 0.01);
+      assert.equal(spilled.length, 0,
+        `${fillers} filler block(s): ${spilled.length} line(s) past the footer — "${spilled[0]?.str}"`);
+    }
+  });
+
+  /**
+   * ⚠ THE SAME SWEEP FOR THE TURNED GRID (stage 5, P1 — /review 2026-09-17). A wrapped heading grows
+   * the head row and a stacked cell grows its row; both heights are read off ONE layout by the
+   * measure and the draw, and this is what proves it: a six-high stack, a wrapped heading, a
+   * "Sitting out" column and labelled station blocks, walked down the page by the fillers. The
+   * size-aware fake, since the fit steps the size down and re-measures.
+   */
+  it('never draws below the footer floor, however tall a stacked cell or a wrapped heading makes the grid', () => {
+    const floor = 279.4 - 18;
+    const footerY = 279.4 - 8;
+    const six = ['Tee', 'Footwork ladder', 'BP', 'Toss', 'Net', 'Wall'];
+    for (let fillers = 1; fillers <= 12; fillers++) {
+      const doc: MockDoc = buildPracticeRunSheetDoc(SizingMockDoc, sheet({
+        blocks: [
+          ...Array.from({ length: fillers }, (_, i) => block({ title: `Filler ${i + 1}` })),
+          block({ title: 'Circuit', stations: [
+            { name: 'Tee', runBy: 'Coach Dana', words: ['Watch for: Contact out front.'],
+              facts: [['Setup', 'Two tees at the fence.'], ['Equipment', 'Tees (2)'], ['Tonight', 'Inside pitch only.']],
+              points: ['Hands inside the ball', 'Finish high'] },
+          ], rotation: {
+            stationNames: six,
+            rounds: [
+              { round: '1 (6:10 p.m.)', groups: [['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F'], [], [], [], [], []], out: [] },
+              { round: '2 (6:20 p.m.)', groups: [[], ['Group A', 'Group B', 'Group C'], [], [], [], ['Group D', 'Group E', 'Group F']], out: ['Group G'] },
+              { round: '3 (6:30 p.m.)', groups: [['Group A'], ['Group B'], ['Group C'], ['Group D'], ['Group E'], ['Group F']], out: [] },
+            ],
+            notes: ['3 rounds of 10 min.'], groups: [],
           } }),
         ],
       }));
