@@ -294,7 +294,7 @@ name they already have sees it named on its row and decides; a coach who built t
 one line saying so and is asked nothing. **What is owed:** the owner's walk (part K on the hub's "QA walk · 4"
 tab), then the commit on the owner's word.
 
-## Stage 5 · Paper & the field — DRAWN 2026-09-17 · RULED 2026-09-17 (P1–P9 all as drawn) · BUILT ON DEV 2026-09-17 · walk owed (§201, the hub's "QA walk · 5" tab) · commit owed
+## Stage 5 · Paper & the field — DRAWN 2026-09-17 · RULED 2026-09-17 (P1–P9 all as drawn) · BUILT ON DEV 2026-09-17 · walk owed (§201, the hub's "QA walk · 5" tab) · COMMITTED `fe2d8244`
 
 **What a coach sees and does differently.** The printed sheet becomes the print of the screen: the rotation grid
 prints with the stations across the top and the group in each cell (two stacked when they share, a "Sitting out"
